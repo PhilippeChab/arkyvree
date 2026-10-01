@@ -1,9 +1,15 @@
-import { stripSeparators } from "@/shared/utils.ts";
-import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
+import {
+  SKILL_MAP as BASE_SKILL_MAP,
+  detectModifiersOf,
+  type ModifierDetection,
+  modifierMapping,
+  validateModifiers,
+} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { SKILL_MAP as BASE_SKILL_MAP, detectModifiersOf, type ModifierDetection, modifierMapping, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 // ---------------------------------------------------------------------------
 // Skill name → slug mapping (extends base with paren-stripped variants)
@@ -35,7 +41,9 @@ export function buildDomainMapping(
   detected: DomainReference["detected"],
   overrides: NonNullable<DomainReference["overrides"]>,
 ): DomainReference["mapping"] {
-  return modifierMapping(raw, detected, overrides, (override?: NonNullable<DomainReference["overrides"]>[string]) => (override?.featPool ? { featPool: override.featPool } : {}));
+  return modifierMapping(raw, detected, overrides, (override?: NonNullable<DomainReference["overrides"]>[string]) =>
+    override?.featPool ? { featPool: override.featPool } : {},
+  );
 }
 
 function detectDomainModifiers(description: string): ModifierDetection<Modifier> {

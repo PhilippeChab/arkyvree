@@ -12,8 +12,7 @@ export const EASING = {
   decelerate: "cubic-bezier(0.0, 0.0, 0.2, 1)",
 } as const;
 
-export const prefersReducedMotion =
-  "@media (prefers-reduced-motion: reduce)" as const;
+export const prefersReducedMotion = "@media (prefers-reduced-motion: reduce)" as const;
 
 export const fadeIn = keyframes`
   from { opacity: 0; }

@@ -1,11 +1,13 @@
+import { getTableName } from "drizzle-orm";
+
 import { klassesInRules } from "@/drizzle/schema.ts";
+import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Klasses, KlassLevels } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   cowEntity,
@@ -19,17 +21,26 @@ import {
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export const ClassesMethods = {
   async getRulesetKlasses(
     rulesetId: string,
-    where: { childOnly?: boolean; kind?: string; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: {
+      childOnly?: boolean;
+      kind?: string;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain, siblingIds } = rulesetData.cow;
-      return await Klasses.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, siblingLoserIds: siblingIds, ...where }, pagination);
+      return await Klasses.findManyByRulesetId(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, siblingLoserIds: siblingIds, ...where },
+        pagination,
+      );
     });
   },
 
@@ -50,16 +61,26 @@ export const ClassesMethods = {
     });
   },
 
-  async createRulesetKlass(session: Session, rulesetId: string, body: {
-    name: string;
-    description?: string | null;
-    hd?: number;
-  }) {
+  async createRulesetKlass(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      hd?: number;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "klasses", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "klasses",
+          body.name,
+        );
 
         const rows = await Klasses.create(tx, {
           ...body,
@@ -87,12 +108,17 @@ export const ClassesMethods = {
     return result;
   },
 
-  async updateRulesetKlass(session: Session, rulesetId: string, klassId: string, body: {
-    name: string;
-    description?: string | null;
-    hd?: number;
-    updatedAt?: string;
-  }) {
+  async updateRulesetKlass(
+    session: Session,
+    rulesetId: string,
+    klassId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      hd?: number;
+      updatedAt?: string;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -109,7 +135,14 @@ export const ClassesMethods = {
         let targetId = klass.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "klasses",
+            klass.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         }
 
@@ -125,7 +158,10 @@ export const ClassesMethods = {
           targetId,
           targetTable: getTableName(klassesInRules),
           type: "updateKlass",
-          data: { entityName: body.name, changedFields: getChangedFields(klass as Record<string, unknown>, body as Record<string, unknown>) },
+          data: {
+            entityName: body.name,
+            changedFields: getChangedFields(klass as Record<string, unknown>, body as Record<string, unknown>),
+          },
         });
 
         return updatedKlass;
@@ -152,7 +188,14 @@ export const ClassesMethods = {
 
         let targetId = klass.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "klasses",
+            klass.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         } else {
           await lockEntityForMutation(tx, "klasses", targetId);

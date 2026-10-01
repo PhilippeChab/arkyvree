@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
+
 import { generateAll } from "@/database/packages/dnd35-from-parser/tools/generator/index.ts";
 
 const GENERATED = join(import.meta.dirname, "../../database/packages/dnd35-from-parser/generated");
@@ -20,7 +21,10 @@ describe("The generator", () => {
       expect(generateAll({}, folder)).toEqual([]);
       expect(filesOf(folder)).toEqual(filesOf(GENERATED));
       for (const file of filesOf(GENERATED)) {
-        expect({ file, code: readFileSync(join(folder, file), "utf8") }).toEqual({ file, code: readFileSync(join(GENERATED, file), "utf8") });
+        expect({ file, code: readFileSync(join(folder, file), "utf8") }).toEqual({
+          file,
+          code: readFileSync(join(GENERATED, file), "utf8"),
+        });
       }
     } finally {
       rmSync(folder, { recursive: true, force: true });

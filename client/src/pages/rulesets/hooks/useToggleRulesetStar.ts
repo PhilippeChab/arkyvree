@@ -1,7 +1,8 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 /** Star or unstar a ruleset; returns `toggleStar(id, isCurrentlyStarred)`. */
 export function useToggleRulesetStar() {
@@ -18,7 +19,8 @@ export function useToggleRulesetStar() {
       // Only the ruleset's own record shows the star; its sections share the key prefix.
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.detail(id), exact: true });
     },
-    onError: (error, { starred }) => snackbar.error(error, starred ? "Failed to unstar ruleset" : "Failed to star ruleset"),
+    onError: (error, { starred }) =>
+      snackbar.error(error, starred ? "Failed to unstar ruleset" : "Failed to star ruleset"),
   });
 
   return (id: string, isCurrentlyStarred: boolean) => mutation.mutate({ id, starred: isCurrentlyStarred });

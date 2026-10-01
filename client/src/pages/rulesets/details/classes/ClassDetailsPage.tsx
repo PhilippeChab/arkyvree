@@ -1,14 +1,3 @@
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { EntityDetailLayout, EntityDetailsCard, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
-import { type ClassFormData, ClassFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { isHitDie } from "@/shared/dnd3.5/classes.ts";
 import {
   EmojiEvents as FeatPoolsIcon,
   TrendingUp as LevelsIcon,
@@ -16,18 +5,35 @@ import {
   Bolt as SpellListIcon,
   AutoStories as SpellsIcon,
 } from "@mui/icons-material";
-import {
-  Box,
-  Chip,
-  MenuItem,
-  TextField,
-} from "@mui/material";
+import { Box, Chip, MenuItem, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useFormSync, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { type ClassDetail, classDetailQuery, type ClassSection, prefetchClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+
+import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useFormSync, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
+import { type ClassFormData, ClassFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import {
+  EntityDetailLayout,
+  EntityDetailsCard,
+  EntityPageError,
+} from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  type ClassDetail,
+  classDetailQuery,
+  type ClassSection,
+  prefetchClassSection,
+} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { isHitDie } from "@/shared/dnd3.5/classes.ts";
+
 import {
   ClassFeatPoolsSection,
   ClassLevelsSection,
@@ -73,7 +79,11 @@ export default function ClassDetailsPage() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const { id: rulesetId = "", classId = "", section } = useParams<{
+  const {
+    id: rulesetId = "",
+    classId = "",
+    section,
+  } = useParams<{
     id: string;
     classId: string;
     section?: string;
@@ -83,9 +93,12 @@ export default function ClassDetailsPage() {
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
 
-  const { data: classData, isLoading: isClassLoading, isFetching: isClassFetching, error: classError } = useQuery(
-    classDetailQuery(rulesetId, classId),
-  );
+  const {
+    data: classData,
+    isLoading: isClassLoading,
+    isFetching: isClassFetching,
+    error: classError,
+  } = useQuery(classDetailQuery(rulesetId, classId));
 
   usePageTitle(classData?.name);
 
@@ -105,10 +118,12 @@ export default function ClassDetailsPage() {
   const updateMutation = useMutation({
     mutationFn: async (data: ClassFormData) => ({
       sourceId: classId,
-      saved: await parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$put({
-        param: { id: rulesetId, classId },
-        json: { ...data, updatedAt: sync.updatedAt() },
-      })),
+      saved: await parseResponse(
+        rpc.api.rulesets[":id"].classes[":classId"].$put({
+          param: { id: rulesetId, classId },
+          json: { ...data, updatedAt: sync.updatedAt() },
+        }),
+      ),
     }),
     onSuccess: ({ saved: data, sourceId }) => {
       // The page may have left that class while the save was in flight.
@@ -210,7 +225,7 @@ export default function ClassDetailsPage() {
               title="Class Overview"
               sx={{ mb: 4 }}
               description={classData.description}
-              chips={(
+              chips={
                 <>
                   <Chip label={`Hit Die: d${classData.hd || 8}`} color="secondary" sx={{ fontWeight: 600 }} />
                   {bonusSpellAbility && (
@@ -220,51 +235,59 @@ export default function ClassDetailsPage() {
                     <Chip label={`Caster Type: ${classData.casterTypeValue}`} color="info" variant="outlined" />
                   )}
                 </>
-              )}
-              edit={canEdit ? {
-                fields: (
-                  <>
-                    <ClassFormFields form={editForm} />
-                    <TextField
-                      label="Spellcasting Ability"
-                      fullWidth
-                      select
-                      // Empty until the abilities load: a value with no option is out of range.
-                      value={bonusSpellAbility?.id ?? ""}
-                      onChange={(e) => bonusSpellMutation.mutate(e.target.value)}
-                      disabled={!abilities || bonusSpellMutation.isPending || isClassFetching}
-                    >
-                      <MenuItem value="">None</MenuItem>
-                      {abilities?.map((a) => (
-                        <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
-                      ))}
-                    </TextField>
-                    <TextField
-                      label="Caster Type"
-                      fullWidth
-                      select
-                      value={classData.casterTypeValue ?? ""}
-                      onChange={(e) => casterTypeMutation.mutate(e.target.value)}
-                      disabled={casterTypeMutation.isPending || isClassFetching}
-                      helperText="Whether this class casts arcane or divine spells"
-                    >
-                      <MenuItem value="">None</MenuItem>
-                      <MenuItem value="Arcane">Arcane</MenuItem>
-                      <MenuItem value="Divine">Divine</MenuItem>
-                    </TextField>
-                  </>
-                ),
-                onSubmit: sync.handleSubmit((data) => updateMutation.mutate(data)),
-                canSave: editForm.formState.isDirty,
-                isSaving: updateMutation.isPending,
-              } : undefined}
+              }
+              edit={
+                canEdit
+                  ? {
+                      fields: (
+                        <>
+                          <ClassFormFields form={editForm} />
+                          <TextField
+                            label="Spellcasting Ability"
+                            fullWidth
+                            select
+                            // Empty until the abilities load: a value with no option is out of range.
+                            value={bonusSpellAbility?.id ?? ""}
+                            onChange={(e) => bonusSpellMutation.mutate(e.target.value)}
+                            disabled={!abilities || bonusSpellMutation.isPending || isClassFetching}
+                          >
+                            <MenuItem value="">None</MenuItem>
+                            {abilities?.map((a) => (
+                              <MenuItem key={a.id} value={a.id}>
+                                {a.name}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                          <TextField
+                            label="Caster Type"
+                            fullWidth
+                            select
+                            value={classData.casterTypeValue ?? ""}
+                            onChange={(e) => casterTypeMutation.mutate(e.target.value)}
+                            disabled={casterTypeMutation.isPending || isClassFetching}
+                            helperText="Whether this class casts arcane or divine spells"
+                          >
+                            <MenuItem value="">None</MenuItem>
+                            <MenuItem value="Arcane">Arcane</MenuItem>
+                            <MenuItem value="Divine">Divine</MenuItem>
+                          </TextField>
+                        </>
+                      ),
+                      onSubmit: sync.handleSubmit((data) => updateMutation.mutate(data)),
+                      canSave: editForm.formState.isDirty,
+                      isSaving: updateMutation.isPending,
+                    }
+                  : undefined
+              }
             />
 
             <SectionTabs
               tabs={TABS}
               value={currentTab}
               // Keep the Back target the page was opened with.
-              onChange={(key) => navigate(`/rulesets/${rulesetId}/classes/${classId}/${key}`, { state: location.state })}
+              onChange={(key) =>
+                navigate(`/rulesets/${rulesetId}/classes/${classId}/${key}`, { state: location.state })
+              }
               onTabHover={(key) => void prefetchClassSection(queryClient, rulesetId, classId, key)}
               aria-label="class details tabs"
             />

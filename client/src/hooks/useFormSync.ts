@@ -93,10 +93,11 @@ export function useFormSync<T extends FieldValues>(
     synced.current = { key: savingKey.current, snapshot: JSON.stringify(savedValues), updatedAt: savedUpdatedAt };
   };
 
-  const handleSubmit = (onValid: SubmitHandler<T>) => form.handleSubmit((data, event) => {
-    savingKey.current = synced.current?.key;
-    return onValid(data, event);
-  });
+  const handleSubmit = (onValid: SubmitHandler<T>) =>
+    form.handleSubmit((data, event) => {
+      savingKey.current = synced.current?.key;
+      return onValid(data, event);
+    });
 
   return {
     handleSubmit,

@@ -1,9 +1,10 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { ClassSkillsService } from "@/server/services/rulesets/index.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { ClassSkillsService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -12,11 +13,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classId } = c.req.valid("param");
       const classSkillsService = ClassSkillsService.initialize();
-      const result = await classSkillsService.call(
-        "getClassSkills",
-        id,
-        classId,
-      );
+      const result = await classSkillsService.call("getClassSkills", id, classId);
       return respond(c, result, 200);
     },
   )
@@ -28,13 +25,7 @@ export default new Hono<SessionContext>()
       const { id, classId } = c.req.valid("param");
       const { skillId } = c.req.valid("json");
       const classSkillsService = ClassSkillsService.initialize();
-      const result = await classSkillsService.call(
-        "addClassSkill",
-        c.var.requestSession,
-        id,
-        classId,
-        skillId,
-      );
+      const result = await classSkillsService.call("addClassSkill", c.var.requestSession, id, classId, skillId);
       return respond(c, result, 200);
     },
   )
@@ -51,13 +42,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classId, skillId } = c.req.valid("param");
       const classSkillsService = ClassSkillsService.initialize();
-      const result = await classSkillsService.call(
-        "removeClassSkill",
-        c.var.requestSession,
-        id,
-        classId,
-        skillId,
-      );
+      const result = await classSkillsService.call("removeClassSkill", c.var.requestSession, id, classId, skillId);
       return respond(c, result, 200);
     },
   );

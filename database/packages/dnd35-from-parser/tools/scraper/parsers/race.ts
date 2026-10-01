@@ -1,7 +1,13 @@
 import * as cheerio from "cheerio";
-import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { frameHeading, pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+
+import {
+  frameHeading,
+  pageTitle,
+  sectionElements,
+  tagOf,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { NamedText, RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
 
 /** A race page's frame also heads its listing "Races". */
@@ -25,8 +31,15 @@ const ABILITY_NAMES = new Set(["Strength", "Dexterity", "Constitution", "Intelli
 
 /** dndtools' Django ids of the sizes, for its "RaceSize object (N)" rendering: the site's keys, not ours. */
 const DNDTOOLS_SIZE_IDS: Record<string, SizeType> = {
-  "1": "Fine", "2": "Diminutive", "3": "Tiny", "4": "Small",
-  "5": "Medium", "6": "Large", "7": "Huge", "8": "Gargantuan", "9": "Colossal",
+  "1": "Fine",
+  "2": "Diminutive",
+  "3": "Tiny",
+  "4": "Small",
+  "5": "Medium",
+  "6": "Large",
+  "7": "Huge",
+  "8": "Gargantuan",
+  "9": "Colossal",
 };
 
 // ---------------------------------------------------------------------------
@@ -125,9 +138,9 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
 
   // Parse description
   const descParts: string[] = [];
-  const descHeader = $("h3").filter((_, el) =>
-    /^Description/i.test($(el).text().trim()),
-  ).first();
+  const descHeader = $("h3")
+    .filter((_, el) => /^Description/i.test($(el).text().trim()))
+    .first();
 
   if (descHeader.length > 0) {
     for (const el of sectionElements(descHeader)) {
@@ -142,9 +155,9 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
 
   // Parse racial traits
   const features: NamedText[] = [];
-  const traitsHeader = $("h3").filter((_, el) =>
-    /^Racial Traits/i.test($(el).text().trim()),
-  ).first();
+  const traitsHeader = $("h3")
+    .filter((_, el) => /^Racial Traits/i.test($(el).text().trim()))
+    .first();
 
   if (traitsHeader.length > 0) {
     for (const el of sectionElements(traitsHeader)) {
@@ -171,5 +184,3 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
     features,
   };
 }
-
-

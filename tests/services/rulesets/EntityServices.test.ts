@@ -4,6 +4,7 @@
  * covers what is specific to it.
  */
 import { describe, expect, test } from "bun:test";
+
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Abilities, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
@@ -32,7 +33,14 @@ type Service = {
   get: (rulesetId: string, id: string) => Promise<{ id: string; name: string }>;
   create: (session: Session, rulesetId: string, name: string, refs: Refs) => Promise<Row>;
   /** `updatedAt` is the stale-edit token: the version of the entity the edit started from. */
-  update: (session: Session, rulesetId: string, id: string, name: string, refs: Refs, updatedAt?: string) => Promise<Row>;
+  update: (
+    session: Session,
+    rulesetId: string,
+    id: string,
+    name: string,
+    refs: Refs,
+    updatedAt?: string,
+  ) => Promise<Row>;
   remove: (session: Session, rulesetId: string, id: string) => Promise<unknown>;
 };
 
@@ -43,70 +51,101 @@ const SERVICES: Record<string, Service> = {
     list: (rulesetId, search) => AptitudesMethods.getRulesetAptitudes(rulesetId, { search }, firstPage),
     get: AptitudesMethods.getRulesetAptitude,
     create: (session, rulesetId, name) => AptitudesMethods.createRulesetAptitude(session, rulesetId, { name }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) => AptitudesMethods.updateRulesetAptitude(session, rulesetId, id, { name, updatedAt }),
+    update: (session, rulesetId, id, name, _refs, updatedAt) =>
+      AptitudesMethods.updateRulesetAptitude(session, rulesetId, id, { name, updatedAt }),
     remove: AptitudesMethods.deleteRulesetAptitude,
   },
   feats: {
     list: (rulesetId, search) => FeatsMethods.getRulesetFeats(rulesetId, { search }, firstPage),
     get: FeatsMethods.getRulesetFeat,
-    create: (session, rulesetId, name, refs) => FeatsMethods.createRulesetFeat(session, rulesetId, { name, aptitudeIds: [refs.featAptitudeId] }),
-    update: (session, rulesetId, id, name, refs, updatedAt) => FeatsMethods.updateRulesetFeat(session, rulesetId, id, { name, aptitudeIds: [refs.featAptitudeId], updatedAt }),
+    create: (session, rulesetId, name, refs) =>
+      FeatsMethods.createRulesetFeat(session, rulesetId, { name, aptitudeIds: [refs.featAptitudeId] }),
+    update: (session, rulesetId, id, name, refs, updatedAt) =>
+      FeatsMethods.updateRulesetFeat(session, rulesetId, id, { name, aptitudeIds: [refs.featAptitudeId], updatedAt }),
     remove: FeatsMethods.deleteRulesetFeat,
   },
   items: {
     list: (rulesetId, search) => ItemsMethods.getRulesetItems(rulesetId, { search }, firstPage),
     get: ItemsMethods.getRulesetItem,
     create: (session, rulesetId, name) => ItemsMethods.createRulesetItem(session, rulesetId, { name }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) => ItemsMethods.updateRulesetItem(session, rulesetId, id, { name, updatedAt }),
+    update: (session, rulesetId, id, name, _refs, updatedAt) =>
+      ItemsMethods.updateRulesetItem(session, rulesetId, id, { name, updatedAt }),
     remove: ItemsMethods.deleteRulesetItem,
   },
   klasses: {
     list: (rulesetId, search) => ClassesMethods.getRulesetKlasses(rulesetId, { search }, firstPage),
     get: ClassesMethods.getRulesetKlass,
     create: (session, rulesetId, name) => ClassesMethods.createRulesetKlass(session, rulesetId, { name }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) => ClassesMethods.updateRulesetKlass(session, rulesetId, id, { name, updatedAt }),
+    update: (session, rulesetId, id, name, _refs, updatedAt) =>
+      ClassesMethods.updateRulesetKlass(session, rulesetId, id, { name, updatedAt }),
     remove: ClassesMethods.deleteRulesetKlass,
   },
   languages: {
     list: (rulesetId, search) => LanguagesMethods.getRulesetLanguages(rulesetId, { search }, firstPage),
     get: LanguagesMethods.getRulesetLanguage,
-    create: (session, rulesetId, name) => LanguagesMethods.createRulesetLanguage(session, rulesetId, { name, type: "Standard" }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) => LanguagesMethods.updateRulesetLanguage(session, rulesetId, id, { name, type: "Standard", updatedAt }),
+    create: (session, rulesetId, name) =>
+      LanguagesMethods.createRulesetLanguage(session, rulesetId, { name, type: "Standard" }),
+    update: (session, rulesetId, id, name, _refs, updatedAt) =>
+      LanguagesMethods.updateRulesetLanguage(session, rulesetId, id, { name, type: "Standard", updatedAt }),
     remove: LanguagesMethods.deleteRulesetLanguage,
   },
   mechanics: {
     list: (rulesetId, search) => MechanicsMethods.getRulesetMechanics(rulesetId, { search }, firstPage),
     get: MechanicsMethods.getRulesetMechanic,
     create: (session, rulesetId, name) => MechanicsMethods.createRulesetMechanic(session, rulesetId, { name }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) => MechanicsMethods.updateRulesetMechanic(session, rulesetId, id, { name, updatedAt }),
+    update: (session, rulesetId, id, name, _refs, updatedAt) =>
+      MechanicsMethods.updateRulesetMechanic(session, rulesetId, id, { name, updatedAt }),
     remove: MechanicsMethods.deleteRulesetMechanic,
   },
   powers: {
     list: (rulesetId, search) => PowersMethods.getRulesetPowers(rulesetId, { search }, firstPage),
     get: PowersMethods.getRulesetPower,
-    create: (session, rulesetId, name, refs) => PowersMethods.createRulesetPower(session, rulesetId, { name, aptitudes: [{ id: refs.powerAptitudeId }] }),
-    update: (session, rulesetId, id, name, refs, updatedAt) => PowersMethods.updateRulesetPower(session, rulesetId, id, { name, aptitudes: [{ id: refs.powerAptitudeId }], updatedAt }),
+    create: (session, rulesetId, name, refs) =>
+      PowersMethods.createRulesetPower(session, rulesetId, { name, aptitudes: [{ id: refs.powerAptitudeId }] }),
+    update: (session, rulesetId, id, name, refs, updatedAt) =>
+      PowersMethods.updateRulesetPower(session, rulesetId, id, {
+        name,
+        aptitudes: [{ id: refs.powerAptitudeId }],
+        updatedAt,
+      }),
     remove: PowersMethods.deleteRulesetPower,
   },
   races: {
     list: (rulesetId, search) => RacesMethods.getRulesetRaces(rulesetId, { search }, firstPage),
     get: RacesMethods.getRulesetRace,
-    create: (session, rulesetId, name) => RacesMethods.createRulesetRace(session, rulesetId, { name, size: "Medium", baseSpeed: 30 }),
-    update: (session, rulesetId, id, name, _refs, updatedAt) => RacesMethods.updateRulesetRace(session, rulesetId, id, { name, size: "Medium", baseSpeed: 30, updatedAt }),
+    create: (session, rulesetId, name) =>
+      RacesMethods.createRulesetRace(session, rulesetId, { name, size: "Medium", baseSpeed: 30 }),
+    update: (session, rulesetId, id, name, _refs, updatedAt) =>
+      RacesMethods.updateRulesetRace(session, rulesetId, id, { name, size: "Medium", baseSpeed: 30, updatedAt }),
     remove: RacesMethods.deleteRulesetRace,
   },
   saves: {
     list: (rulesetId, search) => SavesMethods.getRulesetSaves(rulesetId, { search }, firstPage),
     get: SavesMethods.getRulesetSave,
-    create: (session, rulesetId, name, refs) => SavesMethods.createRulesetSave(session, rulesetId, { name, abilityId: refs.abilityId }),
-    update: (session, rulesetId, id, name, refs, updatedAt) => SavesMethods.updateRulesetSave(session, rulesetId, id, { name, abilityId: refs.abilityId, updatedAt }),
+    create: (session, rulesetId, name, refs) =>
+      SavesMethods.createRulesetSave(session, rulesetId, { name, abilityId: refs.abilityId }),
+    update: (session, rulesetId, id, name, refs, updatedAt) =>
+      SavesMethods.updateRulesetSave(session, rulesetId, id, { name, abilityId: refs.abilityId, updatedAt }),
     remove: SavesMethods.deleteRulesetSave,
   },
   skills: {
     list: (rulesetId, search) => SkillsMethods.getRulesetSkills(rulesetId, { search }, firstPage),
     get: SkillsMethods.getRulesetSkill,
-    create: (session, rulesetId, name, refs) => SkillsMethods.createRulesetSkill(session, rulesetId, { name, primaryAbilityId: refs.abilityId, impactedByWeight: false, usableWithoutTraining: true }),
-    update: (session, rulesetId, id, name, refs, updatedAt) => SkillsMethods.updateRulesetSkill(session, rulesetId, id, { name, primaryAbilityId: refs.abilityId, impactedByWeight: false, usableWithoutTraining: true, updatedAt }),
+    create: (session, rulesetId, name, refs) =>
+      SkillsMethods.createRulesetSkill(session, rulesetId, {
+        name,
+        primaryAbilityId: refs.abilityId,
+        impactedByWeight: false,
+        usableWithoutTraining: true,
+      }),
+    update: (session, rulesetId, id, name, refs, updatedAt) =>
+      SkillsMethods.updateRulesetSkill(session, rulesetId, id, {
+        name,
+        primaryAbilityId: refs.abilityId,
+        impactedByWeight: false,
+        usableWithoutTraining: true,
+        updatedAt,
+      }),
     remove: SkillsMethods.deleteRulesetSkill,
   },
 };
@@ -135,7 +174,10 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     expect((await service.list(ruleset.id)).items.map((e) => e.id)).toContain(created.id);
     expect((await service.list(ruleset.id, "Zephyr")).items.map((e) => e.id)).toEqual([created.id]);
 
-    expect(await service.update(session, ruleset.id, created.id, "Renamed Entity", refs)).toMatchObject({ id: created.id, name: "Renamed Entity" });
+    expect(await service.update(session, ruleset.id, created.id, "Renamed Entity", refs)).toMatchObject({
+      id: created.id,
+      name: "Renamed Entity",
+    });
     await service.remove(session, ruleset.id, created.id);
     await expect(service.get(ruleset.id, created.id)).rejects.toThrow(NotFoundError);
   });
@@ -165,8 +207,12 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     const { session, ruleset, refs } = await setup();
     const created = await service.create(session, ruleset.id, "Contested Entity", refs);
     await service.update(session, ruleset.id, created.id, "First Edit", refs, created.updatedAt);
-    await expect(service.update(session, ruleset.id, created.id, "Second Edit", refs, created.updatedAt)).rejects.toThrow(ConflictError);
-    expect(await service.update(session, ruleset.id, created.id, "Tokenless Edit", refs)).toMatchObject({ name: "Tokenless Edit" });
+    await expect(
+      service.update(session, ruleset.id, created.id, "Second Edit", refs, created.updatedAt),
+    ).rejects.toThrow(ConflictError);
+    expect(await service.update(session, ruleset.id, created.id, "Tokenless Edit", refs)).toMatchObject({
+      name: "Tokenless Edit",
+    });
   });
 
   test("refuses a name the ruleset already uses", async () => {
@@ -188,7 +234,10 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     expect(copy.id).not.toBe(inherited.id);
     expect(await service.get(fork.id, inherited.id)).toMatchObject({ id: copy.id, name: "Forked Entity" });
     // Later edits through the source's id go to the same copy.
-    expect(await service.update(session, fork.id, inherited.id, "Edited Again", refs)).toMatchObject({ id: copy.id, name: "Edited Again" });
+    expect(await service.update(session, fork.id, inherited.id, "Edited Again", refs)).toMatchObject({
+      id: copy.id,
+      name: "Edited Again",
+    });
     expect(await service.get(parent.id, inherited.id)).toMatchObject({ name: "Inherited Entity" });
   });
 
@@ -212,17 +261,40 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
   /** Gives the entity a requirement, a property and, when its type can own one, a modifier with a requirement of its own. */
   async function customize(id: string) {
     if (ownsModifiers) {
-      const [modifier] = await Modifiers.create(db, { sourceId: id, sourceType: entityType, target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" });
-      await Requirements.create(db, { entityId: modifier.id, entityType: "modifiers", level: "1", chainingOperator: "and" });
+      const [modifier] = await Modifiers.create(db, {
+        sourceId: id,
+        sourceType: entityType,
+        target: "abilities.strength.misc",
+        value: "2",
+        valueType: "number",
+        operator: "add",
+      });
+      await Requirements.create(db, {
+        entityId: modifier.id,
+        entityType: "modifiers",
+        level: "1",
+        chainingOperator: "and",
+      });
     }
-    await Requirements.create(db, { entityId: id, entityType, level: "1", target: "abilities.strength.total", value: "13", valueType: "number", operator: "greater_than_or_equal" });
+    await Requirements.create(db, {
+      entityId: id,
+      entityType,
+      level: "1",
+      target: "abilities.strength.total",
+      value: "13",
+      valueType: "number",
+      operator: "greater_than_or_equal",
+    });
     await Properties.create(db, { entityId: id, entityType, type: "NOTE", value: "doomed" });
   }
 
   /** The entity's customizations, and the ids of its modifiers' requirements. */
   async function customizationsOf(id: string) {
     const modifiers = await Modifiers.findManyBySource(db, { sourceIds: [id], sourceType: entityType });
-    const modifierRequirements = await Requirements.findManyByEntity(db, { entityIds: modifiers.map((m) => m.id), entityType: "modifiers" });
+    const modifierRequirements = await Requirements.findManyByEntity(db, {
+      entityIds: modifiers.map((m) => m.id),
+      entityType: "modifiers",
+    });
     return {
       modifiers,
       modifierRequirementIds: modifierRequirements.map((r) => r.id),
@@ -234,13 +306,24 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
   /** How many of each an entity has. */
   const counts = async (id: string) => {
     const { modifiers, modifierRequirementIds, requirements, properties } = await customizationsOf(id);
-    return { modifiers: modifiers.length, modifierRequirements: modifierRequirementIds.length, requirements: requirements.length, properties: properties.length };
+    return {
+      modifiers: modifiers.length,
+      modifierRequirements: modifierRequirementIds.length,
+      requirements: requirements.length,
+      properties: properties.length,
+    };
   };
   const none = { modifiers: 0, modifierRequirements: 0, requirements: 0, properties: 0 };
-  const one = { modifiers: Number(ownsModifiers), modifierRequirements: Number(ownsModifiers), requirements: 1, properties: 1 };
+  const one = {
+    modifiers: Number(ownsModifiers),
+    modifierRequirements: Number(ownsModifiers),
+    requirements: 1,
+    properties: 1,
+  };
 
   /** Whether any of these requirements is left. */
-  const remaining = async (ids: string[]) => (await Promise.all(ids.map((id) => Requirements.findOne(db, { id })))).filter(Boolean);
+  const remaining = async (ids: string[]) =>
+    (await Promise.all(ids.map((id) => Requirements.findOne(db, { id })))).filter(Boolean);
 
   test("deletes the entity's modifiers, requirements and properties with it", async () => {
     const { session, ruleset, refs } = await setup();

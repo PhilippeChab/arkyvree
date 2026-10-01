@@ -1,10 +1,3 @@
-import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { FeatSeed, ModifierSeed, RequirementCondition, RequirementEntry, WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
-import { favoredEnemyFeats } from "@/database/packages/dnd35/content/creatureTypes.ts";
-import { feat } from "@/database/packages/dnd35/content/requirements.ts";
-import { weaponProficiencyFeats } from "@/database/packages/dnd35/content/weapons.ts";
-import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools.ts";
-import { autoCompanionGrantModifiers, expandTemplateDescription, normalizeName, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
   escapeTemplate,
   featLines,
@@ -18,12 +11,34 @@ import {
   stringifyRequirement,
   truncateDesc,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
+import {
+  autoCompanionGrantModifiers,
+  expandTemplateDescription,
+  normalizeName,
+  toCamelCase,
+} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { favoredEnemyFeats } from "@/database/packages/dnd35/content/creatureTypes.ts";
+import { feat } from "@/database/packages/dnd35/content/requirements.ts";
+import type {
+  FeatSeed,
+  ModifierSeed,
+  RequirementCondition,
+  RequirementEntry,
+  WizardSchoolDefinition,
+} from "@/database/packages/dnd35/content/types.ts";
+import { weaponProficiencyFeats } from "@/database/packages/dnd35/content/weapons.ts";
+import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools.ts";
 
 // ---------------------------------------------------------------------------
 // The feats a feat reference makes
 // ---------------------------------------------------------------------------
 
-type FeatEntry = { entry: FeatReference["raw"][number]; detected: FeatReference["detected"][string]; mapped: FeatReference["mapping"][string] };
+type FeatEntry = {
+  entry: FeatReference["raw"][number];
+  detected: FeatReference["detected"][string];
+  mapped: FeatReference["mapping"][string];
+};
 type TemplateType = NonNullable<FeatEntry["mapped"]["template"]>["type"];
 
 /** A template feat's family, which the generated code makes a feat of per item (weapon, skill, school…). */
@@ -78,21 +93,52 @@ function referenceFeats(ref: FeatReference) {
       ...(mapped.selectable === false ? { selectable: false } : {}),
       aptitudes: mapped.aptitudes ?? [],
       requirements: mapped.requirements ?? [],
-      modifiers: [...(mapped.modifiers ?? []), ...autoCompanionGrantModifiers(name, mapped.description ?? entry.benefit ?? "")],
+      modifiers: [
+        ...(mapped.modifiers ?? []),
+        ...autoCompanionGrantModifiers(name, mapped.description ?? entry.benefit ?? ""),
+      ],
       properties: mapped.properties ?? [],
     });
   }
-  return { byType, templates, templateNames: new Set(kept.filter(({ mapped }) => mapped.template).map(({ entry }) => entry.name)) };
+  return {
+    byType,
+    templates,
+    templateNames: new Set(kept.filter(({ mapped }) => mapped.template).map(({ entry }) => entry.name)),
+  };
 }
 
 /**
  * The feats no reference lists that the core rules' feat files add, each: its file and export, the content code the
  * generated file builds it with (and the names that code uses), and the feats that code builds.
  */
-const CORE_SYSTEM_FEATS: { file: string; name: string; code: string; uses: string[]; build: (wizardSchools: WizardSchoolDefinition[]) => FeatSeed[] }[] = [
-  { file: "feats.ts", name: "WIZARD_SCHOOL_FEATS", code: "wizardSchoolFeats(WIZARD_SCHOOLS)", uses: ["wizardSchoolFeats", "WIZARD_SCHOOLS"], build: wizardSchoolFeats },
-  { file: "feats.ts", name: "WEAPON_PROFICIENCY_FEATS", code: "weaponProficiencyFeats", uses: ["weaponProficiencyFeats"], build: () => weaponProficiencyFeats },
-  { file: "favoredEnemy.ts", name: "favoredEnemy", code: "favoredEnemyFeats", uses: ["favoredEnemyFeats"], build: () => favoredEnemyFeats },
+const CORE_SYSTEM_FEATS: {
+  file: string;
+  name: string;
+  code: string;
+  uses: string[];
+  build: (wizardSchools: WizardSchoolDefinition[]) => FeatSeed[];
+}[] = [
+  {
+    file: "feats.ts",
+    name: "WIZARD_SCHOOL_FEATS",
+    code: "wizardSchoolFeats(WIZARD_SCHOOLS)",
+    uses: ["wizardSchoolFeats", "WIZARD_SCHOOLS"],
+    build: wizardSchoolFeats,
+  },
+  {
+    file: "feats.ts",
+    name: "WEAPON_PROFICIENCY_FEATS",
+    code: "weaponProficiencyFeats",
+    uses: ["weaponProficiencyFeats"],
+    build: () => weaponProficiencyFeats,
+  },
+  {
+    file: "favoredEnemy.ts",
+    name: "favoredEnemy",
+    code: "favoredEnemyFeats",
+    uses: ["favoredEnemyFeats"],
+    build: () => favoredEnemyFeats,
+  },
 ];
 
 /** The core rules' system feats (the wizard's school choice, the weapon proficiencies, the favored enemies). */
@@ -106,7 +152,10 @@ export function coreSystemFeats(wizardSchools: WizardSchoolDefinition[]): FeatSe
  */
 export function featAptitudeSources(ref: FeatReference): Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] {
   const { byType, templates } = referenceFeats(ref);
-  return [...[...byType.values()].flat(), ...templates.map(({ familyName, aptitudes, modifiers }) => ({ name: familyName, aptitudes, modifiers }))];
+  return [
+    ...[...byType.values()].flat(),
+    ...templates.map(({ familyName, aptitudes, modifiers }) => ({ name: familyName, aptitudes, modifiers })),
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -123,7 +172,13 @@ function featSlug(req: RequirementCondition): string {
 // ---------------------------------------------------------------------------
 
 /** Starts a template: its feats over `list`, named and described after each item (`variable`). */
-function openTemplate({ lines, uses }: FeatFile, { constName, familyName, aptitudes }: TemplateFamily, list: string, variable: string, description: string): void {
+function openTemplate(
+  { lines, uses }: FeatFile,
+  { constName, familyName, aptitudes }: TemplateFamily,
+  list: string,
+  variable: string,
+  description: string,
+): void {
   uses.add(list);
   lines.push(`export const ${constName}: FeatSeed[] = ${list}.map((${variable}) => ({`);
   lines.push(`  name: \`${escapeTemplate(familyName)}: \${${variable}}\`,`);
@@ -134,7 +189,10 @@ function openTemplate({ lines, uses }: FeatFile, { constName, familyName, aptitu
 /** A template's description, each mention of the chosen item made the item (`variable`). */
 function templateDescription({ description, type }: TemplateFamily, variable: string): string {
   const ITEM = "\u0000";
-  return expandTemplateDescription(truncateDesc(description), type, ITEM).split(ITEM).map(escapeTemplate).join(`\${${variable}}`);
+  return expandTemplateDescription(truncateDesc(description), type, ITEM)
+    .split(ITEM)
+    .map(escapeTemplate)
+    .join(`\${${variable}}`);
 }
 
 /** A template's requirements, when it has some. */
@@ -147,13 +205,23 @@ function emitTemplateRequirements({ lines }: FeatFile, reqLines: string[]): void
  * A template's modifiers, each target made the item's by `retarget`. A requirement on one throws: its targets would
  * have to be the item's too.
  */
-function emitTemplateModifiers({ lines, uses }: FeatFile, modifiers: ModifierSeed[], retarget: (target: string) => string): void {
-  lines.push(...listField("modifiers", modifiers.map((m) => {
-    if (m.requirements?.length) throw new Error(`${m.target}: a template feat's modifier can't have requirements`);
-    const target = retarget(escapeTemplate(m.target));
-    if (target.includes("${stripSeparators(")) uses.add("stripSeparators");
-    return stringifyFeatModifier(m, uses, 2, `\`${target}\``);
-  }), "  "));
+function emitTemplateModifiers(
+  { lines, uses }: FeatFile,
+  modifiers: ModifierSeed[],
+  retarget: (target: string) => string,
+): void {
+  lines.push(
+    ...listField(
+      "modifiers",
+      modifiers.map((m) => {
+        if (m.requirements?.length) throw new Error(`${m.target}: a template feat's modifier can't have requirements`);
+        const target = retarget(escapeTemplate(m.target));
+        if (target.includes("${stripSeparators(")) uses.add("stripSeparators");
+        return stringifyFeatModifier(m, uses, 2, `\`${target}\``);
+      }),
+      "  ",
+    ),
+  );
 }
 
 /** Ends a template: its feats' family. */
@@ -171,7 +239,12 @@ function featRequirement({ uses }: FeatFile, featName: string, perItem: boolean,
 }
 
 /** A single martial weapon's proficiency feat is for a character without them all. */
-const NOT_MARTIAL_PROFICIENT: RequirementCondition = { target: feat("Martial Weapon Proficiency"), operator: "not_equal", value: "true", valueType: "boolean" };
+const NOT_MARTIAL_PROFICIENT: RequirementCondition = {
+  target: feat("Martial Weapon Proficiency"),
+  operator: "not_equal",
+  value: "true",
+  valueType: "boolean",
+};
 
 /** A weapon family's modifier target, made the item's: a combat.X path becomes items.weapons.<weapon>.X. */
 const weaponTarget = (target: string) => target.replace(/^combat\./, "items.weapons.${stripSeparators(w)}.");
@@ -223,7 +296,12 @@ function emitCrossbowTemplate(file: FeatFile, family: TemplateFamily): void {
 }
 
 /** Skill Focus's bonus, when its reference names none. */
-const SKILL_FOCUS_BONUS: ModifierSeed = { target: "skills.skill.misc", operator: "add", value: "3", valueType: "number" };
+const SKILL_FOCUS_BONUS: ModifierSeed = {
+  target: "skills.skill.misc",
+  operator: "add",
+  value: "3",
+  valueType: "number",
+};
 
 function emitSkillTemplate(file: FeatFile, family: TemplateFamily): void {
   openTemplate(file, family, "SKILL_NAMES", "s", "You get a +3 bonus on all ${s} checks.");
@@ -251,11 +329,16 @@ function emitSchoolTemplate(file: FeatFile, family: TemplateFamily): void {
   // `powers.groups.<placeholder>.` segment to the per-school slug. Other
   // targets (e.g. `skills.spellcraft.misc`) are kept verbatim — schools
   // don't parameterize skill names the way SKILL_NAMES does.
-  emitTemplateModifiers(file, modifiers, (target) => target.replace(/powers\.groups\.[^.]+\./, "powers.groups.${stripSeparators(s)}."));
+  emitTemplateModifiers(file, modifiers, (target) =>
+    target.replace(/powers\.groups\.[^.]+\./, "powers.groups.${stripSeparators(s)}."),
+  );
   closeTemplate(file, family.familyName);
 }
 
-const TEMPLATE_EMITTERS: Record<TemplateType, (file: FeatFile, family: TemplateFamily, templateNames: Set<string>) => void> = {
+const TEMPLATE_EMITTERS: Record<
+  TemplateType,
+  (file: FeatFile, family: TemplateFamily, templateNames: Set<string>) => void
+> = {
   weapon: emitWeaponTemplate,
   crossbow: emitCrossbowTemplate,
   skill: emitSkillTemplate,
@@ -269,7 +352,18 @@ const TEMPLATE_EMITTERS: Record<TemplateType, (file: FeatFile, family: TemplateF
 /** Where each name the generated feats use comes from, in the order the imports are written. */
 const IMPORTS: ImportTable = [
   ...REQUIREMENT_IMPORTS,
-  ["@/database/packages/dnd35/content/weapons.ts", ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS", "proficiencyRequirements", "weaponProficiencyFeats"]],
+  [
+    "@/database/packages/dnd35/content/weapons.ts",
+    [
+      "ALL_WEAPONS",
+      "SIMPLE_WEAPONS",
+      "MARTIAL_WEAPONS",
+      "EXOTIC_WEAPONS",
+      "CROSSBOW_WEAPONS",
+      "proficiencyRequirements",
+      "weaponProficiencyFeats",
+    ],
+  ],
   ["@/database/packages/dnd35/content/skills.ts", ["SKILL_NAMES"]],
   ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
   ["@/shared/utils.ts", ["stripSeparators"]],
@@ -292,7 +386,12 @@ function emitSystemFeats(file: FeatFile, fileName: string): void {
 
 /** A feats file's code: its imports, written from the names its code uses, then its code. */
 function featFileCode(file: FeatFile): string {
-  return [`import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`, ...importLines(file.uses, IMPORTS), "", ...file.lines].join("\n");
+  return [
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    ...importLines(file.uses, IMPORTS),
+    "",
+    ...file.lines,
+  ].join("\n");
 }
 
 export function generateFeatSeeds(ref: FeatReference): string {

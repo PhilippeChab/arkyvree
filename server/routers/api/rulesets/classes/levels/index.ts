@@ -1,10 +1,11 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { ClassLevelsService } from "@/server/services/rulesets/index.ts";
-import { limit, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { limit, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { ClassLevelsService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -13,29 +14,17 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classId } = c.req.valid("param");
       const classLevelsService = ClassLevelsService.initialize();
-      const result = await classLevelsService.call(
-        "getClassLevels",
-        id,
-        classId,
-      );
+      const result = await classLevelsService.call("getClassLevels", id, classId);
       return respond(c, result, 200);
     },
   )
   .get(
     "/:id/classes/:classId/levels/:levelId",
-    zValidator(
-      "param",
-      z.object({ id: z.string().uuid(), classId: z.string().uuid(), levelId: z.string().uuid() }),
-    ),
+    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid(), levelId: z.string().uuid() })),
     async (c) => {
       const { id, classId, levelId } = c.req.valid("param");
       const classLevelsService = ClassLevelsService.initialize();
-      const result = await classLevelsService.call(
-        "getClassLevel",
-        id,
-        classId,
-        levelId,
-      );
+      const result = await classLevelsService.call("getClassLevel", id, classId, levelId);
       return respond(c, result, 200);
     },
   )
@@ -45,11 +34,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classLevelId } = c.req.valid("param");
       const classLevelsService = ClassLevelsService.initialize();
-      const result = await classLevelsService.call(
-        "getClassLevelById",
-        id,
-        classLevelId,
-      );
+      const result = await classLevelsService.call("getClassLevelById", id, classLevelId);
       return respond(c, result, 200);
     },
   )
@@ -59,11 +44,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classId } = c.req.valid("param");
       const classLevelsService = ClassLevelsService.initialize();
-      const result = await classLevelsService.call(
-        "getClassLevelSpells",
-        id,
-        classId,
-      );
+      const result = await classLevelsService.call("getClassLevelSpells", id, classId);
       return respond(c, result, 200);
     },
   )
@@ -73,11 +54,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classId } = c.req.valid("param");
       const classLevelsService = ClassLevelsService.initialize();
-      const result = await classLevelsService.call(
-        "getClassLevelSpellsKnown",
-        id,
-        classId,
-      );
+      const result = await classLevelsService.call("getClassLevelSpellsKnown", id, classId);
       return respond(c, result, 200);
     },
   )
@@ -87,11 +64,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classId } = c.req.valid("param");
       const classLevelsService = ClassLevelsService.initialize();
-      const result = await classLevelsService.call(
-        "getClassLevelFeatPools",
-        id,
-        classId,
-      );
+      const result = await classLevelsService.call("getClassLevelFeatPools", id, classId);
       return respond(c, result, 200);
     },
   )
@@ -130,51 +103,58 @@ export default new Hono<SessionContext>()
         level: z.number().int().min(1).max(20),
         bab: z.number().int().min(0),
         skills: z.number().int().min(1),
-        saves: z.array(z.object({
-          saveId: z.string().uuid(),
-          base: z.number().int().min(0).max(12),
-        })).optional(),
-        feats: z.array(z.object({
-          featId: z.string().uuid(),
-          aptitudeId: z.string().uuid(),
-          free: z.boolean().optional(),
-        })).optional(),
+        saves: z
+          .array(
+            z.object({
+              saveId: z.string().uuid(),
+              base: z.number().int().min(0).max(12),
+            }),
+          )
+          .optional(),
+        feats: z
+          .array(
+            z.object({
+              featId: z.string().uuid(),
+              aptitudeId: z.string().uuid(),
+              free: z.boolean().optional(),
+            }),
+          )
+          .optional(),
       }),
     ),
     async (c) => {
       const { id, classId } = c.req.valid("param");
       const body = c.req.valid("json");
       const classLevelsService = ClassLevelsService.initialize();
-      const result = await classLevelsService.call(
-        "createClassLevel",
-        c.var.requestSession,
-        id,
-        classId,
-        body,
-      );
+      const result = await classLevelsService.call("createClassLevel", c.var.requestSession, id, classId, body);
       return respond(c, result, 201);
     },
   )
   .put(
     "/:id/classes/:classId/levels/:levelId",
-    zValidator(
-      "param",
-      z.object({ id: z.string().uuid(), classId: z.string().uuid(), levelId: z.string().uuid() }),
-    ),
+    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid(), levelId: z.string().uuid() })),
     zValidator(
       "json",
       z.object({
         bab: z.number().int().min(0).optional(),
         skills: z.number().int().min(1).optional(),
-        saves: z.array(z.object({
-          saveId: z.string().uuid(),
-          base: z.number().int().min(0).max(12),
-        })).optional(),
-        feats: z.array(z.object({
-          featId: z.string().uuid(),
-          aptitudeId: z.string().uuid(),
-          free: z.boolean().optional(),
-        })).optional(),
+        saves: z
+          .array(
+            z.object({
+              saveId: z.string().uuid(),
+              base: z.number().int().min(0).max(12),
+            }),
+          )
+          .optional(),
+        feats: z
+          .array(
+            z.object({
+              featId: z.string().uuid(),
+              aptitudeId: z.string().uuid(),
+              free: z.boolean().optional(),
+            }),
+          )
+          .optional(),
       }),
     ),
     async (c) => {
@@ -194,20 +174,11 @@ export default new Hono<SessionContext>()
   )
   .delete(
     "/:id/classes/:classId/levels/:levelId",
-    zValidator(
-      "param",
-      z.object({ id: z.string().uuid(), classId: z.string().uuid(), levelId: z.string().uuid() }),
-    ),
+    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid(), levelId: z.string().uuid() })),
     async (c) => {
       const { id, classId, levelId } = c.req.valid("param");
       const classLevelsService = ClassLevelsService.initialize();
-      const result = await classLevelsService.call(
-        "deleteClassLevel",
-        c.var.requestSession,
-        id,
-        classId,
-        levelId,
-      );
+      const result = await classLevelsService.call("deleteClassLevel", c.var.requestSession, id, classId, levelId);
       return respond(c, result, 200);
     },
   );

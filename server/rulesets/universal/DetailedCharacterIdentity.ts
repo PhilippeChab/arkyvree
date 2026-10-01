@@ -1,6 +1,7 @@
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { type Character, type Language, type Race } from "@/shared/relations.ts";
 import { deriveSegmentLabels } from "@/shared/utils.ts";
+
 import type DetailedCharacterAbilities from "./DetailedCharacterAbilities.ts";
 import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";
 
@@ -62,14 +63,17 @@ export type DetailedCharacterComprehensiveIdentity = {
 export default class DetailedCharacterIdentity {
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(
-      [...NAVIGATABLE_IDENTITY_PATHS, ...NAVIGATABLE_BELIEFS_PATHS, ...NAVIGATABLE_BACKGROUND_PATHS, ...NAVIGATABLE_META_PATHS],
+      [
+        ...NAVIGATABLE_IDENTITY_PATHS,
+        ...NAVIGATABLE_BELIEFS_PATHS,
+        ...NAVIGATABLE_BACKGROUND_PATHS,
+        ...NAVIGATABLE_META_PATHS,
+      ],
       { physiology: "Physiology", beliefs: "Beliefs", background: "Background", meta: "Meta", ...SEGMENT_LABELS },
     );
   }
 
-  static generateTargetPaths(
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
+  static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const subPath of NAVIGATABLE_IDENTITY_PATHS) {
@@ -78,16 +82,14 @@ export default class DetailedCharacterIdentity {
         category: "identity",
         description: subPath.description,
         valueType: subPath.type,
-        operators: kind === "modifier"
-          ? (subPath.type === "string" ? ["set"] : ["add", "subtract", "multiply", "divide", "set"])
-          : (subPath.type === "string" ? ["equal", "not_equal"] : [
-            "equal",
-            "not_equal",
-            "greater_than",
-            "less_than",
-            "greater_than_or_equal",
-            "less_than_or_equal",
-          ]),
+        operators:
+          kind === "modifier"
+            ? subPath.type === "string"
+              ? ["set"]
+              : ["add", "subtract", "multiply", "divide", "set"]
+            : subPath.type === "string"
+              ? ["equal", "not_equal"]
+              : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
       });
     }
 
@@ -102,15 +104,13 @@ export default class DetailedCharacterIdentity {
     }
 
     for (const subPath of NAVIGATABLE_BACKGROUND_PATHS) {
-      paths.push(
-        {
-          path: `identity.background.${subPath.path}`,
-          category: "identity",
-          description: subPath.description,
-          valueType: subPath.type,
-          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
-        },
-      );
+      paths.push({
+        path: `identity.background.${subPath.path}`,
+        category: "identity",
+        description: subPath.description,
+        valueType: subPath.type,
+        operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
+      });
     }
 
     for (const subPath of NAVIGATABLE_META_PATHS) {
@@ -119,14 +119,10 @@ export default class DetailedCharacterIdentity {
         category: "identity",
         description: subPath.description,
         valueType: subPath.type,
-        operators: kind === "modifier" ? ["add", "subtract", "multiply", "divide", "set"] : [
-          "equal",
-          "not_equal",
-          "greater_than",
-          "less_than",
-          "greater_than_or_equal",
-          "less_than_or_equal",
-        ],
+        operators:
+          kind === "modifier"
+            ? ["add", "subtract", "multiply", "divide", "set"]
+            : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
       });
     }
 
@@ -141,11 +137,7 @@ export default class DetailedCharacterIdentity {
     protected readonly characterClasses: DetailedCharacterClasses,
   ) {}
 
-  initialize(
-    character: Character,
-    race: Race,
-    languages: Language[],
-  ) {
+  initialize(character: Character, race: Race, languages: Language[]) {
     const classes = this.characterClasses.getClasses();
     const level = Object.values(classes).reduce((acc, klass) => acc + klass.level, 0);
 

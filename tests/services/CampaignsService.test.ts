@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -34,7 +35,11 @@ describe("CampaignsService", () => {
     test("creates a campaign with its creator as Game Master", async () => {
       const { rulesetId } = await getSeedCtx();
       const { user, session } = await createTestUser();
-      const result = await CampaignsMethods.createCampaign(session, { name: "New Campaign", description: "", rulesetId });
+      const result = await CampaignsMethods.createCampaign(session, {
+        name: "New Campaign",
+        description: "",
+        rulesetId,
+      });
       expect(result.campaign).toMatchObject({ name: "New Campaign", description: "", rulesetId });
       expect(result.player).toMatchObject({ userId: user.id, campaignId: result.campaign.id, role: "Game Master" });
     });
@@ -52,33 +57,51 @@ describe("CampaignsService", () => {
       const { user: outsider, session } = await createTestUser("outsider");
       const ruleset = await createSeededTestRuleset(owner.id);
 
-      await expect(CampaignsMethods.createCampaign(session, { name: "Unauthorized", rulesetId: ruleset.id })).rejects.toThrow(ForbiddenError);
+      await expect(
+        CampaignsMethods.createCampaign(session, { name: "Unauthorized", rulesetId: ruleset.id }),
+      ).rejects.toThrow(ForbiddenError);
       expect(await Campaigns.count(db, { userId: outsider.id })).toBe(0);
 
-      const { campaign } = await CampaignsMethods.createCampaign(ownerSession, { name: "Authorized", rulesetId: ruleset.id });
+      const { campaign } = await CampaignsMethods.createCampaign(ownerSession, {
+        name: "Authorized",
+        rulesetId: ruleset.id,
+      });
       await Players.create(db, { campaignId: campaign.id, userId: outsider.id, role: "Player Character" });
-      expect((await CampaignsMethods.createCampaign(session, { name: "Existing access", rulesetId: ruleset.id })).campaign.rulesetId).toBe(ruleset.id);
+      expect(
+        (await CampaignsMethods.createCampaign(session, { name: "Existing access", rulesetId: ruleset.id })).campaign
+          .rulesetId,
+      ).toBe(ruleset.id);
     });
 
     test("refuses archived rulesets and extensions", async () => {
       const { user, session } = await createTestUser();
       const archived = await createSeededTestRuleset(user.id, { status: "Archived" });
-      await expect(CampaignsMethods.createCampaign(session, { name: "Archived", rulesetId: archived.id })).rejects.toThrow("active playable ruleset");
+      await expect(
+        CampaignsMethods.createCampaign(session, { name: "Archived", rulesetId: archived.id }),
+      ).rejects.toThrow("active playable ruleset");
       const extension = await createSeededTestRuleset(user.id, { status: "Published" });
       await Rulesets.update(db, { kind: "extension" }, { id: extension.id });
-      await expect(CampaignsMethods.createCampaign(session, { name: "Extension", rulesetId: extension.id })).rejects.toThrow("active playable ruleset");
+      await expect(
+        CampaignsMethods.createCampaign(session, { name: "Extension", rulesetId: extension.id }),
+      ).rejects.toThrow("active playable ruleset");
     });
   });
 
   describe("getMyCampaigns", () => {
     test("lists the user's campaigns with their player count", async () => {
       const { session } = await createTestUser();
-      expect(await CampaignsMethods.getMyCampaigns(session, {}, firstPage)).toMatchObject({ items: [], page: 1, nextPage: undefined });
+      expect(await CampaignsMethods.getMyCampaigns(session, {}, firstPage)).toMatchObject({
+        items: [],
+        page: 1,
+        nextPage: undefined,
+      });
 
       const campaign = await createCampaign(session);
       await addPlayer(campaign.id);
       await addPlayer(campaign.id);
-      expect((await CampaignsMethods.getMyCampaigns(session, {}, firstPage)).items).toMatchObject([{ id: campaign.id, name: campaign.name, currentPlayers: 3 }]);
+      expect((await CampaignsMethods.getMyCampaigns(session, {}, firstPage)).items).toMatchObject([
+        { id: campaign.id, name: campaign.name, currentPlayers: 3 },
+      ]);
     });
 
     test("searches, pages and filters by archived state", async () => {
@@ -93,7 +116,9 @@ describe("CampaignsService", () => {
       expect(await ids({ search: "Dragon" })).toEqual([dragons.id]);
       expect((await ids({ visibility: Visibility.UnarchivedOnly })).sort()).toEqual([dragons.id, goblins.id].sort());
       expect(await ids({ visibility: Visibility.ArchivedOnly })).toEqual([archived.id]);
-      expect(await CampaignsMethods.getMyCampaigns(session, { visibility: Visibility.All }, { limit: 2, page: 1 })).toMatchObject({ nextPage: 2 });
+      expect(
+        await CampaignsMethods.getMyCampaigns(session, { visibility: Visibility.All }, { limit: 2, page: 1 }),
+      ).toMatchObject({ nextPage: 2 });
       expect(await ids({ visibility: Visibility.All }, { limit: 2, page: 2 })).toHaveLength(1);
     });
   });
@@ -103,7 +128,10 @@ describe("CampaignsService", () => {
       const { session } = await createTestUser();
       const created = await createCampaign(session);
       expect(await CampaignsMethods.getCampaignById(session, created.id)).toMatchObject({
-        id: created.id, name: "Test Campaign", description: "Test description", currentUserRole: "Game Master",
+        id: created.id,
+        name: "Test Campaign",
+        description: "Test description",
+        currentUserRole: "Game Master",
       });
       await expect(CampaignsMethods.getCampaignById(session, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
@@ -112,16 +140,25 @@ describe("CampaignsService", () => {
   describe("updateCampaign", () => {
     test("updates the name, and the description when given", async () => {
       const { gm, campaign } = await setup();
-      expect(await CampaignsMethods.updateCampaign(gm, campaign.id, { name: "Renamed", description: "Updated" })).toMatchObject({ id: campaign.id, name: "Renamed", description: "Updated" });
-      expect(await CampaignsMethods.updateCampaign(gm, campaign.id, { name: "Renamed Again" })).toMatchObject({ name: "Renamed Again", description: "Updated" });
+      expect(
+        await CampaignsMethods.updateCampaign(gm, campaign.id, { name: "Renamed", description: "Updated" }),
+      ).toMatchObject({ id: campaign.id, name: "Renamed", description: "Updated" });
+      expect(await CampaignsMethods.updateCampaign(gm, campaign.id, { name: "Renamed Again" })).toMatchObject({
+        name: "Renamed Again",
+        description: "Updated",
+      });
     });
 
     test("is for the Game Master only", async () => {
       const { campaign, player, stranger } = await setup();
       for (const session of [player, stranger]) {
-        await expect(CampaignsMethods.updateCampaign(session, campaign.id, { name: "Hacked" })).rejects.toThrow(ForbiddenError);
+        await expect(CampaignsMethods.updateCampaign(session, campaign.id, { name: "Hacked" })).rejects.toThrow(
+          ForbiddenError,
+        );
       }
-      await expect(CampaignsMethods.updateCampaign(stranger, NIL_UUID, { name: "Missing" })).rejects.toThrow(NotFoundError);
+      await expect(CampaignsMethods.updateCampaign(stranger, NIL_UUID, { name: "Missing" })).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 

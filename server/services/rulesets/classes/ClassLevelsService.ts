@@ -1,3 +1,5 @@
+import { getTableName } from "drizzle-orm";
+
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -10,17 +12,28 @@ import {
   Requirements,
 } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
-import { cowEntity, cowEntityForCustomization, deleteModifiersWithCascade, deletePropertiesWithCascade, deleteRequirementsWithCascade, entityHasCharacterPicks, withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import BaseService from "@/server/services/BaseService.ts";
+import {
+  cowEntity,
+  cowEntityForCustomization,
+  deleteModifiersWithCascade,
+  deletePropertiesWithCascade,
+  deleteRequirementsWithCascade,
+  entityHasCharacterPicks,
+  withRulesetScope,
+} from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { KlassLevel, KlassLevelFeat, Modifier, Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
-import { getTableName } from "drizzle-orm";
 
-function verifyKlassLineage(klass: { rulesetId: string } | undefined, rulesetId: string, ancestorRulesetIds: string[]): asserts klass is { rulesetId: string } {
+function verifyKlassLineage(
+  klass: { rulesetId: string } | undefined,
+  rulesetId: string,
+  ancestorRulesetIds: string[],
+): asserts klass is { rulesetId: string } {
   if (!klass || (klass.rulesetId !== rulesetId && !ancestorRulesetIds.includes(klass.rulesetId))) {
     throw new NotFoundError("Class not found in this ruleset");
   }
@@ -46,10 +59,17 @@ async function listClassLevels(rulesetId: string, classId: string) {
       const levelFeatsData = levelFeats.map((lf) => {
         const feat = rulesetData.featsById.get(lf.featId);
         const aptitudeEntry = feat?.featsAptitudesInRules?.find((fa) => fa.aptitudeId === lf.aptitudeId);
-        return { ...feat!, aptitudeId: lf.aptitudeId, aptitudeName: aptitudeEntry?.aptitudesInRule?.name ?? null, free: lf.free };
+        return {
+          ...feat!,
+          aptitudeId: lf.aptitudeId,
+          aptitudeName: aptitudeEntry?.aptitudesInRule?.name ?? null,
+          free: lf.free,
+        };
       });
-      const levelSavesData = (rulesetData.klassLevelSavesByKlassLevelId.get(level.id) ?? [])
-        .map((ls) => ({ saveId: ls.saveId, base: ls.base }));
+      const levelSavesData = (rulesetData.klassLevelSavesByKlassLevelId.get(level.id) ?? []).map((ls) => ({
+        saveId: ls.saveId,
+        base: ls.base,
+      }));
 
       return {
         ...level,
@@ -77,7 +97,12 @@ function buildClassLevelDetail<L extends KlassLevel>(
   const featsData = levelFeats.map((lf) => {
     const feat = rulesetData.featsById.get(lf.featId);
     const aptitudeEntry = feat?.featsAptitudesInRules?.find((fa) => fa.aptitudeId === lf.aptitudeId);
-    return { ...feat!, aptitudeId: lf.aptitudeId, aptitudeName: aptitudeEntry?.aptitudesInRule?.name ?? null, free: lf.free };
+    return {
+      ...feat!,
+      aptitudeId: lf.aptitudeId,
+      aptitudeName: aptitudeEntry?.aptitudesInRule?.name ?? null,
+      free: lf.free,
+    };
   });
   const savesData = levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base }));
 
@@ -234,17 +259,26 @@ export const ClassLevelsMethods = {
         }
       }
 
-      return hooks.classLevels.enrichWithFeatPools(levels, [...levelModifiers, ...remappedFeatModifiers], rulesetData.aptitudes);
+      return hooks.classLevels.enrichWithFeatPools(
+        levels,
+        [...levelModifiers, ...remappedFeatModifiers],
+        rulesetData.aptitudes,
+      );
     });
   },
 
-  async createClassLevel(session: Session, rulesetId: string, classId: string, body: {
-    level: number;
-    bab: number;
-    skills: number;
-    saves?: Array<{ saveId: string; base: number }>;
-    feats?: Array<{ featId: string; aptitudeId: string; free?: boolean }>;
-  }) {
+  async createClassLevel(
+    session: Session,
+    rulesetId: string,
+    classId: string,
+    body: {
+      level: number;
+      bab: number;
+      skills: number;
+      saves?: Array<{ saveId: string; base: number }>;
+      feats?: Array<{ featId: string; aptitudeId: string; free?: boolean }>;
+    },
+  ) {
     let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -260,7 +294,14 @@ export const ClassLevelsMethods = {
         // corrupting the parent.
         let targetKlassId = klass.id;
         if (klass.rulesetId !== rulesetId) {
-          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "klasses",
+            klass.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetKlassId = cowResult.id as string;
         }
 
@@ -286,11 +327,14 @@ export const ClassLevelsMethods = {
         }
 
         if (saves && saves.length > 0) {
-          await KlassLevelSaves.createMany(tx, saves.map((s) => ({
-            klassLevelId: klassLevel.id,
-            saveId: s.saveId,
-            base: s.base,
-          })));
+          await KlassLevelSaves.createMany(
+            tx,
+            saves.map((s) => ({
+              klassLevelId: klassLevel.id,
+              saveId: s.saveId,
+              base: s.base,
+            })),
+          );
         }
 
         if (klassLevel.level > 1) {
@@ -322,12 +366,18 @@ export const ClassLevelsMethods = {
     return result;
   },
 
-  async updateClassLevel(session: Session, rulesetId: string, classId: string, levelId: string, body: {
-    bab?: number;
-    skills?: number;
-    saves?: Array<{ saveId: string; base: number }>;
-    feats?: Array<{ featId: string; aptitudeId: string; free?: boolean }>;
-  }) {
+  async updateClassLevel(
+    session: Session,
+    rulesetId: string,
+    classId: string,
+    levelId: string,
+    body: {
+      bab?: number;
+      skills?: number;
+      saves?: Array<{ saveId: string; base: number }>;
+      feats?: Array<{ featId: string; aptitudeId: string; free?: boolean }>;
+    },
+  ) {
     let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -352,9 +402,10 @@ export const ClassLevelsMethods = {
           // the DB but not in rulesetData.propertiesByEntity (composed before
           // the COW). Read straight from the DB so a partial body doesn't
           // silently zero the unspecified field.
-          const currentProps = resolvedLevelId === level.id
-            ? rulesetData.propertiesByEntity.get(resolvedLevelId) ?? []
-            : await Properties.findManyByEntity(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
+          const currentProps =
+            resolvedLevelId === level.id
+              ? (rulesetData.propertiesByEntity.get(resolvedLevelId) ?? [])
+              : await Properties.findManyByEntity(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
           const currentValues = hooks.classLevels.readCurrentValues(currentProps);
 
           await hooks.classLevels.syncProperties(tx, resolvedLevelId, {
@@ -367,7 +418,8 @@ export const ClassLevelsMethods = {
           await KlassLevelFeats.deleteByKlassLevelId(tx, { klassLevelId: resolvedLevelId });
 
           if (feats.length > 0) {
-            await KlassLevelFeats.createMany(tx,
+            await KlassLevelFeats.createMany(
+              tx,
               feats.map((feat) => ({
                 klassLevelId: resolvedLevelId,
                 featId: feat.featId,
@@ -382,7 +434,8 @@ export const ClassLevelsMethods = {
           await KlassLevelSaves.deleteByKlassLevelId(tx, { klassLevelId: resolvedLevelId });
 
           if (saves.length > 0) {
-            await KlassLevelSaves.createMany(tx,
+            await KlassLevelSaves.createMany(
+              tx,
               saves.map((s) => ({
                 klassLevelId: resolvedLevelId,
                 saveId: s.saveId,

@@ -1,6 +1,7 @@
-import react from "@vitejs/plugin-react";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+
+import react from "@vitejs/plugin-react";
 import { createLogger, defineConfig, loadEnv, type UserConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -117,7 +118,7 @@ const baseConfig: UserConfig = {
     alias: {
       "@": path.resolve(__dirname, "."),
       // Ensure Vite uses the correct React installation, not Next.js's bundled version
-      "react": path.resolve(__dirname, "node_modules/react"),
+      react: path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
     },
     extensions: [".js", ".jsx", ".ts", ".tsx"],

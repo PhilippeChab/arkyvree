@@ -1,9 +1,10 @@
-import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { TextField } from "@mui/material";
+import type { UseFormReturn } from "react-hook-form";
+
 import { CreateDialog, DeleteDialog } from "@/client/src/components/common/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
+import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { allLevelSaves, ClassLevelFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import type { UseFormReturn } from "react-hook-form";
 
 interface CreateLevelDialogProps {
   open: boolean;
@@ -14,14 +15,7 @@ interface CreateLevelDialogProps {
   rulesetId: string;
 }
 
-export function CreateLevelDialog({
-  open,
-  onClose,
-  form,
-  onSubmit,
-  isLoading,
-  rulesetId,
-}: CreateLevelDialogProps) {
+export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, rulesetId }: CreateLevelDialogProps) {
   const { data: rulesetSaves } = useRulesetSaves(rulesetId, open);
 
   // The endpoint takes every ruleset save, 0 when unset.
@@ -48,7 +42,7 @@ export function CreateLevelDialog({
         error={!!form.formState.errors.level}
         helperText={form.formState.errors.level?.message}
         slotProps={{
-          htmlInput: { min: 1, max: 20 }
+          htmlInput: { min: 1, max: 20 },
         }}
       />
       <TextField
@@ -62,7 +56,7 @@ export function CreateLevelDialog({
         error={!!form.formState.errors.bab}
         helperText={form.formState.errors.bab?.message}
         slotProps={{
-          htmlInput: { min: 0 }
+          htmlInput: { min: 0 },
         }}
       />
       <TextField
@@ -76,7 +70,7 @@ export function CreateLevelDialog({
         error={!!form.formState.errors.skills}
         helperText={form.formState.errors.skills?.message}
         slotProps={{
-          htmlInput: { min: 1 }
+          htmlInput: { min: 1 },
         }}
       />
       <ClassLevelFields

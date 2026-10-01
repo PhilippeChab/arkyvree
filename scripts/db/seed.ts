@@ -1,7 +1,7 @@
-import type { Db } from "@/server/database/production.ts";
-import { db as defaultDb } from "@/server/database/index.ts";
 import { applyPackages } from "@/database/packages/runner.ts";
 import testSeeds from "@/database/seeds/index.ts";
+import { db as defaultDb } from "@/server/database/index.ts";
+import type { Db } from "@/server/database/production.ts";
 
 export default async function seedDatabase(db: Db, includeTestSeeds: boolean = true) {
   console.log("Applying content packages...");

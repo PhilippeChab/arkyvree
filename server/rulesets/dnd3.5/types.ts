@@ -11,8 +11,8 @@
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { Power, Skill } from "@/shared/relations.ts";
 import type { LevelUpProjector, ProjectedCharacterData } from "@/server/rulesets/types.ts";
+import type { Power, Skill } from "@/shared/relations.ts";
 
 /** A projected skill row with a 3.5 rank allocation. */
 export type Dnd35ProjectedSkill = Skill & {

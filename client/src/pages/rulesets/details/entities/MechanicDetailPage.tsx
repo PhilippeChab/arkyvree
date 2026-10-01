@@ -1,10 +1,8 @@
 import { useParams } from "react-router-dom";
 
-import {
-  type MechanicFormData,
-  MechanicFormFields,
-} from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { type MechanicFormData, MechanicFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
 import { mechanicQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 

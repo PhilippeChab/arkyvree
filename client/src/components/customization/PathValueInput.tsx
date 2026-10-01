@@ -1,5 +1,7 @@
-import type { PathValueType } from "@/shared/customization/target.ts";
 import { MenuItem, TextField } from "@mui/material";
+
+import type { PathValueType } from "@/shared/customization/target.ts";
+
 import { pathChoices } from "./pathValues.ts";
 
 interface PathValueInputProps {

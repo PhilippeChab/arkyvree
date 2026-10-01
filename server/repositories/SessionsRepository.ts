@@ -3,8 +3,8 @@ import type { InferSelectModel } from "drizzle-orm";
 
 import { sessionsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 import { SESSION_TTL_MS } from "@/server/middlewares/session.ts";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class SessionsRepository extends BaseRepository<typeof sessionsInAccount, SessionInstance> {
   constructor() {
@@ -33,22 +33,26 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount, Sessio
   async delete(db: Db, where: { id: string } | { expiredOrArchivedBefore: string }) {
     return await db
       .delete(this.table)
-      .where(this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "expiredOrArchivedBefore" in where
-          && (or(isNotNull(this.table.deletedAt), lt(this.table.expiresAt, where.expiredOrArchivedBefore)) ?? false),
-      ]));
+      .where(
+        this.where([
+          "id" in where && eq(this.table.id, where.id),
+          "expiredOrArchivedBefore" in where &&
+            (or(isNotNull(this.table.deletedAt), lt(this.table.expiresAt, where.expiredOrArchivedBefore)) ?? false),
+        ]),
+      );
   }
 
   async archiveAllForUser(db: Db, where: { userId: string; exceptId?: string }) {
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(
-        eq(this.table.userId, where.userId),
-        isNull(this.table.deletedAt),
-        where.exceptId ? ne(this.table.id, where.exceptId) : undefined,
-      ))
+      .where(
+        and(
+          eq(this.table.userId, where.userId),
+          isNull(this.table.deletedAt),
+          where.exceptId ? ne(this.table.id, where.exceptId) : undefined,
+        ),
+      )
       .returning();
   }
 

@@ -1,20 +1,53 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
-import { parseListingHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
-import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
-import { parseDomainsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
-import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
-import { parseArmorHtml, parseGoodsHtml, parseWeaponsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/item.ts";
-import { parseMagicArmorHtml, parseMagicShieldsHtml, parseMagicWeaponsHtml, parseRingsHtml, parseRodsHtml, parseStaffsHtml, parseWondrousItemsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/magicItem.ts";
-import { type ReferenceType, resolveReference, storedOverrides, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import type { FeatReference, ItemReference, MagicItemReference, RaceReference, SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { sanitizeJsonValues, sortKeysDeep, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { isRecord } from "@/shared/isRecord.ts";
-import { REFERENCE_DIR, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+
+import {
+  type ReferenceType,
+  resolveReference,
+  storedOverrides,
+  type StoredReference,
+} from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import {
+  sanitizeJsonValues,
+  sortKeysDeep,
+  stableStringify,
+} from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import {
+  BASE_URL,
+  buildListingUrl,
+  buildRaceListingUrl,
+  getBookSlug,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { configureHttp, fetchAllPages, fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
-import { BASE_URL, buildListingUrl, buildRaceListingUrl, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
+import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
+import { parseDomainsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
+import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
+import {
+  parseArmorHtml,
+  parseGoodsHtml,
+  parseWeaponsHtml,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/item.ts";
+import {
+  parseMagicArmorHtml,
+  parseMagicShieldsHtml,
+  parseMagicWeaponsHtml,
+  parseRingsHtml,
+  parseRodsHtml,
+  parseStaffsHtml,
+  parseWondrousItemsHtml,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/magicItem.ts";
+import { parseListingHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
+import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
+import { REFERENCE_DIR, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type {
+  FeatReference,
+  ItemReference,
+  MagicItemReference,
+  RaceReference,
+  SpellReference,
+} from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 
 // ---------------------------------------------------------------------------
 // Write helper — only updates scrapedAt when content actually changed
@@ -38,10 +71,14 @@ function writeIfChanged(outPath: string, data: StoredReference): void {
 }
 
 /** A reference as scraped (its `_meta` and `raw`), with the overrides its file had. */
-function scrapedReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]): StoredReference<T> {
+function scrapedReference<T extends ReferenceType>(
+  outPath: string,
+  _meta: StoredReference<T>["_meta"] & { type: T },
+  raw: StoredReference<T>["raw"],
+): StoredReference<T> {
   const overrides = storedOverrides(outPath, _meta.type);
   if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-  return sanitizeJsonValues({ _meta, raw, ...overrides ? { overrides } : {} });
+  return sanitizeJsonValues({ _meta, raw, ...(overrides ? { overrides } : {}) });
 }
 
 /** Writes a reference to its file, when it changed. */
@@ -51,7 +88,11 @@ function writeReference(outPath: string, reference: StoredReference) {
 }
 
 /** Saves a reference as scraped (its `_meta` and `raw`), keeping the overrides its file had. */
-function saveReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]) {
+function saveReference<T extends ReferenceType>(
+  outPath: string,
+  _meta: StoredReference<T>["_meta"] & { type: T },
+  raw: StoredReference<T>["raw"],
+) {
   writeReference(outPath, scrapedReference(outPath, _meta, raw));
 }
 
@@ -59,7 +100,11 @@ function saveReference<T extends ReferenceType>(outPath: string, _meta: StoredRe
  * Saves a reference as scraped (`saveReference`), and returns it with what the generator reads derived from it. A
  * reference that can't be derived isn't written.
  */
-function saveResolvedReference<T extends ReferenceType>(outPath: string, _meta: StoredReference<T>["_meta"] & { type: T }, raw: StoredReference<T>["raw"]) {
+function saveResolvedReference<T extends ReferenceType>(
+  outPath: string,
+  _meta: StoredReference<T>["_meta"] & { type: T },
+  raw: StoredReference<T>["raw"],
+) {
   const reference = scrapedReference(outPath, _meta, raw);
   const resolved = resolveReference(_meta.type, reference);
   writeReference(outPath, reference);
@@ -119,7 +164,9 @@ async function scrapeClass(url: string, book: string) {
   console.log(`  BAB: ${detected.bab}`);
   console.log(`  Saves: fort=${detected.saves.fortitude} ref=${detected.saves.reflex} will=${detected.saves.will}`);
   if (detected.casterLevelAdvancement) {
-    console.log(`  Caster advancement: ${detected.casterLevelAdvancement.type} at levels ${detected.casterLevelAdvancement.levels.join(", ")}`);
+    console.log(
+      `  Caster advancement: ${detected.casterLevelAdvancement.type} at levels ${detected.casterLevelAdvancement.levels.join(", ")}`,
+    );
   }
 }
 
@@ -168,12 +215,16 @@ async function scrapeAllFeats(book: string) {
 
   const outPath = join(REFERENCE_DIR, book, "feats.json");
 
-  saveReference(outPath, {
-    type: "feat",
-    sourceUrl: listingUrl,
-    book,
-    scrapedAt: new Date().toISOString(),
-  }, raw);
+  saveReference(
+    outPath,
+    {
+      type: "feat",
+      sourceUrl: listingUrl,
+      book,
+      scrapedAt: new Date().toISOString(),
+    },
+    raw,
+  );
 }
 
 async function scrapeSingleFeat(url: string) {
@@ -225,12 +276,16 @@ async function scrapeAllSpells(book: string) {
 
   const outPath = join(REFERENCE_DIR, book, "spells.json");
 
-  saveReference(outPath, {
-    type: "spell",
-    sourceUrl: listingUrl,
-    book,
-    scrapedAt: new Date().toISOString(),
-  }, raw);
+  saveReference(
+    outPath,
+    {
+      type: "spell",
+      sourceUrl: listingUrl,
+      book,
+      scrapedAt: new Date().toISOString(),
+    },
+    raw,
+  );
 }
 
 async function scrapeSingleSpell(url: string) {
@@ -270,13 +325,17 @@ async function scrapeAllDomains() {
 
   const outPath = join(REFERENCE_DIR, "domains.json");
 
-  saveReference(outPath, {
-    type: "domain",
-    sourceUrl: DOMAIN_SOURCE_URL,
-    book: "all-domains",
-    filter: "all",
-    scrapedAt: new Date().toISOString(),
-  }, result.raw);
+  saveReference(
+    outPath,
+    {
+      type: "domain",
+      sourceUrl: DOMAIN_SOURCE_URL,
+      book: "all-domains",
+      filter: "all",
+      scrapedAt: new Date().toISOString(),
+    },
+    result.raw,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -299,7 +358,8 @@ async function scrapeAllRaces(book: string) {
     const race = parseRaceDetailHtml(html);
     if (race) {
       raw.push(race);
-      const adjStr = race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)";
+      const adjStr =
+        race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)";
       console.log(`    ${race.name}: ${race.size}, speed ${race.baseSpeed}, ${adjStr}`);
     } else {
       console.warn(`    SKIP: Could not parse ${entry.name} at ${entry.url}`);
@@ -310,12 +370,16 @@ async function scrapeAllRaces(book: string) {
 
   const outPath = join(REFERENCE_DIR, book, "races.json");
 
-  saveReference(outPath, {
-    type: "race",
-    sourceUrl: listingUrl,
-    book,
-    scrapedAt: new Date().toISOString(),
-  }, raw);
+  saveReference(
+    outPath,
+    {
+      type: "race",
+      sourceUrl: listingUrl,
+      book,
+      scrapedAt: new Date().toISOString(),
+    },
+    raw,
+  );
 }
 
 async function scrapeSingleRace(url: string) {
@@ -327,7 +391,9 @@ async function scrapeSingleRace(url: string) {
     process.exit(1);
   }
   console.log(`Parsed: ${race.name} (${race.size}, speed ${race.baseSpeed})`);
-  console.log(`  Abilities: ${race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)"}`);
+  console.log(
+    `  Abilities: ${race.abilityAdjustments.map((a) => `${a.ability} ${a.value > 0 ? "+" : ""}${a.value}`).join(", ") || "(none)"}`,
+  );
   if (race.favoredClass) console.log(`  Favored class: ${race.favoredClass}`);
   console.log(`  Features: ${race.features.length}`);
   console.log(JSON.stringify(race, null, 2));
@@ -372,7 +438,11 @@ async function scrapeAllItems(book: string) {
 
   const outPath = join(REFERENCE_DIR, book, "items.json");
 
-  const { detected } = saveResolvedReference(outPath, { type: "item", sourceUrls: D20SRD_URLS, book, scrapedAt: new Date().toISOString() }, raw);
+  const { detected } = saveResolvedReference(
+    outPath,
+    { type: "item", sourceUrls: D20SRD_URLS, book, scrapedAt: new Date().toISOString() },
+    raw,
+  );
   console.log(`\nDetection results:`);
   const matchedWeapons = Object.values(detected.weapons).filter((w) => w.generatorName).length;
   const matchedArmor = Object.values(detected.armor).filter((a) => a.generatorName).length;
@@ -461,7 +531,11 @@ async function scrapeAllMagicItems(book: string) {
     console.log(`  ${cat}: ${count}`);
   }
 
-  saveReference(outPath, { type: "magicItem", sourceUrls: D20SRD_MAGIC_URLS, book, scrapedAt: new Date().toISOString() }, raw);
+  saveReference(
+    outPath,
+    { type: "magicItem", sourceUrls: D20SRD_MAGIC_URLS, book, scrapedAt: new Date().toISOString() },
+    raw,
+  );
 }
 
 // ---------------------------------------------------------------------------

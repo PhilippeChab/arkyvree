@@ -18,10 +18,11 @@ const FRAME_HEADING = frameHeading();
  */
 export function contentHeading($: cheerio.CheerioAPI, frame = FRAME_HEADING) {
   const h2s = $("h2").toArray();
-  const title = h2s.find((el) => {
-    const text = $(el).text().trim();
-    return text && !frame.test(text) && text.length <= 60;
-  }) ?? h2s[1];
+  const title =
+    h2s.find((el) => {
+      const text = $(el).text().trim();
+      return text && !frame.test(text) && text.length <= 60;
+    }) ?? h2s[1];
   return title ? $(title) : undefined;
 }
 

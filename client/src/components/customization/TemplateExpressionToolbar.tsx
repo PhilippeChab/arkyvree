@@ -1,5 +1,6 @@
 import { Button, Stack, Tooltip } from "@mui/material";
 import type { RefObject } from "react";
+
 import type { TemplateExpressionInputRef } from "./TemplateExpressionInput.tsx";
 
 /** Operator display chars → expression chars (we render math symbols but save ASCII). */

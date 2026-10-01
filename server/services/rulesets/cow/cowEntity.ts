@@ -4,7 +4,14 @@ import { EntitySnapshots, Klasses, KlassLevels, Modifiers, Rulesets } from "@/se
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { type EntityType, hashEntity, type KlassRelationships } from "@/server/services/rulesets/hashing.ts";
-import { CUSTOMIZATION_REPOS, type CustomizationKind, ENTITY_REPOS, ENTITY_TYPE_TO_SOURCE_TYPE, type EntityWithId } from "./constants.ts";
+
+import {
+  CUSTOMIZATION_REPOS,
+  type CustomizationKind,
+  ENTITY_REPOS,
+  ENTITY_TYPE_TO_SOURCE_TYPE,
+  type EntityWithId,
+} from "./constants.ts";
 import { copyEntityCustomizations, copyEntityRelationships } from "./copy.ts";
 import { fetchEntityCustomizations, fetchKlassLevelCustomizations, fetchKlassRelationships } from "./customizations.ts";
 import { buildOverrideMap, buildSourceChain } from "./overrideMap.ts";
@@ -12,7 +19,7 @@ import { mergeSiblingData } from "./siblingMerge.ts";
 
 /** Serialize child writes with deletion/revert of their stored owner. */
 export async function lockEntityForMutation(tx: Db, entityType: EntityType, entityId: string): Promise<void> {
-  if (!await ENTITY_REPOS[entityType].lockById(tx, entityId)) {
+  if (!(await ENTITY_REPOS[entityType].lockById(tx, entityId))) {
     throw new NotFoundError("Customization source no longer exists; refresh the entity");
   }
 }
@@ -59,7 +66,7 @@ export async function cowEntity(
   }
 
   // 1. Fetch the parent entity
-  if (!await repo.lockById(tx, entityId, "share")) {
+  if (!(await repo.lockById(tx, entityId, "share"))) {
     throw new NotFoundError("Customization source no longer exists; refresh the entity");
   }
   const parentEntity = await repo.findOne(tx, { id: entityId } as never);
@@ -68,20 +75,37 @@ export async function cowEntity(
   }
 
   // 2. Copy entity to child ruleset
-  const { id: _id, createdAt: _ca, updatedAt: _ua, deletedAt: _da, rulesetId: _rid, ...entityData } = parentEntity as Record<string, unknown>;
+  const {
+    id: _id,
+    createdAt: _ca,
+    updatedAt: _ua,
+    deletedAt: _da,
+    rulesetId: _rid,
+    ...entityData
+  } = parentEntity as Record<string, unknown>;
   const newRows = await repo.create(tx, { ...entityData, rulesetId: childRulesetId } as never);
   const newEntity = newRows[0] as EntityWithId;
 
   // 3. Copy customizations
   const customizations = await fetchEntityCustomizations(tx, [entityId], entityType, sourceType);
-  const cust = customizations.get(entityId) ?? { modifiers: [], properties: [], requirements: [], modifierRequirements: [] };
+  const cust = customizations.get(entityId) ?? {
+    modifiers: [],
+    properties: [],
+    requirements: [],
+    modifierRequirements: [],
+  };
   await copyEntityCustomizations(tx, entityId, newEntity.id, entityType, cust, customizationIds);
 
   // 4. Copy relationships (aptitudes, klass levels, etc.)
   // idResolveMap (true overrides + sibling-loser aliases) is what we want for
   // FK remapping — a child copy's references should always point at the
   // canonical winner, never at a stale loser.
-  const { siblingMap, idResolveMap } = await buildOverrideMap(tx, childRulesetId, ancestorRulesetIds, extensionRulesetIds);
+  const { siblingMap, idResolveMap } = await buildOverrideMap(
+    tx,
+    childRulesetId,
+    ancestorRulesetIds,
+    extensionRulesetIds,
+  );
   const idMap: Record<string, string> = {};
   for (const [sourceId, forkedId] of idResolveMap) {
     idMap[sourceId] = forkedId;
@@ -148,9 +172,17 @@ export async function cowCustomizationForMutation(
 ): Promise<{ resolvedEntityId: string; resolvedCustomizationId: string }> {
   // oxlint-disable-next-line no-use-before-define -- a modifier's requirements COW the modifier through this function
   const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, entityId, customizationIds);
-  const resolvedCustomizationId = resolveCustomizationId(entityId, resolvedEntityId, customizationId, customizationIds, kind);
-  if (resolvedCustomizationId === customizationId
-    && !await withCowContext(undefined, () => CUSTOMIZATION_REPOS[kind].exists(tx, { id: customizationId }))) {
+  const resolvedCustomizationId = resolveCustomizationId(
+    entityId,
+    resolvedEntityId,
+    customizationId,
+    customizationIds,
+    kind,
+  );
+  if (
+    resolvedCustomizationId === customizationId &&
+    !(await withCowContext(undefined, () => CUSTOMIZATION_REPOS[kind].exists(tx, { id: customizationId })))
+  ) {
     throw new NotFoundError("Customization source no longer exists; refresh the entity");
   }
   return { resolvedEntityId, resolvedCustomizationId };
@@ -166,10 +198,17 @@ async function cowModifierForCustomization(
   // Keep the stored source ID: the repository proxy remaps it after COW,
   // which would make an ancestor modifier appear locally owned on repeat edits.
   const modifier = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifierId }));
-  if (!modifier || modifier.sourceType === "modifiers") throw new NotFoundError("Customization source not found in this ruleset");
+  if (!modifier || modifier.sourceType === "modifiers")
+    throw new NotFoundError("Customization source not found in this ruleset");
 
   const { resolvedCustomizationId } = await cowCustomizationForMutation(
-    tx, rulesetId, modifier.sourceType, modifier.sourceId, "modifier", modifier.id, customizationIds,
+    tx,
+    rulesetId,
+    modifier.sourceType,
+    modifier.sourceId,
+    "modifier",
+    modifier.id,
+    customizationIds,
   );
   return resolvedCustomizationId;
 }
@@ -203,15 +242,24 @@ export async function cowEntityForCustomization(
 
     if (klass.rulesetId === rulesetId) {
       await lockEntityForMutation(tx, "klasses", klass.id);
-      if (!await KlassLevels.findOne(tx, { id: level.id })) {
+      if (!(await KlassLevels.findOne(tx, { id: level.id }))) {
         throw new NotFoundError("Customization source no longer exists; refresh the entity");
       }
       return level.id;
     }
-    if (!sourceChain.includes(klass.rulesetId)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
+    if (!sourceChain.includes(klass.rulesetId))
+      throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
     // COW the klass (copies all levels)
-    const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds, customizationIds);
+    const cowResult = await cowEntity(
+      tx,
+      "klasses",
+      klass.id,
+      rulesetId,
+      sourceChain,
+      ruleset.extensionRulesetIds,
+      customizationIds,
+    );
     // Find the new level by matching level number (levels aren't individually snapshotted)
     const newLevels = await KlassLevels.findManyByKlass(tx, { klassId: cowResult.id as string });
     const newLevel = newLevels.find((l) => l.level === level.level);
@@ -244,8 +292,17 @@ export async function cowEntityForCustomization(
     await lockEntityForMutation(tx, cowType, entity.id);
     return entity.id;
   }
-  if (!sourceChain.includes(entityRecord.rulesetId as string)) throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
+  if (!sourceChain.includes(entityRecord.rulesetId as string))
+    throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
-  const cowResult = await cowEntity(tx, cowType, entity.id, rulesetId, sourceChain, ruleset.extensionRulesetIds, customizationIds);
+  const cowResult = await cowEntity(
+    tx,
+    cowType,
+    entity.id,
+    rulesetId,
+    sourceChain,
+    ruleset.extensionRulesetIds,
+    customizationIds,
+  );
   return cowResult.id;
 }

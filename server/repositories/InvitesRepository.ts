@@ -11,15 +11,13 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign, InviteI
   }
 
   async create(db: Db, values: { email: string; userId?: string; playerId: string }) {
-    return await db.insert(this.table).values({ email: values.email, userId: values.userId, playerId: values.playerId })
+    return await db
+      .insert(this.table)
+      .values({ email: values.email, userId: values.userId, playerId: values.playerId })
       .returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof invitesInCampaign>>,
-    where: { id: string },
-  ) {
+  async update(db: Db, values: Partial<InferInsertModel<typeof invitesInCampaign>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
@@ -29,10 +27,7 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign, InviteI
 
   // Hard delete — used when intentionally removing a player from a campaign
   async deleteByPlayerId(db: Db, where: { playerId: string }) {
-    return await db
-      .delete(this.table)
-      .where(eq(this.table.playerId, where.playerId))
-      .returning();
+    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId)).returning();
   }
 
   async archiveAllForUser(db: Db, where: { userId: string }) {
@@ -78,12 +73,12 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign, InviteI
       ]),
       with: include?.campaign
         ? {
-          playersInCampaign: {
-            with: {
-              campaignsInCampaign: true,
+            playersInCampaign: {
+              with: {
+                campaignsInCampaign: true,
+              },
             },
-          },
-        }
+          }
         : undefined,
       orderBy: [desc(this.table.createdAt)],
       limit: pagination.limit,
@@ -119,10 +114,10 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign, InviteI
 
     const searchCondition = search
       ? or(
-        ilike(this.table.email, `%${search}%`),
-        ilike(usersInAccount.username, `%${search}%`),
-        ilike(usersInAccount.emailAddress, `%${search}%`),
-      )!
+          ilike(this.table.email, `%${search}%`),
+          ilike(usersInAccount.username, `%${search}%`),
+          ilike(usersInAccount.emailAddress, `%${search}%`),
+        )!
       : false;
 
     // The invitee's public fields only: a whole users row carries its password digest.

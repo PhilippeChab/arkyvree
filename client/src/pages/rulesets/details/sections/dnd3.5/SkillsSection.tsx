@@ -1,21 +1,19 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
-import { type SkillFormData, SkillFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Psychology as SkillsIcon } from "@mui/icons-material";
-import {
-  Chip,
-  Typography,
-} from "@mui/material";
+import { Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
 import { useCallback } from "react";
+
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { useRulesetAbilities, useSearchParam } from "@/client/src/hooks/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { type SkillFormData, SkillFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { skillQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 const SKILLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -33,20 +31,18 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
-  const {
-    createForm,
-    handleCreate,
-    createDialogProps,
-  } = useRulesetSection<Skill, SkillFormData>({
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Skill, SkillFormData>({
     rulesetId: ruleset.id,
     sectionName: "skills",
     createDefaults: { impactedByWeight: false, usableWithoutTraining: false },
     label: "Skill",
     createFn: async (data) => {
-      return parseResponse(rpc.api.rulesets[":id"].skills.$post({
-        param: { id: ruleset.id },
-        json: data,
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].skills.$post({
+          param: { id: ruleset.id },
+          json: data,
+        }),
+      );
     },
     onCreateSuccess: (created) => openEntity(`skills/${created.id}`),
   });
@@ -64,9 +60,12 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     openEntity(`skills/${skill.id}`);
   };
 
-  const handleRowMouseEnter = useCallback((skill: Skill) => {
-    void queryClient.prefetchQuery(skillQuery(ruleset.id, skill.id));
-  }, [queryClient, ruleset.id]);
+  const handleRowMouseEnter = useCallback(
+    (skill: Skill) => {
+      void queryClient.prefetchQuery(skillQuery(ruleset.id, skill.id));
+    },
+    [queryClient, ruleset.id],
+  );
 
   const renderCell = (skill: Skill, columnKey: string) => {
     switch (columnKey) {
@@ -74,27 +73,18 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
         return skill.name;
       case "ability": {
         const abilityName = rulesetAbilities.find((a) => a.id === skill.primaryAbilityId)?.name ?? "Unknown";
-        return (
-          <Chip
-            label={abilityName}
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-        );
+        return <Chip label={abilityName} size="small" color="primary" variant="outlined" />;
       }
       case "trainedOnly":
-        return skill.usableWithoutTraining === false
-          ? <Chip label="Yes" size="small" color="warning" />
-          : (
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              No
-            </Typography>
-          );
-      case "description":
-        return (
-          <DescriptionCell text={skill.description} />
+        return skill.usableWithoutTraining === false ? (
+          <Chip label="Yes" size="small" color="warning" />
+        ) : (
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            No
+          </Typography>
         );
+      case "description":
+        return <DescriptionCell text={skill.description} />;
       default:
         return null;
     }
@@ -136,13 +126,9 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
         onClick={() => fetchNextPage()}
       />
 
-      <CreateDialog
-        {...createDialogProps}
-        title="Create New Skill"
-      >
+      <CreateDialog {...createDialogProps} title="Create New Skill">
         <SkillFormFields form={createForm} abilities={rulesetAbilities} />
       </CreateDialog>
-
     </SectionContent>
   );
 }

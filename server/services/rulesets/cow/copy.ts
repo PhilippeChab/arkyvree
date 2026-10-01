@@ -12,6 +12,7 @@ import {
   Requirements,
 } from "@/server/repositories/index.ts";
 import type { EntityCustomizations, EntityType } from "@/server/services/rulesets/hashing.ts";
+
 import { ENTITY_TYPE_TO_SOURCE_TYPE } from "./constants.ts";
 import { fetchEntityCustomizations } from "./customizations.ts";
 
@@ -65,14 +66,42 @@ export async function copyEntityCustomizationsToMany(
   }
 
   const { modifiers, properties, requirements, modifierRequirements } = sourceCust;
-  const newModifiers = await copyRows(tx, Modifiers, modifiers, targetEntityIds, (_, targetId) => ({ sourceId: targetId }), customizationIds);
-  await copyRows(tx, Properties, properties, targetEntityIds, (_, targetId) => ({ entityId: targetId }), customizationIds);
-  await copyRows(tx, Requirements, requirements, targetEntityIds, (_, targetId) => ({ entityId: targetId }), customizationIds);
+  const newModifiers = await copyRows(
+    tx,
+    Modifiers,
+    modifiers,
+    targetEntityIds,
+    (_, targetId) => ({ sourceId: targetId }),
+    customizationIds,
+  );
+  await copyRows(
+    tx,
+    Properties,
+    properties,
+    targetEntityIds,
+    (_, targetId) => ({ entityId: targetId }),
+    customizationIds,
+  );
+  await copyRows(
+    tx,
+    Requirements,
+    requirements,
+    targetEntityIds,
+    (_, targetId) => ({ entityId: targetId }),
+    customizationIds,
+  );
   // A modifier requirement belongs to the copy of its modifier made for the same target.
   const modifierIndex = new Map(modifiers.map((m, i) => [m.id, i]));
-  await copyRows(tx, Requirements, modifierRequirements, targetEntityIds, (r, _, targetIndex) => ({
-    entityId: newModifiers[targetIndex * modifiers.length + modifierIndex.get(r.entityId)!].id,
-  }), customizationIds);
+  await copyRows(
+    tx,
+    Requirements,
+    modifierRequirements,
+    targetEntityIds,
+    (r, _, targetIndex) => ({
+      entityId: newModifiers[targetIndex * modifiers.length + modifierIndex.get(r.entityId)!].id,
+    }),
+    customizationIds,
+  );
 }
 
 // Copy customizations from source entity to target entity

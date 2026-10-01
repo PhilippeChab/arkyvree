@@ -1,12 +1,21 @@
 import { describe, expect, test } from "bun:test";
+
 import * as cheerio from "cheerio";
+
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
 import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
-import { contentHeading, frameHeading, pageTitle, parseListingHtml, sectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import {
+  contentHeading,
+  frameHeading,
+  pageTitle,
+  parseListingHtml,
+  sectionElements,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
 import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
 
-const page = (...headings: string[]) => `<html><body>${headings.map((h) => `<h2>${h}</h2>`).join("")}<h4>Benefit</h4><p>You gain a bonus.</p></body></html>`;
+const page = (...headings: string[]) =>
+  `<html><body>${headings.map((h) => `<h2>${h}</h2>`).join("")}<h4>Benefit</h4><p>You gain a bonus.</p></body></html>`;
 const headingOf = (html: string, frame?: RegExp) => contentHeading(cheerio.load(html), frame)?.text();
 
 describe("A page's content heading", () => {
@@ -43,7 +52,9 @@ describe("A page's content heading", () => {
 
 describe("A section", () => {
   test("is what follows its heading, up to the next heading", () => {
-    const $ = cheerio.load("<h3>Traits</h3><p>one</p><ul><li>two</li></ul><h4>Sub</h4><p>three</p><h3>Next</h3><p>four</p>");
+    const $ = cheerio.load(
+      "<h3>Traits</h3><p>one</p><ul><li>two</li></ul><h4>Sub</h4><p>three</p><h3>Next</h3><p>four</p>",
+    );
     const texts = (stops?: string[]) => sectionElements($("h3").first(), stops).map((el) => el.text());
     expect(texts()).toEqual(["one", "two", "Sub", "three"]);
     expect(texts(["h3", "h4"])).toEqual(["one", "two"]);

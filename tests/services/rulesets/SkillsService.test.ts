@@ -1,22 +1,38 @@
 import { describe, expect, test } from "bun:test";
+
 import { eq } from "drizzle-orm";
+
 import { abilitiesInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";
 import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
 import { SkillsMethods } from "@/server/services/rulesets/SkillsService.ts";
-import { addCharacterLevel, createTestCharacter, createTestKlassLevel, createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
+import {
+  addCharacterLevel,
+  createTestCharacter,
+  createTestKlassLevel,
+  createTestUserAndRuleset,
+  insertRows,
+} from "@/tests/helpers.ts";
 
 type SkillBody = Parameters<typeof SkillsMethods.createRulesetSkill>[2];
 
 /** A new user's empty ruleset with three abilities, and a skill body using its Strength. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const abilities = await insertRows(abilitiesInRules, ["Strength", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId: ruleset.id })));
+  const abilities = await insertRows(
+    abilitiesInRules,
+    ["Strength", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
+  );
   const abilityMap = Object.fromEntries(abilities.map((a) => [a.name, a.id]));
   const body = (overrides: Partial<SkillBody> = {}): SkillBody => ({
-    name: "Climb", description: "Climbing skill", primaryAbilityId: abilityMap.Strength, impactedByWeight: true, usableWithoutTraining: true, ...overrides,
+    name: "Climb",
+    description: "Climbing skill",
+    primaryAbilityId: abilityMap.Strength,
+    impactedByWeight: true,
+    usableWithoutTraining: true,
+    ...overrides,
   });
   return { user, session, ruleset, abilityMap, body };
 }
@@ -25,7 +41,12 @@ async function setup() {
 describe("SkillsService", () => {
   test("stores a skill's ability, weight and training flags, and lists them", async () => {
     const { session, ruleset, abilityMap, body } = await setup();
-    const spellcraft = body({ name: "Spellcraft", primaryAbilityId: abilityMap.Intelligence, impactedByWeight: false, usableWithoutTraining: false });
+    const spellcraft = body({
+      name: "Spellcraft",
+      primaryAbilityId: abilityMap.Intelligence,
+      impactedByWeight: false,
+      usableWithoutTraining: false,
+    });
     expect(await SkillsMethods.createRulesetSkill(session, ruleset.id, body())).toMatchObject(body());
     expect(await SkillsMethods.createRulesetSkill(session, ruleset.id, spellcraft)).toMatchObject(spellcraft);
 
@@ -42,10 +63,18 @@ describe("SkillsService", () => {
     // Read the list once so the ruleset's cache holds the old values.
     await SkillsMethods.getRulesetSkills(ruleset.id, {}, { limit: 10, page: 1 });
 
-    const update = body({ name: "Jump", description: "Updated", primaryAbilityId: abilityMap.Dexterity, impactedByWeight: true, usableWithoutTraining: false });
+    const update = body({
+      name: "Jump",
+      description: "Updated",
+      primaryAbilityId: abilityMap.Dexterity,
+      impactedByWeight: true,
+      usableWithoutTraining: false,
+    });
     expect(await SkillsMethods.updateRulesetSkill(session, ruleset.id, created.id, update)).toMatchObject(update);
     const after = await SkillsMethods.getRulesetSkills(ruleset.id, {}, { limit: 10, page: 1 });
-    expect(after.items).toMatchObject([{ id: created.id, name: "Jump", impactedByWeight: true, usableWithoutTraining: false }]);
+    expect(after.items).toMatchObject([
+      { id: created.id, name: "Jump", impactedByWeight: true, usableWithoutTraining: false },
+    ]);
   });
 
   test("deletes the class skills that point at a deleted skill", async () => {

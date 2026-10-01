@@ -1,5 +1,13 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import {
+  Archive as ArchiveIcon,
+  Map as CampaignIcon,
+  Group as GroupIcon,
+  AutoStories as RulesetIcon,
+} from "@mui/icons-material";
+import { Alert, Button, Container } from "@mui/material";
+import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+
 import {
   BlankState,
   CREATED_SORTS,
@@ -18,30 +26,15 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
-import { CreateCampaignDialog } from "@/client/src/pages/campaigns/components/index.ts";
 import { useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { campaignDetailQuery, type CampaignListFilters, campaignListQuery } from "@/client/src/lib/queries.ts";
+import { CreateCampaignDialog } from "@/client/src/pages/campaigns/components/index.ts";
+import { prefetchCampaignSections } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { useCampaignOperations } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { campaignDetailQuery, type CampaignListFilters, campaignListQuery } from "@/client/src/lib/queries.ts";
-import {
-  Archive as ArchiveIcon,
-  Map as CampaignIcon,
-  Group as GroupIcon,
-  AutoStories as RulesetIcon,
-} from "@mui/icons-material";
-import {
-  Alert,
-  Button,
-  Container,
-} from "@mui/material";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { prefetchCampaignSections } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 
 type SortField = CampaignListFilters["orderBy"];
 
@@ -64,26 +57,16 @@ export default function CampaignsPage() {
 
   const view = oneOf(searchParams.get("view"), ["active", "archived"], "active");
 
-  const {
-    createDialogOpen,
-    setCreateDialogOpen,
-    createForm,
-    createMutation,
-    handleCreate,
-    confirmCreate,
-  } = useCampaignOperations();
+  const { createDialogOpen, setCreateDialogOpen, createForm, createMutation, handleCreate, confirmCreate } =
+    useCampaignOperations();
 
   const listQuery = campaignListQuery({ view, search, orderBy, orderDir });
   const { offset, updateOffset } = useStaggerAnimation(listQuery.queryKey);
 
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({ ...listQuery, placeholderData: keepPreviousData });
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    ...listQuery,
+    placeholderData: keepPreviousData,
+  });
 
   const campaigns = pageItems(data);
 
@@ -135,12 +118,22 @@ export default function CampaignsPage() {
                     avatarTone="secondary"
                     title={campaign.name}
                     description={campaign.description}
-                    pills={(
+                    pills={
                       <>
-                        <InfoPill icon={GroupIcon} label={players} color="info" tooltip={`${players} in this campaign`} />
-                        <InfoPill icon={RulesetIcon} label={campaign.rulesetName} color="secondary" tooltip={campaign.rulesetName} />
+                        <InfoPill
+                          icon={GroupIcon}
+                          label={players}
+                          color="info"
+                          tooltip={`${players} in this campaign`}
+                        />
+                        <InfoPill
+                          icon={RulesetIcon}
+                          label={campaign.rulesetName}
+                          color="secondary"
+                          tooltip={campaign.rulesetName}
+                        />
                       </>
-                    )}
+                    }
                   />
                 );
               })}
@@ -173,9 +166,11 @@ export default function CampaignsPage() {
           <BlankState
             icon={CampaignIcon}
             title="No campaigns yet"
-            description={isDemo
-              ? "Sign up to create campaigns and run multiplayer sessions."
-              : "Create your first campaign to start organizing your adventures"}
+            description={
+              isDemo
+                ? "Sign up to create campaigns and run multiplayer sessions."
+                : "Create your first campaign to start organizing your adventures"
+            }
             action={!isDemo && createButton("Create Your First Campaign")}
           />
         )}

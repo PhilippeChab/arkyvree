@@ -1,19 +1,13 @@
-import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import {
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Button, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+
+import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface DeleteAccountDialogProps {
   open: boolean;
@@ -26,11 +20,7 @@ interface DeleteAccountFormData {
   confirmText: string;
 }
 
-export function DeleteAccountDialog({
-  open,
-  onClose,
-  hasPassword,
-}: DeleteAccountDialogProps) {
+export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccountDialogProps) {
   const snackbar = useSnackbar();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
@@ -50,9 +40,11 @@ export function DeleteAccountDialog({
 
   const deleteMutation = useMutation({
     mutationFn: async (password: string | undefined) => {
-      return parseResponse(rpc.auth["delete-account"].$post({
-        json: { password },
-      }));
+      return parseResponse(
+        rpc.auth["delete-account"].$post({
+          json: { password },
+        }),
+      );
     },
     onSuccess: () => {
       useAuthStore.getState().clearSession();
@@ -75,20 +67,13 @@ export function DeleteAccountDialog({
     : deleteMutation.isPending || confirmText !== "DELETE";
 
   return (
-    <FormDialog
-      open={open}
-      onClose={handleClose}
-      form={form}
-      isLoading={deleteMutation.isPending}
-      maxWidth="xs"
-    >
+    <FormDialog open={open} onClose={handleClose} form={form} isLoading={deleteMutation.isPending} maxWidth="xs">
       <DialogTitle>Delete Account</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            This action is <strong>permanent</strong> and cannot be undone. All
-            your characters, campaign memberships, and account data will be
-            removed.
+            This action is <strong>permanent</strong> and cannot be undone. All your characters, campaign memberships,
+            and account data will be removed.
           </Typography>
 
           <AnimatedAlert in={!!error} severity="error" sx={{ mb: 2 }}>
@@ -117,14 +102,13 @@ export function DeleteAccountDialog({
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} disabled={deleteMutation.isPending} variant="outlined" color="inherit">Cancel</Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="error"
-            disabled={isSubmitDisabled}
-          >
-            <DiceSpinner size="small" loading={deleteMutation.isPending}>Delete Account</DiceSpinner>
+          <Button onClick={handleClose} disabled={deleteMutation.isPending} variant="outlined" color="inherit">
+            Cancel
+          </Button>
+          <Button type="submit" variant="contained" color="error" disabled={isSubmitDisabled}>
+            <DiceSpinner size="small" loading={deleteMutation.isPending}>
+              Delete Account
+            </DiceSpinner>
           </Button>
         </DialogActions>
       </form>

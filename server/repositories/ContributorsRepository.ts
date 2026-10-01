@@ -10,27 +10,29 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules, 
     super(contributorsInRules);
   }
 
-  async create(db: Db, values: {
-    rulesetId: string;
-    email: string;
-    role: "Admin" | "Editor" | "Viewer";
-    invitedBy: string;
-    userId?: string;
-  }) {
-    return await db.insert(this.table).values({
-      rulesetId: values.rulesetId,
-      email: values.email,
-      role: values.role,
-      invitedBy: values.invitedBy,
-      userId: values.userId,
-    }).returning();
+  async create(
+    db: Db,
+    values: {
+      rulesetId: string;
+      email: string;
+      role: "Admin" | "Editor" | "Viewer";
+      invitedBy: string;
+      userId?: string;
+    },
+  ) {
+    return await db
+      .insert(this.table)
+      .values({
+        rulesetId: values.rulesetId,
+        email: values.email,
+        role: values.role,
+        invitedBy: values.invitedBy,
+        userId: values.userId,
+      })
+      .returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof contributorsInRules>>,
-    where: { id: string },
-  ) {
+  async update(db: Db, values: Partial<InferInsertModel<typeof contributorsInRules>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
@@ -67,9 +69,9 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules, 
 
     const searchCondition = search
       ? or(
-        this.search(search, [this.table.email]) || undefined,
-        this.search(search, [usersInAccount.username, usersInAccount.emailAddress]) || undefined,
-      )
+          this.search(search, [this.table.email]) || undefined,
+          this.search(search, [usersInAccount.username, usersInAccount.emailAddress]) || undefined,
+        )
       : undefined;
 
     const rows = await db
@@ -104,7 +106,10 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules, 
     return this.paginated(items, pagination);
   }
 
-  async findActiveRole(db: Db, where: { userId: string; rulesetId: string }): Promise<"Admin" | "Editor" | "Viewer" | null> {
+  async findActiveRole(
+    db: Db,
+    where: { userId: string; rulesetId: string },
+  ): Promise<"Admin" | "Editor" | "Viewer" | null> {
     const contributor = await db.query.contributorsInRules.findFirst({
       where: this.where([
         eq(this.table.userId, where.userId),

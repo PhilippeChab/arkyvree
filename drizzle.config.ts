@@ -1,5 +1,6 @@
-import { defineConfig } from "drizzle-kit";
 import process from "node:process";
+
+import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
   out: "./drizzle",

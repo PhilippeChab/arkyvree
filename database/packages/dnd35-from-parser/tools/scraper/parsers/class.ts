@@ -1,14 +1,36 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
-import { contentHeading, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+
+import {
+  contentHeading,
+  sectionElements,
+  tagOf,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const LOWERCASE_WORDS = new Set(["a", "an", "and", "as", "at", "but", "by", "for", "if", "in", "of", "on", "or", "the", "to", "vs"]);
+const LOWERCASE_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "as",
+  "at",
+  "but",
+  "by",
+  "for",
+  "if",
+  "in",
+  "of",
+  "on",
+  "or",
+  "the",
+  "to",
+  "vs",
+]);
 
 function titleCase(s: string): string {
   return s
@@ -56,9 +78,7 @@ function parseDescription($: cheerio.CheerioAPI): string {
       if (tag === "p") {
         const text = el.text().trim();
         // Skip short text, page references, and "all of the following" boilerplate
-        if (text && text.length >= 20 &&
-            !text.match(/^\(.*p\.\s*\d+\)$/) &&
-            !text.match(/^All of the following/i)) {
+        if (text && text.length >= 20 && !text.match(/^\(.*p\.\s*\d+\)$/) && !text.match(/^All of the following/i)) {
           paragraphs.push(text);
         }
       }
@@ -92,7 +112,13 @@ function splitSpecial(text: string): string[] {
     if (depth === 0 && ch === ",") {
       parts.push(current);
       current = "";
-    } else if (depth === 0 && ch === "." && i + 1 < text.length && /\s/.test(text[i + 1]) && /[A-Za-z]/.test(text[i + 2] ?? "")) {
+    } else if (
+      depth === 0 &&
+      ch === "." &&
+      i + 1 < text.length &&
+      /\s/.test(text[i + 1]) &&
+      /[A-Za-z]/.test(text[i + 2] ?? "")
+    ) {
       // Split on ". " followed by a letter (sentence boundary)
       parts.push(current);
       current = "";
@@ -105,7 +131,10 @@ function splitSpecial(text: string): string[] {
   return parts;
 }
 
-function parseProgression($: cheerio.CheerioAPI): { progression: ClassReference["raw"]["progression"]; hasCantrips?: boolean } {
+function parseProgression($: cheerio.CheerioAPI): {
+  progression: ClassReference["raw"]["progression"];
+  hasCantrips?: boolean;
+} {
   const progression: ClassReference["raw"]["progression"] = [];
   let hasCantrips: boolean | undefined;
 
@@ -113,7 +142,9 @@ function parseProgression($: cheerio.CheerioAPI): { progression: ClassReference[
     const tbody = $(table).children("tbody");
 
     // Find ALL header rows (rows with <th> cells) from the table
-    const headerRows = $(table).find("tr").filter((_, row) => $(row).children("th").length > 0);
+    const headerRows = $(table)
+      .find("tr")
+      .filter((_, row) => $(row).children("th").length > 0);
     if (headerRows.length === 0) return;
 
     // Find the header row that contains Level and BAB columns
@@ -122,7 +153,11 @@ function parseProgression($: cheerio.CheerioAPI): { progression: ClassReference[
     headerRows.each((_, row) => {
       if (mainHeaderRow) return;
       const ths: string[] = [];
-      $(row).children("th").each((_, th) => { ths.push($(th).text().trim().toLowerCase()); });
+      $(row)
+        .children("th")
+        .each((_, th) => {
+          ths.push($(th).text().trim().toLowerCase());
+        });
       const hasLevel = ths.some((h) => h.includes("level"));
       const hasBab = ths.some((h) => h.includes("base") || h.includes("attack") || h === "bab");
       if (hasLevel && hasBab) mainHeaderRow = $(row);
@@ -174,7 +209,9 @@ function parseProgression($: cheerio.CheerioAPI): { progression: ClassReference[
     // Detect spell columns — either explicit "spells per day" header or
     // numeric ordinal columns (1st, 2nd, ...) after the Special column,
     // or a spanning header row above with "Spells per Day"
-    let spellStartIdx = firstRowHeaders.findIndex((h) => h.includes("spells per day") || h.includes("spells") || h === "spellcasting");
+    let spellStartIdx = firstRowHeaders.findIndex(
+      (h) => h.includes("spells per day") || h.includes("spells") || h === "spellcasting",
+    );
     let spellColCount = 0;
 
     if (spellStartIdx >= 0) {
@@ -197,10 +234,12 @@ function parseProgression($: cheerio.CheerioAPI): { progression: ClassReference[
     let expectedLevel = 1;
     directRows.each((_, row) => {
       const cells: string[] = [];
-      $(row).children("td").each((_, cell) => {
-        $(cell).find("sup").remove();
-        cells.push($(cell).text().trim());
-      });
+      $(row)
+        .children("td")
+        .each((_, cell) => {
+          $(cell).find("sup").remove();
+          cells.push($(cell).text().trim());
+        });
       if (cells.length < 5) return;
 
       const levelText = cells[levelIdx];
@@ -259,9 +298,11 @@ function parseSpellsKnownTable($: cheerio.CheerioAPI): string[] {
 
   $("table").each((_, table) => {
     const headers: string[] = [];
-    $(table).find("th").each((_, th) => {
-      headers.push($(th).text().trim().toLowerCase());
-    });
+    $(table)
+      .find("th")
+      .each((_, th) => {
+        headers.push($(th).text().trim().toLowerCase());
+      });
 
     const headerText = headers.join(" ");
     // Skip progression tables (have BAB/attack columns)
@@ -271,32 +312,38 @@ function parseSpellsKnownTable($: cheerio.CheerioAPI): string[] {
     // Match: explicit "known" label OR a Level + ordinal-only table (no BAB/Fort/etc.)
     const hasLevel = headers.some((h) => h.includes("level"));
     const hasOrdinals = headers.some((h) => /^\d+(?:st|nd|rd|th)$/.test(h));
-    const isKnownTable = headerText.includes("known") || (hasLevel && hasOrdinals && !headerText.includes("fort") && !headerText.includes("special"));
+    const isKnownTable =
+      headerText.includes("known") ||
+      (hasLevel && hasOrdinals && !headerText.includes("fort") && !headerText.includes("special"));
     if (!isKnownTable) return;
 
-    $(table).find("tr").each((_, row) => {
-      const cells: string[] = [];
-      $(row).find("td").each((_, td) => {
-        $(td).find("sup").remove();
-        cells.push($(td).text().trim());
-      });
-      if (cells.length < 2) return;
+    $(table)
+      .find("tr")
+      .each((_, row) => {
+        const cells: string[] = [];
+        $(row)
+          .find("td")
+          .each((_, td) => {
+            $(td).find("sup").remove();
+            cells.push($(td).text().trim());
+          });
+        if (cells.length < 2) return;
 
-      const levelMatch = cells[0].match(/^(\d+)(?:st|nd|rd|th)?$/);
-      if (!levelMatch) return;
+        const levelMatch = cells[0].match(/^(\d+)(?:st|nd|rd|th)?$/);
+        if (!levelMatch) return;
 
-      const slots = cells.slice(1).map((c) => {
-        const trimmed = c.trim();
-        if (trimmed === "\u2014" || trimmed === "-" || trimmed === "") return "\u2014";
-        if (trimmed.includes("+")) {
-          const sum = trimmed.split("+").reduce((acc, part) => acc + (parseInt(part.trim(), 10) || 0), 0);
-          return String(sum);
-        }
-        const cleaned = trimmed.replace(/[^0-9]/g, "");
-        return cleaned === "" ? "\u2014" : cleaned;
+        const slots = cells.slice(1).map((c) => {
+          const trimmed = c.trim();
+          if (trimmed === "\u2014" || trimmed === "-" || trimmed === "") return "\u2014";
+          if (trimmed.includes("+")) {
+            const sum = trimmed.split("+").reduce((acc, part) => acc + (parseInt(part.trim(), 10) || 0), 0);
+            return String(sum);
+          }
+          const cleaned = trimmed.replace(/[^0-9]/g, "");
+          return cleaned === "" ? "\u2014" : cleaned;
+        });
+        results.push(slots.join(","));
       });
-      results.push(slots.join(","));
-    });
 
     if (results.length > 0) return false;
   });
@@ -317,10 +364,14 @@ function detectBonusSpellAbility($: cheerio.CheerioAPI): string | undefined {
   const bonusForMatch = bodyText.match(/bonus spells for a high (Intelligence|Wisdom|Charisma)/i);
   if (bonusForMatch) return bonusForMatch[1];
 
-  const dcMatch = bodyText.match(/saves? (?:for these spells )?(?:have |has )?a DC of 10 \+ .*?\+ .*?(Intelligence|Wisdom|Charisma)/i);
+  const dcMatch = bodyText.match(
+    /saves? (?:for these spells )?(?:have |has )?a DC of 10 \+ .*?\+ .*?(Intelligence|Wisdom|Charisma)/i,
+  );
   if (dcMatch) return dcMatch[1];
 
-  const abilityMatch = bodyText.match(/must have (?:a |an )?(Intelligence|Wisdom|Charisma) score (?:equal to )?(?:at )?least 10/i);
+  const abilityMatch = bodyText.match(
+    /must have (?:a |an )?(Intelligence|Wisdom|Charisma) score (?:equal to )?(?:at )?least 10/i,
+  );
   if (abilityMatch) return abilityMatch[1];
 
   return undefined;
@@ -333,9 +384,13 @@ function detectBonusSpellAbility($: cheerio.CheerioAPI): string | undefined {
 /** Find a section header (h3 or h4) whose text matches a pattern */
 function findSectionHeader($: cheerio.CheerioAPI, pattern: RegExp): cheerio.Cheerio<AnyNode> {
   // Try h3 first, then h4
-  const h3 = $("h3").filter((_, el) => pattern.test($(el).text().trim())).first();
+  const h3 = $("h3")
+    .filter((_, el) => pattern.test($(el).text().trim()))
+    .first();
   if (h3.length > 0) return h3;
-  return $("h4").filter((_, el) => pattern.test($(el).text().trim())).first();
+  return $("h4")
+    .filter((_, el) => pattern.test($(el).text().trim()))
+    .first();
 }
 
 /** Get the text content after a header, from the next sibling(s) until the next header */
@@ -410,16 +465,16 @@ function parseSkillPoints($: cheerio.CheerioAPI): string {
 
 /** Known Knowledge subspecialties for expansion */
 const KNOWLEDGE_SUBSPECIALTIES: Record<string, string> = {
-  "arcana": "Knowledge (Arcana)",
+  arcana: "Knowledge (Arcana)",
   "architecture and engineering": "Knowledge (Architecture and Engineering)",
-  "dungeoneering": "Knowledge (Dungeoneering)",
-  "geography": "Knowledge (Geography)",
-  "history": "Knowledge (History)",
-  "local": "Knowledge (Local)",
-  "nature": "Knowledge (Nature)",
+  dungeoneering: "Knowledge (Dungeoneering)",
+  geography: "Knowledge (Geography)",
+  history: "Knowledge (History)",
+  local: "Knowledge (Local)",
+  nature: "Knowledge (Nature)",
   "nobility and royalty": "Knowledge (Nobility and Royalty)",
-  "psionics": "Knowledge (Psionics)",
-  "religion": "Knowledge (Religion)",
+  psionics: "Knowledge (Psionics)",
+  religion: "Knowledge (Religion)",
   "the planes": "Knowledge (The Planes)",
 };
 
@@ -446,8 +501,7 @@ function parseClassSkills($: cheerio.CheerioAPI): string[] {
         if (skillName.toLowerCase().startsWith("knowledge")) {
           // Try extracting subspecialty from cell text or skill name
           const text = firstCell.text().trim();
-          const subMatch = text.match(/Knowledge\s*\(([^)]+)\)/i)
-            ?? skillName.match(/Knowledge\s*\(([^)]+)\)/i);
+          const subMatch = text.match(/Knowledge\s*\(([^)]+)\)/i) ?? skillName.match(/Knowledge\s*\(([^)]+)\)/i);
           if (subMatch) {
             const sub = subMatch[1].toLowerCase().trim();
             if (/^all\b/i.test(sub)) {
@@ -489,7 +543,10 @@ function parseAlignment($: cheerio.CheerioAPI): string | undefined {
   const reqHeader = findSectionHeader($, /^Requirements?$/i);
   if (reqHeader.length > 0) {
     for (const el of sectionElements(reqHeader)) {
-      const alignMatch = el.text().trim().match(/^Alignment:\s*(.+)/i);
+      const alignMatch = el
+        .text()
+        .trim()
+        .match(/^Alignment:\s*(.+)/i);
       if (alignMatch) return alignMatch[1].trim();
     }
   }
@@ -515,7 +572,13 @@ function extractPrerequisiteText($: cheerio.CheerioAPI): string {
   }
 
   // Fallback: old h6 structure
-  const h6Header = $("h6").filter((_, el) => $(el).text().trim().match(/^Requirements?$/i) !== null);
+  const h6Header = $("h6").filter(
+    (_, el) =>
+      $(el)
+        .text()
+        .trim()
+        .match(/^Requirements?$/i) !== null,
+  );
   if (h6Header.length > 0) {
     const lines: string[] = [];
     for (const el of sectionElements(h6Header.first(), ["h6", "h3", "table"])) {
@@ -555,7 +618,9 @@ function parsePrerequisiteText(text: string): ClassReference["raw"]["prerequisit
 
   // Feats
   const feats: string[] = [];
-  const featSection = text.match(/Feats?[:\s]+([\s\S]*?)(?=[\s.]+(?:Skills?|Spells?|Special|Alignment|Race|Base (?:Save Bonus|Attack Bonus)|Class|Speak Language|Patron|Domain)\s*:|\n\n|$)/i);
+  const featSection = text.match(
+    /Feats?[:\s]+([\s\S]*?)(?=[\s.]+(?:Skills?|Spells?|Special|Alignment|Race|Base (?:Save Bonus|Attack Bonus)|Class|Speak Language|Patron|Domain)\s*:|\n\n|$)/i,
+  );
   if (featSection) {
     const featText = featSection[1].replace(/\n/g, " ").trim();
     const parts = featText.split(/,\s*(?:and\s+)?|\s+and\s+/);
@@ -588,18 +653,23 @@ function parsePrerequisiteText(text: string): ClassReference["raw"]["prerequisit
 
   const spellOfMatch = text.match(/(arcane|divine)\s+spells?\s+of\s+(\d+)(?:st|nd|rd|th)\s+level/i);
   if (spellOfMatch) {
-    casterLevels.push({ type: spellOfMatch[1].toLowerCase() as "divine" | "arcane", level: parseInt(spellOfMatch[2], 10) });
+    casterLevels.push({
+      type: spellOfMatch[1].toLowerCase() as "divine" | "arcane",
+      level: parseInt(spellOfMatch[2], 10),
+    });
   }
 
   const castTypeMatch = text.match(/(?:Able to|ability to) cast (arcane|divine) spells/i);
-  if (castTypeMatch && casterLevels.every(c => c.type !== castTypeMatch[1].toLowerCase())) {
+  if (castTypeMatch && casterLevels.every((c) => c.type !== castTypeMatch[1].toLowerCase())) {
     casterLevels.push({ type: castTypeMatch[1].toLowerCase() as "divine" | "arcane", level: 1 });
   }
 
   if (casterLevels.length > 0) parsed.casterLevel = casterLevels;
 
   // Alignment — stop at next labeled section (Skills:, Special:, Feats:, etc.) or end of line
-  const alignMatch = text.match(/Alignment:\s*([\w\s,-]+?)(?=\s+(?:Skills?|Special|Feats?|Base Attack|Race|Spells?|Class):|[.\n]|$)/im);
+  const alignMatch = text.match(
+    /Alignment:\s*([\w\s,-]+?)(?=\s+(?:Skills?|Special|Feats?|Base Attack|Race|Spells?|Class):|[.\n]|$)/im,
+  );
   if (alignMatch) parsed.alignment = alignMatch[1].trim();
 
   // Race / Special
@@ -704,15 +774,18 @@ const IMPLICIT_FEATURES = [
 function cleanSpecialEntry(s: string): string {
   return s
     .replace(/\s*\+\d+(?:d\d+)?(?:\/\+\d+(?:d\d+)?)*$/, "") // +1, +1d6, +1/+1d6
-    .replace(/\s*\+?\d+\/day$/i, "")    // 2/day, +1/day
-    .replace(/\s*\d+%$/, "")           // 10%
-    .replace(/\s*\d+\s*(?:ft\.?|feet)$/i, "")  // 20 ft.
-    .replace(/\s*\d+\/[-–]$/, "")      // 3/-
+    .replace(/\s*\+?\d+\/day$/i, "") // 2/day, +1/day
+    .replace(/\s*\d+%$/, "") // 10%
+    .replace(/\s*\d+\s*(?:ft\.?|feet)$/i, "") // 20 ft.
+    .replace(/\s*\d+\/[-–]$/, "") // 3/-
     .replace(/\s*\d+\/(?:week|round)$/i, "") // 1/week
     .replace(/\s*\(\d+(?:st|nd|rd|th)\)$/, "") // (1st)
     .replace(/\s*\(\d+(?:st|nd|rd|th) type\)$/i, "") // (1st type)
     .replace(/\s*\([^)]*\d+\/day[^)]*\)$/i, "") // (elemental 1/day)
-    .replace(/\s*\((?:black|brown|dire|large|small|tiny|huge|plant|elemental|magic|lawful|adamantine|move action|free action|two|four|radius)[^)]*\)$/i, "") // (black), (magic), (huge elemental), etc.
+    .replace(
+      /\s*\((?:black|brown|dire|large|small|tiny|huge|plant|elemental|magic|lawful|adamantine|move action|free action|two|four|radius)[^)]*\)$/i,
+      "",
+    ) // (black), (magic), (huge elemental), etc.
     .replace(/\s*(?:any distance)$/i, "") // any distance
     .replace(/^(?:1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\s+/i, "") // "1st Favored Enemy" → "Favored Enemy"
     .replace(/\s*\+\d+\s+(?:level of existing .*spellcasting class)$/i, "") // "+1 level of existing..."
@@ -726,7 +799,10 @@ function cleanSpecialEntry(s: string): string {
 }
 
 /** Find name and effect column indices from a sub-option table */
-function findSubOptionColumns($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyNode>): { nameCol: number; effectCol: number } {
+function findSubOptionColumns(
+  $: cheerio.CheerioAPI,
+  table: cheerio.Cheerio<AnyNode>,
+): { nameCol: number; effectCol: number } {
   // Find the header row with the most <th> cells (skip title rows with 1 spanning th, and footnote rows)
   const headerRows = table.find("tr").filter((_, row) => $(row).children("th").length > 1);
   if (headerRows.length === 0) return { nameCol: -1, effectCol: -1 };
@@ -736,10 +812,16 @@ function findSubOptionColumns($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyN
   let bestCount = bestRow.children("th").length;
   headerRows.each((_, row) => {
     const count = $(row).children("th").length;
-    if (count > bestCount) { bestRow = $(row); bestCount = count; }
+    if (count > bestCount) {
+      bestRow = $(row);
+      bestCount = count;
+    }
   });
 
-  const headers = bestRow.children("th").toArray().map((th) => $(th).text().trim().toLowerCase());
+  const headers = bestRow
+    .children("th")
+    .toArray()
+    .map((th) => $(th).text().trim().toLowerCase());
   const nameCol = headers.findIndex((h) => /^(secret|name|ability|trick|mastery|option|maneuver)$/i.test(h));
   const effectCol = headers.findIndex((h) => /^(effect|benefit|description)$/i.test(h));
   return { nameCol, effectCol };
@@ -752,15 +834,30 @@ function normalizeFeatureName(name: string): string {
 }
 
 /** A sub-option table's options of the feature `parentKey`: each its key ("Feature: Option") and effect. */
-function subOptionRows($: cheerio.CheerioAPI, table: cheerio.Cheerio<AnyNode>, parentKey: string): { key: string; desc: string }[] {
+function subOptionRows(
+  $: cheerio.CheerioAPI,
+  table: cheerio.Cheerio<AnyNode>,
+  parentKey: string,
+): { key: string; desc: string }[] {
   const { nameCol, effectCol } = findSubOptionColumns($, table);
   if (nameCol < 0) return [];
-  return table.find("tr").toArray().flatMap((row) => {
-    const cells = $(row).find("td").toArray().map((td) => $(td).text().trim());
-    if (cells.length <= nameCol || !cells[nameCol] || $(row).find("td[colspan]").length > 0) return [];
-    const subName = cells[nameCol].replace(/\s*\*$/, "");
-    return [{ key: normalizeFeatureName(`${parentKey}: ${subName}`), desc: effectCol >= 0 && cells[effectCol] ? cells[effectCol] : "" }];
-  });
+  return table
+    .find("tr")
+    .toArray()
+    .flatMap((row) => {
+      const cells = $(row)
+        .find("td")
+        .toArray()
+        .map((td) => $(td).text().trim());
+      if (cells.length <= nameCol || !cells[nameCol] || $(row).find("td[colspan]").length > 0) return [];
+      const subName = cells[nameCol].replace(/\s*\*$/, "");
+      return [
+        {
+          key: normalizeFeatureName(`${parentKey}: ${subName}`),
+          desc: effectCol >= 0 && cells[effectCol] ? cells[effectCol] : "",
+        },
+      ];
+    });
 }
 
 /** Find the exact key in the known features set that matches this name */
@@ -768,7 +865,9 @@ function findMatchingFeatureKey(name: string, knownFeatures: Set<string>): strin
   const norm = normalizeFeatureName(name);
   const lower = name.toLowerCase();
   // The name, or a plural variant
-  const exact = [norm, lower, lower + "s", lower.replace(/s$/, ""), norm + "s", norm.replace(/s$/, "")].find((n) => knownFeatures.has(n));
+  const exact = [norm, lower, lower + "s", lower.replace(/s$/, ""), norm + "s", norm.replace(/s$/, "")].find((n) =>
+    knownFeatures.has(n),
+  );
   if (exact !== undefined) return exact;
   // A known feature starting with this name
   // e.g. "Mounted Weapon Bonus" matches "Mounted Weapon Bonus (Lance)"
@@ -810,7 +909,9 @@ function parseClassFeatures(
   // Step 2: Collect all text blocks from the Class Features section
   let cfHeader = findSectionHeader($, /^Class Features$/i);
   if (cfHeader.length === 0) {
-    cfHeader = $("h6").filter((_, el) => /^Class Features$/i.test($(el).text().trim())).first();
+    cfHeader = $("h6")
+      .filter((_, el) => /^Class Features$/i.test($(el).text().trim()))
+      .first();
   }
   if (cfHeader.length === 0) return [];
 
@@ -875,8 +976,10 @@ function parseClassFeatures(
           if (isKnownFeature(name, featureNames)) {
             currentFeature = findMatchingFeatureKey(name, featureNames) ?? normalizeFeatureName(name);
             const fullText = el.text().trim();
-            const desc = fullText.substring(fullText.indexOf(headerText) + headerText.length)
-              .replace(/^[:\s]+/, "").trim();
+            const desc = fullText
+              .substring(fullText.indexOf(headerText) + headerText.length)
+              .replace(/^[:\s]+/, "")
+              .trim();
             contentMap.set(currentFeature, {
               type: match[3] ? `(${match[3]})` : undefined,
               desc,
@@ -1017,7 +1120,11 @@ function parseClassFeatures(
 //   <h3>Spells for ClassName</h3>
 // ---------------------------------------------------------------------------
 
-export function parseClassHtml(html: string, sourceUrl: string, book: string): ClassReference["raw"] & { _meta: ClassReference["_meta"] } {
+export function parseClassHtml(
+  html: string,
+  sourceUrl: string,
+  book: string,
+): ClassReference["raw"] & { _meta: ClassReference["_meta"] } {
   const $ = cheerio.load(html);
 
   const name = parseClassName($);

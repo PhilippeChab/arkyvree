@@ -1,8 +1,9 @@
-import { DiceSpinner, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { Autocomplete, Chip, ListItem, ListItemText, TextField } from "@mui/material";
 import { keepPreviousData, type QueryKey } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+
+import { DiceSpinner, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 
 /** A suggestion of the customization completion endpoints. */
 interface Completion {
@@ -98,7 +99,9 @@ export function CompletionAutocomplete<T extends Completion>({
       getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}
       renderOption={({ key, ...props }, option) => (
         <ListItem key={key} {...props}>
-          {typeof option === "string" ? option : (
+          {typeof option === "string" ? (
+            option
+          ) : (
             <ListItemText
               primary={
                 <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>

@@ -1,10 +1,11 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { MechanicsService } from "@/server/services/rulesets/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { MechanicsService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -26,7 +27,12 @@ export default new Hono<SessionContext>()
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
 
       const mechanicsService = MechanicsService.initialize();
-      const result = await mechanicsService.call("getRulesetMechanics", id, { search, childOnly, orderBy, orderDir }, { limit, page });
+      const result = await mechanicsService.call(
+        "getRulesetMechanics",
+        id,
+        { search, childOnly, orderBy, orderDir },
+        { limit, page },
+      );
       return respond(c, result, 200);
     },
   )
@@ -48,7 +54,10 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         name: z.string().min(1),
-        description: z.string().optional().transform(v => v || null),
+        description: z
+          .string()
+          .optional()
+          .transform((v) => v || null),
       }),
     ),
     async (c) => {
@@ -67,7 +76,10 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         name: z.string().min(1),
-        description: z.string().optional().transform(v => v || null),
+        description: z
+          .string()
+          .optional()
+          .transform((v) => v || null),
         updatedAt: z.string().optional(),
       }),
     ),
@@ -76,13 +88,7 @@ export default new Hono<SessionContext>()
       const body = c.req.valid("json");
 
       const mechanicsService = MechanicsService.initialize();
-      const result = await mechanicsService.call(
-        "updateRulesetMechanic",
-        c.var.requestSession,
-        id,
-        mechanicId,
-        body,
-      );
+      const result = await mechanicsService.call("updateRulesetMechanic", c.var.requestSession, id, mechanicId, body);
       return respond(c, result, 200);
     },
   )
@@ -93,12 +99,7 @@ export default new Hono<SessionContext>()
       const { id, mechanicId } = c.req.valid("param");
 
       const mechanicsService = MechanicsService.initialize();
-      const result = await mechanicsService.call(
-        "deleteRulesetMechanic",
-        c.var.requestSession,
-        id,
-        mechanicId,
-      );
+      const result = await mechanicsService.call("deleteRulesetMechanic", c.var.requestSession, id, mechanicId);
       return respond(c, result, 200);
     },
   );

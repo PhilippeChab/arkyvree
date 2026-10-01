@@ -10,10 +10,7 @@ export default function LegalPage() {
   return (
     <PageTransition>
       <Container maxWidth="md" sx={{ py: { xs: 2, sm: 4 } }}>
-        <PageHeader
-          title="Legal"
-          subtitle="Open Game License v1.0a, covering the SRD content used in Arkyvree."
-        />
+        <PageHeader title="Legal" subtitle="Open Game License v1.0a, covering the SRD content used in Arkyvree." />
 
         <Paper sx={{ p: { xs: 2, sm: 4 } }}>
           {isError ? (

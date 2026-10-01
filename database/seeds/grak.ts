@@ -10,7 +10,8 @@ export default {
   gender: "Male",
   height: "195",
   weight: "120",
-  description: "A towering half-orc from the Shattered Peaks, Grak channels his rage into devastating power on the battlefield. His tribal tattoos glow faintly when his fury rises.",
+  description:
+    "A towering half-orc from the Shattered Peaks, Grak channels his rage into devastating power on the battlefield. His tribal tattoos glow faintly when his fury rises.",
   abilities: { Strength: 18, Dexterity: 12, Constitution: 16, Intelligence: 8, Wisdom: 10, Charisma: 6 },
   languages: ["Common", "Orc"],
   classes: [{ klass: "Barbarian", hp: [12, 10, 9] }],

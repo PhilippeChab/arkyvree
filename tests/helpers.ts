@@ -1,12 +1,34 @@
 import { and, eq, type InferInsertModel, type InferSelectModel, isNull, sql } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { JobHelpers } from "graphile-worker";
-import { type charactersInCharacter, klassLevelsInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+
 import { coreRulesetId } from "@/database/packages/dnd35/seed/context.ts";
 import { getSeedContext, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
+import {
+  type charactersInCharacter,
+  klassLevelsInRules,
+  rulesetExtensionsInRules,
+  type rulesetsInRules,
+} from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
-import { Campaigns, CharacterContributors, CharacterLevelFeats, CharacterLevelPowers, CharacterLevels, CharacterLevelSkills, Characters, Contributors, Exports, Klasses, KlassLevels, Players, Properties, Rulesets, Users } from "@/server/repositories/index.ts";
+import {
+  Campaigns,
+  CharacterContributors,
+  CharacterLevelFeats,
+  CharacterLevelPowers,
+  CharacterLevels,
+  CharacterLevelSkills,
+  Characters,
+  Contributors,
+  Exports,
+  Klasses,
+  KlassLevels,
+  Players,
+  Properties,
+  Rulesets,
+  Users,
+} from "@/server/repositories/index.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -43,9 +65,12 @@ export function getSeedCtx() {
 }
 
 /** Inserts rows straight into `table` and returns them: test data set up in bulk, which the app writes one at a time. */
-export async function insertRows<T extends PgTable>(table: T, rows: InferInsertModel<T>[]): Promise<InferSelectModel<T>[]> {
+export async function insertRows<T extends PgTable>(
+  table: T,
+  rows: InferInsertModel<T>[],
+): Promise<InferSelectModel<T>[]> {
   if (rows.length === 0) return [];
-  return await db.insert(table).values(rows).returning() as InferSelectModel<T>[];
+  return (await db.insert(table).values(rows).returning()) as InferSelectModel<T>[];
 }
 
 /** A new user and a session for them. `prefix` starts the username and email. */
@@ -114,11 +139,14 @@ export async function createSeededTestRuleset(
     entityType: "rulesets",
   });
   if (sourceProperties.length > 0) {
-    await Properties.createMany(db, sourceProperties.map((p) => ({
-      ...p,
-      id: undefined,
-      entityId: ruleset.id,
-    })));
+    await Properties.createMany(
+      db,
+      sourceProperties.map((p) => ({
+        ...p,
+        id: undefined,
+        entityId: ruleset.id,
+      })),
+    );
   }
 
   return ruleset;
@@ -170,7 +198,10 @@ export async function createTestCampaign(userId: string, rulesetId?: string) {
  * the database: no abilities, levels or activity. Create one through
  * `CharactersMethods.createCharacter` when the test needs those.
  */
-export async function createTestCharacter(userId: string, values: Partial<InferInsertModel<typeof charactersInCharacter>> = {}) {
+export async function createTestCharacter(
+  userId: string,
+  values: Partial<InferInsertModel<typeof charactersInCharacter>> = {},
+) {
   const ctx = await getSeedCtx();
   const [character] = await Characters.create(db, {
     userId,
@@ -198,7 +229,11 @@ export async function createTestKlassLevel(rulesetId: string) {
 /** A class's level `level`. */
 export async function findKlassLevel(klassId: string, level: number) {
   return await db.query.klassLevelsInRules.findFirst({
-    where: and(eq(klassLevelsInRules.klassId, klassId), eq(klassLevelsInRules.level, level), isNull(klassLevelsInRules.deletedAt)),
+    where: and(
+      eq(klassLevelsInRules.klassId, klassId),
+      eq(klassLevelsInRules.level, level),
+      isNull(klassLevelsInRules.deletedAt),
+    ),
   });
 }
 
@@ -212,9 +247,18 @@ type LevelPicks = {
 export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: LevelPicks = {}) {
   const [level] = await CharacterLevels.create(db, { characterId, klassLevelId, hp: 1 });
   const characterLevelId = level.id;
-  await CharacterLevelFeats.create(db, (picks.feats ?? []).map((pick) => ({ ...pick, characterLevelId })));
-  await CharacterLevelPowers.create(db, (picks.powers ?? []).map((pick) => ({ ...pick, characterLevelId })));
-  await CharacterLevelSkills.create(db, (picks.skills ?? []).map((pick) => ({ ...pick, characterLevelId })));
+  await CharacterLevelFeats.create(
+    db,
+    (picks.feats ?? []).map((pick) => ({ ...pick, characterLevelId })),
+  );
+  await CharacterLevelPowers.create(
+    db,
+    (picks.powers ?? []).map((pick) => ({ ...pick, characterLevelId })),
+  );
+  await CharacterLevelSkills.create(
+    db,
+    (picks.skills ?? []).map((pick) => ({ ...pick, characterLevelId })),
+  );
   return level;
 }
 
@@ -227,14 +271,26 @@ export async function addRulesetContributor(
   invitedBy: string,
   role: "Admin" | "Editor" | "Viewer" = "Editor",
 ) {
-  const [invite] = await Contributors.create(db, { rulesetId, userId: user.id, email: user.emailAddress, role, invitedBy });
+  const [invite] = await Contributors.create(db, {
+    rulesetId,
+    userId: user.id,
+    email: user.emailAddress,
+    role,
+    invitedBy,
+  });
   const [contributor] = await Contributors.update(db, { status: "Active" }, { id: invite.id });
   return contributor;
 }
 
 /** Makes `user` an active contributor of a character, as if they accepted an invite from `invitedBy`. */
 export async function addCharacterContributor(characterId: string, user: Contributor, invitedBy: string) {
-  const [invite] = await CharacterContributors.create(db, { characterId, userId: user.id, email: user.emailAddress, role: "Editor", invitedBy });
+  const [invite] = await CharacterContributors.create(db, {
+    characterId,
+    userId: user.id,
+    email: user.emailAddress,
+    role: "Editor",
+    invitedBy,
+  });
   const [contributor] = await CharacterContributors.update(db, { status: "Active" }, { id: invite.id });
   return contributor;
 }

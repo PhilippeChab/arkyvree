@@ -4,7 +4,13 @@ import { stripSeparators } from "@/shared/utils.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "possessed", description: "Whether the character has this feat", type: "boolean" as const },
-  { path: "count", description: "Times taken (stackable feats only)", type: "number" as const, requirementOnly: true, stackableOnly: true },
+  {
+    path: "count",
+    description: "Times taken (stackable feats only)",
+    type: "number" as const,
+    requirementOnly: true,
+    stackableOnly: true,
+  },
 ];
 
 export type FeatEntry = {
@@ -24,10 +30,7 @@ export default class DetailedCharacterFeats {
     return { possessed: "Possessed", count: "Count" };
   }
 
-  static generateTargetPaths(
-    feats: Feat[],
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
+  static generateTargetPaths(feats: Feat[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const feat of feats) {
@@ -57,10 +60,7 @@ export default class DetailedCharacterFeats {
 
   private readonly detailedCharacterFeats: DetailedCharacterComprehensiveFeats = {};
 
-  initialize(
-    rulesetFeats: Feat[],
-    possessedFeats: Feat[],
-  ) {
+  initialize(rulesetFeats: Feat[], possessedFeats: Feat[]) {
     const possessedCounts = new Map<string, number>();
     for (const feat of possessedFeats) {
       const name = stripSeparators(feat.name);

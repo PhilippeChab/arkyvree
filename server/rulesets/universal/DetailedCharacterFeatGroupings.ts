@@ -32,9 +32,7 @@ export default class DetailedCharacterFeatGroupings {
           description: `${kind === "requirement" ? "Any" : "All"} ${displayName} feats — ${subPath.description}`,
           groupDescription: `${kind === "requirement" ? "Any" : "All"} ${displayName} feats`,
           valueType: subPath.type,
-          operators: kind === "modifier"
-            ? ["set"]
-            : ["equal", "not_equal"],
+          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
         });
       }
     }
@@ -49,10 +47,7 @@ export default class DetailedCharacterFeatGroupings {
     private readonly groupingProperties: readonly string[],
   ) {}
 
-  registerFeat(
-    feat: { name: string },
-    properties: Property[],
-  ): void {
+  registerFeat(feat: { name: string }, properties: Property[]): void {
     for (const prop of properties) {
       if (!this.groupingProperties.includes(prop.type)) continue;
 

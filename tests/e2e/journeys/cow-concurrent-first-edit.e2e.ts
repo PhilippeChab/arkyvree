@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { signIn, uniqueName, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
 
@@ -10,7 +11,7 @@ test("concurrent first edits preserve every property on one fork copy", async ({
   expect(baseId).toBeTruthy();
 
   const forkName = uniqueName("Concurrent COW");
-  await page.getByRole('button', { name: 'More actions' }).first().click();
+  await page.getByRole("button", { name: "More actions" }).first().click();
   await page.getByRole("menuitem", { name: /^Fork\b/ }).click();
   const dialog = page.getByRole("dialog", { name: "Fork Ruleset" });
   await dialog.locator('input[name="name"]').fill(forkName);
@@ -31,9 +32,13 @@ test("concurrent first edits preserve every property on one fork copy", async ({
   // Independent HTTP requests use separate database transactions. The burst
   // exercises the first-copy window that single-transaction unit tests miss.
   const types = Array.from({ length: 8 }, (_, index) => `CONCURRENT_COW_${index}`);
-  const responses = await Promise.all(types.map(type => page.request.post(propertiesUrl(forkId, sourceId), {
-    data: { type, value: "1" },
-  })));
+  const responses = await Promise.all(
+    types.map((type) =>
+      page.request.post(propertiesUrl(forkId, sourceId), {
+        data: { type, value: "1" },
+      }),
+    ),
+  );
   const copiedIds = new Set<string>();
   for (const response of responses) {
     expect(response.status(), await response.text()).toBe(201);
@@ -45,7 +50,7 @@ test("concurrent first edits preserve every property on one fork copy", async ({
   const properties = await page.request.get(propertiesUrl(forkId, copyId));
   expect(properties.ok()).toBe(true);
   const rows = z.array(z.object({ type: z.string() })).parse(await properties.json());
-  for (const type of types) expect(rows.filter(row => row.type === type)).toHaveLength(1);
+  for (const type of types) expect(rows.filter((row) => row.type === type)).toHaveLength(1);
   const parentAfter = await page.request.get(propertiesUrl(baseId!, sourceId));
   expect(parentAfter.ok()).toBe(true);
   expect(await parentAfter.json()).toEqual(parentProperties);

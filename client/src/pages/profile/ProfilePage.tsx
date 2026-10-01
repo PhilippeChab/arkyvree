@@ -1,27 +1,26 @@
-import type { AuthUser } from "@/client/src/stores/authStore.ts";
-import { AttachmentField, DiceSpinner, EmailField, PageError, PageHeader, PageTransition, PasswordField } from "@/client/src/components/common/index.ts";
-import { GoogleSignInButton } from "@/client/src/components/auth/index.ts";
-import { useFormSync, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { confirmPasswordRules, emailRules, newPasswordRules } from "@/client/src/lib/validation.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { DeleteAccountDialog, EmailChangeVerificationDialog } from "@/client/src/pages/profile/components/index.ts";
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Container,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Chip, Container, TextField, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
+
+import { GoogleSignInButton } from "@/client/src/components/auth/index.ts";
+import {
+  AttachmentField,
+  DiceSpinner,
+  EmailField,
+  PageError,
+  PageHeader,
+  PageTransition,
+  PasswordField,
+} from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useFormSync, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { confirmPasswordRules, emailRules, newPasswordRules } from "@/client/src/lib/validation.ts";
+import { DeleteAccountDialog, EmailChangeVerificationDialog } from "@/client/src/pages/profile/components/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import type { AuthUser } from "@/client/src/stores/authStore.ts";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface ProfileFormData {
   username: string;
@@ -45,7 +44,12 @@ function ProfileCard({ title, children, danger = false }: { title: string; child
       <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
         <Typography
           component="h2"
-          sx={{ fontWeight: 700, mb: danger ? 1 : 3, typography: { xs: "h6", sm: "h5" }, color: danger ? "error.main" : undefined }}
+          sx={{
+            fontWeight: 700,
+            mb: danger ? 1 : 3,
+            typography: { xs: "h6", sm: "h5" },
+            color: danger ? "error.main" : undefined,
+          }}
         >
           {title}
         </Typography>
@@ -106,12 +110,15 @@ export default function ProfilePage() {
   });
 
   const profileMutation = useMutation({
-    mutationFn: (data: ProfileFormData) => parseResponse(rpc.auth.profile.$put({
-      json: {
-        username: data.username || undefined,
-        emailAddress: data.emailAddress || undefined,
-      },
-    })),
+    mutationFn: (data: ProfileFormData) =>
+      parseResponse(
+        rpc.auth.profile.$put({
+          json: {
+            username: data.username || undefined,
+            emailAddress: data.emailAddress || undefined,
+          },
+        }),
+      ),
     onSuccess: (data) => {
       // The server's values, not the submitted ones: a new email stays pending
       // until verified, so the field keeps the current address.
@@ -134,11 +141,12 @@ export default function ProfilePage() {
   });
 
   const passwordMutation = useMutation({
-    mutationFn: (data: PasswordFormData) => hasPassword
-      ? rpc.auth.password.$put({ json: data })
-      : rpc.auth["set-password"].$post({
-        json: { newPassword: data.newPassword, newPasswordConfirmation: data.newPasswordConfirmation },
-      }),
+    mutationFn: (data: PasswordFormData) =>
+      hasPassword
+        ? rpc.auth.password.$put({ json: data })
+        : rpc.auth["set-password"].$post({
+            json: { newPassword: data.newPassword, newPasswordConfirmation: data.newPasswordConfirmation },
+          }),
     onSuccess: () => {
       passwordForm.reset();
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
@@ -188,11 +196,7 @@ export default function ProfilePage() {
             sx={{ mb: 3 }}
             action={
               <Box sx={{ display: "flex", gap: 1 }}>
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={() => setVerifyDialogOpen(true)}
-                >
+                <Button size="small" variant="contained" onClick={() => setVerifyDialogOpen(true)}>
                   Verify
                 </Button>
                 <Button
@@ -219,13 +223,7 @@ export default function ProfilePage() {
               gap: { xs: 2, sm: 4 },
             }}
           >
-            <AttachmentField
-              recordType="User"
-              recordId={userData?.id}
-              name="avatar"
-              variant="avatar"
-              size={140}
-            />
+            <AttachmentField recordType="User" recordId={userData?.id} name="avatar" variant="avatar" size={140} />
 
             <Box sx={{ flex: 1, width: "100%" }}>
               <form onSubmit={profileSync.handleSubmit((data) => profileMutation.mutate(data))} noValidate>
@@ -255,7 +253,9 @@ export default function ProfilePage() {
                   sx={{ mt: 2 }}
                   disabled={profileMutation.isPending}
                 >
-                  <DiceSpinner size="small" loading={profileMutation.isPending}>Save Changes</DiceSpinner>
+                  <DiceSpinner size="small" loading={profileMutation.isPending}>
+                    Save Changes
+                  </DiceSpinner>
                 </Button>
               </form>
             </Box>
@@ -263,7 +263,9 @@ export default function ProfilePage() {
         </ProfileCard>
 
         <ProfileCard title="Linked Accounts">
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+          <Box
+            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Typography variant="body1">Google</Typography>
               {isGoogleLinked && <Chip label="Linked" size="small" color="success" />}
@@ -277,7 +279,9 @@ export default function ProfilePage() {
                   onClick={() => unlinkOauthMutation.mutate("google")}
                   disabled={unlinkOauthMutation.isPending || !hasPassword}
                 >
-                  <DiceSpinner size="small" loading={unlinkOauthMutation.isPending}>Unlink</DiceSpinner>
+                  <DiceSpinner size="small" loading={unlinkOauthMutation.isPending}>
+                    Unlink
+                  </DiceSpinner>
                 </Button>
               ) : isGoogleAvailable ? (
                 <GoogleSignInButton overlayRef={overlayRef} label="Link Google" />
@@ -310,7 +314,10 @@ export default function ProfilePage() {
             />
 
             <PasswordField
-              {...passwordForm.register("newPasswordConfirmation", confirmPasswordRules<PasswordFormData>("newPassword"))}
+              {...passwordForm.register(
+                "newPasswordConfirmation",
+                confirmPasswordRules<PasswordFormData>("newPassword"),
+              )}
               error={passwordErrors.newPasswordConfirmation}
               label="Confirm New Password"
               autoComplete="new-password"
@@ -332,14 +339,9 @@ export default function ProfilePage() {
 
         <ProfileCard title="Delete Account" danger>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Permanently delete your account and all associated data. This action
-            cannot be undone.
+            Permanently delete your account and all associated data. This action cannot be undone.
           </Typography>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => setDeleteDialogOpen(true)}
-          >
+          <Button variant="contained" color="error" onClick={() => setDeleteDialogOpen(true)}>
             Delete Account
           </Button>
         </ProfileCard>

@@ -84,9 +84,7 @@ function buildReqForest(rows: Requirement[]): ReqNode[] {
     return p === null || !byLevel.has(p);
   });
 
-  return topLevelRows
-    .sort((a, b) => a.level.localeCompare(b.level))
-    .map((r) => buildNode(r, 0));
+  return topLevelRows.sort((a, b) => a.level.localeCompare(b.level)).map((r) => buildNode(r, 0));
 }
 
 /**
@@ -96,12 +94,7 @@ function buildReqForest(rows: Requirement[]): ReqNode[] {
  * indices, so the result is collision-free as long as the caller picks a
  * non-overlapping `level`.
  */
-function serializeReqNode(
-  node: ReqNode,
-  level: string,
-  entityId: string,
-  entityType: string,
-): Requirement[] {
+function serializeReqNode(node: ReqNode, level: string, entityId: string, entityType: string): Requirement[] {
   const row = { ...node.source, entityId, entityType, level };
   if (node.kind === "leaf") return [row];
   const out: Requirement[] = [row];
@@ -112,10 +105,7 @@ function serializeReqNode(
 }
 
 /** Deduplicate standalone roots only; preserve every condition inside a chain. */
-function dedupAgainstExisting(
-  node: ReqNode,
-  existingKeys: Set<string>,
-): ReqNode | null {
+function dedupAgainstExisting(node: ReqNode, existingKeys: Set<string>): ReqNode | null {
   if (node.kind === "leaf") {
     const key = `${node.target}|${node.operator}|${node.value}`;
     if (existingKeys.has(key)) return null;
@@ -143,7 +133,7 @@ export function mergeSiblingRequirements(
   entityType: string,
 ): Requirement[] {
   const standaloneKeys = collectTopLevelStandaloneKeys(buildReqForest(targetRequirements));
-  const usedLevels = new Set(targetRequirements.map(r => r.level));
+  const usedLevels = new Set(targetRequirements.map((r) => r.level));
   let maxTopInt = 0;
   for (const r of targetRequirements) {
     if (/^\d+$/.test(r.level)) maxTopInt = Math.max(maxTopInt, Number(r.level));
@@ -155,7 +145,9 @@ export function mergeSiblingRequirements(
       if (!node) continue;
       let level: string;
       if (node.kind === "chain") {
-        do { level = String(++maxTopInt); } while (usedLevels.has(level));
+        do {
+          level = String(++maxTopInt);
+        } while (usedLevels.has(level));
       } else {
         const originalLevel = node.source.level;
         level = originalLevel;

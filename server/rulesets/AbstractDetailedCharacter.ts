@@ -1,6 +1,5 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db, type Db } from "@/server/database/index.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type {
   DetailedCharacterInterface,
   FeatWithPMR,
@@ -22,12 +21,13 @@ import type DetailedCharacterAptitudes from "@/server/rulesets/universal/Detaile
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import type DetailedCharacterFeatGroupings from "@/server/rulesets/universal/DetailedCharacterFeatGroupings.ts";
 import type DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
-import type DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
 import type DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
+import type DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
 import type DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
 import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import type DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type {
   Aptitude,
   Campaign,
@@ -70,7 +70,11 @@ export type ValidationResult = {
  */
 export interface DataLoader {
   loadSharedData(database: Db | undefined, preloaded: PreloadedRulesetData): Promise<PreloadedRulesetData>;
-  load(database: Db | undefined, projectedData: unknown | undefined, preloaded: PreloadedCharacterData | PreloadedRulesetData): Promise<LoadedCharacterData>;
+  load(
+    database: Db | undefined,
+    projectedData: unknown | undefined,
+    preloaded: PreloadedCharacterData | PreloadedRulesetData,
+  ): Promise<LoadedCharacterData>;
 }
 
 export default abstract class AbstractDetailedCharacter implements DetailedCharacterInterface {
@@ -175,11 +179,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     });
   }
 
-  async build(
-    database: Db = db,
-    projectedData?: unknown,
-    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
-  ) {
+  async build(database: Db = db, projectedData?: unknown, preloaded?: PreloadedCharacterData | PreloadedRulesetData) {
     const dataLoader = this.createDataLoader();
 
     // withRulesetScope activates the cowContext, loads ruleset + cowData +
@@ -187,9 +187,8 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     // ruleset-level data — never fetches on its own. Projection mode's
     // caller-supplied `preloaded` with `_shared` still takes precedence.
     return await withRulesetScope(database, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
-      const preloadedForLoad: PreloadedCharacterData | PreloadedRulesetData = preloaded && "_shared" in preloaded
-        ? preloaded
-        : { ruleset, cowData: rulesetData.cow, rulesetData };
+      const preloadedForLoad: PreloadedCharacterData | PreloadedRulesetData =
+        preloaded && "_shared" in preloaded ? preloaded : { ruleset, cowData: rulesetData.cow, rulesetData };
       // 1. Load data
       const data = await dataLoader.load(database, projectedData, preloadedForLoad);
       this.applyLoadedData(data);
@@ -216,12 +215,8 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       this.postRequirementProcessing();
 
       // 8. Evaluate non-power modifiers (universal)
-      const powerModifiers = this.modifiers.filter((m) =>
-        m.target.startsWith("powers."),
-      );
-      const otherModifiers = this.modifiers.filter(
-        (m) => !m.target.startsWith("powers."),
-      );
+      const powerModifiers = this.modifiers.filter((m) => m.target.startsWith("powers."));
+      const otherModifiers = this.modifiers.filter((m) => !m.target.startsWith("powers."));
       this.detailedCharacterModifiers.evaluateModifiers(
         this.holders,
         otherModifiers,
@@ -279,12 +274,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   protected preApplyPossessionModifiers() {
     for (const mod of this.modifiers) {
-      if (
-        mod.operator !== "set" ||
-        mod.valueType !== "boolean" ||
-        mod.value !== "true"
-      )
-        continue;
+      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
 
       const parts = mod.target.split(".");
 
@@ -311,42 +301,29 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   areRequirementsMet(requirementGroups: Requirement[][]): boolean {
     if (!this.holders) return false;
 
-    const tempRequirements = new DetailedCharacterRequirements(
-      this.targetPaths,
-    );
+    const tempRequirements = new DetailedCharacterRequirements(this.targetPaths);
     const nonEmpty = requirementGroups.filter((group) => group.length > 0);
     if (nonEmpty.length === 0) return true;
 
     tempRequirements.evaluateRequirements(this.holders, nonEmpty);
-    const { unmetRequirementGroups, invalidRequirements } =
-      tempRequirements.getRequirements();
-    return (
-      unmetRequirementGroups.length === 0 && invalidRequirements.length === 0
-    );
+    const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
+    return unmetRequirementGroups.length === 0 && invalidRequirements.length === 0;
   }
 
-  getUnmetRequirementIssues(
-    requirementGroups: Requirement[][],
-  ): RequirementIssue[] {
+  getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[] {
     if (!this.holders) return [];
 
-    const tempRequirements = new DetailedCharacterRequirements(
-      this.targetPaths,
-    );
+    const tempRequirements = new DetailedCharacterRequirements(this.targetPaths);
     const nonEmpty = requirementGroups.filter((group) => group.length > 0);
     if (nonEmpty.length === 0) return [];
 
     tempRequirements.evaluateRequirements(this.holders, nonEmpty);
-    const { unmetRequirementGroups, invalidRequirements } =
-      tempRequirements.getRequirements();
+    const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
     const issues: RequirementIssue[] = [];
 
     for (const group of unmetRequirementGroups) {
       const firstReq = group[0];
-      const entityName = this.resolveEntityName(
-        firstReq.entityId,
-        firstReq.entityType,
-      );
+      const entityName = this.resolveEntityName(firstReq.entityId, firstReq.entityType);
       const targets = group.filter((r) => r.target).map((r) => r.target);
       const label = entityName
         ? `Unmet prerequisite on ${entityName} (${firstReq.entityType})`
@@ -360,10 +337,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       });
     }
     for (const { warning, requirement } of invalidRequirements) {
-      const entityName = this.resolveEntityName(
-        requirement.entityId,
-        requirement.entityType,
-      );
+      const entityName = this.resolveEntityName(requirement.entityId, requirement.entityType);
       issues.push({
         category: "requirements",
         message: entityName
@@ -389,8 +363,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
           const levelData = aptitudeObj[String(level)] as
             | { allowed: number; spent: number; available: number }
             | undefined;
-          if (!levelData || (levelData.allowed === 0 && levelData.spent === 0))
-            continue;
+          if (!levelData || (levelData.allowed === 0 && levelData.spent === 0)) continue;
           if (levelData.allowed === ALLOWED_ALL) continue;
           if (levelData.available > 0) {
             issues.push({
@@ -421,17 +394,12 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     }
 
     // Check unmet requirements (skip modifier/item requirements)
-    const { unmetRequirementGroups, invalidRequirements } =
-      this.detailedCharacterRequirements.getRequirements();
+    const { unmetRequirementGroups, invalidRequirements } = this.detailedCharacterRequirements.getRequirements();
     for (const group of unmetRequirementGroups) {
       if (group.every((r) => r.entityType === "modifiers")) continue;
       if (group.every((r) => r.entityType === "items")) continue;
-      const firstReq =
-        group.find((r) => r.entityType !== "modifiers") ?? group[0];
-      const entityName = this.resolveEntityName(
-        firstReq.entityId,
-        firstReq.entityType,
-      );
+      const firstReq = group.find((r) => r.entityType !== "modifiers") ?? group[0];
+      const entityName = this.resolveEntityName(firstReq.entityId, firstReq.entityType);
       const targets = group.filter((r) => r.target).map((r) => r.target);
       const label = entityName
         ? `Unmet prerequisite on ${entityName} (${firstReq.entityType})`
@@ -445,10 +413,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       });
     }
     for (const { warning, requirement } of invalidRequirements) {
-      const entityName = this.resolveEntityName(
-        requirement.entityId,
-        requirement.entityType,
-      );
+      const entityName = this.resolveEntityName(requirement.entityId, requirement.entityType);
       issues.push({
         category: "requirements",
         message: entityName
@@ -460,13 +425,10 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     }
 
     // Check modifier issues
-    const { skippedModifiers, unappliedModifiers } =
-      this.detailedCharacterModifiers.getModifiers();
+    const { skippedModifiers, unappliedModifiers } = this.detailedCharacterModifiers.getModifiers();
     for (const modifier of unappliedModifiers) {
       const isConditional = unmetRequirementGroups.some((group) =>
-        group.every(
-          (r) => r.entityType === "modifiers" && r.entityId === modifier.id,
-        ),
+        group.every((r) => r.entityType === "modifiers" && r.entityId === modifier.id),
       );
       if (isConditional) continue;
       const source = this.resolveModifierSourceName(modifier);
@@ -492,11 +454,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     }
 
     // Check referential integrity
-    const sourceChain = (
-      rulesetId: string,
-      name: string,
-      entityType: string,
-    ) => {
+    const sourceChain = (rulesetId: string, name: string, entityType: string) => {
       if (!this.validRulesetIds.has(rulesetId)) {
         issues.push({
           category: "integrity",
@@ -507,16 +465,11 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       }
     };
     sourceChain(this.race.rulesetId, this.race.name, "races");
-    for (const klass of this.klasses)
-      sourceChain(klass.rulesetId, klass.name, "klasses");
-    for (const skill of this.skills)
-      sourceChain(skill.rulesetId, skill.name, "skills");
-    for (const feat of this.feats)
-      sourceChain(feat.rulesetId, feat.name, "feats");
-    for (const power of this.powers)
-      sourceChain(power.rulesetId, power.name, "powers");
-    for (const inv of this.inventory)
-      sourceChain(inv.item.rulesetId, inv.item.name, "items");
+    for (const klass of this.klasses) sourceChain(klass.rulesetId, klass.name, "klasses");
+    for (const skill of this.skills) sourceChain(skill.rulesetId, skill.name, "skills");
+    for (const feat of this.feats) sourceChain(feat.rulesetId, feat.name, "feats");
+    for (const power of this.powers) sourceChain(power.rulesetId, power.name, "powers");
+    for (const inv of this.inventory) sourceChain(inv.item.rulesetId, inv.item.name, "items");
 
     return { valid: issues.length === 0, issues };
   }
@@ -638,17 +591,29 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
         const { data } = result as { data: unknown };
         let typedValue: number | string | boolean;
         switch (req.valueType) {
-          case "number": typedValue = Number(req.value); break;
-          case "boolean": typedValue = req.value === "true"; break;
-          default: typedValue = String(req.value); break;
+          case "number":
+            typedValue = Number(req.value);
+            break;
+          case "boolean":
+            typedValue = req.value === "true";
+            break;
+          default:
+            typedValue = String(req.value);
+            break;
         }
         switch (req.operator) {
-          case "equal": return data === typedValue;
-          case "not_equal": return data !== typedValue;
-          case "greater_than": return typeof data === "number" && data > (typedValue as number);
-          case "less_than": return typeof data === "number" && data < (typedValue as number);
-          case "greater_than_or_equal": return typeof data === "number" && data >= (typedValue as number);
-          case "less_than_or_equal": return typeof data === "number" && data <= (typedValue as number);
+          case "equal":
+            return data === typedValue;
+          case "not_equal":
+            return data !== typedValue;
+          case "greater_than":
+            return typeof data === "number" && data > (typedValue as number);
+          case "less_than":
+            return typeof data === "number" && data < (typedValue as number);
+          case "greater_than_or_equal":
+            return typeof data === "number" && data >= (typedValue as number);
+          case "less_than_or_equal":
+            return typeof data === "number" && data <= (typedValue as number);
           case "contains":
             return typeof data === "string"
               ? data.includes(typedValue as string)
@@ -657,7 +622,8 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
             return typeof data === "string"
               ? !data.includes(typedValue as string)
               : Array.isArray(data) && !data.includes(typedValue);
-          default: return false;
+          default:
+            return false;
         }
       });
     };

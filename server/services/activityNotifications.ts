@@ -1,6 +1,10 @@
-import type { ChangedField } from "@/shared/activity.ts";
 import { getTableName } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
+import { contributorsInCharacter, contributorsInRules, invitesInCampaign } from "@/drizzle/schema.ts";
+import type { activitiesInAccount } from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
   Aptitudes,
@@ -25,21 +29,21 @@ import {
   Skills,
   Users,
 } from "@/server/repositories/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import {
-  contributorsInCharacter,
-  contributorsInRules,
-  invitesInCampaign,
-} from "@/drizzle/schema.ts";
-
 import { noteNotified } from "@/server/ws.ts";
-import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel } from "drizzle-orm";
-import type { activitiesInAccount } from "@/drizzle/schema.ts";
+import type { ChangedField } from "@/shared/activity.ts";
 
 // Tables whose entities have a direct rulesetId
 const RULESET_ENTITY_TABLES = new Set([
-  "feats", "powers", "skills", "races", "klasses", "items", "saves", "languages", "aptitudes", "mechanics",
+  "feats",
+  "powers",
+  "skills",
+  "races",
+  "klasses",
+  "items",
+  "saves",
+  "languages",
+  "aptitudes",
+  "mechanics",
 ]);
 
 // Customization tables whose source entities have a rulesetId
@@ -66,10 +70,7 @@ function normalize(v: unknown): string {
  * Compare an existing entity with an update body and return a list of changes.
  * Short fields include before/after values; long text fields only note the change.
  */
-export function getChangedFields(
-  existing: Record<string, unknown>,
-  body: Record<string, unknown>,
-): ChangedField[] {
+export function getChangedFields(existing: Record<string, unknown>, body: Record<string, unknown>): ChangedField[] {
   const changes: ChangedField[] = [];
   for (const key of Object.keys(body)) {
     if (!(key in existing)) continue;
@@ -170,9 +171,7 @@ async function getCampaignGMsForInvite(db: Db, inviteId: string): Promise<string
   const player = await Players.findOne(db, { id: invite.playerId });
   if (!player) return [];
   const campaignPlayers = await Players.findMany(db, { campaignId: player.campaignId });
-  return campaignPlayers
-    .filter((p) => p.role === "Game Master" && p.userId)
-    .map((p) => p.userId!);
+  return campaignPlayers.filter((p) => p.role === "Game Master" && p.userId).map((p) => p.userId!);
 }
 
 /**
@@ -237,7 +236,11 @@ async function resolveRecipients(
     if (type === "inviteCharacterContributor") {
       const contributor = await CharacterContributors.findOne(db, { id: targetId });
       if (contributor?.userId) recipients.add(contributor.userId);
-    } else if (type === "acceptCharacterContributorInvite" || type === "rejectCharacterContributorInvite" || type === "leaveCharacter") {
+    } else if (
+      type === "acceptCharacterContributorInvite" ||
+      type === "rejectCharacterContributorInvite" ||
+      type === "leaveCharacter"
+    ) {
       let characterId = d.characterId as string | undefined;
       if (!characterId) {
         const contributor = await CharacterContributors.findOne(db, { id: targetId });
@@ -257,13 +260,15 @@ async function resolveRecipients(
 
   // ── Ruleset content changes ───────────────────────────────────────
   const isContentChange = type.startsWith("create") || type.startsWith("update") || type.startsWith("delete");
-  const isRulesetContent = RULESET_ENTITY_TABLES.has(targetTable)
-    || targetTable === "klass_levels" || targetTable === "klass_skills"
-    || CUSTOMIZATION_TABLES.has(targetTable);
+  const isRulesetContent =
+    RULESET_ENTITY_TABLES.has(targetTable) ||
+    targetTable === "klass_levels" ||
+    targetTable === "klass_skills" ||
+    CUSTOMIZATION_TABLES.has(targetTable);
 
   if (isContentChange && isRulesetContent) {
     // Prefer rulesetId from data (required for deletes where the entity is already archived)
-    const rulesetId = (d.rulesetId as string | undefined) ?? await resolveRulesetId(db, targetTable, targetId);
+    const rulesetId = (d.rulesetId as string | undefined) ?? (await resolveRulesetId(db, targetTable, targetId));
     if (rulesetId) {
       const stakeholders = await getRulesetStakeholders(db, rulesetId);
       for (const uid of stakeholders) recipients.add(uid);
@@ -287,7 +292,12 @@ export async function createActivityWithNotifications(
   const [activity] = await Activities.create(db, values);
 
   const recipientIds = await resolveRecipients(
-    db, values.userId, values.type, values.targetId, values.targetTable, values.data,
+    db,
+    values.userId,
+    values.type,
+    values.targetId,
+    values.targetTable,
+    values.data,
   );
 
   if (recipientIds.length > 0) {
@@ -304,7 +314,7 @@ export async function createActivityWithNotifications(
         type: values.type,
         targetId: values.targetId,
         targetTable: values.targetTable,
-        data: { ...(values.data as Record<string, unknown> ?? {}), actorName },
+        data: { ...((values.data as Record<string, unknown>) ?? {}), actorName },
       })),
     );
     // Their pages hear of it once the request is answered, and its transaction committed

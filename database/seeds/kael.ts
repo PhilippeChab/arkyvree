@@ -10,10 +10,14 @@ export default {
   gender: "Male",
   height: "135",
   weight: "85",
-  description: "A stout dwarven warrior who trained with the mountain guard before discovering a berserker rage deep within. Kael wields a battleaxe passed down from his clan's founder.",
+  description:
+    "A stout dwarven warrior who trained with the mountain guard before discovering a berserker rage deep within. Kael wields a battleaxe passed down from his clan's founder.",
   abilities: { Strength: 16, Dexterity: 13, Constitution: 16, Intelligence: 10, Wisdom: 12, Charisma: 8 },
   languages: ["Common", "Dwarven"],
-  classes: [{ klass: "Fighter", hp: [10, 8, 7] }, { klass: "Barbarian", hp: [12] }],
+  classes: [
+    { klass: "Fighter", hp: [10, 8, 7] },
+    { klass: "Barbarian", hp: [12] },
+  ],
   // Total skills: 16
   skills: [
     // Fighter L1 (char level 1, ×4): 2*4 = 8 points

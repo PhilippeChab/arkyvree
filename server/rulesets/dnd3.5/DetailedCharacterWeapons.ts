@@ -23,7 +23,12 @@ const NAVIGATABLE_WEAPON_PATHS = [
   { path: "damage.misc", description: "Other bonuses to damage", type: "number" as const },
   { path: "damage.critical.range", description: "Critical threat range", type: "number" as const },
   { path: "damage.critical.multiplier", description: "Critical hit multiplier", type: "number" as const },
-  { path: "slot", description: "Hand position (main/off/two-handed)", type: "string" as const, possibleValues: SLOT_VALUES },
+  {
+    path: "slot",
+    description: "Hand position (main/off/two-handed)",
+    type: "string" as const,
+    possibleValues: SLOT_VALUES,
+  },
   { path: "damage.strmultiplier", description: "Str-to-damage ratio (1x/0.5x/1.5x)", type: "number" as const },
 ];
 
@@ -38,21 +43,18 @@ export default class DetailedCharacterWeapons {
     return deriveSegmentLabels(NAVIGATABLE_WEAPON_PATHS, { weapons: "Weapons", weapon: "Weapon", tohit: "To Hit" });
   }
 
-  static generateTargetPaths(
-    weaponGroupings: string[],
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
+  static generateTargetPaths(weaponGroupings: string[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const grouping of weaponGroupings) {
       for (const subPath of NAVIGATABLE_WEAPON_PATHS) {
-        const modifierOperators = subPath.type === "string"
-          ? ["set"]
-          : ["add", "subtract", "multiply", "divide", "set"];
+        const modifierOperators =
+          subPath.type === "string" ? ["set"] : ["add", "subtract", "multiply", "divide", "set"];
 
-        const requirementOperators = subPath.type === "string"
-          ? ["equal", "not_equal"]
-          : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"];
+        const requirementOperators =
+          subPath.type === "string"
+            ? ["equal", "not_equal"]
+            : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"];
 
         const targetPath: TargetPath = {
           path: `items.weapons.${grouping}.${subPath.path}`,
@@ -75,16 +77,9 @@ export default class DetailedCharacterWeapons {
 
   private readonly weapons: WeaponsData = {};
 
-  constructor(
-    private readonly characterCombat: DetailedCharacterCombat,
-  ) {}
+  constructor(private readonly characterCombat: DetailedCharacterCombat) {}
 
-  registerWeapon(
-    setIndex: number,
-    slot: string,
-    item: Item,
-    properties: Property[] = [],
-  ): void {
+  registerWeapon(setIndex: number, slot: string, item: Item, properties: Property[] = []): void {
     const slotKey = SLOT_MAP[slot];
     if (!slotKey) return;
 

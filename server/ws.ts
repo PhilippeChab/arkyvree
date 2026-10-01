@@ -1,9 +1,9 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+
+import { sql } from "drizzle-orm";
 import { upgradeWebSocket, websocket } from "hono/bun";
 import type { WSContext } from "hono/ws";
 import { Client as PgClient } from "pg";
-
-import { sql } from "drizzle-orm";
 
 import { db } from "@/server/database/index.ts";
 

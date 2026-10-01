@@ -1,12 +1,14 @@
-import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
-import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
-import type { Dnd35BondedSectionProps } from "./types.ts";
+
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
+import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 import { StatField } from "./statHelpers.tsx";
+import type { Dnd35BondedSectionProps } from "./types.ts";
 
 type FeatEntry = NonNullable<Dnd35BondedSectionProps["bonded"]["feats"]>[string];
 
@@ -30,7 +32,12 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
     .map((feat) => feat.name)
     .sort();
 
-  const nameSx = { fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" }, width: "fit-content" };
+  const nameSx = {
+    fontWeight: 600,
+    color: "primary.main",
+    typography: { xs: "body1", sm: "h6" },
+    width: "fit-content",
+  };
   const nameNode = linkable ? (
     <MuiLink component={Link} to={`/characters/${bonded.id}`} underline="hover" sx={nameSx}>
       {bonded.name}
@@ -48,19 +55,17 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
           <Typography sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary", typography: "body1" }}>
             Abilities
           </Typography>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(64px, 80px))", md: "repeat(3, minmax(72px, 88px))" }, gap: 1 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "repeat(2, minmax(64px, 80px))", md: "repeat(3, minmax(72px, 88px))" },
+              gap: 1,
+            }}
+          >
             {abilityEntries.map(([name, data]) => {
               const total = data.total ?? 10;
               const modifier = abilityModifier(total);
-              return (
-                <AbilityScoreBox
-                  key={name}
-                  ability={name}
-                  score={total}
-                  modifier={modifier}
-                  compact
-                />
-              );
+              return <AbilityScoreBox key={name} ability={name} score={total} modifier={modifier} compact />;
             })}
           </Box>
         </Box>
@@ -79,11 +84,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
               </Stack>
               <Stack spacing={1.5}>
                 {Object.entries(saves).map(([key, save]) => (
-                  <StatField
-                    key={key}
-                    label={save.name ?? key}
-                    value={formatSigned(save.total)}
-                  />
+                  <StatField key={key} label={save.name ?? key} value={formatSigned(save.total)} />
                 ))}
               </Stack>
             </Box>
@@ -99,8 +100,11 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
                   <Box
                     key={n}
                     sx={{
-                      px: 1, py: 0.25,
-                      border: "1px solid", borderColor: "divider", borderRadius: 1,
+                      px: 1,
+                      py: 0.25,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: 1,
                       fontSize: "0.85rem",
                     }}
                   >

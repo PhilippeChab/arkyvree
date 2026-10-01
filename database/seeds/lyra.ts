@@ -10,7 +10,8 @@ export default {
   gender: "Female",
   height: "165",
   weight: "50",
-  description: "A lithe elven rogue who slips through shadows like water. Lyra grew up in the back alleys of a port city, learning to survive by wit and nimble fingers.",
+  description:
+    "A lithe elven rogue who slips through shadows like water. Lyra grew up in the back alleys of a port city, learning to survive by wit and nimble fingers.",
   abilities: { Strength: 10, Dexterity: 18, Constitution: 12, Intelligence: 14, Wisdom: 12, Charisma: 10 },
   languages: ["Common", "Elven"],
   classes: [{ klass: "Rogue", hp: [6, 5, 4] }],

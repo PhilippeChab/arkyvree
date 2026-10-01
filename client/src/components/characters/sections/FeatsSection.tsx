@@ -1,16 +1,11 @@
-import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { BlankState } from "@/client/src/components/common/index.ts";
 import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
-import {
-  Box,
-  Collapse,
-  IconButton,
-  Link as MuiLink,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Collapse, IconButton, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+
+import { BlankState } from "@/client/src/components/common/index.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+
 import { SheetSection } from "./SheetSection.tsx";
 
 type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number];
@@ -66,7 +61,13 @@ function FeatRow({
   );
 }
 
-function GrantedFeatsSection({ feats, rulesetId }: { feats: NonNullable<FeatsSectionProps["virtualFeats"]>; rulesetId?: string }) {
+function GrantedFeatsSection({
+  feats,
+  rulesetId,
+}: {
+  feats: NonNullable<FeatsSectionProps["virtualFeats"]>;
+  rulesetId?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -92,15 +93,21 @@ function GrantedFeatsSection({ feats, rulesetId }: { feats: NonNullable<FeatsSec
           {feats.map((feat) => {
             const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
             return (
-              <Box
-                key={feat.id}
-                sx={{ borderLeft: "4px solid", borderColor: "primary.main", pl: 2 }}
-              >
+              <Box key={feat.id} sx={{ borderLeft: "4px solid", borderColor: "primary.main", pl: 2 }}>
                 <Typography sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}>
-                  {featLink
-                    ? <MuiLink component={Link} to={featLink} target="_blank" underline="hover" sx={{ color: "primary.main" }}>{feat.name}</MuiLink>
-                    : feat.name
-                  }
+                  {featLink ? (
+                    <MuiLink
+                      component={Link}
+                      to={featLink}
+                      target="_blank"
+                      underline="hover"
+                      sx={{ color: "primary.main" }}
+                    >
+                      {feat.name}
+                    </MuiLink>
+                  ) : (
+                    feat.name
+                  )}
                 </Typography>
                 <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
                   {feat.description || "—"}
@@ -115,11 +122,8 @@ function GrantedFeatsSection({ feats, rulesetId }: { feats: NonNullable<FeatsSec
 }
 
 export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra }: FeatsSectionProps) {
-
   const allFeats = classes
-    ? Object.values(classes).flatMap((klass) =>
-      (klass.levels || []).flatMap((level) => level.feats || [])
-    )
+    ? Object.values(classes).flatMap((klass) => (klass.levels || []).flatMap((level) => level.feats || []))
     : [];
 
   // Group feats by name
@@ -134,9 +138,13 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
   const renderFeatName = (feat: { id?: string; name: string }, suffix?: string) => {
     const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
     const label = suffix ? `${feat.name} ${suffix}` : feat.name;
-    return featLink
-      ? <MuiLink component={Link} to={featLink} target="_blank" underline="hover" sx={{ color: "primary.main" }}>{label}</MuiLink>
-      : label;
+    return featLink ? (
+      <MuiLink component={Link} to={featLink} target="_blank" underline="hover" sx={{ color: "primary.main" }}>
+        {label}
+      </MuiLink>
+    ) : (
+      label
+    );
   };
 
   const featElements = Object.values(groupedFeats).flatMap((featGroup, groupIndex) => {
@@ -171,16 +179,14 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
 
   return (
     <SheetSection title="Feats & Special Abilities">
-      {featElements.length > 0 || hasVirtual
-        ? (
-          <Stack spacing={3}>
-            {featElements}
-            {hasVirtual && <GrantedFeatsSection feats={grantedFeats} rulesetId={rulesetId} />}
-          </Stack>
-        )
-        : (
-          <BlankState title="No feats or special abilities available" />
-        )}
+      {featElements.length > 0 || hasVirtual ? (
+        <Stack spacing={3}>
+          {featElements}
+          {hasVirtual && <GrantedFeatsSection feats={grantedFeats} rulesetId={rulesetId} />}
+        </Stack>
+      ) : (
+        <BlankState title="No feats or special abilities available" />
+      )}
     </SheetSection>
   );
 }

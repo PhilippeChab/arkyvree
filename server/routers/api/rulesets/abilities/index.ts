@@ -1,10 +1,11 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { AbilitiesService } from "@/server/services/rulesets/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { AbilitiesService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -26,7 +27,12 @@ export default new Hono<SessionContext>()
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
 
       const abilitiesService = AbilitiesService.initialize();
-      const result = await abilitiesService.call("getRulesetAbilities", id, { search, childOnly, orderBy, orderDir }, { limit, page });
+      const result = await abilitiesService.call(
+        "getRulesetAbilities",
+        id,
+        { search, childOnly, orderBy, orderDir },
+        { limit, page },
+      );
       return respond(c, result, 200);
     },
   )

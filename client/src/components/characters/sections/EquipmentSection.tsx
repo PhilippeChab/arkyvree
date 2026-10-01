@@ -1,4 +1,11 @@
-import { oneOf } from "@/client/src/lib/oneOf.ts";
+import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material";
+import { Autocomplete, Box, Button, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { InferResponseType } from "hono/client";
+import { useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
+
 import {
   AnimatedAlert,
   BlankState,
@@ -12,27 +19,10 @@ import {
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useDebouncedValue, useListboxQuery, useValidationIssues } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, type RPC, rpc } from "@/client/src/services/rpc.ts";
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-} from "@mui/icons-material";
-import {
-  Autocomplete,
-  Box,
-  Button,
-  IconButton,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { useEffect, useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+
 import {
   detectSlotFromItem,
   EMPTY_INVENTORY_FORM,
@@ -73,9 +63,11 @@ export function EquipmentSection({
   const { data: inventoryItems = [] } = useQuery({
     queryKey: queryKeys.characters.inventory(characterId),
     queryFn: async () => {
-      return parseResponse(rpc.api.characters.inventory[":characterId"].$get({
-        param: { characterId },
-      }));
+      return parseResponse(
+        rpc.api.characters.inventory[":characterId"].$get({
+          param: { characterId },
+        }),
+      );
     },
   });
 
@@ -101,7 +93,10 @@ export function EquipmentSection({
   const { data: itemDetail } = useQuery({
     queryKey: queryKeys.characters.rulesetItem(rulesetId, selectedItem?.id ?? ""),
     queryFn: selectedItem
-      ? () => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId: selectedItem.id } }))
+      ? () =>
+          parseResponse(
+            rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId: selectedItem.id } }),
+          )
       : skipToken,
   });
 
@@ -137,10 +132,7 @@ export function EquipmentSection({
   }, [itemDetail, addItemColumns, addProfile, addForm]);
 
   // Edit dialog properties from the inventory entry
-  const editItemProperties = useMemo(
-    () => editingEntry?.item.properties ?? [],
-    [editingEntry],
-  );
+  const editItemProperties = useMemo(() => editingEntry?.item.properties ?? [], [editingEntry]);
   const editItemColumns: ItemColumns = useMemo(
     () => ({ type: editingEntry?.item.type ?? null, slot: editingEntry?.item.slot ?? "Other" }),
     [editingEntry],
@@ -157,12 +149,7 @@ export function EquipmentSection({
   );
 
   const editSlotWarning = useMemo(
-    () => getSlotConflictWarning(
-      editLocation,
-      editWeaponSet,
-      inventoryItems,
-      editingEntry?.itemId,
-    ),
+    () => getSlotConflictWarning(editLocation, editWeaponSet, inventoryItems, editingEntry?.itemId),
     [editLocation, editWeaponSet, inventoryItems, editingEntry],
   );
 
@@ -174,14 +161,16 @@ export function EquipmentSection({
   } = useListboxQuery({
     queryKey: queryKeys.characters.itemSearch(rulesetId, debouncedItemSearch),
     queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.rulesets[":id"].items.$get({
-        param: { id: rulesetId },
-        query: {
-          page: pageParam.toString(),
-          limit: "10",
-          search: debouncedItemSearch || undefined,
-        },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].items.$get({
+          param: { id: rulesetId },
+          query: {
+            page: pageParam.toString(),
+            limit: "10",
+            search: debouncedItemSearch || undefined,
+          },
+        }),
+      );
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -277,40 +266,43 @@ export function EquipmentSection({
     setDeleteDialogOpen(true);
   };
 
-  const requirementAlert = (visible: boolean, onForce?: () => void) => visible ? (
-    <AnimatedAlert
-      in
-      severity="warning"
-      onClose={() => setValidationErrors([])}
-      action={
-        onForce && (
-          <Button
-            size="small"
-            variant="outlined"
-            color="warning"
-            onClick={onForce}
-            disabled={addMutation.isPending || updateMutation.isPending}
-            sx={{ whiteSpace: "nowrap" }}
-          >
-            Proceed Anyway
-          </Button>
-        )
-      }
-      sx={{ mb: 0, "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 } }}
-    >
-      <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-        Equipment warnings
-      </Typography>
-      <ValidationIssueList issues={validationErrors} />
-    </AnimatedAlert>
-  ) : null;
+  const requirementAlert = (visible: boolean, onForce?: () => void) =>
+    visible ? (
+      <AnimatedAlert
+        in
+        severity="warning"
+        onClose={() => setValidationErrors([])}
+        action={
+          onForce && (
+            <Button
+              size="small"
+              variant="outlined"
+              color="warning"
+              onClick={onForce}
+              disabled={addMutation.isPending || updateMutation.isPending}
+              sx={{ whiteSpace: "nowrap" }}
+            >
+              Proceed Anyway
+            </Button>
+          )
+        }
+        sx={{ mb: 0, "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 } }}
+      >
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+          Equipment warnings
+        </Typography>
+        <ValidationIssueList issues={validationErrors} />
+      </AnimatedAlert>
+    ) : null;
 
   const hasItems = inventoryItems.length > 0;
 
   return (
     <SheetSection
       title="Equipment & Inventory"
-      action={!isArchived && hasItems && (
+      action={
+        !isArchived &&
+        hasItems && (
           <Stack direction="row" spacing={1}>
             {isCustomRuleset && (
               <Button
@@ -323,15 +315,12 @@ export function EquipmentSection({
                 Create Item
               </Button>
             )}
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleAddItem}
-            >
+            <Button variant="contained" size="small" onClick={handleAddItem}>
               Add Item
             </Button>
           </Stack>
-      )}
+        )
+      }
     >
       {hasItems ? (
         <EquipmentTable
@@ -344,16 +333,25 @@ export function EquipmentSection({
           }))}
           encumbrance={encumbrance}
           rulesetId={rulesetId}
-          renderActions={isArchived ? undefined : (entry) => (
-            <Stack direction="row" spacing={0} sx={{ justifyContent: "center" }}>
-              <IconButton size="small" aria-label={`Edit ${entry.name}`} onClick={() => handleEditItem(entry)}>
-                <EditIcon fontSize="small" />
-              </IconButton>
-              <IconButton size="small" color="error" aria-label={`Remove ${entry.name}`} onClick={() => handleDeleteItem(entry.itemId)}>
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Stack>
-          )}
+          renderActions={
+            isArchived
+              ? undefined
+              : (entry) => (
+                  <Stack direction="row" spacing={0} sx={{ justifyContent: "center" }}>
+                    <IconButton size="small" aria-label={`Edit ${entry.name}`} onClick={() => handleEditItem(entry)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      aria-label={`Remove ${entry.name}`}
+                      onClick={() => handleDeleteItem(entry.itemId)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
+                )
+          }
         />
       ) : (
         <BlankState
@@ -361,11 +359,7 @@ export function EquipmentSection({
           description="Add items to this character's inventory."
           action={
             !isArchived ? (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleAddItem}
-              >
+              <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddItem}>
                 Add Item
               </Button>
             ) : undefined
@@ -388,12 +382,17 @@ export function EquipmentSection({
         {requirementAlert(
           validationErrors.length > 0 && addDialogOpen,
           // Through the form, so its own rules still hold on a forced save; the warnings clear once it passes.
-          () => void addForm.handleSubmit((data) => {
-            setValidationErrors([]);
-            addMutation.mutate({ data, force: true });
-          })(),
+          () =>
+            void addForm.handleSubmit((data) => {
+              setValidationErrors([]);
+              addMutation.mutate({ data, force: true });
+            })(),
         )}
-        {addSlotWarning && <AnimatedAlert in severity="warning">{addSlotWarning}</AnimatedAlert>}
+        {addSlotWarning && (
+          <AnimatedAlert in severity="warning">
+            {addSlotWarning}
+          </AnimatedAlert>
+        )}
         <Controller
           name="selectedItem"
           control={addForm.control}
@@ -431,13 +430,11 @@ export function EquipmentSection({
                       ...params.slotProps.input,
                       endAdornment: (
                         <>
-                          {isLoadingSearch ? (
-                            <DiceSpinner size="small" />
-                          ) : null}
+                          {isLoadingSearch ? <DiceSpinner size="small" /> : null}
                           {params.slotProps.input.endAdornment}
                         </>
                       ),
-                    }
+                    },
                   }}
                 />
               )}
@@ -446,11 +443,15 @@ export function EquipmentSection({
                   <Box>
                     <Typography variant="body2">{option.name}</Typography>
                     {(() => {
-                      const details = [formatCost(option.costGp), formatWeight(option.weight)].filter(Boolean).join(" | ");
-                      return details && (
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                          {details}
-                        </Typography>
+                      const details = [formatCost(option.costGp), formatWeight(option.weight)]
+                        .filter(Boolean)
+                        .join(" | ");
+                      return (
+                        details && (
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                            {details}
+                          </Typography>
+                        )
                       );
                     })()}
                   </Box>
@@ -461,8 +462,9 @@ export function EquipmentSection({
                 listbox: {
                   component: ScrollSafeListbox,
                   onScroll: handleItemsScroll,
-                }
-              }} />
+                },
+              }}
+            />
           )}
         />
         <InventoryPlacementFields form={addForm} profile={selectedItem ? addProfile : null} />
@@ -476,27 +478,26 @@ export function EquipmentSection({
         }}
         title="Edit Inventory Item"
         form={editForm}
-        onSubmit={(data) =>
-          editingEntry && updateMutation.mutate({ itemId: editingEntry.itemId, data })}
+        onSubmit={(data) => editingEntry && updateMutation.mutate({ itemId: editingEntry.itemId, data })}
         isLoading={updateMutation.isPending}
         maxWidth="md"
       >
         {requirementAlert(
           validationErrors.length > 0 && editDialogOpen,
           editingEntry
-            ? () => void editForm.handleSubmit((data) => {
-              setValidationErrors([]);
-              updateMutation.mutate({ itemId: editingEntry.itemId, data, force: true });
-            })()
+            ? () =>
+                void editForm.handleSubmit((data) => {
+                  setValidationErrors([]);
+                  updateMutation.mutate({ itemId: editingEntry.itemId, data, force: true });
+                })()
             : undefined,
         )}
-        {editSlotWarning && <AnimatedAlert in severity="warning">{editSlotWarning}</AnimatedAlert>}
-        <TextField
-          label="Item"
-          value={editingEntry?.item.name ?? ""}
-          fullWidth
-          disabled
-        />
+        {editSlotWarning && (
+          <AnimatedAlert in severity="warning">
+            {editSlotWarning}
+          </AnimatedAlert>
+        )}
+        <TextField label="Item" value={editingEntry?.item.name ?? ""} fullWidth disabled />
         <InventoryPlacementFields form={editForm} profile={editProfile} />
       </EditDialog>
       {/* Remove Confirmation */}

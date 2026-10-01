@@ -1,25 +1,15 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import type { Holders } from "@/server/rulesets/types.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
-import {
-  ALLOWED_ALL,
-  type AptitudeLevelData,
-} from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
+import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import type DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
-import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import type DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
-import type {
-  Aptitude,
-  CharacterLevel,
-  Klass,
-  KlassLevel,
-  Modifier,
-  Power,
-  Property,
-} from "@/shared/relations.ts";
+import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
+import type { Aptitude, CharacterLevel, Klass, KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
 import { spellPossessionSlug, stripSeparators } from "@/shared/utils.ts";
+
 import type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR } from "./DetailedCharacterDataLoader.ts";
 
 export default class DetailedCharacterSpellcasting {
@@ -100,12 +90,7 @@ export default class DetailedCharacterSpellcasting {
     let maxDivine = 0;
     for (const mod of modifiers) {
       const parts = mod.target.split(".");
-      if (
-        parts.length !== 4 ||
-        parts[0] !== "aptitudes" ||
-        parts[3] !== "allowed"
-      )
-        continue;
+      if (parts.length !== 4 || parts[0] !== "aptitudes" || parts[3] !== "allowed") continue;
       const casterType = spellAptitudeToCasterType.get(parts[1]);
       if (!casterType) continue;
       const spellLevel = Number(parts[2]);
@@ -179,8 +164,7 @@ export default class DetailedCharacterSpellcasting {
     // instead of O(classes × klassLevels × feats × characterLevels).
     const rulesetKlassById = new Map<string, Klass>();
     for (const k of rulesetKlasses) rulesetKlassById.set(k.id, k);
-    const charLevelKey = (characterLevelId: string, klassLevelId: string) =>
-      `${characterLevelId}:${klassLevelId}`;
+    const charLevelKey = (characterLevelId: string, klassLevelId: string) => `${characterLevelId}:${klassLevelId}`;
     const charLevelIndex = new Set<string>();
     for (const cl of characterLevels) {
       charLevelIndex.add(charLevelKey(cl.id, cl.klassLevelId));
@@ -200,19 +184,12 @@ export default class DetailedCharacterSpellcasting {
       // Feats granting this bonus — same answer regardless of which klass level
       // we're checking, so compute once per class rather than per klass level.
       const featsWithTargetMod = feats.filter(
-        (f) =>
-          f.characterLevelId &&
-          f.modifiers.some(
-            (m) => m.target === target && m.operator === "add",
-          ),
+        (f) => f.characterLevelId && f.modifiers.some((m) => m.target === target && m.operator === "add"),
       );
 
       const grantingLevels: Array<{ klassName: string; level: number }> = [];
       for (const kl of klassLevels) {
-        if (
-          kl.modifiers.some((m) => m.target === target && m.operator === "add")
-        )
-          continue;
+        if (kl.modifiers.some((m) => m.target === target && m.operator === "add")) continue;
         for (const feat of featsWithTargetMod) {
           if (!charLevelIndex.has(charLevelKey(feat.characterLevelId, kl.id))) continue;
           const klass = rulesetKlassById.get(kl.klassId);
@@ -227,11 +204,7 @@ export default class DetailedCharacterSpellcasting {
       const receivingBonusLevels = (bonusLevelsByKlassId.get(klassData.klass.id) ?? [])
         .slice()
         .sort((a, b) => a.level - b.level);
-      for (
-        let i = 0;
-        i < receivingBonusLevels.length && i < grantingLevels.length;
-        i++
-      ) {
+      for (let i = 0; i < receivingBonusLevels.length && i < grantingLevels.length; i++) {
         this.bonusKlassLevelAttribution.set(
           receivingBonusLevels[i].id,
           `${grantingLevels[i].klassName} Level ${grantingLevels[i].level}`,
@@ -242,9 +215,7 @@ export default class DetailedCharacterSpellcasting {
 
   applyBonusCasterLevelModifiers(holders: Holders, feats: FeatWithPMR[]) {
     // Filter to aptitudes.* targets only — we only want spell progression
-    const aptitudeModifiers = this.bonusKlassLevelModifiers.filter((m) =>
-      m.target.startsWith("aptitudes."),
-    );
+    const aptitudeModifiers = this.bonusKlassLevelModifiers.filter((m) => m.target.startsWith("aptitudes."));
 
     for (const modifier of aptitudeModifiers) {
       this.characterModifiers.evaluateModifier(modifier, holders);
@@ -286,30 +257,19 @@ export default class DetailedCharacterSpellcasting {
 
     // For each domain spell aptitude, sync levels with the parent class spell aptitude
     for (const [domainAptKey, className] of domainAptKeys) {
-      const domainApt = aptitudes[domainAptKey] as
-        | Record<string, unknown>
-        | undefined;
-      const classSpellApt = aptitudes[stripSeparators(className + "spells")] as
-        | Record<string, unknown>
-        | undefined;
+      const domainApt = aptitudes[domainAptKey] as Record<string, unknown> | undefined;
+      const classSpellApt = aptitudes[stripSeparators(className + "spells")] as Record<string, unknown> | undefined;
       if (!domainApt || !classSpellApt) continue;
 
       for (let level = 1; level <= 9; level++) {
-        const classLevel = classSpellApt[String(level)] as
-          | AptitudeLevelData
-          | undefined;
-        const domainLevel = domainApt[String(level)] as
-          | AptitudeLevelData
-          | undefined;
+        const classLevel = classSpellApt[String(level)] as AptitudeLevelData | undefined;
+        const domainLevel = domainApt[String(level)] as AptitudeLevelData | undefined;
         if (!classLevel || !domainLevel) continue;
 
         if (classLevel.allowed === ALLOWED_ALL && domainLevel.allowed === 0) {
           domainLevel.allowed = ALLOWED_ALL;
           domainLevel.uses = 1;
-        } else if (
-          classLevel.allowed === 0 &&
-          domainLevel.allowed === ALLOWED_ALL
-        ) {
+        } else if (classLevel.allowed === 0 && domainLevel.allowed === ALLOWED_ALL) {
           domainLevel.allowed = 0;
           domainLevel.uses = 0;
         }
@@ -317,9 +277,7 @@ export default class DetailedCharacterSpellcasting {
     }
   }
 
-  applyBonusSpellsFromAbilities(
-    klassBonusSpellAbilityMap: Map<string, string>,
-  ) {
+  applyBonusSpellsFromAbilities(klassBonusSpellAbilityMap: Map<string, string>) {
     const characterClasses = this.classes.getCharacterClasses();
     const aptitudes = this.aptitudes.getAptitudes();
 
@@ -332,17 +290,11 @@ export default class DetailedCharacterSpellcasting {
 
       const aptitudeKey = stripSeparators(className + " Spells");
       const aptitude = aptitudes[aptitudeKey];
-      if (
-        !aptitude ||
-        !this.aptitudes.isLeveledAptitude(aptitudeKey)
-      )
-        continue;
+      if (!aptitude || !this.aptitudes.isLeveledAptitude(aptitudeKey)) continue;
 
       const aptitudeObj = aptitude as Record<string, unknown>;
       for (let spellLevel = 1; spellLevel <= 9; spellLevel++) {
-        const levelData = aptitudeObj[String(spellLevel)] as
-          | AptitudeLevelData
-          | undefined;
+        const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
         if (!levelData || levelData.allowed === 0) continue;
         if (abilityMod < spellLevel) continue;
 
@@ -353,10 +305,7 @@ export default class DetailedCharacterSpellcasting {
   }
 
   /** Full computation: scans spell aptitude data for actual max spell levels. */
-  computeSpellcasting(
-    holders: Holders,
-    klassCasterTypeMap: Map<string, "Arcane" | "Divine">,
-  ) {
+  computeSpellcasting(holders: Holders, klassCasterTypeMap: Map<string, "Arcane" | "Divine">) {
     const characterClasses = this.classes.getCharacterClasses();
     const aptitudes = this.aptitudes.getAptitudes();
 
@@ -369,18 +318,12 @@ export default class DetailedCharacterSpellcasting {
 
       const aptitudeKey = stripSeparators(className + " Spells");
       const aptitude = aptitudes[aptitudeKey];
-      if (
-        !aptitude ||
-        !this.aptitudes.isLeveledAptitude(aptitudeKey)
-      )
-        continue;
+      if (!aptitude || !this.aptitudes.isLeveledAptitude(aptitudeKey)) continue;
 
       const aptitudeObj = aptitude as Record<string, unknown>;
       let maxLevel = 0;
       for (let spellLevel = 9; spellLevel >= 0; spellLevel--) {
-        const levelData = aptitudeObj[String(spellLevel)] as
-          | AptitudeLevelData
-          | undefined;
+        const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
         if (levelData && levelData.allowed !== 0) {
           maxLevel = spellLevel;
           break;
@@ -395,10 +338,7 @@ export default class DetailedCharacterSpellcasting {
     holders["spellcasting"] = { getSpellcasting: () => spellcasting };
   }
 
-  fetchAptitudePowerData(
-    rulesetData: CachedRulesetData,
-    powers: PowerWithPMR[],
-  ) {
+  fetchAptitudePowerData(rulesetData: CachedRulesetData, powers: PowerWithPMR[]) {
     const aptitudes = this.aptitudes.getAptitudes();
     const perAptitudeLevels = new Map<string, Set<number>>();
     const unleveledAptitudeIds = new Set<string>();
@@ -408,9 +348,7 @@ export default class DetailedCharacterSpellcasting {
         const aptitudeObj = aptitude as Record<string, unknown>;
         const levels = new Set<number>();
         for (let level = 0; level <= 9; level++) {
-          const levelData = aptitudeObj[String(level)] as
-            | { allowed: number }
-            | undefined;
+          const levelData = aptitudeObj[String(level)] as { allowed: number } | undefined;
           if (levelData && levelData.allowed === ALLOWED_ALL) {
             levels.add(level);
           }
@@ -423,14 +361,12 @@ export default class DetailedCharacterSpellcasting {
       }
     }
 
-    if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0)
-      return;
+    if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
 
     // Iterate the composed powers once, emitting one row per matching
     // (power, aptitude) link — mirrors the old SQL join shape.
-    const allAptitudePowers: Array<
-      Power & { aptitudeId: string; powerLevel: number | null; saveName: string | null }
-    > = [];
+    const allAptitudePowers: Array<Power & { aptitudeId: string; powerLevel: number | null; saveName: string | null }> =
+      [];
     for (const power of rulesetData.powers) {
       const save = power.saveId ? rulesetData.savesById.get(power.saveId) : undefined;
       const saveName = save?.name ?? null;
@@ -491,9 +427,7 @@ export default class DetailedCharacterSpellcasting {
     const aptitudeIdToClassName = new Map<string, string>();
     const classes = this.classes.getClasses();
     const aptitudes = this.aptitudes.getAptitudes();
-    const aptitudePowerAptitudeIds = new Set(
-      this.allAptitudePowers.map((p) => p.aptitudeId),
-    );
+    const aptitudePowerAptitudeIds = new Set(this.allAptitudePowers.map((p) => p.aptitudeId));
 
     for (const modifier of appliedModifiers) {
       if (modifier.sourceType !== "klass_levels") continue;
@@ -507,9 +441,7 @@ export default class DetailedCharacterSpellcasting {
 
       // Find which class owns this klass level
       for (const [className, klassData] of Object.entries(classes)) {
-        const ownsLevel = klassData.levels.some(
-          (level) => level.klassLevel.id === modifier.sourceId,
-        );
+        const ownsLevel = klassData.levels.some((level) => level.klassLevel.id === modifier.sourceId);
         if (ownsLevel) {
           aptitudeIdToClassName.set(aptitude.id, className);
           break;
@@ -518,9 +450,7 @@ export default class DetailedCharacterSpellcasting {
 
       // Fallback: check bonus klass levels from caster level advancement
       if (!aptitudeIdToClassName.has(aptitude.id)) {
-        const bonusClassName = this.bonusKlassLevelClassMap.get(
-          modifier.sourceId,
-        );
+        const bonusClassName = this.bonusKlassLevelClassMap.get(modifier.sourceId);
         if (bonusClassName) {
           aptitudeIdToClassName.set(aptitude.id, bonusClassName);
         }
@@ -541,9 +471,7 @@ export default class DetailedCharacterSpellcasting {
 
       // Trace feat → klassLevelId → class
       for (const [className, klassData] of Object.entries(classes)) {
-        const ownsLevel = klassData.levels.some((level) =>
-          level.feats.some((f) => f.id === modifier.sourceId),
-        );
+        const ownsLevel = klassData.levels.some((level) => level.feats.some((f) => f.id === modifier.sourceId));
         if (ownsLevel) {
           aptitudeIdToClassName.set(aptitude.id, className);
           break;
@@ -573,9 +501,9 @@ export default class DetailedCharacterSpellcasting {
       if (!klassData || klassData.levels.length === 0) continue;
 
       // Merge domain spells into the class's main spell list
-      const powerAptitude = Object.values(aptitudes).find(
-        (a: { id: string }) => a.id === power.aptitudeId,
-      ) as { id: string; name: string } | undefined;
+      const powerAptitude = Object.values(aptitudes).find((a: { id: string }) => a.id === power.aptitudeId) as
+        | { id: string; name: string }
+        | undefined;
       const resolvedAptitudeId = powerAptitude?.name.endsWith("Domain Spells")
         ? (classNameToSpellAptitudeId.get(className) ?? power.aptitudeId)
         : power.aptitudeId;
@@ -587,9 +515,7 @@ export default class DetailedCharacterSpellcasting {
         klassLevelId: firstLevel.klassLevel.id,
         characterLevelId: firstLevel.characterLevel.id,
         free: true,
-        properties: this.aptitudePowerProperties.filter(
-          (p) => p.entityId === power.id,
-        ),
+        properties: this.aptitudePowerProperties.filter((p) => p.entityId === power.id),
         modifiers: [],
         requirements: [],
       };
@@ -602,49 +528,31 @@ export default class DetailedCharacterSpellcasting {
       this.characterPowers.addPowerEntries(newPowers);
       for (const power of newPowers) {
         // Mark as known in spell map
-        const apt = rulesetAptitudes.find(a => a.id === power.aptitudeId);
+        const apt = rulesetAptitudes.find((a) => a.id === power.aptitudeId);
         if (apt) {
-          const entry = this.characterPowers.getSpellEntry(
-            stripSeparators(power.name),
-            spellPossessionSlug(apt.name),
-          );
+          const entry = this.characterPowers.getSpellEntry(stripSeparators(power.name), spellPossessionSlug(apt.name));
           if (entry) entry.known = true;
         }
 
         let abilityDcName: string | null = null;
-        const klassLevel = klassLevels.find(
-          (kl) => kl.id === power.klassLevelId,
-        );
+        const klassLevel = klassLevels.find((kl) => kl.id === power.klassLevelId);
         if (klassLevel) {
-          abilityDcName =
-            klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
+          abilityDcName = klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
         }
-        this.powerGroupings.registerPower(
-          { ...power, abilityDcName },
-          power.properties,
-        );
+        this.powerGroupings.registerPower({ ...power, abilityDcName }, power.properties);
       }
-      this.characterPowers.injectGroupings(
-        this.powerGroupings.getPowerGroupings(),
-      );
+      this.characterPowers.injectGroupings(this.powerGroupings.getPowerGroupings());
     }
   }
 
-  buildSpellTags(
-    feats: FeatWithPMR[],
-    rulesetAptitudes: Aptitude[],
-  ) {
+  buildSpellTags(feats: FeatWithPMR[], rulesetAptitudes: Aptitude[]) {
     const characterFeatNames = new Set(feats.map((f) => f.name));
 
     const taggedAptitudes = new Map<string, string>();
     for (const apt of rulesetAptitudes) {
-      if (
-        apt.name.endsWith("Domain Spells") ||
-        apt.name.endsWith("Specialist Spells")
-      ) {
+      if (apt.name.endsWith("Domain Spells") || apt.name.endsWith("Specialist Spells")) {
         const featName = apt.name.replace(/ Spells$/, "");
-        if (characterFeatNames.has(featName))
-          taggedAptitudes.set(apt.id, featName);
+        if (characterFeatNames.has(featName)) taggedAptitudes.set(apt.id, featName);
       }
     }
     if (taggedAptitudes.size === 0) return;

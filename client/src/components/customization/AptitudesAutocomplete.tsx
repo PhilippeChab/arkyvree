@@ -1,10 +1,11 @@
+import { Autocomplete, type AutocompleteInputChangeReason, Chip, TextField } from "@mui/material";
+import type { InferResponseType } from "hono/client";
+import { useState } from "react";
+
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Autocomplete, type AutocompleteInputChangeReason, Chip, TextField } from "@mui/material";
-import type { InferResponseType } from "hono/client";
-import { useState } from "react";
 
 type AptitudesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"], 200>;
 export type Aptitude = AptitudesPaginated["items"][number];
@@ -13,18 +14,24 @@ function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
 
-  const { items: fetchedOptions, isLoading, onScroll } = useListboxQuery({
+  const {
+    items: fetchedOptions,
+    isLoading,
+    onScroll,
+  } = useListboxQuery({
     queryKey: queryKeys.rulesets.sectionSearch(rulesetId, "aptitudes", debouncedSearch, scope),
     queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.rulesets[":id"].aptitudes.$get({
-        param: { id: rulesetId },
-        query: {
-          limit: "10",
-          page: pageParam.toString(),
-          search: debouncedSearch || undefined,
-          scope: scope || undefined,
-        },
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].aptitudes.$get({
+          param: { id: rulesetId },
+          query: {
+            limit: "10",
+            page: pageParam.toString(),
+            search: debouncedSearch || undefined,
+            scope: scope || undefined,
+          },
+        }),
+      );
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -59,10 +66,7 @@ export function AptitudesAutocomplete({ rulesetId, value, onChange, disabled, sc
 
   // Merge selected values with fetched options so selected items always appear
   const selectedIds = new Set(value.map((v) => v.id));
-  const options = [
-    ...value,
-    ...fetchedOptions.filter((opt) => !selectedIds.has(opt.id)),
-  ];
+  const options = [...value, ...fetchedOptions.filter((opt) => !selectedIds.has(opt.id))];
 
   return (
     <Autocomplete
@@ -78,9 +82,7 @@ export function AptitudesAutocomplete({ rulesetId, value, onChange, disabled, sc
           return <Chip key={key} label={option.name} size="small" {...chipProps} />;
         })
       }
-      renderInput={(params) => (
-        <TextField {...params} label="Aptitudes" />
-      )}
+      renderInput={(params) => <TextField {...params} label="Aptitudes" />}
     />
   );
 }
@@ -95,13 +97,20 @@ interface AptitudeAutocompleteProps {
   scope?: "feats" | "spells";
 }
 
-export function AptitudeAutocomplete({ rulesetId, value, onChange, disabled, label = "Aptitude", size, scope }: AptitudeAutocompleteProps) {
+export function AptitudeAutocomplete({
+  rulesetId,
+  value,
+  onChange,
+  disabled,
+  label = "Aptitude",
+  size,
+  scope,
+}: AptitudeAutocompleteProps) {
   const { fetchedOptions, autocompleteProps } = useAptitudeOptions(rulesetId, scope);
 
   // Ensure selected value always appears in options
-  const options = value && !fetchedOptions.some((opt) => opt.id === value.id)
-    ? [value, ...fetchedOptions]
-    : fetchedOptions;
+  const options =
+    value && !fetchedOptions.some((opt) => opt.id === value.id) ? [value, ...fetchedOptions] : fetchedOptions;
 
   return (
     <Autocomplete
@@ -111,9 +120,7 @@ export function AptitudeAutocomplete({ rulesetId, value, onChange, disabled, lab
       onChange={(_, newValue) => onChange(newValue)}
       disabled={disabled}
       size={size}
-      renderInput={(params) => (
-        <TextField {...params} label={label} />
-      )}
+      renderInput={(params) => <TextField {...params} label={label} />}
     />
   );
 }

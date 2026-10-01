@@ -1,11 +1,8 @@
 import type { Db } from "@/server/database/index.ts";
-import {
-  Aptitudes,
-  PowersAptitudes,
-  Properties,
-} from "@/server/repositories/index.ts";
-import type { PowerBody, PowersHooks } from "@/server/rulesets/hooks/PowersHooks.ts";
+import { Aptitudes, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
 import { SPELL_SCHOOL } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import type { PowerBody, PowersHooks } from "@/server/rulesets/hooks/PowersHooks.ts";
+
 import {
   generateSpellFocusFeats,
   generateSpellProperties,
@@ -30,7 +27,6 @@ export class Dnd35PowersHooks implements PowersHooks {
   async generateGroupingFeats(tx: Db, rulesetId: string, sourceChain: string[], value: string): Promise<void> {
     await generateSpellFocusFeats(tx, rulesetId, sourceChain, value);
   }
-
 
   async afterPowerLinked(tx: Db, powerId: string, rulesetId: string, sourceChain: string[]): Promise<void> {
     // Get the power's school from properties

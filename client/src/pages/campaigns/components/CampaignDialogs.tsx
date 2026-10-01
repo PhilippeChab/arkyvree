@@ -1,6 +1,17 @@
-import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
-import { nameRules } from "@/client/src/lib/validation.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import {
+  Edit as EditIcon,
+  AdminPanelSettings as GMIcon,
+  ExitToApp as LeaveIcon,
+  PersonAdd as PersonAddIcon,
+  Person as PersonIcon,
+  PersonRemove as PersonRemoveIcon,
+  Send as SendIcon,
+} from "@mui/icons-material";
+import { Alert, Box, TextField, Typography } from "@mui/material";
+import type { InferRequestType } from "hono/client";
+import { type ElementType, useState } from "react";
+import { Controller, type UseFormReturn } from "react-hook-form";
+
 import {
   BaseRulesetAlert,
   ConfirmDialog,
@@ -12,34 +23,16 @@ import {
   SelectField,
 } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
+import { nameRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
-import {
-  Edit as EditIcon,
-  AdminPanelSettings as GMIcon,
-  ExitToApp as LeaveIcon,
-  PersonAdd as PersonAddIcon,
-  Person as PersonIcon,
-  PersonRemove as PersonRemoveIcon,
-  Send as SendIcon,
-} from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  TextField,
-  Typography,
-} from "@mui/material";
-import type { InferRequestType } from "hono/client";
-import { type ElementType, useState } from "react";
-import { Controller, type UseFormReturn } from "react-hook-form";
+
 import type { PlayerFormData, PlayerSlot } from "./players.ts";
 
-export type CreateCampaignFormData = InferRequestType<
-  (typeof rpc.api.campaigns)["$post"]
->["json"];
+export type CreateCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)["$post"]>["json"];
 
-export type EditCampaignFormData = InferRequestType<
-  (typeof rpc.api.campaigns)[":id"]["$put"]
->["json"];
+export type EditCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)[":id"]["$put"]>["json"];
 
 interface CreateCampaignDialogProps {
   open: boolean;
@@ -49,13 +42,7 @@ interface CreateCampaignDialogProps {
   isLoading: boolean;
 }
 
-export function CreateCampaignDialog({
-  open,
-  onClose,
-  form,
-  onSubmit,
-  isLoading,
-}: CreateCampaignDialogProps) {
+export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading }: CreateCampaignDialogProps) {
   const [rulesetSearch, setRulesetSearch] = useState("");
   const debouncedRulesetSearch = useDebouncedValue(rulesetSearch);
 
@@ -69,7 +56,7 @@ export function CreateCampaignDialog({
   });
 
   const rulesets = publishedRulesets
-    .map((r) => ({ ...r, group: r.status === "Draft" ? "My Drafts" as const : "Published" as const }))
+    .map((r) => ({ ...r, group: r.status === "Draft" ? ("My Drafts" as const) : ("Published" as const) }))
     .sort((a, b) => (a.group === b.group ? 0 : a.group === "My Drafts" ? -1 : 1));
   const [selectedRuleset, setSelectedRuleset] = useState<(typeof rulesets)[number] | null>(null);
 
@@ -110,11 +97,7 @@ export function CreateCampaignDialog({
           />
         )}
       />
-      <DescriptionField
-        {...form.register("description")}
-        disabled={isLoading}
-        rows={4}
-      />
+      <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
     </CreateDialog>
   );
 }
@@ -127,13 +110,7 @@ interface EditCampaignDialogProps {
   isLoading: boolean;
 }
 
-export function EditCampaignDialog({
-  open,
-  onClose,
-  form,
-  onSubmit,
-  isLoading,
-}: EditCampaignDialogProps) {
+export function EditCampaignDialog({ open, onClose, form, onSubmit, isLoading }: EditCampaignDialogProps) {
   return (
     <EditDialog
       open={open}
@@ -150,11 +127,7 @@ export function EditCampaignDialog({
         autoFocus
         disabled={isLoading}
       />
-      <DescriptionField
-        {...form.register("description")}
-        disabled={isLoading}
-        rows={4}
-      />
+      <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
     </EditDialog>
   );
 }
@@ -210,13 +183,7 @@ interface AddPlayerDialogProps {
   isLoading: boolean;
 }
 
-export function AddPlayerDialog({
-  open,
-  onClose,
-  form,
-  onSubmit,
-  isLoading,
-}: AddPlayerDialogProps) {
+export function AddPlayerDialog({ open, onClose, form, onSubmit, isLoading }: AddPlayerDialogProps) {
   const inviting = !!form.watch("email");
 
   return (
@@ -251,14 +218,7 @@ interface EditPlayerDialogProps {
   slot: PlayerSlot | null;
 }
 
-export function EditPlayerDialog({
-  open,
-  onClose,
-  form,
-  onSubmit,
-  isLoading,
-  slot,
-}: EditPlayerDialogProps) {
+export function EditPlayerDialog({ open, onClose, form, onSubmit, isLoading, slot }: EditPlayerDialogProps) {
   const pendingInvite = slot?.pendingInvite;
   const inviting = !!form.watch("email");
 
@@ -273,47 +233,39 @@ export function EditPlayerDialog({
       submitLabel={pendingInvite ? "Update Role" : inviting ? "Send Invite" : "Update Player"}
       submitIcon={inviting ? <SendIcon /> : <EditIcon />}
     >
-      {slot?.state === "assigned"
-        ? (
-          <Alert severity="info">
-            <Typography variant="body2">
-              This player slot is assigned to an active user.
-            </Typography>
-          </Alert>
-        )
-        : pendingInvite
-        ? (
-          <Alert severity="warning">
-            <Typography variant="body2">
-              This player slot has a pending invite sent on{" "}
-              {formatDate(pendingInvite.createdAt)}.
-            </Typography>
-          </Alert>
-        )
-        : (
-          <Alert severity="warning">
-            <Typography variant="body2">
-              This player slot is not linked to any user. Enter an email address to send an
-              invite.
-            </Typography>
-          </Alert>
-        )}
+      {slot?.state === "assigned" ? (
+        <Alert severity="info">
+          <Typography variant="body2">This player slot is assigned to an active user.</Typography>
+        </Alert>
+      ) : pendingInvite ? (
+        <Alert severity="warning">
+          <Typography variant="body2">
+            This player slot has a pending invite sent on {formatDate(pendingInvite.createdAt)}.
+          </Typography>
+        </Alert>
+      ) : (
+        <Alert severity="warning">
+          <Typography variant="body2">
+            This player slot is not linked to any user. Enter an email address to send an invite.
+          </Typography>
+        </Alert>
+      )}
 
-      {pendingInvite
-        ? (
-          <TextField
-            label="Invited email"
-            fullWidth
-            value={pendingInvite.usersInAccount?.emailAddress ?? pendingInvite.email ?? ""}
-            disabled
-            slotProps={{
-              input: {
-                readOnly: true,
-              },
-            }}
-          />
-        )
-        : slot?.state === "unassigned" && <PlayerEmailField form={form} isLoading={isLoading} />}
+      {pendingInvite ? (
+        <TextField
+          label="Invited email"
+          fullWidth
+          value={pendingInvite.usersInAccount?.emailAddress ?? pendingInvite.email ?? ""}
+          disabled
+          slotProps={{
+            input: {
+              readOnly: true,
+            },
+          }}
+        />
+      ) : (
+        slot?.state === "unassigned" && <PlayerEmailField form={form} isLoading={isLoading} />
+      )}
 
       <PlayerRoleSelect form={form} isLoading={isLoading} />
     </EditDialog>
@@ -345,15 +297,16 @@ export function RemovePlayerDialog({
       onConfirm={onConfirm}
       isLoading={isLoading}
       title={isSelfRemoval ? "Leave Campaign" : "Remove Player"}
-      message={isSelfRemoval ? (
-        "Are you sure you want to leave this campaign? You will lose access unless re-invited."
-      ) : (
-        <>
-          Are you sure you want to remove <strong>{slot?.name}</strong> from this campaign?
-          {slot?.pendingInvite && " This will also cancel any pending invitations."}{" "}
-          This action cannot be undone.
-        </>
-      )}
+      message={
+        isSelfRemoval ? (
+          "Are you sure you want to leave this campaign? You will lose access unless re-invited."
+        ) : (
+          <>
+            Are you sure you want to remove <strong>{slot?.name}</strong> from this campaign?
+            {slot?.pendingInvite && " This will also cancel any pending invitations."} This action cannot be undone.
+          </>
+        )
+      }
       confirmLabel={isSelfRemoval ? "Leave" : "Remove Player"}
       confirmColor={isSelfRemoval ? "warning" : "error"}
       confirmIcon={isSelfRemoval ? <LeaveIcon /> : <PersonRemoveIcon />}

@@ -1,8 +1,9 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
-import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
-import type Dnd35DetailedCharacter from "./DetailedCharacter.ts";
+
 import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 import { scaledFeats, scaledSkillTotals } from "./bondedScaling.ts";
+import type Dnd35DetailedCharacter from "./DetailedCharacter.ts";
+import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 
 /**
  * SRD basics-table progression keyed by effective AC level (data-driven sum
@@ -19,20 +20,20 @@ type BasicsRow = {
 };
 
 const BASICS_TABLE: BasicsRow[] = [
-  { bonusHD: 0,  natural: 0,  strDex: 0 },
-  { bonusHD: 0,  natural: 0,  strDex: 0 },
-  { bonusHD: 2,  natural: 2,  strDex: 1 },
-  { bonusHD: 2,  natural: 2,  strDex: 1 },
-  { bonusHD: 2,  natural: 2,  strDex: 1 },
-  { bonusHD: 4,  natural: 4,  strDex: 2 },
-  { bonusHD: 4,  natural: 4,  strDex: 2 },
-  { bonusHD: 4,  natural: 4,  strDex: 2 },
-  { bonusHD: 6,  natural: 6,  strDex: 3 },
-  { bonusHD: 6,  natural: 6,  strDex: 3 },
-  { bonusHD: 6,  natural: 6,  strDex: 3 },
-  { bonusHD: 8,  natural: 8,  strDex: 4 },
-  { bonusHD: 8,  natural: 8,  strDex: 4 },
-  { bonusHD: 8,  natural: 8,  strDex: 4 },
+  { bonusHD: 0, natural: 0, strDex: 0 },
+  { bonusHD: 0, natural: 0, strDex: 0 },
+  { bonusHD: 2, natural: 2, strDex: 1 },
+  { bonusHD: 2, natural: 2, strDex: 1 },
+  { bonusHD: 2, natural: 2, strDex: 1 },
+  { bonusHD: 4, natural: 4, strDex: 2 },
+  { bonusHD: 4, natural: 4, strDex: 2 },
+  { bonusHD: 4, natural: 4, strDex: 2 },
+  { bonusHD: 6, natural: 6, strDex: 3 },
+  { bonusHD: 6, natural: 6, strDex: 3 },
+  { bonusHD: 6, natural: 6, strDex: 3 },
+  { bonusHD: 8, natural: 8, strDex: 4 },
+  { bonusHD: 8, natural: 8, strDex: 4 },
+  { bonusHD: 8, natural: 8, strDex: 4 },
   { bonusHD: 10, natural: 10, strDex: 5 },
   { bonusHD: 10, natural: 10, strDex: 5 },
   { bonusHD: 10, natural: 10, strDex: 5 },
@@ -86,10 +87,7 @@ export default class DetailedCharacterAnimalCompanion extends DetailedCharacterB
     this.applySkillTotals(scaledSkillTotals(raceStats, totalHD));
   }
 
-  protected async applyMasterDerivation(
-    parentCharacterId: string,
-    rulesetData: CachedRulesetData,
-  ): Promise<void> {
+  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
     const effective = getAnimalCompanionEffectiveLevel(master);
     const row = basicsAt(effective);

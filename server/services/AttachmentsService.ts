@@ -4,13 +4,7 @@ import { sql } from "drizzle-orm";
 
 import { blobsInStorage } from "@/drizzle/schema.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
-import {
-  BadRequestError,
-  ConflictError,
-  ForbiddenError,
-  InternalError,
-  NotFoundError,
-} from "@/server/errors/index.ts";
+import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { getStorage } from "@/server/storage/s3.ts";
@@ -177,20 +171,12 @@ function urlFor(blob: { key: string }): string | null {
 
 // Polymorphic attachments don't cascade with their owner — when a User or Character
 // is hard-deleted, call this so the sweep can reclaim their orphaned blobs.
-export async function purgeAttachmentsForRecords(
-  tx: Db,
-  recordType: string,
-  recordIds: string[],
-): Promise<void> {
+export async function purgeAttachmentsForRecords(tx: Db, recordType: string, recordIds: string[]): Promise<void> {
   if (recordIds.length === 0) return;
   await Attachments.delete(tx, { recordType, recordIds });
 }
 
-export async function urlForSlot(
-  recordType: string,
-  recordId: string,
-  name: string,
-): Promise<string | null> {
+export async function urlForSlot(recordType: string, recordId: string, name: string): Promise<string | null> {
   const row = await Attachments.findOneWithBlob(db, { recordType, recordId, name });
   return row ? urlFor(row) : null;
 }
@@ -201,10 +187,7 @@ function isUniqueViolation(err: unknown): boolean {
   return e.code === "23505" || e.cause?.code === "23505";
 }
 
-async function findOrphanedBlob(
-  tx: Db,
-  blobId: string,
-): Promise<{ id: string; key: string } | null> {
+async function findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
   const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
   if (refs.length > 0) return null;
   const blob = await Blobs.findOne(tx, { id: blobId });
@@ -218,9 +201,7 @@ async function purgeOrphan(orphan: { id: string; key: string } | null): Promise<
     await getStorage().deleteObject(orphan.key);
     await Blobs.delete(db, { id: orphan.id });
   } catch (err) {
-    console.warn(
-      `[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`,
-    );
+    console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
   }
 }
 
@@ -292,9 +273,7 @@ export const AttachmentsMethods = {
     const stats = await getStorage().objectStats(preBlob.key);
     if (!stats) throw new BadRequestError("Upload not found at expected key");
     if (stats.size !== preBlob.byteSize) {
-      throw new BadRequestError(
-        `Upload size ${stats.size} does not match declared byteSize ${preBlob.byteSize}`,
-      );
+      throw new BadRequestError(`Upload size ${stats.size} does not match declared byteSize ${preBlob.byteSize}`);
     }
 
     const result = await withTransaction(async (tx: Db) => {
@@ -334,11 +313,7 @@ export const AttachmentsMethods = {
       }
       if (!attachment) throw new InternalError("Failed to create attachment");
 
-      const updated = await Blobs.update(
-        tx,
-        { attachedAt: new Date().toISOString() },
-        { id: blob.id },
-      );
+      const updated = await Blobs.update(tx, { attachedAt: new Date().toISOString() }, { id: blob.id });
       const attachedBlob = updated[0] ?? blob;
 
       const orphan = existing ? await findOrphanedBlob(tx, existing.blobId) : null;
@@ -350,10 +325,7 @@ export const AttachmentsMethods = {
     return { attachment: result.attachment, blob: result.blob };
   },
 
-  async findOne(
-    session: Session,
-    params: { recordType: string; recordId: string; name: string },
-  ) {
+  async findOne(session: Session, params: { recordType: string; recordId: string; name: string }) {
     await assertCanRead(session, params.recordType, params.recordId);
     const row = await Attachments.findOneWithBlob(db, {
       recordType: params.recordType,

@@ -24,16 +24,29 @@ export const ROLL_METHODS: { id: RollMethodId; label: string }[] = [
 export const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
 
 export const POINT_BUY_COSTS: Record<number, number> = {
-  8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 6, 15: 8, 16: 10, 17: 13, 18: 16,
+  8: 0,
+  9: 1,
+  10: 2,
+  11: 3,
+  12: 4,
+  13: 5,
+  14: 6,
+  15: 8,
+  16: 10,
+  17: 13,
+  18: 16,
 };
 
 export const POINT_BUY_TOTAL = 25;
 
 export function getRollFunction(method: RollMethodId): (() => number) | null {
   switch (method) {
-    case "4d6-drop-lowest": return roll4d6DropLowest;
-    case "3d6-straight": return roll3d6;
-    default: return null;
+    case "4d6-drop-lowest":
+      return roll4d6DropLowest;
+    case "3d6-straight":
+      return roll3d6;
+    default:
+      return null;
   }
 }
 

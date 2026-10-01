@@ -1,10 +1,9 @@
 import { eq, lt } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { exportsInAccount } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class ExportsRepository extends BaseRepository<typeof exportsInAccount, ExportInstance> {
   constructor() {
@@ -27,10 +26,12 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount, ExportIn
   async delete(db: Db, where: { id: string } | { expiresBefore: string }) {
     return await db
       .delete(this.table)
-      .where(this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "expiresBefore" in where && lt(this.table.expiresAt, where.expiresBefore),
-      ]));
+      .where(
+        this.where([
+          "id" in where && eq(this.table.id, where.id),
+          "expiresBefore" in where && lt(this.table.expiresAt, where.expiresBefore),
+        ]),
+      );
   }
 
   withInstance(instance: InferSelectModel<typeof exportsInAccount>) {

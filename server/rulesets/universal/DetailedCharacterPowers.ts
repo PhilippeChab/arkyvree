@@ -47,9 +47,7 @@ export default class DetailedCharacterPowers {
           category: "powers",
           description: `${power.name} ${formatPropertyType(type)} property`,
           valueType: "string",
-          operators: kind === "modifier"
-            ? ["set"]
-            : ["equal", "not_equal", "contains"],
+          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal", "contains"],
         });
       }
     }
@@ -78,9 +76,7 @@ export default class DetailedCharacterPowers {
           category: "powers",
           description: `Whether ${power.name} is known`,
           valueType: "boolean",
-          operators: kind === "modifier"
-            ? ["set"]
-            : ["equal", "not_equal"],
+          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
         });
       }
     }
@@ -142,7 +138,9 @@ export default class DetailedCharacterPowers {
       const aptSlug = aptitudeIdToSlug.get(power.aptitudeId);
       if (!aptSlug) continue;
 
-      const spellEntry = this.detailedCharacterPowers[stripSeparators(power.name)] as Record<string, { known: boolean }> | undefined;
+      const spellEntry = this.detailedCharacterPowers[stripSeparators(power.name)] as
+        | Record<string, { known: boolean }>
+        | undefined;
       if (spellEntry?.[aptSlug]) {
         spellEntry[aptSlug].known = true;
       }

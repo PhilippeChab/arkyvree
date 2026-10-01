@@ -1,13 +1,10 @@
-import { SelectField } from "@/client/src/components/common/index.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
-import {
-  Box,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { type UseFormReturn } from "react-hook-form";
+
+import { SelectField } from "@/client/src/components/common/index.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
+
 import { ConditionFields } from "./ConditionFields.tsx";
 
 export type RequirementFormData = InferRequestType<

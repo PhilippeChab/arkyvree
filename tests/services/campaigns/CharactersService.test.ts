@@ -1,12 +1,19 @@
 import { describe, expect, test } from "bun:test";
+
 import { and, eq, inArray } from "drizzle-orm";
+
 import { klassLevelsInRules, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, CharacterLevels, Characters, Players } from "@/server/repositories/index.ts";
 import { PlayerCharactersMethods } from "@/server/services/campaigns/CharactersService.ts";
 import {
-  addCharacterContributor, createTestCampaign, createTestCharacter, createTestUser, getSeedCtx, makeSession,
+  addCharacterContributor,
+  createTestCampaign,
+  createTestCharacter,
+  createTestUser,
+  getSeedCtx,
+  makeSession,
 } from "@/tests/helpers.ts";
 
 type Visibility = "Private" | "Public" | "Partial";
@@ -30,7 +37,9 @@ const list = (userId: string, campaignId: string, pagination = { limit: 10, page
 async function addLevels(characterId: string, levels: [string, number][]) {
   const ctx = await getSeedCtx();
   for (const [klass, level] of levels) {
-    const [klassLevel] = await db.select({ id: klassLevelsInRules.id }).from(klassLevelsInRules)
+    const [klassLevel] = await db
+      .select({ id: klassLevelsInRules.id })
+      .from(klassLevelsInRules)
       .where(and(eq(klassLevelsInRules.klassId, ctx.klassMap.pc[klass]), inArray(klassLevelsInRules.level, [level])));
     await CharacterLevels.create(db, { characterId, klassLevelId: klassLevel.id, hp: 8 });
   }
@@ -38,12 +47,19 @@ async function addLevels(characterId: string, levels: [string, number][]) {
 
 describe("PlayerCharactersService", () => {
   describe("linkCharacter", () => {
-    test.each(["Public", "Private", "Partial"] as const)("links the player's character with %s visibility", async (visibility) => {
-      const { user } = await createTestUser();
-      const { campaign, player } = await createTestCampaign(user.id);
-      const character = await createTestCharacter(user.id);
-      expect(await link(user.id, campaign.id, character.id, visibility)).toMatchObject({ characterId: character.id, playerId: player.id, visibility });
-    });
+    test.each(["Public", "Private", "Partial"] as const)(
+      "links the player's character with %s visibility",
+      async (visibility) => {
+        const { user } = await createTestUser();
+        const { campaign, player } = await createTestCampaign(user.id);
+        const character = await createTestCharacter(user.id);
+        expect(await link(user.id, campaign.id, character.id, visibility)).toMatchObject({
+          characterId: character.id,
+          playerId: player.id,
+          visibility,
+        });
+      },
+    );
 
     test("refuses a non-member", async () => {
       const { user } = await createTestUser();
@@ -60,7 +76,9 @@ describe("PlayerCharactersService", () => {
       const character = await createTestCharacter(user.id);
       await link(user.id, campaign.id, character.id);
 
-      await expect(link(user.id, campaign.id, character.id)).rejects.toThrow("Character already linked to this campaign");
+      await expect(link(user.id, campaign.id, character.id)).rejects.toThrow(
+        "Character already linked to this campaign",
+      );
       await expect(link(user.id, other.id, character.id)).rejects.toThrow("Character is already linked to a campaign");
     });
 
@@ -69,7 +87,12 @@ describe("PlayerCharactersService", () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
       const master = await createTestCharacter(user.id);
-      const familiar = await createTestCharacter(user.id, { name: "Cat Familiar", raceId: ctx.raceMap.familiar["Cat"], kind: "familiar", parentCharacterId: master.id });
+      const familiar = await createTestCharacter(user.id, {
+        name: "Cat Familiar",
+        raceId: ctx.raceMap.familiar["Cat"],
+        kind: "familiar",
+        parentCharacterId: master.id,
+      });
       await expect(link(user.id, campaign.id, familiar.id)).rejects.toThrow(NotFoundError);
     });
   });
@@ -83,23 +106,57 @@ describe("PlayerCharactersService", () => {
       const newcomer = await createTestCharacter(user.id);
       const fighter = await createTestCharacter(user.id);
       const multiclass = await createTestCharacter(user.id);
-      await addLevels(fighter.id, [["Fighter", 1], ["Fighter", 2], ["Fighter", 3]]);
-      await addLevels(multiclass.id, [["Fighter", 1], ["Fighter", 2], ["Ranger", 1]]);
+      await addLevels(fighter.id, [
+        ["Fighter", 1],
+        ["Fighter", 2],
+        ["Fighter", 3],
+      ]);
+      await addLevels(multiclass.id, [
+        ["Fighter", 1],
+        ["Fighter", 2],
+        ["Ranger", 1],
+      ]);
       for (const { id } of [newcomer, fighter, multiclass]) await link(user.id, campaign.id, id);
 
       const byId = new Map((await list(user.id, campaign.id)).items.map((c) => [c.id, c]));
-      expect(byId.get(newcomer.id)).toMatchObject({ name: newcomer.name, description: newcomer.description, race: "Human", levels: [], totalLevel: 0 });
+      expect(byId.get(newcomer.id)).toMatchObject({
+        name: newcomer.name,
+        description: newcomer.description,
+        race: "Human",
+        levels: [],
+        totalLevel: 0,
+      });
       expect(byId.get(fighter.id)).toMatchObject({ levels: [{ klass: "Fighter", level: 3 }], totalLevel: 3 });
       expect(byId.get(multiclass.id)?.totalLevel).toBe(3);
-      expect(byId.get(multiclass.id)?.levels.map((l) => [l.klass, l.level]).sort()).toEqual([["Fighter", 2], ["Ranger", 1]]);
+      expect(
+        byId
+          .get(multiclass.id)
+          ?.levels.map((l) => [l.klass, l.level])
+          .sort(),
+      ).toEqual([
+        ["Fighter", 2],
+        ["Ranger", 1],
+      ]);
     });
 
     test("leaves out unlinked and archived characters", async () => {
       const { user } = await createTestUser();
       const { campaign, player } = await createTestCampaign(user.id);
-      const [kept, unlinked, archived] = [await createTestCharacter(user.id), await createTestCharacter(user.id), await createTestCharacter(user.id)];
+      const [kept, unlinked, archived] = [
+        await createTestCharacter(user.id),
+        await createTestCharacter(user.id),
+        await createTestCharacter(user.id),
+      ];
       for (const { id } of [kept, unlinked, archived]) await link(user.id, campaign.id, id);
-      await db.update(playerCharactersInCampaign).set({ deletedAt: new Date().toISOString() }).where(and(eq(playerCharactersInCampaign.playerId, player.id), eq(playerCharactersInCampaign.characterId, unlinked.id)));
+      await db
+        .update(playerCharactersInCampaign)
+        .set({ deletedAt: new Date().toISOString() })
+        .where(
+          and(
+            eq(playerCharactersInCampaign.playerId, player.id),
+            eq(playerCharactersInCampaign.characterId, unlinked.id),
+          ),
+        );
       await Characters.archive(db, { id: archived.id });
 
       expect((await list(user.id, campaign.id)).items.map((c) => c.id)).toEqual([kept.id]);
@@ -114,17 +171,31 @@ describe("PlayerCharactersService", () => {
       const privateOne = await joinWithCharacter(campaign.id, "Private");
 
       const seen = new Map((await list(viewer.user.id, campaign.id)).items.map((c) => [c.id, c]));
-      expect([...seen.keys()].sort()).toEqual([viewer.character.id, publicOne.character.id, partialOne.character.id].sort());
+      expect([...seen.keys()].sort()).toEqual(
+        [viewer.character.id, publicOne.character.id, partialOne.character.id].sort(),
+      );
       // Their own Private character, and others' Public ones, in full.
-      expect(seen.get(viewer.character.id)).toMatchObject({ visibility: "Private", description: viewer.character.description });
-      expect(seen.get(publicOne.character.id)).toMatchObject({ visibility: "Public", description: publicOne.character.description });
+      expect(seen.get(viewer.character.id)).toMatchObject({
+        visibility: "Private",
+        description: viewer.character.description,
+      });
+      expect(seen.get(publicOne.character.id)).toMatchObject({
+        visibility: "Public",
+        description: publicOne.character.description,
+      });
       // Others' Partial ones: name only.
-      expect(seen.get(partialOne.character.id)).toMatchObject({ visibility: "Partial", name: partialOne.character.name, description: null, levels: [] });
+      expect(seen.get(partialOne.character.id)).toMatchObject({
+        visibility: "Partial",
+        name: partialOne.character.name,
+        description: null,
+        levels: [],
+      });
       expect(seen.has(privateOne.character.id)).toBe(false);
 
       // Their own Partial character in full.
-      expect((await list(partialOne.user.id, campaign.id)).items.find((c) => c.id === partialOne.character.id))
-        .toMatchObject({ visibility: "Partial", description: partialOne.character.description });
+      expect(
+        (await list(partialOne.user.id, campaign.id)).items.find((c) => c.id === partialOne.character.id),
+      ).toMatchObject({ visibility: "Partial", description: partialOne.character.description });
 
       expect((await list(gm.id, campaign.id)).items).toHaveLength(4);
     });
@@ -136,7 +207,11 @@ describe("PlayerCharactersService", () => {
 
       const pages = [];
       for (const page of [1, 2, 3]) pages.push(await list(user.id, campaign.id, { limit: 2, page }));
-      expect(pages.map((p) => [p.items.length, p.nextPage])).toEqual([[2, 2], [2, 3], [1, undefined]]);
+      expect(pages.map((p) => [p.items.length, p.nextPage])).toEqual([
+        [2, 2],
+        [2, 3],
+        [1, undefined],
+      ]);
     });
 
     test("refuses a non-member", async () => {
@@ -154,7 +229,11 @@ describe("PlayerCharactersService", () => {
       for (const visibility of ["Private", "Public", "Partial"] as const) {
         const character = await createTestCharacter(user.id);
         await link(user.id, campaign.id, character.id, visibility);
-        const result = await PlayerCharactersMethods.getCampaignCharacter(makeSession(user.id), campaign.id, character.id);
+        const result = await PlayerCharactersMethods.getCampaignCharacter(
+          makeSession(user.id),
+          campaign.id,
+          character.id,
+        );
         expect(result).toMatchObject({ visibility, canEdit: true, isPartial: false });
         expect(result.detailedCharacter).toBeDefined();
       }
@@ -164,7 +243,8 @@ describe("PlayerCharactersService", () => {
       const { user: gm } = await createTestUser("gm");
       const { campaign } = await createTestCampaign(gm.id);
       const viewer = await joinWithCharacter(campaign.id, "Private");
-      const get = (characterId: string) => PlayerCharactersMethods.getCampaignCharacter(makeSession(viewer.user.id), campaign.id, characterId);
+      const get = (characterId: string) =>
+        PlayerCharactersMethods.getCampaignCharacter(makeSession(viewer.user.id), campaign.id, characterId);
 
       const publicOne = await joinWithCharacter(campaign.id, "Public");
       expect(await get(publicOne.character.id)).toMatchObject({ visibility: "Public", canEdit: false });
@@ -172,7 +252,13 @@ describe("PlayerCharactersService", () => {
       const { character } = await joinWithCharacter(campaign.id, "Partial");
       const partial = await get(character.id);
       expect(partial).toMatchObject({ visibility: "Partial", isOwner: false, canEdit: false, isPartial: true });
-      expect(partial.character).toMatchObject({ name: character.name, gender: character.gender, age: character.age, height: character.height, weight: character.weight });
+      expect(partial.character).toMatchObject({
+        name: character.name,
+        gender: character.gender,
+        age: character.age,
+        height: character.height,
+        weight: character.weight,
+      });
 
       const privateOne = await joinWithCharacter(campaign.id, "Private");
       await expect(get(privateOne.character.id)).rejects.toThrow(NotFoundError);
@@ -185,7 +271,11 @@ describe("PlayerCharactersService", () => {
       const contributor = await joinWithCharacter(campaign.id, "Private");
       await addCharacterContributor(character.id, contributor.user, owner.id);
 
-      const result = await PlayerCharactersMethods.getCampaignCharacter(makeSession(contributor.user.id), campaign.id, character.id);
+      const result = await PlayerCharactersMethods.getCampaignCharacter(
+        makeSession(contributor.user.id),
+        campaign.id,
+        character.id,
+      );
       expect(result).toMatchObject({ canEdit: true, isOwner: false, isPartial: false });
     });
 
@@ -196,9 +286,13 @@ describe("PlayerCharactersService", () => {
       await link(user.id, campaign.id, linked.id);
       const { user: stranger } = await createTestUser();
 
-      await expect(PlayerCharactersMethods.getCampaignCharacter(makeSession(stranger.id), campaign.id, linked.id)).rejects.toThrow(ForbiddenError);
+      await expect(
+        PlayerCharactersMethods.getCampaignCharacter(makeSession(stranger.id), campaign.id, linked.id),
+      ).rejects.toThrow(ForbiddenError);
       const unlinked = await createTestCharacter(user.id);
-      await expect(PlayerCharactersMethods.getCampaignCharacter(makeSession(user.id), campaign.id, unlinked.id)).rejects.toThrow(NotFoundError);
+      await expect(
+        PlayerCharactersMethods.getCampaignCharacter(makeSession(user.id), campaign.id, unlinked.id),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 });

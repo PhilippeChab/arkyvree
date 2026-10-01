@@ -2,6 +2,7 @@ import { EmojiEvents as FeatPoolsIcon } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { classFeatPoolsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+
 import { ClassLevelCountsTable } from "./ClassLevelCountsTable.tsx";
 import type { ClassSectionProps } from "./types.ts";
 

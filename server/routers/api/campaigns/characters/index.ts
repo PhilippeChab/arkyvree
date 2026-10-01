@@ -1,12 +1,13 @@
-import { errorResponse, respond } from "@/server/routers/respond.ts";
-import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
-import { denyDemoUser, exportRateLimit, zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
-import { CampaignCharactersService } from "@/server/services/campaigns/index.ts";
-import { limit, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { denyDemoUser, exportRateLimit, zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { limit, page } from "@/server/routers/api/validation.ts";
+import { errorResponse, respond } from "@/server/routers/respond.ts";
+import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
+import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
+import { CampaignCharactersService } from "@/server/services/campaigns/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -33,48 +34,53 @@ export default new Hono<SessionContext>()
         shareToken: data.canEdit ? response.shareToken : null,
       };
       // Explicit allowlist: a new full-response field must be considered here.
-      const visibleResponse = data.isPartial ? {
-        id: safeResponse.id,
-        userId: safeResponse.userId,
-        kind: safeResponse.kind,
-        parentCharacterId: safeResponse.parentCharacterId,
-        name: safeResponse.name,
-        raceId: safeResponse.raceId,
-        rulesetId: safeResponse.rulesetId,
-        rulesetName: safeResponse.rulesetName,
-        baseRules: safeResponse.baseRules,
-        isCustomRuleset: safeResponse.isCustomRuleset,
-        deletedAt: safeResponse.deletedAt,
-        updatedAt: safeResponse.updatedAt,
-        shareToken: null,
-        identity: safeResponse.identity,
-        skillBudget: { available: 0, spent: 0, total: 0 },
-        abilities: {},
-        combat: {},
-        savingThrows: {},
-        classes: {},
-        skills: {},
-        inventory: {},
-        equipment: [],
-        powers: [],
-        virtualFeats: [],
-        virtualPowers: [],
-        aptitudes: {},
-        spellTags: {},
-        requirements: {},
-        modifiers: {},
-        validation: { valid: true, issues: [] },
-      } satisfies Record<keyof typeof response, unknown> : safeResponse;
+      const visibleResponse = data.isPartial
+        ? ({
+            id: safeResponse.id,
+            userId: safeResponse.userId,
+            kind: safeResponse.kind,
+            parentCharacterId: safeResponse.parentCharacterId,
+            name: safeResponse.name,
+            raceId: safeResponse.raceId,
+            rulesetId: safeResponse.rulesetId,
+            rulesetName: safeResponse.rulesetName,
+            baseRules: safeResponse.baseRules,
+            isCustomRuleset: safeResponse.isCustomRuleset,
+            deletedAt: safeResponse.deletedAt,
+            updatedAt: safeResponse.updatedAt,
+            shareToken: null,
+            identity: safeResponse.identity,
+            skillBudget: { available: 0, spent: 0, total: 0 },
+            abilities: {},
+            combat: {},
+            savingThrows: {},
+            classes: {},
+            skills: {},
+            inventory: {},
+            equipment: [],
+            powers: [],
+            virtualFeats: [],
+            virtualPowers: [],
+            aptitudes: {},
+            spellTags: {},
+            requirements: {},
+            modifiers: {},
+            validation: { valid: true, issues: [] },
+          } satisfies Record<keyof typeof response, unknown>)
+        : safeResponse;
 
-      return c.json({
-        visibility: data.visibility,
-        isOwner: data.isOwner,
-        canEdit: data.canEdit,
-        canDownloadPdf: data.canDownloadPdf,
-        isPartial: data.isPartial,
-        ...visibleResponse,
-        bonded: data.isPartial ? {} : buildBondedMap(data.bondedByKind ?? {}, redactForViewer),
-      }, 200);
+      return c.json(
+        {
+          visibility: data.visibility,
+          isOwner: data.isOwner,
+          canEdit: data.canEdit,
+          canDownloadPdf: data.canDownloadPdf,
+          isPartial: data.isPartial,
+          ...visibleResponse,
+          bonded: data.isPartial ? {} : buildBondedMap(data.bondedByKind ?? {}, redactForViewer),
+        },
+        200,
+      );
     },
   )
   // Enqueue async PDF generation of a campaign character (its editors and the Game Master)
@@ -101,9 +107,12 @@ export default new Hono<SessionContext>()
   .put(
     "/:id/characters/:characterId",
     zValidator("param", z.object({ id: z.string().uuid(), characterId: z.string().uuid() })),
-    zValidator("json", z.object({
-      visibility: z.enum(["Private", "Public", "Partial"]),
-    })),
+    zValidator(
+      "json",
+      z.object({
+        visibility: z.enum(["Private", "Public", "Partial"]),
+      }),
+    ),
     async (c) => {
       const { id, characterId } = c.req.valid("param");
       const { visibility } = c.req.valid("json");
@@ -120,13 +129,16 @@ export default new Hono<SessionContext>()
   .get(
     "/:id/characters",
     zValidator("param", z.object({ id: z.string().uuid() })),
-    zValidator("query", z.object({
-      limit,
-      page,
-      search: z.string().optional(),
-      orderBy: z.enum(["createdAt", "updatedAt"]).optional(),
-      orderDir: z.enum(["asc", "desc"]).optional(),
-    })),
+    zValidator(
+      "query",
+      z.object({
+        limit,
+        page,
+        search: z.string().optional(),
+        orderBy: z.enum(["createdAt", "updatedAt"]).optional(),
+        orderDir: z.enum(["asc", "desc"]).optional(),
+      }),
+    ),
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, orderBy, orderDir } = c.req.valid("query");
@@ -143,10 +155,13 @@ export default new Hono<SessionContext>()
   .post(
     "/:id/characters",
     zValidator("param", z.object({ id: z.string().uuid() })),
-    zValidator("json", z.object({
-      characterId: z.string().uuid(),
-      visibility: z.enum(["Private", "Public", "Partial"]).default("Private")
-    })),
+    zValidator(
+      "json",
+      z.object({
+        characterId: z.string().uuid(),
+        visibility: z.enum(["Private", "Public", "Partial"]).default("Private"),
+      }),
+    ),
     async (c) => {
       const { id } = c.req.valid("param");
       const { characterId, visibility } = c.req.valid("json");

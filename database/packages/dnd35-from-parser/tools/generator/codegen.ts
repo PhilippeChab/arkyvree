@@ -1,7 +1,15 @@
 import { isDeepStrictEqual } from "node:util";
-import { eq, eqNum, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
-import type { FeatSeed, Modifier, ModifierEffect, ModifierSeed, RequirementCondition, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+
 import { MAX_DESC, normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { eq, eqNum, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type {
+  FeatSeed,
+  Modifier,
+  ModifierEffect,
+  ModifierSeed,
+  RequirementCondition,
+  RequirementEntry,
+} from "@/database/packages/dnd35/content/types.ts";
 
 // ---------------------------------------------------------------------------
 // Naming helpers
@@ -21,7 +29,10 @@ export function toConstName(name: string): string {
 
 function indent(text: string, level: number): string {
   const prefix = "  ".repeat(level);
-  return text.split("\n").map((line) => line ? prefix + line : line).join("\n");
+  return text
+    .split("\n")
+    .map((line) => (line ? prefix + line : line))
+    .join("\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -73,12 +84,18 @@ function builderOf(check: RequirementCondition) {
   const written = { ...check, value: String(check.value) };
   return CHECK_BUILDERS.find(({ name, takes }) => {
     const build: (target: string, value: string | number) => RequirementCondition = BUILDERS[name];
-    return isDeepStrictEqual(build(written.target, takes === "number" ? Number(written.value) : written.value), written);
+    return isDeepStrictEqual(
+      build(written.target, takes === "number" ? Number(written.value) : written.value),
+      written,
+    );
   });
 }
 
 /** A check written with its builder: `builder(target, value)`. */
-function builderCall({ target, value }: RequirementCondition, { name, takes }: (typeof CHECK_BUILDERS)[number]): string {
+function builderCall(
+  { target, value }: RequirementCondition,
+  { name, takes }: (typeof CHECK_BUILDERS)[number],
+): string {
   if (takes === "nothing") return `${name}(${quote(target)})`;
   return `${name}(${quote(target)}, ${takes === "number" ? Number(value) : quote(value)})`;
 }
@@ -136,7 +153,12 @@ export function stringifyRequirement(req: RequirementEntry, uses: Set<string>, i
 
 /** A modifier's fields written as code, its target as `target`. */
 function modifierFields(mod: ModifierEffect, target: string): string[] {
-  return [`target: ${target}`, `operator: ${quote(mod.operator)}`, `value: ${quote(mod.value)}`, `valueType: ${quote(mod.valueType)}`];
+  return [
+    `target: ${target}`,
+    `operator: ${quote(mod.operator)}`,
+    `value: ${quote(mod.value)}`,
+    `valueType: ${quote(mod.valueType)}`,
+  ];
 }
 
 /** A modifier written as code: a domain's, a race's or an item's, which has no requirements (only a feat's has). */
@@ -149,9 +171,14 @@ export function stringifyModifier(mod: Modifier): string {
  * A feat's modifier written as code, at `indentLevel`: with its requirements, their builders added to `uses`
  * (`stringifyRequirement`). `target` is its target as code (a template's names each item).
  */
-export function stringifyFeatModifier(mod: ModifierSeed, uses: Set<string>, indentLevel = 3, target = quote(mod.target)): string {
+export function stringifyFeatModifier(
+  mod: ModifierSeed,
+  uses: Set<string>,
+  indentLevel = 3,
+  target = quote(mod.target),
+): string {
   const requirements = (mod.requirements ?? []).map((r) => stringifyRequirement(r, uses, indentLevel));
-  return `{ ${[...modifierFields(mod, target), ...requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : []].join(", ")} }`;
+  return `{ ${[...modifierFields(mod, target), ...(requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : [])].join(", ")} }`;
 }
 
 /** A `key: [...]` field of `items`, one per line, after `prefix` (its indentation); none when there are no items. */
@@ -170,11 +197,19 @@ export function featLines(feat: FeatSeed, uses: Set<string>): string[] {
     `  {`,
     `    name: ${quote(feat.name)},`,
     `    description: ${quote(feat.description)},`,
-    ...feat.stackable ? [`    stackable: true,`] : [],
-    ...feat.selectable === false ? [`    selectable: false,`] : [],
+    ...(feat.stackable ? [`    stackable: true,`] : []),
+    ...(feat.selectable === false ? [`    selectable: false,`] : []),
     `    aptitudes: [${feat.aptitudes.map(quote).join(", ")}],`,
-    ...listField("requirements", (feat.requirements ?? []).map((req) => stringifyRequirement(req, uses, 3)), "    "),
-    ...listField("modifiers", (feat.modifiers ?? []).map((m) => stringifyFeatModifier(m, uses)), "    "),
+    ...listField(
+      "requirements",
+      (feat.requirements ?? []).map((req) => stringifyRequirement(req, uses, 3)),
+      "    ",
+    ),
+    ...listField(
+      "modifiers",
+      (feat.modifiers ?? []).map((m) => stringifyFeatModifier(m, uses)),
+      "    ",
+    ),
     ...listField("properties", (feat.properties ?? []).map(stringifyProperty), "    "),
     `  },`,
   ];

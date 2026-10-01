@@ -1,17 +1,18 @@
+import { Translate as LanguagesIcon } from "@mui/icons-material";
+import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import type { RulesetLanguage } from "@/client/src/hooks/index.ts";
+import { useSearchParam } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { type LanguageFormData, LanguageFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { languageQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { type LanguageFormData, LanguageFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { languagesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Translate as LanguagesIcon } from "@mui/icons-material";
-import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParam } from "@/client/src/hooks/index.ts";
-import { useCallback } from "react";
-import { languagesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 const LANGUAGES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -27,19 +28,17 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
   const [searchQuery, setSearchQuery] = useSearchParam("search");
 
-  const {
-    createForm,
-    handleCreate,
-    createDialogProps,
-  } = useRulesetSection<Language, LanguageFormData>({
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Language, LanguageFormData>({
     rulesetId: ruleset.id,
     sectionName: "languages",
     label: "Language",
     createFn: async (data) => {
-      return parseResponse(rpc.api.rulesets[":id"].languages.$post({
-        param: { id: ruleset.id },
-        json: data,
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].languages.$post({
+          param: { id: ruleset.id },
+          json: data,
+        }),
+      );
     },
     onCreateSuccess: (created) => openEntity(`languages/${created.id}`),
   });
@@ -55,9 +54,12 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     openEntity(`languages/${language.id}`);
   };
 
-  const handleRowMouseEnter = useCallback((language: Language) => {
-    void queryClient.prefetchQuery(languageQuery(ruleset.id, language.id));
-  }, [queryClient, ruleset.id]);
+  const handleRowMouseEnter = useCallback(
+    (language: Language) => {
+      void queryClient.prefetchQuery(languageQuery(ruleset.id, language.id));
+    },
+    [queryClient, ruleset.id],
+  );
 
   const renderCell = (language: Language, columnKey: string) => {
     switch (columnKey) {
@@ -66,9 +68,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       case "type":
         return language.type || "—";
       case "description":
-        return (
-          <DescriptionCell text={language.description} />
-        );
+        return <DescriptionCell text={language.description} />;
       default:
         return null;
     }
@@ -110,10 +110,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
         onClick={() => fetchNextPage()}
       />
 
-      <CreateDialog
-        {...createDialogProps}
-        title="Create New Language"
-      >
+      <CreateDialog {...createDialogProps} title="Create New Language">
         <LanguageFormFields form={createForm} />
       </CreateDialog>
     </SectionContent>

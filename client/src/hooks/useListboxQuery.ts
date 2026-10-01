@@ -1,5 +1,3 @@
-import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   type DefaultError,
   type InfiniteData,
@@ -8,6 +6,9 @@ import {
   type UseInfiniteQueryOptions,
 } from "@tanstack/react-query";
 import { useMemo } from "react";
+
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
 
 /** A page of a paginated list endpoint. */
 interface ListPage {

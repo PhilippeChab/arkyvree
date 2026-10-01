@@ -1,16 +1,13 @@
+import { getTableName } from "drizzle-orm";
+
 import { powersInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import {
-  FeatsAptitudes,
-  Powers,
-  PowersAptitudes,
-  Properties,
-} from "@/server/repositories/index.ts";
+import { FeatsAptitudes, Powers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   cowEntity,
@@ -24,7 +21,6 @@ import {
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 interface PowerBody {
   name: string;
@@ -48,12 +44,23 @@ interface PowerBody {
 export const PowersMethods = {
   async getRulesetPowers(
     rulesetId: string,
-    where: { childOnly?: boolean; aptitudeId?: string; level?: number; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: {
+      childOnly?: boolean;
+      aptitudeId?: string;
+      level?: number;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain, siblingIds } = rulesetData.cow;
-      const result = await Powers.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      const result = await Powers.findManyByRulesetId(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
+        pagination,
+      );
       // Filter sibling losers (if any) and replace each row's aptitude links
       // with the compose-step version (sibling-merged + FK-remapped). The
       // rest of the DB row (savesInRule join, etc.) is kept as-is.
@@ -91,7 +98,13 @@ export const PowersMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "powers", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "powers",
+          body.name,
+        );
 
         if (!body.aptitudes || body.aptitudes.length === 0) {
           throw new BadRequestError("At least one aptitude must be selected for the power");
@@ -168,18 +181,29 @@ export const PowersMethods = {
         let targetId = power.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "powers", power.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "powers",
+            power.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         }
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
 
-        const rows = await Powers.update(tx, {
-          name: body.name,
-          description: body.description,
-          saveId: body.saveId ?? null,
-          saveEffect: body.saveEffect ?? null,
-        }, { id: targetId, expectedUpdatedAt });
+        const rows = await Powers.update(
+          tx,
+          {
+            name: body.name,
+            description: body.description,
+            saveId: body.saveId ?? null,
+            saveEffect: body.saveEffect ?? null,
+          },
+          { id: targetId, expectedUpdatedAt },
+        );
         if (expectedUpdatedAt && rows.length === 0) {
           throw new ConflictError(STALE_ENTITY_MESSAGE);
         }
@@ -195,7 +219,8 @@ export const PowersMethods = {
               throw new ConflictError("Cannot link spell to aptitude(s) already used for feats");
             }
 
-            await PowersAptitudes.createMany(tx,
+            await PowersAptitudes.createMany(
+              tx,
               body.aptitudes.map((aptitude) => ({
                 powerId: targetId,
                 aptitudeId: aptitude.id,
@@ -205,11 +230,17 @@ export const PowersMethods = {
           }
         }
 
-        const hasSpellFields = body.school !== undefined || body.subschool !== undefined ||
-          body.descriptors !== undefined || body.castingTime !== undefined ||
-          body.rangeType !== undefined || body.target !== undefined ||
-          body.areaOfEffect !== undefined || body.duration !== undefined ||
-          body.spellResistance !== undefined || body.components !== undefined;
+        const hasSpellFields =
+          body.school !== undefined ||
+          body.subschool !== undefined ||
+          body.descriptors !== undefined ||
+          body.castingTime !== undefined ||
+          body.rangeType !== undefined ||
+          body.target !== undefined ||
+          body.areaOfEffect !== undefined ||
+          body.duration !== undefined ||
+          body.spellResistance !== undefined ||
+          body.components !== undefined;
 
         if (hasSpellFields) {
           const existingProps = await Properties.findManyByEntity(tx, {
@@ -219,7 +250,11 @@ export const PowersMethods = {
           });
           const oldGroupingValue = existingProps.length > 0 ? existingProps[0].value : null;
 
-          await Properties.deleteMany(tx, { entityIds: [targetId], entityType: "powers", types: hooks.powers.generatedPropertyTypes });
+          await Properties.deleteMany(tx, {
+            entityIds: [targetId],
+            entityType: "powers",
+            types: hooks.powers.generatedPropertyTypes,
+          });
 
           const newGroupingValue = hooks.powers.extractGroupingValue(body);
           if (newGroupingValue) {
@@ -240,7 +275,14 @@ export const PowersMethods = {
           targetId,
           targetTable: getTableName(powersInRules),
           type: "updatePower",
-          data: { baseRules: ruleset.baseRules, entityName: body.name, changedFields: getChangedFields(power as Record<string, unknown>, body as unknown as Record<string, unknown>) },
+          data: {
+            baseRules: ruleset.baseRules,
+            entityName: body.name,
+            changedFields: getChangedFields(
+              power as Record<string, unknown>,
+              body as unknown as Record<string, unknown>,
+            ),
+          },
         });
 
         return updatedPower;
@@ -267,7 +309,14 @@ export const PowersMethods = {
 
         let targetId = power.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "powers", power.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "powers",
+            power.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         } else {
           await lockEntityForMutation(tx, "powers", targetId);

@@ -1,6 +1,7 @@
 import type { Db } from "@/server/database/index.ts";
 import { FeatsAptitudes, Modifiers, PowersAptitudes, Properties, Requirements } from "@/server/repositories/index.ts";
 import type { EntityType } from "@/server/services/rulesets/hashing.ts";
+
 import { copyEntityCustomizations } from "./copy.ts";
 import { fetchSiblingCustomizationsRaw } from "./customizations.ts";
 import { mergeSiblingRequirements } from "./requirements.ts";
@@ -34,10 +35,16 @@ export async function mergeSiblingData(
   // them: `(target) AND (sibling_1) AND (sibling_2) AND ...`.
   const targetReqs = await Requirements.findManyByEntity(tx, { entityIds: [targetEntityId], entityType });
   const newReqs = mergeSiblingRequirements(
-    targetReqs, [...siblingCusts.values()].map(cust => cust.requirements), targetEntityId, entityType,
+    targetReqs,
+    [...siblingCusts.values()].map((cust) => cust.requirements),
+    targetEntityId,
+    entityType,
   );
   if (newReqs.length > 0) {
-    const copies = await Requirements.createMany(tx, newReqs.map(row => ({ ...row, id: undefined })));
+    const copies = await Requirements.createMany(
+      tx,
+      newReqs.map((row) => ({ ...row, id: undefined })),
+    );
     for (let i = 0; i < newReqs.length; i++) {
       customizationIds?.set(newReqs[i].id, copies[i].id);
     }
@@ -46,9 +53,7 @@ export async function mergeSiblingData(
   // 2. Merge sibling modifiers (deduplicate by target+value+operator+valueType)
   if (sourceType) {
     const targetModifiers = await Modifiers.findManyBySource(tx, { sourceIds: [targetEntityId], sourceType });
-    const existingModKeys = new Set(
-      targetModifiers.map((m) => `${m.target}|${m.value}|${m.operator}|${m.valueType}`),
-    );
+    const existingModKeys = new Set(targetModifiers.map((m) => `${m.target}|${m.value}|${m.operator}|${m.valueType}`));
 
     for (const [siblingId, sibCust] of siblingCusts) {
       const uniqueModifiers = sibCust.modifiers.filter((m) => {
@@ -59,25 +64,36 @@ export async function mergeSiblingData(
       });
 
       if (uniqueModifiers.length > 0) {
-        const modifierIds = new Set(uniqueModifiers.map(m => m.id));
-        await copyEntityCustomizations(tx, siblingId, targetEntityId, entityType, {
-          modifiers: uniqueModifiers,
-          modifierRequirements: sibCust.modifierRequirements.filter(r => modifierIds.has(r.entityId)),
-          properties: [],
-          requirements: [],
-        }, customizationIds);
+        const modifierIds = new Set(uniqueModifiers.map((m) => m.id));
+        await copyEntityCustomizations(
+          tx,
+          siblingId,
+          targetEntityId,
+          entityType,
+          {
+            modifiers: uniqueModifiers,
+            modifierRequirements: sibCust.modifierRequirements.filter((r) => modifierIds.has(r.entityId)),
+            properties: [],
+            requirements: [],
+          },
+          customizationIds,
+        );
       }
     }
   }
 
   // 3. Merge sibling properties (deduplicate by type+value)
   const targetProperties = await Properties.findManyByEntity(tx, { entityIds: [targetEntityId], entityType });
-  const existingPropKeys = new Set(
-    targetProperties.map((p) => `${p.type}|${p.value}`),
-  );
+  const existingPropKeys = new Set(targetProperties.map((p) => `${p.type}|${p.value}`));
 
   const sourcePropertyIds: string[] = [];
-  const newProperties: Array<{ entityId: string; entityType: string; type: string; value: string; description: string | null }> = [];
+  const newProperties: Array<{
+    entityId: string;
+    entityType: string;
+    type: string;
+    value: string;
+    description: string | null;
+  }> = [];
   for (const [, sibCust] of siblingCusts) {
     for (const prop of sibCust.properties) {
       const key = `${prop.type}|${prop.value}`;

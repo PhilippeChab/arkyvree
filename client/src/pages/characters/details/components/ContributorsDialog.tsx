@@ -1,10 +1,9 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { BlankState, ConfirmDialog, DiceSpinner, LoadMoreButton, Modal } from "@/client/src/components/common/index.ts";
-import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { Add as AddIcon, People as ContributorsIcon, Delete as DeleteIcon, ExitToApp as LeaveIcon } from "@mui/icons-material";
+import {
+  Add as AddIcon,
+  People as ContributorsIcon,
+  Delete as DeleteIcon,
+  ExitToApp as LeaveIcon,
+} from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -21,6 +20,13 @@ import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from 
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { BlankState, ConfirmDialog, DiceSpinner, LoadMoreButton, Modal } from "@/client/src/components/common/index.ts";
+import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 type Contributor = InferResponseType<(typeof rpc.api.characters)[":id"]["contributors"]["$get"], 200>["items"][number];
 
@@ -46,10 +52,13 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: contributorsKey,
-    queryFn: ({ pageParam }) => parseResponse(rpc.api.characters[":id"].contributors.$get({
-      param: { id: characterId },
-      query: { page: pageParam.toString(), limit: "10" },
-    })),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.characters[":id"].contributors.$get({
+          param: { id: characterId },
+          query: { page: pageParam.toString(), limit: "10" },
+        }),
+      ),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     placeholderData: keepPreviousData,
@@ -131,27 +140,35 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                 <BlankState
                   icon={ContributorsIcon}
                   title="No contributors yet"
-                  description={canInvite
-                    ? "Invite collaborators to help maintain this character."
-                    : "This character has no other contributors."}
-                  action={canInvite ? (
-                    <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setInviteOpen(true)}>
-                      Invite a Contributor
-                    </Button>
-                  ) : undefined}
+                  description={
+                    canInvite
+                      ? "Invite collaborators to help maintain this character."
+                      : "This character has no other contributors."
+                  }
+                  action={
+                    canInvite ? (
+                      <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setInviteOpen(true)}>
+                        Invite a Contributor
+                      </Button>
+                    ) : undefined
+                  }
                 />
               ) : (
                 <>
                   <ContributorsTable
                     owner={owner}
                     contributors={contributors}
-                    renderActions={isOwner ? (contributor) => (
-                      <Tooltip title="Remove">
-                        <IconButton size="small" color="error" onClick={() => setRemoveTarget(contributor)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    ) : undefined}
+                    renderActions={
+                      isOwner
+                        ? (contributor) => (
+                            <Tooltip title="Remove">
+                              <IconButton size="small" color="error" onClick={() => setRemoveTarget(contributor)}>
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )
+                        : undefined
+                    }
                   />
                   <LoadMoreButton
                     hasNextPage={hasNextPage}
@@ -164,7 +181,9 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose} variant="outlined" color="inherit">Close</Button>
+          <Button onClick={onClose} variant="outlined" color="inherit">
+            Close
+          </Button>
         </DialogActions>
       </Modal>
 
@@ -182,7 +201,13 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
           onConfirm={() => revokeMutation.mutate(removeTarget.id)}
           isLoading={revokeMutation.isPending}
           title="Remove Contributor"
-          message={<>Are you sure you want to remove <strong>{removeTarget.user?.username || removeTarget.user?.emailAddress || removeTarget.email}</strong> as a contributor?</>}
+          message={
+            <>
+              Are you sure you want to remove{" "}
+              <strong>{removeTarget.user?.username || removeTarget.user?.emailAddress || removeTarget.email}</strong> as
+              a contributor?
+            </>
+          }
           confirmLabel="Remove"
           confirmColor="error"
           maxWidth="xs"

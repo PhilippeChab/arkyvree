@@ -1,13 +1,17 @@
 import { and, desc, eq, getTableColumns, inArray, isNull, or, sql } from "drizzle-orm";
-
-import { charactersInCharacter, klassesInRules, klassLevelsInRules, levelsInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
-import type { Db } from "@/server/database/index.ts";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
-class CharacterLevelsRepository
-  extends BaseRepository<typeof levelsInCharacter, CharacterLevelInstance> {
+import {
+  charactersInCharacter,
+  klassesInRules,
+  klassLevelsInRules,
+  levelsInCharacter,
+  rulesetsInRules,
+} from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+
+class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter, CharacterLevelInstance> {
   constructor() {
     super(levelsInCharacter);
   }
@@ -16,11 +20,7 @@ class CharacterLevelsRepository
     return await db.insert(this.table).values(values).returning();
   }
 
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof levelsInCharacter>>,
-    where: { id: string },
-  ) {
+  async update(db: Db, values: Partial<InferInsertModel<typeof levelsInCharacter>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
@@ -30,9 +30,7 @@ class CharacterLevelsRepository
 
   // Intentional removal — hard delete
   async delete(db: Db, where: { id: string }) {
-    return await db
-      .delete(this.table)
-      .where(eq(this.table.id, where.id));
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 
   async existsByKlassLevelId(db: Db, where: { klassLevelId: string; rulesetId: string }) {
@@ -40,14 +38,17 @@ class CharacterLevelsRepository
       .select({ id: this.table.id })
       .from(this.table)
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(rulesetsInRules, and(
-        eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
-        or(
-          eq(rulesetsInRules.id, where.rulesetId),
-          sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+      .innerJoin(
+        rulesetsInRules,
+        and(
+          eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
+          or(
+            eq(rulesetsInRules.id, where.rulesetId),
+            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+          ),
         ),
-      ))
+      )
       .where(and(this.idMatches(this.table.klassLevelId, where.klassLevelId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
@@ -59,14 +60,17 @@ class CharacterLevelsRepository
       .from(this.table)
       .innerJoin(klassLevelsInRules, eq(this.table.klassLevelId, klassLevelsInRules.id))
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(rulesetsInRules, and(
-        eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
-        or(
-          eq(rulesetsInRules.id, where.rulesetId),
-          sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+      .innerJoin(
+        rulesetsInRules,
+        and(
+          eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
+          or(
+            eq(rulesetsInRules.id, where.rulesetId),
+            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+          ),
         ),
-      ))
+      )
       .where(and(this.idMatches(klassLevelsInRules.klassId, where.klassId), isNull(this.table.deletedAt)))
       .limit(1);
     return result.length > 0;
@@ -77,16 +81,20 @@ class CharacterLevelsRepository
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowKlassIds: string[] },
   ) {
-    const klassCondition = where.shadowKlassIds.length > 0
-      ? or(eq(klassesInRules.rulesetId, where.extensionRulesetId), inArray(klassesInRules.id, where.shadowKlassIds))
-      : eq(klassesInRules.rulesetId, where.extensionRulesetId);
+    const klassCondition =
+      where.shadowKlassIds.length > 0
+        ? or(eq(klassesInRules.rulesetId, where.extensionRulesetId), inArray(klassesInRules.id, where.shadowKlassIds))
+        : eq(klassesInRules.rulesetId, where.extensionRulesetId);
     const rows = await db
       .select({ id: this.table.id })
       .from(this.table)
-      .innerJoin(charactersInCharacter, and(
-        eq(charactersInCharacter.id, this.table.characterId),
-        eq(charactersInCharacter.rulesetId, where.hostRulesetId),
-      ))
+      .innerJoin(
+        charactersInCharacter,
+        and(
+          eq(charactersInCharacter.id, this.table.characterId),
+          eq(charactersInCharacter.rulesetId, where.hostRulesetId),
+        ),
+      )
       .innerJoin(klassLevelsInRules, eq(klassLevelsInRules.id, this.table.klassLevelId))
       .innerJoin(klassesInRules, eq(klassesInRules.id, klassLevelsInRules.klassId))
       .where(and(isNull(this.table.deletedAt), klassCondition))

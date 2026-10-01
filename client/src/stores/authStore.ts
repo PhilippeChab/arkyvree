@@ -1,7 +1,8 @@
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { InferResponseType } from "hono/client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 type MeResponse = InferResponseType<typeof rpc.auth.me.$get, 200>;
 export type AuthUser = Pick<
@@ -21,7 +22,12 @@ interface AuthState {
   verifyEmail: (emailAddress: string, code: string) => Promise<void>;
   resendVerification: (emailAddress: string) => Promise<void>;
   forgotPassword: (emailAddress: string) => Promise<void>;
-  resetPassword: (emailAddress: string, code: string, newPassword: string, newPasswordConfirmation: string) => Promise<void>;
+  resetPassword: (
+    emailAddress: string,
+    code: string,
+    newPassword: string,
+    newPasswordConfirmation: string,
+  ) => Promise<void>;
   signOut: () => Promise<void>;
   clearSession: () => void;
   checkAuth: () => Promise<void>;
@@ -30,7 +36,14 @@ interface AuthState {
 }
 
 /** The fields the store keeps (and persists) from a user response, whatever else it carries. */
-const toAuthUser = ({ id, emailAddress, username, pendingEmailAddress, onboardingCompletedAt, expiresAt }: AuthUser): AuthUser => ({
+const toAuthUser = ({
+  id,
+  emailAddress,
+  username,
+  pendingEmailAddress,
+  onboardingCompletedAt,
+  expiresAt,
+}: AuthUser): AuthUser => ({
   id,
   emailAddress,
   username,
@@ -115,9 +128,11 @@ export const useAuthStore = create<AuthState>()(
         },
 
         resetPassword: async (emailAddress, code, newPassword, newPasswordConfirmation) => {
-          await track(() => rpc.auth["reset-password"].$post({
-            json: { emailAddress, code, newPassword, newPasswordConfirmation },
-          }));
+          await track(() =>
+            rpc.auth["reset-password"].$post({
+              json: { emailAddress, code, newPassword, newPasswordConfirmation },
+            }),
+          );
           set({ pendingPasswordResetEmail: null });
         },
 

@@ -11,7 +11,11 @@ export default function DemoExpiredPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    try { localStorage.removeItem(DEMO_EXPIRED_FLAG); } catch { /* storage disabled */ }
+    try {
+      localStorage.removeItem(DEMO_EXPIRED_FLAG);
+    } catch {
+      /* storage disabled */
+    }
   }, []);
 
   return (

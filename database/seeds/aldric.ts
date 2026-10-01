@@ -10,7 +10,8 @@ export default {
   gender: "Male",
   height: "185",
   weight: "95",
-  description: "A devout human paladin who serves the god of the sun. Aldric swore his oath after witnessing the destruction of his village by undead. He carries a longsword blessed by his temple, rides a celestial-blooded warhorse named Aurelion, and seeks to bring light to the darkest corners of the world.",
+  description:
+    "A devout human paladin who serves the god of the sun. Aldric swore his oath after witnessing the destruction of his village by undead. He carries a longsword blessed by his temple, rides a celestial-blooded warhorse named Aurelion, and seeks to bring light to the darkest corners of the world.",
   abilities: { Strength: 16, Dexterity: 10, Constitution: 14, Intelligence: 10, Wisdom: 12, Charisma: 15 },
   languages: ["Common", "Celestial"],
   classes: [{ klass: "Paladin", hp: [10, 8, 7, 8, 7] }],

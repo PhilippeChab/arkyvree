@@ -1,10 +1,12 @@
+import { getTableName } from "drizzle-orm";
+
 import { racesInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Races } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   cowEntity,
@@ -18,12 +20,17 @@ import {
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export const RacesMethods = {
   async getRulesetRaces(
     rulesetId: string,
-    where: { childOnly?: boolean; kind?: string; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: {
+      childOnly?: boolean;
+      kind?: string;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -48,26 +55,27 @@ export const RacesMethods = {
     });
   },
 
-  async createRulesetRace(session: Session, rulesetId: string, body: {
-    name: string;
-    description?: string | null;
-    size:
-      | "Fine"
-      | "Diminutive"
-      | "Tiny"
-      | "Small"
-      | "Medium"
-      | "Large"
-      | "Huge"
-      | "Gargantuan"
-      | "Colossal";
-    baseSpeed: number;
-  }) {
+  async createRulesetRace(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      size: "Fine" | "Diminutive" | "Tiny" | "Small" | "Medium" | "Large" | "Huge" | "Gargantuan" | "Colossal";
+      baseSpeed: number;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "races", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "races",
+          body.name,
+        );
 
         const rows = await Races.create(tx, {
           ...body,
@@ -96,22 +104,18 @@ export const RacesMethods = {
     return result;
   },
 
-  async updateRulesetRace(session: Session, rulesetId: string, raceId: string, body: {
-    name: string;
-    description?: string | null;
-    size:
-      | "Fine"
-      | "Diminutive"
-      | "Tiny"
-      | "Small"
-      | "Medium"
-      | "Large"
-      | "Huge"
-      | "Gargantuan"
-      | "Colossal";
-    baseSpeed: number;
-    updatedAt?: string;
-  }) {
+  async updateRulesetRace(
+    session: Session,
+    rulesetId: string,
+    raceId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      size: "Fine" | "Diminutive" | "Tiny" | "Small" | "Medium" | "Large" | "Huge" | "Gargantuan" | "Colossal";
+      baseSpeed: number;
+      updatedAt?: string;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -144,7 +148,13 @@ export const RacesMethods = {
           targetId,
           targetTable: getTableName(racesInRules),
           type: "updateRace",
-          data: { entityName: body.name, changedFields: getChangedFields(race as Record<string, unknown>, body as unknown as Record<string, unknown>) },
+          data: {
+            entityName: body.name,
+            changedFields: getChangedFields(
+              race as Record<string, unknown>,
+              body as unknown as Record<string, unknown>,
+            ),
+          },
         });
 
         return updatedRace;

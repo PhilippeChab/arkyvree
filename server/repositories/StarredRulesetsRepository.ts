@@ -1,10 +1,9 @@
 import { and, count, eq, inArray, isNull } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
 
 import { starredRulesetsInAccount } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInAccount, StarredRulesetInstance> {
   constructor() {
@@ -43,12 +42,7 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.userId, where.userId),
-          isNull(this.table.deletedAt),
-        ),
-      )
+      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
       .returning();
   }
 
@@ -82,10 +76,7 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
 
   async findMany(db: Db, where: { userId: string }) {
     return await db.query.starredRulesetsInAccount.findMany({
-      where: and(
-        eq(this.table.userId, where.userId),
-        isNull(this.table.deletedAt),
-      ),
+      where: and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)),
     });
   }
 

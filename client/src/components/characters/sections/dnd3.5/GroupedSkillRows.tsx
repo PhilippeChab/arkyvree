@@ -1,7 +1,9 @@
-import { useToggleSet } from "@/client/src/hooks/index.ts";
 import { ExpandLess } from "@mui/icons-material";
 import { IconButton, TableCell, TableRow } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
+
+import { useToggleSet } from "@/client/src/hooks/index.ts";
+
 import { groupSkills } from "./skillGroups.ts";
 
 /** Where a skill's row sits: under its group's header, and hidden while that group is collapsed. */
@@ -22,7 +24,11 @@ interface GroupedSkillRowsProps<S> {
  * A skill table's rows, with the skills that share a prefix ("Knowledge (…)")
  * under a header row whose click shows or hides them.
  */
-export function GroupedSkillRows<S extends { name: string }>({ skills, columns, renderSkill }: GroupedSkillRowsProps<S>) {
+export function GroupedSkillRows<S extends { name: string }>({
+  skills,
+  columns,
+  renderSkill,
+}: GroupedSkillRowsProps<S>) {
   const [expanded, toggle] = useToggleSet();
   const rows = useMemo(() => groupSkills(skills), [skills]);
 
@@ -35,7 +41,11 @@ export function GroupedSkillRows<S extends { name: string }>({ skills, columns, 
         }
         const isExpanded = expanded.has(row.prefix);
         return (
-          <TableRow key={`group-${row.prefix}`} sx={{ bgcolor: "action.hover", cursor: "pointer" }} onClick={() => toggle(row.prefix)}>
+          <TableRow
+            key={`group-${row.prefix}`}
+            sx={{ bgcolor: "action.hover", cursor: "pointer" }}
+            onClick={() => toggle(row.prefix)}
+          >
             <TableCell sx={{ fontWeight: 600 }}>
               {row.prefix} ({row.count})
             </TableCell>

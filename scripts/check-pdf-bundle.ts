@@ -27,7 +27,17 @@ try {
   assert.equal(installCode, 0, installErrors);
 
   const build = Bun.spawn(
-    [process.execPath, "build", fixture, "--compile", "--external", "pdfkit", "--compile-autoload-package-json", "--outfile", executable],
+    [
+      process.execPath,
+      "build",
+      fixture,
+      "--compile",
+      "--external",
+      "pdfkit",
+      "--compile-autoload-package-json",
+      "--outfile",
+      executable,
+    ],
     { stdout: "pipe", stderr: "pipe", timeout: 120_000 },
   );
   const [buildCode, buildErrors] = await Promise.all([

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+
 import { readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { discoverRefs, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { referenceIssues } from "@/database/packages/dnd35-from-parser/tools/validate.ts";
@@ -33,10 +34,18 @@ describe("parser:validate", () => {
   test("reports a race size the seed refuses, and a seeded race's unreviewed detections", () => {
     const issues = issuesOf("srd/races.json", (overrides) => {
       overrides.reviewed = [];
-      overrides.Elf = { ...isRecord(overrides.Elf) ? overrides.Elf : {}, size: "Titanic" };
+      overrides.Elf = { ...(isRecord(overrides.Elf) ? overrides.Elf : {}), size: "Titanic" };
     });
-    expect(issues).toContainEqual({ kind: "not seedable", entityName: "Elf", text: expect.stringContaining(`Elf's size: "Titanic"`) });
-    expect(issues).toContainEqual({ kind: "modifier", entityName: "Gnome", text: expect.stringContaining("Craft (alchemy)") });
+    expect(issues).toContainEqual({
+      kind: "not seedable",
+      entityName: "Elf",
+      text: expect.stringContaining(`Elf's size: "Titanic"`),
+    });
+    expect(issues).toContainEqual({
+      kind: "modifier",
+      entityName: "Gnome",
+      text: expect.stringContaining("Craft (alchemy)"),
+    });
   });
 
   test("leaves out a skipped race: it isn't seeded", () => {
@@ -53,7 +62,9 @@ describe("parser:validate", () => {
     const issues = issuesOf("srd/magicItems.json", (overrides) => {
       overrides[item] = { slot: "Tail" };
     });
-    expect(issues).toEqual([{ kind: "not seedable", entityName: item, text: expect.stringContaining(`${item}'s slot: "Tail"`) }]);
+    expect(issues).toEqual([
+      { kind: "not seedable", entityName: item, text: expect.stringContaining(`${item}'s slot: "Tail"`) },
+    ]);
   });
 
   test("finds no issue in the committed references", () => {
@@ -66,17 +77,34 @@ describe("parser:validate", () => {
       { kind: "aptitude pick", entityName: "Animal Lord", text: "Animal Bond" },
       { kind: "aptitude pick", entityName: "Animal Lord", text: "Third Totem" },
     ]);
-    expect(issuesOf("complete-warrior/classes/stonelord.json", clear)).toEqual([{ kind: "prereq", entityName: "Stonelord", text: expect.stringContaining("arduous ritual") }]);
+    expect(issuesOf("complete-warrior/classes/stonelord.json", clear)).toEqual([
+      { kind: "prereq", entityName: "Stonelord", text: expect.stringContaining("arduous ritual") },
+    ]);
     const feats = issuesOf("complete-divine/feats.json", clear);
-    expect(feats.map(({ kind, entityName }) => `${kind} ${entityName}`))
-      .toEqual(["modifier Divine Spell Power", "modifier Oaken Resilience", "modifier Swim like a Fish", "modifier Swim like a Fish", "modifier Wolverine's Rage"]);
+    expect(feats.map(({ kind, entityName }) => `${kind} ${entityName}`)).toEqual([
+      "modifier Divine Spell Power",
+      "modifier Oaken Resilience",
+      "modifier Swim like a Fish",
+      "modifier Swim like a Fish",
+      "modifier Wolverine's Rage",
+    ]);
   });
 
   test.each([
-    "srd/classes/monk.json", "srd/feats.json", "domains.json", "srd/races.json", "srd/items.json", "srd/magicItems.json", "srd/spells.json", "srd/wizardSchools.json",
+    "srd/classes/monk.json",
+    "srd/feats.json",
+    "domains.json",
+    "srd/races.json",
+    "srd/items.json",
+    "srd/magicItems.json",
+    "srd/spells.json",
+    "srd/wizardSchools.json",
   ])("reports an entry of %s's review list that covers no issue", (file) => {
     const issues = issuesOf(file, (overrides) => {
-      overrides.reviewed = [...Array.isArray(overrides.reviewed) ? overrides.reviewed : [], "An issue since resolved"];
+      overrides.reviewed = [
+        ...(Array.isArray(overrides.reviewed) ? overrides.reviewed : []),
+        "An issue since resolved",
+      ];
     });
     expect(issues).toEqual([{ kind: "stale review", entityName: undefined, text: "An issue since resolved" }]);
   });
@@ -84,30 +112,45 @@ describe("parser:validate", () => {
   test("counts an entity's review entries as used when it's skipped or reviewed by name, and reports a name without issues", () => {
     const craft = `Unresolved skill bonus: +2 on "Craft (alchemy)"`;
     expect(issuesOf("srd/races.json", (overrides) => void (overrides.reviewed = ["Gnome", craft]))).toEqual([]);
-    expect(issuesOf("srd/races.json", (overrides) => {
-      overrides.reviewed = ["Gnome", craft];
-      overrides.Gnome = { ...isRecord(overrides.Gnome) ? overrides.Gnome : {}, skip: true };
-    })).toEqual([]);
-    expect(issuesOf("srd/races.json", (overrides) => void (overrides.reviewed = [craft, "Elf"]))).toEqual([{ kind: "stale review", entityName: undefined, text: "Elf" }]);
+    expect(
+      issuesOf("srd/races.json", (overrides) => {
+        overrides.reviewed = ["Gnome", craft];
+        overrides.Gnome = { ...(isRecord(overrides.Gnome) ? overrides.Gnome : {}), skip: true };
+      }),
+    ).toEqual([]);
+    expect(issuesOf("srd/races.json", (overrides) => void (overrides.reviewed = [craft, "Elf"]))).toEqual([
+      { kind: "stale review", entityName: undefined, text: "Elf" },
+    ]);
     // A skipped entity without issues has none for its name to cover either
-    expect(issuesOf("srd/races.json", (overrides) => {
-      overrides.reviewed = [craft, "Elf"];
-      overrides.Elf = { ...isRecord(overrides.Elf) ? overrides.Elf : {}, skip: true };
-    })).toEqual([{ kind: "stale review", entityName: undefined, text: "Elf" }]);
+    expect(
+      issuesOf("srd/races.json", (overrides) => {
+        overrides.reviewed = [craft, "Elf"];
+        overrides.Elf = { ...(isRecord(overrides.Elf) ? overrides.Elf : {}), skip: true };
+      }),
+    ).toEqual([{ kind: "stale review", entityName: undefined, text: "Elf" }]);
   });
 
   test("reports a review entry that repeats one, once", () => {
     const craft = `Unresolved skill bonus: +2 on "Craft (alchemy)"`;
     const stale = (text: string) => ({ kind: "stale review" as const, entityName: undefined, text });
-    expect(issuesOf("srd/races.json", (overrides) => void (overrides.reviewed = [craft, craft]))).toEqual([stale(craft)]);
-    expect(issuesOf("srd/races.json", (overrides) => void (overrides.reviewed = [craft, "Resolved", "Resolved"]))).toEqual([stale("Resolved")]);
+    expect(issuesOf("srd/races.json", (overrides) => void (overrides.reviewed = [craft, craft]))).toEqual([
+      stale(craft),
+    ]);
+    expect(
+      issuesOf("srd/races.json", (overrides) => void (overrides.reviewed = [craft, "Resolved", "Resolved"])),
+    ).toEqual([stale("Resolved")]);
   });
 
   test("reports a reference of a type the tools don't read", () => {
     const folder = mkdtempSync(join(tmpdir(), "references-"));
     folders.push(folder);
-    writeFileSync(join(folder, "potions.json"), JSON.stringify({ _meta: { type: "potion", sourceUrl: "", book: "srd", scrapedAt: "" }, raw: [] }));
-    expect(referenceIssues(discoverRefs(folder)).map(({ kind, text }) => ({ kind, text }))).toEqual([{ kind: "unknown type", text: "potion" }]);
+    writeFileSync(
+      join(folder, "potions.json"),
+      JSON.stringify({ _meta: { type: "potion", sourceUrl: "", book: "srd", scrapedAt: "" }, raw: [] }),
+    );
+    expect(referenceIssues(discoverRefs(folder)).map(({ kind, text }) => ({ kind, text }))).toEqual([
+      { kind: "unknown type", text: "potion" },
+    ]);
   });
 
   test("reads a review entry as the scraper stores text: a curly quote or a double space is the plain one", () => {
@@ -122,20 +165,28 @@ describe("parser:validate", () => {
     expect(edited).toBe(1);
     expect(issues).toEqual([]);
     // A spell reference's list too, whose entries are all stale
-    expect(issuesOf("srd/spells.json", (overrides) => void (overrides.reviewed = ["It’s  resolved"])))
-      .toEqual([{ kind: "stale review", entityName: undefined, text: "It's resolved" }]);
+    expect(issuesOf("srd/spells.json", (overrides) => void (overrides.reviewed = ["It’s  resolved"]))).toEqual([
+      { kind: "stale review", entityName: undefined, text: "It's resolved" },
+    ]);
   });
 
   test("reports an item without a definition, which the generator leaves out, unless reviewed", () => {
-    const undefinedSickle = (overrides: Record<string, unknown>) => void (overrides.nameMap = { ...isRecord(overrides.nameMap) ? overrides.nameMap : {}, Sickle: "Laser sickle" });
-    expect(issuesOf("srd/items.json", undefinedSickle)).toEqual([{ kind: "unresolved item", entityName: undefined, text: "weapon: Sickle" }]);
-    expect(issuesOf("srd/items.json", (overrides) => {
-      undefinedSickle(overrides);
-      overrides.reviewed = ["weapon: Sickle"];
-    })).toEqual([]);
-    expect(issuesOf("srd/items.json", (overrides) => {
-      undefinedSickle(overrides);
-      overrides.Sickle = { ...isRecord(overrides.Sickle) ? overrides.Sickle : {}, skip: true };
-    })).toEqual([]);
+    const undefinedSickle = (overrides: Record<string, unknown>) =>
+      void (overrides.nameMap = { ...(isRecord(overrides.nameMap) ? overrides.nameMap : {}), Sickle: "Laser sickle" });
+    expect(issuesOf("srd/items.json", undefinedSickle)).toEqual([
+      { kind: "unresolved item", entityName: undefined, text: "weapon: Sickle" },
+    ]);
+    expect(
+      issuesOf("srd/items.json", (overrides) => {
+        undefinedSickle(overrides);
+        overrides.reviewed = ["weapon: Sickle"];
+      }),
+    ).toEqual([]);
+    expect(
+      issuesOf("srd/items.json", (overrides) => {
+        undefinedSickle(overrides);
+        overrides.Sickle = { ...(isRecord(overrides.Sickle) ? overrides.Sickle : {}), skip: true };
+      }),
+    ).toEqual([]);
   });
 });

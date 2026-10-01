@@ -1,4 +1,3 @@
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type QueryKey, useMutation, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { type DefaultValues, type FieldValues, useForm, type UseFormReturn } from "react-hook-form";
@@ -7,10 +6,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { DeleteDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useFormSync, usePageTitle } from "@/client/src/hooks/index.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
-import { EntityDetailLayout, EntityDetailsCard, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  EntityDetailLayout,
+  EntityDetailsCard,
+  EntityPageError,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 interface EntityBase {
@@ -140,12 +144,16 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
             title={`${label} Details`}
             chips={renderChips?.(entity)}
             description={entity.description}
-            edit={canEdit ? {
-              fields: editing.renderFields(form),
-              onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-              canSave: form.formState.isDirty,
-              isSaving: saveMutation.isPending,
-            } : undefined}
+            edit={
+              canEdit
+                ? {
+                    fields: editing.renderFields(form),
+                    onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
+                    canSave: form.formState.isDirty,
+                    isSaving: saveMutation.isPending,
+                  }
+                : undefined
+            }
           />
         )}
       </EntityDetailLayout>

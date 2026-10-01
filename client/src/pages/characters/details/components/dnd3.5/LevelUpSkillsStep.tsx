@@ -1,7 +1,3 @@
-import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
-import type { LevelUpSkillsStepProps } from "./levelUpFactory.ts";
-import type { SkillsData } from "./levelUp/index.ts";
-import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { Casino as CasinoIcon } from "@mui/icons-material";
 import {
   Alert,
@@ -18,8 +14,14 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { memo, useCallback } from "react";
+
+import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
+import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
+
+import type { SkillsData } from "./levelUp/index.ts";
+import type { LevelUpSkillsStepProps } from "./levelUpFactory.ts";
 
 interface SkillAllocationRowProps {
   skill: SkillsData["skills"][number];
@@ -47,22 +49,21 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
   // class-skill status (not the character-wide history captured by
   // `skill.isClassSkill`). Only widen to the history view when the batch
   // actually spans multiple distinct classes.
-  const isMultiClass = isMultiLevel &&
-    perLevelClassSkillIds.some((ids) => ids.join(",") !== perLevelClassSkillIds[0].join(","));
+  const isMultiClass =
+    isMultiLevel && perLevelClassSkillIds.some((ids) => ids.join(",") !== perLevelClassSkillIds[0].join(","));
 
   // If class skill for any planned level, distributeSkillPoints always puts the
   // first point into a class-skill level (1 pt = 1 rank), so step must be 1.
   // Step 0.5 only works for purely cross-class skills (all levels are cross-class).
-  const isClassForAnyLevel = isMultiLevel &&
-    perLevelClassSkillIds.some((ids) => ids.includes(skill.id));
+  const isClassForAnyLevel = isMultiLevel && perLevelClassSkillIds.some((ids) => ids.includes(skill.id));
 
   const ranksGained = isMultiLevel
     ? distributeSkillPoints(skill.id, pointsAllocated, perLevelClassSkillIds, perLevelSkillPoints).ranks
-    : skill.isCurrentClassSkill ? pointsAllocated : pointsAllocated * 0.5;
+    : skill.isCurrentClassSkill
+      ? pointsAllocated
+      : pointsAllocated * 0.5;
 
-  const maxRank = skill.isClassSkill
-    ? (totalCharacterLevel + 3)
-    : (totalCharacterLevel + 3) / 2;
+  const maxRank = skill.isClassSkill ? totalCharacterLevel + 3 : (totalCharacterLevel + 3) / 2;
   const maxRanksCanAdd = maxRank - skill.currentRank;
 
   const maxFromLevel = isMultiLevel
@@ -76,11 +77,15 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
       name={skill.name}
       indented={indented}
       hidden={hidden}
-      renderName={(label) => skill.description ? (
-        <Tooltip describeChild title={skill.description} enterTouchDelay={0} arrow>
-          <span style={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>{label}</span>
-        </Tooltip>
-      ) : label}
+      renderName={(label) =>
+        skill.description ? (
+          <Tooltip describeChild title={skill.description} enterTouchDelay={0} arrow>
+            <span style={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>{label}</span>
+          </Tooltip>
+        ) : (
+          label
+        )
+      }
     >
       <TableCell>
         <TextField
@@ -94,11 +99,13 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
             // For simplicity, increment/decrement by finding the points that produce the closest rank.
             if (isMultiLevel) {
               // Binary search for the right point count that produces this rank value
-              let lo = 0, hi = maxFromLevel;
+              let lo = 0,
+                hi = maxFromLevel;
               while (lo < hi) {
                 const mid = Math.ceil((lo + hi) / 2);
                 const r = distributeSkillPoints(skill.id, mid, perLevelClassSkillIds, perLevelSkillPoints).ranks;
-                if (r <= ranksValue) lo = mid; else hi = mid - 1;
+                if (r <= ranksValue) lo = mid;
+                else hi = mid - 1;
               }
               onAllocate(skill.id, lo);
             } else {
@@ -112,7 +119,7 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
               min: 0,
               max: maxRanksCanAdd,
               step: isMultiLevel ? (isClassForAnyLevel ? 1 : 0.5) : skill.isCurrentClassSkill ? 1 : 0.5,
-            }
+            },
           }}
         />
       </TableCell>
@@ -123,11 +130,16 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
       </TableCell>
       <TableCell>{skill.currentRank}</TableCell>
       <TableCell>
-        <Typography variant="body2" sx={{ fontWeight: ranksGained > 0 ? 600 : 400, color: ranksGained > 0 ? "primary.main" : "text.secondary" }}>
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: ranksGained > 0 ? 600 : 400, color: ranksGained > 0 ? "primary.main" : "text.secondary" }}
+        >
           {skill.currentRank + ranksGained}
         </Typography>
       </TableCell>
-      <TableCell>{isMultiClass ? (skill.isClassSkill ? "Yes" : "No") : skill.isCurrentClassSkill ? "Yes" : "No"}</TableCell>
+      <TableCell>
+        {isMultiClass ? (skill.isClassSkill ? "Yes" : "No") : skill.isCurrentClassSkill ? "Yes" : "No"}
+      </TableCell>
     </SkillRow>
   );
 });
@@ -181,16 +193,19 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
 
   const skillPointsToSpend = skillData?.skillPointsToSpend ?? 0;
 
-  const onAllocate = useCallback((skillId: string, rawPoints: number) => {
-    if (!skillPointsToSpend) return;
-    const allocs = getValues("skillPointAllocations");
-    const currentTotal = Object.entries(allocs)
-      .filter(([id]) => id !== skillId)
-      .reduce((sum, [, points]) => sum + points, 0);
-    const maxFromAvailable = skillPointsToSpend - currentTotal;
-    const clamped = Math.max(0, Math.min(rawPoints, maxFromAvailable));
-    setValue("skillPointAllocations", { ...allocs, [skillId]: clamped });
-  }, [skillPointsToSpend, setValue, getValues]);
+  const onAllocate = useCallback(
+    (skillId: string, rawPoints: number) => {
+      if (!skillPointsToSpend) return;
+      const allocs = getValues("skillPointAllocations");
+      const currentTotal = Object.entries(allocs)
+        .filter(([id]) => id !== skillId)
+        .reduce((sum, [, points]) => sum + points, 0);
+      const maxFromAvailable = skillPointsToSpend - currentTotal;
+      const clamped = Math.max(0, Math.min(rawPoints, maxFromAvailable));
+      setValue("skillPointAllocations", { ...allocs, [skillId]: clamped });
+    },
+    [skillPointsToSpend, setValue, getValues],
+  );
 
   if (isLoadingSkills) return <DiceSpinner />;
   if (skillsError) return <Alert severity="error">Error loading skills.</Alert>;
@@ -202,13 +217,8 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
   return (
     <Box>
       <Box sx={{ position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pb: 1 }}>
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ alignItems: "center", mb: 1 }}>
-          <Typography variant="h6">
-            Skill Points to Spend: {skillData.skillPointsToSpend}
-          </Typography>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
+          <Typography variant="h6">Skill Points to Spend: {skillData.skillPointsToSpend}</Typography>
           <Button startIcon={<CasinoIcon />} onClick={randomAssign} size="small">
             Auto
           </Button>
@@ -217,11 +227,12 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
           variant="subtitle2"
           gutterBottom
           sx={{
-            color: pointsSpent > skillData.skillPointsToSpend
-              ? "error.main"
-              : pointsSpent === skillData.skillPointsToSpend
-                ? "success.main"
-                : "text.secondary",
+            color:
+              pointsSpent > skillData.skillPointsToSpend
+                ? "error.main"
+                : pointsSpent === skillData.skillPointsToSpend
+                  ? "success.main"
+                  : "text.secondary",
           }}
         >
           Points Spent: {pointsSpent} / {skillData.skillPointsToSpend}

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
@@ -41,8 +42,16 @@ describe("rulesets skills", () => {
   test("rejects a skill without a name or with an ability that isn't an id", async () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    const valid = { name: "Skill", primaryAbilityId: abilityMap["Wisdom"], impactedByWeight: false, usableWithoutTraining: true };
-    for (const json of [{ ...valid, name: "" }, { ...valid, primaryAbilityId: "Wisdom" }]) {
+    const valid = {
+      name: "Skill",
+      primaryAbilityId: abilityMap["Wisdom"],
+      impactedByWeight: false,
+      usableWithoutTraining: true,
+    };
+    for (const json of [
+      { ...valid, name: "" },
+      { ...valid, primaryAbilityId: "Wisdom" },
+    ]) {
       expect((await skills.$post({ param: { id }, json })).status).toBe(400);
     }
   });
@@ -52,7 +61,12 @@ describe("rulesets skills", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     expect((await skills.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
     const param = { id, skillId: NIL_UUID };
-    const json = { name: "Missing", primaryAbilityId: abilityMap["Wisdom"], impactedByWeight: false, usableWithoutTraining: true };
+    const json = {
+      name: "Missing",
+      primaryAbilityId: abilityMap["Wisdom"],
+      impactedByWeight: false,
+      usableWithoutTraining: true,
+    };
     expect((await skill.$put({ param, json })).status).toBe(404);
     expect((await skill.$delete({ param })).status).toBe(404);
   });

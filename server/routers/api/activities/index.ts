@@ -1,9 +1,10 @@
-import { errorResponse, respond } from "@/server/routers/respond.ts";
-import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
-import ActivitiesService from "@/server/services/ActivitiesService.ts";
-import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
+import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { errorResponse, respond } from "@/server/routers/respond.ts";
+import ActivitiesService from "@/server/services/ActivitiesService.ts";
 
 const activities = new Hono()
   .use(sessionMiddleware)
@@ -65,11 +66,18 @@ const activities = new Hono()
 
       const value = result[1];
       if (!value) {
-        return c.json({ error: "NotFoundError", cause: "notFound", message: "Entity not found or no link available" }, 404);
+        return c.json(
+          { error: "NotFoundError", cause: "notFound", message: "Entity not found or no link available" },
+          404,
+        );
       }
       if (typeof value === "object" && "noAccess" in value) {
         return c.json(
-          { error: "ForbiddenError", cause: "noAccess", message: `You no longer have access to this ${value.entityType}.` },
+          {
+            error: "ForbiddenError",
+            cause: "noAccess",
+            message: `You no longer have access to this ${value.entityType}.`,
+          },
           403,
         );
       }

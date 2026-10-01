@@ -3,10 +3,7 @@ import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/databas
 const SPECIAL_MOUNT_APTITUDE = "Special Mount Bond";
 const SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE = "Special Mount Class Feature";
 
-const SPECIAL_MOUNT_APTITUDES = [
-  SPECIAL_MOUNT_APTITUDE,
-  SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE,
-];
+const SPECIAL_MOUNT_APTITUDES = [SPECIAL_MOUNT_APTITUDE, SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE];
 
 const SPECIAL_MOUNT_CLASS_FEATURE_FEATS: FeatSeed[] = [
   {
@@ -73,13 +70,15 @@ const SPECIAL_MOUNT_RACE_PICK_FEATS: FeatSeed[] = SPECIAL_MOUNT_RACE_NAMES.map((
 const SPECIAL_MOUNT_RACES: RaceDefinition[] = [
   {
     name: "Heavy Warhorse",
-    description: "A combat-trained heavy warhorse, the standard special mount for a Medium paladin. Tough, fearless, and capable of bearing armored riders into battle.",
+    description:
+      "A combat-trained heavy warhorse, the standard special mount for a Medium paladin. Tough, fearless, and capable of bearing armored riders into battle.",
     size: "Large",
     baseSpeed: 50,
   },
   {
     name: "Warpony",
-    description: "A combat-trained warpony, the standard special mount for a Small paladin. Smaller than a warhorse but trained to fight and bear an armored rider.",
+    description:
+      "A combat-trained warpony, the standard special mount for a Small paladin. Smaller than a warhorse but trained to fight and bear an armored rider.",
     size: "Medium",
     baseSpeed: 40,
   },
@@ -95,9 +94,7 @@ const SPECIAL_MOUNT_CLASS: ClassSeed = {
   kind: "mount",
   bab: "medium",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
-  classSkills: [
-    "Listen", "Spot", "Survival", "Swim",
-  ],
+  classSkills: ["Listen", "Spot", "Survival", "Swim"],
   classFeatureAptitude: SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE,
   classFeatures: [
     [5, "Empathic Link (Special Mount)"],

@@ -1,10 +1,9 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { abilitiesInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules, AbilityInstance> {
   constructor() {
@@ -39,8 +38,23 @@ class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules, Abilit
   async findManyByRulesetId(
     db: Db,
     where:
-      | { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" }
-      | { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; campaignId: string; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+      | {
+          rulesetId: string;
+          ancestorRulesetIds?: string[];
+          childOnly?: boolean;
+          search?: string;
+          orderBy?: "name" | "createdAt" | "updatedAt";
+          orderDir?: "asc" | "desc";
+        }
+      | {
+          rulesetId: string;
+          ancestorRulesetIds?: string[];
+          childOnly?: boolean;
+          campaignId: string;
+          search?: string;
+          orderBy?: "name" | "createdAt" | "updatedAt";
+          orderDir?: "asc" | "desc";
+        },
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc" } = where;

@@ -42,7 +42,12 @@ const NAVIGATABLE_PATHS = [
   { path: "damage.misc", description: "Other bonuses to damage", type: "number" as const, sortOrder: 1 },
   { path: "damage.critical.range", description: "Weapon critical threat range", type: "number" as const, sortOrder: 1 },
   { path: "damage.critical.multiplier", description: "Critical hit multiplier", type: "number" as const, sortOrder: 1 },
-  { path: "damage.strmultiplier", description: "Str-to-damage ratio (1x/0.5x/1.5x)", type: "number" as const, sortOrder: 1 },
+  {
+    path: "damage.strmultiplier",
+    description: "Str-to-damage ratio (1x/0.5x/1.5x)",
+    type: "number" as const,
+    sortOrder: 1,
+  },
   // Armor class
   { path: "ac.base", description: "Default 10", type: "number" as const, sortOrder: 2 },
   { path: "ac.armor", description: "Armor bonus to AC", type: "number" as const, sortOrder: 2 },
@@ -52,7 +57,13 @@ const NAVIGATABLE_PATHS = [
   { path: "ac.deflection", description: "Deflection bonus to AC", type: "number" as const, sortOrder: 2 },
   { path: "ac.size", description: "Size modifier to AC", type: "number" as const, sortOrder: 2 },
   { path: "ac.misc", description: "Other bonuses to AC", type: "number" as const, sortOrder: 2 },
-  { path: "ac.total", description: "All AC bonuses combined", type: "number" as const, sortOrder: 2, requirementOnly: true },
+  {
+    path: "ac.total",
+    description: "All AC bonuses combined",
+    type: "number" as const,
+    sortOrder: 2,
+    requirementOnly: true,
+  },
   { path: "ac.touch", description: "Ignores armor, shield, natural", type: "number" as const, sortOrder: 2 },
   { path: "ac.flatfooted", description: "Ignores Dex bonus", type: "number" as const, sortOrder: 2 },
   // Hit points
@@ -63,14 +74,24 @@ const NAVIGATABLE_PATHS = [
   // Initiative
   { path: "initiative.dexterity", description: "Dex modifier", type: "number" as const },
   { path: "initiative.misc", description: "Other bonuses to initiative", type: "number" as const },
-  { path: "initiative.total", description: "All initiative bonuses combined", type: "number" as const, requirementOnly: true },
+  {
+    path: "initiative.total",
+    description: "All initiative bonuses combined",
+    type: "number" as const,
+    requirementOnly: true,
+  },
   // Attack
   { path: "bab", description: "From class progression", type: "number" as const },
   { path: "grapple.bab", description: "BAB contribution", type: "number" as const },
   { path: "grapple.strength", description: "Str modifier", type: "number" as const },
   { path: "grapple.size", description: "From race size", type: "number" as const },
   { path: "grapple.misc", description: "Other bonuses to grapple", type: "number" as const },
-  { path: "grapple.total", description: "All grapple bonuses combined", type: "number" as const, requirementOnly: true },
+  {
+    path: "grapple.total",
+    description: "All grapple bonuses combined",
+    type: "number" as const,
+    requirementOnly: true,
+  },
   // Movement
   { path: "speed.base", description: "From race (ft)", type: "number" as const },
   { path: "speed.misc", description: "Other bonuses to speed (ft)", type: "number" as const },
@@ -101,9 +122,21 @@ function iterativeAttacks(bab: number): number[] {
 // D&D 3.5 damage die progression for size adjustments.
 // All weapon/unarmed damages are defined for Medium size; shift up for Large, down for Small, etc.
 const DAMAGE_PROGRESSION = [
-  "1", "1d2", "1d3", "1d4", "1d6", "1d8", "1d10", "2d6", "2d8", "2d10", "3d6", "3d8", "4d6", "4d8",
+  "1",
+  "1d2",
+  "1d3",
+  "1d4",
+  "1d6",
+  "1d8",
+  "1d10",
+  "2d6",
+  "2d8",
+  "2d10",
+  "3d6",
+  "3d8",
+  "4d6",
+  "4d8",
 ];
-
 
 function formatDamageTotal(weapon: WeaponSlot): string {
   const totalBonus = weapon.damage.strength + weapon.damage.magic + weapon.damage.misc;
@@ -217,9 +250,7 @@ export default class DetailedCharacterCombat {
     return deriveSegmentLabels(NAVIGATABLE_PATHS, SEGMENT_LABELS);
   }
 
-  static generateTargetPaths(
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
+  static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const path of NAVIGATABLE_PATHS) {
@@ -229,14 +260,10 @@ export default class DetailedCharacterCombat {
         category: "combat",
         description: path.description,
         valueType: path.type,
-        operators: kind === "modifier" ? ["add", "subtract", "multiply", "divide", "set"] : [
-          "equal",
-          "not_equal",
-          "greater_than",
-          "less_than",
-          "greater_than_or_equal",
-          "less_than_or_equal",
-        ],
+        operators:
+          kind === "modifier"
+            ? ["add", "subtract", "multiply", "divide", "set"]
+            : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
         ...("sortOrder" in path && { sortOrder: path.sortOrder }),
       });
     }
@@ -316,10 +343,7 @@ export default class DetailedCharacterCombat {
     this.characterEncumbrance = encumbrance;
   }
 
-  initialize(
-    race: Race,
-    klassLevelProperties: Map<string, { bab: number; skills: number }>,
-  ) {
+  initialize(race: Race, klassLevelProperties: Map<string, { bab: number; skills: number }>) {
     this.raceSize = race.size;
 
     const dexterityModifier = this.characterAbilities.getAbilityModifier("Dexterity");
@@ -367,14 +391,7 @@ export default class DetailedCharacterCombat {
   }
 
   getCombatElement(
-    element:
-      | "ac"
-      | "hp"
-      | "initiative"
-      | "bab"
-      | "grapple"
-      | "speed"
-      | "weaponsets",
+    element: "ac" | "hp" | "initiative" | "bab" | "grapple" | "speed" | "weaponsets",
   ): DetailedCharacterComprehensiveCombat[typeof element] {
     return this.detailedCharacterCombat[element];
   }
@@ -408,12 +425,8 @@ export default class DetailedCharacterCombat {
     }
 
     const weaponBaseDamage = properties.find((property) => property.type === WEAPON_BASE_DAMAGE);
-    const weaponCriticalRange = properties.find((property) =>
-      property.type === WEAPON_CRITICAL_RANGE
-    );
-    const weaponCriticalMultiplier = properties.find((property) =>
-      property.type === WEAPON_CRITICAL_MULTIPLIER
-    );
+    const weaponCriticalRange = properties.find((property) => property.type === WEAPON_CRITICAL_RANGE);
+    const weaponCriticalMultiplier = properties.find((property) => property.type === WEAPON_CRITICAL_MULTIPLIER);
     const weaponRange = properties.find((property) => property.type === WEAPON_RANGE);
     const weaponReach = properties.find((property) => property.type === WEAPON_REACH);
     const damageTypes = properties.filter((property) => property.type === DAMAGE_TYPE);
@@ -500,11 +513,12 @@ export default class DetailedCharacterCombat {
         magic: 0,
         misc: 0,
         others: [],
-        total: damageModifier < 0
-          ? `${weaponBaseDamage?.value ?? "unknown"} - ${Math.abs(damageModifier)}`
-          : damageModifier > 0
-            ? `${weaponBaseDamage?.value ?? "unknown"} + ${damageModifier}`
-            : (weaponBaseDamage?.value ?? "unknown"),
+        total:
+          damageModifier < 0
+            ? `${weaponBaseDamage?.value ?? "unknown"} - ${Math.abs(damageModifier)}`
+            : damageModifier > 0
+              ? `${weaponBaseDamage?.value ?? "unknown"} + ${damageModifier}`
+              : (weaponBaseDamage?.value ?? "unknown"),
         types: damageTypes.map((property) => property.value),
         strmultiplier: strMultiplier,
         critical: {
@@ -531,9 +545,7 @@ export default class DetailedCharacterCombat {
       const attack = attacks[idx];
       const setIndex = Math.floor(idx / slots.length);
       const slot = slots[idx % slots.length];
-      const displayName = (attack.count && attack.count > 1)
-        ? `${attack.name} (x${attack.count})`
-        : attack.name;
+      const displayName = attack.count && attack.count > 1 ? `${attack.name} (x${attack.count})` : attack.name;
       const props: Property[] = [
         { type: WEAPON_PROFICIENCY, value: "Natural" },
         { type: WEAPON_BASE_DAMAGE, value: attack.damage },
@@ -542,18 +554,11 @@ export default class DetailedCharacterCombat {
         { type: WEAPON_CRITICAL_MULTIPLIER, value: "2" },
         { type: WEAPON_FINESSABLE, value: "true" },
       ] as unknown as Property[];
-      this.addWeapon(
-        setIndex,
-        slot,
-        { name: displayName } as unknown as Item,
-        props,
-      );
+      this.addWeapon(setIndex, slot, { name: displayName } as unknown as Item, props);
     }
   }
 
-  addShield(
-    properties: Property[],
-  ) {
+  addShield(properties: Property[]) {
     const shield = properties.find((property) => property.type === SHIELD_PROFICIENCY);
     if (!shield) {
       return;
@@ -564,8 +569,7 @@ export default class DetailedCharacterCombat {
       this.detailedCharacterCombat.ac.shield = Number(acBonus.value);
     }
 
-    const dexterityLimitation =
-      properties.find((property) => property.type === ARMOR_MAX_DEX)?.value ?? null;
+    const dexterityLimitation = properties.find((property) => property.type === ARMOR_MAX_DEX)?.value ?? null;
     if (dexterityLimitation) {
       this.shieldMaxDex = Math.min(this.shieldMaxDex, Number(dexterityLimitation));
     }
@@ -574,9 +578,7 @@ export default class DetailedCharacterCombat {
     this.updateArmorClassTotal();
   }
 
-  addArmor(
-    properties: Property[],
-  ) {
+  addArmor(properties: Property[]) {
     const armor = properties.find((property) => property.type === ARMOR_PROFICIENCY);
     if (!armor) {
       return;
@@ -615,30 +617,26 @@ export default class DetailedCharacterCombat {
   private initializeInitiative(dexterityModifier: number): void {
     this.detailedCharacterCombat.initiative.dexterity = dexterityModifier;
     this.detailedCharacterCombat.initiative.total =
-      this.detailedCharacterCombat.initiative.dexterity +
-      this.detailedCharacterCombat.initiative.misc;
+      this.detailedCharacterCombat.initiative.dexterity + this.detailedCharacterCombat.initiative.misc;
   }
 
   private initializeBaseAttackBonus(
     classes: ReturnType<DetailedCharacterClasses["getClasses"]>,
     klassLevelProperties: Map<string, { bab: number; skills: number }>,
   ): void {
-    const baseAttackBonusFromClasses = Object.values(classes).reduce(
-      (acc, klass) => {
-        const lastLevel = klass.levels.at(-1);
-        if (!lastLevel) return acc;
-        return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
-      },
-      0,
-    );
+    const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
+      const lastLevel = klass.levels.at(-1);
+      if (!lastLevel) return acc;
+      return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
+    }, 0);
 
     this.detailedCharacterCombat.bab = baseAttackBonusFromClasses;
   }
 
   private initializeSpeed(race: Race): void {
     this.detailedCharacterCombat.speed.base = race.baseSpeed;
-    this.detailedCharacterCombat.speed.total = this.detailedCharacterCombat.speed.base +
-      this.detailedCharacterCombat.speed.misc;
+    this.detailedCharacterCombat.speed.total =
+      this.detailedCharacterCombat.speed.base + this.detailedCharacterCombat.speed.misc;
   }
 
   private recalculateDexterityAc(): void {
@@ -657,9 +655,7 @@ export default class DetailedCharacterCombat {
     // Also consider encumbrance dex cap
     minMaxDex = Math.min(minMaxDex, this.detailedCharacterCombat.encumbrance.maxdex);
 
-    this.detailedCharacterCombat.ac.dexterity = minMaxDex === Infinity
-      ? baseDexMod
-      : Math.min(baseDexMod, minMaxDex);
+    this.detailedCharacterCombat.ac.dexterity = minMaxDex === Infinity ? baseDexMod : Math.min(baseDexMod, minMaxDex);
   }
 
   private updateArmorClassTotal() {
@@ -680,7 +676,9 @@ export default class DetailedCharacterCombat {
 
   private updateHitPointsTotal() {
     const hp = this.detailedCharacterCombat.hp;
-    const numberOfLevels = this.hitDiceOverride ?? Object.values(this.characterClasses.getClasses()).reduce((acc, klass) => acc + klass.level, 0);
+    const numberOfLevels =
+      this.hitDiceOverride ??
+      Object.values(this.characterClasses.getClasses()).reduce((acc, klass) => acc + klass.level, 0);
     hp.constitution = this.characterAbilities.getAbilityModifier("Constitution") * numberOfLevels;
     hp.total = hp.base + hp.constitution + hp.misc;
   }
@@ -691,8 +689,7 @@ export default class DetailedCharacterCombat {
 
   private updateInitiativeTotal() {
     this.detailedCharacterCombat.initiative.total =
-      this.detailedCharacterCombat.initiative.dexterity +
-      this.detailedCharacterCombat.initiative.misc;
+      this.detailedCharacterCombat.initiative.dexterity + this.detailedCharacterCombat.initiative.misc;
   }
 
   private updateSpeedTotal() {
@@ -703,9 +700,7 @@ export default class DetailedCharacterCombat {
     if (load === "overloaded") {
       this.detailedCharacterCombat.speed.total = 5;
     } else if (load === "medium" || load === "heavy" || this.hasSpeedReducingArmor) {
-      const reducedBase = this.characterEncumbrance
-        ? this.characterEncumbrance.getEncumberedSpeed(base)
-        : base;
+      const reducedBase = this.characterEncumbrance ? this.characterEncumbrance.getEncumberedSpeed(base) : base;
       this.detailedCharacterCombat.speed.total = reducedBase + misc;
     } else {
       this.detailedCharacterCombat.speed.total = base + misc;
@@ -721,9 +716,7 @@ export default class DetailedCharacterCombat {
         if (!weapon || !weapon.itemId) continue;
 
         const isUnmet = unmetRequirementGroups.some((group) =>
-          group.some((requirement) =>
-            requirement.entityId === weapon.itemId && requirement.entityType === "items"
-          )
+          group.some((requirement) => requirement.entityId === weapon.itemId && requirement.entityType === "items"),
         );
 
         if (isUnmet) {
@@ -780,9 +773,7 @@ export default class DetailedCharacterCombat {
 
         weapon.tohit.size = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
         const tohitBonuses = weapon.tohit.strength + weapon.tohit.magic + weapon.tohit.misc + weapon.tohit.size;
-        weapon.tohit.total = iterativeAttacks(this.detailedCharacterCombat.bab).map(
-          (base) => base + tohitBonuses,
-        );
+        weapon.tohit.total = iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + tohitBonuses);
 
         weapon.damage.total = formatDamageTotal(weapon);
       }

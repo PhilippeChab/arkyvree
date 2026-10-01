@@ -1,7 +1,8 @@
-import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { Add as AddIcon, Remove as RemoveIcon } from "@mui/icons-material";
 import { Box, IconButton, Paper, Stack, Typography } from "@mui/material";
+
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 interface AbilityScoreBoxProps {
   ability: string;
@@ -23,9 +24,10 @@ export function AbilityScoreBox({
   compact,
 }: AbilityScoreBoxProps) {
   const baseValue = abilityData?.base || 10;
-  const edit = !readOnly && !compact && abilityData?.abilityId && onBaseChange
-    ? { abilityId: abilityData.abilityId, onBaseChange }
-    : null;
+  const edit =
+    !readOnly && !compact && abilityData?.abilityId && onBaseChange
+      ? { abilityId: abilityData.abilityId, onBaseChange }
+      : null;
   const label = compact ? ability.slice(0, 3).toUpperCase() : ability;
   const breakdown = compact ? undefined : abilityData;
 
@@ -35,7 +37,9 @@ export function AbilityScoreBox({
       sx={{
         p: compact ? 1 : 2,
         textAlign: "center",
-        ...(compact ? { display: "flex", flexDirection: "column", gap: 0.5 } : { minHeight: 180, display: "flex", flexDirection: "column", justifyContent: "space-between" }),
+        ...(compact
+          ? { display: "flex", flexDirection: "column", gap: 0.5 }
+          : { minHeight: 180, display: "flex", flexDirection: "column", justifyContent: "space-between" }),
       }}
     >
       <Typography
@@ -81,11 +85,7 @@ export function AbilityScoreBox({
         {breakdown && (
           <Box sx={{ fontSize: "0.75rem", textAlign: "center" }}>
             {edit ? (
-              <Stack
-                direction="row"
-                spacing={0.5}
-                sx={{ alignItems: "center", justifyContent: "center" }}
-              >
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
                 <IconButton
                   size="small"
                   aria-label={`Lower base ${ability}`}

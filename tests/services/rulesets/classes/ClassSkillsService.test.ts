@@ -1,27 +1,44 @@
 import { describe, expect, test } from "bun:test";
+
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Abilities, EntitySnapshots, Klasses, KlassLevels, KlassSkills, Skills } from "@/server/repositories/index.ts";
 import { ClassSkillsMethods } from "@/server/services/rulesets/classes/ClassSkillsService.ts";
-import { addCharacterLevel, createTestCharacter, createTestRuleset, createTestUserAndRuleset } from "@/tests/helpers.ts";
+import {
+  addCharacterLevel,
+  createTestCharacter,
+  createTestRuleset,
+  createTestUserAndRuleset,
+} from "@/tests/helpers.ts";
 
 /** A new user's empty ruleset with two classes and two skills. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
   const rulesetId = ruleset.id;
   const [ability] = await Abilities.create(db, { name: "Strength", description: "Strength", rulesetId });
-  const [fighter, rogue] = await Promise.all(["Fighter", "Rogue"].map(async (name) => (await Klasses.create(db, { name, rulesetId, hd: 8 }))[0]));
-  const [climb, swim] = await Promise.all(["Climb", "Swim"].map(async (name) => (await Skills.create(db, { name, rulesetId, primaryAbilityId: ability.id }))[0]));
+  const [fighter, rogue] = await Promise.all(
+    ["Fighter", "Rogue"].map(async (name) => (await Klasses.create(db, { name, rulesetId, hd: 8 }))[0]),
+  );
+  const [climb, swim] = await Promise.all(
+    ["Climb", "Swim"].map(
+      async (name) => (await Skills.create(db, { name, rulesetId, primaryAbilityId: ability.id }))[0],
+    ),
+  );
   return { user, session, ruleset, fighter, rogue, climb, swim };
 }
 
-const skillIdsOf = async (rulesetId: string, klassId: string) => (await ClassSkillsMethods.getClassSkills(rulesetId, klassId)).map((ks) => ks.skillId).sort();
+const skillIdsOf = async (rulesetId: string, klassId: string) =>
+  (await ClassSkillsMethods.getClassSkills(rulesetId, klassId)).map((ks) => ks.skillId).sort();
 
 // Adding, listing and removing a class skill, and refusing one the class has, are covered in the class skills router test.
 describe("ClassSkillsService", () => {
   test("removes a skill from one class only", async () => {
     const { session, ruleset, fighter, rogue, climb, swim } = await setup();
-    for (const [klass, skill] of [[fighter, climb], [fighter, swim], [rogue, climb]] as const) {
+    for (const [klass, skill] of [
+      [fighter, climb],
+      [fighter, swim],
+      [rogue, climb],
+    ] as const) {
       await ClassSkillsMethods.addClassSkill(session, ruleset.id, klass.id, skill.id);
     }
 
@@ -33,18 +50,30 @@ describe("ClassSkillsService", () => {
   test("refuses changes from anyone but the owner", async () => {
     const { ruleset, fighter, climb } = await setup();
     const { session: other } = await createTestUserAndRuleset();
-    await expect(ClassSkillsMethods.addClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(ForbiddenError);
-    await expect(ClassSkillsMethods.removeClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(ForbiddenError);
+    await expect(ClassSkillsMethods.addClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+      ForbiddenError,
+    );
+    await expect(ClassSkillsMethods.removeClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+      ForbiddenError,
+    );
   });
 
   test("doesn't find a class or skill of another ruleset, nor a skill the class doesn't have", async () => {
     const { session, ruleset, fighter, climb } = await setup();
     const other = await setup();
     await expect(ClassSkillsMethods.getClassSkills(ruleset.id, other.fighter.id)).rejects.toThrow(NotFoundError);
-    await expect(ClassSkillsMethods.addClassSkill(session, ruleset.id, other.fighter.id, climb.id)).rejects.toThrow(NotFoundError);
-    await expect(ClassSkillsMethods.addClassSkill(session, ruleset.id, fighter.id, other.climb.id)).rejects.toThrow(NotFoundError);
-    await expect(ClassSkillsMethods.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(NotFoundError);
-    await expect(ClassSkillsMethods.removeClassSkill(session, ruleset.id, other.fighter.id, climb.id)).rejects.toThrow(NotFoundError);
+    await expect(ClassSkillsMethods.addClassSkill(session, ruleset.id, other.fighter.id, climb.id)).rejects.toThrow(
+      NotFoundError,
+    );
+    await expect(ClassSkillsMethods.addClassSkill(session, ruleset.id, fighter.id, other.climb.id)).rejects.toThrow(
+      NotFoundError,
+    );
+    await expect(ClassSkillsMethods.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+      NotFoundError,
+    );
+    await expect(ClassSkillsMethods.removeClassSkill(session, ruleset.id, other.fighter.id, climb.id)).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   test("refuses to remove a class skill while a character has a level in the class", async () => {
@@ -54,7 +83,9 @@ describe("ClassSkillsService", () => {
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, klassLevel.id);
 
-    await expect(ClassSkillsMethods.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(ConflictError);
+    await expect(ClassSkillsMethods.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+      ConflictError,
+    );
   });
 
   test("in a fork, reads the inherited class's skills and changes them on the fork's copy of the class", async () => {
@@ -65,7 +96,10 @@ describe("ClassSkillsService", () => {
 
     const added = await ClassSkillsMethods.addClassSkill(session, fork.id, fighter.id, swim.id);
     const removed = await ClassSkillsMethods.removeClassSkill(session, fork.id, fighter.id, climb.id);
-    const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, { sourceEntityId: fighter.id, rulesetId: fork.id });
+    const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, {
+      sourceEntityId: fighter.id,
+      rulesetId: fork.id,
+    });
     expect([added.klassId, removed.klassId]).toEqual([snapshot!.forkedEntityId, snapshot!.forkedEntityId]);
 
     expect(await skillIdsOf(fork.id, fighter.id)).toEqual([swim.id]);

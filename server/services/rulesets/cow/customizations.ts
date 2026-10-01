@@ -59,9 +59,9 @@ export async function fetchSiblingCustomizationsRaw(
 
   const modifiers = sourceType
     ? await tx.query.modifiersInCustomization.findMany({
-      where: (m, { and: a, eq: e, inArray: i, isNull: n }) =>
-        a(i(m.sourceId, entityIds), e(m.sourceType, sourceType), n(m.deletedAt)),
-    })
+        where: (m, { and: a, eq: e, inArray: i, isNull: n }) =>
+          a(i(m.sourceId, entityIds), e(m.sourceType, sourceType), n(m.deletedAt)),
+      })
     : [];
   const properties = await tx.query.propertiesInCustomization.findMany({
     where: (p, { and: a, eq: e, inArray: i, isNull: n }) =>
@@ -73,12 +73,13 @@ export async function fetchSiblingCustomizationsRaw(
   });
 
   const modifierIds = modifiers.map((m) => m.id);
-  const modifierRequirements = modifierIds.length > 0
-    ? await tx.query.requirementsInCustomization.findMany({
-      where: (r, { and: a, eq: e, inArray: i, isNull: n }) =>
-        a(i(r.entityId, modifierIds), e(r.entityType, "modifiers"), n(r.deletedAt)),
-    })
-    : [];
+  const modifierRequirements =
+    modifierIds.length > 0
+      ? await tx.query.requirementsInCustomization.findMany({
+          where: (r, { and: a, eq: e, inArray: i, isNull: n }) =>
+            a(i(r.entityId, modifierIds), e(r.entityType, "modifiers"), n(r.deletedAt)),
+        })
+      : [];
 
   return buildCustomizationsMap(entityIds, modifiers, properties, requirements, modifierRequirements);
 }
@@ -95,24 +96,20 @@ export async function fetchEntityCustomizations(
 ): Promise<Map<string, EntityCustomizations>> {
   if (entityIds.length === 0) return new Map();
 
-  const modifiers = sourceType
-    ? await Modifiers.findManyBySource(tx, { sourceIds: entityIds, sourceType })
-    : [];
+  const modifiers = sourceType ? await Modifiers.findManyBySource(tx, { sourceIds: entityIds, sourceType }) : [];
   const properties = await Properties.findManyByEntity(tx, { entityIds, entityType });
   const requirements = await Requirements.findManyByEntity(tx, { entityIds, entityType });
 
   const modifierIds = modifiers.map((m) => m.id);
-  const modifierRequirements = modifierIds.length > 0
-    ? await Requirements.findManyByEntity(tx, { entityIds: modifierIds, entityType: "modifiers" })
-    : [];
+  const modifierRequirements =
+    modifierIds.length > 0
+      ? await Requirements.findManyByEntity(tx, { entityIds: modifierIds, entityType: "modifiers" })
+      : [];
 
   return buildCustomizationsMap(entityIds, modifiers, properties, requirements, modifierRequirements);
 }
 
-export async function fetchKlassRelationships(
-  tx: Db,
-  klassIds: string[],
-): Promise<Map<string, KlassRelationships>> {
+export async function fetchKlassRelationships(tx: Db, klassIds: string[]): Promise<Map<string, KlassRelationships>> {
   if (klassIds.length === 0) return new Map();
 
   const map = new Map<string, KlassRelationships>();

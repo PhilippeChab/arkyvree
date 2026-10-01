@@ -1,10 +1,17 @@
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { type DefaultValues, type FieldValues, useForm } from "react-hook-form";
 
-interface RulesetSectionConfig<TData, TFormData extends FieldValues, TCreated extends { id: string }, TUpdated, TDeleted> {
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+
+interface RulesetSectionConfig<
+  TData,
+  TFormData extends FieldValues,
+  TCreated extends { id: string },
+  TUpdated,
+  TDeleted,
+> {
   rulesetId: string;
   sectionName: string;
   label: string;
@@ -61,7 +68,11 @@ export function useRulesetSection<
   const editForm = useForm<TFormData>();
 
   // Data query (only when queryFn is provided and no external data)
-  const { data: queryData, isLoading, error } = useQuery({
+  const {
+    data: queryData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: queryKeys.rulesets.section(rulesetId, sectionName),
     queryFn: !externalData && queryFn && rulesetId ? queryFn : skipToken,
   });

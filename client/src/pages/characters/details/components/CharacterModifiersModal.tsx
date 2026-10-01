@@ -1,25 +1,4 @@
 import {
-  BlankState,
-  CreateDialog,
-  DeleteDialog,
-  DiceSpinner,
-  EditDialog,
-  FaqHelpIcon,
-  Modal,
-  ROW_ACTIONS_HOVER_SX,
-  ROW_ACTIONS_SX,
-} from "@/client/src/components/common/index.ts";
-import {
-  ModifierForm,
-  type ModifierFormData,
-  TargetPathBreadcrumbs,
-} from "@/client/src/components/customization/index.ts";
-import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
-import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import {
   Add as AddIcon,
   Close as CloseIcon,
   ContentCopy as ContentCopyIcon,
@@ -43,12 +22,37 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import type { InferResponseType } from "hono/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-type Modifier = InferResponseType<(typeof rpc.api.characters.modifiers)[":characterId"]["modifiers"]["$get"], 200>[number];
+import {
+  BlankState,
+  CreateDialog,
+  DeleteDialog,
+  DiceSpinner,
+  EditDialog,
+  FaqHelpIcon,
+  Modal,
+  ROW_ACTIONS_HOVER_SX,
+  ROW_ACTIONS_SX,
+} from "@/client/src/components/common/index.ts";
+import {
+  ModifierForm,
+  type ModifierFormData,
+  TargetPathBreadcrumbs,
+} from "@/client/src/components/customization/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
+type Modifier = InferResponseType<
+  (typeof rpc.api.characters.modifiers)[":characterId"]["modifiers"]["$get"],
+  200
+>[number];
 
 interface CharacterModifiersModalProps {
   open: boolean;
@@ -72,9 +76,11 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   const { data: modifiers = [], isLoading } = useQuery({
     queryKey: queryKeys.characters.modifiers(characterId),
     queryFn: async () => {
-      return parseResponse(rpc.api.characters.modifiers[":characterId"].modifiers.$get({
-        param: { characterId },
-      }));
+      return parseResponse(
+        rpc.api.characters.modifiers[":characterId"].modifiers.$get({
+          param: { characterId },
+        }),
+      );
     },
     enabled: open,
   });
@@ -85,10 +91,12 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
 
   const createMutation = useMutation({
     mutationFn: async (data: ModifierFormData) => {
-      return parseResponse(rpc.api.characters.modifiers[":characterId"].modifiers.$post({
-        param: { characterId },
-        json: data,
-      }));
+      return parseResponse(
+        rpc.api.characters.modifiers[":characterId"].modifiers.$post({
+          param: { characterId },
+          json: data,
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Modifier created");
@@ -100,10 +108,12 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, updatedAt }: { id: string; data: ModifierFormData; updatedAt?: string }) => {
-      return parseResponse(rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$put({
-        param: { characterId, modifierId: id },
-        json: { ...data, updatedAt },
-      }));
+      return parseResponse(
+        rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$put({
+          param: { characterId, modifierId: id },
+          json: { ...data, updatedAt },
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Modifier updated");
@@ -116,9 +126,11 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return parseResponse(rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$delete({
-        param: { characterId, modifierId: id },
-      }));
+      return parseResponse(
+        rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$delete({
+          param: { characterId, modifierId: id },
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Modifier deleted");
@@ -142,11 +154,14 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   };
 
   const handleDuplicate = (modifier: Modifier) => {
-    createForm.reset({
-      target: modifier.target,
-      value: modifier.value,
-      operator: modifier.operator,
-    }, { keepDefaultValues: true });
+    createForm.reset(
+      {
+        target: modifier.target,
+        value: modifier.value,
+        operator: modifier.operator,
+      },
+      { keepDefaultValues: true },
+    );
     setCreateOpen(true);
   };
 
@@ -163,7 +178,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         aria-labelledby="character-modifiers-title"
         maxWidth="md"
         slotProps={{
-          paper: { sx: { minHeight: { sm: "50vh" } } }
+          paper: { sx: { minHeight: { sm: "50vh" } } },
         }}
       >
         <Toolbar sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -171,15 +186,13 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
             <Typography id="character-modifiers-title" variant="h6" sx={{ fontWeight: 600 }}>
               Manage Modifiers
             </Typography>
-            <FaqHelpIcon text="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc." size={18} />
+            <FaqHelpIcon
+              text="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."
+              size={18}
+            />
           </Box>
           <Stack direction="row" spacing={1}>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={handleAdd}
-            >
+            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleAdd}>
               Add
             </Button>
             <IconButton edge="end" aria-label="Close" onClick={onClose}>
@@ -254,7 +267,12 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                           <IconButton size="small" aria-label="Duplicate modifier" onClick={() => handleDuplicate(mod)}>
                             <ContentCopyIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" color="error" aria-label="Delete modifier" onClick={() => handleDelete(mod)}>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            aria-label="Delete modifier"
+                            onClick={() => handleDelete(mod)}
+                          >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Box>
@@ -280,7 +298,10 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       </CreateDialog>
       <EditDialog
         open={editOpen}
-        onClose={() => { setEditOpen(false); setSelectedModifier(null); }}
+        onClose={() => {
+          setEditOpen(false);
+          setSelectedModifier(null);
+        }}
         title="Edit Modifier"
         form={editForm}
         onSubmit={(data) => selectedModifier && updateMutation.mutate({ id: selectedModifier.id, data })}
@@ -291,7 +312,10 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       </EditDialog>
       <DeleteDialog
         open={deleteOpen}
-        onClose={() => { setDeleteOpen(false); setSelectedModifier(null); }}
+        onClose={() => {
+          setDeleteOpen(false);
+          setSelectedModifier(null);
+        }}
         onConfirm={() => selectedModifier && deleteMutation.mutate(selectedModifier.id)}
         title="Delete Modifier"
         message="Are you sure you want to delete this modifier?"

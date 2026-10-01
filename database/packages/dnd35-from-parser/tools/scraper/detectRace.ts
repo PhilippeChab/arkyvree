@@ -1,7 +1,14 @@
-import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
+import {
+  detectModifiersOf,
+  type ModifierDetection,
+  modifierMapping,
+  SAVE_MAP,
+  SKILL_MAP,
+  validateModifiers,
+} from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { detectModifiersOf, type ModifierDetection, modifierMapping, SAVE_MAP, SKILL_MAP, validateModifiers } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 
 // ---------------------------------------------------------------------------
 // Ability name → slug mapping
@@ -22,18 +29,16 @@ const ABILITY_MAP: Record<string, string> = {
 
 function isConditional(text: string, match: RegExpMatchArray): boolean {
   // After a comma, only a condition: ", to a maximum of…", ", for example" qualify nothing
-  return /^(?:\s+(?:that|to|for|made|related|involving)\b|,?\s+(?:(?:when|while|if|against|versus)\b|vs\.?\s))/i.test(text.slice((match.index ?? 0) + match[0].length));
+  return /^(?:\s+(?:that|to|for|made|related|involving)\b|,?\s+(?:(?:when|while|if|against|versus)\b|vs\.?\s))/i.test(
+    text.slice((match.index ?? 0) + match[0].length),
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Skill bonus detection
 // ---------------------------------------------------------------------------
 
-function detectSkillBonuses(
-  text: string,
-  modifiers: Modifier[],
-  unresolvedModifiers: string[],
-): void {
+function detectSkillBonuses(text: string, modifiers: Modifier[], unresolvedModifiers: string[]): void {
   // "+N racial bonus on X checks" or "+N racial bonus on X, Y, and Z checks"
   const pattern = /\+(\d+)\s+racial\s+bonus\s+on\s+([\w\s,()]+?)\s+checks/gi;
 
@@ -68,11 +73,14 @@ function detectSkillBonuses(
 // Save bonus detection
 // ---------------------------------------------------------------------------
 
-function detectSaveBonuses(
-  text: string,
-  modifiers: Modifier[],
-): void {
-  const add = (save: string, bonus: string) => modifiers.push({ target: `saves.${save}.misc`, operator: "add", value: String(parseInt(bonus, 10)), valueType: "number" });
+function detectSaveBonuses(text: string, modifiers: Modifier[]): void {
+  const add = (save: string, bonus: string) =>
+    modifiers.push({
+      target: `saves.${save}.misc`,
+      operator: "add",
+      value: String(parseInt(bonus, 10)),
+      valueType: "number",
+    });
 
   // "+N racial bonus on all saving throws"
   for (const match of text.matchAll(/\+(\d+)\s+racial\s+bonus\s+on\s+all\s+saving\s+throws/gi)) {
@@ -112,9 +120,7 @@ function detectRaceModifiers(entry: RaceReference["raw"][number]): ModifierDetec
 
   // 2. Detect modifiers from racial trait text
   for (const feature of entry.features) {
-    const text = feature.description
-      ? `${feature.name}: ${feature.description}`
-      : feature.name;
+    const text = feature.description ? `${feature.name}: ${feature.description}` : feature.name;
     detectSkillBonuses(text, modifiers, unresolvedModifiers);
     detectSaveBonuses(text, modifiers);
   }

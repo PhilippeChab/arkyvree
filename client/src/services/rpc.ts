@@ -1,7 +1,8 @@
+import { hc } from "hono/client";
+
+import { ApiError, type ApiValidationIssue } from "@/client/src/services/apiError.ts";
 import type { ErrorJson } from "@/server/errors/index.ts";
 import type { Application } from "@/server/routers/application.ts";
-import { hc } from "hono/client";
-import { ApiError, type ApiValidationIssue } from "@/client/src/services/apiError.ts";
 
 // Same-origin in all environments — vite's dev proxy forwards
 // /api/* and /auth/* to API_PORT, and the SSR server serves them

@@ -2,7 +2,14 @@ import { api, expectOk } from "@/tests/api.ts";
 import { uniqueId } from "@/tests/helpers.ts";
 
 export type CustomizableEntityType = "feats" | "items" | "powers" | "races" | "klasses" | "klass_levels";
-export const CUSTOMIZABLE_ENTITY_TYPES: CustomizableEntityType[] = ["feats", "items", "powers", "races", "klasses", "klass_levels"];
+export const CUSTOMIZABLE_ENTITY_TYPES: CustomizableEntityType[] = [
+  "feats",
+  "items",
+  "powers",
+  "races",
+  "klasses",
+  "klass_levels",
+];
 
 /**
  * A new entity of `entityType` created in the ruleset, so customizing it edits
@@ -28,10 +35,12 @@ export async function createEntity(rulesetId: string, entityType: CustomizableEn
       return (await expectOk(ruleset.classes.$post({ param, json: { name } }))).id;
     case "klass_levels": {
       const klass = await expectOk(ruleset.classes.$post({ param, json: { name } }));
-      const level = await expectOk(ruleset.classes[":classId"].levels.$post({
-        param: { id: rulesetId, classId: klass.id },
-        json: { level: 1, bab: 1, skills: 4 },
-      }));
+      const level = await expectOk(
+        ruleset.classes[":classId"].levels.$post({
+          param: { id: rulesetId, classId: klass.id },
+          json: { level: 1, bab: 1, skills: 4 },
+        }),
+      );
       return level.id;
     }
   }

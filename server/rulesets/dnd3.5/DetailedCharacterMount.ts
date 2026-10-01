@@ -1,7 +1,8 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
-import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
+
 import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 import { scaledFeats, scaledSkillTotals } from "./bondedScaling.ts";
+import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 
 /**
  * SRD Paladin's Special Mount progression — keyed on paladin class level.
@@ -51,10 +52,7 @@ export default class DetailedCharacterMount extends DetailedCharacterBonded {
     this.applySkillTotals(scaledSkillTotals(raceStats, totalHD));
   }
 
-  protected async applyMasterDerivation(
-    parentCharacterId: string,
-    rulesetData: CachedRulesetData,
-  ): Promise<void> {
+  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
     const effective = master.getDetailedCharacterBonds().getBondedLevel("mount");
     const row = bracketAt(effective);

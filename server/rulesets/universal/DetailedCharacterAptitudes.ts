@@ -1,14 +1,25 @@
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { type Aptitude } from "@/shared/relations.ts";
 import { deriveSegmentLabels, stripSeparators } from "@/shared/utils.ts";
+
 import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";
 import type DetailedCharacterIdentity from "./DetailedCharacterIdentity.ts";
 
 const ALLOWED_ENTITY_TYPES = ["feats", "klass_levels", "races"];
 
 const NAVIGATABLE_PATHS = [
-  { path: "uses", description: "Uses per day (casts, charges, etc.)", type: "number" as const, allowedEntityTypes: ALLOWED_ENTITY_TYPES },
-  { path: "allowed", description: "Slots for known spells or feats", type: "number" as const, allowedEntityTypes: ALLOWED_ENTITY_TYPES },
+  {
+    path: "uses",
+    description: "Uses per day (casts, charges, etc.)",
+    type: "number" as const,
+    allowedEntityTypes: ALLOWED_ENTITY_TYPES,
+  },
+  {
+    path: "allowed",
+    description: "Slots for known spells or feats",
+    type: "number" as const,
+    allowedEntityTypes: ALLOWED_ENTITY_TYPES,
+  },
 ];
 
 export const ALLOWED_ALL = -1;
@@ -44,9 +55,10 @@ export default class DetailedCharacterAptitudes {
     maxSpellLevel: number,
   ): TargetPath[] {
     const paths: TargetPath[] = [];
-    const operators = kind === "modifier"
-      ? ["add", "subtract", "multiply", "divide", "set"]
-      : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"];
+    const operators =
+      kind === "modifier"
+        ? ["add", "subtract", "multiply", "divide", "set"]
+        : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"];
 
     for (const aptitude of aptitudes) {
       const normalizedAptitudeName = stripSeparators(aptitude.name);
@@ -83,8 +95,7 @@ export default class DetailedCharacterAptitudes {
     return paths;
   }
 
-  private readonly detailedCharacterComprehensiveAptitudes:
-    DetailedCharacterComprehensiveAptitudes = {};
+  private readonly detailedCharacterComprehensiveAptitudes: DetailedCharacterComprehensiveAptitudes = {};
 
   // Track which aptitude keys are leveled (spell aptitudes)
   private readonly leveledAptitudeKeys = new Set<string>();
@@ -232,8 +243,14 @@ export default class DetailedCharacterAptitudes {
    * Extracts non-leveled aptitude pools formatted for feat selection.
    * Returns pool objects keyed by aptitude ID.
    */
-  extractFeatPools(): Record<string, { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }> {
-    const pools: Record<string, { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }> = {};
+  extractFeatPools(): Record<
+    string,
+    { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }
+  > {
+    const pools: Record<
+      string,
+      { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }
+    > = {};
     for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
       if (this.leveledAptitudeKeys.has(key)) continue;
       pools[aptitude.id] = {
@@ -252,16 +269,30 @@ export default class DetailedCharacterAptitudes {
    * Extracts aptitude pools formatted for power/spell selection.
    * Includes leveled aptitudes with per-spell-level breakdowns.
    */
-  extractPowerPools(): Record<string, {
-    id: string; name: string; allowed: number; spent: number; available: number;
-    leveled?: boolean;
-    levels?: Record<string, { allowed: number; spent: number; available: number }>;
-  }> {
-    const pools: Record<string, {
-      id: string; name: string; allowed: number; spent: number; available: number;
+  extractPowerPools(): Record<
+    string,
+    {
+      id: string;
+      name: string;
+      allowed: number;
+      spent: number;
+      available: number;
       leveled?: boolean;
       levels?: Record<string, { allowed: number; spent: number; available: number }>;
-    }> = {};
+    }
+  > {
+    const pools: Record<
+      string,
+      {
+        id: string;
+        name: string;
+        allowed: number;
+        spent: number;
+        available: number;
+        leveled?: boolean;
+        levels?: Record<string, { allowed: number; spent: number; available: number }>;
+      }
+    > = {};
 
     for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
       if (this.leveledAptitudeKeys.has(key)) {

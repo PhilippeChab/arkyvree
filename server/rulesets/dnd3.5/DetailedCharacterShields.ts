@@ -1,5 +1,12 @@
 import type DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
-import { ARMOR_CHECK_PENALTY, ITEM_MASTERWORK, ITEM_SPELL_FAILURE, SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import {
+  ARMOR_CHECK_PENALTY,
+  ITEM_MASTERWORK,
+  ITEM_SPELL_FAILURE,
+  SHIELD_AC_BONUS,
+  SHIELD_PROFICIENCY,
+  SHIELD_TYPE,
+} from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Item, Property } from "@/shared/relations.ts";
 import { deriveSegmentLabels, stripSeparators } from "@/shared/utils.ts";
@@ -37,10 +44,7 @@ export default class DetailedCharacterShields {
     return deriveSegmentLabels(NAVIGATABLE_SHIELD_PATHS, { shields: "Shields", ...SEGMENT_LABELS });
   }
 
-  static generateTargetPaths(
-    shieldGroupings: string[],
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
+  static generateTargetPaths(shieldGroupings: string[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const grouping of shieldGroupings) {
@@ -51,16 +55,10 @@ export default class DetailedCharacterShields {
           category: "items",
           description: subPath.description,
           valueType: subPath.type,
-          operators: kind === "modifier"
-            ? ["add", "subtract", "multiply", "divide", "set"]
-            : [
-              "equal",
-              "not_equal",
-              "greater_than",
-              "less_than",
-              "greater_than_or_equal",
-              "less_than_or_equal",
-            ],
+          operators:
+            kind === "modifier"
+              ? ["add", "subtract", "multiply", "divide", "set"]
+              : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
         });
       }
     }
@@ -70,14 +68,9 @@ export default class DetailedCharacterShields {
 
   private readonly shields: ShieldsData = {};
 
-  constructor(
-    private readonly characterCombat: DetailedCharacterCombat,
-  ) {}
+  constructor(private readonly characterCombat: DetailedCharacterCombat) {}
 
-  registerShield(
-    item: Item,
-    properties: Property[],
-  ): void {
+  registerShield(item: Item, properties: Property[]): void {
     const shieldType = properties.find((p) => p.type === SHIELD_PROFICIENCY);
     if (!shieldType) return;
 

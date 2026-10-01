@@ -1,10 +1,9 @@
 import { and, eq, inArray } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { attachmentsInStorage, blobsInStorage } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage, AttachmentInstance> {
   constructor() {
@@ -22,19 +21,11 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage, 
     if (where.recordIds.length === 0) return [];
     return await db
       .delete(this.table)
-      .where(and(
-        eq(this.table.recordType, where.recordType),
-        inArray(this.table.recordId, where.recordIds),
-      ))
+      .where(and(eq(this.table.recordType, where.recordType), inArray(this.table.recordId, where.recordIds)))
       .returning();
   }
 
-  async findOne(
-    db: Db,
-    where:
-      | { id: string }
-      | { recordType: string; recordId: string; name: string },
-  ) {
+  async findOne(db: Db, where: { id: string } | { recordType: string; recordId: string; name: string }) {
     return await db.query.attachmentsInStorage.findFirst({
       where: this.where([
         "id" in where && eq(this.table.id, where.id),
@@ -45,19 +36,18 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage, 
     });
   }
 
-  async findOneWithBlob(
-    db: Db,
-    where: { recordType: string; recordId: string; name: string },
-  ) {
+  async findOneWithBlob(db: Db, where: { recordType: string; recordId: string; name: string }) {
     const rows = await db
       .select({ id: this.table.id, key: blobsInStorage.key })
       .from(this.table)
       .innerJoin(blobsInStorage, eq(blobsInStorage.id, this.table.blobId))
-      .where(and(
-        eq(this.table.recordType, where.recordType),
-        eq(this.table.recordId, where.recordId),
-        eq(this.table.name, where.name),
-      ))
+      .where(
+        and(
+          eq(this.table.recordType, where.recordType),
+          eq(this.table.recordId, where.recordId),
+          eq(this.table.name, where.name),
+        ),
+      )
       .limit(1);
     return rows[0] ?? null;
   }

@@ -1,28 +1,4 @@
-import { initialOf } from "@/shared/utils.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { oneOf } from "@/client/src/lib/oneOf.ts";
-import type { CampaignDetail } from "@/client/src/lib/queries.ts";
-import {
-  BlankState,
-  DiceSpinner,
-  faqTooltip,
-  LoadMoreButton,
-  Modal,
-  NoMatchesState,
-  ScrollSafeListbox,
-  SearchBar,
-  SectionContent,
-  StyledCard,
-} from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { useAttachments, useDebouncedValue, useListboxQuery, usePrefetch, useSearchParam, useStaggerAnimation } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import {
-  Add as AddIcon,
-  Person as CharacterIcon,
-  Visibility as VisibilityIcon,
-} from "@mui/icons-material";
+import { Add as AddIcon, Person as CharacterIcon, Visibility as VisibilityIcon } from "@mui/icons-material";
 import {
   Alert,
   Autocomplete,
@@ -40,26 +16,54 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import {
+  BlankState,
+  DiceSpinner,
+  faqTooltip,
+  LoadMoreButton,
+  Modal,
+  NoMatchesState,
+  ScrollSafeListbox,
+  SearchBar,
+  SectionContent,
+  StyledCard,
+} from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import {
+  useAttachments,
+  useDebouncedValue,
+  useListboxQuery,
+  usePrefetch,
+  useSearchParam,
+  useStaggerAnimation,
+} from "@/client/src/hooks/index.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import type { CampaignDetail } from "@/client/src/lib/queries.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { initialOf } from "@/shared/utils.ts";
 
 type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
-type UnlinkedCharacter = InferResponseType<(typeof rpc.api.characters.unlinked)[":campaignId"]["$get"], 200>["items"][number];
+type UnlinkedCharacter = InferResponseType<
+  (typeof rpc.api.characters.unlinked)[":campaignId"]["$get"],
+  200
+>["items"][number];
 
 interface CharactersSectionProps {
   campaign: CampaignDetail;
 }
 
-type Visibility = NonNullable<InferRequestType<(typeof rpc.api.campaigns)[":id"]["characters"]["$post"]>["json"]["visibility"]>;
+type Visibility = NonNullable<
+  InferRequestType<(typeof rpc.api.campaigns)[":id"]["characters"]["$post"]>["json"]["visibility"]
+>;
 const VISIBILITY_OPTIONS = ["Private", "Public", "Partial"] as const satisfies readonly Visibility[];
 
 const VISIBILITY_DESCRIPTIONS: Record<Visibility, string> = {
@@ -93,18 +97,22 @@ function CharacterCard({
     [campaignId, character.id],
   );
   const queryFn = useCallback(async () => {
-    return parseResponse(rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
-      param: { id: campaignId, characterId: character.id },
-    }));
+    return parseResponse(
+      rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
+        param: { id: campaignId, characterId: character.id },
+      }),
+    );
   }, [campaignId, character.id]);
   const prefetchHandlers = usePrefetch(queryKey, queryFn);
 
   const { mutate: updateVisibility } = useMutation({
     mutationFn: async (visibility: Visibility) => {
-      return parseResponse(rpc.api.campaigns[":id"].characters[":characterId"]["$put"]({
-        param: { id: campaignId, characterId: character.id },
-        json: { visibility },
-      }));
+      return parseResponse(
+        rpc.api.campaigns[":id"].characters[":characterId"]["$put"]({
+          param: { id: campaignId, characterId: character.id },
+          json: { visibility },
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Visibility updated");
@@ -124,13 +132,15 @@ function CharacterCard({
   const canEditVisibility = character.isOwn && !isArchived;
 
   return (
-    <StyledCard onClick={handleViewSheet} animationIndex={animationIndex} animationOffset={animationOffset} {...prefetchHandlers}>
+    <StyledCard
+      onClick={handleViewSheet}
+      animationIndex={animationIndex}
+      animationOffset={animationOffset}
+      {...prefetchHandlers}
+    >
       <Box sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1.5, sm: 2 } }}>
         {/* Title Row */}
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+        <Stack direction="row" spacing={2} sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0, flex: 1 }}>
             <Avatar
               src={portraitUrl ?? undefined}
@@ -157,15 +167,28 @@ function CharacterCard({
             </Typography>
           </Stack>
           <Chip
-            label={<Stack direction="row" spacing={0.5} sx={{
-              alignItems: "center"
-            }}><span>{character.visibility}</span><VisibilityIcon sx={{ fontSize: 14 }} /></Stack>}
+            label={
+              <Stack
+                direction="row"
+                spacing={0.5}
+                sx={{
+                  alignItems: "center",
+                }}
+              >
+                <span>{character.visibility}</span>
+                <VisibilityIcon sx={{ fontSize: 14 }} />
+              </Stack>
+            }
             size="small"
             variant="outlined"
-            onClick={canEditVisibility ? (e) => {
-              e.stopPropagation();
-              setMenuAnchorEl(e.currentTarget);
-            } : undefined}
+            onClick={
+              canEditVisibility
+                ? (e) => {
+                    e.stopPropagation();
+                    setMenuAnchorEl(e.currentTarget);
+                  }
+                : undefined
+            }
             sx={{
               fontWeight: 500,
               fontSize: "0.7rem",
@@ -204,7 +227,8 @@ function CharacterCard({
         <Stack
           direction="row"
           spacing={1}
-          sx={{ alignItems: "center", justifyContent: "flex-start", flexWrap: "wrap", gap: 1, mb: 2 }}>
+          sx={{ alignItems: "center", justifyContent: "flex-start", flexWrap: "wrap", gap: 1, mb: 2 }}
+        >
           <Chip
             label={character.race}
             size="small"
@@ -231,8 +255,9 @@ function CharacterCard({
             display: "-webkit-box",
             WebkitLineClamp: 4,
             WebkitBoxOrient: "vertical",
-            overflow: "hidden"
-          }}>
+            overflow: "hidden",
+          }}
+        >
           {character.description || "No description available"}
         </Typography>
       </Box>
@@ -262,14 +287,16 @@ function LinkCharacterDialog({
   } = useListboxQuery({
     queryKey: queryKeys.characters.unlinked(campaignId, { search: debouncedCharacterSearch }),
     queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.characters.unlinked[":campaignId"].$get({
-        param: { campaignId },
-        query: {
-          limit: "10",
-          page: pageParam.toString(),
-          search: debouncedCharacterSearch || undefined,
-        },
-      }));
+      return parseResponse(
+        rpc.api.characters.unlinked[":campaignId"].$get({
+          param: { campaignId },
+          query: {
+            limit: "10",
+            page: pageParam.toString(),
+            search: debouncedCharacterSearch || undefined,
+          },
+        }),
+      );
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -278,17 +305,13 @@ function LinkCharacterDialog({
 
   const snackbar = useSnackbar();
   const { mutate: linkCharacter, isPending: isLinking } = useMutation({
-    mutationFn: async ({
-      characterId,
-      visibility,
-    }: {
-      characterId: string;
-      visibility: Visibility;
-    }) => {
-      return parseResponse(rpc.api.campaigns[":id"].characters.$post({
-        param: { id: campaignId },
-        json: { characterId, visibility },
-      }));
+    mutationFn: async ({ characterId, visibility }: { characterId: string; visibility: Visibility }) => {
+      return parseResponse(
+        rpc.api.campaigns[":id"].characters.$post({
+          param: { id: campaignId },
+          json: { characterId, visibility },
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Character linked successfully");
@@ -336,18 +359,13 @@ function LinkCharacterDialog({
                 {option.name}
               </li>
             )}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Character"
-              />
-            )}
+            renderInput={(params) => <TextField {...params} label="Character" />}
             fullWidth
             slotProps={{
               listbox: {
                 component: ScrollSafeListbox,
                 onScroll: handleCharactersScroll,
-              }
+              },
             }}
           />
 
@@ -370,10 +388,15 @@ function LinkCharacterDialog({
                 </MenuItem>
               ))}
             </TextField>
-            <Tooltip describeChild title={faqTooltip("Controls how much of your character sheet other campaign members can see.")} arrow>
+            <Tooltip
+              describeChild
+              title={faqTooltip("Controls how much of your character sheet other campaign members can see.")}
+              arrow
+            >
               <Typography
                 variant="caption"
-                sx={{ color: "text.secondary", mt: 0.5, cursor: "help", alignSelf: "flex-end", fontSize: "0.7rem" }}>
+                sx={{ color: "text.secondary", mt: 0.5, cursor: "help", alignSelf: "flex-end", fontSize: "0.7rem" }}
+              >
                 What's this?
               </Typography>
             </Tooltip>
@@ -381,13 +404,13 @@ function LinkCharacterDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} variant="outlined" color="inherit">Cancel</Button>
-        <Button
-          onClick={handleLinkCharacter}
-          variant="contained"
-          disabled={!selectedCharacter || isLinking}
-        >
-          <DiceSpinner size="small" loading={isLinking}>Link Character</DiceSpinner>
+        <Button onClick={onClose} variant="outlined" color="inherit">
+          Cancel
+        </Button>
+        <Button onClick={handleLinkCharacter} variant="contained" disabled={!selectedCharacter || isLinking}>
+          <DiceSpinner size="small" loading={isLinking}>
+            Link Character
+          </DiceSpinner>
         </Button>
       </DialogActions>
     </Modal>
@@ -412,10 +435,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
     isFetchingNextPage,
   } = useInfiniteQuery({ ...listQuery, placeholderData: keepPreviousData });
 
-  const characters = useMemo(
-    () => pageItems(data),
-    [data],
-  );
+  const characters = useMemo(() => pageItems(data), [data]);
 
   const characterIds = useMemo(() => characters.map((c) => c.id), [characters]);
   const { data: portraitsByCharacterId } = useAttachments({
@@ -427,36 +447,25 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   return (
     <SectionContent>
       {/* Header */}
-      <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>
-        Characters
-      </Typography>
+      <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>Characters</Typography>
 
       <SearchBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search characters..."
-        actions={!campaign.deletedAt && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            size="medium"
-            onClick={() => setLinkDialogOpen(true)}
-          >
-            Link Character
-          </Button>
-        )}
+        actions={
+          !campaign.deletedAt && (
+            <Button variant="contained" startIcon={<AddIcon />} size="medium" onClick={() => setLinkDialogOpen(true)}>
+              Link Character
+            </Button>
+          )
+        }
       />
 
-      <LinkCharacterDialog
-        open={isLinkDialogOpen}
-        onClose={() => setLinkDialogOpen(false)}
-        campaignId={campaign.id}
-      />
+      <LinkCharacterDialog open={isLinkDialogOpen} onClose={() => setLinkDialogOpen(false)} campaignId={campaign.id} />
 
       {/* Loading State */}
-      {charactersLoading && (
-        <DiceSpinner sx={{ py: 4 }} />
-      )}
+      {charactersLoading && <DiceSpinner sx={{ py: 4 }} />}
 
       {/* Error State */}
       {charactersError && (

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { api, createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
@@ -10,7 +11,12 @@ async function invite() {
   const { rulesetId } = await getSeedCtx();
   const invitee = await createSignedInUser("notified");
   const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Notifying Campaign", rulesetId } }));
-  const added = await expectOk(api.api.campaigns[":id"].players.$post({ param: { id: campaign.id }, json: { email: invitee.user.emailAddress, role: "Player Character" } }));
+  const added = await expectOk(
+    api.api.campaigns[":id"].players.$post({
+      param: { id: campaign.id },
+      json: { email: invitee.user.emailAddress, role: "Player Character" },
+    }),
+  );
   return { notifications: invitee.api.api.notifications, invitee, inviteId: added.invite!.id };
 }
 
@@ -33,8 +39,15 @@ describe("notifications", () => {
     // A notification that needs no answer: the owner of another campaign sees the invitee join it.
     const { rulesetId } = await getSeedCtx();
     const { campaign } = await expectOk(ownerApi.api.campaigns.$post({ json: { name: "Joined Campaign", rulesetId } }));
-    const joined = await expectOk(ownerApi.api.campaigns[":id"].players.$post({ param: { id: campaign.id }, json: { email: invitee.user.emailAddress, role: "Player Character" } }));
-    await expectOk(invitee.api.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: joined.invite!.id } }));
+    const joined = await expectOk(
+      ownerApi.api.campaigns[":id"].players.$post({
+        param: { id: campaign.id },
+        json: { email: invitee.user.emailAddress, role: "Player Character" },
+      }),
+    );
+    await expectOk(
+      invitee.api.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: joined.invite!.id } }),
+    );
 
     const ownerNotifications = ownerApi.api.notifications;
     expect((await expectOk(ownerNotifications.unread.$get())).count).toBe(1);

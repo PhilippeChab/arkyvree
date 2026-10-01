@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { sanitizeHtml, sanitizeText, sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 
 describe("Scraped HTML", () => {
@@ -11,8 +12,9 @@ describe("Scraped HTML", () => {
   });
 
   test("gets its apostrophes, typos and encoding fixed", () => {
-    expect(sanitizeHtml("<p>It?s Enhanse profi ciency &#8217;x&#8217; &mdash; “q”&nbsp;…</p>"))
-      .toBe(`<p>It's Enhance Proficiency 'x' - "q" ...</p>`);
+    expect(sanitizeHtml("<p>It?s Enhanse profi ciency &#8217;x&#8217; &mdash; “q”&nbsp;…</p>")).toBe(
+      `<p>It's Enhance Proficiency 'x' - "q" ...</p>`,
+    );
   });
 });
 

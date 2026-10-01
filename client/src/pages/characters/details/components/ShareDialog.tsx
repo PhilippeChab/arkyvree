@@ -1,12 +1,4 @@
-import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import {
-  ContentCopy as CopyIcon,
-  LinkOff as LinkOffIcon,
-  Refresh as RefreshIcon,
-} from "@mui/icons-material";
+import { ContentCopy as CopyIcon, LinkOff as LinkOffIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import {
   Button,
   DialogActions,
@@ -20,6 +12,11 @@ import {
 } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+
+import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 interface ShareDialogProps {
   open: boolean;
@@ -37,9 +34,11 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
 
   const generateMutation = useMutation({
     mutationFn: async () => {
-      return parseResponse(rpc.api.characters[":id"]["share"]["$post"]({
-        param: { id: characterId },
-      }));
+      return parseResponse(
+        rpc.api.characters[":id"]["share"]["$post"]({
+          param: { id: characterId },
+        }),
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
@@ -52,9 +51,11 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
 
   const revokeMutation = useMutation({
     mutationFn: async () => {
-      return parseResponse(rpc.api.characters[":id"]["share"]["$delete"]({
-        param: { id: characterId },
-      }));
+      return parseResponse(
+        rpc.api.characters[":id"]["share"]["$delete"]({
+          param: { id: characterId },
+        }),
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
@@ -86,7 +87,8 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
           {shareUrl ? (
             <>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Anyone with this link can view this character sheet and download the PDF. Private notes are not included.
+                Anyone with this link can view this character sheet and download the PDF. Private notes are not
+                included.
               </Typography>
               <TextField
                 value={shareUrl}
@@ -156,14 +158,13 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
           ) : (
             <>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Generate a public link to share this character sheet. Anyone with the link will be able to view the sheet and download the PDF. Private notes will not be visible.
+                Generate a public link to share this character sheet. Anyone with the link will be able to view the
+                sheet and download the PDF. Private notes will not be visible.
               </Typography>
-              <Button
-                variant="contained"
-                onClick={() => generateMutation.mutate()}
-                disabled={isLoading}
-              >
-                <DiceSpinner size="small" loading={generateMutation.isPending}>Generate Link</DiceSpinner>
+              <Button variant="contained" onClick={() => generateMutation.mutate()} disabled={isLoading}>
+                <DiceSpinner size="small" loading={generateMutation.isPending}>
+                  Generate Link
+                </DiceSpinner>
               </Button>
             </>
           )}

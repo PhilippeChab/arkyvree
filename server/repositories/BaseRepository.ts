@@ -1,4 +1,21 @@
-import { and, asc, type Column, desc, eq, getTableColumns, ilike, inArray, type InferSelectModel, isNull, not, notInArray, or, sql, type SQL, type Table } from "drizzle-orm";
+import {
+  and,
+  asc,
+  type Column,
+  desc,
+  eq,
+  getTableColumns,
+  ilike,
+  inArray,
+  type InferSelectModel,
+  isNull,
+  not,
+  notInArray,
+  or,
+  sql,
+  type SQL,
+  type Table,
+} from "drizzle-orm";
 
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -23,7 +40,10 @@ export const visibilityMap = {
 } as const;
 
 abstract class BaseRepository<T extends Table, I extends Instance<InferSelectModel<T>>> {
-  constructor(protected readonly table: T, private readonly entityType?: string) {}
+  constructor(
+    protected readonly table: T,
+    private readonly entityType?: string,
+  ) {}
 
   /** Whether a row matches `where`, on the repositories that look rows up. */
   async exists<W>(this: { findOne(db: Db, where: W): Promise<unknown> }, db: Db, where: W) {
@@ -36,7 +56,9 @@ abstract class BaseRepository<T extends Table, I extends Instance<InferSelectMod
   async lockById(db: Db, id: string, mode: "update" | "share" = "update"): Promise<boolean> {
     const columns = getTableColumns(this.table);
     if (!columns.id) throw new Error("Row locking requires an id column");
-    const rows = await db.select({ locked: sql<number>`1` }).from(sql`${this.table}`)
+    const rows = await db
+      .select({ locked: sql<number>`1` })
+      .from(sql`${this.table}`)
       .where(and(eq(columns.id, id), columns.deletedAt ? isNull(columns.deletedAt) : undefined))
       .for(mode);
     return rows.length > 0;
@@ -64,9 +86,7 @@ abstract class BaseRepository<T extends Table, I extends Instance<InferSelectMod
     for (const [pre, post] of cow.idResolveMap) {
       if (post === target) candidates.add(pre);
     }
-    return candidates.size === 1
-      ? eq(column, target)
-      : inArray(column, [...candidates]);
+    return candidates.size === 1 ? eq(column, target) : inArray(column, [...candidates]);
   }
 
   async withPagination<R extends InferSelectModel<T>>(
@@ -85,10 +105,7 @@ abstract class BaseRepository<T extends Table, I extends Instance<InferSelectMod
     };
   }
 
-  protected paginated<R>(
-    rows: R[],
-    query: { limit: number; page: number },
-  ) {
+  protected paginated<R>(rows: R[], query: { limit: number; page: number }) {
     const limit = query.limit;
 
     return {
@@ -187,12 +204,15 @@ abstract class BaseRepository<T extends Table, I extends Instance<InferSelectMod
       const cowExcluded = notInArray(
         // @ts-expect-error all ruleset tables have id
         this.table.id,
-        db.select({ id: entitySnapshotsInRules.sourceEntityId })
+        db
+          .select({ id: entitySnapshotsInRules.sourceEntityId })
           .from(entitySnapshotsInRules)
-          .where(and(
-            inArray(entitySnapshotsInRules.rulesetId, overriddenBy),
-            eq(entitySnapshotsInRules.entityType, this.entityType!),
-          )),
+          .where(
+            and(
+              inArray(entitySnapshotsInRules.rulesetId, overriddenBy),
+              eq(entitySnapshotsInRules.entityType, this.entityType!),
+            ),
+          ),
       );
       // @ts-expect-error all ruleset tables have rulesetId and campaignId
       return and(eq(this.table.rulesetId, ancestorId), isNull(this.table.campaignId), cowExcluded);

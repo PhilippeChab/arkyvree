@@ -22,16 +22,20 @@ export function useOpenActivityTarget() {
 
   return async (targetTable: string, targetId: string) => {
     try {
-      const { url } = await parseResponse(rpc.api.activities.resolve[":targetTable"][":targetId"].$get({
-        param: { targetTable, targetId },
-      }));
+      const { url } = await parseResponse(
+        rpc.api.activities.resolve[":targetTable"][":targetId"].$get({
+          param: { targetTable, targetId },
+        }),
+      );
       navigate(url);
     } catch (error) {
       // 403 says why ("You no longer have access to this character.");
       // anything else means the entity is gone.
-      snackbar.warning(error instanceof ApiError && error.status === 403
-        ? error.message
-        : "This item has been deleted and is no longer available.");
+      snackbar.warning(
+        error instanceof ApiError && error.status === 403
+          ? error.message
+          : "This item has been deleted and is no longer available.",
+      );
     }
   };
 }

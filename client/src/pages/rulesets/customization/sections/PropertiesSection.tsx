@@ -1,16 +1,21 @@
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import {
-  PropertyTypeInput,
-  PropertyValueInput,
-} from "@/client/src/components/customization/index.ts";
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { CreateDialog, DeleteDialog, DescriptionField, EditDialog, SectionContent } from "@/client/src/components/common/index.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import type { BaseEntityType } from "@/client/src/pages/rulesets/customization/types.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { ListAlt as PropertiesIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import type { InferRequestType, InferResponseType } from "hono/client";
+
+import {
+  CreateDialog,
+  DeleteDialog,
+  DescriptionField,
+  EditDialog,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
+import { PropertyTypeInput, PropertyValueInput } from "@/client/src/components/customization/index.ts";
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import type { BaseEntityType } from "@/client/src/pages/rulesets/customization/types.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
@@ -20,15 +25,14 @@ const PROPERTIES_COLUMNS = [
   { key: "description", label: "Description", width: "40%" },
 ];
 
-type PropertiesArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"][
-  "$get"
-  ], 200>;
+type PropertiesArray = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$get"],
+  200
+>;
 type Property = PropertiesArray[number];
 
 type PropertyFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"][
-  "$post"
-  ]
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$post"]
 >["json"];
 
 interface PropertiesSectionProps {
@@ -40,9 +44,14 @@ interface PropertiesSectionProps {
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
 
-export function PropertiesSection(
-  { ruleset, entityType, entityId, data: externalData, queryKeysToInvalidate, onEntityIdChange }: PropertiesSectionProps,
-) {
+export function PropertiesSection({
+  ruleset,
+  entityType,
+  entityId,
+  data: externalData,
+  queryKeysToInvalidate,
+  onEntityIdChange,
+}: PropertiesSectionProps) {
   const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
   const entityParam = { id: ruleset.id, entityType, entityId };
 
@@ -70,24 +79,33 @@ export function PropertiesSection(
     data: externalData,
     queryKeysToInvalidate,
     createFn: async (data: PropertyFormData) => {
-      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
-        .properties.$post({
-          param: entityParam,
-          json: data,
-        })));
+      return tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$post({
+            param: entityParam,
+            json: data,
+          }),
+        ),
+      );
     },
     updateFn: async (propertyId: string, data: PropertyFormData) => {
-      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
-        .properties[":property_id"].$put({
-          param: { ...entityParam, property_id: propertyId },
-          json: data,
-        })));
+      return tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$put({
+            param: { ...entityParam, property_id: propertyId },
+            json: data,
+          }),
+        ),
+      );
     },
     deleteFn: async (propertyId: string) => {
-      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
-        .properties[":property_id"].$delete({
-          param: { ...entityParam, property_id: propertyId },
-        })));
+      return tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$delete({
+            param: { ...entityParam, property_id: propertyId },
+          }),
+        ),
+      );
     },
     ...followCopies,
   });
@@ -112,16 +130,13 @@ export function PropertiesSection(
           </Typography>
         );
       case "type":
-        return property.type
-          ? (
-            <Chip
-              label={property.type}
-              size="small"
-              color="primary"
-              variant="outlined"
-            />
-          )
-          : <Typography variant="body2" sx={{ color: "text.secondary" }}>—</Typography>;
+        return property.type ? (
+          <Chip label={property.type} size="small" color="primary" variant="outlined" />
+        ) : (
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            —
+          </Typography>
+        );
       case "description":
         return (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -151,11 +166,7 @@ export function PropertiesSection(
         emptyDescription="No properties defined for this entity."
       />
 
-      <CreateDialog
-        {...createDialogProps}
-        title="Create New Property"
-        fixedHeight="40vh"
-      >
+      <CreateDialog {...createDialogProps} title="Create New Property" fixedHeight="40vh">
         <PropertyTypeInput
           value={createForm.watch("type") || ""}
           onChange={(value: string) => createForm.setValue("type", value)}
@@ -178,10 +189,7 @@ export function PropertiesSection(
           error={!!createForm.formState.errors.value}
           helperText={createForm.formState.errors.value?.message}
         />
-        <DescriptionField
-          {...createForm.register("description")}
-          placeholder="Enter the property description..."
-        />
+        <DescriptionField {...createForm.register("description")} placeholder="Enter the property description..." />
       </CreateDialog>
 
       <EditDialog
@@ -189,8 +197,7 @@ export function PropertiesSection(
         onClose={() => setEditDialogOpen(false)}
         title="Edit Property"
         form={editForm}
-        onSubmit={(data) =>
-          selectedProperty && updateMutation.mutate({ id: selectedProperty.id, data })}
+        onSubmit={(data) => selectedProperty && updateMutation.mutate({ id: selectedProperty.id, data })}
         isLoading={updateMutation.isPending}
         fixedHeight="60vh"
       >
@@ -216,10 +223,7 @@ export function PropertiesSection(
           error={!!editForm.formState.errors.value}
           helperText={editForm.formState.errors.value?.message}
         />
-        <DescriptionField
-          {...editForm.register("description")}
-          placeholder="Enter the property description..."
-        />
+        <DescriptionField {...editForm.register("description")} placeholder="Enter the property description..." />
       </EditDialog>
 
       <DeleteDialog

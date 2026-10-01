@@ -4,6 +4,7 @@ import { db, type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Aptitudes, EntitySnapshots, KlassLevels, Rulesets } from "@/server/repositories/index.ts";
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
+
 import {
   assertCowMapsConsistent,
   buildOverrideMap,
@@ -32,9 +33,11 @@ export interface CowData {
 
 const cowDataCache = new DependentCache<CowData>();
 
-async function buildCowData(
-  ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
-): Promise<CowData> {
+async function buildCowData(ruleset: {
+  id: string;
+  extensionRulesetIds: string[];
+  ancestorRulesetIds: string[];
+}): Promise<CowData> {
   const sourceChain = buildSourceChain(ruleset);
 
   let overrideMap: OverrideMap;
@@ -98,9 +101,7 @@ async function buildCowData(
     }
     for (const [, group] of byName) {
       if (group.length <= 1) continue;
-      const sorted = group.sort((a, b) =>
-        (chainIndex.get(a.rulesetId) ?? 999) - (chainIndex.get(b.rulesetId) ?? 999),
-      );
+      const sorted = group.sort((a, b) => (chainIndex.get(a.rulesetId) ?? 999) - (chainIndex.get(b.rulesetId) ?? 999));
       const [winner, ...losers] = sorted;
       // Aliases must point directly to the visible copy, including a local COW.
       const resolvedWinnerId = idResolveMap.get(winner.id) ?? winner.id;
@@ -132,9 +133,11 @@ async function buildCowData(
  * handle. Letting an in-progress mutation's uncommitted writes populate this
  * shared cache would leak phantom data to every other concurrent reader.
  */
-export async function getOrBuildCowData(
-  ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
-): Promise<CowData> {
+export async function getOrBuildCowData(ruleset: {
+  id: string;
+  extensionRulesetIds: string[];
+  ancestorRulesetIds: string[];
+}): Promise<CowData> {
   // COW maps are shared infrastructure; never build them through a caller's
   // active map (notably during nested master/companion character builds).
   const dependencies = [ruleset.id, ...buildSourceChain(ruleset)];

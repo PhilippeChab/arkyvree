@@ -1,17 +1,17 @@
-import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import type { ClassSectionProps } from "./types.ts";
-import type { Level } from "@/client/src/pages/rulesets/hooks/index.ts";
-import {
-  CreateLevelDialog,
-} from "@/client/src/pages/rulesets/details/classes/components/index.ts";
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { useClassLevels, useOpenEntity, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { Add as AddIcon, FormatListNumbered as LevelsIcon } from "@mui/icons-material";
 import { Box, Button, Chip, Tooltip, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
+
+import { useRulesetSaves } from "@/client/src/hooks/index.ts";
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
+import type { Level } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useClassLevels, useOpenEntity, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+
+import type { ClassSectionProps } from "./types.ts";
 
 export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(rulesetId);
@@ -51,74 +51,53 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
     openEntity(`klass_levels/${level.id}/customization`);
   };
 
-  const handleRowMouseEnter = useCallback((level: Level) => {
-    void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "klass_levels", level.id));
-  }, [queryClient, rulesetId]);
+  const handleRowMouseEnter = useCallback(
+    (level: Level) => {
+      void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "klass_levels", level.id));
+    },
+    [queryClient, rulesetId],
+  );
 
   const renderCell = (level: Level, columnKey: string) => {
     if (columnKey.startsWith("save_")) {
       const saveId = columnKey.replace("save_", "");
       const levelSave = level.saves?.find((s) => s.saveId === saveId);
-      return (
-        <Typography variant="body2">
-          {formatSigned(levelSave?.base)}
-        </Typography>
-      );
+      return <Typography variant="body2">{formatSigned(levelSave?.base)}</Typography>;
     }
 
     switch (columnKey) {
       case "level":
-        return (
-          <Chip
-            label={level.level}
-            size="small"
-            color="primary"
-          />
-        );
+        return <Chip label={level.level} size="small" color="primary" />;
       case "bab":
-        return (
-          <Typography variant="body2">
-            {formatSigned(level.bab)}
-          </Typography>
-        );
+        return <Typography variant="body2">{formatSigned(level.bab)}</Typography>;
       case "skills":
-        return (
-          <Typography variant="body2">
-            {level.skills}
-          </Typography>
-        );
+        return <Typography variant="body2">{level.skills}</Typography>;
       case "feats":
         return (
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-            {level.feats && level.feats.length > 0
-              ? level.feats.map((feat) => {
+            {level.feats && level.feats.length > 0 ? (
+              level.feats.map((feat) => {
                 const suffix = className ? ` (${className})` : "";
-                const label = suffix && feat.name.endsWith(suffix)
-                  ? feat.name.slice(0, -suffix.length)
-                  : feat.name;
+                const label = suffix && feat.name.endsWith(suffix) ? feat.name.slice(0, -suffix.length) : feat.name;
                 return (
-                <Tooltip describeChild
-                  key={feat.id}
-                  title={feat.description || ""}
-                  arrow
-                  placement="top"
-                  enterDelay={300}
-                  slotProps={{ tooltip: { sx: { maxWidth: 400 } } }}
-                >
-                  <Chip
-                    label={label}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontSize: "0.75rem" }}
-                  />
-                </Tooltip>
+                  <Tooltip
+                    describeChild
+                    key={feat.id}
+                    title={feat.description || ""}
+                    arrow
+                    placement="top"
+                    enterDelay={300}
+                    slotProps={{ tooltip: { sx: { maxWidth: 400 } } }}
+                  >
+                    <Chip label={label} size="small" variant="outlined" sx={{ fontSize: "0.75rem" }} />
+                  </Tooltip>
                 );
               })
-              : (
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  —
-                </Typography>
-              )}
+            ) : (
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                —
+              </Typography>
+            )}
           </Box>
         );
       default:
@@ -131,11 +110,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h6">Class Levels</Typography>
         {canEdit && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreate}
-          >
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
             Add Level
           </Button>
         )}
@@ -150,9 +125,11 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         renderCell={renderCell}
         emptyIcon={LevelsIcon}
         emptyTitle="No levels"
-        emptyDescription={canEdit
-          ? "Start by adding the first level for this class."
-          : "This class doesn't have any levels defined yet."}
+        emptyDescription={
+          canEdit
+            ? "Start by adding the first level for this class."
+            : "This class doesn't have any levels defined yet."
+        }
       />
 
       <CreateLevelDialog
@@ -163,7 +140,6 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         isLoading={createMutation.isPending}
         rulesetId={rulesetId}
       />
-
     </Box>
   );
 }

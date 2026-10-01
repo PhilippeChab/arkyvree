@@ -1,10 +1,9 @@
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class KlassesRepository extends BaseRepository<typeof klassesInRules, KlassInstance> {
   constructor() {
@@ -23,11 +22,13 @@ class KlassesRepository extends BaseRepository<typeof klassesInRules, KlassInsta
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(this.where([
-        eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-        this.casUpdatedAt(where.expectedUpdatedAt),
-      ]))
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
       .returning();
   }
 
@@ -35,7 +36,10 @@ class KlassesRepository extends BaseRepository<typeof klassesInRules, KlassInsta
     return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
-  async findOne(db: Db, where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string }) {
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+  ) {
     return await db.query.klassesInRules.findFirst({
       where: this.where([
         "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
@@ -56,8 +60,29 @@ class KlassesRepository extends BaseRepository<typeof klassesInRules, KlassInsta
   async findManyByRulesetId(
     db: Db,
     where:
-      | { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; characterId?: string; siblingLoserIds?: Iterable<string>; kind?: string; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" }
-      | { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; characterId?: string; siblingLoserIds?: Iterable<string>; kind?: string; campaignId: string; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+      | {
+          rulesetId: string;
+          ancestorRulesetIds?: string[];
+          childOnly?: boolean;
+          characterId?: string;
+          siblingLoserIds?: Iterable<string>;
+          kind?: string;
+          search?: string;
+          orderBy?: "name" | "createdAt" | "updatedAt";
+          orderDir?: "asc" | "desc";
+        }
+      | {
+          rulesetId: string;
+          ancestorRulesetIds?: string[];
+          childOnly?: boolean;
+          characterId?: string;
+          siblingLoserIds?: Iterable<string>;
+          kind?: string;
+          campaignId: string;
+          search?: string;
+          orderBy?: "name" | "createdAt" | "updatedAt";
+          orderDir?: "asc" | "desc";
+        },
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc", characterId, siblingLoserIds, kind } = where;

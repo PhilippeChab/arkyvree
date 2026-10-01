@@ -26,10 +26,7 @@ export function getBookSlug(book: string): string {
   return slug;
 }
 
-export function buildListingUrl(
-  type: "classes" | "feats" | "spells",
-  book: string,
-): string {
+export function buildListingUrl(type: "classes" | "feats" | "spells", book: string): string {
   return `${BASE_URL}/${type}/${getBookSlug(book)}/`;
 }
 

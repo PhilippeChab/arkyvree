@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
@@ -11,10 +12,19 @@ describe("rulesets customization property types", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const all = await expectOk(types.$get({ param: { id }, query: {} }));
     const engine = all.filter((type) => type.isStatic);
-    expect(engine.map((type) => type.value)).toEqual(expect.arrayContaining([
-      "WEAPON_PROFICIENCY", "WEAPON_BASE_DAMAGE", "WEAPON_CRITICAL_RANGE", "WEAPON_CRITICAL_MULTIPLIER",
-      "ARMOR_PROFICIENCY", "ARMOR_MAX_DEX", "SHIELD_PROFICIENCY", "DAMAGE_TYPE", "ITEM_MADE_OF",
-    ]));
+    expect(engine.map((type) => type.value)).toEqual(
+      expect.arrayContaining([
+        "WEAPON_PROFICIENCY",
+        "WEAPON_BASE_DAMAGE",
+        "WEAPON_CRITICAL_RANGE",
+        "WEAPON_CRITICAL_MULTIPLIER",
+        "ARMOR_PROFICIENCY",
+        "ARMOR_MAX_DEX",
+        "SHIELD_PROFICIENCY",
+        "DAMAGE_TYPE",
+        "ITEM_MADE_OF",
+      ]),
+    );
     expect(engine.every((type) => typeof type.description === "string")).toBe(true);
 
     const forItems = await expectOk(types.$get({ param: { id }, query: { entityType: "items" } }));
@@ -34,13 +44,16 @@ describe("rulesets customization property types", () => {
     expect(engine.length).toBeGreaterThan(0);
     expect(engine.every((completion) => typeof completion.detail === "string")).toBe(true);
 
-    const armor = await expectOk(types.completions.$get({ param: { id }, query: { query: "armor", entityType: "items" } }));
+    const armor = await expectOk(
+      types.completions.$get({ param: { id }, query: { query: "armor", entityType: "items" } }),
+    );
     expect(armor.items.some((completion) => completion.value === "ARMOR_PROFICIENCY")).toBe(true);
   });
 
   test("completes the engine's values for a property type", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    const complete = (type: string, query: string) => expectOk(properties.values.completions.$get({ param: { id }, query: { type, query } }));
+    const complete = (type: string, query: string) =>
+      expectOk(properties.values.completions.$get({ param: { id }, query: { type, query } }));
 
     const all = await complete("WEAPON_PROFICIENCY", "");
     expect(all.items.map((c) => c.value)).toEqual(expect.arrayContaining(["Simple", "Martial", "Exotic"]));
@@ -51,7 +64,10 @@ describe("rulesets customization property types", () => {
 
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    const response = await guestApi.api.rulesets[":id"].customization.properties.types.$get({ param: { id }, query: {} });
+    const response = await guestApi.api.rulesets[":id"].customization.properties.types.$get({
+      param: { id },
+      query: {},
+    });
     expect(response.status).toBe(401);
   });
 
@@ -60,7 +76,9 @@ describe("rulesets customization property types", () => {
     expect((await types.$get({ param: { id }, query: { entityType: "invalid" as never } })).status).toBe(400);
     expect((await types.search.$get({ param: { id }, query: { query: "" } })).status).toBe(400);
     expect((await types.search.$get({ param: { id }, query: {} as never })).status).toBe(400);
-    expect((await properties.values.completions.$get({ param: { id }, query: { type: "", query: "" } })).status).toBe(400);
+    expect((await properties.values.completions.$get({ param: { id }, query: { type: "", query: "" } })).status).toBe(
+      400,
+    );
   });
 
   test("returns 404 for a missing ruleset", async () => {

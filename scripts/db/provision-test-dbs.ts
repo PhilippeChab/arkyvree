@@ -11,6 +11,7 @@
  * need one DB per worker to avoid session-level collisions.
  */
 import os from "node:os";
+
 import { cloneDatabase, databaseOf } from "@/scripts/db/clone-database.ts";
 
 const DATABASE_URL = process.env.DATABASE_URL ?? "postgresql://devuser:devpass@localhost:5433/arkyvree_test";
@@ -27,4 +28,6 @@ function parseWorkers(): number {
 const workerCount = parseWorkers();
 const workerDbs = Array.from({ length: workerCount }, (_, i) => `${databaseOf(DATABASE_URL).name}_w${i + 1}`);
 await cloneDatabase(DATABASE_URL, workerDbs);
-console.log(`Provisioned ${workerCount} worker DB${workerCount === 1 ? "" : "s"} (${workerDbs[0]}..${workerDbs.at(-1)})`);
+console.log(
+  `Provisioned ${workerCount} worker DB${workerCount === 1 ? "" : "s"} (${workerDbs[0]}..${workerDbs.at(-1)})`,
+);

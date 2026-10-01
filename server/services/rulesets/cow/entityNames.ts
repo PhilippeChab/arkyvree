@@ -3,6 +3,7 @@ import { ConflictError } from "@/server/errors/index.ts";
 import { EntitySnapshots } from "@/server/repositories/index.ts";
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import type { EntityType } from "@/server/services/rulesets/hashing.ts";
+
 import { ENTITY_REPOS } from "./constants.ts";
 import type { CowData } from "./cowData.ts";
 
@@ -28,7 +29,7 @@ export async function assertAncestorNamesHidden(
   const tombstoned = new Set<string>();
   for (const snapshot of snapshots) {
     // Stored id of the local copy — check it as written, without COW remapping.
-    if (!await withCowContext(undefined, () => repo.exists(tx, { id: snapshot.forkedEntityId }))) {
+    if (!(await withCowContext(undefined, () => repo.exists(tx, { id: snapshot.forkedEntityId })))) {
       tombstoned.add(snapshot.sourceEntityId);
     }
   }

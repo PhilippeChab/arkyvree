@@ -1,25 +1,11 @@
-import { PageError } from "@/client/src/components/common/index.ts";
-import { useIsMobile } from "@/client/src/hooks/index.ts";
-import {
-  DURATION,
-  EASING,
-  fadeInUp,
-  prefersReducedMotion,
-} from "@/client/src/lib/animations.ts";
-import {
-  ArrowBack,
-  MoreVert as MoreVertIcon,
-} from "@mui/icons-material";
-import {
-  Box,
-  IconButton,
-  Menu,
-  MenuItem,
-  Skeleton,
-  Typography,
-} from "@mui/material";
+import { ArrowBack, MoreVert as MoreVertIcon } from "@mui/icons-material";
+import { Box, IconButton, Menu, MenuItem, Skeleton, Typography } from "@mui/material";
 import type { ComponentProps, ReactNode } from "react";
 import { useState } from "react";
+
+import { PageError } from "@/client/src/components/common/index.ts";
+import { useIsMobile } from "@/client/src/hooks/index.ts";
+import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
 /** An entity page's column: centered, up to 1200px. */
 const PAGE_SX = { maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } } as const;
@@ -64,7 +50,17 @@ export function EntityDetailLayout({
   if (isLoading) {
     return (
       <Box sx={PAGE_SX}>
-        <Box sx={{ mb: 4, display: "flex", alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}>
+        <Box
+          sx={{
+            mb: 4,
+            display: "flex",
+            alignItems: "center",
+            py: 2,
+            borderBottom: 1,
+            borderColor: "divider",
+            position: "relative",
+          }}
+        >
           <Skeleton variant="circular" width={40} height={40} sx={{ position: "absolute", left: 0 }} />
           <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
             <Skeleton variant="text" width={200} height={40} sx={{ mx: "auto" }} />
@@ -77,11 +73,13 @@ export function EntityDetailLayout({
   }
 
   return (
-    <Box sx={{
-      ...PAGE_SX,
-      animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
-      [prefersReducedMotion]: { animation: "none" },
-    }}>
+    <Box
+      sx={{
+        ...PAGE_SX,
+        animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
+        [prefersReducedMotion]: { animation: "none" },
+      }}
+    >
       <Box
         sx={{
           mb: 4,
@@ -113,9 +111,7 @@ export function EntityDetailLayout({
             px: { xs: 5, sm: 8 },
           }}
         >
-          <Typography sx={{ fontWeight: 600, mb: 0.5, typography: { xs: "h5", md: "h4" } }}>
-            {entityName}
-          </Typography>
+          <Typography sx={{ fontWeight: 600, mb: 0.5, typography: { xs: "h5", md: "h4" } }}>{entityName}</Typography>
           <Typography component="div" variant="body2" sx={{ color: "text.secondary" }}>
             {subtitle || `${rulesetName} Ruleset`}
           </Typography>
@@ -143,7 +139,13 @@ export function EntityDetailLayout({
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
-              <MenuItem onClick={() => { setAnchorEl(null); onDelete(); }} sx={{ color: "error.main" }}>
+              <MenuItem
+                onClick={() => {
+                  setAnchorEl(null);
+                  onDelete();
+                }}
+                sx={{ color: "error.main" }}
+              >
                 Delete
               </MenuItem>
             </Menu>

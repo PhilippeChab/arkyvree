@@ -1,11 +1,11 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
-import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+
 import { sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
 type RawMagicItem = MagicItemReference["raw"][number];
-
 
 type CheerioEl = cheerio.Cheerio<AnyNode>;
 
@@ -98,21 +98,26 @@ function readItemBlock($: cheerio.CheerioAPI, heading: CheerioEl) {
  */
 function itemEntries(block: ReturnType<typeof readItemBlock>, category: MagicItemCategory): RawMagicItem[] {
   const { name, description, metadataText, charges } = block;
-  const entry = (entryName: string): RawMagicItem =>
-    ({ name: entryName, category, description, metadataText, ...(charges.length > 0 ? { spellCharges: charges } : {}) });
+  const entry = (entryName: string): RawMagicItem => ({
+    name: entryName,
+    category,
+    description,
+    metadataText,
+    ...(charges.length > 0 ? { spellCharges: charges } : {}),
+  });
   const variants = parseVariantPrices(metadataText);
   if (!variants) return [entry(name)];
-  return variants.map(({ variant }) => entry(
-    variant.toLowerCase().includes(name.toLowerCase()) ? variant : `${name}${variant.startsWith("+") ? " " : ", "}${variant}`,
-  ));
+  return variants.map(({ variant }) =>
+    entry(
+      variant.toLowerCase().includes(name.toLowerCase())
+        ? variant
+        : `${name}${variant.startsWith("+") ? " " : ", "}${variant}`,
+    ),
+  );
 }
 
 /** The items of the section after the h4 heading `startH4Text`: an h5 heading each. */
-function parseItemEntries(
-  $: cheerio.CheerioAPI,
-  startH4Text: string,
-  category: MagicItemCategory,
-): RawMagicItem[] {
+function parseItemEntries($: cheerio.CheerioAPI, startH4Text: string, category: MagicItemCategory): RawMagicItem[] {
   const startEl = findH4ByText($, startH4Text);
   if (!startEl) return [];
 

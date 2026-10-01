@@ -1,14 +1,15 @@
+import { getTableName } from "drizzle-orm";
+
 import { klassSkillsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import { cowEntity, entityHasCharacterPicks, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export const ClassSkillsMethods = {
   async getClassSkills(rulesetId: string, classId: string) {
@@ -51,7 +52,14 @@ export const ClassSkillsMethods = {
         // would point at the parent ruleset's klass.
         let targetKlassId = klass.id;
         if (klass.rulesetId !== rulesetId) {
-          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "klasses",
+            klass.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetKlassId = cowResult.id as string;
         }
 
@@ -103,7 +111,14 @@ export const ClassSkillsMethods = {
         // klass_skills row from the parent ruleset.
         let targetKlassId = klass.id;
         if (klass.rulesetId !== rulesetId) {
-          const cowResult = await cowEntity(tx, "klasses", klass.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "klasses",
+            klass.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetKlassId = cowResult.id as string;
         }
 

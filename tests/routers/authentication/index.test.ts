@@ -1,6 +1,8 @@
-import { eq } from "drizzle-orm";
-import { emailVerificationsInAccount, sessionsInAccount } from "@/drizzle/schema.ts";
 import { describe, expect, test } from "bun:test";
+
+import { eq } from "drizzle-orm";
+
+import { emailVerificationsInAccount, sessionsInAccount } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
 import { EmailVerifications, OauthAccounts, PasswordResets, Users } from "@/server/repositories/index.ts";
@@ -25,7 +27,9 @@ async function latestVerificationCode(userId: string) {
 async function signUpAndVerify(label: string) {
   const email = newEmail(label);
   const user = await signUp(email);
-  const verified = await auth["verify-email"].$post({ json: { emailAddress: email, code: await latestVerificationCode(user.id) } });
+  const verified = await auth["verify-email"].$post({
+    json: { emailAddress: email, code: await latestVerificationCode(user.id) },
+  });
   await expectOk(verified);
   const sessionId = sessionIdFrom(verified);
   return { email, user, sessionId, api: apiAs(sessionId) };
@@ -34,7 +38,9 @@ async function signUpAndVerify(label: string) {
 describe("authentication", () => {
   describe("sign-up and verification", () => {
     test("signs up without signing in", async () => {
-      const response = await auth["sign-up"].$post({ json: { emailAddress: newEmail("signup"), password, passwordConfirmation: password } });
+      const response = await auth["sign-up"].$post({
+        json: { emailAddress: newEmail("signup"), password, passwordConfirmation: password },
+      });
       expect(response.status).toBe(201);
       expect(await response.json()).toMatchObject({ message: "Verification email sent" });
       expect(response.headers.get("set-cookie") ?? "").not.toContain(SESSION_COOKIE_NAME);
@@ -43,7 +49,9 @@ describe("authentication", () => {
     test("verifies the email with the code sent, signing the user in", async () => {
       const email = newEmail("verify");
       const user = await signUp(email);
-      const response = await auth["verify-email"].$post({ json: { emailAddress: email, code: await latestVerificationCode(user.id) } });
+      const response = await auth["verify-email"].$post({
+        json: { emailAddress: email, code: await latestVerificationCode(user.id) },
+      });
       expect(response.status).toBe(200);
       const body = await expectOk(response);
       expect(body).toMatchObject({ id: user.id, emailAddress: email });
@@ -60,7 +68,9 @@ describe("authentication", () => {
     test("resends the verification code", async () => {
       const email = newEmail("resend");
       await signUp(email);
-      expect(await expectOk(auth["resend-verification"].$post({ json: { emailAddress: email } }))).toEqual({ success: true });
+      expect(await expectOk(auth["resend-verification"].$post({ json: { emailAddress: email } }))).toEqual({
+        success: true,
+      });
     });
   });
 
@@ -91,7 +101,10 @@ describe("authentication", () => {
 
     test("refuses an expired session", async () => {
       const { sessionId, api } = await signUpAndVerify("expired");
-      await db.update(sessionsInAccount).set({ expiresAt: new Date(Date.now() - 1000).toISOString() }).where(eq(sessionsInAccount.id, sessionId));
+      await db
+        .update(sessionsInAccount)
+        .set({ expiresAt: new Date(Date.now() - 1000).toISOString() })
+        .where(eq(sessionsInAccount.id, sessionId));
       expect((await api.auth.me.$get()).status).toBe(401);
     });
 
@@ -105,12 +118,16 @@ describe("authentication", () => {
       const { email, user, api } = await signUpAndVerify("profile");
       const changed = newEmail("profile-new");
 
-      const updated = await expectOk(api.auth.profile.$put({ json: { username: "testusername", emailAddress: changed } }));
+      const updated = await expectOk(
+        api.auth.profile.$put({ json: { username: "testusername", emailAddress: changed } }),
+      );
       expect(updated).toMatchObject({ username: "testusername", emailAddress: email, pendingEmailAddress: changed });
       expect(updated).not.toHaveProperty("passwordDigest");
 
       expect((await api.auth["verify-email-change"].$post({ json: { code: "000000" } })).status).toBe(401);
-      const verified = await expectOk(api.auth["verify-email-change"].$post({ json: { code: await latestVerificationCode(user.id) } }));
+      const verified = await expectOk(
+        api.auth["verify-email-change"].$post({ json: { code: await latestVerificationCode(user.id) } }),
+      );
       expect(verified).toMatchObject({ emailAddress: changed, pendingEmailAddress: null });
       expect(verified).not.toHaveProperty("passwordDigest");
     });
@@ -129,7 +146,10 @@ describe("authentication", () => {
 
       // Past the resend cooldown.
       const verification = await EmailVerifications.findOne(db, { userId: user.id });
-      await db.update(emailVerificationsInAccount).set({ createdAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() }).where(eq(emailVerificationsInAccount.id, verification!.id));
+      await db
+        .update(emailVerificationsInAccount)
+        .set({ createdAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() })
+        .where(eq(emailVerificationsInAccount.id, verification!.id));
       expect(await expectOk(api.auth["resend-email-change"].$post())).toEqual({ success: true });
 
       expect(await expectOk(api.auth["cancel-email-change"].$post())).toEqual({ success: true });
@@ -146,22 +166,40 @@ describe("authentication", () => {
   describe("passwords", () => {
     test("changes the password", async () => {
       const { email, api } = await signUpAndVerify("password");
-      const json = { currentPassword: password, newPassword: "newpassword456", newPasswordConfirmation: "newpassword456" };
+      const json = {
+        currentPassword: password,
+        newPassword: "newpassword456",
+        newPasswordConfirmation: "newpassword456",
+      };
       expect(await expectOk(api.auth.password.$put({ json }))).toEqual({ success: true });
       await expectOk(auth["sign-in"].$post({ json: { emailAddress: email, password: "newpassword456" } }));
     });
 
     test("refuses a wrong current password", async () => {
       const { api } = await signUpAndVerify("wrongpassword");
-      const response = await api.auth.password.$put({ json: { currentPassword: "wrongpassword", newPassword: "newpassword456", newPasswordConfirmation: "newpassword456" } });
+      const response = await api.auth.password.$put({
+        json: {
+          currentPassword: "wrongpassword",
+          newPassword: "newpassword456",
+          newPasswordConfirmation: "newpassword456",
+        },
+      });
       expect(response.status).toBe(401);
-      expect(await response.json()).toMatchObject({ message: expect.stringContaining("Current password is incorrect") });
+      expect(await response.json()).toMatchObject({
+        message: expect.stringContaining("Current password is incorrect"),
+      });
     });
 
     test("resets a forgotten password with the code sent", async () => {
       const { email, user } = await signUpAndVerify("forgot");
-      expect(await expectOk(auth["forgot-password"].$post({ json: { emailAddress: email } }))).toEqual({ success: true });
-      const reset = { emailAddress: email, newPassword: "resetpassword1234", newPasswordConfirmation: "resetpassword1234" };
+      expect(await expectOk(auth["forgot-password"].$post({ json: { emailAddress: email } }))).toEqual({
+        success: true,
+      });
+      const reset = {
+        emailAddress: email,
+        newPassword: "resetpassword1234",
+        newPasswordConfirmation: "resetpassword1234",
+      };
 
       expect((await auth["reset-password"].$post({ json: { ...reset, code: "000000" } })).status).toBe(401);
       const { code } = (await PasswordResets.findOne(db, { userId: user.id }))!;
@@ -171,7 +209,11 @@ describe("authentication", () => {
 
     test("sets a first password for an account without one", async () => {
       const email = newEmail("oauth");
-      const [user] = await Users.create(db, { username: `oauth-${uniqueId()}`, emailAddress: email, emailVerifiedAt: new Date().toISOString() });
+      const [user] = await Users.create(db, {
+        username: `oauth-${uniqueId()}`,
+        emailAddress: email,
+        emailVerifiedAt: new Date().toISOString(),
+      });
       const api = await signedInApi(user.id);
       const json = { newPassword: "firstpassword1", newPasswordConfirmation: "firstpassword1" };
 
@@ -184,16 +226,30 @@ describe("authentication", () => {
   describe("linked accounts", () => {
     test("lists and unlinks a linked Google account", async () => {
       const { user, api } = await signUpAndVerify("linked");
-      await OauthAccounts.create(db, { userId: user.id, provider: "google", providerAccountId: `google-${uniqueId()}` });
+      await OauthAccounts.create(db, {
+        userId: user.id,
+        provider: "google",
+        providerAccountId: `google-${uniqueId()}`,
+      });
 
       expect(await expectOk(api.auth["linked-accounts"].$get())).toMatchObject([{ provider: "google" }]);
-      expect(await expectOk(api.auth["unlink-oauth"].$post({ json: { provider: "google" } }))).toEqual({ success: true });
+      expect(await expectOk(api.auth["unlink-oauth"].$post({ json: { provider: "google" } }))).toEqual({
+        success: true,
+      });
       expect(await expectOk(api.auth["linked-accounts"].$get())).toEqual([]);
     });
 
     test("keeps the only way to sign in: no unlinking without a password", async () => {
-      const [user] = await Users.create(db, { username: `oauth-${uniqueId()}`, emailAddress: newEmail("oauthonly"), emailVerifiedAt: new Date().toISOString() });
-      await OauthAccounts.create(db, { userId: user.id, provider: "google", providerAccountId: `google-${uniqueId()}` });
+      const [user] = await Users.create(db, {
+        username: `oauth-${uniqueId()}`,
+        emailAddress: newEmail("oauthonly"),
+        emailVerifiedAt: new Date().toISOString(),
+      });
+      await OauthAccounts.create(db, {
+        userId: user.id,
+        provider: "google",
+        providerAccountId: `google-${uniqueId()}`,
+      });
       const api = await signedInApi(user.id);
       expect((await api.auth["unlink-oauth"].$post({ json: { provider: "google" } })).status).toBe(400);
     });

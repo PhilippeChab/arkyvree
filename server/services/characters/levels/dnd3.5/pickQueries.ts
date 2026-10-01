@@ -8,6 +8,7 @@
  * - getLevel — retrieves saved selections for an existing character level
  */
 
+import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -20,14 +21,14 @@ import {
   Klasses,
   Powers,
 } from "@/server/repositories/index.ts";
-import type { KlassLevel, Requirement } from "@/shared/relations.ts";
+import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { DetailedCharacterInterface, PreloadedRulesetData } from "@/server/rulesets/types.ts";
-import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import type { KlassLevel, Requirement } from "@/shared/relations.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
+
 import {
   buildPendingCharacterLevels,
   buildProjectedCharacterLevel,
@@ -41,10 +42,7 @@ import {
 import { annotateRequirements } from "./validation.ts";
 
 /** Resolves aptitude-targeting modifiers (aptitudes.<slug>.allowed) for feats, grouped by feat ID. */
-function resolveAptitudeModifiers(
-  featIds: string[],
-  rulesetData: CachedRulesetData,
-) {
+function resolveAptitudeModifiers(featIds: string[], rulesetData: CachedRulesetData) {
   const result = new Map<string, { aptitudeId: string; value: number; operator: string }[]>();
   if (featIds.length === 0) return result;
 
@@ -59,7 +57,10 @@ function resolveAptitudeModifiers(
       if (!resolvedAptitudeId) continue;
 
       let group = result.get(mod.sourceId);
-      if (!group) { group = []; result.set(mod.sourceId, group); }
+      if (!group) {
+        group = [];
+        result.set(mod.sourceId, group);
+      }
       group.push({ aptitudeId: resolvedAptitudeId, value: Number(mod.value), operator: mod.operator });
     }
   }
@@ -76,16 +77,13 @@ async function getExcludeNonStackableFeatIds(
   selectedNonStackableFeatIds: string[],
   detailedCharacter: DetailedCharacterInterface,
 ) {
-  const characterLevels = excludeIdSet.size > 0
-    ? allCharacterLevels.filter((l) => !excludeIdSet.has(l.id))
-    : allCharacterLevels;
+  const characterLevels =
+    excludeIdSet.size > 0 ? allCharacterLevels.filter((l) => !excludeIdSet.has(l.id)) : allCharacterLevels;
   const characterLevelIds = characterLevels.map((lvl) => lvl.id);
   const klassLevelIds = characterLevels.map((lvl) => lvl.klassLevelId);
   const pickedFeats = await Feats.findManyByCharacterLevelIds(database, { characterLevelIds });
   const givenFeats = await Feats.findManyByKlassLevelIds(database, { klassLevelIds, characterLevelIds });
-  const excludeFeatIds = [...pickedFeats, ...givenFeats]
-    .filter((feat) => !feat.stackable)
-    .map((feat) => feat.id);
+  const excludeFeatIds = [...pickedFeats, ...givenFeats].filter((feat) => !feat.stackable).map((feat) => feat.id);
 
   for (const rec of autoGrantedRecords) {
     if (!rec.featsInRule.stackable) {
@@ -114,7 +112,13 @@ export async function getAvailablePowers(
   aptitudeId: string,
   klassId: string,
   level: number,
-  where: { powerLevel?: number; search?: string; excludeSchools?: string[]; selectedFeatPicks?: FeatPick[]; pendingLevelFeatPicks?: FeatPick[] },
+  where: {
+    powerLevel?: number;
+    search?: string;
+    excludeSchools?: string[];
+    selectedFeatPicks?: FeatPick[];
+    pendingLevelFeatPicks?: FeatPick[];
+  },
   pagination: { limit: number; page: number },
   excludeCharacterLevelId?: string,
   pendingLevelKlassLevelIds?: string[],
@@ -128,27 +132,25 @@ export async function getAvailablePowers(
   }
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
     if (!klassLevel) {
       throw new NotFoundError("Class level not found");
     }
-  
+
     // Fetch auto-granted powers for the current klass level so they are part of the
     // projected character (for requirement checking) and excluded from selection.
-    const autoGrantedPowerRecords =
-      rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? [];
-  
+    const autoGrantedPowerRecords = rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? [];
+
     const allCharacterLevels = await CharacterLevels.findMany(db, { characterId });
     const excludeIds = excludeCharacterLevelId
       ? getLevelIdsFromOnward(allCharacterLevels, excludeCharacterLevelId)
       : [];
     const excludeIdSet = new Set(excludeIds);
-  
+
     const pendingLevels = pendingLevelKlassLevelIds?.length
       ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds)
       : [];
-  
+
     const allSelectedFeatPicks: FeatPick[] = [
       ...(where.pendingLevelFeatPicks ?? []),
       ...(where.selectedFeatPicks ?? []),
@@ -156,7 +158,10 @@ export async function getAvailablePowers(
 
     const projectedCharacterLevel = buildProjectedCharacterLevel(characterId, klassLevel.id);
     const { projectedFeats: selectedProjectedFeats } = buildProjectedFeatsFromPicks(
-      allSelectedFeatPicks, klassLevel.id, projectedCharacterLevel.id, rulesetData,
+      allSelectedFeatPicks,
+      klassLevel.id,
+      projectedCharacterLevel.id,
+      rulesetData,
     );
     const projectedData: Dnd35ProjectedCharacterData = {
       ...(excludeIds.length > 0 && { excludeCharacterLevelIds: excludeIds }),
@@ -171,16 +176,15 @@ export async function getAvailablePowers(
         saveName: null,
       })),
     };
-  
+
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
     await detailedCharacter.build(undefined, projectedData);
-  
+
     // Get character's existing powers to exclude already-taken ones
     // When editing, exclude the edited level and all subsequent levels from the "already taken" set
-    const characterLevels = excludeIdSet.size > 0
-      ? allCharacterLevels.filter((l) => !excludeIdSet.has(l.id))
-      : allCharacterLevels;
+    const characterLevels =
+      excludeIdSet.size > 0 ? allCharacterLevels.filter((l) => !excludeIdSet.has(l.id)) : allCharacterLevels;
     const characterLevelIds = characterLevels.map((lvl) => lvl.id);
     const klassLevelIds = characterLevels.map((lvl) => lvl.klassLevelId);
     const pickedPowers = await Powers.findManyByCharacterLevelIds(db, { characterLevelIds });
@@ -188,20 +192,23 @@ export async function getAvailablePowers(
     const excludePowerIds = [...pickedPowers, ...givenPowers]
       .filter((power) => power.aptitudeId === aptitudeId)
       .map((power) => power.id);
-  
+
     // Also exclude auto-granted powers from the current klass level
     for (const rec of autoGrantedPowerRecords) {
       excludePowerIds.push(rec.powersInRule.id);
     }
-  
+
     // Exclude powers virtually granted by modifiers (e.g. "set powers.<spell>.<apt>.known = true")
     const virtualPowerIds = detailedCharacter.getVirtuallyPossessedPowerIds();
     excludePowerIds.push(...virtualPowerIds);
-  
+
     // Exclude powers from wizard-prohibited schools (delegated to ruleset-specific projector)
     const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter) as Dnd35LevelUpProjector;
     const wizardExcluded = await levelUpProjector.getExcludedPowerIds(
-      db, aptitudeId, characterLevelIds, klassLevelIds,
+      db,
+      aptitudeId,
+      characterLevelIds,
+      klassLevelIds,
       selectedProjectedFeats.flatMap((f) => f.properties),
       where.excludeSchools ?? [],
       rulesetData,
@@ -211,16 +218,19 @@ export async function getAvailablePowers(
     const result = await Powers.findAvailableByAptitude(
       db,
       {
-        rulesetId: characterRecord.rulesetId, ancestorRulesetIds: rulesetData.cow.sourceChain, aptitudeId, excludePowerIds,
+        rulesetId: characterRecord.rulesetId,
+        ancestorRulesetIds: rulesetData.cow.sourceChain,
+        aptitudeId,
+        excludePowerIds,
         siblingLoserIds: rulesetData.cow.siblingIds,
-        powerLevel: where.powerLevel, search: where.search,
+        powerLevel: where.powerLevel,
+        search: where.search,
       },
       pagination,
     );
-  
+
     const items = annotateRequirements(detailedCharacter, result.items, rulesetData);
     return { items, page: result.page, nextPage: result.nextPage };
-  
   });
 }
 
@@ -245,7 +255,6 @@ export async function getAvailableFeats(
   }
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
     if (!klassLevel) {
       throw new NotFoundError("Class level not found");
@@ -257,7 +266,10 @@ export async function getAvailableFeats(
     const allAutoGrantedRecords = allAutoGrantedKlassLevelIds.flatMap(
       (klid) => rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klid) ?? [],
     );
-    const allAutoGrantedFeatCustomizations = loadFeatCustomizations(rulesetData, allAutoGrantedRecords.map((rec) => rec.featsInRule.id));
+    const allAutoGrantedFeatCustomizations = loadFeatCustomizations(
+      rulesetData,
+      allAutoGrantedRecords.map((rec) => rec.featsInRule.id),
+    );
 
     const allCharacterLevels = await CharacterLevels.findMany(db, { characterId });
     const excludeIds = excludeCharacterLevelId
@@ -276,14 +288,16 @@ export async function getAvailableFeats(
 
     const projectedCharacterLevel = buildProjectedCharacterLevel(characterId, klassLevel.id);
     const { projectedFeats: selectedProjectedFeats, nonStackableFeatIds: selectedNonStackable } =
-      buildProjectedFeatsFromPicks(
-        allSelectedFeatPicks, klassLevel.id, projectedCharacterLevel.id, rulesetData,
-      );
+      buildProjectedFeatsFromPicks(allSelectedFeatPicks, klassLevel.id, projectedCharacterLevel.id, rulesetData);
     const projectedData: Dnd35ProjectedCharacterData = {
       ...(excludeIds.length > 0 && { excludeCharacterLevelIds: excludeIds }),
       characterLevels: [...pendingLevels, projectedCharacterLevel],
       ...(selectedProjectedFeats.length > 0 && { feats: selectedProjectedFeats }),
-      givenFeats: buildProjectedGivenFeats(allAutoGrantedRecords, projectedCharacterLevel.id, allAutoGrantedFeatCustomizations),
+      givenFeats: buildProjectedGivenFeats(
+        allAutoGrantedRecords,
+        projectedCharacterLevel.id,
+        allAutoGrantedFeatCustomizations,
+      ),
     };
 
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
@@ -291,28 +305,39 @@ export async function getAvailableFeats(
     await detailedCharacter.build(undefined, projectedData);
 
     const excludeFeatIds = await getExcludeNonStackableFeatIds(
-      db, allCharacterLevels, excludeIdSet, allAutoGrantedRecords, selectedNonStackable, detailedCharacter,
+      db,
+      allCharacterLevels,
+      excludeIdSet,
+      allAutoGrantedRecords,
+      selectedNonStackable,
+      detailedCharacter,
     );
 
     const result = await Feats.findAvailableByAptitude(
       db,
       {
-        rulesetId: characterRecord.rulesetId, ancestorRulesetIds: rulesetData.cow.sourceChain, aptitudeId, excludeFeatIds,
+        rulesetId: characterRecord.rulesetId,
+        ancestorRulesetIds: rulesetData.cow.sourceChain,
+        aptitudeId,
+        excludeFeatIds,
         siblingLoserIds: rulesetData.cow.siblingIds,
-        family: where.family, search: where.search,
+        family: where.family,
+        search: where.search,
       },
       pagination,
     );
 
     const items = annotateRequirements(detailedCharacter, result.items, rulesetData);
-    const aptitudeModByFeat = resolveAptitudeModifiers(items.map((f) => f.id), rulesetData);
+    const aptitudeModByFeat = resolveAptitudeModifiers(
+      items.map((f) => f.id),
+      rulesetData,
+    );
     const itemsWithModifiers = items.map((item) => ({
       ...item,
       aptitudeModifiers: aptitudeModByFeat.get(item.id) ?? [],
     }));
-  
+
     return { items: itemsWithModifiers, page: result.page, nextPage: result.nextPage };
-  
   });
 }
 
@@ -337,7 +362,6 @@ export async function getAvailableFeatsGrouped(
   }
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
     if (!klassLevel) {
       throw new NotFoundError("Class level not found");
@@ -350,7 +374,10 @@ export async function getAvailableFeatsGrouped(
     const allAutoGrantedRecords = allAutoGrantedKlassLevelIds.flatMap(
       (klid) => rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klid) ?? [],
     );
-    const allAutoGrantedFeatCustomizations = loadFeatCustomizations(rulesetData, allAutoGrantedRecords.map((rec) => rec.featsInRule.id));
+    const allAutoGrantedFeatCustomizations = loadFeatCustomizations(
+      rulesetData,
+      allAutoGrantedRecords.map((rec) => rec.featsInRule.id),
+    );
 
     const allSelectedFeatPicks: FeatPick[] = [
       ...(where.pendingLevelFeatPicks ?? []),
@@ -363,9 +390,7 @@ export async function getAvailableFeatsGrouped(
 
     const projectedCharacterLevel = buildProjectedCharacterLevel(characterId, klassLevel.id);
     const { projectedFeats: selectedProjectedFeats, nonStackableFeatIds: selectedNonStackable } =
-      buildProjectedFeatsFromPicks(
-        allSelectedFeatPicks, klassLevel.id, projectedCharacterLevel.id, rulesetData,
-      );
+      buildProjectedFeatsFromPicks(allSelectedFeatPicks, klassLevel.id, projectedCharacterLevel.id, rulesetData);
 
     const allCharacterLevels = await CharacterLevels.findMany(db, { characterId });
     const excludeIds = excludeCharacterLevelId
@@ -377,7 +402,11 @@ export async function getAvailableFeatsGrouped(
       ...(excludeIds.length > 0 && { excludeCharacterLevelIds: excludeIds }),
       characterLevels: [...pendingLevels, projectedCharacterLevel],
       ...(selectedProjectedFeats.length > 0 && { feats: selectedProjectedFeats }),
-      givenFeats: buildProjectedGivenFeats(allAutoGrantedRecords, projectedCharacterLevel.id, allAutoGrantedFeatCustomizations),
+      givenFeats: buildProjectedGivenFeats(
+        allAutoGrantedRecords,
+        projectedCharacterLevel.id,
+        allAutoGrantedFeatCustomizations,
+      ),
     };
 
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
@@ -385,33 +414,50 @@ export async function getAvailableFeatsGrouped(
     await detailedCharacter.build(undefined, projectedData);
 
     const excludeFeatIds = await getExcludeNonStackableFeatIds(
-      db, allCharacterLevels, excludeIdSet, allAutoGrantedRecords, selectedNonStackable, detailedCharacter,
+      db,
+      allCharacterLevels,
+      excludeIdSet,
+      allAutoGrantedRecords,
+      selectedNonStackable,
+      detailedCharacter,
     );
 
     const result = await Feats.findAvailableByAptitudeGrouped(
       db,
       {
-        rulesetId: characterRecord.rulesetId, ancestorRulesetIds: rulesetData.cow.sourceChain, aptitudeId, excludeFeatIds,
+        rulesetId: characterRecord.rulesetId,
+        ancestorRulesetIds: rulesetData.cow.sourceChain,
+        aptitudeId,
+        excludeFeatIds,
         siblingLoserIds: rulesetData.cow.siblingIds,
         search: where.search,
       },
       pagination,
     );
-  
+
     // Annotate single-feat rows with eligibility + aptitude modifiers
     const singleRows = result.items.filter((r) => r.variantCount === 1);
     if (singleRows.length === 0) {
-      const items = result.items.map((row) => ({ ...row, eligible: true as boolean, aptitudeModifiers: [] as { aptitudeId: string; value: number; operator: string }[] }));
+      const items = result.items.map((row) => ({
+        ...row,
+        eligible: true as boolean,
+        aptitudeModifiers: [] as { aptitudeId: string; value: number; operator: string }[],
+      }));
       return { items, page: result.page, nextPage: result.nextPage };
     }
-  
+
     const singleIds = singleRows.map((r) => ({ id: r.representativeId }));
     const annotated = annotateRequirements(detailedCharacter, singleIds, rulesetData);
     const eligibilityMap = new Map(annotated.map((a) => [a.id, a.eligible]));
-    const requirementTreeMap = new Map(annotated.filter((a) => a.requirementTree).map((a) => [a.id, a.requirementTree!]));
-  
-    const aptitudeModByFeat = resolveAptitudeModifiers(singleRows.map((r) => r.representativeId), rulesetData);
-  
+    const requirementTreeMap = new Map(
+      annotated.filter((a) => a.requirementTree).map((a) => [a.id, a.requirementTree!]),
+    );
+
+    const aptitudeModByFeat = resolveAptitudeModifiers(
+      singleRows.map((r) => r.representativeId),
+      rulesetData,
+    );
+
     const items = result.items.map((row) => {
       if (row.variantCount === 1) {
         const eligible = eligibilityMap.get(row.representativeId) ?? true;
@@ -422,11 +468,14 @@ export async function getAvailableFeatsGrouped(
           ...(!eligible ? { requirementTree: requirementTreeMap.get(row.representativeId) } : {}),
         };
       }
-      return { ...row, eligible: true as boolean, aptitudeModifiers: [] as { aptitudeId: string; value: number; operator: string }[] };
+      return {
+        ...row,
+        eligible: true as boolean,
+        aptitudeModifiers: [] as { aptitudeId: string; value: number; operator: string }[],
+      };
     });
-  
+
     return { items, page: result.page, nextPage: result.nextPage };
-  
   });
 }
 
@@ -454,7 +503,9 @@ export async function getAvailableKlasses(
     const klassPage = await Klasses.findManyByRulesetId(
       db,
       {
-        rulesetId: characterRecord.rulesetId, ancestorRulesetIds: sourceChain, characterId,
+        rulesetId: characterRecord.rulesetId,
+        ancestorRulesetIds: sourceChain,
+        characterId,
         siblingLoserIds: rulesetData.cow.siblingIds,
         kind: "pc",
         search: where.search,
@@ -465,18 +516,16 @@ export async function getAvailableKlasses(
     if (klassPage.items.length === 0) {
       return { items: [], page: klassPage.page, nextPage: klassPage.nextPage };
     }
-  
+
     const characterKlassLevels = await CharacterLevels.findMaxKlassLevelsByCharacter(db, {
       characterId,
     });
-    const characterKlassLevelMap = new Map(
-      characterKlassLevels.map((i) => [i.klassId, i.maxLevel]),
-    );
-  
+    const characterKlassLevelMap = new Map(characterKlassLevels.map((i) => [i.klassId, i.maxLevel]));
+
     const pendingLevels = pendingLevelKlassLevelIds?.length
       ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds, pendingLevelAbilityIds)
       : [];
-  
+
     // Next klass level per class (served from cache — no DB)
     const nextKlassLevelMap = new Map<string, KlassLevel>();
     if (rulesetData) {
@@ -486,18 +535,18 @@ export async function getAvailableKlasses(
         if (kl) nextKlassLevelMap.set(klass.id, kl);
       }
     }
-  
+
     // Max level per class — pre-indexed on rulesetData.
     const maxLevelMap = rulesetData?.maxLevelByKlassId ?? new Map<string, number>();
-  
+
     const klassesWithNextLevel = klassPage.items
       .filter((klass) => nextKlassLevelMap.has(klass.id))
       .map((klass) => ({ klass, nextKlassLevel: nextKlassLevelMap.get(klass.id)! }));
-  
+
     if (klassesWithNextLevel.length === 0) {
       return { items: [], page: klassPage.page, nextPage: klassPage.nextPage };
     }
-  
+
     // Per-candidate requirements — served from the cache's requirementsByEntity map.
     const requirementsByKlassLevel = new Map<string, Requirement[]>();
     if (rulesetData) {
@@ -506,47 +555,62 @@ export async function getAvailableKlasses(
         if (reqs && reqs.length > 0) requirementsByKlassLevel.set(k.nextKlassLevel.id, reqs);
       }
     }
-  
+
     // Candidates without requirements pass automatically
-    const withoutRequirements = klassesWithNextLevel.filter(
-      (k) => !requirementsByKlassLevel.has(k.nextKlassLevel.id),
-    );
-    const withRequirements = klassesWithNextLevel.filter(
-      (k) => requirementsByKlassLevel.has(k.nextKlassLevel.id),
-    );
-  
+    const withoutRequirements = klassesWithNextLevel.filter((k) => !requirementsByKlassLevel.has(k.nextKlassLevel.id));
+    const withRequirements = klassesWithNextLevel.filter((k) => requirementsByKlassLevel.has(k.nextKlassLevel.id));
+
     // For candidates with requirements, build the character once and evaluate via projector.
     const evaluationResultMap = new Map<string, boolean>();
     let detailedCharacter: DetailedCharacterInterface | undefined;
     if (withRequirements.length > 0) {
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
       detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-  
+
       // Preload COW + ruleset data to avoid redundant fetches inside build()
       const preloadedRulesetData: CachedRulesetData = rulesetData;
       const preloaded: PreloadedRulesetData = { ruleset, cowData: rulesetData.cow, rulesetData: preloadedRulesetData };
       const skillAnchorLevel = pendingLevels[0] ?? buildProjectedCharacterLevel(characterId, "");
-      const autoGrantedRecords = pendingLevelKlassLevelIds?.length && preloadedRulesetData
-        ? pendingLevelKlassLevelIds.flatMap(
-            (klid) => preloadedRulesetData!.klassLevelFeatsWithFeatsByKlassLevel.get(klid) ?? [],
-          )
-        : [];
-      const { projectedFeats } = pendingFeatPicks?.length && preloadedRulesetData
-        ? buildProjectedFeatsFromPicks(pendingFeatPicks, "", "", preloadedRulesetData)
-        : { projectedFeats: [] as NonNullable<Dnd35ProjectedCharacterData["feats"]> };
-      const projectedSkills = pendingSkillAllocations?.length && preloadedRulesetData
-        ? buildProjectedSkillsFromAllocations(pendingSkillAllocations, skillAnchorLevel.klassLevelId, skillAnchorLevel.id, preloadedRulesetData)
-        : [];
-  
+      const autoGrantedRecords =
+        pendingLevelKlassLevelIds?.length && preloadedRulesetData
+          ? pendingLevelKlassLevelIds.flatMap(
+              (klid) => preloadedRulesetData!.klassLevelFeatsWithFeatsByKlassLevel.get(klid) ?? [],
+            )
+          : [];
+      const { projectedFeats } =
+        pendingFeatPicks?.length && preloadedRulesetData
+          ? buildProjectedFeatsFromPicks(pendingFeatPicks, "", "", preloadedRulesetData)
+          : { projectedFeats: [] as NonNullable<Dnd35ProjectedCharacterData["feats"]> };
+      const projectedSkills =
+        pendingSkillAllocations?.length && preloadedRulesetData
+          ? buildProjectedSkillsFromAllocations(
+              pendingSkillAllocations,
+              skillAnchorLevel.klassLevelId,
+              skillAnchorLevel.id,
+              preloadedRulesetData,
+            )
+          : [];
+
       // Project auto-granted feats (free/virtual) from pending klass levels
       // so they're visible during requirement evaluation (e.g., Monk L1 grants Improved Unarmed Strike).
       let projectedGivenFeats: Dnd35ProjectedCharacterData["givenFeats"] = [];
       if (autoGrantedRecords.length > 0 && preloadedRulesetData) {
-        const autoGrantedCustomizations = loadFeatCustomizations(preloadedRulesetData, autoGrantedRecords.map((rec) => rec.featsInRule.id));
-        projectedGivenFeats = buildProjectedGivenFeats(autoGrantedRecords, pendingLevels[0].id, autoGrantedCustomizations);
+        const autoGrantedCustomizations = loadFeatCustomizations(
+          preloadedRulesetData,
+          autoGrantedRecords.map((rec) => rec.featsInRule.id),
+        );
+        projectedGivenFeats = buildProjectedGivenFeats(
+          autoGrantedRecords,
+          pendingLevels[0].id,
+          autoGrantedCustomizations,
+        );
       }
-  
-      const hasProjections = pendingLevels.length > 0 || projectedFeats.length > 0 || projectedGivenFeats.length > 0 || projectedSkills.length > 0;
+
+      const hasProjections =
+        pendingLevels.length > 0 ||
+        projectedFeats.length > 0 ||
+        projectedGivenFeats.length > 0 ||
+        projectedSkills.length > 0;
       const projectedData: Dnd35ProjectedCharacterData | undefined = hasProjections
         ? {
             ...(pendingLevels.length > 0 && { characterLevels: pendingLevels }),
@@ -556,7 +620,7 @@ export async function getAvailableKlasses(
           }
         : undefined;
       await detailedCharacter.build(undefined, projectedData, preloaded);
-  
+
       const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter) as Dnd35LevelUpProjector;
       const candidates = withRequirements.map((k) => ({
         klassName: stripSeparators(k.klass.name),
@@ -569,9 +633,15 @@ export async function getAvailableKlasses(
         evaluationResultMap.set(klassLevelId, result);
       }
     }
-  
+
     const items = [
-      ...withoutRequirements.map((k) => ({ ...k.klass, nextLevel: k.nextKlassLevel.level, maxLevel: maxLevelMap.get(k.klass.id) ?? k.nextKlassLevel.level, eligible: true, requirementTree: undefined as string | undefined })),
+      ...withoutRequirements.map((k) => ({
+        ...k.klass,
+        nextLevel: k.nextKlassLevel.level,
+        maxLevel: maxLevelMap.get(k.klass.id) ?? k.nextKlassLevel.level,
+        eligible: true,
+        requirementTree: undefined as string | undefined,
+      })),
       ...withRequirements.map((k) => {
         const eligible = evaluationResultMap.get(k.nextKlassLevel.id) ?? false;
         const reqs = requirementsByKlassLevel.get(k.nextKlassLevel.id);
@@ -580,13 +650,13 @@ export async function getAvailableKlasses(
           nextLevel: k.nextKlassLevel.level,
           maxLevel: maxLevelMap.get(k.klass.id) ?? k.nextKlassLevel.level,
           eligible,
-          requirementTree: !eligible && reqs && detailedCharacter ? detailedCharacter.formatRequirements(reqs) : undefined,
+          requirementTree:
+            !eligible && reqs && detailedCharacter ? detailedCharacter.formatRequirements(reqs) : undefined,
         };
       }),
     ].sort((a, b) => b.nextLevel - a.nextLevel || a.name.localeCompare(b.name));
-  
+
     return { items, page: klassPage.page, nextPage: klassPage.nextPage };
-  
   });
 }
 
@@ -619,7 +689,7 @@ export async function getLevel(session: Session, characterId: string, characterL
     if (!refreshedCharacterLevel) {
       throw new NotFoundError("Character level not found");
     }
-  
+
     const klassLevel = rulesetData.klassLevelsById.get(refreshedCharacterLevel.klassLevelId);
     if (!klassLevel) {
       throw new NotFoundError("Class level not found");
@@ -628,17 +698,29 @@ export async function getLevel(session: Session, characterId: string, characterL
     if (!klass) {
       throw new NotFoundError("Class not found");
     }
-  
+
     const skills: Record<string, number> = {};
     for (const s of levelSkills) {
       skills[s.skillId] = s.rank;
     }
-  
-    const aptitudeModByFeat = levelFeats.length > 0
-      ? resolveAptitudeModifiers(levelFeats.map((f) => f.featId), rulesetData)
-      : new Map<string, { aptitudeId: string; value: number; operator: string }[]>();
-  
-    const feats: Record<string, Array<{ id: string; name: string; description?: string; aptitudeModifiers: { aptitudeId: string; value: number; operator: string }[] }>> = {};
+
+    const aptitudeModByFeat =
+      levelFeats.length > 0
+        ? resolveAptitudeModifiers(
+            levelFeats.map((f) => f.featId),
+            rulesetData,
+          )
+        : new Map<string, { aptitudeId: string; value: number; operator: string }[]>();
+
+    const feats: Record<
+      string,
+      Array<{
+        id: string;
+        name: string;
+        description?: string;
+        aptitudeModifiers: { aptitudeId: string; value: number; operator: string }[];
+      }>
+    > = {};
     for (const f of levelFeats) {
       if (!feats[f.aptitudeId]) feats[f.aptitudeId] = [];
       const feat = rulesetData.featsById.get(f.featId);
@@ -649,7 +731,7 @@ export async function getLevel(session: Session, characterId: string, characterL
         aptitudeModifiers: aptitudeModByFeat.get(f.featId) ?? [],
       });
     }
-  
+
     // Power→aptitude level links: read straight off the composed cache's inline
     // powersAptitudesInRules join rows. All IDs are post-COW on both sides.
     const powerLevelMap = new Map<string, number | null>();
@@ -660,7 +742,7 @@ export async function getLevel(session: Session, characterId: string, characterL
         powerLevelMap.set(`${pa.powerId}:${pa.aptitudeId}`, pa.level);
       }
     }
-  
+
     const powers: Record<string, Array<{ id: string; name: string; description?: string; powerLevel?: number }>> = {};
     for (const p of levelPowers) {
       if (!powers[p.aptitudeId]) powers[p.aptitudeId] = [];
@@ -673,7 +755,7 @@ export async function getLevel(session: Session, characterId: string, characterL
         ...(level != null && { powerLevel: level }),
       });
     }
-  
+
     return {
       characterLevelId: refreshedCharacterLevel.id,
       klassId: klass.id,
@@ -686,6 +768,5 @@ export async function getLevel(session: Session, characterId: string, characterL
       feats,
       powers,
     };
-  
   });
 }

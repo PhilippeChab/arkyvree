@@ -1,11 +1,9 @@
 import type { Db } from "@/server/database/index.ts";
+
 import type { PropertyRecord } from "./SkillsHooks.ts";
 
 export interface ClassLevelsHooks {
-  buildProperties(
-    levelId: string,
-    body: { bab: number; skills: number },
-  ): PropertyRecord[];
+  buildProperties(levelId: string, body: { bab: number; skills: number }): PropertyRecord[];
 
   enrichWithProperties<T extends { id: string }>(
     levels: T[],
@@ -14,9 +12,7 @@ export interface ClassLevelsHooks {
 
   syncProperties(tx: Db, levelId: string, body: { bab: number; skills: number }): Promise<void>;
 
-  readCurrentValues(
-    properties: { type: string; value: string }[],
-  ): { bab: number; skills: number };
+  readCurrentValues(properties: { type: string; value: string }[]): { bab: number; skills: number };
 
   enrichWithSpellsPerDay<T extends { id: string; level: number }>(
     levels: T[],

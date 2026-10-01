@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+
 import { useLatest } from "./useLatest.ts";
 
 const GSI_SCRIPT_URL = "https://accounts.google.com/gsi/client";

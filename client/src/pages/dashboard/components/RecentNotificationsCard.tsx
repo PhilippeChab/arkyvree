@@ -1,21 +1,17 @@
 import { Notifications as NotificationsIcon } from "@mui/icons-material";
-import { BlankState, CLICKABLE_SX, clickableProps, DiceSpinner } from "@/client/src/components/common/index.ts";
-import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
-import {
-  Box,
-  Button,
-  Paper,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Paper, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+
+import { BlankState, CLICKABLE_SX, clickableProps, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
-import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import {
   formatActivityDetails,
   formatNotificationMessage,
   formatRelativeTime,
 } from "@/client/src/lib/activityFormatters.ts";
+import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
@@ -37,11 +33,7 @@ export function RecentNotificationsCard() {
           Notifications
         </Typography>
         {items.length > 0 && (
-          <Button
-            variant="outlined"
-            startIcon={<NotificationsIcon />}
-            onClick={() => navigate("/notifications")}
-          >
+          <Button variant="outlined" startIcon={<NotificationsIcon />} onClick={() => navigate("/notifications")}>
             View All
           </Button>
         )}
@@ -82,7 +74,10 @@ export function RecentNotificationsCard() {
                     {formatNotificationMessage(notification.type, notification.data)}
                   </Typography>
                   {details && (
-                    <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5, whiteSpace: "pre-line" }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary", display: "block", mt: 0.5, whiteSpace: "pre-line" }}
+                    >
                       {details}
                     </Typography>
                   )}

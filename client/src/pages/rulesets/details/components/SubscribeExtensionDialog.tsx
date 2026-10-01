@@ -1,7 +1,3 @@
-import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
-import type { RulesetListItem } from "@/client/src/lib/queries.ts";
-import { DiceSpinner, Modal, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { Extension as ExtensionIcon } from "@mui/icons-material";
 import {
   Autocomplete,
@@ -15,6 +11,11 @@ import {
   TextField,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
+
+import { DiceSpinner, Modal, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
+import type { RulesetListItem } from "@/client/src/lib/queries.ts";
 
 type ExtensionRuleset = RulesetListItem;
 
@@ -45,7 +46,11 @@ export function SubscribeExtensionDialog({
     }
   }, [open]);
 
-  const { items: extensions, isLoading: isLoadingExtensions, onScroll } = useListboxQuery({
+  const {
+    items: extensions,
+    isLoading: isLoadingExtensions,
+    onScroll,
+  } = useListboxQuery({
     ...rulesetPickerQuery("extensions", debouncedSearch),
     enabled: open,
   });
@@ -73,9 +78,8 @@ export function SubscribeExtensionDialog({
       <DialogContent>
         <Stack spacing={2}>
           <DialogContentText>
-            Add content from official sourcebooks or community-published
-            extensions. Extension entities will be available in your ruleset
-            via inheritance.
+            Add content from official sourcebooks or community-published extensions. Extension entities will be
+            available in your ruleset via inheritance.
           </DialogContentText>
           <Autocomplete
             multiple
@@ -98,16 +102,15 @@ export function SubscribeExtensionDialog({
                 return <Chip key={key} label={option.name} size="small" {...tagProps} />;
               })
             }
-            renderInput={(params) => (
-              <TextField {...params} label="Select extensions" />
-            )}
+            renderInput={(params) => <TextField {...params} label="Select extensions" />}
             fullWidth
             slotProps={{
               listbox: {
                 component: ScrollSafeListbox,
                 onScroll,
-              }
-            }} />
+              },
+            }}
+          />
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -120,7 +123,10 @@ export function SubscribeExtensionDialog({
           disabled={selected.length === 0 || isLoading}
           startIcon={<ExtensionIcon />}
         >
-          <DiceSpinner size="small" loading={isLoading}>{`Subscribe${selected.length > 1 ? ` (${selected.length})` : ""}`}</DiceSpinner>
+          <DiceSpinner
+            size="small"
+            loading={isLoading}
+          >{`Subscribe${selected.length > 1 ? ` (${selected.length})` : ""}`}</DiceSpinner>
         </Button>
       </DialogActions>
     </Modal>

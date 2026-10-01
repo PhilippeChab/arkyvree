@@ -1,16 +1,28 @@
+import { getTableName } from "drizzle-orm";
+
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { invalidateRulesetEntities } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  InternalError,
+  NotFoundError,
+  STALE_ENTITY_MESSAGE,
+} from "@/server/errors/index.ts";
 import { Activities, Requirements } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
+import {
+  cowCustomizationForMutation,
+  cowEntityForCustomization,
+  withRulesetScope,
+} from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
-import { cowCustomizationForMutation, cowEntityForCustomization, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
+
 import TargetPathsService from "./TargetPathsService.ts";
 
 export const RequirementsMethods = {
@@ -52,7 +64,6 @@ export const RequirementsMethods = {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
@@ -63,12 +74,7 @@ export const RequirementsMethods = {
         let requirement;
         if (body.target) {
           const pathsService = TargetPathsService.initialize();
-          const validationResult = await pathsService.call(
-            "validatePath",
-            rulesetId,
-            body.target,
-            "requirement",
-          );
+          const validationResult = await pathsService.call("validatePath", rulesetId, body.target, "requirement");
 
           if (!validationResult[0]) {
             throw new BadRequestError("Failed to validate modifier path");
@@ -76,9 +82,7 @@ export const RequirementsMethods = {
 
           const validation = validationResult[1];
           if (!validation.isValid) {
-            throw new BadRequestError(
-              `Invalid modifier path: ${validation.errors[0]?.message || "Unknown error"}`,
-            );
+            throw new BadRequestError(`Invalid modifier path: ${validation.errors[0]?.message || "Unknown error"}`);
           }
 
           const allPathsResult = await pathsService.call("getTargetPathsWithLabels", rulesetId, "requirement");
@@ -122,7 +126,11 @@ export const RequirementsMethods = {
           targetId: requirement.id,
           targetTable: getTableName(requirementsInCustomization),
           type: "createRequirement",
-          data: { entityName, entityType, ...(body.target ? { target: body.target, value: body.value, operator: body.operator } : {}) },
+          data: {
+            entityName,
+            entityType,
+            ...(body.target ? { target: body.target, value: body.value, operator: body.operator } : {}),
+          },
         });
 
         return { ...requirement, resolvedEntityId };
@@ -150,14 +158,14 @@ export const RequirementsMethods = {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const requirement = rulesetData.requirementsByEntity.get(effectiveEntityId)
-          ?.find(row => row.id === requirementId && row.entityType === entityType);
+        const requirement = rulesetData.requirementsByEntity
+          .get(effectiveEntityId)
+          ?.find((row) => row.id === requirementId && row.entityType === entityType);
         if (!requirement) {
           throw new NotFoundError("Requirement not found for this entity");
         }
@@ -168,18 +176,18 @@ export const RequirementsMethods = {
 
         // COW the owning entity if this requirement is inherited
         const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await cowCustomizationForMutation(
-          tx, rulesetId, entityType, effectiveEntityId, "requirement", requirementId,
+          tx,
+          rulesetId,
+          entityType,
+          effectiveEntityId,
+          "requirement",
+          requirementId,
         );
 
         let updatedRequirement;
         if (body.target) {
           const pathsService = TargetPathsService.initialize();
-          const validationResult = await pathsService.call(
-            "validatePath",
-            rulesetId,
-            body.target,
-            "requirement",
-          );
+          const validationResult = await pathsService.call("validatePath", rulesetId, body.target, "requirement");
 
           if (!validationResult[0]) {
             throw new BadRequestError("Failed to validate modifier path");
@@ -187,9 +195,7 @@ export const RequirementsMethods = {
 
           const validation = validationResult[1];
           if (!validation.isValid) {
-            throw new BadRequestError(
-              `Invalid modifier path: ${validation.errors[0]?.message || "Unknown error"}`,
-            );
+            throw new BadRequestError(`Invalid modifier path: ${validation.errors[0]?.message || "Unknown error"}`);
           }
 
           const allPathsResult = await pathsService.call("getTargetPathsWithLabels", rulesetId, "requirement");
@@ -204,23 +210,31 @@ export const RequirementsMethods = {
 
           const inferredValueType = pathDefinition.valueType;
           const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
-          const rows = await Requirements.update(tx, {
-            level: body.level,
-            target: body.target,
-            value: body.value,
-            valueType: inferredValueType,
-            operator: body.operator,
-          }, { id: resolvedRequirementId, expectedUpdatedAt });
+          const rows = await Requirements.update(
+            tx,
+            {
+              level: body.level,
+              target: body.target,
+              value: body.value,
+              valueType: inferredValueType,
+              operator: body.operator,
+            },
+            { id: resolvedRequirementId, expectedUpdatedAt },
+          );
           if (expectedUpdatedAt && rows.length === 0) {
             throw new ConflictError(STALE_ENTITY_MESSAGE);
           }
           updatedRequirement = rows[0];
         } else {
           const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
-          const rows = await Requirements.update(tx, {
-            level: body.level,
-            chainingOperator: body.chainingOperator,
-          }, { id: resolvedRequirementId, expectedUpdatedAt });
+          const rows = await Requirements.update(
+            tx,
+            {
+              level: body.level,
+              chainingOperator: body.chainingOperator,
+            },
+            { id: resolvedRequirementId, expectedUpdatedAt },
+          );
           if (expectedUpdatedAt && rows.length === 0) {
             throw new ConflictError(STALE_ENTITY_MESSAGE);
           }
@@ -237,7 +251,11 @@ export const RequirementsMethods = {
           targetId: updatedRequirement.id,
           targetTable: getTableName(requirementsInCustomization),
           type: "updateRequirement",
-          data: { entityName, entityType, ...(body.target ? { target: body.target, value: body.value, operator: body.operator } : {}) },
+          data: {
+            entityName,
+            entityType,
+            ...(body.target ? { target: body.target, value: body.value, operator: body.operator } : {}),
+          },
         });
 
         return { ...updatedRequirement, resolvedEntityId };
@@ -256,14 +274,14 @@ export const RequirementsMethods = {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const requirement = rulesetData.requirementsByEntity.get(effectiveEntityId)
-          ?.find(row => row.id === requirementId && row.entityType === entityType);
+        const requirement = rulesetData.requirementsByEntity
+          .get(effectiveEntityId)
+          ?.find((row) => row.id === requirementId && row.entityType === entityType);
         if (!requirement) {
           throw new NotFoundError("Requirement not found for this entity");
         }
@@ -273,13 +291,21 @@ export const RequirementsMethods = {
         await customizationPolicy.canDelete();
 
         const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await cowCustomizationForMutation(
-          tx, rulesetId, entityType, effectiveEntityId, "requirement", requirementId,
+          tx,
+          rulesetId,
+          entityType,
+          effectiveEntityId,
+          "requirement",
+          requirementId,
         );
 
         const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
         const deletedRequirement = rows[0];
 
-        await Activities.deleteByTarget(tx, { targetId: deletedRequirement.id, targetTable: getTableName(requirementsInCustomization) });
+        await Activities.deleteByTarget(tx, {
+          targetId: deletedRequirement.id,
+          targetTable: getTableName(requirementsInCustomization),
+        });
 
         const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
@@ -287,7 +313,14 @@ export const RequirementsMethods = {
           targetId: deletedRequirement.id,
           targetTable: getTableName(requirementsInCustomization),
           type: "deleteRequirement",
-          data: { rulesetId, entityName, entityType, ...(requirement.target ? { target: requirement.target, value: requirement.value, operator: requirement.operator } : {}) },
+          data: {
+            rulesetId,
+            entityName,
+            entityType,
+            ...(requirement.target
+              ? { target: requirement.target, value: requirement.value, operator: requirement.operator }
+              : {}),
+          },
         });
 
         return { ...deletedRequirement, resolvedEntityId };

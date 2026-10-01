@@ -1,6 +1,7 @@
-import { isRecord } from "@/shared/isRecord.ts";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import { isRecord } from "@/shared/isRecord.ts";
 
 /** The router state a ruleset entity's page is opened with. */
 interface EntityPageState {
@@ -24,7 +25,8 @@ export function useOpenEntity(rulesetId: string) {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
   return useCallback(
-    (path: string) => navigate(`/rulesets/${rulesetId}/${path}`, { state: { from: pathname + search } satisfies EntityPageState }),
+    (path: string) =>
+      navigate(`/rulesets/${rulesetId}/${path}`, { state: { from: pathname + search } satisfies EntityPageState }),
     [navigate, rulesetId, pathname, search],
   );
 }

@@ -1,11 +1,17 @@
-import { errorResponse, respond } from "@/server/routers/respond.ts";
+import { Hono } from "hono";
+import { z } from "zod";
+
 import { denyDemoUser, exportRateLimit, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { errorResponse, respond } from "@/server/routers/respond.ts";
+import {
+  buildBondedMap,
+  buildBondedResponse,
+  buildFullCharacterResponse,
+} from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import CharactersService from "@/server/services/CharactersService.ts";
-import { Hono } from "hono";
-import { z } from "zod";
-import { buildBondedMap, buildBondedResponse, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
+
 import contributors from "./contributors/index.ts";
 import inventory from "./inventory/index.ts";
 // Level-up flows are currently 3.5-shaped (aptitude pools in query params,
@@ -70,8 +76,14 @@ const characters = new Hono()
         abilities: z.record(z.string().uuid(), z.number().min(1).max(100)),
         age: z.number().min(1).optional(),
         gender: z.enum(["Male", "Female", "Other"]),
-        height: z.string().optional().transform(v => v || undefined),
-        weight: z.string().optional().transform(v => v || undefined),
+        height: z
+          .string()
+          .optional()
+          .transform((v) => v || undefined),
+        weight: z
+          .string()
+          .optional()
+          .transform((v) => v || undefined),
         deity: z.string().optional(),
         description: z.string().optional(),
         notes: z.string().optional(),
@@ -81,11 +93,7 @@ const characters = new Hono()
       const characterData = c.req.valid("json");
 
       // Use the service to create character with session for activity logging
-      const result = await CharactersService.initialize().call(
-        "createCharacter",
-        c.var.requestSession,
-        characterData,
-      );
+      const result = await CharactersService.initialize().call("createCharacter", c.var.requestSession, characterData);
       return respond(c, result, 201);
     },
   )
@@ -113,7 +121,13 @@ const characters = new Hono()
       const result = await CharactersService.initialize().call(
         "getMyCharacters",
         c.var.requestSession,
-        { visibility, search: query.search, orderBy: query.orderBy, orderDir: query.orderDir, accessRole: query.accessRole },
+        {
+          visibility,
+          search: query.search,
+          orderBy: query.orderBy,
+          orderDir: query.orderDir,
+          accessRole: query.accessRole,
+        },
         { limit: query.limit, page: query.page },
       );
       return respond(c, result, 200);
@@ -153,11 +167,7 @@ const characters = new Hono()
     async (c) => {
       const { characterId } = c.req.valid("param");
 
-      const result = await CharactersService.initialize().call(
-        "enqueuePdf",
-        c.var.requestSession,
-        characterId,
-      );
+      const result = await CharactersService.initialize().call("enqueuePdf", c.var.requestSession, characterId);
       const success = result[0];
 
       if (!success) return errorResponse(c, result[2]);
@@ -179,17 +189,19 @@ const characters = new Hono()
         weight: z.string().optional(),
         deity: z.string().optional(),
         xp: z.number().optional(),
-        alignment: z.enum([
-          "Lawful Good",
-          "Neutral Good",
-          "Chaotic Good",
-          "Lawful Neutral",
-          "True Neutral",
-          "Chaotic Neutral",
-          "Lawful Evil",
-          "Neutral Evil",
-          "Chaotic Evil",
-        ]).optional(),
+        alignment: z
+          .enum([
+            "Lawful Good",
+            "Neutral Good",
+            "Chaotic Good",
+            "Lawful Neutral",
+            "True Neutral",
+            "Chaotic Neutral",
+            "Lawful Evil",
+            "Neutral Evil",
+            "Chaotic Evil",
+          ])
+          .optional(),
         description: z.string().optional(),
         notes: z.string().optional(),
         languageIds: z.array(z.string().uuid()).optional(),
@@ -201,12 +213,7 @@ const characters = new Hono()
       const updateData = c.req.valid("json");
 
       // Use the service to update character with session for activity logging
-      const result = await CharactersService.initialize().call(
-        "updateCharacter",
-        c.var.requestSession,
-        id,
-        updateData,
-      );
+      const result = await CharactersService.initialize().call("updateCharacter", c.var.requestSession, id, updateData);
       return respond(c, result, 200);
     },
   )
@@ -234,20 +241,12 @@ const characters = new Hono()
   .put(
     "/:id/abilities",
     zValidator("param", z.object({ id: z.string().uuid() })),
-    zValidator(
-      "json",
-      z.record(z.string().uuid(), z.number().int().min(1).max(100)),
-    ),
+    zValidator("json", z.record(z.string().uuid(), z.number().int().min(1).max(100))),
     async (c) => {
       const { id } = c.req.valid("param");
       const abilities = c.req.valid("json");
 
-      const result = await CharactersService.initialize().call(
-        "updateAbilities",
-        c.var.requestSession,
-        id,
-        abilities,
-      );
+      const result = await CharactersService.initialize().call("updateAbilities", c.var.requestSession, id, abilities);
       const success = result[0];
 
       if (!success) return errorResponse(c, result[2]);
@@ -256,18 +255,11 @@ const characters = new Hono()
     },
   )
   // Get character data
-  .get(
-    "/:id",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
+  .get("/:id", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
     const { id } = c.req.valid("param");
 
     // Use the service to get character data with session for activity logging
-    const result = await CharactersService.initialize().call(
-      "getCharacter",
-      c.var.requestSession,
-      id,
-    );
+    const result = await CharactersService.initialize().call("getCharacter", c.var.requestSession, id);
     const success = result[0];
 
     if (!success) return errorResponse(c, result[2]);
@@ -275,10 +267,7 @@ const characters = new Hono()
     const { character, detailedCharacter, bondedByKind } = result[1];
 
     if (character.kind !== "pc") {
-      const response = buildBondedResponse(
-        character,
-        detailedCharacter as Parameters<typeof buildBondedResponse>[1],
-      );
+      const response = buildBondedResponse(character, detailedCharacter as Parameters<typeof buildBondedResponse>[1]);
       return c.json({ ...response, bonded: {} as Record<string, ReturnType<typeof buildBondedResponse>> }, 200);
     }
 
@@ -286,92 +275,51 @@ const characters = new Hono()
     return c.json({ ...response, bonded: buildBondedMap(bondedByKind) }, 200);
   })
   // Archive character
-  .delete(
-    "/:id",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+  .delete("/:id", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const result = await CharactersService.initialize().call(
-        "archiveCharacter",
-        c.var.requestSession,
-        id,
-      );
-      const success = result[0];
+    const result = await CharactersService.initialize().call("archiveCharacter", c.var.requestSession, id);
+    const success = result[0];
 
-      if (!success) return errorResponse(c, result[2]);
+    if (!success) return errorResponse(c, result[2]);
 
-      return c.json({ message: "Character archived successfully" }, 200);
-    },
-  )
+    return c.json({ message: "Character archived successfully" }, 200);
+  })
   // Generate share token
-  .post(
-    "/:id/share",
-    denyDemoUser,
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+  .post("/:id/share", denyDemoUser, zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const result = await CharactersService.initialize().call(
-        "generateShareToken",
-        c.var.requestSession,
-        id,
-      );
-      return respond(c, result, 200);
-    },
-  )
+    const result = await CharactersService.initialize().call("generateShareToken", c.var.requestSession, id);
+    return respond(c, result, 200);
+  })
   // Revoke share token
-  .delete(
-    "/:id/share",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+  .delete("/:id/share", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const result = await CharactersService.initialize().call(
-        "revokeShareToken",
-        c.var.requestSession,
-        id,
-      );
-      return respond(c, result, 200);
-    },
-  )
+    const result = await CharactersService.initialize().call("revokeShareToken", c.var.requestSession, id);
+    return respond(c, result, 200);
+  })
   // Permanently delete an archived character
-  .delete(
-    "/:id/permanent",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+  .delete("/:id/permanent", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const result = await CharactersService.initialize().call(
-        "hardDeleteCharacter",
-        c.var.requestSession,
-        id,
-      );
-      const success = result[0];
+    const result = await CharactersService.initialize().call("hardDeleteCharacter", c.var.requestSession, id);
+    const success = result[0];
 
-      if (!success) return errorResponse(c, result[2]);
+    if (!success) return errorResponse(c, result[2]);
 
-      return c.json({ message: "Character permanently deleted" }, 200);
-    },
-  )
+    return c.json({ message: "Character permanently deleted" }, 200);
+  })
   // Unarchive character
-  .post(
-    "/:id/unarchive",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    async (c) => {
-      const { id } = c.req.valid("param");
+  .post("/:id/unarchive", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+    const { id } = c.req.valid("param");
 
-      const result = await CharactersService.initialize().call(
-        "unarchiveCharacter",
-        c.var.requestSession,
-        id,
-      );
-      const success = result[0];
+    const result = await CharactersService.initialize().call("unarchiveCharacter", c.var.requestSession, id);
+    const success = result[0];
 
-      if (!success) return errorResponse(c, result[2]);
+    if (!success) return errorResponse(c, result[2]);
 
-      return c.json({ message: "Character unarchived successfully" }, 200);
-    },
-  );
+    return c.json({ message: "Character unarchived successfully" }, 200);
+  });
 
 export default characters;

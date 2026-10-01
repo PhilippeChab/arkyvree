@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 
 import { db } from "@/server/database/index.ts";
-import { Sessions, Users } from "@/server/repositories/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/index.ts";
+import { Sessions, Users } from "@/server/repositories/index.ts";
 import { addConnection, BUILD_ID, removeConnection, upgradeWebSocket } from "@/server/ws.ts";
 
 export default new Hono().get(

@@ -1,10 +1,7 @@
 import { InternalError } from "@/server/errors/index.ts";
 
 export interface StorageBackend {
-  presignPut(
-    key: string,
-    opts: { contentType: string; expiresIn?: number },
-  ): string;
+  presignPut(key: string, opts: { contentType: string; expiresIn?: number }): string;
   publicUrl(key: string): string;
   deleteObject(key: string): Promise<void>;
   objectExists(key: string): Promise<boolean>;
@@ -15,10 +12,10 @@ export interface StorageBackend {
 export function isStorageConfigured(): boolean {
   return Boolean(
     process.env.S3_BUCKET &&
-      process.env.S3_ENDPOINT &&
-      process.env.S3_ACCESS_KEY_ID &&
-      process.env.S3_SECRET_ACCESS_KEY &&
-      process.env.S3_PUBLIC_URL,
+    process.env.S3_ENDPOINT &&
+    process.env.S3_ACCESS_KEY_ID &&
+    process.env.S3_SECRET_ACCESS_KEY &&
+    process.env.S3_PUBLIC_URL,
   );
 }
 

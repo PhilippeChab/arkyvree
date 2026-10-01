@@ -1,4 +1,5 @@
-import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
+import { getTableName } from "drizzle-orm";
+
 import { campaignsInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
@@ -6,8 +7,8 @@ import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Campaigns, Players, Rulesets } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export const CampaignsMethods = {
   async getMyCampaigns(
@@ -33,21 +34,20 @@ export const CampaignsMethods = {
 
     // Archived campaigns also archive their player rows, so default
     // UnarchivedOnly would miss the membership. Use Visibility.All.
-    const player = await Players.findOne(
-      db,
-      { userId: session.userId, campaignId: id },
-      Visibility.All,
-    );
+    const player = await Players.findOne(db, { userId: session.userId, campaignId: id }, Visibility.All);
     if (!player) throw new ForbiddenError("You are not a member of this campaign");
 
     return { ...campaign, currentUserRole: player.role };
   },
 
-  async createCampaign(session: Session, body: {
-    name: string;
-    description?: string;
-    rulesetId: string;
-  }) {
+  async createCampaign(
+    session: Session,
+    body: {
+      name: string;
+      description?: string;
+      rulesetId: string;
+    },
+  ) {
     return await withTransaction(async (tx) => {
       const ruleset = await Rulesets.findOne(tx, { id: body.rulesetId });
       if (!ruleset) throw new NotFoundError("Ruleset not found");
@@ -85,10 +85,14 @@ export const CampaignsMethods = {
     });
   },
 
-  async updateCampaign(session: Session, id: string, body: {
-    name?: string;
-    description?: string;
-  }) {
+  async updateCampaign(
+    session: Session,
+    id: string,
+    body: {
+      name?: string;
+      description?: string;
+    },
+  ) {
     return await withTransaction(async (tx) => {
       const existingCampaign = await Campaigns.findOne(tx, { id });
 
@@ -201,7 +205,6 @@ export const CampaignsMethods = {
       return unarchivedCampaign;
     });
   },
-
 } as const;
 
 class CampaignsService extends BaseService<typeof CampaignsMethods> {

@@ -1,6 +1,7 @@
 import { Box, Button, Typography } from "@mui/material";
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
+
 import { isChunkLoadError, reloadForStaleChunks } from "@/client/src/lib/chunkReload.ts";
 import { Sentry } from "@/client/src/lib/sentry.ts";
 
@@ -81,11 +82,9 @@ export class ErrorBoundary extends Component<Props, State> {
           >
             A Critical Failure
           </Typography>
-          <Typography
-            variant="body1"
-            sx={{ color: "#e0d4b8", maxWidth: 420, lineHeight: 1.7 }}
-          >
-            You rolled a natural 1.<br />
+          <Typography variant="body1" sx={{ color: "#e0d4b8", maxWidth: 420, lineHeight: 1.7 }}>
+            You rolled a natural 1.
+            <br />
             Something broke unexpectedly.
           </Typography>
           <Box sx={{ display: "flex", gap: 2, mt: 1 }}>

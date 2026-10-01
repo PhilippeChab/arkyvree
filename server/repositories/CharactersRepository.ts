@@ -1,10 +1,15 @@
 import { and, count, desc, eq, exists, inArray, isNull, not, or, sql } from "drizzle-orm";
-
-import { charactersInCharacter, contributorsInCharacter, playerCharactersInCampaign, racesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
-
-import type { Db } from "@/server/database/index.ts";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+
+import {
+  charactersInCharacter,
+  contributorsInCharacter,
+  playerCharactersInCampaign,
+  racesInRules,
+  rulesetsInRules,
+} from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
+import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
 
 class CharactersRepository extends BaseRepository<typeof charactersInCharacter, CharacterInstance> {
   constructor() {
@@ -28,11 +33,13 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(this.where([
-        eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-        this.casUpdatedAt(where.expectedUpdatedAt),
-      ]))
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
       .returning();
   }
 
@@ -88,14 +95,17 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
     const rows = await db
       .select({ id: this.table.id })
       .from(this.table)
-      .innerJoin(rulesetsInRules, and(
-        eq(rulesetsInRules.id, this.table.rulesetId),
-        or(
-          eq(rulesetsInRules.id, where.rulesetId),
-          sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+      .innerJoin(
+        rulesetsInRules,
+        and(
+          eq(rulesetsInRules.id, this.table.rulesetId),
+          or(
+            eq(rulesetsInRules.id, where.rulesetId),
+            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
+          ),
         ),
-      ))
+      )
       .where(this.idMatches(this.table.raceId, where.raceId))
       .limit(1);
     return rows.length > 0;
@@ -105,9 +115,10 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowRaceIds: string[] },
   ) {
-    const raceCondition = where.shadowRaceIds.length > 0
-      ? or(eq(racesInRules.rulesetId, where.extensionRulesetId), inArray(racesInRules.id, where.shadowRaceIds))
-      : eq(racesInRules.rulesetId, where.extensionRulesetId);
+    const raceCondition =
+      where.shadowRaceIds.length > 0
+        ? or(eq(racesInRules.rulesetId, where.extensionRulesetId), inArray(racesInRules.id, where.shadowRaceIds))
+        : eq(racesInRules.rulesetId, where.extensionRulesetId);
     const rows = await db
       .select({ id: this.table.id })
       .from(this.table)
@@ -126,7 +137,7 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
       | { parentCharacterId: string; kind: "familiar" | "animalcompanion" | "mount" },
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {
-    const isUserFacing = ("userId" in where) || ("shareToken" in where);
+    const isUserFacing = "userId" in where || "shareToken" in where;
     return await db.query.charactersInCharacter.findFirst({
       where: this.where([
         "id" in where && eq(this.table.id, where.id),
@@ -140,29 +151,37 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
     });
   }
 
-  async findOneEditable(db: Db, where: { id: string; userId: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
+  async findOneEditable(
+    db: Db,
+    where: { id: string; userId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
     const rows = await db
       .select()
       .from(charactersInCharacter)
-      .where(this.where([
-        eq(charactersInCharacter.id, where.id),
-        eq(charactersInCharacter.kind, "pc"),
-        or(
-          eq(charactersInCharacter.userId, where.userId),
-          exists(
-            db
-              .select({ one: sql`1` })
-              .from(contributorsInCharacter)
-              .where(and(
-                eq(contributorsInCharacter.characterId, charactersInCharacter.id),
-                eq(contributorsInCharacter.userId, where.userId),
-                eq(contributorsInCharacter.status, "Active"),
-                isNull(contributorsInCharacter.deletedAt),
-              )),
-          ),
-        )!,
-        this.visibility(visibility),
-      ]))
+      .where(
+        this.where([
+          eq(charactersInCharacter.id, where.id),
+          eq(charactersInCharacter.kind, "pc"),
+          or(
+            eq(charactersInCharacter.userId, where.userId),
+            exists(
+              db
+                .select({ one: sql`1` })
+                .from(contributorsInCharacter)
+                .where(
+                  and(
+                    eq(contributorsInCharacter.characterId, charactersInCharacter.id),
+                    eq(contributorsInCharacter.userId, where.userId),
+                    eq(contributorsInCharacter.status, "Active"),
+                    isNull(contributorsInCharacter.deletedAt),
+                  ),
+                ),
+            ),
+          )!,
+          this.visibility(visibility),
+        ]),
+      )
       .limit(1);
     return rows[0];
   }
@@ -181,7 +200,13 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
     },
     pagination: { limit: number; page: number },
   ) {
-    const { visibility = Visibility.UnarchivedOnly, search, orderBy = "createdAt", orderDir = "desc", accessRole } = where;
+    const {
+      visibility = Visibility.UnarchivedOnly,
+      search,
+      orderBy = "createdAt",
+      orderDir = "desc",
+      accessRole,
+    } = where;
     const searchConditions = this.search(search, [this.table.name, this.table.description]);
 
     const ownerCondition = eq(this.table.userId, where.userId);
@@ -189,18 +214,21 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
       db
         .select({ one: sql`1` })
         .from(contributorsInCharacter)
-        .where(and(
-          eq(contributorsInCharacter.characterId, this.table.id),
-          eq(contributorsInCharacter.userId, where.userId),
-          eq(contributorsInCharacter.status, "Active"),
-          isNull(contributorsInCharacter.deletedAt),
-        )),
+        .where(
+          and(
+            eq(contributorsInCharacter.characterId, this.table.id),
+            eq(contributorsInCharacter.userId, where.userId),
+            eq(contributorsInCharacter.status, "Active"),
+            isNull(contributorsInCharacter.deletedAt),
+          ),
+        ),
     );
-    const accessCondition = accessRole === "owner"
-      ? ownerCondition
-      : accessRole === "contributor"
-      ? contributorCondition
-      : or(ownerCondition, contributorCondition);
+    const accessCondition =
+      accessRole === "owner"
+        ? ownerCondition
+        : accessRole === "contributor"
+          ? contributorCondition
+          : or(ownerCondition, contributorCondition);
 
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       const rows = await db
@@ -226,15 +254,12 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
           createdAt: this.table.createdAt,
           updatedAt: this.table.updatedAt,
           deletedAt: this.table.deletedAt,
-          accessRole: sql<"owner" | "contributor">`CASE WHEN ${this.table.userId} = ${where.userId} THEN 'owner' ELSE 'contributor' END`,
+          accessRole: sql<
+            "owner" | "contributor"
+          >`CASE WHEN ${this.table.userId} = ${where.userId} THEN 'owner' ELSE 'contributor' END`,
         })
         .from(this.table)
-        .where(this.where([
-          accessCondition!,
-          eq(this.table.kind, "pc"),
-          this.visibility(visibility),
-          searchConditions,
-        ]))
+        .where(this.where([accessCondition!, eq(this.table.kind, "pc"), this.visibility(visibility), searchConditions]))
         .orderBy(this.orderBy(this.table[orderBy], orderDir))
         .limit(limit)
         .offset(offset);
@@ -302,11 +327,13 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
     const [result] = await db
       .select({ count: count() })
       .from(charactersInCharacter)
-      .where(and(
-        isNull(charactersInCharacter.deletedAt),
-        eq(charactersInCharacter.userId, where.userId),
-        eq(charactersInCharacter.kind, "pc"),
-      ));
+      .where(
+        and(
+          isNull(charactersInCharacter.deletedAt),
+          eq(charactersInCharacter.userId, where.userId),
+          eq(charactersInCharacter.kind, "pc"),
+        ),
+      );
 
     return result.count;
   }

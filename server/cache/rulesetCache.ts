@@ -1,4 +1,3 @@
-import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Abilities,
@@ -31,6 +30,8 @@ import {
   mergeSiblingRequirements,
   resolveOverrides,
 } from "@/server/services/rulesets/cow.ts";
+import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
+import type { TargetPath } from "@/shared/customization/target.ts";
 import type {
   Aptitude,
   FeatWithAptitudes,
@@ -52,8 +53,8 @@ import type {
   RulesetSave,
   Skill,
 } from "@/shared/relations.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
 import { spellPossessionSlug, stripSeparators } from "@/shared/utils.ts";
+
 import DependentCache from "./DependentCache.ts";
 
 // ──────────────────────────────────────────────────────────────
@@ -67,9 +68,11 @@ export type CachedCowData = CowData;
  * accept a tx handle — that would let an in-progress mutation's uncommitted
  * writes leak into the global cache for every concurrent reader.
  */
-async function getOrBuildCowData(
-  ruleset: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] },
-): Promise<CachedCowData> {
+async function getOrBuildCowData(ruleset: {
+  id: string;
+  extensionRulesetIds: string[];
+  ancestorRulesetIds: string[];
+}): Promise<CachedCowData> {
   return getOrBuildCowDataFromCow(ruleset);
 }
 
@@ -118,33 +121,21 @@ async function fetchRulesetRawData(
     : { rulesetId, ancestorRulesetIds: [] };
 
   // Round 1: fetch entities + ruleset metadata (for pin decision) in parallel.
-  const [
-    abilities,
-    saves,
-    skills,
-    feats,
-    powers,
-    aptitudes,
-    klasses,
-    races,
-    languages,
-    items,
-    mechanics,
-    ruleset,
-  ] = await Promise.all([
-    Abilities.findAll((pagination) => Abilities.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    Saves.findAll((pagination) => Saves.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    Skills.findAll((pagination) => Skills.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    Feats.findAll((pagination) => Feats.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    Powers.findAll((pagination) => Powers.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    Aptitudes.findAll((pagination) => Aptitudes.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    Klasses.findAll((pagination) => Klasses.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    Races.findAll((pagination) => Races.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    Languages.findAll((pagination) => Languages.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    Items.findAll((pagination) => Items.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    Mechanics.findAll((pagination) => Mechanics.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-    campaignId ? Promise.resolve(null) : Rulesets.findOne(db, { id: rulesetId }),
-  ]);
+  const [abilities, saves, skills, feats, powers, aptitudes, klasses, races, languages, items, mechanics, ruleset] =
+    await Promise.all([
+      Abilities.findAll((pagination) => Abilities.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      Saves.findAll((pagination) => Saves.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      Skills.findAll((pagination) => Skills.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      Feats.findAll((pagination) => Feats.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      Powers.findAll((pagination) => Powers.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      Aptitudes.findAll((pagination) => Aptitudes.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      Klasses.findAll((pagination) => Klasses.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      Races.findAll((pagination) => Races.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      Languages.findAll((pagination) => Languages.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      Items.findAll((pagination) => Items.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      Mechanics.findAll((pagination) => Mechanics.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      campaignId ? Promise.resolve(null) : Rulesets.findOne(db, { id: rulesetId }),
+    ]);
 
   const klassIds = klasses.map((k) => k.id);
 
@@ -153,12 +144,8 @@ async function fetchRulesetRawData(
   // properties/modifiers/requirements attached to class-level rows (KLASS_LEVEL_BAB,
   // KLASS_LEVEL_SKILL_POINTS, class-feature modifiers, etc.).
   const [klassLevels, klassSkills, leveledAptitudeIds] = await Promise.all([
-    klassIds.length > 0
-      ? KlassLevels.findManyByKlassIds(db, { klassIds })
-      : Promise.resolve<KlassLevel[]>([]),
-    klassIds.length > 0
-      ? KlassSkills.findMany(db, { klassIds })
-      : Promise.resolve<KlassSkill[]>([]),
+    klassIds.length > 0 ? KlassLevels.findManyByKlassIds(db, { klassIds }) : Promise.resolve<KlassLevel[]>([]),
+    klassIds.length > 0 ? KlassSkills.findMany(db, { klassIds }) : Promise.resolve<KlassSkill[]>([]),
     aptitudes.length > 0
       ? Aptitudes.findLeveledAptitudeIds(db, { aptitudeIds: aptitudes.map((a) => a.id) })
       : Promise.resolve(new Set<string>()),
@@ -191,22 +178,19 @@ async function fetchRulesetRawData(
     customizationEntityIds.length > 0
       ? Modifiers.findManyBySourceIds(db, { sourceIds: customizationEntityIds })
       : Promise.resolve<Modifier[]>([]),
-    klassLevelIds.length > 0
-      ? KlassLevelFeats.findMany(db, { klassLevelIds })
-      : Promise.resolve<KlassLevelFeat[]>([]),
+    klassLevelIds.length > 0 ? KlassLevelFeats.findMany(db, { klassLevelIds }) : Promise.resolve<KlassLevelFeat[]>([]),
     klassLevelIds.length > 0
       ? KlassLevelPowers.findMany(db, { klassLevelIds })
       : Promise.resolve<KlassLevelPower[]>([]),
-    klassLevelIds.length > 0
-      ? KlassLevelSaves.findMany(db, { klassLevelIds })
-      : Promise.resolve<KlassLevelSave[]>([]),
+    klassLevelIds.length > 0 ? KlassLevelSaves.findMany(db, { klassLevelIds }) : Promise.resolve<KlassLevelSave[]>([]),
   ]);
 
   // Round 4: requirements (need modifier IDs for entityType='modifiers' lookups).
   const requirementEntityIds = [...customizationEntityIds, ...modifiers.map((m) => m.id)];
-  const requirements = requirementEntityIds.length > 0
-    ? await Requirements.findManyByEntityIds(db, { entityIds: requirementEntityIds })
-    : [];
+  const requirements =
+    requirementEntityIds.length > 0
+      ? await Requirements.findManyByEntityIds(db, { entityIds: requirementEntityIds })
+      : [];
 
   const data: RulesetRawData = {
     abilities,
@@ -238,7 +222,6 @@ async function fetchRulesetRawData(
   // into the pinned set. Only the non-campaign entry is eligible (system rulesets
   // are not campaign-scoped).
   return { data, pinned: !!ruleset?.system };
-
 }
 
 /**
@@ -246,10 +229,7 @@ async function fetchRulesetRawData(
  * Pins the entry when the ruleset is system-seeded so bases and extensions
  * stay resident for all forks.
  */
-async function getOrFetchRulesetRawData(
-  rulesetId: string,
-  campaignId?: string,
-): Promise<RulesetRawData> {
+async function getOrFetchRulesetRawData(rulesetId: string, campaignId?: string): Promise<RulesetRawData> {
   const cacheKey = buildRawCacheKey(rulesetId, campaignId);
   return rulesetRawDataCache.getOrFetch(cacheKey, [rulesetId], () =>
     withCowContext(undefined, () => fetchRulesetRawData(rulesetId, campaignId)),
@@ -650,8 +630,8 @@ async function getOrFetchRulesetData(
   // aptitudes-in-rule array alongside the FK remap pass below. Built once
   // here from the raw chain because compose filters out sibling entities
   // before this point.
-  const siblingFeatLinksByWinner = new Map<string, typeof resolvedFeats[number]["featsAptitudesInRules"]>();
-  const siblingPowerLinksByWinner = new Map<string, typeof resolvedPowers[number]["powersAptitudesInRules"]>();
+  const siblingFeatLinksByWinner = new Map<string, (typeof resolvedFeats)[number]["featsAptitudesInRules"]>();
+  const siblingPowerLinksByWinner = new Map<string, (typeof resolvedPowers)[number]["powersAptitudesInRules"]>();
   if (cowData.siblingMap.size > 0) {
     for (const raw of chain) {
       for (const f of raw.feats) {
@@ -776,7 +756,10 @@ async function getOrFetchRulesetData(
   const powersByIdLookup = buildById(resolvedPowers);
   const skillsByIdLookup = buildById(resolvedSkills);
 
-  const klassLevelFeatsWithFeatsByKlassLevel = new Map<string, (KlassLevelFeat & { featsInRule: FeatWithAptitudes })[]>();
+  const klassLevelFeatsWithFeatsByKlassLevel = new Map<
+    string,
+    (KlassLevelFeat & { featsInRule: FeatWithAptitudes })[]
+  >();
   for (const klf of resolvedKlassLevelFeats) {
     const feat = featsByIdLookup.get(klf.featId);
     if (!feat) continue;
@@ -786,7 +769,10 @@ async function getOrFetchRulesetData(
     else klassLevelFeatsWithFeatsByKlassLevel.set(klf.klassLevelId, [joined]);
   }
 
-  const klassLevelPowersWithPowersByKlassLevel = new Map<string, (KlassLevelPower & { powersInRule: PowerWithAptitudes })[]>();
+  const klassLevelPowersWithPowersByKlassLevel = new Map<
+    string,
+    (KlassLevelPower & { powersInRule: PowerWithAptitudes })[]
+  >();
   for (const klp of resolvedKlassLevelPowers) {
     const power = powersByIdLookup.get(klp.powerId);
     if (!power) continue;
@@ -965,7 +951,9 @@ async function getOrFetchTargetPathsAndLabels(
 ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
   // Old subscription metadata must not populate the key for the new chain.
   const key = JSON.stringify([rulesetId, kind, ...sourceChain]);
-  return targetPathsAndLabelsCache.getOrFetch(key, [rulesetId, ...sourceChain], async () => ({ data: await fetcher() }));
+  return targetPathsAndLabelsCache.getOrFetch(key, [rulesetId, ...sourceChain], async () => ({
+    data: await fetcher(),
+  }));
 }
 
 // ──────────────────────────────────────────────────────────────

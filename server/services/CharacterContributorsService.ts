@@ -1,26 +1,20 @@
+import { getTableName } from "drizzle-orm";
+
 import { contributorsInCharacter } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService } from "@/server/emails";
 import { EmailTemplate } from "@/server/emails/templates.ts";
-import {
-  ConflictError,
-  NotFoundError,
-} from "@/server/errors/index.ts";
-import { CharacterContributors, Characters, Notifications, Users } from "@/server/repositories/index.ts";
+import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
+import { CharacterContributors, Characters, Notifications, Users } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export const CharacterContributorsMethods = {
   async getUserContributorInvites(userId: string) {
-    return await CharacterContributors.findManyByUserId(
-      db,
-      { userId, status: "Pending" },
-      { limit: 10 },
-    );
+    return await CharacterContributors.findManyByUserId(db, { userId, status: "Pending" }, { limit: 10 });
   },
 
   // Single invite for the current user, any status. Used by the invite-accept
@@ -66,11 +60,7 @@ export const CharacterContributorsMethods = {
     return { ...paginated, owner };
   },
 
-  async inviteContributor(
-    session: Session,
-    characterId: string,
-    email: string,
-  ) {
+  async inviteContributor(session: Session, characterId: string, email: string) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
       const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
       if (!character || character.kind !== "pc") {
@@ -86,9 +76,7 @@ export const CharacterContributorsMethods = {
       const user = await Users.findOne(tx, { emailAddress: email });
 
       if (user && user.id === character.userId) {
-        throw new ConflictError(
-          "Cannot invite the character owner as a contributor",
-        );
+        throw new ConflictError("Cannot invite the character owner as a contributor");
       }
 
       if (user) {
@@ -143,10 +131,7 @@ export const CharacterContributorsMethods = {
         emailData: {
           email,
           inviteeName: user?.username || email.split("@")[0],
-          inviterName:
-            inviterUser?.username ||
-            inviterUser?.emailAddress.split("@")[0] ||
-            "Someone",
+          inviterName: inviterUser?.username || inviterUser?.emailAddress.split("@")[0] || "Someone",
           characterName: character.name,
           contributorId: contributor.id,
         },
@@ -191,11 +176,7 @@ export const CharacterContributorsMethods = {
         throw new ConflictError("This character has been archived and can no longer be edited");
       }
 
-      const rows = await CharacterContributors.update(
-        tx,
-        { status: "Active" },
-        { id: contributorId },
-      );
+      const rows = await CharacterContributors.update(tx, { status: "Active" }, { id: contributorId });
       const updated = rows[0];
 
       await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributorId });
@@ -229,11 +210,7 @@ export const CharacterContributorsMethods = {
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
 
-      const rows = await CharacterContributors.update(
-        tx,
-        { status: "Rejected" },
-        { id: contributorId },
-      );
+      const rows = await CharacterContributors.update(tx, { status: "Rejected" }, { id: contributorId });
       const updated = rows[0];
 
       await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributorId });
@@ -269,11 +246,7 @@ export const CharacterContributorsMethods = {
       }
 
       const prevStatus = contributor.status;
-      const rows = await CharacterContributors.update(
-        tx,
-        { status: "Revoked" },
-        { id: contributorId },
-      );
+      const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributorId });
       const updated = rows[0];
 
       await createActivityWithNotifications(tx, {
@@ -304,11 +277,7 @@ export const CharacterContributorsMethods = {
         throw new NotFoundError("You are not a contributor of this character");
       }
 
-      const rows = await CharacterContributors.update(
-        tx,
-        { status: "Revoked" },
-        { id: contributor.id },
-      );
+      const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributor.id });
       const updated = rows[0];
 
       await createActivityWithNotifications(tx, {
@@ -322,7 +291,6 @@ export const CharacterContributorsMethods = {
       return updated;
     });
   },
-
 } as const;
 
 class CharacterContributorsService extends BaseService<typeof CharacterContributorsMethods> {

@@ -1,5 +1,5 @@
-import type { BrowserContext, Page } from '@playwright/test';
-import MCR, { type CoverageReportOptions } from 'monocart-coverage-reports';
+import type { BrowserContext, Page } from "@playwright/test";
+import MCR, { type CoverageReportOptions } from "monocart-coverage-reports";
 
 /**
  * The client's coverage by the journeys, when a run sets `E2E_COVERAGE=1`: Chromium's JavaScript coverage of each
@@ -9,18 +9,18 @@ import MCR, { type CoverageReportOptions } from 'monocart-coverage-reports';
  * it opens with `openContext` (another user's, a guest's) until they're closed; a document the app itself replaces (a
  * full-page redirect) loses its coverage.
  */
-const COVERAGE = process.env.E2E_COVERAGE === '1';
+const COVERAGE = process.env.E2E_COVERAGE === "1";
 
 const options: CoverageReportOptions = {
-  name: 'Client coverage by the e2e journeys',
-  outputDir: 'coverage/e2e',
-  reports: ['console-summary', 'json-summary', 'v8'],
+  name: "Client coverage by the e2e journeys",
+  outputDir: "coverage/e2e",
+  reports: ["console-summary", "json-summary", "v8"],
   // The built client's chunks, of which its own sources (not its dependencies')
-  entryFilter: (entry) => entry.url.includes('/assets/'),
+  entryFilter: (entry) => entry.url.includes("/assets/"),
   // Its TypeScript files: a dependency's source map can name a .js file under client/src that doesn't exist
   sourceFilter: (sourcePath) => /^client\/src\/.*\.tsx?$/.test(sourcePath),
   // The files no page loaded count too, as uncovered
-  all: { dir: ['client/src'], filter: (filePath) => /\.tsx?$/.test(filePath) && !filePath.endsWith('.d.ts') },
+  all: { dir: ["client/src"], filter: (filePath) => /\.tsx?$/.test(filePath) && !filePath.endsWith(".d.ts") },
 };
 
 /** Starts a run's coverage: forgets the previous run's. */

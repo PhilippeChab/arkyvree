@@ -8,18 +8,18 @@
 if (!process.env.DATABASE_URL?.includes("test")) {
   throw new Error(
     "FATAL: Test database module loaded with non-test DATABASE_URL. " +
-    "This is a safety violation. Ensure DATABASE_URL contains 'test'."
+      "This is a safety violation. Ensure DATABASE_URL contains 'test'.",
   );
 }
 
-import * as relations from "@/drizzle/relations.ts";
-import * as schema from "@/drizzle/schema.ts";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { NodePgClient } from "drizzle-orm/node-postgres";
 import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import { type PgQueryResultHKT, type PgTransaction } from "drizzle-orm/pg-core";
 import { Pool as PgPool } from "pg";
 
+import * as relations from "@/drizzle/relations.ts";
+import * as schema from "@/drizzle/schema.ts";
 import { clearRequestCache } from "@/server/database/requestCache.ts";
 import { instrumentQueries } from "@/server/timing.ts";
 
@@ -34,9 +34,7 @@ declare global {
 // single-file test runs (no --parallel, no worker ID set).
 const baseUrl = process.env.DATABASE_URL!;
 const workerId = process.env.BUN_TEST_WORKER_ID;
-const connectionString = workerId
-  ? baseUrl.replace(/\/([^/?]+)(\?|$)/, `/$1_w${workerId}$2`)
-  : baseUrl;
+const connectionString = workerId ? baseUrl.replace(/\/([^/?]+)(\?|$)/, `/$1_w${workerId}$2`) : baseUrl;
 const schemaWithRelations = { ...schema, ...relations };
 
 // Test database setup - use pg for manual transaction control
@@ -58,9 +56,7 @@ export const db = new Proxy(_db, {
   },
 });
 
-export async function withTransaction<T>(
-  callback: (tx: Transaction) => Promise<T>,
-): Promise<T> {
+export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
   // In a test, the test's own transaction: this one is a savepoint in it, which a failure rolls back as in production.
   const testDb = globalThis.__getTestDb?.();
   if (testDb) {

@@ -1,20 +1,20 @@
-import type { Character as CharacterRecord, Property } from "@/shared/relations.ts";
 import type { Db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import type { CharacterKind, DetailedCharacterWithSheet, RulesetModule } from "@/server/rulesets/types.ts";
+import type { Character as CharacterRecord, Property } from "@/shared/relations.ts";
 
 import Dnd35DetailedCharacter from "./DetailedCharacter.ts";
-import Dnd35DetailedCharacterFamiliar from "./DetailedCharacterFamiliar.ts";
 import Dnd35DetailedCharacterAnimalCompanion from "./DetailedCharacterAnimalCompanion.ts";
-import Dnd35DetailedCharacterMount from "./DetailedCharacterMount.ts";
 import type Dnd35DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
+import Dnd35DetailedCharacterFamiliar from "./DetailedCharacterFamiliar.ts";
+import Dnd35DetailedCharacterMount from "./DetailedCharacterMount.ts";
 import Dnd35DetailedCharacterSheet from "./DetailedCharacterSheet.tsx";
-import Dnd35LevelUpProjector from "./LevelUpProjector.ts";
-import Dnd35TargetPaths from "./TargetPaths.ts";
-import Dnd35PropertyTypes from "./PropertyTypes.ts";
 import { createServiceHooks } from "./hooks/index.ts";
+import Dnd35LevelUpProjector from "./LevelUpProjector.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "./properties/index.ts";
+import Dnd35PropertyTypes from "./PropertyTypes.ts";
 import { seedTemplateItems } from "./seedTemplateItems.ts";
+import Dnd35TargetPaths from "./TargetPaths.ts";
 
 // D&D 3.5-specific type aliases
 export type AnyCharacterSheetComponent = typeof Dnd35DetailedCharacterSheet;
@@ -22,10 +22,14 @@ export type Dnd35DetailedCharacterSheetComponent = typeof Dnd35DetailedCharacter
 
 function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35DetailedCharacterBonded | null {
   switch (kind) {
-    case "familiar": return new Dnd35DetailedCharacterFamiliar(record);
-    case "animalcompanion": return new Dnd35DetailedCharacterAnimalCompanion(record);
-    case "mount": return new Dnd35DetailedCharacterMount(record);
-    default: return null;
+    case "familiar":
+      return new Dnd35DetailedCharacterFamiliar(record);
+    case "animalcompanion":
+      return new Dnd35DetailedCharacterAnimalCompanion(record);
+    case "mount":
+      return new Dnd35DetailedCharacterMount(record);
+    default:
+      return null;
   }
 }
 
@@ -37,19 +41,24 @@ export function createRulesetModule(): RulesetModule {
       await seedTemplateItems(tx, rulesetId);
     },
 
-    async remapRulesetProperties(tx: Db, sourceProperties: Property[], newRulesetId: string, idMaps: Record<string, Record<string, string>>) {
-      const skillPointAbilityProp = sourceProperties.find(
-        (p) => p.type === RULESET_SKILL_POINT_ABILITY_ID,
-      );
+    async remapRulesetProperties(
+      tx: Db,
+      sourceProperties: Property[],
+      newRulesetId: string,
+      idMaps: Record<string, Record<string, string>>,
+    ) {
+      const skillPointAbilityProp = sourceProperties.find((p) => p.type === RULESET_SKILL_POINT_ABILITY_ID);
       if (skillPointAbilityProp) {
         const newAbilityId = idMaps.abilitiesIdMap?.[skillPointAbilityProp.value];
         if (newAbilityId) {
-          await Properties.createMany(tx, [{
-            entityId: newRulesetId,
-            entityType: "rulesets",
-            type: RULESET_SKILL_POINT_ABILITY_ID,
-            value: newAbilityId,
-          }]);
+          await Properties.createMany(tx, [
+            {
+              entityId: newRulesetId,
+              entityType: "rulesets",
+              type: RULESET_SKILL_POINT_ABILITY_ID,
+              value: newAbilityId,
+            },
+          ]);
         }
       }
     },

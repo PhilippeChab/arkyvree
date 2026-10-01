@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+
 import { Client, Pool } from "pg";
 
 interface TimingStore {
@@ -90,8 +91,16 @@ function wrapPrototypeQuery(proto: { query: (...args: any[]) => any }): void {
       const queryStart = performance.now();
       const sql = typeof args[0] === "string" ? args[0] : args[0]?.text;
       return (result as Promise<unknown>).then(
-        (res) => { onQueryEnd(); trackSlowQuery(sql, queryStart); return res; },
-        (err) => { onQueryEnd(); trackSlowQuery(sql, queryStart); throw err; },
+        (res) => {
+          onQueryEnd();
+          trackSlowQuery(sql, queryStart);
+          return res;
+        },
+        (err) => {
+          onQueryEnd();
+          trackSlowQuery(sql, queryStart);
+          throw err;
+        },
       );
     }
 

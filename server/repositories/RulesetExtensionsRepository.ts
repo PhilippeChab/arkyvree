@@ -1,10 +1,9 @@
 import { and, eq, isNull } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
 
 import { rulesetExtensionsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtensionsInRules, RulesetExtensionInstance> {
   constructor() {
@@ -52,12 +51,7 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
       })
       .from(this.table)
       .innerJoin(rulesetsInRules, eq(this.table.extensionId, rulesetsInRules.id))
-      .where(
-        and(
-          eq(this.table.rulesetId, where.rulesetId),
-          isNull(this.table.deletedAt),
-        ),
-      );
+      .where(and(eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)));
   }
 
   withInstance(instance: InferSelectModel<typeof rulesetExtensionsInRules>) {

@@ -1,10 +1,7 @@
 import type { Holder, Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
 import type { Requirement } from "@/shared/relations.ts";
-import {
-  evaluateTemplateExpression,
-  extractTemplateExpression,
-  isTemplateValue,
-} from "./templateExpression.ts";
+
+import { evaluateTemplateExpression, extractTemplateExpression, isTemplateValue } from "./templateExpression.ts";
 
 type Node = {
   requirement: Requirement;
@@ -27,23 +24,15 @@ export default class DetailedCharacterRequirements {
     fulfilledRequirementGroups: [],
   };
 
-  constructor(
-    private readonly targetPaths: TargetPathsTraverser,
-  ) {}
+  constructor(private readonly targetPaths: TargetPathsTraverser) {}
 
-  evaluateRequirements(
-    holders: Holders,
-    requirements: Requirement[][],
-  ) {
+  evaluateRequirements(holders: Holders, requirements: Requirement[][]) {
     for (const group of requirements) {
       this.evaluateRequirementsGroup(group, holders);
     }
   }
 
-  private evaluateRequirementsGroup(
-    requirements: Requirement[],
-    holders: Holders,
-  ) {
+  private evaluateRequirementsGroup(requirements: Requirement[], holders: Holders) {
     const nodes: Node[] = [];
 
     for (const requirement of requirements) {
@@ -94,11 +83,7 @@ export default class DetailedCharacterRequirements {
     }
   }
 
-  private evaluateRequirement(
-    requirement: Requirement,
-    result: TraversePathResult,
-    holders: Holders,
-  ): boolean {
+  private evaluateRequirement(requirement: Requirement, result: TraversePathResult, holders: Holders): boolean {
     const { operator, value, valueType } = requirement;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = result as { holder: Holder; data: any; object: any; key: string };
@@ -123,17 +108,12 @@ export default class DetailedCharacterRequirements {
         });
         return false;
       }
-      const resolved = evaluateTemplateExpression(
-        expression,
-        holders,
-        this.targetPaths,
-        (warning) => {
-          this.detailedCharacterRequirements.invalidRequirements.push({
-            warning,
-            requirement,
-          });
-        },
-      );
+      const resolved = evaluateTemplateExpression(expression, holders, this.targetPaths, (warning) => {
+        this.detailedCharacterRequirements.invalidRequirements.push({
+          warning,
+          requirement,
+        });
+      });
       if (resolved === null) return false;
       // NaN / ±Infinity passes `typeof === "number"` and silently makes
       // every comparison false, marking the requirement unmet with no
@@ -350,8 +330,7 @@ export default class DetailedCharacterRequirements {
           // Validate: only chaining operator nodes can have children
           if (!parentNode.requirement.chainingOperator) {
             this.detailedCharacterRequirements.invalidRequirements.push({
-              warning:
-                `Condition node at level ${parentNode.requirement.level} cannot have children. Child level ${level} discarded.`,
+              warning: `Condition node at level ${parentNode.requirement.level} cannot have children. Child level ${level} discarded.`,
               requirement: node.requirement,
             });
             // Discard this node - don't add it anywhere

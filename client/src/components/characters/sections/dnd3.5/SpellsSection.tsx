@@ -1,9 +1,4 @@
-import { isRecord } from "@/shared/isRecord.ts";
-import { formatPropertyType, stripSeparators } from "@/shared/utils.ts";
-import {
-  ExpandLess as ExpandLessIcon,
-  ExpandMore as ExpandMoreIcon,
-} from "@mui/icons-material";
+import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import {
   Box,
   Chip,
@@ -20,8 +15,12 @@ import {
 } from "@mui/material";
 import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import type { Dnd35PowersSectionProps } from "./types.ts";
+
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
+import { isRecord } from "@/shared/isRecord.ts";
+import { formatPropertyType, stripSeparators } from "@/shared/utils.ts";
+
+import type { Dnd35PowersSectionProps } from "./types.ts";
 
 const SCHOOL_KEY = "SPELL_SCHOOL";
 
@@ -61,12 +60,28 @@ function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: strin
             <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${spell.name}'s details`} sx={{ p: 0 }}>
               {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
             </IconButton>
-            {spellLink
-              ? <MuiLink component={Link} to={spellLink} target="_blank" underline="hover" onClick={(e: React.MouseEvent) => e.stopPropagation()}>{spell.name}</MuiLink>
-              : spell.name
-            }
+            {spellLink ? (
+              <MuiLink
+                component={Link}
+                to={spellLink}
+                target="_blank"
+                underline="hover"
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
+                {spell.name}
+              </MuiLink>
+            ) : (
+              spell.name
+            )}
             {spell.tags?.map((tag) => (
-              <Chip key={tag} label={tag} size="small" variant="outlined" color={tag.includes("Domain") ? "secondary" : "primary"} sx={{ ml: 0.5, height: 20, fontSize: "0.7rem" }} />
+              <Chip
+                key={tag}
+                label={tag}
+                size="small"
+                variant="outlined"
+                color={tag.includes("Domain") ? "secondary" : "primary"}
+                sx={{ ml: 0.5, height: 20, fontSize: "0.7rem" }}
+              />
             ))}
           </Box>
         </TableCell>
@@ -123,10 +138,7 @@ function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?:
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
           {label} ({group.spells.length})
           {group.uses != null && (
-            <Typography
-              component="span"
-              variant="body2"
-              sx={{ color: "text.secondary", ml: 1 }}>
+            <Typography component="span" variant="body2" sx={{ color: "text.secondary", ml: 1 }}>
               — {group.uses}/day
             </Typography>
           )}
@@ -146,7 +158,9 @@ function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?:
                 <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>School</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Save</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600 }}>DC</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>
+                  DC
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -161,7 +175,13 @@ function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?:
   );
 }
 
-function CollapsibleClass({ apt, rulesetId }: { apt: { aptitudeName: string; levels: SpellGroup[] }; rulesetId?: string }) {
+function CollapsibleClass({
+  apt,
+  rulesetId,
+}: {
+  apt: { aptitudeName: string; levels: SpellGroup[] };
+  rulesetId?: string;
+}) {
   const [open, setOpen] = useState(false);
   const totalSpells = apt.levels.reduce((sum, g) => sum + g.spells.length, 0);
 
@@ -189,7 +209,14 @@ function CollapsibleClass({ apt, rulesetId }: { apt: { aptitudeName: string; lev
   );
 }
 
-export function SpellsSection({ classes, powers, virtualPowers, aptitudes, spellTags, rulesetId }: Dnd35PowersSectionProps) {
+export function SpellsSection({
+  classes,
+  powers,
+  virtualPowers,
+  aptitudes,
+  spellTags,
+  rulesetId,
+}: Dnd35PowersSectionProps) {
   const groups = useMemo(() => {
     const aptitudeNameById = new Map<string, string>();
     if (aptitudes) {
@@ -219,9 +246,8 @@ export function SpellsSection({ classes, powers, virtualPowers, aptitudes, spell
           const normalizedName = stripSeparators(power.name);
           const powerData = powers?.[normalizedName];
 
-          const save = power.saveName && power.saveEffect
-            ? `${power.saveName} ${power.saveEffect}`
-            : power.saveEffect || "None";
+          const save =
+            power.saveName && power.saveEffect ? `${power.saveName} ${power.saveEffect}` : power.saveEffect || "None";
 
           const properties = powerData?.properties ?? {};
           const school = properties[SCHOOL_KEY] || "—";
@@ -231,10 +257,20 @@ export function SpellsSection({ classes, powers, virtualPowers, aptitudes, spell
           const allTags = power.id ? spellTags?.[power.id] : undefined;
           const tags = allTags?.filter((tag: string) => {
             if (tag.includes("Domain")) return aptitudeName.includes("Cleric") || aptitudeName.includes("Domain");
-            if (tag.includes("Specialist")) return aptitudeName.includes("Wizard") || aptitudeName.includes("Specialist");
+            if (tag.includes("Specialist"))
+              return aptitudeName.includes("Wizard") || aptitudeName.includes("Specialist");
             return true;
           });
-          const row: SpellRow = { id: power.id, name: power.name, school, save, dc, description, properties, tags: tags?.length ? tags : undefined };
+          const row: SpellRow = {
+            id: power.id,
+            name: power.name,
+            school,
+            save,
+            dc,
+            description,
+            properties,
+            tags: tags?.length ? tags : undefined,
+          };
 
           const existing = groupMap.get(groupKey);
           if (existing) {
@@ -247,7 +283,12 @@ export function SpellsSection({ classes, powers, virtualPowers, aptitudes, spell
               existing.spells.push(row);
             }
           } else {
-            groupMap.set(groupKey, { aptitudeName, level: spellLevel, uses: getUsesPerDay(aptitudeName, spellLevel), spells: [row] });
+            groupMap.set(groupKey, {
+              aptitudeName,
+              level: spellLevel,
+              uses: getUsesPerDay(aptitudeName, spellLevel),
+              spells: [row],
+            });
           }
         }
       }
@@ -273,7 +314,12 @@ export function SpellsSection({ classes, powers, virtualPowers, aptitudes, spell
       if (existing) {
         existing.spells.push(row);
       } else {
-        groupMap.set(groupKey, { aptitudeName, level: vp.level, uses: getUsesPerDay(aptitudeName, vp.level), spells: [row] });
+        groupMap.set(groupKey, {
+          aptitudeName,
+          level: vp.level,
+          uses: getUsesPerDay(aptitudeName, vp.level),
+          spells: [row],
+        });
       }
     }
 
@@ -288,9 +334,7 @@ export function SpellsSection({ classes, powers, virtualPowers, aptitudes, spell
       }
     }
 
-    const sorted = [...byAptitude.values()].sort((a, b) =>
-      a.aptitudeName.localeCompare(b.aptitudeName),
-    );
+    const sorted = [...byAptitude.values()].sort((a, b) => a.aptitudeName.localeCompare(b.aptitudeName));
     for (const apt of sorted) {
       apt.levels.sort((a, b) => a.level - b.level);
     }

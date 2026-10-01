@@ -1,16 +1,19 @@
-import { AuthPage, AuthSubmitButton, ResendCodeLink, useResendCode, VerificationCodeInput } from "@/client/src/components/auth/index.ts";
-import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import {
-  Box,
-  Link as MuiLink,
-  Typography,
-} from "@mui/material";
+import { Box, Link as MuiLink, Typography } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+
+import {
+  AuthPage,
+  AuthSubmitButton,
+  ResendCodeLink,
+  useResendCode,
+  VerificationCodeInput,
+} from "@/client/src/components/auth/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
+import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface VerifyEmailFormData {
   digits: string[];
@@ -30,7 +33,9 @@ export default function VerifyEmail() {
   const form = useForm<VerifyEmailFormData>({ defaultValues: { digits: EMPTY_VERIFICATION_CODE } });
   const digits = form.watch("digits");
 
-  const { error, setError, handleResend, notice } = useResendCode(() => resendVerification(pendingVerificationEmail ?? ""));
+  const { error, setError, handleResend, notice } = useResendCode(() =>
+    resendVerification(pendingVerificationEmail ?? ""),
+  );
 
   if (!pendingVerificationEmail) {
     return <Navigate to={fromSignIn ? "/sign-in" : "/sign-up"} replace />;
@@ -53,7 +58,11 @@ export default function VerifyEmail() {
       error={error}
       notice={notice}
       title="Verify Email"
-      subtitle={<>We sent an 8-digit code to <strong>{pendingVerificationEmail}</strong></>}
+      subtitle={
+        <>
+          We sent an 8-digit code to <strong>{pendingVerificationEmail}</strong>
+        </>
+      }
     >
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <VerificationCodeInput
@@ -61,7 +70,9 @@ export default function VerifyEmail() {
           onChange={(next) => form.setValue("digits", next, { shouldDirty: true })}
         />
 
-        <AuthSubmitButton loading={isLoading} disabled={!isComplete}>Verify</AuthSubmitButton>
+        <AuthSubmitButton loading={isLoading} disabled={!isComplete}>
+          Verify
+        </AuthSubmitButton>
       </form>
       <Box sx={{ textAlign: "center" }}>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>

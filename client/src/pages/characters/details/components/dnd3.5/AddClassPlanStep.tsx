@@ -1,18 +1,10 @@
-import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { useMemo } from "react";
-import {
-  Autocomplete,
-  Box,
-  Button,
-  Chip,
-  IconButton,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import { Autocomplete, Box, Button, Chip, IconButton, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { useMemo } from "react";
+
+import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+
 import type { AvailableKlass } from "./levelUp/index.ts";
 import type { AddClassPlanStepProps } from "./levelUpFactory.ts";
 
@@ -33,12 +25,9 @@ export function AddClassPlanStep({
     handleRemoveLevel: onRemoveLevel,
   } = wizard;
   const getAdjustedNextLevel = (klassId: string, index: number) => {
-    const klass = availableKlasses.find((k) => k.id === klassId)
-      ?? quickAddKlasses.find((k) => k.id === klassId);
+    const klass = availableKlasses.find((k) => k.id === klassId) ?? quickAddKlasses.find((k) => k.id === klassId);
     if (!klass) return 0;
-    const selectedBefore = levels
-      .slice(0, index)
-      .filter((k) => k !== null && k.id === klassId).length;
+    const selectedBefore = levels.slice(0, index).filter((k) => k !== null && k.id === klassId).length;
     return klass.nextLevel + selectedBefore;
   };
 
@@ -105,15 +94,18 @@ export function AddClassPlanStep({
       </Box>
       {levels.map((selectedKlass, index) =>
         selectedKlass ? (
-          <Box
-            key={slotKeys[index]}
-            sx={{ height: 56, display: "flex", alignItems: "center" }}
-          >
+          <Box key={slotKeys[index]} sx={{ height: 56, display: "flex", alignItems: "center" }}>
             <Chip
               label={`${selectedKlass.name} — Level ${selectedKlass.nextLevel}`}
               onDelete={() => onRemoveLevel(index)}
               size="medium"
-              sx={{ height: 46, fontSize: "1rem", width: "100%", "& .MuiChip-label": { flex: 1, textAlign: "center" }, "& .MuiChip-deleteIcon": { position: "absolute", right: 8 } }}
+              sx={{
+                height: 46,
+                fontSize: "1rem",
+                width: "100%",
+                "& .MuiChip-label": { flex: 1, textAlign: "center" },
+                "& .MuiChip-deleteIcon": { position: "absolute", right: 8 },
+              }}
             />
           </Box>
         ) : (
@@ -139,21 +131,29 @@ export function AddClassPlanStep({
               renderOption={({ key, ...props }, option) => {
                 const adjustedLevel = getAdjustedNextLevel(option.id, index);
                 return (
-                  <Tooltip describeChild
+                  <Tooltip
+                    describeChild
                     key={key}
-                    title={!option.eligible && option.requirementTree ? option.requirementTree : option.description ?? ""}
+                    title={
+                      !option.eligible && option.requirementTree ? option.requirementTree : (option.description ?? "")
+                    }
                     placement="right"
                     enterDelay={300}
                     arrow
-                    slotProps={{ tooltip: { sx: !option.eligible && option.requirementTree ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" } : { maxWidth: 500 } } }}
+                    slotProps={{
+                      tooltip: {
+                        sx:
+                          !option.eligible && option.requirementTree
+                            ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" }
+                            : { maxWidth: 500 },
+                      },
+                    }}
                   >
                     <li {...props} style={{ ...props.style, pointerEvents: "auto" }}>
                       <Box>
                         <Typography>{option.name}</Typography>
                         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                          {option.eligible
-                            ? `Level ${adjustedLevel}`
-                            : `Level ${adjustedLevel} — Requirements not met`}
+                          {option.eligible ? `Level ${adjustedLevel}` : `Level ${adjustedLevel} — Requirements not met`}
                         </Typography>
                       </Box>
                     </li>
@@ -161,17 +161,13 @@ export function AddClassPlanStep({
                 );
               }}
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label={`Level ${index + 1}`}
-                  placeholder="Search classes..."
-                />
+                <TextField {...params} label={`Level ${index + 1}`} placeholder="Search classes..." />
               )}
               slotProps={{
                 listbox: {
                   component: ScrollSafeListbox,
                   onScroll: handleKlassListScroll,
-                }
+                },
               }}
             />
             <IconButton size="small" aria-label={`Remove level ${index + 1}`} onClick={() => onRemoveLevel(index)}>

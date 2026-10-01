@@ -1,8 +1,4 @@
-import {
-  Archive as ArchiveIcon,
-  EditNote as DraftIcon,
-  CheckCircle as PublishedIcon,
-} from "@mui/icons-material";
+import { Archive as ArchiveIcon, EditNote as DraftIcon, CheckCircle as PublishedIcon } from "@mui/icons-material";
 
 /** A ruleset status's icon, color and explanation, for the list's pills and the page's chip. */
 export const RULESET_STATUS = {
@@ -14,7 +10,8 @@ export const RULESET_STATUS = {
   Published: {
     icon: PublishedIcon,
     color: "success",
-    tooltip: "Available for others to use. You can still add, edit, and delete entities — characters that depend on a deletion will block it.",
+    tooltip:
+      "Available for others to use. You can still add, edit, and delete entities — characters that depend on a deletion will block it.",
   },
   Archived: {
     icon: ArchiveIcon,

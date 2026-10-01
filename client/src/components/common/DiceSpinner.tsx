@@ -1,7 +1,8 @@
-import { diceRoll, EASING, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 import { Box, type SxProps, type Theme, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
+
+import { diceRoll, EASING, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
 interface DiceSpinnerProps {
   size?: "small" | "medium" | "large";
@@ -58,28 +59,39 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
   // position-relative dance at every Save button.
   if (children !== undefined) {
     return (
-      <Box component="span" sx={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+      <Box
+        component="span"
+        sx={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+      >
         {loading && (
           <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {dice}
           </Box>
         )}
         {/* "inherit", not "visible": a button hidden with visibility must hide its label too. */}
-        <Box component="span" sx={{ visibility: loading ? "hidden" : "inherit" }}>{children}</Box>
+        <Box component="span" sx={{ visibility: loading ? "hidden" : "inherit" }}>
+          {children}
+        </Box>
       </Box>
     );
   }
 
-  if (size === "small" && overlay) return (
-    <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {dice}
-    </Box>
-  );
+  if (size === "small" && overlay)
+    return (
+      <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {dice}
+      </Box>
+    );
 
   if (size === "small") return dice;
 
   return (
-    <Box sx={[{ display: "flex", justifyContent: "center", alignItems: "center", py: 2 }, ...(Array.isArray(sx) ? sx : [sx])]}>
+    <Box
+      sx={[
+        { display: "flex", justifyContent: "center", alignItems: "center", py: 2 },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
+    >
       {dice}
     </Box>
   );

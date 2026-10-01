@@ -1,15 +1,20 @@
+import { getTableName } from "drizzle-orm";
+
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, Properties } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
+import {
+  cowCustomizationForMutation,
+  cowEntityForCustomization,
+  withRulesetScope,
+} from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
-import { cowCustomizationForMutation, cowEntityForCustomization, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type { Property, Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 /**
  * A property shown on the entity, looked up like requirements and modifiers:
@@ -49,7 +54,6 @@ export const PropertiesMethods = {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
@@ -96,7 +100,6 @@ export const PropertiesMethods = {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
@@ -133,7 +136,12 @@ export const PropertiesMethods = {
 
         // COW the owning entity if this property is inherited
         const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await cowCustomizationForMutation(
-          tx, rulesetId, entityType, effectiveEntityId, "property", propertyId,
+          tx,
+          rulesetId,
+          entityType,
+          effectiveEntityId,
+          "property",
+          propertyId,
         );
 
         const expectedUpdatedAt = resolvedPropertyId === propertyId ? body.updatedAt : undefined;
@@ -169,7 +177,6 @@ export const PropertiesMethods = {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
@@ -185,13 +192,21 @@ export const PropertiesMethods = {
         await customizationPolicy.canDelete();
 
         const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await cowCustomizationForMutation(
-          tx, rulesetId, entityType, effectiveEntityId, "property", propertyId,
+          tx,
+          rulesetId,
+          entityType,
+          effectiveEntityId,
+          "property",
+          propertyId,
         );
 
         const rows = await Properties.delete(tx, { id: resolvedPropertyId });
         const deletedProperty = rows[0];
 
-        await Activities.deleteByTarget(tx, { targetId: deletedProperty.id, targetTable: getTableName(propertiesInCustomization) });
+        await Activities.deleteByTarget(tx, {
+          targetId: deletedProperty.id,
+          targetTable: getTableName(propertiesInCustomization),
+        });
 
         const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {

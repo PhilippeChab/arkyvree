@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
@@ -25,7 +26,9 @@ describe("rulesets", () => {
 
   test("forks a ruleset", async () => {
     const { rulesetId } = await getSeedCtx();
-    const fork = await expectOk(ruleset.fork.$post({ param: { id: rulesetId }, json: { name: "Router Fork", description: "", private: true } }));
+    const fork = await expectOk(
+      ruleset.fork.$post({ param: { id: rulesetId }, json: { name: "Router Fork", description: "", private: true } }),
+    );
     expect(fork).toMatchObject({ name: "Router Fork", rulesetId, private: true });
   });
 
@@ -64,7 +67,9 @@ describe("rulesets", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
     await expectOk(ruleset.subscribe.$post({ param: { id }, json: { extensionIds: [extensionId] } }));
-    expect((await expectOk(ruleset.extensions.$get({ param: { id } }))).map((e) => e.extensionId)).toEqual([extensionId]);
+    expect((await expectOk(ruleset.extensions.$get({ param: { id } }))).map((e) => e.extensionId)).toEqual([
+      extensionId,
+    ]);
 
     await expectOk(ruleset.unsubscribe.$post({ param: { id }, json: { extensionId } }));
     expect(await expectOk(ruleset.extensions.$get({ param: { id } }))).toEqual([]);
@@ -74,12 +79,21 @@ describe("rulesets", () => {
     const { langMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const entityId = langMap["Draconic"];
-    await expectOk(ruleset.languages[":languageId"].$put({ param: { id, languageId: entityId }, json: { name: "Draconic", description: "Edited", type: "Exotic" } }));
+    await expectOk(
+      ruleset.languages[":languageId"].$put({
+        param: { id, languageId: entityId },
+        json: { name: "Draconic", description: "Edited", type: "Exotic" },
+      }),
+    );
 
     const changes = await expectOk(ruleset.changes.$get({ param: { id } }));
-    expect(changes).toContainEqual(expect.objectContaining({ entityType: "languages", status: "modified", sourceEntityId: entityId }));
+    expect(changes).toContainEqual(
+      expect.objectContaining({ entityType: "languages", status: "modified", sourceEntityId: entityId }),
+    );
 
-    await expectOk(ruleset.entities[":entityType"][":entityId"].restore.$post({ param: { id, entityType: "languages", entityId } }));
+    await expectOk(
+      ruleset.entities[":entityType"][":entityId"].restore.$post({ param: { id, entityType: "languages", entityId } }),
+    );
     expect(await expectOk(ruleset.changes.$get({ param: { id } }))).toEqual([]);
   });
 

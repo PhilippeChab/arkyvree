@@ -1,18 +1,22 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
-import { type ClassFormData, ClassFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
-import { useEntityFilters } from "@/client/src/pages/rulesets/details/entityFilters.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { AccessibilityNew as ClassesIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useCallback } from "react";
-import { classDetailQuery, prefetchClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { type ClassFormData, ClassFormFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  classDetailQuery,
+  prefetchClassSection,
+} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { useEntityFilters } from "@/client/src/pages/rulesets/details/entityFilters.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 const CLASSES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -29,20 +33,18 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
 
   const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters();
 
-  const {
-    createForm,
-    handleCreate,
-    createDialogProps,
-  } = useRulesetSection<Class, ClassFormData>({
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Class, ClassFormData>({
     rulesetId: ruleset.id,
     sectionName: "classes",
     label: "Class",
     createDefaults: { hd: 8 },
     createFn: async (data) => {
-      return parseResponse(rpc.api.rulesets[":id"].classes.$post({
-        param: { id: ruleset.id },
-        json: data,
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].classes.$post({
+          param: { id: ruleset.id },
+          json: data,
+        }),
+      );
     },
     onCreateSuccess: (created) => openEntity(`classes/${created.id}/levels`),
   });
@@ -58,10 +60,13 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
     openEntity(`classes/${class_.id}/levels`);
   };
 
-  const handleRowMouseEnter = useCallback((class_: Class) => {
-    void queryClient.prefetchQuery(classDetailQuery(ruleset.id, class_.id));
-    void prefetchClassSection(queryClient, ruleset.id, class_.id, "levels");
-  }, [queryClient, ruleset.id]);
+  const handleRowMouseEnter = useCallback(
+    (class_: Class) => {
+      void queryClient.prefetchQuery(classDetailQuery(ruleset.id, class_.id));
+      void prefetchClassSection(queryClient, ruleset.id, class_.id, "levels");
+    },
+    [queryClient, ruleset.id],
+  );
 
   const formatHitDie = (hitDie: number) => `d${hitDie}`;
 
@@ -74,18 +79,9 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
           </Typography>
         );
       case "hitDie":
-        return (
-          <Chip
-            label={formatHitDie(klass.hd || 8)}
-            size="small"
-            color="secondary"
-            variant="outlined"
-          />
-        );
+        return <Chip label={formatHitDie(klass.hd || 8)} size="small" color="secondary" variant="outlined" />;
       case "description":
-        return (
-          <DescriptionCell text={klass.description} />
-        );
+        return <DescriptionCell text={klass.description} />;
       default:
         return null;
     }
@@ -126,11 +122,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
         onClick={() => fetchNextPage()}
       />
 
-      <CreateDialog
-        {...createDialogProps}
-        title="Add New Class"
-        maxWidth="xs"
-      >
+      <CreateDialog {...createDialogProps} title="Add New Class" maxWidth="xs">
         <ClassFormFields form={createForm} />
       </CreateDialog>
     </SectionContent>

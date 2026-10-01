@@ -6,6 +6,8 @@ import type { ValidationResult } from "@/server/rulesets/AbstractDetailedCharact
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
+import type { EntityType } from "@/shared/customization/properties.ts";
+import type { TargetPath } from "@/shared/customization/target.ts";
 import type {
   Aptitude,
   Campaign,
@@ -31,8 +33,7 @@ import type {
   RulesetSave,
   Skill,
 } from "@/shared/relations.ts";
-import type { EntityType } from "@/shared/customization/properties.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+
 import type { ServiceHooks } from "./hooks/index.ts";
 
 export interface PreloadedRulesetData {
@@ -204,7 +205,11 @@ export interface ProjectedCharacterData {
 
 export interface DetailedCharacterInterface {
   preload(): Promise<PreloadedCharacterData>;
-  build(database?: Db, projectedData?: unknown, preloaded?: PreloadedCharacterData | PreloadedRulesetData): Promise<void>;
+  build(
+    database?: Db,
+    projectedData?: unknown,
+    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
+  ): Promise<void>;
   validate(): ValidationResult;
   formatRequirements(requirements: Requirement[]): string;
   areRequirementsMet(requirementGroups: Requirement[][]): boolean;
@@ -237,7 +242,10 @@ export interface LevelUpProjector {
 }
 
 export interface TargetPathsInterface extends TargetPathsTraverser {
-  getTargetPathsAndLabels(rulesetData: CachedRulesetData, kind: "modifier" | "requirement"): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>;
+  getTargetPathsAndLabels(
+    rulesetData: CachedRulesetData,
+    kind: "modifier" | "requirement",
+  ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>;
   getCategories(): string[];
   getCategoryDescriptions(): Record<string, string>;
   getPathDescriptions(): Record<string, string>;
@@ -264,7 +272,12 @@ export type CharacterKind = (typeof CHARACTER_KINDS_DND35)[number];
 export interface RulesetModule {
   hooks: ServiceHooks;
   seedTemplateItems(tx: Db, rulesetId: string): Promise<void>;
-  remapRulesetProperties(tx: Db, sourceProperties: Property[], newRulesetId: string, idMaps: Record<string, Record<string, string>>): Promise<void>;
+  remapRulesetProperties(
+    tx: Db,
+    sourceProperties: Property[],
+    newRulesetId: string,
+    idMaps: Record<string, Record<string, string>>,
+  ): Promise<void>;
   createDetailedCharacter(record: CharacterRecord, kind?: CharacterKind): DetailedCharacterInterface;
   createLevelUpProjector(character: DetailedCharacterInterface): LevelUpProjector;
   createDetailedCharacterWithSheet(record: CharacterRecord, kind?: CharacterKind): Promise<DetailedCharacterWithSheet>;

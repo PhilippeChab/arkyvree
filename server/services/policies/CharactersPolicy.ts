@@ -2,6 +2,7 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { PlayerCharacters } from "@/server/repositories/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";
+
 import BasePolicy from "./BasePolicy.ts";
 
 export default class CharactersPolicy extends BasePolicy<Character> {
@@ -25,7 +26,9 @@ export default class CharactersPolicy extends BasePolicy<Character> {
     }
     const linkedActive = await PlayerCharacters.existsInActiveCampaign(db, { characterId: this.entity.id });
     if (linkedActive) {
-      throw new ConflictError("This character is linked to an active campaign and cannot be permanently deleted. Remove it from the campaign first.");
+      throw new ConflictError(
+        "This character is linked to an active campaign and cannot be permanently deleted. Remove it from the campaign first.",
+      );
     }
     return true;
   }

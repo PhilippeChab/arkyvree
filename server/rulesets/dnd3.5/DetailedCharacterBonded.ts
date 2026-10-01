@@ -1,20 +1,19 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
+import { memoizeRequest } from "@/server/database/requestCache.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Characters } from "@/server/repositories/index.ts";
-import { memoizeRequest } from "@/server/database/requestCache.ts";
 import type { ValidationIssue, ValidationResult } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 import { stripSeparators } from "@/shared/utils.ts";
+
+import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 
 export default abstract class DetailedCharacterBonded extends Dnd35DetailedCharacter {
   protected cachedTotalHD: number | null = null;
 
-  protected override async postModifierProcessing(
-    rulesetData: CachedRulesetData,
-  ): Promise<void> {
+  protected override async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {
     await super.postModifierProcessing(rulesetData);
 
     if (this.character.parentCharacterId) {
@@ -78,10 +77,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     this.detailedCharacterSkills.updateTotals();
   }
 
-  protected abstract applyMasterDerivation(
-    parentCharacterId: string,
-    rulesetData: CachedRulesetData,
-  ): Promise<void>;
+  protected abstract applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void>;
 
   protected async loadMaster(
     parentCharacterId: string,

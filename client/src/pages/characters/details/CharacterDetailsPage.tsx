@@ -1,10 +1,3 @@
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
-import { ActionMenuItem, ConfirmDialog, DeleteDialog, PageError, PageTransition } from "@/client/src/components/common/index.ts";
-import { DURATION } from "@/client/src/lib/animations.ts";
-import { characterDetailQuery } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
 import {
   Add as AddIcon,
   Archive as ArchiveIcon,
@@ -18,21 +11,30 @@ import {
   Tune as TuneIcon,
   Unarchive as UnarchiveIcon,
 } from "@mui/icons-material";
-import {
-  Alert,
-  Container,
-  Fade,
-  IconButton,
-  Menu,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { Alert, Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+
+import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
+import {
+  ActionMenuItem,
+  ConfirmDialog,
+  DeleteDialog,
+  PageError,
+  PageTransition,
+} from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
+import { DURATION } from "@/client/src/lib/animations.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { characterDetailQuery } from "@/client/src/lib/queries.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import type { EditingLevel } from "@/client/src/types/character.ts";
+import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+
 import {
   AddLevelModal,
   CharacterModifiersModal,
@@ -40,12 +42,6 @@ import {
   EditLevelModal,
   ShareDialog,
 } from "./components/index.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import type { EditingLevel } from "@/client/src/types/character.ts";
-import {
-  CharacterDetailSkeleton,
-  CharacterSheetBody,
-} from "@/client/src/components/characters/index.ts";
 export default function CharacterDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,7 +63,11 @@ export default function CharacterDetailsPage() {
   const { isDemo } = useDemoTimeRemaining();
   const currentUserId = useAuthStore((s) => s.user?.id);
 
-  const { data: character, isLoading, error } = useQuery({
+  const {
+    data: character,
+    isLoading,
+    error,
+  } = useQuery({
     ...characterDetailQuery(id),
     enabled: !!id,
   });
@@ -99,10 +99,11 @@ export default function CharacterDetailsPage() {
     then();
   };
 
-  const invalidateCharacter = () => Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id) }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists }),
-  ]);
+  const invalidateCharacter = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists }),
+    ]);
 
   const removeLevelMutation = useMutation({
     mutationFn: () => rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } }),
@@ -150,7 +151,9 @@ export default function CharacterDetailsPage() {
   if (isLoading) {
     return (
       <Fade in timeout={DURATION.slow}>
-        <div><CharacterDetailSkeleton /></div>
+        <div>
+          <CharacterDetailSkeleton />
+        </div>
       </Fade>
     );
   }
@@ -159,7 +162,11 @@ export default function CharacterDetailsPage() {
   if (!character) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageError message={loadFailureMessage("Character", error)} backLabel="Back to Characters" onBack={() => navigate("/characters")} />
+        <PageError
+          message={loadFailureMessage("Character", error)}
+          backLabel="Back to Characters"
+          onBack={() => navigate("/characters")}
+        />
       </Container>
     );
   }
@@ -176,12 +183,15 @@ export default function CharacterDetailsPage() {
         <Paper sx={{ p: 2, mb: 2 }}>
           <Stack
             direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-            <Stack
-              direction="row"
-              spacing={2}
-              sx={{ alignItems: "center", minWidth: 0 }}>
-              <IconButton aria-label="Back" onClick={() => navigate(isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters")}>
+            sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}
+          >
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
+              <IconButton
+                aria-label="Back"
+                onClick={() =>
+                  navigate(isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters")
+                }
+              >
                 <ArrowBackIcon />
               </IconButton>
               <Typography sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
@@ -191,30 +201,100 @@ export default function CharacterDetailsPage() {
 
             {!(isBonded && isArchived) && (
               <Stack direction="row" spacing={1}>
-              <IconButton aria-label="More actions" onClick={handleClick} sx={{ color: "text.secondary" }}>
-                <MoreVertIcon />
-              </IconButton>
-              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-                {isBonded ? (
-                  <ActionMenuItem key="download-pdf" icon={DownloadIcon} label="Download PDF" onClick={closeMenuAnd(() => pdfExport.mutate())} />
-                ) : isArchived ? (
-                  [
-                    isOwner && <ActionMenuItem key="unarchive" icon={UnarchiveIcon} label="Unarchive" intent="positive" onClick={closeMenuAnd(() => unarchiveMutation.mutate())} />,
-                    !isDemo && <ActionMenuItem key="contributors" icon={GroupIcon} label="Contributors" onClick={closeMenuAnd(() => setContributorsOpen(true))} />,
-                    isOwner && <ActionMenuItem key="hard-delete" icon={DeleteForeverIcon} label="Delete permanently" intent="destructive" onClick={closeMenuAnd(() => setHardDeleteConfirmOpen(true))} />,
-                  ]
-                ) : (
-                  [
-                    <ActionMenuItem key="add-level" icon={AddIcon} label="Add Level" onClick={closeMenuAnd(() => setAddLevelOpen(true))} />,
-                    <ActionMenuItem key="remove-level" icon={RemoveIcon} label="Remove Level" onClick={closeMenuAnd(() => setConfirmOpen(true))} />,
-                    <ActionMenuItem key="manage-modifiers" icon={TuneIcon} label="Manage Modifiers" onClick={closeMenuAnd(() => setModifiersOpen(true))} />,
-                    <ActionMenuItem key="download-pdf" icon={DownloadIcon} label="Download PDF" onClick={closeMenuAnd(() => pdfExport.mutate())} />,
-                    !isDemo && <ActionMenuItem key="contributors" icon={GroupIcon} label="Contributors" onClick={closeMenuAnd(() => setContributorsOpen(true))} />,
-                    isOwner && !isDemo && <ActionMenuItem key="share" icon={ShareIcon} label="Share" onClick={closeMenuAnd(() => setShareOpen(true))} />,
-                    isOwner && <ActionMenuItem key="archive" icon={ArchiveIcon} label="Archive" intent="caution" onClick={closeMenuAnd(() => setArchiveConfirmOpen(true))} />,
-                  ]
-                )}
-              </Menu>
+                <IconButton aria-label="More actions" onClick={handleClick} sx={{ color: "text.secondary" }}>
+                  <MoreVertIcon />
+                </IconButton>
+                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+                  {isBonded ? (
+                    <ActionMenuItem
+                      key="download-pdf"
+                      icon={DownloadIcon}
+                      label="Download PDF"
+                      onClick={closeMenuAnd(() => pdfExport.mutate())}
+                    />
+                  ) : isArchived ? (
+                    [
+                      isOwner && (
+                        <ActionMenuItem
+                          key="unarchive"
+                          icon={UnarchiveIcon}
+                          label="Unarchive"
+                          intent="positive"
+                          onClick={closeMenuAnd(() => unarchiveMutation.mutate())}
+                        />
+                      ),
+                      !isDemo && (
+                        <ActionMenuItem
+                          key="contributors"
+                          icon={GroupIcon}
+                          label="Contributors"
+                          onClick={closeMenuAnd(() => setContributorsOpen(true))}
+                        />
+                      ),
+                      isOwner && (
+                        <ActionMenuItem
+                          key="hard-delete"
+                          icon={DeleteForeverIcon}
+                          label="Delete permanently"
+                          intent="destructive"
+                          onClick={closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
+                        />
+                      ),
+                    ]
+                  ) : (
+                    [
+                      <ActionMenuItem
+                        key="add-level"
+                        icon={AddIcon}
+                        label="Add Level"
+                        onClick={closeMenuAnd(() => setAddLevelOpen(true))}
+                      />,
+                      <ActionMenuItem
+                        key="remove-level"
+                        icon={RemoveIcon}
+                        label="Remove Level"
+                        onClick={closeMenuAnd(() => setConfirmOpen(true))}
+                      />,
+                      <ActionMenuItem
+                        key="manage-modifiers"
+                        icon={TuneIcon}
+                        label="Manage Modifiers"
+                        onClick={closeMenuAnd(() => setModifiersOpen(true))}
+                      />,
+                      <ActionMenuItem
+                        key="download-pdf"
+                        icon={DownloadIcon}
+                        label="Download PDF"
+                        onClick={closeMenuAnd(() => pdfExport.mutate())}
+                      />,
+                      !isDemo && (
+                        <ActionMenuItem
+                          key="contributors"
+                          icon={GroupIcon}
+                          label="Contributors"
+                          onClick={closeMenuAnd(() => setContributorsOpen(true))}
+                        />
+                      ),
+                      isOwner && !isDemo && (
+                        <ActionMenuItem
+                          key="share"
+                          icon={ShareIcon}
+                          label="Share"
+                          onClick={closeMenuAnd(() => setShareOpen(true))}
+                        />
+                      ),
+                      isOwner && (
+                        <ActionMenuItem
+                          key="archive"
+                          icon={ArchiveIcon}
+                          label="Archive"
+                          intent="caution"
+                          onClick={closeMenuAnd(() => setArchiveConfirmOpen(true))}
+                        />
+                      ),
+                    ]
+                  )}
+                </Menu>
               </Stack>
             )}
           </Stack>
@@ -278,8 +358,8 @@ export default function CharacterDetailsPage() {
         {isArchived && (
           <Alert severity="info" sx={{ mb: 2 }}>
             <Typography variant="body2">
-              <strong>This character is archived and read-only.</strong>{" "}
-              You can view all content but cannot make changes.
+              <strong>This character is archived and read-only.</strong> You can view all content but cannot make
+              changes.
             </Typography>
           </Alert>
         )}

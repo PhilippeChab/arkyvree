@@ -1,7 +1,8 @@
+import type { InferResponseType } from "hono/client";
+
 import type { CharacterDetail, RulesetItem } from "@/client/src/lib/queries.ts";
 import type { RPC } from "@/client/src/services/rpc.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
-import type { InferResponseType } from "hono/client";
 
 export type LocationValue = (typeof LOCATION_OPTIONS)[number];
 
@@ -38,8 +39,14 @@ type InventoryEntry = InferResponseType<RPC["api"]["characters"]["inventory"][":
 export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
 const SINGLE_OCCUPANCY_SLOTS = new Set<LocationValue>([
-  "Head", "Neck", "Shoulders", "Torso", "Wrists",
-  "Hands", "Waist", "Trinket",
+  "Head",
+  "Neck",
+  "Shoulders",
+  "Torso",
+  "Wrists",
+  "Hands",
+  "Waist",
+  "Trinket",
 ]);
 
 /** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
@@ -124,9 +131,7 @@ export function getSlotConflictWarning(
 ): string | null {
   if (!location || location === "none") return null;
 
-  const equipped = inventoryItems.filter(
-    (e) => e.equipped && e.location && e.itemId !== excludeItemId,
-  );
+  const equipped = inventoryItems.filter((e) => e.equipped && e.location && e.itemId !== excludeItemId);
 
   if (SINGLE_OCCUPANCY_SLOTS.has(location)) {
     const conflict = equipped.find((e) => e.location === location);
@@ -144,13 +149,12 @@ export function getSlotConflictWarning(
 
   if (HAND_SLOTS.has(location)) {
     const sameSet = equipped.filter(
-      (e) => !!e.location && HAND_SLOTS.has(e.location) && e.weaponSet !== null && shownWeaponSet(e.weaponSet) === weaponSet,
+      (e) =>
+        !!e.location && HAND_SLOTS.has(e.location) && e.weaponSet !== null && shownWeaponSet(e.weaponSet) === weaponSet,
     );
 
     if (location === "Two Handed") {
-      const conflict = sameSet.find(
-        (e) => e.location === "Main Hand" || e.location === "Off Hand",
-      );
+      const conflict = sameSet.find((e) => e.location === "Main Hand" || e.location === "Off Hand");
       if (conflict) {
         return `Cannot equip two-handed: ${conflict.item.name} is in ${conflict.location} (Set ${weaponSet})`;
       }

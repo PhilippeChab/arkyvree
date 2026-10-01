@@ -1,10 +1,12 @@
+import { getTableName } from "drizzle-orm";
+
 import { savesInRules } from "@/drizzle/schema.ts";
+import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { KlassLevelSaves, Saves } from "@/server/repositories/index.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   cowEntity,
@@ -17,12 +19,16 @@ import {
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export const SavesMethods = {
   async getRulesetSaves(
     rulesetId: string,
-    where: { childOnly?: boolean; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: {
+      childOnly?: boolean;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -42,16 +48,26 @@ export const SavesMethods = {
     });
   },
 
-  async createRulesetSave(session: Session, rulesetId: string, body: {
-    name: string;
-    description?: string | null;
-    abilityId: string;
-  }) {
+  async createRulesetSave(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      abilityId: string;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "saves", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "saves",
+          body.name,
+        );
 
         const rows = await Saves.create(tx, { ...body, rulesetId });
         const save = rows[0];
@@ -75,12 +91,17 @@ export const SavesMethods = {
     return result;
   },
 
-  async updateRulesetSave(session: Session, rulesetId: string, saveId: string, body: {
-    name: string;
-    description?: string | null;
-    abilityId: string;
-    updatedAt?: string;
-  }) {
+  async updateRulesetSave(
+    session: Session,
+    rulesetId: string,
+    saveId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      abilityId: string;
+      updatedAt?: string;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -113,7 +134,10 @@ export const SavesMethods = {
           targetId,
           targetTable: getTableName(savesInRules),
           type: "updateSave",
-          data: { entityName: body.name, changedFields: getChangedFields(save as Record<string, unknown>, body as Record<string, unknown>) },
+          data: {
+            entityName: body.name,
+            changedFields: getChangedFields(save as Record<string, unknown>, body as Record<string, unknown>),
+          },
         });
 
         return updatedSave;

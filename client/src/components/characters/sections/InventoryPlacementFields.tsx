@@ -1,7 +1,9 @@
-import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { MenuItem, Stack, TextField } from "@mui/material";
 import type { UseFormReturn } from "react-hook-form";
+
+import { oneOf } from "@/client/src/lib/oneOf.ts";
+import { wholeNumberRules } from "@/client/src/lib/validation.ts";
+
 import { HAND_SLOTS, type InventoryFormData, LOCATION_CHOICES, type PlacementProfile } from "./equipment.ts";
 
 interface InventoryPlacementFieldsProps {

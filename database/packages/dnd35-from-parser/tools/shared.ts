@@ -2,16 +2,22 @@
  * Shared utilities used across scraper, generator, and CLI tools.
  */
 
-import { stripSeparators } from "@/shared/utils.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
-import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import type { Modifier, ModifierEffect, ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
-import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+
 import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import type { DetectedModifiers } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
+import type {
+  Modifier,
+  ModifierEffect,
+  ModifierSeed,
+  RequirementEntry,
+} from "@/database/packages/dnd35/content/types.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 // Re-export stripSeparators — used as the slug function throughout the tools
 export { stripSeparators } from "@/shared/utils.ts";
@@ -29,8 +35,16 @@ const COMPANION_GRANT_PATTERNS: {
 ];
 
 const NUMBER_WORDS: Record<string, number> = {
-  one: 1, two: 2, three: 3, four: 4, five: 5,
-  six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
 };
 
 /**
@@ -122,7 +136,7 @@ export function toCamelCase(name: string): string {
   return name
     .replace(/['']/g, "")
     .split(/[\s-]+/)
-    .map((word, i) => i === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word, i) => (i === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
     .join("");
 }
 
@@ -149,13 +163,18 @@ export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
 /** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */
 export function referenceBooks(): string[] {
   return readdirSync(REFERENCE_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() || (entry.isSymbolicLink() && statSync(join(REFERENCE_DIR, entry.name)).isDirectory()))
+    .filter(
+      (entry) =>
+        entry.isDirectory() || (entry.isSymbolicLink() && statSync(join(REFERENCE_DIR, entry.name)).isDirectory()),
+    )
     .map((entry) => entry.name)
     .sort();
 }
 
 /** The reference files under `refDir`: each book's, and the ones every book shares (domains.json). */
-export function discoverRefs(refDir = REFERENCE_DIR): { path: string; type: ReferenceType; url?: string; book: string; filter?: string }[] {
+export function discoverRefs(
+  refDir = REFERENCE_DIR,
+): { path: string; type: ReferenceType; url?: string; book: string; filter?: string }[] {
   const files = readdirSync(refDir, { withFileTypes: true, recursive: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
     .map((entry) => join(entry.parentPath, entry.name))
@@ -182,15 +201,23 @@ for (const name of SKILL_NAMES) {
 export function skillSlug(name: string): string {
   const fullKey = name.toLowerCase().trim();
   if (SKILL_MAP[fullKey]) return SKILL_MAP[fullKey];
-  const baseName = name.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
+  const baseName = name
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .toLowerCase()
+    .trim();
   return SKILL_MAP[baseName] ?? stripSeparators(baseName);
 }
 
 /** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
 export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
   if (!/\(any\)/i.test(name)) return undefined;
-  const baseName = name.replace(/\s*\(any\)/i, "").trim().toLowerCase();
-  const checks = SKILL_NAMES.filter((s) => s.toLowerCase().startsWith(baseName)).map((s) => gte(`skills.${stripSeparators(s)}.rank`, ranks));
+  const baseName = name
+    .replace(/\s*\(any\)/i, "")
+    .trim()
+    .toLowerCase();
+  const checks = SKILL_NAMES.filter((s) => s.toLowerCase().startsWith(baseName)).map((s) =>
+    gte(`skills.${stripSeparators(s)}.rank`, ranks),
+  );
   if (checks.length <= 1) return checks[0];
   return or(...checks);
 }
@@ -221,7 +248,9 @@ export type Checked<T> = { ok: true; value: T } | { ok: false; problem: string }
 
 /** `value` checked against `options`: `what` names it in the problem. */
 export function checkOneOf<T extends string>(value: string, options: readonly T[], what: string): Checked<T> {
-  return isOneOf(value, options) ? { ok: true, value } : { ok: false, problem: `${what}: "${value}" isn't one of ${options.join(", ")}` };
+  return isOneOf(value, options)
+    ? { ok: true, value }
+    : { ok: false, problem: `${what}: "${value}" isn't one of ${options.join(", ")}` };
 }
 
 /** A checked value, for the seed: its problem throws. */
@@ -241,10 +270,17 @@ export const normalizeWs = (text: string) => text.replace(/\s+/g, " ").trim();
  * What detecting an entry's modifiers finds: its modifiers (a feat's `ModifierSeed`, a domain's or a race's
  * `Modifier`), the invalid paths and the text it couldn't parse.
  */
-export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = { modifiers: M[]; errors: string[]; unresolvedModifiers: string[] };
+export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = {
+  modifiers: M[];
+  errors: string[];
+  unresolvedModifiers: string[];
+};
 
 /** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
-export function detectModifiersOf<E extends { name: string }>(raw: E[], detect: (entry: E) => ModifierDetection<Modifier>) {
+export function detectModifiersOf<E extends { name: string }>(
+  raw: E[],
+  detect: (entry: E) => ModifierDetection<Modifier>,
+) {
   const detected: Record<string, DetectedModifiers> = {};
   for (const entry of raw) {
     const { modifiers, errors, unresolvedModifiers } = detect(entry);
@@ -258,7 +294,11 @@ export function detectModifiersOf<E extends { name: string }>(raw: E[], detect: 
 }
 
 /** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
-export function modifierMapping<E extends { name: string; description: string }, O extends { description?: string; modifiers?: Modifier[] }, X extends object>(
+export function modifierMapping<
+  E extends { name: string; description: string },
+  O extends { description?: string; modifiers?: Modifier[] },
+  X extends object,
+>(
   raw: E[],
   detected: Record<string, { modifiers: Modifier[] } | undefined>,
   overrides: Record<string, O | undefined>,
@@ -268,7 +308,11 @@ export function modifierMapping<E extends { name: string; description: string },
   for (const entry of raw) {
     const override = overrides[entry.name];
     const modifiers = override?.modifiers ?? detected[entry.name]?.modifiers ?? [];
-    mapping[entry.name] = { description: override?.description ?? entry.description, ...(modifiers.length > 0 ? { modifiers } : {}), ...extra(override) };
+    mapping[entry.name] = {
+      description: override?.description ?? entry.description,
+      ...(modifiers.length > 0 ? { modifiers } : {}),
+      ...extra(override),
+    };
   }
   return mapping;
 }
@@ -314,11 +358,7 @@ for (const name of SAVE_NAMES) {
 // Template description expansion — used by buildSeeds, generator/feat
 // ---------------------------------------------------------------------------
 
-const WEAPON_DESC_PATTERNS = [
-  /the selected weapon/gi,
-  /selected weapon/gi,
-  /the weapon you selected/gi,
-];
+const WEAPON_DESC_PATTERNS = [/the selected weapon/gi, /selected weapon/gi, /the weapon you selected/gi];
 
 export function expandTemplateDescription(description: string, type: string, item: string): string {
   if (type === "weapon" || type === "crossbow") {

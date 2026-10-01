@@ -20,7 +20,9 @@
  *      and extension, compare row contents between reference and target.
  */
 import { readFileSync } from "node:fs";
+
 import { Pool, type PoolClient } from "pg";
+
 import { registry } from "@/database/packages/registry.ts";
 import { planPackages } from "@/database/packages/runner.ts";
 
@@ -45,13 +47,7 @@ let hasDrift = false;
  * nonsense across independent seed runs.
  */
 function stripVolatile(row: Record<string, unknown>): Record<string, unknown> {
-  const skip = new Set([
-    "id",
-    "created_at",
-    "updated_at",
-    "deleted_at",
-    "ruleset_id",
-  ]);
+  const skip = new Set(["id", "created_at", "updated_at", "deleted_at", "ruleset_id"]);
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(row)) {
     if (skip.has(k)) continue;
@@ -65,10 +61,9 @@ function stripVolatile(row: Record<string, unknown>): Record<string, unknown> {
 }
 
 async function pullScoped(c: PoolClient, table: string, rulesetId: string): Promise<IdentifiedRow[]> {
-  const { rows } = await c.query<Record<string, unknown>>(
-    `select * from rules.${table} where ruleset_id = $1`,
-    [rulesetId],
-  );
+  const { rows } = await c.query<Record<string, unknown>>(`select * from rules.${table} where ruleset_id = $1`, [
+    rulesetId,
+  ]);
   return rows
     .filter((r) => r.deleted_at == null)
     .map((r) => ({
@@ -293,7 +288,13 @@ async function diffContent(tgtClient: PoolClient, refClient: PoolClient): Promis
     {
       name: "klass_level_feats",
       pull: async (c, rulesetId) => {
-        const { rows } = await c.query<{ klass_name: string; level: number; feat_name: string; apt_ruleset: string; apt_name: string }>(
+        const { rows } = await c.query<{
+          klass_name: string;
+          level: number;
+          feat_name: string;
+          apt_ruleset: string;
+          apt_name: string;
+        }>(
           `select k.name as klass_name, kl.level, f.name as feat_name,
                   ar.name as apt_ruleset, a.name as apt_name
              from rules.klass_level_feats klf
@@ -319,7 +320,13 @@ async function diffContent(tgtClient: PoolClient, refClient: PoolClient): Promis
     {
       name: "klass_level_powers",
       pull: async (c, rulesetId) => {
-        const { rows } = await c.query<{ klass_name: string; level: number; power_name: string; apt_ruleset: string; apt_name: string }>(
+        const { rows } = await c.query<{
+          klass_name: string;
+          level: number;
+          power_name: string;
+          apt_ruleset: string;
+          apt_name: string;
+        }>(
           `select k.name as klass_name, kl.level, p.name as power_name,
                   ar.name as apt_ruleset, a.name as apt_name
              from rules.klass_level_powers klp
@@ -376,7 +383,13 @@ async function diffContent(tgtClient: PoolClient, refClient: PoolClient): Promis
     {
       name: "klass_level_saves",
       pull: async (c, rulesetId) => {
-        const { rows } = await c.query<{ klass_name: string; level: number; save_ruleset: string; save_name: string; base: number }>(
+        const { rows } = await c.query<{
+          klass_name: string;
+          level: number;
+          save_ruleset: string;
+          save_name: string;
+          base: number;
+        }>(
           `select k.name as klass_name, kl.level,
                   sr.name as save_ruleset, sv.name as save_name, kls.base
              from rules.klass_level_saves kls
@@ -412,8 +425,12 @@ async function diffContent(tgtClient: PoolClient, refClient: PoolClient): Promis
       name: "modifiers",
       pull: async (c, rulesetId) => {
         const { rows } = await c.query<{
-          source_type: string; source_name: string;
-          target: string; operator: string; value: string; value_type: string;
+          source_type: string;
+          source_name: string;
+          target: string;
+          operator: string;
+          value: string;
+          value_type: string;
         }>(
           `with owners as (
              select id, 'feats'::text as t, name from rules.feats      where ruleset_id = $1 and deleted_at is null
@@ -459,9 +476,14 @@ async function diffContent(tgtClient: PoolClient, refClient: PoolClient): Promis
       name: "requirements",
       pull: async (c, rulesetId) => {
         const { rows } = await c.query<{
-          entity_type: string; entity_name: string;
-          level: string; target: string | null; operator: string | null;
-          value: string | null; value_type: string | null; chaining_operator: string | null;
+          entity_type: string;
+          entity_name: string;
+          level: string;
+          target: string | null;
+          operator: string | null;
+          value: string | null;
+          value_type: string | null;
+          chaining_operator: string | null;
         }>(
           `with owners as (
              select id, 'feats'::text as t, name from rules.feats      where ruleset_id = $1 and deleted_at is null
@@ -521,8 +543,10 @@ async function diffContent(tgtClient: PoolClient, refClient: PoolClient): Promis
         // KLASS_BONUS_SPELL_ABILITY_ID). Resolve those to `<type>:<name>` so
         // UUID churn between prod and a fresh seed doesn't register as drift.
         const { rows } = await c.query<{
-          entity_type: string; entity_name: string;
-          type: string; value: string;
+          entity_type: string;
+          entity_name: string;
+          type: string;
+          value: string;
         }>(
           `with owners as (
              select id, 'feats'::text as t, name from rules.feats      where ruleset_id = $1 and deleted_at is null
@@ -587,10 +611,24 @@ async function diffContent(tgtClient: PoolClient, refClient: PoolClient): Promis
   let drift = false;
 
   // Match base rulesets on both sides. Base rulesets have system=true and no userId.
-  const refRulesets = await refClient.query<{ id: string; name: string; base_rules: string; private: boolean; status: string; system: boolean }>(
+  const refRulesets = await refClient.query<{
+    id: string;
+    name: string;
+    base_rules: string;
+    private: boolean;
+    status: string;
+    system: boolean;
+  }>(
     `select id, name, base_rules, private, status, system from rules.rulesets where user_id is null and system = true order by name`,
   );
-  const tgtRulesets = await tgtClient.query<{ id: string; name: string; base_rules: string; private: boolean; status: string; system: boolean }>(
+  const tgtRulesets = await tgtClient.query<{
+    id: string;
+    name: string;
+    base_rules: string;
+    private: boolean;
+    status: string;
+    system: boolean;
+  }>(
     `select id, name, base_rules, private, status, system from rules.rulesets where user_id is null and system = true order by name`,
   );
 
@@ -627,7 +665,9 @@ async function diffContent(tgtClient: PoolClient, refClient: PoolClient): Promis
     }
     if (!tgt) {
       if (emitSql) {
-        console.log(`\n-- ${name}: only in reference (target missing this ruleset) — skipped (INSERT would need FK remap)`);
+        console.log(
+          `\n-- ${name}: only in reference (target missing this ruleset) — skipped (INSERT would need FK remap)`,
+        );
       } else {
         console.log(`### ${name}`);
         console.log(`  only in reference — target is missing this ruleset\n`);
@@ -693,9 +733,9 @@ try {
     // ── 1. Schema drift ──
     console.log("## Schema drift\n");
 
-    const journal = JSON.parse(
-      readFileSync("./drizzle/meta/_journal.json", "utf8"),
-    ) as { entries: { idx: number; tag: string; when: number }[] };
+    const journal = JSON.parse(readFileSync("./drizzle/meta/_journal.json", "utf8")) as {
+      entries: { idx: number; tag: string; when: number }[];
+    };
     const codeMigrations = journal.entries.map((e) => ({ tag: e.tag, when: e.when }));
 
     const { rows: applied } = await client.query<{ created_at: string }>(
@@ -706,9 +746,7 @@ try {
     const codeWhens = new Set(codeMigrations.map((m) => m.when));
 
     const missingOnRemote = codeMigrations.filter((m) => !appliedWhens.has(m.when));
-    const extraOnRemote = applied
-      .map((r) => Number(r.created_at))
-      .filter((w) => !codeWhens.has(w));
+    const extraOnRemote = applied.map((r) => Number(r.created_at)).filter((w) => !codeWhens.has(w));
 
     console.log(`Code migrations:   ${codeMigrations.length}`);
     console.log(`Remote migrations: ${applied.length}`);
@@ -736,9 +774,7 @@ try {
       type: string;
       version: number;
       applied_at: string;
-    }>(
-      `select name, type, version, applied_at from rules.content_packages order by name`,
-    );
+    }>(`select name, type, version, applied_at from rules.content_packages order by name`);
 
     const remoteMap = new Map(remotePackages.map((p) => [p.name, p]));
     // What the next deploy's runner does: it applies no package while one has a problem.
@@ -765,7 +801,9 @@ try {
         status = `next deploy will be REFUSED (${problem.join("; ")})`;
         hasDrift = true;
       } else if (!r) {
-        status = blocked ? "missing on remote (blocked: the next deploy applies no package)" : "missing on remote (next deploy will install)";
+        status = blocked
+          ? "missing on remote (blocked: the next deploy applies no package)"
+          : "missing on remote (next deploy will install)";
         hasDrift = true;
       } else if (codeVersion === undefined) {
         status = "on remote but not in code";
@@ -773,7 +811,9 @@ try {
       } else if (r.version === codeVersion) {
         status = "in sync";
       } else if (r.version < codeVersion) {
-        status = blocked ? "behind (blocked: the next deploy applies no package)" : `next deploy will upgrade (v${r.version} -> v${codeVersion})`;
+        status = blocked
+          ? "behind (blocked: the next deploy applies no package)"
+          : `next deploy will upgrade (v${r.version} -> v${codeVersion})`;
         hasDrift = true;
       } else {
         status = `remote ahead of code (v${r.version} > v${codeVersion})`;
@@ -796,8 +836,8 @@ try {
       process.exit(1);
     }
     // In SQL-emit mode, drift is the expected output, not a failure. Only
-  // exit non-zero on errors (which throw before this point).
-  process.exit(emitSql ? 0 : hasDrift ? 1 : 0);
+    // exit non-zero on errors (which throw before this point).
+    process.exit(emitSql ? 0 : hasDrift ? 1 : 0);
   }
 
   const refPool = new Pool({ connectionString: referenceConnectionString });

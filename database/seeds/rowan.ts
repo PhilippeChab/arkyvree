@@ -10,7 +10,8 @@ export default {
   gender: "Male",
   height: "180",
   weight: "78",
-  description: "Rowan grew up deep in the Whispering Forest, raised by a circle of druids who taught him to listen to the voice of the land. He wields the primal forces of nature to protect the wild places from those who would despoil them.",
+  description:
+    "Rowan grew up deep in the Whispering Forest, raised by a circle of druids who taught him to listen to the voice of the land. He wields the primal forces of nature to protect the wild places from those who would despoil them.",
   abilities: { Strength: 14, Dexterity: 12, Constitution: 14, Intelligence: 10, Wisdom: 16, Charisma: 8 },
   languages: ["Common", "Druidic"],
   classes: [{ klass: "Druid", hp: [7, 6, 8] }],

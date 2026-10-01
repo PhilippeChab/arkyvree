@@ -1,19 +1,19 @@
 import "@/server/instrument-worker.ts";
 import "@/server/log.ts";
-import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
-import { shutdownOtel } from "@/server/otel.ts";
-import { Sentry } from "@/server/sentry.ts";
+import { EventEmitter } from "events";
 
 import { sql } from "drizzle-orm";
-import { EventEmitter } from "events";
 import { Logger, run, type Runner } from "graphile-worker";
 import { Pool } from "pg";
 
+import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
 import { db } from "@/server/database/index.ts";
-import { runCleanupTask } from "@/server/jobs/runCleanup";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
+import { runCleanupTask } from "@/server/jobs/runCleanup";
 import { sendEmailTask } from "@/server/jobs/sendEmail.ts";
 import { sweepPendingBlobsTask } from "@/server/jobs/sweepPendingBlobs.ts";
+import { shutdownOtel } from "@/server/otel.ts";
+import { Sentry } from "@/server/sentry.ts";
 
 const logger = new Logger((scope) => {
   return (level, message) => {
@@ -36,7 +36,10 @@ const logger = new Logger((scope) => {
 const events = new EventEmitter();
 
 events.on("job:error", ({ job, error }) => {
-  console.error(`[worker] Job ${job.task_identifier} (id=${job.id}) error (attempt ${job.attempts}/${job.max_attempts}):`, error);
+  console.error(
+    `[worker] Job ${job.task_identifier} (id=${job.id}) error (attempt ${job.attempts}/${job.max_attempts}):`,
+    error,
+  );
 });
 
 events.on("job:failed", ({ job, error }) => {
@@ -122,10 +125,7 @@ const runner: Runner = await run({
     runCleanup: runCleanupTask,
     sweepPendingBlobs: sweepPendingBlobsTask,
   },
-  crontab: [
-    "0 4 * * * runCleanup",
-    "0 * * * * sweepPendingBlobs",
-  ].join("\n"),
+  crontab: ["0 4 * * * runCleanup", "0 * * * * sweepPendingBlobs"].join("\n"),
 });
 
 console.log("[worker] Started");

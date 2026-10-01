@@ -10,7 +10,8 @@ export default {
   gender: "Male",
   height: "183",
   weight: "85",
-  description: "A devout cleric of Pelor, Theron travels the land healing the sick and smiting the undead. His unwavering faith radiates through his warm smile and the golden symbol he wears.",
+  description:
+    "A devout cleric of Pelor, Theron travels the land healing the sick and smiting the undead. His unwavering faith radiates through his warm smile and the golden symbol he wears.",
   abilities: { Strength: 14, Dexterity: 10, Constitution: 14, Intelligence: 12, Wisdom: 16, Charisma: 12 },
   languages: ["Common", "Celestial"],
   classes: [{ klass: "Cleric", hp: [8, 6, 7] }],

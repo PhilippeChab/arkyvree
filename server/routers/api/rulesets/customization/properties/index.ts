@@ -1,10 +1,11 @@
-import { respond } from "@/server/routers/respond.ts";
+import { Hono } from "hono";
+import { z } from "zod";
+
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import propertyTypesRouter from "@/server/routers/api/rulesets/customization/properties/types/index.ts";
+import { respond } from "@/server/routers/respond.ts";
 import { PropertiesService } from "@/server/services/rulesets/index.ts";
-import { Hono } from "hono";
-import { z } from "zod";
 
 export default new Hono<SessionContext>()
   .get(
@@ -21,12 +22,7 @@ export default new Hono<SessionContext>()
       const { id, entityType, entityId } = c.req.valid("param");
 
       const propertiesService = PropertiesService.initialize();
-      const result = await propertiesService.call(
-        "getEntityProperties",
-        id,
-        entityType,
-        entityId,
-      );
+      const result = await propertiesService.call("getEntityProperties", id, entityType, entityId);
       return respond(c, result, 200);
     },
   )

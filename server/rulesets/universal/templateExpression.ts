@@ -41,7 +41,10 @@ class Tokenizer {
     const tokens: Token[] = [];
     while (this.pos < this.src.length) {
       const ch = this.src[this.pos];
-      if (ch === " " || ch === "\t" || ch === "\n") { this.pos++; continue; }
+      if (ch === " " || ch === "\t" || ch === "\n") {
+        this.pos++;
+        continue;
+      }
       if (ch === "[") {
         const end = this.src.indexOf("]", this.pos + 1);
         if (end === -1) throw new Error("Unterminated path: missing ]");
@@ -102,7 +105,9 @@ class Parser {
   }
 
   // Pratt-style precedence: + - lowest, * / next, unary - tightest before primary
-  private parseExpr(): AstNode { return this.parseAddSub(); }
+  private parseExpr(): AstNode {
+    return this.parseAddSub();
+  }
 
   private parseAddSub(): AstNode {
     let left = this.parseMulDiv();
@@ -135,8 +140,14 @@ class Parser {
   private parsePrimary(): AstNode {
     const tok = this.tokens[this.pos];
     if (!tok) throw new Error("Unexpected end of expression");
-    if (tok.type === "NUMBER") { this.pos++; return { type: "number", value: tok.value }; }
-    if (tok.type === "PATH") { this.pos++; return { type: "path", value: tok.value }; }
+    if (tok.type === "NUMBER") {
+      this.pos++;
+      return { type: "number", value: tok.value };
+    }
+    if (tok.type === "PATH") {
+      this.pos++;
+      return { type: "path", value: tok.value };
+    }
     if (tok.type === "IDENT") {
       this.pos++;
       if (this.peekPunc("(")) {
@@ -206,7 +217,9 @@ export function evaluateTemplateExpression(
     // Wildcard paths expand to multiple results — silently using the first
     // is order-dependent. Refuse to guess and warn instead.
     if (results.length > 1) {
-      onWarning?.(`Path "${path}" expanded to ${results.length} results; template expressions don't aggregate wildcards`);
+      onWarning?.(
+        `Path "${path}" expanded to ${results.length} results; template expressions don't aggregate wildcards`,
+      );
       return null;
     }
     return results[0].data as number | string | boolean | null;
@@ -214,7 +227,8 @@ export function evaluateTemplateExpression(
 
   const evNumeric = (node: AstNode): number | null => {
     switch (node.type) {
-      case "number": return node.value;
+      case "number":
+        return node.value;
       case "path": {
         const v = resolvePath(node.value);
         if (typeof v !== "number") {
@@ -245,10 +259,14 @@ export function evaluateTemplateExpression(
         const r = evNumeric(node.right);
         if (l === null || r === null) return null;
         switch (node.op) {
-          case "+": return l + r;
-          case "-": return l - r;
-          case "*": return l * r;
-          case "/": return r === 0 ? null : l / r;
+          case "+":
+            return l + r;
+          case "-":
+            return l - r;
+          case "*":
+            return l * r;
+          case "/":
+            return r === 0 ? null : l / r;
         }
         return null;
       }

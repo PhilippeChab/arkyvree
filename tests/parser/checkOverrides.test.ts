@@ -1,29 +1,48 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+
 import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/checkOverrides.ts";
-import { readStoredReference, resolveReference, type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import {
+  readStoredReference,
+  resolveReference,
+  type StoredReference,
+} from "@/database/packages/dnd35-from-parser/tools/references.ts";
 
 const REFERENCE = join(import.meta.dirname, "../../database/packages/dnd35-from-parser/reference");
 
 /** A committed class reference, with its overrides changed by `change`. */
-function classReference(file: string, change: (overrides: NonNullable<StoredReference<"class">["overrides"]>, stored: StoredReference<"class">) => void = () => {}) {
+function classReference(
+  file: string,
+  change: (
+    overrides: NonNullable<StoredReference<"class">["overrides"]>,
+    stored: StoredReference<"class">,
+  ) => void = () => {},
+) {
   const stored = structuredClone(readStoredReference(join(REFERENCE, file), "class"));
   stored.overrides ??= {};
   change(stored.overrides, stored);
   return stored;
 }
 
-const derived = (stored: StoredReference<"class">) => resolveReference("class", { _meta: stored._meta, raw: stored.raw });
+const derived = (stored: StoredReference<"class">) =>
+  resolveReference("class", { _meta: stored._meta, raw: stored.raw });
 
 describe("A redundant class override", () => {
   test("is none of a committed class's, which the generator needs", () => {
-    for (const file of ["srd/classes/barbarian.json", "srd/classes/wizard.json", "complete-divine/classes/spiritShaman.json", "complete-warrior/classes/drunkenMaster.json"]) {
+    for (const file of [
+      "srd/classes/barbarian.json",
+      "srd/classes/wizard.json",
+      "complete-divine/classes/spiritShaman.json",
+      "complete-warrior/classes/drunkenMaster.json",
+    ]) {
       expect({ file, redundant: checkClassOverrides(classReference(file)).redundant }).toEqual({ file, redundant: [] });
     }
   });
 
   test("is one equal to what's detected", () => {
-    const stored = classReference("srd/classes/barbarian.json", (overrides, s) => { overrides.bab = derived(s).detected.bab; });
+    const stored = classReference("srd/classes/barbarian.json", (overrides, s) => {
+      overrides.bab = derived(s).detected.bab;
+    });
     expect(checkClassOverrides(stored).redundant).toContain("bab");
   });
 
@@ -36,7 +55,10 @@ describe("A redundant class override", () => {
 
   test("is a feature field removed where the feature has none", () => {
     const stored = classReference("srd/classes/barbarian.json", (overrides) => {
-      overrides.features = { ...overrides.features, "Fast Movement": { ...overrides.features?.["Fast Movement"], aptitude: null } };
+      overrides.features = {
+        ...overrides.features,
+        "Fast Movement": { ...overrides.features?.["Fast Movement"], aptitude: null },
+      };
     });
     expect(checkClassOverrides(stored).redundant).toEqual(["features.Fast Movement.aptitude"]);
   });
@@ -68,13 +90,17 @@ describe("A redundant class override", () => {
 describe("A class override the generator ignores", () => {
   test("is spells, even a spell list it inherits, for a class without detected spells", () => {
     for (const spells of [{ perDay: [[1]] }, { inheritsFrom: "Cleric" }]) {
-      const stored = classReference("srd/classes/barbarian.json", (overrides) => { overrides.spells = spells; });
+      const stored = classReference("srd/classes/barbarian.json", (overrides) => {
+        overrides.spells = spells;
+      });
       expect(checkClassOverrides(stored).ignored).toEqual(["spells"]);
     }
   });
 
   test("is noSpells, for a class without detected spells", () => {
-    const stored = classReference("srd/classes/barbarian.json", (overrides) => { overrides.noSpells = true; });
+    const stored = classReference("srd/classes/barbarian.json", (overrides) => {
+      overrides.noSpells = true;
+    });
     expect(checkClassOverrides(stored).ignored).toEqual(["noSpells"]);
   });
 
@@ -87,7 +113,11 @@ describe("A class override the generator ignores", () => {
   });
 
   test("is none of a committed class's", () => {
-    for (const file of ["srd/classes/barbarian.json", "srd/classes/wizard.json", "complete-divine/classes/favoredSoul.json"]) {
+    for (const file of [
+      "srd/classes/barbarian.json",
+      "srd/classes/wizard.json",
+      "complete-divine/classes/favoredSoul.json",
+    ]) {
       expect({ file, ignored: checkClassOverrides(classReference(file)).ignored }).toEqual({ file, ignored: [] });
     }
   });
@@ -95,8 +125,10 @@ describe("A class override the generator ignores", () => {
 
 describe("A class the generator refuses", () => {
   test("is reported, and has no redundant overrides", () => {
-    const stored = classReference("srd/classes/barbarian.json", (overrides) => { overrides.bonusSpellAbility = "Wisdom"; });
-    expect(checkClassOverrides(stored).refusal).toContain("has bonusSpellAbility (\"Wisdom\") but no casterType");
+    const stored = classReference("srd/classes/barbarian.json", (overrides) => {
+      overrides.bonusSpellAbility = "Wisdom";
+    });
+    expect(checkClassOverrides(stored).refusal).toContain('has bonusSpellAbility ("Wisdom") but no casterType');
     expect(checkClassOverrides(stored).redundant).toEqual([]);
     expect(checkClassOverrides(classReference("srd/classes/barbarian.json")).refusal).toBeUndefined();
   });

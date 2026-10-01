@@ -22,9 +22,7 @@ function utcTimestamp(): string {
 
 function log(prefix: LogPrefix, method: string, path: string, extra?: string): void {
   const ts = utcTimestamp();
-  const msg = extra
-    ? `[api] ${ts} ${prefix} ${method} ${path} ${extra}`
-    : `[api] ${ts} ${prefix} ${method} ${path}`;
+  const msg = extra ? `[api] ${ts} ${prefix} ${method} ${path} ${extra}` : `[api] ${ts} ${prefix} ${method} ${path}`;
   console.log(msg);
 }
 
@@ -35,33 +33,46 @@ export function requestLogger(): MiddlewareHandler {
 
     log(LogPrefix.Incoming, method, path);
 
-    await timingStorage.run({ dbTimeMs: 0, queryCount: 0, activeQueries: 0, dbWallStart: 0, slowQueries: [], cacheHits: 0, cacheMisses: 0, dedupHits: 0, dedupMisses: 0 }, async () => {
-      const start = performance.now();
-      await next();
+    await timingStorage.run(
+      {
+        dbTimeMs: 0,
+        queryCount: 0,
+        activeQueries: 0,
+        dbWallStart: 0,
+        slowQueries: [],
+        cacheHits: 0,
+        cacheMisses: 0,
+        dedupHits: 0,
+        dedupMisses: 0,
+      },
+      async () => {
+        const start = performance.now();
+        await next();
 
-      const totalMs = performance.now() - start;
-      const store = getTimingStore();
-      const dbMs = store?.dbTimeMs ?? 0;
-      const cpuMs = totalMs - dbMs;
-      const queryCount = store?.queryCount ?? 0;
+        const totalMs = performance.now() - start;
+        const store = getTimingStore();
+        const dbMs = store?.dbTimeMs ?? 0;
+        const cpuMs = totalMs - dbMs;
+        const queryCount = store?.queryCount ?? 0;
 
-      const cacheHits = store?.cacheHits ?? 0;
-      const cacheMisses = store?.cacheMisses ?? 0;
-      const dedupHits = store?.dedupHits ?? 0;
-      const dedupMisses = store?.dedupMisses ?? 0;
+        const cacheHits = store?.cacheHits ?? 0;
+        const cacheMisses = store?.cacheMisses ?? 0;
+        const dedupHits = store?.dedupHits ?? 0;
+        const dedupMisses = store?.dedupMisses ?? 0;
 
-      const status = colorStatus(c.res.status);
-      const cacheInfo = (cacheHits > 0 || cacheMisses > 0) ? ` cache: ${cacheHits}/${cacheHits + cacheMisses}` : "";
-      const dedupInfo = (dedupHits > 0) ? ` dedup: ${dedupHits}/${dedupHits + dedupMisses}` : "";
-      const timing = `(db: ${Math.round(dbMs)}ms cpu: ${Math.round(cpuMs)}ms q: ${queryCount}${cacheInfo}${dedupInfo})`;
+        const status = colorStatus(c.res.status);
+        const cacheInfo = cacheHits > 0 || cacheMisses > 0 ? ` cache: ${cacheHits}/${cacheHits + cacheMisses}` : "";
+        const dedupInfo = dedupHits > 0 ? ` dedup: ${dedupHits}/${dedupHits + dedupMisses}` : "";
+        const timing = `(db: ${Math.round(dbMs)}ms cpu: ${Math.round(cpuMs)}ms q: ${queryCount}${cacheInfo}${dedupInfo})`;
 
-      log(LogPrefix.Outgoing, method, path, `${status} ${Math.round(totalMs)}ms ${timing}`);
+        log(LogPrefix.Outgoing, method, path, `${status} ${Math.round(totalMs)}ms ${timing}`);
 
-      if (store?.slowQueries.length) {
-        for (const q of store.slowQueries) {
-          console.log(`[api] \x1b[33m    ⚠ ${Math.round(q.durationMs)}ms  ${q.sql}\x1b[0m`);
+        if (store?.slowQueries.length) {
+          for (const q of store.slowQueries) {
+            console.log(`[api] \x1b[33m    ⚠ ${Math.round(q.durationMs)}ms  ${q.sql}\x1b[0m`);
+          }
         }
-      }
-    });
+      },
+    );
   };
 }

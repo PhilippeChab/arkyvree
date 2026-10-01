@@ -1,23 +1,29 @@
-import { lazy, useEffect, useState } from "react";
 import CssBaseline from "@mui/material/CssBaseline";
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { lazy, useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+
 import { AuthLayoutRoute } from "@/client/src/components/auth/index.ts";
 import { ErrorBoundary } from "@/client/src/components/common/index.ts";
 import { Layout, PublicLayout } from "@/client/src/components/layout/index.ts";
 import { CustomThemeProvider } from "@/client/src/contexts/ThemeContext.tsx";
 import { SnackbarProvider } from "@/client/src/contexts/ToastContext.tsx";
 import { WebSocketProvider } from "@/client/src/contexts/WebSocketContext.tsx";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import DashboardPage from "@/client/src/pages/dashboard/DashboardPage.tsx";
-import SignIn from "@/client/src/pages/auth/SignIn.tsx";
-import { ApiError } from "@/client/src/services/rpc.ts";
 import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
+import SignIn from "@/client/src/pages/auth/SignIn.tsx";
+import DashboardPage from "@/client/src/pages/dashboard/DashboardPage.tsx";
+import { ApiError } from "@/client/src/services/rpc.ts";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
+
 import "./App.css";
 
 const ActivitiesPage = lazy(() => import("@/client/src/pages/activities/ActivitiesPage.tsx"));
-const RulesetContributorInvitePage = lazy(() => import("@/client/src/pages/ruleset-contributor-invite/RulesetContributorInvitePage.tsx"));
-const CharacterContributorInvitePage = lazy(() => import("@/client/src/pages/character-contributor-invite/CharacterContributorInvitePage.tsx"));
+const RulesetContributorInvitePage = lazy(
+  () => import("@/client/src/pages/ruleset-contributor-invite/RulesetContributorInvitePage.tsx"),
+);
+const CharacterContributorInvitePage = lazy(
+  () => import("@/client/src/pages/character-contributor-invite/CharacterContributorInvitePage.tsx"),
+);
 const NotificationsPage = lazy(() => import("@/client/src/pages/notifications/NotificationsPage.tsx"));
 const CampaignsPage = lazy(() => import("@/client/src/pages/campaigns/CampaignsPage.tsx"));
 const CampaignCharacterPage = lazy(() => import("@/client/src/pages/campaigns/CampaignCharacterPage.tsx"));
@@ -52,7 +58,11 @@ function handleGlobalError(error: unknown) {
     // If the cleared user was a demo, leave a breadcrumb so the post-clear
     // catch-all can route to /demo-expired instead of /sign-in.
     if (useAuthStore.getState().user?.expiresAt) {
-      try { localStorage.setItem(DEMO_EXPIRED_FLAG, "1"); } catch { /* storage disabled */ }
+      try {
+        localStorage.setItem(DEMO_EXPIRED_FLAG, "1");
+      } catch {
+        /* storage disabled */
+      }
     }
     useAuthStore.getState().clearSession();
   }
@@ -103,7 +113,9 @@ function PrivateRoute() {
     void authProbe.finally(() => {
       if (!cancelled) setChecked(true);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [checkAuth]);
 
   if (!checked && !isAuthenticated) return null;
@@ -113,7 +125,11 @@ function PrivateRoute() {
   // render is unsafe under StrictMode's double-invoke (the second pass would
   // see an already-cleared flag and fall through to /sign-in).
   let demoExpired = false;
-  try { demoExpired = !!localStorage.getItem(DEMO_EXPIRED_FLAG); } catch { /* storage disabled */ }
+  try {
+    demoExpired = !!localStorage.getItem(DEMO_EXPIRED_FLAG);
+  } catch {
+    /* storage disabled */
+  }
   if (demoExpired) return <Navigate to="/demo-expired" replace />;
 
   const target = location.pathname + location.search;

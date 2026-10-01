@@ -1,12 +1,10 @@
-import type { rpc } from "@/client/src/services/rpc.ts";
 import type { InferRequestType } from "hono/client";
 
 import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import type { Item } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 
-export type ItemFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["items"]["$post"]
->["json"];
+export type ItemFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["items"]["$post"]>["json"];
 
 export type ItemFormInternal = Omit<ItemFormData, "weight" | "costGp"> & {
   weight?: string;
@@ -32,7 +30,7 @@ export const toItemForm = (
   type: item.type,
   slot: item.slot ?? undefined,
   isTemplate: item.isTemplate,
-  sourceItemId: item.isTemplate ? undefined : item.sourceItemId ?? undefined,
+  sourceItemId: item.isTemplate ? undefined : (item.sourceItemId ?? undefined),
 });
 
 function parseNumericField(value: string | undefined): number | undefined {

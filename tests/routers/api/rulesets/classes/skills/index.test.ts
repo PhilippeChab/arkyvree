@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
@@ -33,7 +34,9 @@ describe("rulesets class skills", () => {
 
   test("requires a session", async () => {
     const { id, classId } = await setup();
-    expect((await guestApi.api.rulesets[":id"].classes[":classId"].skills.$get({ param: { id, classId } })).status).toBe(401);
+    expect(
+      (await guestApi.api.rulesets[":id"].classes[":classId"].skills.$get({ param: { id, classId } })).status,
+    ).toBe(401);
   });
 
   test("rejects a request without a skill id", async () => {

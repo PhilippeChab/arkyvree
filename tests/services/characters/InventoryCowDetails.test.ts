@@ -2,10 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Items, Sessions, Users } from "@/server/repositories/index.ts";
-import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
-import { CharactersMethods } from "@/server/services/CharactersService.ts";
+import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { CharacterInventoryMethods } from "@/server/services/characters/CharacterInventoryService.ts";
+import { CharactersMethods } from "@/server/services/CharactersService.ts";
 import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
 import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
 
@@ -30,9 +30,7 @@ async function setup() {
     height: "180 cm",
     weight: "80 kg",
   });
-  await CharacterInventoryMethods.addItem(
-    session, character.id, item.id, 2, true, "Main Hand", null, null, 0,
-  );
+  await CharacterInventoryMethods.addItem(session, character.id, item.id, 2, true, "Main Hand", null, null, 0);
   return { session, ruleset, item, character };
 }
 

@@ -1,4 +1,5 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
+
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 
 export function faqTooltip(text: string) {

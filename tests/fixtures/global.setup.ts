@@ -1,4 +1,4 @@
-import { startCoverage } from '@/tests/e2e/coverage.ts';
+import { startCoverage } from "@/tests/e2e/coverage.ts";
 
 /**
  * Prepares the run. The server's start copied the seeded database, and each test signs in as users of its own, so

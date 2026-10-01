@@ -1,7 +1,9 @@
 import { basename, join } from "node:path";
+
 import { $ } from "bun";
-import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+
 import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
+import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 /**
  * Re-scrapes all existing reference JSON files (keeping their overrides),
@@ -31,7 +33,13 @@ async function run(script: string, args: string[]): Promise<boolean> {
  * Constructs dndtools.net URLs from book + type + name, regardless of
  * what the stored sourceUrl says (it may point to the old dead site).
  */
-function buildScrapeArgs(ref: { path: string; type: string; url?: string; book: string; filter?: string }): string[] | null {
+function buildScrapeArgs(ref: {
+  path: string;
+  type: string;
+  url?: string;
+  book: string;
+  filter?: string;
+}): string[] | null {
   const name = basename(ref.path, ".json");
 
   // wizardSchool has no parser — skip
@@ -103,7 +111,9 @@ async function main() {
   // Domain refs are handled separately — they use a master reference
   const regularRefs = refs.filter((r) => r.type !== "domain");
 
-  console.log(`Found ${refs.length} reference files.${bookFilter || typeFilter || nameFilter ? ` (filtered: book=${bookFilter ?? "*"}, type=${typeFilter ?? "*"}, name=${nameFilter ?? "*"})` : ""}\n`);
+  console.log(
+    `Found ${refs.length} reference files.${bookFilter || typeFilter || nameFilter ? ` (filtered: book=${bookFilter ?? "*"}, type=${typeFilter ?? "*"}, name=${nameFilter ?? "*"})` : ""}\n`,
+  );
 
   // What failed: the sync then exits with an error, so a script running it stops
   const failed: string[] = [];

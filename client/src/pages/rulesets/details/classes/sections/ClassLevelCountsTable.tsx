@@ -32,12 +32,17 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
 }: ClassLevelCountsTableProps<L>) {
   const keys = [...new Set((levels ?? []).flatMap(keysOf))].sort(compareKeys);
 
-  const columns = keys.length === 0
-    ? [{ key: "level", label: "Level", width: "100%" }]
-    : [
-      { key: "level", label: "Level", width: "12%" },
-      ...keys.map((key) => ({ key: `count_${key}`, label: labelOf(key), width: `${Math.floor(80 / keys.length)}%` })),
-    ];
+  const columns =
+    keys.length === 0
+      ? [{ key: "level", label: "Level", width: "100%" }]
+      : [
+          { key: "level", label: "Level", width: "12%" },
+          ...keys.map((key) => ({
+            key: `count_${key}`,
+            label: labelOf(key),
+            width: `${Math.floor(80 / keys.length)}%`,
+          })),
+        ];
 
   // A copy: sorting the query's own array would reorder its cache.
   const sortedLevels = useMemo(() => levels && [...levels].sort((a, b) => a.level - b.level), [levels]);

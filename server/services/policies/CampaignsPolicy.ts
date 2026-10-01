@@ -1,8 +1,9 @@
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { Players } from "@/server/repositories/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
+import { Players } from "@/server/repositories/index.ts";
 import { type Campaign } from "@/shared/relations.ts";
+
 import BasePolicy from "./BasePolicy.ts";
 
 export default class CampaignsPolicy extends BasePolicy<Campaign> {
@@ -13,7 +14,7 @@ export default class CampaignsPolicy extends BasePolicy<Campaign> {
   }
 
   async canUpdate() {
-    if (!await CampaignsPolicy.isGameMaster(this.session.userId, this.entity.id)) {
+    if (!(await CampaignsPolicy.isGameMaster(this.session.userId, this.entity.id))) {
       throw new ForbiddenError("Only the Game Master can edit this campaign");
     }
 

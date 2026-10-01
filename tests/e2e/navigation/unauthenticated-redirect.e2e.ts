@@ -1,11 +1,7 @@
-import { expect, test } from '@/tests/e2e/fixtures.ts';
+import { expect, test } from "@/tests/e2e/fixtures.ts";
 
-test.describe('Protected Routes - Unauthenticated', () => {
-  const protectedRoutes = [
-    '/dashboard',
-    '/campaigns',
-    '/characters',
-  ];
+test.describe("Protected Routes - Unauthenticated", () => {
+  const protectedRoutes = ["/dashboard", "/campaigns", "/characters"];
 
   for (const route of protectedRoutes) {
     test(`should redirect ${route} to sign-in when not authenticated`, async ({ page }) => {

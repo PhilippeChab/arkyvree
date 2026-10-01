@@ -15,12 +15,12 @@
  *   bun run parser:validate complete-warrior              # only a specific book
  */
 
+import { seededMagicItems, seededRaces, skippedRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/checkOverrides.ts";
 import { loadReference, readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { seededMagicItems, seededRaces, skippedRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import { unresolvedItems } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
+import { discoverRefs, parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
 type DetectedEntry = {
   errors?: string[];
@@ -55,7 +55,18 @@ export type Issue = {
   book: string;
   file: string;
   label: string;
-  kind: "error" | "modifier" | "prereq" | "aptitude pick" | "unresolved item" | "stale review" | "unknown type" | "redundant override" | "ignored override" | "generator refuses the class" | "not seedable";
+  kind:
+    | "error"
+    | "modifier"
+    | "prereq"
+    | "aptitude pick"
+    | "unresolved item"
+    | "stale review"
+    | "unknown type"
+    | "redundant override"
+    | "ignored override"
+    | "generator refuses the class"
+    | "not seedable";
   text: string;
   entityName?: string;
 };
@@ -63,7 +74,8 @@ export type Issue = {
 type Found = { kind: Issue["kind"]; text: string };
 
 /** An entry's detected issues. */
-const detectedIssues = (d: DetectedEntry): Found[] => DETECTED_ISSUES.flatMap(([key, kind]) => (d[key] ?? []).map((text) => ({ kind, text })));
+const detectedIssues = (d: DetectedEntry): Found[] =>
+  DETECTED_ISSUES.flatMap(([key, kind]) => (d[key] ?? []).map((text) => ({ kind, text })));
 
 /** The issues of the references `refs` (`discoverRefs`): what the header lists. */
 export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] {
@@ -79,7 +91,8 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
       }
     };
     /** An entity whose value the generator refuses: it has to be corrected in the reference's overrides, or skipped. */
-    const notSeedable = (name: string, text: string) => issues.push({ ...at, label: name, kind: "not seedable", text, entityName: name });
+    const notSeedable = (name: string, text: string) =>
+      issues.push({ ...at, label: name, kind: "not seedable", text, entityName: name });
     const entityIssues = (detected: Record<string, DetectedEntry>, review: Review, skip = new Set<string>()) => {
       for (const [name, d] of Object.entries(detected)) {
         const found = detectedIssues(d);
@@ -102,11 +115,12 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
           unreviewed(review, detectedIssues(data.detected), { label: "class", entityName: data.raw.name });
           const { refusal, redundant, ignored } = checkClassOverrides(readStoredReference(ref.path, "class"));
           const classIssues: Found[] = [
-            ...refusal ? [{ kind: "generator refuses the class" as const, text: refusal }] : [],
+            ...(refusal ? [{ kind: "generator refuses the class" as const, text: refusal }] : []),
             ...redundant.map((text) => ({ kind: "redundant override" as const, text })),
             ...ignored.map((text) => ({ kind: "ignored override" as const, text })),
           ];
-          for (const { kind, text } of classIssues) issues.push({ ...at, label: "class", kind, text, entityName: data.raw.name });
+          for (const { kind, text } of classIssues)
+            issues.push({ ...at, label: "class", kind, text, entityName: data.raw.name });
           return review;
         }
         case "feat": {
@@ -114,7 +128,13 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
           const data = loadReference(ref.path, "feat");
           const { overrides } = data;
           const review = reviewOf(overrides?.reviewed);
-          entityIssues(data.detected, review, new Set(data.raw.filter((f) => f.featType === "epic" && overrides?.[f.name]?.skip !== false).map((f) => f.name)));
+          entityIssues(
+            data.detected,
+            review,
+            new Set(
+              data.raw.filter((f) => f.featType === "epic" && overrides?.[f.name]?.skip !== false).map((f) => f.name),
+            ),
+          );
           return review;
         }
         case "domain": {
@@ -136,7 +156,11 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
           const data = loadReference(ref.path, "item");
           const review = reviewOf(data.overrides?.reviewed);
           const unresolved = unresolvedItems(data.detected, (name) => Boolean(data.overrides?.[name]?.skip));
-          unreviewed(review, unresolved.map((text) => ({ kind: "unresolved item" as const, text })), { label: "item" });
+          unreviewed(
+            review,
+            unresolved.map((text) => ({ kind: "unresolved item" as const, text })),
+            { label: "item" },
+          );
           return review;
         }
         case "magicItem": {
@@ -156,7 +180,8 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
       }
     };
 
-    for (const entry of reviewedIssues().stale()) issues.push({ ...at, label: "reviewed", kind: "stale review", text: entry });
+    for (const entry of reviewedIssues().stale())
+      issues.push({ ...at, label: "reviewed", kind: "stale review", text: entry });
   }
   return issues;
 }

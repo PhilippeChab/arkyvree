@@ -1,6 +1,7 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
-import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
+
 import { getBondedRaceStats } from "./bondedRaceData.ts";
+import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 
 /**
  * SRD Familiar mechanic:
@@ -13,10 +14,7 @@ import { getBondedRaceStats } from "./bondedRaceData.ts";
  * animal of its kind and uses the master-level progression instead.
  */
 export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
-  protected async applyMasterDerivation(
-    parentCharacterId: string,
-    rulesetData: CachedRulesetData,
-  ): Promise<void> {
+  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
     const masterLevel = master.getDetailedCharacterIdentity().getIdentity().meta.level;
     const naBonus = Math.min(10, Math.max(1, Math.ceil(masterLevel / 2)));

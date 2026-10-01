@@ -65,7 +65,7 @@ export function computePerLevelAptitudeSlots(
 
   // Find the General aptitude ID
   const generalAptId = aptitudeSlugToId.get("general");
-  const generalFormula = (charLevel: number) => charLevel === 0 ? 0 : Math.floor(charLevel / 3) + 1;
+  const generalFormula = (charLevel: number) => (charLevel === 0 ? 0 : Math.floor(charLevel / 3) + 1);
 
   for (let i = 0; i < klassLevelIds.length; i++) {
     const klassLevelId = klassLevelIds[i];
@@ -195,7 +195,10 @@ export function distributePoolSelections(
     if (totalPoints <= 0) continue;
 
     const { perLevel } = distributeSkillPoints(
-      skillId, totalPoints, data.perLevelClassSkillIds, remainingPointsPerLevel,
+      skillId,
+      totalPoints,
+      data.perLevelClassSkillIds,
+      remainingPointsPerLevel,
     );
 
     // Enforce intermediate max ranks: walk levels and push overflow forward

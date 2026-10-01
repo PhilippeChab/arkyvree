@@ -17,18 +17,25 @@ import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 function contributorStatusColor(status: string): "warning" | "success" | "error" | "default" {
   switch (status) {
-    case "Pending": return "warning";
-    case "Active": return "success";
-    case "Rejected": return "error";
-    default: return "default";
+    case "Pending":
+      return "warning";
+    case "Active":
+      return "success";
+    case "Rejected":
+      return "error";
+    default:
+      return "default";
   }
 }
 
 function roleColor(role: string): "error" | "primary" | "default" {
   switch (role) {
-    case "Admin": return "error";
-    case "Editor": return "primary";
-    default: return "default";
+    case "Admin":
+      return "error";
+    case "Editor":
+      return "primary";
+    default:
+      return "default";
   }
 }
 
@@ -94,9 +101,11 @@ export function ContributorsTable<T extends ContributorRow>({
                 </TableCell>
               )}
               <TableCell>
-                {showRoles
-                  ? <Chip label="Active" size="small" color="success" variant="filled" />
-                  : <Chip label="Owner" size="small" color="primary" variant="filled" />}
+                {showRoles ? (
+                  <Chip label="Active" size="small" color="success" variant="filled" />
+                ) : (
+                  <Chip label="Owner" size="small" color="primary" variant="filled" />
+                )}
               </TableCell>
               {renderActions && <TableCell align="right" />}
             </TableRow>
@@ -108,12 +117,22 @@ export function ContributorsTable<T extends ContributorRow>({
               {showRoles && (
                 <TableCell>
                   {contributor.role && (
-                    <Chip label={contributor.role} size="small" color={roleColor(contributor.role)} variant="outlined" />
+                    <Chip
+                      label={contributor.role}
+                      size="small"
+                      color={roleColor(contributor.role)}
+                      variant="outlined"
+                    />
                   )}
                 </TableCell>
               )}
               <TableCell>
-                <Chip label={contributor.status} size="small" color={contributorStatusColor(contributor.status)} variant="filled" />
+                <Chip
+                  label={contributor.status}
+                  size="small"
+                  color={contributorStatusColor(contributor.status)}
+                  variant="filled"
+                />
               </TableCell>
               {renderActions && (
                 <TableCell align="right">

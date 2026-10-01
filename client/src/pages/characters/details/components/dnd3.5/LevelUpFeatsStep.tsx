@@ -1,12 +1,4 @@
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import type { LevelUpFeatsStepProps } from "./levelUpFactory.ts";
-import type { AptitudePool, FeatsData, SelectedFeat } from "./levelUp/index.ts";
-import { fadeInUpSx } from "@/client/src/lib/animations.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
-import { CLICKABLE_SX, clickableProps, DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
 import {
   Alert,
   Box,
@@ -24,7 +16,23 @@ import {
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-function AutoGrantedFeats({ feats, defaultCollapsed }: { feats: FeatsData["autoGrantedFeats"]; defaultCollapsed: boolean }) {
+import { CLICKABLE_SX, clickableProps, DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
+import { fadeInUpSx } from "@/client/src/lib/animations.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
+import type { AptitudePool, FeatsData, SelectedFeat } from "./levelUp/index.ts";
+import type { LevelUpFeatsStepProps } from "./levelUpFactory.ts";
+
+function AutoGrantedFeats({
+  feats,
+  defaultCollapsed,
+}: {
+  feats: FeatsData["autoGrantedFeats"];
+  defaultCollapsed: boolean;
+}) {
   const [open, setOpen] = useState(!defaultCollapsed);
   return (
     <Box sx={{ mb: 1 }}>
@@ -77,23 +85,33 @@ function FeatFamilyExpansion({
   setValue: (key: "selectedFeats", value: Record<string, SelectedFeat[]>) => void;
 }) {
   const query = useInfiniteQuery({
-    queryKey: queryKeys.characters.levelUp.availableFeatFamily(characterId, aptitudeId, family, klassId, editingLevelId, allSelectedFeatPickString, pendingLevelKlassLevelIds),
+    queryKey: queryKeys.characters.levelUp.availableFeatFamily(
+      characterId,
+      aptitudeId,
+      family,
+      klassId,
+      editingLevelId,
+      allSelectedFeatPickString,
+      pendingLevelKlassLevelIds,
+    ),
     queryFn: async ({ pageParam }) => {
-      return parseResponse(rpc.api.characters.levels[":characterId"]["available-feats"]["$get"]({
-        param: { characterId },
-        query: {
-          aptitudeId,
-          klassId,
-          level: klassLevel.toString(),
-          limit: "50",
-          page: pageParam.toString(),
-          family,
-          characterLevelId: editingLevelId || undefined,
-          selectedFeatPicks: allSelectedFeatPickString || undefined,
-          pendingLevelKlassLevelIds: pendingLevelKlassLevelIds || undefined,
-          pendingLevelFeatPicks: pendingLevelFeatPicks || undefined,
-        },
-      }));
+      return parseResponse(
+        rpc.api.characters.levels[":characterId"]["available-feats"]["$get"]({
+          param: { characterId },
+          query: {
+            aptitudeId,
+            klassId,
+            level: klassLevel.toString(),
+            limit: "50",
+            page: pageParam.toString(),
+            family,
+            characterLevelId: editingLevelId || undefined,
+            selectedFeatPicks: allSelectedFeatPickString || undefined,
+            pendingLevelKlassLevelIds: pendingLevelKlassLevelIds || undefined,
+            pendingLevelFeatPicks: pendingLevelFeatPicks || undefined,
+          },
+        }),
+      );
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -116,37 +134,55 @@ function FeatFamilyExpansion({
   return (
     <>
       {variants.map((feat, i) => {
-          const isNew = i >= previousItemCount;
-          return (
-            <Tooltip describeChild key={feat.id} title={!feat.eligible && feat.requirementTree ? feat.requirementTree : feat.description ?? ""} placement="right" enterDelay={300} arrow slotProps={{ tooltip: { sx: !feat.eligible && feat.requirementTree ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" } : {} } }}>
-              <Box component="span" sx={{ display: "block", ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}>
-                <ListItemButton
-                  sx={{ pl: 6 }}
-                  disabled={!feat.eligible}
-                  onClick={() => {
-                    setValue("selectedFeats", {
-                      ...selectedFeats,
-                      [selectedAptitude]: [
-                        ...(selectedFeats[selectedAptitude] || []),
-                        { id: feat.id, name: feat.name, description: feat.description ?? undefined, aptitudeModifiers: feat.aptitudeModifiers },
-                      ],
-                    });
-                  }}
-                >
-                  <ListItemText primary={feat.name} />
-                </ListItemButton>
-              </Box>
-            </Tooltip>
-          );
-        })}
+        const isNew = i >= previousItemCount;
+        return (
+          <Tooltip
+            describeChild
+            key={feat.id}
+            title={!feat.eligible && feat.requirementTree ? feat.requirementTree : (feat.description ?? "")}
+            placement="right"
+            enterDelay={300}
+            arrow
+            slotProps={{
+              tooltip: {
+                sx:
+                  !feat.eligible && feat.requirementTree
+                    ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" }
+                    : {},
+              },
+            }}
+          >
+            <Box component="span" sx={{ display: "block", ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}>
+              <ListItemButton
+                sx={{ pl: 6 }}
+                disabled={!feat.eligible}
+                onClick={() => {
+                  setValue("selectedFeats", {
+                    ...selectedFeats,
+                    [selectedAptitude]: [
+                      ...(selectedFeats[selectedAptitude] || []),
+                      {
+                        id: feat.id,
+                        name: feat.name,
+                        description: feat.description ?? undefined,
+                        aptitudeModifiers: feat.aptitudeModifiers,
+                      },
+                    ],
+                  });
+                }}
+              >
+                <ListItemText primary={feat.name} />
+              </ListItemButton>
+            </Box>
+          </Tooltip>
+        );
+      })}
       {query.hasNextPage && (
         <Box sx={{ pl: 6, py: 0.5 }}>
-          <Button
-            size="small"
-            onClick={() => query.fetchNextPage()}
-            disabled={query.isFetchingNextPage}
-          >
-            <DiceSpinner size="small" loading={query.isFetchingNextPage}>Load More</DiceSpinner>
+          <Button size="small" onClick={() => query.fetchNextPage()} disabled={query.isFetchingNextPage}>
+            <DiceSpinner size="small" loading={query.isFetchingNextPage}>
+              Load More
+            </DiceSpinner>
           </Button>
         </Box>
       )}
@@ -184,26 +220,19 @@ export function LevelUpFeatsStep({
     handleDeleteFeat,
   } = wizard;
   if (isLoadingFeats) return <DiceSpinner />;
-  if (featsError)
-    return <Alert severity="error">Error loading feats.</Alert>;
+  if (featsError) return <Alert severity="error">Error loading feats.</Alert>;
   if (!featData) return null;
 
   const aptitudePools: AptitudePool[] = Object.values(adjustedFeatPools);
 
-  const hasSelectableFeats = aptitudePools.some(
-    (pool) => pool.available > 0,
-  );
+  const hasSelectableFeats = aptitudePools.some((pool) => pool.available > 0);
 
   if (!hasSelectableFeats && featData.autoGrantedFeats.length === 0) {
-    return (
-      <Alert severity="info">No feats to select at this level.</Alert>
-    );
+    return <Alert severity="info">No feats to select at this level.</Alert>;
   }
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
-    >
+    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <Box sx={{ flexShrink: 0 }}>
         <Typography variant="h6" gutterBottom>
           Select Feats by Aptitude
@@ -248,51 +277,45 @@ export function LevelUpFeatsStep({
       {/* Feat Selection Interface for Selected Aptitude */}
       {selectedAptitude &&
         (() => {
-          const currentPool = aptitudePools.find(
-            (p) => p.id === selectedAptitude,
-          );
-          const currentPoolFeats =
-            selectedFeats[selectedAptitude] || [];
+          const currentPool = aptitudePools.find((p) => p.id === selectedAptitude);
+          const currentPoolFeats = selectedFeats[selectedAptitude] || [];
 
           return (
-            <Box
-              sx={{ display: "flex", flexDirection: "column", mt: 3, flex: 1, minHeight: 0 }}
-            >
+            <Box sx={{ display: "flex", flexDirection: "column", mt: 3, flex: 1, minHeight: 0 }}>
               {/* Selected Feats (always reserve space) */}
               <Box sx={{ flexShrink: 0, mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   Selected {currentPool?.name} Feats ({currentPoolFeats.length}/{currentPool?.available || 0}):
                 </Typography>
-                <Box
-                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
-                >
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                   {currentPoolFeats.length > 0
                     ? currentPoolFeats.map((feat) => (
-                        <Tooltip describeChild key={feat.id} title={feat.description ? feat.description.length > 200 ? `${feat.description.slice(0, 200)}…` : feat.description : ""} placement="right" enterDelay={300} arrow>
-                          <Chip
-                            label={feat.name}
-                            onDelete={() =>
-                              handleDeleteFeat(
-                                feat.id,
-                                selectedAptitude,
-                              )
-                            }
-                          />
+                        <Tooltip
+                          describeChild
+                          key={feat.id}
+                          title={
+                            feat.description
+                              ? feat.description.length > 200
+                                ? `${feat.description.slice(0, 200)}…`
+                                : feat.description
+                              : ""
+                          }
+                          placement="right"
+                          enterDelay={300}
+                          arrow
+                        >
+                          <Chip label={feat.name} onDelete={() => handleDeleteFeat(feat.id, selectedAptitude)} />
                         </Tooltip>
                       ))
                     : Array.from({ length: currentPool?.available || 0 }, (_, i) => (
                         <Skeleton key={i} variant="rounded" width={100} height={32} />
-                      ))
-                  }
+                      ))}
                 </Box>
               </Box>
 
               {/* Add Feat List (Grouped) */}
-              {currentPoolFeats.length <
-                (currentPool?.available || 0) && (
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
-                >
+              {currentPoolFeats.length < (currentPool?.available || 0) && (
+                <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
                   <TextField
                     label={`Search ${currentPool?.name} Feats`}
                     placeholder="Search feats..."
@@ -301,17 +324,12 @@ export function LevelUpFeatsStep({
                     fullWidth
                     sx={{ mb: 1, flexShrink: 0 }}
                   />
-                  {isLoadingAvailableFeats &&
-                  groupedFeats.length === 0 ? (
+                  {isLoadingAvailableFeats && groupedFeats.length === 0 ? (
                     <DiceSpinner />
                   ) : groupedFeats.length === 0 && featSearch ? (
                     <NoMatchesState search={featSearch} />
                   ) : (
-                    <List
-                      dense
-                      sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
-                      onScroll={handleFeatsScroll}
-                    >
+                    <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }} onScroll={handleFeatsScroll}>
                       {groupedFeats.map((row) => {
                         const family = row.variantCount > 1 ? row.family : null;
                         const isExpanded = family !== null && expandedFeatFamilies.has(family);
@@ -319,21 +337,11 @@ export function LevelUpFeatsStep({
                         if (family !== null) {
                           return (
                             <Box key={row.family}>
-                              <ListItemButton
-                                onClick={() =>
-                                  toggleFeatFamily(family)
-                                }
-                              >
+                              <ListItemButton onClick={() => toggleFeatFamily(family)}>
                                 {isExpanded ? (
-                                  <ExpandLessIcon
-                                    fontSize="small"
-                                    sx={{ mr: 1 }}
-                                  />
+                                  <ExpandLessIcon fontSize="small" sx={{ mr: 1 }} />
                                 ) : (
-                                  <ExpandMoreIcon
-                                    fontSize="small"
-                                    sx={{ mr: 1 }}
-                                  />
+                                  <ExpandMoreIcon fontSize="small" sx={{ mr: 1 }} />
                                 )}
                                 <ListItemText
                                   primary={row.displayName}
@@ -367,7 +375,24 @@ export function LevelUpFeatsStep({
                         // Wizard Spellcasting on multi-level Archmage)
                         // should remain pickable across batch levels.
                         return (
-                          <Tooltip describeChild key={row.representativeId} title={!row.eligible && "requirementTree" in row ? String(row.requirementTree) : row.description} placement="right" enterDelay={300} arrow slotProps={{ tooltip: { sx: !row.eligible && "requirementTree" in row ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" } : {} } }}>
+                          <Tooltip
+                            describeChild
+                            key={row.representativeId}
+                            title={
+                              !row.eligible && "requirementTree" in row ? String(row.requirementTree) : row.description
+                            }
+                            placement="right"
+                            enterDelay={300}
+                            arrow
+                            slotProps={{
+                              tooltip: {
+                                sx:
+                                  !row.eligible && "requirementTree" in row
+                                    ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" }
+                                    : {},
+                              },
+                            }}
+                          >
                             <span>
                               <ListItemButton
                                 disabled={!row.eligible}
@@ -375,9 +400,7 @@ export function LevelUpFeatsStep({
                                   setValue("selectedFeats", {
                                     ...selectedFeats,
                                     [selectedAptitude]: [
-                                      ...(selectedFeats[
-                                        selectedAptitude
-                                      ] || []),
+                                      ...(selectedFeats[selectedAptitude] || []),
                                       {
                                         id: row.representativeId,
                                         name: row.displayName,
@@ -388,18 +411,14 @@ export function LevelUpFeatsStep({
                                   });
                                 }}
                               >
-                                <ListItemText
-                                  primary={row.displayName}
-                                />
+                                <ListItemText primary={row.displayName} />
                               </ListItemButton>
                             </span>
                           </Tooltip>
                         );
                       })}
                       {isFetchingNextFeatsPage && (
-                        <Box
-                          sx={{ display: "flex", justifyContent: "center", py: 1 }}
-                        >
+                        <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
                           <DiceSpinner size="small" />
                         </Box>
                       )}
@@ -407,7 +426,6 @@ export function LevelUpFeatsStep({
                   )}
                 </Box>
               )}
-
             </Box>
           );
         })()}

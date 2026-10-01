@@ -1,4 +1,5 @@
 import type { UseFormReturn } from "react-hook-form";
+
 import { ConditionFields } from "./ConditionFields.tsx";
 
 export interface ModifierFormData {

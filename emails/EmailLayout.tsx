@@ -1,14 +1,4 @@
-import {
-  Body,
-  Container,
-  Head,
-  Hr,
-  Html,
-  Img,
-  Preview,
-  Section,
-  Text,
-} from "@react-email/components";
+import { Body, Container, Head, Hr, Html, Img, Preview, Section, Text } from "@react-email/components";
 import type { CSSProperties, ReactNode } from "react";
 
 export const APP_URL = process.env.APP_URL || "http://localhost:5173";
@@ -94,21 +84,13 @@ export const EmailLayout = ({ preview, children }: EmailLayoutProps) => (
     <Body style={body}>
       <Container style={container}>
         <Section style={header}>
-          <Img
-            src={`${APP_URL}/pwa-192x192.png`}
-            width={64}
-            height={64}
-            alt="Arkyvree"
-            style={logo}
-          />
+          <Img src={`${APP_URL}/pwa-192x192.png`} width={64} height={64} alt="Arkyvree" style={logo} />
           <Text style={wordmark}>Arkyvree</Text>
         </Section>
         <Hr style={accentBar} />
         {children}
         <Hr style={divider} />
-        <Text style={footer}>
-          © {new Date().getFullYear()} Arkyvree · Happy adventuring
-        </Text>
+        <Text style={footer}>© {new Date().getFullYear()} Arkyvree · Happy adventuring</Text>
       </Container>
     </Body>
   </Html>

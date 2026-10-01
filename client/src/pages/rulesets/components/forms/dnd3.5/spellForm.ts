@@ -2,9 +2,7 @@ import type { InferRequestType } from "hono/client";
 
 import type { rpc } from "@/client/src/services/rpc.ts";
 
-export type SpellFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["powers"]["$post"]
->["json"];
+export type SpellFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["powers"]["$post"]>["json"];
 
 export type SpellAptitude = SpellFormData["aptitudes"][number];
 

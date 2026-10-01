@@ -5,17 +5,15 @@
  * mirror it in the cache compose step.
  */
 
-import { and, eq, isNull } from "drizzle-orm";
-import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
-import { db } from "@/server/database/index.ts";
-import { type SeedContext } from "@/database/seeds/helpers.ts";
-import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
-import {
-  type CachedRulesetData,
-  getOrBuildCowData,
-  getOrFetchRulesetData,
-} from "@/server/cache/rulesetCache.ts";
 import { beforeAll, describe, expect, test } from "bun:test";
+
+import { and, eq, isNull } from "drizzle-orm";
+
+import { type SeedContext } from "@/database/seeds/helpers.ts";
+import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
+import { type CachedRulesetData, getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache.ts";
+import { db } from "@/server/database/index.ts";
+import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx } from "@/tests/helpers.ts";
 
 describe("cache join-maps — parity with repository queries", () => {
@@ -30,8 +28,7 @@ describe("cache join-maps — parity with repository queries", () => {
     rulesetData = await getOrFetchRulesetData(ctx.rulesetId, cowData);
   });
 
-  const sortById = <T extends { id: string }>(xs: T[]) =>
-    [...xs].sort((a, b) => a.id.localeCompare(b.id));
+  const sortById = <T extends { id: string }>(xs: T[]) => [...xs].sort((a, b) => a.id.localeCompare(b.id));
 
   test("klassLevelFeatsWithFeatsByKlassLevel matches the class level's feats with their feat", async () => {
     const fighterId = ctx.klassMap.pc["Fighter"];
@@ -71,9 +68,7 @@ describe("cache join-maps — parity with repository queries", () => {
     expect(fromCache.length).toBe(fromDb.length);
     // klass_level_powers has no `id` column — sort by (powerId, aptitudeId).
     const sortByPowerApt = <T extends { powerId: string; aptitudeId: string }>(xs: T[]) =>
-      [...xs].sort((a, b) =>
-        a.powerId.localeCompare(b.powerId) || a.aptitudeId.localeCompare(b.aptitudeId),
-      );
+      [...xs].sort((a, b) => a.powerId.localeCompare(b.powerId) || a.aptitudeId.localeCompare(b.aptitudeId));
     const mapRow = (r: (typeof fromDb)[number]) => ({
       klassLevelId: r.klassLevelId,
       powerId: r.powerId,
@@ -114,9 +109,7 @@ describe("cache join-maps — parity with repository queries", () => {
     // aptitude exclusion would matter; that case is exercised by
     // tests/cache/aptitudeDedup.test.ts.
     const allAptitudeIds = rulesetData.aptitudes.map((a) => a.id);
-    const fromDb = new Set(
-      await PowersAptitudes.findDistinctAptitudeIds(db, { aptitudeIds: allAptitudeIds }),
-    );
+    const fromDb = new Set(await PowersAptitudes.findDistinctAptitudeIds(db, { aptitudeIds: allAptitudeIds }));
     expect(rulesetData.aptitudeIdsByHavingPowers).toEqual(fromDb);
   });
 
@@ -149,10 +142,11 @@ describe("cache join-maps — parity with repository queries", () => {
 
   test("propertiesByEntity + propertiesByEntityType cover the same row set", () => {
     // Both indices are built from the same composed rows; total counts must match.
-    const totalByEntity = [...rulesetData.propertiesByEntity.values()]
-      .reduce((sum, rows) => sum + rows.length, 0);
-    const totalByEntityType = [...rulesetData.propertiesByEntityType.values()]
-      .reduce((sum, rows) => sum + rows.length, 0);
+    const totalByEntity = [...rulesetData.propertiesByEntity.values()].reduce((sum, rows) => sum + rows.length, 0);
+    const totalByEntityType = [...rulesetData.propertiesByEntityType.values()].reduce(
+      (sum, rows) => sum + rows.length,
+      0,
+    );
     expect(totalByEntity).toBe(totalByEntityType);
 
     // Every row reachable via entityType is also reachable via entityId.

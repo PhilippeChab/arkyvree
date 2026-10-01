@@ -1,22 +1,15 @@
-import { VerificationCodeInput } from "@/client/src/components/auth/index.ts";
-import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
-import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import {
-  Box,
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Link as MuiLink,
-  Typography,
-} from "@mui/material";
+import { Box, Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+
+import { VerificationCodeInput } from "@/client/src/components/auth/index.ts";
+import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface EmailChangeVerificationDialogProps {
   open: boolean;
@@ -28,11 +21,7 @@ interface EmailVerificationFormData {
   digits: string[];
 }
 
-export function EmailChangeVerificationDialog({
-  open,
-  onClose,
-  pendingEmail,
-}: EmailChangeVerificationDialogProps) {
+export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: EmailChangeVerificationDialogProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -80,13 +69,7 @@ export function EmailChangeVerificationDialog({
   const isComplete = digits.every((d) => d !== "");
 
   return (
-    <FormDialog
-      open={open}
-      onClose={handleClose}
-      form={form}
-      isLoading={verifyMutation.isPending}
-      maxWidth="xs"
-    >
+    <FormDialog open={open} onClose={handleClose} form={form} isLoading={verifyMutation.isPending} maxWidth="xs">
       <DialogTitle>Verify New Email</DialogTitle>
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <DialogContent>
@@ -123,13 +106,13 @@ export function EmailChangeVerificationDialog({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} disabled={verifyMutation.isPending} variant="outlined" color="inherit">Cancel</Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={verifyMutation.isPending || !isComplete}
-          >
-            <DiceSpinner size="small" loading={verifyMutation.isPending}>Verify</DiceSpinner>
+          <Button onClick={handleClose} disabled={verifyMutation.isPending} variant="outlined" color="inherit">
+            Cancel
+          </Button>
+          <Button type="submit" variant="contained" disabled={verifyMutation.isPending || !isComplete}>
+            <DiceSpinner size="small" loading={verifyMutation.isPending}>
+              Verify
+            </DiceSpinner>
           </Button>
         </DialogActions>
       </form>

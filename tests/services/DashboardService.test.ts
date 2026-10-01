@@ -1,8 +1,15 @@
 import { describe, expect, test } from "bun:test";
+
 import { db } from "@/server/database/index.ts";
 import { Campaigns, Characters, Rulesets } from "@/server/repositories/index.ts";
 import { DashboardMethods } from "@/server/services/DashboardService.ts";
-import { addRulesetContributor, createTestCampaign, createTestCharacter, createTestRuleset, createTestUser } from "@/tests/helpers.ts";
+import {
+  addRulesetContributor,
+  createTestCampaign,
+  createTestCharacter,
+  createTestRuleset,
+  createTestUser,
+} from "@/tests/helpers.ts";
 
 describe("DashboardService.getMyStats", () => {
   test("counts the user's own live characters and campaigns only", async () => {

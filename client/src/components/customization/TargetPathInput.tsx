@@ -3,14 +3,11 @@ import type { PathCompletion, PathValidationResult, TargetPath } from "@/shared/
 
 /** What the input reports about a completed path. */
 export type PathInfo = Pick<TargetPath, "path" | "valueType" | "operators" | "possibleValues">;
-import {
-  Box,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-} from "@mui/material";
+import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { useLatest } from "@/client/src/hooks/index.ts";
+
 import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
 
 interface TargetPathInputProps {
@@ -47,10 +44,7 @@ export function TargetPathInput({
   const [userChanged, setUserChanged] = useState(false);
   const onPathInfoChangeRef = useLatest(onPathInfoChange);
 
-  const segments = useMemo(
-    () => (value ? value.split(".").filter(Boolean) : []),
-    [value],
-  );
+  const segments = useMemo(() => (value ? value.split(".").filter(Boolean) : []), [value]);
 
   // A path is complete when the browser reports a selected leaf completion
   const isComplete = selectedCompletion?.kind === "property" && selectedCompletion?.path === value;
@@ -63,10 +57,14 @@ export function TargetPathInput({
         return;
       }
       try {
-        setValidationResult(await parseResponse(rpc.api.rulesets[":id"].customization["target"].paths.validate.$post({
-          param: { id: rulesetId },
-          json: { path, kind },
-        })));
+        setValidationResult(
+          await parseResponse(
+            rpc.api.rulesets[":id"].customization["target"].paths.validate.$post({
+              param: { id: rulesetId },
+              json: { path, kind },
+            }),
+          ),
+        );
       } catch {
         setValidationResult(null);
       }
@@ -132,11 +130,7 @@ export function TargetPathInput({
 
   return (
     <FormControl fullWidth={fullWidth} error={hasError}>
-      <InputLabel
-        shrink
-        required={required}
-        sx={{ backgroundColor: "background.paper", px: 0.5 }}
-      >
+      <InputLabel shrink required={required} sx={{ backgroundColor: "background.paper", px: 0.5 }}>
         {label}
       </InputLabel>
       <Box
@@ -159,7 +153,10 @@ export function TargetPathInput({
           segments={segments}
           isComplete={isComplete}
           disabled={disabled}
-          onChange={(v) => { setUserChanged(true); onChange(v); }}
+          onChange={(v) => {
+            setUserChanged(true);
+            onChange(v);
+          }}
           onSelectedCompletion={setSelectedCompletion}
         />
       </Box>

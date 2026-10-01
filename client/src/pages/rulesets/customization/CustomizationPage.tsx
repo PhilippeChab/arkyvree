@@ -1,8 +1,20 @@
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { Settings as ModifiersIcon, Label as PropertiesIcon, Rule as RequirementsIcon } from "@mui/icons-material";
+import { Box, Typography } from "@mui/material";
+import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type ReactNode, useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+
+import {
+  DeleteDialog,
+  DiceSpinner,
+  FaqHelpIcon,
+  type SectionTab,
+  SectionTabs,
+} from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
-import { DeleteDialog, DiceSpinner, FaqHelpIcon, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -20,23 +32,14 @@ import {
   type CustomizationEntity,
   customizationEntityQuery,
 } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
-import {
-  Settings as ModifiersIcon,
-  Label as PropertiesIcon,
-  Rule as RequirementsIcon,
-} from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
-import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ModifiersSection,
   PropertiesSection,
   RequirementsSection,
 } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import type { EntityType } from "@/client/src/pages/rulesets/customization/types.ts";
+import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 type TabSection = "properties" | "modifiers" | "requirements";
 
@@ -51,17 +54,26 @@ const TABS: SectionTab<TabSection>[] = [
   {
     key: "properties",
     icon: PropertiesIcon,
-    label: tabLabel("Properties", "Properties are additional attributes that can be applied to entities, providing extra characteristics or metadata."),
+    label: tabLabel(
+      "Properties",
+      "Properties are additional attributes that can be applied to entities, providing extra characteristics or metadata.",
+    ),
   },
   {
     key: "modifiers",
     icon: ModifiersIcon,
-    label: tabLabel("Modifiers", "Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."),
+    label: tabLabel(
+      "Modifiers",
+      "Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc.",
+    ),
   },
   {
     key: "requirements",
     icon: RequirementsIcon,
-    label: tabLabel("Requirements", "Requirements are conditions that entities must meet to be usable/available. Examples include character level requirements, feat prerequisites, etc."),
+    label: tabLabel(
+      "Requirements",
+      "Requirements are conditions that entities must meet to be usable/available. Examples include character level requirements, feat prerequisites, etc.",
+    ),
   },
 ];
 
@@ -87,7 +99,11 @@ const isEditable = (data: CustomizationEntity): data is EditableEntity =>
   EDITABLE_TYPES.some((type) => type === data.type);
 
 /** What surrounds the editor: the header and where Back goes. */
-function describe(data: CustomizationEntity, rulesetId: string, entityId: string): {
+function describe(
+  data: CustomizationEntity,
+  rulesetId: string,
+  entityId: string,
+): {
   title: string;
   pageTitle: string;
   subtitle?: ReactNode;
@@ -117,7 +133,11 @@ function describe(data: CustomizationEntity, rulesetId: string, entityId: string
         backPath: `/rulesets/${rulesetId}/classes/${data.entity.klassId}/levels`,
       };
     case "klasses":
-      return { title: data.entity.name, pageTitle: data.entity.name, backPath: `/rulesets/${rulesetId}/classes/${entityId}` };
+      return {
+        title: data.entity.name,
+        pageTitle: data.entity.name,
+        backPath: `/rulesets/${rulesetId}/classes/${entityId}`,
+      };
     default:
       return { title: data.entity.name, pageTitle: data.entity.name };
   }
@@ -156,7 +176,9 @@ async function deleteEntity(data: EditableEntity, id: string, entityId: string) 
       await api.powers[":powerId"].$delete({ param: { id, powerId: entityId } });
       return;
     case "klass_levels":
-      await api.classes[":classId"].levels[":levelId"].$delete({ param: { id, classId: data.entity.klassId, levelId: entityId } });
+      await api.classes[":classId"].levels[":levelId"].$delete({
+        param: { id, classId: data.entity.klassId, levelId: entityId },
+      });
       return;
     default:
       return data satisfies never;
@@ -175,7 +197,16 @@ interface CustomizationViewProps {
   locked: boolean;
 }
 
-function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, canEdit, locked }: CustomizationViewProps) {
+function CustomizationView({
+  rulesetId,
+  entityId,
+  section,
+  tabs,
+  ruleset,
+  data,
+  canEdit,
+  locked,
+}: CustomizationViewProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -190,7 +221,8 @@ function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, 
   usePageTitle(pageTitle);
 
   const entityKey = queryKeys.rulesets.entity(rulesetId, type, entityId);
-  const klassLevelsKey = data.type === "klass_levels" ? queryKeys.rulesets.classLevels(rulesetId, data.entity.klassId) : undefined;
+  const klassLevelsKey =
+    data.type === "klass_levels" ? queryKeys.rulesets.classLevels(rulesetId, data.entity.klassId) : undefined;
 
   // Editing or customizing an inherited entity copies it into this ruleset
   // under a new id: move to the copy, unless the page has left the source
@@ -257,25 +289,28 @@ function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, 
       canDelete={canEdit && isEditable(data) && !locked}
       onDelete={() => setDeleteDialogOpen(true)}
     >
-      {isEditable(data) && renderEditor(data, {
-        rulesetId,
-        entityId,
-        recordKey: `${rulesetId}/${entityId}`,
-        adoptKey: state.copiedFrom && `${rulesetId}/${state.copiedFrom}`,
-        canEdit,
-        locked,
-        onSaved: handleSaved,
-      })}
+      {isEditable(data) &&
+        renderEditor(data, {
+          rulesetId,
+          entityId,
+          recordKey: `${rulesetId}/${entityId}`,
+          adoptKey: state.copiedFrom && `${rulesetId}/${state.copiedFrom}`,
+          canEdit,
+          locked,
+          onSaved: handleSaved,
+        })}
 
       <SectionTabs
         tabs={tabs}
         value={section}
         // While locked the entry still says where the copy came from: replace it
         // rather than leave more entries to clean up.
-        onChange={(key) => navigate(`/rulesets/${rulesetId}/${type}/${entityId}/customization/${key}`, {
-          state: location.state,
-          replace: locked,
-        })}
+        onChange={(key) =>
+          navigate(`/rulesets/${rulesetId}/${type}/${entityId}/customization/${key}`, {
+            state: location.state,
+            replace: locked,
+          })
+        }
         aria-label="customization tabs"
       />
 
@@ -310,7 +345,12 @@ function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, 
 }
 
 export default function CustomizationPage() {
-  const { id: rulesetId = "", entityType, entityId = "", section } = useParams<{
+  const {
+    id: rulesetId = "",
+    entityType,
+    entityId = "",
+    section,
+  } = useParams<{
     id: string;
     entityType: string;
     entityId: string;
@@ -323,7 +363,12 @@ export default function CustomizationPage() {
   const { copiedFrom } = entityPageState(location.state);
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
-  const { data, isLoading: isEntityLoading, isPlaceholderData, error: entityError } = useQuery({
+  const {
+    data,
+    isLoading: isEntityLoading,
+    isPlaceholderData,
+    error: entityError,
+  } = useQuery({
     ...customizationEntityQuery(rulesetId, validType ?? "feats", entityId),
     enabled: !!validType && !!entityId,
     // Right after a copy-on-write, keep showing the entity the copy was made
@@ -332,8 +377,10 @@ export default function CustomizationPage() {
     // copy, as the server resolves an inherited entity to its copy. The
     // ruleset must match too: an inherited entity keeps its id in every fork.
     placeholderData: (previous, previousQuery) =>
-      copiedFrom && previous && previousQuery?.queryKey[2] === rulesetId
-        && (previous.entity.id === copiedFrom || previous.entity.id === entityId)
+      copiedFrom &&
+      previous &&
+      previousQuery?.queryKey[2] === rulesetId &&
+      (previous.entity.id === copiedFrom || previous.entity.id === entityId)
         ? previous
         : undefined,
   });
@@ -356,14 +403,21 @@ export default function CustomizationPage() {
   }, [rulesetId, validType, entityId, currentTab, navigate, location.state]);
 
   // A failed refetch keeps showing the data it has (and any unsaved edits).
-  if (!validType || (rulesetError && !ruleset) || (entityError && !data) || (!isRulesetLoading && !isEntityLoading && (!ruleset || !data))) {
+  if (
+    !validType ||
+    (rulesetError && !ruleset) ||
+    (entityError && !data) ||
+    (!isRulesetLoading && !isEntityLoading && (!ruleset || !data))
+  ) {
     return (
       <EntityPageError
-        message={!validType
-          ? `Invalid entity type: ${entityType}`
-          : !ruleset && (rulesetError || !entityError)
-            ? loadFailureMessage("Ruleset", rulesetError)
-            : loadFailureMessage(ENTITY_LABELS[validType], entityError)}
+        message={
+          !validType
+            ? `Invalid entity type: ${entityType}`
+            : !ruleset && (rulesetError || !entityError)
+              ? loadFailureMessage("Ruleset", rulesetError)
+              : loadFailureMessage(ENTITY_LABELS[validType], entityError)
+        }
         backLabel="Back to Ruleset"
         onBack={() => navigate(`/rulesets/${rulesetId}`)}
       />
@@ -371,7 +425,11 @@ export default function CustomizationPage() {
   }
 
   if (!ruleset || !data || !currentTab) {
-    return <EntityDetailLayout onBack={() => navigate(-1)} canDelete={false} isLoading>{null}</EntityDetailLayout>;
+    return (
+      <EntityDetailLayout onBack={() => navigate(-1)} canDelete={false} isLoading>
+        {null}
+      </EntityDetailLayout>
+    );
   }
 
   return (

@@ -1,9 +1,13 @@
-import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+import { Stack } from "@mui/material";
+
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import type { SheetCombat } from "./sections/dnd3.5/index.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
+import { BONDED_KIND_SLUGS, BONDED_LABEL_BY_KIND } from "@/shared/dnd3.5/bondedKinds.ts";
+import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+
 import { getSections } from "./sectionFactory.ts";
+import type { SheetCombat } from "./sections/dnd3.5/index.ts";
 import {
   type CharacterData,
   CharacterIdentitySection,
@@ -14,8 +18,6 @@ import {
   ReadOnlyEquipmentSection,
   WeaponsSection,
 } from "./sections/index.ts";
-import { Stack } from "@mui/material";
-import { BONDED_KIND_SLUGS, BONDED_LABEL_BY_KIND } from "@/shared/dnd3.5/bondedKinds.ts";
 
 type CharacterSheetBodyProps = {
   character: CharacterData;
@@ -74,11 +76,7 @@ export function CharacterSheetBody({
 
       {!partial && (
         <>
-          <sections.AbilityScoresSection
-            abilities={abilities}
-            characterId={characterId}
-            readOnly={readOnly}
-          />
+          <sections.AbilityScoresSection abilities={abilities} characterId={characterId} readOnly={readOnly} />
 
           <ClassesSection
             classes={character.classes || {}}
@@ -89,10 +87,7 @@ export function CharacterSheetBody({
             readOnly={readOnly}
           />
 
-          <sections.CombatAndSavesSection
-            combat={combat}
-            saves={saves}
-          />
+          <sections.CombatAndSavesSection combat={combat} saves={saves} />
 
           <WeaponsSection combat={combat} />
 
@@ -105,7 +100,7 @@ export function CharacterSheetBody({
             renderFeatExtra={(() => {
               const bondedMap = "bonded" in character ? character.bonded : null;
               if (!bondedMap) return undefined;
-              const matches: { suffix: string; bonded: NonNullable<typeof bondedMap[string]> }[] = [];
+              const matches: { suffix: string; bonded: NonNullable<(typeof bondedMap)[string]> }[] = [];
               for (const [kind, bonded] of Object.entries(bondedMap)) {
                 if (!bonded) continue;
                 const bondedKind = oneOf(kind, BONDED_KIND_SLUGS);
@@ -118,12 +113,7 @@ export function CharacterSheetBody({
                 for (const { suffix, bonded } of matches) {
                   const raceName = bonded.identity?.physiology?.race?.name;
                   if (raceName && feat.name === `${raceName} ${suffix}`) {
-                    return (
-                      <sections.BondedSection
-                        bonded={bonded}
-                        linkable={!!onViewBondedSheet}
-                      />
-                    );
+                    return <sections.BondedSection bonded={bonded} linkable={!!onViewBondedSheet} />;
                   }
                 }
                 return null;
@@ -133,7 +123,14 @@ export function CharacterSheetBody({
 
           {/* The campaign endpoint returns powers as [] for partial visibility — guard against that since PowersSection expects a record */}
           {!Array.isArray(character.powers) && (
-            <sections.PowersSection classes={character.classes || {}} powers={character.powers} virtualPowers={character.virtualPowers} aptitudes={character.aptitudes} spellTags={character.spellTags} rulesetId={rulesetId} />
+            <sections.PowersSection
+              classes={character.classes || {}}
+              powers={character.powers}
+              virtualPowers={character.virtualPowers}
+              aptitudes={character.aptitudes}
+              spellTags={character.spellTags}
+              rulesetId={rulesetId}
+            />
           )}
 
           {equipmentMode === "editable" && rulesetId ? (
@@ -145,10 +142,7 @@ export function CharacterSheetBody({
               encumbrance={encumbrance}
             />
           ) : (
-            <ReadOnlyEquipmentSection
-              equipment={character.equipment || []}
-              encumbrance={encumbrance}
-            />
+            <ReadOnlyEquipmentSection equipment={character.equipment || []} encumbrance={encumbrance} />
           )}
 
           {diagnostics && Object.values(character.classes || {}).some((cls) => cls.levels.length > 0) && (

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { db } from "@/server/database/index.ts";
 import { EmailVerifications, Users } from "@/server/repositories/index.ts";
 import { api, apiAs, createSignedInUser, expectOk, guestApi, sessionIdFrom } from "@/tests/api.ts";
@@ -10,7 +11,9 @@ const invites = api.api.campaigns.invites;
 async function createInvite(email: string) {
   const { rulesetId } = await getSeedCtx();
   const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Invites Campaign", rulesetId } }));
-  const { invite } = await expectOk(api.api.campaigns[":id"].players.$post({ param: { id: campaign.id }, json: { email, role: "Player Character" } }));
+  const { invite } = await expectOk(
+    api.api.campaigns[":id"].players.$post({ param: { id: campaign.id }, json: { email, role: "Player Character" } }),
+  );
   return { campaignId: campaign.id, inviteId: invite!.id };
 }
 
@@ -33,38 +36,57 @@ describe("campaigns invites", () => {
     const { inviteId, invitee } = await createInviteForNewUser();
     const theirs = invitee.api.api.campaigns.invites;
     expect((await expectOk(theirs.me.$get())).map((i) => i.id)).toEqual([inviteId]);
-    expect(await expectOk(theirs[":inviteId"].$get({ param: { inviteId } }))).toMatchObject({ id: inviteId, status: "Pending" });
-    expect(await expectOk(theirs[":inviteId"].accept.$post({ param: { inviteId } }))).toMatchObject({ status: "Accepted" });
+    expect(await expectOk(theirs[":inviteId"].$get({ param: { inviteId } }))).toMatchObject({
+      id: inviteId,
+      status: "Pending",
+    });
+    expect(await expectOk(theirs[":inviteId"].accept.$post({ param: { inviteId } }))).toMatchObject({
+      status: "Accepted",
+    });
   });
 
   test("lets the invitee reject an invite", async () => {
     const { inviteId, invitee } = await createInviteForNewUser();
-    const rejected = await expectOk(invitee.api.api.campaigns.invites[":inviteId"].reject.$post({ param: { inviteId } }));
+    const rejected = await expectOk(
+      invitee.api.api.campaigns.invites[":inviteId"].reject.$post({ param: { inviteId } }),
+    );
     expect(rejected.status).toBe("Rejected");
   });
 
   test("lets the Game Master revoke an invite", async () => {
     const { inviteId } = await createInviteForNewUser();
-    expect(await expectOk(invites[":inviteId"].revoke.$post({ param: { inviteId } }))).toMatchObject({ status: "Revoked" });
+    expect(await expectOk(invites[":inviteId"].revoke.$post({ param: { inviteId } }))).toMatchObject({
+      status: "Revoked",
+    });
   });
 
   test("hands an email-only invite to whoever signs up with that email", async () => {
     const email = `email-only-${uniqueId()}@example.com`;
     const { inviteId } = await createInvite(email);
 
-    await expectOk(guestApi.auth["sign-up"].$post({ json: { emailAddress: email, password: "password1234", passwordConfirmation: "password1234" } }));
+    await expectOk(
+      guestApi.auth["sign-up"].$post({
+        json: { emailAddress: email, password: "password1234", passwordConfirmation: "password1234" },
+      }),
+    );
     const user = await Users.findOne(db, { emailAddress: email });
     const verification = await EmailVerifications.findOne(db, { userId: user!.id });
-    const verified = await guestApi.auth["verify-email"].$post({ json: { emailAddress: email, code: verification!.code } });
+    const verified = await guestApi.auth["verify-email"].$post({
+      json: { emailAddress: email, code: verification!.code },
+    });
     await expectOk(verified);
     const theirs = apiAs(sessionIdFrom(verified)).api.campaigns.invites;
     expect(await expectOk(theirs.me.$get())).toMatchObject([{ id: inviteId, status: "Pending" }]);
-    expect(await expectOk(theirs[":inviteId"].accept.$post({ param: { inviteId } }))).toMatchObject({ status: "Accepted" });
+    expect(await expectOk(theirs[":inviteId"].accept.$post({ param: { inviteId } }))).toMatchObject({
+      status: "Accepted",
+    });
   });
 
   test("requires a session", async () => {
     const { campaignId } = await createInviteForNewUser();
-    expect((await guestApi.api.campaigns[":id"].invites.$get({ param: { id: campaignId }, query: {} })).status).toBe(401);
+    expect((await guestApi.api.campaigns[":id"].invites.$get({ param: { id: campaignId }, query: {} })).status).toBe(
+      401,
+    );
   });
 
   test("returns 404 for a missing campaign or invite", async () => {

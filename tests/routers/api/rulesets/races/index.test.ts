@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
@@ -34,7 +35,11 @@ describe("rulesets races", () => {
   test("rejects a race without a name, with an unknown size or a non-numeric speed", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const valid = { name: "Race", size: "Medium", baseSpeed: 30 };
-    for (const json of [{ ...valid, name: "" }, { ...valid, size: "Colossal-ish" }, { ...valid, baseSpeed: "fast" }]) {
+    for (const json of [
+      { ...valid, name: "" },
+      { ...valid, size: "Colossal-ish" },
+      { ...valid, baseSpeed: "fast" },
+    ]) {
       expect((await races.$post({ param: { id }, json: json as never })).status).toBe(400);
     }
   });

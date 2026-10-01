@@ -1,16 +1,16 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
-import { ConflictError } from "@/server/errors/index.ts";
 import type { Db } from "@/server/database/index.ts";
+import { ConflictError } from "@/server/errors/index.ts";
+import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
+import { SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { PropertyRecord, SkillsHooks } from "@/server/rulesets/hooks/SkillsHooks.ts";
 import {
-  Aptitudes,
-  Feats,
-  FeatsAptitudes,
-  Modifiers,
-  Properties,
-} from "@/server/repositories/index.ts";
-import { cowEntityForCustomization, deleteModifiersWithCascade, deletePropertiesWithCascade, deleteRequirementsWithCascade, entityHasCharacterPicks } from "@/server/services/rulesets/cow.ts";
-import { SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "@/server/rulesets/dnd3.5/properties/index.ts";
+  cowEntityForCustomization,
+  deleteModifiersWithCascade,
+  deletePropertiesWithCascade,
+  deleteRequirementsWithCascade,
+  entityHasCharacterPicks,
+} from "@/server/services/rulesets/cow.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
 export class Dnd35SkillsHooks implements SkillsHooks {
@@ -77,7 +77,11 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     skillId: string,
     body: { impactedByWeight: boolean; usableWithoutTraining: boolean },
   ): Promise<void> {
-    await Properties.deleteMany(tx, { entityIds: [skillId], entityType: "skills", types: [SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING] });
+    await Properties.deleteMany(tx, {
+      entityIds: [skillId],
+      entityType: "skills",
+      types: [SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING],
+    });
 
     const records = this.buildProperties(skillId, body);
     if (records.length > 0) {
@@ -104,18 +108,20 @@ export class Dnd35SkillsHooks implements SkillsHooks {
 
     await FeatsAptitudes.create(tx, { featId: feat.id, aptitudeId: generalAptitude.id });
 
-    await Modifiers.createMany(tx, [{
-      sourceId: feat.id,
-      sourceType: "feats",
-      target: `skills.${stripSeparators(skillName)}.misc`,
-      operator: "add",
-      value: "3",
-      valueType: "number",
-    }]);
+    await Modifiers.createMany(tx, [
+      {
+        sourceId: feat.id,
+        sourceType: "feats",
+        target: `skills.${stripSeparators(skillName)}.misc`,
+        operator: "add",
+        value: "3",
+        valueType: "number",
+      },
+    ]);
   }
 
   async deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void> {
-    const feat = rulesetData.feats.find(f => f.name === `Skill Focus: ${skillName}`);
+    const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
     if (!feat) return;
     if (await entityHasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
       throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");

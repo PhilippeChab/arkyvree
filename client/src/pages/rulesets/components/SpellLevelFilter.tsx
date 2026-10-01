@@ -23,7 +23,9 @@ export function SpellLevelFilter({ value, onChange, allowAll }: SpellLevelFilter
     >
       {allowAll && <MenuItem value="">All</MenuItem>}
       {SPELL_LEVELS.map((level) => (
-        <MenuItem key={level} value={level}>{level}</MenuItem>
+        <MenuItem key={level} value={level}>
+          {level}
+        </MenuItem>
       ))}
     </TextField>
   );

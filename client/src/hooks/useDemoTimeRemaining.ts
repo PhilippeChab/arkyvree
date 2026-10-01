@@ -52,7 +52,9 @@ export function useDemoTimeRemaining(): DemoTimeRemaining {
       timeoutId = setTimeout(tick, delay);
     };
     tick();
-    return () => { if (timeoutId) clearTimeout(timeoutId); };
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [expiresAt]);
 
   return state;

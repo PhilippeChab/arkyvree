@@ -1,21 +1,19 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
-import { useEntityFilters } from "@/client/src/pages/rulesets/details/entityFilters.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { People as RacesIcon } from "@mui/icons-material";
-import {
-  Chip,
-  Typography,
-} from "@mui/material";
+import { Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useCallback } from "react";
-import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+
+import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { useEntityFilters } from "@/client/src/pages/rulesets/details/entityFilters.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 const RACES_COLUMNS = [
   { key: "name", label: "Name", width: "15%" },
@@ -33,20 +31,18 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters();
 
-  const {
-    createForm,
-    handleCreate,
-    createDialogProps,
-  } = useRulesetSection<Race, RaceFormData>({
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Race, RaceFormData>({
     rulesetId: ruleset.id,
     sectionName: "races",
     createDefaults: { size: "Medium", baseSpeed: 30 },
     label: "Race",
     createFn: async (data) => {
-      return parseResponse(rpc.api.rulesets[":id"].races.$post({
-        param: { id: ruleset.id },
-        json: data,
-      }));
+      return parseResponse(
+        rpc.api.rulesets[":id"].races.$post({
+          param: { id: ruleset.id },
+          json: data,
+        }),
+      );
     },
     onCreateSuccess: (created) => openEntity(`races/${created.id}/customization`),
   });
@@ -62,33 +58,23 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     openEntity(`races/${race.id}/customization`);
   };
 
-  const handleRowMouseEnter = useCallback((race: Race) => {
-    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "races", race.id));
-  }, [queryClient, ruleset.id]);
+  const handleRowMouseEnter = useCallback(
+    (race: Race) => {
+      void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "races", race.id));
+    },
+    [queryClient, ruleset.id],
+  );
 
   const renderCell = (race: Race, columnKey: string) => {
     switch (columnKey) {
       case "name":
         return race.name;
       case "size":
-        return (
-          <Chip
-            label={race.size}
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-        );
+        return <Chip label={race.size} size="small" color="primary" variant="outlined" />;
       case "speed":
-        return (
-          <Typography variant="body2">
-            {race.baseSpeed} ft
-          </Typography>
-        );
+        return <Typography variant="body2">{race.baseSpeed} ft</Typography>;
       case "description":
-        return (
-          <DescriptionCell text={race.description} />
-        );
+        return <DescriptionCell text={race.description} />;
       default:
         return null;
     }
@@ -129,10 +115,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         onClick={() => fetchNextPage()}
       />
 
-      <CreateDialog
-        {...createDialogProps}
-        title="Create New Race"
-      >
+      <CreateDialog {...createDialogProps} title="Create New Race">
         <RaceFormFields form={createForm} />
       </CreateDialog>
     </SectionContent>

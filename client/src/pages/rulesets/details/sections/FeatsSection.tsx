@@ -1,32 +1,4 @@
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import {
-  type Aptitude,
-  AptitudeAutocomplete,
-} from "@/client/src/components/customization/index.ts";
-import { type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import {
-  BlankState,
-  CLICKABLE_SX,
-  clickableProps,
-  CreateDialog,
-  DiceSpinner,
-  LoadMoreButton,
-  NoMatchesState,
-  SearchBar,
-  SectionContent,
-} from "@/client/src/components/common/index.ts";
-import { AptitudeChipsCell, DescriptionCell, RulesetSectionTable, SectionActions, TABLE_CONTAINER_LOADING_STYLE, TABLE_CONTAINER_STYLE, TABLE_STYLE } from "@/client/src/pages/rulesets/components/index.ts";
-import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { fadeInUpSx } from "@/client/src/lib/animations.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import {
-  ExpandLess as ExpandLessIcon,
-  ExpandMore as ExpandMoreIcon,
-  Spoke as FeatsIcon,
-} from "@mui/icons-material";
+import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon, Spoke as FeatsIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -44,10 +16,40 @@ import {
 } from "@mui/material";
 import { keepPreviousData, skipToken, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { useSearchParam, useToggleSet } from "@/client/src/hooks/index.ts";
 import { useCallback, useState } from "react";
-import { featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+
+import {
+  BlankState,
+  CLICKABLE_SX,
+  clickableProps,
+  CreateDialog,
+  DiceSpinner,
+  LoadMoreButton,
+  NoMatchesState,
+  SearchBar,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
+import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
+import { useSearchParam, useToggleSet } from "@/client/src/hooks/index.ts";
+import { fadeInUpSx } from "@/client/src/lib/animations.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import {
+  AptitudeChipsCell,
+  DescriptionCell,
+  RulesetSectionTable,
+  SectionActions,
+  TABLE_CONTAINER_LOADING_STYLE,
+  TABLE_CONTAINER_STYLE,
+  TABLE_STYLE,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
+import { featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 const FEATS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -95,17 +97,21 @@ function GroupedRow({
 }) {
   const variantQuery = useInfiniteQuery({
     queryKey: queryKeys.rulesets.familyVariants(rulesetId, family ?? "", childOnly),
-    queryFn: family ? async ({ pageParam }) => {
-      return parseResponse(rpc.api.rulesets[":id"].feats.$get({
-        param: { id: rulesetId },
-        query: {
-          limit: "50",
-          page: pageParam.toString(),
-          family,
-          childOnly: childOnly ? "true" : undefined,
-        },
-      }));
-    } : skipToken,
+    queryFn: family
+      ? async ({ pageParam }) => {
+          return parseResponse(
+            rpc.api.rulesets[":id"].feats.$get({
+              param: { id: rulesetId },
+              query: {
+                limit: "50",
+                page: pageParam.toString(),
+                family,
+                childOnly: childOnly ? "true" : undefined,
+              },
+            }),
+          );
+        }
+      : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     enabled: isExpanded,
@@ -125,7 +131,9 @@ function GroupedRow({
           <TableCell>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.displayName}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {row.displayName}
+              </Typography>
             </Box>
           </TableCell>
           <TableCell>
@@ -139,37 +147,43 @@ function GroupedRow({
             </TableCell>
           </TableRow>
         )}
-        {isExpanded && variants.map((feat, i) => {
-          const pages = variantQuery.data?.pages ?? [];
-          const previousItemCount = pages.slice(0, -1).reduce((sum, p) => sum + p.items.length, 0);
-          const isNew = i >= previousItemCount;
-          return (
-            <TableRow
-              key={feat.id}
-              hover
-              {...clickableProps(() => onVariantClick(feat))}
-              onMouseEnter={() => onVariantMouseEnter(feat)}
-              onFocus={() => onVariantMouseEnter(feat)}
-              sx={{ ...CLICKABLE_SX, ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}
-            >
-              <TableCell sx={{ pl: 6 }}>
-                <Typography variant="body2">{feat.name}</Typography>
-              </TableCell>
-              <TableCell>
-                <DescriptionCell text={feat.description} />
-              </TableCell>
-            </TableRow>
-          );
-        })}
+        {isExpanded &&
+          variants.map((feat, i) => {
+            const pages = variantQuery.data?.pages ?? [];
+            const previousItemCount = pages.slice(0, -1).reduce((sum, p) => sum + p.items.length, 0);
+            const isNew = i >= previousItemCount;
+            return (
+              <TableRow
+                key={feat.id}
+                hover
+                {...clickableProps(() => onVariantClick(feat))}
+                onMouseEnter={() => onVariantMouseEnter(feat)}
+                onFocus={() => onVariantMouseEnter(feat)}
+                sx={{ ...CLICKABLE_SX, ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}
+              >
+                <TableCell sx={{ pl: 6 }}>
+                  <Typography variant="body2">{feat.name}</Typography>
+                </TableCell>
+                <TableCell>
+                  <DescriptionCell text={feat.description} />
+                </TableCell>
+              </TableRow>
+            );
+          })}
         {isExpanded && variantQuery.hasNextPage && (
           <TableRow>
             <TableCell colSpan={2} sx={{ pl: 6 }}>
               <Button
                 size="small"
-                onClick={(e) => { e.stopPropagation(); variantQuery.fetchNextPage(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  variantQuery.fetchNextPage();
+                }}
                 disabled={variantQuery.isFetchingNextPage}
               >
-                <DiceSpinner size="small" loading={variantQuery.isFetchingNextPage}>Load More</DiceSpinner>
+                <DiceSpinner size="small" loading={variantQuery.isFetchingNextPage}>
+                  Load More
+                </DiceSpinner>
               </Button>
             </TableCell>
           </TableRow>
@@ -191,7 +205,9 @@ function GroupedRow({
         <Typography variant="body2">{row.displayName}</Typography>
       </TableCell>
       <TableCell>
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>—</Typography>
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          —
+        </Typography>
       </TableCell>
     </TableRow>
   );
@@ -207,11 +223,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const grouped = groupedParam === "true";
   const [expandedFamilies, toggleFamily, collapseFamilies] = useToggleSet();
 
-  const {
-    setCreateDialogOpen,
-    createForm,
-    createDialogProps,
-  } = useRulesetSection<Feat, FeatFormData>({
+  const { setCreateDialogOpen, createForm, createDialogProps } = useRulesetSection<Feat, FeatFormData>({
     rulesetId: ruleset.id,
     sectionName: "feats",
     label: "Feat",
@@ -250,9 +262,12 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     openEntity(`feats/${feat.id}/customization`);
   };
 
-  const handleRowMouseEnter = useCallback((feat: Pick<Feat, "id">) => {
-    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "feats", feat.id));
-  }, [queryClient, ruleset.id]);
+  const handleRowMouseEnter = useCallback(
+    (feat: Pick<Feat, "id">) => {
+      void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "feats", feat.id));
+    },
+    [queryClient, ruleset.id],
+  );
 
   const handleGroupedToggle = () => {
     setGroupedParam(grouped ? "false" : "true");
@@ -285,7 +300,9 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             <TableHead>
               <TableRow>
                 {GROUPED_COLUMNS.map((col) => (
-                  <TableCell key={col.key} sx={{ width: col.width, fontWeight: 600 }}>{col.label}</TableCell>
+                  <TableCell key={col.key} sx={{ width: col.width, fontWeight: 600 }}>
+                    {col.label}
+                  </TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -293,7 +310,9 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
               {[...Array(5)].map((_, i) => (
                 <TableRow key={i}>
                   {GROUPED_COLUMNS.map((col) => (
-                    <TableCell key={col.key}><Skeleton variant="text" /></TableCell>
+                    <TableCell key={col.key}>
+                      <Skeleton variant="text" />
+                    </TableCell>
                   ))}
                 </TableRow>
               ))}
@@ -304,9 +323,11 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     }
 
     if (groupedFeats.length === 0) {
-      return searchQuery
-        ? <NoMatchesState search={searchQuery} />
-        : <BlankState icon={FeatsIcon} title="No feats" description="No feats available for this ruleset." />;
+      return searchQuery ? (
+        <NoMatchesState search={searchQuery} />
+      ) : (
+        <BlankState icon={FeatsIcon} title="No feats" description="No feats available for this ruleset." />
+      );
     }
 
     let rowIndex = 0;
@@ -317,7 +338,9 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           <TableHead>
             <TableRow>
               {GROUPED_COLUMNS.map((col) => (
-                <TableCell key={col.key} sx={{ width: col.width, fontWeight: 600 }}>{col.label}</TableCell>
+                <TableCell key={col.key} sx={{ width: col.width, fontWeight: 600 }}>
+                  {col.label}
+                </TableCell>
               ))}
             </TableRow>
           </TableHead>
@@ -410,10 +433,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         onClick={() => fetchNextPage()}
       />
 
-      <CreateDialog
-        {...createDialogProps}
-        title="Create New Feat"
-      >
+      <CreateDialog {...createDialogProps} title="Create New Feat">
         <FeatFormFields form={createForm} rulesetId={ruleset.id} />
       </CreateDialog>
     </SectionContent>

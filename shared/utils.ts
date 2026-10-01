@@ -22,7 +22,7 @@ const cryptoHash = async (text: string) => {
   const messageBuffer = new TextEncoder().encode(text);
   const hashBuffer = await crypto.subtle.digest("SHA-256", messageBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 };
 
 export const hashPassword = (password: string) => {
@@ -51,19 +51,23 @@ export const capitalize = (s: string) => String(s).charAt(0).toUpperCase() + Str
 /** A name's first letter, capitalized, for an avatar. */
 export const initialOf = (name: string) => name.charAt(0).toUpperCase();
 export const stripSeparators = (s: string) =>
-  String(s).replaceAll(/[^a-z0-9]/gi, "").toLowerCase();
+  String(s)
+    .replaceAll(/[^a-z0-9]/gi, "")
+    .toLowerCase();
 
 /**
  * Derives the slug used in spell possession paths from an aptitude name.
  * Strips the " Spells" suffix so paths read naturally
  * (e.g. "Wizard Spells" → "wizard", "Knowledge Domain Spells" → "knowledgedomain").
  */
-export const spellPossessionSlug = (aptitudeName: string) =>
-  stripSeparators(aptitudeName.replace(/ Spells$/, ""));
+export const spellPossessionSlug = (aptitudeName: string) => stripSeparators(aptitudeName.replace(/ Spells$/, ""));
 
 /** Formats an UPPER_SNAKE_CASE property type into a human-readable label (e.g. "SPELL_SCHOOL" → "Spell School") */
 export const formatPropertyType = (type: string) =>
-  type.split("_").map((w) => w.charAt(0) + w.slice(1).toLowerCase()).join(" ");
+  type
+    .split("_")
+    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+    .join(" ");
 
 /** Formats a raw path segment into a human-readable label (e.g. "privateNotes" → "Private Notes") */
 export const formatSegment = (segment: string) =>

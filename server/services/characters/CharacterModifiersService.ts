@@ -1,13 +1,14 @@
+import { getTableName } from "drizzle-orm";
+
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
-import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
+import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, Characters, Modifiers } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { deleteModifiersWithCascade } from "@/server/services/rulesets/cow.ts";
 import TargetPathsService from "@/server/services/rulesets/customization/TargetPathsService.ts";
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export const CharacterModifiersMethods = {
   async getModifiers(session: Session, characterId: string) {
@@ -36,7 +37,12 @@ export const CharacterModifiersMethods = {
       if (!character) throw new NotFoundError("Character not found");
 
       const pathsService = TargetPathsService.initialize();
-      const valueTypeResult = await pathsService.call("resolvePathValueType", character.rulesetId, body.target, "modifier");
+      const valueTypeResult = await pathsService.call(
+        "resolvePathValueType",
+        character.rulesetId,
+        body.target,
+        "modifier",
+      );
       if (!valueTypeResult[0]) throw valueTypeResult[2];
       const valueType = valueTypeResult[1];
 
@@ -78,16 +84,25 @@ export const CharacterModifiersMethods = {
       }
 
       const pathsService = TargetPathsService.initialize();
-      const valueTypeResult = await pathsService.call("resolvePathValueType", character.rulesetId, body.target, "modifier");
+      const valueTypeResult = await pathsService.call(
+        "resolvePathValueType",
+        character.rulesetId,
+        body.target,
+        "modifier",
+      );
       if (!valueTypeResult[0]) throw valueTypeResult[2];
       const valueType = valueTypeResult[1];
 
-      const rows = await Modifiers.update(tx, {
-        target: body.target,
-        value: body.value,
-        valueType,
-        operator: body.operator,
-      }, { id: modifierId, expectedUpdatedAt: body.updatedAt });
+      const rows = await Modifiers.update(
+        tx,
+        {
+          target: body.target,
+          value: body.value,
+          valueType,
+          operator: body.operator,
+        },
+        { id: modifierId, expectedUpdatedAt: body.updatedAt },
+      );
       if (body.updatedAt && rows.length === 0) {
         throw new ConflictError(STALE_ENTITY_MESSAGE);
       }
@@ -123,7 +138,12 @@ export const CharacterModifiersMethods = {
         targetId: modifierId,
         targetTable: getTableName(modifiersInCustomization),
         type: "deleteCharacterModifier",
-        data: { characterName: character.name, target: existing.target, value: existing.value, operator: existing.operator },
+        data: {
+          characterName: character.name,
+          target: existing.target,
+          value: existing.value,
+          operator: existing.operator,
+        },
       });
 
       return modifier;

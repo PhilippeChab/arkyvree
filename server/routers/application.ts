@@ -1,15 +1,15 @@
 import { httpInstrumentationMiddleware } from "@hono/otel";
+import { sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors as buildCors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
-import { requestLogger } from "@/server/middlewares/index.ts";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
-import { sql } from "drizzle-orm";
 
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
+import { requestLogger } from "@/server/middlewares/index.ts";
 import apiRouter from "@/server/routers/api.tsx";
 import authenticationRouter from "@/server/routers/authentication/index.ts";
 import { errorResponse } from "@/server/routers/respond.ts";
@@ -18,12 +18,9 @@ import wsRouter from "@/server/routers/ws.ts";
 import { collectingNotified, publishWsEvent } from "@/server/ws.ts";
 
 const isDev = process.env.NODE_ENV !== "production";
-const isTest = process.env.NODE_ENV === "test"
-  || process.env.DATABASE_URL?.includes("test");
+const isTest = process.env.NODE_ENV === "test" || process.env.DATABASE_URL?.includes("test");
 
-const origin = isDev
-  ? ["http://localhost:5173"]
-  : process.env.APP_URL ? [process.env.APP_URL] : [];
+const origin = isDev ? ["http://localhost:5173"] : process.env.APP_URL ? [process.env.APP_URL] : [];
 
 const cors = buildCors({
   origin,
@@ -38,12 +35,8 @@ const cors = buildCors({
 // probes hit it with the machine-name Host, not the public hostname. Disabled
 // in dev because Vite's `changeOrigin: true` proxy rewrites the Host to the
 // backend's, which would otherwise trigger an infinite redirect loop.
-const enforceCanonicalHost =
-  process.env.NODE_ENV === "production"
-  && !!process.env.APP_URL;
-const canonicalHost = enforceCanonicalHost
-  ? new URL(process.env.APP_URL!).host
-  : null;
+const enforceCanonicalHost = process.env.NODE_ENV === "production" && !!process.env.APP_URL;
+const canonicalHost = enforceCanonicalHost ? new URL(process.env.APP_URL!).host : null;
 
 const app = new Hono()
   .use("*", async (c, next) => {
@@ -76,12 +69,19 @@ const app = new Hono()
       c.res.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
     }
   })
-  .use("*", secureHeaders({
-    crossOriginOpenerPolicy: "same-origin-allow-popups",
-  }))
+  .use(
+    "*",
+    secureHeaders({
+      crossOriginOpenerPolicy: "same-origin-allow-popups",
+    }),
+  )
   // Install a request-scoped query dedup store so repeated reads of the same
   // row/query within one request coalesce into a single DB round trip.
-  .use("*", async (_, next) => runWithRequestCache(async () => { await next(); }))
+  .use("*", async (_, next) =>
+    runWithRequestCache(async () => {
+      await next();
+    }),
+  )
   .get("/health", async (c) => {
     try {
       await db.execute(sql`SELECT 1`);

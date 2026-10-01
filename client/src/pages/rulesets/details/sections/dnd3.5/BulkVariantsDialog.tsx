@@ -1,4 +1,4 @@
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -11,10 +11,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
 import { DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
 
 interface BulkVariantsDialogProps {
@@ -67,15 +68,12 @@ export function BulkVariantsDialog({
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              Each variant copies the base item's cost, weight, type, and slot.
-              You'll be able to customize them individually after.
+              Each variant copies the base item's cost, weight, type, and slot. You'll be able to customize them
+              individually after.
             </Typography>
             <Stack spacing={3}>
               {fields.map((field, index) => (
-                <Box
-                  key={field.id}
-                  sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}
-                >
+                <Box key={field.id} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
                   <Stack spacing={1} sx={{ flex: 1 }}>
                     <TextField
                       {...form.register(`variants.${index}.name`, {
@@ -115,7 +113,9 @@ export function BulkVariantsDialog({
             <Button
               variant="outlined"
               startIcon={<AddIcon />}
-              onClick={() => append(variantRow({ name: baseItemName, description: baseItemDescription }, fields.length + 1))}
+              onClick={() =>
+                append(variantRow({ name: baseItemName, description: baseItemDescription }, fields.length + 1))
+              }
               disabled={fields.length >= MAX_VARIANTS || isLoading}
               sx={{ alignSelf: "flex-start" }}
             >

@@ -57,10 +57,7 @@ export default class DetailedCharacterClasses {
     return { level: "Level", bonuscasterlevel: "Bonus Caster Level" };
   }
 
-  static generateTargetPaths(
-    klasses: Klass[],
-    kind: "modifier" | "requirement",
-  ): TargetPath[] {
+  static generateTargetPaths(klasses: Klass[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const klass of klasses) {
@@ -71,14 +68,10 @@ export default class DetailedCharacterClasses {
         category: "classes",
         description: `Number of ${klass.name} levels taken`,
         valueType: "number",
-        operators: kind === "modifier" ? ["add", "subtract", "set"] : [
-          "equal",
-          "not_equal",
-          "greater_than",
-          "less_than",
-          "greater_than_or_equal",
-          "less_than_or_equal",
-        ],
+        operators:
+          kind === "modifier"
+            ? ["add", "subtract", "set"]
+            : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
       });
 
       if (kind === "modifier") {
@@ -218,20 +211,14 @@ export default class DetailedCharacterClasses {
   }
 
   getCharacterClasses() {
-    return Object.fromEntries(
-      Object.entries(this.detailedCharacterClasses).filter(([, klass]) => klass.level > 0),
-    );
+    return Object.fromEntries(Object.entries(this.detailedCharacterClasses).filter(([, klass]) => klass.level > 0));
   }
 
   getClass(klassName: string) {
     return this.detailedCharacterClasses[klassName];
   }
 
-  addProjectedLevel(
-    klassName: string,
-    klassLevel: KlassLevel,
-    characterLevel: CharacterLevel,
-  ): void {
+  addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: CharacterLevel): void {
     const entry = this.detailedCharacterClasses[klassName];
     if (!entry) return;
 

@@ -3,15 +3,12 @@ import { createMiddleware } from "hono/factory";
 
 import { TooManyRequestsError } from "@/server/errors/index.ts";
 
-const isTest = process.env.NODE_ENV === "test"
-  || process.env.DATABASE_URL?.includes("test");
+const isTest = process.env.NODE_ENV === "test" || process.env.DATABASE_URL?.includes("test");
 
 const noop = createMiddleware(async (_, next) => next());
 
 function getClientIp(c: { req: { header: (name: string) => string | undefined } }) {
-  return c.req.header("x-forwarded-for")?.split(",")[0]?.trim()
-    || c.req.header("x-real-ip")
-    || "unknown";
+  return c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "unknown";
 }
 
 type KeyGenerator = NonNullable<Parameters<typeof rateLimiter>[0]["keyGenerator"]>;

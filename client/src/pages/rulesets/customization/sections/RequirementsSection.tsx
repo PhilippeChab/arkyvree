@@ -1,5 +1,17 @@
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import {
+  Add as AddIcon,
+  ChevronRight as ChevronRightIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  ExpandMore as ExpandMoreIcon,
+  Rule as RequirementsIcon,
+} from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, Chip, IconButton, Stack, Typography } from "@mui/material";
+import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
+import { TreeItem } from "@mui/x-tree-view/TreeItem";
+import type { InferResponseType } from "hono/client";
+import { useCallback, useMemo, useState } from "react";
+
 import {
   BlankState,
   CreateDialog,
@@ -14,38 +26,20 @@ import {
   type RequirementType,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
+import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import type { EntityType } from "@/client/src/pages/rulesets/customization/types.ts";
+import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import {
-  Add as AddIcon,
-  ChevronRight as ChevronRightIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  ExpandMore as ExpandMoreIcon,
-  Rule as RequirementsIcon,
-} from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  IconButton,
-  Stack,
-  Typography,
-} from "@mui/material";
-import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
-import { TreeItem } from "@mui/x-tree-view/TreeItem";
-import type { InferResponseType } from "hono/client";
-import { useCallback, useMemo, useState } from "react";
+
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
-type RequirementsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"][
-    "$get"
-  ], 200>;
+type RequirementsArray = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"]["$get"],
+  200
+>;
 type Requirement = RequirementsArray[number];
 
 // Tree node interface for hierarchical requirements
@@ -79,9 +73,14 @@ interface RequirementsSectionProps {
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
 
-export function RequirementsSection(
-  { ruleset, entityType, entityId, data: externalData, queryKeysToInvalidate, onEntityIdChange }: RequirementsSectionProps,
-) {
+export function RequirementsSection({
+  ruleset,
+  entityType,
+  entityId,
+  data: externalData,
+  queryKeysToInvalidate,
+  onEntityIdChange,
+}: RequirementsSectionProps) {
   const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
   const entityParam = { id: ruleset.id, entityType, entityId };
 
@@ -94,8 +93,7 @@ export function RequirementsSection(
 
   // Helper function to determine if a requirement is a chaining node
   const isChaining = (requirement: Requirement) => {
-    return requirement.chainingOperator &&
-      (!requirement.target || !requirement.operator || !requirement.value);
+    return requirement.chainingOperator && (!requirement.target || !requirement.operator || !requirement.value);
   };
 
   const {
@@ -122,32 +120,44 @@ export function RequirementsSection(
     sectionName: `customization-${entityType}-${entityId}-requirements`,
     label: "Requirement",
     data: externalData,
-    queryFn: !externalData ? async () => {
-      return parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
-        .requirements.$get({
-          param: entityParam,
-        }));
-    } : undefined,
+    queryFn: !externalData
+      ? async () => {
+          return parseResponse(
+            rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements.$get({
+              param: entityParam,
+            }),
+          );
+        }
+      : undefined,
     queryKeysToInvalidate,
     createFn: async (data: RequirementFormData) => {
-      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
-        .requirements.$post({
-          param: entityParam,
-          json: data,
-        })));
+      return tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements.$post({
+            param: entityParam,
+            json: data,
+          }),
+        ),
+      );
     },
     updateFn: async (requirementId: string, data: RequirementFormData) => {
-      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
-        .requirements[":requirement_id"].$put({
-          param: { ...entityParam, requirement_id: requirementId },
-          json: data,
-        })));
+      return tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirement_id"].$put({
+            param: { ...entityParam, requirement_id: requirementId },
+            json: data,
+          }),
+        ),
+      );
     },
     deleteFn: async (requirementId: string) => {
-      return tag(parseResponse(rpc.api.rulesets[":id"].customization[":entityType"][":entityId"]
-        .requirements[":requirement_id"].$delete({
-          param: { ...entityParam, requirement_id: requirementId },
-        })));
+      return tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirement_id"].$delete({
+            param: { ...entityParam, requirement_id: requirementId },
+          }),
+        ),
+      );
     },
     ...followCopies,
   });
@@ -173,27 +183,28 @@ export function RequirementsSection(
     setEditRequirementType("condition");
   };
 
-  const computeNextLevel = useCallback((parentLevel: string | null): string => {
-    if (!requirements) return "1";
+  const computeNextLevel = useCallback(
+    (parentLevel: string | null): string => {
+      if (!requirements) return "1";
 
-    if (parentLevel === null) {
-      const rootNumbers = requirements
-        .map((r) => parseInt(r.level.split(".")[0]))
+      if (parentLevel === null) {
+        const rootNumbers = requirements.map((r) => parseInt(r.level.split(".")[0])).filter((n) => !isNaN(n));
+        return String((rootNumbers.length > 0 ? Math.max(...rootNumbers) : 0) + 1);
+      }
+
+      const prefix = parentLevel + ".";
+      const childNumbers = requirements
+        .filter((r) => r.level.startsWith(prefix))
+        .map((r) => {
+          const rest = r.level.slice(prefix.length);
+          if (rest.includes(".")) return NaN;
+          return parseInt(rest);
+        })
         .filter((n) => !isNaN(n));
-      return String((rootNumbers.length > 0 ? Math.max(...rootNumbers) : 0) + 1);
-    }
-
-    const prefix = parentLevel + ".";
-    const childNumbers = requirements
-      .filter((r) => r.level.startsWith(prefix))
-      .map((r) => {
-        const rest = r.level.slice(prefix.length);
-        if (rest.includes(".")) return NaN;
-        return parseInt(rest);
-      })
-      .filter((n) => !isNaN(n));
-    return `${parentLevel}.${(childNumbers.length > 0 ? Math.max(...childNumbers) : 0) + 1}`;
-  }, [requirements]);
+      return `${parentLevel}.${(childNumbers.length > 0 ? Math.max(...childNumbers) : 0) + 1}`;
+    },
+    [requirements],
+  );
 
   // Build tree structure from flat requirements array
   const requirementsTree = useMemo(() => {
@@ -228,8 +239,7 @@ export function RequirementsSection(
 
       // Determine if this is a root node
       // Root nodes: "1", "2", "1.0", "2.0" etc (major version changes)
-      const isRootNode = levelParts.length === 1 ||
-        (levelParts.length === 2 && levelParts[1] === "0");
+      const isRootNode = levelParts.length === 1 || (levelParts.length === 2 && levelParts[1] === "0");
 
       if (isRootNode) {
         // Root level (e.g., "1", "2", "1.0", "2.0")
@@ -345,38 +355,33 @@ export function RequirementsSection(
                   sx={{ fontWeight: 700, minWidth: 32, fontFamily: "monospace" }}
                 />
 
-                {requirementIsChaining
-                  ? (
-                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                        Chaining:
+                {requirementIsChaining ? (
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      Chaining:
+                    </Typography>
+                    <Chip label={requirement.chainingOperator} size="small" color="warning" variant="outlined" />
+                  </Stack>
+                ) : (
+                  <>
+                    {requirement.target ? (
+                      <TargetPathBreadcrumbs target={requirement.target} targetLabels={requirement.targetLabels} />
+                    ) : (
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        —
                       </Typography>
+                    )}
+                    {requirement.operator && (
                       <Chip
-                        label={requirement.chainingOperator}
+                        label={REQUIREMENT_OPERATOR_LABELS[requirement.operator] || requirement.operator}
                         size="small"
-                        color="warning"
+                        color="secondary"
                         variant="outlined"
                       />
-                    </Stack>
-                  )
-                  : (
-                    <>
-                      {requirement.target
-                        ? <TargetPathBreadcrumbs target={requirement.target} targetLabels={requirement.targetLabels} />
-                        : <Typography variant="body2" sx={{ fontWeight: 500 }}>—</Typography>}
-                      {requirement.operator && (
-                        <Chip
-                          label={REQUIREMENT_OPERATOR_LABELS[requirement.operator] || requirement.operator}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                        />
-                      )}
-                      <Typography variant="body2">
-                        {requirement.valueLabel || requirement.value || "—"}
-                      </Typography>
-                    </>
-                  )}
+                    )}
+                    <Typography variant="body2">{requirement.valueLabel || requirement.value || "—"}</Typography>
+                  </>
+                )}
 
                 <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
                   <Typography
@@ -384,8 +389,9 @@ export function RequirementsSection(
                     sx={{
                       color: "text.secondary",
                       whiteSpace: "nowrap",
-                      display: { xs: "none", sm: "block" }
-                    }}>
+                      display: { xs: "none", sm: "block" },
+                    }}
+                  >
                     {formatDate(requirement.createdAt)}
                   </Typography>
 
@@ -442,33 +448,29 @@ export function RequirementsSection(
     <SectionContent>
       {canEdit && <SectionAddButton label="Add Requirement" onClick={() => openCreate(null)} />}
       {/* Loading State */}
-      {isLoading && (
-        <DiceSpinner sx={{ py: 4 }} />
-      )}
+      {isLoading && <DiceSpinner sx={{ py: 4 }} />}
       {/* Content */}
       {!isLoading && (
         <>
-          {requirementsTree.length === 0
-            ? (
-              <BlankState
-                icon={RequirementsIcon}
-                title="No requirements"
-                description="No requirements defined for this entity."
-              />
-            )
-            : (
-              <SimpleTreeView
-                slots={{
-                  collapseIcon: ExpandMoreIcon,
-                  expandIcon: ChevronRightIcon,
-                }}
-                sx={{ flexGrow: 1, maxWidth: "100%", overflowY: "auto" }}
-                expandedItems={expandedItems}
-                onExpandedItemsChange={(_, ids) => setCollapsedIds(new Set(parentIds.filter((id) => !ids.includes(id))))}
-              >
-                {requirementsTree.map(renderRequirementNode)}
-              </SimpleTreeView>
-            )}
+          {requirementsTree.length === 0 ? (
+            <BlankState
+              icon={RequirementsIcon}
+              title="No requirements"
+              description="No requirements defined for this entity."
+            />
+          ) : (
+            <SimpleTreeView
+              slots={{
+                collapseIcon: ExpandMoreIcon,
+                expandIcon: ChevronRightIcon,
+              }}
+              sx={{ flexGrow: 1, maxWidth: "100%", overflowY: "auto" }}
+              expandedItems={expandedItems}
+              onExpandedItemsChange={(_, ids) => setCollapsedIds(new Set(parentIds.filter((id) => !ids.includes(id))))}
+            >
+              {requirementsTree.map(renderRequirementNode)}
+            </SimpleTreeView>
+          )}
         </>
       )}
       <CreateDialog
@@ -479,7 +481,9 @@ export function RequirementsSection(
         }}
         title="Create Requirement"
         form={createForm}
-        onSubmit={(data) => createMutation.mutate(requirementPayload(createRequirementType, computeNextLevel(createParentLevel), data))}
+        onSubmit={(data) =>
+          createMutation.mutate(requirementPayload(createRequirementType, computeNextLevel(createParentLevel), data))
+        }
         isLoading={createMutation.isPending}
         maxWidth="md"
       >

@@ -1,10 +1,9 @@
 import { and, eq, inArray, isNotNull, isNull, notInArray } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { aptitudesInRules, featsAptitudesInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
-
 import type { Db } from "@/server/database/index.ts";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
 
 class AptitudesRepository extends BaseRepository<typeof aptitudesInRules, AptitudeInstance> {
   constructor() {
@@ -23,11 +22,13 @@ class AptitudesRepository extends BaseRepository<typeof aptitudesInRules, Aptitu
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(this.where([
-        eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-        this.casUpdatedAt(where.expectedUpdatedAt),
-      ]))
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
       .returning();
   }
 
@@ -50,9 +51,8 @@ class AptitudesRepository extends BaseRepository<typeof aptitudesInRules, Aptitu
   }
 
   async findMany(db: Db, where: { ids: string[] } | { rulesetIds: string[] }) {
-    const condition = "ids" in where
-      ? inArray(this.table.id, where.ids)
-      : inArray(this.table.rulesetId, where.rulesetIds);
+    const condition =
+      "ids" in where ? inArray(this.table.id, where.ids) : inArray(this.table.rulesetId, where.rulesetIds);
     return await db.query.aptitudesInRules.findMany({
       where: and(condition, isNull(this.table.deletedAt)),
       orderBy: (aptitudes, { asc }) => [asc(aptitudes.name)],
@@ -62,29 +62,53 @@ class AptitudesRepository extends BaseRepository<typeof aptitudesInRules, Aptitu
   async findManyByRulesetId(
     db: Db,
     where:
-      | { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; scope?: "feats" | "spells"; excludeIds?: string[]; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" }
-      | { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; scope?: "feats" | "spells"; excludeIds?: string[]; campaignId: string; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+      | {
+          rulesetId: string;
+          ancestorRulesetIds?: string[];
+          childOnly?: boolean;
+          scope?: "feats" | "spells";
+          excludeIds?: string[];
+          search?: string;
+          orderBy?: "name" | "createdAt" | "updatedAt";
+          orderDir?: "asc" | "desc";
+        }
+      | {
+          rulesetId: string;
+          ancestorRulesetIds?: string[];
+          childOnly?: boolean;
+          scope?: "feats" | "spells";
+          excludeIds?: string[];
+          campaignId: string;
+          search?: string;
+          orderBy?: "name" | "createdAt" | "updatedAt";
+          orderDir?: "asc" | "desc";
+        },
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc", scope, excludeIds } = where;
     const searchColumns = [this.table.name, this.table.description];
     const searchConditions = this.fuzzySearch(search, searchColumns);
 
-    const scopeCondition = scope === "feats"
-      ? inArray(this.table.id, db.select({ id: featsAptitudesInRules.aptitudeId }).from(featsAptitudesInRules))
-      : scope === "spells"
-        ? inArray(this.table.id, db.select({ id: powersAptitudesInRules.aptitudeId }).from(powersAptitudesInRules))
-        : false;
+    const scopeCondition =
+      scope === "feats"
+        ? inArray(this.table.id, db.select({ id: featsAptitudesInRules.aptitudeId }).from(featsAptitudesInRules))
+        : scope === "spells"
+          ? inArray(this.table.id, db.select({ id: powersAptitudesInRules.aptitudeId }).from(powersAptitudesInRules))
+          : false;
 
-    const excludeCondition = excludeIds && excludeIds.length > 0
-      ? notInArray(this.table.id, excludeIds)
-      : false;
+    const excludeCondition = excludeIds && excludeIds.length > 0 ? notInArray(this.table.id, excludeIds) : false;
 
     const rulesetCondition = this.buildRulesetCondition(db, where);
 
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.aptitudesInRules.findMany({
-        where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions, scopeCondition, excludeCondition]),
+        where: this.where([
+          rulesetCondition,
+          isNull(this.table.deletedAt),
+          searchConditions,
+          scopeCondition,
+          excludeCondition,
+        ]),
         orderBy: this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
         limit,
         offset,
@@ -97,10 +121,7 @@ class AptitudesRepository extends BaseRepository<typeof aptitudesInRules, Aptitu
       .selectDistinct({ aptitudeId: powersAptitudesInRules.aptitudeId })
       .from(powersAptitudesInRules)
       .where(
-        and(
-          inArray(powersAptitudesInRules.aptitudeId, where.aptitudeIds),
-          isNotNull(powersAptitudesInRules.level),
-        ),
+        and(inArray(powersAptitudesInRules.aptitudeId, where.aptitudeIds), isNotNull(powersAptitudesInRules.level)),
       );
     return new Set(rows.map((r) => r.aptitudeId));
   }

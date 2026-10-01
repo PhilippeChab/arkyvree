@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { addClassLevels, addFeats, SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
@@ -12,8 +13,26 @@ import { PlayerCharactersMethods } from "@/server/services/campaigns/CharactersS
 import { CharacterContributorsMethods } from "@/server/services/CharacterContributorsService.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
 import { CharactersMethods } from "@/server/services/CharactersService.ts";
-import { addCharacterContributor, addOneLevel, createTestCampaign, createTestUser, getSeedCtx, makeSession, queuedPdfJobs } from "@/tests/helpers.ts";
-import { createDruidWithCompanion, createPaladinWithMount, createSeedCharacter, createWizardWithFamiliar, levelUp, picking, picks, SORCERER_1, WIZARD_1 } from "@/tests/levelFixtures.ts";
+import {
+  addCharacterContributor,
+  addOneLevel,
+  createTestCampaign,
+  createTestUser,
+  getSeedCtx,
+  makeSession,
+  queuedPdfJobs,
+} from "@/tests/helpers.ts";
+import {
+  createDruidWithCompanion,
+  createPaladinWithMount,
+  createSeedCharacter,
+  createWizardWithFamiliar,
+  levelUp,
+  picking,
+  picks,
+  SORCERER_1,
+  WIZARD_1,
+} from "@/tests/levelFixtures.ts";
 
 const owner = makeSession();
 const familiarOf = (masterId: string) => Characters.findOne(db, { parentCharacterId: masterId, kind: "familiar" });
@@ -30,10 +49,18 @@ function statBlock(detailed: DetailedCharacterMount | DetailedCharacterAnimalCom
   const abilities = detailed.getDetailedCharacterAbilities().getAbilities();
   const bite = weaponsets["0"]?.mainhand;
   return {
-    hp: hp.base, bab, natural: ac.natural, size: ac.size, ac: ac.total,
+    hp: hp.base,
+    bab,
+    natural: ac.natural,
+    size: ac.size,
+    ac: ac.total,
     baseSaves: { fortitude: saves.fortitude.base, reflex: saves.reflex.base, will: saves.will.base },
     saves: { fortitude: saves.fortitude.total, reflex: saves.reflex.total, will: saves.will.total },
-    abilities: { strength: abilities.strength.total, intelligence: abilities.intelligence.total, misc: [abilities.strength.misc, abilities.dexterity.misc] },
+    abilities: {
+      strength: abilities.strength.total,
+      intelligence: abilities.intelligence.total,
+      misc: [abilities.strength.misc, abilities.dexterity.misc],
+    },
     attack: { name: bite?.name, size: bite?.tohit?.size, toHit: bite?.tohit?.total?.[0], damage: bite?.damage?.total },
   };
 }
@@ -43,12 +70,23 @@ describe("Bonded creatures", () => {
     ["a wizard's familiar", () => createWizardWithFamiliar(), "familiar", "Cat", 1],
     ["a druid's animal companion", () => createDruidWithCompanion(3), "animalcompanion", "Wolf", 3],
     ["a paladin's special mount", () => createPaladinWithMount(5), "mount", "Heavy Warhorse", 5],
-  ] as const)("%s is made from their pick, a level for each of theirs, and shown with them", async (_, create, kind, race, levels) => {
-    const { ctx, masterId, bonded } = await create();
-    expect(bonded).toMatchObject({ kind, parentCharacterId: masterId, userId: SEED_USER_ID, raceId: ctx.raceMap[kind][race] });
-    expect(await CharacterLevels.findMany(db, { characterId: bonded.id })).toHaveLength(levels);
-    expect((await CharactersMethods.getCharacter(owner, masterId)).bondedByKind[kind]?.record).toMatchObject({ id: bonded.id, kind });
-  });
+  ] as const)(
+    "%s is made from their pick, a level for each of theirs, and shown with them",
+    async (_, create, kind, race, levels) => {
+      const { ctx, masterId, bonded } = await create();
+      expect(bonded).toMatchObject({
+        kind,
+        parentCharacterId: masterId,
+        userId: SEED_USER_ID,
+        raceId: ctx.raceMap[kind][race],
+      });
+      expect(await CharacterLevels.findMany(db, { characterId: bonded.id })).toHaveLength(levels);
+      expect((await CharactersMethods.getCharacter(owner, masterId)).bondedByKind[kind]?.record).toMatchObject({
+        id: bonded.id,
+        kind,
+      });
+    },
+  );
 
   test("a companion loses a level with each of its druid's, and goes with the level that picked it", async () => {
     const { masterId, bonded } = await createDruidWithCompanion(3);
@@ -80,7 +118,17 @@ describe("Bonded creatures", () => {
     const [level] = await CharacterLevels.findMany(db, { characterId: masterId });
     const pick = (familiar: string[], force = false) => {
       const { skills, feats, powers } = picks(ctx, picking(WIZARD_1, "Familiar Bond", familiar));
-      return CharacterLevelsMethods.updateLevel(owner, masterId, level.id, WIZARD_1.hp, null, skills, feats, powers, force);
+      return CharacterLevelsMethods.updateLevel(
+        owner,
+        masterId,
+        level.id,
+        WIZARD_1.hp,
+        null,
+        skills,
+        feats,
+        powers,
+        force,
+      );
     };
     await pick(["Owl Familiar"]);
     const owl = (await familiarOf(masterId))!;
@@ -99,14 +147,18 @@ describe("Bonded creatures", () => {
     // A second character level: no General feat.
     await levelUp(owner, ctx, masterId, "Sorcerer", 1, { ...SORCERER_1, feats: { "Familiar Bond": ["Owl Familiar"] } });
     const master = await Characters.findOne(db, { id: masterId });
-    const bond = (await build(new DetailedCharacter(master!))).getDetailedCharacterAptitudes().getAptitudes()["familiarbond"];
+    const bond = (await build(new DetailedCharacter(master!))).getDetailedCharacterAptitudes().getAptitudes()[
+      "familiarbond"
+    ];
     expect(bond).toMatchObject({ allowed: 2, spent: 2 });
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
 
     const { skills, feats, powers } = picks(ctx, WIZARD_1);
     await CharacterLevelsMethods.updateLevel(owner, masterId, wizardLevel.id, WIZARD_1.hp, null, skills, feats, powers);
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
-    expect((await build(new DetailedCharacter(master!))).getDetailedCharacterBonds().getBondedRace("familiar")).toBe("Owl");
+    expect((await build(new DetailedCharacter(master!))).getDetailedCharacterBonds().getBondedRace("familiar")).toBe(
+      "Owl",
+    );
   });
 
   test("a familiar picked straight in the database, without a level-up, is the master's", async () => {
@@ -120,7 +172,13 @@ describe("Bonded creatures", () => {
 
   test("a familiar is archived and restored with its master, and isn't listed or found on its own", async () => {
     const { masterId, bonded } = await createWizardWithFamiliar();
-    const listed = (await Characters.findMany(db, { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly }, { limit: 200, page: 1 })).items.map((c) => c.id);
+    const listed = (
+      await Characters.findMany(
+        db,
+        { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly },
+        { limit: 200, page: 1 },
+      )
+    ).items.map((c) => c.id);
     expect(listed).toContain(masterId);
     expect(listed).not.toContain(bonded.id);
     expect(await Characters.findOne(db, { id: bonded.id, userId: SEED_USER_ID })).toBeUndefined();
@@ -136,12 +194,24 @@ describe("CharactersService with bonded creatures", () => {
   test("refuses a familiar's race for a new character, and a familiar's class for a level", async () => {
     const ctx = await getSeedCtx();
     const { session } = await createTestUser();
-    await expect(CharactersMethods.createCharacter(session, {
-      rulesetId: ctx.rulesetId, raceId: ctx.raceMap.familiar["Cat"], name: "Cat PC", xp: 0, alignment: "True Neutral", abilities: {},
-      age: 1, gender: "Other", height: "0.3 m", weight: "5 kg",
-    })).rejects.toThrow(BadRequestError);
+    await expect(
+      CharactersMethods.createCharacter(session, {
+        rulesetId: ctx.rulesetId,
+        raceId: ctx.raceMap.familiar["Cat"],
+        name: "Cat PC",
+        xp: 0,
+        alignment: "True Neutral",
+        abilities: {},
+        age: 1,
+        gender: "Other",
+        height: "0.3 m",
+        weight: "5 kg",
+      }),
+    ).rejects.toThrow(BadRequestError);
     const wizardId = await createSeedCharacter(ctx, "wizard");
-    await expect(addOneLevel(owner, wizardId, ctx.klassMap.familiar["Familiar"], 1, 4, null)).rejects.toThrow(BadRequestError);
+    await expect(addOneLevel(owner, wizardId, ctx.klassMap.familiar["Familiar"], 1, 4, null)).rejects.toThrow(
+      BadRequestError,
+    );
   });
 
   test("shows a master without a familiar with none, and one whose master is archived with it", async () => {
@@ -156,9 +226,14 @@ describe("CharactersService with bonded creatures", () => {
     const { masterId, bonded } = await createWizardWithFamiliar();
     const { user, session: contributor } = await createTestUser();
     await addCharacterContributor(masterId, user, SEED_USER_ID);
-    expect(await CharactersMethods.getCharacter(owner, bonded.id)).toMatchObject({ character: { id: bonded.id, kind: "familiar" }, bondedByKind: {} });
+    expect(await CharactersMethods.getCharacter(owner, bonded.id)).toMatchObject({
+      character: { id: bonded.id, kind: "familiar" },
+      bondedByKind: {},
+    });
     expect((await CharactersMethods.getCharacter(contributor, bonded.id)).character.id).toBe(bonded.id);
-    await expect(CharactersMethods.getCharacter((await createTestUser()).session, bonded.id)).rejects.toThrow(NotFoundError);
+    await expect(CharactersMethods.getCharacter((await createTestUser()).session, bonded.id)).rejects.toThrow(
+      NotFoundError,
+    );
 
     await CharactersMethods.archiveCharacter(owner, masterId);
     expect((await CharactersMethods.getCharacter(owner, bonded.id)).character.id).toBe(bonded.id);
@@ -171,9 +246,13 @@ describe("CharactersService with bonded creatures", () => {
     await CharactersMethods.updateCharacter(owner, bonded.id, { name: "Whiskers" });
     await CharactersMethods.updateCharacter(contributor, bonded.id, { name: "Mittens" });
     expect((await Characters.findOne(db, { id: bonded.id }))?.name).toBe("Mittens");
-    await expect(CharactersMethods.updateCharacter((await createTestUser()).session, bonded.id, { name: "Nope" })).rejects.toThrow(NotFoundError);
+    await expect(
+      CharactersMethods.updateCharacter((await createTestUser()).session, bonded.id, { name: "Nope" }),
+    ).rejects.toThrow(NotFoundError);
     await CharactersMethods.enqueuePdf(owner, bonded.id);
-    expect(await queuedPdfJobs(bonded.id)).toMatchObject([{ task: "generatePdf", payload: { characterId: bonded.id } }]);
+    expect(await queuedPdfJobs(bonded.id)).toMatchObject([
+      { task: "generatePdf", payload: { characterId: bonded.id } },
+    ]);
 
     await CharactersMethods.archiveCharacter(owner, masterId);
     await expect(CharactersMethods.updateCharacter(owner, bonded.id, { name: "Ghost" })).rejects.toThrow(NotFoundError);
@@ -191,8 +270,14 @@ describe("CharactersService with bonded creatures", () => {
     ["unarchive", (id: string) => CharactersMethods.unarchiveCharacter(owner, id)],
     ["share", (id: string) => CharactersMethods.generateShareToken(owner, id)],
     ["stop sharing", (id: string) => CharactersMethods.revokeShareToken(owner, id)],
-    ["list the contributors of", (id: string) => CharacterContributorsMethods.getContributors(owner, id, {}, { limit: 10, page: 1 })],
-    ["invite a contributor to", (id: string) => CharacterContributorsMethods.inviteContributor(owner, id, "anyone@example.com")],
+    [
+      "list the contributors of",
+      (id: string) => CharacterContributorsMethods.getContributors(owner, id, {}, { limit: 10, page: 1 }),
+    ],
+    [
+      "invite a contributor to",
+      (id: string) => CharacterContributorsMethods.inviteContributor(owner, id, "anyone@example.com"),
+    ],
     ["leave", (id: string) => CharacterContributorsMethods.leaveCharacter(owner, id)],
   ])("won't %s a familiar on its own", async (_, call) => {
     const { bonded } = await createWizardWithFamiliar();
@@ -210,7 +295,9 @@ describe("CharactersService with bonded creatures", () => {
         await Players.create(db, { userId: user.id, campaignId: campaign.id, role: viewerRole });
         viewer = session;
       }
-      return Object.keys((await PlayerCharactersMethods.getCampaignCharacter(viewer, campaign.id, masterId)).bondedByKind ?? {});
+      return Object.keys(
+        (await PlayerCharactersMethods.getCampaignCharacter(viewer, campaign.id, masterId)).bondedByKind ?? {},
+      );
     };
     expect(await bondedIn("Public")).toEqual(["familiar"]);
     expect(await bondedIn("Partial", "Player Character")).toEqual([]);
@@ -221,13 +308,21 @@ describe("Stat blocks", () => {
   test("a cat familiar has the SRD cat's skills, and a tiny creature's size bonuses", async () => {
     const cat = await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded));
     const skills = cat.getDetailedCharacterSkills().getSkills();
-    expect(Object.fromEntries(["balance", "climb", "hide", "jump", "listen", "movesilently", "spot"].map((skill) => [skill, skills[skill]?.total])))
-      .toEqual({ balance: 10, climb: 6, hide: 12, jump: 10, listen: 3, movesilently: 8, spot: 3 });
+    expect(
+      Object.fromEntries(
+        ["balance", "climb", "hide", "jump", "listen", "movesilently", "spot"].map((skill) => [
+          skill,
+          skills[skill]?.total,
+        ]),
+      ),
+    ).toEqual({ balance: 10, climb: 6, hide: 12, jump: 10, listen: 3, movesilently: 8, spot: 3 });
     expect(skills["hide"]?.size).toBe(8);
 
     const { ac, weaponsets } = cat.getDetailedCharacterCombat().getCombat();
     expect(ac.size).toBe(2);
-    expect(ac.total).toBe(ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.size + ac.misc);
+    expect(ac.total).toBe(
+      ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.size + ac.misc,
+    );
     const claws = weaponsets["0"]?.mainhand ?? weaponsets["0"]?.offhand;
     if (claws) expect(claws.tohit.size).toBe(2);
   });
@@ -236,10 +331,19 @@ describe("Stat blocks", () => {
     // The Monster Manual wolf, with the first row of the companion table: no bonus.
     [1, { natural: 2, bab: 1 }],
     // The 3-5 row: 2 more hit dice (4 in all), +2 natural armor, +1 Strength and Dexterity.
-    [3, {
-      hp: 18, bab: 3, natural: 4, size: 0, ac: 17, saves: { fortitude: 6, reflex: 7, will: 2 }, abilities: { misc: [1, 1] },
-      attack: { name: "Bite", size: 0, toHit: 6, damage: "1d6 + 2" },
-    }],
+    [
+      3,
+      {
+        hp: 18,
+        bab: 3,
+        natural: 4,
+        size: 0,
+        ac: 17,
+        saves: { fortitude: 6, reflex: 7, will: 2 },
+        abilities: { misc: [1, 1] },
+        attack: { name: "Bite", size: 0, toHit: 6, damage: "1d6 + 2" },
+      },
+    ],
   ])("a druid %i's wolf companion", async (druidLevel, expected) => {
     const { bonded } = await createDruidWithCompanion(druidLevel);
     expect(statBlock(await build(new DetailedCharacterAnimalCompanion(bonded)))).toMatchObject(expected);
@@ -247,7 +351,17 @@ describe("Stat blocks", () => {
 
   test.each([
     // The 5-7 row: 2 more hit dice (6 in all), +4 natural armor, +1 Strength, Intelligence 6.
-    [5, { bab: 4, natural: 8, size: -1, ac: 18, baseSaves: { fortitude: 5, reflex: 5, will: 2 }, abilities: { strength: 19, intelligence: 6 } }],
+    [
+      5,
+      {
+        bab: 4,
+        natural: 8,
+        size: -1,
+        ac: 18,
+        baseSaves: { fortitude: 5, reflex: 5, will: 2 },
+        abilities: { strength: 19, intelligence: 6 },
+      },
+    ],
     // The 8-10 row: +6 natural armor, +2 Strength, Intelligence 7.
     [8, { natural: 10, abilities: { strength: 20, intelligence: 7 } }],
     // It shares the paladin's better Fortitude: 7 at the 10th level, against its own 6.

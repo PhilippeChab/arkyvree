@@ -1,10 +1,12 @@
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { Alert } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
+
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
+
 import { type BaseRules, editStepContent, editStepLabels, useLevelWizard } from "./levelUp/index.ts";
 import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 
@@ -16,13 +18,7 @@ interface EditLevelModalProps {
   editingLevel: EditingLevel;
 }
 
-export function EditLevelModal({
-  open,
-  onClose,
-  characterId,
-  baseRules,
-  editingLevel,
-}: EditLevelModalProps) {
+export function EditLevelModal({ open, onClose, characterId, baseRules, editingLevel }: EditLevelModalProps) {
   const editingLevelId = editingLevel.characterLevelId;
 
   // Pre-population refs
@@ -47,17 +43,18 @@ export function EditLevelModal({
 
   // ── Edit-only: fetch existing level data ────────────────────────────
 
-  const { data: editLevelData, isLoading: isLoadingLevel, error: levelError } = useQuery({
-    queryKey: queryKeys.characters.levelUp.levelData(
-      characterId,
-      editingLevelId,
-    ),
+  const {
+    data: editLevelData,
+    isLoading: isLoadingLevel,
+    error: levelError,
+  } = useQuery({
+    queryKey: queryKeys.characters.levelUp.levelData(characterId, editingLevelId),
     queryFn: async () => {
-      return parseResponse(rpc.api.characters.levels[":characterId"][
-        ":characterLevelId"
-      ]["$get"]({
-        param: { characterId, characterLevelId: editingLevelId },
-      }));
+      return parseResponse(
+        rpc.api.characters.levels[":characterId"][":characterLevelId"]["$get"]({
+          param: { characterId, characterLevelId: editingLevelId },
+        }),
+      );
     },
     enabled: open && !!editingLevelId,
   });
@@ -87,8 +84,7 @@ export function EditLevelModal({
 
   // Pre-populate feats from edit data
   useEffect(() => {
-    if (!editLevelData || !wizard.featData || editFeatsAppliedRef.current)
-      return;
+    if (!editLevelData || !wizard.featData || editFeatsAppliedRef.current) return;
     editFeatsAppliedRef.current = true;
     // A saved level's feats have the selected-feat shape.
     if (Object.keys(editLevelData.feats).length > 0) wizardSetValue("selectedFeats", editLevelData.feats);
@@ -96,8 +92,7 @@ export function EditLevelModal({
 
   // Pre-populate powers from edit data
   useEffect(() => {
-    if (!editLevelData || !wizard.powerData || editPowersAppliedRef.current)
-      return;
+    if (!editLevelData || !wizard.powerData || editPowersAppliedRef.current) return;
     editPowersAppliedRef.current = true;
     if (Object.keys(editLevelData.powers).length > 0) wizardSetValue("selectedPowers", editLevelData.powers);
   }, [editLevelData, wizard.powerData, wizardSetValue]);
@@ -112,7 +107,8 @@ export function EditLevelModal({
   // The saved level fills the picks in as it loads (the level, then its class's feat and power slots): Next waits while
   // it loads, or a quick Finish would save the level without its feats and powers. Saving without them would erase
   // them, so a load that failed stops the wizard at the step that shows its error.
-  const loading = isLoadingLevel || (!!editLevelData && !wizard.selectedClass) || wizard.isLoadingFeats || wizard.isLoadingPowers;
+  const loading =
+    isLoadingLevel || (!!editLevelData && !wizard.selectedClass) || wizard.isLoadingFeats || wizard.isLoadingPowers;
   const step = editStepContent[wizard.activeStep];
   const failed = !editLevelData || (step === "feats" && !wizard.featData) || (step === "powers" && !wizard.powerData);
 

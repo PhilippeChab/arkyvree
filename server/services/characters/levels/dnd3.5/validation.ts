@@ -5,13 +5,12 @@
  * - annotateRequirements — attaches eligibility and requirement tree info to candidate entities
  */
 
+import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { type Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
-import {
-  Feats,
-} from "@/server/repositories/index.ts";
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import { Feats } from "@/server/repositories/index.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
+
 import { loadFeatCustomizations } from "./helpers.ts";
 
 /**
@@ -57,13 +56,17 @@ export async function validateAndFetchLevelSelections(
   const uniqueSkillIds = [...new Set(skillIds)];
   const uniqueFeatIds = [...new Set(featIds)];
   const uniquePowerIds = [...new Set(powerIds)];
-  const fetchedSkills = uniqueSkillIds.map((id) => rulesetData.skillsById.get(id))
+  const fetchedSkills = uniqueSkillIds
+    .map((id) => rulesetData.skillsById.get(id))
     .filter((s): s is NonNullable<typeof s> => s !== undefined);
-  const fetchedFeats = uniqueFeatIds.map((id) => rulesetData.featsById.get(id))
+  const fetchedFeats = uniqueFeatIds
+    .map((id) => rulesetData.featsById.get(id))
     .filter((f): f is NonNullable<typeof f> => f !== undefined);
-  const fetchedPowers = uniquePowerIds.map((id) => rulesetData.powersById.get(id))
+  const fetchedPowers = uniquePowerIds
+    .map((id) => rulesetData.powersById.get(id))
     .filter((p): p is NonNullable<typeof p> => p !== undefined);
-  const fetchedAptitudes = aptitudeIds.map((id) => rulesetData.aptitudesById.get(id))
+  const fetchedAptitudes = aptitudeIds
+    .map((id) => rulesetData.aptitudesById.get(id))
     .filter((a): a is NonNullable<typeof a> => a !== undefined);
 
   if (fetchedSkills.length !== uniqueSkillIds.length) throw new BadRequestError("One or more skills not found");
@@ -124,12 +127,15 @@ export async function validateAndFetchLevelSelections(
     // returned feat.id are auto-remapped to post-COW by the repo Proxy, so the
     // DB IN-filter and the Set comparison both operate on post-COW ids.
     const otherKlassLevelIds = otherLevels.map((lvl) => lvl.klassLevelId);
-    const pickedFeats = otherLevelIds.length > 0
-      ? await Feats.findManyByCharacterLevelIds(tx, { characterLevelIds: otherLevelIds })
-      : [];
-    const givenFeats = otherKlassLevelIds.length > 0
-      ? await Feats.findManyByKlassLevelIds(tx, { klassLevelIds: otherKlassLevelIds, characterLevelIds: otherLevelIds })
-      : [];
+    const pickedFeats =
+      otherLevelIds.length > 0 ? await Feats.findManyByCharacterLevelIds(tx, { characterLevelIds: otherLevelIds }) : [];
+    const givenFeats =
+      otherKlassLevelIds.length > 0
+        ? await Feats.findManyByKlassLevelIds(tx, {
+            klassLevelIds: otherKlassLevelIds,
+            characterLevelIds: otherLevelIds,
+          })
+        : [];
     const existingFeatIds = new Set([...pickedFeats, ...givenFeats].map((f) => f.id));
 
     // Auto-granted feats come from the composed cache (already post-COW).
@@ -163,7 +169,16 @@ export async function validateAndFetchLevelSelections(
   const autoGrantedFeatIds = autoGrantedRecords.map((rec) => rec.featsInRule.id);
   const featCustomizations = loadFeatCustomizations(rulesetData, [...featIds, ...autoGrantedFeatIds]);
 
-  return { fetchedSkills, fetchedFeats, fetchedPowers, featToAptitude, powerToAptitude, powerLevelMap, featCustomizations, autoGrantedRecords };
+  return {
+    fetchedSkills,
+    fetchedFeats,
+    fetchedPowers,
+    featToAptitude,
+    powerToAptitude,
+    powerLevelMap,
+    featCustomizations,
+    autoGrantedRecords,
+  };
 }
 
 export function annotateRequirements<T extends { id: string }>(
@@ -174,8 +189,7 @@ export function annotateRequirements<T extends { id: string }>(
   if (candidates.length === 0) return [];
   return candidates.map((candidate) => {
     const reqs = rulesetData.requirementsByEntity.get(candidate.id);
-    const eligible = !reqs || reqs.length === 0
-      || detailedCharacter.areRequirementsMet([reqs]);
+    const eligible = !reqs || reqs.length === 0 || detailedCharacter.areRequirementsMet([reqs]);
     return {
       ...candidate,
       eligible,

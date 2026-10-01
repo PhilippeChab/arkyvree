@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+
 import { useLatest } from "@/client/src/hooks/index.ts";
 
 interface WsMessage {

@@ -54,9 +54,14 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
           : undefined,
       }}
     >
-      <form onSubmit={form.handleSubmit(onSubmit)} style={fixedHeight ? { display: "flex", flexDirection: "column", flex: 1, minHeight: 0 } : undefined}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        style={fixedHeight ? { display: "flex", flexDirection: "column", flex: 1, minHeight: 0 } : undefined}
+      >
         <DialogTitle>{title}</DialogTitle>
-        <DialogContent sx={fixedHeight ? { flex: 1, minHeight: 0, overflowY: "auto", scrollbarGutter: "stable" } : undefined}>
+        <DialogContent
+          sx={fixedHeight ? { flex: 1, minHeight: 0, overflowY: "auto", scrollbarGutter: "stable" } : undefined}
+        >
           <Stack spacing={3} sx={{ mt: 1 }}>
             {children}
           </Stack>
@@ -66,7 +71,9 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
             Cancel
           </Button>
           <Button type="submit" variant="contained" disabled={isLoading} startIcon={submitIcon}>
-            <DiceSpinner size="small" loading={isLoading}>{submitLabel}</DiceSpinner>
+            <DiceSpinner size="small" loading={isLoading}>
+              {submitLabel}
+            </DiceSpinner>
           </Button>
         </DialogActions>
       </form>
@@ -126,8 +133,16 @@ export function ConfirmDialog({
         <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
           Cancel
         </Button>
-        <Button onClick={onConfirm} variant="contained" color={confirmColor} disabled={isLoading} startIcon={confirmIcon}>
-          <DiceSpinner size="small" loading={isLoading}>{confirmLabel}</DiceSpinner>
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          color={confirmColor}
+          disabled={isLoading}
+          startIcon={confirmIcon}
+        >
+          <DiceSpinner size="small" loading={isLoading}>
+            {confirmLabel}
+          </DiceSpinner>
         </Button>
       </DialogActions>
     </Modal>

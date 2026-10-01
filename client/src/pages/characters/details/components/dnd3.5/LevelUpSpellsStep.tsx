@@ -1,6 +1,3 @@
-import type { LevelUpPowersStepProps } from "./levelUpFactory.ts";
-import type { PowerAptitudePool } from "./levelUp/index.ts";
-import { DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
 import {
   Alert,
   Box,
@@ -13,6 +10,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+
+import { DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
+
+import type { PowerAptitudePool } from "./levelUp/index.ts";
+import type { LevelUpPowersStepProps } from "./levelUpFactory.ts";
 
 export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   const {
@@ -53,9 +55,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
     setPowerSearch("");
   };
 
-  const powerAptitudePools: PowerAptitudePool[] = powerData.aptitudePools
-    ? Object.values(powerData.aptitudePools)
-    : [];
+  const powerAptitudePools: PowerAptitudePool[] = powerData.aptitudePools ? Object.values(powerData.aptitudePools) : [];
 
   const autoGrantedFree = powerData.autoGrantedPowers.filter((p) => p.free);
   const autoGrantedNonFree = powerData.autoGrantedPowers.filter((p) => !p.free);
@@ -107,127 +107,143 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
               Choose an aptitude to select spells from:
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-            {powerAptitudePools
-              .filter((pool) => getPowerPoolAvailable(pool) > 0)
-              .flatMap((pool) => {
-                const poolTyped = pool;
+              {powerAptitudePools
+                .filter((pool) => getPowerPoolAvailable(pool) > 0)
+                .flatMap((pool) => {
+                  const poolTyped = pool;
 
-                // Leveled pool: render one chip per spell level with available > 0
-                if (poolTyped.leveled && poolTyped.levels) {
-                  return Object.entries(poolTyped.levels)
-                    .filter(([level]) => getLevelPoolAvailable(poolTyped, level) > 0)
-                    .map(([level]) => {
-                      const levelAvailable = getLevelPoolAvailable(poolTyped, level);
-                      const powersInLevel = (selectedPowers[pool.id] || []).filter(
-                        (p) => p.powerLevel === Number(level),
-                      ).length;
-                      const isSelected = selectedPowerAptitude === pool.id
-                        && selectedPowerLevel === Number(level);
-                      const levelLabel = level === "0" ? "Cantrips" : `Level ${level}`;
+                  // Leveled pool: render one chip per spell level with available > 0
+                  if (poolTyped.leveled && poolTyped.levels) {
+                    return Object.entries(poolTyped.levels)
+                      .filter(([level]) => getLevelPoolAvailable(poolTyped, level) > 0)
+                      .map(([level]) => {
+                        const levelAvailable = getLevelPoolAvailable(poolTyped, level);
+                        const powersInLevel = (selectedPowers[pool.id] || []).filter(
+                          (p) => p.powerLevel === Number(level),
+                        ).length;
+                        const isSelected = selectedPowerAptitude === pool.id && selectedPowerLevel === Number(level);
+                        const levelLabel = level === "0" ? "Cantrips" : `Level ${level}`;
 
-                      return (
-                        <Chip
-                          key={`${pool.id}-${level}`}
-                          label={`${pool.name} - ${levelLabel} ${powersInLevel}/${levelAvailable}`}
-                          variant={isSelected ? "filled" : "outlined"}
-                          color={isSelected ? "primary" : "default"}
-                          onClick={() => openPool(pool.id, Number(level))}
-                        />
-                      );
-                    });
-                }
+                        return (
+                          <Chip
+                            key={`${pool.id}-${level}`}
+                            label={`${pool.name} - ${levelLabel} ${powersInLevel}/${levelAvailable}`}
+                            variant={isSelected ? "filled" : "outlined"}
+                            color={isSelected ? "primary" : "default"}
+                            onClick={() => openPool(pool.id, Number(level))}
+                          />
+                        );
+                      });
+                  }
 
-                // Non-leveled pool: render single chip
-                const currentPoolPowers = selectedPowers[pool.id] || [];
-                const poolAvailable = getPowerPoolAvailable(poolTyped);
-                const isSelected = selectedPowerAptitude === pool.id
-                  && selectedPowerLevel === null;
+                  // Non-leveled pool: render single chip
+                  const currentPoolPowers = selectedPowers[pool.id] || [];
+                  const poolAvailable = getPowerPoolAvailable(poolTyped);
+                  const isSelected = selectedPowerAptitude === pool.id && selectedPowerLevel === null;
 
-                return [(
-                  <Chip
-                    key={pool.id}
-                    label={`${pool.name} ${currentPoolPowers.length}/${poolAvailable}`}
-                    variant={isSelected ? "filled" : "outlined"}
-                    color={isSelected ? "primary" : "default"}
-                    onClick={() => openPool(pool.id, null)}
-                  />
-                )];
-              })}
-          </Box>
+                  return [
+                    <Chip
+                      key={pool.id}
+                      label={`${pool.name} ${currentPoolPowers.length}/${poolAvailable}`}
+                      variant={isSelected ? "filled" : "outlined"}
+                      color={isSelected ? "primary" : "default"}
+                      onClick={() => openPool(pool.id, null)}
+                    />,
+                  ];
+                })}
+            </Box>
           </>
         )}
       </Box>
       {/* Spell Selection Interface for Selected Aptitude */}
-      {selectedPowerAptitude && (() => {
-        const currentPool = powerAptitudePools.find(
-          (p) => p.id === selectedPowerAptitude,
-        );
-        if (!currentPool) return null;
+      {selectedPowerAptitude &&
+        (() => {
+          const currentPool = powerAptitudePools.find((p) => p.id === selectedPowerAptitude);
+          if (!currentPool) return null;
 
-        const isLeveled = (currentPool).leveled;
-        const currentPoolPowers = selectedPowers[selectedPowerAptitude] || [];
-        const allSelectedPowerIds = Object.values(selectedPowers).flat().map((p) => p.id);
-        const pickablePowers = availablePowers.filter((opt) => !allSelectedPowerIds.includes(opt.id));
+          const isLeveled = currentPool.leveled;
+          const currentPoolPowers = selectedPowers[selectedPowerAptitude] || [];
+          const allSelectedPowerIds = Object.values(selectedPowers)
+            .flat()
+            .map((p) => p.id);
+          const pickablePowers = availablePowers.filter((opt) => !allSelectedPowerIds.includes(opt.id));
 
-        // For leveled pools, scope to selected power level
-        const levelPowers = isLeveled && selectedPowerLevel != null
-          ? currentPoolPowers.filter((p) => p.powerLevel === selectedPowerLevel)
-          : currentPoolPowers;
-        const poolAvailable = isLeveled && selectedPowerLevel != null
-          ? getLevelPoolAvailable(currentPool, String(selectedPowerLevel))
-          : getPowerPoolAvailable(currentPool);
+          // For leveled pools, scope to selected power level
+          const levelPowers =
+            isLeveled && selectedPowerLevel != null
+              ? currentPoolPowers.filter((p) => p.powerLevel === selectedPowerLevel)
+              : currentPoolPowers;
+          const poolAvailable =
+            isLeveled && selectedPowerLevel != null
+              ? getLevelPoolAvailable(currentPool, String(selectedPowerLevel))
+              : getPowerPoolAvailable(currentPool);
 
-        const levelLabel = selectedPowerLevel != null
-          ? selectedPowerLevel === 0 ? "Cantrip" : `Level ${selectedPowerLevel}`
-          : "";
+          const levelLabel =
+            selectedPowerLevel != null ? (selectedPowerLevel === 0 ? "Cantrip" : `Level ${selectedPowerLevel}`) : "";
 
-        return (
-          <Box sx={{ display: "flex", flexDirection: "column", mt: 3, flex: 1, minHeight: 0 }}>
-            {/* Selected Spells (always reserve space) */}
-            <Box sx={{ flexShrink: 0, mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Selected {currentPool?.name}{levelLabel ? ` ${levelLabel}` : ""} Spells ({levelPowers.length}/{poolAvailable}):
-              </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {levelPowers.length > 0
-                  ? levelPowers.map((power) => (
-                      <Tooltip describeChild key={power.id} title={power.description ? power.description.length > 200 ? `${power.description.slice(0, 200)}…` : power.description : ""} placement="right" enterDelay={300} arrow>
-                        <Chip
-                          label={power.name}
-                          onDelete={() =>
-                            handleDeletePower(power.id, selectedPowerAptitude)}
-                        />
-                      </Tooltip>
-                    ))
-                  : Array.from({ length: poolAvailable }, (_, i) => (
-                      <Skeleton key={i} variant="rounded" width={100} height={32} />
-                    ))
-                }
+          return (
+            <Box sx={{ display: "flex", flexDirection: "column", mt: 3, flex: 1, minHeight: 0 }}>
+              {/* Selected Spells (always reserve space) */}
+              <Box sx={{ flexShrink: 0, mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Selected {currentPool?.name}
+                  {levelLabel ? ` ${levelLabel}` : ""} Spells ({levelPowers.length}/{poolAvailable}):
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  {levelPowers.length > 0
+                    ? levelPowers.map((power) => (
+                        <Tooltip
+                          describeChild
+                          key={power.id}
+                          title={
+                            power.description
+                              ? power.description.length > 200
+                                ? `${power.description.slice(0, 200)}…`
+                                : power.description
+                              : ""
+                          }
+                          placement="right"
+                          enterDelay={300}
+                          arrow
+                        >
+                          <Chip
+                            label={power.name}
+                            onDelete={() => handleDeletePower(power.id, selectedPowerAptitude)}
+                          />
+                        </Tooltip>
+                      ))
+                    : Array.from({ length: poolAvailable }, (_, i) => (
+                        <Skeleton key={i} variant="rounded" width={100} height={32} />
+                      ))}
+                </Box>
               </Box>
-            </Box>
 
-            {/* Add Spell List */}
-            {levelPowers.length < poolAvailable && (
-              <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-                <TextField
-                  label={`Search ${currentPool?.name}${levelLabel ? ` ${levelLabel}` : ""} Spells`}
-                  placeholder="Search spells..."
-                  value={powerSearch}
-                  onChange={(e) => setPowerSearch(e.target.value)}
-                  fullWidth
-                  sx={{ mb: 1, flexShrink: 0 }}
-                />
-                {isLoadingAvailablePowers && availablePowers.length === 0
-                  ? <DiceSpinner />
-                  : pickablePowers.length === 0 && powerSearch
-                  ? <NoMatchesState search={powerSearch} />
-                  : <List
-                      dense
-                      sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
-                      onScroll={handlePowersScroll}
-                    >
+              {/* Add Spell List */}
+              {levelPowers.length < poolAvailable && (
+                <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+                  <TextField
+                    label={`Search ${currentPool?.name}${levelLabel ? ` ${levelLabel}` : ""} Spells`}
+                    placeholder="Search spells..."
+                    value={powerSearch}
+                    onChange={(e) => setPowerSearch(e.target.value)}
+                    fullWidth
+                    sx={{ mb: 1, flexShrink: 0 }}
+                  />
+                  {isLoadingAvailablePowers && availablePowers.length === 0 ? (
+                    <DiceSpinner />
+                  ) : pickablePowers.length === 0 && powerSearch ? (
+                    <NoMatchesState search={powerSearch} />
+                  ) : (
+                    <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }} onScroll={handlePowersScroll}>
                       {pickablePowers.map((power) => (
-                        <Tooltip describeChild key={power.id} title={power.description ?? ""} placement="right" enterDelay={300} arrow>
+                        <Tooltip
+                          describeChild
+                          key={power.id}
+                          title={power.description ?? ""}
+                          placement="right"
+                          enterDelay={300}
+                          arrow
+                        >
                           <span>
                             <ListItemButton
                               disabled={!power.eligible}
@@ -257,13 +273,12 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                         </Box>
                       )}
                     </List>
-                }
-              </Box>
-            )}
-
-          </Box>
-        );
-      })()}
+                  )}
+                </Box>
+              )}
+            </Box>
+          );
+        })()}
     </Box>
   );
 }

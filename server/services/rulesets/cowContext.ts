@@ -14,6 +14,7 @@
  * The async-local store dies with the callback — zero cross-request leakage.
  */
 import { AsyncLocalStorage } from "node:async_hooks";
+
 import type { CachedCowData } from "@/server/cache/index.ts";
 
 const storage = new AsyncLocalStorage<CachedCowData | undefined>();
@@ -25,10 +26,7 @@ const storage = new AsyncLocalStorage<CachedCowData | undefined>();
  *
  * @internal — Use `withRulesetScope` from `./cow.ts` from application code.
  */
-export function withCowContext<T>(
-  cowData: CachedCowData | null | undefined,
-  fn: () => Promise<T>,
-): Promise<T> {
+export function withCowContext<T>(cowData: CachedCowData | null | undefined, fn: () => Promise<T>): Promise<T> {
   return storage.run(cowData ?? undefined, fn);
 }
 

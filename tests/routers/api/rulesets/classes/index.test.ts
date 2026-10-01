@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
@@ -10,7 +11,9 @@ describe("rulesets classes", () => {
   test("creates, reads, lists, updates and deletes a class", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-    const created = await expectOk(classes.$post({ param: { id }, json: { name: "Test Class", description: "A test class", hd: 10 } }));
+    const created = await expectOk(
+      classes.$post({ param: { id }, json: { name: "Test Class", description: "A test class", hd: 10 } }),
+    );
     expect(created).toMatchObject({ name: "Test Class", description: "A test class", hd: 10 });
     const param = { id, classId: created.id };
 
@@ -18,7 +21,9 @@ describe("rulesets classes", () => {
     const list = await expectOk(classes.$get({ param: { id }, query: { search: "Test Class" } }));
     expect(list.items.map((c) => c.id)).toContain(created.id);
 
-    const updated = await expectOk(klass.$put({ param, json: { name: "Renamed Class", description: "Updated", hd: 12 } }));
+    const updated = await expectOk(
+      klass.$put({ param, json: { name: "Renamed Class", description: "Updated", hd: 12 } }),
+    );
     expect(updated).toMatchObject({ name: "Renamed Class", description: "Updated", hd: 12 });
 
     await expectOk(klass.$delete({ param }));

@@ -7,8 +7,9 @@ import { queryOptions } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { ClassDetail } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
 import type { EntityType } from "./types.ts";
 
 const rulesetApi = rpc.api.rulesets[":id"];
@@ -35,31 +36,51 @@ export type CustomizationEntity =
 async function fetchEntity(id: string, type: EntityType, entityId: string): Promise<CustomizationEntity> {
   switch (type) {
     case "feats":
-      return { type, entity: await parseResponse(rulesetApi.feats[":featId"].$get({ param: { id, featId: entityId } })) };
+      return {
+        type,
+        entity: await parseResponse(rulesetApi.feats[":featId"].$get({ param: { id, featId: entityId } })),
+      };
     case "races":
-      return { type, entity: await parseResponse(rulesetApi.races[":raceId"].$get({ param: { id, raceId: entityId } })) };
+      return {
+        type,
+        entity: await parseResponse(rulesetApi.races[":raceId"].$get({ param: { id, raceId: entityId } })),
+      };
     case "items":
-      return { type, entity: await parseResponse(rulesetApi.items[":itemId"].$get({ param: { id, itemId: entityId } })) };
+      return {
+        type,
+        entity: await parseResponse(rulesetApi.items[":itemId"].$get({ param: { id, itemId: entityId } })),
+      };
     case "powers":
-      return { type, entity: await parseResponse(rulesetApi.powers[":powerId"].$get({ param: { id, powerId: entityId } })) };
+      return {
+        type,
+        entity: await parseResponse(rulesetApi.powers[":powerId"].$get({ param: { id, powerId: entityId } })),
+      };
     case "klass_levels":
       return {
         type,
-        entity: await parseResponse(rulesetApi.class_levels[":classLevelId"].$get({ param: { id, classLevelId: entityId } })),
+        entity: await parseResponse(
+          rulesetApi.class_levels[":classLevelId"].$get({ param: { id, classLevelId: entityId } }),
+        ),
       };
     case "klasses":
-      return { type, entity: await parseResponse(rulesetApi.classes[":classId"].$get({ param: { id, classId: entityId } })) };
+      return {
+        type,
+        entity: await parseResponse(rulesetApi.classes[":classId"].$get({ param: { id, classId: entityId } })),
+      };
     case "modifiers":
       return {
         type,
-        entity: await parseResponse(rulesetApi.customization[":entityType"][":entityId"].modifiers[":modifierId"].$get({
-          param: { id, entityType: type, entityId, modifierId: entityId },
-        })),
+        entity: await parseResponse(
+          rulesetApi.customization[":entityType"][":entityId"].modifiers[":modifierId"].$get({
+            param: { id, entityType: type, entityId, modifierId: entityId },
+          }),
+        ),
       };
   }
 }
 
-export const customizationEntityQuery = (rulesetId: string, type: EntityType, entityId: string) => queryOptions({
-  queryKey: queryKeys.rulesets.entity(rulesetId, type, entityId),
-  queryFn: () => fetchEntity(rulesetId, type, entityId),
-});
+export const customizationEntityQuery = (rulesetId: string, type: EntityType, entityId: string) =>
+  queryOptions({
+    queryKey: queryKeys.rulesets.entity(rulesetId, type, entityId),
+    queryFn: () => fetchEntity(rulesetId, type, entityId),
+  });

@@ -1,5 +1,7 @@
-import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import type { ComponentType } from "react";
+
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+
 import {
   AbilityScoresSection,
   BondedSection,

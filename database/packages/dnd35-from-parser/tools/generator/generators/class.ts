@@ -1,7 +1,11 @@
-import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
-import { buildClassFeatSeeds, buildPoolParentNameMap, classAptitudePicks, classSpells, insertOrdinalInName, loadExistingFeats } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
-import { extractGrantedFeatNames, stripClassSuffix } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import {
+  buildClassFeatSeeds,
+  buildPoolParentNameMap,
+  classAptitudePicks,
+  classSpells,
+  insertOrdinalInName,
+  loadExistingFeats,
+} from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import {
   formatStringArray,
   listField,
@@ -14,6 +18,9 @@ import {
   toConstName,
   truncateDesc,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
+import { extractGrantedFeatNames, stripClassSuffix } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 
 // ---------------------------------------------------------------------------
 // Generate FeatSeed[] TypeScript file
@@ -24,12 +31,16 @@ function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string, uses: Set<s
   const parts = [
     `name: ${quote(feat.name)}`,
     `description: ${quote(feat.description)}`,
-    ...feat.stackable ? ["stackable: true"] : [],
-    ...feat.selectable !== undefined ? [`selectable: ${feat.selectable}`] : [],
+    ...(feat.stackable ? ["stackable: true"] : []),
+    ...(feat.selectable !== undefined ? [`selectable: ${feat.selectable}`] : []),
     `aptitudes: [${feat.aptitudes.map((a) => (a === classFeatureAptitude ? "APT" : quote(a))).join(", ")}]`,
-    ...feat.modifiers?.length ? [`modifiers: [${feat.modifiers.map((m) => stringifyFeatModifier(m, uses)).join(", ")}]`] : [],
-    ...feat.requirements?.length ? [`requirements: [${feat.requirements.map((r) => stringifyRequirement(r, uses)).join(", ")}]`] : [],
-    ...feat.properties?.length ? [`properties: [${feat.properties.map(stringifyProperty).join(", ")}]`] : [],
+    ...(feat.modifiers?.length
+      ? [`modifiers: [${feat.modifiers.map((m) => stringifyFeatModifier(m, uses)).join(", ")}]`]
+      : []),
+    ...(feat.requirements?.length
+      ? [`requirements: [${feat.requirements.map((r) => stringifyRequirement(r, uses)).join(", ")}]`]
+      : []),
+    ...(feat.properties?.length ? [`properties: [${feat.properties.map(stringifyProperty).join(", ")}]`] : []),
   ];
   return `  { ${parts.join(", ")} },`;
 }
@@ -56,10 +67,7 @@ export function generateFeatSeeds(ref: ClassReference): string {
 // Build classFeatures array from mapping + detected
 // ---------------------------------------------------------------------------
 
-function findMappedName(
-  rawName: string,
-  features: ClassReference["mapping"]["features"],
-): string | undefined {
+function findMappedName(rawName: string, features: ClassReference["mapping"]["features"]): string | undefined {
   if (!features) return undefined;
   // Exact match
   if (features[rawName]) return features[rawName].seedName;
@@ -74,7 +82,10 @@ function findMappedName(
 }
 
 /** A class's features and the existing feats it grants, a feature split per level named as `perLevelPicks` splits its pick. */
-function buildClassFeatures(ref: ClassReference, perLevelPicks: ReturnType<typeof classAptitudePicks>["perLevel"]): {
+function buildClassFeatures(
+  ref: ClassReference,
+  perLevelPicks: ReturnType<typeof classAptitudePicks>["perLevel"],
+): {
   classFeatures: [number, string][];
   autoFreeFeats: [number, string, string][];
 } {
@@ -118,7 +129,7 @@ function buildClassFeatures(ref: ClassReference, perLevelPicks: ReturnType<typeo
     if (feature?.skip) continue;
 
     const mappedName = feature?.seedName ?? findMappedName(occ.name, features_);
-    const name = mappedName ?? (poolParentNames.get(occ.name.toLowerCase()) ?? occ.name);
+    const name = mappedName ?? poolParentNames.get(occ.name.toLowerCase()) ?? occ.name;
 
     const freeFeatName = existingFeatGranted(name, feature?.description);
     if (freeFeatName && mapping.classFeatureAptitude) {
@@ -184,10 +195,18 @@ export function generateClassSeed(ref: ClassReference): string {
   lines.push(`  description: ${quote(truncateDesc(overrides.description ?? raw.description, MAX_CLASS_DESC))},`);
   lines.push(`  hd: ${detected.hd}, levels: ${detected.levels}, skillPoints: ${detected.skillPoints},`);
   lines.push(`  bab: ${quote(bab)},`);
-  lines.push(`  saves: { fortitude: ${quote(saves.fortitude)}, reflex: ${quote(saves.reflex)}, will: ${quote(saves.will)} },`);
+  lines.push(
+    `  saves: { fortitude: ${quote(saves.fortitude)}, reflex: ${quote(saves.reflex)}, will: ${quote(saves.will)} },`,
+  );
   lines.push(`  classSkills: ${formatStringArray(classSkills, 1)},`);
 
-  lines.push(...listField("requirements", requirements.map((req) => stringifyRequirement(req, uses, 2)), "  "));
+  lines.push(
+    ...listField(
+      "requirements",
+      requirements.map((req) => stringifyRequirement(req, uses, 2)),
+      "  ",
+    ),
+  );
 
   // Caster level advancement
   const cla = detected.casterLevelAdvancement;
@@ -264,7 +283,9 @@ export function generateClassSeed(ref: ClassReference): string {
   if (overrides.modifiers && overrides.modifiers.length > 0) {
     lines.push(`  modifiers: [`);
     for (const m of overrides.modifiers) {
-      lines.push(`    { level: ${m.level}, target: ${quote(m.target)}, value: ${quote(m.value)}, valueType: ${quote(m.valueType)}, operator: ${quote(m.operator)} },`);
+      lines.push(
+        `    { level: ${m.level}, target: ${quote(m.target)}, value: ${quote(m.value)}, valueType: ${quote(m.valueType)}, operator: ${quote(m.operator)} },`,
+      );
     }
     lines.push(`  ],`);
   }
@@ -307,7 +328,7 @@ export function generateClassSeed(ref: ClassReference): string {
   // Flag unresolved items as TODO comments
   // Convention: if the key exists in the overrides (even empty []), it's been reviewed — no TODO
   const todos: string[] = [];
-  if (!("requirements" in (overrides)) && detected.unresolvedPrereqs?.length) {
+  if (!("requirements" in overrides) && detected.unresolvedPrereqs?.length) {
     for (const p of detected.unresolvedPrereqs) todos.push(p);
   }
   if (!("aptitudePicks" in overrides) && detected.unresolvedAptitudePicks?.length) {
@@ -324,6 +345,10 @@ export function generateClassSeed(ref: ClassReference): string {
   }
 
   lines.push("");
-  return [`import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";`, ...requirementImports(uses), "", ...lines].join("\n");
+  return [
+    `import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    ...requirementImports(uses),
+    "",
+    ...lines,
+  ].join("\n");
 }
-

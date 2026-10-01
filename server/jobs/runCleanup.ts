@@ -55,7 +55,7 @@ export const runCleanupTask: Task = async (_, helpers) => {
           const characterIds = await Characters.findIdsByUserIds(tx, { userIds });
           await purgeAttachmentsForRecords(tx, "User", userIds);
           await purgeAttachmentsForRecords(tx, "Character", characterIds);
-          const result = await Users.delete(tx, { expiredDemosBefore: now }) as { rowCount?: number | null };
+          const result = (await Users.delete(tx, { expiredDemosBefore: now })) as { rowCount?: number | null };
           return { rowCount: result.rowCount ?? userIds.length };
         });
       },
@@ -72,7 +72,7 @@ export const runCleanupTask: Task = async (_, helpers) => {
 
   for (const task of tasks) {
     try {
-      const result = await task.run() as { rowCount?: number | null };
+      const result = (await task.run()) as { rowCount?: number | null };
       counts[task.name] = result.rowCount ?? 0;
     } catch (error) {
       helpers.logger.error(`Failed to purge ${task.name}: ${error}`);
@@ -87,4 +87,4 @@ export const runCleanupTask: Task = async (_, helpers) => {
       .join(", ");
     helpers.logger.info(`Purged: ${summary}`);
   }
-}
+};

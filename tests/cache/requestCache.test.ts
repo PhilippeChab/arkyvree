@@ -9,15 +9,12 @@
  * - Rejected promises self-evict so retries don't return the cached rejection.
  */
 
-import { db, withTransaction } from "@/server/database/index.ts";
-import { type SeedContext } from "@/database/seeds/helpers.ts";
-import { Characters, Feats, Rulesets } from "@/server/repositories/index.ts";
-import {
-  clearRequestCache,
-  memoizeRequest,
-  runWithRequestCache,
-} from "@/server/database/requestCache.ts";
 import { beforeAll, describe, expect, test } from "bun:test";
+
+import { type SeedContext } from "@/database/seeds/helpers.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
+import { clearRequestCache, memoizeRequest, runWithRequestCache } from "@/server/database/requestCache.ts";
+import { Characters, Feats, Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 describe("requestCache — repository Proxy memoization", () => {
@@ -143,13 +140,10 @@ describe("requestCache — memoizeRequest primitive", () => {
       let callCount = 0;
       const failThenSucceed = () => {
         callCount += 1;
-        return callCount === 1
-          ? Promise.reject(new Error("boom"))
-          : Promise.resolve("ok");
+        return callCount === 1 ? Promise.reject(new Error("boom")) : Promise.resolve("ok");
       };
 
-      await expect(memoizeRequest("retry-key", failThenSucceed))
-        .rejects.toThrow("boom");
+      await expect(memoizeRequest("retry-key", failThenSucceed)).rejects.toThrow("boom");
 
       // Second call must actually re-invoke the fn — the cache must not have
       // retained the rejected promise from the first attempt.
@@ -163,13 +157,16 @@ describe("requestCache — memoizeRequest primitive", () => {
     await runWithRequestCache(async () => {
       let aCalls = 0;
       let bCalls = 0;
-      const fnA = () => { aCalls += 1; return Promise.resolve("a"); };
-      const fnB = () => { bCalls += 1; return Promise.resolve("b"); };
+      const fnA = () => {
+        aCalls += 1;
+        return Promise.resolve("a");
+      };
+      const fnB = () => {
+        bCalls += 1;
+        return Promise.resolve("b");
+      };
 
-      const [r1, r2] = await Promise.all([
-        memoizeRequest("key-a", fnA),
-        memoizeRequest("key-b", fnB),
-      ]);
+      const [r1, r2] = await Promise.all([memoizeRequest("key-a", fnA), memoizeRequest("key-b", fnB)]);
       const r3 = await memoizeRequest("key-a", fnA);
 
       expect(r1).toBe("a");
@@ -183,7 +180,10 @@ describe("requestCache — memoizeRequest primitive", () => {
 
   test("memoizeRequest is a no-op outside runWithRequestCache", async () => {
     let calls = 0;
-    const fn = () => { calls += 1; return Promise.resolve(calls); };
+    const fn = () => {
+      calls += 1;
+      return Promise.resolve(calls);
+    };
 
     const a = await memoizeRequest("no-store-key", fn);
     const b = await memoizeRequest("no-store-key", fn);

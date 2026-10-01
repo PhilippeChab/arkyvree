@@ -68,9 +68,13 @@ export async function sweepPendingBlobs(
   // the success-count's worth of progress per iteration.
   const failedIds = new Set<string>();
   while (true) {
-    const exclude = failedIds.size > 0
-      ? sql`AND b.id NOT IN (${sql.join([...failedIds].map((id) => sql`${id}::uuid`), sql`, `)})`
-      : sql``;
+    const exclude =
+      failedIds.size > 0
+        ? sql`AND b.id NOT IN (${sql.join(
+            [...failedIds].map((id) => sql`${id}::uuid`),
+            sql`, `,
+          )})`
+        : sql``;
     const candidates = (await db.execute<{ id: string; key: string }>(sql`
       SELECT b.id, b.key
       FROM ${blobsInStorage} b

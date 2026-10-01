@@ -1,15 +1,9 @@
-import { PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { type ThemeMode, useTheme } from "@/client/src/contexts/ThemeContext.tsx";
 import { DarkMode, LightMode, SettingsBrightness } from "@mui/icons-material";
-import {
-  Card,
-  CardContent,
-  Container,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from "@mui/material";
+import { Card, CardContent, Container, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+
+import { PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
+import { type ThemeMode, useTheme } from "@/client/src/contexts/ThemeContext.tsx";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
 
 const themeModeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
   { value: "light", label: "Light", icon: <LightMode /> },
@@ -31,11 +25,8 @@ export default function SettingsPage() {
             <Typography component="h2" sx={{ fontWeight: 700, mb: 1, typography: { xs: "h6", sm: "h5" } }}>
               Theme
             </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", mb: 3 }}>
-              Choose how Arkyvree looks to you. Select a single theme, or sync
-              with your system settings.
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
+              Choose how Arkyvree looks to you. Select a single theme, or sync with your system settings.
             </Typography>
 
             <ToggleButtonGroup

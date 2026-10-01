@@ -1,5 +1,6 @@
 import type { Holder, Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
 import type { Modifier } from "@/shared/relations.ts";
+
 import type DetailedCharacterRequirements from "./DetailedCharacterRequirements.ts";
 import {
   evaluateTemplateExpression,
@@ -25,9 +26,7 @@ export default class DetailedCharacterModifiers {
     skippedModifiers: [],
   };
 
-  constructor(
-    private readonly targetPaths: TargetPathsTraverser,
-  ) {}
+  constructor(private readonly targetPaths: TargetPathsTraverser) {}
 
   // ── Private statics ──────────────────────────────────────────────
 
@@ -44,11 +43,7 @@ export default class DetailedCharacterModifiers {
 
   // ── Public methods ───────────────────────────────────────────────
 
-  evaluateModifiers(
-    holders: Holders,
-    modifiers: Modifier[],
-    characterRequirements: DetailedCharacterRequirements,
-  ) {
+  evaluateModifiers(holders: Holders, modifiers: Modifier[], characterRequirements: DetailedCharacterRequirements) {
     // Precompute the set of "source keys" that gate a modifier out. A modifier
     // is dropped if its source entity OR the modifier itself has an unmet or
     // invalid requirement. Building this once is O(requirements); the previous
@@ -85,10 +80,7 @@ export default class DetailedCharacterModifiers {
     }
   }
 
-  evaluateModifier(
-    modifier: Modifier,
-    holders: Holders,
-  ) {
+  evaluateModifier(modifier: Modifier, holders: Holders) {
     const { target } = modifier;
 
     const results = this.targetPaths.traversePathInit(target, holders, { sourceId: modifier.sourceId });
@@ -114,14 +106,8 @@ export default class DetailedCharacterModifiers {
 
   // ── Private methods ──────────────────────────────────────────────
 
-  private filterByRequirements(
-    modifier: Modifier,
-    blockedKeys: Set<string>,
-  ): boolean {
-    if (
-      blockedKeys.has(`${modifier.sourceId}:${modifier.sourceType}`) ||
-      blockedKeys.has(`${modifier.id}:modifiers`)
-    ) {
+  private filterByRequirements(modifier: Modifier, blockedKeys: Set<string>): boolean {
+    if (blockedKeys.has(`${modifier.sourceId}:${modifier.sourceType}`) || blockedKeys.has(`${modifier.id}:modifiers`)) {
       this.detailedCharacterModifiers.unappliedModifiers.push(modifier);
       return false;
     }
@@ -174,11 +160,7 @@ export default class DetailedCharacterModifiers {
     });
   }
 
-  private applyModifier(
-    modifier: Modifier,
-    result: TraversePathResult,
-    holders: Holders,
-  ) {
+  private applyModifier(modifier: Modifier, result: TraversePathResult, holders: Holders) {
     const { value, valueType, operator } = modifier;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { holder, data, object, key } = result as { holder: Holder; data: any; object: any; key: string };

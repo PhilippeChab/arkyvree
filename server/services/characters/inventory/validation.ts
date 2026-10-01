@@ -6,10 +6,10 @@
  */
 
 import type { location } from "@/drizzle/schema.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterInventory } from "@/server/repositories/index.ts";
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { Character as CharacterRecord, Ruleset } from "@/shared/relations.ts";
 
@@ -17,8 +17,14 @@ type InventoryLocation = (typeof location.enumValues)[number];
 
 export const HAND_SLOTS = new Set<InventoryLocation>(["Main Hand", "Off Hand", "Two Handed"]);
 const SINGLE_OCCUPANCY_SLOTS = new Set<InventoryLocation>([
-  "Head", "Neck", "Shoulders", "Torso", "Wrists",
-  "Hands", "Waist", "Trinket",
+  "Head",
+  "Neck",
+  "Shoulders",
+  "Torso",
+  "Wrists",
+  "Hands",
+  "Waist",
+  "Trinket",
 ]);
 const MAX_FINGER_SLOTS = 2;
 
@@ -37,9 +43,7 @@ export async function validateEquipmentSlot(
   // is auto-canonicalized at the Items.findOne call site, so equality
   // self-exclusion works directly.
   const inventory = await CharacterInventory.findMany(tx, { characterId });
-  const equippedItems = inventory.filter((entry) =>
-    entry.equipped && entry.itemId !== item.id
-  );
+  const equippedItems = inventory.filter((entry) => entry.equipped && entry.itemId !== item.id);
 
   if (SINGLE_OCCUPANCY_SLOTS.has(location)) {
     const occupied = equippedItems.some((entry) => entry.location === location);
@@ -57,16 +61,17 @@ export async function validateEquipmentSlot(
 
   // Hand slot conflicts are per-weapon-set
   if (HAND_SLOTS.has(location)) {
-    const sameSetItems = equippedItems.filter((entry) =>
-      HAND_SLOTS.has(entry.location as InventoryLocation) &&
-      entry.weaponSet === weaponSet
+    const sameSetItems = equippedItems.filter(
+      (entry) => HAND_SLOTS.has(entry.location as InventoryLocation) && entry.weaponSet === weaponSet,
     );
 
     if (location === "Two Handed") {
       const hasMainHand = sameSetItems.some((entry) => entry.location === "Main Hand");
       const hasOffHand = sameSetItems.some((entry) => entry.location === "Off Hand");
       if (hasMainHand || hasOffHand) {
-        throw new BadRequestError("Cannot equip a two-handed item while holding items in Main Hand or Off Hand in the same weapon set");
+        throw new BadRequestError(
+          "Cannot equip a two-handed item while holding items in Main Hand or Off Hand in the same weapon set",
+        );
       }
     }
 
@@ -129,9 +134,7 @@ export async function validateItemRequirements(
   // requirementsByEntity is wrapped by cowResolvingMap — stored pre-COW ids
   // auto-resolve on lookup. No manual canonicalize needed.
   const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
-  const templateRequirements = item.sourceItemId
-    ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
-    : [];
+  const templateRequirements = item.sourceItemId ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? []) : [];
   const requirements = [...templateRequirements, ...ownRequirements];
   if (requirements.length === 0) return;
 

@@ -1,5 +1,5 @@
-import { db } from "@/server/database/index.ts";
 import { getOrFetchTargetPathsAndLabels } from "@/server/cache/rulesetCache.ts";
+import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
@@ -28,11 +28,16 @@ export const TargetPathsMethods = {
     if (!ruleset) throw new NotFoundError("Ruleset not found");
     // Compose inside the registered cache fill: composing beforehand can carry
     // a stale view across invalidation and later cache paths derived from it.
-    const result = await getOrFetchTargetPathsAndLabels(rulesetId, kind, () =>
-      withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-        const generator = RulesetFactory.fromBaseRules(ruleset.baseRules).createTargetPaths();
-        return generator.getTargetPathsAndLabels(rulesetData, kind);
-      }), buildSourceChain(ruleset));
+    const result = await getOrFetchTargetPathsAndLabels(
+      rulesetId,
+      kind,
+      () =>
+        withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+          const generator = RulesetFactory.fromBaseRules(ruleset.baseRules).createTargetPaths();
+          return generator.getTargetPathsAndLabels(rulesetData, kind);
+        }),
+      buildSourceChain(ruleset),
+    );
     if (!entityType) return result;
     return {
       paths: result.paths.filter((p) => !p.allowedEntityTypes || p.allowedEntityTypes.includes(entityType)),
@@ -69,9 +74,9 @@ export const TargetPathsMethods = {
         code: "INVALID_CATEGORY",
       });
 
-      const similarCategories = validCategories.filter((cat) =>
-        cat.toLowerCase().includes(category.toLowerCase()) ||
-        category.toLowerCase().includes(cat.toLowerCase())
+      const similarCategories = validCategories.filter(
+        (cat) =>
+          cat.toLowerCase().includes(category.toLowerCase()) || category.toLowerCase().includes(cat.toLowerCase()),
       );
       suggestions.push(...similarCategories);
     }
@@ -84,9 +89,10 @@ export const TargetPathsMethods = {
     const partialMatches = allPaths.filter((p) => p.path.startsWith(path));
     if (partialMatches.length > 0) {
       errors.push({
-        message: `Incomplete path. Did you mean: ${
-          partialMatches.slice(0, 3).map((p) => p.path).join(", ")
-        }?`,
+        message: `Incomplete path. Did you mean: ${partialMatches
+          .slice(0, 3)
+          .map((p) => p.path)
+          .join(", ")}?`,
         position: { start: 0, end: path.length },
         severity: "warning",
         code: "INCOMPLETE_PATH",
@@ -230,7 +236,10 @@ export const TargetPathsMethods = {
 
       if (endsWithDot) {
         const basePrefix = pathPrefix;
-        const segmentInfo = new Map<string, { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined }>();
+        const segmentInfo = new Map<
+          string,
+          { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined }
+        >();
 
         for (const p of allPaths) {
           if (!p.path.startsWith(basePrefix)) continue;
@@ -266,12 +275,13 @@ export const TargetPathsMethods = {
             insertText: segment,
             kind: info.isGroup ? "group" : "property",
             ...(info.examplePath?.sortOrder !== undefined && { sortOrder: info.examplePath.sortOrder }),
-            ...(isLeaf && info.examplePath && {
-              path: info.examplePath.path,
-              valueType: info.examplePath.valueType,
-              operators: info.examplePath.operators,
-              possibleValues: info.examplePath.possibleValues,
-            }),
+            ...(isLeaf &&
+              info.examplePath && {
+                path: info.examplePath.path,
+                valueType: info.examplePath.valueType,
+                operators: info.examplePath.operators,
+                possibleValues: info.examplePath.possibleValues,
+              }),
           });
         }
       } else {
@@ -279,7 +289,10 @@ export const TargetPathsMethods = {
         const currentSegmentPrefix = lastSegment.toLowerCase();
         const baseDot = basePrefix ? basePrefix + "." : "";
 
-        const segmentInfo = new Map<string, { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined }>();
+        const segmentInfo = new Map<
+          string,
+          { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined }
+        >();
 
         for (const p of allPaths) {
           if (baseDot && !p.path.startsWith(baseDot)) continue;
@@ -316,12 +329,13 @@ export const TargetPathsMethods = {
             insertText: segment,
             kind: info.isGroup ? "group" : "property",
             ...(info.examplePath?.sortOrder !== undefined && { sortOrder: info.examplePath.sortOrder }),
-            ...(isLeaf && info.examplePath && {
-              path: info.examplePath.path,
-              valueType: info.examplePath.valueType,
-              operators: info.examplePath.operators,
-              possibleValues: info.examplePath.possibleValues,
-            }),
+            ...(isLeaf &&
+              info.examplePath && {
+                path: info.examplePath.path,
+                valueType: info.examplePath.valueType,
+                operators: info.examplePath.operators,
+                possibleValues: info.examplePath.possibleValues,
+              }),
           });
         }
       }
@@ -354,11 +368,7 @@ export const TargetPathsMethods = {
   /**
    * Validate a modifier/requirement path and return its value type.
    */
-  async resolvePathValueType(
-    rulesetId: string,
-    target: string,
-    kind: "modifier" | "requirement",
-  ): Promise<string> {
+  async resolvePathValueType(rulesetId: string, target: string, kind: "modifier" | "requirement"): Promise<string> {
     const { paths } = await TargetPathsMethods.getTargetPathsWithLabels(rulesetId, kind);
     const pathDef = paths.find((p) => p.path === target);
     if (!pathDef) throw new BadRequestError(`Path not found: ${target}`);

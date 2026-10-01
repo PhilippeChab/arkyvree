@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
@@ -11,7 +12,9 @@ const requirements = api.api.rulesets[":id"].customization[":entityType"][":enti
 /** A seeded fork with a new class. */
 async function setup() {
   const { id } = await createSeededTestRuleset(SEED_USER_ID);
-  const created = await expectOk(api.api.rulesets[":id"].classes.$post({ param: { id }, json: { name: "Level Class", hd: 10 } }));
+  const created = await expectOk(
+    api.api.rulesets[":id"].classes.$post({ param: { id }, json: { name: "Level Class", hd: 10 } }),
+  );
   return { id, classId: created.id };
 }
 
@@ -24,12 +27,18 @@ describe("rulesets class levels", () => {
     const param = { id, classId, levelId: created.id };
 
     expect(await expectOk(level.$get({ param }))).toMatchObject({ id: created.id, level: 1 });
-    const byId = await expectOk(api.api.rulesets[":id"].class_levels[":classLevelId"].$get({ param: { id, classLevelId: created.id } }));
+    const byId = await expectOk(
+      api.api.rulesets[":id"].class_levels[":classLevelId"].$get({ param: { id, classLevelId: created.id } }),
+    );
     expect(byId.id).toBe(created.id);
     expect((await expectOk(levels.$get({ param: { id, classId } }))).map((l) => l.id)).toEqual([created.id]);
 
     // The level number is fixed once created.
-    expect(await expectOk(level.$put({ param, json: { bab: 3, skills: 6 } }))).toMatchObject({ level: 1, bab: 3, skills: 6 });
+    expect(await expectOk(level.$put({ param, json: { bab: 3, skills: 6 } }))).toMatchObject({
+      level: 1,
+      bab: 3,
+      skills: 6,
+    });
 
     await expectOk(level.$delete({ param }));
     expect(await expectOk(levels.$get({ param: { id, classId } }))).toEqual([]);
@@ -60,21 +69,29 @@ describe("rulesets class levels", () => {
     const pools = await expectOk(klass["feat-pools"].$get({ param: { id, classId: klassMap.pc["Fighter"] } }));
     expect(pools.find((l) => l.level === 1)).toMatchObject({ featPools: { "Fighter Bonus Feat": 1 } });
 
-    const spells = await expectOk(klass["spell-list"].$get({
-      param: { id, classId: klassMap.pc["Wizard"] },
-      query: { level: "1", search: "Magic Missile" },
-    }));
+    const spells = await expectOk(
+      klass["spell-list"].$get({
+        param: { id, classId: klassMap.pc["Wizard"] },
+        query: { level: "1", search: "Magic Missile" },
+      }),
+    );
     expect(spells.items.map((s) => s.name)).toContain("Magic Missile");
   });
 
   test("requires a session", async () => {
     const { id, classId } = await setup();
-    expect((await guestApi.api.rulesets[":id"].classes[":classId"].levels.$get({ param: { id, classId } })).status).toBe(401);
+    expect(
+      (await guestApi.api.rulesets[":id"].classes[":classId"].levels.$get({ param: { id, classId } })).status,
+    ).toBe(401);
   });
 
   test("rejects a level without a number or out of 1–20", async () => {
     const { id, classId } = await setup();
-    for (const json of [{ bab: 1, skills: 4 }, { level: "1", bab: 1, skills: 4 }, { level: 21, bab: 1, skills: 4 }]) {
+    for (const json of [
+      { bab: 1, skills: 4 },
+      { level: "1", bab: 1, skills: 4 },
+      { level: 21, bab: 1, skills: 4 },
+    ]) {
       expect((await levels.$post({ param: { id, classId }, json: json as never })).status).toBe(400);
     }
   });

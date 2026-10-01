@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 
 import { db } from "@/server/database/index.ts";
 import { pingWorker } from "@/server/queue.ts";
+
 import type { EmailJobPayload } from "./templates.ts";
 
 type SendArgs = {
@@ -18,8 +19,9 @@ export class EmailService {
 
     try {
       const from = options.from || "Arkyvree <notifications@arkyvree.com>";
-      const to = (Array.isArray(options.to) ? options.to : [options.to])
-        .filter((addr) => !addr.endsWith("@demo.invalid"));
+      const to = (Array.isArray(options.to) ? options.to : [options.to]).filter(
+        (addr) => !addr.endsWith("@demo.invalid"),
+      );
       // Demo users have synthetic @demo.invalid addresses. Drop them before
       // queuing — undeliverable bounces would burn sender reputation.
       if (to.length === 0) return { success: true };

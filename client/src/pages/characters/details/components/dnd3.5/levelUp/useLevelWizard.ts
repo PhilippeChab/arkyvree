@@ -1,27 +1,18 @@
-import { useListboxQuery } from "@/client/src/hooks/index.ts";
-import type { BaseRules, LevelUpFormData } from "./levelUpTypes.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { rollDie } from "@/client/src/lib/dice.ts";
-import {
-  skipToken,
-  useMutation,
-  useQuery,
-} from "@tanstack/react-query";
+import { skipToken, useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+
+import { useListboxQuery } from "@/client/src/hooks/index.ts";
+import { rollDie } from "@/client/src/lib/dice.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+
+import type { BaseRules, LevelUpFormData } from "./levelUpTypes.ts";
 import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
 // ── Step content types ────────────────────────────────────────────────
 
-export const editStepContent = [
-  "hp",
-  "attributes",
-  "skills",
-  "feats",
-  "powers",
-  "review",
-] as const;
+export const editStepContent = ["hp", "attributes", "skills", "feats", "powers", "review"] as const;
 
 export const editStepLabels = [
   "Select HP",
@@ -120,9 +111,10 @@ export function useLevelWizard({
     error: attributesError,
   } = useQuery({
     queryKey: queryKeys.characters.levelUp.attributes(characterId, editingLevelId),
-    queryFn: open && activeStep === attributeStep
-      ? () => parseResponse(levels["attribute-slots"].$get({ param, query: { characterLevelId: editingLevelId } }))
-      : skipToken,
+    queryFn:
+      open && activeStep === attributeStep
+        ? () => parseResponse(levels["attribute-slots"].$get({ param, query: { characterLevelId: editingLevelId } }))
+        : skipToken,
   });
 
   const {
@@ -131,12 +123,16 @@ export function useLevelWizard({
     error: skillsError,
   } = useQuery({
     queryKey: queryKeys.characters.levelUp.skills(characterId, selectedClass?.id, editingLevelId, selectedAttribute),
-    queryFn: open && activeStep === skillsStep && levelQuery
-      ? () => parseResponse(levels["skill-slots"].$get({
-        param,
-        query: { ...levelQuery, abilityId: selectedAttribute || undefined },
-      }))
-      : skipToken,
+    queryFn:
+      open && activeStep === skillsStep && levelQuery
+        ? () =>
+            parseResponse(
+              levels["skill-slots"].$get({
+                param,
+                query: { ...levelQuery, abilityId: selectedAttribute || undefined },
+              }),
+            )
+        : skipToken,
   });
 
   const {
@@ -145,9 +141,8 @@ export function useLevelWizard({
     error: featsError,
   } = useQuery({
     queryKey: queryKeys.characters.levelUp.feats(characterId, selectedClass?.id, editingLevelId),
-    queryFn: open && levelQuery
-      ? () => parseResponse(levels["feat-slots"].$get({ param, query: levelQuery }))
-      : skipToken,
+    queryFn:
+      open && levelQuery ? () => parseResponse(levels["feat-slots"].$get({ param, query: levelQuery })) : skipToken,
   });
 
   // Grouped available feats
@@ -165,19 +160,23 @@ export function useLevelWizard({
       editingLevelId,
       allSelectedFeatPickString,
     ),
-    queryFn: open && activeStep === featsStep && selectedAptitude && levelQuery
-      ? ({ pageParam }) => parseResponse(levels["available-feats"].grouped.$get({
-        param,
-        query: {
-          ...levelQuery,
-          aptitudeId: selectedAptitude,
-          limit: "20",
-          page: pageParam.toString(),
-          search: debouncedFeatSearch || undefined,
-          selectedFeatPicks: allSelectedFeatPickString || undefined,
-        },
-      }))
-      : skipToken,
+    queryFn:
+      open && activeStep === featsStep && selectedAptitude && levelQuery
+        ? ({ pageParam }) =>
+            parseResponse(
+              levels["available-feats"].grouped.$get({
+                param,
+                query: {
+                  ...levelQuery,
+                  aptitudeId: selectedAptitude,
+                  limit: "20",
+                  page: pageParam.toString(),
+                  search: debouncedFeatSearch || undefined,
+                  selectedFeatPicks: allSelectedFeatPickString || undefined,
+                },
+              }),
+            )
+        : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
@@ -189,9 +188,8 @@ export function useLevelWizard({
     error: powersError,
   } = useQuery({
     queryKey: queryKeys.characters.levelUp.powers(characterId, selectedClass?.id, editingLevelId),
-    queryFn: open && levelQuery
-      ? () => parseResponse(levels["power-slots"].$get({ param, query: levelQuery }))
-      : skipToken,
+    queryFn:
+      open && levelQuery ? () => parseResponse(levels["power-slots"].$get({ param, query: levelQuery })) : skipToken,
   });
 
   const {
@@ -209,20 +207,24 @@ export function useLevelWizard({
       editingLevelId,
       allSelectedFeatPickString,
     ),
-    queryFn: open && activeStep === powersStep && selectedPowerAptitude && levelQuery
-      ? ({ pageParam }) => parseResponse(levels["available-powers"].$get({
-        param,
-        query: {
-          ...levelQuery,
-          aptitudeId: selectedPowerAptitude,
-          powerLevel: selectedPowerLevel?.toString(),
-          limit: "20",
-          page: pageParam.toString(),
-          search: debouncedPowerSearch || undefined,
-          selectedFeatPicks: allSelectedFeatPickString || undefined,
-        },
-      }))
-      : skipToken,
+    queryFn:
+      open && activeStep === powersStep && selectedPowerAptitude && levelQuery
+        ? ({ pageParam }) =>
+            parseResponse(
+              levels["available-powers"].$get({
+                param,
+                query: {
+                  ...levelQuery,
+                  aptitudeId: selectedPowerAptitude,
+                  powerLevel: selectedPowerLevel?.toString(),
+                  limit: "20",
+                  page: pageParam.toString(),
+                  search: debouncedPowerSearch || undefined,
+                  selectedFeatPicks: allSelectedFeatPickString || undefined,
+                },
+              }),
+            )
+        : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
@@ -241,19 +243,19 @@ export function useLevelWizard({
       if (!data.selectedHP) throw new Error("HP not selected");
       // The level's feat and power slots fill its saved picks in: saving before them would erase the picks
       if (!featData || !powerData) throw new Error("The level hasn't finished loading");
-      return parseResponse(rpc.api.characters.levels[":characterId"][
-        ":characterLevelId"
-      ]["$put"]({
-        param: { characterId, characterLevelId: editingLevelId },
-        json: {
-          hp: data.selectedHP,
-          abilityId: data.selectedAttribute,
-          skills: data.skillPointAllocations,
-          feats: pickIds(data.selectedFeats),
-          powers: pickIds(data.selectedPowers),
-          force,
-        },
-      }));
+      return parseResponse(
+        rpc.api.characters.levels[":characterId"][":characterLevelId"]["$put"]({
+          param: { characterId, characterLevelId: editingLevelId },
+          json: {
+            hp: data.selectedHP,
+            abilityId: data.selectedAttribute,
+            skills: data.skillPointAllocations,
+            feats: pickIds(data.selectedFeats),
+            powers: pickIds(data.selectedPowers),
+            force,
+          },
+        }),
+      );
     },
     onSuccess: async () => {
       await refreshAfterSave();

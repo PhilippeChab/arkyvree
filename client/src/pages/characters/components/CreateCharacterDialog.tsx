@@ -1,48 +1,48 @@
-import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { nameRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
-import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
-import { BaseRulesetAlert, CreateDialog, DescriptionField, NameField, RulesetPicker, SelectField } from "@/client/src/components/common/index.ts";
-import { type RulesetAbility, useDebouncedValue, useListboxQuery, useRulesetAbilities } from "@/client/src/hooks/index.ts";
-import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
-import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
-import { settledPulse } from "@/client/src/lib/animations.ts";
-import { getRollFunction, isDiceMethod, POINT_BUY_COSTS, POINT_BUY_TOTAL, ROLL_METHODS, type RollMethodId, STANDARD_ARRAY } from "@/client/src/lib/dice.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
-import {
-  Add as AddIcon,
-  Casino as CasinoIcon,
-  Remove as RemoveIcon,
-} from "@mui/icons-material";
-import {
-  Chip,
-  IconButton,
-  MenuItem,
-  Paper,
-  Skeleton,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import {
-  keepPreviousData,
-  skipToken,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { Add as AddIcon, Casino as CasinoIcon, Remove as RemoveIcon } from "@mui/icons-material";
+import { Chip, IconButton, MenuItem, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { keepPreviousData, skipToken, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { type Control, Controller, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 
-type CreateCharacterFormData = InferRequestType<
-  typeof rpc.api.characters.$post
->["json"];
+import {
+  BaseRulesetAlert,
+  CreateDialog,
+  DescriptionField,
+  NameField,
+  RulesetPicker,
+  SelectField,
+} from "@/client/src/components/common/index.ts";
+import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
+import {
+  type RulesetAbility,
+  useDebouncedValue,
+  useListboxQuery,
+  useRulesetAbilities,
+} from "@/client/src/hooks/index.ts";
+import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
+import { settledPulse } from "@/client/src/lib/animations.ts";
+import {
+  getRollFunction,
+  isDiceMethod,
+  POINT_BUY_COSTS,
+  POINT_BUY_TOTAL,
+  ROLL_METHODS,
+  type RollMethodId,
+  STANDARD_ARRAY,
+} from "@/client/src/lib/dice.ts";
+import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { nameRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
+import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
+
+type CreateCharacterFormData = InferRequestType<typeof rpc.api.characters.$post>["json"];
 
 type AbilityOption = Pick<RulesetAbility, "id" | "name">;
 
@@ -69,28 +69,37 @@ function AbilityCard({
     <Paper
       variant="outlined"
       sx={{
-        p: 1.5, minWidth: 100, flex: "1 1 0", textAlign: "center",
-        display: "flex", flexDirection: "column", alignItems: "center",
-        justifyContent: "space-between", minHeight: 100,
+        p: 1.5,
+        minWidth: 100,
+        flex: "1 1 0",
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "space-between",
+        minHeight: 100,
         ...(isSettled && {
           animation: `${settledPulse} 0.4s cubic-bezier(0.4, 0, 0.2, 1)`,
         }),
       }}
     >
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>{name}</Typography>
-      <Stack
-        direction="row"
-        spacing={0.5}
-        sx={{ alignItems: "center", justifyContent: "center" }}>
+      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        {name}
+      </Typography>
+      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
         <IconButton size="small" aria-label={`Lower ${name}`} onClick={onDecrease} disabled={!canDecrease}>
           <RemoveIcon fontSize="small" />
         </IconButton>
-        <Typography variant="h6" sx={{ minWidth: 28 }}>{score}</Typography>
+        <Typography variant="h6" sx={{ minWidth: 28 }}>
+          {score}
+        </Typography>
         <IconButton size="small" aria-label={`Raise ${name}`} onClick={onIncrease} disabled={!canIncrease}>
           <AddIcon fontSize="small" />
         </IconButton>
       </Stack>
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>{bottomInfo}</Typography>
+      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        {bottomInfo}
+      </Typography>
     </Paper>
   );
 }
@@ -106,9 +115,7 @@ function StandardArrayScores({
 }) {
   const handleChange = (abilityId: string, newValue: number) => {
     if (!abilityValues) return;
-    const swapId = abilities.find(
-      (a) => a.id !== abilityId && abilityValues[a.id] === newValue,
-    )?.id;
+    const swapId = abilities.find((a) => a.id !== abilityId && abilityValues[a.id] === newValue)?.id;
     if (swapId) {
       setValue(`abilities.${swapId}`, abilityValues[abilityId] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1]);
     }
@@ -153,9 +160,7 @@ function PointBuyScores({
 }) {
   const pointsSpent = useMemo(() => {
     if (!abilityValues) return 0;
-    return abilities.reduce(
-      (sum, a) => sum + (POINT_BUY_COSTS[abilityValues[a.id] ?? 8] ?? 0), 0,
-    );
+    return abilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[abilityValues[a.id] ?? 8] ?? 0), 0);
   }, [abilities, abilityValues]);
 
   const pointsRemaining = POINT_BUY_TOTAL - pointsSpent;
@@ -166,7 +171,7 @@ function PointBuyScores({
         const score = abilityValues?.[ability.id] ?? 8;
         const costNow = POINT_BUY_COSTS[score] ?? 0;
         const costNext = POINT_BUY_COSTS[score + 1];
-        const canIncrease = score < 18 && costNext !== undefined && (costNext - costNow) <= pointsRemaining;
+        const canIncrease = score < 18 && costNext !== undefined && costNext - costNow <= pointsRemaining;
         const canDecrease = score > 8;
 
         return (
@@ -214,8 +219,12 @@ function AbilityScoresSection({
 
   useEffect(() => {
     return () => {
-      for (const id of intervalsRef.current) { clearInterval(id); }
-      for (const id of timeoutsRef.current) { clearTimeout(id); }
+      for (const id of intervalsRef.current) {
+        clearInterval(id);
+      }
+      for (const id of timeoutsRef.current) {
+        clearTimeout(id);
+      }
     };
   }, []);
 
@@ -223,8 +232,12 @@ function AbilityScoresSection({
     const rollFn = getRollFunction(method);
     if (rolling || !rollFn) return;
 
-    for (const id of intervalsRef.current) { clearInterval(id); }
-    for (const id of timeoutsRef.current) { clearTimeout(id); }
+    for (const id of intervalsRef.current) {
+      clearInterval(id);
+    }
+    for (const id of timeoutsRef.current) {
+      clearTimeout(id);
+    }
     intervalsRef.current = [];
     timeoutsRef.current = [];
 
@@ -301,13 +314,7 @@ function AbilityScoresSection({
   );
 }
 
-export function CreateCharacterDialog({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -380,20 +387,15 @@ export function CreateCharacterDialog({
   });
 
   const rulesets = useMemo(() => {
-    const draftRulesets =
-      pageItems(myDraftsData);
-    const publishedRulesets =
-      pageItems(rulesetsData);
-    const campaignRulesets =
-      pageItems(campaignRulesetsData);
+    const draftRulesets = pageItems(myDraftsData);
+    const publishedRulesets = pageItems(rulesetsData);
+    const campaignRulesets = pageItems(campaignRulesetsData);
     const seenIds = new Set(draftRulesets.map((r) => r.id));
-    const dedupedPublished = publishedRulesets.filter(
-      (r) => !seenIds.has(r.id),
-    );
-    for (const r of dedupedPublished) { seenIds.add(r.id); }
-    const dedupedCampaign = campaignRulesets.filter(
-      (r) => !seenIds.has(r.id),
-    );
+    const dedupedPublished = publishedRulesets.filter((r) => !seenIds.has(r.id));
+    for (const r of dedupedPublished) {
+      seenIds.add(r.id);
+    }
+    const dedupedCampaign = campaignRulesets.filter((r) => !seenIds.has(r.id));
     return [
       ...draftRulesets.map((r) => ({ ...r, group: "My Drafts" as const })),
       ...dedupedPublished.map((r) => ({ ...r, group: "Published" as const })),
@@ -401,9 +403,7 @@ export function CreateCharacterDialog({
     ];
   }, [myDraftsData, rulesetsData, campaignRulesetsData]);
 
-  const [selectedRuleset, setSelectedRuleset] = useState<
-    (typeof rulesets)[number] | null
-  >(null);
+  const [selectedRuleset, setSelectedRuleset] = useState<(typeof rulesets)[number] | null>(null);
 
   // Fetch races for selected ruleset, annotated with eligibility
   const {
@@ -417,17 +417,21 @@ export function CreateCharacterDialog({
       alignment: selectedAlignment,
       gender: selectedGender,
     }),
-    queryFn: selectedRulesetId ? async ({ pageParam }) => {
-      return parseResponse(rpc.api.characters["available-races"].$get({
-        query: {
-          rulesetId: selectedRulesetId,
-          alignment: selectedAlignment || undefined,
-          gender: selectedGender || undefined,
-          limit: "100",
-          page: pageParam.toString(),
-        },
-      }));
-    } : skipToken,
+    queryFn: selectedRulesetId
+      ? async ({ pageParam }) => {
+          return parseResponse(
+            rpc.api.characters["available-races"].$get({
+              query: {
+                rulesetId: selectedRulesetId,
+                alignment: selectedAlignment || undefined,
+                gender: selectedGender || undefined,
+                limit: "100",
+                page: pageParam.toString(),
+              },
+            }),
+          );
+        }
+      : skipToken,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     placeholderData: keepPreviousData,
@@ -475,30 +479,44 @@ export function CreateCharacterDialog({
   }, [rulesetAbilities, rollMethod, setValue]);
 
   const handleRulesetsScroll = createListboxScrollHandler([
-    { hasNextPage: hasNextMyDraftsPage, isFetchingNextPage: isFetchingNextMyDraftsPage, fetchNextPage: fetchNextMyDraftsPage },
-    { hasNextPage: hasNextRulesetsPage, isFetchingNextPage: isFetchingNextRulesetsPage, fetchNextPage: fetchNextRulesetsPage },
-    { hasNextPage: hasNextCampaignRulesetsPage, isFetchingNextPage: isFetchingNextCampaignRulesetsPage, fetchNextPage: fetchNextCampaignRulesetsPage },
+    {
+      hasNextPage: hasNextMyDraftsPage,
+      isFetchingNextPage: isFetchingNextMyDraftsPage,
+      fetchNextPage: fetchNextMyDraftsPage,
+    },
+    {
+      hasNextPage: hasNextRulesetsPage,
+      isFetchingNextPage: isFetchingNextRulesetsPage,
+      fetchNextPage: fetchNextRulesetsPage,
+    },
+    {
+      hasNextPage: hasNextCampaignRulesetsPage,
+      isFetchingNextPage: isFetchingNextCampaignRulesetsPage,
+      fetchNextPage: fetchNextCampaignRulesetsPage,
+    },
   ]);
 
   const createCharacterMutation = useMutation({
     mutationFn: async (data: CreateCharacterFormData) => {
-      return parseResponse(rpc.api.characters.$post({
-        json: {
-          rulesetId: data.rulesetId,
-          raceId: data.raceId,
-          name: data.name,
-          xp: data.xp,
-          alignment: data.alignment,
-          abilities: data.abilities,
-          age: data.age || undefined,
-          gender: data.gender,
-          height: data.height || undefined,
-          weight: data.weight || undefined,
-          deity: data.deity || undefined,
-          description: data.description || undefined,
-          notes: data.notes || undefined,
-        },
-      }));
+      return parseResponse(
+        rpc.api.characters.$post({
+          json: {
+            rulesetId: data.rulesetId,
+            raceId: data.raceId,
+            name: data.name,
+            xp: data.xp,
+            alignment: data.alignment,
+            abilities: data.abilities,
+            age: data.age || undefined,
+            gender: data.gender,
+            height: data.height || undefined,
+            weight: data.weight || undefined,
+            deity: data.deity || undefined,
+            description: data.description || undefined,
+            notes: data.notes || undefined,
+          },
+        }),
+      );
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists });
@@ -529,11 +547,7 @@ export function CreateCharacterDialog({
       {/* Basic Info */}
       <Typography variant="h6">Basic Information</Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <NameField
-          {...register("name", nameRules)}
-          error={errors.name}
-          label="Character Name"
-        />
+        <NameField {...register("name", nameRules)} error={errors.name} label="Character Name" />
         <TextField
           {...register("xp", wholeNumberRules(0, "Experience points are required"))}
           label="Experience Points"
@@ -610,7 +624,9 @@ export function CreateCharacterDialog({
           sx={{ minWidth: 200 }}
         >
           {ROLL_METHODS.map((m) => (
-            <MenuItem key={m.id} value={m.id}>{m.label}</MenuItem>
+            <MenuItem key={m.id} value={m.id}>
+              {m.label}
+            </MenuItem>
           ))}
         </TextField>
         {isDiceMethod(rollMethod) && (
@@ -624,20 +640,19 @@ export function CreateCharacterDialog({
             <CasinoIcon />
           </IconButton>
         )}
-        {rollMethod === "point-buy" && (() => {
-          const abilities = watch("abilities");
-          const spent = rulesetAbilities.reduce(
-            (sum, a) => sum + (POINT_BUY_COSTS[abilities?.[a.id] ?? 8] ?? 0), 0,
-          );
-          const remaining = POINT_BUY_TOTAL - spent;
-          return (
-            <Chip
-              label={`${remaining} / ${POINT_BUY_TOTAL} pts`}
-              color={remaining < 0 ? "error" : remaining === 0 ? "success" : "default"}
-              size="small"
-            />
-          );
-        })()}
+        {rollMethod === "point-buy" &&
+          (() => {
+            const abilities = watch("abilities");
+            const spent = rulesetAbilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[abilities?.[a.id] ?? 8] ?? 0), 0);
+            const remaining = POINT_BUY_TOTAL - spent;
+            return (
+              <Chip
+                label={`${remaining} / ${POINT_BUY_TOTAL} pts`}
+                color={remaining < 0 ? "error" : remaining === 0 ? "success" : "default"}
+                size="small"
+              />
+            );
+          })()}
       </Stack>
       {rulesetAbilities.length > 0 ? (
         <AbilityScoresSection
@@ -651,12 +666,7 @@ export function CreateCharacterDialog({
       ) : (
         <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
           {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton
-              key={i}
-              variant="rounded"
-              height={100}
-              sx={{ minWidth: 100, flex: "1 1 0" }}
-            />
+            <Skeleton key={i} variant="rounded" height={100} sx={{ minWidth: 100, flex: "1 1 0" }} />
           ))}
         </Stack>
       )}
@@ -671,18 +681,8 @@ export function CreateCharacterDialog({
           slotProps={{ htmlInput: { min: 1 } }}
           fullWidth
         />
-        <TextField
-          {...register("height")}
-          label="Height"
-          placeholder="e.g., 5 feet 8 inches"
-          fullWidth
-        />
-        <TextField
-          {...register("weight")}
-          label="Weight"
-          placeholder="e.g., 150 lbs, 68kg"
-          fullWidth
-        />
+        <TextField {...register("height")} label="Height" placeholder="e.g., 5 feet 8 inches" fullWidth />
+        <TextField {...register("weight")} label="Weight" placeholder="e.g., 150 lbs, 68kg" fullWidth />
       </Stack>
 
       {/* Optional Details */}

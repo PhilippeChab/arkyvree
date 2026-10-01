@@ -1,10 +1,12 @@
+import { getTableName } from "drizzle-orm";
+
 import { languagesInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Languages } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
+import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   cowEntity,
@@ -18,17 +20,25 @@ import {
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getTableName } from "drizzle-orm";
 
 export const LanguagesMethods = {
   async getRulesetLanguages(
     rulesetId: string,
-    where: { childOnly?: boolean; search?: string; orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
+    where: {
+      childOnly?: boolean;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      return await Languages.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      return await Languages.findManyByRulesetId(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
+        pagination,
+      );
     });
   },
 
@@ -43,16 +53,26 @@ export const LanguagesMethods = {
     });
   },
 
-  async createRulesetLanguage(session: Session, rulesetId: string, body: {
-    name: string;
-    description?: string | null;
-    type: string;
-  }) {
+  async createRulesetLanguage(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      type: string;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(tx, rulesetId, rulesetData.cow, "languages", body.name);
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "languages",
+          body.name,
+        );
 
         const rows = await Languages.create(tx, {
           ...body,
@@ -79,12 +99,17 @@ export const LanguagesMethods = {
     return result;
   },
 
-  async updateRulesetLanguage(session: Session, rulesetId: string, languageId: string, body: {
-    name: string;
-    description?: string | null;
-    type: string;
-    updatedAt?: string;
-  }) {
+  async updateRulesetLanguage(
+    session: Session,
+    rulesetId: string,
+    languageId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      type: string;
+      updatedAt?: string;
+    },
+  ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -101,7 +126,14 @@ export const LanguagesMethods = {
         let targetId = language.id;
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "languages", language.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "languages",
+            language.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         }
 
@@ -117,7 +149,10 @@ export const LanguagesMethods = {
           targetId,
           targetTable: getTableName(languagesInRules),
           type: "updateLanguage",
-          data: { entityName: body.name, changedFields: getChangedFields(language as Record<string, unknown>, body as Record<string, unknown>) },
+          data: {
+            entityName: body.name,
+            changedFields: getChangedFields(language as Record<string, unknown>, body as Record<string, unknown>),
+          },
         });
 
         return updatedLanguage;
@@ -144,7 +179,14 @@ export const LanguagesMethods = {
 
         let targetId = language.id;
         if (isInherited) {
-          const cowResult = await cowEntity(tx, "languages", language.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
+          const cowResult = await cowEntity(
+            tx,
+            "languages",
+            language.id,
+            rulesetId,
+            sourceChain,
+            ruleset.extensionRulesetIds,
+          );
           targetId = cowResult.id as string;
         } else {
           await lockEntityForMutation(tx, "languages", targetId);

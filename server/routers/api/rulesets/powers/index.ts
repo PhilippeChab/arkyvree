@@ -1,10 +1,11 @@
-import { respond } from "@/server/routers/respond.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { PowersService } from "@/server/services/rulesets/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { Hono } from "hono";
 import { z } from "zod";
+
+import { zValidator } from "@/server/middlewares/index.ts";
+import type { SessionContext } from "@/server/middlewares/index.ts";
+import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { respond } from "@/server/routers/respond.ts";
+import { PowersService } from "@/server/services/rulesets/index.ts";
 
 const spellFields = {
   school: z.string().optional(),
@@ -41,7 +42,12 @@ export default new Hono<SessionContext>()
       const { limit, page, search, childOnly, aptitudeId, level, orderBy, orderDir } = c.req.valid("query");
 
       const powersService = PowersService.initialize();
-      const result = await powersService.call("getRulesetPowers", id, { search, childOnly, aptitudeId, level, orderBy, orderDir }, { limit, page });
+      const result = await powersService.call(
+        "getRulesetPowers",
+        id,
+        { search, childOnly, aptitudeId, level, orderBy, orderDir },
+        { limit, page },
+      );
       return respond(c, result, 200);
     },
   )
@@ -63,11 +69,18 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         name: z.string().min(1),
-        description: z.string().optional().transform(v => v || null),
-        aptitudes: z.array(z.object({
-          id: z.string().uuid(),
-          level: z.number().int().min(0).max(9).optional(),
-        })).min(1, "At least one aptitude must be selected"),
+        description: z
+          .string()
+          .optional()
+          .transform((v) => v || null),
+        aptitudes: z
+          .array(
+            z.object({
+              id: z.string().uuid(),
+              level: z.number().int().min(0).max(9).optional(),
+            }),
+          )
+          .min(1, "At least one aptitude must be selected"),
         saveId: z.string().uuid().nullable().optional(),
         saveEffect: z.string().nullable().optional(),
         ...spellFields,
@@ -89,11 +102,18 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         name: z.string().min(1),
-        description: z.string().optional().transform(v => v || null),
-        aptitudes: z.array(z.object({
-          id: z.string().uuid(),
-          level: z.number().int().min(0).max(9).optional(),
-        })).optional(),
+        description: z
+          .string()
+          .optional()
+          .transform((v) => v || null),
+        aptitudes: z
+          .array(
+            z.object({
+              id: z.string().uuid(),
+              level: z.number().int().min(0).max(9).optional(),
+            }),
+          )
+          .optional(),
         saveId: z.string().uuid().nullable().optional(),
         saveEffect: z.string().nullable().optional(),
         ...spellFields,
@@ -105,13 +125,7 @@ export default new Hono<SessionContext>()
       const body = c.req.valid("json");
 
       const powersService = PowersService.initialize();
-      const result = await powersService.call(
-        "updateRulesetPower",
-        c.var.requestSession,
-        id,
-        powerId,
-        body,
-      );
+      const result = await powersService.call("updateRulesetPower", c.var.requestSession, id, powerId, body);
       return respond(c, result, 200);
     },
   )

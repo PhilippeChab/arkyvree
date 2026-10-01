@@ -2,6 +2,7 @@ import { Divider } from "@mui/material";
 
 import { useGoogleSignIn } from "@/client/src/hooks/index.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+
 import { GoogleSignInButton } from "./GoogleSignInButton.tsx";
 
 interface GoogleSignInSectionProps {
