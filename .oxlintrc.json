@@ -116,16 +116,10 @@
         "import/no-default-export": "error"
       }
     },
-    // drizzle-kit pull writes the schema, and its foreign keys point both ways
+    // Written by tools, which lay them out: drizzle-kit pull (the schema, whose
+    // foreign keys point both ways, and its relations) and the parser's generator
     {
-      "files": ["drizzle/schema.ts"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    // The generator lays out what it writes
-    {
-      "files": ["database/packages/*/generated/**"],
+      "files": ["drizzle/schema.ts", "drizzle/relations.ts", "database/packages/*/generated/**"],
       "rules": {
         "no-use-before-define": "off",
         "sort-imports": "off"

@@ -48,6 +48,7 @@ For code changes, run:
 ```bash
 bunx tsgo --noEmit
 bun run lint
+bun run format:check   # bun run format fixes it
 bun run build
 ```
 
