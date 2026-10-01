@@ -54,6 +54,10 @@ import type {
 import type { DomainDefinition, FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
 
+// ---------------------------------------------------------------------------
+// CLI: bun database/packages/dnd35-from-parser/tools/generator/index.ts [<json-path> [--book <book>] | [book [name]] [--type <type>]]
+// ---------------------------------------------------------------------------
+
 const BASE_DIR = join(import.meta.dirname!, "../../");
 const GENERATED_DIR = join(BASE_DIR, "generated");
 /** Where a generation writes (generated/, or a test's folder), and whether it logs what it does. */
@@ -997,10 +1001,6 @@ function generateSpell(out: Output, ref: SpellReference, book: string) {
 
   if (!out.quiet) console.log(`\nDone! Review the generated files and copy to database/packages/dnd35/ when ready.`);
 }
-
-// ---------------------------------------------------------------------------
-// CLI: bun database/packages/dnd35-from-parser/tools/generator/index.ts [<json-path> [--book <book>] | [book [name]] [--type <type>]]
-// ---------------------------------------------------------------------------
 
 function generateRef(out: Output, jsonPath: string, bookOverride?: string) {
   const meta = JSON.parse(readFileSync(jsonPath, "utf-8"))._meta;
