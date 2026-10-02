@@ -213,7 +213,6 @@ export default class DetailedCharacterDataLoader {
       : characterLevels;
     const realCharacterLevelIds = characterLevels.map((level) => level.id);
     const klassLevelIds = allCharacterLevels.map((level) => level.klassLevelId);
-    const allCharacterLevelIds = allCharacterLevels.map((level) => level.id);
 
     // The join uses the stored item ID. Load the effective item so COW changes
     // refresh its name and other fields, not just its ID.
@@ -234,17 +233,12 @@ export default class DetailedCharacterDataLoader {
     const rawPickedFeats = await Feats.findManyByCharacterLevelIds(database, {
       characterLevelIds: realCharacterLevelIds,
     });
-    const rawGivenFeats = await Feats.findManyByKlassLevelIds(database, {
-      klassLevelIds,
-      characterLevelIds: allCharacterLevelIds,
-    });
+    // A saved level's class level, copied (copy-on-write) or not; a projected level's grants come with it
+    const rawGivenFeats = await Feats.findManyGrantedAt(database, { levels: characterLevels });
     const rawPickedPowers = await Powers.findManyByCharacterLevelIds(database, {
       characterLevelIds: realCharacterLevelIds,
     });
-    const rawGivenPowers = await Powers.findManyByKlassLevelIds(database, {
-      klassLevelIds,
-      characterLevelIds: allCharacterLevelIds,
-    });
+    const rawGivenPowers = await Powers.findManyGrantedAt(database, { levels: characterLevels });
 
     // Ruleset-scoped rows read from the composed cache's pre-built Maps.
     const languages = [];

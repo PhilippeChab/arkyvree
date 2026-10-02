@@ -38,6 +38,7 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
 import { CharactersMethods } from "@/server/services/CharactersService.ts";
+import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
 import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
 import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import {
@@ -436,6 +437,51 @@ describe("LevelsService", () => {
           {},
           { [featAptitude.id]: [feats["Power Attack"].id] },
           {},
+        ),
+      ).rejects.toThrow('Non-stackable feat "Power Attack" is already on this character');
+    });
+
+    test("refuse a feat an earlier level grants once the fork copies the class, and leave it out of the picks", async () => {
+      // Editing an inherited class in a fork copies it there (copy-on-write): the character's levels then read the
+      // copy's, whose grants a lookup by the levels' stored class levels never reached
+      const { session, ruleset, character, klass, klassLevels, featAptitude, feats } = await setupRuleset({
+        fork: true,
+      });
+      await KlassLevelFeats.create(db, {
+        klassLevelId: klassLevels[0].id,
+        featId: feats["Power Attack"].id,
+        aptitudeId: featAptitude.id,
+        free: true,
+      });
+      await addOneLevel(session, character.id, klass.id, 1, 8, null, {}, {}, {}, true);
+      await ClassesMethods.updateRulesetKlass(session, ruleset.id, klass.id, {
+        name: "Test Class",
+        description: "Ours",
+      });
+      const copy = (await Klasses.findOne(db, { name: "Test Class", rulesetId: ruleset.id }))!;
+
+      const available = await CharacterLevelsMethods.getAvailableFeats(
+        session,
+        character.id,
+        featAptitude.id,
+        copy.id,
+        2,
+        {},
+        page,
+      );
+      expect(names(available.items)).not.toContain("Power Attack");
+      await expect(
+        addOneLevel(
+          session,
+          character.id,
+          copy.id,
+          2,
+          8,
+          null,
+          {},
+          { [featAptitude.id]: [feats["Power Attack"].id] },
+          {},
+          true,
         ),
       ).rejects.toThrow('Non-stackable feat "Power Attack" is already on this character');
     });

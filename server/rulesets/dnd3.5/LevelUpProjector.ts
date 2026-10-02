@@ -71,8 +71,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
   async getExcludedPowerIds(
     tx: Db,
     aptitudeId: string,
-    characterLevelIds: string[],
-    klassLevelIds: string[],
+    characterLevels: { id: string; klassLevelId: string }[],
     selectedFeatProperties: { type: string; value: string }[],
     clientExcludeSchools: string[],
     rulesetData: CachedRulesetData,
@@ -82,13 +81,14 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
 
     const prohibitedSchools = new Set<string>(clientExcludeSchools);
 
-    if (characterLevelIds.length > 0) {
+    if (characterLevels.length > 0) {
       // Called inside withRulesetScope: Feats.findManyByCharacterLevelIds and
-      // findManyByKlassLevelIds auto-apply resolveRowOverrides via the repo
+      // findManyGrantedAt auto-apply resolveRowOverrides via the repo
       // Proxy, so feat.id is already post-COW. propertiesByEntity.get also
       // auto-resolves on the way in.
+      const characterLevelIds = characterLevels.map((level) => level.id);
       const pickedFeats = await Feats.findManyByCharacterLevelIds(tx, { characterLevelIds });
-      const givenFeats = await Feats.findManyByKlassLevelIds(tx, { klassLevelIds, characterLevelIds });
+      const givenFeats = await Feats.findManyGrantedAt(tx, { levels: characterLevels });
       const allFeatIds = [...new Set([...pickedFeats, ...givenFeats].map((f) => f.id))];
 
       for (const featId of allFeatIds) {

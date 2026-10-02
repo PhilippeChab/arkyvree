@@ -187,6 +187,22 @@ abstract class BaseRepository<T extends Table, I extends Instance<InferSelectMod
     return notInArray(this.table.id, arr);
   }
 
+  /**
+   * What each character level's class level grants (`granted`, by `klassLevelId`), with the level it's granted at.
+   * The class level is the one the caller passes, not the level's stored one: under copy-on-write, the copy's, whose
+   * grants a join on the stored id would never reach.
+   */
+  protected grantedAt<R extends { klassLevelId: string }>(
+    levels: { id: string; klassLevelId: string }[],
+    granted: R[],
+  ): (R & { characterLevelId: string })[] {
+    return levels.flatMap((level) =>
+      granted
+        .filter((row) => row.klassLevelId === level.klassLevelId)
+        .map((row) => ({ ...row, characterLevelId: level.id })),
+    );
+  }
+
   protected buildRulesetCondition(
     db: Db,
     where: { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; campaignId?: string },
