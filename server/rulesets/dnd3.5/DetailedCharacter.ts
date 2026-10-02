@@ -525,6 +525,8 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
         return idx.powersById.get(entityId)?.name;
       case "items":
         return idx.inventoryByItemId.get(entityId)?.item.name;
+      case "klasses":
+        return idx.rulesetKlassesById.get(entityId)?.name;
       case "modifiers": {
         const mod =
           this.modifiers.find((m) => m.id === entityId) ??

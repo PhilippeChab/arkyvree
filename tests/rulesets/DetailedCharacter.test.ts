@@ -1417,6 +1417,55 @@ describe("DetailedCharacter", () => {
       ).toEqual([5, 5]);
     });
   });
+  describe("a class's own customizations", () => {
+    const dexterityMisc = (detailed: Detailed) =>
+      detailed.getDetailedCharacterAbilities().getAbilities().dexterity.misc;
+
+    test("give a character with any level of the class its modifiers, once", async () => {
+      const ctx = await getSeedCtx();
+      const [lyraBefore, bjornBefore] = [await buildSeeded("Lyra Shadowstep"), await buildSeeded("Bjorn Ironhand")];
+      await Modifiers.create(db, {
+        sourceId: ctx.klassMap.pc["Rogue"],
+        sourceType: "klasses",
+        target: "abilities.dexterity.misc",
+        value: "1",
+        valueType: "number",
+        operator: "add",
+      });
+      invalidateSeededRuleset(ctx.rulesetId);
+      // Lyra is a rogue 3, Bjorn has no rogue level
+      expect(dexterityMisc(await buildSeeded("Lyra Shadowstep"))).toBe(dexterityMisc(lyraBefore) + 1);
+      expect(dexterityMisc(await buildSeeded("Bjorn Ironhand"))).toBe(dexterityMisc(bjornBefore));
+    });
+
+    test("check its requirements, unmet ones keeping its modifiers off", async () => {
+      const ctx = await getSeedCtx();
+      const rogue = ctx.klassMap.pc["Rogue"];
+      const lyraBefore = await buildSeeded("Lyra Shadowstep");
+      await Modifiers.create(db, {
+        sourceId: rogue,
+        sourceType: "klasses",
+        target: "abilities.dexterity.misc",
+        value: "1",
+        valueType: "number",
+        operator: "add",
+      });
+      await Requirements.create(db, {
+        entityId: rogue,
+        entityType: "klasses",
+        level: "1",
+        target: "abilities.strength.total",
+        operator: "greater_than_or_equal",
+        value: "30",
+        valueType: "number",
+      });
+      invalidateSeededRuleset(ctx.rulesetId);
+      const lyra = await buildSeeded("Lyra Shadowstep");
+      expect(requirementIssues(lyra).map((issue) => issue.message)).toContain("Unmet prerequisite on Rogue (klasses)");
+      expect(dexterityMisc(lyra)).toBe(dexterityMisc(lyraBefore));
+    });
+  });
+
   describe("requirements on feats", () => {
     const met = async (name: string, target: string, check?: Parameters<typeof requiring>[1]) =>
       (await buildSeeded(name)).areRequirementsMet(requiring(target, check));

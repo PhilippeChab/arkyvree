@@ -10,7 +10,16 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 export type ClassDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["$get"], 200>;
 
-export type ClassSection = "levels" | "skills" | "feat-pools" | "spells-known" | "spell-list" | "spells";
+export type ClassSection =
+  | "levels"
+  | "skills"
+  | "feat-pools"
+  | "spells-known"
+  | "spell-list"
+  | "spells"
+  | "properties"
+  | "modifiers"
+  | "requirements";
 
 const classParam = (rulesetId: string, classId: string) => ({ param: { id: rulesetId, classId } });
 
@@ -90,5 +99,10 @@ export function prefetchClassSection(
       return queryClient.prefetchQuery(classSpellsQuery(rulesetId, classId));
     case "spell-list":
       return queryClient.prefetchInfiniteQuery(classSpellListQuery(rulesetId, classId, 0, ""));
+    // The customization tabs read their rows through their sections, as every entity's customization page does
+    case "properties":
+    case "modifiers":
+    case "requirements":
+      return;
   }
 }
