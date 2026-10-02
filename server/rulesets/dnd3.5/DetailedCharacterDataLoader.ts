@@ -336,7 +336,8 @@ export default class DetailedCharacterDataLoader {
 
     const featIds = allFeats.map((feat) => feat.id);
     const powerIds = allPowers.map((power) => power.id);
-    const klassEntityIds = klassIds;
+    // The character's classes, each once (`klassIds` has one per level)
+    const klassEntityIds = [...new Set(klassIds)];
 
     // ── Round 5: klasses from cache + character-sourced modifiers only ──
     // Every ruleset-scoped property/modifier/requirement is already indexed on
@@ -359,7 +360,14 @@ export default class DetailedCharacterDataLoader {
     // Flat modifier list scoped to this character — used by resolvePossessedFeatIds /
     // resolvePossessedPowers (which scan for "set feats/powers.<slug>.possessed/known"
     // targets). Built by O(entities) map lookups, not an O(all ruleset mods) filter.
-    const rulesetScopedModifierSources = [race.id, ...equippedItemIds, ...klassLevelIds, ...featIds, ...powerIds];
+    const rulesetScopedModifierSources = [
+      race.id,
+      ...equippedItemIds,
+      ...klassEntityIds,
+      ...klassLevelIds,
+      ...featIds,
+      ...powerIds,
+    ];
     const baseModifiers: Modifier[] = [];
     for (const id of rulesetScopedModifierSources) {
       const group = rulesetData.modifiersBySource.get(id);
@@ -471,6 +479,11 @@ export default class DetailedCharacterDataLoader {
     for (const klassLevel of klassLevels) {
       modifiers.push(...klassLevel.modifiers);
       requirementGroups.push(klassLevel.requirements);
+    }
+    // A class's own modifiers and requirements, once for a character with any level of it
+    for (const klassId of klassEntityIds) {
+      modifiers.push(...(rulesetData.modifiersBySource.get(klassId) ?? []));
+      requirementGroups.push(rulesetData.requirementsByEntity.get(klassId) ?? []);
     }
 
     // Build klass level properties map (bab, skills)

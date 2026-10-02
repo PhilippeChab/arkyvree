@@ -1,3 +1,8 @@
+export {
+  ClassModifiersSection,
+  ClassPropertiesSection,
+  ClassRequirementsSection,
+} from "./ClassCustomizationSections.tsx";
 export { ClassFeatPoolsSection } from "./ClassFeatPoolsSection.tsx";
 export { ClassLevelsSection } from "./ClassLevelsSection.tsx";
 export { ClassSkillsSection } from "./ClassSkillsSection.tsx";

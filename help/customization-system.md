@@ -68,6 +68,8 @@ Common targets:
 
 The slug is the entity name lowercased with separators stripped — Power Attack becomes `powerattack`, Knowledge (Arcana) becomes `knowledgearcana`.
 
+A class is customized like the rest, in the **Properties**, **Modifiers** and **Requirements** tabs of its page. Its modifiers apply once to a character with any level of the class, and its requirements are checked to take any level of it, with the level's own.
+
 Requirements gate eligibility. They don't model selection rules ("must pick at level 1") — that's handled by aptitudes and class-granted feats. They don't apply at runtime in combat — they're evaluated when the level-up wizard previews choices.
 
 ## What are Modifiers?

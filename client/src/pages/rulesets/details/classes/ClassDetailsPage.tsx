@@ -1,6 +1,9 @@
 import {
   EmojiEvents as FeatPoolsIcon,
   TrendingUp as LevelsIcon,
+  Settings as ModifiersIcon,
+  Label as PropertiesIcon,
+  Rule as RequirementsIcon,
   Psychology as SkillsIcon,
   Bolt as SpellListIcon,
   AutoStories as SpellsIcon,
@@ -38,6 +41,9 @@ import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 import {
   ClassFeatPoolsSection,
   ClassLevelsSection,
+  ClassModifiersSection,
+  ClassPropertiesSection,
+  ClassRequirementsSection,
   ClassSkillsSection,
   ClassSpellListSection,
   ClassSpellsKnownSection,
@@ -51,6 +57,9 @@ const TABS: SectionTab<ClassSection>[] = [
   { key: "spells-known", label: "Spells Known", icon: SpellsIcon },
   { key: "spells", label: "Spell Uses", icon: SpellsIcon },
   { key: "spell-list", label: "Spells", icon: SpellListIcon },
+  { key: "properties", label: "Properties", icon: PropertiesIcon },
+  { key: "modifiers", label: "Modifiers", icon: ModifiersIcon },
+  { key: "requirements", label: "Requirements", icon: RequirementsIcon },
 ];
 
 const SECTION_COMPONENTS = {
@@ -60,6 +69,9 @@ const SECTION_COMPONENTS = {
   "spells-known": ClassSpellsKnownSection,
   spells: ClassSpellsSection,
   "spell-list": ClassSpellListSection,
+  properties: ClassPropertiesSection,
+  modifiers: ClassModifiersSection,
+  requirements: ClassRequirementsSection,
 } as const;
 
 // Class settings stored as customization properties of the class.

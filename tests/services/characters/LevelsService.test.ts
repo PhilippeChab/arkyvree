@@ -248,6 +248,42 @@ describe("LevelsService", () => {
       expect(await eligibleWith("Power Attack")).toBe(false);
     });
 
+    test("checks a class's own requirements with its next level's, in the list and on saving", async () => {
+      const ctx = await getSeedCtx();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const [klass] = await Klasses.create(db, { name: `Duelist ${uniqueId()}`, rulesetId: fork.id, hd: 10 });
+      const [level] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
+      // The class requires Power Attack, its first level a base attack bonus of +1, which a fighter 1 has
+      for (const [entityId, entityType, target, operator, value, valueType] of [
+        [klass.id, "klasses", "feats.powerattack.possessed", "equal", "true", "boolean"],
+        [level.id, "klass_levels", "combat.bab", "greater_than_or_equal", "1", "number"],
+      ]) {
+        await Requirements.create(db, { entityId, entityType, level: "1", target, operator, value, valueType });
+      }
+      const fighterWith = async (featName: string) => {
+        const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000, rulesetId: fork.id });
+        const levelIds = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+        await addFeats(db, ctx, levelIds, [{ levelIndex: 0, aptitude: "Fighter Bonus Feat", featName }]);
+        return characterId;
+      };
+      const eligible = async (characterId: string) =>
+        (await CharacterLevelsMethods.getAvailableKlasses(session, characterId, {}, page)).items.find(
+          (k) => k.id === klass.id,
+        )?.eligible;
+      const saving = (characterId: string) =>
+        addOneLevel(session, characterId, klass.id, 1, 8, null).then(
+          () => "saved",
+          (error: Error) => error.message,
+        );
+
+      const withPowerAttack = await fighterWith("Power Attack");
+      const withWeaponFocus = await fighterWith("Weapon Focus: Longsword");
+      expect(await eligible(withPowerAttack)).toBe(true);
+      expect(await eligible(withWeaponFocus)).toBe(false);
+      expect(await saving(withPowerAttack)).not.toContain("(klasses)");
+      expect(await saving(withWeaponFocus)).toContain(`Unmet prerequisite on ${klass.name} (klasses)`);
+    });
+
     describe("counts the levels, feats and skill ranks being added toward a prestige class", () => {
       // The Blackguard (Dungeon Master's Guide) needs BAB 6, 5 ranks of Hide, 2 of
       // Knowledge (Religion), Power Attack, Cleave and Improved Sunder. Each case
