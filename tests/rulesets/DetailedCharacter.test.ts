@@ -555,6 +555,35 @@ describe("DetailedCharacter", () => {
         ).toMatchObject({ name: "Base Blade", proficient: false, tohit: { misc: -2 } });
       });
 
+      test("counts a base weapon whose proficiency names nothing as one the character isn't proficient with", async () => {
+        const blade = await requiringWithBonus(
+          await createItem(
+            { name: "Lost Blade", type: "Weapon", slot: "Main Hand", isTemplate: true },
+            { WEAPON_PROFICIENCY: "Martial", WEAPON_BASE_DAMAGE: "1d8", WEAPON_TYPE: "Longsword" },
+          ),
+          "feats.nosuchproficiency.possessed",
+        );
+        expect(
+          weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: blade.id, location: "Main Hand", weaponSet: 0 }]))
+            .mainhand,
+        ).toMatchObject({ name: "Lost Blade", proficient: false });
+      });
+
+      test("never costs a plain weapon, neither a template nor made from one: its requirements are its own", async () => {
+        const blade = await requiringWithBonus(
+          await createItem(
+            { name: "Plain Blade", type: "Weapon", slot: "Main Hand" },
+            { WEAPON_PROFICIENCY: "Martial", WEAPON_BASE_DAMAGE: "1d8", WEAPON_TYPE: "Longsword" },
+          ),
+          "feats.martialweaponproficiency.possessed",
+        );
+        // A wizard: no -4, and its +2 off
+        expect(
+          weaponSet(await buildCarrying("Elara Starweaver", [{ item: blade.id, location: "Main Hand", weaponSet: 0 }]))
+            .mainhand,
+        ).toMatchObject({ name: "Plain Blade", proficient: true, tohit: { misc: 0 } });
+      });
+
       test("costs a weapon nothing for another requirement unmet, which turns its own bonuses off", async () => {
         const { itemMap } = await getSeedCtx();
         const blade = await requiringWithBonus(
