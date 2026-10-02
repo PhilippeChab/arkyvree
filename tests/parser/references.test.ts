@@ -15,6 +15,7 @@ import {
   resolveReference,
   type StoredReference,
 } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { buildFeatDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
 import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
 import { checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
@@ -114,6 +115,28 @@ describe("A race reference's races", () => {
       problem: `${first.name}'s size: "Titanic" isn't one of ${SIZE_OPTIONS.join(", ")}`,
     });
     expect(() => buildRaceSeeds(resolveReference("race", reference))).toThrow(`${first.name}'s size`);
+  });
+});
+
+describe("A feat's detected aptitudes", () => {
+  test("make a general feat a fighter bonus feat when its Special says a fighter may or can select it", () => {
+    const feat = (name: string, special: string) => ({
+      name,
+      featType: "general",
+      prerequisiteText: "",
+      benefit: "",
+      special,
+    });
+    const detected = buildFeatDetected([
+      feat("Mounted Combat", "A fighter may select Mounted Combat as one of his fighter bonus feats."),
+      feat("Deadly Defense", "A fighter can select Deadly Defense as one of his fighter bonus feats (PH 38)."),
+      feat("Shield Proficiency", "Fighters automatically have Shield Proficiency as a bonus feat."),
+    ]);
+    expect(Object.fromEntries(Object.entries(detected).map(([name, d]) => [name, d.aptitudes]))).toEqual({
+      "Mounted Combat": ["General", "Fighter Bonus Feat"],
+      "Deadly Defense": ["General", "Fighter Bonus Feat"],
+      "Shield Proficiency": ["General"],
+    });
   });
 });
 
