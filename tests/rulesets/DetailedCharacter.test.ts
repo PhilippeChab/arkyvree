@@ -1405,6 +1405,13 @@ describe("DetailedCharacter", () => {
       expect(issues.map((issue) => issue.message)).toEqual(["Invalid requirement: Element not found: power"]);
     });
 
+    test("a feat's name reaches that feat, not one whose name it starts: a monk's weapons aren't all simple ones", async () => {
+      // Zen's monk proficiencies are Simple Weapon Proficiency: Club, Dagger… and, by the monk's, Unarmed Strike
+      expect(await met("Zen Whitepetal", "feats.simpleweaponproficiencyclub.possessed")).toBe(true);
+      expect(await met("Zen Whitepetal", "feats.simpleweaponproficiencyunarmedstrike.possessed")).toBe(true);
+      expect(await met("Zen Whitepetal", "feats.simpleweaponproficiency.possessed")).toBe(false);
+    });
+
     test("a skill's name still reaches its subtypes", async () => {
       expect(await met("Elara Starweaver", "skills.knowledge.rank", atLeastOne)).toBe(true);
     });

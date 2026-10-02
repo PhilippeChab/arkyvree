@@ -8,6 +8,7 @@ import {
   WIZARD_SCHOOL_FEATS,
 } from "@/database/packages/dnd35-from-parser/generated/srd/feats/feats.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
+import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import {
   escapeTemplate,
   importLines,
@@ -246,5 +247,37 @@ describe("The generated feats", () => {
       loadReference(join(REFERENCE_DIR, "dmg", "classes", "arcaneTrickster.json"), "class"),
     );
     expect(arcaneTrickster).toContain(`gte("feats.sneakattack.*.count", 2),`);
+  });
+});
+
+describe("A generated class", () => {
+  const classRef = (book: string, slug: string) =>
+    loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class");
+
+  test("grants the existing feat a feature is, named in another case or by a family's option, not a copy of it", () => {
+    for (const [book, slug, granted, feature] of [
+      [
+        "complete-adventurer",
+        "dreadPirate",
+        `[1, "Two-Weapon Fighting", "Dread Pirate Class Feature"]`,
+        "Two-weapon Fighting (Dread Pirate)",
+      ],
+      [
+        "complete-scoundrel",
+        "malconvoker",
+        `[3, "Skill Focus: Bluff", "Malconvoker Class Feature"]`,
+        "Skill Focus (Bluff) (Malconvoker)",
+      ],
+      [
+        "complete-warrior",
+        "orderOfTheBowInitiate",
+        `[6, "Sharp-Shooting", "Order of the Bow Initiate Class Feature"]`,
+        "Sharp-shooting (Order of the Bow Initiate)",
+      ],
+    ] as const) {
+      const ref = classRef(book, slug);
+      expect(generateClassSeed(ref)).toContain(granted);
+      expect(buildClassFeatSeeds(ref).map((f) => f.name)).not.toContain(feature);
+    }
   });
 });

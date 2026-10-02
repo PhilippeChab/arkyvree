@@ -47,7 +47,6 @@ export const DREAD_PIRATE: ClassSeed = {
   classFeatureAptitude: "Dread Pirate Class Feature",
   classFeatures: [
     [1, "Seamanship (Dread Pirate)"],
-    [1, "Two-weapon Fighting (Dread Pirate)"],
     [1, "Weapon and Armor Proficiency (Dread Pirate)"],
     [2, "Fearsome Reputation (Dread Pirate)"],
     [3, "Rally the Crew +1 (1/day) or Sneak Attack (Dread Pirate)"],
@@ -60,6 +59,9 @@ export const DREAD_PIRATE: ClassSeed = {
     [9, "Fight to the Death or Motivate the Scum (Dread Pirate)"],
     [10, "Fearsome Reputation (Dread Pirate)"],
     [10, "Pirate King (Dread Pirate)"],
+  ],
+  freeFeats: [
+    [1, "Two-Weapon Fighting", "Dread Pirate Class Feature"],
   ],
 };
 

@@ -277,8 +277,8 @@ export default class DetailedCharacterModifiers {
     }
 
     // Track successful modifier application — use the resolved path so expanded
-    // subtypes (e.g. feats.simpleweaponproficiencydagger.possessed) show their
-    // actual target instead of repeating the base slug
+    // subtypes (e.g. skills.craftarmorsmithing.misc) show their actual target
+    // instead of repeating the base slug
     const appliedTarget = result.resolvedPath ?? modifier.target;
     this.detailedCharacterModifiers.appliedModifiers.push(
       appliedTarget !== modifier.target ? { ...modifier, target: appliedTarget } : modifier,

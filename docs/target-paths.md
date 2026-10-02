@@ -133,11 +133,13 @@ A family is the feats sharing a `FEAT_FAMILY` property (*Feat family groupings* 
 
 ### Proficiency feat paths (auto-generated as item requirements)
 
-Weapon items, armor items, and shield items auto-generate proficiency requirements targeting these feat paths:
+Weapon items, armor items, and shield items auto-generate proficiency requirements targeting these feat paths. A simple or martial weapon accepts the proficiency with all of its group or with it alone, never another weapon's: `feats.simpleweaponproficiency.possessed` is that feat only, not every `simpleweaponproficiency<weapon>`.
+
 
 | Path                                               | Used by                        |
 |----------------------------------------------------|--------------------------------|
-| `feats.simpleweaponproficiency.possessed`          | Simple weapon items            |
+| `feats.simpleweaponproficiency.possessed`          | Simple weapon items (OR chain) |
+| `feats.simpleweaponproficiency<weapon>.possessed`   | Simple weapon items (OR chain) |
 | `feats.martialweaponproficiency.possessed`         | Martial weapon items (OR chain) |
 | `feats.martialweaponproficiency<weapon>.possessed`  | Martial weapon items (OR chain) |
 | `feats.exoticweaponproficiency<weapon>.possessed`   | Exotic weapon items            |
