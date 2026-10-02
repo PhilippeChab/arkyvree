@@ -11,7 +11,7 @@ export const SESSION_COOKIE_NAME = "session-id";
 const SESSION_CONTEXT_KEY = "requestSession";
 const USER_CONTEXT_KEY = "requestUser";
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
+export const SESSION_TTL_SECONDS = SESSION_TTL_MS / 1000;
 
 export type SessionContext = {
   Variables: {

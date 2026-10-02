@@ -1,9 +1,9 @@
 import { applyPackages } from "@/database/packages/runner.ts";
 import testSeeds from "@/database/seeds/index.ts";
-import { db as defaultDb } from "@/server/database/index.ts";
-import type { Db } from "@/server/database/production.ts";
+import { type Db, db as defaultDb } from "@/server/database/index.ts";
 
-export default async function seedDatabase(db: Db, includeTestSeeds: boolean = true) {
+/** Applies the content packages to `db`, then, when `includeTestSeeds`, the test data's seeds. */
+export default async function seedDatabase(db: Db, includeTestSeeds: boolean) {
   console.log("Applying content packages...");
   await applyPackages(db);
   console.log("✓ Content packages applied");
@@ -19,12 +19,12 @@ export default async function seedDatabase(db: Db, includeTestSeeds: boolean = t
   console.log("Database seeded successfully.");
 }
 
-if (import.meta.main) {
+/** Whether a seed or reset script was asked for the test data (`--with-test-data`); its usage, and exits, on `--help`. */
+export function includeTestSeedsOption(script: "seed" | "reset"): boolean {
   const args = process.argv.slice(2);
-
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
-Usage: bun run scripts/db/seed.ts [options]
+Usage: bun run scripts/db/${script}.ts [options]
 
 Options:
   --with-test-data    Include test data seeds
@@ -32,8 +32,10 @@ Options:
 `);
     process.exit(0);
   }
+  return args.includes("--with-test-data");
+}
 
-  const includeTestSeeds = args.includes("--with-test-data");
-  await seedDatabase(defaultDb, includeTestSeeds);
+if (import.meta.main) {
+  await seedDatabase(defaultDb, includeTestSeedsOption("seed"));
   process.exit(0);
 }

@@ -7,7 +7,7 @@
 #   - feature branch cut from develop → parent is develop
 #   - stacked branch cut from another feature (feature-on-feature) → parent is
 #     the underlying feature
-# Falls back to main/develop if nothing else matches (fresh branch, detached HEAD).
+# Falls back to origin/develop, the branch pull requests target, when nothing matches (detached HEAD, no develop).
 set -euo pipefail
 
 CURRENT=$(git branch --show-current 2>/dev/null || true)
@@ -31,6 +31,4 @@ for ref in $candidates; do
   fi
 done
 
-# Last-resort fallback: no ancestor branch found (e.g., branch just created).
-# Default to main to produce a sensible large diff rather than error.
-echo "${best_branch:-main}"
+echo "${best_branch:-origin/develop}"

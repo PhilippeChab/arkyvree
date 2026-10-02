@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { AUTH_STORAGE_KEY } from "@/shared/auth.ts";
 
 type MeResponse = InferResponseType<typeof rpc.auth.me.$get, 200>;
 export type AuthUser = Pick<
@@ -151,7 +152,7 @@ export const useAuthStore = create<AuthState>()(
       };
     },
     {
-      name: "auth-storage",
+      name: AUTH_STORAGE_KEY,
       // Version 0 stored the whole sign-in response, password digest included:
       // drop it, and checkAuth reloads the user from /auth/me.
       version: 1,
