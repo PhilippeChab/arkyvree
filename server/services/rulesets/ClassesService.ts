@@ -4,16 +4,13 @@ import { klassesInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Klasses, KlassLevels } from "@/server/repositories/index.ts";
+import { Klasses } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   cowEntity,
-  deleteModifiersWithCascade,
-  deletePropertiesWithCascade,
-  deleteRequirementsWithCascade,
   entityHasCharacterPicks,
   lockEntityForMutation,
   repointTombstoneSnapshot,
@@ -201,23 +198,10 @@ export const ClassesMethods = {
           await lockEntityForMutation(tx, "klasses", targetId);
         }
 
-        // Per-level customizations are polymorphic FKs — Postgres can't cascade these.
-        const levels = await KlassLevels.findManyByKlass(tx, { klassId: targetId });
-        const levelIds = levels.map((l) => l.id);
-        if (levelIds.length > 0) {
-          await deleteModifiersWithCascade(tx, { sourceIds: levelIds, sourceType: "klass_levels" });
-          await deletePropertiesWithCascade(tx, { entityIds: levelIds, entityType: "klass_levels" });
-          await deleteRequirementsWithCascade(tx, { entityIds: levelIds, entityType: "klass_levels" });
-        }
-
-        // Klass customizations (polymorphic FKs).
-        await deleteModifiersWithCascade(tx, { sourceIds: [targetId], sourceType: "klasses" });
-        await deletePropertiesWithCascade(tx, { entityIds: [targetId], entityType: "klasses" });
-        await deleteRequirementsWithCascade(tx, { entityIds: [targetId], entityType: "klasses" });
-
         // FK CASCADE wipes klass_levels (and their klass_level_feats /
         // klass_level_powers / klass_level_saves), klass_skills, and any
         // character_levels referencing this klass when the row is deleted.
+        // The database deletes the class's and its levels' customizations.
         const rows = await Klasses.delete(tx, { id: targetId });
         const deletedKlass = rows[0];
 

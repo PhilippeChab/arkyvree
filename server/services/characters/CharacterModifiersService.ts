@@ -5,7 +5,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, Characters, Modifiers } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
-import { deleteModifiersWithCascade } from "@/server/services/rulesets/cow.ts";
 import TargetPathsService from "@/server/services/rulesets/customization/TargetPathsService.ts";
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -130,7 +129,7 @@ export const CharacterModifiersMethods = {
         throw new NotFoundError("Modifier not found");
       }
 
-      const rows = await deleteModifiersWithCascade(tx, { ids: [modifierId] });
+      const rows = await Modifiers.deleteMany(tx, { ids: [modifierId] });
       const modifier = rows[0];
 
       await Activities.create(tx, {

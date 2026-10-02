@@ -1,8 +1,11 @@
 import { db } from "@/server/database/index.ts";
+import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
   Aptitudes,
+  Campaigns,
   CharacterContributors,
+  Characters,
   Contributors,
   Feats,
   Invites,
@@ -17,6 +20,7 @@ import {
   Properties,
   Races,
   Requirements,
+  Rulesets,
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
@@ -101,14 +105,17 @@ export const ActivitiesMethods = {
     targetTable: string,
     targetId: string,
   ): Promise<string | null | { noAccess: true; entityType: "ruleset" | "character" }> {
-    // Top-level entities — no lookup needed
+    // Top-level records link to their page, archived or not, until they're deleted
     switch (targetTable) {
       case "rulesets":
-        return `/rulesets/${targetId}`;
+        return (await Rulesets.findOne(db, { id: targetId }, Visibility.All)) ? `/rulesets/${targetId}` : null;
       case "characters":
-        return `/characters/${targetId}`;
+      // Character sub-entities: targetId is the characterId
+      case "inventory":
+      case "levels":
+        return (await Characters.findOne(db, { id: targetId }, Visibility.All)) ? `/characters/${targetId}` : null;
       case "campaigns":
-        return `/campaigns/${targetId}`;
+        return (await Campaigns.findOne(db, { id: targetId }, Visibility.All)) ? `/campaigns/${targetId}` : null;
       case "users":
       case "sessions":
         return null;
@@ -132,11 +139,6 @@ export const ActivitiesMethods = {
       const klass = await Klasses.findOne(db, { id: targetId });
       if (!klass) return null;
       return `/rulesets/${klass.rulesetId}/classes/${klass.id}/skills`;
-    }
-
-    // Character sub-entities (targetId is characterId)
-    if (targetTable === "inventory" || targetTable === "levels") {
-      return `/characters/${targetId}`;
     }
 
     // Campaign sub-entities

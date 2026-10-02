@@ -12,7 +12,6 @@ import {
   copyEntityCustomizations,
   cowCustomizationForMutation,
   cowEntityForCustomization,
-  deleteModifiersWithCascade,
   fetchEntityCustomizations,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -293,7 +292,8 @@ export const ModifiersMethods = {
           modifierId,
         );
 
-        const rows = await deleteModifiersWithCascade(tx, { ids: [resolvedModifierId] });
+        // The database deletes the modifier's requirements with it
+        const rows = await Modifiers.deleteMany(tx, { ids: [resolvedModifierId] });
         const deletedModifier = rows[0];
 
         const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);

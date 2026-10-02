@@ -1,8 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import { getTableName } from "drizzle-orm";
-
-import { playersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Campaigns, Invites, Players } from "@/server/repositories/index.ts";
@@ -168,7 +165,7 @@ describe("PlayersService", () => {
   });
 
   describe("removeCampaignPlayer", () => {
-    test("deletes the slot, its invite and their activities, logging the removal", async () => {
+    test("deletes the slot and its invite, keeping their activities and logging the removal", async () => {
       const { session, campaign } = await setup();
       const { user: invitee } = await createTestUser();
       const { player } = await CampaignPlayersMethods.addCampaignPlayer(
@@ -181,12 +178,12 @@ describe("PlayersService", () => {
       expect((await CampaignPlayersMethods.removeCampaignPlayer(session, campaign.id, player.id)).id).toBe(player.id);
       expect(await Players.findOne(db, { id: player.id })).toBeUndefined();
       expect(await Invites.findMany(db, { playerId: player.id })).toEqual([]);
-      const { items } = await Activities.findMany(
-        db,
-        { userId: session.userId, targetTable: getTableName(playersInCampaign) },
-        { limit: 100, page: 1 },
-      );
-      expect(items.filter((a) => a.targetId === player.id).map((a) => a.type)).toEqual(["removeCampaignPlayer"]);
+      const { items } = await Activities.findMany(db, { userId: session.userId }, { limit: 100, page: 1 });
+      expect(items.map((a) => `${a.targetTable} ${a.type}`).sort()).toEqual([
+        "invites createCampaignInvite",
+        "players addCampaignPlayer",
+        "players removeCampaignPlayer",
+      ]);
     });
 
     test("lets a player leave on their own, but never removes the last Game Master", async () => {

@@ -132,7 +132,6 @@ From `server/services/rulesets/cow.ts`:
 | `cowEntity`, `cowEntityForCustomization` | Fork an inherited entity into the current ruleset (for admin-CRUD edits / deletes). |
 | `cowCustomizationForMutation` | Resolve the modifier / property / requirement row an update or delete changes: copies an inherited owner, maps the row to its copy, re-checks a local row after the owner lock. |
 | `lockEntityForMutation` | Lock an already-local owner before deleting its customizations. |
-| `deleteModifiersWithCascade`, `deletePropertiesWithCascade`, `deleteRequirementsWithCascade` | Cascade delete an entity's customizations. |
 
 For lineage checks (entity-belongs-to-sourceChain), inline `rulesetData.cow.sourceChain.includes(entity.rulesetId)` — no helper needed. For id canonicalization (pre-COW → post-COW) use `rulesetData.canonicalize(id)`. Sibling merging (aptitude links, modifiers, properties, requirements) is pre-baked into `rulesetData` by the compose step, so consumers only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
 

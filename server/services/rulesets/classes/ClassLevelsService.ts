@@ -17,9 +17,6 @@ import BaseService from "@/server/services/BaseService.ts";
 import {
   cowEntity,
   cowEntityForCustomization,
-  deleteModifiersWithCascade,
-  deletePropertiesWithCascade,
-  deleteRequirementsWithCascade,
   entityHasCharacterPicks,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -487,13 +484,9 @@ export const ClassLevelsMethods = {
         // returns the level id in the new copy.
         const resolvedLevelId = await cowEntityForCustomization(tx, rulesetId, "klass_levels", level.id);
 
-        // Customizations are polymorphic FKs — Postgres can't cascade these.
-        await deleteRequirementsWithCascade(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
-        await deletePropertiesWithCascade(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
-        await deleteModifiersWithCascade(tx, { sourceIds: [resolvedLevelId], sourceType: "klass_levels" });
-
         // FK CASCADE on klass_level_feats / klass_level_powers / klass_level_saves
         // wipes those join rows when the level row is deleted.
+        // The database deletes its customizations with it.
         const rows = await KlassLevels.delete(tx, { id: resolvedLevelId });
         const deletedLevel = rows[0];
 

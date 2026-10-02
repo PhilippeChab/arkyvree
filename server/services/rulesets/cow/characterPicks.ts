@@ -1,9 +1,5 @@
-import { getTableName } from "drizzle-orm";
-
-import { modifiersInCustomization, propertiesInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import {
-  Activities,
   CharacterInventory,
   CharacterLanguages,
   CharacterLevelFeats,
@@ -11,58 +7,8 @@ import {
   CharacterLevels,
   CharacterLevelSkills,
   Characters,
-  Modifiers,
-  Properties,
-  Requirements,
 } from "@/server/repositories/index.ts";
 import type { EntityType } from "@/server/services/rulesets/hashing.ts";
-
-// ──────────────────────────────────────────────────────────────
-// Cascade helpers for modifier deletion
-// ──────────────────────────────────────────────────────────────
-
-export async function deletePropertiesWithCascade(
-  tx: Db,
-  where: { ids: string[] } | { entityIds: string[]; entityType: string },
-) {
-  const deleted = await Properties.deleteMany(tx, where);
-  if (deleted.length > 0) {
-    await Activities.deleteByTargets(tx, {
-      targetIds: deleted.map((p) => p.id),
-      targetTable: getTableName(propertiesInCustomization),
-    });
-  }
-  return deleted;
-}
-
-export async function deleteRequirementsWithCascade(
-  tx: Db,
-  where: { ids: string[] } | { entityIds: string[]; entityType: string },
-) {
-  const deleted = await Requirements.deleteMany(tx, where);
-  if (deleted.length > 0) {
-    await Activities.deleteByTargets(tx, {
-      targetIds: deleted.map((r) => r.id),
-      targetTable: getTableName(requirementsInCustomization),
-    });
-  }
-  return deleted;
-}
-
-// The database deletes the modifiers' requirements with them
-export async function deleteModifiersWithCascade(
-  tx: Db,
-  where: { ids: string[] } | { sourceIds: string[]; sourceType: string },
-) {
-  const deleted = await Modifiers.deleteMany(tx, where);
-  if (deleted.length > 0) {
-    await Activities.deleteByTargets(tx, {
-      targetIds: deleted.map((m) => m.id),
-      targetTable: getTableName(modifiersInCustomization),
-    });
-  }
-  return deleted;
-}
 
 /**
  * Returns true if any character on a ruleset that depends on `rulesetId` has

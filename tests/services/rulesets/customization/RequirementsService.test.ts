@@ -25,14 +25,17 @@ async function setup() {
   return { session, rulesetId: ruleset.id, feat, race };
 }
 
-/** The activities logged against a requirement, by type. */
+/** The activities logged against a requirement, by type, sorted: those of one test share a timestamp. */
 async function activityTypes(userId: string, requirementId: string) {
   const { items } = await Activities.findMany(
     db,
     { userId, targetTable: getTableName(requirementsInCustomization) },
     { limit: 100, page: 1 },
   );
-  return items.filter((a) => a.targetId === requirementId).map((a) => a.type);
+  return items
+    .filter((a) => a.targetId === requirementId)
+    .map((a) => a.type)
+    .sort();
 }
 
 describe("RequirementsService", () => {
@@ -198,7 +201,7 @@ describe("RequirementsService", () => {
   });
 
   describe("deleteEntityRequirement", () => {
-    test("deletes a feat's or a race's requirement, replacing its activities with the deletion", async () => {
+    test("deletes a feat's or a race's requirement, keeping its activities", async () => {
       const { session, rulesetId, feat, race } = await setup();
       for (const [entityType, entityId] of [
         ["feats", feat.id],
@@ -215,7 +218,7 @@ describe("RequirementsService", () => {
           (await RequirementsMethods.deleteEntityRequirement(session, rulesetId, entityType, entityId, created.id)).id,
         ).toBe(created.id);
         expect(await Requirements.findOne(db, { id: created.id })).toBeUndefined();
-        expect(await activityTypes(session.userId, created.id)).toEqual(["deleteRequirement"]);
+        expect(await activityTypes(session.userId, created.id)).toEqual(["createRequirement", "deleteRequirement"]);
       }
     });
 
