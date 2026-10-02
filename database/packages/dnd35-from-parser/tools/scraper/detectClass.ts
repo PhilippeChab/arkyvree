@@ -1,4 +1,10 @@
+import { parseAlignmentRequirement } from "@/database/packages/dnd35-from-parser/tools/scraper/alignment.ts";
 import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
+import {
+  familyOptions,
+  featWithoutChoice,
+  weaponNamed,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
 import { findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import {
   anySkillRequirement,
@@ -20,7 +26,12 @@ import type {
 import { findCreatureType } from "@/database/packages/dnd35/content/creatureTypes.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
-import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import {
+  EXOTIC_WEAPONS,
+  MARTIAL_WEAPONS,
+  proficiencyRequirements,
+  SIMPLE_WEAPONS,
+} from "@/database/packages/dnd35/content/weapons.ts";
 import { capitalize, stripSeparators } from "@/shared/utils.ts";
 
 // ---------------------------------------------------------------------------
@@ -116,12 +127,12 @@ function expandAnyFeatRequirement(text: string): RequirementEntry | undefined {
 // ---------------------------------------------------------------------------
 
 function parseCompoundFeatRequirement(text: string, featNameMap: Record<string, string>): RequirementEntry | undefined {
-  // Pattern: "FeatName (optionA or optionB)"
+  // Pattern: "FeatName (optionA or optionB)", "FeatName (optionA, optionB, or optionC)"
   const match = text.match(/^(.+?)\s*\(([^)]+\s+or\s+[^)]+)\)$/i);
   if (!match) return undefined;
 
   const baseFeat = match[1].trim();
-  const options = match[2].split(/\s+or\s+/i).map((o) => o.trim());
+  const options = familyOptions(baseFeat, match[2]);
 
   if (options.length < 2) return undefined;
 
@@ -133,6 +144,23 @@ function parseCompoundFeatRequirement(text: string, featNameMap: Record<string, 
   });
 
   return or(...children);
+}
+
+/**
+ * A class's feat prerequisites as the scraper split them, mended: a list split inside its parentheses ("Weapon Focus
+ * (longbow", "shortbow", "or composite version of either)") is one prerequisite again, and the languages read into
+ * the list ("Spell Focus (conjuration) Languages: Celestial", "Infernal") are dropped.
+ */
+function featPrerequisites(scraped: string[]): string[] {
+  const feats: string[] = [];
+  for (const entry of scraped) {
+    const open = feats.at(-1);
+    if (open && open.split("(").length > open.split(")").length) feats[feats.length - 1] = `${open}, ${entry}`;
+    else feats.push(entry);
+  }
+  const languages = feats.findIndex((f) => /\bLanguages?:/.test(f));
+  if (languages < 0) return feats;
+  return [...feats.slice(0, languages), feats[languages].replace(/\s*\bLanguages?:.*$/, "")];
 }
 
 // ---------------------------------------------------------------------------
@@ -908,110 +936,6 @@ function expandSkillRequirement(name: string, ranks: number): RequirementEntry |
   return null;
 }
 
-function parseAlignmentRequirement(text: string): RequirementEntry | undefined {
-  const lower = text.toLowerCase().trim().replace(/\.$/, "");
-  const path = "identity.beliefs.alignment";
-
-  if (lower.startsWith("any evil")) {
-    return or(eqStr(path, "Lawful Evil"), eqStr(path, "Neutral Evil"), eqStr(path, "Chaotic Evil"));
-  }
-  if (lower.startsWith("any good")) {
-    return or(eqStr(path, "Lawful Good"), eqStr(path, "Neutral Good"), eqStr(path, "Chaotic Good"));
-  }
-  if (lower.startsWith("any lawful")) {
-    return or(eqStr(path, "Lawful Good"), eqStr(path, "Lawful Neutral"), eqStr(path, "Lawful Evil"));
-  }
-  if (lower.startsWith("any chaotic")) {
-    return or(eqStr(path, "Chaotic Good"), eqStr(path, "Chaotic Neutral"), eqStr(path, "Chaotic Evil"));
-  }
-  if (lower.startsWith("any non-evil") || lower.startsWith("any nonevil")) {
-    return or(
-      eqStr(path, "Lawful Good"),
-      eqStr(path, "Neutral Good"),
-      eqStr(path, "Chaotic Good"),
-      eqStr(path, "Lawful Neutral"),
-      eqStr(path, "True Neutral"),
-      eqStr(path, "Chaotic Neutral"),
-    );
-  }
-  if (lower.startsWith("any non-good") || lower.startsWith("any nongood")) {
-    return or(
-      eqStr(path, "Lawful Neutral"),
-      eqStr(path, "True Neutral"),
-      eqStr(path, "Chaotic Neutral"),
-      eqStr(path, "Lawful Evil"),
-      eqStr(path, "Neutral Evil"),
-      eqStr(path, "Chaotic Evil"),
-    );
-  }
-  if (lower.startsWith("any non-lawful") || lower.startsWith("any nonlawful")) {
-    return or(
-      eqStr(path, "Neutral Good"),
-      eqStr(path, "True Neutral"),
-      eqStr(path, "Neutral Evil"),
-      eqStr(path, "Chaotic Good"),
-      eqStr(path, "Chaotic Neutral"),
-      eqStr(path, "Chaotic Evil"),
-    );
-  }
-  if (lower.startsWith("any non-chaotic") || lower.startsWith("any nonchaotic")) {
-    return or(
-      eqStr(path, "Lawful Good"),
-      eqStr(path, "Lawful Neutral"),
-      eqStr(path, "Lawful Evil"),
-      eqStr(path, "Neutral Good"),
-      eqStr(path, "True Neutral"),
-      eqStr(path, "Neutral Evil"),
-    );
-  }
-
-  const alignmentNames = [
-    "lawful good",
-    "neutral good",
-    "chaotic good",
-    "lawful neutral",
-    "true neutral",
-    "chaotic neutral",
-    "lawful evil",
-    "neutral evil",
-    "chaotic evil",
-  ];
-
-  // Comma-separated list of alignments (e.g. "Neutral good, lawful neutral, neutral, chaotic neutral, or neutral evil.")
-  if (lower.includes(",")) {
-    const parts = lower
-      .replace(/\.$/, "")
-      .split(/,\s*/)
-      .map((s) => s.replace(/^or\s+/, "").trim())
-      .filter(Boolean);
-    const matched: RequirementEntry[] = [];
-    for (const part of parts) {
-      const normalized = part === "neutral" ? "true neutral" : part;
-      const titleCase = normalized
-        .split(" ")
-        .map((w) => w[0].toUpperCase() + w.slice(1))
-        .join(" ");
-      if (alignmentNames.includes(normalized)) {
-        matched.push(eqStr(path, titleCase));
-      }
-    }
-    if (matched.length > 0) return or(...matched);
-  }
-
-  // Specific alignment
-  for (const name of alignmentNames) {
-    if (lower === name || (name === "true neutral" && lower === "neutral")) {
-      const titleCase = name
-        .split(" ")
-        .map((w) => w[0].toUpperCase() + w.slice(1))
-        .join(" ");
-      return eqStr(path, titleCase);
-    }
-  }
-
-  return undefined;
-}
-
 function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]["parsed"]): {
   requirements: RequirementEntry[];
   featNameMap: Record<string, string>;
@@ -1083,9 +1007,30 @@ function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]["parse
   }
 
   if (parsed.feats) {
-    for (const f of parsed.feats) {
+    const feats = featPrerequisites(parsed.feats);
+    for (let i = 0; i < feats.length; i++) {
+      let f = feats[i];
       // Skip scraping artifacts (page references, HTML fragments, etc.)
       if (/\bpage \d+\b|^[^a-zA-Z]*$/i.test(f)) continue;
+
+      // "Negotiator (or), Persuasive": either one
+      if (/\s*\(or\)$/i.test(f) && i + 1 < feats.length) {
+        reqs.push(or(eq(feat(f.replace(/\s*\(or\)$/i, ""))), eq(feat(feats[++i]))));
+        continue;
+      }
+      // "Improved Unarmed Strike (or monk's unarmed strike ability)": the feat, which the alternative grants
+      f = f.replace(/\s*\(or\b[^)]*\)$/i, "");
+      // "Exotic Weapon Proficiency (kukri)": proficiency with the weapon, which may be martial
+      const proficiencyWeapon = weaponNamed(/^Exotic Weapon Proficiency \((.+)\)$/i.exec(f)?.[1] ?? "");
+      if (proficiencyWeapon) {
+        reqs.push(...proficiencyRequirements(proficiencyWeapon));
+        continue;
+      }
+      const withoutChoice = featWithoutChoice(f);
+      if (withoutChoice) {
+        reqs.push(eq(feat(withoutChoice)));
+        continue;
+      }
 
       // "any metamagic feat" / "any item creation feat" → grouping wildcard
       if (/any (?:other )?metamagic feat/i.test(f) && !/item creation/i.test(f)) {

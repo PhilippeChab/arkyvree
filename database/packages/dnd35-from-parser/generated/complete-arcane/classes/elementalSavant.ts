@@ -11,12 +11,7 @@ export const ELEMENTAL_SAVANT: ClassSeed = {
   requirements: [
     gte("skills.knowledgearcana.rank", 8),
     gte("skills.knowledgetheplanes.rank", 4),
-    or(
-      eq("feats.energysubstitutionacid.possessed"),
-      eq("feats.energysubstitutioncold.possessed"),
-      eq("feats.energysubstitutionelectricity.possessed"),
-      eq("feats.energysubstitutionfire.possessed"),
-    ),
+    eq("feats.energysubstitution.possessed"),
     or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3)),
   ],
   casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 6, 7, 8, 9] },

@@ -22,8 +22,7 @@ export const MALCONVOKER: ClassSeed = {
     gte("skills.bluff.rank", 4),
     gte("skills.knowledgetheplanes.rank", 4),
     eq("feats.augmentsummoning.possessed"),
-    eq("feats.spellfocusconjurationlanguagescelestial.possessed"),
-    eq("feats.infernal.possessed"),
+    eq("feats.spellfocusconjuration.possessed"),
     or(
       eqStr("identity.beliefs.alignment", "Lawful Good"),
       eqStr("identity.beliefs.alignment", "Neutral Good"),

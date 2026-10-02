@@ -268,7 +268,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     description: "When you cast a spell with either the electricity descriptor or the sonic descriptor that deals hit point damage, you can declare that spell to be a spell of the three thunders, with half its damage dealt as electricity damage and half dealt as sonic damage. In addition, the spell concludes with a mighty thunderclap that stuns all creatures that take damage from the spell for 1 round unless they succeed on a Fortitude save, then knocks stunned creatures prone unless they succeed on a Reflex save (both saves at the same DC as the base spell). Channeling the three thunders is costly, though, and you are automatically dazed for 1 round after doing so. A three thunders spell uses a spell slot of the spell's normal level. In addition, its descriptor changes to include both energy types--for example, a lightning bolt of the three thunders is an evocation [electricity, sonic] spell.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [
-      eq("feats.energysubstitutionelectricity.possessed"),
+      eq("feats.energysubstitution.possessed"),
       gte("skills.knowledgenature.rank", 4),
     ],
     properties: [
@@ -354,7 +354,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     description: "You can turn spells with the cold descriptor into uttercold spells. Half the damage dealt by an uttercold spell is cold damage, and the other half is negative energy damage. The spell's saving throw remains unchanged, but creatures can apply cold resistance or immunity to cold only to the cold portion of the damage. An undead creature can be healed by the negative energy damage of an uttercold spell, though if it doesn't have resistance to cold, the effects of damage and healing cancel each other out. An uttercold spell uses a spell slot of the spell's normal level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [
-      eq("feats.energysubstitutioncold.possessed"),
+      eq("feats.energysubstitution.possessed"),
       gte("skills.knowledgetheplanes.rank", 9),
     ],
     properties: [

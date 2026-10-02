@@ -27,6 +27,7 @@ export {
   weaponSpecialization,
   WIZARD_SCHOOL_FEATS,
   WEAPON_PROFICIENCY_FEATS,
+  SPELL_WEAPON_FOCUS_FEATS,
 } from "./feats.ts";
 
 export { ALL_CLASS_FEATS } from "./classes/index.ts";
@@ -55,6 +56,7 @@ import {
   weaponSpecialization as _weaponSpecialization,
   WIZARD_SCHOOL_FEATS as _WIZARD_SCHOOL_FEATS,
   WEAPON_PROFICIENCY_FEATS as _WEAPON_PROFICIENCY_FEATS,
+  SPELL_WEAPON_FOCUS_FEATS as _SPELL_WEAPON_FOCUS_FEATS,
 } from "./feats.ts";
 import { ALL_CLASS_FEATS as _ALL_CLASS_FEATS } from "./classes/index.ts";
 
@@ -78,6 +80,7 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ..._weaponSpecialization,
   ..._WIZARD_SCHOOL_FEATS,
   ..._WEAPON_PROFICIENCY_FEATS,
+  ..._SPELL_WEAPON_FOCUS_FEATS,
 ];
 
 export const ALL_FEATS: FeatSeed[] = [
@@ -100,5 +103,6 @@ export const ALL_FEATS: FeatSeed[] = [
   ..._weaponSpecialization,
   ..._WIZARD_SCHOOL_FEATS,
   ..._WEAPON_PROFICIENCY_FEATS,
+  ..._SPELL_WEAPON_FOCUS_FEATS,
   ..._ALL_CLASS_FEATS,
 ];

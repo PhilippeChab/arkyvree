@@ -20,33 +20,10 @@
         "valueType": "number"
       },
       {
-        "chainingOperator": "or",
-        "children": [
-          {
-            "operator": "equal",
-            "target": "feats.energysubstitutionacid.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "equal",
-            "target": "feats.energysubstitutioncold.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "equal",
-            "target": "feats.energysubstitutionelectricity.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "equal",
-            "target": "feats.energysubstitutionfire.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          }
-        ]
+        "operator": "equal",
+        "target": "feats.energysubstitution.possessed",
+        "value": "true",
+        "valueType": "boolean"
       },
       {
         "chainingOperator": "or",

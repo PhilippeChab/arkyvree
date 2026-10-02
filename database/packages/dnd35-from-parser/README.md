@@ -75,7 +75,7 @@ Scrapes class pages into `ClassReference` JSON with full progression tables.
 - Progression table (BAB, saves, special features, spells per day)
 - BAB type (good/medium/poor), save types (good/poor)
 - Prerequisites: BAB, skills, feats, caster level, alignment, race, weapon proficiency
-- Compound feat requirements (e.g. "Weapon Focus (longbow or shortbow)" → `or()`)
+- Compound feat requirements (e.g. "Weapon Focus (longbow or shortbow)" → `or()`), lists included ("Weapon Focus (dagger, kukri, or punch dagger)", which the scraper splits): each option by its weapon's or school's name ("punch dagger" → Punching Dagger, "Necro." → Necromancy), "composite version of either" as the composite of each. "Negotiator (or), Persuasive" is either feat, "Improved Unarmed Strike (or monk's unarmed strike ability)" the feat, and an exotic proficiency with a martial weapon ("Exotic Weapon Proficiency (kukri)") the martial one. A feat with a choice ("Energy Substitution (cold)") is the feat. Languages read into the feats ("Spell Focus (conjuration) Languages: Celestial") are left out
 - Caster level advancement from "+1 level of existing" text
 - Spell tables (per day + known), with footnote stripping
 - Bonus spell ability from class feature text
@@ -95,7 +95,7 @@ Scrapes feat listing and detail pages into `FeatReference` JSON.
 
 **Auto-detected:**
 - Feat name, type (General, Fighter, Metamagic, etc.), description, benefit
-- Prerequisite text parsing into structured requirements (ability scores, BAB, feats, skills, caster level)
+- Prerequisite text parsing into structured requirements (ability scores, BAB, feats, skills, caster level), with the same option lists as classes. A class feature named as a prerequisite ("Ability to acquire a new familiar", "Sneak attack +2d6") is a check of its family; "Ki strike (lawful)" is monk level 10, and "Relevant alignment" the alignment the feat's name holds (Spell Focus (Chaos): any chaotic). What no path can read ("Ability to fly") is reported, to be reviewed
 - Template feat detection (e.g. "Weapon Focus" expands into per-weapon variants)
 - Stackable feat detection
 - Modifier detection from benefit text

@@ -1,5 +1,5 @@
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
-import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 
 export const ORDER_OF_THE_BOW_INITIATE: ClassSeed = {
   name: "Order of the Bow Initiate",
@@ -15,9 +15,12 @@ export const ORDER_OF_THE_BOW_INITIATE: ClassSeed = {
     eq("feats.pointblankshot.possessed"),
     eq("feats.preciseshot.possessed"),
     eq("feats.rapidshot.possessed"),
-    eq("feats.weaponfocuslongbow.possessed"),
-    eq("feats.shortbow.possessed"),
-    eq("feats.orcompositeversionofeither.possessed"),
+    or(
+      eq("feats.weaponfocuslongbow.possessed"),
+      eq("feats.weaponfocusshortbow.possessed"),
+      eq("feats.weaponfocuscompositelongbow.possessed"),
+      eq("feats.weaponfocuscompositeshortbow.possessed"),
+    ),
   ],
   classFeatureAptitude: "Order of the Bow Initiate Class Feature",
   classFeatures: [

@@ -154,7 +154,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       eq("feats.stunningfist.possessed"),
-      eq("feats.kistrikelawful.possessed"),
+      gte("classes.monk.level", 10),
     ],
   },
   {
@@ -351,7 +351,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "Your familiar options expand to include additional creatures. You may select a familiar whose alignment differs from yours by no more than one step on each axis. Each creature requires a minimum arcane caster level and base attack bonus. Available options include: Krenshar (N, 3rd level, +3 BAB), Worg (NE, 3rd level, +3 BAB), Blink dog (LG, 5th level, +5 BAB), Hell hound (LE, 5th level, +5 BAB), Hippogriff (N, 7th level, +7 BAB), Howler (CE, 7th level, +7 BAB), Winter wolf (NE, 7th level, +7 BAB). All familiars provide the Alertness feat, an empathic link, and spell sharing. They also gain improved evasion: on a successful Reflex save they take no damage, and on a failed save they take only half.",
     aptitudes: ["General"],
     requirements: [
-      or(eq("feats.familiarsorcerer.possessed"), eq("feats.familiarwizard.possessed")),
+      eq("feats.summonfamiliar.*.possessed"),
     ],
   },
   {

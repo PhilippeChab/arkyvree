@@ -23,7 +23,57 @@
       "Spells per Day": {
         "description": "At each odd-numbered spellsword level (1st, 3rd, 5th, 7th, and 9th), the character gains additional spells per day as though he had also advanced one level in whichever arcane spellcasting class he belonged to before entering this prestige class. This progression improves his effective caster level and spells per day but does not confer any other class benefits (such as undead turning, bonus metamagic feats, item creation feats, or similar features). A character who previously had levels in more than one arcane casting class must choose which class receives the benefit for the purpose of calculating spells per day."
       }
-    }
+    },
+    "requirements": [
+      {
+        "operator": "greater_than_or_equal",
+        "target": "combat.bab",
+        "value": "4",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledgearcana.rank",
+        "value": "6",
+        "valueType": "number"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.simpleweaponproficiency.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.martialweaponproficiency.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.armorproficiencylight.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.armorproficiencymedium.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "equal",
+        "target": "feats.armorproficiencyheavy.possessed",
+        "value": "true",
+        "valueType": "boolean"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "spellcasting.arcane",
+        "value": "2",
+        "valueType": "number"
+      }
+    ]
   },
   "raw": {
     "classFeatures": [

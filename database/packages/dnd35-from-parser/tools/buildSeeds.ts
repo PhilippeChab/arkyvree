@@ -238,6 +238,7 @@ const CLASS_FEATURES_BY_CLASS = [
   "Smite Evil",
   "Sneak Attack",
   "Sudden Strike",
+  "Summon Familiar",
   "Trapfinding",
 ];
 

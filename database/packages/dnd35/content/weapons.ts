@@ -1,4 +1,4 @@
-import { eq, feat, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 
 // The weapons by proficiency, which the weapon feats and the proficiency requirements name.
@@ -8,6 +8,7 @@ export const SIMPLE_WEAPONS = [
   "Unarmed Strike",
   "Dagger",
   "Punching Dagger",
+  "Spiked Gauntlet",
   "Light Mace",
   "Sickle",
   "Club",
@@ -119,3 +120,15 @@ export const weaponProficiencyFeats: FeatSeed[] = [
     selectable: false,
   })),
 ];
+
+/**
+ * Weapon Focus for a kind of spell, a choice the Player's Handbook allows (a ray) and Complete Arcane's Ranged Spell
+ * and Touch Spell Specialization require: in the Weapon Focus family, without a weapon to give the bonus to.
+ */
+export const spellWeaponFocusFeats: FeatSeed[] = ["Ranged Spell", "Touch Spell"].map((spell) => ({
+  name: `Weapon Focus: ${spell}`,
+  description: `You gain a +1 bonus on attack rolls you make with ${spell.toLowerCase()}s.`,
+  aptitudes: ["General", "Fighter Bonus Feat"],
+  requirements: [gte("combat.bab", 1)],
+  properties: [{ type: "FEAT_FAMILY", value: "Weapon Focus" }],
+}));

@@ -10,6 +10,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import {
   classReferences,
+  loadReference,
   readStoredReference,
   type ReferenceType,
   resolveReference,
@@ -18,6 +19,7 @@ import {
 import { buildFeatDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
 import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
 import { checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 
 describe("A book's class references", () => {
@@ -136,6 +138,71 @@ describe("A feat's detected aptitudes", () => {
       "Deadly Defense": ["General", "Fighter Bonus Feat"],
       "Shield Proficiency": ["General"],
     });
+  });
+});
+
+describe("A class's detected prerequisites", () => {
+  const detectedOf = (book: string, slug: string) =>
+    loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class").detected.requirements;
+  const anyOf = (family: string, options: string[]) => or(...options.map((o) => eq(feat(`${family}: ${o}`))));
+
+  test("are any one of the options a list names, each by its name, though the scraper split the list", () => {
+    expect(detectedOf("complete-warrior", "orderOfTheBowInitiate")).toContainEqual(
+      anyOf("Weapon Focus", ["Longbow", "Shortbow", "Composite Longbow", "Composite Shortbow"]),
+    );
+    expect(detectedOf("complete-warrior", "invisibleBlade")).toContainEqual(
+      anyOf("Weapon Focus", ["Dagger", "Kukri", "Punching Dagger"]),
+    );
+    expect(detectedOf("complete-divine", "nightcloak")).toContainEqual(
+      anyOf("Spell Focus", ["Enchantment", "Illusion", "Necromancy"]),
+    );
+  });
+
+  test("read a stray '(or)' as either feat, an alternative as the feat, and a feat's choice as the feat", () => {
+    expect(detectedOf("complete-divine", "evangelist")).toContainEqual(
+      or(eq(feat("Negotiator")), eq(feat("Persuasive"))),
+    );
+    expect(detectedOf("complete-warrior", "drunkenMaster")).toContainEqual(eq(feat("Improved Unarmed Strike")));
+    expect(detectedOf("complete-arcane", "elementalSavant")).toContainEqual(eq(feat("Energy Substitution")));
+  });
+
+  test("read an exotic proficiency with a martial weapon as the martial one, and leave out the languages", () => {
+    expect(detectedOf("complete-divine", "blackFlameZealot")).toContainEqual(
+      or(eq(feat("Martial Weapon Proficiency")), eq(feat("Martial Weapon Proficiency: Kukri"))),
+    );
+    const malconvoker = detectedOf("complete-scoundrel", "malconvoker");
+    expect(malconvoker).toContainEqual(eq(feat("Spell Focus: Conjuration")));
+    expect(JSON.stringify(malconvoker)).not.toMatch(/celestial|infernal|languages/);
+  });
+});
+
+describe("A feat's detected prerequisites", () => {
+  const detectedOf = (name: string, prerequisiteText: string) =>
+    buildFeatDetected([{ name, featType: "general", prerequisiteText, benefit: "", special: "" }])[name];
+
+  test("name a class feature by its family, and a lawful ki strike by the monk level it comes at", () => {
+    expect(detectedOf("Improved Familiar", "Ability to acquire a new familiar,").requirements).toEqual([
+      eq(feat("Summon Familiar")),
+    ]);
+    expect(detectedOf("Axiomatic Strike", "Stunning Fist, Ki strike (lawful),").requirements).toEqual([
+      eq(feat("Stunning Fist")),
+      gte("classes.monk.level", 10),
+    ]);
+  });
+
+  test("read a relevant alignment as the feat's own, and a feat's choice as the feat", () => {
+    expect(detectedOf("Spell Focus (Chaos)", "Relevant alignment,").requirements).toEqual([
+      or(...["Chaotic Good", "Chaotic Neutral", "Chaotic Evil"].map((a) => eqStr("identity.beliefs.alignment", a))),
+    ]);
+    expect(detectedOf("Lord of the Uttercold", "Energy Substitution (cold),").requirements).toEqual([
+      eq(feat("Energy Substitution")),
+    ]);
+  });
+
+  test("report what no path reads, flight, instead of reading it as feats", () => {
+    const flight = detectedOf("Improved Flight", "Ability to fly (naturally, magically, or through shapechanging),");
+    expect(flight.requirements).toEqual([]);
+    expect(flight.unresolvedPrereqs).toEqual(["Ability to fly"]);
   });
 });
 

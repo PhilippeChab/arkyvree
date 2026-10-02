@@ -1,6 +1,6 @@
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import { ALL_WEAPONS, EXOTIC_WEAPONS, CROSSBOW_WEAPONS, proficiencyRequirements, weaponProficiencyFeats } from "@/database/packages/dnd35/content/weapons.ts";
+import { ALL_WEAPONS, EXOTIC_WEAPONS, CROSSBOW_WEAPONS, proficiencyRequirements, spellWeaponFocusFeats, weaponProficiencyFeats } from "@/database/packages/dnd35/content/weapons.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/utils.ts";
@@ -1021,3 +1021,4 @@ export const weaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
 // The system feats (`coreSystemFeats`): no reference lists them.
 export const WIZARD_SCHOOL_FEATS: FeatSeed[] = wizardSchoolFeats(WIZARD_SCHOOLS);
 export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = weaponProficiencyFeats;
+export const SPELL_WEAPON_FOCUS_FEATS: FeatSeed[] = spellWeaponFocusFeats;

@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import { favoredEnemy } from "@/database/packages/dnd35-from-parser/generated/srd/feats/favoredEnemy.ts";
 import {
+  SPELL_WEAPON_FOCUS_FEATS,
   WEAPON_PROFICIENCY_FEATS,
   WIZARD_SCHOOL_FEATS,
 } from "@/database/packages/dnd35-from-parser/generated/srd/feats/feats.ts";
@@ -173,7 +174,7 @@ describe("Generated strings", () => {
 
 describe("The generated feats", () => {
   test("hold the system feats the aptitude list reads", () => {
-    expect([...WIZARD_SCHOOL_FEATS, ...WEAPON_PROFICIENCY_FEATS, ...favoredEnemy]).toEqual(
+    expect([...WIZARD_SCHOOL_FEATS, ...WEAPON_PROFICIENCY_FEATS, ...SPELL_WEAPON_FOCUS_FEATS, ...favoredEnemy]).toEqual(
       coreSystemFeats(WIZARD_SCHOOLS),
     );
   });

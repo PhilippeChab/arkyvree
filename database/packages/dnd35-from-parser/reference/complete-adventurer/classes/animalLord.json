@@ -221,20 +221,6 @@
             "requirements": [
               {
                 "operator": "equal",
-                "target": "feats.birdlordanimallord.possessed",
-                "value": "true",
-                "valueType": "boolean"
-              }
-            ],
-            "target": "feats.flybyattack.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "requirements": [
-              {
-                "operator": "equal",
                 "target": "feats.catlordanimallord.possessed",
                 "value": "true",
                 "valueType": "boolean"
@@ -255,20 +241,6 @@
               }
             ],
             "target": "feats.trample.possessed",
-            "value": "true",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "set",
-            "requirements": [
-              {
-                "operator": "equal",
-                "target": "feats.sharklordanimallord.possessed",
-                "value": "true",
-                "valueType": "boolean"
-              }
-            ],
-            "target": "feats.improvedcriticalbite.possessed",
             "value": "true",
             "valueType": "boolean"
           },
