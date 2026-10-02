@@ -84,36 +84,9 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Blind-Fight",
-    description: "During melee combat, whenever you miss due to concealment, you may reroll the miss chance percentile once to determine if you actually connect. An invisible opponent gains no special melee advantages against you - you keep your Dexterity bonus to Armor Class, and the attacker does not receive the standard +2 bonus for invisibility. These benefits do not extend to ranged attacks from invisible foes. Your movement penalty for being unable to see is reduced by half. Poor visibility or darkness reduces your speed to three-quarters of normal rather than one-half.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-  },
-  {
-    name: "Cleave",
-    description: "When you deal enough damage to drop a creature (usually by reducing it below 0 hit points or killing it), you immediately gain an extra melee attack against another creature you can reach. No 5-foot step is allowed before this bonus attack. The additional strike uses the same weapon and attack bonus as the blow that felled the previous creature. This ability can be used once per round.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("abilities.strength.total", 13),
-      eq("feats.powerattack.possessed"),
-    ],
-  },
-  {
     name: "Combat Casting",
     description: "You receive a +4 bonus to Concentration checks when casting a spell or using a spell-like ability while fighting defensively or while grappled or pinned.",
     aptitudes: ["General"],
-  },
-  {
-    name: "Combat Expertise",
-    description: "During an attack action or full attack action in melee, you may accept up to a -5 penalty on your attack rolls and apply the same value (up to +5) as a dodge bonus to your Armor Class. The penalty cannot exceed your base attack bonus. These adjustments remain in effect until your next action.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("abilities.intelligence.total", 13),
-    ],
-  },
-  {
-    name: "Combat Reflexes",
-    description: "You may make additional attacks of opportunity each round equal to your Dexterity bonus. For instance, a fighter with 15 Dexterity can make three total attacks of opportunity per round - the standard one plus two more from the +2 Dexterity bonus. If multiple foes provoke, you can respond to as many as your limit allows, but still only one per individual opportunity. This feat also allows you to make attacks of opportunity while flat-footed.",
-    aptitudes: ["General", "Fighter Bonus Feat", "Monk Bonus Feat (2nd)"],
   },
   {
     name: "Deceitful",
@@ -122,17 +95,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     modifiers: [
       { target: "skills.disguise.misc", operator: "add", value: "2", valueType: "number" },
       { target: "skills.forgery.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Deflect Arrows",
-    description: "You must have at least one hand free to use this feat. Once per round, when a ranged weapon attack would hit you, you can deflect it and take no damage. You must be aware of the incoming attack and cannot be flat-footed. Deflecting does not require an action. Extremely large ranged weapons (such as boulders thrown by giants) and spell-generated ranged attacks (such as Melf's acid arrow) cannot be deflected.",
-    aptitudes: ["General", "Fighter Bonus Feat", "Monk Bonus Feat (2nd)"],
-    requirements: [
-      or(
-        and(gte("abilities.dexterity.total", 13), eq("feats.improvedunarmedstrike.possessed")),
-        gte("classes.monk.level", 2),
-      ),
     ],
   },
   {
@@ -162,14 +124,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Dodge",
-    description: "On your action, you choose one opponent and gain a +1 dodge bonus to Armor Class against that opponent's attacks. You may designate a different opponent on any subsequent action. Losing your Dexterity bonus to AC also causes you to lose dodge bonuses. Dodge bonuses (including this one and racial dodge bonuses such as those dwarves receive against giants) stack with one another, unlike most bonus types.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("abilities.dexterity.total", 13),
-    ],
-  },
-  {
     name: "Endurance",
     description: "You gain a +4 bonus to the following: Swim checks to resist nonlethal damage, Constitution checks to keep running, Constitution checks to avoid nonlethal damage from forced marches, Constitution checks to hold your breath, Constitution checks to avoid nonlethal damage from starvation or thirst, Fortitude saves to avoid nonlethal damage from extreme temperatures, and Fortitude saves to resist suffocation damage. Additionally, you can sleep in light or medium armor without becoming fatigued.",
     aptitudes: ["General", "Ranger Class Feature"],
@@ -188,17 +142,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Great Cleave",
-    description: "This feat functions identically to Cleave, except there is no limit on how many times you may use it in a single round.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 4),
-      gte("abilities.strength.total", 13),
-      eq("feats.cleave.possessed"),
-      eq("feats.powerattack.possessed"),
-    ],
-  },
-  {
     name: "Great Fortitude",
     description: "You receive a +2 bonus to all Fortitude saving throws.",
     aptitudes: ["General"],
@@ -212,6 +155,249 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       eq("feats.spellpenetration.possessed"),
+    ],
+  },
+  {
+    name: "Improved Counterspell",
+    description: "When counterspelling, you may substitute any spell from the same school that is at least one level higher than the spell being countered.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Improved Feint",
+    description: "You can use a Bluff check to feint in combat as a move action instead of a standard action.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("abilities.intelligence.total", 13),
+      eq("feats.combatexpertise.possessed"),
+    ],
+  },
+  {
+    name: "Improved Turning",
+    description: "Your effective level for turning or rebuking creatures is treated as one level higher than your actual level in the class that grants the ability.",
+    aptitudes: ["General"],
+    requirements: [
+      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
+    ],
+  },
+  {
+    name: "Investigator",
+    description: "You receive a +2 bonus to Gather Information checks and Search checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.gatherinformation.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.search.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Iron Will",
+    description: "You receive a +2 bonus to all Will saving throws.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "saves.will.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Leadership",
+    description: "You gain the ability to attract loyal companions and devoted followers who serve under you. The specifics of available cohorts and followers are determined by the DM.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("identity.meta.level", 6),
+    ],
+  },
+  {
+    name: "Lightning Reflexes",
+    description: "You receive a +2 bonus to all Reflex saving throws.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "saves.reflex.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Magical Aptitude",
+    description: "You receive a +2 bonus to Spellcraft checks and Use Magic Device checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.spellcraft.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.usemagicdevice.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Martial Weapon Proficiency",
+    description: "You make attack rolls with the chosen weapon without penalty.",
+    stackable: true,
+    aptitudes: ["General"],
+  },
+  {
+    name: "Mounted Combat",
+    description: "Once per round, when your mount takes a hit in combat, you may make a Ride check as a reaction to negate the blow. If your Ride check result exceeds the opponent's attack roll, the hit is negated. In effect, your Ride check result serves as the mount's AC when it would be higher than the mount's normal AC.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("skills.ride.rank", 1),
+    ],
+  },
+  {
+    name: "Natural Spell",
+    description: "You can fulfill the verbal and somatic components of spells while in wild shape form. For instance, while shaped as a hawk, screeches and talon gestures can substitute for normal verbal and somatic components. You may also use material components or focuses in your possession, even if they are melded into your current form. This feat does not allow use of magic items that your current form could not normally use, nor does it grant the ability to speak while wild shaped.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("abilities.wisdom.total", 13),
+      eq("feats.wildshapedruid.possessed"),
+    ],
+  },
+  {
+    name: "Negotiator",
+    description: "You receive a +2 bonus to Diplomacy checks and Sense Motive checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.diplomacy.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.sensemotive.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Nimble Fingers",
+    description: "You receive a +2 bonus to Disable Device checks and Open Lock checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.disabledevice.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.openlock.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Persuasive",
+    description: "You receive a +2 bonus to Bluff checks and Intimidate checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.bluff.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.intimidate.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Run",
+    description: "While running, you move at five times your normal speed (with medium, light, or no armor and no more than a medium load) or four times your speed (with heavy armor or a heavy load). A running start grants a +4 bonus to Jump checks. You retain your Dexterity bonus to AC while running.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Self-Sufficient",
+    description: "You receive a +2 bonus to Heal checks and Survival checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.heal.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.survival.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Shield Proficiency",
+    description: "You can use a shield while incurring only the standard penalties.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Simple Weapon Proficiency",
+    description: "You make attack rolls with simple weapons without penalty.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Spell Penetration",
+    description: "You receive a +2 bonus to caster level checks (1d20 + caster level) made to overcome a creature's spell resistance.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Stealthy",
+    description: "You receive a +2 bonus to Hide checks and Move Silently checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.hide.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.movesilently.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Sunder",
+    description: "Striking at an opponent's weapon does not provoke an attack of opportunity from that opponent.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("abilities.strength.total", 13),
+      eq("feats.powerattack.possessed"),
+    ],
+  },
+  {
+    name: "Toughness",
+    description: "You gain +3 hit points.",
+    stackable: true,
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "combat.hp.misc", operator: "add", value: "3", valueType: "number" },
+    ],
+  },
+  {
+    name: "Tower Shield Proficiency",
+    description: "You can use a tower shield while incurring only the standard penalties.",
+    aptitudes: ["General"],
+    requirements: [
+      eq("feats.shieldproficiency.possessed"),
+    ],
+  },
+  {
+    name: "Track",
+    description: "Finding tracks or following them for 1 mile requires a successful Survival check. A new check is needed whenever the trail becomes harder to follow, such as when other tracks cross the trail or when it doubles back and splits. You travel at half normal speed while tracking (or at normal speed with a -5 check penalty, or up to double speed with a -20 penalty). The DC varies based on surface type and conditions. Very Soft Ground (fresh snow, thick dust, wet mud) retains deep, clear footprints. Soft Ground yields to pressure but is firmer, leaving frequent shallow prints. Firm Ground (typical outdoor terrain like lawns, fields, and woods, or very soft or dirty indoor surfaces) may show traces like broken branches or tufts of hair, with only occasional or partial prints. Hard Ground (bare rock, indoor floors, streambeds) holds no prints, only faint traces like scuff marks or displaced pebbles. Various conditions modify the Survival DC. Every three creatures in the tracked group reduce the DC by 1. For mixed-size groups, apply only the modifier for the largest size. On a failed check, you may retry after 1 hour outdoors or 10 minutes indoors.",
+    aptitudes: ["General", "Ranger Class Feature"],
+  },
+];
+
+export const FIGHTER_FEATS: FeatSeed[] = [
+  {
+    name: "Blind-Fight",
+    description: "During melee combat, whenever you miss due to concealment, you may reroll the miss chance percentile once to determine if you actually connect. An invisible opponent gains no special melee advantages against you - you keep your Dexterity bonus to Armor Class, and the attacker does not receive the standard +2 bonus for invisibility. These benefits do not extend to ranged attacks from invisible foes. Your movement penalty for being unable to see is reduced by half. Poor visibility or darkness reduces your speed to three-quarters of normal rather than one-half.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+  },
+  {
+    name: "Cleave",
+    description: "When you deal enough damage to drop a creature (usually by reducing it below 0 hit points or killing it), you immediately gain an extra melee attack against another creature you can reach. No 5-foot step is allowed before this bonus attack. The additional strike uses the same weapon and attack bonus as the blow that felled the previous creature. This ability can be used once per round.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("abilities.strength.total", 13),
+      eq("feats.powerattack.possessed"),
+    ],
+  },
+  {
+    name: "Combat Expertise",
+    description: "During an attack action or full attack action in melee, you may accept up to a -5 penalty on your attack rolls and apply the same value (up to +5) as a dodge bonus to your Armor Class. The penalty cannot exceed your base attack bonus. These adjustments remain in effect until your next action.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("abilities.intelligence.total", 13),
+    ],
+  },
+  {
+    name: "Combat Reflexes",
+    description: "You may make additional attacks of opportunity each round equal to your Dexterity bonus. For instance, a fighter with 15 Dexterity can make three total attacks of opportunity per round - the standard one plus two more from the +2 Dexterity bonus. If multiple foes provoke, you can respond to as many as your limit allows, but still only one per individual opportunity. This feat also allows you to make attacks of opportunity while flat-footed.",
+    aptitudes: ["General", "Fighter Bonus Feat", "Monk Bonus Feat (2nd)"],
+  },
+  {
+    name: "Deflect Arrows",
+    description: "You must have at least one hand free to use this feat. Once per round, when a ranged weapon attack would hit you, you can deflect it and take no damage. You must be aware of the incoming attack and cannot be flat-footed. Deflecting does not require an action. Extremely large ranged weapons (such as boulders thrown by giants) and spell-generated ranged attacks (such as Melf's acid arrow) cannot be deflected.",
+    aptitudes: ["General", "Fighter Bonus Feat", "Monk Bonus Feat (2nd)"],
+    requirements: [
+      or(
+        and(gte("abilities.dexterity.total", 13), eq("feats.improvedunarmedstrike.possessed")),
+        gte("classes.monk.level", 2),
+      ),
+    ],
+  },
+  {
+    name: "Dodge",
+    description: "On your action, you choose one opponent and gain a +1 dodge bonus to Armor Class against that opponent's attacks. You may designate a different opponent on any subsequent action. Losing your Dexterity bonus to AC also causes you to lose dodge bonuses. Dodge bonuses (including this one and racial dodge bonuses such as those dwarves receive against giants) stack with one another, unlike most bonus types.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("abilities.dexterity.total", 13),
+    ],
+  },
+  {
+    name: "Great Cleave",
+    description: "This feat functions identically to Cleave, except there is no limit on how many times you may use it in a single round.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 4),
+      gte("abilities.strength.total", 13),
+      eq("feats.cleave.possessed"),
+      eq("feats.powerattack.possessed"),
     ],
   },
   {
@@ -236,11 +422,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Improved Counterspell",
-    description: "When counterspelling, you may substitute any spell from the same school that is at least one level higher than the spell being countered.",
-    aptitudes: ["General"],
-  },
-  {
     name: "Improved Disarm",
     description: "Attempting to disarm an opponent does not provoke an attack of opportunity, and the opponent cannot attempt to disarm you in return. You also receive a +4 bonus on the opposed attack roll made during the disarm attempt.",
     aptitudes: ["General", "Fighter Bonus Feat", "Monk Bonus Feat (6th)"],
@@ -249,15 +430,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
         and(gte("abilities.intelligence.total", 13), eq("feats.combatexpertise.possessed")),
         gte("classes.monk.level", 6),
       ),
-    ],
-  },
-  {
-    name: "Improved Feint",
-    description: "You can use a Bluff check to feint in combat as a move action instead of a standard action.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("abilities.intelligence.total", 13),
-      eq("feats.combatexpertise.possessed"),
     ],
   },
   {
@@ -336,14 +508,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Improved Turning",
-    description: "Your effective level for turning or rebuking creatures is treated as one level higher than your actual level in the class that grants the ability.",
-    aptitudes: ["General"],
-    requirements: [
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
-    ],
-  },
-  {
     name: "Improved Two-Weapon Fighting",
     description: "Beyond the standard single extra attack with your off-hand weapon, you gain a second off-hand attack at a -5 penalty.",
     aptitudes: ["General", "Fighter Bonus Feat", "Ranger Improved Combat Style (6th)"],
@@ -361,48 +525,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General", "Fighter Bonus Feat", "Monk Class Feature"],
   },
   {
-    name: "Investigator",
-    description: "You receive a +2 bonus to Gather Information checks and Search checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.gatherinformation.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.search.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Iron Will",
-    description: "You receive a +2 bonus to all Will saving throws.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "saves.will.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Leadership",
-    description: "You gain the ability to attract loyal companions and devoted followers who serve under you. The specifics of available cohorts and followers are determined by the DM.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("identity.meta.level", 6),
-    ],
-  },
-  {
-    name: "Lightning Reflexes",
-    description: "You receive a +2 bonus to all Reflex saving throws.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "saves.reflex.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Magical Aptitude",
-    description: "You receive a +2 bonus to Spellcraft checks and Use Magic Device checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.spellcraft.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.usemagicdevice.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
     name: "Manyshot",
     description: "As a standard action, you may loose two arrows simultaneously at one target within 30 feet. Both arrows share a single attack roll (at a -4 penalty) and deal damage independently. For every 5 points of base attack bonus above +6, you may add one more arrow, up to four arrows at +16 base attack bonus. Each arrow beyond the second imposes a cumulative -2 attack penalty (-6 total for three arrows, -8 for four). Damage reduction and resistances apply separately to each arrow.",
     aptitudes: ["General", "Fighter Bonus Feat", "Ranger Improved Combat Style (6th)"],
@@ -413,12 +535,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
         gte("classes.ranger.level", 6),
       ),
     ],
-  },
-  {
-    name: "Martial Weapon Proficiency",
-    description: "You make attack rolls with the chosen weapon without penalty.",
-    stackable: true,
-    aptitudes: ["General"],
   },
   {
     name: "Mobility",
@@ -436,50 +552,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     requirements: [
       eq("feats.mountedcombat.possessed"),
       gte("skills.ride.rank", 1),
-    ],
-  },
-  {
-    name: "Mounted Combat",
-    description: "Once per round, when your mount takes a hit in combat, you may make a Ride check as a reaction to negate the blow. If your Ride check result exceeds the opponent's attack roll, the hit is negated. In effect, your Ride check result serves as the mount's AC when it would be higher than the mount's normal AC.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("skills.ride.rank", 1),
-    ],
-  },
-  {
-    name: "Natural Spell",
-    description: "You can fulfill the verbal and somatic components of spells while in wild shape form. For instance, while shaped as a hawk, screeches and talon gestures can substitute for normal verbal and somatic components. You may also use material components or focuses in your possession, even if they are melded into your current form. This feat does not allow use of magic items that your current form could not normally use, nor does it grant the ability to speak while wild shaped.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("abilities.wisdom.total", 13),
-      eq("feats.wildshapedruid.possessed"),
-    ],
-  },
-  {
-    name: "Negotiator",
-    description: "You receive a +2 bonus to Diplomacy checks and Sense Motive checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.diplomacy.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.sensemotive.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Nimble Fingers",
-    description: "You receive a +2 bonus to Disable Device checks and Open Lock checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.disabledevice.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.openlock.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Persuasive",
-    description: "You receive a +2 bonus to Bluff checks and Intimidate checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.bluff.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.intimidate.misc", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -532,25 +604,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Run",
-    description: "While running, you move at five times your normal speed (with medium, light, or no armor and no more than a medium load) or four times your speed (with heavy armor or a heavy load). A running start grants a +4 bonus to Jump checks. You retain your Dexterity bonus to AC while running.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Self-Sufficient",
-    description: "You receive a +2 bonus to Heal checks and Survival checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.heal.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.survival.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Shield Proficiency",
-    description: "You can use a shield while incurring only the standard penalties.",
-    aptitudes: ["General"],
-  },
-  {
     name: "Shot on the Run",
     description: "When taking the attack action with a ranged weapon, you may move both before and after your attack, as long as your total movement does not exceed your speed.",
     aptitudes: ["General", "Fighter Bonus Feat"],
@@ -563,11 +616,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Simple Weapon Proficiency",
-    description: "You make attack rolls with simple weapons without penalty.",
-    aptitudes: ["General"],
-  },
-  {
     name: "Snatch Arrows",
     description: "When you use the Deflect Arrows feat, you may catch the incoming weapon rather than simply deflecting it. Caught thrown weapons (such as spears or axes) can be hurled back at the original attacker immediately (even outside your turn) or kept for later use. You must have at least one hand free to use this feat.",
     aptitudes: ["General", "Fighter Bonus Feat"],
@@ -576,11 +624,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
       eq("feats.deflectarrows.possessed"),
       eq("feats.improvedunarmedstrike.possessed"),
     ],
-  },
-  {
-    name: "Spell Penetration",
-    description: "You receive a +2 bonus to caster level checks (1d20 + caster level) made to overcome a creature's spell resistance.",
-    aptitudes: ["General"],
   },
   {
     name: "Spirited Charge",
@@ -603,15 +646,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Stealthy",
-    description: "You receive a +2 bonus to Hide checks and Move Silently checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.hide.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.movesilently.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
     name: "Stunning Fist",
     description: "You must declare use of this feat prior to your attack roll; a missed attack wastes the attempt. A foe struck by your unarmed attack must make a Fortitude saving throw (DC 10 + half your character level + your Wisdom modifier) in addition to taking normal damage. On a failed save, the target is stunned for 1 round (until just before your next action). A stunned creature cannot act, loses any Dexterity bonus to AC, and suffers a -2 penalty to AC. You may attempt a stunning strike once per day for every four character levels you possess, and no more than once per round. Constructs, oozes, plants, undead, incorporeal creatures, and creatures immune to critical hits are immune to this effect.",
     aptitudes: ["General", "Fighter Bonus Feat", "Monk Bonus Feat (1st)"],
@@ -626,37 +660,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
         gte("classes.monk.level", 1),
       ),
     ],
-  },
-  {
-    name: "Sunder",
-    description: "Striking at an opponent's weapon does not provoke an attack of opportunity from that opponent.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("abilities.strength.total", 13),
-      eq("feats.powerattack.possessed"),
-    ],
-  },
-  {
-    name: "Toughness",
-    description: "You gain +3 hit points.",
-    stackable: true,
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "combat.hp.misc", operator: "add", value: "3", valueType: "number" },
-    ],
-  },
-  {
-    name: "Tower Shield Proficiency",
-    description: "You can use a tower shield while incurring only the standard penalties.",
-    aptitudes: ["General"],
-    requirements: [
-      eq("feats.shieldproficiency.possessed"),
-    ],
-  },
-  {
-    name: "Track",
-    description: "Finding tracks or following them for 1 mile requires a successful Survival check. A new check is needed whenever the trail becomes harder to follow, such as when other tracks cross the trail or when it doubles back and splits. You travel at half normal speed while tracking (or at normal speed with a -5 check penalty, or up to double speed with a -20 penalty). The DC varies based on surface type and conditions. Very Soft Ground (fresh snow, thick dust, wet mud) retains deep, clear footprints. Soft Ground yields to pressure but is firmer, leaving frequent shallow prints. Firm Ground (typical outdoor terrain like lawns, fields, and woods, or very soft or dirty indoor surfaces) may show traces like broken branches or tufts of hair, with only occasional or partial prints. Hard Ground (bare rock, indoor floors, streambeds) holds no prints, only faint traces like scuff marks or displaced pebbles. Various conditions modify the Survival DC. Every three creatures in the tracked group reduce the DC by 1. For mixed-size groups, apply only the modifier for the largest size. On a failed check, you may retry after 1 hour outdoors or 10 minutes indoors.",
-    aptitudes: ["General", "Ranger Class Feature"],
   },
   {
     name: "Trample",

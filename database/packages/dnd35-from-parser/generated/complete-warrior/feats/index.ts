@@ -4,6 +4,7 @@ import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 export {
   STYLE_FEATS,
   GENERAL_FEATS,
+  FIGHTER_FEATS,
   DIVINE_FEATS,
   TACTICAL_FEATS,
   greaterResiliency,
@@ -15,6 +16,7 @@ export { ALL_CLASS_FEATS } from "./classes/index.ts";
 import {
   STYLE_FEATS as _STYLE_FEATS,
   GENERAL_FEATS as _GENERAL_FEATS,
+  FIGHTER_FEATS as _FIGHTER_FEATS,
   DIVINE_FEATS as _DIVINE_FEATS,
   TACTICAL_FEATS as _TACTICAL_FEATS,
   greaterResiliency as _greaterResiliency,
@@ -25,6 +27,7 @@ import { ALL_CLASS_FEATS as _ALL_CLASS_FEATS } from "./classes/index.ts";
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ..._STYLE_FEATS,
   ..._GENERAL_FEATS,
+  ..._FIGHTER_FEATS,
   ..._DIVINE_FEATS,
   ..._TACTICAL_FEATS,
   ..._greaterResiliency,
@@ -34,6 +37,7 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
 export const ALL_FEATS: FeatSeed[] = [
   ..._STYLE_FEATS,
   ..._GENERAL_FEATS,
+  ..._FIGHTER_FEATS,
   ..._DIVINE_FEATS,
   ..._TACTICAL_FEATS,
   ..._greaterResiliency,

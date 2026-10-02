@@ -57,20 +57,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Brutal Throw",
-    description: "You can add your Strength modifier (instead of your Dexterity modifier) to attack rolls with thrown weapons.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-  },
-  {
-    name: "Combat Intuition",
-    description: "As a free action, you can use Sense Motive to assess the challenge presented by a single opponent in relationship to your own level/Hit Dice. You gain a +4 bonus on such checks and narrow the result to a single category. In addition, whenever you make a melee attack against a creature that you made a melee attack against during the previous round, you gain a +1 insight bonus on your melee attack rolls against that creature.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 5),
-      gte("skills.sensemotive.rank", 4),
-    ],
-  },
-  {
     name: "Danger Sense",
     description: "Once per day, you can reroll an initiative check you have just made. You use the better of your two rolls. You must decide to reroll before the round starts.",
     aptitudes: ["General"],
@@ -152,15 +138,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Dual Strike",
-    description: "As a standard action, you can make a melee attack with your primary weapon and your off-hand weapon. Both attacks use the same attack roll to determine success, using the worse of the two weapons' attack modifiers. If you are using a one-handed or light weapon in your primary hand and a light weapon in your off hand, you take a -4 penalty on this attack roll; otherwise you take a -10 penalty. Each weapon deals its normal damage. Damage reduction and other resistances apply separately against each weapon attack.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      eq("feats.improvedtwoweaponfighting.possessed"),
-      eq("feats.twoweaponfighting.possessed"),
-    ],
-  },
-  {
     name: "Expert Tactician",
     description: "If you hit a creature with an attack of opportunity, you and all your allies gain a +2 circumstance bonus on melee attack rolls and damage rolls against that creature for 1 round.",
     aptitudes: ["General"],
@@ -204,15 +181,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Goad",
-    description: "As a move action, you can goad an opponent that threatens you, has line of sight to you, can hear you, and has an Intelligence of 3 or higher. (The goad is a mind-affecting ability.) When the goaded opponent starts its next turn, if it threatens you and has line of sight to you, it must make a Will saving throw (DC 10 + 1/2 your character level + your Cha modifier). If the opponent fails its save, you are the only creature it can make melee attacks against during this turn. (If it kills you, knocks you unconscious, loses sight of you, or otherwise is unable to make melee attacks against you, it may make any remaining melee attacks against other foes, as normal.) A goaded creature can still cast spells, make ranged attacks, move, or perform other actions normally. The use of this feat restricts only melee attacks.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 1),
-      gte("abilities.charisma.total", 13),
-    ],
-  },
-  {
     name: "Green Ear",
     description: "You can alter any of your mind-affecting bardic music abilities (or similar Perform-based abilities from other classes) so that they influence only plant creatures instead of other creatures. However, plants receive a +5 bonus on Will saves against any of these effects.",
     aptitudes: ["General"],
@@ -227,17 +195,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     requirements: [
       eq("feats.blindfight.possessed"),
       gte("skills.listen.rank", 5),
-    ],
-  },
-  {
-    name: "Improved Diversion",
-    description: "You can use Bluff to create a diversion to hide as a move action. You gain a +4 bonus on Bluff checks made for this purpose.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("skills.bluff.rank", 4),
-    ],
-    modifiers: [
-      { target: "skills.bluff.misc", operator: "add", value: "4", valueType: "number" },
     ],
   },
   {
@@ -304,34 +261,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "You immediately gain 5 skill points. Spend these skill points as normal. You cannot exceed the normal maximum ranks for your level in any skill.",
     stackable: true,
     aptitudes: ["General"],
-  },
-  {
-    name: "Oversized Two-Weapon Fighting",
-    description: "When wielding a one-handed weapon in your off hand, you take penalties for fighting with two weapons as if you were wielding a light weapon in your off hand.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("abilities.strength.total", 13),
-      eq("feats.twoweaponfighting.possessed"),
-    ],
-  },
-  {
-    name: "Polyglot",
-    description: "You can speak all languages. If you are literate, you can also read and write all languages (not including magical script).",
-    aptitudes: ["General"],
-    requirements: [
-      gte("abilities.intelligence.total", 25),
-      eq("feats.speaklanguagefivelanguages.possessed"),
-    ],
-  },
-  {
-    name: "Power Throw",
-    description: "On your turn, before making any attack rolls, you can choose to subtract a number from all thrown weapon attack rolls and add the same number to all thrown weapon damage rolls. This number may not exceed your base attack bonus. The penalty on attack rolls and the bonus on damage rolls applies until your next turn.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("abilities.strength.total", 13),
-      eq("feats.brutalthrow.possessed"),
-      eq("feats.powerattack.possessed"),
-    ],
   },
   {
     name: "Quick Reconnoiter",
@@ -431,6 +360,71 @@ export const WILD_FEATS: FeatSeed[] = [
     name: "Scent",
     description: "You can expend one daily use of wild shape to gain the scent ability for 1 hour per Hit Die. While this benefit is in effect, you can detect opponents within 30 feet by sense of smell. In addition, if you have the Track feat, you can track creatures by scent. You retain this benefit regardless of what form you are in.",
     aptitudes: ["General"],
+  },
+];
+
+export const FIGHTER_FEATS: FeatSeed[] = [
+  {
+    name: "Brutal Throw",
+    description: "You can add your Strength modifier (instead of your Dexterity modifier) to attack rolls with thrown weapons.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+  },
+  {
+    name: "Combat Intuition",
+    description: "As a free action, you can use Sense Motive to assess the challenge presented by a single opponent in relationship to your own level/Hit Dice. You gain a +4 bonus on such checks and narrow the result to a single category. In addition, whenever you make a melee attack against a creature that you made a melee attack against during the previous round, you gain a +1 insight bonus on your melee attack rolls against that creature.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 5),
+      gte("skills.sensemotive.rank", 4),
+    ],
+  },
+  {
+    name: "Dual Strike",
+    description: "As a standard action, you can make a melee attack with your primary weapon and your off-hand weapon. Both attacks use the same attack roll to determine success, using the worse of the two weapons' attack modifiers. If you are using a one-handed or light weapon in your primary hand and a light weapon in your off hand, you take a -4 penalty on this attack roll; otherwise you take a -10 penalty. Each weapon deals its normal damage. Damage reduction and other resistances apply separately against each weapon attack.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      eq("feats.improvedtwoweaponfighting.possessed"),
+      eq("feats.twoweaponfighting.possessed"),
+    ],
+  },
+  {
+    name: "Goad",
+    description: "As a move action, you can goad an opponent that threatens you, has line of sight to you, can hear you, and has an Intelligence of 3 or higher. (The goad is a mind-affecting ability.) When the goaded opponent starts its next turn, if it threatens you and has line of sight to you, it must make a Will saving throw (DC 10 + 1/2 your character level + your Cha modifier). If the opponent fails its save, you are the only creature it can make melee attacks against during this turn. (If it kills you, knocks you unconscious, loses sight of you, or otherwise is unable to make melee attacks against you, it may make any remaining melee attacks against other foes, as normal.) A goaded creature can still cast spells, make ranged attacks, move, or perform other actions normally. The use of this feat restricts only melee attacks.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 1),
+      gte("abilities.charisma.total", 13),
+    ],
+  },
+  {
+    name: "Improved Diversion",
+    description: "You can use Bluff to create a diversion to hide as a move action. You gain a +4 bonus on Bluff checks made for this purpose.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("skills.bluff.rank", 4),
+    ],
+    modifiers: [
+      { target: "skills.bluff.misc", operator: "add", value: "4", valueType: "number" },
+    ],
+  },
+  {
+    name: "Oversized Two-Weapon Fighting",
+    description: "When wielding a one-handed weapon in your off hand, you take penalties for fighting with two weapons as if you were wielding a light weapon in your off hand.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("abilities.strength.total", 13),
+      eq("feats.twoweaponfighting.possessed"),
+    ],
+  },
+  {
+    name: "Power Throw",
+    description: "On your turn, before making any attack rolls, you can choose to subtract a number from all thrown weapon attack rolls and add the same number to all thrown weapon damage rolls. This number may not exceed your base attack bonus. The penalty on attack rolls and the bonus on damage rolls applies until your next turn.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("abilities.strength.total", 13),
+      eq("feats.brutalthrow.possessed"),
+      eq("feats.powerattack.possessed"),
+    ],
   },
 ];
 

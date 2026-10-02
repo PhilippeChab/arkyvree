@@ -52,33 +52,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Magical Beast Wild Shape",
-    description: "Your wild shape ability extends to magical beast forms. The size restriction matches your normal animal size limitation. You acquire all supernatural abilities of the magical beast whose shape you assume.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("abilities.wisdom.total", 25),
-      gte("skills.knowledgenature.rank", 27),
-    ],
-  },
-  {
-    name: "Negative Energy Burst",
-    description: "By expending one rebuke or command undead attempt, you emit a 60-foot burst of negative energy. Make a standard rebuke (or command) check, but the burst targets living creatures instead of undead. Creatures that would be rebuked by the result gain one negative level; those that would be commanded gain two negative levels. The Fortitude DC to remove these negative levels after 24 hours equals 10 + half your effective turning level + your Charisma modifier.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("abilities.charisma.total", 25),
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
-    ],
-  },
-  {
-    name: "Positive Energy Aura",
-    description: "Any undead creature entering within 15 feet of you is automatically subjected to a turning effect at no cost in turning attempts and with no turning damage roll required. However, only undead whose Hit Dice do not exceed your effective cleric level minus 10 are turned, and only those whose Hit Dice do not exceed your effective cleric level minus 20 are destroyed. Undead with total cover relative to you are unaffected, just as with standard turning.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("abilities.charisma.total", 25),
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
-    ],
-  },
-  {
     name: "Practiced Spellcaster",
     description: "Your caster level for one chosen spellcasting class increases by 4, though it cannot exceed your total Hit Dice. If you cannot immediately benefit from the full increase, any remaining bonus applies as you gain additional non-caster Hit Dice later. Characters with multiple spellcasting classes must designate which class receives this benefit. This feat does not grant additional spells per day or spells known; it only raises your effective caster level for purposes such as spell resistance penetration, duration, and other level-dependent effects.",
     stackable: true,
@@ -151,16 +124,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     requirements: [
       gte("abilities.wisdom.total", 13),
       gte("skills.knowledgereligion.rank", 4),
-    ],
-  },
-  {
-    name: "Zone of Animation",
-    description: "By expending a rebuke or command undead attempt, you raise corpses within your rebuke/command range as undead. The total HD of undead you animate equals the number of HD that your check result would normally command. You cannot animate more corpses than are available in range, nor can you exceed your total commanded undead limit (accounting for those already under your control) with any single use. Animated undead fall under your command automatically, subject to your normal command cap. Recently deceased corpses rise as zombies; older remains become upgraded.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("abilities.charisma.total", 25),
-      eq("feats.undeadmastery.possessed"),
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
     ],
   },
 ];

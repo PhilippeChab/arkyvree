@@ -1,6 +1,12 @@
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
 
-import { pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import {
+  contentHeading,
+  pageTitle,
+  sectionElements,
+  tagOf,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
@@ -12,6 +18,25 @@ const KNOWN_LABELS = new Set(["prerequisite", "prerequisites", "benefit", "benef
 
 function isKnownLabel(text: string): boolean {
   return KNOWN_LABELS.has(text.toLowerCase());
+}
+
+/**
+ * A feat's categories, in their order: the links in the brackets after its heading
+ * (`[<a href="/feats/categories/…">Fighter Bonus Feat</a>, <a …>General</a>]`), else the bracket's text.
+ */
+function featCategories($: cheerio.CheerioAPI, heading: cheerio.Cheerio<AnyNode>): string[] {
+  let after = "";
+  for (
+    let node = heading[0].nextSibling;
+    node && !(node.type === "tag" && node.name === "h4");
+    node = node.nextSibling
+  ) {
+    after += $.html(node);
+  }
+  const bracket = after.match(/\[([^\]]*)\]/)?.[1] ?? "";
+  const links = [...bracket.matchAll(/<a[^>]*href="\/feats\/categories\/[^"]+"[^>]*>([^<]+)<\/a>/gi)].map((m) => m[1]);
+  const names = links.length > 0 ? links : cheerio.load(bracket).text().split(",");
+  return names.map((name) => name.trim()).filter(Boolean);
 }
 
 function normalizeFeatType(raw: string): string {
@@ -46,24 +71,14 @@ export function parseFeatDetailHtml(html: string): FeatReference["raw"][number] 
   const name = pageTitle($);
   if (!name) return null;
 
-  // Feat type from bracketed category links: [General], [Fighter Bonus Feat], [Metamagic]
-  let featType = "general";
-  const bodyText = $("body").html() ?? "";
-  // Look for [<a href="/feats/categories/.../">Type</a>] pattern
-  const categoryMatch = bodyText.match(/\[<a[^>]*href="\/feats\/categories\/([^"]+)\/"[^>]*>([^<]+)<\/a>\]/i);
-  if (categoryMatch) {
-    featType = normalizeFeatType(categoryMatch[2].trim());
-  } else {
-    // Fallback: look for bracket text near the top
-    const bracketMatch = $("h2")
-      .first()
-      .parent()
-      .text()
-      .match(/\[([^\]]+)\]/);
-    if (bracketMatch) {
-      featType = normalizeFeatType(bracketMatch[1].trim());
-    }
-  }
+  const heading = contentHeading($);
+  const categories = heading ? featCategories($, heading) : [];
+  // An epic feat or a skill trick is that whatever else it's listed in ([Divine, Epic], [Movement, Skill Trick]); any
+  // other feat is its first category naming a type, the general one aside ([Fighter Bonus Feat, General])
+  const typeOf = (category: string) => categories.find((c) => c.toLowerCase() === category);
+  const featType = normalizeFeatType(
+    typeOf("epic") ?? typeOf("skill trick") ?? categories.find((c) => c.toLowerCase() !== "general") ?? "general",
+  );
 
   // Parse sections: Prerequisite, Benefit, Normal, Special
   const sections: Record<string, string> = {};

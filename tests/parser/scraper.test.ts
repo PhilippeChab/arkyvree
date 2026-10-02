@@ -54,7 +54,7 @@ describe("The scraper reads from a page the reference's entries:", () => {
     ["acrobatic", "Acrobatic"],
     ["armor-proficiency-heavy", "Armor Proficiency (heavy)"],
     ["brew-potion", "Brew Potion"],
-    // Stored as general, not fighter: its two categories are #75
+    // In two categories: Fighter Bonus Feat and General
     ["cleave", "Cleave"],
   ])("the feat %s", (page, name) => {
     const feats = stored("srd/feats.json", "feat").raw;

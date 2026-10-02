@@ -52,14 +52,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Enhance Spell",
-    description: "The damage cap for your spells increases by 10 dice for spells that deal a number of dice of damage equal to your caster level (such as fireball) or by 5 dice for spells that deal a number of dice of damage equal to half your level (such as searing light). An enhanced spell uses up a spell slot four levels higher than the spell's actual level (or as modifi ed by any other metamagic feats). This feat has no effect on spells that don't specifically deal a number of dice of damage equal to your level or half your level, even if the spell's effect is otherwise dictated by your level. Thus, it has no effect on magic missile (though your level determines how many missiles you fire), Melf's acid arrow (though your level indicates how many rounds the acid deals damage), or produce flame (though you add your level to the base 1d4 points of damage dealt).",
-    aptitudes: ["General"],
-    requirements: [
-      eq("feats.maximizespell.possessed"),
-    ],
-  },
-  {
     name: "Extra Edge",
     description: "You gain a +1 bonus on your warmage edge, plus an additional +1 bonus per four warmage levels. For instance, an 8th-level warmage with 18 Intelligence gets a +7 bonus on the damage dealt by any spell that deals hit point damage.",
     aptitudes: ["General"],

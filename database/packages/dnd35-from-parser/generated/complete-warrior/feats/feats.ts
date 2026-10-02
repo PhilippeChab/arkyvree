@@ -158,17 +158,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Cavalry Charger",
-    description: "This feat grants access to three tactical options. Unhorse: While mounted, you charge a mounted enemy. If your charge attack connects, you may attempt a free bull rush. Success moves the rider but leaves the mount in place. Leaping Charge: While mounted, you charge a foe at least one size category smaller than your mount. At the end of the charge's movement, make a Ride check: DC 10 to deal 2 extra damage, or DC 20 to deal 4 extra damage. Failure means you miss entirely, and failing by 5 or more causes you to fall from your mount into an adjacent square. Fell Trample: You may attempt mounted overrun attacks against multiple opponents in sequence. Your mount receives a hoof attack against each foe you successfully overrun.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 6),
-      eq("feats.mountedcombat.possessed"),
-      eq("feats.spiritedcharge.possessed"),
-      eq("feats.trample.possessed"),
-    ],
-  },
-  {
     name: "Clever Wrestling",
     description: "When grappling an opponent larger than Medium, you receive a circumstance bonus on grapple checks made to escape a grapple or pin. The bonus scales with your opponent's size: +2 versus Large, +4 versus Huge, +6 versus Gargantuan, and +8 versus Colossal creatures.",
     aptitudes: ["General"],
@@ -178,40 +167,11 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Close-Quarters Fighting",
-    description: "Whenever an enemy tries to grapple you, you receive an attack of opportunity against it, even if it possesses a feat or special ability that would normally prevent this. If your attack of opportunity deals damage and the enemy lacks Improved Grapple or a special grappling ability like improved grab, the grapple attempt automatically fails. If the enemy does have such an ability, you add the damage dealt as a bonus to your opposed grapple check to resist. This feat does not increase your maximum number of attacks of opportunity per round, nor does it function when you would otherwise be denied attacks of opportunity.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 3),
-    ],
-  },
-  {
-    name: "Combat Brute",
-    description: "This feat provides three tactical options. Advancing Blows: After a successful bull rush, during the following round all your attacks against the pushed foe gain a +1 bonus to attack and damage rolls per square you pushed them. Sundering Cleave: When you destroy an opponent's weapon or shield via a sunder attempt, you immediately gain an extra melee attack against that foe at the same attack bonus used for the sunder. Momentum Swing: If you charged on the previous round and use Power Attack on the current round with a penalty of -5 or worse, your Power Attack damage multiplier becomes x1.5 (or x3 with a two-handed weapon or one-handed weapon wielded in two hands).",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 6),
-      eq("feats.improvedsunder.possessed"),
-      eq("feats.powerattack.possessed"),
-    ],
-  },
-  {
     name: "Dash",
     description: "While wearing light or no armor and carrying no more than a light load, your movement speed increases by 5 feet.",
     aptitudes: ["General"],
     modifiers: [
       { target: "combat.speed.misc", operator: "add", value: "5", valueType: "number" },
-    ],
-  },
-  {
-    name: "Defensive Strike",
-    description: "When you are using the total defense action and an opponent's attack against you misses, you gain a +4 bonus on your attack roll against that opponent during your next turn. No bonus is gained against foes who do not attack you or whose attacks hit.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("abilities.dexterity.total", 13),
-      gte("abilities.intelligence.total", 13),
-      eq("feats.combatexpertise.possessed"),
-      eq("feats.dodge.possessed"),
     ],
   },
   {
@@ -359,41 +319,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Formation Expert",
-    description: "This feat grants three tactical maneuvers that function even if your allies lack this feat. Lock Shields: While carrying a readied shield with allies on opposite sides who also have readied shields, you gain +1 to AC. Step into the Breach: When an adjacent ally falls and another ally occupies every square between you and the fallen comrade, you may immediately take a single move action to occupy the fallen ally's square. Wall of Polearms: While wielding a shortspear, longspear, trident, glaive, guisarme, halberd, or ranseur with adjacent allies wielding the same weapon on opposite sides, you gain +2 on attack rolls.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 6),
-    ],
-  },
-  {
-    name: "Freezing The Lifeblood",
-    description: "You must declare the use of this feat before rolling your attack (a miss wastes the attempt). Against a humanoid target, you deliver an unarmed strike that deals no damage but may paralyze. On a hit, the target makes a Fortitude save (DC 10 + half your character level + your Wis modifier) or is paralyzed for 1d4+1 rounds. Each use counts as one daily use of Stunning Fist. Creatures immune to stunning cannot be paralyzed this way.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 10),
-      gte("abilities.wisdom.total", 17),
-      eq("feats.improvedunarmedstrike.possessed"),
-      eq("feats.stunningfist.possessed"),
-    ],
-  },
-  {
-    name: "Giantbane",
-    description: "This feat provides three tactical maneuvers for fighting foes at least two size categories larger. Duck Underneath: After taking total defense, if attacked by such a foe, you receive an additional +4 dodge bonus to AC (stacking with total defense). If the foe misses, on your next turn you may attempt a DC 15 Tumble check as a free action to move to an unoccupied square on the opposite side of the foe. Death from Below: After successfully ducking underneath, you may immediately attack that foe with a single strike. The foe is flat-footed, and you receive +4 on the attack roll. Climb Aboard: After moving adjacent to such a foe, on the following round you may make a DC 10 Climb check as a free action to clamber onto the creature (occupying one of its squares). The creature suffers a -4 penalty on attacks against you. You move with the creature; it may attempt to dislodge you by winning a grapple check opposed by your Climb check. If dislodged, you land in a random adjacent square.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 6),
-      or(
-        eqStr("identity.physiology.race.size", "Fine"),
-        eqStr("identity.physiology.race.size", "Diminutive"),
-        eqStr("identity.physiology.race.size", "Tiny"),
-        eqStr("identity.physiology.race.size", "Small"),
-        eqStr("identity.physiology.race.size", "Medium"),
-      ),
-      gte("skills.tumble.rank", 5),
-    ],
-  },
-  {
     name: "Greater Kiai Shout",
     description: "When you perform a kiai shout, affected opponents are panicked for 2d6 rounds unless they succeed on a Will save (DC 10 + half your character level + your Cha modifier). Only opponents with fewer Hit Dice or levels than you are affected.",
     aptitudes: ["General"],
@@ -401,18 +326,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
       gte("combat.bab", 9),
       gte("abilities.charisma.total", 13),
       eq("feats.kiaishout.possessed"),
-    ],
-  },
-  {
-    name: "Greater Two-Weapon Defense",
-    description: "While wielding two weapons (not natural weapons or unarmed strikes), you gain a +3 shield bonus to AC. This increases to +6 when fighting defensively or using the total defense action.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 11),
-      gte("abilities.dexterity.total", 19),
-      eq("feats.improvedtwoweapondefense.possessed"),
-      eq("feats.twoweaponfighting.possessed"),
-      eq("feats.twoweapondefense.possessed"),
     ],
   },
   {
@@ -434,24 +347,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Improved Buckler Defense",
-    description: "When making an off-hand weapon attack, you retain the shield bonus to AC from your buckler.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      eq("feats.shieldproficiency.possessed"),
-    ],
-  },
-  {
-    name: "Improved Combat Expertise",
-    description: "When employing Combat Expertise, the amount you subtract from attack rolls and add to AC may be any value up to your full base attack bonus.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 6),
-      gte("abilities.intelligence.total", 13),
-      eq("feats.combatexpertise.possessed"),
-    ],
-  },
-  {
     name: "Improved Familiar",
     description: "Your familiar options expand to include additional creatures. You may select a familiar whose alignment differs from yours by no more than one step on each axis. Each creature requires a minimum arcane caster level and base attack bonus. Available options include: Krenshar (N, 3rd level, +3 BAB), Worg (NE, 3rd level, +3 BAB), Blink dog (LG, 5th level, +5 BAB), Hell hound (LE, 5th level, +5 BAB), Hippogriff (N, 7th level, +7 BAB), Howler (CE, 7th level, +7 BAB), Winter wolf (NE, 7th level, +7 BAB). All familiars provide the Alertness feat, an empathic link, and spell sharing. They also gain improved evasion: on a successful Reflex save they take no damage, and on a failed save they take only half.",
     aptitudes: ["General"],
@@ -465,56 +360,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("combat.bab", 5),
-    ],
-  },
-  {
-    name: "Improved Mounted Archery",
-    description: "The ranged attack penalty for firing while your mount takes a double move is eliminated. The penalty when your mount is running is reduced from -4 to -2. You may attack at any point during your mount's movement.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      eq("feats.mountedarchery.possessed"),
-      eq("feats.mountedcombat.possessed"),
-      gte("skills.ride.rank", 1),
-    ],
-  },
-  {
-    name: "Improved Rapid Shot",
-    description: "When using the Rapid Shot feat, the -2 penalty on all ranged attack rolls is negated.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      eq("feats.manyshot.possessed"),
-      eq("feats.pointblankshot.possessed"),
-      eq("feats.rapidshot.possessed"),
-    ],
-  },
-  {
-    name: "Improved Toughness",
-    description: "You gain hit points equal to your current number of Hit Dice. Whenever you gain a Hit Die (such as from gaining a level), you gain 1 additional hit point. Losing a Hit Die (such as from level loss) permanently reduces your hit points by 1.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("saves.fortitude.base", 2),
-    ],
-    modifiers: [
-      { target: "combat.hp.misc", operator: "add", value: "{{ [identity.meta.level] }}", valueType: "number" },
-    ],
-  },
-  {
-    name: "Improved Two-Weapon Defense",
-    description: "While wielding two weapons (not natural weapons or unarmed strikes), you receive a +2 shield bonus to AC. This increases to +4 when fighting defensively or using the total defense action.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 6),
-      gte("abilities.dexterity.total", 17),
-      eq("feats.twoweaponfighting.possessed"),
-      eq("feats.twoweapondefense.possessed"),
-    ],
-  },
-  {
-    name: "Improved Weapon Familiarity",
-    description: "All exotic weapons associated with your race are treated as martial weapons for you. A weapon is considered racially associated if the race's name is part of the weapon's name (such as the elven thinblade or dwarven urgrosh).",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("combat.bab", 1),
     ],
   },
   {
@@ -571,6 +416,232 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
+    name: "Pin Shield",
+    description: "This feat works against opponents of your size or within one size category who are using a shield. During a full attack, you may forfeit all off-hand attacks to pin the foe's shield with your off-hand weapon. Your remaining primary weapon attacks (with normal two-weapon fighting penalties) deny the foe any AC benefit from their shield until the end of your action. You must be wielding two weapons to use this feat.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("combat.bab", 4),
+      eq("feats.twoweaponfighting.possessed"),
+    ],
+  },
+  {
+    name: "Ranged Pin",
+    description: "You can pin a target's clothing or equipment to a nearby surface using a ranged attack. The target must be within 5 feet of a wall, tree, or similar surface and must be wearing some form of clothing, armor, or gear. Make a ranged attack roll (not a touch attack), then win an opposed grapple check (size modifiers apply normally). The pinned target can break free with a DC 15 Strength check or DC 15 Escape Artist check as a standard action.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("combat.bab", 5),
+      gte("abilities.dexterity.total", 15),
+      eq("feats.pointblankshot.possessed"),
+      eq("feats.preciseshot.possessed"),
+    ],
+  },
+  {
+    name: "Rapid Stunning",
+    description: "You may perform one additional stunning attack (or other special attack that counts against your daily stunning limit) per round.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("combat.bab", 6),
+      eq("feats.combatreflexes.possessed"),
+      eq("feats.stunningfist.possessed"),
+    ],
+  },
+  {
+    name: "Roundabout Kick",
+    description: "When you score a critical hit on an unarmed attack, you immediately receive an additional unarmed attack against the same opponent at the same attack bonus used for the critical hit.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("abilities.strength.total", 15),
+      eq("feats.improvedunarmedstrike.possessed"),
+      eq("feats.powerattack.possessed"),
+    ],
+  },
+  {
+    name: "Swarmfighting",
+    description: "You may share a 5-foot square with any allied Small creature that also has this feat, at no penalty. When you engage a Medium or larger foe in melee while at least one other ally with this feat also threatens that target, you gain a +1 morale bonus on attack rolls. This bonus increases by +1 for each additional threatening ally with this feat beyond the first. The total morale bonus cannot exceed your Dexterity bonus.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("combat.bab", 1),
+      eqStr("identity.physiology.race.size", "Small"),
+      gte("abilities.dexterity.total", 13),
+    ],
+  },
+  {
+    name: "Throw Anything",
+    description: "You may throw any melee weapon you are proficient with as though it were a ranged weapon, using a range increment of 10 feet.",
+    aptitudes: ["General", "Hulking Hurler Class Feature"],
+    requirements: [
+      gte("combat.bab", 2),
+      gte("abilities.dexterity.total", 15),
+    ],
+  },
+  {
+    name: "Zen Archery",
+    description: "You may substitute your Wisdom modifier for your Dexterity modifier on ranged attack rolls.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("combat.bab", 1),
+      gte("abilities.wisdom.total", 13),
+    ],
+  },
+];
+
+export const FIGHTER_FEATS: FeatSeed[] = [
+  {
+    name: "Cavalry Charger",
+    description: "This feat grants access to three tactical options. Unhorse: While mounted, you charge a mounted enemy. If your charge attack connects, you may attempt a free bull rush. Success moves the rider but leaves the mount in place. Leaping Charge: While mounted, you charge a foe at least one size category smaller than your mount. At the end of the charge's movement, make a Ride check: DC 10 to deal 2 extra damage, or DC 20 to deal 4 extra damage. Failure means you miss entirely, and failing by 5 or more causes you to fall from your mount into an adjacent square. Fell Trample: You may attempt mounted overrun attacks against multiple opponents in sequence. Your mount receives a hoof attack against each foe you successfully overrun.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 6),
+      eq("feats.mountedcombat.possessed"),
+      eq("feats.spiritedcharge.possessed"),
+      eq("feats.trample.possessed"),
+    ],
+  },
+  {
+    name: "Close-Quarters Fighting",
+    description: "Whenever an enemy tries to grapple you, you receive an attack of opportunity against it, even if it possesses a feat or special ability that would normally prevent this. If your attack of opportunity deals damage and the enemy lacks Improved Grapple or a special grappling ability like improved grab, the grapple attempt automatically fails. If the enemy does have such an ability, you add the damage dealt as a bonus to your opposed grapple check to resist. This feat does not increase your maximum number of attacks of opportunity per round, nor does it function when you would otherwise be denied attacks of opportunity.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 3),
+    ],
+  },
+  {
+    name: "Combat Brute",
+    description: "This feat provides three tactical options. Advancing Blows: After a successful bull rush, during the following round all your attacks against the pushed foe gain a +1 bonus to attack and damage rolls per square you pushed them. Sundering Cleave: When you destroy an opponent's weapon or shield via a sunder attempt, you immediately gain an extra melee attack against that foe at the same attack bonus used for the sunder. Momentum Swing: If you charged on the previous round and use Power Attack on the current round with a penalty of -5 or worse, your Power Attack damage multiplier becomes x1.5 (or x3 with a two-handed weapon or one-handed weapon wielded in two hands).",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 6),
+      eq("feats.improvedsunder.possessed"),
+      eq("feats.powerattack.possessed"),
+    ],
+  },
+  {
+    name: "Defensive Strike",
+    description: "When you are using the total defense action and an opponent's attack against you misses, you gain a +4 bonus on your attack roll against that opponent during your next turn. No bonus is gained against foes who do not attack you or whose attacks hit.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("abilities.dexterity.total", 13),
+      gte("abilities.intelligence.total", 13),
+      eq("feats.combatexpertise.possessed"),
+      eq("feats.dodge.possessed"),
+    ],
+  },
+  {
+    name: "Formation Expert",
+    description: "This feat grants three tactical maneuvers that function even if your allies lack this feat. Lock Shields: While carrying a readied shield with allies on opposite sides who also have readied shields, you gain +1 to AC. Step into the Breach: When an adjacent ally falls and another ally occupies every square between you and the fallen comrade, you may immediately take a single move action to occupy the fallen ally's square. Wall of Polearms: While wielding a shortspear, longspear, trident, glaive, guisarme, halberd, or ranseur with adjacent allies wielding the same weapon on opposite sides, you gain +2 on attack rolls.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 6),
+    ],
+  },
+  {
+    name: "Freezing The Lifeblood",
+    description: "You must declare the use of this feat before rolling your attack (a miss wastes the attempt). Against a humanoid target, you deliver an unarmed strike that deals no damage but may paralyze. On a hit, the target makes a Fortitude save (DC 10 + half your character level + your Wis modifier) or is paralyzed for 1d4+1 rounds. Each use counts as one daily use of Stunning Fist. Creatures immune to stunning cannot be paralyzed this way.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 10),
+      gte("abilities.wisdom.total", 17),
+      eq("feats.improvedunarmedstrike.possessed"),
+      eq("feats.stunningfist.possessed"),
+    ],
+  },
+  {
+    name: "Giantbane",
+    description: "This feat provides three tactical maneuvers for fighting foes at least two size categories larger. Duck Underneath: After taking total defense, if attacked by such a foe, you receive an additional +4 dodge bonus to AC (stacking with total defense). If the foe misses, on your next turn you may attempt a DC 15 Tumble check as a free action to move to an unoccupied square on the opposite side of the foe. Death from Below: After successfully ducking underneath, you may immediately attack that foe with a single strike. The foe is flat-footed, and you receive +4 on the attack roll. Climb Aboard: After moving adjacent to such a foe, on the following round you may make a DC 10 Climb check as a free action to clamber onto the creature (occupying one of its squares). The creature suffers a -4 penalty on attacks against you. You move with the creature; it may attempt to dislodge you by winning a grapple check opposed by your Climb check. If dislodged, you land in a random adjacent square.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 6),
+      or(
+        eqStr("identity.physiology.race.size", "Fine"),
+        eqStr("identity.physiology.race.size", "Diminutive"),
+        eqStr("identity.physiology.race.size", "Tiny"),
+        eqStr("identity.physiology.race.size", "Small"),
+        eqStr("identity.physiology.race.size", "Medium"),
+      ),
+      gte("skills.tumble.rank", 5),
+    ],
+  },
+  {
+    name: "Greater Two-Weapon Defense",
+    description: "While wielding two weapons (not natural weapons or unarmed strikes), you gain a +3 shield bonus to AC. This increases to +6 when fighting defensively or using the total defense action.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 11),
+      gte("abilities.dexterity.total", 19),
+      eq("feats.improvedtwoweapondefense.possessed"),
+      eq("feats.twoweaponfighting.possessed"),
+      eq("feats.twoweapondefense.possessed"),
+    ],
+  },
+  {
+    name: "Improved Buckler Defense",
+    description: "When making an off-hand weapon attack, you retain the shield bonus to AC from your buckler.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      eq("feats.shieldproficiency.possessed"),
+    ],
+  },
+  {
+    name: "Improved Combat Expertise",
+    description: "When employing Combat Expertise, the amount you subtract from attack rolls and add to AC may be any value up to your full base attack bonus.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 6),
+      gte("abilities.intelligence.total", 13),
+      eq("feats.combatexpertise.possessed"),
+    ],
+  },
+  {
+    name: "Improved Mounted Archery",
+    description: "The ranged attack penalty for firing while your mount takes a double move is eliminated. The penalty when your mount is running is reduced from -4 to -2. You may attack at any point during your mount's movement.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      eq("feats.mountedarchery.possessed"),
+      eq("feats.mountedcombat.possessed"),
+      gte("skills.ride.rank", 1),
+    ],
+  },
+  {
+    name: "Improved Rapid Shot",
+    description: "When using the Rapid Shot feat, the -2 penalty on all ranged attack rolls is negated.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      eq("feats.manyshot.possessed"),
+      eq("feats.pointblankshot.possessed"),
+      eq("feats.rapidshot.possessed"),
+    ],
+  },
+  {
+    name: "Improved Toughness",
+    description: "You gain hit points equal to your current number of Hit Dice. Whenever you gain a Hit Die (such as from gaining a level), you gain 1 additional hit point. Losing a Hit Die (such as from level loss) permanently reduces your hit points by 1.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("saves.fortitude.base", 2),
+    ],
+    modifiers: [
+      { target: "combat.hp.misc", operator: "add", value: "{{ [identity.meta.level] }}", valueType: "number" },
+    ],
+  },
+  {
+    name: "Improved Two-Weapon Defense",
+    description: "While wielding two weapons (not natural weapons or unarmed strikes), you receive a +2 shield bonus to AC. This increases to +4 when fighting defensively or using the total defense action.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 6),
+      gte("abilities.dexterity.total", 17),
+      eq("feats.twoweaponfighting.possessed"),
+      eq("feats.twoweapondefense.possessed"),
+    ],
+  },
+  {
+    name: "Improved Weapon Familiarity",
+    description: "All exotic weapons associated with your race are treated as martial weapons for you. A weapon is considered racially associated if the race's name is part of the weapon's name (such as the elven thinblade or dwarven urgrosh).",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("combat.bab", 1),
+    ],
+  },
+  {
     name: "Phalanx Fighting",
     description: "While using a heavy shield and a light weapon, you gain a +1 bonus to AC. Additionally, if you are within 5 feet of an ally who also has this feat and is similarly equipped with a heavy shield and light weapon, you form a shield wall. All participants in the shield wall receive an extra +2 bonus to AC (totaling +3 with this feat) and a +1 bonus on Reflex saves.",
     aptitudes: ["General", "Fighter Bonus Feat"],
@@ -580,15 +651,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
     modifiers: [
       { target: "combat.ac.misc", operator: "add", value: "1", valueType: "number" },
-    ],
-  },
-  {
-    name: "Pin Shield",
-    description: "This feat works against opponents of your size or within one size category who are using a shield. During a full attack, you may forfeit all off-hand attacks to pin the foe's shield with your off-hand weapon. Your remaining primary weapon attacks (with normal two-weapon fighting penalties) deny the foe any AC benefit from their shield until the end of your action. You must be wielding two weapons to use this feat.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("combat.bab", 4),
-      eq("feats.twoweaponfighting.possessed"),
     ],
   },
   {
@@ -613,17 +675,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Ranged Pin",
-    description: "You can pin a target's clothing or equipment to a nearby surface using a ranged attack. The target must be within 5 feet of a wall, tree, or similar surface and must be wearing some form of clothing, armor, or gear. Make a ranged attack roll (not a touch attack), then win an opposed grapple check (size modifiers apply normally). The pinned target can break free with a DC 15 Strength check or DC 15 Escape Artist check as a standard action.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("combat.bab", 5),
-      gte("abilities.dexterity.total", 15),
-      eq("feats.pointblankshot.possessed"),
-      eq("feats.preciseshot.possessed"),
-    ],
-  },
-  {
     name: "Ranged Sunder",
     description: "Slashing and bludgeoning ranged weapons deal full damage (instead of half) when targeting objects. Piercing ranged weapons (such as arrows) can also be used for ranged sunder attempts but deal only half damage; halve the damage before applying hardness. You must be within 30 feet of the target to attempt a ranged sunder.",
     aptitudes: ["General", "Fighter Bonus Feat"],
@@ -632,26 +683,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
       gte("abilities.strength.total", 13),
       eq("feats.pointblankshot.possessed"),
       eq("feats.preciseshot.possessed"),
-    ],
-  },
-  {
-    name: "Rapid Stunning",
-    description: "You may perform one additional stunning attack (or other special attack that counts against your daily stunning limit) per round.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("combat.bab", 6),
-      eq("feats.combatreflexes.possessed"),
-      eq("feats.stunningfist.possessed"),
-    ],
-  },
-  {
-    name: "Roundabout Kick",
-    description: "When you score a critical hit on an unarmed attack, you immediately receive an additional unarmed attack against the same opponent at the same attack bonus used for the critical hit.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("abilities.strength.total", 15),
-      eq("feats.improvedunarmedstrike.possessed"),
-      eq("feats.powerattack.possessed"),
     ],
   },
   {
@@ -694,25 +725,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Swarmfighting",
-    description: "You may share a 5-foot square with any allied Small creature that also has this feat, at no penalty. When you engage a Medium or larger foe in melee while at least one other ally with this feat also threatens that target, you gain a +1 morale bonus on attack rolls. This bonus increases by +1 for each additional threatening ally with this feat beyond the first. The total morale bonus cannot exceed your Dexterity bonus.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("combat.bab", 1),
-      eqStr("identity.physiology.race.size", "Small"),
-      gte("abilities.dexterity.total", 13),
-    ],
-  },
-  {
-    name: "Throw Anything",
-    description: "You may throw any melee weapon you are proficient with as though it were a ranged weapon, using a range increment of 10 feet.",
-    aptitudes: ["General", "Hulking Hurler Class Feature"],
-    requirements: [
-      gte("combat.bab", 2),
-      gte("abilities.dexterity.total", 15),
-    ],
-  },
-  {
     name: "Weakening Touch",
     description: "You must declare the use of this feat before making your attack roll (a miss wastes the attempt). Your unarmed strike deals no damage but instead imposes a -6 penalty to the target's Strength score for 1 minute. Multiple applications against the same target do not stack. Each use expends one daily use of Stunning Fist. Creatures immune to stun effects are unaffected.",
     aptitudes: ["General", "Fighter Bonus Feat"],
@@ -721,15 +733,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
       gte("abilities.wisdom.total", 17),
       eq("feats.improvedunarmedstrike.possessed"),
       eq("feats.stunningfist.possessed"),
-    ],
-  },
-  {
-    name: "Zen Archery",
-    description: "You may substitute your Wisdom modifier for your Dexterity modifier on ranged attack rolls.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("combat.bab", 1),
-      gte("abilities.wisdom.total", 13),
     ],
   },
 ];

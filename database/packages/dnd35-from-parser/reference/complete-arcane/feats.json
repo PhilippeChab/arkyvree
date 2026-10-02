@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T22:33:23.786Z",
+    "scrapedAt": "2026-10-02T02:13:36.822Z",
     "sourceUrl": "https://dndtools.net/feats/complete-arcane--55/",
     "type": "feat"
   },
@@ -310,7 +310,7 @@
     },
     {
       "benefit": "The damage cap for your spells increases by 10 dice for spells that deal a number of dice of damage equal to your caster level (such as fireball) or by 5 dice for spells that deal a number of dice of damage equal to half your level (such as searing light). An enhanced spell uses up a spell slot four levels higher than the spell's actual level (or as modifi ed by any other metamagic feats). This feat has no effect on spells that don't specifically deal a number of dice of damage equal to your level or half your level, even if the spell's effect is otherwise dictated by your level. Thus, it has no effect on magic missile (though your level determines how many missiles you fire), Melf's acid arrow (though your level indicates how many rounds the acid deals damage), or produce flame (though you add your level to the base 1d4 points of damage dealt).",
-      "featType": "general",
+      "featType": "epic",
       "name": "Enhance Spell",
       "prerequisiteText": "Maximize Spell,"
     },

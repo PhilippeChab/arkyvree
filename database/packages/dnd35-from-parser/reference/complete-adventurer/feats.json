@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-04-01T02:22:05.551Z",
+    "scrapedAt": "2026-10-02T02:13:20.921Z",
     "sourceUrl": "https://dndtools.net/feats/complete-adventurer--54/",
     "type": "feat"
   },
@@ -69,7 +69,7 @@
     },
     {
       "benefit": "You can add your Strength modifier (instead of your Dexterity modifier) to attack rolls with thrown weapons.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Brutal Throw",
       "normal": "A character attacking with a ranged weapon adds his Dexterity modifier to the attack roll.",
       "prerequisiteText": "",
@@ -89,7 +89,7 @@
     },
     {
       "benefit": "As a free action, you can use Sense Motive to assess the challenge presented by a single opponent in relationship to your own level/Hit Dice. You gain a +4 bonus on such checks and narrow the result to a single category. In addition, whenever you make a melee attack against a creature that you made a melee attack against during the previous round, you gain a +1 insight bonus on your melee attack rolls against that creature.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Combat Intuition",
       "prerequisiteText": "Sense Motive 4 ranks, base attack bonus +5,",
       "special": "A fighter may select Combat Intuition as one of his fighter bonus feats."
@@ -157,7 +157,7 @@
     },
     {
       "benefit": "As a standard action, you can make a melee attack with your primary weapon and your off-hand weapon. Both attacks use the same attack roll to determine success, using the worse of the two weapons' attack modifiers. If you are using a one-handed or light weapon in your primary hand and a light weapon in your off hand, you take a -4 penalty on this attack roll; otherwise you take a -10 penalty. Each weapon deals its normal damage. Damage reduction and other resistances apply separately against each weapon attack.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Dual Strike",
       "prerequisiteText": "Improved Two-Weapon Fighting, Two-Weapon Fighting,",
       "special": "When you make this attack, you apply precision- based damage (such as from sneak attack) only once. If you score a critical hit, only the weapon in your primary hand deals extra critical hit damage; your offhand weapon deals regular damage. A fighter may select Dual Strike as one of his fighter bonus feats."
@@ -223,7 +223,7 @@
     },
     {
       "benefit": "As a move action, you can goad an opponent that threatens you, has line of sight to you, can hear you, and has an Intelligence of 3 or higher. (The goad is a mind-affecting ability.) When the goaded opponent starts its next turn, if it threatens you and has line of sight to you, it must make a Will saving throw (DC 10 + 1/2 your character level + your Cha modifier). If the opponent fails its save, you are the only creature it can make melee attacks against during this turn. (If it kills you, knocks you unconscious, loses sight of you, or otherwise is unable to make melee attacks against you, it may make any remaining melee attacks against other foes, as normal.) A goaded creature can still cast spells, make ranged attacks, move, or perform other actions normally. The use of this feat restricts only melee attacks.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Goad",
       "prerequisiteText": "CHA 13, base attack bonus +1,",
       "special": "A fighter may select Goad as one of his fighter bonus feats."
@@ -255,7 +255,7 @@
     },
     {
       "benefit": "You can use Bluff to create a diversion to hide as a move action. You gain a +4 bonus on Bluff checks made for this purpose.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Improved Diversion",
       "normal": "Without this feat, creating a diversion to hide using the Bluff skill requires a standard action.",
       "prerequisiteText": "Bluff 4 ranks,",
@@ -373,20 +373,20 @@
     },
     {
       "benefit": "When wielding a one-handed weapon in your off hand, you take penalties for fighting with two weapons as if you were wielding a light weapon in your off hand.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Oversized Two-Weapon Fighting",
       "prerequisiteText": "Two-Weapon Fighting, STR 13,",
       "special": "A fighter may select Oversized Two-Weapon Fighting as one of his fighter bonus feats."
     },
     {
       "benefit": "You can speak all languages. If you are literate, you can also read and write all languages (not including magical script).",
-      "featType": "general",
+      "featType": "epic",
       "name": "Polyglot",
       "prerequisiteText": "INT 25, Speak Language (five languages),"
     },
     {
       "benefit": "On your turn, before making any attack rolls, you can choose to subtract a number from all thrown weapon attack rolls and add the same number to all thrown weapon damage rolls. This number may not exceed your base attack bonus. The penalty on attack rolls and the bonus on damage rolls applies until your next turn.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Power Throw",
       "prerequisiteText": "Brutal Throw, Power Attack, STR 13,",
       "special": "A fighter may select Power Throw as one of his fighter bonus feats."
