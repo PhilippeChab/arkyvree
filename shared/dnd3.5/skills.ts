@@ -1,46 +1,42 @@
-/**
- * Shared skill distribution algorithms used by both the frontend (UI previews)
- * and backend (actual distribution during batch level-up).
- */
+// Spending skill points over planned levels: the level-up wizard previews it, the server applies it.
 
 /**
- * 2-pass greedy distribution: class-skill levels first (1 pt = 1 rank),
- * then cross-class levels (2 pts = 1 rank).
+ * The levels in the order points go to `skillId`: those where it's a class skill first, at a point a rank, then the
+ * others, at two points a rank.
  */
+function spendingOrder(
+  skillId: string,
+  perLevelClassSkillIds: string[][],
+  perLevelSkillPoints: number[],
+): { level: number; pointsPerRank: number }[] {
+  const levels = perLevelSkillPoints.map((_, level) => ({
+    level,
+    pointsPerRank: perLevelClassSkillIds[level].includes(skillId) ? 1 : 2,
+  }));
+  return [...levels.filter((l) => l.pointsPerRank === 1), ...levels.filter((l) => l.pointsPerRank === 2)];
+}
+
+/** `points` spent on `skillId`, class-skill levels first: the ranks they buy and the points each level spends. */
 export function distributeSkillPoints(
   skillId: string,
   points: number,
   perLevelClassSkillIds: string[][],
   perLevelSkillPoints: number[],
 ): { ranks: number; perLevel: number[] } {
-  const perLevel = new Array(perLevelSkillPoints.length).fill(0);
+  const perLevel = perLevelSkillPoints.map(() => 0);
   let ranks = 0;
   let remaining = points;
-
-  // Pass 1: class-skill levels (1:1)
-  for (let i = 0; i < perLevelSkillPoints.length && remaining > 0; i++) {
-    if (!perLevelClassSkillIds[i].includes(skillId)) continue;
-    const take = Math.min(remaining, perLevelSkillPoints[i]);
-    ranks += take;
-    perLevel[i] = take;
-    remaining -= take;
+  for (const { level, pointsPerRank } of spendingOrder(skillId, perLevelClassSkillIds, perLevelSkillPoints)) {
+    if (remaining <= 0) break;
+    const spent = Math.min(remaining, perLevelSkillPoints[level]);
+    ranks += spent / pointsPerRank;
+    perLevel[level] = spent;
+    remaining -= spent;
   }
-
-  // Pass 2: cross-class levels (2:1)
-  for (let i = 0; i < perLevelSkillPoints.length && remaining > 0; i++) {
-    if (perLevelClassSkillIds[i].includes(skillId)) continue;
-    const take = Math.min(remaining, perLevelSkillPoints[i]);
-    ranks += take / 2;
-    perLevel[i] = take;
-    remaining -= take;
-  }
-
   return { ranks, perLevel };
 }
 
-/**
- * Compute max points that can be spent on a skill before hitting the rank cap.
- */
+/** The most points `skillId` can take before it gains `maxRanksCanAdd` ranks, class-skill levels first. */
 export function computeMaxPointsForSkill(
   skillId: string,
   maxRanksCanAdd: number,
@@ -48,23 +44,12 @@ export function computeMaxPointsForSkill(
   perLevelSkillPoints: number[],
 ): number {
   let ranksLeft = maxRanksCanAdd;
-  let totalPoints = 0;
-
-  // Pass 1: class-skill levels (1 pt = 1 rank)
-  for (let i = 0; i < perLevelSkillPoints.length && ranksLeft > 0; i++) {
-    if (!perLevelClassSkillIds[i].includes(skillId)) continue;
-    const ranksFromLevel = Math.min(ranksLeft, perLevelSkillPoints[i]);
-    totalPoints += ranksFromLevel;
-    ranksLeft -= ranksFromLevel;
+  let points = 0;
+  for (const { level, pointsPerRank } of spendingOrder(skillId, perLevelClassSkillIds, perLevelSkillPoints)) {
+    if (ranksLeft <= 0) break;
+    const ranks = Math.min(ranksLeft, perLevelSkillPoints[level] / pointsPerRank);
+    points += ranks * pointsPerRank;
+    ranksLeft -= ranks;
   }
-
-  // Pass 2: cross-class levels (2 pts = 1 rank)
-  for (let i = 0; i < perLevelSkillPoints.length && ranksLeft > 0; i++) {
-    if (perLevelClassSkillIds[i].includes(skillId)) continue;
-    const ranksFromLevel = Math.min(ranksLeft, perLevelSkillPoints[i] / 2);
-    totalPoints += ranksFromLevel * 2;
-    ranksLeft -= ranksFromLevel;
-  }
-
-  return Math.floor(totalPoints);
+  return Math.floor(points);
 }

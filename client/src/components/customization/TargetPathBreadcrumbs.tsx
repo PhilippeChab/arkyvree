@@ -1,7 +1,7 @@
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import { Box, Chip } from "@mui/material";
 
-import { formatSegment } from "@/shared/utils.ts";
+import { formatSegment } from "@/shared/customization/target.ts";
 
 interface TargetPathBreadcrumbsProps {
   target: string;

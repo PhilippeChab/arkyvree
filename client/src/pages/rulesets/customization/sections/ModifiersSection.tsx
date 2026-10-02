@@ -15,9 +15,9 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import type { BaseEntityType } from "@/client/src/pages/rulesets/customization/types.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
@@ -41,7 +41,7 @@ type ModifierFormData = InferRequestType<
 
 interface ModifiersSectionProps {
   ruleset: RulesetDetail;
-  entityType: BaseEntityType;
+  entityType: CustomizableEntityType;
   entityId: string;
   data?: Modifier[];
   queryKeysToInvalidate?: readonly (readonly unknown[])[];

@@ -4,9 +4,8 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Contributors, Rulesets } from "@/server/repositories/index.ts";
 import { ContributorsMethods } from "@/server/services/rulesets/ContributorsService.ts";
+import type { ContributorRole } from "@/shared/enums.ts";
 import { createTestRuleset, createTestUser } from "@/tests/helpers.ts";
-
-type Role = "Admin" | "Editor" | "Viewer";
 
 /** A new user's draft ruleset. */
 async function setup() {
@@ -19,7 +18,7 @@ async function setup() {
 async function addContributor(
   inviterSession: Parameters<typeof ContributorsMethods.inviteContributor>[0],
   rulesetId: string,
-  role: Role,
+  role: ContributorRole,
   pending = false,
 ) {
   const { user, session } = await createTestUser(role.toLowerCase());

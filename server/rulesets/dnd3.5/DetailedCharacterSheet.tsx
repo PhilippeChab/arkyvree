@@ -1,7 +1,8 @@
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
+import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
-import { formatPropertyType, stripSeparators } from "@/shared/utils.ts";
+import { capitalize, stripSeparators } from "@/shared/utils.ts";
 
 import type DetailedCharacter from "./DetailedCharacter.ts";
 
@@ -1418,7 +1419,7 @@ const DetailedCharacterSheet = ({
                           },
                         ]}
                       >
-                        {combatData.encumbrance.load.charAt(0).toUpperCase() + combatData.encumbrance.load.slice(1)}
+                        {capitalize(combatData.encumbrance.load)}
                       </Text>
                     )}
                   </View>

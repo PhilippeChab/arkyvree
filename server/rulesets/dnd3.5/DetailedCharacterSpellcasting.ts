@@ -7,8 +7,9 @@ import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedC
 import type DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
 import type DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
 import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
+import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, CharacterLevel, Klass, KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
-import { spellPossessionSlug, stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 import type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR } from "./DetailedCharacterDataLoader.ts";
 

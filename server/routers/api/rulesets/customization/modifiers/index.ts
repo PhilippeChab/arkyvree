@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
+import { type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import { modifierOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { ModifiersService } from "@/server/services/rulesets/index.ts";
+import { CUSTOMIZABLE_ENTITY_TYPES, CUSTOMIZATION_OWNER_TYPES } from "@/shared/customization/entities.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -14,7 +14,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum(["klass_levels", "klasses", "feats", "items", "powers", "races", "modifiers"]),
+        entityType: z.enum(CUSTOMIZATION_OWNER_TYPES),
         entityId: z.string().uuid(),
         modifierId: z.string().uuid(),
       }),
@@ -33,7 +33,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum(["klass_levels", "klasses", "feats", "items", "powers", "races"]),
+        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
         entityId: z.string().uuid(),
       }),
     ),
@@ -51,7 +51,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum(["klass_levels", "klasses", "feats", "items", "powers", "races"]),
+        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
         entityId: z.string().uuid(),
       }),
     ),
@@ -85,7 +85,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum(["klass_levels", "klasses", "feats", "items", "powers", "races"]),
+        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
         entityId: z.string().uuid(),
         modifierId: z.string().uuid(),
       }),
@@ -121,7 +121,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum(["klass_levels", "klasses", "feats", "items", "powers", "races"]),
+        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
         entityId: z.string().uuid(),
         modifierId: z.string().uuid(),
       }),
@@ -158,7 +158,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum(["klass_levels", "klasses", "feats", "items", "powers", "races"]),
+        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
         entityId: z.string().uuid(),
         modifierId: z.string().uuid(),
       }),

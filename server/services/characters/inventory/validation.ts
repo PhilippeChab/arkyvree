@@ -5,34 +5,29 @@
  * - validateItemRequirements — checks character meets item requirements before equipping
  */
 
-import type { location } from "@/drizzle/schema.ts";
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterInventory } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import type { ItemLocation } from "@/shared/enums.ts";
+import { isHandLocation, MAX_FINGER_ITEMS, slotConflict, type SlotConflictReason } from "@/shared/equipment.ts";
 import type { Character as CharacterRecord, Ruleset } from "@/shared/relations.ts";
 
-type InventoryLocation = (typeof location.enumValues)[number];
-
-export const HAND_SLOTS = new Set<InventoryLocation>(["Main Hand", "Off Hand", "Two Handed"]);
-const SINGLE_OCCUPANCY_SLOTS = new Set<InventoryLocation>([
-  "Head",
-  "Neck",
-  "Shoulders",
-  "Torso",
-  "Wrists",
-  "Hands",
-  "Waist",
-  "Trinket",
-]);
-const MAX_FINGER_SLOTS = 2;
+/** Why an item can't be equipped at a location, by the slot conflict's reason. */
+const SLOT_CONFLICT_MESSAGES: Record<SlotConflictReason, (location: ItemLocation) => string> = {
+  occupied: (location) => `Equipment slot "${location}" is already occupied`,
+  fingers: () => `Cannot equip more than ${MAX_FINGER_ITEMS} rings`,
+  hands: () => "Cannot equip a two-handed item while holding items in Main Hand or Off Hand in the same weapon set",
+  twoHanded: () => "Cannot equip in hand slot while holding a two-handed item in the same weapon set",
+  sameHand: (location) => `"${location}" is already occupied in this weapon set`,
+};
 
 export async function validateEquipmentSlot(
   tx: Db,
   characterId: string,
   item: { id: string; type: string | null },
-  location: InventoryLocation,
+  location: ItemLocation,
   weaponSet: number | null,
   raceId: string,
   ruleset: Ruleset,
@@ -45,79 +40,23 @@ export async function validateEquipmentSlot(
   const inventory = await CharacterInventory.findMany(tx, { characterId });
   const equippedItems = inventory.filter((entry) => entry.equipped && entry.itemId !== item.id);
 
-  if (SINGLE_OCCUPANCY_SLOTS.has(location)) {
-    const occupied = equippedItems.some((entry) => entry.location === location);
-    if (occupied) {
-      throw new BadRequestError(`Equipment slot "${location}" is already occupied`);
-    }
-  }
+  const conflict = slotConflict(location, weaponSet, equippedItems);
+  if (conflict) throw new BadRequestError(SLOT_CONFLICT_MESSAGES[conflict.reason](location));
 
-  if (location === "Finger") {
-    const fingerCount = equippedItems.filter((entry) => entry.location === "Finger").length;
-    if (fingerCount >= MAX_FINGER_SLOTS) {
-      throw new BadRequestError(`Cannot equip more than ${MAX_FINGER_SLOTS} rings`);
-    }
-  }
-
-  // Hand slot conflicts are per-weapon-set
-  if (HAND_SLOTS.has(location)) {
-    const sameSetItems = equippedItems.filter(
-      (entry) => HAND_SLOTS.has(entry.location as InventoryLocation) && entry.weaponSet === weaponSet,
-    );
-
-    if (location === "Two Handed") {
-      const hasMainHand = sameSetItems.some((entry) => entry.location === "Main Hand");
-      const hasOffHand = sameSetItems.some((entry) => entry.location === "Off Hand");
-      if (hasMainHand || hasOffHand) {
-        throw new BadRequestError(
-          "Cannot equip a two-handed item while holding items in Main Hand or Off Hand in the same weapon set",
-        );
-      }
-    }
-
-    if (location === "Main Hand" || location === "Off Hand") {
-      const hasTwoHanded = sameSetItems.some((entry) => entry.location === "Two Handed");
-      if (hasTwoHanded) {
-        throw new BadRequestError("Cannot equip in hand slot while holding a two-handed item in the same weapon set");
-      }
-    }
-
-    // Each hand slot, Two Handed included, holds one item per weapon set.
-    const hasSameSlot = sameSetItems.some((entry) => entry.location === location);
-    if (hasSameSlot) {
-      throw new BadRequestError(`"${location}" is already occupied in this weapon set`);
-    }
-  }
-
-  // Weapon size vs character size validation for hand slots
-  if (HAND_SLOTS.has(location)) {
-    const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-    await hooks.inventory.validateWeaponSize(tx, rulesetData, item.id, raceId, location);
-    return;
-  }
-
-  const isWeapon = item.type === "Weapon";
-  const isArmor = item.type === "Armor";
-  const isShield = item.type === "Shield";
-
-  if (isWeapon && !HAND_SLOTS.has(location)) {
+  if (item.type === "Weapon" && !isHandLocation(location)) {
     throw new BadRequestError("Weapons can only be equipped in hand slots");
   }
-
-  if (isArmor && location !== "Torso") {
+  if (item.type === "Armor" && location !== "Torso") {
     throw new BadRequestError("Body armor can only be equipped in the Torso slot");
   }
-
-  if (isShield && location !== "Off Hand") {
+  if (item.type === "Shield" && location !== "Off Hand") {
     throw new BadRequestError("Shields can only be equipped in the Off Hand slot");
   }
 
-  // Armor: only one body armor
-  if (location === "Torso" && isArmor) {
-    const hasArmor = equippedItems.some((entry) => entry.location === "Torso");
-    if (hasArmor) {
-      throw new BadRequestError("Can only equip one body armor");
-    }
+  // What's held must suit the character's size
+  if (isHandLocation(location)) {
+    const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+    await hooks.inventory.validateWeaponSize(tx, rulesetData, item.id, raceId, location);
   }
 }
 

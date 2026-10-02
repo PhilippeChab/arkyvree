@@ -2,9 +2,8 @@ import type { InferResponseType } from "hono/client";
 
 import type { CharacterDetail, RulesetItem } from "@/client/src/lib/queries.ts";
 import type { RPC } from "@/client/src/services/rpc.ts";
-import { LOCATION_OPTIONS } from "@/shared/enums.ts";
-
-export type LocationValue = (typeof LOCATION_OPTIONS)[number];
+import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
+import { HAND_LOCATIONS, isHandLocation, slotConflict, type SlotConflictReason } from "@/shared/equipment.ts";
 
 /** A sheet's equipment row: the inventory entry with its item's fields. */
 export type EquipmentRow = CharacterDetail["equipment"][number];
@@ -15,17 +14,13 @@ export type EncumbranceData = Omit<CharacterDetail["combat"]["encumbrance"], "ma
   maxdex: number | null;
 };
 
-// Typed as strings so API locations can be checked without a cast.
-/** The slots a weapon set applies to. */
-export const HAND_SLOTS: ReadonlySet<string> = new Set<LocationValue>(["Main Hand", "Off Hand", "Two Handed"]);
-
 /** A weapon set as the user sees it: stored from 0, shown from 1 ("Set 1"), as on the sheet and the PDF. */
 export const shownWeaponSet = (stored: number) => stored + 1;
 
 /** Where an entry is worn ("Main Hand (Set 1)"), or a dash when it's carried. */
 export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">): string {
   if (!entry.equipped || !entry.location) return "—";
-  if (HAND_SLOTS.has(entry.location) && entry.weaponSet !== null) {
+  if (isHandLocation(entry.location) && entry.weaponSet !== null) {
     return `${entry.location} (Set ${shownWeaponSet(entry.weaponSet)})`;
   }
   return entry.location;
@@ -38,22 +33,11 @@ type InventoryEntry = InferResponseType<RPC["api"]["characters"]["inventory"][":
 /** A slot, or not equipped. */
 export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
-const SINGLE_OCCUPANCY_SLOTS = new Set<LocationValue>([
-  "Head",
-  "Neck",
-  "Shoulders",
-  "Torso",
-  "Wrists",
-  "Hands",
-  "Waist",
-  "Trinket",
-]);
-
 /** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
 export interface InventoryFormData {
   selectedItem: RulesetItem | null;
   quantity: number;
-  location: LocationValue | "none";
+  location: ItemLocation | "none";
   /** As shown, from 1 (see `shownWeaponSet`). */
   weaponSet: number;
   totalCharges: number;
@@ -78,7 +62,7 @@ export function placementPayload(data: InventoryFormData, hasCharges: boolean) {
     location,
     totalCharges: hasCharges ? data.totalCharges : null,
     remainingCharges: hasCharges ? data.remainingCharges : null,
-    weaponSet: location && HAND_SLOTS.has(location) ? data.weaponSet - 1 : null,
+    weaponSet: isHandLocation(location) ? data.weaponSet - 1 : null,
   };
 }
 
@@ -86,15 +70,13 @@ export function placementPayload(data: InventoryFormData, hasCharges: boolean) {
 export type ItemColumns = { type: string | null; slot: string };
 type ItemProperties = { type: string; value: string }[];
 
-const HAND_PICKER: LocationValue[] = ["Main Hand", "Off Hand", "Two Handed"];
-
 /** How an item is placed: the slots it can take, whether a weapon set applies, and its charges. */
 export function placementProfile(item: ItemColumns, properties: ItemProperties) {
   const isWeapon = item.type === "Weapon";
   const isShield = item.type === "Shield";
   const chargesProperty = properties.find((p) => p.type === "ITEM_HAS_CHARGES");
-  const locationOptions: readonly LocationValue[] = isWeapon
-    ? HAND_PICKER
+  const locationOptions: readonly ItemLocation[] = isWeapon
+    ? HAND_LOCATIONS
     : isShield
       ? ["Off Hand"]
       : item.type === "Armor"
@@ -114,65 +96,43 @@ export function placementProfile(item: ItemColumns, properties: ItemProperties) 
 export type PlacementProfile = ReturnType<typeof placementProfile>;
 
 /** The slot an item goes to when picked, or null to leave the choice (a weapon's hand) to the user. */
-export function detectSlotFromItem(item: ItemColumns): LocationValue | null {
+export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
   if (item.type === "Weapon") return null; // hand slot picker
   if (item.type === "Armor") return "Torso";
   if (item.type === "Shield") return "Off Hand";
   return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
 }
 
+/** An inventory entry as the slot warnings read it. */
+type PlacedEntry = Pick<InventoryEntry, "equipped" | "location" | "weaponSet" | "itemId"> & {
+  item: Pick<InventoryEntry["item"], "name">;
+};
+
+/** The warning for a slot taken by `entry`, `weaponSet` as the form shows it. */
+const SLOT_CONFLICT_WARNINGS: Record<
+  Exclude<SlotConflictReason, "fingers">,
+  (location: ItemLocation, entry: PlacedEntry, weaponSet: number) => string
+> = {
+  occupied: (location, entry) => `${location} slot is occupied by ${entry.item.name}`,
+  hands: (_, entry, weaponSet) =>
+    `Cannot equip two-handed: ${entry.item.name} is in ${entry.location} (Set ${weaponSet})`,
+  twoHanded: (_, entry, weaponSet) => `Cannot equip: ${entry.item.name} is two-handed in Set ${weaponSet}`,
+  sameHand: (location, entry, weaponSet) => `${location} is occupied by ${entry.item.name} (Set ${weaponSet})`,
+};
+
 /** Why the slot is taken (by another item, or a two-handed weapon in the same set), if it is. */
 export function getSlotConflictWarning(
-  location: LocationValue | "none",
+  location: ItemLocation | "none",
   /** As the form shows it, from 1. */
   weaponSet: number,
-  inventoryItems: InventoryEntry[],
+  inventoryItems: PlacedEntry[],
   excludeItemId?: string,
 ): string | null {
   if (!location || location === "none") return null;
 
   const equipped = inventoryItems.filter((e) => e.equipped && e.location && e.itemId !== excludeItemId);
-
-  if (SINGLE_OCCUPANCY_SLOTS.has(location)) {
-    const conflict = equipped.find((e) => e.location === location);
-    if (conflict) {
-      return `${location} slot is occupied by ${conflict.item.name}`;
-    }
-  }
-
-  if (location === "Finger") {
-    const fingerCount = equipped.filter((e) => e.location === "Finger").length;
-    if (fingerCount >= 2) {
-      return "Both finger slots are occupied";
-    }
-  }
-
-  if (HAND_SLOTS.has(location)) {
-    const sameSet = equipped.filter(
-      (e) =>
-        !!e.location && HAND_SLOTS.has(e.location) && e.weaponSet !== null && shownWeaponSet(e.weaponSet) === weaponSet,
-    );
-
-    if (location === "Two Handed") {
-      const conflict = sameSet.find((e) => e.location === "Main Hand" || e.location === "Off Hand");
-      if (conflict) {
-        return `Cannot equip two-handed: ${conflict.item.name} is in ${conflict.location} (Set ${weaponSet})`;
-      }
-    }
-
-    if (location === "Main Hand" || location === "Off Hand") {
-      const twoHanded = sameSet.find((e) => e.location === "Two Handed");
-      if (twoHanded) {
-        return `Cannot equip: ${twoHanded.item.name} is two-handed in Set ${weaponSet}`;
-      }
-    }
-
-    // Each hand slot, Two Handed included, holds one item per weapon set.
-    const sameSlot = sameSet.find((e) => e.location === location);
-    if (sameSlot) {
-      return `${location} is occupied by ${sameSlot.item.name} (Set ${weaponSet})`;
-    }
-  }
-
-  return null;
+  const conflict = slotConflict(location, weaponSet - 1, equipped);
+  if (!conflict) return null;
+  if (conflict.reason === "fingers") return "Both finger slots are occupied";
+  return SLOT_CONFLICT_WARNINGS[conflict.reason](location, conflict.entry, weaponSet);
 }

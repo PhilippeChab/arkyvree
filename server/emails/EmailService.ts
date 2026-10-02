@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 
 import { db } from "@/server/database/index.ts";
+import { isTest } from "@/server/environment.ts";
 import { pingWorker } from "@/server/queue.ts";
 
 import type { EmailJobPayload } from "./templates.ts";
@@ -13,7 +14,7 @@ type SendArgs = {
 
 export class EmailService {
   async send(options: SendArgs): Promise<{ success: boolean; error?: string }> {
-    if (process.env.NODE_ENV === "test") {
+    if (isTest()) {
       return { success: false, error: "Email service not configured" };
     }
 

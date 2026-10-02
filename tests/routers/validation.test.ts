@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { toJson } from "@/server/errors/index.ts";
+import { sanitizedEmail, sanitizeText } from "@/server/routers/api/validation.ts";
 import { application } from "@/server/routers/application.ts";
 import { api, expectOk, SEED_SESSION_ID } from "@/tests/api.ts";
 
@@ -92,4 +93,12 @@ test("an unexpected error answers 500 with the standard envelope, keeping its me
     { error: "InternalError", cause: "internal", message: "Internal Server Error" },
     500,
   ]);
+});
+
+describe("Text from a request", () => {
+  test("is stored trimmed and Unicode-normalized, an email address lowercased too", () => {
+    expect(sanitizeText("  ﬁre\u00A0ball  ")).toBe("fire ball");
+    expect(sanitizedEmail.parse("Elara@Example.COM")).toBe("elara@example.com");
+    expect(sanitizedEmail.safeParse("not-an-email").success).toBe(false);
+  });
 });

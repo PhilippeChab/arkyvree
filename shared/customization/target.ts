@@ -51,45 +51,39 @@ export interface PaginatedCompletions {
   segmentLabels: Record<string, string>;
 }
 
-/**
- * Pick only the segment labels relevant to the given target paths. Accepts:
- *   - Plain paths: `saves.fortitude.misc`
- *   - Template values: `{{ abilities.charisma.modifier }}` (legacy bare path)
- *   - Bracketed template values: `{{ [abilities.charisma.modifier] }}`
- *   - Expression templates with one or more bracketed paths inside:
- *     `{{ floor([classes.ranger.level] / 2) }}` — pulls every `[...]` group out
- *     and labels segments of each.
- */
-export function pickTargetLabels(targets: string[], segmentLabels: Record<string, string>): Record<string, string> {
-  const labels: Record<string, string> = {};
-  for (const raw of targets) {
-    // Strip template braces.
-    const inner = raw.replace(/^\{\{?\s*|\s*\}?\}$/g, "").trim();
-    // Extract every [bracketed.path] group; if none, treat the whole inner as a bare path.
-    const bracketed: string[] = [];
-    inner.replace(/\[([^\]]+)\]/g, (_, group: string) => {
-      bracketed.push(group.trim());
-      return "";
-    });
-    const paths = bracketed.length > 0 ? bracketed : [inner];
-    for (const path of paths) {
-      for (const seg of path.split(".")) {
-        if (seg in segmentLabels) labels[seg] = segmentLabels[seg];
-      }
+/** A path segment as a label ("privateNotes" → "Private Notes"). */
+export const formatSegment = (segment: string) =>
+  segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
+
+/** The label of each segment of `paths`: its override, else the segment formatted. */
+export function deriveSegmentLabels(
+  paths: { path: string }[],
+  overrides: Record<string, string> = {},
+): Record<string, string> {
+  const labels: Record<string, string> = { ...overrides };
+  for (const { path } of paths) {
+    for (const segment of path.split(".")) {
+      if (!(segment in labels)) labels[segment] = formatSegment(segment);
     }
   }
   return labels;
 }
 
-export interface PathHoverInfo {
-  content: string;
-  range: { start: number; end: number };
-  examples?: string[];
-}
-
-export interface PathToken {
-  text?: string;
-  type: string;
-  start: number;
-  end: number;
+/**
+ * The labels of the segments `targets` name, picked from `segmentLabels`. A target is a path
+ * (`saves.fortitude.misc`) or a template value: a bare path (`{{ abilities.charisma.modifier }}`), or an expression
+ * whose paths are bracketed (`{{ floor([classes.ranger.level] / 2) }}`).
+ */
+export function pickTargetLabels(targets: string[], segmentLabels: Record<string, string>): Record<string, string> {
+  const labels: Record<string, string> = {};
+  for (const target of targets) {
+    const inner = target.replace(/^\{\{?\s*|\s*\}?\}$/g, "").trim();
+    const bracketed = [...inner.matchAll(/\[([^\]]+)\]/g)].map((match) => match[1].trim());
+    for (const path of bracketed.length > 0 ? bracketed : [inner]) {
+      for (const segment of path.split(".")) {
+        if (segment in segmentLabels) labels[segment] = segmentLabels[segment];
+      }
+    }
+  }
+  return labels;
 }

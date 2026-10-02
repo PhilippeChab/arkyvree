@@ -4,9 +4,9 @@ import type { ArmorsData } from "@/server/rulesets/dnd3.5/DetailedCharacterArmor
 import type { ShieldsData } from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
-import { deriveSegmentLabels, stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "rank", description: "Total ranks invested", type: "number" as const },

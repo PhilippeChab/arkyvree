@@ -1,9 +1,9 @@
 import type DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
 import type { WeaponSet } from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
 import { WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { Item, Property } from "@/shared/relations.ts";
-import { deriveSegmentLabels, stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 const SLOT_MAP: Record<string, keyof WeaponSet> = {
   "Main Hand": "mainhand",

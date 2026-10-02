@@ -1,5 +1,4 @@
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
-import { getTableName } from "drizzle-orm";
+import { and, eq, getTableName, inArray, isNull, sql } from "drizzle-orm";
 import { unionAll } from "drizzle-orm/pg-core";
 
 import {
@@ -76,6 +75,7 @@ import {
 } from "@/server/services/rulesets/cow.ts";
 import { type EntityType } from "@/server/services/rulesets/hashing.ts";
 import { assertCanBeExtension, getRulesetPolicy, isStarrable } from "@/server/services/rulesets/helpers.ts";
+import type { RulesetKind } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 const ENTITY_REPOS = {
@@ -551,7 +551,7 @@ export const RulesetsMethods = {
     return result;
   },
 
-  async publishRuleset(session: Session, id: string, body: { kind?: "ruleset" | "extension" } = {}) {
+  async publishRuleset(session: Session, id: string, body: { kind?: RulesetKind } = {}) {
     const result = await withTransaction(async (tx) => {
       // First verify the ruleset exists
       const ruleset = await Rulesets.findOne(tx, { id });
@@ -647,7 +647,7 @@ export const RulesetsMethods = {
   async updateRuleset(
     session: Session,
     id: string,
-    body: { name: string; description: string; private?: boolean; kind?: "ruleset" | "extension"; updatedAt?: string },
+    body: { name: string; description: string; private?: boolean; kind?: RulesetKind; updatedAt?: string },
   ) {
     const result = await withTransaction(async (tx) => {
       // First verify the ruleset exists

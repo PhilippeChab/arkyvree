@@ -18,8 +18,7 @@ import {
 import { buildFeatDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
 import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
 import { checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
-import { SIZE_OPTIONS } from "@/shared/enums.ts";
+import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 
 describe("A book's class references", () => {
   test("are its classes folder's reference files, sorted (the same on every filesystem), each loaded", () => {
@@ -253,7 +252,7 @@ describe("A magic item reference's items", () => {
     const loaded = resolveReference("magicItem", reference);
     const [skipped, slotted] = Object.keys(loaded.detected).filter((name) => !reference.overrides?.[name]);
     // A slot the item isn't detected with
-    const slot = SLOT_OPTIONS.find((option) => option !== loaded.detected[slotted].slot) ?? "Waist";
+    const slot = LOCATION_OPTIONS.find((option) => option !== loaded.detected[slotted].slot) ?? "Waist";
     reference.overrides = { ...reference.overrides, [skipped]: { skip: true }, [slotted]: { slot } };
     const items = seededMagicItems(resolveReference("magicItem", reference));
     expect(items.map(({ name }) => name)).not.toContain(skipped);
@@ -272,7 +271,7 @@ describe("A magic item reference's items", () => {
     )?.slot;
     expect(refused).toEqual({
       ok: false,
-      problem: `${slotted}'s slot: "Tail" isn't one of ${SLOT_OPTIONS.join(", ")}`,
+      problem: `${slotted}'s slot: "Tail" isn't one of ${LOCATION_OPTIONS.join(", ")}`,
     });
     expect(() => buildMagicItemSeeds(resolveReference("magicItem", reference))).toThrow(`${slotted}'s slot`);
   });

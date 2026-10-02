@@ -32,6 +32,7 @@ import {
 } from "@/server/services/rulesets/cow.ts";
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
+import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Aptitude,
   FeatWithAptitudes,
@@ -53,7 +54,7 @@ import type {
   RulesetSave,
   Skill,
 } from "@/shared/relations.ts";
-import { spellPossessionSlug, stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 import DependentCache from "./DependentCache.ts";
 

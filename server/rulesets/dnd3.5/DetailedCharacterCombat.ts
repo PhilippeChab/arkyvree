@@ -26,9 +26,8 @@ import type DetailedCharacterAbilities from "@/server/rulesets/universal/Detaile
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import type DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
 import type DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type CharacterLevel, type Item, type Property, type Race } from "@/shared/relations.ts";
-import { deriveSegmentLabels } from "@/shared/utils.ts";
 
 const NAVIGATABLE_PATHS = [
   // Self-targeting weapon paths (resolved to the source item's equipped weapon slot)

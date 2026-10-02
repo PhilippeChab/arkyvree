@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { role as campaignRole } from "@/drizzle/schema.ts";
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
-import { limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { limit, orderDirAsc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/index.ts";
-import { sanitizeEmail } from "@/shared/utils.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -43,8 +43,8 @@ export default new Hono<SessionContext>()
     zValidator(
       "json",
       z.object({
-        role: z.enum(["Game Master", "Player Character"]),
-        email: z.string().email().transform(sanitizeEmail).optional(),
+        role: z.enum(campaignRole.enumValues),
+        email: sanitizedEmail.optional(),
       }),
     ),
     async (c) => {
@@ -61,8 +61,8 @@ export default new Hono<SessionContext>()
     zValidator(
       "json",
       z.object({
-        role: z.enum(["Game Master", "Player Character"]),
-        email: z.string().email().transform(sanitizeEmail).optional(),
+        role: z.enum(campaignRole.enumValues),
+        email: sanitizedEmail.optional(),
       }),
     ),
     async (c) => {

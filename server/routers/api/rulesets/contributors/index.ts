@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { contributorRole } from "@/drizzle/schema.ts";
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
-import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { limit, orderDirDesc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { ContributorsService } from "@/server/services/rulesets/index.ts";
-import { sanitizeEmail } from "@/shared/utils.ts";
 
-const contributorRoleSchema = z.enum(["Admin", "Editor", "Viewer"]);
+const contributorRoleSchema = z.enum(contributorRole.enumValues);
 
 export default new Hono<SessionContext>()
   .get(
@@ -45,7 +45,7 @@ export default new Hono<SessionContext>()
     zValidator(
       "json",
       z.object({
-        email: z.string().email().transform(sanitizeEmail),
+        email: sanitizedEmail,
         role: contributorRoleSchema.default("Editor"),
       }),
     ),

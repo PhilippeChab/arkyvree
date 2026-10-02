@@ -1,3 +1,7 @@
+/**
+ * The creatures a character can be bonded to. `className` is the seeded class a bonded creature levels in, kept apart
+ * from `label` so renaming one in the UI ("Special Mount" → "Mount") doesn't break the reconciler's class lookup.
+ */
 export const BONDED_KINDS = [
   { slug: "familiar", label: "Familiar", className: "Familiar" },
   { slug: "animalcompanion", label: "Animal Companion", className: "Animal Companion" },
@@ -6,15 +10,10 @@ export const BONDED_KINDS = [
 
 export type BondedKind = (typeof BONDED_KINDS)[number]["slug"];
 
-export const BONDED_KIND_SLUGS = BONDED_KINDS.map((b) => b.slug) as readonly BondedKind[];
+export const BONDED_KIND_SLUGS = BONDED_KINDS.map((kind) => kind.slug);
 
-export const BONDED_LABEL_BY_KIND: Record<BondedKind, string> = Object.fromEntries(
-  BONDED_KINDS.map((b) => [b.slug, b.label]),
-) as Record<BondedKind, string>;
-
-// Seed class names. Kept separate from labels so that re-labeling the UI
-// (e.g. localization, renaming "Special Mount" → "Mount" in display) doesn't
-// silently break the reconciler's content-seed lookup.
-export const BONDED_CLASS_NAME_BY_KIND: Record<BondedKind, string> = Object.fromEntries(
-  BONDED_KINDS.map((b) => [b.slug, b.className]),
-) as Record<BondedKind, string>;
+/** Each bonded kind's definition, by its slug (typed by hand: `Object.fromEntries` loses its keys' type). */
+export const BONDED_KIND_BY_SLUG = Object.fromEntries(BONDED_KINDS.map((kind) => [kind.slug, kind])) as Record<
+  BondedKind,
+  (typeof BONDED_KINDS)[number]
+>;

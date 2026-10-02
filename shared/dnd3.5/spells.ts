@@ -1,3 +1,5 @@
+import { stripSeparators } from "@/shared/utils.ts";
+
 export const SPELL_SCHOOLS = [
   "Abjuration",
   "Conjuration",
@@ -72,3 +74,9 @@ export const SPELL_SAVING_THROWS = [
 
 /** Schools that get Spell Focus / Greater Spell Focus feats (excludes Universal) */
 export const MAGIC_SCHOOLS = SPELL_SCHOOLS.filter((s) => s !== "Universal");
+
+/**
+ * The slug of a spell list's possession paths, from its aptitude's name without the " Spells" suffix ("Wizard Spells"
+ * → "wizard", "Knowledge Domain Spells" → "knowledgedomain").
+ */
+export const spellPossessionSlug = (aptitudeName: string) => stripSeparators(aptitudeName.replace(/ Spells$/, ""));

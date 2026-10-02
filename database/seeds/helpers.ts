@@ -7,10 +7,8 @@ import {
   type SeedContext as RulesetSeedContext,
 } from "@/database/packages/dnd35/seed/context.ts";
 import {
-  type alignment,
   characterAbilitiesInCharacter,
   charactersInCharacter,
-  type gender,
   inventoryInCharacter,
   itemsInRules,
   klassesInRules,
@@ -21,7 +19,6 @@ import {
   levelPowersInCharacter,
   levelsInCharacter,
   levelSkillsInCharacter,
-  type location,
   racesInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -31,6 +28,7 @@ import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharac
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { reconcileAllBondedKinds } from "@/server/services/characters/levels/dnd3.5/bondedReconcile.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import type { Alignment, Gender, ItemLocation } from "@/shared/enums.ts";
 
 export const SEED_USER_ID = "00000000-0000-4000-8000-000000000456";
 
@@ -109,9 +107,9 @@ export async function createCharacter(
     raceName: string;
     name: string;
     xp: number;
-    alignment: (typeof alignment.enumValues)[number];
+    alignment: Alignment;
     age: number;
-    gender: (typeof gender.enumValues)[number];
+    gender: Gender;
     height: string;
     weight: string;
     description: string;
@@ -239,7 +237,7 @@ async function addInventory(
     name: string;
     quantity: number;
     equipped?: boolean;
-    location?: (typeof location.enumValues)[number];
+    location?: ItemLocation;
     weaponSet?: number;
   }[],
 ) {

@@ -1,8 +1,7 @@
 import { eq, getTableName, sql } from "drizzle-orm";
 
-import { type alignment, charactersInCharacter, type gender, playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
-import type { Db } from "@/server/database/index.ts";
+import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import {
   BadRequestError,
   ConflictError,
@@ -29,12 +28,12 @@ import type { CharacterKind, DetailedCharacterInterface, Holders } from "@/serve
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import { purgeAttachmentsForRecords, urlForSlot } from "@/server/services/AttachmentsService.ts";
 import BaseService from "@/server/services/BaseService.ts";
-import { BONDED_KINDS, type BondedKind } from "@/server/services/characters/levels/dnd3.5/bondedReconcile.ts";
 import { CampaignsPolicy, CharactersPolicy } from "@/server/services/policies/index.ts";
 import { withRulesetScope, withRulesetScopes } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
-import type { Character } from "@/shared/relations.ts";
-import type { Requirement, Session } from "@/shared/relations.ts";
+import { BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
+import type { Alignment, Gender } from "@/shared/enums.ts";
+import type { Character, Requirement, Session } from "@/shared/relations.ts";
 
 /**
  * Replace a character's language set in-place. Validates each id resolves
@@ -78,7 +77,7 @@ export async function loadBondedByKind(
   masterId: string,
 ): Promise<Partial<Record<BondedKind, BondedEntry>>> {
   const out: Partial<Record<BondedKind, BondedEntry>> = {};
-  for (const kind of BONDED_KINDS) {
+  for (const kind of BONDED_KIND_SLUGS) {
     const record = await Characters.findOne(
       db,
       {
@@ -256,10 +255,10 @@ export const CharactersMethods = {
       raceId: string;
       name: string;
       xp: number;
-      alignment: (typeof alignment.enumValues)[number];
+      alignment: Alignment;
       abilities: Record<string, number>;
       age?: number;
-      gender: (typeof gender.enumValues)[number];
+      gender: Gender;
       height?: string;
       weight?: string;
       deity?: string;
@@ -389,12 +388,12 @@ export const CharactersMethods = {
     updateData: {
       name?: string;
       age?: number;
-      gender?: (typeof gender.enumValues)[number];
+      gender?: Gender;
       height?: string;
       weight?: string;
       deity?: string;
       xp?: number;
-      alignment?: (typeof alignment.enumValues)[number];
+      alignment?: Alignment;
       description?: string;
       notes?: string;
       languageIds?: string[];

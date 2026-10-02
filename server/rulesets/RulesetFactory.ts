@@ -2,11 +2,10 @@ import { baseRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import { createRulesetModule as createDnd35Module } from "./dnd3.5/index.ts";
 import type { RulesetModule } from "./types.ts";
-
-type BaseRules = (typeof baseRules.enumValues)[number];
 
 export class RulesetFactory {
   static fromBaseRules(baseRules: BaseRules): RulesetModule {

@@ -17,8 +17,9 @@ import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
+import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { formatPropertyType, stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 import type { Dnd35PowersSectionProps } from "./types.ts";
 

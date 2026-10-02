@@ -7,10 +7,11 @@ import { db } from "@/server/database/index.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Players } from "@/server/repositories/index.ts";
 import CampaignsPolicy from "@/server/services/policies/CampaignsPolicy.ts";
+import type { CampaignRole } from "@/shared/enums.ts";
 import { createTestUser, getSeedCtx } from "@/tests/helpers.ts";
 
 /** A campaign, and the policy of a new user holding `role` in it (or no seat at all). */
-async function policyFor(role: "Game Master" | "Player Character" | null) {
+async function policyFor(role: CampaignRole | null) {
   const { rulesetId } = await getSeedCtx();
   const [campaign] = await Campaigns.create(db, { name: "Policy Campaign", rulesetId });
   const { user, session } = await createTestUser();

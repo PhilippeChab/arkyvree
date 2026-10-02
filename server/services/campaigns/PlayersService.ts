@@ -7,6 +7,7 @@ import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Campaigns, Invites, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import type { CampaignRole } from "@/shared/enums.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
 import { createInviteInTransaction, type InviteEmailData, sendInviteEmail } from "./InvitesService.ts";
@@ -29,12 +30,7 @@ export const CampaignPlayersMethods = {
     return await Players.findManyForCampaign(db, { campaignId, ...where }, pagination, Visibility.All);
   },
 
-  async addCampaignPlayer(
-    session: Session,
-    campaignId: string,
-    role: "Game Master" | "Player Character",
-    email?: string,
-  ) {
+  async addCampaignPlayer(session: Session, campaignId: string, role: CampaignRole, email?: string) {
     let emailData: InviteEmailData | null = null;
 
     const { player, invite } = await withTransaction(async (tx) => {
@@ -82,7 +78,7 @@ export const CampaignPlayersMethods = {
     session: Session,
     campaignId: string,
     playerId: string,
-    role: "Game Master" | "Player Character",
+    role: CampaignRole,
     email?: string,
   ) {
     let emailData: InviteEmailData | null = null;

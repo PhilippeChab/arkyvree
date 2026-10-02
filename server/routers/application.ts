@@ -9,6 +9,7 @@ import { secureHeaders } from "hono/secure-headers";
 
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
+import { isTest } from "@/server/environment.ts";
 import { requestLogger } from "@/server/middlewares/index.ts";
 import apiRouter from "@/server/routers/api.tsx";
 import authenticationRouter from "@/server/routers/authentication/index.ts";
@@ -18,7 +19,6 @@ import wsRouter from "@/server/routers/ws.ts";
 import { collectingNotified, publishWsEvent } from "@/server/ws.ts";
 
 const isDev = process.env.NODE_ENV !== "production";
-const isTest = process.env.NODE_ENV === "test" || process.env.DATABASE_URL?.includes("test");
 
 const origin = isDev ? ["http://localhost:5173"] : process.env.APP_URL ? [process.env.APP_URL] : [];
 
@@ -48,7 +48,7 @@ const app = new Hono()
     return c.redirect(`https://${canonicalHost}${url.pathname}${url.search}`, 301);
   })
   .use("*", cors)
-  .use("*", isTest ? async (_, next) => next() : csrf({ origin }))
+  .use("*", isTest() ? async (_, next) => next() : csrf({ origin }))
   .use("*", httpInstrumentationMiddleware({ disableTracing: true }))
   .use("*", requestLogger())
   .use("*", requestId())

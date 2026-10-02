@@ -15,8 +15,13 @@ import {
   WEAPON_PROFICIENCY,
   WEAPON_TYPE,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import type { TargetPathsInterface } from "@/server/rulesets/types.ts";
-import type { Holder, Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
+import type {
+  Holder,
+  Holders,
+  TargetPathsInterface,
+  TargetPathsTraverser,
+  TraversePathResult,
+} from "@/server/rulesets/types.ts";
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import DetailedCharacterBonds from "@/server/rulesets/universal/DetailedCharacterBonds.ts";
@@ -27,8 +32,10 @@ import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedChara
 import DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
 import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
+import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
-import { formatPropertyType, spellPossessionSlug, stripSeparators } from "@/shared/utils.ts";
+import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 import { Dnd35LevelsHooks } from "./hooks/LevelsHooks.ts";
 

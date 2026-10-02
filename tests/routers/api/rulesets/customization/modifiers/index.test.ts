@@ -2,9 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { application } from "@/server/routers/application.ts";
+import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import { api, expectOk, guestApi, SEED_SESSION_ID } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
-import { createEntity, CUSTOMIZABLE_ENTITY_TYPES } from "@/tests/routers/api/rulesets/customization/entities.ts";
+import { createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
 
 const modifiers = api.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers;
 const modifier = modifiers[":modifierId"];
@@ -60,7 +61,7 @@ describe("rulesets customization modifiers", () => {
     expect((await modifier.$get({ param: modifierParam })).status).toBe(404);
   });
 
-  test.each(CUSTOMIZABLE_ENTITY_TYPES)("adds a modifier to %s", async (entityType) => {
+  test.each([...CUSTOMIZABLE_ENTITY_TYPES])("adds a modifier to %s", async (entityType) => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const entityId = await createEntity(id, entityType);
     const created = await expectOk(

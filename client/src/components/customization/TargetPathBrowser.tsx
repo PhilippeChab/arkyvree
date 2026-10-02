@@ -23,8 +23,7 @@ import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { PathCompletion } from "@/shared/customization/target.ts";
-import { formatSegment } from "@/shared/utils.ts";
+import { formatSegment, type PathCompletion } from "@/shared/customization/target.ts";
 
 interface TargetPathBrowserProps {
   rulesetId: string;

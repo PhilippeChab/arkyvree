@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
+import { type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import propertyTypesRouter from "@/server/routers/api/rulesets/customization/properties/types/index.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { PropertiesService } from "@/server/services/rulesets/index.ts";
+import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -14,7 +14,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum(["klass_levels", "klasses", "feats", "items", "powers", "races"]),
+        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
         entityId: z.string().uuid(),
       }),
     ),
@@ -33,7 +33,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum(["klass_levels", "klasses", "feats", "items", "powers", "races"]),
+        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
         entityId: z.string().uuid(),
       }),
     ),
@@ -67,7 +67,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum(["klass_levels", "klasses", "feats", "items", "powers", "races"]),
+        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
         entityId: z.string().uuid(),
         property_id: z.string().uuid(),
       }),
@@ -104,7 +104,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum(["klass_levels", "klasses", "feats", "items", "powers", "races"]),
+        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
         entityId: z.string().uuid(),
         property_id: z.string().uuid(),
       }),

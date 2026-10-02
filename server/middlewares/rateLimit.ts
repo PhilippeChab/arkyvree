@@ -1,9 +1,8 @@
 import { rateLimiter } from "hono-rate-limiter";
 import { createMiddleware } from "hono/factory";
 
+import { isTest } from "@/server/environment.ts";
 import { TooManyRequestsError } from "@/server/errors/index.ts";
-
-const isTest = process.env.NODE_ENV === "test" || process.env.DATABASE_URL?.includes("test");
 
 const noop = createMiddleware(async (_, next) => next());
 
@@ -37,7 +36,7 @@ const emailKey: KeyGenerator = async (c) => {
  */
 export function rateLimit(
   { windowMs, limit, per = "ip" }: { windowMs: number; limit: number; per?: "ip" | "email" },
-  enabled = !isTest,
+  enabled = !isTest(),
 ) {
   if (!enabled) return noop;
   return rateLimiter({

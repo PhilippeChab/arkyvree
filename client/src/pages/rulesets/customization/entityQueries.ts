@@ -9,8 +9,7 @@ import type { InferResponseType } from "hono/client";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import type { ClassDetail } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-
-import type { EntityType } from "./types.ts";
+import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
 
 const rulesetApi = rpc.api.rulesets[":id"];
 
@@ -33,7 +32,7 @@ export type CustomizationEntity =
   | { type: "klasses"; entity: ClassDetail }
   | { type: "modifiers"; entity: CustomizedModifier };
 
-async function fetchEntity(id: string, type: EntityType, entityId: string): Promise<CustomizationEntity> {
+async function fetchEntity(id: string, type: CustomizationOwnerType, entityId: string): Promise<CustomizationEntity> {
   switch (type) {
     case "feats":
       return {
@@ -79,7 +78,7 @@ async function fetchEntity(id: string, type: EntityType, entityId: string): Prom
   }
 }
 
-export const customizationEntityQuery = (rulesetId: string, type: EntityType, entityId: string) =>
+export const customizationEntityQuery = (rulesetId: string, type: CustomizationOwnerType, entityId: string) =>
   queryOptions({
     queryKey: queryKeys.rulesets.entity(rulesetId, type, entityId),
     queryFn: () => fetchEntity(rulesetId, type, entityId),

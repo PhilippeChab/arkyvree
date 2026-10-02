@@ -50,7 +50,7 @@ import {
   WIZARD_PROHIBITED_SCHOOL,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { PropertyTypesProvider } from "@/server/rulesets/types.ts";
-import type { EntityType } from "@/shared/customization/properties.ts";
+import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import {
   SPELL_COMPONENTS,
   SPELL_DESCRIPTORS,
@@ -226,7 +226,7 @@ const POWER_PROPERTY_TYPES: Record<string, string> = {
   [SPELL_AREA_OF_EFFECT]: 'Area of effect (e.g., "20-ft. radius", "Cone")',
 };
 
-const ENTITY_PROPERTY_TYPES: Partial<Record<EntityType, Record<string, string>>> = {
+const ENTITY_PROPERTY_TYPES: Partial<Record<PropertyEntityType, Record<string, string>>> = {
   feats: FEAT_PROPERTY_TYPES,
   items: ITEM_PROPERTY_TYPES,
   klasses: KLASS_PROPERTY_TYPES,
@@ -298,7 +298,7 @@ const PROPERTY_VALUES: Record<string, string[]> = {
 };
 
 export default class Dnd35PropertyTypes implements PropertyTypesProvider {
-  getStaticPropertyTypes(entityType?: EntityType): Record<string, string> {
+  getStaticPropertyTypes(entityType?: PropertyEntityType): Record<string, string> {
     if (!entityType) {
       return {
         ...FEAT_PROPERTY_TYPES,

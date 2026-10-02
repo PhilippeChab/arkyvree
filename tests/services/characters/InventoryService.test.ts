@@ -2,13 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import type { InferInsertModel } from "drizzle-orm";
 
-import type { itemsInRules, location, sizeType } from "@/drizzle/schema.ts";
+import type { itemsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Items, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
 import { CharacterInventoryMethods } from "@/server/services/characters/CharacterInventoryService.ts";
 import { CharactersMethods } from "@/server/services/CharactersService.ts";
+import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
   createSeededTestRuleset,
@@ -19,11 +20,10 @@ import {
   uniqueId,
 } from "@/tests/helpers.ts";
 
-type Location = (typeof location.enumValues)[number];
 type Placement = {
   quantity?: number;
   equipped?: boolean;
-  location?: Location | null;
+  location?: ItemLocation | null;
   weaponSet?: number | null;
   charges?: [number | null, number | null];
   force?: boolean;
@@ -83,7 +83,7 @@ const update = (
     updatedAt,
   );
 
-const equipped = (location: Location, weaponSet: number | null = null): Placement => ({
+const equipped = (location: ItemLocation, weaponSet: number | null = null): Placement => ({
   equipped: true,
   location,
   weaponSet,
@@ -131,7 +131,7 @@ async function createCharacter(session: Session, values: { rulesetId?: string; r
 }
 
 /** A new user's character on their fork of the seeded ruleset, whose items the test makes. */
-async function setup(race?: { size: (typeof sizeType.enumValues)[number] }) {
+async function setup(race?: { size: SizeType }) {
   const { user, session } = await createTestUser();
   const ruleset = await createSeededTestRuleset(user.id);
   const raceId =
@@ -328,6 +328,13 @@ describe("InventoryService", () => {
         "Body armor can only be equipped in the Torso slot",
       );
       await expect(add(session, character.id, shield.id, equipped("Head"))).rejects.toThrow(
+        "Shields can only be equipped in the Off Hand slot",
+      );
+      // A hand holds weapons and shields only, and a shield only the off hand
+      await expect(add(session, character.id, armor.id, equipped("Main Hand", 0))).rejects.toThrow(
+        "Body armor can only be equipped in the Torso slot",
+      );
+      await expect(add(session, character.id, shield.id, equipped("Main Hand", 0))).rejects.toThrow(
         "Shields can only be equipped in the Off Hand slot",
       );
 

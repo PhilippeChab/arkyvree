@@ -22,15 +22,13 @@ import type { TargetPath } from "@/shared/customization/target.ts";
  */
 import { BONDED_KINDS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 
-type BondedKindSlug = BondedKind;
-
 export type DetailedCharacterBondedSlot = {
   race: string;
   level: number;
 };
 
 export type DetailedCharacterComprehensiveBonds = {
-  [K in BondedKindSlug]: DetailedCharacterBondedSlot;
+  [K in BondedKind]: DetailedCharacterBondedSlot;
 };
 
 export default class DetailedCharacterBonds {
@@ -78,15 +76,13 @@ export default class DetailedCharacterBonds {
   }
 
   /** Resolved race name for a given bonded slot, or null if no race is set. */
-  getBondedRace(slug: BondedKindSlug): string | null {
+  getBondedRace(slug: BondedKind): string | null {
     const value = this.bonds[slug]?.race;
     return value && value.length > 0 ? value : null;
   }
 
   /** Effective level for a given bonded slot. */
-  getBondedLevel(slug: BondedKindSlug): number {
+  getBondedLevel(slug: BondedKind): number {
     return this.bonds[slug]?.level ?? 0;
   }
 }
-
-export type { BondedKindSlug };

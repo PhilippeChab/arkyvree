@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { rulesetKind } from "@/drizzle/schema.ts";
 import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import abilities from "@/server/routers/api/rulesets/abilities/index.ts";
 import aptitudes from "@/server/routers/api/rulesets/aptitudes/index.ts";
@@ -85,7 +86,7 @@ const authenticatedRulesets = new Hono()
     zValidator(
       "json",
       z.object({
-        kind: z.enum(["ruleset", "extension"]).optional(),
+        kind: z.enum(rulesetKind.enumValues).optional(),
       }),
     ),
     async (c) => {
@@ -128,7 +129,7 @@ const authenticatedRulesets = new Hono()
         name: z.string(),
         description: z.string(),
         private: z.boolean().optional(),
-        kind: z.enum(["ruleset", "extension"]).optional(),
+        kind: z.enum(rulesetKind.enumValues).optional(),
         updatedAt: z.string().optional(),
       }),
     ),

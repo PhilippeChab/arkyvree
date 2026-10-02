@@ -29,9 +29,9 @@ import {
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import type { EntityType } from "@/client/src/pages/rulesets/customization/types.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
 
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
@@ -66,7 +66,7 @@ function PublishedWarning() {
 
 interface RequirementsSectionProps {
   ruleset: RulesetDetail;
-  entityType: EntityType;
+  entityType: CustomizationOwnerType;
   entityId: string;
   data?: Requirement[];
   queryKeysToInvalidate?: readonly (readonly unknown[])[];

@@ -1,5 +1,4 @@
-import type { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
-import type { SizeType } from "@/shared/enums.ts";
+import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 
 // The shapes of the content packages' data: the generated books and the hand-written content alike.
 
@@ -99,15 +98,13 @@ export type RaceDefinition = {
   modifiers?: Modifier[];
 };
 
-type Slot = (typeof SLOT_OPTIONS)[number];
-
 export interface ItemDef {
   name: string;
   description: string;
   weight: string;
   costGp: string;
   type: string;
-  slot?: Slot;
+  slot?: ItemLocation;
   properties: Property[];
   /** The template item this one is made from, by name. */
   sourceItem?: string;

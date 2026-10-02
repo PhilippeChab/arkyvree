@@ -1,9 +1,9 @@
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { and, eq, isNull, not, or } from "drizzle-orm";
+import { and, eq, type InferInsertModel, type InferSelectModel, isNull, not, or } from "drizzle-orm";
 
 import { contributorsInCharacter, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import type { ContributorRole } from "@/shared/enums.ts";
 
 class CharacterContributorsRepository extends BaseRepository<
   typeof contributorsInCharacter,
@@ -18,7 +18,7 @@ class CharacterContributorsRepository extends BaseRepository<
     values: {
       characterId: string;
       email: string;
-      role: "Admin" | "Editor" | "Viewer";
+      role: ContributorRole;
       invitedBy: string;
       userId?: string;
     },
@@ -109,10 +109,7 @@ class CharacterContributorsRepository extends BaseRepository<
     return this.paginated(items, pagination);
   }
 
-  async findActiveRole(
-    db: Db,
-    where: { userId: string; characterId: string },
-  ): Promise<"Admin" | "Editor" | "Viewer" | null> {
+  async findActiveRole(db: Db, where: { userId: string; characterId: string }): Promise<ContributorRole | null> {
     const contributor = await db.query.contributorsInCharacter.findFirst({
       where: this.where([
         eq(this.table.userId, where.userId),

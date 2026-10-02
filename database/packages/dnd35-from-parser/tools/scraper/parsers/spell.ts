@@ -4,6 +4,7 @@ import { isText } from "domhandler";
 import { pageTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { capitalize } from "@/shared/utils.ts";
 
 // ---------------------------------------------------------------------------
 // Spell HTML Parser — supports both dndtools.net and legacy srd.dndtools.org
@@ -190,7 +191,7 @@ export function parseSpellDetailHtml(html: string, sourceUrl: string): SpellRefe
   if (schoolMatch) {
     school = schoolMatch[2].trim();
     // Capitalize first letter
-    school = school.charAt(0).toUpperCase() + school.slice(1);
+    school = capitalize(school);
   }
 
   // Extract subschool from link

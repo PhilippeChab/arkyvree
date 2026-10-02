@@ -8,11 +8,8 @@ import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
 import { getBondedRaceStats } from "@/server/rulesets/dnd3.5/bondedRaceData.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { purgeAttachmentsForRecords } from "@/server/services/AttachmentsService.ts";
-import { BONDED_CLASS_NAME_BY_KIND, BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
+import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character } from "@/shared/relations.ts";
-
-export type { BondedKind };
-export const BONDED_KINDS = BONDED_KIND_SLUGS;
 
 function computeBondedTargetHD(kind: BondedKind, detailedMaster: Dnd35DetailedCharacter): number {
   // Each grant feat writes its contribution to bonded.<kind>.level via a
@@ -102,7 +99,7 @@ async function reconcileBonded(
   detailedMaster: Dnd35DetailedCharacter,
   rulesetData: CachedRulesetData,
 ): Promise<void> {
-  const className = BONDED_CLASS_NAME_BY_KIND[kind];
+  const { className } = BONDED_KIND_BY_SLUG[kind];
   const targetRaceName = detailedMaster.getDetailedCharacterBonds().getBondedRace(kind);
 
   // SELECT … FOR UPDATE on the master serializes concurrent reconciles for
@@ -169,7 +166,7 @@ export async function reconcileAllBondedKinds(
   detailedMaster: Dnd35DetailedCharacter,
   rulesetData: CachedRulesetData,
 ): Promise<void> {
-  for (const kind of BONDED_KINDS) {
+  for (const kind of BONDED_KIND_SLUGS) {
     await reconcileBonded(tx, masterRecord, kind, detailedMaster, rulesetData);
   }
 }
