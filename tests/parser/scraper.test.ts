@@ -106,12 +106,22 @@ describe("The scraper reads from a page the reference's entries:", () => {
     const domains = stored("domains.json", "domain").raw;
     const parse = (filter: "core" | "non-core" | "all") =>
       scraped(parseDomainsHtml(fixture("domains"), "", "all-domains", filter).raw);
-    // Sand is left out: its granted power's table is read as its spells (#77)
+    // Sand's granted power has a table of its own before its spell list's
     expect(parse("all")).toEqual(
-      named(domains, ["Air", "Artifice", "Celestial", "Glory (BoED)", "Healing", "Strength", "War", "The Abyss"]),
+      named(domains, [
+        "Air",
+        "Artifice",
+        "Celestial",
+        "Glory (BoED)",
+        "Healing",
+        "Sand",
+        "Strength",
+        "War",
+        "The Abyss",
+      ]),
     );
     expect(parse("core")).toEqual(named(domains, ["Air", "Healing", "Strength", "War"]));
-    expect(parse("non-core")).toEqual(named(domains, ["Artifice", "Celestial", "Glory (BoED)", "The Abyss"]));
+    expect(parse("non-core")).toEqual(named(domains, ["Artifice", "Celestial", "Glory (BoED)", "Sand", "The Abyss"]));
   });
 
   test("the weapons, armor and goods", () => {
