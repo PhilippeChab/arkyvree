@@ -17,6 +17,7 @@ import {
   stringifyModifier,
   stringifyRequirement,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
+import { generateClassSeed } from "@/database/packages/dnd35-from-parser/tools/generator/generators/class.ts";
 import {
   coreSystemFeats,
   generateFeatSeeds,
@@ -204,9 +205,16 @@ describe("The generated feats", () => {
   });
 
   test("refuse a family checked inside a group, which can't name the item", () => {
-    const ref = structuredClone(loadReference(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
-    ref.mapping["Greater Spell Focus"].requirements = [or(eq(feat("Spell Focus")), gte("spellcasting.arcane", 1))];
-    expect(() => generateFeatSeeds(ref)).toThrow("a family it requires inside a group can't be written for each item");
+    for (const [template, group] of [
+      ["Greater Spell Focus", or(eq(feat("Spell Focus")), gte("spellcasting.arcane", 1))],
+      ["Weapon Specialization", or(eq(feat("Weapon Focus")), gte("combat.bab", 6))],
+    ] as const) {
+      const ref = structuredClone(loadReference(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
+      ref.mapping[template].requirements = [group];
+      expect(() => generateFeatSeeds(ref)).toThrow(
+        `${template}: a family it requires inside a group can't be written for each item`,
+      );
+    }
   });
 
   test("let an extension's family require the core rules' for the same item", () => {
@@ -214,5 +222,18 @@ describe("The generated feats", () => {
     const generated = generateFeatSeeds(ref);
     const template = generated.slice(generated.indexOf("export const powerCritical"));
     expect(template.slice(0, template.indexOf("}));"))).toContain("eq(feat(`Weapon Focus: ${w}`)),");
+  });
+
+  test("require any feat of a family a feat or a class names by the family's own name", () => {
+    const feats = generateFeatSeeds(loadReference(join(REFERENCE_DIR, "complete-scoundrel", "feats.json"), "feat"));
+    const daringWarrior = feats.slice(feats.indexOf(`name: "Daring Warrior"`));
+    expect(daringWarrior.slice(0, daringWarrior.indexOf("},"))).toContain(
+      `eq("feats.weaponspecialization.*.possessed"),`,
+    );
+    const warChanter = generateClassSeed(
+      loadReference(join(REFERENCE_DIR, "complete-warrior", "classes", "warChanter.json"), "class"),
+    );
+    expect(warChanter).toContain(`eq("feats.weaponfocus.*.possessed"),`);
+    expect(warChanter).toContain(`eq("feats.combatexpertise.possessed"),`);
   });
 });

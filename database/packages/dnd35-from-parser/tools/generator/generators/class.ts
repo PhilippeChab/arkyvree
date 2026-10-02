@@ -18,6 +18,10 @@ import {
   toConstName,
   truncateDesc,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
+import {
+  anyOfFamilies,
+  templateFamilies,
+} from "@/database/packages/dnd35-from-parser/tools/generator/generators/feat.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 
@@ -169,7 +173,7 @@ export function generateClassSeed(ref: ClassReference): string {
   const bab = overrides.bab ?? detected.bab;
   const saves = overrides.saves ?? detected.saves;
   const classSkills = overrides.classSkills ?? raw.classSkills;
-  const requirements = overrides.requirements ?? detected.requirements;
+  const requirements = anyOfFamilies(overrides.requirements ?? detected.requirements, templateFamilies(ref._meta.book));
 
   const constName = toConstName(raw.name);
   const { aptitudePicks, remap, perLevel } = classAptitudePicks(ref);

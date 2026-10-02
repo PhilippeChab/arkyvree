@@ -733,7 +733,7 @@ export const FIGHTER_FEATS: FeatSeed[] = [
     description: "Your fighter and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 6th-level fighter/5th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your fighter and swashbuckler levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
     aptitudes: ["General", "Fighter Bonus Feat"],
     requirements: [
-      eq("feats.weaponspecialization.possessed"),
+      eq("feats.weaponspecialization.*.possessed"),
       eq("feats.grace.possessed"),
     ],
   },
