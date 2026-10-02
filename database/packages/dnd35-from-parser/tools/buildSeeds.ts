@@ -56,6 +56,7 @@ import {
   MARTIAL_WEAPONS,
   SIMPLE_WEAPONS,
 } from "@/database/packages/dnd35/content/weapons.ts";
+import { CLASS_FEATURE_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 import { capitalize } from "@/shared/utils.ts";
 
@@ -243,32 +244,11 @@ export function buildPoolParentNameMap(
   return nameMap;
 }
 
-// Class features each class that has one seeds as a feat of its own, "Sneak Attack (Rogue)": a prerequisite checks
-// any of them, by the feature's name ("Sneak attack +2d6")
-const CLASS_FEATURES_BY_CLASS = [
-  "Animal Companion",
-  "Bardic Music",
-  "Evasion",
-  "Flurry of Blows",
-  "Grace",
-  "Inspire Courage",
-  "Ki Power",
-  "Lay on Hands",
-  "Poison Use",
-  "Rage",
-  "Skirmish",
-  "Smite Evil",
-  "Sneak Attack",
-  "Sudden Strike",
-  "Summon Familiar",
-  "Trapfinding",
-];
-
 const CLASS_FEAT_FAMILIES: { pattern: RegExp; family: string }[] = [
   { pattern: /^(?:Turn or Rebuke Undead|Turn Undead|Rebuke Undead)\b/i, family: "Turn or Rebuke Undead" },
   { pattern: /^Wild Shape\b/i, family: "Wild Shape" },
   // "Grace (Duelist)", not "Grace of the Dark"; "Rage (Barbarian)", not "Rage +1 Use/day"
-  ...CLASS_FEATURES_BY_CLASS.map((family) => ({ pattern: new RegExp(`^${RegExp.escape(family)} \\(`), family })),
+  ...CLASS_FEATURE_FAMILIES.map((family) => ({ pattern: new RegExp(`^${RegExp.escape(family)} \\(`), family })),
 ];
 
 /** The families of class features, Favored Enemy's included, which a prerequisite checks by the family's name. */

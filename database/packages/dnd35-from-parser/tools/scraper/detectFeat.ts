@@ -22,6 +22,7 @@ import {
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
@@ -36,13 +37,7 @@ const FEAT_TYPE_APTITUDES: Record<string, string[]> = {
   "item creation": ["General", "Wizard Bonus Feat"],
 };
 
-// Feat type → the family its feats make. Complete Arcane's draconic feats have no type of their own: their name
-// makes them one
-const FEAT_TYPE_FAMILIES: Record<string, string> = {
-  metamagic: "Metamagic",
-  "item creation": "Item Creation",
-  luck: "Luck",
-};
+// Complete Arcane's draconic feats have no type of their own: their name makes them a family
 const DRACONIC_FAMILY = "Draconic";
 
 // Patterns that extractFeatPrereqs should skip — these are class abilities, not feat names
@@ -318,7 +313,7 @@ function extractFeatPrereqs(text: string): string[] {
 /** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */
 export function familyFeatRequirements(text: string): RequirementEntry[] {
   const counts = Object.keys(NUMBER_WORDS).join("|");
-  return [...Object.values(FEAT_TYPE_FAMILIES), DRACONIC_FAMILY].flatMap((family) => {
+  return FEAT_FAMILIES.flatMap((family) => {
     const match = new RegExp(`\\bany (?:other )?(?:(${counts}) )?${family} feats?\\b`, "i").exec(text);
     if (!match) return [];
     const slug = stripSeparators(family);
@@ -762,7 +757,7 @@ export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["det
     const template = detectTemplate(entry);
 
     const family =
-      FEAT_TYPE_FAMILIES[entry.featType] ??
+      FEAT_FAMILIES.find((name) => name.toLowerCase() === entry.featType) ??
       (entry.name.startsWith(`${DRACONIC_FAMILY} `) ? DRACONIC_FAMILY : undefined);
     const properties = family ? [{ type: "FEAT_FAMILY", value: family }] : [];
 

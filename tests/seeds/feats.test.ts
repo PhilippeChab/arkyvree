@@ -1,18 +1,29 @@
 import { expect, test } from "bun:test";
 
 import * as RULESET_NAMES from "@/database/packages/dnd35/names.ts";
+import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
 
-test("Every seeded check of a feat names a feat or a family of the seeded rules", async () => {
+/** Every seeded ruleset's rows. */
+async function seededRulesets() {
   const rulesets = [];
   for (const name of Object.values(RULESET_NAMES)) rulesets.push(await seededRows(name));
+  return rulesets;
+}
+
+/** The families the rulesets' feats are in (their FEAT_FAMILY). */
+const familiesOf = (rulesets: Awaited<ReturnType<typeof seededRulesets>>) =>
+  new Set(rulesets.flatMap((rows) => rows.properties.filter((p) => p.type === "FEAT_FAMILY").map((p) => p.value)));
+
+test("The seeded families of feats are the built-in ones the customization offers", async () => {
+  expect([...familiesOf(await seededRulesets())].sort()).toEqual([...FEAT_FAMILIES].sort());
+});
+
+test("Every seeded check of a feat names a feat or a family of the seeded rules", async () => {
+  const rulesets = await seededRulesets();
   const feats = new Set(rulesets.flatMap((rows) => rows.feats.map((feat) => stripSeparators(feat.name))));
-  const families = new Set(
-    rulesets.flatMap((rows) =>
-      rows.properties.filter((p) => p.type === "FEAT_FAMILY").map((p) => stripSeparators(p.value)),
-    ),
-  );
+  const families = new Set([...familiesOf(rulesets)].map(stripSeparators));
   // A feat by its name (`feats.dodge.possessed`, a stackable one's `.count`), a family by its wildcard
   // (`feats.metamagic.*.possessed`) or its count (`feats.luck.count`)
   const namesNothing = (path: string) => {
