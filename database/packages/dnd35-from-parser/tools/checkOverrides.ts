@@ -58,6 +58,9 @@ export function checkClassOverrides(stored: StoredReference<"class">): {
   const { features = {}, spells = {}, bonusFeatLists: _bonusFeatLists, reviewed: _reviewed, ...rest } = overrides;
   const { inheritsFrom: _inheritsFrom, ...spellFields } = spells;
   const detectedSpells = resolve({}).mapping.spells;
+  // A feature's field without its override is what's derived for it, whichever other feature override is left out:
+  // one resolve gives them all, and only a field holding it is resolved without its override and generated again
+  const derivedFeatures = resolve({ ...overrides, features: {} }).mapping.features;
   return {
     redundant: [
       ...Object.keys(rest).filter((key) => {
@@ -80,16 +83,16 @@ export function checkClassOverrides(stored: StoredReference<"class">): {
         : []),
       ...Object.entries(features).flatMap(([name, fields]) =>
         Object.keys(fields)
-          .filter((key) => {
-            const ref = without((copy) => copy.features?.[name] && Reflect.deleteProperty(copy.features[name], key));
-            return redundant(
-              ref,
+          .filter(
+            (key) =>
               alike(
                 Reflect.get(withAll.mapping.features[name] ?? {}, key),
-                Reflect.get(ref.mapping.features[name] ?? {}, key),
-              ),
-            );
-          })
+                Reflect.get(derivedFeatures[name] ?? {}, key),
+              ) &&
+              generated(
+                without((copy) => copy.features?.[name] && Reflect.deleteProperty(copy.features[name], key)),
+              ) === output,
+          )
           .map((key) => `features.${name}.${key}`),
       ),
     ],

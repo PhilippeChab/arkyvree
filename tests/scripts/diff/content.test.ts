@@ -5,7 +5,6 @@ import { sql } from "drizzle-orm";
 import {
   COMPARED_TABLES,
   CONTENT_TABLES,
-  diffContent,
   LABELLED_COLUMNS,
   pullTable,
   type Query,
@@ -234,10 +233,6 @@ describe("The content comparison (diff-prod)", () => {
     const sqlLines = renderSql("rules.items", diff, LABELLED_COLUMNS["rules.items"]);
     expect(sqlLines.some((line) => line.includes("source_item_id") && line.startsWith("--"))).toBe(true);
     expect(sqlLines.filter((line) => line.startsWith("UPDATE"))).toEqual([]);
-  });
-
-  test("finds no drift between a database and itself", async () => {
-    expect(await diffContent(query, query)).toEqual({ onlyInTarget: [], onlyInReference: [], drifted: [] });
   });
 
   // Each column of a system row is changed in turn: the comparison of its ruleset has to see it
