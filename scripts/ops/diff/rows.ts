@@ -83,16 +83,20 @@ export function sqlLiteral(v: unknown): string {
 }
 
 /**
- * The SQL that brings `table`'s (schema-qualified) drifted fields to the reference's values. A row on one side only is a comment: an
- * INSERT would need its references remapped, and a DELETE could break a character's.
+ * The SQL that brings `table`'s (schema-qualified) drifted fields to the reference's values. What it can't write is a
+ * comment, for manual handling: a row on one side only (an INSERT would need its references remapped, and a DELETE
+ * could break a character's), and a `labelled` field, compared by the names of the rows it references, which no id
+ * column takes.
  */
-export function renderSql(table: string, d: TableDiff): string[] {
+export function renderSql(table: string, d: TableDiff, labelled: readonly string[] = []): string[] {
   return [
     `-- ${table}:`,
     ...d.onlyInRef.map((bk) => `--   only in reference: ${bk} (INSERT skipped — FK remap required)`),
     ...d.onlyInTgt.map((bk) => `--   only in target: ${bk} (DELETE skipped — may be referenced by characters)`),
-    ...d.fieldChanges.map(
-      (c) => `UPDATE ${table} SET ${c.field} = ${sqlLiteral(c.ref)} WHERE id = ${sqlLiteral(c.targetId)};  -- ${c.bk}`,
+    ...d.fieldChanges.map((c) =>
+      labelled.includes(c.field)
+        ? `--   ${c.bk}.${c.field}: reference ${JSON.stringify(c.ref)}, target ${JSON.stringify(c.tgt)} (UPDATE skipped — it references other rows)`
+        : `UPDATE ${table} SET ${c.field} = ${sqlLiteral(c.ref)} WHERE id = ${sqlLiteral(c.targetId)};  -- ${c.bk}`,
     ),
   ];
 }

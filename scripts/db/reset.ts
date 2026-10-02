@@ -6,7 +6,7 @@ import { Pool } from "pg";
 import { db } from "@/server/database/index.ts";
 
 import { assertLocalDatabase, databaseOf } from "./clone-database.ts";
-import seedDatabase, { includeTestSeedsOption } from "./seed.ts";
+import seedDatabase from "./seed.ts";
 
 /**
  * Empties the local database DATABASE_URL names (every schema the app or its tools made, and public's tables and
@@ -16,7 +16,12 @@ export default async function resetDatabase(includeTestSeeds: boolean) {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) throw new Error("DATABASE_URL is not set");
   assertLocalDatabase(connectionString, "reset");
-  console.log(`Resetting database: ${databaseOf(connectionString).name} on ${new URL(connectionString).host}`);
+  // A tunnel to a remote server is local too: the database's name has to say it's a development or test one
+  const { name } = databaseOf(connectionString);
+  if (!/(^|_)(dev|test)(_|$)/.test(name)) {
+    throw new Error(`${name} isn't a development or test database (dev or test a word of its name): only one is reset`);
+  }
+  console.log(`Resetting database: ${name} on ${new URL(connectionString).host}`);
 
   await db.execute(`
     CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
@@ -56,7 +61,18 @@ export default async function resetDatabase(includeTestSeeds: boolean) {
 }
 
 if (import.meta.main) {
-  await resetDatabase(includeTestSeedsOption("reset"));
+  const args = process.argv.slice(2);
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(`
+Usage: bun run scripts/db/reset.ts [options]
+
+Options:
+  --with-test-data    Include test data seeds
+  --help, -h          Show this help message
+`);
+    process.exit(0);
+  }
+  await resetDatabase(args.includes("--with-test-data"));
   console.log("Database reset completed!");
   process.exit(0);
 }

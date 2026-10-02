@@ -84,7 +84,7 @@ A package's `seeds` install it at `seedsVersion`. A change after that goes in `u
 
 - A new database runs the seeds, then every update.
 - An existing database runs the updates past its version.
-- A database older than `seedsVersion` is refused: the updates it lacks are now part of the seeds, so none can bring it up to date. The runner checks every package first and applies none if one is refused. Reset a development database; any other needs those updates back (from git history) until it has them. `bun run prod:diff` (`scripts/ops/diff-prod.ts`) shows whether production's versions would be refused before a deploy. With `REFERENCE_DATABASE_URL` set to a freshly seeded database, it also compares every row the seeds write (`scripts/ops/contentDiff.ts`); `tests/scripts/contentDiff.test.ts` fails when a table or a column isn't compared.
+- A database older than `seedsVersion` is refused: the updates it lacks are now part of the seeds, so none can bring it up to date. The runner checks every package first and applies none if one is refused. Reset a development database; any other needs those updates back (from git history) until it has them. `bun run prod:diff` (`scripts/ops/diff/diff-prod.ts`) shows whether production's versions would be refused before a deploy. With `REFERENCE_DATABASE_URL` set to a freshly seeded database, it also compares every row the seeds write (`scripts/ops/diff/content.ts`); `tests/scripts/diff/content.test.ts` fails when a table or a column isn't compared.
 
 ```ts
 const dnd35Dmg: ContentPackage = {

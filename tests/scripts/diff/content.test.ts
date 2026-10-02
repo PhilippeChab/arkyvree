@@ -6,11 +6,12 @@ import {
   COMPARED_TABLES,
   CONTENT_TABLES,
   diffContent,
+  LABELLED_COLUMNS,
   pullTable,
   type Query,
   UNCOMPARED_TABLES,
-} from "@/scripts/ops/contentDiff.ts";
-import { collectDiff, diffIsEmpty } from "@/scripts/ops/rowDiff.ts";
+} from "@/scripts/ops/diff/content.ts";
+import { collectDiff, diffIsEmpty, renderSql } from "@/scripts/ops/diff/rows.ts";
 import { db } from "@/server/database/index.ts";
 
 /** The test's database, queried as diff-prod's pg client is: positional parameters ($1…), the rows. */
@@ -203,6 +204,36 @@ describe("The content comparison (diff-prod)", () => {
     expect(tables.map(({ name }) => name).sort()).toEqual(
       [...COMPARED_TABLES, ...Object.keys(UNCOMPARED_TABLES)].sort(),
     );
+  });
+
+  // An id compared as is would differ between any two seeds; compared by name, SQL can't write it back
+  test("compares every reference by the names of the rows it references", async () => {
+    const references = await query<{ name: string }>(
+      `select table_schema || '.' || table_name || '.' || column_name as name from information_schema.columns
+        where table_schema = 'rules' and table_name = any($1) and udt_name in ('uuid', '_uuid')
+          and column_name not in ('id', 'ruleset_id', 'campaign_id', 'user_id')`,
+      [["rulesets", ...CONTENT_TABLES]],
+    );
+    const labelled = Object.entries(LABELLED_COLUMNS).flatMap(([table, columns]) =>
+      columns.map((c) => `${table}.${c}`),
+    );
+    expect(references.map(({ name }) => name).sort()).toEqual(labelled.sort());
+  });
+
+  test("writes no UPDATE for a reference that drifted, which would set an id to a name", async () => {
+    const [shield] = await query<{ id: string; ruleset_id: string }>(
+      `select i.id, i.ruleset_id from rules.items i join rules.rulesets r on r.id = i.ruleset_id
+        where r.system and i.source_item_id is not null limit 1`,
+    );
+    const before = await pullTable(query, "rules.items", shield.ruleset_id);
+    await query(
+      `update rules.items set source_item_id = (select id from rules.items where id <> $1 limit 1) where id = $1`,
+      [shield.id],
+    );
+    const diff = collectDiff(before, await pullTable(query, "rules.items", shield.ruleset_id));
+    const sqlLines = renderSql("rules.items", diff, LABELLED_COLUMNS["rules.items"]);
+    expect(sqlLines.some((line) => line.includes("source_item_id") && line.startsWith("--"))).toBe(true);
+    expect(sqlLines.filter((line) => line.startsWith("UPDATE"))).toEqual([]);
   });
 
   test("finds no drift between a database and itself", async () => {

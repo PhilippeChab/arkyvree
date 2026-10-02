@@ -1,8 +1,8 @@
 // What the seeds write, read from a database so two can be compared (diff-prod.ts): every system ruleset's rows, each
-// by a business key built from names, since every seed draws new ids. tests/scripts/contentDiff.test.ts changes every
+// by a business key built from names, since every seed draws new ids. tests/scripts/diff/content.test.ts changes every
 // column of every table below and checks the comparison sees it.
 
-import { collectDiff, diffIsEmpty, type IdentifiedRow, stripVolatile, type TableDiff } from "./rowDiff.ts";
+import { collectDiff, diffIsEmpty, type IdentifiedRow, stripVolatile, type TableDiff } from "./rows.ts";
 
 /** Runs a query with positional parameters ($1…) and gives its rows, as pg's client does. */
 export type Query = <R extends Record<string, unknown>>(text: string, params?: unknown[]) => Promise<R[]>;
@@ -32,6 +32,15 @@ const REFERENCES: Partial<Record<ContentTable, Record<string, ContentTable>>> = 
   races: { parent_id: "races" },
   saves: { ability_id: "abilities" },
   skills: { primary_ability_id: "abilities" },
+};
+
+/** A ruleset's lists of other rulesets, compared by their names. */
+const RULESET_LISTS = ["ancestor_ruleset_ids", "extension_ruleset_ids"];
+
+/** The columns compared by the names of the rows they reference, which SQL can't set back from a name. */
+export const LABELLED_COLUMNS: Record<string, string[]> = {
+  "rules.rulesets": RULESET_LISTS,
+  ...Object.fromEntries(Object.entries(REFERENCES).map(([table, columns]) => [`rules.${table}`, Object.keys(columns)])),
 };
 
 /** The tables nothing compares, and why. */
@@ -336,7 +345,7 @@ async function pullRulesetRow(query: Query, rulesetId: string): Promise<Identifi
     (await query<{ id: string; name: string }>(`select id, name from rules.rulesets`)).map((r) => [r.id, r.name]),
   );
   return rows.map((row) => {
-    for (const column of ["ancestor_ruleset_ids", "extension_ruleset_ids"]) {
+    for (const column of RULESET_LISTS) {
       const ids = row[column];
       if (Array.isArray(ids)) row[column] = ids.map((id) => names.get(id) ?? "<unresolved>");
     }

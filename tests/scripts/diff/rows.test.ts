@@ -1,6 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { collectDiff, diffIsEmpty, renderHuman, renderSql, sqlLiteral, stripVolatile } from "@/scripts/ops/rowDiff.ts";
+import {
+  collectDiff,
+  diffIsEmpty,
+  renderHuman,
+  renderSql,
+  sqlLiteral,
+  stripVolatile,
+} from "@/scripts/ops/diff/rows.ts";
 
 const UUID = "0b9c6a1e-3f5d-4c2a-9e8b-7d6f5a4b3c2d";
 
@@ -48,6 +55,17 @@ describe("A table's diff", () => {
     expect(changes(new Date("2026-01-01"), new Date("2026-01-01"))).toBe(0);
     expect(changes(new Date("2026-01-01"), new Date("2026-01-02"))).toBe(1);
     expect(changes(null, 0)).toBe(1);
+  });
+
+  test("writes a field that references other rows as a comment: its value is their names, which no id column takes", () => {
+    const diff = collectDiff(
+      [row("Spiked Shield", { source_item_id: "Core: Shield" })],
+      [row("Spiked Shield", { source_item_id: "Core: Dagger" }, "t1")],
+    );
+    expect(renderSql("rules.items", diff, ["source_item_id"])).toEqual([
+      "-- rules.items:",
+      '--   Spiked Shield.source_item_id: reference "Core: Shield", target "Core: Dagger" (UPDATE skipped — it references other rows)',
+    ]);
   });
 
   test("reads for a person, and as the SQL that aligns the target, its one-sided rows as comments", () => {

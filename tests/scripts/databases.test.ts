@@ -24,11 +24,14 @@ describe("A script that drops databases or tables", () => {
     );
   });
 
-  test("resets no remote database, before touching anything", async () => {
+  test("resets only a local development or test database, before touching anything", async () => {
     const url = process.env.DATABASE_URL;
-    process.env.DATABASE_URL = "postgresql://u:p@ep-x.neon.tech/arkyvree_test";
     try {
+      process.env.DATABASE_URL = "postgresql://u:p@ep-x.neon.tech/arkyvree_test";
       await expect(resetDatabase(false)).rejects.toThrow("isn't a local database server");
+      // Production through a tunnel: on localhost, but not named as a development or test database
+      process.env.DATABASE_URL = "postgresql://u:p@localhost:5433/arkyvreedb";
+      await expect(resetDatabase(false)).rejects.toThrow("arkyvreedb isn't a development or test database");
     } finally {
       process.env.DATABASE_URL = url;
     }
