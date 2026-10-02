@@ -3,8 +3,8 @@ import {
   buildPoolParentNameMap,
   classAptitudePicks,
   classSpells,
+  existingFeatGranted,
   insertOrdinalInName,
-  loadExistingFeats,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import {
   formatStringArray,
@@ -18,7 +18,6 @@ import {
   toConstName,
   truncateDesc,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
-import { extractGrantedFeatNames, stripClassSuffix } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 
@@ -94,17 +93,6 @@ function buildClassFeatures(
   const { detected, mapping } = ref;
   const features_ = ref.mapping.features;
   const poolParentNames = buildPoolParentNameMap(features_, ref.raw.name, mapping.classFeatureAptitude);
-  const existingFeats = loadExistingFeats(ref._meta.book);
-  /**
-   * The existing feat a feature named `name` grants: that feat (with or without the class's suffix), or one its
-   * description says it gains as a bonus feat.
-   */
-  const existingFeatGranted = (name: string, description: string | undefined) => {
-    const baseName = stripClassSuffix(name, ref.raw.name);
-    if (baseName && existingFeats.has(baseName)) return baseName;
-    if (existingFeats.has(name)) return name;
-    return description ? extractGrantedFeatNames(description).find((n) => existingFeats.has(n)) : undefined;
-  };
 
   // Build per-level feat name map for multi-occurrence aptitude expansions
   const perLevelFeatNames = new Map<string, Map<number, string>>();
@@ -131,7 +119,7 @@ function buildClassFeatures(
     const mappedName = feature?.seedName ?? findMappedName(occ.name, features_);
     const name = mappedName ?? poolParentNames.get(occ.name.toLowerCase()) ?? occ.name;
 
-    const freeFeatName = existingFeatGranted(name, feature?.description);
+    const freeFeatName = existingFeatGranted(ref, name, feature?.description);
     if (freeFeatName && mapping.classFeatureAptitude) {
       for (const level of occ.levels) autoFreeFeats.push([level, freeFeatName, mapping.classFeatureAptitude]);
     } else {
@@ -155,7 +143,7 @@ function buildClassFeatures(
     if (feat.skip || feat.level == null || coveredKeys.has(key.toLowerCase())) continue;
     if (feat.aptitude && feat.aptitude !== mapping.classFeatureAptitude) continue;
     const name = feat.seedName ?? key;
-    const freeFeatName = existingFeatGranted(name, feat.description);
+    const freeFeatName = existingFeatGranted(ref, name, feat.description);
     if (freeFeatName && mapping.classFeatureAptitude) {
       autoFreeFeats.push([feat.level, freeFeatName, mapping.classFeatureAptitude]);
     } else {

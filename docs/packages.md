@@ -98,6 +98,8 @@ const dnd35Dmg: ContentPackage = {
 };
 ```
 
+A feat the seeds stop writing leaves existing databases through `removeUnusedFeat` (`seed/removeUnusedFeat.ts`): it removes the feat with its aptitude links and customizations, unless a class level grants it, a character picked it, or a fork or an extension copied it.
+
 Once every database has an update (production, staging and any other shared database: the runner refuses one below the new `seedsVersion`), fold it: change the seeds so a new database gets the same rows, drop the update, and raise `seedsVersion` to its version. The seeds alone then describe the package. Check a fold by seeding a new database both ways and comparing their content.
 
 ## Reference files

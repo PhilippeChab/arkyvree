@@ -15,6 +15,7 @@ import {
   autoCompanionGrantModifiers,
   checkedValue,
   checkOneOf,
+  extractGrantedFeatNames,
   matchesWithPluralVariants,
   normalizeDescription,
   normalizeWs,
@@ -86,6 +87,18 @@ export function loadExistingFeats(book?: string): Set<string> {
 
   _existingFeatsCache.set(key, feats);
   return feats;
+}
+
+/**
+ * The existing feat a class's feature named `name` grants instead of being a feat of its own: that feat (with or without
+ * the class's suffix), or one its description says it gains as a bonus feat.
+ */
+export function existingFeatGranted(ref: ClassReference, name: string, description: string | undefined) {
+  const existingFeats = loadExistingFeats(ref._meta.book);
+  const baseName = stripClassSuffix(name, ref.raw.name);
+  if (baseName && existingFeats.has(baseName)) return baseName;
+  if (existingFeats.has(name)) return name;
+  return description ? extractGrantedFeatNames(description).find((n) => existingFeats.has(n)) : undefined;
 }
 
 /** Merge detected aptitude picks with overrides. Overrides win per-target; detected picks not in overrides are preserved. */
@@ -252,7 +265,6 @@ export function classAptitudePicks(ref: ClassReference) {
 export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
   const { mapping, detected } = ref;
   const classSlug = stripSeparators(ref.raw.name);
-  const existingFeats = loadExistingFeats(ref._meta.book);
   const { aptitudeMinLevel, remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = classAptitudePicks(ref);
   const levelRequirement = (level: number): RequirementEntry[] => [gte(`classes.${classSlug}.level`, level)];
 
@@ -270,8 +282,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
     const name = feature.seedName ?? (feature.aptitude ? `${key} (${feature.aptitude})` : key);
     const lockedType = lockedFavoredEnemies.get(key.toLowerCase());
     // An existing feat the class grants is a free feat, not one of its own.
-    const baseName = stripClassSuffix(name, ref.raw.name);
-    if (!lockedType && baseName && existingFeats.has(baseName)) continue;
+    if (!lockedType && existingFeatGranted(ref, name, feature.description)) continue;
 
     const description = normalizeDescription(feature.description ?? "");
     const aptitudes = [feature.aptitude ?? mapping.classFeatureAptitude];
