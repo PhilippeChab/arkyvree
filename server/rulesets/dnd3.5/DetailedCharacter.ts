@@ -180,10 +180,11 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.leveledAptitudeIds,
     );
     this.detailedCharacterFeats.initialize(this.rulesetFeats, this.feats);
-    for (const feat of this.feats) {
-      if (feat.properties.length > 0) {
-        this.detailedCharacterFeatGroupings.registerFeat(feat, feat.properties);
-      }
+    // Every feat of a family, had or not, so a check of any of them reads the whole family
+    const rulesetFeatsById = new Map(this.rulesetFeats.map((feat) => [feat.id, feat]));
+    for (const prop of this.rulesetFeatProperties) {
+      const feat = rulesetFeatsById.get(prop.entityId);
+      if (feat) this.detailedCharacterFeatGroupings.registerFeat(feat, [prop]);
     }
     this.detailedCharacterFeats.injectGroupings(this.detailedCharacterFeatGroupings.getFeatGroupings());
     this.detailedCharacterSkills.initialize(

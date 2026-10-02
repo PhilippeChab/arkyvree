@@ -56,7 +56,7 @@ export function findCreatureType(text: string): CreatureType | null {
 
 const FAVORED_ENEMY_APTITUDE = "Favored Enemy";
 const FAVORED_ENEMY_SPECIALIZATION_APTITUDE = "Favored Enemy Specialization";
-const FAVORED_ENEMY_FAMILY = "Favored Enemy";
+export const FAVORED_ENEMY_FAMILY = "Favored Enemy";
 
 const favoredEnemy: FeatSeed[] = CREATURE_TYPES.map((t) => ({
   name: `Favored Enemy: ${t}`,

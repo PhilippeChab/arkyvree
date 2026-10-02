@@ -25,7 +25,7 @@ export const GRAY_GUARD: ClassSeed = {
     gte("skills.knowledgereligion.rank", 8),
     gte("skills.sensemotive.rank", 4),
     eqStr("identity.beliefs.alignment", "Lawful Good"),
-    eq("feats.layonhands.possessed"),
+    eq("feats.layonhands.*.possessed"),
   ],
   casterLevelAdvancement: { type: "divine", levels: [2, 4, 6, 8, 10] },
   classFeatureAptitude: "Gray Guard Class Feature",

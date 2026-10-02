@@ -43,7 +43,7 @@ export const BLACK_FLAME_ZEALOT: ClassSeed = {
       eqStr("identity.beliefs.alignment", "Neutral Evil"),
       eqStr("identity.beliefs.alignment", "Chaotic Evil"),
     ),
-    gte("feats.sneakattack.count", 1),
+    gte("feats.sneakattack.*.count", 1),
   ],
   casterLevelAdvancement: { type: "divine", levels: [2, 4, 6, 8, 10] },
   classFeatureAptitude: "Black Flame Zealot Class Feature",

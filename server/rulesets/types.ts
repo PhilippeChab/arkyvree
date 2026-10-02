@@ -118,6 +118,7 @@ export interface LoadedCharacterData {
   rulesetSaves: RulesetSave[];
   rulesetSkills: Skill[];
   rulesetFeats: Feat[];
+  rulesetFeatProperties: Property[];
   rulesetPowers: PowerWithAptitudes[];
   rulesetPowerProperties: Property[];
   rulesetAptitudes: Aptitude[];

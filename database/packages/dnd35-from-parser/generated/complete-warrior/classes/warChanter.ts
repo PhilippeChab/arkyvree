@@ -35,7 +35,7 @@ export const WAR_CHANTER: ClassSeed = {
       eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
       eqStr("identity.beliefs.alignment", "Chaotic Evil"),
     ),
-    eq("feats.inspirecourage.possessed"),
+    eq("feats.inspirecourage.*.possessed"),
   ],
   classFeatureAptitude: "War Chanter Class Feature",
   classFeatures: [

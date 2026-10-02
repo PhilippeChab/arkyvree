@@ -105,9 +105,6 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
     const feats = {
       weaponfocus: { longsword: { possessed: true }, greatsword: { possessed: false } },
       powercritical: { possessed: true },
-      sneakattackrogue: { possessed: true },
-      sneakattackassassin: { possessed: false },
-      ragebarbarian: { possessed: true },
     };
     test.each([
       [
@@ -123,7 +120,12 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
         { powers: { groups: { evocation: { magicmissile: { dc: { misc: 0 } }, burninghands: { dc: { misc: 1 } } } } } },
         [0, 1],
       ],
-      ["a key to the entries it prefixes", "feats.sneakattack.possessed", { feats }, [true, false]],
+      [
+        "a skill to the subtypes it prefixes",
+        "skills.knowledge.rank",
+        { skills: { knowledgearcana: { rank: 4 }, knowledgehistory: { rank: 0 }, diplomacy: { rank: 7 } } },
+        [4, 0],
+      ],
       [
         "a key to itself and the subtypes it prefixes",
         "skills.craft.rank",
@@ -190,6 +192,12 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
     test.each([
       ["a missing element", "abilities.charisma.score", { abilities: { strength: { score: 18 } } }],
       ["a key no entry starts with", "skills.craft.rank", { skills: { diplomacy: { rank: 7 } } }],
+      // A feat's family is checked by its group: a name starting other feats' is none of them
+      [
+        "a feat's name others start with",
+        "feats.sneakattack.possessed",
+        { feats: { sneakattackrogue: { possessed: true } } },
+      ],
       // Nothing is left to read in the subtypes.
       ["a prefix as the last element", "skills.craft", { skills: { craftarmorsmithing: { rank: 12 } } }],
       ["a missing spell school", "powers.groups.illusion.*.dc.misc", { powers: {} }],

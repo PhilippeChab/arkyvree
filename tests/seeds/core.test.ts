@@ -142,6 +142,27 @@ describe("The seeded core rules", () => {
     });
   });
 
+  test("put each class's own feat of a class feature in the feature's family, and only those", async () => {
+    const rows = await seededRows();
+    const familyOf = (name: string) =>
+      rows.properties.filter((p) => p.entityId === rows.feat(name).id && p.type === "FEAT_FAMILY").map((p) => p.value);
+    expect(
+      [
+        "Sneak Attack (Rogue)",
+        "Evasion (Monk)",
+        "Evasion (Animal Companion)",
+        "Rage (Barbarian)",
+        "Improved Evasion (Monk)",
+      ].map((name) => [name, familyOf(name)]),
+    ).toEqual([
+      ["Sneak Attack (Rogue)", ["Sneak Attack"]],
+      ["Evasion (Monk)", ["Evasion"]],
+      ["Evasion (Animal Companion)", ["Evasion"]],
+      ["Rage (Barbarian)", ["Rage"]],
+      ["Improved Evasion (Monk)", []],
+    ]);
+  });
+
   describe("favored enemies", () => {
     const variants = CREATURE_TYPES.map((type) => `Favored Enemy: ${type}`);
     const umbrellaSlots = (rows: Awaited<ReturnType<typeof seededRows>>) =>

@@ -88,6 +88,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   protected rulesetSaves: RulesetSave[] = [];
   protected rulesetSkills: Skill[] = [];
   protected rulesetFeats: Feat[] = [];
+  protected rulesetFeatProperties: Property[] = [];
   protected rulesetPowers: PowerWithAptitudes[] = [];
   protected rulesetPowerProperties: Property[] = [];
   protected rulesetAptitudes: Aptitude[] = [];
@@ -248,6 +249,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     this.rulesetSaves = data.rulesetSaves;
     this.rulesetSkills = data.rulesetSkills;
     this.rulesetFeats = data.rulesetFeats;
+    this.rulesetFeatProperties = data.rulesetFeatProperties;
     this.rulesetPowers = data.rulesetPowers;
     this.rulesetPowerProperties = data.rulesetPowerProperties;
     this.rulesetAptitudes = data.rulesetAptitudes;

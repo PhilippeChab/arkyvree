@@ -11,7 +11,7 @@ export const BEAR_WARRIOR: ClassSeed = {
   requirements: [
     gte("combat.bab", 7),
     eq("feats.powerattack.possessed"),
-    eq("feats.rage.possessed"),
+    eq("feats.rage.*.possessed"),
   ],
   classFeatureAptitude: "Bear Warrior Class Feature",
   classFeatures: [

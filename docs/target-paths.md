@@ -126,6 +126,10 @@ Grouped by shield type and item name.
 |------|------|-------------|
 | `feats.<name>.possessed` | boolean | Whether feat is possessed |
 | `feats.<name>.count` | number | Times taken — stackable feats only (req only) |
+| `feats.<family>.*.possessed` | boolean | Any feat of the family possessed (req), every feat of it (modifier) |
+| `feats.<family>.*.count` | number | Times any one feat of the family was taken (req only) |
+
+A family is the feats sharing a `FEAT_FAMILY` property (*Feat family groupings* in [customization.md](./customization.md)). `feats.<family>.possessed` names no feat.
 
 ### Proficiency feat paths (auto-generated as item requirements)
 
