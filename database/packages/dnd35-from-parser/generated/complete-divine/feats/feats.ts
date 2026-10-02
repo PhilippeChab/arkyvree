@@ -1,5 +1,5 @@
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
-import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 
 export const GENERAL_FEATS: FeatSeed[] = [
   {
@@ -73,7 +73,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.relevantalignment.possessed"),
+      or(eqStr("identity.beliefs.alignment", "Chaotic Good"), eqStr("identity.beliefs.alignment", "Chaotic Neutral"), eqStr("identity.beliefs.alignment", "Chaotic Evil")),
     ],
   },
   {
@@ -81,7 +81,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.relevantalignment.possessed"),
+      or(eqStr("identity.beliefs.alignment", "Lawful Evil"), eqStr("identity.beliefs.alignment", "Neutral Evil"), eqStr("identity.beliefs.alignment", "Chaotic Evil")),
     ],
   },
   {
@@ -89,7 +89,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.relevantalignment.possessed"),
+      or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Neutral Good"), eqStr("identity.beliefs.alignment", "Chaotic Good")),
     ],
   },
   {
@@ -97,7 +97,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "The save DC for all your spells bearing an alignment descriptor (chaos, evil, good, or law) that corresponds to your own alignment increases by +1. This bonus does not stack with bonuses from other Spell Focus feats.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.relevantalignment.possessed"),
+      or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Evil")),
     ],
   },
   {

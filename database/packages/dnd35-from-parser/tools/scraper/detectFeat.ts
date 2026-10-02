@@ -2,7 +2,9 @@ import {
   loadBonusFeatAptitudes,
   loadBonusFeatClassLevels,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { parseAlignmentRequirement } from "@/database/packages/dnd35-from-parser/tools/scraper/alignment.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
+import { familyOptions, featWithoutChoice } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
 import {
   findInvalidRequirementPaths,
   isValidModifierPath,
@@ -50,6 +52,8 @@ const ABILITY_PREREQ_PATTERNS = [
   /^grace \+\d+$/i,
   /^skirmish \+\d+d\d+.*$/i,
   /^sudden strike \+\d+d\d+$/i,
+  /^ki strike \(lawful\)$/i,
+  /^relevant alignment$/i,
   /^Weapon Proficiency\b/i,
 ];
 
@@ -289,7 +293,7 @@ function extractFeatPrereqs(text: string): string[] {
     if (trimmed.match(/^[A-Z][a-zA-Z]/) && !isCommonPhrase(trimmed)) {
       const titled = titleCaseFeat(trimmed);
       if (!ABILITY_PREREQ_PATTERNS.some((p) => p.test(titled))) {
-        feats.push(titled);
+        feats.push(featWithoutChoice(titled) ?? titled);
       }
     }
   }
@@ -414,11 +418,9 @@ function parsePrerequisiteText(text: string): {
   }
   while ((multiMatch = multiOptionFeatRegex.exec(cleanedText)) !== null) {
     const featBase = titleCaseFeat(multiMatch[1].trim());
-    const optionsText = multiMatch[2];
-    const options = optionsText
-      .split(/,\s*(?:or\s+)?|\s+or\s+/)
-      .map((o) => o.trim())
-      .filter(Boolean);
+    // "Ability to fly (naturally, magically, or through shapechanging)" names no feat
+    if (isCommonPhrase(featBase)) continue;
+    const options = familyOptions(featBase, multiMatch[2]);
     if (options.length >= 2) {
       const children = options.map((opt) => {
         const name = `${featBase}: ${titleCaseFeat(opt)}`;
@@ -558,8 +560,14 @@ function parsePrerequisiteText(text: string): {
       resolve: () => eq(feat("Wild Shape (Druid)")),
     },
     {
+      // Any class's Summon Familiar (the generator makes it a check of its family)
       pattern: /[Aa]bility to acquire a (?:new )?familiar/,
-      resolve: () => or(eq(feat("Familiar (Sorcerer)")), eq(feat("Familiar (Wizard)"))),
+      resolve: () => eq(feat("Summon Familiar")),
+    },
+    {
+      // A monk's ki strike is lawful from monk level 10
+      pattern: /[Kk]i strike \(lawful\)/,
+      resolve: () => gte("classes.monk.level", 10),
     },
     // These are class features inherent to a class — not feat prerequisites
     { pattern: /[Ff]avored enemy ability/i, resolve: () => null },
@@ -598,7 +606,7 @@ function parsePrerequisiteText(text: string): {
   }
 
   // Detect prerequisite patterns we recognize but can't map to requirement entries
-  const unresolvedPatterns = [/[Pp]roficien(?:t|cy) with (?:selected )?(?:weapon|armor)/];
+  const unresolvedPatterns = [/[Pp]roficien(?:t|cy) with (?:selected )?(?:weapon|armor)/, /[Aa]bility to fly\b/];
   for (const pattern of unresolvedPatterns) {
     const match = cleanedText.match(pattern);
     if (match) {
@@ -678,6 +686,14 @@ function isStackable(entry: FeatReference["raw"][number]): boolean {
 // Detect requirements + aptitudes for all feats
 // ---------------------------------------------------------------------------
 
+// The alignment "Relevant alignment" asks of a feat for an alignment's spells ("Spell Focus (Chaos)")
+const RELEVANT_ALIGNMENTS: Record<string, string> = {
+  chaos: "Any chaotic",
+  evil: "Any evil",
+  good: "Any good",
+  law: "Any lawful",
+};
+
 export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["detected"] {
   const detected: FeatReference["detected"] = {};
 
@@ -707,6 +723,13 @@ export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["det
         requirements.push(req);
       }
     }
+
+    // "Relevant alignment" (Spell Focus (Chaos), (Evil)…): an alignment of the feat's
+    const relevantAlignment = /\brelevant alignment\b/i.test(entry.prerequisiteText ?? "")
+      ? RELEVANT_ALIGNMENTS[/\((\w+)\)$/.exec(entry.name)?.[1].toLowerCase() ?? ""]
+      : undefined;
+    const alignment = relevantAlignment && parseAlignmentRequirement(relevantAlignment);
+    if (alignment) requirements.push(alignment);
 
     // Detect implicit feat prerequisites from benefit/special text
     // e.g. "to which you already have applied the Spell Focus feat"

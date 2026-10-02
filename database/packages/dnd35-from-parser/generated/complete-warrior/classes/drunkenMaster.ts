@@ -26,7 +26,7 @@ export const DRUNKEN_MASTER: ClassSeed = {
     gte("skills.tumble.rank", 8),
     eq("feats.dodge.possessed"),
     eq("feats.greatfortitude.possessed"),
-    eq("feats.improvedunarmedstrikeormonksunarmedstrikeability.possessed"),
+    eq("feats.improvedunarmedstrike.possessed"),
     eq("feats.flurryofblows.*.possessed"),
   ],
   classFeatureAptitude: "Drunken Master Class Feature",

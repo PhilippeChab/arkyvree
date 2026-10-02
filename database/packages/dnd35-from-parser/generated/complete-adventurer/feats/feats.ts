@@ -199,9 +199,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     name: "Improved Flight",
     description: "Your maneuverability class while flying improves by one step--clumsy to poor, poor to average, average to good, or good to perfect.",
     aptitudes: ["General"],
-    requirements: [
-      or(eq("feats.abilitytoflynaturally.possessed"), eq("feats.abilitytoflymagically.possessed"), eq("feats.abilitytoflythroughshapechanging.possessed")),
-    ],
   },
   {
     name: "Improved Swimming",

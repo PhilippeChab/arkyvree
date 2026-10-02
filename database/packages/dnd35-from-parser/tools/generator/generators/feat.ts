@@ -33,7 +33,7 @@ import type {
   RequirementEntry,
   WizardSchoolDefinition,
 } from "@/database/packages/dnd35/content/types.ts";
-import { weaponProficiencyFeats } from "@/database/packages/dnd35/content/weapons.ts";
+import { spellWeaponFocusFeats, weaponProficiencyFeats } from "@/database/packages/dnd35/content/weapons.ts";
 import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
@@ -140,6 +140,13 @@ const CORE_SYSTEM_FEATS: {
     build: () => weaponProficiencyFeats,
   },
   {
+    file: "feats.ts",
+    name: "SPELL_WEAPON_FOCUS_FEATS",
+    code: "spellWeaponFocusFeats",
+    uses: ["spellWeaponFocusFeats"],
+    build: () => spellWeaponFocusFeats,
+  },
+  {
     file: "favoredEnemy.ts",
     name: "favoredEnemy",
     code: "favoredEnemyFeats",
@@ -148,7 +155,7 @@ const CORE_SYSTEM_FEATS: {
   },
 ];
 
-/** The core rules' system feats (the wizard's school choice, the weapon proficiencies, the favored enemies). */
+/** The core rules' system feats (the wizard's school choice, the weapon proficiencies, Weapon Focus for spells, the favored enemies). */
 export function coreSystemFeats(wizardSchools: WizardSchoolDefinition[]): FeatSeed[] {
   return CORE_SYSTEM_FEATS.flatMap(({ build }) => build(wizardSchools));
 }
@@ -380,6 +387,7 @@ const IMPORTS: ImportTable = [
       "EXOTIC_WEAPONS",
       "CROSSBOW_WEAPONS",
       "proficiencyRequirements",
+      "spellWeaponFocusFeats",
       "weaponProficiencyFeats",
     ],
   ],

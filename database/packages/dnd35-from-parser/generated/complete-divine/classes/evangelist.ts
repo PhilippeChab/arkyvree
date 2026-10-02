@@ -1,5 +1,5 @@
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
-import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 
 export const EVANGELIST: ClassSeed = {
   name: "Evangelist",
@@ -37,8 +37,7 @@ export const EVANGELIST: ClassSeed = {
     gte("skills.knowledgereligion.rank", 5),
     gte("skills.perform.rank", 6),
     gte("skills.sensemotive.rank", 5),
-    eq("feats.negotiatoror.possessed"),
-    eq("feats.persuasive.possessed"),
+    or(eq("feats.negotiator.possessed"), eq("feats.persuasive.possessed")),
   ],
   classFeatureAptitude: "Evangelist Class Feature",
   classFeatures: [

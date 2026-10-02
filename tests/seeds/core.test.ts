@@ -21,6 +21,9 @@ describe("The seeded core rules", () => {
   test.each([
     ["feats", "Weapon Focus: Longsword", [...proficiency("martial", "longsword"), bab1]],
     ["feats", "Weapon Focus: Dagger", [...proficiency("simple", "dagger"), bab1]],
+    ["feats", "Weapon Focus: Spiked Gauntlet", [...proficiency("simple", "spikedgauntlet"), bab1]],
+    // A spell has no proficiency to require
+    ["feats", "Weapon Focus: Ranged Spell", ["1 combat.bab greater_than_or_equal 1"]],
     [
       "feats",
       "Weapon Specialization: Longsword",
@@ -44,6 +47,7 @@ describe("The seeded core rules", () => {
     ["feats", "Necromancy Specialist", ["1 classes.wizard.level greater_than_or_equal 1"]],
     ["items", "Handaxe", proficiency("martial", "handaxe")],
     ["items", "Longsword", proficiency("martial", "longsword")],
+    ["items", "Spiked Gauntlet", proficiency("simple", "spikedgauntlet")],
   ] as const)("%s: %s has its requirements", async (type, name, expected) => {
     const rows = await seededRows();
     const entity = type === "feats" ? rows.feat(name) : rows.items.find((item) => item.name === name)!;
@@ -142,7 +146,7 @@ describe("The seeded core rules", () => {
     });
   });
 
-  test("put each class's own feat of a class feature in the feature's family, and only those", async () => {
+  test("put each class's own feat of a class feature, and a spell's Weapon Focus, in its family, and only those", async () => {
     const rows = await seededRows();
     const familyOf = (name: string) =>
       rows.properties.filter((p) => p.entityId === rows.feat(name).id && p.type === "FEAT_FAMILY").map((p) => p.value);
@@ -152,6 +156,8 @@ describe("The seeded core rules", () => {
         "Evasion (Monk)",
         "Evasion (Animal Companion)",
         "Rage (Barbarian)",
+        "Summon Familiar (Wizard)",
+        "Weapon Focus: Touch Spell",
         "Improved Evasion (Monk)",
       ].map((name) => [name, familyOf(name)]),
     ).toEqual([
@@ -159,6 +165,8 @@ describe("The seeded core rules", () => {
       ["Evasion (Monk)", ["Evasion"]],
       ["Evasion (Animal Companion)", ["Evasion"]],
       ["Rage (Barbarian)", ["Rage"]],
+      ["Summon Familiar (Wizard)", ["Summon Familiar"]],
+      ["Weapon Focus: Touch Spell", ["Weapon Focus"]],
       ["Improved Evasion (Monk)", []],
     ]);
   });

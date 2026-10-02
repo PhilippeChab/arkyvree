@@ -549,7 +549,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "When you choose a familiar, the creatures on the table below are also available. You can choose a familiar with an alignment up to one step away on each of the alignment axes (lawful through chaotic,good through evil). For example, a chaotic good spellcaster could acquire a neutral familiar. A lawful neutral spellcaster could acquire a neutral good familiar. Except as noted here, improved familiars otherwise use the normal rules for familiars (PH 52). Arcane Familiar Alignment Caster Level Monstrous centipede, Small N 2nd Badger N 3rd Monstrous scorpion, Small N 3rd Viper, Medium N 3rd Monstrous spider, Small N 4th Vargouille* NE 6th Mephit, any N 7th * Vargouilles summoned as familiars do not possess the kiss supernatural ability.",
     aptitudes: ["General"],
     requirements: [
-      or(eq("feats.familiarsorcerer.possessed"), eq("feats.familiarwizard.possessed")),
+      eq("feats.summonfamiliar.*.possessed"),
     ],
   },
   {

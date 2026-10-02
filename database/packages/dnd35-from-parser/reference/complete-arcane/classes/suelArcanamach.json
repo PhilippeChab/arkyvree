@@ -5,52 +5,7 @@
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/suel-arcanamach/",
     "type": "class"
   },
-  "overrides": {
-    "requirements": [
-      {
-        "operator": "greater_than_or_equal",
-        "target": "combat.bab",
-        "value": "6",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.concentration.rank",
-        "value": "4",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.jump.rank",
-        "value": "4",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.spellcraft.rank",
-        "value": "5",
-        "valueType": "number"
-      },
-      {
-        "operator": "greater_than_or_equal",
-        "target": "skills.tumble.rank",
-        "value": "4",
-        "valueType": "number"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.combatcasting.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      },
-      {
-        "operator": "equal",
-        "target": "feats.ironwill.possessed",
-        "value": "true",
-        "valueType": "boolean"
-      }
-    ]
-  },
+  "overrides": {},
   "raw": {
     "bonusSpellAbility": "Charisma",
     "classFeatures": [

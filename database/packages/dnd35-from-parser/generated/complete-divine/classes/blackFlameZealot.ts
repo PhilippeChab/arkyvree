@@ -32,7 +32,7 @@ export const BLACK_FLAME_ZEALOT: ClassSeed = {
     gte("skills.hide.rank", 8),
     gte("skills.knowledgereligion.rank", 8),
     gte("skills.movesilently.rank", 8),
-    eq("feats.exoticweaponproficiencykukri.possessed"),
+    or(eq("feats.martialweaponproficiency.possessed"), eq("feats.martialweaponproficiencykukri.possessed")),
     eq("feats.ironwill.possessed"),
     gte("spellcasting.divine", 2),
     or(

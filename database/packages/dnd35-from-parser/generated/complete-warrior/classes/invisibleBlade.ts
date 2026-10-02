@@ -1,5 +1,5 @@
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
-import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 
 export const INVISIBLE_BLADE: ClassSeed = {
   name: "Invisible Blade",
@@ -28,9 +28,7 @@ export const INVISIBLE_BLADE: ClassSeed = {
     gte("skills.sensemotive.rank", 6),
     eq("feats.farshot.possessed"),
     eq("feats.pointblankshot.possessed"),
-    eq("feats.weaponfocusdagger.possessed"),
-    eq("feats.kukri.possessed"),
-    eq("feats.orpunchdagger.possessed"),
+    or(eq("feats.weaponfocusdagger.possessed"), eq("feats.weaponfocuskukri.possessed"), eq("feats.weaponfocuspunchingdagger.possessed")),
   ],
   classFeatureAptitude: "Invisible Blade Class Feature",
   classFeatures: [
