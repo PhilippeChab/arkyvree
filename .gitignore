@@ -53,9 +53,10 @@ migrate-bin
 # Scraper cache
 database/packages/dnd35-from-parser/tools/scraper/.cache/
 
-# The parser's generation in progress (generated/'s copy, swapped in when it succeeds)
+# The parser's generation in progress (generated/'s copy, swapped in when it succeeds, and its lock)
 database/packages/dnd35-from-parser/generated.next/
 database/packages/dnd35-from-parser/generated.previous/
+database/packages/dnd35-from-parser/generated.lock
 
 # Dumps
 *.pgdump

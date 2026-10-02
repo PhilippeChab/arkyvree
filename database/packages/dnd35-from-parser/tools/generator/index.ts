@@ -1,7 +1,9 @@
 import {
+  closeSync,
   cpSync,
   existsSync,
   mkdirSync,
+  openSync,
   readdirSync,
   readFileSync,
   renameSync,
@@ -1089,26 +1091,48 @@ export function generateAll(
   return failures;
 }
 
+/** Takes `lock`, a file only one process can create: a second generation on the same folder would work in the first's copy. */
+function takeLock(lock: string): number {
+  try {
+    return openSync(lock, "wx");
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
+    throw new Error(`Another generation is running on this folder: delete ${lock} if it was killed`);
+  }
+}
+
 /**
  * Runs a generation in a copy of `dir`, which takes `dir`'s place only when the generation reports no failure: a failed
- * one leaves `dir` as it was rather than half-written. The copy sits next to `dir`, so the swap is a rename.
+ * one leaves `dir` as it was rather than half-written. The copy sits next to `dir`, so the swap is a rename, and one
+ * generation runs on `dir` at a time.
  */
 export function generateAtomically(dir: string, generate: (copy: string) => string[]): string[] {
   const copy = `${dir}.next`;
   const previous = `${dir}.previous`;
-  rmSync(copy, { recursive: true, force: true });
-  rmSync(previous, { recursive: true, force: true });
-  cpSync(dir, copy, { recursive: true });
+  const lock = `${dir}.lock`;
+  const lockFd = takeLock(lock);
   try {
+    // A run killed mid-swap left the tree only as `previous`
+    if (!existsSync(dir) && existsSync(previous)) renameSync(previous, dir);
+    rmSync(copy, { recursive: true, force: true });
+    rmSync(previous, { recursive: true, force: true });
+    cpSync(dir, copy, { recursive: true });
     const failures = generate(copy);
     if (failures.length === 0) {
       renameSync(dir, previous);
-      renameSync(copy, dir);
+      try {
+        renameSync(copy, dir);
+      } catch (error) {
+        renameSync(previous, dir);
+        throw error;
+      }
       rmSync(previous, { recursive: true, force: true });
     }
     return failures;
   } finally {
     rmSync(copy, { recursive: true, force: true });
+    closeSync(lockFd);
+    rmSync(lock, { force: true });
   }
 }
 
@@ -1121,7 +1145,7 @@ function main() {
     process.exit(1);
   }
   const args = process.argv.slice(2);
-  const failures = generateAtomically(GENERATED_DIR, (dir) => {
+  const generate = (dir: string) => {
     if (!args[0]?.endsWith(".json")) return generateAll(parseCliArgs(), dir);
     const bookIdx = args.indexOf("--book");
     try {
@@ -1130,7 +1154,15 @@ function main() {
     } catch (error) {
       return [error instanceof Error ? error.message : String(error)];
     }
-  });
+  };
+  let failures: string[];
+  try {
+    failures = generateAtomically(GENERATED_DIR, generate);
+  } catch (error) {
+    // Another generation running, or the copy or the swap failing: generated/ is as it was
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  }
   if (failures.length > 0) {
     console.error(
       `${failures.length} reference(s) failed, so generated/ is unchanged:\n${failures.map((f) => `  ${f}`).join("\n")}`,

@@ -71,4 +71,51 @@ describe("The generator", () => {
       rmSync(parent, { recursive: true, force: true });
     }
   });
+
+  test("drops the files a generation removes, and recovers what a killed run left", () => {
+    const parent = mkdtempSync(join(tmpdir(), "generation-"));
+    const folder = join(parent, "generated");
+    try {
+      // Killed mid-swap: the tree only as the previous one, and a stale copy
+      mkdirSync(`${folder}.previous`);
+      writeFileSync(join(`${folder}.previous`, "index.ts"), "before");
+      writeFileSync(join(`${folder}.previous`, "domainFeats.ts"), "stale");
+      mkdirSync(`${folder}.next`);
+      writeFileSync(join(`${folder}.next`, "junk.ts"), "junk");
+
+      expect(
+        generateAtomically(folder, (copy) => {
+          rmSync(join(copy, "domainFeats.ts"));
+          return [];
+        }),
+      ).toEqual([]);
+      expect(filesOf(folder)).toEqual(["index.ts"]);
+      expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe("before");
+      expect(readdirSync(parent)).toEqual(["generated"]);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  test("refuses a second generation on the same folder while one runs", () => {
+    const parent = mkdtempSync(join(tmpdir(), "generation-"));
+    const folder = join(parent, "generated");
+    try {
+      mkdirSync(folder);
+      writeFileSync(join(folder, "index.ts"), "before");
+      expect(
+        generateAtomically(folder, (copy) => {
+          writeFileSync(join(copy, "index.ts"), "first");
+          expect(() => generateAtomically(folder, () => [])).toThrow("Another generation is running on this folder");
+          writeFileSync(join(copy, "items.ts"), "first");
+          return [];
+        }),
+      ).toEqual([]);
+      expect(filesOf(folder)).toEqual(["index.ts", "items.ts"]);
+      expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe("first");
+      expect(readdirSync(parent)).toEqual(["generated"]);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
 });
