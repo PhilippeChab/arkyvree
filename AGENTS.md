@@ -163,7 +163,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 **Test Structure:**
 
-- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeders, the seeded content, the package runner and the test data), `/tests/parser` (the parser tools; the scraper's parsers read the trimmed pages in `tests/parser/fixtures`), `/tests/jobs`, `/tests/middlewares` (the rate limits), `/tests/shared` (the shared code, and its enum and operator lists against the schema and the database)
+- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeders, the seeded content, the package runner and the test data), `/tests/parser` (the parser tools; the scraper's parsers read the trimmed pages in `tests/parser/fixtures`), `/tests/jobs`, `/tests/middlewares` (the rate limits), `/tests/shared` (the shared code, and its enum and operator lists against the schema and the database), `/tests/scripts` (the database scripts' guards, and `prod:diff`'s content comparison: every column of every seeded table)
 - Client tests: `/tests/client` (the client's logic that needs no browser: `lib/`, and pure modules such as the inventory dialogs' `equipment.ts`)
 - E2E tests: `/tests/e2e`
 - What tests do differently (no CSRF check, rate limit or email, cheap password hashes) reads `isTest` (`server/environment.ts`): `NODE_ENV=test`, which `tests/env.ts` and the e2e server set, never the database's name

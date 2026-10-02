@@ -1,9 +1,9 @@
 import { applyPackages } from "@/database/packages/runner.ts";
 import testSeeds from "@/database/seeds/index.ts";
-import { db as defaultDb } from "@/server/database/index.ts";
-import type { Db } from "@/server/database/production.ts";
+import type { Db } from "@/server/database/index.ts";
 
-export default async function seedDatabase(db: Db, includeTestSeeds: boolean = true) {
+/** Applies the content packages to `db`, then, when `includeTestSeeds`, the test data's seeds (reset.ts). */
+export default async function seedDatabase(db: Db, includeTestSeeds: boolean) {
   console.log("Applying content packages...");
   await applyPackages(db);
   console.log("✓ Content packages applied");
@@ -17,23 +17,4 @@ export default async function seedDatabase(db: Db, includeTestSeeds: boolean = t
   }
 
   console.log("Database seeded successfully.");
-}
-
-if (import.meta.main) {
-  const args = process.argv.slice(2);
-
-  if (args.includes("--help") || args.includes("-h")) {
-    console.log(`
-Usage: bun run scripts/db/seed.ts [options]
-
-Options:
-  --with-test-data    Include test data seeds
-  --help, -h          Show this help message
-`);
-    process.exit(0);
-  }
-
-  const includeTestSeeds = args.includes("--with-test-data");
-  await seedDatabase(defaultDb, includeTestSeeds);
-  process.exit(0);
 }

@@ -5,82 +5,63 @@ import { Pool } from "pg";
 
 import { db } from "@/server/database/index.ts";
 
+import { assertLocalDatabase, databaseOf } from "./clone-database.ts";
 import seedDatabase from "./seed.ts";
 
-export default async function resetDatabase(includeSeeds: boolean = true) {
+/**
+ * Empties the local database DATABASE_URL names (every schema the app or its tools made, and public's tables and
+ * enums), migrates it as production does, then seeds it.
+ */
+export default async function resetDatabase(includeTestSeeds: boolean) {
   const connectionString = process.env.DATABASE_URL;
-
-  if (!connectionString) {
-    throw new Error("DATABASE_URL is not set");
+  if (!connectionString) throw new Error("DATABASE_URL is not set");
+  assertLocalDatabase(connectionString, "reset");
+  // A tunnel to a remote server is local too: the database's name has to say it's a development or test one
+  const { name } = databaseOf(connectionString);
+  if (!/(^|_)(dev|test)(_|$)/.test(name)) {
+    throw new Error(`${name} isn't a development or test database (dev or test a word of its name): only one is reset`);
   }
+  console.log(`Resetting database: ${name} on ${new URL(connectionString).host}`);
 
-  console.log(`Resetting database: ${connectionString}`);
+  await db.execute(`
+    CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+  `);
+  await db.execute(`
+    DO $$ DECLARE
+        r RECORD;
+    BEGIN
+        FOR r IN (
+            SELECT nspname FROM pg_namespace
+            WHERE nspname NOT IN ('public', 'information_schema') AND nspname !~ '^pg_'
+        ) LOOP
+            EXECUTE 'DROP SCHEMA ' || quote_ident(r.nspname) || ' CASCADE';
+        END LOOP;
 
+        FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+            EXECUTE 'DROP TABLE IF EXISTS public.' || quote_ident(r.tablename) || ' CASCADE';
+        END LOOP;
+
+        FOR r IN (SELECT typname FROM pg_type WHERE typnamespace = 'public'::regnamespace AND typtype = 'e') LOOP
+            EXECUTE 'DROP TYPE IF EXISTS public.' || quote_ident(r.typname) || ' CASCADE';
+        END LOOP;
+    END $$;
+  `);
+
+  const pool = new Pool({ connectionString });
   try {
-    // Ensure extensions exist
-    await db.execute(`
-      CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
-      CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
-    `);
-
-    // Drop all tables, schemas, and enums
-    await db.execute(`
-      DO $$ DECLARE
-          r RECORD;
-      BEGIN
-          FOR r IN (
-              SELECT schemaname, tablename
-              FROM pg_tables
-              WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-          ) LOOP
-              EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.schemaname) || '.' || quote_ident(r.tablename) || ' CASCADE';
-          END LOOP;
-
-          FOR r IN (
-              SELECT nspname
-              FROM pg_namespace
-              WHERE nspname IN ('account', 'customization', 'campaign', 'character', 'rules', 'storage', 'graphile_worker')
-          ) LOOP
-              EXECUTE 'DROP SCHEMA IF EXISTS ' || quote_ident(r.nspname) || ' CASCADE';
-          END LOOP;
-
-          FOR r IN (
-              SELECT typname
-              FROM pg_type
-              WHERE typnamespace = 'public'::regnamespace
-                AND typtype = 'e'
-          ) LOOP
-              EXECUTE 'DROP TYPE IF EXISTS public.' || quote_ident(r.typname) || ' CASCADE';
-          END LOOP;
-      END $$;
-    `);
-
-    // Apply migrations (same path as production)
-    const pool = new Pool({ connectionString });
-    const migrationDb = drizzle(pool);
-    await migrate(migrationDb, { migrationsFolder: "./drizzle" });
-
-    // Set up graphile-worker schema
+    await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
     await runMigrations({ pgPool: pool });
-
+  } finally {
     await pool.end();
-    console.log("✓ Migrations applied");
-
-    // Seed
-    await seedDatabase(db, includeSeeds);
-  } catch (err) {
-    const e = err as Error;
-    console.error("Error resetting database:");
-    console.error(e.message);
-    console.error(e.cause);
-    console.error(e.stack);
-    throw err;
   }
+  console.log("✓ Migrations applied");
+
+  await seedDatabase(db, includeTestSeeds);
 }
 
 if (import.meta.main) {
   const args = process.argv.slice(2);
-
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
 Usage: bun run scripts/db/reset.ts [options]
@@ -91,9 +72,7 @@ Options:
 `);
     process.exit(0);
   }
-
-  const includeTestSeeds = args.includes("--with-test-data");
-  await resetDatabase(includeTestSeeds);
+  await resetDatabase(args.includes("--with-test-data"));
   console.log("Database reset completed!");
   process.exit(0);
 }

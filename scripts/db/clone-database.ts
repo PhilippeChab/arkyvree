@@ -20,8 +20,16 @@ export function databaseOf(url: string) {
 /** The URL of the database named `name` on `url`'s server. */
 export const withDatabase = (url: string, name: string) => `${databaseOf(url).server}/${name}${new URL(url).search}`;
 
-/** The hosts of a local database server: the only one whose databases are replaced. */
+/** The hosts of a local database server: the only one whose databases are replaced or reset. */
 const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
+
+/** Refuses `url` unless its database is on a local server: a script that drops databases or tables runs only there. */
+export function assertLocalDatabase(url: string, action: string) {
+  const { hostname } = new URL(url);
+  if (!LOCAL_HOSTS.includes(hostname)) {
+    throw new Error(`${hostname} isn't a local database server: only a local database is ${action}`);
+  }
+}
 
 /**
  * Replaces the databases `targets` with copies of `templateUrl`'s database. Only a local test database (`test` a word
@@ -29,9 +37,7 @@ const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
  */
 export async function cloneDatabase(templateUrl: string, targets: string[]) {
   const { server, name: template } = databaseOf(templateUrl);
-  const { hostname } = new URL(templateUrl);
-  if (!LOCAL_HOSTS.includes(hostname))
-    throw new Error(`${hostname} isn't a local database server: only a local test database is copied`);
+  assertLocalDatabase(templateUrl, "copied");
   if (!/^[a-z0-9_]+$/.test(template) || !/(^|_)test(_|$)/.test(template)) {
     throw new Error(
       `${template} isn't a test database (test a word of a name of letters, digits and _): only a test database is copied`,
