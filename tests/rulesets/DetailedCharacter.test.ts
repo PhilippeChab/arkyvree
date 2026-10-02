@@ -37,6 +37,7 @@ import {
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
+import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character } from "@/shared/relations.ts";
 import {
@@ -45,6 +46,7 @@ import {
   findKlassLevel,
   getSeedCtx,
   invalidateSeededRuleset,
+  makeSession,
   NIL_UUID,
 } from "@/tests/helpers.ts";
 
@@ -867,6 +869,44 @@ describe("DetailedCharacter", () => {
           requirementIssues(detailed).find((issue) => issue.entityName === "Exotic Weapon Proficiency: Whip"),
         ).toBeUndefined();
       });
+    });
+    test("keep what a class grants once the character's ruleset copies the class", async () => {
+      // Editing an inherited class in a fork copies it there (copy-on-write): the character's levels then read the
+      // copy's, whose grants a lookup by the levels' stored class levels never reached
+      const dmgId = (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id;
+      const fork = await forkWith(DND35_DMG_NAME);
+      const characterId = await createSeedCharacter(
+        "Archmage Candidate",
+        { Strength: 8, Dexterity: 14, Constitution: 12, Intelligence: 18, Wisdom: 10, Charisma: 10 },
+        { rulesetId: fork.id },
+      );
+      const archmage = (await Klasses.findOne(db, { name: "Archmage", rulesetId: dmgId }))!;
+      const highArcana = (await Aptitudes.findOne(db, { name: "Archmage High Arcana", rulesetId: dmgId }))!;
+      for (const [index, option] of ["Arcane Reach", "Spell Power"].entries()) {
+        const feat = (await Feats.findOne(db, { name: `${option} (Archmage High Arcana)`, rulesetId: dmgId }))!;
+        await addCharacterLevel(characterId, (await findKlassLevel(archmage.id, index + 1))!.id, {
+          feats: [{ featId: feat.id, aptitudeId: highArcana.id }],
+        });
+      }
+      // Each level's High Arcana (Archmage) grants one pick of the High Arcana
+      const highArcanaPicks = async () => {
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        const { allowed, spent } = detailed.getDetailedCharacterAptitudes().getAptitudes()["archmagehigharcana"];
+        return {
+          allowed,
+          spent,
+          granted: detailed.getDetailedCharacterFeats().getFeat("High Arcana (Archmage)")?.count,
+        };
+      };
+      expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
+
+      await ClassesMethods.updateRulesetKlass(makeSession(), fork.id, archmage.id, {
+        name: "Archmage",
+        description: "Ours",
+      });
+      invalidateRuleset(fork.id);
+      expect(await Klasses.findOne(db, { name: "Archmage", rulesetId: fork.id })).toBeDefined();
+      expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
     });
   });
 

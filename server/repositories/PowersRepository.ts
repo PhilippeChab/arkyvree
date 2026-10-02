@@ -219,12 +219,13 @@ class PowersRepository extends BaseRepository<typeof powersInRules, PowerInstanc
       );
   }
 
-  async findManyByKlassLevelIds(db: Db, where: { klassLevelIds: string[]; characterLevelIds: string[] }) {
-    return await db
+  /** The powers the character levels' class levels grant, each with its level (see `grantedAt`). */
+  async findManyGrantedAt(db: Db, where: { levels: { id: string; klassLevelId: string }[] }) {
+    if (where.levels.length === 0) return [];
+    const granted = await db
       .select({
         ...getTableColumns(powersInRules),
-        klassLevelId: klassLevelsInRules.id,
-        characterLevelId: levelsInCharacter.id,
+        klassLevelId: klassLevelPowersInRules.klassLevelId,
         aptitudeId: klassLevelPowersInRules.aptitudeId,
         free: klassLevelPowersInRules.free,
         saveName: savesInRules.name,
@@ -232,8 +233,6 @@ class PowersRepository extends BaseRepository<typeof powersInRules, PowerInstanc
       })
       .from(powersInRules)
       .innerJoin(klassLevelPowersInRules, eq(powersInRules.id, klassLevelPowersInRules.powerId))
-      .innerJoin(klassLevelsInRules, eq(klassLevelPowersInRules.klassLevelId, klassLevelsInRules.id))
-      .innerJoin(levelsInCharacter, eq(klassLevelsInRules.id, levelsInCharacter.klassLevelId))
       .leftJoin(savesInRules, eq(powersInRules.saveId, savesInRules.id))
       .leftJoin(
         powersAptitudesInRules,
@@ -244,11 +243,11 @@ class PowersRepository extends BaseRepository<typeof powersInRules, PowerInstanc
       )
       .where(
         and(
-          inArray(klassLevelPowersInRules.klassLevelId, where.klassLevelIds),
-          inArray(levelsInCharacter.id, where.characterLevelIds),
+          inArray(klassLevelPowersInRules.klassLevelId, [...new Set(where.levels.map((level) => level.klassLevelId))]),
           isNull(powersInRules.deletedAt),
         ),
       );
+    return this.grantedAt(where.levels, granted);
   }
 
   withInstance(instance: InferSelectModel<typeof powersInRules>) {

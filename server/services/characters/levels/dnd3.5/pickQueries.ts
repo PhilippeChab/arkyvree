@@ -80,9 +80,8 @@ async function getExcludeNonStackableFeatIds(
   const characterLevels =
     excludeIdSet.size > 0 ? allCharacterLevels.filter((l) => !excludeIdSet.has(l.id)) : allCharacterLevels;
   const characterLevelIds = characterLevels.map((lvl) => lvl.id);
-  const klassLevelIds = characterLevels.map((lvl) => lvl.klassLevelId);
   const pickedFeats = await Feats.findManyByCharacterLevelIds(database, { characterLevelIds });
-  const givenFeats = await Feats.findManyByKlassLevelIds(database, { klassLevelIds, characterLevelIds });
+  const givenFeats = await Feats.findManyGrantedAt(database, { levels: characterLevels });
   const excludeFeatIds = [...pickedFeats, ...givenFeats].filter((feat) => !feat.stackable).map((feat) => feat.id);
 
   for (const rec of autoGrantedRecords) {
@@ -186,9 +185,8 @@ export async function getAvailablePowers(
     const characterLevels =
       excludeIdSet.size > 0 ? allCharacterLevels.filter((l) => !excludeIdSet.has(l.id)) : allCharacterLevels;
     const characterLevelIds = characterLevels.map((lvl) => lvl.id);
-    const klassLevelIds = characterLevels.map((lvl) => lvl.klassLevelId);
     const pickedPowers = await Powers.findManyByCharacterLevelIds(db, { characterLevelIds });
-    const givenPowers = await Powers.findManyByKlassLevelIds(db, { klassLevelIds, characterLevelIds });
+    const givenPowers = await Powers.findManyGrantedAt(db, { levels: characterLevels });
     const excludePowerIds = [...pickedPowers, ...givenPowers]
       .filter((power) => power.aptitudeId === aptitudeId)
       .map((power) => power.id);
@@ -207,8 +205,7 @@ export async function getAvailablePowers(
     const wizardExcluded = await levelUpProjector.getExcludedPowerIds(
       db,
       aptitudeId,
-      characterLevelIds,
-      klassLevelIds,
+      characterLevels,
       selectedProjectedFeats.flatMap((f) => f.properties),
       where.excludeSchools ?? [],
       rulesetData,

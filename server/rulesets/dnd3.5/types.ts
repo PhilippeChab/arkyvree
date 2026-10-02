@@ -50,8 +50,7 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
   getExcludedPowerIds(
     tx: Db,
     aptitudeId: string,
-    characterLevelIds: string[],
-    klassLevelIds: string[],
+    characterLevels: { id: string; klassLevelId: string }[],
     selectedFeatProperties: { type: string; value: string }[],
     clientExcludeSchools: string[],
     rulesetData: CachedRulesetData,

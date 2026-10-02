@@ -124,18 +124,11 @@ export async function validateAndFetchLevelSelections(
   if (nonStackableSubmitted.length > 0) {
     const otherLevelIds = otherLevels.map((lvl) => lvl.id);
     // Inside the caller's withRulesetScope, otherLevels[i].klassLevelId and the
-    // returned feat.id are auto-remapped to post-COW by the repo Proxy, so the
-    // DB IN-filter and the Set comparison both operate on post-COW ids.
-    const otherKlassLevelIds = otherLevels.map((lvl) => lvl.klassLevelId);
+    // returned feat.id are auto-remapped to post-COW by the repo Proxy: the
+    // grants are the copied class level's, and the Set compares post-COW ids.
     const pickedFeats =
       otherLevelIds.length > 0 ? await Feats.findManyByCharacterLevelIds(tx, { characterLevelIds: otherLevelIds }) : [];
-    const givenFeats =
-      otherKlassLevelIds.length > 0
-        ? await Feats.findManyByKlassLevelIds(tx, {
-            klassLevelIds: otherKlassLevelIds,
-            characterLevelIds: otherLevelIds,
-          })
-        : [];
+    const givenFeats = await Feats.findManyGrantedAt(tx, { levels: otherLevels });
     const existingFeatIds = new Set([...pickedFeats, ...givenFeats].map((f) => f.id));
 
     // Auto-granted feats come from the composed cache (already post-COW).
