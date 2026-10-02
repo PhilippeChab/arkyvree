@@ -19,7 +19,6 @@ import {
   CharacterLevels,
   Characters,
   Languages,
-  Modifiers,
   PlayerCharacters,
   Races,
 } from "@/server/repositories/index.ts";
@@ -635,8 +634,8 @@ export const CharactersMethods = {
       await new CharactersPolicy(session, existingCharacter).canHardDelete();
 
       // Bonded children cascade via FK on delete, but their polymorphic
-      // attachments and character-scoped modifiers don't — purge them here
-      // alongside the master's before the row is gone.
+      // attachments don't — purge them here alongside the master's before the
+      // row is gone. The database deletes their modifiers with them.
       const bondedChildren = await tx.query.charactersInCharacter.findMany({
         where: eq(charactersInCharacter.parentCharacterId, characterId),
         columns: { id: true },
@@ -644,7 +643,6 @@ export const CharactersMethods = {
       const allIds = [characterId, ...bondedChildren.map((c) => c.id)];
 
       await purgeAttachmentsForRecords(tx, "Character", allIds);
-      await Modifiers.deleteMany(tx, { sourceIds: allIds, sourceType: "characters" });
 
       await Characters.delete(tx, { id: characterId });
 
