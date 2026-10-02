@@ -57,9 +57,9 @@ export default class DetailedCharacterRequirements {
           }
         }
 
-        if (validResults.length > 0) {
-          // Wildcard paths expand to multiple results — use OR semantics
-          // (requirement is met if ANY expanded path satisfies it)
+        // A path that names nothing gave errors: the requirement is invalid, not unmet. One that resolves is met
+        // when any of what it reaches satisfies it (a wildcard reaches several), so unmet when it reaches nothing
+        if (validResults.length > 0 || results.length === 0) {
           const fulfilled = validResults.some((result) => this.evaluateRequirement(requirement, result, holders));
 
           nodes.push({

@@ -597,6 +597,7 @@ export default class DetailedCharacterDataLoader {
       rulesetSaves,
       rulesetSkills,
       rulesetFeats,
+      rulesetFeatProperties: rulesetData.propertiesByEntityType.get("feats") ?? [],
       rulesetPowers,
       rulesetPowerProperties: rulesetData.propertiesByEntityType.get("powers") ?? [],
       rulesetAptitudes,

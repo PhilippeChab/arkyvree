@@ -39,7 +39,7 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
-import type { Character } from "@/shared/relations.ts";
+import type { Character, Requirement } from "@/shared/relations.ts";
 import {
   addCharacterLevel,
   createTestRuleset,
@@ -69,6 +69,31 @@ async function build(character: Character) {
 }
 
 const buildSeeded = async (name: string) => build(await seeded(name));
+
+/** One group holding one requirement on `target`: by default, that it's true. */
+function requiring(
+  target: string,
+  check: Pick<Requirement, "operator" | "value" | "valueType"> = {
+    operator: "equal",
+    value: "true",
+    valueType: "boolean",
+  },
+): Requirement[][] {
+  const now = new Date().toISOString();
+  const requirement: Requirement = {
+    id: target,
+    entityId: "test",
+    entityType: "test",
+    level: "1",
+    target,
+    ...check,
+    chainingOperator: null,
+    createdAt: now,
+    deletedAt: null,
+    updatedAt: now,
+  };
+  return [[requirement]];
+}
 
 type Carried = {
   item: string;
@@ -1184,25 +1209,8 @@ describe("DetailedCharacter", () => {
 
       test("can be required", async () => {
         const elara = await buildSeeded("Elara Starweaver");
-        const now = new Date().toISOString();
-        const atLeast = (target: string) => [
-          [
-            {
-              id: target,
-              entityId: "test",
-              entityType: "test",
-              level: "1",
-              target,
-              operator: "greater_than_or_equal",
-              value: "2",
-              valueType: "number",
-              chainingOperator: null,
-              createdAt: now,
-              deletedAt: null,
-              updatedAt: now,
-            },
-          ],
-        ];
+        const atLeast = (target: string) =>
+          requiring(target, { operator: "greater_than_or_equal", value: "2", valueType: "number" });
         expect(elara.areRequirementsMet(atLeast("spellcasting.arcane"))).toBe(true);
         expect(elara.areRequirementsMet(atLeast("spellcasting.divine"))).toBe(false);
       });
@@ -1370,6 +1378,42 @@ describe("DetailedCharacter", () => {
           { item: "Barrel (empty)", quantity: 3, equipped: false },
         ]),
       ).toEqual([5, 5]);
+    });
+  });
+  describe("requirements on feats", () => {
+    const met = async (name: string, target: string, check?: Parameters<typeof requiring>[1]) =>
+      (await buildSeeded(name)).areRequirementsMet(requiring(target, check));
+    const atLeastOne = { operator: "greater_than_or_equal", value: "1", valueType: "number" } as const;
+
+    // Bjorn has Weapon Focus: Longsword and no Spell Focus; Elara, Spell Focus: Evocation and no Weapon Focus.
+    test("a family is met by any of its feats, and only by them", async () => {
+      expect(await met("Bjorn Ironhand", "feats.weaponfocus.*.possessed")).toBe(true);
+      expect(await met("Elara Starweaver", "feats.weaponfocus.*.possessed")).toBe(false);
+      expect(await met("Bjorn Ironhand", "feats.spellfocus.*.possessed")).toBe(false);
+      expect(await met("Elara Starweaver", "feats.spellfocus.*.possessed")).toBe(true);
+      expect(await met("Bjorn Ironhand", "feats.weaponfocus.*.count", atLeastOne)).toBe(true);
+      expect(await met("Elara Starweaver", "feats.weaponfocus.*.count", atLeastOne)).toBe(false);
+    });
+
+    test("a family's name alone, or a name that only starts a feat's, names no feat", async () => {
+      expect(await met("Bjorn Ironhand", "feats.weaponfocus.possessed")).toBe(false);
+      // Power Attack
+      expect(await met("Bjorn Ironhand", "feats.power.possessed")).toBe(false);
+      const issues = (await buildSeeded("Bjorn Ironhand")).getUnmetRequirementIssues(
+        requiring("feats.power.possessed"),
+      );
+      expect(issues.map((issue) => issue.message)).toEqual(["Invalid requirement: Element not found: power"]);
+    });
+
+    test("a skill's name still reaches its subtypes", async () => {
+      expect(await met("Elara Starweaver", "skills.knowledge.rank", atLeastOne)).toBe(true);
+    });
+
+    test("a check that reaches nothing isn't met", async () => {
+      // Bjorn knows no spell, so no evocation spell's DC
+      const dc = { operator: "greater_than", value: "0", valueType: "number" } as const;
+      expect(await met("Bjorn Ironhand", "powers.groups.evocation.*.dc.total", dc)).toBe(false);
+      expect(await met("Elara Starweaver", "powers.groups.evocation.*.dc.total", dc)).toBe(true);
     });
   });
 });

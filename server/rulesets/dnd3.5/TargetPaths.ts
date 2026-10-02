@@ -695,9 +695,10 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
       currentValue = parentObject[formattedKey];
       pathParts = [...pathParts, formattedKey];
       elements = rest;
-    } else if (formattedKey && rest.length > 0) {
-      // Key not found — check if it's a prefix of other keys (e.g., "craft" matches "craftarmorsmithing")
-      // If so, expand to all matching keys like an implicit wildcard
+    } else if (formattedKey && rest.length > 0 && pathParts[0] === "skills") {
+      // A skill not found may name its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…): expand to
+      // all of them like an implicit wildcard. Only skills: a feat a name prefixes is another feat ("light" →
+      // "lightningreflexes"), and a family of feats is checked by its group (`feats.weaponfocus.*.possessed`)
       const prefixMatches = Object.entries(currentValue).filter(
         ([key, value]) =>
           value !== null &&

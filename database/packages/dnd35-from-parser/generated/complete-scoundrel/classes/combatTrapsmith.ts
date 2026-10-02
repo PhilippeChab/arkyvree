@@ -31,7 +31,7 @@ export const COMBAT_TRAPSMITH: ClassSeed = {
     gte("skills.craft.rank", 8),
     gte("skills.disabledevice.rank", 6),
     gte("skills.search.rank", 6),
-    eq("feats.trapfinding.possessed"),
+    eq("feats.trapfinding.*.possessed"),
   ],
   classFeatureAptitude: "Combat Trapsmith Class Feature",
   classFeatures: [

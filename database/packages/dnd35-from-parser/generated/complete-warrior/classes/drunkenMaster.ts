@@ -27,7 +27,7 @@ export const DRUNKEN_MASTER: ClassSeed = {
     eq("feats.dodge.possessed"),
     eq("feats.greatfortitude.possessed"),
     eq("feats.improvedunarmedstrikeormonksunarmedstrikeability.possessed"),
-    eq("feats.flurryofblows.possessed"),
+    eq("feats.flurryofblows.*.possessed"),
   ],
   classFeatureAptitude: "Drunken Master Class Feature",
   classFeatures: [

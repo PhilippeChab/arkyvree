@@ -145,7 +145,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("combat.bab", 4),
-      eq("feats.sneakattack.possessed"),
+      eq("feats.sneakattack.*.possessed"),
     ],
   },
   {
@@ -334,7 +334,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("combat.bab", 4),
-      eq("feats.sneakattack.possessed"),
+      eq("feats.sneakattack.*.possessed"),
     ],
   },
   {

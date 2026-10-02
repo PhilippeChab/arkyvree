@@ -42,7 +42,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       eq("feats.improvedunarmedstrike.possessed"),
-      eq("feats.sneakattack.possessed"),
+      eq("feats.sneakattack.*.possessed"),
     ],
   },
   {
@@ -88,7 +88,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
       gte("abilities.intelligence.total", 13),
       eq("feats.combatexpertise.possessed"),
       gte("skills.spot.rank", 10),
-      eq("feats.sneakattack.possessed"),
+      eq("feats.sneakattack.*.possessed"),
     ],
   },
   {
@@ -96,8 +96,8 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "When you successfully use your sneak attack ability and your smite evil ability against the same foe in a single attack, you can potentially daze your foe. An opponent affected by both abilities must make a Will saving throw (DC 10 + 1/2 your character level + your Cha modifier) or be dazed for 1 round. In addition, you can multiclass freely between the paladin and rogue classes. You must still remain lawful good in order to retain your paladin abilities and take paladin levels. You still face the normal XP penalties for having multiple classes more than one level apart.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.smiteevil.possessed"),
-      eq("feats.sneakattack.possessed"),
+      eq("feats.smiteevil.*.possessed"),
+      eq("feats.sneakattack.*.possessed"),
     ],
   },
   {
@@ -105,7 +105,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "If you have levels in paladin and bard, those levels stack for the purpose of determining the bonus damage dealt by your smite evil ability and determining the number of times per day that you can use your bardic music. This feat does not allow additional daily uses of smite evil or bardic music abilities beyond what your class levels would normally allow. In addition, you can multiclass freely between the paladin and bard classes and may even gain additional bard levels regardless of your lawful alignment. You must still remain lawful good in order to retain your paladin abilities and take paladin levels. You still face the normal XP penalties for having multiple classes more than one level apart.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.bardicmusic.possessed"),
+      eq("feats.bardicmusic.*.possessed"),
     ],
   },
   {
@@ -151,7 +151,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     stackable: true,
     aptitudes: ["General"],
     requirements: [
-      eq("feats.bardicmusic.possessed"),
+      eq("feats.bardicmusic.*.possessed"),
     ],
   },
   {
@@ -238,7 +238,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "If you use bardic music to inspire courage, inspire greatness, or inspire heroics, the effect lasts for 1 minute after an inspired ally stops hearing you play.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.bardicmusic.possessed"),
+      eq("feats.bardicmusic.*.possessed"),
     ],
   },
   {
@@ -254,7 +254,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "Add three to your effective druid level for the purpose of determining the bonus Hit Dice, extra tricks, special abilities, and other bonuses that your animal companion receives. This bonus can never make your effective druid level exceed your character level.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.animalcompanion.possessed"),
+      eq("feats.animalcompanion.*.possessed"),
     ],
   },
   {
@@ -286,7 +286,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       or(gte("spellcasting.arcane", 5), gte("spellcasting.divine", 5)),
-      eq("feats.sneakattack.possessed"),
+      eq("feats.sneakattack.*.possessed"),
     ],
   },
   {
@@ -295,7 +295,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("combat.bab", 6),
-      eq("feats.sneakattack.possessed"),
+      eq("feats.sneakattack.*.possessed"),
     ],
   },
   {
@@ -356,7 +356,7 @@ export const WILD_FEATS: FeatSeed[] = [
     description: "While you are in a wild shape, any time you make a successful grapple check to damage a creature with which you are already grappling, you can add your sneak attack damage as well. Creatures not subject to sneak attacks don't take this extra damage.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.sneakattack.possessed"),
+      eq("feats.sneakattack.*.possessed"),
     ],
   },
   {
@@ -434,7 +434,7 @@ export const BARDIC_FEATS: FeatSeed[] = [
     description: "You can expend one daily use of your bardic music ability as an immediate action to provide all allies (including yourself) the benefit of the Diehard feat until the end of your next turn. You can use this feat multiple times consecutively to keep yourself and your allies conscious. Even while this feat is active, you or your allies die if reduced to -10 hit points or lower. This feat does not function in an area of magical silence.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.bardicmusic.possessed"),
+      eq("feats.bardicmusic.*.possessed"),
       gte("skills.concentration.rank", 9),
       gte("skills.perform.rank", 9),
     ],
@@ -444,7 +444,7 @@ export const BARDIC_FEATS: FeatSeed[] = [
     description: "As a swift action that does not provoke attacks of opportunity, you can expend one daily use of your bardic music ability to provide damage reduction of 5/-- to yourself or to one ally within 30 feet who can hear you until the start of your next turn. This feat does not function in an area of magical silence.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.bardicmusic.possessed"),
+      eq("feats.bardicmusic.*.possessed"),
       gte("skills.concentration.rank", 12),
       gte("skills.perform.rank", 12),
     ],
@@ -454,7 +454,7 @@ export const BARDIC_FEATS: FeatSeed[] = [
     description: "You can expend daily uses of your bardic music to cast any arcane spell that you know and can cast spontaneously. You must still use an action to cast the spell (following the normal rules for casting time), but using the Lyric Spell feat counts as part of the spellcasting action. Casting a spell requires one use of your bardic music ability, plus one additional use per level of the spell. For example, casting a 3rd-level spell requires four daily uses of your bardic music ability.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.bardicmusic.possessed"),
+      eq("feats.bardicmusic.*.possessed"),
       gte("skills.perform.rank", 9),
     ],
   },

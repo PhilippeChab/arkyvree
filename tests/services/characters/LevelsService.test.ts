@@ -31,6 +31,7 @@ import {
   PowersAptitudes,
   Properties,
   Races,
+  Requirements,
   Rulesets,
   Skills,
 } from "@/server/repositories/index.ts";
@@ -44,6 +45,7 @@ import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
 import {
   addCharacterLevel,
   addOneLevel,
+  createSeededTestRuleset,
   createTestCharacter,
   createTestRuleset,
   createTestUser,
@@ -218,6 +220,32 @@ describe("LevelsService", () => {
         nextLevel: 2,
         eligible: true,
       });
+    });
+
+    test("counts any feat of a family a class requires, and only those", async () => {
+      const ctx = await getSeedCtx();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const [klass] = await Klasses.create(db, { name: `Kensai ${uniqueId()}`, rulesetId: fork.id, hd: 10 });
+      const [level] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
+      await Requirements.create(db, {
+        entityId: level.id,
+        entityType: "klass_levels",
+        level: "1",
+        target: "feats.weaponfocus.*.possessed",
+        operator: "equal",
+        value: "true",
+        valueType: "boolean",
+      });
+      const eligibleWith = async (featName: string) => {
+        const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000, rulesetId: fork.id });
+        const levelIds = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+        await addFeats(db, ctx, levelIds, [{ levelIndex: 0, aptitude: "Fighter Bonus Feat", featName }]);
+        const { items } = await CharacterLevelsMethods.getAvailableKlasses(session, characterId, {}, page);
+        return items.find((k) => k.id === klass.id)?.eligible;
+      };
+
+      expect(await eligibleWith("Weapon Focus: Longsword")).toBe(true);
+      expect(await eligibleWith("Power Attack")).toBe(false);
     });
 
     describe("counts the levels, feats and skill ranks being added toward a prestige class", () => {

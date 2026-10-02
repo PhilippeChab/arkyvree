@@ -499,7 +499,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "Your monk and ninja levels stack for the purpose of determining the size of your ki pool. For example, a 4th-level monk/2nd-level ninja with this feat could use her ki powers a number of times equal to 3 (half the sum of her monk and ninja levels) + her Wisdom bonus (if any). Your monk and ninja levels also stack for the purpose of determining your unarmed strike damage, as well as your ki strike class feature. For example, a 4th-level monk/6th-level ninja would deal 1d10 points of damage with her unarmed strike, and her unarmed strike would overcome damage reduction as a lawful magic weapon (as if she were a 10th-level monk). In addition, you can multiclass freely between the monk and ninja classes. You must still remain lawful in order to continue advancing as a monk. You still face the normal XP penalties for having multiple classes more than one level apart.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.kipower.possessed"),
+      eq("feats.kipower.*.possessed"),
     ],
   },
   {
@@ -517,8 +517,8 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "Your rogue and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 7th-level rogue/4th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your rogue and swashbuckler levels also stack for the purpose of determining your sneak attack bonus damage. For example, a 7th-level rogue/4th-level swashbuckler would deal an extra 6d6 points of damage with her sneak attack, as if she were an 11th-level rogue.",
     aptitudes: ["General"],
     requirements: [
-      gte("feats.sneakattack.count", 2),
-      eq("feats.grace.possessed"),
+      gte("feats.sneakattack.*.count", 2),
+      eq("feats.grace.*.possessed"),
     ],
   },
   {
@@ -536,7 +536,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "You gain three extra daily uses of your ki power (ki power is a class feature of the ninja; see the sidebar for details).",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.kipower.possessed"),
+      eq("feats.kipower.*.possessed"),
     ],
   },
   {
@@ -557,7 +557,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "If you move at least 20 feet away from where you were at the start of your turn, your skirmish damage increases by 2d6 and your competence bonus to AC from skirmish improves by 2.",
     aptitudes: ["General"],
     requirements: [
-      gte("feats.skirmish.count", 2),
+      gte("feats.skirmish.*.count", 2),
     ],
   },
   {
@@ -574,7 +574,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     stackable: true,
     aptitudes: ["General"],
     requirements: [
-      eq("feats.poisonuse.possessed"),
+      eq("feats.poisonuse.*.possessed"),
       gte("skills.craft.rank", 4),
     ],
   },
@@ -585,7 +585,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       eq("feats.poisonexpert.possessed"),
-      eq("feats.poisonuse.possessed"),
+      eq("feats.poisonuse.*.possessed"),
       gte("skills.craft.rank", 8),
     ],
   },
@@ -617,8 +617,8 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "Your rogue and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/7th-level rogue would deal an extra 3d6 points of damage and gain a +3 competence bonus to AC when skirmishing, as if she were an 11th-level scout. In addition, you can qualify for ambush feats as if your sneak attack bonus damage were the sum of your skirmish damage and sneak attack bonus damage. You cannot sacrifice skirmish extra damage to use those feats, however.",
     aptitudes: ["General"],
     requirements: [
-      gte("feats.sneakattack.count", 1),
-      gte("feats.skirmish.count", 1),
+      gte("feats.sneakattack.*.count", 1),
+      gte("feats.skirmish.*.count", 1),
     ],
   },
   {
@@ -626,8 +626,8 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "Your ranger and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/1st-level ranger would deal an extra 2d6 points of damage and gain a +1 competence bonus to AC when skirmishing, as if she were a 5th-level scout. Your ranger and scout levels also stack for the purpose of determining when you select additional favored enemies, as well as the total bonus granted against your favored enemies. For example, a 4th-level scout/1st-level ranger would have two favored enemies and could allocate an extra +2 bonus against one of those favored enemies, as if she were a 5th-level ranger. In addition, your skirmish extra damage applies against any creature you have selected as a favored enemy, even if it is normally immune to extra damage from critical hits or skirmish attacks.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.favoredenemy.possessed"),
-      gte("feats.skirmish.count", 1),
+      eq("feats.favoredenemy.*.possessed"),
+      gte("feats.skirmish.*.count", 1),
     ],
   },
 ];
@@ -643,7 +643,7 @@ export const BARDIC_FEATS: FeatSeed[] = [
     description: "As an immediate action, you can expend three daily uses of your bardic music ability to distract an opponent. The target must be within 30 feet of you and able to hear or see you. Make a Perform check, opposed by the target's Sense Motive check (modified as if you were using Bluff to feint in combat). If you succeed, that opponent is rendered flat-footed against an ally of your choice. The effect lasts until that opponent is attacked or until the start of your next turn, whichever comes first.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.bardicmusic.possessed"),
+      eq("feats.bardicmusic.*.possessed"),
       gte("skills.perform.rank", 9),
     ],
   },
@@ -657,7 +657,7 @@ export const BARDIC_FEATS: FeatSeed[] = [
     description: "As a standard action, you can expend two daily uses of your bardic music ability to deafen a single target for 3 rounds. A successful Will save (using your Perform check result as the DC) negates the effect. The target must be within 30 feet of you and be able to hear you.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.bardicmusic.possessed"),
+      eq("feats.bardicmusic.*.possessed"),
       gte("skills.perform.rank", 9),
     ],
   },
@@ -666,8 +666,8 @@ export const BARDIC_FEATS: FeatSeed[] = [
     description: "As an immediate action, you can expend two daily uses of your bardic music ability to grant a single ally (other than yourself) a +5 morale bonus on her next Reflex save and evasion the monk class feature, PH 41). The ally must be within 30 feet of you and able to see or hear you. The effect lasts until the target rolls a Reflex save or until the start of your turn, whichever comes first.",
     aptitudes: ["General"],
     requirements: [
-      eq("feats.bardicmusic.possessed"),
-      eq("feats.evasion.possessed"),
+      eq("feats.bardicmusic.*.possessed"),
+      eq("feats.evasion.*.possessed"),
       gte("skills.perform.rank", 9),
     ],
   },
@@ -679,7 +679,7 @@ export const AMBUSH_FEATS: FeatSeed[] = [
     description: "Your successful sneak attack imposes a 2 penalty on the target's Intelligence and Wisdom checks, as well as on any Intelligence and Wisdom-based skill checks, for 10 rounds. If you use this feat a second time on a target before 10 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 2d6.",
     aptitudes: ["General"],
     requirements: [
-      gte("feats.sneakattack.count", 3),
+      gte("feats.sneakattack.*.count", 3),
     ],
   },
   {
@@ -693,7 +693,7 @@ export const AMBUSH_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("skills.knowledgearcana.rank", 1),
-      gte("feats.sneakattack.count", 4),
+      gte("feats.sneakattack.*.count", 4),
     ],
   },
   {
@@ -722,7 +722,7 @@ export const AMBUSH_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       eq("feats.improvedunarmedstrike.possessed"),
-      gte("feats.sneakattack.count", 3),
+      gte("feats.sneakattack.*.count", 3),
     ],
   },
 ];
@@ -734,7 +734,7 @@ export const FIGHTER_FEATS: FeatSeed[] = [
     aptitudes: ["General", "Fighter Bonus Feat"],
     requirements: [
       eq("feats.weaponspecialization.*.possessed"),
-      eq("feats.grace.possessed"),
+      eq("feats.grace.*.possessed"),
     ],
   },
   {

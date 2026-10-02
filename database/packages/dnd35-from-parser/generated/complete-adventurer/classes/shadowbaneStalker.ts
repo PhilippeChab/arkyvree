@@ -42,7 +42,7 @@ export const SHADOWBANE_STALKER: ClassSeed = {
     gte("skills.search.rank", 4),
     gte("skills.sensemotive.rank", 4),
     eqStr("identity.beliefs.alignment", "Lawful Good"),
-    gte("feats.sneakattack.count", 1),
+    gte("feats.sneakattack.*.count", 1),
   ],
   casterLevelAdvancement: { type: "divine", levels: [1, 2, 3, 5, 6, 7, 8, 10] },
   classFeatureAptitude: "Shadowbane Stalker Class Feature",

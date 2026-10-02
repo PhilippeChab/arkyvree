@@ -57,6 +57,7 @@ describe("DetailedCharacterRequirements", () => {
     ["one value that doesn't", {}, [false], unmet],
     ["a wildcard with one match among several", {}, [false, true, false], met],
     ["a wildcard without a match", {}, [false, false, false], unmet],
+    ["a wildcard that reaches nothing", {}, [], unmet],
     [
       "a wildcard over numbers, one above the bar",
       { target: "powers.groups.evocation.*.dc.total", operator: "greater_than", value: "15", valueType: "number" },

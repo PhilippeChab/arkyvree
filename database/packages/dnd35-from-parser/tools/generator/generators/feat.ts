@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
+import { CLASS_FEAT_FAMILY_NAMES } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import {
   escapeTemplate,
   featLines,
@@ -427,30 +428,30 @@ function bookTemplateNames(book: string): Set<string> {
 }
 
 /**
- * The families a book's feats and classes can require: its own templates (`own`), and for an extension, the core
- * rules' its feats build on (Power Critical requires the SRD's Weapon Focus).
+ * The families a book's feats and classes can require: its own templates (`own`), for an extension the core rules'
+ * its feats build on (Power Critical requires the SRD's Weapon Focus), and the class features' (Sneak Attack, Rage…).
  */
-export function templateFamilies(book: string, own = bookTemplateNames(book)): Set<string> {
-  return book === "srd" ? own : new Set([...own, ...bookTemplateNames("srd")]);
+export function requirableFamilies(book: string, own = bookTemplateNames(book)): Set<string> {
+  return new Set([...own, ...(book === "srd" ? [] : bookTemplateNames("srd")), ...CLASS_FEAT_FAMILY_NAMES]);
 }
 
 /**
- * `requirements`, each check of a family by its own name (Daring Warrior's "Weapon Specialization"), which no feat
- * has, made a check of any of its feats.
+ * `requirements`, each check of a family by its own name (Daring Warrior's "Weapon Specialization", a prestige
+ * class's "Sneak attack +2d6"), which no feat has, made a check of any of its feats.
  */
 export function anyOfFamilies(requirements: RequirementEntry[], families: Set<string>): RequirementEntry[] {
   const slugs = new Set([...families].map(stripSeparators));
   const anyOf = (entry: RequirementEntry): RequirementEntry => {
     if ("chainingOperator" in entry) return { ...entry, children: entry.children.map(anyOf) };
-    const slug = /^feats\.([^.]+)\.possessed$/.exec(entry.target)?.[1];
-    return slug && slugs.has(slug) ? { ...entry, target: `feats.${slug}.*.possessed` } : entry;
+    const [, slug, field] = /^feats\.([^.]+)\.(possessed|count)$/.exec(entry.target) ?? [];
+    return slug && slugs.has(slug) ? { ...entry, target: `feats.${slug}.*.${field}` } : entry;
   };
   return requirements.map(anyOf);
 }
 
 export function generateFeatSeeds(ref: FeatReference): string {
   const { byType, templates, templateNames } = referenceFeats(ref);
-  const families = templateFamilies(ref._meta.book, templateNames);
+  const families = requirableFamilies(ref._meta.book, templateNames);
   const file: FeatFile = { lines: [], uses: new Set() };
 
   for (const [type, feats] of byType) {

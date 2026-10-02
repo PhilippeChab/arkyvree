@@ -37,6 +37,7 @@ import type {
   SpellReference,
   WizardSchoolReference,
 } from "@/database/packages/dnd35-from-parser/tools/types.ts";
+import { FAVORED_ENEMY_FAMILY } from "@/database/packages/dnd35/content/creatureTypes.ts";
 import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
 import type {
   DomainDefinition,
@@ -220,10 +221,35 @@ export function buildPoolParentNameMap(
   return nameMap;
 }
 
+// Class features each class that has one seeds as a feat of its own, "Sneak Attack (Rogue)": a prerequisite checks
+// any of them, by the feature's name ("Sneak attack +2d6")
+const CLASS_FEATURES_BY_CLASS = [
+  "Animal Companion",
+  "Bardic Music",
+  "Evasion",
+  "Flurry of Blows",
+  "Grace",
+  "Inspire Courage",
+  "Ki Power",
+  "Lay on Hands",
+  "Poison Use",
+  "Rage",
+  "Skirmish",
+  "Smite Evil",
+  "Sneak Attack",
+  "Sudden Strike",
+  "Trapfinding",
+];
+
 const CLASS_FEAT_FAMILIES: { pattern: RegExp; family: string }[] = [
   { pattern: /^(?:Turn or Rebuke Undead|Turn Undead|Rebuke Undead)\b/i, family: "Turn or Rebuke Undead" },
   { pattern: /^Wild Shape\b/i, family: "Wild Shape" },
+  // "Grace (Duelist)", not "Grace of the Dark"; "Rage (Barbarian)", not "Rage +1 Use/day"
+  ...CLASS_FEATURES_BY_CLASS.map((family) => ({ pattern: new RegExp(`^${RegExp.escape(family)} \\(`), family })),
 ];
+
+/** The families of class features, Favored Enemy's included, which a prerequisite checks by the family's name. */
+export const CLASS_FEAT_FAMILY_NAMES = [...CLASS_FEAT_FAMILIES.map(({ family }) => family), FAVORED_ENEMY_FAMILY];
 
 function detectClassFeatFamily(name: string): string | undefined {
   for (const { pattern, family } of CLASS_FEAT_FAMILIES) {
@@ -321,7 +347,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
         ? aptitudeMinLevel.get(stripSeparators(feature.aptitude))
         : undefined;
     const isAutoGranted = feature.level != null && !feature.aptitude;
-    const family = lockedType ? "Favored Enemy" : detectClassFeatFamily(name);
+    const family = lockedType ? FAVORED_ENEMY_FAMILY : detectClassFeatFamily(name);
     feats.push({
       name,
       description,

@@ -236,4 +236,14 @@ describe("The generated feats", () => {
     expect(warChanter).toContain(`eq("feats.weaponfocus.*.possessed"),`);
     expect(warChanter).toContain(`eq("feats.combatexpertise.possessed"),`);
   });
+
+  test("require any class's feat of a class feature a feat or a class names, or a number of it", () => {
+    const feats = generateFeatSeeds(loadReference(join(REFERENCE_DIR, "complete-scoundrel", "feats.json"), "feat"));
+    const asceticStalker = feats.slice(feats.indexOf(`name: "Ascetic Stalker"`));
+    expect(asceticStalker.slice(0, asceticStalker.indexOf("},"))).toContain(`eq("feats.kipower.*.possessed"),`);
+    const arcaneTrickster = generateClassSeed(
+      loadReference(join(REFERENCE_DIR, "dmg", "classes", "arcaneTrickster.json"), "class"),
+    );
+    expect(arcaneTrickster).toContain(`gte("feats.sneakattack.*.count", 2),`);
+  });
 });

@@ -20,7 +20,7 @@ export const RAGE_MAGE: ClassSeed = {
       eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
       eqStr("identity.beliefs.alignment", "Chaotic Evil"),
     ),
-    eq("feats.rage.possessed"),
+    eq("feats.rage.*.possessed"),
   ],
   casterLevelAdvancement: { type: "arcane", levels: [2, 4, 6, 8, 10] },
   classFeatureAptitude: "Rage Mage Class Feature",

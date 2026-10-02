@@ -38,7 +38,7 @@ export const DUNGEON_DELVER: ClassSeed = {
     gte("skills.search.rank", 10),
     eq("feats.alertness.possessed"),
     eq("feats.blindfight.possessed"),
-    eq("feats.trapfinding.possessed"),
+    eq("feats.trapfinding.*.possessed"),
   ],
   classFeatureAptitude: "Dungeon Delver Class Feature",
   classFeatures: [

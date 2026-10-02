@@ -27,7 +27,7 @@ export const HIGHLAND_STALKER: ClassSeed = {
     gte("skills.spot.rank", 8),
     gte("skills.survival.rank", 8),
     eq("feats.track.possessed"),
-    eq("feats.sneakattack.possessed"),
+    eq("feats.sneakattack.*.possessed"),
   ],
   classFeatureAptitude: "Highland Stalker Class Feature",
   classFeatures: [
