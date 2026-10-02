@@ -17,6 +17,7 @@ import {
   stringifyModifier,
   stringifyRequirement,
 } from "@/database/packages/dnd35-from-parser/tools/generator/codegen.ts";
+import { generateClassSeed } from "@/database/packages/dnd35-from-parser/tools/generator/generators/class.ts";
 import {
   coreSystemFeats,
   generateFeatSeeds,
@@ -189,5 +190,50 @@ describe("The generated feats", () => {
       },
     ];
     expect(() => generateFeatSeeds(ref)).toThrow("a template feat's modifier can't have requirements");
+  });
+
+  test("require a family's feat for the same item, and any other feat or requirement as it is", () => {
+    const ref = structuredClone(loadReference(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
+    const greater = ref.mapping["Greater Spell Focus"];
+    greater.requirements = [...(greater.requirements ?? []), eq(feat("Combat Casting")), gte("spellcasting.arcane", 1)];
+    greater.featNameMap = { ...greater.featNameMap, combatcasting: "Combat Casting" };
+    const generated = generateFeatSeeds(ref);
+    const template = generated.slice(generated.indexOf("export const greaterSpellFocus"));
+    expect(template).toContain("eq(feat(`Spell Focus: ${s}`)),");
+    expect(template).toContain(`eq(feat("Combat Casting")),`);
+    expect(template).toContain(`gte("spellcasting.arcane", 1),`);
+  });
+
+  test("refuse a family checked inside a group, which can't name the item", () => {
+    for (const [template, group] of [
+      ["Greater Spell Focus", or(eq(feat("Spell Focus")), gte("spellcasting.arcane", 1))],
+      ["Weapon Specialization", or(eq(feat("Weapon Focus")), gte("combat.bab", 6))],
+    ] as const) {
+      const ref = structuredClone(loadReference(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
+      ref.mapping[template].requirements = [group];
+      expect(() => generateFeatSeeds(ref)).toThrow(
+        `${template}: a family it requires inside a group can't be written for each item`,
+      );
+    }
+  });
+
+  test("let an extension's family require the core rules' for the same item", () => {
+    const ref = loadReference(join(REFERENCE_DIR, "complete-warrior", "feats.json"), "feat");
+    const generated = generateFeatSeeds(ref);
+    const template = generated.slice(generated.indexOf("export const powerCritical"));
+    expect(template.slice(0, template.indexOf("}));"))).toContain("eq(feat(`Weapon Focus: ${w}`)),");
+  });
+
+  test("require any feat of a family a feat or a class names by the family's own name", () => {
+    const feats = generateFeatSeeds(loadReference(join(REFERENCE_DIR, "complete-scoundrel", "feats.json"), "feat"));
+    const daringWarrior = feats.slice(feats.indexOf(`name: "Daring Warrior"`));
+    expect(daringWarrior.slice(0, daringWarrior.indexOf("},"))).toContain(
+      `eq("feats.weaponspecialization.*.possessed"),`,
+    );
+    const warChanter = generateClassSeed(
+      loadReference(join(REFERENCE_DIR, "complete-warrior", "classes", "warChanter.json"), "class"),
+    );
+    expect(warChanter).toContain(`eq("feats.weaponfocus.*.possessed"),`);
+    expect(warChanter).toContain(`eq("feats.combatexpertise.possessed"),`);
   });
 });

@@ -26,7 +26,7 @@ export const WAR_CHANTER: ClassSeed = {
     gte("combat.bab", 4),
     gte("skills.perform.rank", 6),
     eq("feats.combatexpertise.possessed"),
-    eq("feats.weaponfocus.possessed"),
+    eq("feats.weaponfocus.*.possessed"),
     or(
       eqStr("identity.beliefs.alignment", "Neutral Good"),
       eqStr("identity.beliefs.alignment", "True Neutral"),
