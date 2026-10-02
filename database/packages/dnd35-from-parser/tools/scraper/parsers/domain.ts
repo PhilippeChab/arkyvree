@@ -160,9 +160,11 @@ export function parseDomainsHtml(
       const slug = href?.match(/#(.+)$/)?.[1];
       spells.push({ name: normalizeDomainSpellName(spellName), ...(slug ? { slug } : {}), level });
     };
-    // The spell list's table follows its heading: a granted power can have a table of its own before it (Sand's)
+    // The spell list's table follows its heading: a granted power can have a table of its own before it (Sand's).
+    // Without one after the heading, the section's first table.
+    const isTable = (el: cheerio.Cheerio<AnyNode>) => el.is("table");
     const spellsHeading = siblings.findIndex((s) => s.is("h6"));
-    const table = siblings.slice(Math.max(spellsHeading, 0)).find((s) => s.is("table"));
+    const table = siblings.slice(Math.max(spellsHeading, 0)).find(isTable) ?? siblings.find(isTable);
     if (table) {
       table.find("tr").each((_, tr) => {
         const tds = $(tr).find("td");
