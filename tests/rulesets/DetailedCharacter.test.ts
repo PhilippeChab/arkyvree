@@ -493,6 +493,43 @@ describe("DetailedCharacter", () => {
         });
       });
 
+      test("costs a weapon made from a template when the character isn't proficient with its template", async () => {
+        const longsword: Carried[] = [{ item: "Masterwork Cold Iron Longsword", location: "Main Hand", weaponSet: 0 }];
+        expect(weaponSet(await buildCarrying("Elara Starweaver", longsword)).mainhand).toMatchObject({
+          name: "Masterwork Cold Iron Longsword",
+          proficient: false,
+          tohit: { misc: -4 },
+        });
+        expect(weaponSet(await buildCarrying("Bjorn Ironhand", longsword)).mainhand).toMatchObject({
+          name: "Masterwork Cold Iron Longsword",
+          proficient: true,
+        });
+      });
+
+      test("doesn't cost a weapon made from a template its own modifiers", async () => {
+        // A luck blade is a shortsword, which a wizard isn't proficient with: her saves still take its +1 luck.
+        const elara = await buildCarrying("Elara Starweaver", [
+          { item: "Luck Blade, 0 Wishes", location: "Main Hand", weaponSet: 0 },
+        ]);
+        expect(weaponSet(elara).mainhand).toMatchObject({ proficient: false, tohit: { misc: -4 } });
+        const will = (character: DetailedCharacter) =>
+          character.getDetailedCharacterSavingThrows().getSavingThrows().will;
+        expect(will(elara).misc).toBe(will(await buildCarrying("Elara Starweaver")).misc + 1);
+      });
+
+      test("never costs a monk her gauntlet, a strike with it being unarmed, but costs her a spiked one", async () => {
+        const holding = async (item: string) =>
+          weaponSet(await buildCarrying("Zen Whitepetal", [{ item, location: "Main Hand", weaponSet: 0 }])).mainhand;
+        expect(await holding("Gauntlet")).toMatchObject({ name: "Gauntlet", proficient: true, tohit: { misc: 0 } });
+        expect(await holding("Spiked Gauntlet")).toMatchObject({ name: "Spiked Gauntlet", proficient: false });
+        // A wizard isn't proficient with her unarmed strike either.
+        expect(
+          weaponSet(
+            await buildCarrying("Elara Starweaver", [{ item: "Gauntlet", location: "Main Hand", weaponSet: 0 }]),
+          ).mainhand,
+        ).toMatchObject({ name: "Gauntlet", proficient: false });
+      });
+
       test("never costs an unarmed strike", async () => {
         expect(weaponSet(await buildCarrying("Bjorn Ironhand")).mainhand).toMatchObject({
           name: "Unarmed Strike",

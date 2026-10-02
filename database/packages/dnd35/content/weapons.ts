@@ -87,9 +87,16 @@ export const CROSSBOW_WEAPONS = ALL_WEAPONS.filter((w) => w.toLowerCase().includ
 const SIMPLE_SET = new Set(SIMPLE_WEAPONS);
 const MARTIAL_SET = new Set(MARTIAL_WEAPONS);
 
-/** Being proficient with a simple weapon: with them all, or with it alone. */
+/**
+ * Being proficient with a simple weapon: with them all, or with it alone. A strike with a gauntlet "is otherwise
+ * considered an unarmed attack": the unarmed strike's proficiency is the gauntlet's too.
+ */
 export const simple = (weapon: string): RequirementEntry[] => [
-  or(eq(feat("Simple Weapon Proficiency")), eq(feat(`Simple Weapon Proficiency: ${weapon}`))),
+  or(
+    eq(feat("Simple Weapon Proficiency")),
+    eq(feat(`Simple Weapon Proficiency: ${weapon}`)),
+    ...(weapon === "Gauntlet" ? [eq(feat("Simple Weapon Proficiency: Unarmed Strike"))] : []),
+  ),
 ];
 /** Being proficient with a martial weapon: with them all, or with it alone. */
 export const martial = (weapon: string): RequirementEntry[] => [

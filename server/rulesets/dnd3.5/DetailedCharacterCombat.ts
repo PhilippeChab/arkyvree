@@ -25,7 +25,6 @@ import { WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import type DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
-import type DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type CharacterLevel, type Item, type Property, type Race } from "@/shared/relations.ts";
 
@@ -706,22 +705,15 @@ export default class DetailedCharacterCombat {
     }
   }
 
-  applyProficiencyPenalties(characterRequirements: DetailedCharacterRequirements) {
-    const { unmetRequirementGroups } = characterRequirements.getRequirements();
-
+  /** Costs each weapon whose item's requirements are unmet (its proficiency) the non-proficiency penalty. */
+  applyProficiencyPenalties(unmetItemIds: Set<string>) {
     for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
       for (const slotKey of WEAPON_SET_SLOTS) {
         const weapon = weaponSet[slotKey];
-        if (!weapon || !weapon.itemId) continue;
+        if (!weapon?.itemId || !unmetItemIds.has(weapon.itemId)) continue;
 
-        const isUnmet = unmetRequirementGroups.some((group) =>
-          group.some((requirement) => requirement.entityId === weapon.itemId && requirement.entityType === "items"),
-        );
-
-        if (isUnmet) {
-          weapon.proficient = false;
-          weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
-        }
+        weapon.proficient = false;
+        weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
       }
     }
 

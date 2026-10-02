@@ -154,9 +154,11 @@ Properties generated from `WEAPON_TYPE_DEFINITIONS` in `weaponGenerator.ts`:
 | `WEAPON_REACH`             | _(only if > 0)_                     |
 
 Proficiency requirements (on the item, checked at equip time):
-- **Simple**: OR chain — `feats.simpleweaponproficiency.possessed` OR `feats.simpleweaponproficiency<weapon>.possessed`
+- **Simple**: OR chain — `feats.simpleweaponproficiency.possessed` OR `feats.simpleweaponproficiency<weapon>.possessed` (a gauntlet's also takes `feats.simpleweaponproficiencyunarmedstrike.possessed`: a strike with it is unarmed)
 - **Martial**: OR chain — `feats.martialweaponproficiency.possessed` OR `feats.martialweaponproficiency<weapon>.possessed`
 - **Exotic**: `feats.exoticweaponproficiency<weapon>.possessed == true`
+
+An equipped weapon whose requirements are unmet, its template's included for a weapon made from one, isn't proficient: −4 to hit.
 
 ### Armor (type = "Armor")
 

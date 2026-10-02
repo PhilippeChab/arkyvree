@@ -133,7 +133,7 @@ A family is the feats sharing a `FEAT_FAMILY` property (*Feat family groupings* 
 
 ### Proficiency feat paths (auto-generated as item requirements)
 
-Weapon items, armor items, and shield items auto-generate proficiency requirements targeting these feat paths. A simple or martial weapon accepts the proficiency with all of its group or with it alone, never another weapon's: `feats.simpleweaponproficiency.possessed` is that feat only, not every `simpleweaponproficiency<weapon>`.
+Weapon items, armor items, and shield items auto-generate proficiency requirements targeting these feat paths. A simple or martial weapon accepts the proficiency with all of its group or with it alone, never another weapon's: `feats.simpleweaponproficiency.possessed` is that feat only, not every `simpleweaponproficiency<weapon>`. The gauntlet also accepts the unarmed strike's: a strike with it is unarmed.
 
 
 | Path                                               | Used by                        |
