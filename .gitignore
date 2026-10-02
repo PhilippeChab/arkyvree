@@ -53,6 +53,10 @@ migrate-bin
 # Scraper cache
 database/packages/dnd35-from-parser/tools/scraper/.cache/
 
+# The parser's generation in progress (generated/'s copy, swapped in when it succeeds)
+database/packages/dnd35-from-parser/generated.next/
+database/packages/dnd35-from-parser/generated.previous/
+
 # Dumps
 *.pgdump
 .claude/scheduled_tasks.lock

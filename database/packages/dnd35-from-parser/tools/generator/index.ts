@@ -1,4 +1,14 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 
 import {
@@ -86,7 +96,7 @@ function listExport(name: string, seedType: string, items: string[]): string[] {
 function writeGenerated(out: Output, path: string, code: string) {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, code);
-  if (!out.quiet) console.log(`Generated: ${path}`);
+  if (!out.quiet) console.log(`Generated: ${relative(out.dir, path)}`);
 }
 
 /** Regenerate index.ts for an extension's book: its content, as the extension seeds it. */
@@ -1048,7 +1058,7 @@ function generateRef(out: Output, jsonPath: string, bookOverride?: string) {
  */
 export function generateAll(
   { bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>,
-  outDir = GENERATED_DIR,
+  outDir: string,
 ): string[] {
   const refs = discoverRefs().filter(
     (r) =>
@@ -1079,6 +1089,29 @@ export function generateAll(
   return failures;
 }
 
+/**
+ * Runs a generation in a copy of `dir`, which takes `dir`'s place only when the generation reports no failure: a failed
+ * one leaves `dir` as it was rather than half-written. The copy sits next to `dir`, so the swap is a rename.
+ */
+export function generateAtomically(dir: string, generate: (copy: string) => string[]): string[] {
+  const copy = `${dir}.next`;
+  const previous = `${dir}.previous`;
+  rmSync(copy, { recursive: true, force: true });
+  rmSync(previous, { recursive: true, force: true });
+  cpSync(dir, copy, { recursive: true });
+  try {
+    const failures = generate(copy);
+    if (failures.length === 0) {
+      renameSync(dir, previous);
+      renameSync(copy, dir);
+      rmSync(previous, { recursive: true, force: true });
+    }
+    return failures;
+  } finally {
+    rmSync(copy, { recursive: true, force: true });
+  }
+}
+
 function main() {
   // A book's aptitudes name its domains, and most generation rewrites them: check the domains reference up front
   const domainsPath = join(REFERENCE_DIR, "domains.json");
@@ -1088,20 +1121,21 @@ function main() {
     process.exit(1);
   }
   const args = process.argv.slice(2);
-  if (args[0]?.endsWith(".json")) {
+  const failures = generateAtomically(GENERATED_DIR, (dir) => {
+    if (!args[0]?.endsWith(".json")) return generateAll(parseCliArgs(), dir);
     const bookIdx = args.indexOf("--book");
     try {
-      generateRef({ dir: GENERATED_DIR, quiet: false }, args[0], bookIdx >= 0 ? args[bookIdx + 1] : undefined);
+      generateRef({ dir, quiet: false }, args[0], bookIdx >= 0 ? args[bookIdx + 1] : undefined);
+      return [];
     } catch (error) {
-      console.error(error instanceof Error ? error.message : error);
-      process.exit(1);
+      return [error instanceof Error ? error.message : String(error)];
     }
-  } else {
-    const failures = generateAll(parseCliArgs());
-    if (failures.length > 0) {
-      console.error(`${failures.length} reference(s) failed:\n${failures.map((f) => `  ${f}`).join("\n")}`);
-      process.exit(1);
-    }
+  });
+  if (failures.length > 0) {
+    console.error(
+      `${failures.length} reference(s) failed, so generated/ is unchanged:\n${failures.map((f) => `  ${f}`).join("\n")}`,
+    );
+    process.exit(1);
   }
 }
 
