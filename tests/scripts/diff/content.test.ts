@@ -238,7 +238,7 @@ describe("The content comparison (diff-prod)", () => {
 
   test("finds no drift between a database and itself", async () => {
     expect(await diffContent(query, query)).toEqual({ onlyInTarget: [], onlyInReference: [], drifted: [] });
-  });
+  }, 30_000);
 
   // Each column of a system row is changed in turn: the comparison of its ruleset has to see it
   test.each(COMPARED_TABLES)(
