@@ -34,7 +34,7 @@ const COMPANION_GRANT_PATTERNS: {
   { pattern: /^Special Mount \((.+)\)$/, aptitudeSlug: "specialmountbond", bondedKind: "mount" },
 ];
 
-const NUMBER_WORDS: Record<string, number> = {
+export const NUMBER_WORDS: Record<string, number> = {
   one: 1,
   two: 2,
   three: 3,

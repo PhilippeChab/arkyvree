@@ -156,6 +156,8 @@ A feat needing any Weapon Focus — one row:
 
 This matches Weapon Focus (Longsword), Weapon Focus (Greatsword), and any custom Weapon Focus variant carrying `FEAT_FAMILY = weaponfocus`.
 
+For *any two luck feats*, count the family instead: `feats.luck.count >= 2`. A family's count adds up every feat of it the character has, each as many times as it was taken: `feats.sneakattack.count` is the character's sneak attack dice from all their classes.
+
 Built-in families on the SRD ruleset:
 
 | Family | Matches |
@@ -167,7 +169,8 @@ Built-in families on the SRD ruleset:
 | `rapidreload` | Rapid Reload variants |
 | `spellfocus`, `greaterspellfocus` | Spell Focus and Greater Spell Focus per school |
 | `skillfocus` | Skill Focus per skill |
-| `metamagic`, `itemcreation` | every metamagic / item creation feat |
+| `metamagic`, `itemcreation`, `luck` | every metamagic / item creation / luck feat |
+| `draconic` | Complete Arcane's draconic feats (Draconic Heritage, Draconic Breath…) |
 | `turnorrebukeundead`, `wildshape` | class-feature feats |
 
 ### Skill subtype wildcards — `skills.<prefix>*.rank`

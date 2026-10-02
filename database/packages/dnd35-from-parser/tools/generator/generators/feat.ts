@@ -444,15 +444,16 @@ export function requirableFamilies(book: string, own = bookTemplateNames(book)):
 }
 
 /**
- * `requirements`, each check of a family by its own name (Daring Warrior's "Weapon Specialization", a prestige
- * class's "Sneak attack +2d6"), which no feat has, made a check of any of its feats.
+ * `requirements`, each check of a family by its own name (Daring Warrior's "Weapon Specialization"), which no feat
+ * has, made a check of any of its feats. A count of a family by its name (a prestige class's "Sneak attack +2d6") is
+ * the family's own: how many times the character has its feats, every class's sneak attack dice together.
  */
 export function anyOfFamilies(requirements: RequirementEntry[], families: Set<string>): RequirementEntry[] {
   const slugs = new Set([...families].map(stripSeparators));
   const anyOf = (entry: RequirementEntry): RequirementEntry => {
     if ("chainingOperator" in entry) return { ...entry, children: entry.children.map(anyOf) };
-    const [, slug, field] = /^feats\.([^.]+)\.(possessed|count)$/.exec(entry.target) ?? [];
-    return slug && slugs.has(slug) ? { ...entry, target: `feats.${slug}.*.${field}` } : entry;
+    const [, slug] = /^feats\.([^.]+)\.possessed$/.exec(entry.target) ?? [];
+    return slug && slugs.has(slug) ? { ...entry, target: `feats.${slug}.*.possessed` } : entry;
   };
   return requirements.map(anyOf);
 }

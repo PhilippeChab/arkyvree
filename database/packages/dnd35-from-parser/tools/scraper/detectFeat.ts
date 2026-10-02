@@ -14,6 +14,7 @@ import {
   anySkillRequirement,
   BOOK_ABBREV_PATTERN,
   type ModifierDetection,
+  NUMBER_WORDS,
   SAVE_MAP,
   skillSlug,
   validateModifiers,
@@ -34,6 +35,15 @@ const FEAT_TYPE_APTITUDES: Record<string, string[]> = {
   metamagic: ["General", "Wizard Bonus Feat"],
   "item creation": ["General", "Wizard Bonus Feat"],
 };
+
+// Feat type → the family its feats make. Complete Arcane's draconic feats have no type of their own: their name
+// makes them one
+const FEAT_TYPE_FAMILIES: Record<string, string> = {
+  metamagic: "Metamagic",
+  "item creation": "Item Creation",
+  luck: "Luck",
+};
+const DRACONIC_FAMILY = "Draconic";
 
 // Patterns that extractFeatPrereqs should skip — these are class abilities, not feat names
 const ABILITY_PREREQ_PATTERNS = [
@@ -305,6 +315,19 @@ function extractFeatPrereqs(text: string): string[] {
 // Prerequisite text → RequirementEntry[]
 // ---------------------------------------------------------------------------
 
+/** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */
+export function familyFeatRequirements(text: string): RequirementEntry[] {
+  const counts = Object.keys(NUMBER_WORDS).join("|");
+  return [...Object.values(FEAT_TYPE_FAMILIES), DRACONIC_FAMILY].flatMap((family) => {
+    const match = new RegExp(`\\bany (?:other )?(?:(${counts}) )?${family} feats?\\b`, "i").exec(text);
+    if (!match) return [];
+    const slug = stripSeparators(family);
+    return [
+      match[1] ? gte(`feats.${slug}.count`, NUMBER_WORDS[match[1].toLowerCase()]) : eq(`feats.${slug}.*.possessed`),
+    ];
+  });
+}
+
 function parsePrerequisiteText(text: string): {
   requirements: RequirementEntry[];
   featNameMap: Record<string, string>;
@@ -508,7 +531,7 @@ function parsePrerequisiteText(text: string): {
       resolve: () => or(eq(feat("Turn or Rebuke Undead (Cleric)")), eq(feat("Turn Undead (Paladin)"))),
     },
     {
-      // "Sneak attack or sudden strike +Nd6" — either ability with N stacks
+      // "Sneak attack or sudden strike +Nd6" — either ability's dice, every class's together
       pattern: /[Ss]neak [Aa]ttack or [Ss]udden [Ss]trike \+(\d+)d\d+/,
       resolve: (m) => {
         const count = parseInt(m[1], 10);
@@ -516,7 +539,7 @@ function parsePrerequisiteText(text: string): {
       },
     },
     {
-      // "Sneak Attack +Nd6" — require N stacks of any Sneak Attack variant
+      // "Sneak Attack +Nd6" — N sneak attack dice, every class's together
       pattern: /[Ss]neak [Aa]ttack \+(\d+)d\d+/,
       resolve: (m) => gte("feats.sneakattack.count", parseInt(m[1], 10)),
     },
@@ -530,7 +553,7 @@ function parsePrerequisiteText(text: string): {
       resolve: () => eq("feats.sneakattack.possessed"),
     },
     {
-      // "Sudden Strike +Nd6" — require N stacks of any Sudden Strike variant
+      // "Sudden Strike +Nd6" — N sudden strike dice, every class's together
       pattern: /[Ss]udden [Ss]trike \+(\d+)d\d+/,
       resolve: (m) => gte("feats.suddenstrike.count", parseInt(m[1], 10)),
     },
@@ -539,7 +562,7 @@ function parsePrerequisiteText(text: string): {
       resolve: () => eq("feats.grace.possessed"),
     },
     {
-      // "Skirmish +Nd6" — require N stacks of any Skirmish variant
+      // "Skirmish +Nd6" — N skirmish dice, every class's together
       pattern: /[Ss]kirmish \+(\d+)d\d+/,
       resolve: (m) => gte("feats.skirmish.count", parseInt(m[1], 10)),
     },
@@ -597,13 +620,7 @@ function parsePrerequisiteText(text: string): {
     reqs.push(eq(feat(name)));
   }
 
-  // "Any metamagic feat" / "Any item creation feat" → grouping wildcard check
-  if (/any (?:other )?metamagic feat/i.test(cleanedText)) {
-    reqs.push(eq("feats.metamagic.*.possessed"));
-  }
-  if (/any (?:other )?item creation feat/i.test(cleanedText)) {
-    reqs.push(eq("feats.itemcreation.*.possessed"));
-  }
+  reqs.push(...familyFeatRequirements(cleanedText));
 
   // Detect prerequisite patterns we recognize but can't map to requirement entries
   const unresolvedPatterns = [/[Pp]roficien(?:t|cy) with (?:selected )?(?:weapon|armor)/, /[Aa]bility to fly\b/];
@@ -744,13 +761,10 @@ export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["det
 
     const template = detectTemplate(entry);
 
-    // Auto-add FEAT_FAMILY property for metamagic and item creation feats
-    const properties: { type: string; value: string }[] = [];
-    if (entry.featType === "metamagic") {
-      properties.push({ type: "FEAT_FAMILY", value: "Metamagic" });
-    } else if (entry.featType === "item creation") {
-      properties.push({ type: "FEAT_FAMILY", value: "Item Creation" });
-    }
+    const family =
+      FEAT_TYPE_FAMILIES[entry.featType] ??
+      (entry.name.startsWith(`${DRACONIC_FAMILY} `) ? DRACONIC_FAMILY : undefined);
+    const properties = family ? [{ type: "FEAT_FAMILY", value: family }] : [];
 
     detected[entry.name] = {
       aptitudes,

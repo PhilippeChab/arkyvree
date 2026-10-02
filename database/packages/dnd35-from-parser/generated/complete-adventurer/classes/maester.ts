@@ -1,5 +1,5 @@
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
-import { eq, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import { eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
 
 export const MAESTER: ClassSeed = {
   name: "Maester",
@@ -31,7 +31,7 @@ export const MAESTER: ClassSeed = {
   requirements: [
     gte("skills.craft.rank", 8),
     gte("skills.usemagicdevice.rank", 4),
-    eq("feats.any.*.possessed"),
+    gte("feats.itemcreation.count", 2),
     eqStr("identity.physiology.race.name", "Gnome"),
   ],
   casterLevelAdvancement: { type: "any", levels: [2, 3, 4, 5] },

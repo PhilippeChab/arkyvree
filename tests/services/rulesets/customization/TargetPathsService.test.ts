@@ -217,6 +217,11 @@ describe("TargetPathsService", () => {
       expect(await validate("abilities.strength.total", "requirement")).toMatchObject({ isValid: true });
     });
 
+    test("accepts a family's count when requiring, not when modifying", async () => {
+      expect((await validate("feats.metamagic.count", "requirement")).isValid).toBe(true);
+      expect((await validate("feats.metamagic.count")).isValid).toBe(false);
+    });
+
     test("refuses an unknown category, suggesting close ones", async () => {
       expect((await validate("")).errors[0]).toMatchObject({ code: "INVALID_CATEGORY", severity: "error" });
       const result = await validate("abil.something");

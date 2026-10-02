@@ -35,6 +35,7 @@ export const LOREMASTER: ClassSeed = {
   requirements: [
     or(gte("spellcasting.arcane", 7), gte("spellcasting.divine", 7)),
     gte("skills.spellcraft.rank", 10),
+    { target: "feats.metamagic.count", operator: "greater_than_or_equal", value: "{{ 3 - [feats.itemcreation.count] }}", valueType: "number" },
   ],
   casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Loremaster Class Feature",

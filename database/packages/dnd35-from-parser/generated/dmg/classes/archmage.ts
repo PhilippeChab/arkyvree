@@ -28,7 +28,7 @@ export const ARCHMAGE: ClassSeed = {
     gte("skills.knowledgearcana.rank", 15),
     gte("skills.spellcraft.rank", 15),
     eq("feats.skillfocusspellcraft.possessed"),
-    eq("feats.spellfocus.*.possessed"),
+    gte("feats.spellfocus.count", 2),
     gte("spellcasting.arcane", 7),
   ],
   casterLevelAdvancement: { type: "arcane", levels: [1, 2, 3, 4, 5] },
