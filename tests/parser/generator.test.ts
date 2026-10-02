@@ -97,6 +97,26 @@ describe("The generator", () => {
     }
   });
 
+  test("puts the folder back when the swap fails", () => {
+    const parent = mkdtempSync(join(tmpdir(), "generation-"));
+    const folder = join(parent, "generated");
+    try {
+      mkdirSync(folder);
+      writeFileSync(join(folder, "index.ts"), "before");
+      // The copy gone, the second rename of the swap fails
+      expect(() =>
+        generateAtomically(folder, (copy) => {
+          rmSync(copy, { recursive: true });
+          return [];
+        }),
+      ).toThrow("ENOENT");
+      expect(readFileSync(join(folder, "index.ts"), "utf8")).toBe("before");
+      expect(readdirSync(parent)).toEqual(["generated"]);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   test("refuses a second generation on the same folder while one runs", () => {
     const parent = mkdtempSync(join(tmpdir(), "generation-"));
     const folder = join(parent, "generated");
