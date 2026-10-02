@@ -190,4 +190,29 @@ describe("The generated feats", () => {
     ];
     expect(() => generateFeatSeeds(ref)).toThrow("a template feat's modifier can't have requirements");
   });
+
+  test("require a family's feat for the same item, and any other feat or requirement as it is", () => {
+    const ref = structuredClone(loadReference(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
+    const greater = ref.mapping["Greater Spell Focus"];
+    greater.requirements = [...(greater.requirements ?? []), eq(feat("Combat Casting")), gte("spellcasting.arcane", 1)];
+    greater.featNameMap = { ...greater.featNameMap, combatcasting: "Combat Casting" };
+    const generated = generateFeatSeeds(ref);
+    const template = generated.slice(generated.indexOf("export const greaterSpellFocus"));
+    expect(template).toContain("eq(feat(`Spell Focus: ${s}`)),");
+    expect(template).toContain(`eq(feat("Combat Casting")),`);
+    expect(template).toContain(`gte("spellcasting.arcane", 1),`);
+  });
+
+  test("refuse a family checked inside a group, which can't name the item", () => {
+    const ref = structuredClone(loadReference(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
+    ref.mapping["Greater Spell Focus"].requirements = [or(eq(feat("Spell Focus")), gte("spellcasting.arcane", 1))];
+    expect(() => generateFeatSeeds(ref)).toThrow("a family it requires inside a group can't be written for each item");
+  });
+
+  test("let an extension's family require the core rules' for the same item", () => {
+    const ref = loadReference(join(REFERENCE_DIR, "complete-warrior", "feats.json"), "feat");
+    const generated = generateFeatSeeds(ref);
+    const template = generated.slice(generated.indexOf("export const powerCritical"));
+    expect(template.slice(0, template.indexOf("}));"))).toContain("eq(feat(`Weapon Focus: ${w}`)),");
+  });
 });
