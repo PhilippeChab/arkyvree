@@ -6,6 +6,7 @@ export const ALL_APTITUDES: string[] = [
   "Battle Trickster Class Feature",
   "Cloaked Dancer Class Feature",
   "Combat Trapsmith Class Feature",
+  "Fighter Bonus Feat",
   "Fortune's Friend Class Feature",
   "General",
   "Gray Guard Class Feature",

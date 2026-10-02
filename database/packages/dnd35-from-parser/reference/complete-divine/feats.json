@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-31T22:19:26.791Z",
+    "scrapedAt": "2026-10-02T02:18:48.494Z",
     "sourceUrl": "https://dndtools.net/feats/complete-divine--56/",
     "type": "feat"
   },
@@ -352,13 +352,13 @@
     },
     {
       "benefit": "You can use your normal wild shape ability to take the form of a magical beast. The size limitation is the same as your limitation on animal size. You gain all supernatural abilities of the magical beast whose form you take.",
-      "featType": "general",
+      "featType": "epic",
       "name": "Magical Beast Wild Shape",
       "prerequisiteText": "Knowledge (nature) 27 ranks, WIS 25, wild shape 6/day,"
     },
     {
       "benefit": "You can use one rebuke or command undead attempt to unleash a wave of negative energy in a 60-footburst. Roll a normal rebuke (or command) check, except that the negative energy burst affects living creatures rather than undead. Any creature that would be rebuked by this result gains one negative level. Any creature that would be commanded by this check gains two negative levels. The Fortitude save DC to remove these levels 24 hours later is equal to 10 + 1/2 your effective turning level + your Charisma modifier.",
-      "featType": "general",
+      "featType": "epic",
       "name": "Negative Energy Burst",
       "prerequisiteText": "CHA 25, ability to rebuke or command undead, able to cast infl ict critical wounds, any evil alignment,"
     },
@@ -391,7 +391,7 @@
     },
     {
       "benefit": "Every undead creature that comes within 15 feet of you is automatically affected as if you had turned it. This doesn't cost a turning attempt, and you don't have to roll turning damage (it automatically affects all undead in a 15-foot burst), but it only turns undead with Hit Dice equal to or less than your effective cleric level minus 10 (and automatically destroys undead with Hit Dice equal to or less than your effective cleric level minus 20). For example, a 22nd-level cleric would automatically turn any nearby wights or wraiths and would automatically destroy any Medium skeletons or zombies that came near him, but would have to turn nightshades and the like normally. Just as with normal turning, you can't affect undead that have total cover relative to you.",
-      "featType": "general",
+      "featType": "epic",
       "name": "Positive Energy Aura",
       "prerequisiteText": "CHA 25, ability to turn undead, able to cast dispel evil,"
     },
@@ -544,7 +544,7 @@
     },
     {
       "benefit": "You can use a rebuke or command undead attempt to animate corpses within range of your rebuke or command attempt. You animate a total number of HD of undead equal to the number of undead that would be commanded by your result (though you can't animate more undead than there are available corpses within range). You can't animate more undead with any single attempt than the maximum number you can command (including any undead already under your command). These undead are automatically under your command, though your normal limit of commanded undead still applies. If the corpses are relatively fresh, the animated undead are zombies. Otherwise, they are skeletons.",
-      "featType": "general",
+      "featType": "epic",
       "name": "Zone of Animation",
       "prerequisiteText": "Undead Mastery, CHA 25, ability to rebuke or command undead,"
     }

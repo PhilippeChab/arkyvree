@@ -5,21 +5,13 @@ import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
-export const GENERAL_FEATS: FeatSeed[] = [
+export const SKILL_TRICK_FEATS: FeatSeed[] = [
   {
     name: "Acrobatic Backstab",
     description: "If you succeed on a Tumble check to move through an enemy's space, you can treat that enemy as flat-footed against the next melee attack you make against it on your current turn. Your enemy must be standing on the ground or floor in order for you to use this trick.",
     aptitudes: ["General"],
     requirements: [
       gte("skills.tumble.rank", 12),
-    ],
-  },
-  {
-    name: "Ascetic Stalker",
-    description: "Your monk and ninja levels stack for the purpose of determining the size of your ki pool. For example, a 4th-level monk/2nd-level ninja with this feat could use her ki powers a number of times equal to 3 (half the sum of her monk and ninja levels) + her Wisdom bonus (if any). Your monk and ninja levels also stack for the purpose of determining your unarmed strike damage, as well as your ki strike class feature. For example, a 4th-level monk/6th-level ninja would deal 1d10 points of damage with her unarmed strike, and her unarmed strike would overcome damage reduction as a lawful magic weapon (as if she were a 10th-level monk). In addition, you can multiclass freely between the monk and ninja classes. You must still remain lawful in order to continue advancing as a monk. You still face the normal XP penalties for having multiple classes more than one level apart.",
-    aptitudes: ["General"],
-    requirements: [
-      eq("feats.kipower.possessed"),
     ],
   },
   {
@@ -86,45 +78,12 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Cool Head (CS)",
-    description: "You immediately learn up to two mental skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on mental skill tricks.",
-    aptitudes: ["General"],
-  },
-  {
     name: "Corner Perch",
     description: "If you succeed on a Climb check to ascend or descend either a \"chimney,\" where you can brace against opposite walls, or a corner where you can brace against perpendicular walls (PH 69), you can suspend yourself momentarily. Until the end of your next turn, you can use your hands freely for any other purpose (including attacking) without risk of falling. At the end of your next turn, you fall from the wall unless you succeed on a Climb check against the normal DC + 5 (made as a move action) or you have succeeded on another Climb check to move up or down the wall as normal. Example: Ember the monk succeeds on a DC 15 Climb check to scramble up 10 feet (one-quarter of her speed) into a corner formed by two typical dungeon walls. Using Corner Perch, she then braces her legs against the walls and uses her remaining standard action to draw and throw a shuriken at a bugbear on the ground below her. On her next turn, still braced in the corner, she draws her quarterstaff and attacks an ogre that has moved next to her, gaining a +1 bonus on the attack roll for higher ground. At the end of that turn, she drops from the wall rather than attempting to hold her position. Since she has the slow fall class feature, Ember takes no damage from the drop.",
     aptitudes: ["General"],
     requirements: [
       gte("skills.climb.rank", 8),
     ],
-  },
-  {
-    name: "Daredevil Athlete",
-    description: "Three times per day, you can use an immediate action to gain a +5 competence bonus on a single Balance, Climb, Escape Artist, Jump, Ride, Swim, or Tumble check",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Daring Outlaw",
-    description: "Your rogue and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 7th-level rogue/4th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your rogue and swashbuckler levels also stack for the purpose of determining your sneak attack bonus damage. For example, a 7th-level rogue/4th-level swashbuckler would deal an extra 6d6 points of damage with her sneak attack, as if she were an 11th-level rogue.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("feats.sneakattack.count", 2),
-      eq("feats.grace.possessed"),
-    ],
-  },
-  {
-    name: "Daring Warrior",
-    description: "Your fighter and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 6th-level fighter/5th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your fighter and swashbuckler levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
-    aptitudes: ["General"],
-    requirements: [
-      eq("feats.weaponspecialization.possessed"),
-      eq("feats.grace.possessed"),
-    ],
-  },
-  {
-    name: "Deadly Defense",
-    description: "When fighting defensively, you deal an extra 1d6 points of damage with any light weapon or with any weapon to which the Weapon Finesse feat applies (such as a rapier, spiked chain, or whip). This feat's benefit applies only when you are unarmored or wearing light armor and not using a shield.",
-    aptitudes: ["General"],
   },
   {
     name: "Dismount Attack",
@@ -150,24 +109,11 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Enduring Ki",
-    description: "By spending an extra daily use of your ki power when you activate it, the chosen effect lasts for an additional round (ki power is a class feature of the ninja; see the sidebar for details). You also gain one extra daily use of your ki power.",
-    aptitudes: ["General"],
-  },
-  {
     name: "Escape Attack",
     description: "When you escape a grapple, you can make a single melee attack with a light weapon as a swift action against the opponent that was grappling you. The opponent is considered flat-footed against this attack. You must have the weapon in hand at the beginning of your turn in order to use this trick.",
     aptitudes: ["General"],
     requirements: [
       gte("skills.escapeartist.rank", 8),
-    ],
-  },
-  {
-    name: "Expanded Ki Pool",
-    description: "You gain three extra daily uses of your ki power (ki power is a class feature of the ninja; see the sidebar for details).",
-    aptitudes: ["General"],
-    requirements: [
-      eq("feats.kipower.possessed"),
     ],
   },
   {
@@ -187,11 +133,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
       gte("skills.sleightofhand.rank", 8),
       gte("skills.spellcraft.rank", 8),
     ],
-  },
-  {
-    name: "Freerunner",
-    description: "You immediately learn up to two movement skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on movement skill tricks.",
-    aptitudes: ["General"],
   },
   {
     name: "Group Fake-Out",
@@ -219,22 +160,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Improved Familiar",
-    description: "When you choose a familiar, the creatures on the table below are also available. You can choose a familiar with an alignment up to one step away on each of the alignment axes (lawful through chaotic,good through evil). For example, a chaotic good spellcaster could acquire a neutral familiar. A lawful neutral spellcaster could acquire a neutral good familiar. Except as noted here, improved familiars otherwise use the normal rules for familiars (PH 52). Arcane Familiar Alignment Caster Level Monstrous centipede, Small N 2nd Badger N 3rd Monstrous scorpion, Small N 3rd Viper, Medium N 3rd Monstrous spider, Small N 4th Vargouille* NE 6th Mephit, any N 7th * Vargouilles summoned as familiars do not possess the kiss supernatural ability.",
-    aptitudes: ["General"],
-    requirements: [
-      or(eq("feats.familiarsorcerer.possessed"), eq("feats.familiarwizard.possessed")),
-    ],
-  },
-  {
-    name: "Improved Skirmish",
-    description: "If you move at least 20 feet away from where you were at the start of your turn, your skirmish damage increases by 2d6 and your competence bonus to AC from skirmish improves by 2.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("feats.skirmish.count", 2),
-    ],
-  },
-  {
     name: "Leaping Climber",
     description: "If you begin a climb by making a Jump check as a swift action, you can add the vertical distance of your jump to the distance climbed in that round. Treat the Jump check as being made with a running start even if you didn't move at least 20 feet. Example: Ember the monk is standing at the base of a craggy cliff and wants to scale the cliff as quickly as possible. She spends a swift action to make a Jump check and gets a result of 24. Thus, she adds 6 feet to the distance she climbs in that round.",
     aptitudes: ["General"],
@@ -249,19 +174,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("skills.listen.rank", 5),
-    ],
-  },
-  {
-    name: "Martial Stalker",
-    description: "Your fighter and ninja levels stack for the purpose of determining the size of your ki pool, as well as your AC bonus. For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja). Your fighter and ninja levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Master Spellthief",
-    description: "Your spellthief levels stack with levels of other arcane spellcaster classes (that is, levels of any class that grants arcane spellcasting other than the spellthief) for the purpose of determining what level of spell you can steal. For example, a 4th-level spellthief/4th-level wizard could steal spells of up to 4th level, as if he were an 8th-level spellthief. Your spellthief and arcane spellcaster levels also stack when determining your caster level for all arcane spells. The character described above would have a caster level of 8th for both his spellthief spells and his wizard spells. In addition, you do not incur a chance of arcane spell failure for arcane spells cast or stolen from other classes, but only if you are wearing light armor. You incur the normal arcane spell failure chance when wearing medium or heavy armor or when using a shield.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("spellcasting.arcane", 2),
     ],
   },
   {
@@ -313,32 +225,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Poison Expert",
-    description: "Choose a type of poison (contact, ingested, inhaled, or injury). The DC to resist both the initial and secondary damage of poisons of this type that you create and use increases by 1. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
-    stackable: true,
-    aptitudes: ["General"],
-    requirements: [
-      eq("feats.poisonuse.possessed"),
-      gte("skills.craft.rank", 4),
-    ],
-  },
-  {
-    name: "Poison Master",
-    description: "Choose a type of poison (contact, ingested, inhaled, or injury) for which you have selected the Poison Expert feat. The initial and secondary damage dealt by poisons of this type that you create and use increases by 1 point per die of damage (or by 1 point, if it deals a fixed amount of damage). For example, lich dust used by a character with Poison Master (ingested) would deal initial damage of 2d6+2 Str and secondary damage of 1d6+1 Con plus 1d6+1 Str. If a poison doesn't deal damage, this feat has no effect. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
-    stackable: true,
-    aptitudes: ["General"],
-    requirements: [
-      eq("feats.poisonexpert.possessed"),
-      eq("feats.poisonuse.possessed"),
-      gte("skills.craft.rank", 8),
-    ],
-  },
-  {
-    name: "Psithief",
-    description: "You can use your steal spell ability to siphon psionic energy instead of spell energy. Instead of stealing a spell, you can choose to steal a number of power points equal twice to the maximum level of spell you can steal minus 1 (up to a maximum value equal to the manifester level of the creature struck). For example, a 4th-level spellthief/1st-level psychic warrior could steal up to 3 power points; if he used this ability against a 2nd-level psion he could steal only 2 power points, since that is the target's manifester level. You can use the stolen power points only to manifest a psionic power you already know. You must use these power points within 1 hour of stealing them; otherwise, the extra psionic energy fades harmlessly away. This feat otherwise follows the rules for the steal spell class feature. In addition, Knowledge (psionics) and Psicraft are spellthief class skills for you. These skills appear on of Expanded Psionics Handbook.",
-    aptitudes: ["General"],
-  },
-  {
     name: "Quick Escape",
     description: "This trick has two options, either of which can be used once per encounter. You can make an Escape Artist check to escape from a grapple or pin as a swift action. You can use this trick even if you have already used a standard action on your current turn to attempt the same escape. Alternatively, you can make any Escape Artist check that would normally require a full-round action as a move action. You can't use this option more than once per day against the same kind of restraint.",
     aptitudes: ["General"],
@@ -352,14 +238,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("skills.swim.rank", 5),
-    ],
-  },
-  {
-    name: "Savvy Rogue",
-    description: "Based on the rogue special abilities you have (PH 50), you gain one or more additional special benefits as described below. You gain the benefits for all the special abilities you have, even those you gain after selecting this feat. Crippling Strike: You can deal Strength damage even to a target that is immune to extra damage from sneak attacks. Defensive Roll: You can use this ability three times per day, rather than once per day. Improved Evasion: You gain a +2 competence bonus on Reflex saves. Opportunist: You can use the opportunist ability as many times per round as you can make attacks of opportunity, but no more than once per creature per round. Each use of the opportunist ability counts as an attack of opportunity. Skill Mastery: When taking 10 with a skill to which you have assigned skill mastery, you can treat the die roll as a 12 instead of as a 10. (In effect, you're \"taking 12.\") Slippery Mind: You gain a +2 competence bonus on the extra save granted by slippery mind.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("classes.rogue.level", 10),
     ],
   },
   {
@@ -424,39 +302,11 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "Sure Hand",
-    description: "You immediately learn up to two manipulation skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on manipulation skill tricks.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Sweet Talker",
-    description: "You immediately learn up to two interaction skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on interaction skill tricks.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Swift Ambusher",
-    description: "Your rogue and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/7th-level rogue would deal an extra 3d6 points of damage and gain a +3 competence bonus to AC when skirmishing, as if she were an 11th-level scout. In addition, you can qualify for ambush feats as if your sneak attack bonus damage were the sum of your skirmish damage and sneak attack bonus damage. You cannot sacrifice skirmish extra damage to use those feats, however.",
-    aptitudes: ["General"],
-    requirements: [
-      gte("feats.sneakattack.count", 1),
-      gte("feats.skirmish.count", 1),
-    ],
-  },
-  {
     name: "Swift Concentration",
     description: "You can maintain concentration on a spell or similar effect as a swift action.",
     aptitudes: ["General"],
     requirements: [
       gte("skills.concentration.rank", 12),
-    ],
-  },
-  {
-    name: "Swift Hunter",
-    description: "Your ranger and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/1st-level ranger would deal an extra 2d6 points of damage and gain a +1 competence bonus to AC when skirmishing, as if she were a 5th-level scout. Your ranger and scout levels also stack for the purpose of determining when you select additional favored enemies, as well as the total bonus granted against your favored enemies. For example, a 4th-level scout/1st-level ranger would have two favored enemies and could allocate an extra +2 bonus against one of those favored enemies, as if she were a 5th-level ranger. In addition, your skirmish extra damage applies against any creature you have selected as a favored enemy, even if it is normally immune to extra damage from critical hits or skirmish attacks.",
-    aptitudes: ["General"],
-    requirements: [
-      eq("feats.favoredenemy.possessed"),
-      gte("feats.skirmish.count", 1),
     ],
   },
   {
@@ -628,6 +478,145 @@ export const LUCK_FEATS: FeatSeed[] = [
   },
 ];
 
+export const GENERAL_FEATS: FeatSeed[] = [
+  {
+    name: "Ascetic Stalker",
+    description: "Your monk and ninja levels stack for the purpose of determining the size of your ki pool. For example, a 4th-level monk/2nd-level ninja with this feat could use her ki powers a number of times equal to 3 (half the sum of her monk and ninja levels) + her Wisdom bonus (if any). Your monk and ninja levels also stack for the purpose of determining your unarmed strike damage, as well as your ki strike class feature. For example, a 4th-level monk/6th-level ninja would deal 1d10 points of damage with her unarmed strike, and her unarmed strike would overcome damage reduction as a lawful magic weapon (as if she were a 10th-level monk). In addition, you can multiclass freely between the monk and ninja classes. You must still remain lawful in order to continue advancing as a monk. You still face the normal XP penalties for having multiple classes more than one level apart.",
+    aptitudes: ["General"],
+    requirements: [
+      eq("feats.kipower.possessed"),
+    ],
+  },
+  {
+    name: "Cool Head (CS)",
+    description: "You immediately learn up to two mental skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on mental skill tricks.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Daredevil Athlete",
+    description: "Three times per day, you can use an immediate action to gain a +5 competence bonus on a single Balance, Climb, Escape Artist, Jump, Ride, Swim, or Tumble check",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Daring Outlaw",
+    description: "Your rogue and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 7th-level rogue/4th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your rogue and swashbuckler levels also stack for the purpose of determining your sneak attack bonus damage. For example, a 7th-level rogue/4th-level swashbuckler would deal an extra 6d6 points of damage with her sneak attack, as if she were an 11th-level rogue.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("feats.sneakattack.count", 2),
+      eq("feats.grace.possessed"),
+    ],
+  },
+  {
+    name: "Deadly Defense",
+    description: "When fighting defensively, you deal an extra 1d6 points of damage with any light weapon or with any weapon to which the Weapon Finesse feat applies (such as a rapier, spiked chain, or whip). This feat's benefit applies only when you are unarmored or wearing light armor and not using a shield.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Enduring Ki",
+    description: "By spending an extra daily use of your ki power when you activate it, the chosen effect lasts for an additional round (ki power is a class feature of the ninja; see the sidebar for details). You also gain one extra daily use of your ki power.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Expanded Ki Pool",
+    description: "You gain three extra daily uses of your ki power (ki power is a class feature of the ninja; see the sidebar for details).",
+    aptitudes: ["General"],
+    requirements: [
+      eq("feats.kipower.possessed"),
+    ],
+  },
+  {
+    name: "Freerunner",
+    description: "You immediately learn up to two movement skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on movement skill tricks.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Improved Familiar",
+    description: "When you choose a familiar, the creatures on the table below are also available. You can choose a familiar with an alignment up to one step away on each of the alignment axes (lawful through chaotic,good through evil). For example, a chaotic good spellcaster could acquire a neutral familiar. A lawful neutral spellcaster could acquire a neutral good familiar. Except as noted here, improved familiars otherwise use the normal rules for familiars (PH 52). Arcane Familiar Alignment Caster Level Monstrous centipede, Small N 2nd Badger N 3rd Monstrous scorpion, Small N 3rd Viper, Medium N 3rd Monstrous spider, Small N 4th Vargouille* NE 6th Mephit, any N 7th * Vargouilles summoned as familiars do not possess the kiss supernatural ability.",
+    aptitudes: ["General"],
+    requirements: [
+      or(eq("feats.familiarsorcerer.possessed"), eq("feats.familiarwizard.possessed")),
+    ],
+  },
+  {
+    name: "Improved Skirmish",
+    description: "If you move at least 20 feet away from where you were at the start of your turn, your skirmish damage increases by 2d6 and your competence bonus to AC from skirmish improves by 2.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("feats.skirmish.count", 2),
+    ],
+  },
+  {
+    name: "Master Spellthief",
+    description: "Your spellthief levels stack with levels of other arcane spellcaster classes (that is, levels of any class that grants arcane spellcasting other than the spellthief) for the purpose of determining what level of spell you can steal. For example, a 4th-level spellthief/4th-level wizard could steal spells of up to 4th level, as if he were an 8th-level spellthief. Your spellthief and arcane spellcaster levels also stack when determining your caster level for all arcane spells. The character described above would have a caster level of 8th for both his spellthief spells and his wizard spells. In addition, you do not incur a chance of arcane spell failure for arcane spells cast or stolen from other classes, but only if you are wearing light armor. You incur the normal arcane spell failure chance when wearing medium or heavy armor or when using a shield.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("spellcasting.arcane", 2),
+    ],
+  },
+  {
+    name: "Poison Expert",
+    description: "Choose a type of poison (contact, ingested, inhaled, or injury). The DC to resist both the initial and secondary damage of poisons of this type that you create and use increases by 1. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
+    stackable: true,
+    aptitudes: ["General"],
+    requirements: [
+      eq("feats.poisonuse.possessed"),
+      gte("skills.craft.rank", 4),
+    ],
+  },
+  {
+    name: "Poison Master",
+    description: "Choose a type of poison (contact, ingested, inhaled, or injury) for which you have selected the Poison Expert feat. The initial and secondary damage dealt by poisons of this type that you create and use increases by 1 point per die of damage (or by 1 point, if it deals a fixed amount of damage). For example, lich dust used by a character with Poison Master (ingested) would deal initial damage of 2d6+2 Str and secondary damage of 1d6+1 Con plus 1d6+1 Str. If a poison doesn't deal damage, this feat has no effect. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
+    stackable: true,
+    aptitudes: ["General"],
+    requirements: [
+      eq("feats.poisonexpert.possessed"),
+      eq("feats.poisonuse.possessed"),
+      gte("skills.craft.rank", 8),
+    ],
+  },
+  {
+    name: "Psithief",
+    description: "You can use your steal spell ability to siphon psionic energy instead of spell energy. Instead of stealing a spell, you can choose to steal a number of power points equal twice to the maximum level of spell you can steal minus 1 (up to a maximum value equal to the manifester level of the creature struck). For example, a 4th-level spellthief/1st-level psychic warrior could steal up to 3 power points; if he used this ability against a 2nd-level psion he could steal only 2 power points, since that is the target's manifester level. You can use the stolen power points only to manifest a psionic power you already know. You must use these power points within 1 hour of stealing them; otherwise, the extra psionic energy fades harmlessly away. This feat otherwise follows the rules for the steal spell class feature. In addition, Knowledge (psionics) and Psicraft are spellthief class skills for you. These skills appear on of Expanded Psionics Handbook.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Savvy Rogue",
+    description: "Based on the rogue special abilities you have (PH 50), you gain one or more additional special benefits as described below. You gain the benefits for all the special abilities you have, even those you gain after selecting this feat. Crippling Strike: You can deal Strength damage even to a target that is immune to extra damage from sneak attacks. Defensive Roll: You can use this ability three times per day, rather than once per day. Improved Evasion: You gain a +2 competence bonus on Reflex saves. Opportunist: You can use the opportunist ability as many times per round as you can make attacks of opportunity, but no more than once per creature per round. Each use of the opportunist ability counts as an attack of opportunity. Skill Mastery: When taking 10 with a skill to which you have assigned skill mastery, you can treat the die roll as a 12 instead of as a 10. (In effect, you're \"taking 12.\") Slippery Mind: You gain a +2 competence bonus on the extra save granted by slippery mind.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("classes.rogue.level", 10),
+    ],
+  },
+  {
+    name: "Sure Hand",
+    description: "You immediately learn up to two manipulation skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on manipulation skill tricks.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Sweet Talker",
+    description: "You immediately learn up to two interaction skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on interaction skill tricks.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Swift Ambusher",
+    description: "Your rogue and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/7th-level rogue would deal an extra 3d6 points of damage and gain a +3 competence bonus to AC when skirmishing, as if she were an 11th-level scout. In addition, you can qualify for ambush feats as if your sneak attack bonus damage were the sum of your skirmish damage and sneak attack bonus damage. You cannot sacrifice skirmish extra damage to use those feats, however.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("feats.sneakattack.count", 1),
+      gte("feats.skirmish.count", 1),
+    ],
+  },
+  {
+    name: "Swift Hunter",
+    description: "Your ranger and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/1st-level ranger would deal an extra 2d6 points of damage and gain a +1 competence bonus to AC when skirmishing, as if she were a 5th-level scout. Your ranger and scout levels also stack for the purpose of determining when you select additional favored enemies, as well as the total bonus granted against your favored enemies. For example, a 4th-level scout/1st-level ranger would have two favored enemies and could allocate an extra +2 bonus against one of those favored enemies, as if she were a 5th-level ranger. In addition, your skirmish extra damage applies against any creature you have selected as a favored enemy, even if it is normally immune to extra damage from critical hits or skirmish attacks.",
+    aptitudes: ["General"],
+    requirements: [
+      eq("feats.favoredenemy.possessed"),
+      gte("feats.skirmish.count", 1),
+    ],
+  },
+];
+
 export const BARDIC_FEATS: FeatSeed[] = [
   {
     name: "Chant of the Long Road",
@@ -720,6 +709,23 @@ export const AMBUSH_FEATS: FeatSeed[] = [
       eq("feats.improvedunarmedstrike.possessed"),
       gte("feats.sneakattack.count", 3),
     ],
+  },
+];
+
+export const FIGHTER_FEATS: FeatSeed[] = [
+  {
+    name: "Daring Warrior",
+    description: "Your fighter and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 6th-level fighter/5th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your fighter and swashbuckler levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      eq("feats.weaponspecialization.possessed"),
+      eq("feats.grace.possessed"),
+    ],
+  },
+  {
+    name: "Martial Stalker",
+    description: "Your fighter and ninja levels stack for the purpose of determining the size of your ki pool, as well as your AC bonus. For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja). Your fighter and ninja levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
   },
 ];
 

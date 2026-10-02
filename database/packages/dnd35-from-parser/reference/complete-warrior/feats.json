@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-warrior",
-    "scrapedAt": "2026-04-25T20:06:51.630Z",
+    "scrapedAt": "2026-10-02T02:14:29.523Z",
     "sourceUrl": "https://dndtools.net/feats/complete-warrior--61/",
     "type": "feat"
   },
@@ -387,7 +387,7 @@
     },
     {
       "benefit": "The Cavalry Charger feat enables the use of three tactical maneuvers. Unhorse: To use this maneuver, you must be mounted and charge a mounted foe. If your charge attack hits, you may make a free bull rush attempt. If the bull rush attempt succeeds, you move your foe normally, but his mount remains where it was. Leaping Charge: To use this maneuver, you must be mounted and charge a foe at least one size category smaller than your mount. Make a Ride check at the conclusion of the move portion of the charge action. Prior to making the roll, determine the DC of the check: either DC 10 for a chance to deal 2 extra points of damage or DC 20 for a chance to deal 4 extra points of damage. If you fail this Ride check, you miss your target (no attack roll) and if you fail this Ride check by 5 or more, you miss your target and fall off your mount, landing in a square adjacent to the mount's space. Fell Trample: You can make mounted overrun attempts against more than one foe, resolving each attempt according to the rules. Your mount gets a hoof attack against each foe you successfully overrun.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Cavalry Charger",
       "prerequisiteText": "Mounted Combat, Spirited Charge, Trample, base attack bonus +6,",
       "special": "A fighter may select Cavalry Charger as one of his fighter bonus feats."
@@ -400,7 +400,7 @@
     },
     {
       "benefit": "You gain an attack of opportunity whenever an enemy attempts to grapple you, even if the enemy has a feat or special ability that would normally bypass the attack. If you deal damage with this attack, the enemy fails to start the grapple unless it has the Improved Grapple feat or a special ability such as improved grab. If the enemy has such an ability, you may add the damage you deal as a bonus on your opposed check to resist being grappled. This feat does not give you extra attacks of opportunity during a round or allow you to make an attack of opportunity when you would be denied one for being surprised, helpless, or in a similar situation. For example, an ogre attempts to grapple Tordek. Tordek gains an attack of opportunity, hits, and causes damage. Since the ogre does not have any sort of grappling special ability or feat, it fails to start a grapple. Then an ankheg--a creature with the improved grab special ability--attempts to grapple Tordek. He takes an attack of opportunity, hits, and deals 10 points of damage to the creature. Tordek then adds +10 to his opposed check to resist being grappled.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Close-Quarters Fighting",
       "normal": "Creatures with Improved Grapple, improved grab, or similar feats or special abilities do not provoke attacks of opportunity when they attempt to start a grapple.",
       "prerequisiteText": "Base attack bonus +3,",
@@ -415,7 +415,7 @@
     },
     {
       "benefit": "The Combat Brute feat enables the use of three tactical maneuvers. Advancing Blows: To use this maneuver, you must make a successful bull rush attempt against a foe. During the next round, all your attacks against that foe gain a +1 bonus on attack and damage rolls for each square your bull rush moved that foe. For example, if you pushed an orc back 10 (2 squares) feet with a bull rush, you would gain a +2 bonus on attack and damage rolls against that orc on the following round. Sundering Cleave: To use this maneuver, you must destroy a foe's weapon or shield with a successful sunder attempt. If you do so, you gain an immediate additional melee attack against the foe. The additional attack is with the same weapon and at the same attack bonus as the attack that destroyed the weapon or shield. Momentum Swing: To use this maneuver, you must charge a foe in the first round, and you must make an attack using your Power Attack feat in the second round. The penalty you take on your attack roll must be -5 or worse. Your attacks during the second round gain a bonus equal to your attack roll penalty x 1-1/2, or x 3 if you're using a two-handed weapon or a one-handed weapon wielded in two hands. For instance, if you choose to take a -6 penalty on your attack roll, you can deal an extra 9 points of damage, or an extra 18 points if you're using a two-handed weapon or a one-handed weapon wielded in two hands.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Combat Brute",
       "prerequisiteText": "Improved Sunder, Power Attack, base attack bonus +6,",
       "special": "A fighter may select Combat Brute as one of his fighter bonus feats."
@@ -447,7 +447,7 @@
     },
     {
       "benefit": "If an opponent attacks you and misses while you are using the total defense action, you can attack that opponent on your next turn with a +4 bonus on your attack roll. You gain no bonus against an opponent that does not attack you or against an opponent that attacks and hits you.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Defensive Strike",
       "prerequisiteText": "Combat Expertise, Dodge, DEX 13, INT 13,",
       "special": "A fighter may select Defensive Strike as one of his fighter bonus feats."
@@ -620,21 +620,21 @@
     },
     {
       "benefit": "The Formation Expert feat enables the use of three tactical maneuvers. You gain the benefit of the feat even if you are fighting in formation with allies that do not have this feat. Lock Shields: To use this maneuver, you must have a ready shield, and adjacent allies on opposite sides of you must have ready shields. You gain a +1 bonus to Armor Class. Step into the Breach: To use this maneuver, you must be within a single move of an ally who falls in combat, and an ally must occupy every square between you and the fallen comrade. You can immediately take a single move action (as if you had readied an action to do so) to move into the square the fallen ally occupies. Wall of Polearms: To use this maneuver, you must be wielding a shortspear, longspear, trident, glaive, guisarme, halberd, or ranseur, and you must have adjacent allies wielding weapons identical to yours on opposite sides of you. You gain a +2 bonus on attack rolls.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Formation Expert",
       "prerequisiteText": "Base attack bonus +6,",
       "special": "A fighter may select Formation Expert as one of his fighter bonus feats."
     },
     {
       "benefit": "Declare that you are using this feat before you make your attack roll (thus, a missed attack roll ruins the attempt). Against a humanoid opponent, you can make an unarmed attack that deals no damage but has a chance of paralyzing your target. If your attack is successful, your target must attempt a Fortitude saving throw (DC 10 + 1/2 your character level + your Wis modifier). If the target fails this saving throw, it is paralyzed for 1d4+1 rounds. Each attempt to paralyze an opponent counts as one of your uses of the Stunning Fist feat for the day. Creatures immune to stunning cannot be paralyzed in this manner.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Freezing The Lifeblood",
       "prerequisiteText": "Improved Unarmed Strike, Stunning Fist, WIS 17, base attack bonus +10,",
       "special": "A fighter may select Freezing the Lifeblood as one of his fighter bonus feats."
     },
     {
       "benefit": "The Giantbane feat enables the use of three tactical maneuvers. Duck Underneath: To use this maneuver, you must have taken a total defense action, then have been attacked by a foe at least two size categories larger than you. You gain a +4 dodge bonus to your Armor Class, which stacks with the bonus for total defense. If that foe misses you, on your next turn, as a free action, you may make a DC 15 Tumble check. If the check succeeds, you move immediately to any unoccupied square on the opposite side of the foe (having successfully ducked underneath your foe). If there is no unoccupied square on the opposite side of the foe or you fail the Tumble check, you remain in the square you are in and have failed to duck underneath your foe. Death from Below: To use this maneuver, you must have successfully used the duck underneath maneuver. You may make an immediate single attack against the foe you ducked underneath. That foe is treated as fl at-footed, and you gain a +4 bonus on your attack roll. Climb Aboard: To use this maneuver, you must move adjacent to a foe at least two size categories larger than you. In the following round, you may make a DC 10 Climb check as a free action to clamber onto the creature's back or limbs (you move into one of the squares the creature occupies). The creature you're standing on takes a -4 penalty on attack rolls against you, because it can strike at you only awkwardly. If the creature moves during its action, you move along with it. The creature can try to shake you off by making a grapple check opposed by your Climb check. If the creature succeeds, you wind up in a random adjacent square.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Giantbane",
       "prerequisiteText": "Tumble 5 ranks, base attack bonus +6, Medium or smaller size,",
       "special": "A fighter may select Giantbane as one of his fighter bonus feats."
@@ -653,7 +653,7 @@
     },
     {
       "benefit": "When wielding two weapons (not including natural weapons or unarmed strikes), you gain a +3 shield bonus to your AC. When you are fighting defensively or using the total defense action, this shield bonus increases to +6.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Greater Two-Weapon Defense",
       "prerequisiteText": "Improved Two-Weapon Defense, Two-Weapon Fighting, DEX 19, base attack bonus +11, Two- Weapon Defense,",
       "special": "A fighter may select Greater Two-Weapon Defense as one of his fighter bonus feats."
@@ -685,7 +685,7 @@
     },
     {
       "benefit": "When you attack with a weapon in your off hand, you may still apply your buckler's shield bonus to your Armor Class.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Improved Buckler Defense",
       "normal": "Without this feat, a character wielding a buckler who attacks with an off-hand weapon loses the buckler's shield bonus to AC until his or her next turn.",
       "prerequisiteText": "Shield Proficiency,",
@@ -693,7 +693,7 @@
     },
     {
       "benefit": "When you use the Combat Expertise feat to improve your Armor Class, the number you subtract from your attack roll and add to your AC can be any number that does not exceed your base attack bonus.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Improved Combat Expertise",
       "normal": "With Combat Expertise, the number can be no greater than +5.",
       "prerequisiteText": "Combat Expertise, INT 13, Base attack bonus +6,",
@@ -713,35 +713,35 @@
     },
     {
       "benefit": "The penalty you take when using a ranged weapon if your mount is taking a double move is eliminated, and the penalty for using a ranged weapon when your mount is running is lessened from -4 to - 2. You can attack at any time during your mount's move.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Improved Mounted Archery",
       "prerequisiteText": "Mounted Archery, Mounted Combat, Ride 1 ranks,",
       "special": "A fighter may select Improved Mounted Archery as one of his fighter bonus feats."
     },
     {
       "benefit": "When using the Rapid Shot feat, you may ignore the -2 penalty on all your ranged attack rolls.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Improved Rapid Shot",
       "prerequisiteText": "Manyshot, Point Blank Shot, Rapid Shot,",
       "special": "A fighter may select Improved Rapid Shot as one of his fighter bonus feats."
     },
     {
       "benefit": "You gain a number of hit points equal to your current Hit Dice. Each time you gain a HD (such as by gaining a level), you gain 1 additional hit point. If you lose a HD (such as by losing a level), you lose 1 hit point permanently.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Improved Toughness",
       "prerequisiteText": "Base Fortitude save bonus +2,",
       "special": "A fighter may select Improved Toughness as one of his fighter bonus feats."
     },
     {
       "benefit": "When wielding two weapons (not including natural weapons or unarmed strikes), you gain a +2 shield bonus to your Armor Class. When you are fighting defensively or using the total defense action, this shield bonus increases to +4.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Improved Two-Weapon Defense",
       "prerequisiteText": "Two-Weapon Fighting, Two-Weapon Defense, DEX 17, base attack bonus +6,",
       "special": "A fighter may select Improved Two-Weapon Defense as one of his fighter bonus feats."
     },
     {
       "benefit": "You can treat all the exotic weapons associated with your race as martial weapons rather than as exotic weapons. A weapon is treated as being associated with a race if the race's name appears as part of the weapon's name, such as the elven thinblade or the dwarven urgrosh.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Improved Weapon Familiarity",
       "normal": "Without this feat, you must select the Exotic Weapon Proficiency feat (or have the appropriate weapon familiarity as a racial trait) to eliminate the nonproficiency penalty you take when wielding an exotic weapon associated with your race.",
       "prerequisiteText": "Base attack bonus +1,",
@@ -813,7 +813,7 @@
     },
     {
       "benefit": "If you are using a heavy shield and a light weapon, you gain a +1 bonus to your Armor Class. In addition, if you are within 5 feet of an ally who is also using a heavy shield and light weapon and who also has this feat, you may form a shield wall. A shield wall provides an extra +2 bonus to AC and a +1 bonus on Reflex saves to all eligible characters participating in the shield wall. For example, a single character with this feat gains a +1 bonus to his AC. If two or more characters who all know this feat are adjacent, they each gain an extra +2 bonus to AC (for a total of +3) and a +1 bonus on Reflex saves.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Phalanx Fighting",
       "prerequisiteText": "base attack bonus +1, Proficiency with a heavy shield,",
       "special": "A fighter may select Phalanx Fighting as one of his fighter bonus feats."
@@ -826,14 +826,14 @@
     },
     {
       "benefit": "When using the weapon you selected, you gain a +4 bonus on the roll to confi rm a threat.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Power Critical",
       "prerequisiteText": "base attack bonus +4, Weapon Focus with weapon,",
       "special": "A fighter may select Power Critical as one of his fighter bonus feats. You can gain Power Critical multiple times. Each time you take the feat, it may be with a different weapon or the same weapon. If you take it with the same weapon, the effects of the feats stack."
     },
     {
       "benefit": "You can make an attack from the prone position and take no penalty on your attack roll. If your attack roll is successful, you may regain your feet immediately as a free action. Opponents gain no bonus on melee attacks against you while you are prone.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Prone Attack",
       "prerequisiteText": "Lightning Reflexes, DEX 15, base attack bonus +2,",
       "special": "A fighter may select Prone Attack as one of his fighter bonus feats"
@@ -846,7 +846,7 @@
     },
     {
       "benefit": "Choose one type of ranged weapon with which you are proficient. You can make a disarm attempt with this weapon as long as your target is within 30 feet.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Ranged Disarm",
       "prerequisiteText": "Point Blank Shot, Precise Shot, DEX 15, base attack bonus +5,",
       "special": "A fighter may select Ranged Disarm as one of his fighter bonus feats. you can gain this feat multiple times, it's effects do not stack. Each time you take this feat it applies to a new ranged weapon. when using this feat, a character gains no benefit from the improved disarm feat"
@@ -859,7 +859,7 @@
     },
     {
       "benefit": "When attacking objects, you deal full damage instead of half damage) with slashing or bludgeoning ranged weapons. You can make ranged sunder attempts with piercing weapons, such as arrows, but you deal only half damage; divide by 2 before applying the object's hardness. You must be within 30' of your opponents to make a ranged sunder attempts.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Ranged Sunder",
       "normal": "Objects take half damage from ranged weapons (other than siege weapons and the like ). You can only sunder with a melee attack using a slashing or bludgeoning weapon",
       "prerequisiteText": "Point Blank Shot, Precise Shot, STR 13, Base Attack bonus +5,",
@@ -892,7 +892,7 @@
     },
     {
       "benefit": "Your targets only receive a +2 bonus to Armor Class due to cover. This feat has no effect against foes with no cover or total cover.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Sharp-Shooting",
       "normal": "Cover normally gives a +4 bonus to AC.",
       "prerequisiteText": "Point Blank Shot, Precise Shot, base attack bonus +3,",
@@ -900,21 +900,21 @@
     },
     {
       "benefit": "If you hit an opponent with your shield as part of a charge action, in addition to dealing damage normally, you may make a trip attack without provoking an attack of opportunity. If you lose, the defender does not get to try to trip you in return.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Shield Charge",
       "prerequisiteText": "Improved Shield Bash, base attack bonus +3,",
       "special": "A fighter may select Shield Charge as one of his fighter bonus feats."
     },
     {
       "benefit": "As a full-round action or as a charge action, you may make an attack with your shield against an opponent. If you hit, you force the target damaged by this attack to make a Fortitude saving throw (DC 10 + 1/2 your character level+your Str modifier) in addition to dealing damage normally. A defender who fails this saving throw is dazed for 1 round (until just before your next action). Constructs, oozes, plants, undead, incorporeal creatures, and creatures immune to critical hits cannot be dazed.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Shield Slam",
       "prerequisiteText": "Improved Shield Bash, Shield Charge, base attack bonus +6,",
       "special": "A fighter may select Shield Slam as one of his fighter bonus feats."
     },
     {
       "benefit": "The Shock Trooper feat enables the use of three tactical maneuvers. Directed Bull Rush: To use this maneuver, you must make a successful bull rush attempt as part of a charge. For every square you push your foe back, you may also push that foe one square to the left or right. Domino Rush: To use this maneuver, you must make a successful bull rush attempt that forces a foe into the same square as another foe. You may make a free trip attempt against both foes at the same time, and neither foe gets a chance to trip you if your attempt fails. Heedless Charge: To use this maneuver, you must charge and make the attack at the end of the charge using your Power Attack feat. The penalty you take on your attack roll must be -5 or worse. In addition to normal charge modifiers (which give you a -2 penalty to AC and a +2 bonus on the attack roll), you can assign any portion of the attack roll penalty from Power Attack to your Armor Class instead, up to a maximum equal to your base attack bonus.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Shock Trooper",
       "prerequisiteText": "Improved Bull Rush, Power Attack, base attack bonus +6,",
       "special": "A fighter may select Shock Trooper as one of his fighter bonus feats."
@@ -952,7 +952,7 @@
     },
     {
       "benefit": "Declare that you are using this feat before you make your attack roll (thus, a missed attack roll ruins the attempt). You can make an unarmed attack that deals no damage, but instead applies a -6 penalty to the target's Strength score for 1 minute. Multiple weakening touches delivered on the same target are not cumulative. Each attempt to deliver a weakening touch counts as one of your Stunning Fist attacks for the day. Creatures with immunity to stun effects cannot be affected by this feat.",
-      "featType": "general",
+      "featType": "fighter",
       "name": "Weakening Touch",
       "prerequisiteText": "Improved Unarmed Strike, Stunning Fist, WIS 17, base attack bonus +2,",
       "special": "A fighter may select Weakening Touch as one of his fighter bonus feats."

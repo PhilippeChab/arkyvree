@@ -4,6 +4,7 @@ import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 export {
   GENERAL_FEATS,
   WILD_FEATS,
+  FIGHTER_FEATS,
   BARDIC_FEATS,
   jackOfAllTrades,
 } from "./feats.ts";
@@ -13,6 +14,7 @@ export { ALL_CLASS_FEATS } from "./classes/index.ts";
 import {
   GENERAL_FEATS as _GENERAL_FEATS,
   WILD_FEATS as _WILD_FEATS,
+  FIGHTER_FEATS as _FIGHTER_FEATS,
   BARDIC_FEATS as _BARDIC_FEATS,
   jackOfAllTrades as _jackOfAllTrades,
 } from "./feats.ts";
@@ -21,6 +23,7 @@ import { ALL_CLASS_FEATS as _ALL_CLASS_FEATS } from "./classes/index.ts";
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ..._GENERAL_FEATS,
   ..._WILD_FEATS,
+  ..._FIGHTER_FEATS,
   ..._BARDIC_FEATS,
   ..._jackOfAllTrades,
 ];
@@ -28,6 +31,7 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
 export const ALL_FEATS: FeatSeed[] = [
   ..._GENERAL_FEATS,
   ..._WILD_FEATS,
+  ..._FIGHTER_FEATS,
   ..._BARDIC_FEATS,
   ..._jackOfAllTrades,
   ..._ALL_CLASS_FEATS,

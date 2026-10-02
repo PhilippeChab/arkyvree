@@ -11,6 +11,7 @@ export {
 
 export {
   GENERAL_FEATS,
+  FIGHTER_FEATS,
   ITEM_CREATION_FEATS,
   METAMAGIC_FEATS,
   SPECIAL_FEATS,
@@ -38,6 +39,7 @@ import {
 } from "./favoredEnemy.ts";
 import {
   GENERAL_FEATS as _GENERAL_FEATS,
+  FIGHTER_FEATS as _FIGHTER_FEATS,
   ITEM_CREATION_FEATS as _ITEM_CREATION_FEATS,
   METAMAGIC_FEATS as _METAMAGIC_FEATS,
   SPECIAL_FEATS as _SPECIAL_FEATS,
@@ -60,6 +62,7 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ..._DOMAIN_POOL_FEATS,
   ..._favoredEnemy,
   ..._GENERAL_FEATS,
+  ..._FIGHTER_FEATS,
   ..._ITEM_CREATION_FEATS,
   ..._METAMAGIC_FEATS,
   ..._SPECIAL_FEATS,
@@ -81,6 +84,7 @@ export const ALL_FEATS: FeatSeed[] = [
   ..._DOMAIN_POOL_FEATS,
   ..._favoredEnemy,
   ..._GENERAL_FEATS,
+  ..._FIGHTER_FEATS,
   ..._ITEM_CREATION_FEATS,
   ..._METAMAGIC_FEATS,
   ..._SPECIAL_FEATS,

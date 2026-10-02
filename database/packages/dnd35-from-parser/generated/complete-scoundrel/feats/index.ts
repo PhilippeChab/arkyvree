@@ -2,10 +2,12 @@
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export {
-  GENERAL_FEATS,
+  SKILL_TRICK_FEATS,
   LUCK_FEATS,
+  GENERAL_FEATS,
   BARDIC_FEATS,
   AMBUSH_FEATS,
+  FIGHTER_FEATS,
   disembowelingStrike,
   headShot,
   magicalAppraisal,
@@ -15,10 +17,12 @@ export {
 export { ALL_CLASS_FEATS } from "./classes/index.ts";
 
 import {
-  GENERAL_FEATS as _GENERAL_FEATS,
+  SKILL_TRICK_FEATS as _SKILL_TRICK_FEATS,
   LUCK_FEATS as _LUCK_FEATS,
+  GENERAL_FEATS as _GENERAL_FEATS,
   BARDIC_FEATS as _BARDIC_FEATS,
   AMBUSH_FEATS as _AMBUSH_FEATS,
+  FIGHTER_FEATS as _FIGHTER_FEATS,
   disembowelingStrike as _disembowelingStrike,
   headShot as _headShot,
   magicalAppraisal as _magicalAppraisal,
@@ -27,10 +31,12 @@ import {
 import { ALL_CLASS_FEATS as _ALL_CLASS_FEATS } from "./classes/index.ts";
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
-  ..._GENERAL_FEATS,
+  ..._SKILL_TRICK_FEATS,
   ..._LUCK_FEATS,
+  ..._GENERAL_FEATS,
   ..._BARDIC_FEATS,
   ..._AMBUSH_FEATS,
+  ..._FIGHTER_FEATS,
   ..._disembowelingStrike,
   ..._headShot,
   ..._magicalAppraisal,
@@ -38,10 +44,12 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
 ];
 
 export const ALL_FEATS: FeatSeed[] = [
-  ..._GENERAL_FEATS,
+  ..._SKILL_TRICK_FEATS,
   ..._LUCK_FEATS,
+  ..._GENERAL_FEATS,
   ..._BARDIC_FEATS,
   ..._AMBUSH_FEATS,
+  ..._FIGHTER_FEATS,
   ..._disembowelingStrike,
   ..._headShot,
   ..._magicalAppraisal,
