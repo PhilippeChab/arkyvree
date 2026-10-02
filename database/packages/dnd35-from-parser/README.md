@@ -23,6 +23,8 @@ bun run parser:generate srd                  # one book
 bun run parser:generate srd --type class     # one book's classes
 bun run parser:generate -- <path-to-json>    # one reference
 bun run parser:generate -- database/packages/dnd35-from-parser/reference/domains.json --book srd   # the domains, for one book
+# A generation runs in a copy of generated/, which replaces it only when every reference succeeds:
+# a failed one leaves generated/ as it was. One runs at a time (generated.lock)
 
 # Re-scrape and regenerate all existing references
 bun run parser:sync
