@@ -4,7 +4,7 @@
 
 Entities (`CUSTOMIZABLE_ENTITY_TYPES` in `shared/customization/entities.ts`: feats, powers, items, races, classes, class levels) can have **modifiers**, **requirements**, and **properties** attached via junction tables in the `customization` schema.
 
-A class's own modifiers apply once to a character with any level of it, and its requirements are checked to take any level of it, with that level's own (the level-up wizard's class list), and on a character who has it. Its page (Customize on the class page) is the customization page every entity has.
+A class's own modifiers apply once to a character with any level of it, and its requirements are checked to take any level of it, with that level's own (the level-up wizard's class list), and on a character who has it. The class page's Properties, Modifiers and Requirements tabs are the sections every entity's customization page has (`ClassCustomizationSections`).
 
 The complete application operator definitions live in `shared/customization/operators.ts`. API validators consume those lists; `tests/shared/operators.test.ts` verifies they match the migrated database's CHECK constraints. Keep generated `drizzle/schema.ts` free of handwritten helpers. Operator changes require a database migration and a schema refresh as well as updating the application definitions.
 

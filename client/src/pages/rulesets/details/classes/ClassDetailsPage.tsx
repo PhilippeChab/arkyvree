@@ -1,12 +1,14 @@
 import {
-  Tune as CustomizeIcon,
   EmojiEvents as FeatPoolsIcon,
   TrendingUp as LevelsIcon,
+  Settings as ModifiersIcon,
+  Label as PropertiesIcon,
+  Rule as RequirementsIcon,
   Psychology as SkillsIcon,
   Bolt as SpellListIcon,
   AutoStories as SpellsIcon,
 } from "@mui/icons-material";
-import { Box, Button, Chip, MenuItem, TextField } from "@mui/material";
+import { Box, Chip, MenuItem, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -32,13 +34,16 @@ import {
   type ClassSection,
   prefetchClassSection,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-import { entityPageState, useOpenEntity, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 
 import {
   ClassFeatPoolsSection,
   ClassLevelsSection,
+  ClassModifiersSection,
+  ClassPropertiesSection,
+  ClassRequirementsSection,
   ClassSkillsSection,
   ClassSpellListSection,
   ClassSpellsKnownSection,
@@ -52,6 +57,9 @@ const TABS: SectionTab<ClassSection>[] = [
   { key: "spells-known", label: "Spells Known", icon: SpellsIcon },
   { key: "spells", label: "Spell Uses", icon: SpellsIcon },
   { key: "spell-list", label: "Spells", icon: SpellListIcon },
+  { key: "properties", label: "Properties", icon: PropertiesIcon },
+  { key: "modifiers", label: "Modifiers", icon: ModifiersIcon },
+  { key: "requirements", label: "Requirements", icon: RequirementsIcon },
 ];
 
 const SECTION_COMPONENTS = {
@@ -61,6 +69,9 @@ const SECTION_COMPONENTS = {
   "spells-known": ClassSpellsKnownSection,
   spells: ClassSpellsSection,
   "spell-list": ClassSpellListSection,
+  properties: ClassPropertiesSection,
+  modifiers: ClassModifiersSection,
+  requirements: ClassRequirementsSection,
 } as const;
 
 // Class settings stored as customization properties of the class.
@@ -108,7 +119,6 @@ export default function ClassDetailsPage() {
   const editForm = useForm<ClassFormData>();
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  const openEntity = useOpenEntity(rulesetId);
 
   const sync = useFormSync(editForm, classData && toClassForm(classData), {
     // An inherited class keeps its id in every fork.
@@ -228,17 +238,6 @@ export default function ClassDetailsPage() {
               title="Class Overview"
               sx={{ mb: 4 }}
               description={classData.description}
-              action={
-                // Its properties, modifiers and requirements, on the page every customizable entity has
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<CustomizeIcon />}
-                  onClick={() => openEntity(`klasses/${classId}/customization`)}
-                >
-                  Customize
-                </Button>
-              }
               chips={
                 <>
                   <Chip label={`Hit Die: d${classData.hd || 8}`} color="secondary" sx={{ fontWeight: 600 }} />
