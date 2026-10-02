@@ -160,7 +160,9 @@ export function parseDomainsHtml(
       const slug = href?.match(/#(.+)$/)?.[1];
       spells.push({ name: normalizeDomainSpellName(spellName), ...(slug ? { slug } : {}), level });
     };
-    const table = siblings.find((s) => s.is("table"));
+    // The spell list's table follows its heading: a granted power can have a table of its own before it (Sand's)
+    const spellsHeading = siblings.findIndex((s) => s.is("h6"));
+    const table = siblings.slice(Math.max(spellsHeading, 0)).find((s) => s.is("table"));
     if (table) {
       table.find("tr").each((_, tr) => {
         const tds = $(tr).find("td");

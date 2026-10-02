@@ -2,7 +2,7 @@
   "_meta": {
     "book": "all-domains",
     "filter": "all",
-    "scrapedAt": "2026-03-24T20:14:44.683Z",
+    "scrapedAt": "2026-10-02T02:10:20.587Z",
     "sourceUrl": "https://srd.dndtools.org/srd/magic/spells/classSpellLists/domains.html",
     "type": "domain"
   },
@@ -3537,6 +3537,57 @@
           "level": 9,
           "name": "Teleportation Circle",
           "slug": "teleportation-circle"
+        }
+      ]
+    },
+    {
+      "description": "Once per day, you can shape a small amount of sand into any solid object you can imagine, up to 8 cubic feet in volume. You can shape one object or several, up to a number equal to your Wisdom bonus, as long as the total volume does not exceed 8 cubic feet. You must make a special Wisdom check (d20 + your Wis modifier + 1/2 your cleric level) against a DC determined by the size and complexity of the item. The item to be created has a base DC of 5, plus the modifiers on the table below. Each attempt to create an item requires a number of minutes equal to its DC. You can take 10 or take 20 on this check. Created items persist for 1 minute per cleric level, and can only be solid objects. The objects created have no magical properties, though they radiate faint transmutation magic. All items created in this fashion have hardness 5 and hit points as follows: Fine 1, Diminutive 2, Tiny 3, Small 5, Medium 8, Large 10.",
+      "name": "Sand",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Waste Strider",
+          "slug": "WASTE STRIDER"
+        },
+        {
+          "level": 2,
+          "name": "Black Sand",
+          "slug": "BLACK SAND"
+        },
+        {
+          "level": 3,
+          "name": "Haboob",
+          "slug": "HABOOB"
+        },
+        {
+          "level": 4,
+          "name": "Blast of Sand",
+          "slug": "BLAST OF SAND"
+        },
+        {
+          "level": 5,
+          "name": "Flaywind Burst",
+          "slug": "FLAYWIND BURST"
+        },
+        {
+          "level": 6,
+          "name": "Awaken Sand",
+          "slug": "AWAKEN SAND"
+        },
+        {
+          "level": 7,
+          "name": "Vitrify",
+          "slug": "VITRIFY"
+        },
+        {
+          "level": 8,
+          "name": "Desert Binding",
+          "slug": "DESERT BINDING"
+        },
+        {
+          "level": 9,
+          "name": "Summon Desert Ally IX",
+          "slug": "SUMMON DESERT ALLY IX"
         }
       ]
     },
