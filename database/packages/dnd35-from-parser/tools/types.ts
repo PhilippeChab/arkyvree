@@ -83,7 +83,7 @@ type ClassFeatureFields = {
 type ItemFields = { description?: string; costGp?: string; weight?: string; skip?: boolean };
 
 /** A magic item's fields an override sets. */
-type MagicItemFields = ItemFields & { slot?: string; baseItem?: string | null };
+type MagicItemFields = ItemFields & { slot?: string; baseItem?: string | null; modifiers?: Modifier[] };
 
 export type WeaponRow = {
   name: string;
@@ -427,6 +427,7 @@ export type MagicItemReference = {
       variant?: string;
       baseItem?: string;
       modifiers?: Modifier[];
+      unresolvedModifiers?: string[];
     }
   >;
 

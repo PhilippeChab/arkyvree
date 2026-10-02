@@ -936,9 +936,6 @@ export const WONDROUS_ITEMS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Faint illusion" },
       { type: "MAGIC_CASTER_LEVEL", value: "5" },
     ],
-    modifiers: [
-      { target: "skills.hide.misc", operator: "add", value: "10", valueType: "number" },
-    ],
   },
   {
     name: "Elixir of Love",
@@ -957,9 +954,6 @@ export const WONDROUS_ITEMS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Faint illusion" },
       { type: "MAGIC_CASTER_LEVEL", value: "5" },
     ],
-    modifiers: [
-      { target: "skills.movesilently.misc", operator: "add", value: "10", valueType: "number" },
-    ],
   },
   {
     name: "Elixir of Swimming",
@@ -968,9 +962,6 @@ export const WONDROUS_ITEMS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Faint illusion" },
       { type: "MAGIC_CASTER_LEVEL", value: "2" },
-    ],
-    modifiers: [
-      { target: "skills.swim.misc", operator: "add", value: "10", valueType: "number" },
     ],
   },
   {
@@ -989,9 +980,6 @@ export const WONDROUS_ITEMS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Faint divination" },
       { type: "MAGIC_CASTER_LEVEL", value: "2" },
-    ],
-    modifiers: [
-      { target: "skills.search.misc", operator: "add", value: "10", valueType: "number" },
     ],
   },
   {
@@ -1219,9 +1207,6 @@ export const WONDROUS_ITEMS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Faint divination" },
       { type: "MAGIC_CASTER_LEVEL", value: "3" },
     ],
-    modifiers: [
-      { target: "skills.search.misc", operator: "add", value: "5", valueType: "number" },
-    ],
   },
   {
     name: "Goggles of Night",
@@ -1338,9 +1323,6 @@ export const WONDROUS_ITEMS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Faint divination" },
       { type: "MAGIC_CASTER_LEVEL", value: "4" },
-    ],
-    modifiers: [
-      { target: "skills.decipherscript.misc", operator: "add", value: "5", valueType: "number" },
     ],
   },
   {
@@ -2383,9 +2365,6 @@ export const WONDROUS_ITEMS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Faint transmutation" },
       { type: "MAGIC_CASTER_LEVEL", value: "3" },
-    ],
-    modifiers: [
-      { target: "saves.*.misc", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {

@@ -10,13 +10,16 @@
       "Ascetic Mage",
       "Combat Intuition",
       "Deft Opportunist",
-      "Epic Reputation",
       "Epic Skill Focus",
       "Green Ear",
       "Hawk's Vision",
       "Hear The Unseen",
+      "Unresolved bonus: \"You gain a +4 bonus on Bluff checks made for this purpose\"",
       "Versatile Performer"
-    ]
+    ],
+    "Cougar's Vision": {
+      "modifiers": []
+    }
   },
   "raw": [
     {
