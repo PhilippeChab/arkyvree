@@ -49,16 +49,15 @@ export async function deleteRequirementsWithCascade(
   return deleted;
 }
 
+// The database deletes the modifiers' requirements with them
 export async function deleteModifiersWithCascade(
   tx: Db,
   where: { ids: string[] } | { sourceIds: string[]; sourceType: string },
 ) {
   const deleted = await Modifiers.deleteMany(tx, where);
   if (deleted.length > 0) {
-    const modifierIds = deleted.map((m) => m.id);
-    await deleteRequirementsWithCascade(tx, { entityIds: modifierIds, entityType: "modifiers" });
     await Activities.deleteByTargets(tx, {
-      targetIds: modifierIds,
+      targetIds: deleted.map((m) => m.id),
       targetTable: getTableName(modifiersInCustomization),
     });
   }

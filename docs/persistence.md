@@ -43,7 +43,7 @@ Three groups where archive vs hard-delete makes a real, observable difference.
 Archiving preserves content for later restoration.
 
 - `Characters` and `Campaigns` have a hard-delete path on **archived rows**:
-  - `DELETE /api/characters/:id/permanent` — owner only, must be archived, must not be linked to a campaign that is itself active (an archived campaign no longer "uses" the character). Service cleans up polymorphic rows that FK CASCADE doesn't reach (character attachments, character-scoped modifiers, including bonded children's rows) before calling `Characters.delete`.
+  - `DELETE /api/characters/:id/permanent` — owner only, must be archived, must not be linked to a campaign that is itself active (an archived campaign no longer "uses" the character). Its bonded children go through FK CASCADE, and the database deletes every deleted character's attachments and modifiers (see *Polymorphic rows* below).
   - `DELETE /api/campaigns/:id/permanent` — GM only, must be archived. Every FK to `campaigns.id` is `ON DELETE CASCADE`, so the row delete wipes membership rows (`players`, `invites`, `player_characters`) **and** every campaign-scoped ruleset entity (`aptitudes`, `abilities`, `feats`, `items`, `klasses` → `klass_levels` → level-feats/powers/saves, `languages`, `mechanics`, `powers`, `races`, `saves`, `skills`) in one shot.
   - Both endpoints enforce ownership and archive-state checks through `CharactersPolicy.canHardDelete` / `CampaignsPolicy.canHardDelete`.
 - `Rulesets` has no hard-delete path. Archive is the only terminal state.
@@ -83,6 +83,15 @@ These are intentionally archived. Don't flip them — the restore-by-recreate be
 
 ## Special cases
 
+### Polymorphic rows: customizations and attachments
+
+Customizations (`Modifiers`, `Requirements`, `Properties`) and `Attachments` name what they belong to by type and id (`source_type` / `source_id`, `entity_type` / `entity_id`, `record_type` / `record_id`), with no foreign key. Triggers delete them with their owner, whatever deletes it: a service, or a foreign key's cascade (a demo account's purge deletes its rulesets, their entities and its characters).
+
+- **Customizations:** a trigger on each table a customization can belong to (`drizzle/0070_customization_cleanup.sql`). Deleting a modifier deletes its requirements the same way. A new type of owner needs the trigger too, and a row in `OWNERS` of `tests/services/rulesets/customization/CustomizationCleanup.test.ts`, which deletes a row of each type and finds no customization left without its owner.
+- **Attachments:** a trigger on users and characters (`drizzle/0071_attachment_cleanup.sql`); the blob sweep then reclaims their files. Archiving keeps them: account deletion, which archives the user and its characters, purges their attachments itself (`purgeAttachmentsForRecords`).
+
+`EntitySnapshots` name their entities the same way, on purpose without a trigger: a snapshot whose fork copy is deleted is the tombstone that hides the inherited entity in that fork.
+
 ### Campaign-membership rows (`Players`, `Invites`, `PlayerCharacters`)
 
 Both primitives, picked by entry point:
@@ -92,7 +101,7 @@ Both primitives, picked by entry point:
 
 ### Demo `Users`
 
-Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo data is by design ephemeral and only owned by the demo user, so the FK CASCADE on hard-delete is exactly what's wanted to clean everything up at expiry.
+Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo data is by design ephemeral and only owned by the demo user, so the FK CASCADE on hard-delete is exactly what's wanted to clean everything up at expiry. The database deletes the attachments of the account and its characters, and the customizations of its rulesets and characters (see *Polymorphic rows* below).
 
 ### Ruleset entity / class cascade (`deleteEntityWithCascade`)
 

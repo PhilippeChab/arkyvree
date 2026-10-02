@@ -10,6 +10,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/in
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
+  Attachments,
   Campaigns,
   CharacterAbilities,
   CharacterInventory,
@@ -30,6 +31,7 @@ import type { Session } from "@/shared/relations.ts";
 import {
   addCharacterLevel,
   addRulesetContributor,
+  createTestAttachment,
   createTestCampaign,
   createTestRuleset,
   createTestUser,
@@ -343,7 +345,7 @@ describe("CharactersService", () => {
     });
 
     describe("deleting for good", () => {
-      test("removes an archived character with its modifiers and bonded children", async () => {
+      test("removes an archived character with its modifiers, attachments and bonded children", async () => {
         const { session } = await createTestUser();
         const { rulesetId, raceMap } = await getSeedCtx();
         const character = await createCharacter(session);
@@ -370,6 +372,11 @@ describe("CharactersService", () => {
           })
           .returning();
 
+        const portraits = [
+          await createTestAttachment("Character", character.id),
+          await createTestAttachment("Character", familiar.id),
+        ];
+
         await CharactersMethods.archiveCharacter(session, character.id);
         await CharactersMethods.hardDeleteCharacter(session, character.id);
 
@@ -378,6 +385,7 @@ describe("CharactersService", () => {
         expect(await Modifiers.findManyBySource(db, { sourceIds: [character.id], sourceType: "characters" })).toEqual(
           [],
         );
+        for (const { id } of portraits) expect(await Attachments.findOne(db, { id })).toBeUndefined();
       });
 
       test("is refused for a character that isn't archived, or that plays in an active campaign", async () => {

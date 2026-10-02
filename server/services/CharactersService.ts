@@ -1,4 +1,4 @@
-import { eq, getTableName, sql } from "drizzle-orm";
+import { getTableName, sql } from "drizzle-orm";
 
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
@@ -19,14 +19,13 @@ import {
   CharacterLevels,
   Characters,
   Languages,
-  Modifiers,
   PlayerCharacters,
   Races,
 } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind, DetailedCharacterInterface, Holders } from "@/server/rulesets/types.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
-import { purgeAttachmentsForRecords, urlForSlot } from "@/server/services/AttachmentsService.ts";
+import { urlForSlot } from "@/server/services/AttachmentsService.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CampaignsPolicy, CharactersPolicy } from "@/server/services/policies/index.ts";
 import { withRulesetScope, withRulesetScopes } from "@/server/services/rulesets/cow.ts";
@@ -634,18 +633,8 @@ export const CharactersMethods = {
 
       await new CharactersPolicy(session, existingCharacter).canHardDelete();
 
-      // Bonded children cascade via FK on delete, but their polymorphic
-      // attachments and character-scoped modifiers don't — purge them here
-      // alongside the master's before the row is gone.
-      const bondedChildren = await tx.query.charactersInCharacter.findMany({
-        where: eq(charactersInCharacter.parentCharacterId, characterId),
-        columns: { id: true },
-      });
-      const allIds = [characterId, ...bondedChildren.map((c) => c.id)];
-
-      await purgeAttachmentsForRecords(tx, "Character", allIds);
-      await Modifiers.deleteMany(tx, { sourceIds: allIds, sourceType: "characters" });
-
+      // Bonded children cascade via FK on delete, and the database deletes
+      // their attachments and modifiers with them.
       await Characters.delete(tx, { id: characterId });
 
       await Activities.create(tx, {

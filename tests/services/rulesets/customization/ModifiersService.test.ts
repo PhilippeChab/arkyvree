@@ -192,7 +192,7 @@ describe("ModifiersService", () => {
   });
 
   describe("deleting a modifier", () => {
-    test("deletes its requirements, replaces its activities with the deletion and drops its requirements'", async () => {
+    test("deletes its requirements, replaces its activities with the deletion and keeps its requirements'", async () => {
       const { session, rulesetId, feat } = await setup();
       const [modifier, sibling] = [
         await ModifiersMethods.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus),
@@ -210,7 +210,10 @@ describe("ModifiersService", () => {
         [],
       );
       expect(await activityTypes(session.userId, modifiersInCustomization, modifier.id)).toEqual(["deleteModifier"]);
-      expect(await activityTypes(session.userId, requirementsInCustomization, requirements[0].id)).toEqual([]);
+      // The database deletes the requirements with the modifier: their history stays
+      expect(await activityTypes(session.userId, requirementsInCustomization, requirements[0].id)).toEqual([
+        "createRequirement",
+      ]);
       // The other modifier keeps its requirement.
       expect(
         await Requirements.findManyByEntity(db, { entityIds: [sibling.id], entityType: "modifiers" }),

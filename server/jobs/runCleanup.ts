@@ -1,9 +1,8 @@
 import type { Task } from "graphile-worker";
 
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import {
   Activities,
-  Characters,
   EmailVerifications,
   Exports,
   Notifications,
@@ -11,7 +10,6 @@ import {
   Sessions,
   Users,
 } from "@/server/repositories/index.ts";
-import { purgeAttachmentsForRecords } from "@/server/services/AttachmentsService.ts";
 
 function retentionCutoff(): string {
   const date = new Date();
@@ -45,20 +43,10 @@ export const runCleanupTask: Task = async (_, helpers) => {
     },
     {
       // Demo users have a 1h TTL on users.expires_at. Hard-delete past-expiry
-      // rows so CASCADE wipes their characters/forks/sessions/activities/etc.
-      // Polymorphic attachments don't cascade, so purge them in the same tx.
+      // rows so CASCADE wipes their characters/forks/sessions/activities/etc.,
+      // and the database their attachments and customizations.
       name: "demo_users",
-      run: async () => {
-        return await withTransaction(async (tx) => {
-          const userIds = await Users.findExpiredDemoIds(tx, { expiredDemosBefore: now });
-          if (userIds.length === 0) return { rowCount: 0 };
-          const characterIds = await Characters.findIdsByUserIds(tx, { userIds });
-          await purgeAttachmentsForRecords(tx, "User", userIds);
-          await purgeAttachmentsForRecords(tx, "Character", characterIds);
-          const result = (await Users.delete(tx, { expiredDemosBefore: now })) as { rowCount?: number | null };
-          return { rowCount: result.rowCount ?? userIds.length };
-        });
-      },
+      run: () => Users.delete(db, { expiredDemosBefore: now }),
     },
     {
       name: "notifications",
