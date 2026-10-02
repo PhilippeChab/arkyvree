@@ -84,8 +84,6 @@ describe("parser:validate", () => {
     expect(feats.map(({ kind, entityName }) => `${kind} ${entityName}`)).toEqual([
       "modifier Divine Spell Power",
       "modifier Oaken Resilience",
-      "modifier Swim like a Fish",
-      "modifier Swim like a Fish",
       "modifier Wolverine's Rage",
     ]);
   });

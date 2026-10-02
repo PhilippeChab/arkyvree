@@ -1,10 +1,11 @@
+import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
 import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
+import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
 import {
   detectModifiersOf,
   type ModifierDetection,
   modifierMapping,
   SAVE_MAP,
-  SKILL_MAP,
   validateModifiers,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
@@ -27,11 +28,10 @@ const ABILITY_MAP: Record<string, string> = {
 // Internal detection
 // ---------------------------------------------------------------------------
 
-function isConditional(text: string, match: RegExpMatchArray): boolean {
-  // After a comma, only a condition: ", to a maximum of…", ", for example" qualify nothing
-  return /^(?:\s+(?:that|to|for|made|related|involving)\b|,?\s+(?:(?:when|while|if|against|versus)\b|vs\.?\s))/i.test(
-    text.slice((match.index ?? 0) + match[0].length),
-  );
+/** Whether the bonus `match` read applies only sometimes (`isConditional`). */
+function conditional(text: string, match: RegExpMatchArray): boolean {
+  const start = match.index ?? 0;
+  return isConditional(text, start, start + match[0].length);
 }
 
 // ---------------------------------------------------------------------------
@@ -40,31 +40,11 @@ function isConditional(text: string, match: RegExpMatchArray): boolean {
 
 function detectSkillBonuses(text: string, modifiers: Modifier[], unresolvedModifiers: string[]): void {
   // "+N racial bonus on X checks" or "+N racial bonus on X, Y, and Z checks"
-  const pattern = /\+(\d+)\s+racial\s+bonus\s+on\s+([\w\s,()]+?)\s+checks/gi;
-
-  let match;
-  while ((match = pattern.exec(text)) !== null) {
-    const bonus = parseInt(match[1], 10);
-    const skillText = match[2];
-
-    if (isConditional(text, match)) continue;
-
-    const skills = skillText.split(/,\s*(?:and\s+)?|\s+and\s+/);
-    for (const raw of skills) {
-      const trimmed = raw.trim();
-      if (!trimmed) continue;
-
-      const slug = SKILL_MAP[trimmed.toLowerCase()];
-      if (slug) {
-        modifiers.push({
-          target: `skills.${slug}.misc`,
-          operator: "add",
-          value: String(bonus),
-          valueType: "number",
-        });
-      } else {
-        unresolvedModifiers.push(`Unresolved skill bonus: +${bonus} on "${trimmed}"`);
-      }
+  for (const bonus of readSkillBonuses(text, (match) => conditional(text, match))) {
+    if (bonus.slug) {
+      modifiers.push({ target: `skills.${bonus.slug}.misc`, operator: "add", value: bonus.value, valueType: "number" });
+    } else {
+      unresolvedModifiers.push(`Unresolved skill bonus: +${bonus.value} on "${bonus.name}"`);
     }
   }
 }
@@ -84,13 +64,13 @@ function detectSaveBonuses(text: string, modifiers: Modifier[]): void {
 
   // "+N racial bonus on all saving throws"
   for (const match of text.matchAll(/\+(\d+)\s+racial\s+bonus\s+on\s+all\s+saving\s+throws/gi)) {
-    if (!isConditional(text, match)) for (const save of ["fortitude", "reflex", "will"]) add(save, match[1]);
+    if (!conditional(text, match)) for (const save of ["fortitude", "reflex", "will"]) add(save, match[1]);
   }
 
   // "+N racial bonus on Fortitude saving throws" (specific save)
   for (const match of text.matchAll(/\+(\d+)\s+racial\s+bonus\s+on\s+(\w+)\s+saving\s+throws/gi)) {
     const saveSlug = SAVE_MAP[match[2].toLowerCase()];
-    if (saveSlug && !isConditional(text, match)) add(saveSlug, match[1]);
+    if (saveSlug && !conditional(text, match)) add(saveSlug, match[1]);
   }
 }
 

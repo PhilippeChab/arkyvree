@@ -164,10 +164,13 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
           return review;
         }
         case "magicItem": {
-          // A seeded magic item's slot must be one the seed accepts
+          // A seeded magic item's slot must be one the seed accepts; a skipped one's detections don't matter
           const data = loadReference(ref.path, "magicItem");
+          const review = reviewOf(data.overrides?.reviewed);
+          const skipped = Object.keys(data.detected).filter((name) => data.overrides?.[name]?.skip);
+          entityIssues(data.detected, review, new Set(skipped));
           for (const { name, slot } of seededMagicItems(data)) if (slot && !slot.ok) notSeedable(name, slot.problem);
-          return reviewOf(data.overrides?.reviewed);
+          return review;
         }
         case "spell":
         case "wizardSchool":

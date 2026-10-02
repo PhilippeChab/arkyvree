@@ -157,6 +157,13 @@ Scrapes magic item pages into `MagicItemReference` JSON. Covers wondrous items, 
 - Slot assignment (head, neck, hands, etc.)
 - Modifier detection from item descriptions (save bonuses, skill bonuses, ability bonuses)
 
+### Bonus detection
+
+Feats (with class features), races and magic items read their bonuses with the same two pieces in `tools/scraper/`:
+
+- **`readSkillBonuses`** (`skillBonuses.ts`): "+N [type] bonus on/to [all] [the wearer's/your…] X, Y and Z check(s)", capitalized skill names joined by commas and "and" (never split inside parentheses). A size bonus is left out: the character sheet applies size itself. A name that isn't a skill is reported, for review.
+- **`isConditional`** (`conditional.ts`): a bonus isn't a permanent modifier when its part of the sentence (the sentence's opening, its own text up to the next bonus, and what joins it to the previous one) names a condition (against, while, when, if, only, as long as…), an effect used (expend, per day, as a swift action, for 1 hour…), or someone else it goes to (allies, a companion, a mount…); or when what follows it narrows it ("made to…", "to find…", "related to…"). What's worn, held or carried isn't a condition.
+
 ## What needs manual annotation in `overrides`
 
 - **`modifiers`** — Structured stat modifiers from prose descriptions (e.g. Dragon Disciple ability boosts, natural armor)

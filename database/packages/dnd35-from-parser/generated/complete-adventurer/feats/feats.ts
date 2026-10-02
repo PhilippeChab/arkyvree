@@ -409,9 +409,6 @@ export const FIGHTER_FEATS: FeatSeed[] = [
     requirements: [
       gte("skills.bluff.rank", 4),
     ],
-    modifiers: [
-      { target: "skills.bluff.misc", operator: "add", value: "4", valueType: "number" },
-    ],
   },
   {
     name: "Oversized Two-Weapon Fighting",

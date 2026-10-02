@@ -344,7 +344,8 @@
       "Unresolved bonus: \"The next melee attack you make against your foe gains a +2 bonus on the attack and damage rolls for every round you have just spent observing the foe, to a maximum bonus of +6 (for 3 consecutive full rounds of observation)\"",
       "Unresolved bonus: \"Your targets only receive a +2 bonus to Armor Class due to cover\"",
       "Unresolved bonus: \"In addition to normal charge modifiers (which give you a -2 penalty to AC and a +2 bonus on the attack roll), you can assign any portion of the attack roll penalty from Power Attack to your Armor Class instead, up to a maximum equal to your base attack bonus\"",
-      "Proficiency with weapon"
+      "Proficiency with weapon",
+      "Unresolved bonus: \"If you are using a heavy shield and a light weapon, you gain a +1 bonus to your Armor Class\""
     ]
   },
   "raw": [

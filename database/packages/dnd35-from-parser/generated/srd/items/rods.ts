@@ -49,9 +49,6 @@ export const RODS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Moderate enchantment" },
       { type: "MAGIC_CASTER_LEVEL", value: "9" },
     ],
-    modifiers: [
-      { target: "saves.*.misc", operator: "add", value: "4", valueType: "number" },
-    ],
   },
   {
     name: "Rod of Flame Extinguishing",

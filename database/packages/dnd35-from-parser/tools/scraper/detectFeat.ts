@@ -2,16 +2,17 @@ import {
   loadBonusFeatAptitudes,
   loadBonusFeatClassLevels,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
 import {
   findInvalidRequirementPaths,
   isValidModifierPath,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
+import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
 import {
   anySkillRequirement,
   BOOK_ABBREV_PATTERN,
   type ModifierDetection,
   SAVE_MAP,
-  SKILL_MAP,
   skillSlug,
   validateModifiers,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
@@ -128,66 +129,36 @@ export function detectModifiers(benefit: string): ModifierDetection {
     return benefit.slice(start, end).trim();
   }
 
-  /** Check if a match occurs in a conditional context (against X, while X, etc.) */
-  function isConditional(matchIndex: number, _matchLength: number): boolean {
-    const sentence = extractSentence(matchIndex).toLowerCase();
-    return /\b(against|while|when|during|versus|vs\.|if you are (?!wearing)|only when|only while|only against)\b/.test(
-      sentence,
-    );
-  }
+  /** Whether the bonus matched at `index` applies only sometimes (`isConditional`). */
+  const conditional = (index: number, length: number) => isConditional(benefit, index, index + length);
 
-  // Pattern: "+N bonus on [all] X checks [and Y checks]"
-  // Match within a single sentence (stop at period followed by space+uppercase)
-  const skillBonusRegex = /\+(\d+)\s+bonus on (?:all\s+)?([^.]+checks)/gi;
-  let match: RegExpExecArray | null;
-  while ((match = skillBonusRegex.exec(benefit)) !== null) {
-    if (isConditional(match.index, match[0].length)) continue;
-    const value = match[1];
-    const skillText = match[2];
-
-    // Extract skill names: split on "checks and", "checks,", or bare "and", then strip trailing "checks"
-    const parts = skillText.split(/\s+checks(?:\s+and\s+|\s*,\s*)|\s+and\s+/i);
-    for (const raw of parts) {
-      const name = raw.replace(/\s+checks$/i, "").trim();
-      if (!name || name.toLowerCase() === "initiative") continue;
-      const slug = SKILL_MAP[name.toLowerCase()];
-      if (slug) {
-        modifiers.push({ target: `skills.${slug}.misc`, operator: "add", value, valueType: "number" });
-      } else if (name.toLowerCase() !== "all") {
-        unresolvedModifiers.push(`Unresolved skill: "${extractSentence(match!.index)}"`);
-      }
-    }
-  }
-
-  // Pattern: "+N bonus on your X check" (singular, e.g. Run feat's "+4 bonus on your Jump check")
-  const singleSkillRegex = /\+(\d+)\s+bonus on (?:your\s+)?([A-Z][a-zA-Z\s]*?)\s+check(?!s)/gi;
-  while ((match = singleSkillRegex.exec(benefit)) !== null) {
-    if (isConditional(match.index, match[0].length)) continue;
-    const value = match[1];
-    const name = match[2].trim();
-    const slug = SKILL_MAP[name.toLowerCase()];
-    if (slug) {
-      modifiers.push({ target: `skills.${slug}.misc`, operator: "add", value, valueType: "number" });
+  // Skill bonuses: "+N bonus on [all] X checks [and Y checks]", "+N bonus on your X check"
+  for (const bonus of readSkillBonuses(benefit, (match) => conditional(match.index, match[0].length))) {
+    if (bonus.slug) {
+      modifiers.push({ target: `skills.${bonus.slug}.misc`, operator: "add", value: bonus.value, valueType: "number" });
+    } else {
+      unresolvedModifiers.push(`Unresolved skill: "${extractSentence(bonus.index)}"`);
     }
   }
 
   // Pattern: "+N bonus on initiative checks" or "+N to initiative"
   const initMatch = benefit.match(/\+(\d+)\s+(?:bonus (?:on|to)\s+)?initiative/i);
-  if (initMatch && !isConditional(benefit.indexOf(initMatch[0]), initMatch[0].length)) {
+  if (initMatch && !conditional(benefit.indexOf(initMatch[0]), initMatch[0].length)) {
     modifiers.push({ target: "combat.initiative.misc", operator: "add", value: initMatch[1], valueType: "number" });
   }
 
   // Pattern: "+N hit points" or "gain +N hit points"
   const hpMatch = benefit.match(/\+(\d+)\s+hit points/i);
-  if (hpMatch && !isConditional(benefit.indexOf(hpMatch[0]), hpMatch[0].length)) {
+  if (hpMatch && !conditional(benefit.indexOf(hpMatch[0]), hpMatch[0].length)) {
     modifiers.push({ target: "combat.hp.misc", operator: "add", value: hpMatch[1], valueType: "number" });
   }
 
   // Pattern: "+N bonus on Fortitude/Reflex/Will saves/saving throws"
   const saveRegex =
     /\+(\d+)\s+(?:bonus (?:on|to)\s+)?(?:all\s+)?(fortitude|reflex|will)(?:\s+saving)?\s+(?:saves|throws)/gi;
+  let match: RegExpExecArray | null;
   while ((match = saveRegex.exec(benefit)) !== null) {
-    if (isConditional(match.index, match[0].length)) continue;
+    if (conditional(match.index, match[0].length)) continue;
     const slug = SAVE_MAP[match[2].toLowerCase()];
     if (slug) {
       modifiers.push({ target: `saves.${slug}.misc`, operator: "add", value: match[1], valueType: "number" });
@@ -224,13 +195,13 @@ export function detectModifiers(benefit: string): ModifierDetection {
   // Pattern: "+N feet" speed bonus (e.g. "speed is faster... by +10 feet")
   const speedMatch =
     benefit.match(/\+?(\d+)\s*(?:feet|ft\.?)\s*faster\b/i) ?? benefit.match(/\+(\d+)\s*(?:feet|ft\.?)\b/i);
-  if (speedMatch && !isConditional(benefit.indexOf(speedMatch[0]), speedMatch[0].length)) {
+  if (speedMatch && !conditional(benefit.indexOf(speedMatch[0]), speedMatch[0].length)) {
     modifiers.push({ target: "combat.speed.misc", operator: "add", value: speedMatch[1], valueType: "number" });
   }
 
   // Pattern: "+N bonus on grapple checks"
   const grappleMatch = benefit.match(/\+(\d+)\s+bonus on (?:all\s+)?grapple checks/i);
-  if (grappleMatch && !isConditional(benefit.indexOf(grappleMatch[0]), grappleMatch[0].length)) {
+  if (grappleMatch && !conditional(benefit.indexOf(grappleMatch[0]), grappleMatch[0].length)) {
     modifiers.push({ target: "combat.grapple.misc", operator: "add", value: grappleMatch[1], valueType: "number" });
   }
 

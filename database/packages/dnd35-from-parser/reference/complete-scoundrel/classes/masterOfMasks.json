@@ -169,5 +169,12 @@
       }
     ],
     "skillPointsPerLevel": "4 + Int modifier"
+  },
+  "overrides": {
+    "features": {
+      "Persona Masks": {
+        "modifiers": null
+      }
+    }
   }
 }

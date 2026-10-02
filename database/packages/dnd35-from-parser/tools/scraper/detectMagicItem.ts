@@ -1,5 +1,7 @@
+import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
 import { parseCost, parseWeight } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
-import { SAVE_MAP, SKILL_MAP } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
+import { SAVE_MAP } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
 // ---------------------------------------------------------------------------
@@ -292,8 +294,10 @@ const NAME_MODIFIER_PATTERNS: { pattern: RegExp; toModifiers: (match: RegExpMatc
   },
 ];
 
-function detectModifiers(name: string, description: string): Modifier[] {
+/** An item's modifiers, from its name and description, and the bonuses it names that no modifier can hold. */
+function detectModifiers(name: string, description: string): { modifiers: Modifier[]; unresolvedModifiers: string[] } {
   const modifiers: Modifier[] = [];
+  const unresolvedModifiers: string[] = [];
 
   // --- Name-based patterns (accumulate, don't short-circuit) ---
   for (const { pattern, toModifiers } of NAME_MODIFIER_PATTERNS) {
@@ -304,20 +308,18 @@ function detectModifiers(name: string, description: string): Modifier[] {
     }
   }
 
-  if (!description) return modifiers;
+  if (!description) return { modifiers, unresolvedModifiers };
 
   // Track targets to prevent duplicates from name + description overlap
   const seen = new Set(modifiers.map((m) => m.target));
 
-  /** Skip bonuses in conditional contexts (against X, while X, etc.) */
-  function isConditional(matchIndex: number, matchLength: number): boolean {
-    const before = description.lastIndexOf(".", matchIndex);
-    const after = description.indexOf(".", matchIndex + matchLength);
-    const sentence = description.slice(before + 1, after === -1 ? undefined : after).toLowerCase();
-    // "when worn/placed/donned/held/grasped/carried" = item usage, not a combat condition
-    return /\b(against|while|during|versus|vs\.|if you are|only when|only while|only against|when (?!worn|placed|donned|held|grasped|carried|used|activated))\b/.test(
-      sentence,
-    );
+  /** Whether the bonus matched at `index` applies only sometimes (`isConditional`). */
+  const conditional = (index: number, length: number) => isConditional(description, index, index + length);
+
+  /** The sentence `index` is in. */
+  function sentenceAt(index: number): string {
+    const after = description.indexOf(".", index);
+    return description.slice(description.lastIndexOf(".", index) + 1, after === -1 ? undefined : after).trim();
   }
 
   function add(target: string, value: string): void {
@@ -337,33 +339,20 @@ function detectModifiers(name: string, description: string): Modifier[] {
   );
   let match: RegExpExecArray | null;
   while ((match = enhRegex.exec(description)) !== null) {
-    if (isConditional(match.index, match[0].length)) continue;
+    if (conditional(match.index, match[0].length)) continue;
     const target = ABILITY_MAP[match[2].toLowerCase()];
     if (target) add(target, match[1]);
   }
 
   // 2. Skill bonuses: "+N <type> bonus on/to [all] [his/her/wearer's/your] <SkillName> checks"
-  //    Greedy [^.]+ captures multi-skill patterns ("Swim checks and Climb checks") without crossing sentences
-  const skillRegex =
-    /\+(\d+)\s+(?:\w+\s+)?bonus (?:on|to) (?:all\s+)?(?:her |his |its wearer's |the wearer's |your )?([^.]+checks?)/gi;
-  while ((match = skillRegex.exec(description)) !== null) {
-    if (isConditional(match.index, match[0].length)) continue;
-    const value = match[1];
-    const skillText = match[2];
-
-    // Split on "checks and" / "checks," to handle multi-skill descriptions
-    const parts = skillText.split(/\s+checks?\s+and\s+|\s+checks?\s*,\s*/i);
-    for (const raw of parts) {
-      const skillName = raw.replace(/\s+checks?$/i, "").trim();
-      if (!skillName) continue;
-      const slug = SKILL_MAP[skillName.toLowerCase()];
-      if (slug) add(`skills.${slug}.misc`, value);
-    }
+  for (const bonus of readSkillBonuses(description, (match) => conditional(match.index, match[0].length))) {
+    if (bonus.slug) add(`skills.${bonus.slug}.misc`, bonus.value);
+    else unresolvedModifiers.push(`Unresolved skill: "${sentenceAt(bonus.index)}"`);
   }
 
   // 3. Save bonuses: "+N <type> bonus on [all] saving throws"
   const allSavesMatch = description.match(/\+(\d+)\s+\w+\s+bonus on (?:all )?saving throws/i);
-  if (allSavesMatch && !isConditional(description.indexOf(allSavesMatch[0]), allSavesMatch[0].length)) {
+  if (allSavesMatch && !conditional(description.indexOf(allSavesMatch[0]), allSavesMatch[0].length)) {
     add("saves.*.misc", allSavesMatch[1]);
   }
 
@@ -371,18 +360,18 @@ function detectModifiers(name: string, description: string): Modifier[] {
   const singleSaveRegex =
     /\+(\d+)\s+\w+\s+bonus (?:on|to) (?:all\s+)?(fortitude|reflex|will)(?:\s+saving)?\s+(?:saves|throws)/gi;
   while ((match = singleSaveRegex.exec(description)) !== null) {
-    if (isConditional(match.index, match[0].length)) continue;
+    if (conditional(match.index, match[0].length)) continue;
     const slug = SAVE_MAP[match[2].toLowerCase()];
     if (slug) add(`saves.${slug}.misc`, match[1]);
   }
 
   // 4. Initiative: "+N <type> bonus on/to initiative"
   const initMatch = description.match(/\+(\d+)\s+\w+\s+bonus (?:on|to)\s+initiative/i);
-  if (initMatch && !isConditional(description.indexOf(initMatch[0]), initMatch[0].length)) {
+  if (initMatch && !conditional(description.indexOf(initMatch[0]), initMatch[0].length)) {
     add("combat.initiative.misc", initMatch[1]);
   }
 
-  return modifiers;
+  return { modifiers, unresolvedModifiers };
 }
 
 // ---------------------------------------------------------------------------
@@ -438,7 +427,7 @@ export function buildMagicItemDetected(raw: MagicItemReference["raw"]): MagicIte
 
     const rawEntry = raw.find((r) => r.name === entry.name);
     const description = rawEntry?.description ?? "";
-    const modifiers = detectModifiers(entry.name, description);
+    const { modifiers, unresolvedModifiers } = detectModifiers(entry.name, description);
     const baseItem = detectBaseItem(entry.name, description, entry.category);
 
     detected[entry.name] = {
@@ -451,6 +440,7 @@ export function buildMagicItemDetected(raw: MagicItemReference["raw"]): MagicIte
       slot: inferSlot(entry.name, entry.category),
       ...(baseItem ? { baseItem } : {}),
       ...(modifiers.length > 0 ? { modifiers } : {}),
+      ...(unresolvedModifiers.length > 0 ? { unresolvedModifiers } : {}),
     };
   }
 

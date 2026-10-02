@@ -427,6 +427,7 @@ export type MagicItemReference = {
       variant?: string;
       baseItem?: string;
       modifiers?: Modifier[];
+      unresolvedModifiers?: string[];
     }
   >;
 
