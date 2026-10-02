@@ -209,9 +209,6 @@ export const WILD_FEATS: FeatSeed[] = [
     requirements: [
       eq("feats.wildshapedruid.possessed"),
     ],
-    modifiers: [
-      { target: "skills.swim.misc", operator: "add", value: "8", valueType: "number" },
-    ],
   },
   {
     name: "Wolverine's Rage",

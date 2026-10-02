@@ -23,7 +23,10 @@
       "Unresolved skill: \"The wearer gains a +2 competence bonus on all Charisma checks, including turning checks and Charisma-based skill checks\"",
       "Unresolved skill: \"This belt gives the wearer a +4 competence bonus on Charisma checks and Charisma-based skill checks as they relate to dealing with dwarves, a +2 competence bonus on similar checks when dealing with gnomes and halflings, and a -2 competence penalty on similar checks when dealing with anyone else\"",
       "Unresolved skill: \"This silver headband grants a +3 competence bonus on the wearer's Charisma-based checks\""
-    ]
+    ],
+    "Unguent of Timelessness": {
+      "modifiers": []
+    }
   },
   "raw": [
     {

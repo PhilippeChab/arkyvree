@@ -250,5 +250,12 @@
       }
     ],
     "skillPointsPerLevel": "2 + Int modifier"
+  },
+  "overrides": {
+    "features": {
+      "Emerald Perfection": {
+        "modifiers": null
+      }
+    }
   }
 }

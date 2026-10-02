@@ -156,7 +156,8 @@
       "description": "You gain the ability to spontaneously convert your prepared spells into inflict spells from your class spell list, functioning like a cleric's spontaneous casting of inflict spells. You can use this ability a number of times per day equal to your Wisdom modifier."
     },
     "Swim like a Fish": {
-      "description": "Expending one wild shape use causes you to develop gills for underwater breathing (you retain the ability to breathe air as well). Webbing forms between your fingers and toes, granting a swim speed of 40 feet and a +8 bonus on Swim checks. These effects last for 1 hour."
+      "description": "Expending one wild shape use causes you to develop gills for underwater breathing (you retain the ability to breathe air as well). Webbing forms between your fingers and toes, granting a swim speed of 40 feet and a +8 bonus on Swim checks. These effects last for 1 hour.",
+      "modifiers": []
     },
     "Transdimensional Spell": {
       "description": "A spell enhanced with this metamagic feat fully affects incorporeal creatures, creatures on the Ethereal Plane or the Plane of Shadow, and creatures occupying extradimensional spaces within the spell's area. This includes ethereal beings, creatures using blink or shadow walk, manifested ghosts, and creatures inside spaces created by effects like rope trick or portable hole. You still need to perceive a creature to target it directly, but area effects (bursts, cones, emanations, and spreads) can catch creatures you cannot perceive. The modified spell uses a slot one level higher than normal."

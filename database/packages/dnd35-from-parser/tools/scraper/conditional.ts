@@ -4,13 +4,16 @@ const CONDITION = /\b(?:against|while|whenever|when|during|versus|if|unless|only
 /** Someone other than the character, whom what the sentence grants goes to: "all allies within 30 feet gain…". */
 const SOMEONE_ELSE = /\b(?:all(?:y|ies)|companions?|cohorts?|familiars?|followers?|mounts?)\b/i;
 
-/** An effect used rather than had: "expend one use of…", "three times per day", "as a swift action", "for 1 hour". */
+/** An effect used rather than had: "expend/spend one use of…", "three times per day", "as a swift action", "for 1 hour". */
 const ACTIVATION =
-  /\bexpend\b|\bper day\b|\/day\b|\btimes? a day\b|\bas an? (?:free|swift|immediate|move|standard|full-round) action\b|\bfor (?:\d+|one|a|an) (?:rounds?|minutes?|hours?)\b/i;
+  /\b(?:ex|s)pend\b|\bper day\b|\/day\b|\btimes? a day\b|\bas an? (?:free|swift|immediate|move|standard|full-round) action\b|\bfor (?:\d+|one|a|an) (?:rounds?|minutes?|hours?)\b/i;
 
-/** What narrows a bonus right after it: "Search checks made to notice…", "a bonus that…", "checks related to…". */
+/**
+ * What narrows a bonus right after it: "Search checks made to notice…", "a bonus that…", "checks related to…", "saves
+ * for resisting poison", "checks for 1 hour". Not "for every three levels", which scales it.
+ */
 const NARROWED =
-  /^(?:\s+(?:that|to|for|made|related|involving)\b|,?\s+(?:(?:when|while|if|against|versus)\b|vs\.?\s))/i;
+  /^(?:\s+(?:that|to|made|related|involving)\b|\s+for\s+(?:\w+ing\b|(?:\d+(?:d\d+)?|one|a|an)\s+(?:rounds?|minutes?|hours?|days?)\b)|,?\s+(?:(?:when|while|if|against|versus)\b|vs\.?\s))/i;
 
 /**
  * What's worn, held or carried, which conditions nothing: an item "when worn", a feat's "if you are wearing light

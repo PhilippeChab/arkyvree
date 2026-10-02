@@ -2366,9 +2366,6 @@ export const WONDROUS_ITEMS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Faint transmutation" },
       { type: "MAGIC_CASTER_LEVEL", value: "3" },
     ],
-    modifiers: [
-      { target: "saves.*.misc", operator: "add", value: "1", valueType: "number" },
-    ],
   },
   {
     name: "Universal Solvent",

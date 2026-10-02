@@ -342,9 +342,6 @@ export const WILD_FEATS: FeatSeed[] = [
     requirements: [
       gte("skills.spot.rank", 2),
     ],
-    modifiers: [
-      { target: "skills.spot.misc", operator: "add", value: "4", valueType: "number" },
-    ],
   },
   {
     name: "Hawk's Vision",

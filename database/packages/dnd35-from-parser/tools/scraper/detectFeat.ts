@@ -194,7 +194,7 @@ export function detectModifiers(benefit: string): ModifierDetection {
 
   // Pattern: "+N feet" speed bonus (e.g. "speed is faster... by +10 feet")
   const speedMatch =
-    benefit.match(/\+?(\d+)\s*(?:feet|ft\.?)\s*faster\b/i) ?? benefit.match(/\+(\d+)\s*(?:feet|ft\.?)\b/i);
+    benefit.match(/\+?(\d+)\s*(?:feet|foot|ft\.?)\s*faster\b/i) ?? benefit.match(/\+(\d+)\s*(?:feet|foot|ft\.?)\b/i);
   if (speedMatch && !conditional(benefit.indexOf(speedMatch[0]), speedMatch[0].length)) {
     modifiers.push({ target: "combat.speed.misc", operator: "add", value: speedMatch[1], valueType: "number" });
   }

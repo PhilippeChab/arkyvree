@@ -69,6 +69,7 @@ describe("A bonus", () => {
       true,
     );
     expect(conditional("You gain a +4 bonus on Bluff checks made for this purpose.")).toBe(true);
+    expect(conditional("You can spend a use of rage to gain a +4 bonus on Jump checks.")).toBe(true);
     expect(
       conditional("Three times per day, you can use an immediate action to gain a +5 bonus on Climb checks."),
     ).toBe(true);
@@ -95,6 +96,8 @@ describe("A bonus", () => {
       conditional("If you are wearing light armor and carrying a light load, you gain a +2 bonus on Jump checks."),
     ).toBe(false);
     expect(conditional("You gain a +2 racial bonus on Listen checks. You hide only when unseen.")).toBe(false);
+    // "for" scales it here, it doesn't narrow it
+    expect(conditional("You gain a +1 bonus on Search checks for every three class levels.")).toBe(false);
     // A race's traits are joined by a separator: each is its own sentence
     expect(conditional("+2 racial bonus on Listen checks.\u0001Proficient with longswords only when trained.")).toBe(
       false,
@@ -111,7 +114,6 @@ const seededModifiers = (seeds: { name: string; modifiers?: { target: string; va
 
 describe("The seeded bonuses the rules read", () => {
   test("give a feat, a class feature or a race its permanent skill bonuses", () => {
-    expect(seededModifiers(DIVINE_FEATS, "Swim like a Fish")).toEqual(["skills.swim.misc +8"]);
     expect(seededModifiers(ADVENTURER_FEATS, "Acrobatics (Ninja)")).toEqual([
       "skills.climb.misc +2",
       "skills.jump.misc +2",
@@ -126,6 +128,8 @@ describe("The seeded bonuses the rules read", () => {
       "skills.search.misc +5",
       "skills.spot.misc +5",
     ]);
+    // A value that grows with level gives its first one ("+10 foot… increases to +20 feet")
+    expect(seededModifiers(ADVENTURER_FEATS, "Fast Movement (Scout)")).toEqual(["combat.speed.misc +10"]);
     // A race's traits are each their own sentence
     expect(seededModifiers(ALL_RACES, "Elf")).toEqual(
       expect.arrayContaining(["skills.listen.misc +2", "skills.search.misc +2", "skills.spot.misc +2"]),
@@ -140,6 +144,10 @@ describe("The seeded bonuses the rules read", () => {
   test("leave out a bonus that's conditional, used, narrowed, someone else's or a choice", () => {
     for (const [seeds, name] of [
       [ADVENTURER_FEATS, "Improved Diversion"],
+      // Part of an effect spent, which other sentences describe: the overrides say so
+      [DIVINE_FEATS, "Swim like a Fish"],
+      [ADVENTURER_FEATS, "Cougar's Vision"],
+      [DIVINE_FEATS, "Sense Void (Void Disciple)"],
       [ADVENTURER_FEATS, "Quick Hide (Vigilante)"],
       [ADVENTURER_FEATS, "Fearsome Reputation (Dread Pirate)"],
       [ARCANE_FEATS, "Emerald Perfection (Green Star Adept)"],
@@ -152,6 +160,8 @@ describe("The seeded bonuses the rules read", () => {
       [WONDROUS_ITEMS, "Goggles of Minute Seeing"],
       [WONDROUS_ITEMS, "Helm of Comprehend Languages and Read Magic"],
       [RODS, "Rod of Flailing"],
+      // Goes to the object it coats: its override says so
+      [WONDROUS_ITEMS, "Unguent of Timelessness"],
     ] as const) {
       expect({ name, modifiers: seededModifiers(seeds, name) }).toEqual({ name, modifiers: [] });
     }

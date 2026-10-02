@@ -1203,7 +1203,8 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
       slot: slot && checkedValue(slot),
       properties,
       ...(sourceItem ? { sourceItem } : {}),
-      ...(det.modifiers?.length ? { modifiers: det.modifiers } : {}),
+      // An override's modifiers, an empty list too, win over those detected
+      ...((ovr?.modifiers ?? det.modifiers)?.length ? { modifiers: ovr?.modifiers ?? det.modifiers } : {}),
     });
   }
 
