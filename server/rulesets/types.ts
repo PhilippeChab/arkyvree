@@ -103,6 +103,9 @@ export type InventoryEntry = CharacterInventory & {
   item: Item & {
     properties: Property[];
     modifiers: Modifier[];
+    /** The base item's requirements: its template's, or its own when it is one */
+    proficiency: Requirement[];
+    /** Its other requirements, which its modifiers need */
     requirements: Requirement[];
   };
 };
