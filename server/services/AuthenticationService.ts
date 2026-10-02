@@ -115,12 +115,7 @@ async function purgeDemoSessionUser(tx: Db, sessionId: string | undefined) {
   const session = await Sessions.findOne(tx, { id: sessionId });
   if (!session) return;
   const user = await Users.findOne(tx, { id: session.userId });
-  if (user?.expiresAt) {
-    const characterIds = await Characters.findIdsByUserIds(tx, { userIds: [user.id] });
-    await purgeAttachmentsForRecords(tx, "User", [user.id]);
-    await purgeAttachmentsForRecords(tx, "Character", characterIds);
-    await Users.delete(tx, { id: user.id });
-  }
+  if (user?.expiresAt) await Users.delete(tx, { id: user.id });
 }
 
 /**
@@ -436,9 +431,6 @@ export const AuthenticationMethods = {
     return await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (user?.expiresAt) {
-        const characterIds = await Characters.findIdsByUserIds(tx, { userIds: [user.id] });
-        await purgeAttachmentsForRecords(tx, "User", [user.id]);
-        await purgeAttachmentsForRecords(tx, "Character", characterIds);
         await Users.delete(tx, { id: user.id });
         return;
       }

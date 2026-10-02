@@ -13,6 +13,8 @@ import {
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import {
+  Attachments,
+  Blobs,
   Campaigns,
   CharacterContributors,
   CharacterLevelFeats,
@@ -307,6 +309,20 @@ export async function createExport(userId: string, expiresAt = new Date(Date.now
     expiresAt,
   });
   return record;
+}
+
+/** An image attached to a user (its avatar) or a character (its portrait), written straight to the database. */
+export async function createTestAttachment(recordType: "User" | "Character", recordId: string) {
+  const [blob] = await Blobs.create(db, {
+    key: `blobs/${uniqueId()}/image.png`,
+    filename: "image.png",
+    contentType: "image/png",
+    byteSize: 100,
+    attachedAt: new Date().toISOString(),
+  });
+  const name = recordType === "User" ? "avatar" : "portrait";
+  const [attachment] = await Attachments.create(db, { recordType, recordId, name, blobId: blob.id });
+  return attachment;
 }
 
 /** Worker job helpers with a silent logger, for running a task directly. */

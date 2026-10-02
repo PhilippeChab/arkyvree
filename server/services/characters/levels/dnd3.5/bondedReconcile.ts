@@ -7,7 +7,6 @@ import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
 import { getBondedRaceStats } from "@/server/rulesets/dnd3.5/bondedRaceData.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import { purgeAttachmentsForRecords } from "@/server/services/AttachmentsService.ts";
 import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character } from "@/shared/relations.ts";
 
@@ -127,10 +126,7 @@ async function reconcileBonded(
   });
 
   if (!targetRaceName) {
-    if (existing) {
-      await purgeAttachmentsForRecords(tx, "Character", [existing.id]);
-      await Characters.delete(tx, { id: existing.id });
-    }
+    if (existing) await Characters.delete(tx, { id: existing.id });
     return;
   }
 
@@ -151,10 +147,7 @@ async function reconcileBonded(
     return;
   }
 
-  if (existing) {
-    await purgeAttachmentsForRecords(tx, "Character", [existing.id]);
-    await Characters.delete(tx, { id: existing.id });
-  }
+  if (existing) await Characters.delete(tx, { id: existing.id });
 
   const bondedId = await createBonded(tx, masterRecord, kind, targetRace.id, targetRaceName, rulesetData);
   await syncBondedLevels(tx, bondedId, bondedKlass.id, targetHD, rulesetData);

@@ -169,8 +169,9 @@ function urlFor(blob: { key: string }): string | null {
   }
 }
 
-// Polymorphic attachments don't cascade with their owner — when a User or Character
-// is hard-deleted, call this so the sweep can reclaim their orphaned blobs.
+// The database deletes a deleted user's or character's attachments. Archiving one
+// keeps them: call this when the archive is for good (account deletion), so the
+// sweep can reclaim their blobs.
 export async function purgeAttachmentsForRecords(tx: Db, recordType: string, recordIds: string[]): Promise<void> {
   if (recordIds.length === 0) return;
   await Attachments.delete(tx, { recordType, recordIds });

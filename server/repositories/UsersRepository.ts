@@ -33,20 +33,6 @@ class UsersRepository extends BaseRepository<typeof usersInAccount, UserInstance
       .returning();
   }
 
-  async findExpiredDemoIds(db: Db, where: { expiredDemosBefore: string }) {
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .where(
-        and(
-          isNotNull(this.table.expiresAt),
-          like(this.table.emailAddress, "%@demo.invalid"),
-          lt(this.table.expiresAt, where.expiredDemosBefore),
-        ),
-      );
-    return rows.map((r) => r.id);
-  }
-
   async delete(db: Db, where: { id: string } | { expiredDemosBefore: string }) {
     const isDemo = and(isNotNull(this.table.expiresAt), like(this.table.emailAddress, "%@demo.invalid"));
     if ("id" in where) {
