@@ -1432,6 +1432,34 @@ describe("DetailedCharacter", () => {
       expect(await met("Elara Starweaver", "feats.weaponfocus.*.count", atLeastOne)).toBe(false);
     });
 
+    test("a family's count is how many times the character has its feats, every class's sneak attack dice together", async () => {
+      const exactly = (value: number) => ({ operator: "equal", value: String(value), valueType: "number" }) as const;
+      expect(await met("Elara Starweaver", "feats.spellfocus.count", exactly(1))).toBe(true);
+      expect(await met("Bjorn Ironhand", "feats.spellfocus.count", exactly(0))).toBe(true);
+      // A rogue 3 has her Sneak Attack (Rogue) twice: +2d6
+      expect(await met("Lyra Shadowstep", "feats.sneakattack.count", exactly(2))).toBe(true);
+
+      // An assassin level adds its +1d6, from a feat of its own
+      const ctx = await getSeedCtx();
+      const fork = await forkWith(DND35_DMG_NAME);
+      const characterId = await createSeedCharacter(
+        "Two Sneak Attacks",
+        { Strength: 10, Dexterity: 16, Constitution: 12, Intelligence: 12, Wisdom: 10, Charisma: 10 },
+        { rulesetId: fork.id },
+      );
+      await addClassLevels(db, ctx, characterId, "Rogue", [1, 2, 3], [6, 4, 4]);
+      const assassin = (await Klasses.findOne(db, {
+        name: "Assassin",
+        rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id,
+      }))!;
+      await addCharacterLevel(characterId, (await findKlassLevel(assassin.id, 1))!.id);
+      const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+      expect(detailed.areRequirementsMet(requiring("feats.sneakattack.count", exactly(3)))).toBe(true);
+      // Each class's alone is less
+      const threeOfOne = { operator: "greater_than_or_equal", value: "3", valueType: "number" } as const;
+      expect(detailed.areRequirementsMet(requiring("feats.sneakattack.*.count", threeOfOne))).toBe(false);
+    });
+
     test("a family's name alone, or a name that only starts a feat's, names no feat", async () => {
       expect(await met("Bjorn Ironhand", "feats.weaponfocus.possessed")).toBe(false);
       // Power Attack

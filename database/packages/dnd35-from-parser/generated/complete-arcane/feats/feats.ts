@@ -541,6 +541,9 @@ export const DRACONIC_FEATS: FeatSeed[] = [
     requirements: [
       eq("feats.draconicheritage.possessed"),
     ],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Draconic" },
+    ],
   },
 ];
 
@@ -552,6 +555,9 @@ export const HERITAGE_FEATS: FeatSeed[] = [
     requirements: [
       eq("feats.draconicheritage.possessed"),
     ],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Draconic" },
+    ],
   },
   {
     name: "Draconic Flight",
@@ -559,6 +565,9 @@ export const HERITAGE_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       eq("feats.draconicheritage.possessed"),
+    ],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Draconic" },
     ],
   },
   {
@@ -568,11 +577,20 @@ export const HERITAGE_FEATS: FeatSeed[] = [
     requirements: [
       gte("classes.sorcerer.level", 1),
     ],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Draconic" },
+    ],
   },
   {
     name: "Draconic Legacy",
     description: "Based on your draconic heritage, add the following spells to your list of spells known. Each spell is added at the level that a spellcaster would normally gain it unless otherwise indicated. Draconic Legacy Dragon Kind Spells Known Black Charm animal (snakes and lizards only), deeper darkness, insect plague. Blue --- Major image, mirage arcane, ventriloquism. Green - Charm person, dominate person, plant growth. Red ---- Detect secret doors, suggestion, true seeing. White -- Obscuring mist, sleet storm, wall of ice (5th level). Brass - Control winds, endure elements, tongues Bronze Control water (5th level), speak with animals, water breathing. Copper - Silent image, stone shape, wall of stone Gold Bless, daylight, dispel evil. Silver -- Air walk (5th level), feather fall, wind wall.",
     aptitudes: ["General"],
+    requirements: [
+      gte("feats.draconic.count", 4),
+    ],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Draconic" },
+    ],
   },
   {
     name: "Draconic Power",
@@ -580,6 +598,9 @@ export const HERITAGE_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       eq("feats.draconicheritage.possessed"),
+    ],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Draconic" },
     ],
   },
   {
@@ -589,6 +610,9 @@ export const HERITAGE_FEATS: FeatSeed[] = [
     requirements: [
       eq("feats.draconicheritage.possessed"),
     ],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Draconic" },
+    ],
   },
   {
     name: "Draconic Resistance",
@@ -597,6 +621,9 @@ export const HERITAGE_FEATS: FeatSeed[] = [
     requirements: [
       eq("feats.draconicheritage.possessed"),
     ],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Draconic" },
+    ],
   },
   {
     name: "Draconic Skin",
@@ -604,6 +631,9 @@ export const HERITAGE_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       eq("feats.draconicheritage.possessed"),
+    ],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Draconic" },
     ],
   },
 ];

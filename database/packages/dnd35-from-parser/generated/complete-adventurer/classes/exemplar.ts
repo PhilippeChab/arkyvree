@@ -57,7 +57,7 @@ export const EXEMPLAR: ClassSeed = {
   ],
   requirements: [
     gte("skills.diplomacy.rank", 6),
-    eq("feats.skillfocusany.*.possessed"),
+    eq("feats.skillfocus.*.possessed"),
   ],
   classFeatureAptitude: "Exemplar Class Feature",
   classFeatures: [

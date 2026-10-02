@@ -51,6 +51,7 @@ import {
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { PropertyTypesProvider } from "@/server/rulesets/types.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import {
   SPELL_COMPONENTS,
   SPELL_DESCRIPTORS,
@@ -278,23 +279,7 @@ const PROPERTY_VALUES: Record<string, string[]> = {
   [WEAPON_FINESSABLE]: ["true", "false"],
   [WEAPON_TYPE]: [...WEAPON_TYPE_NAMES],
   [KLASS_CASTER_TYPE]: ["Arcane", "Divine"],
-  [FEAT_FAMILY]: [
-    "Weapon Focus",
-    "Greater Weapon Focus",
-    "Weapon Specialization",
-    "Greater Weapon Specialization",
-    "Improved Critical",
-    "Martial Weapon Proficiency",
-    "Exotic Weapon Proficiency",
-    "Rapid Reload",
-    "Spell Focus",
-    "Greater Spell Focus",
-    "Skill Focus",
-    "Metamagic",
-    "Item Creation",
-    "Turn or Rebuke Undead",
-    "Wild Shape",
-  ],
+  [FEAT_FAMILY]: [...FEAT_FAMILIES],
 };
 
 export default class Dnd35PropertyTypes implements PropertyTypesProvider {

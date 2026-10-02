@@ -35,7 +35,7 @@ export const FORTUNES_FRIEND: ClassSeed = {
   ],
   requirements: [
     gte("combat.bab", 3),
-    eq("feats.luck.possessed"),
+    eq("feats.luck.*.possessed"),
   ],
   casterLevelAdvancement: { type: "any", levels: [2, 4] },
   classFeatureAptitude: "Fortune's Friend Class Feature",

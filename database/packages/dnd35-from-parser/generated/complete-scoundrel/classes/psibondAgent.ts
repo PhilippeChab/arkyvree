@@ -43,7 +43,7 @@ export const PSIBOND_AGENT: ClassSeed = {
   requirements: [
     gte("skills.gatherinformation.rank", 8),
     gte("skills.sensemotive.rank", 4),
-    gte("feats.sneakattack.*.count", 1),
+    gte("feats.sneakattack.count", 1),
   ],
   classFeatureAptitude: "Psibond Agent Class Feature",
   classFeatures: [

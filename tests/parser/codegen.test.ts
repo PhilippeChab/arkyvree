@@ -239,20 +239,48 @@ describe("The generated feats", () => {
     expect(warChanter).toContain(`eq("feats.combatexpertise.possessed"),`);
   });
 
-  test("require any class's feat of a class feature a feat or a class names, or a number of it", () => {
+  test("require any class's feat of a class feature a feat or a class names, or a number of them all together", () => {
     const feats = generateFeatSeeds(loadReference(join(REFERENCE_DIR, "complete-scoundrel", "feats.json"), "feat"));
     const asceticStalker = feats.slice(feats.indexOf(`name: "Ascetic Stalker"`));
     expect(asceticStalker.slice(0, asceticStalker.indexOf("},"))).toContain(`eq("feats.kipower.*.possessed"),`);
     const arcaneTrickster = generateClassSeed(
       loadReference(join(REFERENCE_DIR, "dmg", "classes", "arcaneTrickster.json"), "class"),
     );
-    expect(arcaneTrickster).toContain(`gte("feats.sneakattack.*.count", 2),`);
+    expect(arcaneTrickster).toContain(`gte("feats.sneakattack.count", 2),`);
+  });
+
+  test("make luck and draconic feats a family, which a feat checks one of, or a number of", () => {
+    const entry = (feats: string, name: string) => {
+      const from = feats.slice(feats.indexOf(`name: "${name}"`));
+      return from.slice(0, from.indexOf("\n  },"));
+    };
+    const scoundrel = generateFeatSeeds(loadReference(join(REFERENCE_DIR, "complete-scoundrel", "feats.json"), "feat"));
+    expect(entry(scoundrel, "Tempting Fate")).toContain(`eq("feats.luck.*.possessed"),`);
+    expect(entry(scoundrel, "Better Lucky than Good")).toContain(`gte("feats.luck.count", 2),`);
+    expect(entry(scoundrel, "Better Lucky than Good")).toContain(`{ type: "FEAT_FAMILY", value: "Luck" },`);
+    const arcane = generateFeatSeeds(loadReference(join(REFERENCE_DIR, "complete-arcane", "feats.json"), "feat"));
+    expect(entry(arcane, "Draconic Legacy")).toContain(`gte("feats.draconic.count", 4),`);
+    expect(entry(arcane, "Draconic Breath")).toContain(`{ type: "FEAT_FAMILY", value: "Draconic" },`);
   });
 });
 
 describe("A generated class", () => {
   const classRef = (book: string, slug: string) =>
     loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class");
+
+  test("requires one of a family's feats, or a number of them", () => {
+    expect(generateClassSeed(classRef("complete-scoundrel", "fortunesFriend"))).toContain(
+      `eq("feats.luck.*.possessed"),`,
+    );
+    expect(generateClassSeed(classRef("complete-adventurer", "exemplar"))).toContain(
+      `eq("feats.skillfocus.*.possessed"),`,
+    );
+    expect(generateClassSeed(classRef("complete-adventurer", "maester"))).toContain(
+      `gte("feats.itemcreation.count", 2),`,
+    );
+    // "Spell Focus (two schools of magic)"
+    expect(generateClassSeed(classRef("dmg", "archmage"))).toContain(`gte("feats.spellfocus.count", 2),`);
+  });
 
   test("grants the existing feat a feature is, named in another case or by a family's option, not a copy of it", () => {
     for (const [book, slug, granted, feature] of [

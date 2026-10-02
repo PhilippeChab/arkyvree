@@ -1,5 +1,8 @@
 import { parseAlignmentRequirement } from "@/database/packages/dnd35-from-parser/tools/scraper/alignment.ts";
-import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
+import {
+  detectModifiers,
+  familyFeatRequirements,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
 import {
   familyOptions,
   featWithoutChoice,
@@ -101,25 +104,12 @@ function parseSkillPoints(text: string): number {
 // ---------------------------------------------------------------------------
 
 function expandAnyFeatRequirement(text: string): RequirementEntry | undefined {
-  // Pattern 0: "Any X feat" → feats.X.possessed (prefix expansion matches all variants)
-  const anyFeatMatch = text.match(/^[Aa]ny\s+(\w+)\s+feat$/i);
-  if (anyFeatMatch) {
-    const family = stripSeparators(anyFeatMatch[1].trim());
-    return eq(`feats.${family}.possessed`);
-  }
-  // Pattern 1: "FeatFamily (any category)" → extract base feat from parenthetical
-  const parenMatch = text.match(/^(.+?)\s*\((.+)\)$/i);
-  if (parenMatch) {
-    const prefix = stripSeparators(parenMatch[1].trim());
-    return eq(`feats.${prefix}.*.possessed`);
-  }
-  // Pattern 2: prose like "Spell Focus in two schools of magic" → extract leading feat family
-  const proseMatch = text.match(/^(.+?)\s+(?:in\s+)?\b(?:any|two)\b/i);
-  if (proseMatch) {
-    const prefix = stripSeparators(proseMatch[1].trim());
-    return eq(`feats.${prefix}.*.possessed`);
-  }
-  return undefined;
+  // "FeatFamily (any category)", or prose like "Spell Focus in two schools of magic" → the leading feat family
+  const family = text.match(/^(.+?)\s*\(/)?.[1] ?? text.match(/^(.+?)\s+(?:in\s+)?\b(?:any|two)\b/i)?.[1];
+  if (!family) return undefined;
+  const slug = stripSeparators(family.trim());
+  // "Spell Focus (two schools of magic)": two of the family's feats
+  return /\btwo\s+\w/i.test(text) ? gte(`feats.${slug}.count`, 2) : eq(`feats.${slug}.*.possessed`);
 }
 
 // ---------------------------------------------------------------------------
@@ -1032,18 +1022,9 @@ function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]["parse
         continue;
       }
 
-      // "any metamagic feat" / "any item creation feat" → grouping wildcard
-      if (/any (?:other )?metamagic feat/i.test(f) && !/item creation/i.test(f)) {
-        reqs.push(eq("feats.metamagic.*.possessed"));
-        continue;
-      }
-      if (/any (?:other )?item creation feat/i.test(f) && !/metamagic/i.test(f)) {
-        reqs.push(eq("feats.itemcreation.*.possessed"));
-        continue;
-      }
-      // "Any [N] metamagic or item creation feats" → OR of both wildcards
-      if (/any\b.*\bmetamagic\b.*\bitem creation\b.*\bfeats?\b/i.test(f)) {
-        reqs.push(or(eq("feats.metamagic.*.possessed"), eq("feats.itemcreation.*.possessed")));
+      const familyReqs = familyFeatRequirements(f);
+      if (familyReqs.length > 0) {
+        reqs.push(...familyReqs);
         continue;
       }
       // "any" feats (e.g. "Weapon Focus (any thrown weapon)", "Spell Focus in two schools of magic",

@@ -61,7 +61,7 @@ export const ARCANE_TRICKSTER: ClassSeed = {
       eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
       eqStr("identity.beliefs.alignment", "Chaotic Evil"),
     ),
-    gte("feats.sneakattack.*.count", 2),
+    gte("feats.sneakattack.count", 2),
   ],
   casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Arcane Trickster Class Feature",

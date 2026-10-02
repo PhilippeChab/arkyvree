@@ -75,7 +75,16 @@
         "target": "skills.spellcraft.rank",
         "value": "10",
         "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "feats.metamagic.count",
+        "value": "{{ 3 - [feats.itemcreation.count] }}",
+        "valueType": "number"
       }
+    ],
+    "reviewed": [
+      "Any three metamagic or item creation feats"
     ]
   },
   "raw": {
