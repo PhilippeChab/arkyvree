@@ -4,6 +4,7 @@ import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
+import type { CampaignRole } from "@/shared/enums.ts";
 import { api, createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
 import { getSeedCtx, NIL_UUID, queuedPdfJobs, silentJobHelpers, uniqueId } from "@/tests/helpers.ts";
 
@@ -41,7 +42,7 @@ async function setup() {
 }
 
 /** Adds a new user to the campaign with `role`, and returns a client signed in as them. */
-async function join(campaignId: string, role: "Game Master" | "Player Character") {
+async function join(campaignId: string, role: CampaignRole) {
   const member = await createSignedInUser("member");
   const [player] = await Players.create(db, { campaignId, userId: member.user.id, role });
   return { ...member, player };
@@ -145,7 +146,7 @@ describe("campaigns characters", () => {
 
   describe("PDF export", () => {
     /** The seeded user's character linked as a Private player character, and a new member with `role`. */
-    async function setupExport(role: "Game Master" | "Player Character") {
+    async function setupExport(role: CampaignRole) {
       const { campaignId, characterId } = await setup();
       const owner = (await Players.findOne(db, { campaignId, userId: SEED_USER_ID }))!;
       await Players.update(db, { role: "Player Character" }, { id: owner.id });

@@ -7,6 +7,7 @@
 - Be DRY
 - Reuse existing patterns, naming
 - A file reads bottom-up: a helper sits above the code that uses it, in a file's sections too (oxlint's `no-use-before-define`). Functions that call each other keep one `oxlint-disable-next-line` saying so
+- `shared/` holds what more than one of the client, the server and the database packages use, grouped by domain (`customization/`, `dnd3.5/`): types, vocabulary and pure helpers, never code tied to one runtime (Bun's APIs, the database). It never imports `drizzle/schema.ts` at runtime, which would load the whole schema in the client: a database enum's options are written out in `shared/enums.ts`, checked against the schema and the database by `tests/shared/enums.test.ts`. Take the enum types (`ItemLocation`, `ContributorRole`, …) and the customizable entity types (`shared/customization/entities.ts`) from there rather than re-deriving them
 - `oxfmt` formats the code (`bun run format`; CI runs `format:check`): 120 columns, the imports sorted and grouped. What tools write keeps their layout: the drizzle schema and relations (`drizzle-kit pull`) and the parser's `generated/`. A data table keeps one row per line under `// oxfmt-ignore`. oxlint's `sort-imports` sorts the names inside an import
 
 **TypeScript & Naming:**
@@ -162,9 +163,10 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 **Test Structure:**
 
-- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeders, the seeded content, the package runner and the test data), `/tests/parser` (the parser tools; the scraper's parsers read the trimmed pages in `tests/parser/fixtures`), `/tests/jobs`, `/tests/middlewares` (the rate limits)
-- Client tests: `/tests/client` (the client's logic that needs no browser: `lib/`)
+- Backend tests: `/tests/routers` (the API, through `tests/api.ts`), `/tests/services`, `/tests/rulesets` (character computation, target paths, requirements), `/tests/cache`, `/tests/seeds` (the seeders, the seeded content, the package runner and the test data), `/tests/parser` (the parser tools; the scraper's parsers read the trimmed pages in `tests/parser/fixtures`), `/tests/jobs`, `/tests/middlewares` (the rate limits), `/tests/shared` (the shared code, and its enum and operator lists against the schema and the database)
+- Client tests: `/tests/client` (the client's logic that needs no browser: `lib/`, and pure modules such as the inventory dialogs' `equipment.ts`)
 - E2E tests: `/tests/e2e`
+- What tests do differently (no CSRF check, rate limit or email, cheap password hashes) reads `isTest` (`server/environment.ts`): `NODE_ENV=test`, which `tests/env.ts` and the e2e server set, never the database's name
 - Each test runs in its own transaction, rolled back afterwards (`tests/setup.ts`); a transaction the code opens in it (`withTransaction`, `db.transaction`) is a savepoint on the same connection, rolled back when it throws. In production that transaction is its own, on another connection, so tests don't catch transaction-boundary bugs (what it can see, when it commits). It has a single connection: run service calls that write one at a time, never in a `Promise.all`: concurrent savepoints share a name, so one's failure silently undoes the other's writes
 - The ruleset cache outlives the rollback. Write a test's rows into a fork (`createSeededTestRuleset`), not a seeded ruleset; a test that has to write into a seeded one calls `invalidateSeededRuleset(rulesetId)` afterwards, and the setup drops those rules again once the rollback undoes the rows
 - CRUD, ownership and copy-on-write of every ruleset entity are tested once, for all of them, in `tests/services/rulesets/EntityServices.test.ts`: an entity's own service test covers only what's particular to it

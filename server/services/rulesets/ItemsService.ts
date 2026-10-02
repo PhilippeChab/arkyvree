@@ -1,7 +1,6 @@
-import { inArray } from "drizzle-orm";
-import { getTableName } from "drizzle-orm";
+import { getTableName, inArray } from "drizzle-orm";
 
-import { itemsInRules, type location } from "@/drizzle/schema.ts";
+import { itemsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE, UnprocessableEntityError } from "@/server/errors/index.ts";
@@ -25,6 +24,7 @@ import {
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
+import type { ItemLocation } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 interface ItemBody {
@@ -33,7 +33,7 @@ interface ItemBody {
   weight?: number;
   costGp?: number;
   type?: string | null;
-  slot?: (typeof location.enumValues)[number];
+  slot?: ItemLocation;
   sourceItemId?: string;
   isTemplate?: boolean;
   updatedAt?: string;

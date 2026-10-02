@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+/** Text as it's stored: Unicode-normalized (NFKC) and trimmed. */
+export const sanitizeText = (text: string) => text.normalize("NFKC").trim();
+
+/** An email address as it's stored: sanitized text, lowercased. */
+export const sanitizeEmail = (email: string) => sanitizeText(email).toLowerCase();
+
+/** An email address, sanitized as it's stored. */
+export const sanitizedEmail = z.string().email().transform(sanitizeEmail);
+
 /** Standard page parameter: positive integer, defaults to 1 */
 export const page = z.coerce.number().min(1).default(1);
 

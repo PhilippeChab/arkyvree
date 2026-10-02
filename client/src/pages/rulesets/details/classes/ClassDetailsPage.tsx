@@ -15,6 +15,7 @@ import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/compone
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { useFormSync, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
@@ -32,7 +33,7 @@ import {
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { isHitDie } from "@/shared/dnd3.5/classes.ts";
+import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 
 import {
   ClassFeatPoolsSection,
@@ -68,7 +69,7 @@ const CASTER_TYPE_PROPERTY_TYPE = "KLASS_CASTER_TYPE";
 const toClassForm = (klass: Pick<ClassDetail, "name" | "description" | "hd">): ClassFormData => ({
   name: klass.name,
   description: klass.description ?? "",
-  hd: isHitDie(klass.hd) ? klass.hd : 8,
+  hd: oneOf(klass.hd, HIT_DIE_VALUES, 8),
 });
 
 const isClassSection = (section: string | undefined): section is ClassSection =>

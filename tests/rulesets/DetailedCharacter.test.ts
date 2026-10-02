@@ -17,12 +17,7 @@ import {
   createCharacter,
   SEED_USER_ID,
 } from "@/database/seeds/helpers.ts";
-import {
-  characterAbilitiesInCharacter,
-  charactersInCharacter,
-  inventoryInCharacter,
-  type location,
-} from "@/drizzle/schema.ts";
+import { characterAbilitiesInCharacter, charactersInCharacter, inventoryInCharacter } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -42,6 +37,7 @@ import {
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
+import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character } from "@/shared/relations.ts";
 import {
   addCharacterLevel,
@@ -74,7 +70,7 @@ const buildSeeded = async (name: string) => build(await seeded(name));
 
 type Carried = {
   item: string;
-  location?: (typeof location.enumValues)[number];
+  location?: ItemLocation;
   weaponSet?: number;
   equipped?: boolean;
   quantity?: number;
@@ -105,7 +101,7 @@ async function buildCarrying(name: string, carried: Carried[] = []) {
 
 /** A new item of the seeded ruleset, with these properties. */
 async function createItem(
-  values: { name: string; type: string; slot: (typeof location.enumValues)[number]; sourceItemId?: string },
+  values: { name: string; type: string; slot: ItemLocation; sourceItemId?: string },
   properties: Record<string, string> = {},
 ) {
   const { rulesetId } = await getSeedCtx();

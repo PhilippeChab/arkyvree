@@ -1,7 +1,9 @@
 import type { PowerDc } from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
+import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
+import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude, type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
-import { formatPropertyType, spellPossessionSlug, stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 export type PowerEntry = {
   power: Power;

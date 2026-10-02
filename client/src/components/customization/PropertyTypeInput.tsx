@@ -1,6 +1,6 @@
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { EntityType } from "@/shared/customization/properties.ts";
+import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 
 import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
 
@@ -8,7 +8,7 @@ interface PropertyTypeInputProps {
   value: string;
   onChange: (value: string) => void;
   rulesetId: string;
-  entityType?: EntityType;
+  entityType?: PropertyEntityType;
   label?: string;
   required?: boolean;
   error?: boolean;

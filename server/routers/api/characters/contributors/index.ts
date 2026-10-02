@@ -2,10 +2,9 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
-import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { limit, orderDirDesc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import CharacterContributorsService from "@/server/services/CharacterContributorsService.ts";
-import { sanitizeEmail } from "@/shared/utils.ts";
 
 export default new Hono<SessionContext>()
   .get(
@@ -43,7 +42,7 @@ export default new Hono<SessionContext>()
     zValidator(
       "json",
       z.object({
-        email: z.string().email().transform(sanitizeEmail),
+        email: sanitizedEmail,
       }),
     ),
     async (c) => {

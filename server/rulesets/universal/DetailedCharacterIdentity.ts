@@ -1,6 +1,5 @@
-import type { TargetPath } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type Character, type Language, type Race } from "@/shared/relations.ts";
-import { deriveSegmentLabels } from "@/shared/utils.ts";
 
 import type DetailedCharacterAbilities from "./DetailedCharacterAbilities.ts";
 import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";

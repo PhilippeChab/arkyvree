@@ -1,10 +1,9 @@
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { and, eq, isNotNull, isNull, like, lt } from "drizzle-orm";
+import { and, eq, type InferInsertModel, type InferSelectModel, isNotNull, isNull, like, lt } from "drizzle-orm";
 
 import { usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { hashPassword } from "@/server/password.ts";
 import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
-import { hashPassword } from "@/shared/utils.ts";
 
 class UsersRepository extends BaseRepository<typeof usersInAccount, UserInstance> {
   constructor() {

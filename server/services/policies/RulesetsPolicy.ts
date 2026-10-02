@@ -3,16 +3,15 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { campaignsInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import type { ContributorRole } from "@/shared/enums.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
 
-export type ContributorRole = "Admin" | "Editor" | "Viewer" | null;
-
 export default class RulesetsPolicy extends BasePolicy<Ruleset> {
-  private readonly contributorRole: ContributorRole;
+  private readonly contributorRole: ContributorRole | null;
 
-  constructor(session: Session, entity: Ruleset, contributorRole: ContributorRole = null) {
+  constructor(session: Session, entity: Ruleset, contributorRole: ContributorRole | null = null) {
     super(session, entity);
     this.contributorRole = contributorRole;
   }

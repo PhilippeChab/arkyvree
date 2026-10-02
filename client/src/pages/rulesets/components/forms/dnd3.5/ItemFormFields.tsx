@@ -6,7 +6,8 @@ import { DescriptionField, NameField } from "@/client/src/components/common/inde
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { ITEM_TYPE_OPTIONS, SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
+import { ITEM_TYPE_OPTIONS } from "@/shared/dnd3.5/items.ts";
+import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 import { DECIMAL_PATTERN, isTemplateType, type ItemFormInternal, type TemplateType } from "./itemForm.ts";
 
@@ -115,7 +116,7 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
       ) : (
         <TextField {...form.register("slot")} label="Slot" fullWidth select value={slot || ""} disabled={lockType}>
           <MenuItem value="">None</MenuItem>
-          {SLOT_OPTIONS.map((slot) => (
+          {LOCATION_OPTIONS.map((slot) => (
             <MenuItem key={slot} value={slot}>
               {slot}
             </MenuItem>

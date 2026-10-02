@@ -7,10 +7,10 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { useListParams } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { BONDED_KINDS } from "@/shared/dnd3.5/bondedKinds.ts";
+import { BONDED_KIND_SLUGS, BONDED_KINDS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 
-export type EntityKind = "pc" | (typeof BONDED_KINDS)[number]["slug"];
-const ENTITY_KINDS: readonly EntityKind[] = ["pc", ...BONDED_KINDS.map((b) => b.slug)];
+export type EntityKind = "pc" | BondedKind;
+const ENTITY_KINDS: readonly EntityKind[] = ["pc", ...BONDED_KIND_SLUGS];
 
 const ENTITY_SORT_FIELDS = ["name", "createdAt", "updatedAt"] as const;
 export type EntitySortField = (typeof ENTITY_SORT_FIELDS)[number];

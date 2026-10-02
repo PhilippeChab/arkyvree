@@ -1,15 +1,6 @@
+import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { api, expectOk } from "@/tests/api.ts";
 import { uniqueId } from "@/tests/helpers.ts";
-
-export type CustomizableEntityType = "feats" | "items" | "powers" | "races" | "klasses" | "klass_levels";
-export const CUSTOMIZABLE_ENTITY_TYPES: CustomizableEntityType[] = [
-  "feats",
-  "items",
-  "powers",
-  "races",
-  "klasses",
-  "klass_levels",
-];
 
 /**
  * A new entity of `entityType` created in the ruleset, so customizing it edits

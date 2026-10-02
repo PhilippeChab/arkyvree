@@ -21,7 +21,7 @@ import { findCreatureType } from "@/database/packages/dnd35/content/creatureType
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { capitalize, stripSeparators } from "@/shared/utils.ts";
 
 // ---------------------------------------------------------------------------
 // BAB detection
@@ -126,7 +126,7 @@ function parseCompoundFeatRequirement(text: string, featNameMap: Record<string, 
   if (options.length < 2) return undefined;
 
   const children: RequirementEntry[] = options.map((opt) => {
-    const fullName = `${baseFeat}: ${opt.charAt(0).toUpperCase() + opt.slice(1)}`;
+    const fullName = `${baseFeat}: ${capitalize(opt)}`;
     const slug = stripSeparators(fullName);
     featNameMap[slug] = fullName;
     return eq(feat(fullName));
@@ -897,7 +897,7 @@ function expandSkillRequirement(name: string, ranks: number): RequirementEntry |
       const slugs = options.map((opt) => {
         // Normalize abbreviated Craft subtypes: "leather" → "leatherworking", "metal" → "metalworking"
         const normalized = /^craft$/i.test(baseName) ? normalizeCraftSubtype(opt) : opt;
-        const fullName = `${baseName} (${normalized.charAt(0).toUpperCase() + normalized.slice(1)})`;
+        const fullName = `${baseName} (${capitalize(normalized)})`;
         // Try exact SKILL_MAP lookup first, fall back to constructing the slug directly
         return SKILL_MAP[fullName.toLowerCase()] ?? stripSeparators(fullName);
       });

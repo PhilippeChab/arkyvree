@@ -54,8 +54,8 @@ import {
   MARTIAL_WEAPONS,
   SIMPLE_WEAPONS,
 } from "@/database/packages/dnd35/content/weapons.ts";
-import { SLOT_OPTIONS } from "@/shared/dnd3.5/items.ts";
-import { SIZE_OPTIONS } from "@/shared/enums.ts";
+import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
+import { capitalize } from "@/shared/utils.ts";
 
 // ---------------------------------------------------------------------------
 // Existing feat lookup — set of known feat names
@@ -711,10 +711,7 @@ function normalizeDescriptor(value: string): string {
   // Only normalize all-lowercase scrapes (e.g. "good"); leave mixed-case
   // compounds like "Fire or Cold" or "Mind-Affecting" untouched.
   if (trimmed !== trimmed.toLowerCase()) return trimmed;
-  return trimmed
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join("-");
+  return trimmed.split("-").map(capitalize).join("-");
 }
 
 function normalizeSpellResistance(value: string): string {
@@ -1136,7 +1133,7 @@ export function seededMagicItems(ref: MagicItemReference) {
     const override = ref.overrides?.[name];
     if (override?.skip) return [];
     const slot = override?.slot ?? det.slot;
-    return [{ name, det, override, slot: slot ? checkOneOf(slot, SLOT_OPTIONS, `${name}'s slot`) : undefined }];
+    return [{ name, det, override, slot: slot ? checkOneOf(slot, LOCATION_OPTIONS, `${name}'s slot`) : undefined }];
   });
 }
 

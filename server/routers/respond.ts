@@ -2,7 +2,7 @@ import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import { toJson } from "@/server/errors/index.ts";
-import type { Result } from "@/shared/utils.ts";
+import type { Result } from "@/server/services/BaseService.ts";
 
 /** An error in the API's envelope, with its status: what a failed request answers. */
 export function errorResponse(c: Context, err: Error) {

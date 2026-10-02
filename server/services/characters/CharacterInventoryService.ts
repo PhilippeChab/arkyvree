@@ -1,17 +1,17 @@
 import { getTableName } from "drizzle-orm";
 
-import { inventoryInCharacter, type location } from "@/drizzle/schema.ts";
+import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, CharacterInventory, Characters, Items } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import type { ItemLocation } from "@/shared/enums.ts";
+import { isHandLocation } from "@/shared/equipment.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { HAND_SLOTS, validateEquipmentSlot, validateItemRequirements } from "./inventory/validation.ts";
-
-type InventoryLocation = (typeof location.enumValues)[number];
+import { validateEquipmentSlot, validateItemRequirements } from "./inventory/validation.ts";
 
 export const CharacterInventoryMethods = {
   async getInventory(session: Session, characterId: string) {
@@ -67,7 +67,7 @@ export const CharacterInventoryMethods = {
     itemId: string,
     quantity: number,
     equipped: boolean,
-    location: InventoryLocation | null,
+    location: ItemLocation | null,
     totalCharges: number | null,
     remainingCharges: number | null,
     weaponSet: number | null,
@@ -114,7 +114,7 @@ export const CharacterInventoryMethods = {
         }
 
         // Require weaponSet for hand slots
-        if (equipped && location && HAND_SLOTS.has(location) && weaponSet === null) {
+        if (equipped && isHandLocation(location) && weaponSet === null) {
           throw new BadRequestError("A weapon set is required when equipping to a hand slot");
         }
 
@@ -143,7 +143,7 @@ export const CharacterInventoryMethods = {
           quantity,
           equipped: resolvedEquipped,
           location: resolvedLocation,
-          weaponSet: resolvedEquipped && resolvedLocation && HAND_SLOTS.has(resolvedLocation) ? weaponSet : null,
+          weaponSet: resolvedEquipped && isHandLocation(resolvedLocation) ? weaponSet : null,
           totalCharges: totalCharges ?? null,
           remainingCharges: remainingCharges ?? null,
         };
@@ -168,7 +168,7 @@ export const CharacterInventoryMethods = {
     itemId: string,
     quantity: number,
     equipped: boolean,
-    location: InventoryLocation | null,
+    location: ItemLocation | null,
     totalCharges: number | null,
     remainingCharges: number | null,
     weaponSet: number | null,
@@ -199,7 +199,7 @@ export const CharacterInventoryMethods = {
         }
 
         // Require weaponSet for hand slots
-        if (equipped && location && HAND_SLOTS.has(location) && weaponSet === null) {
+        if (equipped && isHandLocation(location) && weaponSet === null) {
           throw new BadRequestError("A weapon set is required when equipping to a hand slot");
         }
 
@@ -232,7 +232,7 @@ export const CharacterInventoryMethods = {
             quantity,
             equipped: resolvedEquipped,
             location: resolvedLocation,
-            weaponSet: resolvedEquipped && resolvedLocation && HAND_SLOTS.has(resolvedLocation) ? weaponSet : null,
+            weaponSet: resolvedEquipped && isHandLocation(resolvedLocation) ? weaponSet : null,
             totalCharges: totalCharges ?? null,
             remainingCharges: remainingCharges ?? null,
           },

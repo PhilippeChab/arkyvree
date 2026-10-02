@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import { api, expectOk, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
-import { createEntity, CUSTOMIZABLE_ENTITY_TYPES } from "@/tests/routers/api/rulesets/customization/entities.ts";
+import { createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
 
 const properties = api.api.rulesets[":id"].customization[":entityType"][":entityId"].properties;
 const property = properties[":property_id"];
@@ -33,7 +34,7 @@ describe("rulesets customization properties", () => {
     expect(await expectOk(properties.$get({ param }))).toEqual([]);
   });
 
-  test.each(CUSTOMIZABLE_ENTITY_TYPES)("adds a property to %s", async (entityType) => {
+  test.each([...CUSTOMIZABLE_ENTITY_TYPES])("adds a property to %s", async (entityType) => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const entityId = await createEntity(id, entityType);
     const created = await expectOk(

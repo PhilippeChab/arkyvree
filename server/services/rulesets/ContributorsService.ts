@@ -10,6 +10,7 @@ import { Contributors, Notifications, Rulesets, Users } from "@/server/repositor
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
+import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 export const ContributorsMethods = {
@@ -66,7 +67,7 @@ export const ContributorsMethods = {
     return { ...paginated, owner };
   },
 
-  async inviteContributor(session: Session, rulesetId: string, email: string, role: "Admin" | "Editor" | "Viewer") {
+  async inviteContributor(session: Session, rulesetId: string, email: string, role: ContributorRole) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
       const ruleset = await Rulesets.findOne(tx, { id: rulesetId }, Visibility.All);
       if (!ruleset) {
@@ -280,7 +281,7 @@ export const ContributorsMethods = {
     });
   },
 
-  async updateContributorRole(session: Session, contributorId: string, role: "Admin" | "Editor" | "Viewer") {
+  async updateContributorRole(session: Session, contributorId: string, role: ContributorRole) {
     return await withTransaction(async (tx) => {
       const contributor = await Contributors.findOne(tx, { id: contributorId });
       if (!contributor) {

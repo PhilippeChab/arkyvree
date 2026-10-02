@@ -30,6 +30,7 @@ import {
   Users,
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
+import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** An id no row has: for "not found" cases. */
@@ -269,7 +270,7 @@ export async function addRulesetContributor(
   rulesetId: string,
   user: Contributor,
   invitedBy: string,
-  role: "Admin" | "Editor" | "Viewer" = "Editor",
+  role: ContributorRole = "Editor",
 ) {
   const [invite] = await Contributors.create(db, {
     rulesetId,

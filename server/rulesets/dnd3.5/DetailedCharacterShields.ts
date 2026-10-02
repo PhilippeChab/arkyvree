@@ -7,9 +7,9 @@ import {
   SHIELD_PROFICIENCY,
   SHIELD_TYPE,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { Item, Property } from "@/shared/relations.ts";
-import { deriveSegmentLabels, stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/utils.ts";
 
 const NAVIGATABLE_SHIELD_PATHS = [
   { path: "ac.bonus", description: "Base AC bonus from shield", type: "number" as const },

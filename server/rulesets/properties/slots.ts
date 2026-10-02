@@ -1,27 +1,24 @@
-import { location, sizeType } from "@/drizzle/schema.ts";
+import { type ItemLocation, LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
+import { type HandLocation, isHandLocation } from "@/shared/equipment.ts";
 
-export const SIZE_ORDER: Record<string, number> = Object.fromEntries(sizeType.enumValues.map((size, i) => [size, i]));
+export const SIZE_ORDER: Record<string, number> = Object.fromEntries(SIZE_OPTIONS.map((size, i) => [size, i]));
 
 const WEAPON_LOCATION_MAP = {
   "Main Hand": "mainhand",
   "Off Hand": "offhand",
   "Two Handed": "twohanded",
-} as const;
+} as const satisfies Record<HandLocation, string>;
 
-type WeaponLocation = keyof typeof WEAPON_LOCATION_MAP;
+export type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[HandLocation];
 
-const isWeaponLocation = (loc: string): loc is WeaponLocation => loc in WEAPON_LOCATION_MAP;
-
-export type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[WeaponLocation];
-
-type EquipmentSlot = Lowercase<Exclude<(typeof location.enumValues)[number], WeaponLocation>>;
+type EquipmentSlot = Lowercase<Exclude<ItemLocation, HandLocation>>;
 
 export type InventorySlot = EquipmentSlot | WeaponSetSlot;
 
 const LOCATION_TO_SLOT: Record<string, InventorySlot> = Object.fromEntries(
-  location.enumValues.map((loc) => [
+  LOCATION_OPTIONS.map((loc) => [
     loc,
-    isWeaponLocation(loc) ? WEAPON_LOCATION_MAP[loc] : (loc.toLowerCase() as EquipmentSlot),
+    isHandLocation(loc) ? WEAPON_LOCATION_MAP[loc] : (loc.toLowerCase() as EquipmentSlot),
   ]),
 );
 
@@ -31,13 +28,5 @@ export function getInventorySlot(type: string | null, location: string | null): 
   if (type === "Armor") return "torso";
   if (type === "Shield") return "offhand";
 
-  if (type === "Weapon" && location) {
-    return LOCATION_TO_SLOT[location] ?? null;
-  }
-
-  if (location) {
-    return LOCATION_TO_SLOT[location] ?? null;
-  }
-
-  return null;
+  return location ? (LOCATION_TO_SLOT[location] ?? null) : null;
 }

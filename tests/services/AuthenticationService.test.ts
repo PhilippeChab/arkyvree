@@ -224,6 +224,12 @@ describe("AuthenticationService", () => {
         { id: user.id },
       );
 
+      // A wrong password against it is refused, and leaves it as it is
+      await expect(AuthenticationMethods.signIn({ ...account, password: "wrong-password" })).rejects.toThrow(
+        UnauthorizedError,
+      );
+      expect((await Users.findOne(db, { id: user.id }))!.passwordDigest).not.toStartWith("$argon2");
+
       await AuthenticationMethods.signIn(account);
       expect((await Users.findOne(db, { id: user.id }))!.passwordDigest).toStartWith("$argon2");
     });

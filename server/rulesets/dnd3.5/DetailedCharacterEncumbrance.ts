@@ -6,9 +6,8 @@ import {
   SIZE_CARRY_MULTIPLIERS,
 } from "@/server/rulesets/constants.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { CharacterInventory, Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
-import { deriveSegmentLabels } from "@/shared/utils.ts";
 
 type RawInventoryEntry = CharacterInventory & {
   item: Item & {

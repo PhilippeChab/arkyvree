@@ -1,8 +1,5 @@
-import type { location } from "@/drizzle/schema.ts";
+import type { ItemLocation } from "@/shared/enums.ts";
 
 export interface ItemsHooks {
-  resolveSlot(
-    itemType: string | null | undefined,
-    requestedSlot: (typeof location.enumValues)[number] | undefined,
-  ): (typeof location.enumValues)[number] | undefined;
+  resolveSlot(itemType: string | null | undefined, requestedSlot: ItemLocation | undefined): ItemLocation | undefined;
 }

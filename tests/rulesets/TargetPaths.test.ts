@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";
 import type { Holders } from "@/server/rulesets/types.ts";
-import { spellPossessionSlug } from "@/shared/utils.ts";
+import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 
 const targetPaths = new Dnd35TargetPaths();
 

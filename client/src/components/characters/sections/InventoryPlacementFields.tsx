@@ -3,8 +3,9 @@ import type { UseFormReturn } from "react-hook-form";
 
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { isHandLocation } from "@/shared/equipment.ts";
 
-import { HAND_SLOTS, type InventoryFormData, LOCATION_CHOICES, type PlacementProfile } from "./equipment.ts";
+import { type InventoryFormData, LOCATION_CHOICES, type PlacementProfile } from "./equipment.ts";
 
 interface InventoryPlacementFieldsProps {
   form: UseFormReturn<InventoryFormData>;
@@ -43,7 +44,7 @@ export function InventoryPlacementFields({ form, profile }: InventoryPlacementFi
               </MenuItem>
             ))}
           </TextField>
-          {profile.showWeaponSet && HAND_SLOTS.has(location) && (
+          {profile.showWeaponSet && isHandLocation(location) && (
             <TextField
               {...form.register("weaponSet", wholeNumberRules(1, "Weapon set is required"))}
               label="Weapon Set"

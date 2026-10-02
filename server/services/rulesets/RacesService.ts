@@ -19,6 +19,7 @@ import {
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
+import type { SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 export const RacesMethods = {
@@ -61,7 +62,7 @@ export const RacesMethods = {
     body: {
       name: string;
       description?: string | null;
-      size: "Fine" | "Diminutive" | "Tiny" | "Small" | "Medium" | "Large" | "Huge" | "Gargantuan" | "Colossal";
+      size: SizeType;
       baseSpeed: number;
     },
   ) {
@@ -111,7 +112,7 @@ export const RacesMethods = {
     body: {
       name: string;
       description?: string | null;
-      size: "Fine" | "Diminutive" | "Tiny" | "Small" | "Medium" | "Large" | "Huge" | "Gargantuan" | "Colossal";
+      size: SizeType;
       baseSpeed: number;
       updatedAt?: string;
     },

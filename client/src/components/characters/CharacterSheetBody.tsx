@@ -3,7 +3,7 @@ import { Stack } from "@mui/material";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
-import { BONDED_KIND_SLUGS, BONDED_LABEL_BY_KIND } from "@/shared/dnd3.5/bondedKinds.ts";
+import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS } from "@/shared/dnd3.5/bondedKinds.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import { getSections } from "./sectionFactory.ts";
@@ -105,7 +105,7 @@ export function CharacterSheetBody({
                 if (!bonded) continue;
                 const bondedKind = oneOf(kind, BONDED_KIND_SLUGS);
                 if (!bondedKind) continue;
-                const suffix = BONDED_LABEL_BY_KIND[bondedKind];
+                const suffix = BONDED_KIND_BY_SLUG[bondedKind].label;
                 matches.push({ suffix, bonded });
               }
               if (matches.length === 0) return undefined;

@@ -101,7 +101,7 @@ export default defineConfig({
         ? []
         : [`NODE_ENV=production bunx vite build${coverage ? " --sourcemap inline" : ""}`]),
       `bun --env-file=.env.test scripts/db/clone-database.ts ${port}`,
-      "HOST=:: bun --env-file=.env.test server/main.ts",
+      "HOST=:: NODE_ENV=test bun --env-file=.env.test server/main.ts",
     ].join(" && "),
     url: `http://[::1]:${port}/health`,
     // A server already on the port isn't this run's: it would serve another database

@@ -15,6 +15,7 @@ import { TargetPathBreadcrumbs } from "@/client/src/components/customization/ind
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -37,9 +38,9 @@ import {
   PropertiesSection,
   RequirementsSection,
 } from "@/client/src/pages/rulesets/customization/sections/index.ts";
-import type { EntityType } from "@/client/src/pages/rulesets/customization/types.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { CUSTOMIZATION_OWNER_TYPES, type CustomizationOwnerType } from "@/shared/customization/entities.ts";
 
 type TabSection = "properties" | "modifiers" | "requirements";
 
@@ -78,9 +79,10 @@ const TABS: SectionTab<TabSection>[] = [
 ];
 
 // A modifier can only carry requirements.
-const tabsFor = (type: EntityType) => (type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS);
+const tabsFor = (type: CustomizationOwnerType) =>
+  type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
 
-const ENTITY_LABELS: Record<EntityType, string> = {
+const ENTITY_LABELS: Record<CustomizationOwnerType, string> = {
   feats: "Feat",
   klass_levels: "Class Level",
   klasses: "Class",
@@ -89,8 +91,6 @@ const ENTITY_LABELS: Record<EntityType, string> = {
   races: "Race",
   modifiers: "Modifier",
 };
-
-const isEntityType = (type: string | undefined): type is EntityType => !!type && Object.hasOwn(ENTITY_LABELS, type);
 
 // Entities with an editor on this page, which can also be deleted from it.
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
@@ -358,7 +358,7 @@ export default function CustomizationPage() {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const validType = isEntityType(entityType) ? entityType : undefined;
+  const validType = oneOf(entityType, CUSTOMIZATION_OWNER_TYPES);
 
   const { copiedFrom } = entityPageState(location.state);
 

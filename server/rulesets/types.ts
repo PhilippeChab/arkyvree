@@ -6,7 +6,7 @@ import type { ValidationResult } from "@/server/rulesets/AbstractDetailedCharact
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
-import type { EntityType } from "@/shared/customization/properties.ts";
+import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import type {
   Aptitude,
@@ -253,7 +253,7 @@ export interface TargetPathsInterface extends TargetPathsTraverser {
 }
 
 export interface PropertyTypesProvider {
-  getStaticPropertyTypes(entityType?: EntityType): Record<string, string>;
+  getStaticPropertyTypes(entityType?: PropertyEntityType): Record<string, string>;
   getStaticPropertyValues(type: string): string[] | null;
 }
 
