@@ -140,6 +140,42 @@ describe("A feat's detected aptitudes", () => {
   });
 });
 
+describe("A feat's detected template", () => {
+  test("is one feat per skill or school for a feat taken again for each, not one naming skills or schools", () => {
+    const feat = (name: string, benefit: string, special = "") => ({
+      name,
+      featType: "general",
+      prerequisiteText: "",
+      benefit,
+      special,
+    });
+    const detected = buildFeatDetected([
+      feat(
+        "Skill Focus",
+        "You get a +3 bonus on all checks involving that skill.",
+        "Each time you take the feat, it applies to a new skill.",
+      ),
+      feat("Jack of All Trades", "You can use any skill as if you had 1/2 rank in that skill."),
+      feat(
+        "Spell Focus",
+        "Add +1 to the Difficulty Class for all saving throws against spells from the school of magic you select.",
+      ),
+      feat("Precocious Apprentice", "Choose one 2nd-level spell from a school of magic you have access to."),
+      feat(
+        "Magical Appraisal",
+        "When you succeed on a Spellcraft check to determine the school of magic of the aura surrounding a magic item…",
+      ),
+    ]);
+    expect(Object.fromEntries(Object.entries(detected).map(([name, d]) => [name, d.template?.type ?? null]))).toEqual({
+      "Skill Focus": "skill",
+      "Jack of All Trades": null,
+      "Spell Focus": "school",
+      "Precocious Apprentice": null,
+      "Magical Appraisal": null,
+    });
+  });
+});
+
 describe("A race's detected modifiers", () => {
   const race = (name: string, abilityAdjustments: { ability: string; value: number }[], ...features: string[]) => ({
     name,

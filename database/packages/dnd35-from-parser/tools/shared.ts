@@ -365,7 +365,7 @@ export function expandTemplateDescription(description: string, type: string, ite
     return WEAPON_DESC_PATTERNS.reduce((text, pattern) => text.replace(pattern, item), description);
   }
   if (type === "skill") {
-    return description.replace(/that skill/gi, item);
+    return description.replace(/that skill|\{skill\}/gi, item);
   }
   if (type === "school") {
     return description.replace(/\{school\}/g, item);

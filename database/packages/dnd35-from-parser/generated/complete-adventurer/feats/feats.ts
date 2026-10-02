@@ -1,7 +1,5 @@
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
-import { stripSeparators } from "@/shared/utils.ts";
 
 export const GENERAL_FEATS: FeatSeed[] = [
   {
@@ -217,6 +215,14 @@ export const GENERAL_FEATS: FeatSeed[] = [
     name: "Insightful Reflexes",
     description: "You add your Intelligence modifier (instead of your Dexterity modifier) to Reflex saves.",
     aptitudes: ["General"],
+  },
+  {
+    name: "Jack of All Trades",
+    description: "You can use any skill as if you had 1/2 rank in that skill. This benefit allows you to attempt checks with skills that normally don't allow untrained skill checks (such as Decipher Script and Knowledge). If a skill doesn't allow skill checks (such as Speak Language), this feat has no effect.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("abilities.intelligence.total", 13),
+    ],
   },
   {
     name: "Leap Attack",
@@ -459,13 +465,3 @@ export const BARDIC_FEATS: FeatSeed[] = [
     ],
   },
 ];
-
-export const jackOfAllTrades: FeatSeed[] = SKILL_NAMES.map((s) => ({
-  name: `Jack of All Trades: ${s}`,
-  description: `You get a +3 bonus on all ${s} checks.`,
-  aptitudes: ["General"],
-  modifiers: [
-    { target: `skills.${stripSeparators(s)}.misc`, operator: "add", value: "3", valueType: "number" },
-  ],
-  properties: [{ type: "FEAT_FAMILY", value: "Jack of All Trades" }],
-}));

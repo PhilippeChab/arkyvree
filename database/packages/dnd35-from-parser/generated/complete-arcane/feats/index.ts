@@ -8,7 +8,6 @@ export {
   DRACONIC_FEATS,
   HERITAGE_FEATS,
   arcaneDefense,
-  precociousApprentice,
 } from "./feats.ts";
 
 export { ALL_CLASS_FEATS } from "./classes/index.ts";
@@ -20,7 +19,6 @@ import {
   DRACONIC_FEATS as _DRACONIC_FEATS,
   HERITAGE_FEATS as _HERITAGE_FEATS,
   arcaneDefense as _arcaneDefense,
-  precociousApprentice as _precociousApprentice,
 } from "./feats.ts";
 import { ALL_CLASS_FEATS as _ALL_CLASS_FEATS } from "./classes/index.ts";
 
@@ -31,7 +29,6 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ..._DRACONIC_FEATS,
   ..._HERITAGE_FEATS,
   ..._arcaneDefense,
-  ..._precociousApprentice,
 ];
 
 export const ALL_FEATS: FeatSeed[] = [
@@ -41,6 +38,5 @@ export const ALL_FEATS: FeatSeed[] = [
   ..._DRACONIC_FEATS,
   ..._HERITAGE_FEATS,
   ..._arcaneDefense,
-  ..._precociousApprentice,
   ..._ALL_CLASS_FEATS,
 ];

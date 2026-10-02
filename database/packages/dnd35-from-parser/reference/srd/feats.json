@@ -453,7 +453,15 @@
       "description": "You make attack rolls with simple weapons without penalty."
     },
     "Skill Focus": {
-      "description": "You receive a +3 bonus to all checks using the chosen skill."
+      "description": "You get a +3 bonus on all {skill} checks.",
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "skills.skill.misc",
+          "value": "3",
+          "valueType": "number"
+        }
+      ]
     },
     "Snatch Arrows": {
       "description": "When you use the Deflect Arrows feat, you may catch the incoming weapon rather than simply deflecting it. Caught thrown weapons (such as spears or axes) can be hurled back at the original attacker immediately (even outside your turn) or kept for later use. You must have at least one hand free to use this feat."
