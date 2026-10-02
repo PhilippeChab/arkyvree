@@ -29,16 +29,20 @@ const resolve = (targetTable: string, targetId: string, session: Session = makeS
 const resolveAll = (targets: string[][]) => Promise.all(targets.map(([table, id]) => resolve(table, id)));
 
 describe("ActivitiesService.resolveActivityUrl", () => {
-  test("links rulesets, characters and campaigns to their page, and users and sessions nowhere", async () => {
+  test("links rulesets, characters and campaigns to their page, archived or not, and users and sessions nowhere", async () => {
+    const { user } = await createTestUser();
+    const ruleset = await createTestRuleset(user.id);
+    const character = await createTestCharacter(user.id, { deletedAt: new Date().toISOString() });
+    const { campaign } = await createTestCampaign(user.id);
     expect(
       await resolveAll([
-        ["rulesets", "r"],
-        ["characters", "c"],
-        ["campaigns", "g"],
-        ["users", "u"],
-        ["sessions", "s"],
+        ["rulesets", ruleset.id],
+        ["characters", character.id],
+        ["campaigns", campaign.id],
+        ["users", user.id],
+        ["sessions", NIL_UUID],
       ]),
-    ).toEqual(["/rulesets/r", "/characters/c", "/campaigns/g", null, null]);
+    ).toEqual([`/rulesets/${ruleset.id}`, `/characters/${character.id}`, `/campaigns/${campaign.id}`, null, null]);
   });
 
   test("links a ruleset's entities to their page, or their customization when they have one", async () => {
@@ -178,6 +182,12 @@ describe("ActivitiesService.resolveActivityUrl", () => {
 
   test("links nothing for a missing entity or a table without pages", async () => {
     for (const table of [
+      // A character or campaign deleted for good
+      "rulesets",
+      "characters",
+      "inventory",
+      "levels",
+      "campaigns",
       "feats",
       "klass_levels",
       "klass_skills",

@@ -63,7 +63,7 @@ There is no un-delete UI for accounts. The archive isn't about reversibility; it
 | `Sessions` | user signs out / account deleted | `runCleanup.ts` reaps expired |
 | `EmailVerifications` | code consumed / account email changed | `runCleanup.ts` reaps expired |
 | `PasswordResets` | code consumed / account deleted | `runCleanup.ts` reaps expired |
-| `Activities` | (none: no `archive`) | `runCleanup.ts` retention sweep, or `deleteByTargets` when target hard-deleted |
+| `Activities` | (none: no `archive`) | `runCleanup.ts` retention sweep only: they're history, kept when their target is deleted (see *Polymorphic rows*) |
 | `Notifications` | (none: no `archive`, use `markRead`) | `runCleanup.ts` retention sweep |
 | `Blobs`, `Attachments`, `Exports` | (none: no `archive`) | linked S3 object reaped / export expired |
 
@@ -90,7 +90,10 @@ Customizations (`Modifiers`, `Requirements`, `Properties`) and `Attachments` nam
 - **Customizations:** a trigger on each table a customization can belong to (`drizzle/0070_customization_cleanup.sql`). Deleting a modifier deletes its requirements the same way. A new type of owner needs the trigger too, and a row in `OWNERS` of `tests/services/rulesets/customization/CustomizationCleanup.test.ts`, which deletes a row of each type and finds no customization left without its owner.
 - **Attachments:** a trigger on users and characters (`drizzle/0071_attachment_cleanup.sql`); the blob sweep then reclaims their files. Archiving keeps them: account deletion, which archives the user and its characters, purges their attachments itself (`purgeAttachmentsForRecords`).
 
-`EntitySnapshots` name their entities the same way, on purpose without a trigger: a snapshot whose fork copy is deleted is the tombstone that hides the inherited entity in that fork.
+Others name their row the same way, and stay when it's deleted, on purpose:
+
+- **`Activities` and `Notifications`** are history, kept until the retention sweep. Opening one whose target is gone resolves to no page (`resolveActivityUrl`), and the client says the item was deleted.
+- **`EntitySnapshots`:** a snapshot whose fork copy is deleted is the tombstone that hides the inherited entity in that fork.
 
 ### Campaign-membership rows (`Players`, `Invites`, `PlayerCharacters`)
 
@@ -101,15 +104,16 @@ Both primitives, picked by entry point:
 
 ### Demo `Users`
 
-Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo data is by design ephemeral and only owned by the demo user, so the FK CASCADE on hard-delete is exactly what's wanted to clean everything up at expiry. The database deletes the attachments of the account and its characters, and the customizations of its rulesets and characters (see *Polymorphic rows* below).
+Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo data is by design ephemeral and only owned by the demo user, so the FK CASCADE on hard-delete is exactly what's wanted to clean everything up at expiry. The database deletes the attachments of the account and its characters, and the customizations of its rulesets and characters (see *Polymorphic rows* above).
 
 ### Ruleset entity / class cascade (`deleteEntityWithCascade`)
 
 `deleteEntityWithCascade` (`server/services/RulesetsService.ts`) is the shared cleanup helper used in two flows: `unsubscribeExtension` and `revertOverride`. It:
 
 - Hard-deletes the entity's junction rows (aptitude links, class-structure rows referencing it).
-- Hard-deletes the entity's customizations (modifiers / properties / requirements).
-- Hard-deletes the entity itself, plus `klass_levels` for klasses (FK CASCADE on `klass_levels.klass_id` would also handle this; the explicit walk gives us per-level customization cleanup).
+- Hard-deletes the entity itself, plus `klass_levels` for klasses (FK CASCADE on `klass_levels.klass_id` would also handle this).
+
+The database deletes the customizations of every row it deletes (see *Polymorphic rows* above).
 
 For items, the `source_item_id` FK is `RESTRICT` — `revertOverride` repoints copies to the original parent template before invoking the cascade.
 

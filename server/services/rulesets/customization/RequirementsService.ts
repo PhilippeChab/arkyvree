@@ -10,7 +10,7 @@ import {
   NotFoundError,
   STALE_ENTITY_MESSAGE,
 } from "@/server/errors/index.ts";
-import { Activities, Requirements } from "@/server/repositories/index.ts";
+import { Requirements } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
@@ -301,11 +301,6 @@ export const RequirementsMethods = {
 
         const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
         const deletedRequirement = rows[0];
-
-        await Activities.deleteByTarget(tx, {
-          targetId: deletedRequirement.id,
-          targetTable: getTableName(requirementsInCustomization),
-        });
 
         const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {

@@ -1,6 +1,6 @@
 import { getTableName } from "drizzle-orm";
 
-import { invitesInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
+import { playersInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -175,16 +175,8 @@ export const CampaignPlayersMethods = {
       const removedPlayer = player;
 
       await Players.delete(tx, { id: playerId });
-      const deletedInvites = await Invites.deleteByPlayerId(tx, { playerId });
+      await Invites.deleteByPlayerId(tx, { playerId });
       await PlayerCharacters.deleteByPlayerId(tx, { playerId });
-
-      await Activities.deleteByTarget(tx, { targetId: removedPlayer.id, targetTable: getTableName(playersInCampaign) });
-      if (deletedInvites.length > 0) {
-        await Activities.deleteByTargets(tx, {
-          targetIds: deletedInvites.map((i) => i.id),
-          targetTable: getTableName(invitesInCampaign),
-        });
-      }
 
       await Activities.create(tx, {
         userId: session.userId,

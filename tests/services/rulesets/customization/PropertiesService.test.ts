@@ -22,18 +22,22 @@ async function setup() {
   return { session, rulesetId, feat, template, templateProperty, derived };
 }
 
+/** The activities logged against a property, by type, sorted: those of one test share a timestamp. */
 async function activityTypes(userId: string, propertyId: string) {
   const { items } = await Activities.findMany(
     db,
     { userId, targetTable: getTableName(propertiesInCustomization) },
     { limit: 100, page: 1 },
   );
-  return items.filter((a) => a.targetId === propertyId).map((a) => a.type);
+  return items
+    .filter((a) => a.targetId === propertyId)
+    .map((a) => a.type)
+    .sort();
 }
 
 // The feat property routes are covered in the customization properties router test.
 describe("PropertiesService", () => {
-  test("creates, lists, updates and deletes a property, replacing its activities with the deletion", async () => {
+  test("creates, lists, updates and deletes a property, keeping its activities", async () => {
     const { session, rulesetId, feat } = await setup();
     expect(await PropertiesMethods.getEntityProperties(rulesetId, "feats", feat.id)).toEqual([]);
 
@@ -51,7 +55,11 @@ describe("PropertiesService", () => {
 
     await PropertiesMethods.deleteEntityProperty(session, rulesetId, "feats", feat.id, created.id);
     expect(await PropertiesMethods.getEntityProperties(rulesetId, "feats", feat.id)).toEqual([]);
-    expect(await activityTypes(session.userId, created.id)).toEqual(["deleteProperty"]);
+    expect(await activityTypes(session.userId, created.id)).toEqual([
+      "createProperty",
+      "deleteProperty",
+      "updateProperty",
+    ]);
   });
 
   test("refuses a missing ruleset, entity or property, another entity's property and another user", async () => {

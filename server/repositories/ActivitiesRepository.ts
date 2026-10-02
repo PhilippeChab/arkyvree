@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, isNull, lt } from "drizzle-orm";
+import { eq, gte, isNull, lt } from "drizzle-orm";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 import { activitiesInAccount } from "@/drizzle/schema.ts";
@@ -23,20 +23,6 @@ class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount, Ac
           "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
         ]),
       );
-  }
-
-  // Exception to soft-delete: clean up activities for hard-deleted entities
-  async deleteByTarget(db: Db, where: { targetId: string; targetTable: string }) {
-    return await db
-      .delete(this.table)
-      .where(and(eq(this.table.targetId, where.targetId), eq(this.table.targetTable, where.targetTable)));
-  }
-
-  async deleteByTargets(db: Db, where: { targetIds: string[]; targetTable: string }) {
-    if (where.targetIds.length === 0) return;
-    return await db
-      .delete(this.table)
-      .where(and(inArray(this.table.targetId, where.targetIds), eq(this.table.targetTable, where.targetTable)));
   }
 
   async findMany(

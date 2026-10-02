@@ -14,9 +14,6 @@ import {
   copyEntityCustomizations,
   copyEntityCustomizationsToMany,
   cowEntity,
-  deleteModifiersWithCascade,
-  deletePropertiesWithCascade,
-  deleteRequirementsWithCascade,
   entityHasCharacterPicks,
   fetchEntityCustomizations,
   lockEntityForMutation,
@@ -448,11 +445,7 @@ export const ItemsMethods = {
           await lockEntityForMutation(tx, "items", targetId);
         }
 
-        // Customizations are polymorphic FKs — Postgres can't cascade these.
-        await deleteRequirementsWithCascade(tx, { entityIds: [targetId], entityType: "items" });
-        await deletePropertiesWithCascade(tx, { entityIds: [targetId], entityType: "items" });
-        await deleteModifiersWithCascade(tx, { sourceIds: [targetId], sourceType: "items" });
-
+        // The database deletes its customizations with it.
         const rows = await Items.delete(tx, { id: targetId });
         const deletedItem = rows[0];
 

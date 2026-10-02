@@ -66,10 +66,6 @@ import BaseService from "@/server/services/BaseService.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   buildSourceChain,
-  deleteModifiersWithCascade,
-  deletePropertiesWithCascade,
-  deleteRequirementsWithCascade,
-  ENTITY_TYPE_TO_SOURCE_TYPE,
   entityHasCharacterPicks,
   NAME_FALLBACK_ENTITY_TYPES,
 } from "@/server/services/rulesets/cow.ts";
@@ -193,7 +189,6 @@ async function deleteEntityWithCascade(tx: Db, entityType: EntityType, entityId:
   // A tombstone may already have no row. Still clean up any remaining children
   // when restoring it; creation cannot succeed against an absent owner.
   await ENTITY_REPOS[entityType].lockById(tx, entityId);
-  const sourceType = ENTITY_TYPE_TO_SOURCE_TYPE[entityType];
 
   // 1. Delete join tables
   if (entityType === "feats") {
@@ -215,9 +210,6 @@ async function deleteEntityWithCascade(tx: Db, entityType: EntityType, entityId:
     const levels = await KlassLevels.findManyByKlass(tx, { klassId: entityId });
     const levelIds = levels.map((l) => l.id);
     if (levelIds.length > 0) {
-      await deleteModifiersWithCascade(tx, { sourceIds: levelIds, sourceType: "klass_levels" });
-      await deletePropertiesWithCascade(tx, { entityIds: levelIds, entityType: "klass_levels" });
-      await deleteRequirementsWithCascade(tx, { entityIds: levelIds, entityType: "klass_levels" });
       for (const levelId of levelIds) {
         await KlassLevelFeats.deleteByKlassLevelId(tx, { klassLevelId: levelId });
         await KlassLevelPowers.deleteByKlassLevelId(tx, { klassLevelId: levelId });
@@ -232,14 +224,7 @@ async function deleteEntityWithCascade(tx: Db, entityType: EntityType, entityId:
   // items.source_item_id is RESTRICT — callers that may hit references (revertOverride)
   // must repoint copies before invoking this.
 
-  // 2. Delete customizations
-  if (sourceType) {
-    await deleteModifiersWithCascade(tx, { sourceIds: [entityId], sourceType });
-  }
-  await deletePropertiesWithCascade(tx, { entityIds: [entityId], entityType });
-  await deleteRequirementsWithCascade(tx, { entityIds: [entityId], entityType });
-
-  // 3. Delete the entity itself
+  // 2. Delete the entity itself: the database deletes its customizations
   await ENTITY_REPOS[entityType].delete(tx, { id: entityId } as never);
 }
 

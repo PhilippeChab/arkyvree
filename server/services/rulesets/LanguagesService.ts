@@ -10,9 +10,6 @@ import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   cowEntity,
-  deleteModifiersWithCascade,
-  deletePropertiesWithCascade,
-  deleteRequirementsWithCascade,
   entityHasCharacterPicks,
   lockEntityForMutation,
   repointTombstoneSnapshot,
@@ -192,11 +189,7 @@ export const LanguagesMethods = {
           await lockEntityForMutation(tx, "languages", targetId);
         }
 
-        // Customizations are polymorphic FKs — Postgres can't cascade these.
-        await deleteModifiersWithCascade(tx, { sourceIds: [targetId], sourceType: "languages" });
-        await deletePropertiesWithCascade(tx, { entityIds: [targetId], entityType: "languages" });
-        await deleteRequirementsWithCascade(tx, { entityIds: [targetId], entityType: "languages" });
-
+        // The database deletes its customizations with it.
         const rows = await Languages.delete(tx, { id: targetId });
         const deletedLanguage = rows[0];
 

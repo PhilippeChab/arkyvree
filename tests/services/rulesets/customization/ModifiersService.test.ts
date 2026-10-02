@@ -5,20 +5,9 @@ import { getTableName } from "drizzle-orm";
 import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import {
-  Abilities,
-  Activities,
-  Feats,
-  Items,
-  Modifiers,
-  Powers,
-  Races,
-  Requirements,
-} from "@/server/repositories/index.ts";
-import { deleteModifiersWithCascade } from "@/server/services/rulesets/cow.ts";
+import { Abilities, Activities, Feats, Items, Powers, Races, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
 import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { timingStorage } from "@/server/timing.ts";
 import { createTestKlassLevel, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", operator: "add" };
@@ -39,7 +28,7 @@ async function setup() {
   return { session, rulesetId, feat, item, owners };
 }
 
-/** The activities logged against a row of `table`, by type. */
+/** The activities logged against a row of `table`, by type, sorted: those of one test share a timestamp. */
 async function activityTypes(
   userId: string,
   table: typeof modifiersInCustomization | typeof requirementsInCustomization,
@@ -50,7 +39,10 @@ async function activityTypes(
     { userId, targetTable: getTableName(table) },
     { limit: 100, page: 1 },
   );
-  return items.filter((a) => a.targetId === targetId).map((a) => a.type);
+  return items
+    .filter((a) => a.targetId === targetId)
+    .map((a) => a.type)
+    .sort();
 }
 
 // The feat modifier routes are covered in the customization modifiers router test.
@@ -192,7 +184,7 @@ describe("ModifiersService", () => {
   });
 
   describe("deleting a modifier", () => {
-    test("deletes its requirements, replaces its activities with the deletion and keeps its requirements'", async () => {
+    test("deletes its requirements, keeping its and their activities", async () => {
       const { session, rulesetId, feat } = await setup();
       const [modifier, sibling] = [
         await ModifiersMethods.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus),
@@ -209,8 +201,10 @@ describe("ModifiersService", () => {
       expect(await Requirements.findManyByEntity(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual(
         [],
       );
-      expect(await activityTypes(session.userId, modifiersInCustomization, modifier.id)).toEqual(["deleteModifier"]);
-      // The database deletes the requirements with the modifier: their history stays
+      expect(await activityTypes(session.userId, modifiersInCustomization, modifier.id)).toEqual([
+        "createModifier",
+        "deleteModifier",
+      ]);
       expect(await activityTypes(session.userId, requirementsInCustomization, requirements[0].id)).toEqual([
         "createRequirement",
       ]);
@@ -218,41 +212,6 @@ describe("ModifiersService", () => {
       expect(
         await Requirements.findManyByEntity(db, { entityIds: [sibling.id], entityType: "modifiers" }),
       ).toMatchObject([{ id: requirements[1].id }]);
-    });
-
-    test("stays batched however many modifiers go", async () => {
-      const counts: number[] = [];
-      for (const width of [1, 40]) {
-        const modifiers = await Modifiers.createMany(
-          db,
-          Array.from({ length: width }, () => ({
-            ...strengthBonus,
-            sourceId: crypto.randomUUID(),
-            sourceType: "feats",
-            valueType: "number",
-          })),
-        );
-        const ids = modifiers.map((row) => row.id);
-        await Requirements.createMany(
-          db,
-          ids.map((entityId) => ({ entityId, entityType: "modifiers", level: "1", chainingOperator: "and" })),
-        );
-        const timing = {
-          dbTimeMs: 0,
-          queryCount: 0,
-          activeQueries: 0,
-          dbWallStart: 0,
-          slowQueries: [],
-          cacheHits: 0,
-          cacheMisses: 0,
-          dedupHits: 0,
-          dedupMisses: 0,
-        };
-        expect(await timingStorage.run(timing, () => deleteModifiersWithCascade(db, { ids }))).toHaveLength(width);
-        counts.push(timing.queryCount);
-        expect(await Requirements.findManyByEntity(db, { entityIds: ids, entityType: "modifiers" })).toEqual([]);
-      }
-      expect(counts[1]).toBe(counts[0]);
     });
   });
 });

@@ -4,7 +4,7 @@ import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Activities, Properties } from "@/server/repositories/index.ts";
+import { Properties } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
@@ -202,11 +202,6 @@ export const PropertiesMethods = {
 
         const rows = await Properties.delete(tx, { id: resolvedPropertyId });
         const deletedProperty = rows[0];
-
-        await Activities.deleteByTarget(tx, {
-          targetId: deletedProperty.id,
-          targetTable: getTableName(propertiesInCustomization),
-        });
 
         const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {

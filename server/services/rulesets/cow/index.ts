@@ -5,7 +5,7 @@
  *   Consumer surface (any service or route):
  *     `withRulesetScope` / `withRulesetScopes` for single / multi-ruleset
  *     reads. `cowEntity` / `cowEntityForCustomization` and the
- *     `lockEntityForMutation` / `delete*WithCascade` helpers for admin CRUD mutations.
+ *     `lockEntityForMutation` / `entityHasCharacterPicks` helpers for admin CRUD mutations.
  *     `cowCustomizationForMutation` resolves the row a customization update or delete changes.
  *
  *   Copy primitives: `fetchEntityCustomizations` /
@@ -29,12 +29,7 @@ export {
 } from "./cowEntity.ts";
 export { withRulesetScope, withRulesetScopes } from "./cowData.ts";
 export { assertAncestorNamesHidden, assertEntityNameAvailable, repointTombstoneSnapshot } from "./entityNames.ts";
-export {
-  deleteModifiersWithCascade,
-  deletePropertiesWithCascade,
-  deleteRequirementsWithCascade,
-  entityHasCharacterPicks,
-} from "./cascade.ts";
+export { entityHasCharacterPicks } from "./characterPicks.ts";
 export { ENTITY_TYPE_TO_SOURCE_TYPE, NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
 export { fetchEntityCustomizations } from "./customizations.ts";
 export { copyEntityCustomizations, copyEntityCustomizationsToMany } from "./copy.ts";
