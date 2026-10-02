@@ -1,11 +1,12 @@
 import {
+  Tune as CustomizeIcon,
   EmojiEvents as FeatPoolsIcon,
   TrendingUp as LevelsIcon,
   Psychology as SkillsIcon,
   Bolt as SpellListIcon,
   AutoStories as SpellsIcon,
 } from "@mui/icons-material";
-import { Box, Chip, MenuItem, TextField } from "@mui/material";
+import { Box, Button, Chip, MenuItem, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -31,7 +32,7 @@ import {
   type ClassSection,
   prefetchClassSection,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { entityPageState, useOpenEntity, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 
@@ -107,6 +108,7 @@ export default function ClassDetailsPage() {
   const editForm = useForm<ClassFormData>();
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
+  const openEntity = useOpenEntity(rulesetId);
 
   const sync = useFormSync(editForm, classData && toClassForm(classData), {
     // An inherited class keeps its id in every fork.
@@ -226,6 +228,17 @@ export default function ClassDetailsPage() {
               title="Class Overview"
               sx={{ mb: 4 }}
               description={classData.description}
+              action={
+                // Its properties, modifiers and requirements, on the page every customizable entity has
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<CustomizeIcon />}
+                  onClick={() => openEntity(`klasses/${classId}/customization`)}
+                >
+                  Customize
+                </Button>
+              }
               chips={
                 <>
                   <Chip label={`Hit Die: d${classData.hd || 8}`} color="secondary" sx={{ fontWeight: 600 }} />

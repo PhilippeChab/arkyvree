@@ -544,12 +544,15 @@ export async function getAvailableKlasses(
       return { items: [], page: klassPage.page, nextPage: klassPage.nextPage };
     }
 
-    // Per-candidate requirements — served from the cache's requirementsByEntity map.
-    const requirementsByKlassLevel = new Map<string, Requirement[]>();
+    // Per-candidate requirements, the class's own and its next level's — served from the cache's requirementsByEntity
+    // map.
+    const requirementsByKlassLevel = new Map<string, Requirement[][]>();
     if (rulesetData) {
       for (const k of klassesWithNextLevel) {
-        const reqs = rulesetData.requirementsByEntity.get(k.nextKlassLevel.id);
-        if (reqs && reqs.length > 0) requirementsByKlassLevel.set(k.nextKlassLevel.id, reqs);
+        const groups = [k.klass.id, k.nextKlassLevel.id]
+          .map((id) => rulesetData.requirementsByEntity.get(id) ?? [])
+          .filter((reqs) => reqs.length > 0);
+        if (groups.length > 0) requirementsByKlassLevel.set(k.nextKlassLevel.id, groups);
       }
     }
 
@@ -622,7 +625,7 @@ export async function getAvailableKlasses(
       const candidates = withRequirements.map((k) => ({
         klassName: stripSeparators(k.klass.name),
         klassLevel: k.nextKlassLevel,
-        requirementGroups: [requirementsByKlassLevel.get(k.nextKlassLevel.id)!],
+        requirementGroups: requirementsByKlassLevel.get(k.nextKlassLevel.id)!,
       }));
       const projectedCharLevel = buildProjectedCharacterLevel(characterId, "");
       const evaluationResults = await levelUpProjector.evaluateClassAvailability(candidates, projectedCharLevel);
@@ -641,14 +644,16 @@ export async function getAvailableKlasses(
       })),
       ...withRequirements.map((k) => {
         const eligible = evaluationResultMap.get(k.nextKlassLevel.id) ?? false;
-        const reqs = requirementsByKlassLevel.get(k.nextKlassLevel.id);
+        const groups = requirementsByKlassLevel.get(k.nextKlassLevel.id);
         return {
           ...k.klass,
           nextLevel: k.nextKlassLevel.level,
           maxLevel: maxLevelMap.get(k.klass.id) ?? k.nextKlassLevel.level,
           eligible,
           requirementTree:
-            !eligible && reqs && detailedCharacter ? detailedCharacter.formatRequirements(reqs) : undefined,
+            !eligible && groups && detailedCharacter
+              ? groups.map((reqs) => detailedCharacter.formatRequirements(reqs)).join("\n")
+              : undefined,
         };
       }),
     ].sort((a, b) => b.nextLevel - a.nextLevel || a.name.localeCompare(b.name));

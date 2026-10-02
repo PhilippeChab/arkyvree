@@ -15,6 +15,7 @@ import {
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
+import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 
 // ──────────────────────────────────────────────────────────────
 // Constants
@@ -25,14 +26,10 @@ export interface EntityWithId {
   [key: string]: unknown;
 }
 
-// Customization source type mapping — entity types that have modifiers use a different sourceType
-export const ENTITY_TYPE_TO_SOURCE_TYPE: Record<string, string> = {
-  feats: "feats",
-  powers: "powers",
-  items: "items",
-  races: "races",
-  klass_levels: "klass_levels",
-};
+// Customization source type mapping: every customizable entity has modifiers, sourced by its own type
+export const ENTITY_TYPE_TO_SOURCE_TYPE: Record<string, string> = Object.fromEntries(
+  CUSTOMIZABLE_ENTITY_TYPES.map((entityType) => [entityType, entityType]),
+);
 
 // Tables that participate in the name-based sibling fallback. Limited to
 // feats and powers because those are the entity types D&D sourcebooks

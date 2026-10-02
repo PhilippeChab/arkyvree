@@ -2,7 +2,9 @@
 
 ## Overview
 
-Entities (feats, powers, items, klass_levels) can have **modifiers**, **requirements**, and **properties** attached via junction tables in the `customization` schema.
+Entities (`CUSTOMIZABLE_ENTITY_TYPES` in `shared/customization/entities.ts`: feats, powers, items, races, classes, class levels) can have **modifiers**, **requirements**, and **properties** attached via junction tables in the `customization` schema.
+
+A class's own modifiers apply once to a character with any level of it, and its requirements are checked to take any level of it, with that level's own (the level-up wizard's class list), and on a character who has it. Its page (Customize on the class page) is the customization page every entity has.
 
 The complete application operator definitions live in `shared/customization/operators.ts`. API validators consume those lists; `tests/shared/operators.test.ts` verifies they match the migrated database's CHECK constraints. Keep generated `drizzle/schema.ts` free of handwritten helpers. Operator changes require a database migration and a schema refresh as well as updating the application definitions.
 
@@ -311,7 +313,7 @@ All 11 core classes: fighter, barbarian, cleric, rogue, sorcerer, monk, wizard, 
 
 Ruleset customization endpoints require the source entity to belong to the composed ruleset. IDs outside that scope (including character IDs) are rejected before writes; inherited sources are copied before customization.
 
-Modifiers belong directly to ruleset entities or class levels. A modifier can have requirements, but cannot have other modifiers. Editing an inherited modifier or its requirements copies its owning entity and preserves the modifier requirements. Missing owners and sources outside the ruleset source chain are rejected.
+Modifiers belong directly to ruleset entities, classes and class levels included. A modifier can have requirements, but cannot have other modifiers. Editing an inherited modifier or its requirements copies its owning entity and preserves the modifier requirements. Missing owners and sources outside the ruleset source chain are rejected.
 
 Modifier, property, and requirement updates and deletes follow one pattern. The
 row must be shown on the entity in the composed ruleset: its own rows plus

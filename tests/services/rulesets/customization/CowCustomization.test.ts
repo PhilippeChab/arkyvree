@@ -27,8 +27,9 @@ const requirement = { valueType: "number", operator: "greater_than_or_equal" } a
 
 /**
  * A published ruleset whose feat has a modifier (with a requirement of its
- * own), a property and a requirement, and whose class level has a modifier;
- * and another user's fork of it.
+ * own), a property and a requirement, whose class has a modifier, a property
+ * and a requirement, and whose class level has a modifier; and another user's
+ * fork of it.
  */
 async function setup() {
   const { user: owner } = await createTestUser();
@@ -69,13 +70,27 @@ async function setup() {
 
   const [klass] = await Klasses.create(db, { name: "Fighter", rulesetId, hd: 10 });
   const [level] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
-  await Modifiers.create(db, {
-    sourceId: level.id,
-    sourceType: "klass_levels",
+  for (const [sourceId, sourceType] of [
+    [level.id, "klass_levels"],
+    [klass.id, "klasses"],
+  ]) {
+    await Modifiers.create(db, {
+      sourceId,
+      sourceType,
+      target: "abilities.strength.misc",
+      value: "1",
+      valueType: "number",
+      operator: "add",
+    });
+  }
+  await Properties.create(db, { entityId: klass.id, entityType: "klasses", type: "tag", value: "martial" });
+  await Requirements.create(db, {
+    ...requirement,
+    entityId: klass.id,
+    entityType: "klasses",
+    level: "1",
     target: "abilities.strength.misc",
-    value: "1",
-    valueType: "number",
-    operator: "add",
+    value: "13",
   });
 
   const fork = await RulesetsMethods.forkRuleset(session, rulesetId, { name: "Fork", private: false });
@@ -85,7 +100,7 @@ async function setup() {
     fork,
     feat,
     klass,
-    owners: { feats: feat.id, klass_levels: level.id, modifiers: modifier.id },
+    owners: { feats: feat.id, klasses: klass.id, klass_levels: level.id, modifiers: modifier.id },
   };
 }
 
@@ -142,6 +157,9 @@ const CASES = [
   ["feats", "modifiers"],
   ["feats", "properties"],
   ["feats", "requirements"],
+  ["klasses", "modifiers"],
+  ["klasses", "properties"],
+  ["klasses", "requirements"],
   ["klass_levels", "modifiers"],
   ["modifiers", "requirements"],
 ] as const;
@@ -163,7 +181,7 @@ describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
     expect(created.resolvedEntityId).not.toBe(ownerId);
     expect((await kind.rowsOf(ownerType, created.resolvedEntityId)).map((r) => r.id)).toContain(created.id);
     const copied =
-      ownerType === "klass_levels"
+      ownerType === "klasses" || ownerType === "klass_levels"
         ? { entityType: "klasses", sourceEntityId: klass.id }
         : { entityType: "feats", sourceEntityId: feat.id };
     expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toMatchObject([copied]);

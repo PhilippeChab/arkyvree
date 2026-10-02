@@ -7,6 +7,8 @@ interface EntityDetailsCardProps {
   title: string;
   /** Facts shown next to the title in the read-only view. */
   chips?: ReactNode;
+  /** An action shown next to the title in either view: the class's Customize. */
+  action?: ReactNode;
   description?: string | null;
   /** Read-only body for entities without a description; replaces it. */
   readOnlyBody?: ReactNode;
@@ -21,7 +23,15 @@ interface EntityDetailsCardProps {
 }
 
 /** Card at the top of a ruleset entity page: its edit form, or its description. */
-export function EntityDetailsCard({ title, chips, description, readOnlyBody, edit, sx }: EntityDetailsCardProps) {
+export function EntityDetailsCard({
+  title,
+  chips,
+  action,
+  description,
+  readOnlyBody,
+  edit,
+  sx,
+}: EntityDetailsCardProps) {
   return (
     <Card
       sx={[{ boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }, ...(Array.isArray(sx) ? sx : [sx])]}
@@ -34,7 +44,12 @@ export function EntityDetailsCard({ title, chips, description, readOnlyBody, edi
             <Typography component="h2" variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
               {title}
             </Typography>
-            {!edit && chips && <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>{chips}</Box>}
+            {((!edit && chips) || action) && (
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+                {!edit && chips}
+                {action}
+              </Box>
+            )}
           </Box>
         </Box>
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
