@@ -509,7 +509,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
   {
     name: "Deadly Defense",
     description: "When fighting defensively, you deal an extra 1d6 points of damage with any light weapon or with any weapon to which the Weapon Finesse feat applies (such as a rapier, spiked chain, or whip). This feat's benefit applies only when you are unarmored or wearing light armor and not using a shield.",
-    aptitudes: ["General"],
+    aptitudes: ["General", "Fighter Bonus Feat"],
   },
   {
     name: "Enduring Ki",
