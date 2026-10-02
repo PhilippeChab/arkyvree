@@ -22,7 +22,7 @@ function isKnownLabel(text: string): boolean {
 
 /**
  * A feat's categories, in their order: the links in the brackets after its heading
- * (`[<a href="/feats/categories/…">Fighter Bonus Feat</a>, <a …>General</a>]`), else the bracket's text.
+ * (`[<a href="/feats/categories/…">Fighter Bonus Feat</a>, <a …>General</a>]`).
  */
 function featCategories($: cheerio.CheerioAPI, heading: cheerio.Cheerio<AnyNode>): string[] {
   let after = "";
@@ -34,9 +34,7 @@ function featCategories($: cheerio.CheerioAPI, heading: cheerio.Cheerio<AnyNode>
     after += $.html(node);
   }
   const bracket = after.match(/\[([^\]]*)\]/)?.[1] ?? "";
-  const links = [...bracket.matchAll(/<a[^>]*href="\/feats\/categories\/[^"]+"[^>]*>([^<]+)<\/a>/gi)].map((m) => m[1]);
-  const names = links.length > 0 ? links : cheerio.load(bracket).text().split(",");
-  return names.map((name) => name.trim()).filter(Boolean);
+  return [...bracket.matchAll(/<a[^>]*href="\/feats\/categories\/[^"]+"[^>]*>([^<]+)<\/a>/gi)].map((m) => m[1].trim());
 }
 
 function normalizeFeatType(raw: string): string {

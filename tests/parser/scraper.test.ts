@@ -51,13 +51,17 @@ function named<T extends { name: string }>(entries: T[], names: string[]) {
 
 describe("The scraper reads from a page the reference's entries:", () => {
   test.each([
-    ["acrobatic", "Acrobatic"],
-    ["armor-proficiency-heavy", "Armor Proficiency (heavy)"],
-    ["brew-potion", "Brew Potion"],
+    ["acrobatic", "srd", "Acrobatic"],
+    ["armor-proficiency-heavy", "srd", "Armor Proficiency (heavy)"],
+    ["brew-potion", "srd", "Brew Potion"],
     // In two categories: Fighter Bonus Feat and General
-    ["cleave", "Cleave"],
-  ])("the feat %s", (page, name) => {
-    const feats = stored("srd/feats.json", "feat").raw;
+    ["cleave", "srd", "Cleave"],
+    // Epic, though also Divine
+    ["zone-of-animation", "complete-divine", "Zone of Animation"],
+    // A skill trick, though first a movement one
+    ["walk-the-walls", "complete-scoundrel", "Walk the Walls"],
+  ])("the feat %s", (page, book, name) => {
+    const feats = stored(`${book}/feats.json`, "feat").raw;
     expect(scraped(parseFeatDetailHtml(fixture(`feat-${page}`)))).toEqual(feats.find((feat) => feat.name === name)!);
   });
 
