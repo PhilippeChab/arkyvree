@@ -30,10 +30,12 @@ export const ORDER_OF_THE_BOW_INITIATE: ClassSeed = {
     [3, "Ranged Precision (Order of the Bow Initiate)"],
     [4, "Greater Weapon Focus (Order of the Bow Initiate)"],
     [5, "Ranged Precision (Order of the Bow Initiate)"],
-    [6, "Sharp-shooting (Order of the Bow Initiate)"],
     [7, "Ranged Precision (Order of the Bow Initiate)"],
     [9, "Ranged Precision (Order of the Bow Initiate)"],
     [10, "Extended Precision (Order of the Bow Initiate)"],
+  ],
+  freeFeats: [
+    [6, "Sharp-Shooting", "Order of the Bow Initiate Class Feature"],
   ],
 };
 

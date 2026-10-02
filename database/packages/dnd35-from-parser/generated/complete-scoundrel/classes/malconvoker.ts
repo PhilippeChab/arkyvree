@@ -39,7 +39,6 @@ export const MALCONVOKER: ClassSeed = {
     [1, "Deceptive Summons (Malconvoker)"],
     [1, "Unrestricted Conjuration (Malconvoker)"],
     [2, "Planar Binding (Malconvoker)"],
-    [3, "Skill Focus (Bluff) (Malconvoker)"],
     [4, "Deceptive Summons (Fury) (Malconvoker)"],
     [4, "Deceptive Summons (Malconvoker)"],
     [5, "Fiendish Legion (Malconvoker)"],
@@ -48,6 +47,9 @@ export const MALCONVOKER: ClassSeed = {
     [7, "Deceptive Summons (Resistance) (Malconvoker)"],
     [8, "Improved Calling (Malconvoker)"],
     [9, "Safe Summoning (Malconvoker)"],
+  ],
+  freeFeats: [
+    [3, "Skill Focus: Bluff", "Malconvoker Class Feature"],
   ],
 };
 

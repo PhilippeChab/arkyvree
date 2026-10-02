@@ -1,3 +1,4 @@
+import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { ALL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { SPELL_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/utils.ts";
@@ -11,10 +12,11 @@ export function featWithoutChoice(name: string): string | undefined {
   return base ? FEATS_WITH_A_CHOICE.find((feat) => stripSeparators(feat) === stripSeparators(base)) : undefined;
 }
 
-// What a family of feats is taken for: a weapon feat's weapons, a spell school feat's schools
+// What a family of feats is taken for: a weapon feat's weapons, a spell school feat's schools, Skill Focus's skills
 const OPTIONS_OF: { family: RegExp; names: readonly string[] }[] = [
   { family: /^(?:Greater )?Weapon (?:Focus|Specialization)$|^Improved Critical$/i, names: ALL_WEAPONS },
   { family: /^(?:Greater )?Spell Focus$/i, names: SPELL_SCHOOLS },
+  { family: /^Skill Focus$/i, names: SKILL_NAMES },
 ];
 
 /** The name an option is: its own, or the one whose words its words start ("punch dagger", "Necro."). */
@@ -46,6 +48,14 @@ export function familyOptions(family: string, optionsText: string): string[] {
     }
   }
   return options;
+}
+
+/** The feat of a family a name takes with its option ("Skill Focus (Bluff)": Skill Focus: Bluff), if any. */
+export function familyFeatNamed(name: string): string | undefined {
+  const [, family, option] = /^(.+?)\s*\((.+)\)$/.exec(name) ?? [];
+  const names = family ? OPTIONS_OF.find((options) => options.family.test(family))?.names : undefined;
+  const optionName = names && nameOf(option, names);
+  return optionName ? `${family}: ${optionName}` : undefined;
 }
 
 /** The weapon a prerequisite names ("orc double axe"), if any. */

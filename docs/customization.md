@@ -108,7 +108,7 @@ requirements: [gte("skills.craft*.rank", 10)]
 
 The `*` suffix matches any key starting with the prefix. This is handled by `traversePath` in `TargetPaths.ts`.
 
-A skill's name without the `*` reaches its subtypes too when no skill has that name (`skills.knowledge.rank`: implicit prefix expansion). Only skills: under `feats`, a name that starts other feats' names is none of them (`feats.light.possessed` names no feat, not Lightning Reflexes). A family of feats is checked by its group.
+A skill's name without the `*` reaches its subtypes too: next to the skill of that name (`skills.craft.rank`, Craft and each Craft (…)), or alone when no skill has it (`skills.knowledge.rank`: implicit prefix expansion). Only skills: anywhere else a name reaches its own entry only. A feat's name is that feat, not the feats whose names it starts (`feats.dodge.possessed` isn't met by Dodge Bonus (Swashbuckler)), and names nothing when no feat has it (`feats.light.possessed`, not Lightning Reflexes). A family of feats is checked by its group.
 
 ### Modifier wildcards (`saves.*.misc`, `items.weapons.*.damage.misc`)
 

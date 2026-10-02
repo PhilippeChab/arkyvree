@@ -11,6 +11,7 @@ import { join } from "node:path";
 import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
+import { familyFeatNamed } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
 import {
   autoCompanionGrantModifiers,
   checkedValue,
@@ -90,16 +91,37 @@ export function loadExistingFeats(book?: string): Set<string> {
   return feats;
 }
 
+const _existingFeatSlugsCache = new Map<string, Map<string, string>>();
+
+/**
+ * The existing feat a name means: one by its letters (a class feature's "Two-weapon Fighting" is Two-Weapon Fighting),
+ * or a family's feat for the option the name holds ("Skill Focus (Bluff)": Skill Focus: Bluff).
+ */
+function existingFeatNamed(book: string, name: string): string | undefined {
+  let bySlug = _existingFeatSlugsCache.get(book);
+  if (!bySlug) {
+    bySlug = new Map([...loadExistingFeats(book)].map((feat) => [stripSeparators(feat), feat]));
+    _existingFeatSlugsCache.set(book, bySlug);
+  }
+  return bySlug.get(stripSeparators(name)) ?? familyFeatNamed(name);
+}
+
 /**
  * The existing feat a class's feature named `name` grants instead of being a feat of its own: that feat (with or without
  * the class's suffix), or one its description says it gains as a bonus feat.
  */
 export function existingFeatGranted(ref: ClassReference, name: string, description: string | undefined) {
-  const existingFeats = loadExistingFeats(ref._meta.book);
+  const book = ref._meta.book;
   const baseName = stripClassSuffix(name, ref.raw.name);
-  if (baseName && existingFeats.has(baseName)) return baseName;
-  if (existingFeats.has(name)) return name;
-  return description ? extractGrantedFeatNames(description).find((n) => existingFeats.has(n)) : undefined;
+  return (
+    (baseName && existingFeatNamed(book, baseName)) ||
+    existingFeatNamed(book, name) ||
+    (description
+      ? extractGrantedFeatNames(description)
+          .map((n) => existingFeatNamed(book, n))
+          .find(Boolean)
+      : undefined)
+  );
 }
 
 /** Merge detected aptitude picks with overrides. Overrides win per-target; detected picks not in overrides are preserved. */

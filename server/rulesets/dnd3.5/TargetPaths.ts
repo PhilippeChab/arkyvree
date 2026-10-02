@@ -651,11 +651,12 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     }
 
     const formattedKey = stripSeparators(next);
+    // Only a skill's name also reaches its subtypes, the skills its name starts ("craft" → "craftarmorsmithing").
+    // Anywhere else, a name another starts is another entry: a feat's ("dodge" isn't "dodgebonusswashbuckler",
+    // "light" isn't "lightningreflexes"), checked by its family's group if it has one (`feats.weaponfocus.*`)
+    const reachesSubtypes = rest.length > 0 && pathParts[0] === "skills";
     if (formattedKey && formattedKey in currentValue) {
-      // Sibling subtype expansion (`craft` → `craftarmorsmithing`). Skipped
-      // for aptitudes — those are flat siblings, prefix overlap is not parent/child.
-      const skipSubtypeExpansion = pathParts[0] === "aptitudes";
-      if (rest.length > 0 && !skipSubtypeExpansion) {
+      if (reachesSubtypes) {
         const subtypeMatches = Object.entries(currentValue).filter(
           ([key, value]) =>
             value !== null &&
@@ -695,10 +696,9 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
       currentValue = parentObject[formattedKey];
       pathParts = [...pathParts, formattedKey];
       elements = rest;
-    } else if (formattedKey && rest.length > 0 && pathParts[0] === "skills") {
-      // A skill not found may name its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…): expand to
-      // all of them like an implicit wildcard. Only skills: a feat a name prefixes is another feat ("light" →
-      // "lightningreflexes"), and a family of feats is checked by its group (`feats.weaponfocus.*.possessed`)
+    } else if (formattedKey && reachesSubtypes) {
+      // A skill not found may name only its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…):
+      // expand to all of them like an implicit wildcard
       const prefixMatches = Object.entries(currentValue).filter(
         ([key, value]) =>
           value !== null &&

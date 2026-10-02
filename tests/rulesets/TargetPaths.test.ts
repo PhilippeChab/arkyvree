@@ -139,6 +139,12 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
         [5],
       ],
       ["a wildcard prefix matching nothing to nothing", "feats.zzz*.possessed", { feats }, []],
+      [
+        "a feat's name to that feat, not one whose name it starts",
+        "feats.dodge.possessed",
+        { feats: { dodge: { possessed: false }, dodgebonusswashbuckler: { possessed: true } } },
+        [false],
+      ],
     ] as const)("%s", (_, target, data, expected) => {
       expect(resolve(target, data)).toEqual([...expected]);
     });
@@ -153,19 +159,16 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       expect(paths("abilities.strength.score", { abilities: { strength: { score: 18 } } })).toEqual([
         "abilities.strength.score",
       ]);
+      expect(paths("skills.craft.rank", { skills: { craft: { rank: 0 }, craftarmorsmithing: { rank: 1 } } })).toEqual([
+        "skills.craft.rank",
+        "skills.craftarmorsmithing.rank",
+      ]);
+      // A feat's name reaches that feat only, not the feats it starts the names of
       expect(
         paths("feats.simpleweaponproficiency.possessed", {
-          feats: {
-            simpleweaponproficiency: owned,
-            simpleweaponproficiencydagger: owned,
-            simpleweaponproficiencymace: owned,
-          },
+          feats: { simpleweaponproficiency: owned, simpleweaponproficiencydagger: owned },
         }),
-      ).toEqual([
-        "feats.simpleweaponproficiency.possessed",
-        "feats.simpleweaponproficiencydagger.possessed",
-        "feats.simpleweaponproficiencymace.possessed",
-      ]);
+      ).toEqual(["feats.simpleweaponproficiency.possessed"]);
       expect(
         paths("skills.craft.rank", { skills: { craftarmorsmithing: { rank: 1 }, craftweaponsmithing: { rank: 2 } } }),
       ).toEqual(["skills.craftarmorsmithing.rank", "skills.craftweaponsmithing.rank"]);

@@ -93,7 +93,93 @@
         "description": "Monks undergo extensive training in weaponless combat, granting them significant advantages when fighting barehanded. At 1st level, the monk receives Improved Unarmed Strike as a bonus feat. Her unarmed attacks can be delivered with any part of her body - fists, elbows, knees, or feet - allowing her to make unarmed strikes even while her hands are occupied. A monk has no off-hand when attacking unarmed, so she applies her full Strength bonus to damage on every unarmed strike. By default her unarmed attacks inflict lethal damage, though she may opt to deal nonlethal damage instead without any attack roll penalty. The same lethal/nonlethal choice applies while grappling. A monk's unarmed strike counts as both a manufactured weapon and a natural weapon for purposes of spells and effects that improve either category (such as magic fang and magic weapon). Additionally, a monk inflicts greater unarmed damage than an ordinary person, with the damage increasing as she gains levels as shown in the class table. A Small monk deals reduced unarmed damage compared to the listed values, while a Large monk deals increased damage."
       },
       "Weapon and Armor Proficiency": {
-        "description": "Monks have proficiency with a limited selection of common and specialized weapons associated with their training traditions. Their proficient weapons include the club, crossbow (light or heavy), dagger, handaxe, javelin, kama, nunchaku, quarterstaff, sai, shuriken, siangham, and sling. Monks lack proficiency with all armor and shields - indeed, much of their unique capabilities depend on unrestricted movement. While wearing armor, wielding a shield, or bearing a medium or heavy load, a monk forfeits her AC bonus, fast movement, and flurry of blows capabilities."
+        "description": "Monks have proficiency with a limited selection of common and specialized weapons associated with their training traditions. Their proficient weapons include the club, crossbow (light or heavy), dagger, handaxe, javelin, kama, nunchaku, quarterstaff, sai, shuriken, siangham, and sling. Monks lack proficiency with all armor and shields - indeed, much of their unique capabilities depend on unrestricted movement. While wearing armor, wielding a shield, or bearing a medium or heavy load, a monk forfeits her AC bonus, fast movement, and flurry of blows capabilities.",
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencylightcrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyheavycrossbow.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyquarterstaff.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencynunchaku.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencysiangham.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencyshuriken.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyjavelin.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.martialweaponproficiencyhandaxe.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencydagger.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencysling.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyclub.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencykama.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.exoticweaponproficiencysai.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "set",
+            "target": "feats.simpleweaponproficiencyunarmedstrike.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ]
       },
       "Wholeness of Body": {
         "description": "Beginning at 7th level, a monk can mend her own injuries through focused will. Each day she can restore a total number of hit points equal to twice her current monk level, and she may divide this healing across multiple uses throughout the day."
