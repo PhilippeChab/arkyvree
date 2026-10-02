@@ -69,7 +69,7 @@ describe("parser:validate", () => {
 
   test("finds no issue in the committed references", () => {
     expect(referenceIssues(discoverRefs())).toEqual([]);
-  }, 30_000);
+  });
 
   test("reports what a reference's review list covers, once cleared: a class's aptitude picks and prerequisites, feats' modifiers", () => {
     const clear = (overrides: Record<string, unknown>) => void (overrides.reviewed = []);
