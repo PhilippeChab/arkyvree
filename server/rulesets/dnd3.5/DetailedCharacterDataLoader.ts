@@ -428,7 +428,9 @@ export default class DetailedCharacterDataLoader {
     modifiers.push(...raceModifiers);
     requirementGroups.push(raceRequirements);
 
-    // Item properties/modifiers/requirements (with template inheritance via sourceItemId)
+    // Item properties/modifiers/requirements (with template inheritance via sourceItemId). The base item's
+    // requirements are the proficiency with it: its template's, or its own when it is one. Its own on top of a
+    // template, or a plain item's, are its other requirements, which its modifiers need
     const inventoryResult: InventoryEntry[] = resolvedInventory.map((inv) => {
       const item = inv.itemsInRule;
       const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
@@ -446,7 +448,8 @@ export default class DetailedCharacterDataLoader {
           ...item,
           properties: [...templateProperties, ...ownProperties],
           modifiers: inv.equipped ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
-          requirements: [...templateRequirements, ...ownRequirements],
+          proficiency: item.isTemplate ? ownRequirements : templateRequirements,
+          requirements: item.isTemplate ? [] : ownRequirements,
         },
       };
     });

@@ -128,7 +128,7 @@ async function buildCarrying(name: string, carried: Carried[] = []) {
 
 /** A new item of the seeded ruleset, with these properties. */
 async function createItem(
-  values: { name: string; type: string; slot: ItemLocation; sourceItemId?: string },
+  values: { name: string; type: string; slot: ItemLocation; sourceItemId?: string; isTemplate?: boolean },
   properties: Record<string, string> = {},
 ) {
   const { rulesetId } = await getSeedCtx();
@@ -515,6 +515,63 @@ describe("DetailedCharacter", () => {
         const will = (character: DetailedCharacter) =>
           character.getDetailedCharacterSavingThrows().getSavingThrows().will;
         expect(will(elara).misc).toBe(will(await buildCarrying("Elara Starweaver")).misc + 1);
+      });
+
+      /** An item that requires `target` (equal true, or this check), with +2 to hit for the hand holding it. */
+      async function requiringWithBonus(
+        item: Awaited<ReturnType<typeof createItem>>,
+        target: string,
+        check: Pick<Requirement, "operator" | "value" | "valueType"> = {
+          operator: "equal",
+          value: "true",
+          valueType: "boolean",
+        },
+      ) {
+        await Requirements.create(db, { entityId: item.id, entityType: "items", level: "1", target, ...check });
+        await Modifiers.create(db, {
+          sourceId: item.id,
+          sourceType: "items",
+          target: "combat.tohit.misc",
+          value: "2",
+          valueType: "number",
+          operator: "add",
+        });
+        invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+        return item;
+      }
+
+      test("costs a base weapon the character isn't proficient with 4 to hit, and nothing else", async () => {
+        const blade = await requiringWithBonus(
+          await createItem(
+            { name: "Base Blade", type: "Weapon", slot: "Main Hand", isTemplate: true },
+            { WEAPON_PROFICIENCY: "Martial", WEAPON_BASE_DAMAGE: "1d8", WEAPON_TYPE: "Longsword" },
+          ),
+          "feats.martialweaponproficiency.possessed",
+        );
+        // A wizard keeps its +2: -4 + 2
+        expect(
+          weaponSet(await buildCarrying("Elara Starweaver", [{ item: blade.id, location: "Main Hand", weaponSet: 0 }]))
+            .mainhand,
+        ).toMatchObject({ name: "Base Blade", proficient: false, tohit: { misc: -2 } });
+      });
+
+      test("costs a weapon nothing for another requirement unmet, which turns its own bonuses off", async () => {
+        const { itemMap } = await getSeedCtx();
+        const blade = await requiringWithBonus(
+          await createItem({
+            name: "Giant's Blade",
+            type: "Weapon",
+            slot: "Main Hand",
+            sourceItemId: itemMap["Longsword"],
+          }),
+          "abilities.strength.total",
+          { operator: "greater_than_or_equal", value: "30", valueType: "number" },
+        );
+        // Bjorn, proficient with longswords, has Weapon Focus: Longsword (+1) and STR 18
+        expect(
+          weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: blade.id, location: "Main Hand", weaponSet: 0 }]))
+            .mainhand,
+        ).toMatchObject({ name: "Giant's Blade", proficient: true, tohit: { misc: 1 } });
       });
 
       test("never costs a monk her gauntlet, a strike with it being unarmed, but costs her a spiked one", async () => {

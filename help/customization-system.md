@@ -38,6 +38,8 @@ Each requirement leaf has three parts: **target** (a path into the character she
 
 The path is built using the **target path browser** in the requirement editor.
 
+On an item, the requirements of a base weapon, armor or shield (a template) are the proficiency with it, and an item made from it shares them. Not being proficient with a weapon costs 4 to hit and nothing else; armor and shields can't be equipped without their proficiency. Requirements added to any other item are its own: while one isn't met, the item's own modifiers don't apply.
+
 Multiple requirements on the same entity are AND'd together by default. To express OR, add a chain (group) node and place leaves under it.
 
 **Cleave** needs Strength 13 AND Power Attack — two leaves, both must hold:

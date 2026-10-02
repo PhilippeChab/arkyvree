@@ -265,13 +265,13 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
   }
 
   protected postRequirementProcessing(): void {
-    // An equipped item's requirements are one group, its template's with its own (`DetailedCharacterDataLoader`):
-    // the item is unmet when that group is. A template's requirements carry the template's id, not the item's
-    const unmetGroups = new Set(this.detailedCharacterRequirements.getRequirements().unmetRequirementGroups);
-    const unmetItemIds = new Set(
-      this.inventory.filter((inv) => unmetGroups.has(inv.item.requirements)).map((inv) => inv.item.id),
+    // A weapon's proficiency is its base item's requirements (`DetailedCharacterDataLoader`), apart from its others
+    const unproficientItemIds = new Set(
+      this.inventory
+        .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency]))
+        .map((inv) => inv.item.id),
     );
-    this.detailedCharacterCombat.applyProficiencyPenalties(unmetItemIds);
+    this.detailedCharacterCombat.applyProficiencyPenalties(unproficientItemIds);
   }
 
   protected async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {

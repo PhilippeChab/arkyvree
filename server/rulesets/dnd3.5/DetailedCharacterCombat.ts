@@ -705,12 +705,12 @@ export default class DetailedCharacterCombat {
     }
   }
 
-  /** Costs each weapon whose item's requirements are unmet (its proficiency) the non-proficiency penalty. */
-  applyProficiencyPenalties(unmetItemIds: Set<string>) {
+  /** Costs each weapon the character isn't proficient with the non-proficiency penalty: 4 to hit, nothing else. */
+  applyProficiencyPenalties(unproficientItemIds: Set<string>) {
     for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
       for (const slotKey of WEAPON_SET_SLOTS) {
         const weapon = weaponSet[slotKey];
-        if (!weapon?.itemId || !unmetItemIds.has(weapon.itemId)) continue;
+        if (!weapon?.itemId || !unproficientItemIds.has(weapon.itemId)) continue;
 
         weapon.proficient = false;
         weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;

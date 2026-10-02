@@ -161,7 +161,7 @@ Proficiency requirements (on the item, checked at equip time):
 - **Martial**: OR chain — `feats.martialweaponproficiency.possessed` OR `feats.martialweaponproficiency<weapon>.possessed`
 - **Exotic**: `feats.exoticweaponproficiency<weapon>.possessed == true`
 
-An equipped weapon whose requirements are unmet, its template's included for a weapon made from one, isn't proficient: −4 to hit.
+An item's proficiency is its base item's requirements: its template's, or its own when it's a template. An equipped weapon whose proficiency is unmet isn't proficient: −4 to hit, and nothing else (its modifiers still apply). Its own requirements on top of a template, or a plain item's, are its other requirements: unmet, its own modifiers don't apply, and it keeps its proficiency (`DetailedCharacterDataLoader`).
 
 ### Armor (type = "Armor")
 
