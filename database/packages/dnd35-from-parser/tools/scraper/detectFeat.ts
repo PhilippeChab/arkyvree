@@ -673,13 +673,15 @@ function detectTemplate(entry: FeatReference["raw"][number]): FeatReference["det
     return { type: "crossbow", familyName: entry.name };
   }
 
-  // Skill templates: "that skill", "involving that skill"
-  if (/that skill|the skill you select/.test(text)) {
+  // Skill templates: a feat taken again for another skill, not one about any skill ("as if you had 1/2 rank in that
+  // skill": Jack of All Trades)
+  if (/the skill you select|applies to a new skill/.test(text)) {
     return { type: "skill", familyName: entry.name };
   }
 
-  // School templates: "school of magic you select"
-  if (/school of magic/.test(text)) {
+  // School templates: a feat taken again for another school, not one naming a school ("a school of magic you have
+  // access to": Precocious Apprentice)
+  if (/school of magic you select|chosen school|selected school|applies to a new school/.test(text)) {
     return { type: "school", familyName: entry.name };
   }
 

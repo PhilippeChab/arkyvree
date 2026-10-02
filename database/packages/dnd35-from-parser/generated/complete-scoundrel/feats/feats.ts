@@ -1,9 +1,6 @@
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { ALL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
-import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
-import { stripSeparators } from "@/shared/utils.ts";
 
 export const SKILL_TRICK_FEATS: FeatSeed[] = [
   {
@@ -174,6 +171,16 @@ export const SKILL_TRICK_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("skills.listen.rank", 5),
+    ],
+  },
+  {
+    name: "Magical Appraisal",
+    description: "When you succeed by 5 or more on a Spellcraft check to determine the school of magic of the aura surrounding a magic item (by casting detect magic), you can then spend 1 minute concentrating to also learn the properties of the item, as if you had cast identify. You can use this skill trick once per day.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("skills.appraise.rank", 5),
+      gte("skills.knowledgearcana.rank", 5),
+      gte("skills.spellcraft.rank", 12),
     ],
   },
   {
@@ -432,6 +439,14 @@ export const LUCK_FEATS: FeatSeed[] = [
     name: "Magical Fortune",
     description: "You can expend one luck reroll as a swift action to reroll the damage dealt by a spell you have just cast. You can expend two luck rerolls as a swift action to reroll a caster level check. You gain one luck reroll per day.",
     aptitudes: ["General"],
+  },
+  {
+    name: "Make Your Own Luck",
+    description: "You can expend one luck reroll as an immediate action to reroll a skill check, as long as you have at least 1 rank in that skill. You gain one luck reroll per day",
+    aptitudes: ["General"],
+    requirements: [
+      gte("identity.meta.level", 6),
+    ],
   },
   {
     name: "Miser's Fortune",
@@ -741,21 +756,4 @@ export const headShot: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   description: `Your successful sneak attack with a bludgeoning weapon for which you have ${w} Focus leaves your foe confused for 1 round. A successful Will save (DC 10 + the number of extra damage dice normally dealt by your sneak attack + your Dex modifier) negates this effect. If you use this feat a second time on a target before 1 round has elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 5d6.`,
   aptitudes: ["General"],
   properties: [{ type: "FEAT_FAMILY", value: "Head Shot" }],
-}));
-
-export const magicalAppraisal: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
-  name: `Magical Appraisal: ${s}`,
-  description: `When you succeed by 5 or more on a Spellcraft check to determine the school of magic of the aura surrounding a magic item (by casting detect magic), you can then spend 1 minute concentrating to also learn the properties of the item, as if you had cast identify. You can use this skill trick once per day.`,
-  aptitudes: ["General"],
-  properties: [{ type: "FEAT_FAMILY", value: "Magical Appraisal" }],
-}));
-
-export const makeYourOwnLuck: FeatSeed[] = SKILL_NAMES.map((s) => ({
-  name: `Make Your Own Luck: ${s}`,
-  description: `You get a +3 bonus on all ${s} checks.`,
-  aptitudes: ["General"],
-  modifiers: [
-    { target: `skills.${stripSeparators(s)}.misc`, operator: "add", value: "3", valueType: "number" },
-  ],
-  properties: [{ type: "FEAT_FAMILY", value: "Make Your Own Luck" }],
 }));

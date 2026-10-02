@@ -10,8 +10,6 @@ export {
   FIGHTER_FEATS,
   disembowelingStrike,
   headShot,
-  magicalAppraisal,
-  makeYourOwnLuck,
 } from "./feats.ts";
 
 export { ALL_CLASS_FEATS } from "./classes/index.ts";
@@ -25,8 +23,6 @@ import {
   FIGHTER_FEATS as _FIGHTER_FEATS,
   disembowelingStrike as _disembowelingStrike,
   headShot as _headShot,
-  magicalAppraisal as _magicalAppraisal,
-  makeYourOwnLuck as _makeYourOwnLuck,
 } from "./feats.ts";
 import { ALL_CLASS_FEATS as _ALL_CLASS_FEATS } from "./classes/index.ts";
 
@@ -39,8 +35,6 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ..._FIGHTER_FEATS,
   ..._disembowelingStrike,
   ..._headShot,
-  ..._magicalAppraisal,
-  ..._makeYourOwnLuck,
 ];
 
 export const ALL_FEATS: FeatSeed[] = [
@@ -52,7 +46,5 @@ export const ALL_FEATS: FeatSeed[] = [
   ..._FIGHTER_FEATS,
   ..._disembowelingStrike,
   ..._headShot,
-  ..._magicalAppraisal,
-  ..._makeYourOwnLuck,
   ..._ALL_CLASS_FEATS,
 ];

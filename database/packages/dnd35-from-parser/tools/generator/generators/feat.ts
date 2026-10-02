@@ -295,35 +295,42 @@ function emitCrossbowTemplate(file: FeatFile, family: TemplateFamily): void {
   closeTemplate(file, family.familyName);
 }
 
-/** Skill Focus's bonus, when its reference names none. */
-const SKILL_FOCUS_BONUS: ModifierSeed = {
-  target: "skills.skill.misc",
-  operator: "add",
-  value: "3",
-  valueType: "number",
-};
+/**
+ * A skill or school template's requirements, for its item (`variable`): a feat it requires is that feat's for the item
+ * (Greater Spell Focus requires Spell Focus in its school), the feat's family a template of this book's or another's
+ * (Spell Focus from the SRD); any other requirement as it is.
+ */
+function itemRequirementLines(
+  file: FeatFile,
+  { requirements, featNameMap }: TemplateFamily,
+  variable: string,
+): string[] {
+  const lines: string[] = [];
+  for (const req of requirements) {
+    if (!("chainingOperator" in req) && req.target.startsWith("feats.")) {
+      const featName = featNameMap[featSlug(req)];
+      if (featName) lines.push(`    ${featRequirement(file, featName, true, variable)},`);
+    } else {
+      lines.push(`    ${stringifyRequirement(req, file.uses, 2)},`);
+    }
+  }
+  return lines;
+}
 
+/** A feat per skill: its description and modifiers name the skill (`{skill}`, `skills.skill.…`). */
 function emitSkillTemplate(file: FeatFile, family: TemplateFamily): void {
-  openTemplate(file, family, "SKILL_NAMES", "s", "You get a +3 bonus on all ${s} checks.");
-  // Replace generic skill path with per-skill
-  const modifiers = family.modifiers.length > 0 ? family.modifiers : [SKILL_FOCUS_BONUS];
-  emitTemplateModifiers(file, modifiers, (target) => target.replace(/skills\.[^.]+/, "skills.${stripSeparators(s)}"));
+  openTemplate(file, family, "SKILL_NAMES", "s", templateDescription(family, "s"));
+  emitTemplateRequirements(file, itemRequirementLines(file, family, "s"));
+  emitTemplateModifiers(file, family.modifiers, (target) =>
+    target.replace(/skills\.[^.]+/, "skills.${stripSeparators(s)}"),
+  );
   closeTemplate(file, family.familyName);
 }
 
 function emitSchoolTemplate(file: FeatFile, family: TemplateFamily): void {
-  const { requirements, featNameMap, modifiers } = family;
+  const { modifiers } = family;
   openTemplate(file, family, "MAGIC_SCHOOLS", "s", templateDescription(family, "s"));
-
-  // Requirements: for Greater Spell Focus, require Spell Focus of same school. A school feat's family is a template,
-  // this book's or another's (Spell Focus from the SRD).
-  const reqLines: string[] = [];
-  for (const req of requirements) {
-    if ("chainingOperator" in req || !req.target.startsWith("feats.")) continue;
-    const featName = featNameMap[featSlug(req)];
-    if (featName) reqLines.push(`    ${featRequirement(file, featName, true, "s")},`);
-  }
-  emitTemplateRequirements(file, reqLines);
+  emitTemplateRequirements(file, itemRequirementLines(file, family, "s"));
 
   // Use the explicit modifiers from the reference JSON. Re-write any
   // `powers.groups.<placeholder>.` segment to the per-school slug. Other

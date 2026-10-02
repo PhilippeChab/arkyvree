@@ -192,6 +192,18 @@ export const GENERAL_FEATS: FeatSeed[] = [
     ],
   },
   {
+    name: "Precocious Apprentice",
+    description: "Choose one 2nd-level spell from a school of magic you have access to. You gain an extra 2nd-level spell slot that must be used initially to cast only the chosen spell. Until your level is high enough to allow you to cast 2nd-level spells, you must succeed on a DC 8 caster level check to successfully cast this spell; if you fail, the spell is miscast to no effect. Your caster level with the chosen spell is your normal caster level, even if this level is insufficient to cast the spell under normal circumstances. When you become able to cast 2nd-level spells, you lose the benefit described above but retain the extra 2nd-level spell slot, which you can use to prepare or spontaneously cast a spell of 2nd level or lower as you normally would. Finally, you gain a +2 bonus on all Spellcraft checks.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("spellcasting.arcane", 1),
+      or(gte("abilities.intelligence.total", 15), gte("abilities.charisma.total", 15)),
+    ],
+    modifiers: [
+      { target: "skills.spellcraft.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
     name: "Ranged Spell Specialization",
     description: "Damage-dealing spells that require a ranged touch attack roll gain a +2 bonus on the damage they deal. This extra damage applies only to the first successful attack of spells that create multiple rays or missiles, or to the first round of damage for spells that deal damage over multiple rounds on a single successful attack (such as Melf's acid arrow). Because you must be able to strike precisely, the extra damage applies only to targets within 30 feet. Only spells that deal hit point damage can be affected by this feat.",
     aptitudes: ["General"],
@@ -604,14 +616,4 @@ export const arcaneDefense: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
     eq(feat(`Spell Focus: ${s}`)),
   ],
   properties: [{ type: "FEAT_FAMILY", value: "Arcane Defense" }],
-}));
-
-export const precociousApprentice: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
-  name: `Precocious Apprentice: ${s}`,
-  description: `Choose one 2nd-level spell from a school of magic you have access to. You gain an extra 2nd-level spell slot that must be used initially to cast only the chosen spell. Until your level is high enough to allow you to cast 2nd-level spells, you must succeed on a DC 8 caster level check to successfully cast this spell; if you fail, the spell is miscast to no effect. Your caster level with the chosen spell is your normal caster level, even if this level is insufficient to cast the spell under normal circumstances. When you become able to cast 2nd-level spells, you lose the benefit described above but retain the extra 2nd-level spell slot, which you can use to prepare or spontaneously cast a spell of 2nd level or lower as you normally would. Finally, you gain a +2 bonus on all Spellcraft checks.`,
-  aptitudes: ["General"],
-  modifiers: [
-    { target: `skills.spellcraft.misc`, operator: "add", value: "2", valueType: "number" },
-  ],
-  properties: [{ type: "FEAT_FAMILY", value: "Precocious Apprentice" }],
 }));
