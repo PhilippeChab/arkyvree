@@ -712,8 +712,12 @@ export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["det
     const { requirements: rawReqs, featNameMap, unresolvedPrereqs } = parsePrerequisiteText(entry.prerequisiteText);
     const aptitudes = [...(FEAT_TYPE_APTITUDES[entry.featType] ?? ["General"])];
 
-    // Detect fighter bonus feat from Special text
-    if (entry.special && /fighter may select/i.test(entry.special) && !aptitudes.includes("Fighter Bonus Feat")) {
+    // Detect fighter bonus feat from Special text: "A fighter may select", or "can select" (Complete Scoundrel)
+    if (
+      entry.special &&
+      /fighter (?:may|can) select/i.test(entry.special) &&
+      !aptitudes.includes("Fighter Bonus Feat")
+    ) {
       aptitudes.push("Fighter Bonus Feat");
     }
 
