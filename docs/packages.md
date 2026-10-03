@@ -157,7 +157,7 @@ bun db:packages    # Apply all registered packages
 ### Do not
 
 - Never delete seed data — characters reference rows by ID
-- Never change the seeds to fix deployed data — add an `updates` entry
+- Never fix deployed data by changing the seeds alone. A data fix changes the seeds (or the parser's output) for new databases, and its PR carries the SQL that brings existing ones in line, run in production once it merges; `bun run prod:diff` with a freshly seeded `REFERENCE_DATABASE_URL` then finds no drift. Add an `updates` entry instead only when that SQL would be too large or risky to run by hand
 - Never add requirements to existing feats/class features without careful consideration — it can retroactively invalidate characters
 - Never remove or reorder an update some database doesn't have yet, and never skip a version in `updates`
 - Never hardcode entity IDs — always look them up by name

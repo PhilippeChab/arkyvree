@@ -132,8 +132,10 @@ From `server/services/rulesets/cow.ts`:
 | `cowEntity`, `cowEntityForCustomization` | Fork an inherited entity into the current ruleset (for admin-CRUD edits / deletes). |
 | `cowCustomizationForMutation` | Resolve the modifier / property / requirement row an update or delete changes: copies an inherited owner, maps the row to its copy, re-checks a local row after the owner lock. |
 | `lockEntityForMutation` | Lock an already-local owner before deleting its customizations. |
+| `findScopedEntity` | The entity an id names in the composed view (the ruleset's own, or inherited through its source chain), or a 404. |
+| `entityToEdit` / `entityToDelete` | The row a CRUD update or delete writes: the ruleset's own entity, or the copy of an inherited one (`entityToDelete` locks its own). |
 
-For lineage checks (entity-belongs-to-sourceChain), inline `rulesetData.cow.sourceChain.includes(entity.rulesetId)` — no helper needed. For id canonicalization (pre-COW → post-COW) use `rulesetData.canonicalize(id)`. Sibling merging (aptitude links, modifiers, properties, requirements) is pre-baked into `rulesetData` by the compose step, so consumers only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
+For lineage checks (entity-belongs-to-sourceChain), `findScopedEntity`. For id canonicalization (pre-COW → post-COW) use `rulesetData.canonicalize(id)`. Sibling merging (aptitude links, modifiers, properties, requirements) is pre-baked into `rulesetData` by the compose step, so consumers only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
 
 From `server/cache/rulesetCache.ts` (re-exported via `server/cache/index.ts`):
 
@@ -150,7 +152,7 @@ From `server/cache/rulesetCache.ts` (re-exported via `server/cache/index.ts`):
 Used by the copy flows, `RulesetsService` (publish, extensions, reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
 - **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateRulesetItem` / `bulkCreateVariants` and `ModifiersService.duplicateEntityModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow.ts` doesn't re-export.
-- **Extensions and reverts** (`RulesetsService`): `ENTITY_TYPE_TO_SOURCE_TYPE` finds a COW copy's customizations when `unsubscribeExtension` / `revertOverride` delete it, and `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
+- **Extensions** (`RulesetsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
 - **Override map**: `buildOverrideMap`, called only inside `cow/` (`getOrBuildCowData`, `cowEntity`).
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`getOrBuildCowData`, `cowEntity`) and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `getOrFetchRulesetData`, `invalidateCowData`, `invalidateAllCowData`.
@@ -203,7 +205,7 @@ flowchart TD
 
 Roughly: concat arrays from fork+ancestors → drop COW'd ids and sibling ids → apply FK remap → build id-indexed Maps for O(1) lookups.
 
-`siblingIds` / `overrideMap` pick up two flavors of loser in `buildOverrideMap` (`server/services/rulesets/cow.ts`): (1) entity-level COW siblings — multiple extensions COW'd the same base entity; (2) aptitude-name collisions — independently-created copies of the same aptitude name across the chain, typically sibling-shared class spell lists like `Assassin Spells`. Both are treated identically by the compose step: losers dropped from the entities array, FKs remapped to the winner. Base-inherited aptitudes (`General`, `Cleric Domain`, etc.) are not duplicated at seed time (see `docs/packages.md`), so they don't participate.
+`siblingIds` / `overrideMap` pick up two flavors of loser in `buildOverrideMap` (`server/services/rulesets/cow/overrideMap.ts`): (1) entity-level COW siblings — multiple extensions COW'd the same base entity; (2) aptitude-name collisions — independently-created copies of the same aptitude name across the chain, typically sibling-shared class spell lists like `Assassin Spells`. Both are treated identically by the compose step: losers dropped from the entities array, FKs remapped to the winner. Base-inherited aptitudes (`General`, `Cleric Domain`, etc.) are not duplicated at seed time (see `docs/packages.md`), so they don't participate.
 
 ### Pinning
 
@@ -244,25 +246,24 @@ In tests, the cache reads through the test's transaction and outlives its rollba
 
 Services used to query the DB for single rows even after the cache was warm. The composed view now exposes pre-built Maps over the arrays so consumers do O(1) lookups without round-tripping Postgres:
 
-| Index | Replaces DB call |
+| Index | Holds |
 |---|---|
-| `featsById`, `powersById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `klassLevelsById` | `Repo.findOne({ id })`, `Repo.findMany({ ids })` |
-| `klassLevelByKlassAndLevel` | `KlassLevels.findOneByKlassAndLevel` |
-| `propertiesByEntity` | `Properties.findManyByEntity` |
-| `propertiesByEntityType` (key `"items"` / `"powers"` / `"rulesets"` / ...) | `Properties.findManyByEntityType` |
-| `klassLevelFeatsWithFeatsByKlassLevel` | `KlassLevelFeats.findManyWithFeats` |
-| `klassLevelPowersWithPowersByKlassLevel` | `KlassLevelPowers.findManyWithPowers` |
-| `klassSkillsWithSkillsByKlass` | `KlassSkills.findManyWithSkills` |
-| `klassSkillsByKlassId` (bare join rows without the joined Skill) | `KlassSkills.findManyByKlassId` |
-| `klassLevelSavesByKlassLevelId` | `KlassLevelSaves.findManyByKlassLevelId` |
-| `aptitudeIdsByHavingPowers` | `PowersAptitudes.findDistinctAptitudeIds` |
-| `maxLevelByKlassId` | `KlassLevels.findMaxLevelByKlassIds` |
-| `modifiersBySource` | Ruleset-scoped `Modifiers.findManyBySource` |
-| `requirementsByEntity` | Ruleset-scoped `Requirements.findManyByEntityIds` |
-| `entityIdsByPropertyLookup` (key `${entityType}:${type}:${value}`) | `Properties.findEntityIdsByPropertyValues` |
-| `aptitudeIdBySlug` (key `stripSeparators(aptitude.name)`) | per-ruleset slug → id map (rebuilt ad hoc by several services before unification) |
-| `aptitudeIdBySpellSlug` (key `spellPossessionSlug(aptitude.name)`) | same, for the "set powers.X.\<apt\>.known" modifier scan |
-| `featIdBySlug` / `powerIdsBySlug` (key `stripSeparators(name)`) | slug lookup in the possessed-feat / possessed-power virtual-modifier scan |
+| `featsById`, `powersById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `klassLevelsById` | Each entity of the composed view by id (a stored pre-COW id resolves to its copy) |
+| `klassLevelByKlassAndLevel` (key `${klassId}:${level}`) | A class's level |
+| `klassLevelsByKlassId`, `maxLevelByKlassId` | A class's levels, and its highest |
+| `propertiesByEntity` | An entity's properties |
+| `propertiesByEntityType` (key `"items"` / `"powers"` / `"rulesets"` / ...) | Every property of one entity type |
+| `klassLevelFeatsWithFeatsByKlassLevel`, `klassLevelPowersWithPowersByKlassLevel` | A class level's feats and powers, each with its entity |
+| `klassSkillsWithSkillsByKlass`, `klassSkillsByKlassId` | A class's skills, with or without each skill |
+| `klassLevelSavesByKlassLevelId` | A class level's saves |
+| `aptitudeIdsByHavingPowers` | The aptitudes some power belongs to |
+| `modifiersBySource` | A source's modifiers |
+| `requirementsByEntity` | An entity's requirements |
+| `entityIdsByPropertyLookup` (key `${entityType}:${type}:${value}`) | The entities with a property value |
+| `klassLevelFeatsByKlassLevel`, `klassLevelPowersByKlassLevel` | A class level's feat and power rows, without their entities |
+| `modifiersById` | Each modifier by id |
+| `leveledAptitudeIds` | The aptitudes counted by spell level (spell pools) |
+| `aptitudeIdBySlug`, `aptitudeIdBySpellSlug`, `featIdBySlug`, `powerIdsBySlug` | An aptitude, feat or powers by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `powers.<slug>.<aptitude>.known`) |
 
 All are derived from the composed arrays at compose time. They add a few hundred KB of pointer overhead per cached ruleset — negligible against the entity data itself.
 

@@ -3,6 +3,13 @@ export const CUSTOMIZABLE_ENTITY_TYPES = ["klass_levels", "klasses", "feats", "i
 
 export type CustomizableEntityType = (typeof CUSTOMIZABLE_ENTITY_TYPES)[number];
 
+const customizableEntityTypes = new Set<string>(CUSTOMIZABLE_ENTITY_TYPES);
+
+/** Whether entities of this type are customizable: they own modifiers (sourced by their own type), not only rows. */
+export function isCustomizableEntityType(entityType: string): entityType is CustomizableEntityType {
+  return customizableEntityTypes.has(entityType);
+}
+
 /** What a customization can belong to: a customizable entity, or a modifier, which has requirements of its own. */
 export const CUSTOMIZATION_OWNER_TYPES = [...CUSTOMIZABLE_ENTITY_TYPES, "modifiers"] as const;
 

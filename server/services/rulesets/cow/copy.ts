@@ -12,8 +12,8 @@ import {
   Requirements,
 } from "@/server/repositories/index.ts";
 import type { EntityCustomizations, EntityType } from "@/server/services/rulesets/hashing.ts";
+import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
-import { ENTITY_TYPE_TO_SOURCE_TYPE } from "./constants.ts";
 import { fetchEntityCustomizations } from "./customizations.ts";
 
 /**
@@ -56,7 +56,7 @@ export async function copyEntityCustomizationsToMany(
   if (customizationIds && targetEntityIds.length > 1) {
     throw new Error("customizationIds maps each source row to one copy; copy to a single target");
   }
-  if (!ENTITY_TYPE_TO_SOURCE_TYPE[entityType] && sourceCust.modifiers.length > 0) {
+  if (!isCustomizableEntityType(entityType) && sourceCust.modifiers.length > 0) {
     throw new Error(`Cannot copy modifiers onto ${entityType}`);
   }
   const sourceModifierIds = new Set(sourceCust.modifiers.map((m) => m.id));
