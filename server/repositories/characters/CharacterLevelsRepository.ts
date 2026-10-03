@@ -88,7 +88,7 @@ class CharacterLevelsRepository extends include(
     return await this.existsKlassPickFromExtension(db, where);
   }
 
-  async findHighestCharacterLevel(db: Db, where: { characterId: string }) {
+  async findLatest(db: Db, where: { characterId: string }) {
     const result = await db
       .select(getTableColumns(this.table))
       .from(this.table)
@@ -102,15 +102,17 @@ class CharacterLevelsRepository extends include(
 
   async findMany(db: Db, where: { characterId: string } | { characterIds: string[] }) {
     return await db.query.levelsInCharacter.findMany({
-      where: this.where([
-        "characterId" in where && eq(this.table.characterId, where.characterId),
-        "characterIds" in where && inArray(this.table.characterId, where.characterIds),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "characterId" in where && eq(this.table.characterId, where.characterId),
+          "characterIds" in where && inArray(this.table.characterId, where.characterIds),
+        ],
+        [isNull(this.table.deletedAt)],
+      ),
     });
   }
 
-  async findMaxKlassLevelsByCharacter(db: Db, where: { characterId: string }) {
+  async findMaxKlassLevels(db: Db, where: { characterId: string }) {
     const result = await db
       .select({
         klassId: klassLevelsInRules.klassId,
@@ -126,12 +128,13 @@ class CharacterLevelsRepository extends include(
 
   async findOne(db: Db, where: { id: string } | { characterId: string; klassLevelId: string }) {
     return await db.query.levelsInCharacter.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "characterId" in where && eq(this.table.characterId, where.characterId),
-        "klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "id" in where && eq(this.table.id, where.id),
+          "characterId" in where && eq(this.table.characterId, where.characterId),
+        ],
+        ["klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId), isNull(this.table.deletedAt)],
+      ),
     });
   }
 

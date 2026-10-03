@@ -2,6 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 
 import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
+import { everyPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Abilities, Aptitudes, Feats, FeatsAptitudes, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
@@ -101,8 +102,8 @@ for (const [chainingOperator, reverseOrder] of [
         ]);
     }, reverseOrder);
     const abilities = new DetailedCharacterAbilities();
-    const rows = await Abilities.findAll((pagination) =>
-      Abilities.findManyByRulesetId(db, { rulesetId: host.ancestorRulesetIds[0], ancestorRulesetIds: [] }, pagination),
+    const rows = await everyPage((pagination) =>
+      Abilities.findPage(db, { rulesetId: host.ancestorRulesetIds[0], ancestorRulesetIds: [] }, pagination),
     );
     abilities.initialize(
       rows.map((row) => ({ abilityId: row.id, name: row.name, score: row.name === "Strength" ? 13 : 10 })),
@@ -116,7 +117,7 @@ for (const [chainingOperator, reverseOrder] of [
       return result.unmetRequirementGroups.length === 0;
     };
     const originals = await Promise.all(
-      copies.map((entityId) => Requirements.findManyByEntity(db, { entityIds: [entityId], entityType: "feats" })),
+      copies.map((entityId) => Requirements.findMany(db, { entityIds: [entityId], entityType: "feats" })),
     );
     const expected = evaluate(originals);
     expect(expected).toBe(chainingOperator === "or");
@@ -130,7 +131,7 @@ for (const [chainingOperator, reverseOrder] of [
     expect({ before, after, cold }).toEqual({ before: expected, after: expected, cold: expected });
     expect(
       await Promise.all(
-        copies.map((entityId) => Requirements.findManyByEntity(db, { entityIds: [entityId], entityType: "feats" })),
+        copies.map((entityId) => Requirements.findMany(db, { entityIds: [entityId], entityType: "feats" })),
       ),
     ).toEqual(originals);
   });

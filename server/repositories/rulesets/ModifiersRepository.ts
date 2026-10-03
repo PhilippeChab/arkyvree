@@ -17,20 +17,14 @@ class ModifiersRepository extends include(
     super(modifiersInCustomization);
   }
 
-  async findManyBySource(db: Db, where: { sourceIds: string[]; sourceType: string }) {
+  async findMany(db: Db, where: { sourceIds: string[]; sourceType: string } | { sourceIds: string[] }) {
+    if (!("sourceType" in where) && where.sourceIds.length === 0) return [];
     return await db.query.modifiersInCustomization.findMany({
-      where: and(
+      where: this.where([
         inArray(this.table.sourceId, where.sourceIds),
-        eq(this.table.sourceType, where.sourceType),
+        "sourceType" in where && eq(this.table.sourceType, where.sourceType),
         isNull(this.table.deletedAt),
-      ),
-    });
-  }
-
-  async findManyBySourceIds(db: Db, where: { sourceIds: string[] }) {
-    if (where.sourceIds.length === 0) return [];
-    return await db.query.modifiersInCustomization.findMany({
-      where: and(inArray(this.table.sourceId, where.sourceIds), isNull(this.table.deletedAt)),
+      ]),
     });
   }
 
@@ -72,7 +66,7 @@ class ModifiersRepository extends include(
     return await db
       .delete(this.table)
       .where(
-        this.writeWhere(
+        this.branchWhere(
           [
             "id" in where && eq(this.table.id, where.id),
             "ids" in where && inArray(this.table.id, where.ids),

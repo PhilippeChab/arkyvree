@@ -38,7 +38,7 @@ export async function getAvailableKlasses(
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const { sourceChain } = rulesetData.cow;
 
-    const klassPage = await Klasses.findManyByRulesetId(
+    const klassPage = await Klasses.findPage(
       db,
       {
         rulesetId: characterRecord.rulesetId,
@@ -55,7 +55,7 @@ export async function getAvailableKlasses(
       return { items: [], page: klassPage.page, nextPage: klassPage.nextPage };
     }
 
-    const characterKlassLevels = await CharacterLevels.findMaxKlassLevelsByCharacter(db, {
+    const characterKlassLevels = await CharacterLevels.findMaxKlassLevels(db, {
       characterId,
     });
     const characterKlassLevelMap = new Map(characterKlassLevels.map((i) => [i.klassId, i.maxLevel]));

@@ -25,7 +25,7 @@ export async function assertAncestorNamesHidden(
     throw new ConflictError("Name already exists in the source chain (an ancestor or subscribed extension)");
   }
   const repo = ENTITY_REPOS[entityType];
-  const snapshots = await EntitySnapshots.findManyBySourcesAndRuleset(tx, { sourceEntityIds: ancestorIds, rulesetId });
+  const snapshots = await EntitySnapshots.findMany(tx, { sourceEntityIds: ancestorIds, rulesetId });
   const tombstoned = new Set<string>();
   for (const snapshot of snapshots) {
     // Stored id of the local copy — check it as written, without COW remapping.
@@ -78,7 +78,7 @@ export async function repointTombstoneSnapshot(
   ancestorEntityId: string,
   newEntityId: string,
 ): Promise<void> {
-  const tombstone = await EntitySnapshots.findBySourceAndRuleset(tx, {
+  const tombstone = await EntitySnapshots.findOne(tx, {
     sourceEntityId: ancestorEntityId,
     rulesetId,
   });

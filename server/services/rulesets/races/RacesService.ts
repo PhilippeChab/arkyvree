@@ -46,7 +46,7 @@ class RacesService {
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      return await Races.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      return await Races.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
   }
 

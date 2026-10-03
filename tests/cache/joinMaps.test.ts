@@ -102,14 +102,14 @@ describe("cache join-maps — parity with repository queries", () => {
     expect(sortBySkillId(fromCache).map(mapRow)).toEqual(sortBySkillId(fromDb).map(mapRow));
   });
 
-  test("aptitudeIdsByHavingPowers matches PowersAptitudes.findDistinctAptitudeIds", async () => {
+  test("aptitudeIdsByHavingPowers matches PowersAptitudes.findAptitudeIds", async () => {
     // Seed ruleset is a base (no ancestors, no siblings), so every composed
     // aptitude is a DB-visible aptitude — the composed view and the raw DB
     // answer should be identical sets. For forks with extensions, sibling
     // aptitude exclusion would matter; that case is exercised by
     // tests/cache/aptitudeDedup.test.ts.
     const allAptitudeIds = rulesetData.aptitudes.map((a) => a.id);
-    const fromDb = new Set(await PowersAptitudes.findDistinctAptitudeIds(db, { aptitudeIds: allAptitudeIds }));
+    const fromDb = new Set(await PowersAptitudes.findAptitudeIds(db, { aptitudeIds: allAptitudeIds }));
     expect(rulesetData.aptitudeIdsByHavingPowers).toEqual(fromDb);
   });
 

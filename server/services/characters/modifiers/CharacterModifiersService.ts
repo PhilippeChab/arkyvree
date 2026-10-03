@@ -17,7 +17,7 @@ class CharacterModifiersService {
     const character = await getEditableCharacter(db, session, characterId);
 
     const [modifiers, { segmentLabels }] = await Promise.all([
-      Modifiers.findManyBySource(db, {
+      Modifiers.findMany(db, {
         sourceIds: [characterId],
         sourceType: "characters",
       }),

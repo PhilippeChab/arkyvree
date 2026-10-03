@@ -879,7 +879,7 @@ describe("LevelsService", () => {
 
       const longsword = ctx.featMap["War Domain Weapon: Longsword"];
       expect(
-        (await Modifiers.findManyBySource(db, { sourceIds: [longsword], sourceType: "feats" }))
+        (await Modifiers.findMany(db, { sourceIds: [longsword], sourceType: "feats" }))
           .filter((m) => m.target.endsWith(".possessed"))
           .map(({ target, value, operator }) => ({ target, value, operator }))
           .sort((a, b) => a.target.localeCompare(b.target)),
@@ -888,7 +888,7 @@ describe("LevelsService", () => {
         { target: "feats.weaponfocuslongsword.possessed", value: "true", operator: "set" },
       ]);
       expect(
-        (await Properties.findManyByEntity(db, { entityIds: [longsword], entityType: "feats", type: "FEAT_FAMILY" }))
+        (await Properties.findMany(db, { entityIds: [longsword], entityType: "feats", type: "FEAT_FAMILY" }))
           .map((p) => p.value)
           .sort(),
       ).toEqual(["Martial Weapon Proficiency", "Weapon Focus"]);

@@ -24,7 +24,7 @@ async function setup() {
 
 /** The activities logged against a property, by type, sorted: those of one test share a timestamp. */
 async function activityTypes(userId: string, propertyId: string) {
-  const { items } = await Activities.findMany(
+  const { items } = await Activities.findPage(
     db,
     { userId, targetTable: getTableName(propertiesInCustomization) },
     { limit: 100, page: 1 },

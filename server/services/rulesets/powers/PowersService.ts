@@ -84,7 +84,7 @@ class PowersService {
         }
 
         const aptitudeIds = body.aptitudes.map((a) => a.id);
-        const featAptitudes = await FeatsAptitudes.findDistinctAptitudeIds(tx, { aptitudeIds });
+        const featAptitudes = await FeatsAptitudes.findAptitudeIds(tx, { aptitudeIds });
         if (featAptitudes.length > 0) {
           throw new ConflictError("Cannot link spell to aptitude(s) already used for feats");
         }
@@ -171,7 +171,7 @@ class PowersService {
 
           if (body.aptitudes.length > 0) {
             const aptitudeIds = body.aptitudes.map((a) => a.id);
-            const featAptitudes = await FeatsAptitudes.findDistinctAptitudeIds(tx, { aptitudeIds });
+            const featAptitudes = await FeatsAptitudes.findAptitudeIds(tx, { aptitudeIds });
             if (featAptitudes.length > 0) {
               throw new ConflictError("Cannot link spell to aptitude(s) already used for feats");
             }
@@ -200,7 +200,7 @@ class PowersService {
           body.components !== undefined;
 
         if (hasSpellFields) {
-          const existingProps = await Properties.findManyByEntity(tx, {
+          const existingProps = await Properties.findMany(tx, {
             entityIds: [targetId],
             entityType: "powers",
             type: hooks.powers.primaryGroupingType,

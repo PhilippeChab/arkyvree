@@ -10,7 +10,7 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
     super(attachmentsInStorage);
   }
 
-  async findManyByBlobIds(db: Db, where: { blobIds: string[] }) {
+  async findMany(db: Db, where: { blobIds: string[] }) {
     if (where.blobIds.length === 0) return [];
     return await db.query.attachmentsInStorage.findMany({
       where: inArray(this.table.blobId, where.blobIds),
@@ -19,12 +19,13 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
 
   async findOne(db: Db, where: { id: string } | { recordType: string; recordId: string; name: string }) {
     return await db.query.attachmentsInStorage.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "recordType" in where && eq(this.table.recordType, where.recordType),
-        "recordId" in where && eq(this.table.recordId, where.recordId),
-        "name" in where && eq(this.table.name, where.name),
-      ]),
+      where: this.branchWhere(
+        ["id" in where && eq(this.table.id, where.id), "recordId" in where && eq(this.table.recordId, where.recordId)],
+        [
+          "recordType" in where && eq(this.table.recordType, where.recordType),
+          "name" in where && eq(this.table.name, where.name),
+        ],
+      ),
     });
   }
 

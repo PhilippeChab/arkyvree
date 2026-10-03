@@ -45,7 +45,7 @@ class AptitudesService {
       // source: includes aptitude name-grouping losers, sibling losers, and
       // overridden source IDs — all things that shouldn't appear in the list.
       const excludeIds = sourceChain.length > 0 && !where.childOnly ? [...idResolveMap.keys()] : undefined;
-      return await Aptitudes.findManyByRulesetId(
+      return await Aptitudes.findPage(
         db,
         { rulesetId, ancestorRulesetIds: sourceChain, excludeIds, ...where },
         pagination,

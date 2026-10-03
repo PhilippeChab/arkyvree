@@ -96,7 +96,7 @@ describe("ClassSkillsService", () => {
 
     const added = await ClassSkillsService.addClassSkill(session, fork.id, fighter.id, swim.id);
     const removed = await ClassSkillsService.removeClassSkill(session, fork.id, fighter.id, climb.id);
-    const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, {
+    const snapshot = await EntitySnapshots.findOne(db, {
       sourceEntityId: fighter.id,
       rulesetId: fork.id,
     });

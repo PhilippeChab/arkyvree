@@ -33,23 +33,19 @@ async function customize(itemId: string) {
 
 /** The customizations an item owns, with each modifier's own requirements. */
 async function customizationsOf(itemId: string) {
-  const modifiers = await Modifiers.findManyBySource(db, { sourceIds: [itemId], sourceType: "items" });
+  const modifiers = await Modifiers.findMany(db, { sourceIds: [itemId], sourceType: "items" });
   return {
     modifiers: await Promise.all(
       modifiers.map(async ({ id, target }) => ({
         id,
         target,
-        requirements: (await Requirements.findManyByEntity(db, { entityIds: [id], entityType: "modifiers" })).map(
+        requirements: (await Requirements.findMany(db, { entityIds: [id], entityType: "modifiers" })).map(
           (r) => r.target,
         ),
       })),
     ),
-    properties: (await Properties.findManyByEntity(db, { entityIds: [itemId], entityType: "items" })).map(
-      (p) => p.value,
-    ),
-    requirements: (await Requirements.findManyByEntity(db, { entityIds: [itemId], entityType: "items" })).map(
-      (r) => r.target,
-    ),
+    properties: (await Properties.findMany(db, { entityIds: [itemId], entityType: "items" })).map((p) => p.value),
+    requirements: (await Requirements.findMany(db, { entityIds: [itemId], entityType: "items" })).map((r) => r.target),
   };
 }
 
@@ -264,7 +260,7 @@ describe("ItemsService", () => {
       await ItemsService.deleteRulesetItem(session, fork.id, copy.id);
       const [variant] = await ItemsService.createVariants(session, fork.id, source.id, [{ name: "Ghostly Scroll" }]);
 
-      const snapshots = await EntitySnapshots.findByTypeAndRuleset(db, { rulesetId: fork.id, entityType: "items" });
+      const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id, entityType: "items" });
       expect(snapshots).toMatchObject([{ sourceEntityId: inherited.id, forkedEntityId: variant.id }]);
     });
   });

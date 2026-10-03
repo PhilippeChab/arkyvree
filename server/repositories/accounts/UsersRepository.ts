@@ -16,12 +16,14 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {
     return await db.query.usersInAccount.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "emailAddress" in where && eq(this.table.emailAddress, where.emailAddress),
-        "username" in where && eq(this.table.username, where.username),
-        this.visibility(visibility),
-      ]),
+      where: this.branchWhere(
+        [
+          "id" in where && eq(this.table.id, where.id),
+          "emailAddress" in where && eq(this.table.emailAddress, where.emailAddress),
+          "username" in where && eq(this.table.username, where.username),
+        ],
+        [this.visibility(visibility)],
+      ),
     });
   }
 

@@ -34,7 +34,7 @@ async function activityTypes(
   table: typeof modifiersInCustomization | typeof requirementsInCustomization,
   targetId: string,
 ) {
-  const { items } = await Activities.findMany(
+  const { items } = await Activities.findPage(
     db,
     { userId, targetTable: getTableName(table) },
     { limit: 100, page: 1 },
@@ -158,7 +158,7 @@ describe("ModifiersService", () => {
       value: "5",
       operator: "greater_than_or_equal",
     });
-    const sourceRequirements = await Requirements.findManyByEntity(db, {
+    const sourceRequirements = await Requirements.findMany(db, {
       entityIds: [source.id],
       entityType: "modifiers",
     });
@@ -168,7 +168,7 @@ describe("ModifiersService", () => {
       value: "3",
     });
     expect(copy).toMatchObject({ ...strengthBonus, value: "3", sourceId: feat.id });
-    const copied = await Requirements.findManyByEntity(db, { entityIds: [copy.id], entityType: "modifiers" });
+    const copied = await Requirements.findMany(db, { entityIds: [copy.id], entityType: "modifiers" });
     expect(
       copied
         .map(({ level, chainingOperator, target }) => ({ level, chainingOperator, target }))
@@ -178,7 +178,7 @@ describe("ModifiersService", () => {
       { level: "1.1", chainingOperator: null, target: "combat.bab" },
     ]);
     expect(copied.map((r) => r.id)).not.toContain(sourceRequirements[0].id);
-    expect(await Requirements.findManyByEntity(db, { entityIds: [source.id], entityType: "modifiers" })).toEqual(
+    expect(await Requirements.findMany(db, { entityIds: [source.id], entityType: "modifiers" })).toEqual(
       sourceRequirements,
     );
   });
@@ -198,9 +198,7 @@ describe("ModifiersService", () => {
 
       await ModifiersService.deleteEntityModifier(session, rulesetId, "feats", feat.id, modifier.id);
 
-      expect(await Requirements.findManyByEntity(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual(
-        [],
-      );
+      expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([]);
       expect(await activityTypes(session.userId, modifiersInCustomization, modifier.id)).toEqual([
         "createModifier",
         "deleteModifier",
@@ -209,9 +207,9 @@ describe("ModifiersService", () => {
         "createRequirement",
       ]);
       // The other modifier keeps its requirement.
-      expect(
-        await Requirements.findManyByEntity(db, { entityIds: [sibling.id], entityType: "modifiers" }),
-      ).toMatchObject([{ id: requirements[1].id }]);
+      expect(await Requirements.findMany(db, { entityIds: [sibling.id], entityType: "modifiers" })).toMatchObject([
+        { id: requirements[1].id },
+      ]);
     });
   });
 });

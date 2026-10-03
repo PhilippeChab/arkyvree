@@ -89,7 +89,7 @@ export async function buildOverrideMap(
   extensionRulesetIds?: string[],
 ): Promise<{ map: OverrideMap; siblingMap: Map<string, string[]>; idResolveMap: IdResolveMap }> {
   const allRulesetIds = [rulesetId, ...ancestorRulesetIds];
-  const allSnapshots = await EntitySnapshots.findByRulesetIds(db, { rulesetIds: allRulesetIds });
+  const allSnapshots = await EntitySnapshots.findMany(db, { rulesetIds: allRulesetIds });
 
   // Group by rulesetId, process closest-first (allRulesetIds is already ordered closest-first)
   const byRuleset = new Map<string, typeof allSnapshots>();

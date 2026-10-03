@@ -34,7 +34,7 @@ class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInR
     return await db
       .delete(this.table)
       .where(
-        this.writeWhere([
+        this.branchWhere([
           "klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId),
           "featId" in where && eq(this.table.featId, where.featId),
           "aptitudeId" in where && eq(this.table.aptitudeId, where.aptitudeId),

@@ -35,13 +35,13 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     const prohibitedSchools = new Set<string>(clientExcludeSchools);
 
     if (characterLevels.length > 0) {
-      // Called inside withRulesetScope: Feats.findManyByCharacterLevelIds and
-      // findManyGrantedAt auto-apply resolveRowOverrides via the repo
+      // Called inside withRulesetScope: Feats.findPicks and
+      // Feats.findGrants auto-apply resolveRowOverrides via the repo
       // Proxy, so feat.id is already post-COW. propertiesByEntity.get also
       // auto-resolves on the way in.
       const characterLevelIds = characterLevels.map((level) => level.id);
-      const pickedFeats = await Feats.findManyByCharacterLevelIds(tx, { characterLevelIds });
-      const givenFeats = await Feats.findManyGrantedAt(tx, { levels: characterLevels });
+      const pickedFeats = await Feats.findPicks(tx, { characterLevelIds });
+      const givenFeats = await Feats.findGrants(tx, { levels: characterLevels });
       const allFeatIds = [...new Set([...pickedFeats, ...givenFeats].map((f) => f.id))];
 
       for (const featId of allFeatIds) {

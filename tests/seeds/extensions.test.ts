@@ -36,7 +36,7 @@ describe("The seeded extensions", () => {
     const warrior = await seededRows(DND35_COMPLETE_WARRIOR_NAME);
     const coreFeats = new Map((await seededRows()).feats.map((feat) => [feat.id, feat]));
     const snapshots = (
-      await EntitySnapshots.findByTypeAndRuleset(db, { rulesetId: warrior.rulesetId, entityType: "feats" })
+      await EntitySnapshots.findMany(db, { rulesetId: warrior.rulesetId, entityType: "feats" })
     ).filter((s) => coreFeats.has(s.sourceEntityId));
     expect(snapshots.length).toBeGreaterThan(0);
     for (const snapshot of snapshots) {
@@ -53,9 +53,9 @@ describe("The seeded extensions", () => {
     const corePowers = new Map(core.powers.map((power) => [power.id, power]));
     const failures: string[] = [];
     let copies = 0;
-    for (const extension of (await Rulesets.findSystemOwned(db)).filter((r) => r.id !== core.rulesetId)) {
+    for (const extension of (await Rulesets.findMany(db, { system: true })).filter((r) => r.id !== core.rulesetId)) {
       const rows = await seededRows(extension.name);
-      for (const { sourceEntityId, forkedEntityId } of await EntitySnapshots.findByTypeAndRuleset(db, {
+      for (const { sourceEntityId, forkedEntityId } of await EntitySnapshots.findMany(db, {
         rulesetId: extension.id,
         entityType: "powers",
       })) {
@@ -81,9 +81,9 @@ describe("The seeded extensions", () => {
 
     const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
     const missile = divine.powers.find((power) => power.name === "Magic Missile")!;
-    const snapshot = (
-      await EntitySnapshots.findByTypeAndRuleset(db, { rulesetId: divine.rulesetId, entityType: "powers" })
-    ).find((s) => s.forkedEntityId === missile.id);
+    const snapshot = (await EntitySnapshots.findMany(db, { rulesetId: divine.rulesetId, entityType: "powers" })).find(
+      (s) => s.forkedEntityId === missile.id,
+    );
     expect(snapshot?.sourceEntityId).toBe(core.powers.find((power) => power.name === "Magic Missile")!.id);
     expect(missile.powersAptitudesInRules.map((link) => link.aptitudeId)).toContain(
       divine.aptitude("Force Domain Spells").id,

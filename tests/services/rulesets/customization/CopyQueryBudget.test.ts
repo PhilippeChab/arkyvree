@@ -48,10 +48,10 @@ test("modifier and requirement copies stay batched as modifier count grows", asy
     };
     await timingStorage.run(timing, () => copyEntityCustomizations(db, source.id, target.id, "feats", customizations));
     counts.push(timing.queryCount);
-    const copiedRoots = await Modifiers.findManyBySource(db, { sourceIds: [target.id], sourceType: "feats" });
+    const copiedRoots = await Modifiers.findMany(db, { sourceIds: [target.id], sourceType: "feats" });
     expect(copiedRoots).toHaveLength(width);
     expect(
-      await Requirements.findManyByEntity(db, { entityIds: copiedRoots.map((m) => m.id), entityType: "modifiers" }),
+      await Requirements.findMany(db, { entityIds: copiedRoots.map((m) => m.id), entityType: "modifiers" }),
     ).toHaveLength(width);
   }
   expect(counts[1]).toBe(counts[0]);

@@ -234,18 +234,18 @@ export default class DetailedCharacterDataLoader {
     const equippedItemIds = resolvedInventory.filter((inv) => inv.equipped).map((inv) => inv.itemsInRule.id);
 
     // ── Round 4: character-scoped queries (5); ruleset-scoped lookups resolve from cache ──
-    const rawRealSkills = await Skills.findManyByCharacterLevelIds(database, {
+    const rawRealSkills = await Skills.findPicks(database, {
       characterLevelIds: realCharacterLevelIds,
     });
-    const rawPickedFeats = await Feats.findManyByCharacterLevelIds(database, {
+    const rawPickedFeats = await Feats.findPicks(database, {
       characterLevelIds: realCharacterLevelIds,
     });
     // A saved level's class level, copied (copy-on-write) or not; a projected level's grants come with it
-    const rawGivenFeats = await Feats.findManyGrantedAt(database, { levels: characterLevels });
-    const rawPickedPowers = await Powers.findManyByCharacterLevelIds(database, {
+    const rawGivenFeats = await Feats.findGrants(database, { levels: characterLevels });
+    const rawPickedPowers = await Powers.findPicks(database, {
       characterLevelIds: realCharacterLevelIds,
     });
-    const rawGivenPowers = await Powers.findManyGrantedAt(database, { levels: characterLevels });
+    const rawGivenPowers = await Powers.findGrants(database, { levels: characterLevels });
 
     // Ruleset-scoped rows read from the composed cache's pre-built Maps.
     const languages = [];
@@ -360,7 +360,7 @@ export default class DetailedCharacterDataLoader {
       if (ks) klassSkills.push(...ks);
     }
 
-    const characterSourcedModifiers = await Modifiers.findManyBySourceIds(database, {
+    const characterSourcedModifiers = await Modifiers.findMany(database, {
       sourceIds: [this.character.id],
     });
 
@@ -405,7 +405,7 @@ export default class DetailedCharacterDataLoader {
     // Only character-direct modifiers can have requirements the cache misses.
     const extraModifierRequirements =
       characterSourcedModifiers.length > 0
-        ? await Requirements.findManyByEntityIds(database, {
+        ? await Requirements.findMany(database, {
             entityIds: characterSourcedModifiers.map((m) => m.id),
           })
         : [];

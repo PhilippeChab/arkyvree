@@ -77,9 +77,9 @@ class CharactersService extends include(Object, Archives) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
 
-      // Races.findManyByRulesetId output has its FK fields auto-resolved by
+      // Races.findPage's output has its FK fields auto-resolved by
       // the Proxy since cowContext is active. No manual resolveOverrides pass.
-      const result = await Races.findManyByRulesetId(
+      const result = await Races.findPage(
         db,
         { rulesetId, ancestorRulesetIds: sourceChain, kind: "pc", search: where.search },
         pagination,
@@ -194,7 +194,7 @@ class CharactersService extends include(Object, Archives) {
     pagination: { limit: number; page: number },
   ) {
     // Fetch basic character data with pagination
-    const result = await Characters.findMany(db, { userId: session.userId, ...where }, pagination);
+    const result = await Characters.findPage(db, { userId: session.userId, ...where }, pagination);
 
     const charactersList = result.items;
     const characterIds = charactersList.map((char) => char.id);
@@ -272,7 +272,7 @@ class CharactersService extends include(Object, Archives) {
       throw new NotFoundError("Campaign not found");
     }
 
-    return await Characters.findUnlinked(
+    return await Characters.findUnlinkedPage(
       db,
       { userId: session.userId, rulesetId: campaign.rulesetId, search: where.search },
       pagination,

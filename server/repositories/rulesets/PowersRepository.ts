@@ -23,7 +23,65 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
 
   protected readonly entityType = "powers";
 
-  async findAvailableByAptitude(
+  /** The powers the character levels' class levels grant, each with its level (see `grantedAt`). */
+  async findGrants(db: Db, where: { levels: { id: string; klassLevelId: string }[] }) {
+    if (where.levels.length === 0) return [];
+    const granted = await db
+      .select({
+        ...getTableColumns(powersInRules),
+        klassLevelId: klassLevelPowersInRules.klassLevelId,
+        aptitudeId: klassLevelPowersInRules.aptitudeId,
+        free: klassLevelPowersInRules.free,
+        saveName: savesInRules.name,
+        powerLevel: powersAptitudesInRules.level,
+      })
+      .from(powersInRules)
+      .innerJoin(klassLevelPowersInRules, eq(powersInRules.id, klassLevelPowersInRules.powerId))
+      .leftJoin(savesInRules, eq(powersInRules.saveId, savesInRules.id))
+      .leftJoin(
+        powersAptitudesInRules,
+        and(
+          eq(powersInRules.id, powersAptitudesInRules.powerId),
+          eq(klassLevelPowersInRules.aptitudeId, powersAptitudesInRules.aptitudeId),
+        ),
+      )
+      .where(
+        and(
+          inArray(klassLevelPowersInRules.klassLevelId, [...new Set(where.levels.map((level) => level.klassLevelId))]),
+          isNull(powersInRules.deletedAt),
+        ),
+      );
+    return this.grantedAt(where.levels, granted);
+  }
+
+  async findMany(db: Db, where: { ids: string[] }) {
+    return await db.query.powersInRules.findMany({
+      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
+      orderBy: [this.orderBy(this.table.name)],
+    });
+  }
+
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+  ) {
+    return await db.query.powersInRules.findFirst({
+      where: this.branchWhere(
+        ["id" in where && eq(this.table.id, where.id), "name" in where && eq(this.table.name, where.name)],
+        ["rulesetId" in where && eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)],
+      ),
+      with: {
+        powersAptitudesInRules: {
+          with: {
+            aptitudesInRule: true,
+          },
+        },
+        savesInRule: true,
+      },
+    });
+  }
+
+  async findOptionPage(
     db: Db,
     where: {
       rulesetId: string;
@@ -69,41 +127,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
     return this.paginated(rows, pagination);
   }
 
-  async findMany(db: Db, where: { ids: string[] }) {
-    return await db.query.powersInRules.findMany({
-      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: [this.orderBy(this.table.name)],
-    });
-  }
-
-  async findManyByCharacterLevelIds(db: Db, where: { characterLevelIds: string[] }) {
-    return await db
-      .select({
-        ...getTableColumns(powersInRules),
-        klassLevelId: klassLevelsInRules.id,
-        characterLevelId: levelsInCharacter.id,
-        aptitudeId: levelPowersInCharacter.aptitudeId,
-        saveName: savesInRules.name,
-        powerLevel: powersAptitudesInRules.level,
-      })
-      .from(powersInRules)
-      .innerJoin(levelPowersInCharacter, eq(powersInRules.id, levelPowersInCharacter.powerId))
-      .innerJoin(levelsInCharacter, eq(levelPowersInCharacter.characterLevelId, levelsInCharacter.id))
-      .innerJoin(klassLevelsInRules, eq(levelsInCharacter.klassLevelId, klassLevelsInRules.id))
-      .leftJoin(savesInRules, eq(powersInRules.saveId, savesInRules.id))
-      .leftJoin(
-        powersAptitudesInRules,
-        and(
-          eq(powersInRules.id, powersAptitudesInRules.powerId),
-          eq(levelPowersInCharacter.aptitudeId, powersAptitudesInRules.aptitudeId),
-        ),
-      )
-      .where(
-        and(inArray(levelPowersInCharacter.characterLevelId, where.characterLevelIds), isNull(powersInRules.deletedAt)),
-      );
-  }
-
-  async findManyByRulesetId(
+  async findPage(
     db: Db,
     where: RulesetEntityFilters<{ aptitudeId?: string; level?: number }>,
     pagination: { limit: number; page: number },
@@ -155,57 +179,31 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
     });
   }
 
-  /** The powers the character levels' class levels grant, each with its level (see `grantedAt`). */
-  async findManyGrantedAt(db: Db, where: { levels: { id: string; klassLevelId: string }[] }) {
-    if (where.levels.length === 0) return [];
-    const granted = await db
+  async findPicks(db: Db, where: { characterLevelIds: string[] }) {
+    return await db
       .select({
         ...getTableColumns(powersInRules),
-        klassLevelId: klassLevelPowersInRules.klassLevelId,
-        aptitudeId: klassLevelPowersInRules.aptitudeId,
-        free: klassLevelPowersInRules.free,
+        klassLevelId: klassLevelsInRules.id,
+        characterLevelId: levelsInCharacter.id,
+        aptitudeId: levelPowersInCharacter.aptitudeId,
         saveName: savesInRules.name,
         powerLevel: powersAptitudesInRules.level,
       })
       .from(powersInRules)
-      .innerJoin(klassLevelPowersInRules, eq(powersInRules.id, klassLevelPowersInRules.powerId))
+      .innerJoin(levelPowersInCharacter, eq(powersInRules.id, levelPowersInCharacter.powerId))
+      .innerJoin(levelsInCharacter, eq(levelPowersInCharacter.characterLevelId, levelsInCharacter.id))
+      .innerJoin(klassLevelsInRules, eq(levelsInCharacter.klassLevelId, klassLevelsInRules.id))
       .leftJoin(savesInRules, eq(powersInRules.saveId, savesInRules.id))
       .leftJoin(
         powersAptitudesInRules,
         and(
           eq(powersInRules.id, powersAptitudesInRules.powerId),
-          eq(klassLevelPowersInRules.aptitudeId, powersAptitudesInRules.aptitudeId),
+          eq(levelPowersInCharacter.aptitudeId, powersAptitudesInRules.aptitudeId),
         ),
       )
       .where(
-        and(
-          inArray(klassLevelPowersInRules.klassLevelId, [...new Set(where.levels.map((level) => level.klassLevelId))]),
-          isNull(powersInRules.deletedAt),
-        ),
+        and(inArray(levelPowersInCharacter.characterLevelId, where.characterLevelIds), isNull(powersInRules.deletedAt)),
       );
-    return this.grantedAt(where.levels, granted);
-  }
-
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
-  ) {
-    return await db.query.powersInRules.findFirst({
-      where: this.where([
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "id" in where && eq(this.table.id, where.id),
-        "name" in where && eq(this.table.name, where.name),
-        isNull(this.table.deletedAt),
-      ]),
-      with: {
-        powersAptitudesInRules: {
-          with: {
-            aptitudesInRule: true,
-          },
-        },
-        savesInRule: true,
-      },
-    });
   }
 }
 

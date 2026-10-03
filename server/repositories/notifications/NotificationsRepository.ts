@@ -32,7 +32,7 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     return result[0]?.count ?? 0;
   }
 
-  async findMany(
+  async findPage(
     db: Db,
     where: {
       recipientId: string;
@@ -88,7 +88,7 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
       .update(this.table)
       .set({ readAt: new Date().toISOString() })
       .where(
-        this.writeWhere(
+        this.branchWhere(
           [eq(this.table.recipientId, where.recipientId)],
           [
             "id" in where && eq(this.table.id, where.id),
@@ -105,7 +105,7 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     return await db
       .delete(this.table)
       .where(
-        this.writeWhere([
+        this.branchWhere([
           "id" in where && eq(this.table.id, where.id),
           "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
         ]),

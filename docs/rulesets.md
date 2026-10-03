@@ -125,7 +125,7 @@ Inherited entities are read-only. When a user edits or deletes one:
 
 ### COW in Repositories
 
-Each repository's `findManyByRulesetId` builds COW-aware SQL per ancestor:
+Each repository's `findPage` builds COW-aware SQL per ancestor:
 
 ```sql
 -- For each ancestor in the source chain:
@@ -345,7 +345,7 @@ Every entity service works in the ruleset's scope (`withRulesetScope`): reads co
 ```ts
 // Read (list): the repository reads the ruleset and its source chain
 return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
-  Saves.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: rulesetData.cow.sourceChain, ...where }, pagination),
+  Saves.findPage(db, { rulesetId, ancestorRulesetIds: rulesetData.cow.sourceChain, ...where }, pagination),
 );
 
 // Read (one), and the start of every write: the entity in the composed view, or a 404

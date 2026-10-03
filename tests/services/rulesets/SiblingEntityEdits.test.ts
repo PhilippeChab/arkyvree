@@ -42,7 +42,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
         operator: "add",
       });
     if (omitLastLevel) {
-      const last = (await KlassLevels.findManyByKlass(db, { klassId: copy.id })).find((level) => level.level === 20)!;
+      const last = (await KlassLevels.findMany(db, { klassId: copy.id })).find((level) => level.level === 20)!;
       await ClassLevelsService.deleteClassLevel(session, extension.id, copy.id, last.id);
     }
     await Rulesets.update(
@@ -70,7 +70,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     });
   const before = await read();
   expect(before).toEqual({ properties: ["0", "1"], modifiers: entityType === "klasses" ? [] : ["10", "11"] });
-  const originals = await Properties.findManyByEntityIds(db, { entityIds: sourceIds });
+  const originals = await Properties.findMany(db, { entityIds: sourceIds });
   const assertCopied = async () => {
     for (const cold of [false, true]) {
       if (cold) invalidateAll();
@@ -79,14 +79,14 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     const id = await withRulesetScope(db, host.id, async ({ rulesetData }) => rulesetData.canonicalize(source.id));
     expect(sourceIds).not.toContain(id);
     // Verify rows were actually copied, not merely re-merged into the read view.
-    const stored = await Properties.findManyByEntity(db, { entityIds: [id], entityType });
+    const stored = await Properties.findMany(db, { entityIds: [id], entityType });
     expect(
       stored
         .filter((p) => p.type === "SIBLING_MARKER")
         .map((p) => p.value)
         .sort(),
     ).toEqual(before.properties);
-    expect(await Properties.findManyByEntityIds(db, { entityIds: sourceIds })).toEqual(originals);
+    expect(await Properties.findMany(db, { entityIds: sourceIds })).toEqual(originals);
   };
   return { session, host, source, assertCopied };
 }

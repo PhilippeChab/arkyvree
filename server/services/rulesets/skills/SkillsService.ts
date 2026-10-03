@@ -46,11 +46,7 @@ class SkillsService {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-      const result = await Skills.findManyByRulesetId(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
-        pagination,
-      );
+      const result = await Skills.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
 
       // Flatten per-skill properties from the cache into a single array for
       // enrichWithProperties (which does the entity-type filtering internally).

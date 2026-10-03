@@ -63,8 +63,8 @@ async function getExcludeNonStackableFeatIds(
   const characterLevels =
     excludeIdSet.size > 0 ? allCharacterLevels.filter((l) => !excludeIdSet.has(l.id)) : allCharacterLevels;
   const characterLevelIds = characterLevels.map((lvl) => lvl.id);
-  const pickedFeats = await Feats.findManyByCharacterLevelIds(database, { characterLevelIds });
-  const givenFeats = await Feats.findManyGrantedAt(database, { levels: characterLevels });
+  const pickedFeats = await Feats.findPicks(database, { characterLevelIds });
+  const givenFeats = await Feats.findGrants(database, { levels: characterLevels });
   const excludeFeatIds = [...pickedFeats, ...givenFeats].filter((feat) => !feat.stackable).map((feat) => feat.id);
 
   for (const rec of autoGrantedRecords) {
@@ -177,7 +177,7 @@ export async function getAvailableFeats(
       pendingLevelAbilityIds,
     );
 
-    const result = await Feats.findAvailableByAptitude(
+    const result = await Feats.findOptionPage(
       db,
       {
         rulesetId: characterRecord.rulesetId,
@@ -233,7 +233,7 @@ export async function getAvailableFeatsGrouped(
       pendingLevelAbilityIds,
     );
 
-    const result = await Feats.findAvailableByAptitudeGrouped(
+    const result = await Feats.findOptionGroupPage(
       db,
       {
         rulesetId: characterRecord.rulesetId,

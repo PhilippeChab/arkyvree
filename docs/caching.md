@@ -79,7 +79,7 @@ Also at compose time: the inline join rows on feats/powers (`powersAptitudesInRu
 
 ### Layer 2 — Character\* repo reads auto-resolve when a COW context is active
 
-`CharacterLevels`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterAbilities`, `CharacterInventory`, `CharacterLanguages` — plus any method named `*ByCharacter*` or `*ByKlassLevel*` on ruleset-scoped repos (e.g. `Feats.findManyByCharacterLevelIds`) — have their read results (`find*`, `exists*`, `count*`) post-processed. When a `cowContext` is active, every `*Id` field on every returned row is remapped to its post-COW form via `resolveRowOverrides`.
+Every repository's reads (`find*`, `exists*`, `count*`) but `EntitySnapshots`' and `RulesetEntities`' (`skipCow`) have their results post-processed. The ones carrying stored ids are the Character\* repos' (`CharacterLevels`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterAbilities`, `CharacterInventory`, `CharacterLanguages`) and the ruleset repos' reads of picks and grants (`Feats.findPicks`, `Feats.findGrants`). When a `cowContext` is active, every `*Id` field on every returned row is remapped to its post-COW form via `resolveRowOverrides`.
 
 ```ts
 // Inside a cowContext: row.klassLevelId / row.abilityId / row.featId /
@@ -275,7 +275,7 @@ The flat `properties` / `modifiers` / `requirements` arrays were removed from `C
 
 Character-scoped tables: `characters`, `character_levels`, `character_abilities`, `character_languages`, `inventory`, `character_level_feats/powers/skills`, character-sourced modifiers. These change per character per mutation; cross-request cache hit rate would be ~0%. They're served by the request-scoped dedup layer when the same query fires twice in one request.
 
-Paginated / searched / filtered queries (e.g. `Feats.findManyByRulesetId({ search, pagination })`): too many unique keys to make a shared cache useful. These go straight to Postgres.
+Paginated / searched / filtered queries (e.g. `Feats.findPage({ search, pagination })`): too many unique keys to make a shared cache useful. These go straight to Postgres.
 
 ## Request-Scoped Query Dedup
 
@@ -449,7 +449,7 @@ sequenceDiagram
 
     Note over Svc: ...more reads, some hit dedup
 
-    Svc->>Repo: Powers.findAvailableByAptitude(db, ...)
+    Svc->>Repo: Powers.findOptionPage(db, ...)
     Note over Repo: paginated — not cached
     Repo->>DB: SELECT ... LIMIT 20
     DB-->>Repo: rows

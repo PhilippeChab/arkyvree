@@ -20,7 +20,7 @@ async function sweepOne(blobId: string, key: string, logger: Logger): Promise<Sw
   return await withTransaction(async (tx) => {
     if (!(await Blobs.lock(tx, { id: blobId }, "update", true))) return "skipped";
 
-    const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
+    const refs = await Attachments.findMany(tx, { blobIds: [blobId] });
     if (refs.length > 0) return "skipped";
 
     // S3 call inside the tx (unlike attach() which moves it out) — the
@@ -63,7 +63,7 @@ export async function sweepPendingBlobs(
   // the success-count's worth of progress per iteration.
   const failedIds = new Set<string>();
   while (true) {
-    const candidates = await Blobs.findSweepCandidates(
+    const candidates = await Blobs.findOrphans(
       db,
       { createdBefore: cutoff, excludeIds: [...failedIds] },
       { limit: batch },

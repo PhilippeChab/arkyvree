@@ -13,7 +13,7 @@ test("stored modifier reads preserve ownership without changing ordinary COW rea
   const seed = await getSeedCtx();
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const sourceId = seed.featMap.Toughness;
-  const [modifier] = await Modifiers.findManyBySource(db, { sourceIds: [sourceId], sourceType: "feats" });
+  const [modifier] = await Modifiers.findMany(db, { sourceIds: [sourceId], sourceType: "feats" });
   expect(modifier).toBeDefined();
   const copy = await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
 

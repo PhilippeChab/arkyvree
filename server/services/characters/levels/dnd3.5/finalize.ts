@@ -259,7 +259,7 @@ export async function removeLevel(session: Session, characterId: string) {
   return await withTransaction(async (tx) => {
     const characterRecord = await getEditableCharacter(tx, session, characterId);
 
-    const lastLevel = await CharacterLevels.findHighestCharacterLevel(tx, {
+    const lastLevel = await CharacterLevels.findLatest(tx, {
       characterId,
     });
     if (!lastLevel) {

@@ -29,7 +29,40 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
     return result.count;
   }
 
-  async findMany(
+  async findOne(db: Db, where: { id: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
+    return await db.query.campaignsInCampaign.findFirst({
+      where: this.where([eq(this.table.id, where.id), this.visibility(visibility)]),
+    });
+  }
+
+  async findOneWithPlayerCount(db: Db, where: { id: string }) {
+    return await db
+      .select({
+        id: campaignsInCampaign.id,
+        name: campaignsInCampaign.name,
+        description: campaignsInCampaign.description,
+        rulesetName: rulesetsInRules.name,
+        deletedAt: campaignsInCampaign.deletedAt,
+        createdAt: campaignsInCampaign.createdAt,
+        updatedAt: campaignsInCampaign.updatedAt,
+        currentPlayers: count(playersInCampaign.userId).as("currentPlayers"),
+      })
+      .from(campaignsInCampaign)
+      .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
+      .innerJoin(rulesetsInRules, eq(campaignsInCampaign.rulesetId, rulesetsInRules.id))
+      .where(and(eq(campaignsInCampaign.id, where.id), not(isNull(playersInCampaign.userId))))
+      .groupBy(
+        campaignsInCampaign.id,
+        campaignsInCampaign.name,
+        campaignsInCampaign.description,
+        rulesetsInRules.name,
+        campaignsInCampaign.deletedAt,
+        campaignsInCampaign.createdAt,
+        campaignsInCampaign.updatedAt,
+      );
+  }
+
+  async findPage(
     db: Db,
     where: {
       userId: string;
@@ -81,39 +114,6 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
       .offset(offset);
 
     return this.paginated(rows, pagination);
-  }
-
-  async findOne(db: Db, where: { id: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
-    return await db.query.campaignsInCampaign.findFirst({
-      where: this.where([eq(this.table.id, where.id), this.visibility(visibility)]),
-    });
-  }
-
-  async findOneWithPlayerCount(db: Db, where: { id: string }) {
-    return await db
-      .select({
-        id: campaignsInCampaign.id,
-        name: campaignsInCampaign.name,
-        description: campaignsInCampaign.description,
-        rulesetName: rulesetsInRules.name,
-        deletedAt: campaignsInCampaign.deletedAt,
-        createdAt: campaignsInCampaign.createdAt,
-        updatedAt: campaignsInCampaign.updatedAt,
-        currentPlayers: count(playersInCampaign.userId).as("currentPlayers"),
-      })
-      .from(campaignsInCampaign)
-      .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
-      .innerJoin(rulesetsInRules, eq(campaignsInCampaign.rulesetId, rulesetsInRules.id))
-      .where(and(eq(campaignsInCampaign.id, where.id), not(isNull(playersInCampaign.userId))))
-      .groupBy(
-        campaignsInCampaign.id,
-        campaignsInCampaign.name,
-        campaignsInCampaign.description,
-        rulesetsInRules.name,
-        campaignsInCampaign.deletedAt,
-        campaignsInCampaign.createdAt,
-        campaignsInCampaign.updatedAt,
-      );
   }
 
   async create(db: Db, values: InferInsertModel<typeof campaignsInCampaign>) {

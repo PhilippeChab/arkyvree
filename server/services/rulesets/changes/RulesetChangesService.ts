@@ -23,7 +23,7 @@ class RulesetChangesService {
       throw new BadRequestError("Only forked rulesets have local changes");
     }
 
-    const snapshots = await EntitySnapshots.findByRulesetId(db, { rulesetId });
+    const snapshots = await EntitySnapshots.findMany(db, { rulesetId });
 
     // Group snapshots by entity type for batch fetching
     const snapshotsByType = new Map<string, typeof snapshots>();
@@ -104,7 +104,7 @@ class RulesetChangesService {
 
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-      const snapshot = await EntitySnapshots.findBySourceAndRuleset(tx, {
+      const snapshot = await EntitySnapshots.findOne(tx, {
         sourceEntityId: entityId,
         rulesetId,
       });

@@ -11,7 +11,7 @@ import { linkGoogleAccountTo } from "./linkGoogleAccountTo.ts";
 
 class LinkedAccountsService {
   async getLinkedAccounts(session: Session) {
-    const accounts = await OauthAccounts.findManyByUser(db, { userId: session.userId });
+    const accounts = await OauthAccounts.findMany(db, { userId: session.userId });
     return accounts.map((a) => ({ provider: a.provider, linkedAt: a.createdAt }));
   }
 

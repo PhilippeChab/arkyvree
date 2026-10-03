@@ -38,15 +38,30 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {
     return await db.query.playersInCampaign.findMany({
-      where: this.where([
-        "campaignId" in where && eq(this.table.campaignId, where.campaignId),
-        "userId" in where && eq(this.table.userId, where.userId),
-        this.visibility(visibility),
-      ]),
+      where: this.branchWhere(
+        [
+          "campaignId" in where && eq(this.table.campaignId, where.campaignId),
+          "userId" in where && eq(this.table.userId, where.userId),
+        ],
+        [this.visibility(visibility)],
+      ),
     });
   }
 
-  async findManyForCampaign(
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; campaignId: string } | { userId: string; campaignId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    return await db.query.playersInCampaign.findFirst({
+      where: this.branchWhere(
+        ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
+        ["campaignId" in where && eq(this.table.campaignId, where.campaignId), this.visibility(visibility)],
+      ),
+    });
+  }
+
+  async findPage(
     db: Db,
     where: { campaignId: string; search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
     pagination: { limit: number; page: number },
@@ -104,21 +119,6 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
         limit,
         offset,
       });
-    });
-  }
-
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; campaignId: string } | { userId: string; campaignId: string },
-    visibility: Visibility = Visibility.UnarchivedOnly,
-  ) {
-    return await db.query.playersInCampaign.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "campaignId" in where && eq(this.table.campaignId, where.campaignId),
-        "userId" in where && eq(this.table.userId, where.userId),
-        this.visibility(visibility),
-      ]),
     });
   }
 

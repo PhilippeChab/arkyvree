@@ -13,11 +13,11 @@ describe("method-names", () => {
       lint({
         "server/repositories/Good.ts": `export class Good {
   findOne() {}
-  existsByName() {}
+  existsWithName() {}
   countUnread() {}
   createMany() {}
-  markAllRead() {}
-  lockById() {}
+  markRead() {}
+  lock() {}
   protected where() {}
   private build() {}
   #own() {}
@@ -28,6 +28,22 @@ describe("method-names", () => {
         "server/repositories/Get.ts": "export class Get {\n  get = async () => 1;\n}\n",
       }),
     ).toEqual(["method-names server/repositories/Get.ts", "method-names server/repositories/concerns/Bad.ts"]);
+  });
+
+  test("a repository method never names a filter: filters go in its where", () => {
+    expect(
+      lint({
+        "server/repositories/Good.ts":
+          "export class Good {\n  findOneWithBlob() {}\n  countPerRuleset() {}\n  findPage() {}\n  private findByIds() {}\n}\n",
+        "server/repositories/By.ts": "export class By {\n  findManyByUser() {}\n}\n",
+        "server/repositories/All.ts": "export class All {\n  archiveAllForUser() {}\n}\n",
+        "server/repositories/In.ts": "export class In {\n  existsInCampaign() {}\n}\n",
+      }),
+    ).toEqual([
+      "method-names server/repositories/All.ts",
+      "method-names server/repositories/By.ts",
+      "method-names server/repositories/In.ts",
+    ]);
   });
 
   test("a service reads with get, writes with its CRUD verbs, or takes an action", () => {

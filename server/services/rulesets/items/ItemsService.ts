@@ -141,11 +141,7 @@ class ItemsService extends include(Object, Variants) {
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const result = await Items.findManyByRulesetId(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
-        pagination,
-      );
+      const result = await Items.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
 
       return {
         ...result,
@@ -229,7 +225,7 @@ class ItemsService extends include(Object, Variants) {
 
         // If template, check for copies using the resolved ID
         if (item.isTemplate) {
-          const copies = await Items.findCopies(tx, { sourceItemId: item.id });
+          const copies = await Items.findMany(tx, { sourceItemId: item.id });
           if (copies.length > 0) {
             throw new ConflictError("Cannot delete a template item that has copies referencing it");
           }

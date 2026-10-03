@@ -162,7 +162,7 @@ export async function copyEntityRelationships(
     }
 
     // Copy levels and their sub-relationships
-    const levels = await KlassLevels.findManyByKlass(tx, { klassId: sourceEntityId });
+    const levels = await KlassLevels.findMany(tx, { klassId: sourceEntityId });
     if (levels.length === 0) return;
 
     const newLevels = await KlassLevels.createMany(

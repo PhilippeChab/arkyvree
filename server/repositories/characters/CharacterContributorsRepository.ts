@@ -18,20 +18,68 @@ class CharacterContributorsRepository extends include(
     super(contributorsInCharacter);
   }
 
-  async findActiveRole(db: Db, where: { userId: string; characterId: string }): Promise<ContributorRole | null> {
-    const contributor = await db.query.contributorsInCharacter.findFirst({
+  async findManyWithCharacter(
+    db: Db,
+    where: { userId: string; status: ContributorStatus },
+    pagination: { limit: number } = { limit: 100 },
+  ) {
+    return await db.query.contributorsInCharacter.findMany({
       where: this.where([
         eq(this.table.userId, where.userId),
-        eq(this.table.characterId, where.characterId),
-        eq(this.table.status, "Active"),
+        eq(this.table.status, where.status),
         isNull(this.table.deletedAt),
       ]),
+      with: {
+        charactersInCharacter: {
+          columns: { id: true, name: true },
+        },
+      },
+      orderBy: [this.orderBy(this.table.createdAt, "desc")],
+      limit: pagination.limit,
     });
-
-    return contributor?.role ?? null;
   }
 
-  async findMany(
+  async findOne(
+    db: Db,
+    where:
+      | { id: string }
+      | { characterId: string; userId: string; status: ContributorStatus }
+      | { characterId: string; email: string; status: ContributorStatus },
+  ) {
+    return await db.query.contributorsInCharacter.findFirst({
+      where: this.branchWhere(
+        [
+          "id" in where && eq(this.table.id, where.id),
+          "userId" in where && eq(this.table.userId, where.userId),
+          "email" in where && eq(this.table.email, where.email),
+        ],
+        [
+          "characterId" in where && eq(this.table.characterId, where.characterId),
+          "status" in where && eq(this.table.status, where.status),
+          isNull(this.table.deletedAt),
+        ],
+      ),
+    });
+  }
+
+  // Single invite for a specific user, any status. Caller is responsible for
+  // scoping by userId so a stranger can't probe other people's invite ids.
+  async findOneWithCharacter(db: Db, where: { id: string; userId: string }) {
+    return await db.query.contributorsInCharacter.findFirst({
+      where: this.where([
+        eq(this.table.id, where.id),
+        eq(this.table.userId, where.userId),
+        isNull(this.table.deletedAt),
+      ]),
+      with: {
+        charactersInCharacter: {
+          columns: { id: true, name: true, deletedAt: true },
+        },
+      },
+    });
+  }
+
+  async findPage(
     db: Db,
     where: { characterId: string; search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
     pagination: { limit: number; page: number },
@@ -78,61 +126,18 @@ class CharacterContributorsRepository extends include(
     return this.paginated(items, pagination);
   }
 
-  async findManyByUserId(
-    db: Db,
-    where: { userId: string; status: ContributorStatus },
-    pagination: { limit: number } = { limit: 100 },
-  ) {
-    return await db.query.contributorsInCharacter.findMany({
+  /** The user's role on the character as an active contributor, or null. */
+  async findRole(db: Db, where: { userId: string; characterId: string }): Promise<ContributorRole | null> {
+    const contributor = await db.query.contributorsInCharacter.findFirst({
       where: this.where([
         eq(this.table.userId, where.userId),
-        eq(this.table.status, where.status),
+        eq(this.table.characterId, where.characterId),
+        eq(this.table.status, "Active"),
         isNull(this.table.deletedAt),
       ]),
-      with: {
-        charactersInCharacter: {
-          columns: { id: true, name: true },
-        },
-      },
-      orderBy: [this.orderBy(this.table.createdAt, "desc")],
-      limit: pagination.limit,
     });
-  }
 
-  async findOne(
-    db: Db,
-    where:
-      | { id: string }
-      | { characterId: string; userId: string; status: ContributorStatus }
-      | { characterId: string; email: string; status: ContributorStatus },
-  ) {
-    return await db.query.contributorsInCharacter.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "characterId" in where && eq(this.table.characterId, where.characterId),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "email" in where && eq(this.table.email, where.email),
-        "status" in where && eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
-  // Single invite for a specific user, any status. Caller is responsible for
-  // scoping by userId so a stranger can't probe other people's invite ids.
-  async findOneForUser(db: Db, where: { id: string; userId: string }) {
-    return await db.query.contributorsInCharacter.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        eq(this.table.userId, where.userId),
-        isNull(this.table.deletedAt),
-      ]),
-      with: {
-        charactersInCharacter: {
-          columns: { id: true, name: true, deletedAt: true },
-        },
-      },
-    });
+    return contributor?.role ?? null;
   }
 
   async create(

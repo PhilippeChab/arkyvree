@@ -127,7 +127,7 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
             ],
       );
     });
-    const originals = await Requirements.findManyByEntity(db, { entityIds: copies, entityType: "feats" });
+    const originals = await Requirements.findMany(db, { entityIds: copies, entityType: "feats" });
     const visible = await RequirementsService.getEntityRequirements(host.id, "feats", copies[0]);
     expect(visible.map((r) => r.level).sort()).toEqual(["1", "2", "2.1", "2.2", "2.2.1", "2.2.2", "2.3"]);
     const target = visible.find((r) => r.level === (action === "update chain" ? "2" : "2.2.1"))!;
@@ -163,7 +163,7 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
       expect(shape(after)).toEqual(shape(expected));
       expect(after.some((r) => originals.some((source) => source.id === r.id))).toBe(false);
     }
-    expect(await Requirements.findManyByEntity(db, { entityIds: copies, entityType: "feats" })).toEqual(originals);
+    expect(await Requirements.findMany(db, { entityIds: copies, entityType: "feats" })).toEqual(originals);
     await expectStatus(route.$delete({ param }), 404);
   });
 }
@@ -175,7 +175,7 @@ test("hidden and unrelated template properties cannot be overridden", async () =
   const item = await ItemsService.duplicateRulesetItem(session, host.id, source.id, {
     name: "Template ownership check",
   });
-  const [hidden] = await Properties.findManyByEntity(db, { entityIds: [copies[1]], entityType: "items" });
+  const [hidden] = await Properties.findMany(db, { entityIds: [copies[1]], entityType: "items" });
   const [unrelatedItem] = await Items.create(db, { rulesetId: host.id, name: "Unrelated template", isTemplate: true });
   const [unrelated] = await Properties.create(db, {
     entityId: unrelatedItem.id,
@@ -219,7 +219,7 @@ test("three-extension requirement merge preserves chains and rejects a duplicate
     },
     3,
   );
-  const [hidden] = await Requirements.findManyByEntity(db, { entityIds: [copies[1]], entityType: "feats" });
+  const [hidden] = await Requirements.findMany(db, { entityIds: [copies[1]], entityType: "feats" });
   const before = await RequirementsService.getEntityRequirements(host.id, "feats", source.id);
   expect(before.map((r) => r.level).sort()).toEqual(["1", "2", "2.1", "2.2"]);
   await expect(

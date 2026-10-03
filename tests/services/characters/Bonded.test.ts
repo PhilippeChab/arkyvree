@@ -174,7 +174,7 @@ describe("Bonded creatures", () => {
   test("a familiar is archived and restored with its master, and isn't listed or found on its own", async () => {
     const { masterId, bonded } = await createWizardWithFamiliar();
     const listed = (
-      await Characters.findMany(
+      await Characters.findPage(
         db,
         { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly },
         { limit: 200, page: 1 },

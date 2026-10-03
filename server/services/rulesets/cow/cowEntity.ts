@@ -46,7 +46,7 @@ export async function cowEntity(
   // If the snapshot is a tombstone (the COW row was hard-deleted by a
   // user-initiated delete on an overridden entity), drop the snapshot so
   // we can re-COW below with a fresh forkedEntityId.
-  const existingSnapshot = await EntitySnapshots.findBySourceAndRuleset(tx, {
+  const existingSnapshot = await EntitySnapshots.findOne(tx, {
     sourceEntityId: entityId,
     rulesetId: childRulesetId,
   });
@@ -291,7 +291,7 @@ export async function cowEntityForCustomization(
       customizationIds,
     );
     // Find the new level by matching level number (levels aren't individually snapshotted)
-    const newLevels = await KlassLevels.findManyByKlass(tx, { klassId: cowResult.id });
+    const newLevels = await KlassLevels.findMany(tx, { klassId: cowResult.id });
     const newLevel = newLevels.find((l) => l.level === level.level);
     if (!newLevel) throw new NotFoundError("Copied class level not found");
     return newLevel.id;

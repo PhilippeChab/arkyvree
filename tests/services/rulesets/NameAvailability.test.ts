@@ -41,7 +41,7 @@ test("creating a feat with a renamed override's original name keeps the override
     aptitudeIds: [general.id],
   });
 
-  const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, { sourceEntityId: source.id, rulesetId: fork.id });
+  const snapshot = await EntitySnapshots.findOne(db, { sourceEntityId: source.id, rulesetId: fork.id });
   expect(snapshot?.forkedEntityId).toBe(renamed.id);
   const names = await withRulesetScope(db, fork.id, async ({ rulesetData }) => ({
     source: rulesetData.featsById.get(source.id)?.name,
@@ -71,7 +71,7 @@ test("bulk item variants with a renamed override's original name keep the overri
 
   const [created] = await ItemsService.createVariants(session, fork.id, renamed.id, [{ name: source.name }]);
 
-  const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, { sourceEntityId: source.id, rulesetId: fork.id });
+  const snapshot = await EntitySnapshots.findOne(db, { sourceEntityId: source.id, rulesetId: fork.id });
   expect(snapshot?.forkedEntityId).toBe(renamed.id);
   expect(created.name).toBe(source.name);
 });
@@ -99,7 +99,7 @@ test("the original name of a renamed extension copy is available", async () => {
     aptitudeIds: [general.id],
   });
 
-  const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, {
+  const snapshot = await EntitySnapshots.findOne(db, {
     sourceEntityId: extensionCopy.id,
     rulesetId: fork.id,
   });

@@ -38,11 +38,7 @@ class MechanicsService {
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      return await Mechanics.findManyByRulesetId(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
-        pagination,
-      );
+      return await Mechanics.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
   }
 

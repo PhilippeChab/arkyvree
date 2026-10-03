@@ -10,7 +10,7 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
     super(featsAptitudesInRules);
   }
 
-  async findDistinctAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
+  async findAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
     if (where.aptitudeIds.length === 0) return [];
     const rows = await db
       .selectDistinct({ aptitudeId: this.table.aptitudeId })
@@ -21,11 +21,13 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
 
   async findMany(db: Db, where: { featIds: string[] } | { featId: string }) {
     return await db.query.featsAptitudesInRules.findMany({
-      where: this.where([
-        "featIds" in where && inArray(this.table.featId, where.featIds),
-        "featId" in where && eq(this.table.featId, where.featId),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "featIds" in where && inArray(this.table.featId, where.featIds),
+          "featId" in where && eq(this.table.featId, where.featId),
+        ],
+        [isNull(this.table.deletedAt)],
+      ),
       with: {
         aptitudesInRule: true,
       },
@@ -46,7 +48,7 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
     return await db
       .delete(this.table)
       .where(
-        this.writeWhere([
+        this.branchWhere([
           "featId" in where && eq(this.table.featId, where.featId),
           where.aptitudeId !== undefined && eq(this.table.aptitudeId, where.aptitudeId),
         ]),

@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { eq, inArray, isNull } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
@@ -17,30 +17,21 @@ class PropertiesRepository extends include(
     super(propertiesInCustomization);
   }
 
-  async findManyByEntity(
+  async findMany(
     db: Db,
     where:
       | { entityIds: string[]; entityType: string }
-      | {
-          entityIds: string[];
-          entityType: string;
-          type: string;
-        },
+      | { entityIds: string[]; entityType: string; type: string }
+      | { entityIds: string[] },
   ) {
+    if (!("entityType" in where) && where.entityIds.length === 0) return [];
     return await db.query.propertiesInCustomization.findMany({
       where: this.where([
         "type" in where && eq(this.table.type, where.type),
         inArray(this.table.entityId, where.entityIds),
-        eq(this.table.entityType, where.entityType),
+        "entityType" in where && eq(this.table.entityType, where.entityType),
         isNull(this.table.deletedAt),
       ]),
-    });
-  }
-
-  async findManyByEntityIds(db: Db, where: { entityIds: string[] }) {
-    if (where.entityIds.length === 0) return [];
-    return await db.query.propertiesInCustomization.findMany({
-      where: and(inArray(this.table.entityId, where.entityIds), isNull(this.table.deletedAt)),
     });
   }
 
@@ -90,7 +81,7 @@ class PropertiesRepository extends include(
     return await db
       .delete(this.table)
       .where(
-        this.writeWhere(
+        this.branchWhere(
           [
             "id" in where && eq(this.table.id, where.id),
             "ids" in where && inArray(this.table.id, where.ids),

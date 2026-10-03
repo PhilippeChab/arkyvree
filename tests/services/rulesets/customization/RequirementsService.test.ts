@@ -27,7 +27,7 @@ async function setup() {
 
 /** The activities logged against a requirement, by type, sorted: those of one test share a timestamp. */
 async function activityTypes(userId: string, requirementId: string) {
-  const { items } = await Activities.findMany(
+  const { items } = await Activities.findPage(
     db,
     { userId, targetTable: getTableName(requirementsInCustomization) },
     { limit: 100, page: 1 },

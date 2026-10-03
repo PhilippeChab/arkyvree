@@ -33,7 +33,7 @@ export class Dnd35PowersHooks implements PowersHooks {
 
   async afterPowerLinked(tx: Db, powerId: string, rulesetId: string, sourceChain: string[]): Promise<void> {
     // Get the power's school from properties
-    const schoolProps = await Properties.findManyByEntity(tx, {
+    const schoolProps = await Properties.findMany(tx, {
       entityIds: [powerId],
       entityType: "powers",
       type: SPELL_SCHOOL,

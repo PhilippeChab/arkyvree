@@ -237,14 +237,14 @@ describe("RulesetsService", () => {
         extensionRulesetIds: [extension.id],
         baseRules: parent.baseRules,
       });
-      expect((await Feats.findManyByRulesetId(db, { rulesetId: created.id }, firstPage)).items).toEqual([]);
-      expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: created.id })).toEqual([]);
+      expect((await Feats.findPage(db, { rulesetId: created.id }, firstPage)).items).toEqual([]);
+      expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toEqual([]);
       expect(await FeatsService.getRulesetFeat(created.id, feat.id)).toMatchObject({
         id: feat.id,
         featsAptitudesInRules: [{ aptitudeId: aptitude.id }],
       });
       // Ruleset-wide settings are copied as they are.
-      expect(await Properties.findManyByEntity(db, { entityIds: [created.id], entityType: "rulesets" })).toMatchObject([
+      expect(await Properties.findMany(db, { entityIds: [created.id], entityType: "rulesets" })).toMatchObject([
         { type: RULESET_SKILL_POINT_ABILITY_ID, value: aptitude.id },
       ]);
 
@@ -255,9 +255,11 @@ describe("RulesetsService", () => {
       const { session } = await createTestUser();
       const withTemplates = await createParent();
       const withoutTemplates = await createTestRuleset(null, { private: false, status: "Published" });
-      expect(await Items.findTemplates(db, { rulesetId: (await fork(session, withTemplates)).id })).toEqual([]);
       expect(
-        (await Items.findTemplates(db, { rulesetId: (await fork(session, withoutTemplates)).id })).length,
+        await Items.findMany(db, { rulesetId: (await fork(session, withTemplates)).id, isTemplate: true }),
+      ).toEqual([]);
+      expect(
+        (await Items.findMany(db, { rulesetId: (await fork(session, withoutTemplates)).id, isTemplate: true })).length,
       ).toBeGreaterThan(0);
     });
 
@@ -281,11 +283,11 @@ describe("RulesetsService", () => {
       const { session } = await createTestUser();
       const { rulesetId } = await getSeedCtx();
       const created = await fork(session, { id: rulesetId }, { private: true });
-      const feats = await Feats.findManyByRulesetId(db, { rulesetId }, { limit: 26, page: 1 });
+      const feats = await Feats.findPage(db, { rulesetId }, { limit: 26, page: 1 });
       for (const feat of feats.items) {
         expect((await cowEntity(db, "feats", feat.id, created.id, [rulesetId], [])).id).not.toBe(feat.id);
       }
-      expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: created.id })).toHaveLength(26);
+      expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toHaveLength(26);
     });
   });
 
@@ -300,7 +302,7 @@ describe("RulesetsService", () => {
 
       expect(await RulesetsService.archiveRuleset(session, ruleset.id)).toMatchObject({ status: "Archived" });
       expect(await Feats.findOne(db, { id: feat.id })).toMatchObject({ deletedAt: null });
-      expect(await Properties.findManyByEntity(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(1);
+      expect(await Properties.findMany(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(1);
 
       expect(await RulesetsService.unarchiveRuleset(session, ruleset.id)).toMatchObject({ status: "Draft" });
     });
@@ -548,9 +550,9 @@ describe("RulesetsService", () => {
           id: modified.id,
           description: null,
         });
-        expect(await Modifiers.findManyBySource(db, { sourceIds: [copy.id], sourceType: "feats" })).toEqual([]);
-        expect(await Properties.findManyByEntity(db, { entityIds: [copy.id], entityType: "feats" })).toEqual([]);
-        expect(await Requirements.findManyByEntity(db, { entityIds: [copy.id], entityType: "feats" })).toEqual([]);
+        expect(await Modifiers.findMany(db, { sourceIds: [copy.id], sourceType: "feats" })).toEqual([]);
+        expect(await Properties.findMany(db, { entityIds: [copy.id], entityType: "feats" })).toEqual([]);
+        expect(await Requirements.findMany(db, { entityIds: [copy.id], entityType: "feats" })).toEqual([]);
         expect(await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, copy.id))).toEqual(
           [],
         );
@@ -560,7 +562,7 @@ describe("RulesetsService", () => {
         const { session, fork, deleted } = await setupChanges();
         await FeatsService.deleteRulesetFeat(session, fork.id, deleted.id);
         await RulesetChangesService.revertOverride(session, fork.id, "feats", deleted.id);
-        expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toEqual([]);
+        expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toEqual([]);
         expect(await FeatsService.getRulesetFeat(fork.id, deleted.id)).toMatchObject({ id: deleted.id });
       });
 
@@ -573,7 +575,7 @@ describe("RulesetsService", () => {
 
         await RulesetChangesService.revertOverride(session, fork.id, "klasses", klass.id);
 
-        expect(await KlassLevels.findManyByKlass(db, { klassId: copy.id as string })).toEqual([]);
+        expect(await KlassLevels.findMany(db, { klassId: copy.id as string })).toEqual([]);
         expect(
           await db
             .select()

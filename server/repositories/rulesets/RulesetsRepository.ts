@@ -80,7 +80,35 @@ class RulesetsRepository extends include(
     return !!row;
   }
 
-  async findMany(
+  /** Rulesets by id, those subscribing to an extension (`extensionRulesetId`), or the system's own (`system`). */
+  async findMany(db: Db, where: { ids: string[] } | { extensionRulesetId: string } | { system: true }) {
+    return await db.query.rulesetsInRules.findMany({
+      where: this.branchWhere(
+        [
+          "ids" in where && inArray(this.table.id, where.ids),
+          "extensionRulesetId" in where &&
+            sql`${this.table.extensionRulesetIds} @> ARRAY[${where.extensionRulesetId}]::uuid[]`,
+          "system" in where && eq(this.table.system, where.system),
+        ],
+        [isNull(this.table.deletedAt)],
+      ),
+    });
+  }
+
+  async findOne(db: Db, where: { id: string } | { name: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
+    let condition;
+    if ("name" in where) {
+      condition = eq(this.table.name, where.name);
+    } else {
+      condition = eq(this.table.id, where.id);
+    }
+
+    return await db.query.rulesetsInRules.findFirst({
+      where: this.where([condition, this.visibility(visibility)]),
+    });
+  }
+
+  async findPage(
     db: Db,
     session: Session,
     where: {
@@ -294,37 +322,6 @@ class RulesetsRepository extends include(
           .limit(paginate.limit)
           .offset(paginate.offset),
     );
-  }
-
-  async findManyByIds(db: Db, where: { ids: string[] }) {
-    return await db.query.rulesetsInRules.findMany({
-      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-    });
-  }
-
-  async findOne(db: Db, where: { id: string } | { name: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
-    let condition;
-    if ("name" in where) {
-      condition = eq(this.table.name, where.name);
-    } else {
-      condition = eq(this.table.id, where.id);
-    }
-
-    return await db.query.rulesetsInRules.findFirst({
-      where: this.where([condition, this.visibility(visibility)]),
-    });
-  }
-
-  async findSubscribers(db: Db, hostId: string) {
-    return await db.query.rulesetsInRules.findMany({
-      where: and(sql`${this.table.extensionRulesetIds} @> ARRAY[${hostId}]::uuid[]`, isNull(this.table.deletedAt)),
-    });
-  }
-
-  async findSystemOwned(db: Db) {
-    return await db.query.rulesetsInRules.findMany({
-      where: and(eq(this.table.system, true), isNull(this.table.deletedAt)),
-    });
   }
 
   async create(db: Db, values: InferInsertModel<typeof rulesetsInRules>) {

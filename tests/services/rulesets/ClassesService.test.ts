@@ -119,7 +119,7 @@ describe("ClassesService", () => {
       await db.select().from(klassLevelSavesInRules).where(eq(klassLevelSavesInRules.klassLevelId, level.id)),
     ).toEqual([]);
     expect(await db.select().from(klassSkillsInRules).where(eq(klassSkillsInRules.klassId, klass.id))).toEqual([]);
-    expect(await Modifiers.findManyBySource(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
+    expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
   });
 
   test("copies an inherited class into a fork with its levels, their modifiers and those modifiers' requirements", async () => {
@@ -151,14 +151,14 @@ describe("ClassesService", () => {
       description: "Forked",
     });
 
-    const [copiedLevel] = await KlassLevels.findManyByKlass(db, { klassId: copy.id });
+    const [copiedLevel] = await KlassLevels.findMany(db, { klassId: copy.id });
     expect(copiedLevel).toMatchObject({ level: 1 });
-    const [copiedModifier] = await Modifiers.findManyBySource(db, {
+    const [copiedModifier] = await Modifiers.findMany(db, {
       sourceIds: [copiedLevel.id],
       sourceType: "klass_levels",
     });
     expect(copiedModifier).toMatchObject({ target: "saves.fortitude.misc", value: "1" });
-    const copiedRequirements = await Requirements.findManyByEntity(db, {
+    const copiedRequirements = await Requirements.findMany(db, {
       entityIds: [copiedModifier.id],
       entityType: "modifiers",
     });

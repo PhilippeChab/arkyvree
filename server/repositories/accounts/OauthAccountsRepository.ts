@@ -9,7 +9,7 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
     super(oauthAccountsInAccount);
   }
 
-  async findManyByUser(db: Db, where: { userId: string }) {
+  async findMany(db: Db, where: { userId: string }) {
     return await db.query.oauthAccountsInAccount.findMany({
       where: and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)),
     });
@@ -20,14 +20,16 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
     where: { id: string } | { provider: string; providerAccountId: string } | { userId: string; provider: string },
   ) {
     return await db.query.oauthAccountsInAccount.findFirst({
-      where: this.where([
-        "id" in where && !("provider" in where) && eq(this.table.id, where.id),
-        "providerAccountId" in where &&
-          eq(this.table.provider, where.provider) &&
-          eq(this.table.providerAccountId, where.providerAccountId),
-        "userId" in where && eq(this.table.userId, where.userId) && eq(this.table.provider, where.provider),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "id" in where && !("provider" in where) && eq(this.table.id, where.id),
+          "providerAccountId" in where &&
+            eq(this.table.provider, where.provider) &&
+            eq(this.table.providerAccountId, where.providerAccountId),
+          "userId" in where && eq(this.table.userId, where.userId) && eq(this.table.provider, where.provider),
+        ],
+        [isNull(this.table.deletedAt)],
+      ),
     });
   }
 
@@ -40,7 +42,7 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(
-        this.writeWhere(
+        this.branchWhere(
           ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
           [isNull(this.table.deletedAt)],
         ),

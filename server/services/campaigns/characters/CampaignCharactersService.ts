@@ -44,7 +44,7 @@ class CampaignCharactersService {
     const isCharacterOwner = character.userId === session.userId;
     const contributorRole = isCharacterOwner
       ? null
-      : await CharacterContributors.findActiveRole(db, { userId: session.userId, characterId });
+      : await CharacterContributors.findRole(db, { userId: session.userId, characterId });
     const canEdit = isCharacterOwner || contributorRole !== null;
 
     // Partial visibility hides build details from incidental viewers. The
@@ -91,7 +91,7 @@ class CampaignCharactersService {
     }
 
     // Get linked characters with pagination; GMs see all characters regardless of visibility
-    const paginatedResult = await PlayerCharacters.findMany(
+    const paginatedResult = await PlayerCharacters.findPage(
       db,
       { playerIds, search: where.search, visibilityPlayerId: isGM ? undefined : member.id },
       pagination,
@@ -109,7 +109,7 @@ class CampaignCharactersService {
     const characterIds = linkedCharacters.map((pc) => pc.characterId);
 
     // Get character details using direct query with character IDs
-    const characters = await Characters.findManyByIds(db, { ids: characterIds });
+    const characters = await Characters.findMany(db, { ids: characterIds });
 
     if (characters.length === 0) {
       return { items: [], page: paginationMeta.page, nextPage: paginationMeta.nextPage };

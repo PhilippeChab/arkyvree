@@ -138,7 +138,7 @@ export async function createSeededTestRuleset(
   });
 
   // Copy ruleset-level properties (e.g., RULESET_SKILL_POINT_ABILITY_ID)
-  const sourceProperties = await Properties.findManyByEntity(db, {
+  const sourceProperties = await Properties.findMany(db, {
     entityIds: [coreId],
     entityType: "rulesets",
   });

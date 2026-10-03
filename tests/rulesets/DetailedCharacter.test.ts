@@ -52,7 +52,7 @@ import {
 
 /** A seeded character of the seed user's, by name. */
 async function seeded(name: string): Promise<Character> {
-  const { items } = await Characters.findMany(
+  const { items } = await Characters.findPage(
     db,
     { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly },
     { limit: 100, page: 1 },

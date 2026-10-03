@@ -41,14 +41,14 @@ async function buildCowData(ruleset: {
     // on level number. Also mirror into idResolveMap so id-based lookups
     // (e.g. resolving a stored klass-level id) resolve to the post-COW id.
     if (overrideMap.size > 0) {
-      const klassSnaps = await EntitySnapshots.findByTypeAndRuleset(db, {
+      const klassSnaps = await EntitySnapshots.findMany(db, {
         rulesetId: ruleset.id,
         entityType: "klasses",
       });
       for (const snap of klassSnaps) {
         const [parentLevels, childLevels] = await Promise.all([
-          KlassLevels.findManyByKlass(db, { klassId: snap.sourceEntityId }),
-          KlassLevels.findManyByKlass(db, { klassId: snap.forkedEntityId }),
+          KlassLevels.findMany(db, { klassId: snap.sourceEntityId }),
+          KlassLevels.findMany(db, { klassId: snap.forkedEntityId }),
         ]);
         for (const parentLevel of parentLevels) {
           const childLevel = childLevels.find((l) => l.level === parentLevel.level);

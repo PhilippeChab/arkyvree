@@ -10,35 +10,33 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     super(entitySnapshotsInRules);
   }
 
-  async findByRulesetId(db: Db, where: { rulesetId: string }) {
+  async findMany(
+    db: Db,
+    where:
+      | { rulesetId: string }
+      | { rulesetIds: string[] }
+      | { rulesetId: string; entityType: string }
+      | { rulesetId: string; sourceEntityIds: string[] },
+  ) {
+    if ("rulesetIds" in where && where.rulesetIds.length === 0) return [];
+    if ("sourceEntityIds" in where && where.sourceEntityIds.length === 0) return [];
     return await db.query.entitySnapshotsInRules.findMany({
-      where: eq(this.table.rulesetId, where.rulesetId),
+      where: this.branchWhere(
+        [
+          "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+          "rulesetIds" in where && inArray(this.table.rulesetId, where.rulesetIds),
+        ],
+        [
+          "entityType" in where && eq(this.table.entityType, where.entityType),
+          "sourceEntityIds" in where && inArray(this.table.sourceEntityId, where.sourceEntityIds),
+        ],
+      ),
     });
   }
 
-  async findByRulesetIds(db: Db, where: { rulesetIds: string[] }) {
-    if (where.rulesetIds.length === 0) return [];
-    return await db.query.entitySnapshotsInRules.findMany({
-      where: inArray(this.table.rulesetId, where.rulesetIds),
-    });
-  }
-
-  async findBySourceAndRuleset(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
+  async findOne(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
     return await db.query.entitySnapshotsInRules.findFirst({
       where: and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)),
-    });
-  }
-
-  async findByTypeAndRuleset(db: Db, where: { rulesetId: string; entityType: string }) {
-    return await db.query.entitySnapshotsInRules.findMany({
-      where: and(eq(this.table.rulesetId, where.rulesetId), eq(this.table.entityType, where.entityType)),
-    });
-  }
-
-  async findManyBySourcesAndRuleset(db: Db, where: { sourceEntityIds: string[]; rulesetId: string }) {
-    if (where.sourceEntityIds.length === 0) return [];
-    return await db.query.entitySnapshotsInRules.findMany({
-      where: and(inArray(this.table.sourceEntityId, where.sourceEntityIds), eq(this.table.rulesetId, where.rulesetId)),
     });
   }
 

@@ -36,7 +36,7 @@ class RulesetExtensionsService {
     // Group snapshots by entity type, then resolve each type's source entities
     // in one batched query (avoids N+1 over snapshot count). Build a per-type
     // list of host-owned shadow IDs whose source entity belongs to the extension.
-    const snapshots = await EntitySnapshots.findByRulesetId(tx, { rulesetId: hostRulesetId });
+    const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: hostRulesetId });
     const sourceIdsByType: Partial<Record<EntityType, string[]>> = {};
     for (const snap of snapshots) {
       const type = snap.entityType as EntityType;
@@ -173,7 +173,7 @@ class RulesetExtensionsService {
       throw new NotFoundError("Ruleset not found");
     }
 
-    const subscribed = await RulesetExtensions.findByRulesetId(db, { rulesetId: id });
+    const subscribed = await RulesetExtensions.findMany(db, { rulesetId: id });
 
     return subscribed.map((ext) => ({
       extensionId: ext.extensionId,
@@ -197,7 +197,7 @@ class RulesetExtensionsService {
       // extension by someone else — adding extensions to it would create
       // transitive deps for those subscribers.
       if (childRuleset.userId !== null) {
-        const subscribers = await Rulesets.findSubscribers(tx, id);
+        const subscribers = await Rulesets.findMany(tx, { extensionRulesetId: id });
         if (subscribers.length > 0) {
           throw new UnprocessableEntityError(
             "Cannot subscribe to extensions while this ruleset is being used as an extension",
@@ -284,7 +284,7 @@ class RulesetExtensionsService {
       policy.canUnsubscribeExtension({ inUse });
 
       // 2. Clean up COW copies: find snapshots whose sourceEntityId belongs to the extension
-      const snapshots = await EntitySnapshots.findByRulesetId(tx, { rulesetId: id });
+      const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: id });
       const extensionSnapshots = [];
       for (const snap of snapshots) {
         const entityType = snap.entityType as EntityType;
