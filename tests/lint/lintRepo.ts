@@ -10,13 +10,16 @@ const oxlint = path.resolve("node_modules/.bin/oxlint");
  */
 export function runOxlint(args: string[], cwd?: string) {
   const run = () => Bun.spawnSync([oxlint, "--threads=1", ...args], { cwd, timeout: 15_000 });
+  // A killed run's exit code can read as success (0) with nothing on stdout: only the timeout flag tells.
+  const hung = (result: ReturnType<typeof run>) =>
+    `(${args.join(" ")}; exit ${result.exitCode}, signal ${result.signalCode}): ${result.stderr.toString()}`;
   let result = run();
-  if (result.exitCode === null) {
+  if (result.exitedDueToTimeout) {
     // oxlint-disable-next-line no-console
-    console.warn(`oxlint hung once (${args.join(" ")}), running it again: ${result.stderr.toString()}`);
+    console.warn(`oxlint hung once, running it again ${hung(result)}`);
     result = run();
   }
-  if (result.exitCode === null) throw new Error(`oxlint hung twice (${args.join(" ")}): ${result.stderr.toString()}`);
+  if (result.exitedDueToTimeout) throw new Error(`oxlint hung twice ${hung(result)}`);
   return result;
 }
 
