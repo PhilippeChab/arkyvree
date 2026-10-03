@@ -14,7 +14,8 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
   }
 
   /** Whether the user plays in a live campaign on the ruleset: what lets a member create on a private ruleset. */
-  async existsOnRuleset(db: Db, where: { userId: string; rulesetId: string }) {
+  /** Whether the user plays in a campaign on the ruleset. */
+  async exists(db: Db, where: { userId: string; rulesetId: string }) {
     const [row] = await db
       .select({ one: sql`1` })
       .from(this.table)
@@ -133,7 +134,7 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
       .returning();
   }
 
-  async archiveAllForUser(db: Db, where: { userId: string }) {
+  async archive(db: Db, where: { userId: string }) {
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })

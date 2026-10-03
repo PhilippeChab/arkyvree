@@ -43,7 +43,7 @@ class CampaignInvitesService {
    */
   private async answerInvite(tx: Db, session: Session, invite: Invite, status: "Accepted" | "Rejected") {
     const [updatedInvite] = await Invites.update(tx, { status }, { id: invite.id });
-    await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: invite.id });
+    await Notifications.markRead(tx, { recipientId: session.userId, targetId: invite.id });
     await createActivityWithNotifications(tx, {
       userId: session.userId,
       targetId: updatedInvite.id,

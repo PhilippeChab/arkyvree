@@ -134,9 +134,9 @@ describe("rulesetCache", () => {
     await getOrFetchRulesetRawData(userFork.id);
     expect(isRulesetRawDataPinned(userFork.id)).toBe(false);
 
-    // An orphaned fork (userId nulled out by orphanByUser) still has system = false
+    // An orphaned fork (userId nulled out by Rulesets.orphan) still has system = false
     // and must not bleed into the pinned set.
-    await Rulesets.orphanByUser(db, { userId: SEED_USER_ID });
+    await Rulesets.orphan(db, { userId: SEED_USER_ID });
     invalidateAll();
     await getOrFetchRulesetRawData(userFork.id);
     expect(isRulesetRawDataPinned(userFork.id)).toBe(false);

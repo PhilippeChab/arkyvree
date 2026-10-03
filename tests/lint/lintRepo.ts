@@ -5,9 +5,20 @@ import path from "node:path";
 const oxlint = path.resolve("node_modules/.bin/oxlint");
 
 /**
+ * Runs oxlint on one thread (the suite's other workers keep the rest of the cores). A run that hangs, seen now and then
+ * under a full suite, is killed after 15s and run again; a second hang fails with oxlint's stderr.
+ */
+export function runOxlint(args: string[], cwd?: string) {
+  const run = () => Bun.spawnSync([oxlint, "--threads=1", ...args], { cwd, timeout: 15_000 });
+  let result = run();
+  if (result.exitCode === null) result = run();
+  if (result.exitCode === null) throw new Error(`oxlint hung twice (${args.join(" ")}): ${result.stderr.toString()}`);
+  return result;
+}
+
+/**
  * A repo of `files` (path → source), linted by our `rules` (`arkyvree/…`) from `from`, one of its folders: each
- * finding as `rule path`. The rules find the root by its lint config, wherever oxlint runs. One thread: the suite's
- * other workers keep the rest of the cores.
+ * finding as `rule path`. The rules find the root by its lint config, wherever oxlint runs.
  */
 export function lintRepo(files: Record<string, string>, rules: string[], from = ".") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
@@ -22,9 +33,7 @@ export function lintRepo(files: Record<string, string>, rules: string[], from = 
       rules: Object.fromEntries(rules.map((rule) => [`arkyvree/${rule}`, "error"])),
     }),
   );
-  const run = Bun.spawnSync([oxlint, "--threads=1", "-f", "unix", "-c", path.join(dir, ".oxlintrc.json"), "."], {
-    cwd: path.join(dir, from),
-  });
+  const run = runOxlint(["-f", "unix", "-c", path.join(dir, ".oxlintrc.json"), "."], path.join(dir, from));
   fs.rmSync(dir, { recursive: true });
   return [...run.stdout.toString().matchAll(/^\.?\/?([^:]+):\d+:\d+: .*\[Error\/arkyvree\(([a-z-]+)\)\]$/gm)]
     .map(([, file, rule]) => `${rule} ${path.posix.join(from, file)}`)

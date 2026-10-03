@@ -207,7 +207,7 @@ class PowersService {
           });
           const oldGroupingValue = existingProps.length > 0 ? existingProps[0].value : null;
 
-          await Properties.deleteMany(tx, {
+          await Properties.delete(tx, {
             entityIds: [targetId],
             entityType: "powers",
             types: hooks.powers.generatedPropertyTypes,

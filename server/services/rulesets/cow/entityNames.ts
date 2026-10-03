@@ -83,7 +83,7 @@ export async function repointTombstoneSnapshot(
     rulesetId,
   });
   if (!tombstone) return;
-  await EntitySnapshots.deleteBySourceAndRuleset(tx, {
+  await EntitySnapshots.delete(tx, {
     sourceEntityId: ancestorEntityId,
     rulesetId,
   });

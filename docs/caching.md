@@ -471,7 +471,7 @@ sequenceDiagram
 
 ## A repository method's verb
 
-The Proxy classifies a method by its verb, its first camelCase word (`find` in `findManyByUser`, `mark` in `markAllRead`), against `server/repositories/methodVerbs.json`: a `read` (`find`, `exists`, `count`) is memoized and sees copy-on-write ids, a `write` (`create`, `update`, `upsert`, `delete`, `archive`, `unarchive`, `mark`, `backfill`, `orphan`, `publish`) clears the cache before and after, and a `lock` does neither. Lint (`arkyvree/method-names`) holds every public repository method to one of these verbs, so a new method is classified by its name, with nothing to update here.
+The Proxy classifies a method by its verb, its first camelCase word (`find` in `findOneWithBlob`, `mark` in `markRead`), against `server/repositories/methodVerbs.json`: a `read` (`find`, `exists`, `count`) is memoized and sees copy-on-write ids, a `write` (`create`, `update`, `upsert`, `delete`, `archive`, `unarchive`, `mark`, `backfill`, `orphan`, `publish`) clears the cache before and after, and a `lock` does neither. Lint (`arkyvree/method-names`) holds every public repository method to one of these verbs, so a new method is classified by its name, with nothing to update here.
 
 A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A verb added to `methodVerbs.json` joins its class for every repository at once: a read verb would memoize, a write verb would clear.
 

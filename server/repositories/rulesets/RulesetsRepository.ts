@@ -65,11 +65,17 @@ class RulesetsRepository extends include(
     return result.count;
   }
 
-  async existsSubscriber(db: Db, hostId: string): Promise<boolean> {
+  /** Whether a ruleset subscribes to the extension. */
+  async exists(db: Db, where: { extensionRulesetId: string }): Promise<boolean> {
     const [row] = await db
       .select({ exists: sql<boolean>`true` })
       .from(this.table)
-      .where(and(sql`${this.table.extensionRulesetIds} @> ARRAY[${hostId}]::uuid[]`, isNull(this.table.deletedAt)))
+      .where(
+        and(
+          sql`${this.table.extensionRulesetIds} @> ARRAY[${where.extensionRulesetId}]::uuid[]`,
+          isNull(this.table.deletedAt),
+        ),
+      )
       .limit(1);
     return !!row;
   }
@@ -359,7 +365,8 @@ class RulesetsRepository extends include(
       .returning();
   }
 
-  async orphanByUser(db: Db, where: { userId: string }) {
+  /** Leaves a user's rulesets without an owner, when the user deletes their account. */
+  async orphan(db: Db, where: { userId: string }) {
     return await db
       .update(this.table)
       .set({ userId: null, updatedAt: new Date().toISOString() })

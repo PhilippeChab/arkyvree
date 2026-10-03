@@ -111,7 +111,7 @@ async function reconcileBonded(
   // blocked here while a concurrent archiveCharacter ran. Without this
   // check we'd insert a fresh live bonded under a now-archived master
   // (the cascade already ran), leaving an orphan visible only by deep link.
-  if (!(await Characters.lockById(tx, masterRecord.id))) return;
+  if (!(await Characters.lock(tx, { id: masterRecord.id }))) return;
 
   const existing = await Characters.findOne(tx, {
     parentCharacterId: masterRecord.id,

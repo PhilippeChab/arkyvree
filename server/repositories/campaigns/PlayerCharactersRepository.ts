@@ -28,7 +28,8 @@ class PlayerCharactersRepository extends include(
    * archived). Used by `CharactersPolicy.canHardDelete` so that a character
    * orphaned by an archived campaign isn't kept un-deletable.
    */
-  async existsInActiveCampaign(db: Db, where: { characterId: string }): Promise<boolean> {
+  /** Whether the character is linked in a campaign that isn't archived, by a player who isn't either. */
+  async exists(db: Db, where: { characterId: string; campaignArchived: false }): Promise<boolean> {
     const rows = await db
       .select({ id: this.table.characterId })
       .from(this.table)
@@ -141,7 +142,7 @@ class PlayerCharactersRepository extends include(
   }
 
   // Hard delete — used when intentionally removing a player from a campaign
-  async deleteByPlayerId(db: Db, where: { playerId: string }) {
+  async delete(db: Db, where: { playerId: string }) {
     return await db.delete(this.table).where(eq(this.table.playerId, where.playerId));
   }
 }

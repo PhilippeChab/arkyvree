@@ -23,7 +23,7 @@ test("owner mutation waits for a competing transaction and acquires the row afte
   let locking: Promise<void> | undefined;
   try {
     await blocker.query("BEGIN");
-    expect(await Feats.lockById(createTestDbFromClient(blocker), seed.featMap.Toughness)).toBe(true);
+    expect(await Feats.lock(createTestDbFromClient(blocker), { id: seed.featMap.Toughness })).toBe(true);
     locking = lockEntityForMutation(db, "feats", seed.featMap.Toughness);
     let waiting = false;
     for (let attempt = 0; attempt < 100; attempt++) {
@@ -54,13 +54,13 @@ test("owner locks leave other entities independent and shared copy reads compati
   const seed = await getSeedCtx();
   const otherId = Object.values(seed.featMap).find((id) => id !== seed.featMap.Toughness)!;
   await lockEntityForMutation(db, "feats", seed.featMap.Toughness);
-  expect(await Feats.lockById(db, otherId, "share")).toBe(true);
+  expect(await Feats.lock(db, { id: otherId }, "share")).toBe(true);
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL lock_timeout = '500ms'");
     const other = createTestDbFromClient(client);
-    expect(await Feats.lockById(other, otherId, "share")).toBe(true);
+    expect(await Feats.lock(other, { id: otherId }, "share")).toBe(true);
   } finally {
     await client.query("ROLLBACK");
     client.release();
@@ -94,9 +94,9 @@ async function setupRemovedCustomizations() {
     { ...owner, level: "1", target: "combat.bab", operator: "greater_than_or_equal", value: "1", valueType: "number" },
   ]);
   await withRulesetScope(db, ruleset.id, async () => {});
-  await Modifiers.deleteMany(db, { ids: [modifier.id] });
-  await Properties.deleteMany(db, { ids: [property.id] });
-  await Requirements.deleteMany(db, { ids: [requirement.id] });
+  await Modifiers.delete(db, { ids: [modifier.id] });
+  await Properties.delete(db, { ids: [property.id] });
+  await Requirements.delete(db, { ids: [requirement.id] });
   return { session, rulesetId: ruleset.id, featId: feat.id, modifier, property, requirement };
 }
 

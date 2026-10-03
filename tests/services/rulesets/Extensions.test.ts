@@ -733,7 +733,7 @@ describe("two extensions overriding the same base entity", () => {
     await ENTITIES.feats.edit(session, draft.id, baseId);
     const [trial] = await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id });
     await Feats.delete(db, { id: trial.forkedEntityId });
-    await EntitySnapshots.deleteBySourceAndRuleset(db, { sourceEntityId: trial.sourceEntityId, rulesetId: draft.id });
+    await EntitySnapshots.delete(db, { sourceEntityId: trial.sourceEntityId, rulesetId: draft.id });
     const loser = contributions.find((c) => c.copyId !== trial.sourceEntityId)!;
     const either = ["abilities.constitution.total", "abilities.intelligence.total"];
     await Requirements.create(db, { entityId: loser.copyId, entityType: "feats", level: "5", chainingOperator: "or" });

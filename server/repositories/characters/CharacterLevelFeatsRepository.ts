@@ -24,7 +24,7 @@ class CharacterLevelFeatsRepository extends include(
     super(levelFeatsInCharacter);
   }
 
-  async existsByAptitudeId(db: Db, where: { aptitudeId: string; rulesetId: string }) {
+  private async existsAptitudePick(db: Db, where: { aptitudeId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.aptitudeId })
       .from(this.table)
@@ -36,7 +36,7 @@ class CharacterLevelFeatsRepository extends include(
     return rows.length > 0;
   }
 
-  async existsByAptitudePickFromExtension(
+  private async existsAptitudePickFromExtension(
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowAptitudeIds: string[] },
   ) {
@@ -64,7 +64,7 @@ class CharacterLevelFeatsRepository extends include(
     return rows.length > 0;
   }
 
-  async existsByFeatId(db: Db, where: { featId: string; rulesetId: string }) {
+  private async existsFeatPick(db: Db, where: { featId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.featId })
       .from(this.table)
@@ -77,7 +77,7 @@ class CharacterLevelFeatsRepository extends include(
   }
 
   // Archived characters count — see `project_archive_preserves_picks` memory.
-  async existsByFeatPickFromExtension(
+  private async existsFeatPickFromExtension(
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowFeatIds: string[] },
   ) {
@@ -102,6 +102,24 @@ class CharacterLevelFeatsRepository extends include(
     return rows.length > 0;
   }
 
+  /**
+   * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
+   * an in-use check.
+   */
+  async exists(
+    db: Db,
+    where:
+      | { featId: string; rulesetId: string }
+      | { aptitudeId: string; rulesetId: string }
+      | { hostRulesetId: string; extensionRulesetId: string; shadowFeatIds: string[] }
+      | { hostRulesetId: string; extensionRulesetId: string; shadowAptitudeIds: string[] },
+  ): Promise<boolean> {
+    if ("featId" in where) return await this.existsFeatPick(db, where);
+    if ("aptitudeId" in where) return await this.existsAptitudePick(db, where);
+    if ("shadowFeatIds" in where) return await this.existsFeatPickFromExtension(db, where);
+    return await this.existsAptitudePickFromExtension(db, where);
+  }
+
   async findMany(db: Db, where: { characterLevelIds: string[] }) {
     return await db.query.levelFeatsInCharacter.findMany({
       where: and(inArray(this.table.characterLevelId, where.characterLevelIds), isNull(this.table.deletedAt)),
@@ -114,7 +132,7 @@ class CharacterLevelFeatsRepository extends include(
   }
 
   // Exception to soft-delete: old picks are disposable when re-finalizing a level
-  async deleteByCharacterLevelId(db: Db, where: { characterLevelId: string }) {
+  async delete(db: Db, where: { characterLevelId: string }) {
     return await db.delete(this.table).where(eq(this.table.characterLevelId, where.characterLevelId));
   }
 }

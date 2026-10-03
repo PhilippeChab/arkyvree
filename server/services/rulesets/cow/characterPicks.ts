@@ -13,8 +13,8 @@ import type { EntityType } from "./hashing.ts";
 
 /**
  * Returns true if any character on a ruleset that depends on `rulesetId` has
- * a pick that references this entity. The character-side `existsBy*` methods
- * join on `rulesets` and match three cases in one query: the same ruleset,
+ * a pick that references this entity. The character-side in-use `exists`
+ * joins `rulesets` and match three cases in one query: the same ruleset,
  * any descendant fork (`ancestor_ruleset_ids @> [rulesetId]`), or any host
  * that subscribes to it as an extension (`extension_ruleset_ids @> [rulesetId]`).
  *
@@ -34,25 +34,25 @@ export async function entityHasCharacterPicks(
 ): Promise<boolean> {
   switch (entityType) {
     case "feats":
-      return CharacterLevelFeats.existsByFeatId(tx, { featId: entityId, rulesetId });
+      return CharacterLevelFeats.exists(tx, { featId: entityId, rulesetId });
     case "powers":
-      return CharacterLevelPowers.existsByPowerId(tx, { powerId: entityId, rulesetId });
+      return CharacterLevelPowers.exists(tx, { powerId: entityId, rulesetId });
     case "skills":
-      return CharacterLevelSkills.existsBySkillId(tx, { skillId: entityId, rulesetId });
+      return CharacterLevelSkills.exists(tx, { skillId: entityId, rulesetId });
     case "races":
-      return Characters.existsByRaceId(tx, { raceId: entityId, rulesetId });
+      return Characters.exists(tx, { raceId: entityId, rulesetId });
     case "items":
-      return CharacterInventory.existsByItemId(tx, { itemId: entityId, rulesetId });
+      return CharacterInventory.exists(tx, { itemId: entityId, rulesetId });
     case "languages":
-      return CharacterLanguages.existsByLanguageId(tx, { languageId: entityId, rulesetId });
+      return CharacterLanguages.exists(tx, { languageId: entityId, rulesetId });
     case "klasses":
-      return CharacterLevels.existsByKlassId(tx, { klassId: entityId, rulesetId });
+      return CharacterLevels.exists(tx, { klassId: entityId, rulesetId });
     case "klass_levels":
-      return CharacterLevels.existsByKlassLevelId(tx, { klassLevelId: entityId, rulesetId });
+      return CharacterLevels.exists(tx, { klassLevelId: entityId, rulesetId });
     case "aptitudes": {
       const [byFeat, byPower] = await Promise.all([
-        CharacterLevelFeats.existsByAptitudeId(tx, { aptitudeId: entityId, rulesetId }),
-        CharacterLevelPowers.existsByAptitudeId(tx, { aptitudeId: entityId, rulesetId }),
+        CharacterLevelFeats.exists(tx, { aptitudeId: entityId, rulesetId }),
+        CharacterLevelPowers.exists(tx, { aptitudeId: entityId, rulesetId }),
       ]);
       return byFeat || byPower;
     }

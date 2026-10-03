@@ -257,7 +257,7 @@ class ModifiersService {
         );
 
         // The database deletes the modifier's requirements with it
-        const rows = await Modifiers.deleteMany(tx, { ids: [resolvedModifierId] });
+        const rows = await Modifiers.delete(tx, { ids: [resolvedModifierId] });
         const deletedModifier = rows[0];
 
         const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);

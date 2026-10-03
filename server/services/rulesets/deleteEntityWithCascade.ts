@@ -17,38 +17,38 @@ import { ENTITY_REPOS, type EntityType } from "./cow/index.ts";
 export async function deleteEntityWithCascade(tx: Db, entityType: EntityType, entityId: string) {
   // A tombstone may already have no row. Still clean up any remaining children
   // when restoring it; creation cannot succeed against an absent owner.
-  await ENTITY_REPOS[entityType].lockById(tx, entityId);
+  await ENTITY_REPOS[entityType].lock(tx, { id: entityId });
 
   // 1. Delete join tables
   if (entityType === "feats") {
     await FeatsAptitudes.delete(tx, { featId: entityId });
-    await KlassLevelFeats.deleteByFeatId(tx, { featId: entityId });
+    await KlassLevelFeats.delete(tx, { featId: entityId });
   } else if (entityType === "powers") {
     await PowersAptitudes.delete(tx, { powerId: entityId });
-    await KlassLevelPowers.deleteByPowerId(tx, { powerId: entityId });
+    await KlassLevelPowers.delete(tx, { powerId: entityId });
   } else if (entityType === "aptitudes") {
-    await KlassLevelFeats.deleteByAptitudeId(tx, { aptitudeId: entityId });
-    await FeatsAptitudes.deleteByAptitudeId(tx, { aptitudeId: entityId });
-    await PowersAptitudes.deleteByAptitudeId(tx, { aptitudeId: entityId });
-    await KlassLevelPowers.deleteByAptitudeId(tx, { aptitudeId: entityId });
+    await KlassLevelFeats.delete(tx, { aptitudeId: entityId });
+    await FeatsAptitudes.delete(tx, { aptitudeId: entityId });
+    await PowersAptitudes.delete(tx, { aptitudeId: entityId });
+    await KlassLevelPowers.delete(tx, { aptitudeId: entityId });
   } else if (entityType === "skills") {
-    await KlassSkills.deleteBySkillId(tx, { skillId: entityId });
+    await KlassSkills.delete(tx, { skillId: entityId });
   } else if (entityType === "saves") {
-    await KlassLevelSaves.deleteBySaveId(tx, { saveId: entityId });
+    await KlassLevelSaves.delete(tx, { saveId: entityId });
   } else if (entityType === "klasses") {
     const levels = await KlassLevels.findManyByKlass(tx, { klassId: entityId });
     const levelIds = levels.map((l) => l.id);
     if (levelIds.length > 0) {
       for (const levelId of levelIds) {
-        await KlassLevelFeats.deleteByKlassLevelId(tx, { klassLevelId: levelId });
-        await KlassLevelPowers.deleteByKlassLevelId(tx, { klassLevelId: levelId });
-        await KlassLevelSaves.deleteByKlassLevelId(tx, { klassLevelId: levelId });
+        await KlassLevelFeats.delete(tx, { klassLevelId: levelId });
+        await KlassLevelPowers.delete(tx, { klassLevelId: levelId });
+        await KlassLevelSaves.delete(tx, { klassLevelId: levelId });
       }
       for (const level of levels) {
         await KlassLevels.delete(tx, { id: level.id });
       }
     }
-    await KlassSkills.deleteByKlassId(tx, { klassId: entityId });
+    await KlassSkills.delete(tx, { klassId: entityId });
   }
   // items.source_item_id is RESTRICT — callers that may hit references (revertOverride)
   // must repoint copies before invoking this.

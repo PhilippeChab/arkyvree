@@ -20,7 +20,7 @@ class NotificationsService {
 
   async getUnreadSummary(session: Session, limit = 10) {
     const [count, items] = await Promise.all([
-      Notifications.countUnread(db, { recipientId: session.userId }),
+      Notifications.count(db, { recipientId: session.userId, unread: true }),
       Notifications.findMany(
         db,
         { recipientId: session.userId, unreadOnly: true, orderDir: "desc" },
@@ -32,7 +32,7 @@ class NotificationsService {
 
   async markAllRead(session: Session) {
     return await withTransaction(async (tx) => {
-      return await Notifications.markAllRead(tx, {
+      return await Notifications.markRead(tx, {
         recipientId: session.userId,
         excludeTypes: ACTIONABLE_TYPES,
       });

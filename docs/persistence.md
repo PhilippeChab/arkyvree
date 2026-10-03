@@ -81,9 +81,9 @@ These tables archive specifically because re-creating the same row should restor
 
 | Table | Why archive | Restore mechanism |
 |---|---|---|
-| `StarredRulesets` | Star → unstar → re-star should preserve any per-row metadata | `createOrRestore` (un-archives the existing row) |
+| `StarredRulesets` | Star → unstar → re-star should preserve any per-row metadata | `upsert` (un-archives the existing row) |
 | `RulesetExtensions` | Subscribe → unsubscribe → re-subscribe should be idempotent on the metadata row | `upsert` clears `deletedAt` on conflict |
-| `OauthAccounts` | Mirrors the `Users`-archive pattern: account-deletion archives the user, dependent rows tag along | `archiveAllForUser` paired with the `Users.archive` flow |
+| `OauthAccounts` | Mirrors the `Users`-archive pattern: account-deletion archives the user, dependent rows tag along | `archive({ userId })` paired with the `Users.archive` flow |
 
 These are intentionally archived. Don't flip them — the restore-by-recreate behavior is load-bearing.
 
@@ -106,7 +106,7 @@ Others name their row the same way, and stay when it's deleted, on purpose:
 Both primitives, picked by entry point:
 
 - **GM removes a single player from a campaign** → hard-delete (`CampaignPlayersService.removeCampaignPlayer`). Intentional removal, no preservation needed.
-- **User account deletion** → archive (`AuthenticationService.archiveAllForUser`). The whole `deleteAccount` flow takes a "hide, don't destroy" approach to leave the user row's dependent state intact; membership rows go along.
+- **User account deletion** → archive (`AccountService.deleteAccount`, each repository's `archive({ userId })`). The whole `deleteAccount` flow takes a "hide, don't destroy" approach to leave the user row's dependent state intact; membership rows go along.
 
 ### Demo `Users`
 
@@ -130,7 +130,7 @@ For items, the `source_item_id` FK is `RESTRICT` — `revertOverride` repoints c
 3. Is it Characters / Campaigns / Rulesets? → **archive** (recoverable user content).
 4. Is it the `Users` table (real users)? → **archive** (FK CASCADE avoidance).
 5. Is it a one-time auth token / cleanup-by-TTL record? → **hybrid**: archive on consume, hard-delete in the TTL sweep.
-6. Does re-creating the same row need to restore prior state (star toggle, extension subscribe toggle)? → **archive**, with `createOrRestore` / `upsert` to handle the restore.
+6. Does re-creating the same row need to restore prior state (star toggle, extension subscribe toggle)? → **archive**, with `upsert` to handle the restore.
 
 If you're adding a new repository that doesn't fit any of these, prefer hard-delete with appropriate `inUse` checks at the service layer. Soft-archive is only worth its weight when you have a concrete reason from the list above.
 

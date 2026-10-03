@@ -26,22 +26,21 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules> {
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { klassId: string; skillId: string }) {
+  async delete(db: Db, where: { klassId: string; skillId: string } | { klassId: string } | { skillId: string }) {
     return await db
       .delete(this.table)
-      .where(and(eq(this.table.klassId, where.klassId), eq(this.table.skillId, where.skillId)))
+      .where(
+        this.writeWhere([
+          "klassId" in where && eq(this.table.klassId, where.klassId),
+          "skillId" in where && eq(this.table.skillId, where.skillId),
+        ]),
+      )
       .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteByKlassId(db: Db, where: { klassId: string }) {
-    return await db.delete(this.table).where(eq(this.table.klassId, where.klassId)).returning();
-  }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteBySkillId(db: Db, where: { skillId: string }) {
-    return await db.delete(this.table).where(eq(this.table.skillId, where.skillId)).returning();
-  }
 }
 
 export default KlassSkillsRepository;

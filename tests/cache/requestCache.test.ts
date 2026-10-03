@@ -61,17 +61,17 @@ describe("requestCache — repository Proxy memoization", () => {
 
   test("a method is cached by its verb (methodVerbs.json): a read memoizes, a write clears, a lock does neither", async () => {
     await runWithRequestCache(async () => {
-      const read = Rulesets.existsSubscriber(db, ctx.rulesetId);
-      expect(Rulesets.existsSubscriber(db, ctx.rulesetId)).toBe(read);
+      const read = Rulesets.exists(db, { extensionRulesetId: ctx.rulesetId });
+      expect(Rulesets.exists(db, { extensionRulesetId: ctx.rulesetId })).toBe(read);
       await read;
 
-      const lock = Rulesets.lockById(db, ctx.rulesetId, "share");
-      expect(Rulesets.lockById(db, ctx.rulesetId, "share")).not.toBe(lock);
+      const lock = Rulesets.lock(db, { id: ctx.rulesetId }, "share");
+      expect(Rulesets.lock(db, { id: ctx.rulesetId }, "share")).not.toBe(lock);
       await lock;
-      expect(Rulesets.existsSubscriber(db, ctx.rulesetId)).toBe(read);
+      expect(Rulesets.exists(db, { extensionRulesetId: ctx.rulesetId })).toBe(read);
 
-      await Notifications.markAllRead(db, { recipientId: NIL_UUID });
-      const fresh = Rulesets.existsSubscriber(db, ctx.rulesetId);
+      await Notifications.markRead(db, { recipientId: NIL_UUID });
+      const fresh = Rulesets.exists(db, { extensionRulesetId: ctx.rulesetId });
       expect(fresh).not.toBe(read);
       await fresh;
     });

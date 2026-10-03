@@ -22,7 +22,7 @@ test("COW waits for a competing copy transaction and continues after rollback", 
   try {
     await blocker.query("BEGIN");
     const blockerDb = createTestDbFromClient(blocker);
-    await EntitySnapshots.lockForCopy(blockerDb, fork.id, sourceId);
+    await EntitySnapshots.lock(blockerDb, { rulesetId: fork.id, sourceEntityId: sourceId });
     copying = cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
     // Observe an actual PostgreSQL wait, rather than relying on a sleep to
     // guess whether the competing call has reached its critical section.
@@ -59,14 +59,14 @@ test("COW waits for a competing copy transaction and continues after rollback", 
 test("copy locks do not block other sources or other forks", async () => {
   const forkId = crypto.randomUUID();
   const sourceId = crypto.randomUUID();
-  await EntitySnapshots.lockForCopy(db, forkId, sourceId);
+  await EntitySnapshots.lock(db, { rulesetId: forkId, sourceEntityId: sourceId });
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL lock_timeout = '500ms'");
     const otherDb = createTestDbFromClient(client);
-    await EntitySnapshots.lockForCopy(otherDb, forkId, crypto.randomUUID());
-    await EntitySnapshots.lockForCopy(otherDb, crypto.randomUUID(), sourceId);
+    await EntitySnapshots.lock(otherDb, { rulesetId: forkId, sourceEntityId: crypto.randomUUID() });
+    await EntitySnapshots.lock(otherDb, { rulesetId: crypto.randomUUID(), sourceEntityId: sourceId });
   } finally {
     await client.query("ROLLBACK");
     client.release();

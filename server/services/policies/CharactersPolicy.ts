@@ -24,7 +24,7 @@ export default class CharactersPolicy extends BasePolicy<Character> {
     if (!this.entity.deletedAt) {
       throw new UnprocessableEntityError("Only archived characters can be permanently deleted");
     }
-    const linkedActive = await PlayerCharacters.existsInActiveCampaign(db, { characterId: this.entity.id });
+    const linkedActive = await PlayerCharacters.exists(db, { characterId: this.entity.id, campaignArchived: false });
     if (linkedActive) {
       throw new ConflictError(
         "This character is linked to an active campaign and cannot be permanently deleted. Remove it from the campaign first.",

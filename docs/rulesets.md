@@ -281,7 +281,7 @@ No entities are copied. They become visible immediately via the source chain.
 ### Unsubscribe (`unsubscribeExtension`)
 
 1. Validates: user is owner, extension is subscribed, ruleset not archived
-2. **In-use check** (`isExtensionInUseByHost`) — blocks with `ConflictError` if any character on the host has picked an extension-owned entity, either directly or via a host-side COW shadow of one. The shadow case matters because step 3 below hard-deletes those shadows; without this guard the character pick would silently dangle. (Scoped to the host only; fork-of-fork is blocked at policy time so descendant forks aren't a concern. If that ever changes, `existsBy*PickFromExtension` would need to widen the join.)
+2. **In-use check** (`isExtensionInUseByHost`) — blocks with `ConflictError` if any character on the host has picked an extension-owned entity, either directly or via a host-side COW shadow of one. The shadow case matters because step 3 below hard-deletes those shadows; without this guard the character pick would silently dangle. (Scoped to the host only; fork-of-fork is blocked at policy time so descendant forks aren't a concern. If that ever changes, the character repos' `exists` extension branch (`{ hostRulesetId, extensionRulesetId, shadow…Ids }`) would need to widen the join.)
 3. Finds snapshots whose `sourceEntityId` belongs to the extension (COW copies of extension entities)
 4. Deletes those COW copies and their snapshots
 5. Removes `extensionId` from the array
@@ -304,8 +304,8 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
 `inUse` is about one thing: would deletion orphan a character pick on the
 **current ruleset or any descendant fork**? Nothing else.
 
-- **Scoping is current + descendants.** The Character* repos' `existsBy*`
-  methods take `{ id, rulesetId }` and internally join on `rulesetsInRules`
+- **Scoping is current + descendants.** The Character* repos' in-use
+  `exists` takes `{ <entity>Id, rulesetId }` and internally joins on `rulesetsInRules`
   with `id = $rulesetId OR $rulesetId = ANY(ancestor_ruleset_ids)` — single
   SQL roundtrip. With forks of forks blocked, descendants of a base ruleset
   are at most one level deep, but the query shape stays the same so the
@@ -317,7 +317,7 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
 - **Picks stored under a source id count against its local copy.** A
   character that picked an inherited entity keeps the source id after the fork
   copies it. Deleting that copy leaves a tombstone hiding the source, which
-  would orphan the pick. Every `existsBy*` matches the entity id with
+  would orphan the pick. Every in-use `exists` matches the entity id with
   `idMatches`, so inside the delete's `withRulesetScope` it also matches the
   pre-copy ids that resolve to the copy. `revertOverride` runs outside a scope
   and matches the copy's own id only: restoring the source keeps pre-copy

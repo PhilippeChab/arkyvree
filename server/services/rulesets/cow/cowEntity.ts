@@ -14,7 +14,7 @@ import { mergeSiblingData } from "./siblingMerge.ts";
 
 /** Serialize child writes with deletion/revert of their stored owner. */
 export async function lockEntityForMutation(tx: Db, entityType: EntityType, entityId: string): Promise<void> {
-  if (!(await ENTITY_REPOS[entityType].lockById(tx, entityId))) {
+  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId }))) {
     throw new NotFoundError("Customization source no longer exists; refresh the entity");
   }
 }
@@ -40,7 +40,7 @@ export async function cowEntity(
   // A second first edit must wait for the copying transaction, then see its
   // committed snapshot. Keep this separate from the SELECT: under READ
   // COMMITTED, a SELECT started before the wait retains its old snapshot.
-  await EntitySnapshots.lockForCopy(tx, childRulesetId, entityId);
+  await EntitySnapshots.lock(tx, { rulesetId: childRulesetId, sourceEntityId: entityId });
 
   // 0. Idempotency: if a COW copy already exists, return it.
   // If the snapshot is a tombstone (the COW row was hard-deleted by a
@@ -51,17 +51,17 @@ export async function cowEntity(
     rulesetId: childRulesetId,
   });
   if (existingSnapshot) {
-    const exists = await repo.lockById(tx, existingSnapshot.forkedEntityId);
+    const exists = await repo.lock(tx, { id: existingSnapshot.forkedEntityId });
     const existing = exists ? await repo.findOne(tx, { id: existingSnapshot.forkedEntityId }) : undefined;
     if (existing) return existing;
-    await EntitySnapshots.deleteBySourceAndRuleset(tx, {
+    await EntitySnapshots.delete(tx, {
       sourceEntityId: entityId,
       rulesetId: childRulesetId,
     });
   }
 
   // 1. Fetch the parent entity
-  if (!(await repo.lockById(tx, entityId, "share"))) {
+  if (!(await repo.lock(tx, { id: entityId }, "share"))) {
     throw new NotFoundError("Customization source no longer exists; refresh the entity");
   }
   const parentEntity = await repo.findOne(tx, { id: entityId });

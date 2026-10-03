@@ -28,7 +28,7 @@ export function Stars<B extends Constructor>(Base: B) {
           throw new ForbiddenError("Only base rulesets and extensions can be starred");
         }
 
-        await StarredRulesets.createOrRestore(tx, { userId: session.userId, rulesetId });
+        await StarredRulesets.upsert(tx, { userId: session.userId, rulesetId });
       });
     }
 

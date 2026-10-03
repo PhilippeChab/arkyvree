@@ -111,7 +111,7 @@ class CharacterModifiersService {
         throw new NotFoundError("Modifier not found");
       }
 
-      const rows = await Modifiers.deleteMany(tx, { ids: [modifierId] });
+      const rows = await Modifiers.delete(tx, { ids: [modifierId] });
       const modifier = rows[0];
 
       await Activities.create(tx, {

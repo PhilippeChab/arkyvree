@@ -2,7 +2,18 @@ import { expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
-import { Requirements, Rulesets } from "@/server/repositories/index.ts";
+import {
+  Characters,
+  FeatsAptitudes,
+  KlassLevelFeats,
+  KlassSkills,
+  Modifiers,
+  Notifications,
+  Properties,
+  Requirements,
+  Rulesets,
+  Sessions,
+} from "@/server/repositories/index.ts";
 import { getSeedCtx } from "@/tests/helpers.ts";
 
 test("a rejected repository write remains handled and subsequent reads work", async () => {
@@ -29,4 +40,21 @@ test("a rejected repository write remains handled and subsequent reads work", as
     expect(fresh).not.toBe(cached);
     expect((await fresh)?.id).toBe(ctx.rulesetId);
   });
+});
+
+test("a write whose where matches none of its branches throws instead of writing every row", async () => {
+  // A loose type away from a call: `{}` names no branch, which would pick every row.
+  const unmatched = {} as never;
+  for (const write of [
+    () => Modifiers.delete(db, unmatched),
+    () => Properties.delete(db, unmatched),
+    () => KlassLevelFeats.delete(db, unmatched),
+    () => KlassSkills.delete(db, unmatched),
+    () => FeatsAptitudes.delete(db, unmatched),
+    () => Characters.archive(db, unmatched),
+    () => Sessions.archive(db, unmatched),
+    () => Notifications.delete(db, unmatched),
+  ]) {
+    await expect(write()).rejects.toThrow("a write's where matches none of its branches");
+  }
 });

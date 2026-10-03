@@ -38,7 +38,7 @@ class CharacterContributorsService {
     status: "Active" | "Rejected",
   ) {
     const [updated] = await CharacterContributors.update(tx, { status }, { id: contributor.id });
-    await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributor.id });
+    await Notifications.markRead(tx, { recipientId: session.userId, targetId: contributor.id });
     await createActivityWithNotifications(tx, {
       userId: session.userId,
       targetId: updated.id,

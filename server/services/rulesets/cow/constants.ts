@@ -49,7 +49,7 @@ export const NAME_FALLBACK_ENTITY_TYPES = ["feats", "powers"] as const;
  * `create`: a method, whose looser check lets each repository's insert model stand for a copied row.
  */
 interface EntityRepository {
-  lockById: (db: Db, id: string, mode?: "update" | "share") => Promise<boolean>;
+  lock: (db: Db, where: { id: string }, mode?: "update" | "share") => Promise<boolean>;
   exists: (db: Db, where: { id: string }) => Promise<boolean>;
   findOne: (db: Db, where: { id: string } | { name: string; rulesetId: string }) => Promise<EntityWithId | undefined>;
   findMany: (db: Db, where: { ids: string[] }) => Promise<EntityWithId[]>;

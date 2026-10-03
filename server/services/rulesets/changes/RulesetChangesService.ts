@@ -127,11 +127,11 @@ class RulesetChangesService {
         // Stored ids, with copy-on-write resolution off: a scope would resolve the source to its copy,
         // repointing nothing.
         await withCowContext(undefined, () =>
-          Items.updateCopies(tx, { sourceItemId: entityId }, { sourceItemId: snapshot.forkedEntityId }),
+          Items.update(tx, { sourceItemId: entityId }, { sourceItemId: snapshot.forkedEntityId }),
         );
       }
       await deleteEntityWithCascade(tx, entityType, snapshot.forkedEntityId);
-      await EntitySnapshots.deleteBySourceAndRuleset(tx, {
+      await EntitySnapshots.delete(tx, {
         sourceEntityId: entityId,
         rulesetId,
       });

@@ -23,7 +23,18 @@ class CharacterLevelsRepository extends include(
     super(levelsInCharacter);
   }
 
-  async existsByKlassId(db: Db, where: { klassId: string; rulesetId: string }) {
+  private async existsKlassLevelPick(db: Db, where: { klassLevelId: string; rulesetId: string }) {
+    const rows = await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
+      .where(and(this.idMatches(this.table.klassLevelId, where.klassLevelId), isNull(this.table.deletedAt)))
+      .limit(1);
+    return rows.length > 0;
+  }
+
+  private async existsKlassPick(db: Db, where: { klassId: string; rulesetId: string }) {
     const result = await db
       .select({ id: this.table.id })
       .from(this.table)
@@ -35,19 +46,8 @@ class CharacterLevelsRepository extends include(
     return result.length > 0;
   }
 
-  async existsByKlassLevelId(db: Db, where: { klassLevelId: string; rulesetId: string }) {
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
-      .where(and(this.idMatches(this.table.klassLevelId, where.klassLevelId), isNull(this.table.deletedAt)))
-      .limit(1);
-    return rows.length > 0;
-  }
-
   // Archived characters count — see `project_archive_preserves_picks` memory.
-  async existsByKlassPickFromExtension(
+  private async existsKlassPickFromExtension(
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowKlassIds: string[] },
   ) {
@@ -70,6 +70,22 @@ class CharacterLevelsRepository extends include(
       .where(and(isNull(this.table.deletedAt), klassCondition))
       .limit(1);
     return rows.length > 0;
+  }
+
+  /**
+   * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
+   * an in-use check.
+   */
+  async exists(
+    db: Db,
+    where:
+      | { klassId: string; rulesetId: string }
+      | { klassLevelId: string; rulesetId: string }
+      | { hostRulesetId: string; extensionRulesetId: string; shadowKlassIds: string[] },
+  ): Promise<boolean> {
+    if ("klassId" in where) return await this.existsKlassPick(db, where);
+    if ("klassLevelId" in where) return await this.existsKlassLevelPick(db, where);
+    return await this.existsKlassPickFromExtension(db, where);
   }
 
   async findHighestCharacterLevel(db: Db, where: { characterId: string }) {

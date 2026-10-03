@@ -107,7 +107,7 @@ export async function signInAsGoogleAccount(payload: { sub: string; email: strin
       let linkedUser = existingUser;
       if (!existingUser.emailVerifiedAt) {
         [linkedUser] = await Users.update(tx, { emailVerifiedAt: new Date().toISOString() }, { id: existingUser.id });
-        await EmailVerifications.archiveAllForUser(tx, { userId: existingUser.id });
+        await EmailVerifications.archive(tx, { userId: existingUser.id });
       }
 
       const session = await openSession(tx, existingUser, "signIn", { provider: "google" });

@@ -35,19 +35,16 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
     return await db.insert(this.table).values(values).returning();
   }
 
-  async archive(db: Db, where: { id: string }) {
+  async archive(db: Db, where: { id: string } | { userId: string }) {
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async archiveAllForUser(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .where(
+        this.writeWhere(
+          ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
+          [isNull(this.table.deletedAt)],
+        ),
+      )
       .returning();
   }
 }

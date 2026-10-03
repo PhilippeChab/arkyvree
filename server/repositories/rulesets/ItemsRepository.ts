@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, type InferInsertModel, isNull } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -88,12 +88,17 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     });
   }
 
-  /** Repoints the copies of one item at another: what a revert does before the copy it reverts is deleted. */
-  async updateCopies(db: Db, values: { sourceItemId: string }, where: { sourceItemId: string }) {
-    return await db
-      .update(this.table)
-      .set({ sourceItemId: values.sourceItemId })
-      .where(eq(this.table.sourceItemId, where.sourceItemId));
+  /**
+   * Updates an item (`{ id }`, see the entity's `update`), or repoints its copies (`{ sourceItemId }`: the items copied
+   * from it), which keep their `updatedAt`: a repoint isn't an edit.
+   */
+  async update(
+    db: Db,
+    values: Partial<InferInsertModel<typeof itemsInRules>>,
+    where: { id: string; expectedUpdatedAt?: string } | { sourceItemId: string },
+  ) {
+    if ("id" in where) return await super.update(db, values, where);
+    return await db.update(this.table).set(values).where(eq(this.table.sourceItemId, where.sourceItemId)).returning();
   }
 }
 

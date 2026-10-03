@@ -5,9 +5,14 @@ import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { ChecksExistence } from "@/server/repositories/concerns/ChecksExistence.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 
-class RequirementsRepository extends include(BaseRepository<typeof requirementsInCustomization>, GuardsStaleEdits) {
+class RequirementsRepository extends include(
+  BaseRepository<typeof requirementsInCustomization>,
+  GuardsStaleEdits,
+  ChecksExistence,
+) {
   constructor() {
     super(requirementsInCustomization);
   }
@@ -68,23 +73,23 @@ class RequirementsRepository extends include(BaseRepository<typeof requirementsI
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteMany(db: Db, where: { ids: string[] } | { entityIds: string[]; entityType: string }) {
+  async delete(db: Db, where: { id: string } | { ids: string[] } | { entityIds: string[]; entityType: string }) {
     return await db
       .delete(this.table)
       .where(
-        this.where([
-          "ids" in where && inArray(this.table.id, where.ids),
-          "entityIds" in where && inArray(this.table.entityId, where.entityIds),
-          "entityType" in where && eq(this.table.entityType, where.entityType),
-        ]),
+        this.writeWhere(
+          [
+            "id" in where && eq(this.table.id, where.id),
+            "ids" in where && inArray(this.table.id, where.ids),
+            "entityIds" in where && inArray(this.table.entityId, where.entityIds),
+          ],
+          ["entityType" in where && eq(this.table.entityType, where.entityType)],
+        ),
       )
       .returning();
   }
+
+  // Exception to soft-delete: disposable configuration data — intentional removal
 }
 
 export default RequirementsRepository;

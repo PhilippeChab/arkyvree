@@ -22,23 +22,14 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
     return await db.insert(this.table).values({ userId: values.userId, expiresAt }).returning();
   }
 
-  async archive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async archiveAllForUser(db: Db, where: { userId: string; exceptId?: string }) {
+  async archive(db: Db, where: { id: string } | { userId: string; exceptId?: string }) {
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(
-        and(
-          eq(this.table.userId, where.userId),
-          isNull(this.table.deletedAt),
-          where.exceptId ? ne(this.table.id, where.exceptId) : undefined,
+        this.writeWhere(
+          ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
+          ["exceptId" in where && !!where.exceptId && ne(this.table.id, where.exceptId), isNull(this.table.deletedAt)],
         ),
       )
       .returning();
@@ -48,7 +39,7 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
     return await db
       .delete(this.table)
       .where(
-        this.where([
+        this.writeWhere([
           "id" in where && eq(this.table.id, where.id),
           "expiredOrArchivedBefore" in where &&
             (or(isNotNull(this.table.deletedAt), lt(this.table.expiresAt, where.expiredOrArchivedBefore)) ?? false),

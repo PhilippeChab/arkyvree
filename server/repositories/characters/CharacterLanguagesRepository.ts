@@ -17,7 +17,7 @@ class CharacterLanguagesRepository extends include(
     super(languagesInCharacter);
   }
 
-  async existsByLanguageId(db: Db, where: { languageId: string; rulesetId: string }) {
+  private async existsLanguagePick(db: Db, where: { languageId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.languageId })
       .from(this.table)
@@ -29,7 +29,7 @@ class CharacterLanguagesRepository extends include(
   }
 
   // Archived characters count — see `project_archive_preserves_picks` memory.
-  async existsByLanguagePickFromExtension(
+  private async existsLanguagePickFromExtension(
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowLanguageIds: string[] },
   ) {
@@ -54,6 +54,20 @@ class CharacterLanguagesRepository extends include(
       .where(langCondition)
       .limit(1);
     return rows.length > 0;
+  }
+
+  /**
+   * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
+   * an in-use check.
+   */
+  async exists(
+    db: Db,
+    where:
+      | { languageId: string; rulesetId: string }
+      | { hostRulesetId: string; extensionRulesetId: string; shadowLanguageIds: string[] },
+  ): Promise<boolean> {
+    if ("languageId" in where) return await this.existsLanguagePick(db, where);
+    return await this.existsLanguagePickFromExtension(db, where);
   }
 
   async findMany(db: Db, where: { characterId: string }) {

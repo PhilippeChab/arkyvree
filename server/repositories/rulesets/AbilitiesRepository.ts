@@ -5,6 +5,7 @@ import { abilitiesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { ChecksExistence } from "@/server/repositories/concerns/ChecksExistence.ts";
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import { ScopesToRuleset } from "@/server/repositories/concerns/ScopesToRuleset.ts";
@@ -15,6 +16,7 @@ class AbilitiesRepository extends include(
   Paginates,
   Searches,
   ScopesToRuleset,
+  ChecksExistence,
 ) {
   constructor() {
     super(abilitiesInRules);

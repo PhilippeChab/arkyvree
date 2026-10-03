@@ -258,7 +258,7 @@ class AttachmentsService {
       // Lock the blob row so a concurrent sweep can't delete it between
       // here and the Attachments.create below — that would surface as a
       // 23503 FK violation on insert.
-      await Blobs.lockById(tx, payload.blobId);
+      await Blobs.lock(tx, { id: payload.blobId });
       const blob = await Blobs.findOne(tx, { id: payload.blobId });
       if (!blob) throw new NotFoundError("Blob not found");
       if (blob.attachedAt) throw new ConflictError("Blob is already attached");

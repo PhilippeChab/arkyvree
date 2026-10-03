@@ -44,22 +44,27 @@ abstract class BaseRepository<T extends Table> {
     return and(...(statements.filter(Boolean) as SQL[]));
   }
 
-  /** Whether a row matches `where`, on the repositories that look rows up. */
-  async exists<W>(this: { findOne(db: Db, where: W): Promise<unknown> }, db: Db, where: W) {
-    return Boolean(await this.findOne(db, where));
+  /**
+   * A write's WHERE (`delete`, `archive`, `update`, `markRead`…): `keys`, the conditions that pick its rows, one per
+   * branch of its `where` union, and `rest`, those that narrow them (`isNull(deletedAt)`, `exceptId`). A `where` that
+   * matches no branch would pick every row, so it throws instead.
+   */
+  protected writeWhere(keys: (SQL | boolean)[], rest: (SQL | boolean)[] = []) {
+    if (!keys.some(Boolean)) throw new Error(`${this.constructor.name}: a write's where matches none of its branches`);
+    return this.where([...keys, ...rest]);
   }
 
   /** Call inside a transaction to lock a stored row before changing its children.
    * IDs are already resolved by the caller. Never memoize a locking read.
    * `skipLocked`: a row another transaction holds counts as not found instead of being waited for.
    */
-  async lockById(db: Db, id: string, mode: "update" | "share" = "update", skipLocked = false): Promise<boolean> {
+  async lock(db: Db, where: { id: string }, mode: "update" | "share" = "update", skipLocked = false): Promise<boolean> {
     const columns = getTableColumns(this.table);
     if (!columns.id) throw new Error("Row locking requires an id column");
     const rows = await db
       .select({ locked: sql<number>`1` })
       .from(sql`${this.table}`)
-      .where(and(eq(columns.id, id), columns.deletedAt ? isNull(columns.deletedAt) : undefined))
+      .where(and(eq(columns.id, where.id), columns.deletedAt ? isNull(columns.deletedAt) : undefined))
       .for(mode, skipLocked ? { skipLocked: true } : {});
     return rows.length > 0;
   }

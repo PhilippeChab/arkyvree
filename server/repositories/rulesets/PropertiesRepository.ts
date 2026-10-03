@@ -5,9 +5,14 @@ import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { ChecksExistence } from "@/server/repositories/concerns/ChecksExistence.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 
-class PropertiesRepository extends include(BaseRepository<typeof propertiesInCustomization>, GuardsStaleEdits) {
+class PropertiesRepository extends include(
+  BaseRepository<typeof propertiesInCustomization>,
+  GuardsStaleEdits,
+  ChecksExistence,
+) {
   constructor() {
     super(propertiesInCustomization);
   }
@@ -78,28 +83,29 @@ class PropertiesRepository extends include(BaseRepository<typeof propertiesInCus
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  /** `types` limits the delete to those property types, e.g. the ones a save regenerates. */
-  async deleteMany(
+  async delete(
     db: Db,
-    where: { ids: string[] } | { entityIds: string[]; entityType: string; types?: readonly string[] },
+    where: { id: string } | { ids: string[] } | { entityIds: string[]; entityType: string; types?: readonly string[] },
   ) {
     return await db
       .delete(this.table)
       .where(
-        this.where([
-          "ids" in where && inArray(this.table.id, where.ids),
-          "entityIds" in where && inArray(this.table.entityId, where.entityIds),
-          "entityType" in where && eq(this.table.entityType, where.entityType),
-          "types" in where && where.types !== undefined && inArray(this.table.type, where.types),
-        ]),
+        this.writeWhere(
+          [
+            "id" in where && eq(this.table.id, where.id),
+            "ids" in where && inArray(this.table.id, where.ids),
+            "entityIds" in where && inArray(this.table.entityId, where.entityIds),
+          ],
+          [
+            "entityType" in where && eq(this.table.entityType, where.entityType),
+            "types" in where && where.types !== undefined && inArray(this.table.type, where.types),
+          ],
+        ),
       )
       .returning();
   }
+
+  // Exception to soft-delete: disposable configuration data — intentional removal
 }
 
 export default PropertiesRepository;

@@ -42,23 +42,19 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { featId: string; aptitudeId?: string }) {
-    const conditions = [eq(this.table.featId, where.featId)];
-
-    if (where.aptitudeId) {
-      conditions.push(eq(this.table.aptitudeId, where.aptitudeId));
-    }
-
+  async delete(db: Db, where: { featId: string; aptitudeId?: string } | { aptitudeId: string }) {
     return await db
       .delete(this.table)
-      .where(and(...conditions))
+      .where(
+        this.writeWhere([
+          "featId" in where && eq(this.table.featId, where.featId),
+          where.aptitudeId !== undefined && eq(this.table.aptitudeId, where.aptitudeId),
+        ]),
+      )
       .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteByAptitudeId(db: Db, where: { aptitudeId: string }) {
-    return await db.delete(this.table).where(eq(this.table.aptitudeId, where.aptitudeId)).returning();
-  }
 }
 
 export default FeatsAptitudesRepository;

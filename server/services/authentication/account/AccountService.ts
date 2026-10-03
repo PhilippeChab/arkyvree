@@ -74,7 +74,7 @@ class AccountService {
       const rows = await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
       const updatedUser = rows[0];
       if (!updatedUser) throw new InternalError("Failed to update password");
-      await Sessions.archiveAllForUser(tx, { userId: session.userId, exceptId: session.id });
+      await Sessions.archive(tx, { userId: session.userId, exceptId: session.id });
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -126,7 +126,7 @@ class AccountService {
 
       // If email is changing, create verification code
       if (newEmailAddress) {
-        await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
+        await EmailVerifications.archive(tx, { userId: user.id });
 
         emailChangeCode = generateVerificationCode();
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
@@ -181,15 +181,15 @@ class AccountService {
       await purgeAttachmentsForRecords(tx, "User", [userId]);
       await purgeAttachmentsForRecords(tx, "Character", characterIds);
 
-      await Rulesets.orphanByUser(tx, { userId });
-      await Characters.archiveAllForUser(tx, { userId });
-      await Players.archiveAllForUser(tx, { userId });
-      await Invites.archiveAllForUser(tx, { userId });
-      await StarredRulesets.archiveAllForUser(tx, { userId });
-      await Sessions.archiveAllForUser(tx, { userId });
-      await EmailVerifications.archiveAllForUser(tx, { userId });
-      await PasswordResets.archiveAllForUser(tx, { userId });
-      await OauthAccounts.archiveAllForUser(tx, { userId });
+      await Rulesets.orphan(tx, { userId });
+      await Characters.archive(tx, { userId });
+      await Players.archive(tx, { userId });
+      await Invites.archive(tx, { userId });
+      await StarredRulesets.archive(tx, { userId });
+      await Sessions.archive(tx, { userId });
+      await EmailVerifications.archive(tx, { userId });
+      await PasswordResets.archive(tx, { userId });
+      await OauthAccounts.archive(tx, { userId });
 
       await Users.archive(tx, { id: userId });
 
@@ -210,7 +210,7 @@ class AccountService {
       if (!user) throw new InternalError("User not found");
 
       await Users.update(tx, { pendingEmailAddress: null }, { id: user.id });
-      await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
+      await EmailVerifications.archive(tx, { userId: user.id });
 
       await Activities.create(tx, {
         userId: user.id,
@@ -244,7 +244,7 @@ class AccountService {
         }
       }
 
-      await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
+      await EmailVerifications.archive(tx, { userId: user.id });
 
       const code = generateVerificationCode();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();

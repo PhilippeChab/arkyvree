@@ -184,7 +184,7 @@ async function fetchRulesetRawData(
   // Pin system-seeded rulesets (bases + extensions) BEFORE writing so the pin flag
   // is in place for the entry's whole lifetime — no window where eviction pressure
   // could knock it out. We use the `system` column rather than `userId IS NULL` so
-  // orphaned user forks (userId nulled out by orphanByUser) can't accidentally slip
+  // orphaned user forks (userId nulled out by `Rulesets.orphan`) can't accidentally slip
   // into the pinned set. Only the non-campaign entry is eligible (system rulesets
   // are not campaign-scoped).
   return { data, pinned: !!ruleset?.system };
