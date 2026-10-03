@@ -78,7 +78,7 @@ async function resolveCustomizationUrl(entityId: string, entityType: string): Pr
   return `/rulesets/${entity.rulesetId}/${entityType}/${entityId}/customization`;
 }
 
-export const ActivitiesMethods = {
+const ActivitiesMethods = {
   async findActivities(
     session: Session,
     where: {

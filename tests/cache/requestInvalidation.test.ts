@@ -5,11 +5,16 @@ import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { TargetPathsMethods } from "@/server/services/rulesets/customization/TargetPathsService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
-import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
+import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import TargetPathsService from "@/server/services/rulesets/customization/TargetPathsService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
+import { createSeededTestRuleset, getSeedCtx, makeSession, methodsOf } from "@/tests/helpers.ts";
+
+const PropertiesMethods = methodsOf(PropertiesService);
+const TargetPathsMethods = methodsOf(TargetPathsService);
+const FeatsMethods = methodsOf(FeatsService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 afterEach(invalidateAll);
 

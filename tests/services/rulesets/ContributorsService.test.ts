@@ -3,9 +3,11 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Contributors, Rulesets } from "@/server/repositories/index.ts";
-import { ContributorsMethods } from "@/server/services/rulesets/ContributorsService.ts";
+import ContributorsService from "@/server/services/rulesets/ContributorsService.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
-import { createTestRuleset, createTestUser } from "@/tests/helpers.ts";
+import { createTestRuleset, createTestUser, methodsOf } from "@/tests/helpers.ts";
+
+const ContributorsMethods = methodsOf(ContributorsService);
 
 /** A new user's draft ruleset. */
 async function setup() {

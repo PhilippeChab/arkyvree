@@ -2,11 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { Aptitudes, Characters, Notifications, Players, Rulesets } from "@/server/repositories/index.ts";
-import { CampaignInvitesMethods } from "@/server/services/campaigns/InvitesService.ts";
-import { CharacterContributorsMethods } from "@/server/services/CharacterContributorsService.ts";
-import { ContributorsMethods } from "@/server/services/rulesets/ContributorsService.ts";
-import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
+import InvitesService from "@/server/services/campaigns/InvitesService.ts";
+import CharacterContributorsService from "@/server/services/CharacterContributorsService.ts";
+import ContributorsService from "@/server/services/rulesets/ContributorsService.ts";
+import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
 import { collectingNotified } from "@/server/ws.ts";
 import {
   addRulesetContributor,
@@ -14,7 +14,15 @@ import {
   createTestCharacter,
   createTestRuleset,
   createTestUser,
+  inviteToSlot,
+  methodsOf,
 } from "@/tests/helpers.ts";
+
+const CampaignInvitesMethods = methodsOf(InvitesService);
+const CharacterContributorsMethods = methodsOf(CharacterContributorsService);
+const ContributorsMethods = methodsOf(ContributorsService);
+const PropertiesMethods = methodsOf(PropertiesService);
+const FeatsMethods = methodsOf(FeatsService);
 
 type User = Awaited<ReturnType<typeof createTestUser>>;
 
@@ -36,7 +44,7 @@ describe("activity notifications", () => {
       const { campaign } = await createTestCampaign(gm.user.id);
       for (const invitee of [accepting, rejecting]) {
         const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
-        await CampaignInvitesMethods.createCampaignInvite(gm.session, slot, invitee.user.emailAddress);
+        await inviteToSlot(gm.session, slot, invitee.user.emailAddress);
         expect(await inbox(invitee)).toEqual([note("createCampaignInvite", gm)]);
       }
       const [accepted] = await CampaignInvitesMethods.getUserInvites(accepting.user.id);
@@ -54,7 +62,7 @@ describe("activity notifications", () => {
       const [gm] = await users(1);
       const { campaign } = await createTestCampaign(gm.user.id);
       const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
-      await CampaignInvitesMethods.createCampaignInvite(gm.session, slot, "unknown@nowhere.com");
+      await inviteToSlot(gm.session, slot, "unknown@nowhere.com");
       expect(await inbox(gm)).toEqual([]);
     });
   });
@@ -184,7 +192,7 @@ describe("the users a request notified", () => {
     const [gm, invitee] = await users(2);
     const { campaign } = await createTestCampaign(gm.user.id);
     const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
-    const invite = () => CampaignInvitesMethods.createCampaignInvite(gm.session, slot, invitee.user.emailAddress);
+    const invite = () => inviteToSlot(gm.session, slot, invitee.user.emailAddress);
     return { invitee, invite };
   }
 

@@ -14,7 +14,7 @@ import type {
 } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/utils.ts";
 
-export const TargetPathsMethods = {
+const TargetPathsMethods = {
   /**
    * Get all target paths with segment labels in a single fetch.
    * Entity data is fetched once and used to build both.

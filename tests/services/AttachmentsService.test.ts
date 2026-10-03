@@ -4,10 +4,12 @@ import { createHmac } from "node:crypto";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
-import { AttachmentsMethods } from "@/server/services/AttachmentsService.ts";
+import AttachmentsService from "@/server/services/AttachmentsService.ts";
 import { setStorageForTest } from "@/server/storage/s3.ts";
-import { createTestCharacter, createTestUser, NIL_UUID } from "@/tests/helpers.ts";
+import { createTestCharacter, createTestUser, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
 import { fakeStorage } from "@/tests/storage.ts";
+
+const AttachmentsMethods = methodsOf(AttachmentsService);
 
 // Replicates the service's HMAC signing so tests can craft tokens with
 // arbitrary `iat` values (e.g. expired) without exposing internals.

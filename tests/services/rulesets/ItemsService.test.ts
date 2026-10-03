@@ -4,8 +4,16 @@ import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
-import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
-import { createTestCharacter, createTestRuleset, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import {
+  createTestCharacter,
+  createTestRuleset,
+  createTestUserAndRuleset,
+  methodsOf,
+  NIL_UUID,
+} from "@/tests/helpers.ts";
+
+const ItemsMethods = methodsOf(ItemsService);
 
 const requirement = {
   level: "1",

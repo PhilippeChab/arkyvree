@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { NotFoundError } from "@/server/errors/index.ts";
-import { ExportsMethods } from "@/server/services/ExportsService.ts";
-import { createExport, createTestUser, NIL_UUID } from "@/tests/helpers.ts";
+import ExportsService from "@/server/services/ExportsService.ts";
+import { createExport, createTestUser, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
+
+const ExportsMethods = methodsOf(ExportsService);
 
 describe("ExportsService.download", () => {
   test("returns the owner's export", async () => {

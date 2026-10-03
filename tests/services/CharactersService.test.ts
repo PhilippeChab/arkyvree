@@ -25,7 +25,7 @@ import {
   Races,
   Requirements,
 } from "@/server/repositories/index.ts";
-import { CharactersMethods } from "@/server/services/CharactersService.ts";
+import CharactersService from "@/server/services/CharactersService.ts";
 import { cowEntity } from "@/server/services/rulesets/cow.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
@@ -39,10 +39,13 @@ import {
   getSeedCtx,
   invalidateSeededRuleset,
   makeSession,
+  methodsOf,
   NIL_UUID,
   queuedPdfJobs,
   uniqueId,
 } from "@/tests/helpers.ts";
+
+const CharactersMethods = methodsOf(CharactersService);
 
 type CharacterBody = Parameters<typeof CharactersMethods.createCharacter>[1];
 const page = { limit: 100, page: 1 };

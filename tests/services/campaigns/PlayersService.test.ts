@@ -3,8 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Campaigns, Invites, Players } from "@/server/repositories/index.ts";
-import { CampaignPlayersMethods } from "@/server/services/campaigns/PlayersService.ts";
-import { createTestCampaign, createTestUser, NIL_UUID } from "@/tests/helpers.ts";
+import PlayersService from "@/server/services/campaigns/PlayersService.ts";
+import { createTestCampaign, createTestUser, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
+
+const CampaignPlayersMethods = methodsOf(PlayersService);
 
 const firstPage = { limit: 10, page: 1 };
 

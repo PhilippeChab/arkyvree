@@ -3,7 +3,7 @@ import { Campaigns, Characters, Rulesets } from "@/server/repositories/index.ts"
 import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
 
-export const DashboardMethods = {
+const DashboardMethods = {
   async getMyStats(session: Session) {
     const totalRulesets = await Rulesets.count(db, { userId: session.userId });
     const totalCharacters = await Characters.count(db, { userId: session.userId });

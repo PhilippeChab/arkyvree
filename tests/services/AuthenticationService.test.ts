@@ -17,22 +17,22 @@ import {
   Sessions,
   Users,
 } from "@/server/repositories/index.ts";
-import {
-  AuthenticationMethods,
-  linkGoogleAccountTo,
-  signInAsGoogleAccount,
-} from "@/server/services/AuthenticationService.ts";
-import { CampaignInvitesMethods } from "@/server/services/campaigns/InvitesService.ts";
+import { linkGoogleAccountTo, signInAsGoogleAccount } from "@/server/services/accounts.ts";
+import AuthenticationService from "@/server/services/AuthenticationService.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
   createTestCampaign,
   createTestCharacter,
   createTestRuleset,
   createTestUser,
+  inviteToSlot,
   makeSession,
+  methodsOf,
   NIL_UUID,
   uniqueId,
 } from "@/tests/helpers.ts";
+
+const AuthenticationMethods = methodsOf(AuthenticationService);
 
 function credentials() {
   const suffix = uniqueId();
@@ -164,7 +164,7 @@ describe("AuthenticationService", () => {
       const invite = async (email: string) => {
         const { campaign } = await createTestCampaign(gm.id);
         const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
-        return CampaignInvitesMethods.createCampaignInvite(gmSession, slot, email);
+        return inviteToSlot(gmSession, slot, email);
       };
       const account = credentials();
       const invites = [await invite(account.emailAddress), await invite(account.emailAddress)];
@@ -530,7 +530,7 @@ describe("AuthenticationService", () => {
       const { user: gm, session: gmSession } = await createTestUser("gm");
       const { campaign } = await createTestCampaign(gm.id);
       const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
-      const invite = await CampaignInvitesMethods.createCampaignInvite(gmSession, slot, account.email);
+      const invite = await inviteToSlot(gmSession, slot, account.email);
 
       const { user } = await signInAsGoogleAccount({ ...account, email: account.email.toUpperCase() });
       expect(user).toMatchObject({

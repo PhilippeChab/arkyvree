@@ -6,8 +6,8 @@ import { aptitudesInRules, klassLevelPowersInRules, powersAptitudesInRules } fro
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import PowersService from "@/server/services/rulesets/PowersService.ts";
 import {
   addCharacterLevel,
   createTestCharacter,
@@ -15,7 +15,11 @@ import {
   createTestRuleset,
   createTestUserAndRuleset,
   insertRows,
+  methodsOf,
 } from "@/tests/helpers.ts";
+
+const FeatsMethods = methodsOf(FeatsService);
+const PowersMethods = methodsOf(PowersService);
 
 /** A new user's empty ruleset with three aptitudes. */
 async function setup() {

@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { NotFoundError } from "@/server/errors/index.ts";
-import { TargetPathsMethods } from "@/server/services/rulesets/customization/TargetPathsService.ts";
-import { createTestRuleset, createTestUser, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+import TargetPathsService from "@/server/services/rulesets/customization/TargetPathsService.ts";
+import { createTestRuleset, createTestUser, getSeedCtx, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
+
+const TargetPathsMethods = methodsOf(TargetPathsService);
 
 type Kind = "modifier" | "requirement";
 type EntityType = Parameters<typeof TargetPathsMethods.getTargetPathsWithLabels>[2];

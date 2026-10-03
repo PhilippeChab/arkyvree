@@ -5,10 +5,13 @@ import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { refreshEntityData } from "@/server/services/rulesets/cow.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
-import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import PowersService from "@/server/services/rulesets/PowersService.ts";
+import { createSeededTestRuleset, getSeedCtx, makeSession, methodsOf } from "@/tests/helpers.ts";
 import { createSeedCharacter } from "@/tests/levelFixtures.ts";
+
+const FeatsMethods = methodsOf(FeatsService);
+const PowersMethods = methodsOf(PowersService);
 
 describe("refreshEntityData", () => {
   const rows = [

@@ -4,9 +4,11 @@ import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Campaigns, Players, Rulesets } from "@/server/repositories/index.ts";
-import { CampaignsMethods } from "@/server/services/CampaignsService.ts";
+import CampaignsService from "@/server/services/CampaignsService.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createSeededTestRuleset, createTestUser, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, createTestUser, getSeedCtx, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
+
+const CampaignsMethods = methodsOf(CampaignsService);
 
 const firstPage = { limit: 10, page: 1 };
 

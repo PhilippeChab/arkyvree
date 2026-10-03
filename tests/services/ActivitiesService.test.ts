@@ -10,8 +10,8 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
-import { ActivitiesMethods } from "@/server/services/ActivitiesService.ts";
-import { PlayerCharactersMethods } from "@/server/services/campaigns/CharactersService.ts";
+import ActivitiesService from "@/server/services/ActivitiesService.ts";
+import PlayerCharactersService from "@/server/services/campaigns/CharactersService.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
   createTestCampaign,
@@ -20,8 +20,12 @@ import {
   createTestUser,
   getSeedCtx,
   makeSession,
+  methodsOf,
   NIL_UUID,
 } from "@/tests/helpers.ts";
+
+const ActivitiesMethods = methodsOf(ActivitiesService);
+const PlayerCharactersMethods = methodsOf(PlayerCharactersService);
 
 const resolve = (targetTable: string, targetId: string, session: Session = makeSession()) =>
   ActivitiesMethods.resolveActivityUrl(session, targetTable, targetId);

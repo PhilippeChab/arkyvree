@@ -10,7 +10,7 @@ import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-export const CampaignsMethods = {
+const CampaignsMethods = {
   async getMyCampaigns(
     session: Session,
     where: {

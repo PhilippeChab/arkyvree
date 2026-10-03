@@ -4,8 +4,10 @@ import { abilitiesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Klasses, KlassLevels, KlassLevelSaves } from "@/server/repositories/index.ts";
-import { SavesMethods } from "@/server/services/rulesets/SavesService.ts";
-import { createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
+import SavesService from "@/server/services/rulesets/SavesService.ts";
+import { createTestUserAndRuleset, insertRows, methodsOf } from "@/tests/helpers.ts";
+
+const SavesMethods = methodsOf(SavesService);
 
 /** A new user's empty ruleset with two abilities. */
 async function setup() {

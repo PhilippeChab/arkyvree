@@ -3,8 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Items, Properties } from "@/server/repositories/index.ts";
-import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
-import { createSeededTestRuleset, createTestUser, invalidateSeededRuleset } from "@/tests/helpers.ts";
+import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import { createSeededTestRuleset, createTestUser, invalidateSeededRuleset, methodsOf } from "@/tests/helpers.ts";
+
+const ItemsMethods = methodsOf(ItemsService);
 
 async function setup() {
   const { user, session } = await createTestUser();

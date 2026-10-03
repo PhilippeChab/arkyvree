@@ -20,7 +20,7 @@ import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
-export const SkillsMethods = {
+const SkillsMethods = {
   async getRulesetSkills(
     rulesetId: string,
     where: {

@@ -13,9 +13,12 @@ import {
 import { db } from "@/server/database/index.ts";
 import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { cowEntity, invalidateCowData } from "@/server/services/rulesets/cow.ts";
-import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { createTestRuleset, getSeedCtx, insertRows, makeSession, uniqueId } from "@/tests/helpers.ts";
+import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import { createTestRuleset, getSeedCtx, insertRows, makeSession, methodsOf, uniqueId } from "@/tests/helpers.ts";
+
+const ModifiersMethods = methodsOf(ModifiersService);
+const FeatsMethods = methodsOf(FeatsService);
 
 describe("rulesetCache", () => {
   async function getRuleset() {

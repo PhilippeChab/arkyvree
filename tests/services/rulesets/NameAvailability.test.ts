@@ -7,10 +7,14 @@ import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
+import { createSeededTestRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
+
+const FeatsMethods = methodsOf(FeatsService);
+const ItemsMethods = methodsOf(ItemsService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 afterEach(invalidateAll);
 

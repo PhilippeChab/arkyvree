@@ -5,12 +5,17 @@ import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
+import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
+import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
 import { api } from "@/tests/api.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
+
+const PropertiesMethods = methodsOf(PropertiesService);
+const RequirementsMethods = methodsOf(RequirementsService);
+const ItemsMethods = methodsOf(ItemsService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 afterEach(invalidateAll);
 

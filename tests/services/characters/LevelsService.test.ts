@@ -37,11 +37,11 @@ import {
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
-import { CharactersMethods } from "@/server/services/CharactersService.ts";
-import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
+import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
+import CharactersService from "@/server/services/CharactersService.ts";
+import ClassesService from "@/server/services/rulesets/ClassesService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
 import {
   addCharacterLevel,
   addOneLevel,
@@ -54,6 +54,7 @@ import {
   insertRows,
   invalidateSeededRuleset,
   makeSession,
+  methodsOf,
   NIL_UUID,
   uniqueId,
 } from "@/tests/helpers.ts";
@@ -67,6 +68,12 @@ import {
   WAR_CLERIC_1,
   WIZARD_1,
 } from "@/tests/levelFixtures.ts";
+
+const CharacterLevelsMethods = methodsOf(CharacterLevelsService);
+const CharactersMethods = methodsOf(CharactersService);
+const ClassesMethods = methodsOf(ClassesService);
+const FeatsMethods = methodsOf(FeatsService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 const session = makeSession(SEED_USER_ID);
 const page = { limit: 500, page: 1 };

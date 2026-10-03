@@ -3,14 +3,21 @@ import { expect, test } from "bun:test";
 import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets } from "@/server/repositories/index.ts";
-import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLevelsService.ts";
-import { ClassSkillsMethods } from "@/server/services/rulesets/classes/ClassSkillsService.ts";
-import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
+import ClassLevelsService from "@/server/services/rulesets/classes/ClassLevelsService.ts";
+import ClassSkillsService from "@/server/services/rulesets/classes/ClassSkillsService.ts";
+import ClassesService from "@/server/services/rulesets/ClassesService.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
-import { RacesMethods } from "@/server/services/rulesets/RacesService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
-import { createSeededTestRuleset, invalidateSeededRuleset, makeSession } from "@/tests/helpers.ts";
+import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import RacesService from "@/server/services/rulesets/RacesService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
+import { createSeededTestRuleset, invalidateSeededRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
+
+const ClassLevelsMethods = methodsOf(ClassLevelsService);
+const ClassSkillsMethods = methodsOf(ClassSkillsService);
+const ClassesMethods = methodsOf(ClassesService);
+const ItemsMethods = methodsOf(ItemsService);
+const RacesMethods = methodsOf(RacesService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 type EntityType = "races" | "klasses" | "items";
 

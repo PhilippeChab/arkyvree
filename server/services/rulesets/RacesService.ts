@@ -19,7 +19,7 @@ import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
-export const RacesMethods = {
+const RacesMethods = {
   async getRulesetRaces(
     rulesetId: string,
     where: {

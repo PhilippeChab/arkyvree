@@ -12,8 +12,8 @@ import {
   CharacterLevels,
   CharacterLevelSkills,
 } from "@/server/repositories/index.ts";
-import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
-import { getSeedCtx, makeSession, NIL_UUID } from "@/tests/helpers.ts";
+import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
+import { getSeedCtx, makeSession, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
 import {
   addFighterLevels,
   type BUILDS,
@@ -23,6 +23,8 @@ import {
   levelUp,
   picks,
 } from "@/tests/levelFixtures.ts";
+
+const CharacterLevelsMethods = methodsOf(CharacterLevelsService);
 
 const session = makeSession(SEED_USER_ID);
 

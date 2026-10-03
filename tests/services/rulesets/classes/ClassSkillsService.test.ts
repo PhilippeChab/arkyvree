@@ -3,13 +3,16 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Abilities, EntitySnapshots, Klasses, KlassLevels, KlassSkills, Skills } from "@/server/repositories/index.ts";
-import { ClassSkillsMethods } from "@/server/services/rulesets/classes/ClassSkillsService.ts";
+import ClassSkillsService from "@/server/services/rulesets/classes/ClassSkillsService.ts";
 import {
   addCharacterLevel,
   createTestCharacter,
   createTestRuleset,
   createTestUserAndRuleset,
+  methodsOf,
 } from "@/tests/helpers.ts";
+
+const ClassSkillsMethods = methodsOf(ClassSkillsService);
 
 /** A new user's empty ruleset with two classes and two skills. */
 async function setup() {

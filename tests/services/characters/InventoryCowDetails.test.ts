@@ -4,10 +4,14 @@ import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Items, Sessions, Users } from "@/server/repositories/index.ts";
 import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import { CharacterInventoryMethods } from "@/server/services/characters/CharacterInventoryService.ts";
-import { CharactersMethods } from "@/server/services/CharactersService.ts";
-import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
-import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
+import CharacterInventoryService from "@/server/services/characters/CharacterInventoryService.ts";
+import CharactersService from "@/server/services/CharactersService.ts";
+import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import { createSeededTestRuleset, getSeedCtx, methodsOf } from "@/tests/helpers.ts";
+
+const CharacterInventoryMethods = methodsOf(CharacterInventoryService);
+const CharactersMethods = methodsOf(CharactersService);
+const ItemsMethods = methodsOf(ItemsService);
 
 async function setup() {
   const user = await Users.findOne(db, { emailAddress: "testuser1@example.com" });

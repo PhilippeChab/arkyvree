@@ -8,10 +8,14 @@ import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { lockEntityForMutation, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
-import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { createSeededTestRuleset, getSeedCtx, insertRows, makeSession } from "@/tests/helpers.ts";
+import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
+import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
+import { createSeededTestRuleset, getSeedCtx, insertRows, makeSession, methodsOf } from "@/tests/helpers.ts";
+
+const ModifiersMethods = methodsOf(ModifiersService);
+const PropertiesMethods = methodsOf(PropertiesService);
+const RequirementsMethods = methodsOf(RequirementsService);
 
 const pool = createTestPool();
 afterAll(() => pool.end());

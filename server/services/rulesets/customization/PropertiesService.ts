@@ -31,7 +31,7 @@ function findEntityProperty(rulesetData: CachedRulesetData, entityType: string, 
   throw new NotFoundError("Property not found for this entity");
 }
 
-export const PropertiesMethods = {
+const PropertiesMethods = {
   async getEntityProperties(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);

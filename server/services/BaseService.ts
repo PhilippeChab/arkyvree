@@ -4,7 +4,7 @@ import { InternalError } from "@/server/errors/index.ts";
 export type Result<N> = [true, N, undefined] | [false, undefined, Error];
 
 type Method = (...args: never[]) => unknown;
-type Methods = Record<string, Method>;
+export type Methods = Record<string, Method>;
 
 abstract class BaseService<M extends Methods> {
   _methods: M;
