@@ -248,27 +248,26 @@ const TEST_MIRRORS = [
   ["tests/scripts/", "scripts/"],
 ];
 
-const moduleCache = new Map();
-/** Every module under `tree` (a repo path), by its name without the extension: `FeatsService` → its paths. */
+/**
+ * Every module under `tree` (a repo path), by its name without the extension: `FeatsService` → its paths. Read again
+ * for each test file, not cached: an editor's language server lints for as long as it runs, and a module added since
+ * must count.
+ */
 function modulesIn(root, tree) {
-  const key = `${root}:${tree}`;
-  if (!moduleCache.has(key)) {
-    const byName = new Map();
-    const walk = (dir) => {
-      if (!fs.existsSync(path.join(root, dir))) return;
-      for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
-        const rel = `${dir}${entry.name}`;
-        if (entry.isDirectory()) walk(`${rel}/`);
-        else if (/\.(tsx?|mjs)$/.test(entry.name) && !/\.d\.m?ts$/.test(entry.name)) {
-          const name = entry.name.replace(/\.(tsx?|mjs)$/, "");
-          byName.set(name, [...(byName.get(name) ?? []), rel]);
-        }
+  const byName = new Map();
+  const walk = (dir) => {
+    if (!fs.existsSync(path.join(root, dir))) return;
+    for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
+      const rel = `${dir}${entry.name}`;
+      if (entry.isDirectory()) walk(`${rel}/`);
+      else if (/\.(tsx?|mjs)$/.test(entry.name) && !/\.d\.m?ts$/.test(entry.name)) {
+        const name = entry.name.replace(/\.(tsx?|mjs)$/, "");
+        byName.set(name, [...(byName.get(name) ?? []), rel]);
       }
-    };
-    walk(tree);
-    moduleCache.set(key, byName);
-  }
-  return moduleCache.get(key);
+    }
+  };
+  walk(tree);
+  return byName;
 }
 
 const testPlacement = {
@@ -276,9 +275,10 @@ const testPlacement = {
   create(context) {
     const file = repoPath(context.filename);
     const mirror = TEST_MIRRORS.find(([tests]) => file.startsWith(tests));
-    if (!mirror || !file.endsWith(".test.ts")) return {};
+    const extension = /\.test\.tsx?$/.exec(file)?.[0];
+    if (!mirror || !extension) return {};
     const [tests, tree] = mirror;
-    const name = path.posix.basename(file, ".test.ts");
+    const name = path.posix.basename(file, extension);
     const mirrored = `${tree}${path.posix.dirname(file.slice(tests.length))}/`.replace(/\/\.\/$/, "/");
     const modules = modulesIn(rootOf(context.filename), tree).get(name);
     return {

@@ -400,6 +400,7 @@ export function RequirementsSection({
                       size="small"
                       color="primary"
                       title="Add child requirement"
+                      aria-label="Add child requirement"
                       onClick={(e) => {
                         e.stopPropagation();
                         openCreate(node.level);
