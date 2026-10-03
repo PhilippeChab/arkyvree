@@ -14,81 +14,28 @@ import { stripSeparators } from "@/shared/utils.ts";
 /** The powers a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
 export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithKnownPowers extends Base {
-    fetchAptitudePowerData(rulesetData: CachedRulesetData, powers: PowerWithPMR[]) {
-      const aptitudes = this.aptitudes.getAptitudes();
-      const perAptitudeLevels = new Map<string, Set<number>>();
-      const unleveledAptitudeIds = new Set<string>();
+    getSpellTags() {
+      return this.spellTags;
+    }
 
-      for (const [key, aptitude] of Object.entries(aptitudes)) {
-        if (this.aptitudes.isLeveledAptitude(key)) {
-          const aptitudeObj = aptitude as Record<string, unknown>;
-          const levels = new Set<number>();
-          for (let level = 0; level <= 9; level++) {
-            const levelData = aptitudeObj[String(level)] as { allowed: number } | undefined;
-            if (levelData && levelData.allowed === ALLOWED_ALL) {
-              levels.add(level);
-            }
-          }
-          if (levels.size > 0) {
-            perAptitudeLevels.set(aptitude.id, levels);
-          }
-        } else if (aptitude.allowed === ALLOWED_ALL) {
-          unleveledAptitudeIds.add(aptitude.id);
+    buildSpellTags(feats: FeatWithPMR[], rulesetAptitudes: Aptitude[]) {
+      const characterFeatNames = new Set(feats.map((f) => f.name));
+
+      const taggedAptitudes = new Map<string, string>();
+      for (const apt of rulesetAptitudes) {
+        if (apt.name.endsWith("Domain Spells") || apt.name.endsWith("Specialist Spells")) {
+          const featName = apt.name.replace(/ Spells$/, "");
+          if (characterFeatNames.has(featName)) taggedAptitudes.set(apt.id, featName);
         }
       }
+      if (taggedAptitudes.size === 0) return;
 
-      if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
-
-      // Iterate the composed powers once, emitting one row per matching
-      // (power, aptitude) link — mirrors the old SQL join shape.
-      const allAptitudePowers: Array<
-        Power & { aptitudeId: string; powerLevel: number | null; saveName: string | null }
-      > = [];
-      for (const power of rulesetData.powers) {
-        const save = power.saveId ? rulesetData.savesById.get(power.saveId) : undefined;
-        const saveName = save?.name ?? null;
-        for (const link of power.powersAptitudesInRules) {
-          const leveledSet = perAptitudeLevels.get(link.aptitudeId);
-          const isLeveled = leveledSet !== undefined && link.level !== null && leveledSet.has(link.level);
-          const isUnleveled = unleveledAptitudeIds.has(link.aptitudeId);
-          if (!isLeveled && !isUnleveled) continue;
-          allAptitudePowers.push({
-            ...power,
-            aptitudeId: link.aptitudeId,
-            powerLevel: link.level,
-            saveName,
-          });
-        }
+      for (const link of this.powerAptitudeLinks) {
+        const tag = taggedAptitudes.get(link.aptitudeId);
+        if (!tag) continue;
+        if (!this.spellTags[link.powerId]) this.spellTags[link.powerId] = [];
+        this.spellTags[link.powerId].push(tag);
       }
-
-      this.allAptitudePowers = allAptitudePowers;
-      if (this.allAptitudePowers.length === 0) return;
-
-      // Gather properties (own + template via sourceItemId-style inheritance does
-      // not apply to powers) and the power→aptitude link table from the cache.
-      // Virtuals already live in `powers` with their properties attached, so
-      // they no longer need to be folded into `aptitudePowerProperties`.
-      const aptitudePowerIds = new Set(this.allAptitudePowers.map((p) => p.id));
-      const propertyEntityIds = new Set<string>(aptitudePowerIds);
-
-      const properties: Property[] = [];
-      for (const id of propertyEntityIds) {
-        const ps = rulesetData.propertiesByEntity.get(id);
-        if (ps) properties.push(...ps);
-      }
-
-      const allPowerIdSet = new Set<string>([...powers.map((p) => p.id), ...aptitudePowerIds]);
-      const powerAptitudeLinks: { powerId: string; aptitudeId: string }[] = [];
-      for (const id of allPowerIdSet) {
-        const p = rulesetData.powersById.get(id);
-        if (!p) continue;
-        for (const link of p.powersAptitudesInRules) {
-          powerAptitudeLinks.push({ powerId: p.id, aptitudeId: link.aptitudeId });
-        }
-      }
-
-      this.aptitudePowerProperties = properties;
-      this.powerAptitudeLinks = powerAptitudeLinks;
     }
 
     enrichAllKnownPowers(
@@ -225,28 +172,81 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       }
     }
 
-    buildSpellTags(feats: FeatWithPMR[], rulesetAptitudes: Aptitude[]) {
-      const characterFeatNames = new Set(feats.map((f) => f.name));
+    fetchAptitudePowerData(rulesetData: CachedRulesetData, powers: PowerWithPMR[]) {
+      const aptitudes = this.aptitudes.getAptitudes();
+      const perAptitudeLevels = new Map<string, Set<number>>();
+      const unleveledAptitudeIds = new Set<string>();
 
-      const taggedAptitudes = new Map<string, string>();
-      for (const apt of rulesetAptitudes) {
-        if (apt.name.endsWith("Domain Spells") || apt.name.endsWith("Specialist Spells")) {
-          const featName = apt.name.replace(/ Spells$/, "");
-          if (characterFeatNames.has(featName)) taggedAptitudes.set(apt.id, featName);
+      for (const [key, aptitude] of Object.entries(aptitudes)) {
+        if (this.aptitudes.isLeveledAptitude(key)) {
+          const aptitudeObj = aptitude as Record<string, unknown>;
+          const levels = new Set<number>();
+          for (let level = 0; level <= 9; level++) {
+            const levelData = aptitudeObj[String(level)] as { allowed: number } | undefined;
+            if (levelData && levelData.allowed === ALLOWED_ALL) {
+              levels.add(level);
+            }
+          }
+          if (levels.size > 0) {
+            perAptitudeLevels.set(aptitude.id, levels);
+          }
+        } else if (aptitude.allowed === ALLOWED_ALL) {
+          unleveledAptitudeIds.add(aptitude.id);
         }
       }
-      if (taggedAptitudes.size === 0) return;
 
-      for (const link of this.powerAptitudeLinks) {
-        const tag = taggedAptitudes.get(link.aptitudeId);
-        if (!tag) continue;
-        if (!this.spellTags[link.powerId]) this.spellTags[link.powerId] = [];
-        this.spellTags[link.powerId].push(tag);
+      if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
+
+      // Iterate the composed powers once, emitting one row per matching
+      // (power, aptitude) link — mirrors the old SQL join shape.
+      const allAptitudePowers: Array<
+        Power & { aptitudeId: string; powerLevel: number | null; saveName: string | null }
+      > = [];
+      for (const power of rulesetData.powers) {
+        const save = power.saveId ? rulesetData.savesById.get(power.saveId) : undefined;
+        const saveName = save?.name ?? null;
+        for (const link of power.powersAptitudesInRules) {
+          const leveledSet = perAptitudeLevels.get(link.aptitudeId);
+          const isLeveled = leveledSet !== undefined && link.level !== null && leveledSet.has(link.level);
+          const isUnleveled = unleveledAptitudeIds.has(link.aptitudeId);
+          if (!isLeveled && !isUnleveled) continue;
+          allAptitudePowers.push({
+            ...power,
+            aptitudeId: link.aptitudeId,
+            powerLevel: link.level,
+            saveName,
+          });
+        }
       }
-    }
 
-    getSpellTags() {
-      return this.spellTags;
+      this.allAptitudePowers = allAptitudePowers;
+      if (this.allAptitudePowers.length === 0) return;
+
+      // Gather properties (own + template via sourceItemId-style inheritance does
+      // not apply to powers) and the power→aptitude link table from the cache.
+      // Virtuals already live in `powers` with their properties attached, so
+      // they no longer need to be folded into `aptitudePowerProperties`.
+      const aptitudePowerIds = new Set(this.allAptitudePowers.map((p) => p.id));
+      const propertyEntityIds = new Set<string>(aptitudePowerIds);
+
+      const properties: Property[] = [];
+      for (const id of propertyEntityIds) {
+        const ps = rulesetData.propertiesByEntity.get(id);
+        if (ps) properties.push(...ps);
+      }
+
+      const allPowerIdSet = new Set<string>([...powers.map((p) => p.id), ...aptitudePowerIds]);
+      const powerAptitudeLinks: { powerId: string; aptitudeId: string }[] = [];
+      for (const id of allPowerIdSet) {
+        const p = rulesetData.powersById.get(id);
+        if (!p) continue;
+        for (const link of p.powersAptitudesInRules) {
+          powerAptitudeLinks.push({ powerId: p.id, aptitudeId: link.aptitudeId });
+        }
+      }
+
+      this.aptitudePowerProperties = properties;
+      this.powerAptitudeLinks = powerAptitudeLinks;
     }
   }
   return WithKnownPowers;

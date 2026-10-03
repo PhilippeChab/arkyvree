@@ -81,169 +81,120 @@ export interface DataLoader {
 }
 
 export default abstract class AbstractDetailedCharacter implements DetailedCharacterInterface {
+  constructor(protected readonly character: Character) {}
+
+  // ── Requirement formatting ────────────────────────────────────────
+  private static readonly OPERATOR_SYMBOLS: Record<string, string> = {
+    equal: "=",
+    not_equal: "!=",
+    greater_than: ">",
+    less_than: "<",
+    greater_than_or_equal: ">=",
+    less_than_or_equal: "<=",
+    contains: "contains",
+    not_contains: "not contains",
+    starts_with: "starts with",
+    ends_with: "ends with",
+    is_empty: "is empty",
+    not_empty: "is not empty",
+  };
+
   // ── Context data ──────────────────────────────────────────────────
   protected ruleset: Ruleset | undefined = undefined;
+
   protected player: Player | undefined = undefined;
+
   protected campaign: Campaign | undefined = undefined;
 
   // ── Ruleset data ──────────────────────────────────────────────────
   protected rulesetAbilities: RulesetAbility[] = [];
+
   protected rulesetSaves: RulesetSave[] = [];
+
   protected rulesetSkills: Skill[] = [];
+
   protected rulesetFeats: Feat[] = [];
+
   protected rulesetFeatProperties: Property[] = [];
+
   protected rulesetPowers: PowerWithAptitudes[] = [];
+
   protected rulesetPowerProperties: Property[] = [];
+
   protected rulesetAptitudes: Aptitude[] = [];
+
   protected rulesetKlasses: Klass[] = [];
 
   // ── Character data ────────────────────────────────────────────────
   protected race: RaceWithPMR = {} as RaceWithPMR;
+
   protected languages: Language[] = [];
+
   protected inventory: InventoryEntry[] = [];
+
   protected characterAbilityScores: { abilityId: string; name: string; score: number }[] = [];
+
   protected characterLevels: CharacterLevel[] = [];
+
   protected klassLevels: KlassLevelWithPMR[] = [];
+
   protected klassSkills: KlassSkill[] = [];
+
   protected klassLevelSaves: KlassLevelSave[] = [];
+
   protected klasses: Klass[] = [];
+
   protected feats: FeatWithPMR[] = [];
+
   protected skills: SkillWithRank[] = [];
+
   protected powers: PowerWithPMR[] = [];
 
   // ── Derived data ──────────────────────────────────────────────────
   protected klassLevelFeatCountsByAptitudeId: Record<string, number> = {};
+
   protected klassLevelPowerCountsByAptitudeId: Record<string, number> = {};
+
   protected leveledAptitudeIds: Set<string> = new Set();
 
   // ── Modifier/requirement collections ──────────────────────────────
   protected holders: Holders | null = null;
+
   protected modifiers: Modifier[] = [];
+
   protected requirementGroups: Requirement[][] = [];
+
   protected validRulesetIds = new Set<string>();
 
   // ── Universal sub-systems (initialized by subclass constructor) ──
   protected detailedCharacterAbilities!: DetailedCharacterAbilities;
-  protected detailedCharacterClasses!: DetailedCharacterClasses;
-  protected detailedCharacterFeats!: DetailedCharacterFeats;
-  protected detailedCharacterFeatGroupings!: DetailedCharacterFeatGroupings;
-  protected detailedCharacterPowers!: DetailedCharacterPowers;
-  protected detailedCharacterPowerGroupings!: DetailedCharacterPowerGroupings;
-  protected detailedCharacterAptitudes!: DetailedCharacterAptitudes;
-  protected detailedCharacterSavingThrows!: DetailedCharacterSavingThrows;
-  protected detailedCharacterModifiers!: DetailedCharacterModifiers;
-  protected detailedCharacterIdentity!: DetailedCharacterIdentity;
-  protected detailedCharacterRequirements!: DetailedCharacterRequirements;
-  protected targetPaths!: TargetPathsTraverser;
 
-  constructor(protected readonly character: Character) {}
+  protected detailedCharacterClasses!: DetailedCharacterClasses;
+
+  protected detailedCharacterFeats!: DetailedCharacterFeats;
+
+  protected detailedCharacterFeatGroupings!: DetailedCharacterFeatGroupings;
+
+  protected detailedCharacterPowers!: DetailedCharacterPowers;
+
+  protected detailedCharacterPowerGroupings!: DetailedCharacterPowerGroupings;
+
+  protected detailedCharacterAptitudes!: DetailedCharacterAptitudes;
+
+  protected detailedCharacterSavingThrows!: DetailedCharacterSavingThrows;
+
+  protected detailedCharacterModifiers!: DetailedCharacterModifiers;
+
+  protected detailedCharacterIdentity!: DetailedCharacterIdentity;
+
+  protected detailedCharacterRequirements!: DetailedCharacterRequirements;
+
+  protected targetPaths!: TargetPathsTraverser;
 
   /** Create the data loader for this ruleset. */
   protected abstract createDataLoader(): DataLoader;
 
-  /** Initialize all sub-systems from loaded data. Order matters. */
-  protected abstract normalizeData(): void;
-
-  /** Build the holders map — universal holders + ruleset-specific ones. */
-  protected abstract buildHolders(): Holders;
-
-  /** Ruleset-specific setup before requirement evaluation (e.g. spellcasting holder). */
-  protected abstract preRequirementProcessing(): void;
-
-  /** Ruleset-specific processing after requirements, before modifiers (e.g. proficiency penalties). */
-  protected abstract postRequirementProcessing(): void;
-
-  /** Ruleset-specific processing after non-power modifiers are applied. */
-  protected abstract postModifierProcessing(rulesetData: CachedRulesetData): Promise<void>;
-
-  /** Resolve entity name for ruleset-specific entity types. */
-  abstract resolveEntityName(entityId: string, entityType: string): string | undefined;
-
-  /** Resolve modifier source name. */
-  abstract resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined;
-
-  /** Getters for ruleset-specific sub-systems and data. Subclass adds its own. */
-  abstract getVirtuallyPossessedPowerIds(): string[];
-  abstract getVirtuallyPossessedPowersWithAptitudes(): unknown[];
-  abstract getSpellTags(): Record<string, string[]>;
-  abstract getSpellcasting(): { arcane: number; divine: number };
-
-  // ── Template build pipeline ───────────────────────────────────────
-
-  async preload(): Promise<PreloadedCharacterData> {
-    const dataLoader = this.createDataLoader();
-    return await withRulesetScope(db, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
-      const shared = await dataLoader.loadSharedData(db, { ruleset, cowData: rulesetData.cow, rulesetData });
-      return {
-        ruleset,
-        cowData: shared.cowData,
-        rulesetData: shared.rulesetData,
-        _shared: shared,
-      };
-    });
-  }
-
-  async build(database: Db = db, projectedData?: unknown, preloaded?: PreloadedCharacterData | PreloadedRulesetData) {
-    const dataLoader = this.createDataLoader();
-
-    // withRulesetScope activates the cowContext, loads ruleset + cowData +
-    // rulesetData, and hands them back. The data loader requires preloaded
-    // ruleset-level data — never fetches on its own. Projection mode's
-    // caller-supplied `preloaded` with `_shared` still takes precedence.
-    return await withRulesetScope(database, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
-      const preloadedForLoad: PreloadedCharacterData | PreloadedRulesetData =
-        preloaded && "_shared" in preloaded ? preloaded : { ruleset, cowData: rulesetData.cow, rulesetData };
-      // 1. Load data
-      const data = await dataLoader.load(database, projectedData, preloadedForLoad);
-      this.applyLoadedData(data);
-
-      // 2. Normalize (subclass — initializes all sub-systems)
-      this.normalizeData();
-
-      // 3. Pre-apply possession modifiers (universal)
-      this.preApplyPossessionModifiers();
-
-      // 4. Build holders (subclass — includes ruleset-specific holders)
-      this.holders = this.buildHolders();
-
-      // 5. Pre-requirement processing (subclass — e.g. spellcasting holder init)
-      this.preRequirementProcessing();
-
-      // 6. Evaluate requirements (universal)
-      this.detailedCharacterRequirements.evaluateRequirements(
-        this.holders,
-        this.requirementGroups.filter((group) => group.length > 0),
-      );
-
-      // 7. Post-requirement processing (subclass — e.g. proficiency penalties)
-      this.postRequirementProcessing();
-
-      // 8. Evaluate non-power modifiers (universal)
-      const powerModifiers = this.modifiers.filter((m) => m.target.startsWith("powers."));
-      const otherModifiers = this.modifiers.filter((m) => !m.target.startsWith("powers."));
-      this.detailedCharacterModifiers.evaluateModifiers(
-        this.holders,
-        otherModifiers,
-        this.detailedCharacterRequirements,
-      );
-
-      // 9. Refresh universal ability-dependent sub-systems
-      this.detailedCharacterSavingThrows.refreshAbilityModifiers();
-
-      // 10. Ruleset-specific post-modifier processing (subclass)
-      await this.postModifierProcessing(rulesetData);
-
-      // 11. Evaluate power modifiers (universal)
-      this.detailedCharacterModifiers.evaluateModifiers(
-        this.holders,
-        powerModifiers,
-        this.detailedCharacterRequirements,
-      );
-    });
-  }
-
   // ── Universal concrete methods ────────────────────────────────────
-
   protected applyLoadedData(data: LoadedCharacterData) {
     this.ruleset = data.ruleset;
     this.player = data.player;
@@ -277,6 +228,36 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     this.validRulesetIds = data.validRulesetIds;
   }
 
+  /** Build the holders map — universal holders + ruleset-specific ones. */
+  protected abstract buildHolders(): Holders;
+
+  private invalidRequirementIssue({
+    warning,
+    requirement,
+  }: {
+    warning: string;
+    requirement: Requirement;
+  }): RequirementIssue {
+    const entityName = this.resolveEntityName(requirement.entityId, requirement.entityType);
+    return {
+      category: "requirements",
+      message: entityName
+        ? `Invalid requirement on ${entityName} (${requirement.entityType}): ${warning}`
+        : `Invalid requirement: ${warning}`,
+      entityName,
+      entityType: requirement.entityType,
+    };
+  }
+
+  /** Initialize all sub-systems from loaded data. Order matters. */
+  protected abstract normalizeData(): void;
+
+  /** Ruleset-specific processing after non-power modifiers are applied. */
+  protected abstract postModifierProcessing(rulesetData: CachedRulesetData): Promise<void>;
+
+  /** Ruleset-specific processing after requirements, before modifiers (e.g. proficiency penalties). */
+  protected abstract postRequirementProcessing(): void;
+
   protected preApplyPossessionModifiers() {
     for (const mod of this.modifiers) {
       if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
@@ -303,17 +284,80 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     }
   }
 
-  areRequirementsMet(requirementGroups: Requirement[][]): boolean {
-    if (!this.holders) return false;
+  /** Ruleset-specific setup before requirement evaluation (e.g. spellcasting holder). */
+  protected abstract preRequirementProcessing(): void;
 
-    const tempRequirements = new DetailedCharacterRequirements(this.targetPaths);
-    const nonEmpty = requirementGroups.filter((group) => group.length > 0);
-    if (nonEmpty.length === 0) return true;
-
-    tempRequirements.evaluateRequirements(this.holders, nonEmpty);
-    const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
-    return unmetRequirementGroups.length === 0 && invalidRequirements.length === 0;
+  /** An unmet requirement group's issue: on the entity of `owner`, one of its requirements, or naming its targets. */
+  private unmetRequirementIssue(group: Requirement[], owner: Requirement): RequirementIssue {
+    const entityName = this.resolveEntityName(owner.entityId, owner.entityType);
+    const targets = group.filter((r) => r.target).map((r) => r.target);
+    return {
+      category: "requirements",
+      message: entityName
+        ? `Unmet prerequisite on ${entityName} (${owner.entityType})`
+        : `Unmet prerequisite: ${targets.join(", ") || "unknown"}`,
+      entityName,
+      entityType: owner.entityType,
+      requirementTree: this.formatRequirements(group),
+    };
   }
+
+  getCampaign() {
+    return this.campaign;
+  }
+
+  getDetailedCharacterAbilities() {
+    return this.detailedCharacterAbilities;
+  }
+
+  getDetailedCharacterAptitudes() {
+    return this.detailedCharacterAptitudes;
+  }
+
+  getDetailedCharacterClasses() {
+    return this.detailedCharacterClasses;
+  }
+
+  getDetailedCharacterFeats() {
+    return this.detailedCharacterFeats;
+  }
+
+  getDetailedCharacterIdentity() {
+    return this.detailedCharacterIdentity;
+  }
+
+  getDetailedCharacterModifiers() {
+    return this.detailedCharacterModifiers;
+  }
+
+  getDetailedCharacterPowerGroupings() {
+    return this.detailedCharacterPowerGroupings;
+  }
+
+  getDetailedCharacterPowers() {
+    return this.detailedCharacterPowers;
+  }
+
+  getDetailedCharacterRequirements() {
+    return this.detailedCharacterRequirements;
+  }
+
+  getDetailedCharacterSavingThrows() {
+    return this.detailedCharacterSavingThrows;
+  }
+
+  getPlayer() {
+    return this.player;
+  }
+
+  // ── Universal getters ─────────────────────────────────────────────
+  getRuleset() {
+    return this.ruleset;
+  }
+
+  abstract getSpellTags(): Record<string, string[]>;
+
+  abstract getSpellcasting(): { arcane: number; divine: number };
 
   getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[] {
     if (!this.holders) return [];
@@ -331,38 +375,24 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     return issues;
   }
 
-  /** An unmet requirement group's issue: on the entity of `owner`, one of its requirements, or naming its targets. */
-  private unmetRequirementIssue(group: Requirement[], owner: Requirement): RequirementIssue {
-    const entityName = this.resolveEntityName(owner.entityId, owner.entityType);
-    const targets = group.filter((r) => r.target).map((r) => r.target);
-    return {
-      category: "requirements",
-      message: entityName
-        ? `Unmet prerequisite on ${entityName} (${owner.entityType})`
-        : `Unmet prerequisite: ${targets.join(", ") || "unknown"}`,
-      entityName,
-      entityType: owner.entityType,
-      requirementTree: this.formatRequirements(group),
-    };
+  getVirtuallyPossessedFeatIds() {
+    return this.feats.filter((f) => f.virtual).map((f) => f.id);
   }
 
-  private invalidRequirementIssue({
-    warning,
-    requirement,
-  }: {
-    warning: string;
-    requirement: Requirement;
-  }): RequirementIssue {
-    const entityName = this.resolveEntityName(requirement.entityId, requirement.entityType);
-    return {
-      category: "requirements",
-      message: entityName
-        ? `Invalid requirement on ${entityName} (${requirement.entityType}): ${warning}`
-        : `Invalid requirement: ${warning}`,
-      entityName,
-      entityType: requirement.entityType,
-    };
+  getVirtuallyPossessedFeats() {
+    return this.feats.filter((f) => f.virtual);
   }
+
+  /** Getters for ruleset-specific sub-systems and data. Subclass adds its own. */
+  abstract getVirtuallyPossessedPowerIds(): string[];
+
+  abstract getVirtuallyPossessedPowersWithAptitudes(): unknown[];
+
+  /** Resolve entity name for ruleset-specific entity types. */
+  abstract resolveEntityName(entityId: string, entityType: string): string | undefined;
+
+  /** Resolve modifier source name. */
+  abstract resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined;
 
   validate(): ValidationResult {
     const issues: ValidationIssue[] = [];
@@ -450,84 +480,76 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     return { valid: issues.length === 0, issues };
   }
 
-  // ── Universal getters ─────────────────────────────────────────────
+  areRequirementsMet(requirementGroups: Requirement[][]): boolean {
+    if (!this.holders) return false;
 
-  getRuleset() {
-    return this.ruleset;
+    const tempRequirements = new DetailedCharacterRequirements(this.targetPaths);
+    const nonEmpty = requirementGroups.filter((group) => group.length > 0);
+    if (nonEmpty.length === 0) return true;
+
+    tempRequirements.evaluateRequirements(this.holders, nonEmpty);
+    const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
+    return unmetRequirementGroups.length === 0 && invalidRequirements.length === 0;
   }
 
-  getPlayer() {
-    return this.player;
+  async build(database: Db = db, projectedData?: unknown, preloaded?: PreloadedCharacterData | PreloadedRulesetData) {
+    const dataLoader = this.createDataLoader();
+
+    // withRulesetScope activates the cowContext, loads ruleset + cowData +
+    // rulesetData, and hands them back. The data loader requires preloaded
+    // ruleset-level data — never fetches on its own. Projection mode's
+    // caller-supplied `preloaded` with `_shared` still takes precedence.
+    return await withRulesetScope(database, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
+      const preloadedForLoad: PreloadedCharacterData | PreloadedRulesetData =
+        preloaded && "_shared" in preloaded ? preloaded : { ruleset, cowData: rulesetData.cow, rulesetData };
+      // 1. Load data
+      const data = await dataLoader.load(database, projectedData, preloadedForLoad);
+      this.applyLoadedData(data);
+
+      // 2. Normalize (subclass — initializes all sub-systems)
+      this.normalizeData();
+
+      // 3. Pre-apply possession modifiers (universal)
+      this.preApplyPossessionModifiers();
+
+      // 4. Build holders (subclass — includes ruleset-specific holders)
+      this.holders = this.buildHolders();
+
+      // 5. Pre-requirement processing (subclass — e.g. spellcasting holder init)
+      this.preRequirementProcessing();
+
+      // 6. Evaluate requirements (universal)
+      this.detailedCharacterRequirements.evaluateRequirements(
+        this.holders,
+        this.requirementGroups.filter((group) => group.length > 0),
+      );
+
+      // 7. Post-requirement processing (subclass — e.g. proficiency penalties)
+      this.postRequirementProcessing();
+
+      // 8. Evaluate non-power modifiers (universal)
+      const powerModifiers = this.modifiers.filter((m) => m.target.startsWith("powers."));
+      const otherModifiers = this.modifiers.filter((m) => !m.target.startsWith("powers."));
+      this.detailedCharacterModifiers.evaluateModifiers(
+        this.holders,
+        otherModifiers,
+        this.detailedCharacterRequirements,
+      );
+
+      // 9. Refresh universal ability-dependent sub-systems
+      this.detailedCharacterSavingThrows.refreshAbilityModifiers();
+
+      // 10. Ruleset-specific post-modifier processing (subclass)
+      await this.postModifierProcessing(rulesetData);
+
+      // 11. Evaluate power modifiers (universal)
+      this.detailedCharacterModifiers.evaluateModifiers(
+        this.holders,
+        powerModifiers,
+        this.detailedCharacterRequirements,
+      );
+    });
   }
-
-  getCampaign() {
-    return this.campaign;
-  }
-
-  getDetailedCharacterClasses() {
-    return this.detailedCharacterClasses;
-  }
-
-  getDetailedCharacterIdentity() {
-    return this.detailedCharacterIdentity;
-  }
-
-  getDetailedCharacterAbilities() {
-    return this.detailedCharacterAbilities;
-  }
-
-  getDetailedCharacterSavingThrows() {
-    return this.detailedCharacterSavingThrows;
-  }
-
-  getDetailedCharacterFeats() {
-    return this.detailedCharacterFeats;
-  }
-
-  getDetailedCharacterPowers() {
-    return this.detailedCharacterPowers;
-  }
-
-  getDetailedCharacterPowerGroupings() {
-    return this.detailedCharacterPowerGroupings;
-  }
-
-  getDetailedCharacterAptitudes() {
-    return this.detailedCharacterAptitudes;
-  }
-
-  getDetailedCharacterModifiers() {
-    return this.detailedCharacterModifiers;
-  }
-
-  getDetailedCharacterRequirements() {
-    return this.detailedCharacterRequirements;
-  }
-
-  getVirtuallyPossessedFeatIds() {
-    return this.feats.filter((f) => f.virtual).map((f) => f.id);
-  }
-
-  getVirtuallyPossessedFeats() {
-    return this.feats.filter((f) => f.virtual);
-  }
-
-  // ── Requirement formatting ────────────────────────────────────────
-
-  private static readonly OPERATOR_SYMBOLS: Record<string, string> = {
-    equal: "=",
-    not_equal: "!=",
-    greater_than: ">",
-    less_than: "<",
-    greater_than_or_equal: ">=",
-    less_than_or_equal: "<=",
-    contains: "contains",
-    not_contains: "not contains",
-    starts_with: "starts with",
-    ends_with: "ends with",
-    is_empty: "is empty",
-    not_empty: "is not empty",
-  };
 
   formatRequirements(requirements: Requirement[]): string {
     type TreeNode = { requirement: Requirement; children: TreeNode[] };
@@ -614,5 +636,19 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     };
 
     return roots.map((root) => formatNode(root, "")).join("\n");
+  }
+
+  // ── Template build pipeline ───────────────────────────────────────
+  async preload(): Promise<PreloadedCharacterData> {
+    const dataLoader = this.createDataLoader();
+    return await withRulesetScope(db, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
+      const shared = await dataLoader.loadSharedData(db, { ruleset, cowData: rulesetData.cow, rulesetData });
+      return {
+        ruleset,
+        cowData: shared.cowData,
+        rulesetData: shared.rulesetData,
+        _shared: shared,
+      };
+    });
   }
 }

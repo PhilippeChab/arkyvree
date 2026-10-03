@@ -20,20 +20,6 @@ export default class CampaignsPolicy extends BasePolicy<Campaign> {
     return player;
   }
 
-  /** An archived campaign is read-only. */
-  canModify() {
-    if (this.entity.deletedAt) throw new ForbiddenError("Cannot modify an archived campaign");
-    return true;
-  }
-
-  async canUpdate() {
-    if (!(await CampaignsPolicy.isGameMaster(this.session.userId, this.entity.id))) {
-      throw new ForbiddenError("Only the Game Master can edit this campaign");
-    }
-
-    return true;
-  }
-
   async canDelete() {
     // Archived campaigns also archive their player rows — include them.
     const player = await Players.findOne(
@@ -61,6 +47,20 @@ export default class CampaignsPolicy extends BasePolicy<Campaign> {
     if (!this.entity.deletedAt) {
       throw new UnprocessableEntityError("Only archived campaigns can be permanently deleted");
     }
+    return true;
+  }
+
+  /** An archived campaign is read-only. */
+  canModify() {
+    if (this.entity.deletedAt) throw new ForbiddenError("Cannot modify an archived campaign");
+    return true;
+  }
+
+  async canUpdate() {
+    if (!(await CampaignsPolicy.isGameMaster(this.session.userId, this.entity.id))) {
+      throw new ForbiddenError("Only the Game Master can edit this campaign");
+    }
+
     return true;
   }
 }

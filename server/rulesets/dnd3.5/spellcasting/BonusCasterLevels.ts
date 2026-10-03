@@ -10,6 +10,63 @@ import { stripSeparators } from "@/shared/utils.ts";
 /** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain spells they bring. */
 export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithBonusCasterLevels extends Base {
+    /**
+     * Sync domain spell aptitude levels to match the parent class's accessible spell levels.
+     */
+    protected syncDomainSpellAptitudes(feats: FeatWithPMR[]) {
+      const aptitudes = this.aptitudes.getAptitudes();
+      const classes = this.classes.getCharacterClasses();
+
+      // klassLevelId → className index so feat → class attribution is O(1)
+      // instead of O(classes × levels) per feat modifier.
+      const classNameByKlassLevelId = new Map<string, string>();
+      for (const [className, klassData] of Object.entries(classes)) {
+        for (const l of klassData.levels) {
+          classNameByKlassLevelId.set(l.klassLevel.id, className);
+        }
+      }
+
+      // Build domain aptitude key → owning class name by tracing feat → klassLevelId → class
+      const domainAptKeys = new Map<string, string>();
+      for (const feat of feats) {
+        for (const mod of feat.modifiers) {
+          if (!mod.target.includes("domainspells")) continue;
+          const parts = mod.target.split(".");
+          if (parts.length < 4 || parts[0] !== "aptitudes") continue;
+          const aptKey = parts[1];
+          if (domainAptKeys.has(aptKey)) continue;
+
+          const className = classNameByKlassLevelId.get(feat.klassLevelId);
+          if (className) domainAptKeys.set(aptKey, className);
+        }
+      }
+
+      // For each domain spell aptitude, sync levels with the parent class spell aptitude
+      for (const [domainAptKey, className] of domainAptKeys) {
+        const domainApt = aptitudes[domainAptKey] as Record<string, unknown> | undefined;
+        const classSpellApt = aptitudes[stripSeparators(className + "spells")] as Record<string, unknown> | undefined;
+        if (!domainApt || !classSpellApt) continue;
+
+        for (let level = 1; level <= 9; level++) {
+          const classLevel = classSpellApt[String(level)] as AptitudeLevelData | undefined;
+          const domainLevel = domainApt[String(level)] as AptitudeLevelData | undefined;
+          if (!classLevel || !domainLevel) continue;
+
+          if (classLevel.allowed === ALLOWED_ALL && domainLevel.allowed === 0) {
+            domainLevel.allowed = ALLOWED_ALL;
+            domainLevel.uses = 1;
+          } else if (classLevel.allowed === 0 && domainLevel.allowed === ALLOWED_ALL) {
+            domainLevel.allowed = 0;
+            domainLevel.uses = 0;
+          }
+        }
+      }
+    }
+
+    getBonusKlassLevelAttribution() {
+      return this.bonusKlassLevelAttribution;
+    }
+
     getBonusKlassLevelModifiers() {
       return this.bonusKlassLevelModifiers;
     }
@@ -18,8 +75,15 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       return this.bonusKlassLevels;
     }
 
-    getBonusKlassLevelAttribution() {
-      return this.bonusKlassLevelAttribution;
+    applyBonusCasterLevelModifiers(holders: Holders, feats: FeatWithPMR[]) {
+      // Filter to aptitudes.* targets only — we only want spell progression
+      const aptitudeModifiers = this.bonusKlassLevelModifiers.filter((m) => m.target.startsWith("aptitudes."));
+
+      for (const modifier of aptitudeModifiers) {
+        this.characterModifiers.evaluateModifier(modifier, holders);
+      }
+
+      this.syncDomainSpellAptitudes(feats);
     }
 
     fetchBonusCasterLevelData(
@@ -130,70 +194,6 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
           );
         }
       }
-    }
-
-    /**
-     * Sync domain spell aptitude levels to match the parent class's accessible spell levels.
-     */
-    protected syncDomainSpellAptitudes(feats: FeatWithPMR[]) {
-      const aptitudes = this.aptitudes.getAptitudes();
-      const classes = this.classes.getCharacterClasses();
-
-      // klassLevelId → className index so feat → class attribution is O(1)
-      // instead of O(classes × levels) per feat modifier.
-      const classNameByKlassLevelId = new Map<string, string>();
-      for (const [className, klassData] of Object.entries(classes)) {
-        for (const l of klassData.levels) {
-          classNameByKlassLevelId.set(l.klassLevel.id, className);
-        }
-      }
-
-      // Build domain aptitude key → owning class name by tracing feat → klassLevelId → class
-      const domainAptKeys = new Map<string, string>();
-      for (const feat of feats) {
-        for (const mod of feat.modifiers) {
-          if (!mod.target.includes("domainspells")) continue;
-          const parts = mod.target.split(".");
-          if (parts.length < 4 || parts[0] !== "aptitudes") continue;
-          const aptKey = parts[1];
-          if (domainAptKeys.has(aptKey)) continue;
-
-          const className = classNameByKlassLevelId.get(feat.klassLevelId);
-          if (className) domainAptKeys.set(aptKey, className);
-        }
-      }
-
-      // For each domain spell aptitude, sync levels with the parent class spell aptitude
-      for (const [domainAptKey, className] of domainAptKeys) {
-        const domainApt = aptitudes[domainAptKey] as Record<string, unknown> | undefined;
-        const classSpellApt = aptitudes[stripSeparators(className + "spells")] as Record<string, unknown> | undefined;
-        if (!domainApt || !classSpellApt) continue;
-
-        for (let level = 1; level <= 9; level++) {
-          const classLevel = classSpellApt[String(level)] as AptitudeLevelData | undefined;
-          const domainLevel = domainApt[String(level)] as AptitudeLevelData | undefined;
-          if (!classLevel || !domainLevel) continue;
-
-          if (classLevel.allowed === ALLOWED_ALL && domainLevel.allowed === 0) {
-            domainLevel.allowed = ALLOWED_ALL;
-            domainLevel.uses = 1;
-          } else if (classLevel.allowed === 0 && domainLevel.allowed === ALLOWED_ALL) {
-            domainLevel.allowed = 0;
-            domainLevel.uses = 0;
-          }
-        }
-      }
-    }
-
-    applyBonusCasterLevelModifiers(holders: Holders, feats: FeatWithPMR[]) {
-      // Filter to aptitudes.* targets only — we only want spell progression
-      const aptitudeModifiers = this.bonusKlassLevelModifiers.filter((m) => m.target.startsWith("aptitudes."));
-
-      for (const modifier of aptitudeModifiers) {
-        this.characterModifiers.evaluateModifier(modifier, holders);
-      }
-
-      this.syncDomainSpellAptitudes(feats);
     }
   }
   return WithBonusCasterLevels;

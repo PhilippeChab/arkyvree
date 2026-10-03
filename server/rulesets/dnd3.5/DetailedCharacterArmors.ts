@@ -44,6 +44,8 @@ type ArmorsData = Record<string, ArmorSlot>;
 export type { ArmorsData };
 
 export default class DetailedCharacterArmors {
+  constructor(private readonly characterCombat: DetailedCharacterCombat) {}
+
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_ARMOR_PATHS, { armors: "Armors", ...SEGMENT_LABELS });
   }
@@ -72,7 +74,20 @@ export default class DetailedCharacterArmors {
 
   private readonly armors: ArmorsData = {};
 
-  constructor(private readonly characterCombat: DetailedCharacterCombat) {}
+  getArmors(): ArmorsData {
+    return this.armors;
+  }
+
+  updateTotals(): void {
+    const uniqueArmors = new Set(Object.values(this.armors));
+    let totalArmorAc = 0;
+    for (const armor of uniqueArmors) {
+      armor.ac.total = armor.ac.bonus + armor.ac.misc;
+      totalArmorAc += armor.ac.total;
+    }
+    this.characterCombat.getCombat().ac.armor = totalArmorAc;
+    this.characterCombat.updateTotals();
+  }
 
   registerArmor(item: Item, properties: Property[]): void {
     const armorType = properties.find((p) => p.type === ARMOR_PROFICIENCY);
@@ -110,20 +125,5 @@ export default class DetailedCharacterArmors {
     }
 
     this.characterCombat.addArmor(properties);
-  }
-
-  getArmors(): ArmorsData {
-    return this.armors;
-  }
-
-  updateTotals(): void {
-    const uniqueArmors = new Set(Object.values(this.armors));
-    let totalArmorAc = 0;
-    for (const armor of uniqueArmors) {
-      armor.ac.total = armor.ac.bonus + armor.ac.misc;
-      totalArmorAc += armor.ac.total;
-    }
-    this.characterCombat.getCombat().ac.armor = totalArmorAc;
-    this.characterCombat.updateTotals();
   }
 }

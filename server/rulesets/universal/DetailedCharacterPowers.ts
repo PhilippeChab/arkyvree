@@ -88,6 +88,29 @@ export default class DetailedCharacterPowers {
 
   private readonly detailedCharacterPowers: DetailedCharacterComprehensivePowers = {};
 
+  getFlatPowers(): Record<string, PowerEntry> {
+    const result: Record<string, PowerEntry> = {};
+    for (const [key, value] of Object.entries(this.detailedCharacterPowers)) {
+      if ("power" in value) {
+        result[key] = value as PowerEntry;
+      }
+    }
+    return result;
+  }
+
+  getPower(name: string) {
+    return this.detailedCharacterPowers[stripSeparators(name)] as PowerEntry | undefined;
+  }
+
+  getPowers() {
+    return this.detailedCharacterPowers;
+  }
+
+  getSpellEntry(spellSlug: string, aptitudeSlug: string): { known: boolean } | undefined {
+    const entry = this.detailedCharacterPowers[spellSlug] as Record<string, { known: boolean }> | undefined;
+    return entry?.[aptitudeSlug];
+  }
+
   addPowerEntries(powers: (Power & { properties: Property[] })[]) {
     for (const power of powers) {
       const propertiesMap: Record<string, string> = {};
@@ -103,6 +126,15 @@ export default class DetailedCharacterPowers {
         power,
         properties: propertiesMap,
       };
+    }
+  }
+
+  updateTotals(): void {
+    for (const value of Object.values(this.detailedCharacterPowers)) {
+      if ("dc" in value) {
+        const dc = (value as PowerEntry).dc!;
+        dc.total = dc.base + dc.level + dc.ability + dc.misc;
+      }
     }
   }
 
@@ -160,37 +192,5 @@ export default class DetailedCharacterPowers {
       namespace[key] = wrapped;
     }
     this.detailedCharacterPowers.groups = namespace;
-  }
-
-  getPowers() {
-    return this.detailedCharacterPowers;
-  }
-
-  getFlatPowers(): Record<string, PowerEntry> {
-    const result: Record<string, PowerEntry> = {};
-    for (const [key, value] of Object.entries(this.detailedCharacterPowers)) {
-      if ("power" in value) {
-        result[key] = value as PowerEntry;
-      }
-    }
-    return result;
-  }
-
-  getPower(name: string) {
-    return this.detailedCharacterPowers[stripSeparators(name)] as PowerEntry | undefined;
-  }
-
-  getSpellEntry(spellSlug: string, aptitudeSlug: string): { known: boolean } | undefined {
-    const entry = this.detailedCharacterPowers[spellSlug] as Record<string, { known: boolean }> | undefined;
-    return entry?.[aptitudeSlug];
-  }
-
-  updateTotals(): void {
-    for (const value of Object.values(this.detailedCharacterPowers)) {
-      if ("dc" in value) {
-        const dc = (value as PowerEntry).dc!;
-        dc.total = dc.base + dc.level + dc.ability + dc.misc;
-      }
-    }
   }
 }

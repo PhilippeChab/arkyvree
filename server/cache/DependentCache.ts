@@ -10,6 +10,7 @@ interface Loaded<T> {
 /** Bounded cached entries plus in-flight reads, invalidated by dependency ID. */
 export default class DependentCache<T> {
   private cache = new MemoryCache<{ data: T; dependencies: ReadonlySet<string> }>();
+
   private pending = new Map<string, { promise: Promise<T>; dependencies: ReadonlySet<string> }>();
 
   async getOrFetch(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {
@@ -43,6 +44,10 @@ export default class DependentCache<T> {
     return promise;
   }
 
+  isPinned(key: string): boolean {
+    return this.cache.isPinned(key);
+  }
+
   invalidate(dependencyId: string): void {
     // MemoryCache is capped at 200 entries. No unbounded dependency registry,
     // no database lookup, and unrelated cached/in-flight reads stay reusable.
@@ -55,9 +60,5 @@ export default class DependentCache<T> {
   invalidateAll(): void {
     this.cache.invalidateAll();
     this.pending.clear();
-  }
-
-  isPinned(key: string): boolean {
-    return this.cache.isPinned(key);
   }
 }

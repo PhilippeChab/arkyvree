@@ -22,6 +22,12 @@ type PowerGroup = Record<string, PowerDc>;
 type PowerGroupingsData = Record<string, PowerGroup>;
 
 export default class DetailedCharacterPowerGroupings {
+  constructor(
+    private readonly detailedCharacterPowers: DetailedCharacterPowers,
+    private readonly detailedCharacterAbilities: DetailedCharacterAbilities,
+    private readonly groupingProperties: readonly string[],
+  ) {}
+
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_POWER_DC_PATHS, { dc: "DC", groups: "Groups" });
   }
@@ -59,25 +65,19 @@ export default class DetailedCharacterPowerGroupings {
 
   private readonly powerGroupings: PowerGroupingsData = {};
 
-  constructor(
-    private readonly detailedCharacterPowers: DetailedCharacterPowers,
-    private readonly detailedCharacterAbilities: DetailedCharacterAbilities,
-    private readonly groupingProperties: readonly string[],
-  ) {}
+  getPowerGroupings(): PowerGroupingsData {
+    return this.powerGroupings;
+  }
 
-  /**
-   * Pre-creates empty grouping buckets so wildcard target paths like
-   * `powers.groups.<name>.*.dc.misc` resolve even when the character has no
-   * spells of that grouping. Without this, the modifier evaluator reports
-   * `Element not found` (skipped) rather than the more accurate "applied to
-   * zero matches" (inactive).
-   */
-  seedEmptyGroupings(values: string[]): void {
-    for (const raw of values) {
-      const key = stripSeparators(raw);
-      if (!key) continue;
-      if (!this.powerGroupings[key]) {
-        this.powerGroupings[key] = {};
+  updateTotals(): void {
+    // Collect unique DC references to avoid recalculating shared objects
+    const seen = new Set<PowerDc>();
+    for (const group of Object.values(this.powerGroupings)) {
+      for (const dc of Object.values(group)) {
+        if (seen.has(dc)) continue;
+        seen.add(dc);
+        // Re-read ability modifier in case abilities were modified
+        dc.total = dc.base + dc.level + dc.ability + dc.misc;
       }
     }
   }
@@ -126,19 +126,19 @@ export default class DetailedCharacterPowerGroupings {
     return dc;
   }
 
-  getPowerGroupings(): PowerGroupingsData {
-    return this.powerGroupings;
-  }
-
-  updateTotals(): void {
-    // Collect unique DC references to avoid recalculating shared objects
-    const seen = new Set<PowerDc>();
-    for (const group of Object.values(this.powerGroupings)) {
-      for (const dc of Object.values(group)) {
-        if (seen.has(dc)) continue;
-        seen.add(dc);
-        // Re-read ability modifier in case abilities were modified
-        dc.total = dc.base + dc.level + dc.ability + dc.misc;
+  /**
+   * Pre-creates empty grouping buckets so wildcard target paths like
+   * `powers.groups.<name>.*.dc.misc` resolve even when the character has no
+   * spells of that grouping. Without this, the modifier evaluator reports
+   * `Element not found` (skipped) rather than the more accurate "applied to
+   * zero matches" (inactive).
+   */
+  seedEmptyGroupings(values: string[]): void {
+    for (const raw of values) {
+      const key = stripSeparators(raw);
+      if (!key) continue;
+      if (!this.powerGroupings[key]) {
+        this.powerGroupings[key] = {};
       }
     }
   }

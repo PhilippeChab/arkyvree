@@ -6,12 +6,12 @@ import type { Character, Session } from "@/shared/relations.ts";
 import BasePolicy from "./BasePolicy.ts";
 
 export default class CharactersPolicy extends BasePolicy<Character> {
-  private readonly isActiveContributor: boolean;
-
   constructor(session: Session, entity: Character, isActiveContributor = false) {
     super(session, entity);
     this.isActiveContributor = isActiveContributor;
   }
+
+  private readonly isActiveContributor: boolean;
 
   private get isOwner() {
     return this.entity.userId === this.session.userId;

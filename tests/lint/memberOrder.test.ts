@@ -111,12 +111,13 @@ describe("member order", () => {
     expect(fs.readFileSync(service, "utf8")).toBe(
       [
         "class FeatsService {",
-        "  private helper() {}",
-        "",
-        // A field keeps its place: its initializer may read an earlier one.
+        // Fields keep their order, first: an initializer may read an earlier field.
         "  readonly zz = 1;",
         "",
         "  readonly aa = this.zz + 1;",
+        "",
+        // Then private methods, then public ones, each in CRUD order.
+        "  private helper() {}",
         "",
         "  async getFeats() {}",
         "",

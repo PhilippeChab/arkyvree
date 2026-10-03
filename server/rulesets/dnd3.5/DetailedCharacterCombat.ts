@@ -125,12 +125,32 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
     return paths;
   }
 
-  setSkills(skills: DetailedCharacterSkills) {
-    this.characterSkills = skills;
+  getCombat(): DetailedCharacterComprehensiveCombat {
+    return this.detailedCharacterCombat;
   }
 
   setEncumbranceSource(encumbrance: DetailedCharacterEncumbrance) {
     this.characterEncumbrance = encumbrance;
+  }
+
+  setSkills(skills: DetailedCharacterSkills) {
+    this.characterSkills = skills;
+  }
+
+  updateTotals() {
+    if (this.characterEncumbrance) {
+      this.characterEncumbrance.updateTotals();
+      const enc = this.characterEncumbrance.getEncumbrance();
+      this.detailedCharacterCombat.encumbrance = enc;
+    }
+    this.recalculateDexterityAc();
+    this.updateArmorClassTotal();
+    this.updateHitPointsTotal();
+    this.updateInitiativeTotal();
+    this.updateGrappleTotal();
+    this.updateSpeedTotal();
+    this.updateWeaponsTotal();
+    this.characterSkills?.updateTotals();
   }
 
   initialize(race: Race, klassLevelProperties: Map<string, { bab: number; skills: number }>) {
@@ -166,26 +186,6 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
         { type: WEAPON_FINESSABLE, value: "true" },
       ] as unknown as Property[],
     );
-  }
-
-  getCombat(): DetailedCharacterComprehensiveCombat {
-    return this.detailedCharacterCombat;
-  }
-
-  updateTotals() {
-    if (this.characterEncumbrance) {
-      this.characterEncumbrance.updateTotals();
-      const enc = this.characterEncumbrance.getEncumbrance();
-      this.detailedCharacterCombat.encumbrance = enc;
-    }
-    this.recalculateDexterityAc();
-    this.updateArmorClassTotal();
-    this.updateHitPointsTotal();
-    this.updateInitiativeTotal();
-    this.updateGrappleTotal();
-    this.updateSpeedTotal();
-    this.updateWeaponsTotal();
-    this.characterSkills?.updateTotals();
   }
 }
 

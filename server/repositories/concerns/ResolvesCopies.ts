@@ -8,6 +8,24 @@ import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Base: B) {
   abstract class ResolvingCopies extends Base {
     /**
+     * Build an `id NOT IN (...)` clause for a list of entity IDs. Returns `false`
+     * (sentinel for `this.where([...])`) when the exclude set is empty so no
+     * clause is emitted.
+     *
+     * Intended for service-layer callers that want to exclude sibling-loser IDs
+     * (from `rulesetData.cow.siblingIds`) at the SQL level, so pagination counts
+     * stay accurate. The sibling-loser set is computed at compose time and
+     * applies to raw repo queries that don't otherwise know the cache exists.
+     */
+    protected excludeIds(ids: Iterable<string> | undefined): SQL | false {
+      if (!ids) return false;
+      const arr = Array.isArray(ids) ? ids : [...ids];
+      if (arr.length === 0) return false;
+      // @ts-expect-error all ruleset tables have id
+      return notInArray(this.table.id, arr);
+    }
+
+    /**
      * Predicate for composite-key WHERE clauses on an entity-id column. When
      * a cowContext is active, expands to `WHERE col IN (target, ...preCowIds)`
      * so a stored pre-COW row still matches a submitted post-COW id (and vice
@@ -24,24 +42,6 @@ export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Bas
         if (post === target) candidates.add(pre);
       }
       return candidates.size === 1 ? eq(column, target) : inArray(column, [...candidates]);
-    }
-
-    /**
-     * Build an `id NOT IN (...)` clause for a list of entity IDs. Returns `false`
-     * (sentinel for `this.where([...])`) when the exclude set is empty so no
-     * clause is emitted.
-     *
-     * Intended for service-layer callers that want to exclude sibling-loser IDs
-     * (from `rulesetData.cow.siblingIds`) at the SQL level, so pagination counts
-     * stay accurate. The sibling-loser set is computed at compose time and
-     * applies to raw repo queries that don't otherwise know the cache exists.
-     */
-    protected excludeIds(ids: Iterable<string> | undefined): SQL | false {
-      if (!ids) return false;
-      const arr = Array.isArray(ids) ? ids : [...ids];
-      if (arr.length === 0) return false;
-      // @ts-expect-error all ruleset tables have id
-      return notInArray(this.table.id, arr);
     }
   }
   return ResolvingCopies;

@@ -39,6 +39,8 @@ export type EncumbranceData = {
 };
 
 export default class DetailedCharacterEncumbrance {
+  constructor(private readonly characterAbilities: DetailedCharacterAbilities) {}
+
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_PATHS, SEGMENT_LABELS);
   }
@@ -68,20 +70,32 @@ export default class DetailedCharacterEncumbrance {
 
   private raceSize = "Medium";
 
-  constructor(private readonly characterAbilities: DetailedCharacterAbilities) {}
+  private getCarryingCapacity(str: number): number {
+    if (str <= 0) return 0;
+    if (str < CARRYING_CAPACITY.length) return CARRYING_CAPACITY[str];
 
-  initialize(inventory: RawInventoryEntry[], raceSize: string): void {
-    this.raceSize = raceSize;
+    // For Str 30+: each +10 multiplies by ×4 (PHB formula)
+    const remainder = str % 10;
+    const baseStr = remainder === 0 ? 10 : 20 + remainder;
+    const multiplier = Math.pow(4, Math.floor((str - baseStr) / 10));
+    return CARRYING_CAPACITY[baseStr] * multiplier;
+  }
 
-    let totalWeight = 0;
-    for (const entry of inventory) {
-      const itemWeight = Number(entry.item.weight ?? 0);
-      const quantity = entry.quantity ?? 1;
-      totalWeight += itemWeight * quantity;
+  private getLoadCategory(weight: number, heavyLoad: number): LoadCategory {
+    if (heavyLoad <= 0) return weight > 0 ? "overloaded" : "light";
+    const lightLoad = Math.floor(heavyLoad / 3);
+    const mediumLoad = Math.floor((heavyLoad * 2) / 3);
+    if (weight <= lightLoad) return "light";
+    if (weight <= mediumLoad) return "medium";
+    if (weight <= heavyLoad) return "heavy";
+    return "overloaded";
+  }
+
+  getEncumberedSpeed(baseSpeed: number): number {
+    if (ENCUMBERED_SPEED[baseSpeed] !== undefined) {
+      return ENCUMBERED_SPEED[baseSpeed];
     }
-
-    this.encumbrance.carriedweight = totalWeight;
-    this.updateTotals();
+    return Math.floor((baseSpeed * 2) / 3);
   }
 
   getEncumbrance(): EncumbranceData {
@@ -103,31 +117,17 @@ export default class DetailedCharacterEncumbrance {
     this.encumbrance.checkpenalty = penalties.checkpenalty;
   }
 
-  getEncumberedSpeed(baseSpeed: number): number {
-    if (ENCUMBERED_SPEED[baseSpeed] !== undefined) {
-      return ENCUMBERED_SPEED[baseSpeed];
+  initialize(inventory: RawInventoryEntry[], raceSize: string): void {
+    this.raceSize = raceSize;
+
+    let totalWeight = 0;
+    for (const entry of inventory) {
+      const itemWeight = Number(entry.item.weight ?? 0);
+      const quantity = entry.quantity ?? 1;
+      totalWeight += itemWeight * quantity;
     }
-    return Math.floor((baseSpeed * 2) / 3);
-  }
 
-  private getCarryingCapacity(str: number): number {
-    if (str <= 0) return 0;
-    if (str < CARRYING_CAPACITY.length) return CARRYING_CAPACITY[str];
-
-    // For Str 30+: each +10 multiplies by ×4 (PHB formula)
-    const remainder = str % 10;
-    const baseStr = remainder === 0 ? 10 : 20 + remainder;
-    const multiplier = Math.pow(4, Math.floor((str - baseStr) / 10));
-    return CARRYING_CAPACITY[baseStr] * multiplier;
-  }
-
-  private getLoadCategory(weight: number, heavyLoad: number): LoadCategory {
-    if (heavyLoad <= 0) return weight > 0 ? "overloaded" : "light";
-    const lightLoad = Math.floor(heavyLoad / 3);
-    const mediumLoad = Math.floor((heavyLoad * 2) / 3);
-    if (weight <= lightLoad) return "light";
-    if (weight <= mediumLoad) return "medium";
-    if (weight <= heavyLoad) return "heavy";
-    return "overloaded";
+    this.encumbrance.carriedweight = totalWeight;
+    this.updateTotals();
   }
 }

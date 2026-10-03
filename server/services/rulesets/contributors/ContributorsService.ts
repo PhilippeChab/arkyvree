@@ -13,6 +13,21 @@ import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ContributorsService {
+  /** A contributor the session's user may manage, with its ruleset and the policy that allowed it. */
+  private async getManagedContributor(tx: Db, session: Session, contributorId: string) {
+    const contributor = await Contributors.findOne(tx, { id: contributorId });
+    if (!contributor) {
+      throw new NotFoundError("Contributor not found");
+    }
+    const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
+    if (!ruleset) {
+      throw new NotFoundError("Ruleset not found");
+    }
+    const policy = await RulesetsPolicy.for(tx, session, ruleset);
+    policy.canManageContributors();
+    return { contributor, ruleset, policy };
+  }
+
   /**
    * The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists.
    */
@@ -42,21 +57,6 @@ class ContributorsService {
       data: { contributorId },
     });
     return updated;
-  }
-
-  /** A contributor the session's user may manage, with its ruleset and the policy that allowed it. */
-  private async getManagedContributor(tx: Db, session: Session, contributorId: string) {
-    const contributor = await Contributors.findOne(tx, { id: contributorId });
-    if (!contributor) {
-      throw new NotFoundError("Contributor not found");
-    }
-    const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
-    if (!ruleset) {
-      throw new NotFoundError("Ruleset not found");
-    }
-    const policy = await RulesetsPolicy.for(tx, session, ruleset);
-    policy.canManageContributors();
-    return { contributor, ruleset, policy };
   }
 
   // Single invite for the current user, any status. Used by the invite-accept

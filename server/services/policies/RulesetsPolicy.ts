@@ -20,21 +20,17 @@ class RulesetsPolicy extends include(RulesetRoles, EntityRights, ContributorRigh
     return new RulesetsPolicy(session, ruleset, role);
   }
 
-  /**
-   * Used by RulesetsService for updating the ruleset itself (name, description, privacy, archive).
-   * Only owner and Admin contributors are allowed.
-   */
-  canUpdate() {
-    if (!this.entity.userId) {
-      throw new ForbiddenError("Cannot edit a base ruleset");
+  canFork() {
+    if (this.entity.status !== "Published") {
+      throw new UnprocessableEntityError("Can only fork published rulesets");
     }
 
-    if (!this.isOwner && !this.isAdminContributor) {
-      throw new ForbiddenError("Cannot edit another user's ruleset");
-    }
-
-    if (this.entity.status === "Archived") {
-      throw new UnprocessableEntityError("Archived rulesets are read-only");
+    // Only base rulesets can be forked. Anything with a parent (system
+    // extensions, user forks, homebrew extensions) is rejected — the
+    // descendant complexity (extension inheritance, COW resolution through
+    // chains) isn't worth it for a use case nobody's asked for yet.
+    if (this.entity.rulesetId) {
+      throw new UnprocessableEntityError("Cannot fork a non-base ruleset — only base rulesets can be forked");
     }
 
     return true;
@@ -56,22 +52,6 @@ class RulesetsPolicy extends include(RulesetRoles, EntityRights, ContributorRigh
     return true;
   }
 
-  canFork() {
-    if (this.entity.status !== "Published") {
-      throw new UnprocessableEntityError("Can only fork published rulesets");
-    }
-
-    // Only base rulesets can be forked. Anything with a parent (system
-    // extensions, user forks, homebrew extensions) is rejected — the
-    // descendant complexity (extension inheritance, COW resolution through
-    // chains) isn't worth it for a use case nobody's asked for yet.
-    if (this.entity.rulesetId) {
-      throw new UnprocessableEntityError("Cannot fork a non-base ruleset — only base rulesets can be forked");
-    }
-
-    return true;
-  }
-
   canUnarchive() {
     if (!this.entity.userId) {
       throw new ForbiddenError("Cannot unarchive a base ruleset");
@@ -83,6 +63,26 @@ class RulesetsPolicy extends include(RulesetRoles, EntityRights, ContributorRigh
 
     if (this.entity.status !== "Archived") {
       throw new ForbiddenError("Ruleset is not archived");
+    }
+
+    return true;
+  }
+
+  /**
+   * Used by RulesetsService for updating the ruleset itself (name, description, privacy, archive).
+   * Only owner and Admin contributors are allowed.
+   */
+  canUpdate() {
+    if (!this.entity.userId) {
+      throw new ForbiddenError("Cannot edit a base ruleset");
+    }
+
+    if (!this.isOwner && !this.isAdminContributor) {
+      throw new ForbiddenError("Cannot edit another user's ruleset");
+    }
+
+    if (this.entity.status === "Archived") {
+      throw new UnprocessableEntityError("Archived rulesets are read-only");
     }
 
     return true;

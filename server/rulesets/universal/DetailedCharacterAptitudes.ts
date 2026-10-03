@@ -44,6 +44,16 @@ type DetailedCharacterComprehensiveAptitudes = {
 };
 
 export default class DetailedCharacterAptitudes {
+  constructor(
+    private readonly characterIdentity: DetailedCharacterIdentity,
+    private readonly characterClasses: DetailedCharacterClasses,
+    /** Largest spell/power level a leveled aptitude enumerates (inclusive).
+     *  Required — each ruleset must pass its own value (e.g.
+     *  `Dnd35LevelsHooks.MAX_SPELL_LEVEL`). No default so a universal file
+     *  never carries a ruleset-specific constant. */
+    readonly maxSpellLevel: number,
+  ) {}
+
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_PATHS);
   }
@@ -100,15 +110,141 @@ export default class DetailedCharacterAptitudes {
   // Track which aptitude keys are leveled (spell aptitudes)
   private readonly leveledAptitudeKeys = new Set<string>();
 
-  constructor(
-    private readonly characterIdentity: DetailedCharacterIdentity,
-    private readonly characterClasses: DetailedCharacterClasses,
-    /** Largest spell/power level a leveled aptitude enumerates (inclusive).
-     *  Required — each ruleset must pass its own value (e.g.
-     *  `Dnd35LevelsHooks.MAX_SPELL_LEVEL`). No default so a universal file
-     *  never carries a ruleset-specific constant. */
-    readonly maxSpellLevel: number,
-  ) {}
+  getAptitudes() {
+    return this.detailedCharacterComprehensiveAptitudes;
+  }
+
+  /** Returns IDs of all non-leveled aptitudes. */
+  getNonLeveledAptitudeIds(): string[] {
+    return Object.entries(this.detailedCharacterComprehensiveAptitudes)
+      .filter(([key]) => !this.leveledAptitudeKeys.has(key))
+      .map(([, apt]) => apt.id);
+  }
+
+  isLeveledAptitude(key: string): boolean {
+    return this.leveledAptitudeKeys.has(key);
+  }
+
+  updateAvailables() {
+    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
+      if (this.leveledAptitudeKeys.has(key)) {
+        // Update per-level availables for spell aptitudes
+        const aptitudeObj = aptitude as Record<string, unknown>;
+        for (let level = 0; level <= this.maxSpellLevel; level++) {
+          const levelData = aptitudeObj[String(level)] as AptitudeLevelData | undefined;
+          if (levelData) {
+            if (levelData.allowed === ALLOWED_ALL) {
+              levelData.available = 0;
+            } else {
+              levelData.available = levelData.allowed - levelData.spent;
+            }
+          }
+        }
+      } else {
+        // Update flat available
+        if (aptitude.allowed === ALLOWED_ALL) {
+          aptitude.available = 0;
+        } else {
+          aptitude.available = aptitude.allowed - aptitude.spent;
+        }
+      }
+    }
+  }
+
+  /**
+   * Extracts non-leveled aptitude pools formatted for feat selection.
+   * Returns pool objects keyed by aptitude ID.
+   */
+  extractFeatPools(): Record<
+    string,
+    { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }
+  > {
+    const pools: Record<
+      string,
+      { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }
+    > = {};
+    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
+      if (this.leveledAptitudeKeys.has(key)) continue;
+      pools[aptitude.id] = {
+        id: aptitude.id,
+        name: aptitude.name,
+        allowed: aptitude.allowed,
+        spent: aptitude.spent,
+        available: aptitude.available,
+        shared: false,
+      };
+    }
+    return pools;
+  }
+
+  /**
+   * Extracts aptitude pools formatted for power/spell selection.
+   * Includes leveled aptitudes with per-spell-level breakdowns.
+   */
+  extractPowerPools(): Record<
+    string,
+    {
+      id: string;
+      name: string;
+      allowed: number;
+      spent: number;
+      available: number;
+      leveled?: boolean;
+      levels?: Record<string, { allowed: number; spent: number; available: number }>;
+    }
+  > {
+    const pools: Record<
+      string,
+      {
+        id: string;
+        name: string;
+        allowed: number;
+        spent: number;
+        available: number;
+        leveled?: boolean;
+        levels?: Record<string, { allowed: number; spent: number; available: number }>;
+      }
+    > = {};
+
+    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
+      if (this.leveledAptitudeKeys.has(key)) {
+        const aptitudeObj = aptitude as Record<string, unknown>;
+        const levels: Record<string, { allowed: number; spent: number; available: number }> = {};
+        let totalAvailable = 0;
+
+        for (let spellLevel = 0; spellLevel <= this.maxSpellLevel; spellLevel++) {
+          const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
+          if (levelData && levelData.available > 0) {
+            levels[String(spellLevel)] = {
+              allowed: levelData.allowed,
+              spent: levelData.spent,
+              available: levelData.available,
+            };
+            totalAvailable += levelData.available;
+          }
+        }
+
+        pools[aptitude.id] = {
+          id: aptitude.id,
+          name: aptitude.name,
+          allowed: aptitude.allowed,
+          spent: aptitude.spent,
+          available: totalAvailable,
+          leveled: true,
+          levels,
+        };
+      } else {
+        pools[aptitude.id] = {
+          id: aptitude.id,
+          name: aptitude.name,
+          allowed: aptitude.allowed,
+          spent: aptitude.spent,
+          available: aptitude.available,
+        };
+      }
+    }
+    return pools;
+  }
 
   initialize(
     aptitudes: Aptitude[],
@@ -225,141 +361,5 @@ export default class DetailedCharacterAptitudes {
     }
 
     this.updateAvailables();
-  }
-
-  getAptitudes() {
-    return this.detailedCharacterComprehensiveAptitudes;
-  }
-
-  isLeveledAptitude(key: string): boolean {
-    return this.leveledAptitudeKeys.has(key);
-  }
-
-  /**
-   * Extracts non-leveled aptitude pools formatted for feat selection.
-   * Returns pool objects keyed by aptitude ID.
-   */
-  extractFeatPools(): Record<
-    string,
-    { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }
-  > {
-    const pools: Record<
-      string,
-      { id: string; name: string; allowed: number; spent: number; available: number; shared: boolean }
-    > = {};
-    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
-      if (this.leveledAptitudeKeys.has(key)) continue;
-      pools[aptitude.id] = {
-        id: aptitude.id,
-        name: aptitude.name,
-        allowed: aptitude.allowed,
-        spent: aptitude.spent,
-        available: aptitude.available,
-        shared: false,
-      };
-    }
-    return pools;
-  }
-
-  /**
-   * Extracts aptitude pools formatted for power/spell selection.
-   * Includes leveled aptitudes with per-spell-level breakdowns.
-   */
-  extractPowerPools(): Record<
-    string,
-    {
-      id: string;
-      name: string;
-      allowed: number;
-      spent: number;
-      available: number;
-      leveled?: boolean;
-      levels?: Record<string, { allowed: number; spent: number; available: number }>;
-    }
-  > {
-    const pools: Record<
-      string,
-      {
-        id: string;
-        name: string;
-        allowed: number;
-        spent: number;
-        available: number;
-        leveled?: boolean;
-        levels?: Record<string, { allowed: number; spent: number; available: number }>;
-      }
-    > = {};
-
-    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
-      if (this.leveledAptitudeKeys.has(key)) {
-        const aptitudeObj = aptitude as Record<string, unknown>;
-        const levels: Record<string, { allowed: number; spent: number; available: number }> = {};
-        let totalAvailable = 0;
-
-        for (let spellLevel = 0; spellLevel <= this.maxSpellLevel; spellLevel++) {
-          const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
-          if (levelData && levelData.available > 0) {
-            levels[String(spellLevel)] = {
-              allowed: levelData.allowed,
-              spent: levelData.spent,
-              available: levelData.available,
-            };
-            totalAvailable += levelData.available;
-          }
-        }
-
-        pools[aptitude.id] = {
-          id: aptitude.id,
-          name: aptitude.name,
-          allowed: aptitude.allowed,
-          spent: aptitude.spent,
-          available: totalAvailable,
-          leveled: true,
-          levels,
-        };
-      } else {
-        pools[aptitude.id] = {
-          id: aptitude.id,
-          name: aptitude.name,
-          allowed: aptitude.allowed,
-          spent: aptitude.spent,
-          available: aptitude.available,
-        };
-      }
-    }
-    return pools;
-  }
-
-  /** Returns IDs of all non-leveled aptitudes. */
-  getNonLeveledAptitudeIds(): string[] {
-    return Object.entries(this.detailedCharacterComprehensiveAptitudes)
-      .filter(([key]) => !this.leveledAptitudeKeys.has(key))
-      .map(([, apt]) => apt.id);
-  }
-
-  updateAvailables() {
-    for (const [key, aptitude] of Object.entries(this.detailedCharacterComprehensiveAptitudes)) {
-      if (this.leveledAptitudeKeys.has(key)) {
-        // Update per-level availables for spell aptitudes
-        const aptitudeObj = aptitude as Record<string, unknown>;
-        for (let level = 0; level <= this.maxSpellLevel; level++) {
-          const levelData = aptitudeObj[String(level)] as AptitudeLevelData | undefined;
-          if (levelData) {
-            if (levelData.allowed === ALLOWED_ALL) {
-              levelData.available = 0;
-            } else {
-              levelData.available = levelData.allowed - levelData.spent;
-            }
-          }
-        }
-      } else {
-        // Update flat available
-        if (aptitude.allowed === ALLOWED_ALL) {
-          aptitude.available = 0;
-        } else {
-          aptitude.available = aptitude.allowed - aptitude.spent;
-        }
-      }
-    }
   }
 }

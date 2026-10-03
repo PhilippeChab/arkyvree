@@ -23,6 +23,11 @@ type DetailedCharacterComprehensiveSavingThrows = {
 };
 
 export default class DetailedCharacterSavingThrows {
+  constructor(
+    private readonly characterAbilities: DetailedCharacterAbilities,
+    private readonly characterClasses: DetailedCharacterClasses,
+  ) {}
+
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_PATHS);
   }
@@ -65,12 +70,27 @@ export default class DetailedCharacterSavingThrows {
 
   private readonly detailedCharacterSavingThrows: DetailedCharacterComprehensiveSavingThrows =
     {} as DetailedCharacterComprehensiveSavingThrows;
+
   private readonly saveAbilityNames = new Map<string, string>();
 
-  constructor(
-    private readonly characterAbilities: DetailedCharacterAbilities,
-    private readonly characterClasses: DetailedCharacterClasses,
-  ) {}
+  getSavingThrow(savingThrowName: string): DetailedCharacterComprehensiveSavingThrows[string] {
+    return this.detailedCharacterSavingThrows[stripSeparators(savingThrowName)];
+  }
+
+  getSavingThrows(): DetailedCharacterComprehensiveSavingThrows {
+    return this.detailedCharacterSavingThrows;
+  }
+
+  updateTotal(savingThrowName: string) {
+    const savingThrow = this.detailedCharacterSavingThrows[savingThrowName];
+    savingThrow.total = savingThrow.base + savingThrow.ability + savingThrow.misc;
+  }
+
+  updateTotals() {
+    for (const savingThrowName of Object.keys(this.detailedCharacterSavingThrows)) {
+      this.updateTotal(savingThrowName);
+    }
+  }
 
   initialize(saves: RulesetSave[], rulesetAbilities: RulesetAbility[], klassLevelSaves: KlassLevelSave[]) {
     const abilityNames = new Map(rulesetAbilities.map((a) => [a.id, a.name]));
@@ -103,14 +123,6 @@ export default class DetailedCharacterSavingThrows {
     }
   }
 
-  getSavingThrows(): DetailedCharacterComprehensiveSavingThrows {
-    return this.detailedCharacterSavingThrows;
-  }
-
-  getSavingThrow(savingThrowName: string): DetailedCharacterComprehensiveSavingThrows[string] {
-    return this.detailedCharacterSavingThrows[stripSeparators(savingThrowName)];
-  }
-
   refreshAbilityModifiers() {
     for (const [saveName, save] of Object.entries(this.detailedCharacterSavingThrows)) {
       const abilityName = this.saveAbilityNames.get(saveName);
@@ -119,16 +131,5 @@ export default class DetailedCharacterSavingThrows {
       }
     }
     this.updateTotals();
-  }
-
-  updateTotals() {
-    for (const savingThrowName of Object.keys(this.detailedCharacterSavingThrows)) {
-      this.updateTotal(savingThrowName);
-    }
-  }
-
-  updateTotal(savingThrowName: string) {
-    const savingThrow = this.detailedCharacterSavingThrows[savingThrowName];
-    savingThrow.total = savingThrow.base + savingThrow.ability + savingThrow.misc;
   }
 }

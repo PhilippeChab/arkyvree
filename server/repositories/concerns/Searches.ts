@@ -11,20 +11,20 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
       return or(...columns.map((column) => ilike(column, `%${search}%`)))!;
     }
 
-    protected fuzzySearch(search: string | undefined, columns: Column[]): SQL | false {
-      if (!search) return false;
-      return or(
-        ...columns.map((column) => ilike(column, `%${search}%`)),
-        ...columns.map((column) => sql`word_similarity(${search}, ${column}) > 0.7`),
-      )!;
-    }
-
     protected searchOrderBy(search: string | undefined, columns: Column[], fallback: SQL): SQL {
       if (!search) return fallback;
       const ilikeMatch = or(...columns.map((c) => ilike(c, `%${search}%`)))!;
       const nameIlikeMatch = ilike(columns[0], `%${search}%`);
       const nameSimilarity = sql`word_similarity(${search}, ${columns[0]})`;
       return sql`(CASE WHEN ${ilikeMatch} THEN 0 ELSE 1 END), (CASE WHEN ${nameIlikeMatch} THEN 0 ELSE 1 END), ${nameSimilarity} DESC, ${fallback}`;
+    }
+
+    protected fuzzySearch(search: string | undefined, columns: Column[]): SQL | false {
+      if (!search) return false;
+      return or(
+        ...columns.map((column) => ilike(column, `%${search}%`)),
+        ...columns.map((column) => sql`word_similarity(${search}, ${column}) > 0.7`),
+      )!;
     }
   }
   return Searching;

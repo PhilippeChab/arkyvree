@@ -37,18 +37,26 @@ type RawInventoryEntry = CharacterInventory & {
 };
 
 export default class DetailedCharacterInventory {
-  private readonly detailedCharacterInventory: DetailedCharacterComprehensiveInventory = {
-    weaponsets: {},
-  } as DetailedCharacterComprehensiveInventory;
-
-  private rawItems: RawInventoryEntry[] = [];
-
   constructor(
     private readonly characterCombat: DetailedCharacterCombat,
     private readonly characterWeapons: DetailedCharacterWeapons,
     private readonly characterArmors: DetailedCharacterArmors,
     private readonly characterShields: DetailedCharacterShields,
   ) {}
+
+  private readonly detailedCharacterInventory: DetailedCharacterComprehensiveInventory = {
+    weaponsets: {},
+  } as DetailedCharacterComprehensiveInventory;
+
+  private rawItems: RawInventoryEntry[] = [];
+
+  getFlatInventory() {
+    return this.rawItems;
+  }
+
+  getInventory() {
+    return this.detailedCharacterInventory;
+  }
 
   initialize(inventory: RawInventoryEntry[]) {
     this.rawItems = inventory;
@@ -118,13 +126,5 @@ export default class DetailedCharacterInventory {
     if (set0Mainhand?.name === "Unarmed Strike" && set0Mainhand.itemId === null) {
       this.characterWeapons.registerWeapon(0, "Main Hand", { name: "Unarmed Strike" } as unknown as Item);
     }
-  }
-
-  getInventory() {
-    return this.detailedCharacterInventory;
-  }
-
-  getFlatInventory() {
-    return this.rawItems;
   }
 }

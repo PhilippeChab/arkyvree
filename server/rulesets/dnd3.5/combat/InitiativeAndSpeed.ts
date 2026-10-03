@@ -5,21 +5,9 @@ import { type Race } from "@/shared/relations.ts";
 /** A character's initiative, and its speed under its armor and load. */
 export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithInitiativeAndSpeed extends Base {
-    protected initializeInitiative(dexterityModifier: number): void {
-      this.detailedCharacterCombat.initiative.dexterity = dexterityModifier;
-      this.detailedCharacterCombat.initiative.total =
-        this.detailedCharacterCombat.initiative.dexterity + this.detailedCharacterCombat.initiative.misc;
-    }
-
     protected updateInitiativeTotal() {
       this.detailedCharacterCombat.initiative.total =
         this.detailedCharacterCombat.initiative.dexterity + this.detailedCharacterCombat.initiative.misc;
-    }
-
-    protected initializeSpeed(race: Race): void {
-      this.detailedCharacterCombat.speed.base = race.baseSpeed;
-      this.detailedCharacterCombat.speed.total =
-        this.detailedCharacterCombat.speed.base + this.detailedCharacterCombat.speed.misc;
     }
 
     protected updateSpeedTotal() {
@@ -35,6 +23,18 @@ export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) 
       } else {
         this.detailedCharacterCombat.speed.total = base + misc;
       }
+    }
+
+    protected initializeInitiative(dexterityModifier: number): void {
+      this.detailedCharacterCombat.initiative.dexterity = dexterityModifier;
+      this.detailedCharacterCombat.initiative.total =
+        this.detailedCharacterCombat.initiative.dexterity + this.detailedCharacterCombat.initiative.misc;
+    }
+
+    protected initializeSpeed(race: Race): void {
+      this.detailedCharacterCombat.speed.base = race.baseSpeed;
+      this.detailedCharacterCombat.speed.total =
+        this.detailedCharacterCombat.speed.base + this.detailedCharacterCombat.speed.misc;
     }
   }
   return WithInitiativeAndSpeed;
