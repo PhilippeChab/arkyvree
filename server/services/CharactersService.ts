@@ -24,7 +24,6 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind, Holders } from "@/server/rulesets/types.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import { urlForSlot } from "@/server/services/attachments.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   type BondedEntry,
   enqueueCharacterPdf,
@@ -40,42 +39,42 @@ import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Requirement, Session } from "@/shared/relations.ts";
 
-/**
- * Replace a character's language set in-place. Validates each id resolves
- * to a language in the character's ruleset (or its COW ancestor chain),
- * then deletes existing rows and inserts the new set. Caller is responsible
- * for the surrounding transaction + withRulesetScope.
- */
-async function replaceCharacterLanguages(
-  tx: Db,
-  characterRecord: { id: string; rulesetId: string },
-  rulesetData: { cow: { sourceChain: string[] } },
-  languageIds: string[],
-): Promise<void> {
-  if (languageIds.length > 0) {
-    // Proxy auto-canonicalizes the `ids` input through cowContext, so
-    // Languages.findMany returns the post-COW rows regardless of which
-    // form the client sent.
-    const languages = await Languages.findMany(tx, { ids: languageIds });
-    if (languages.length !== languageIds.length) {
-      throw new BadRequestError("Some languages were not found");
+class CharactersService {
+  /**
+   * Replace a character's language set in-place. Validates each id resolves
+   * to a language in the character's ruleset (or its COW ancestor chain),
+   * then deletes existing rows and inserts the new set. Caller is responsible
+   * for the surrounding transaction + withRulesetScope.
+   */
+  private async replaceCharacterLanguages(
+    tx: Db,
+    characterRecord: { id: string; rulesetId: string },
+    rulesetData: { cow: { sourceChain: string[] } },
+    languageIds: string[],
+  ): Promise<void> {
+    if (languageIds.length > 0) {
+      // Proxy auto-canonicalizes the `ids` input through cowContext, so
+      // Languages.findMany returns the post-COW rows regardless of which
+      // form the client sent.
+      const languages = await Languages.findMany(tx, { ids: languageIds });
+      if (languages.length !== languageIds.length) {
+        throw new BadRequestError("Some languages were not found");
+      }
+      const validRulesetIds = new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain]);
+      if (languages.some((l) => !validRulesetIds.has(l.rulesetId))) {
+        throw new BadRequestError("Some languages do not belong to the character's ruleset");
+      }
     }
-    const validRulesetIds = new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain]);
-    if (languages.some((l) => !validRulesetIds.has(l.rulesetId))) {
-      throw new BadRequestError("Some languages do not belong to the character's ruleset");
+
+    const existing = await CharacterLanguages.findMany(tx, { characterId: characterRecord.id });
+    for (const lang of existing) {
+      await CharacterLanguages.delete(tx, { characterId: characterRecord.id, languageId: lang.languageId });
+    }
+    for (const languageId of languageIds) {
+      await CharacterLanguages.create(tx, { characterId: characterRecord.id, languageId });
     }
   }
 
-  const existing = await CharacterLanguages.findMany(tx, { characterId: characterRecord.id });
-  for (const lang of existing) {
-    await CharacterLanguages.delete(tx, { characterId: characterRecord.id, languageId: lang.languageId });
-  }
-  for (const languageId of languageIds) {
-    await CharacterLanguages.create(tx, { characterId: characterRecord.id, languageId });
-  }
-}
-
-const CharactersMethods = {
   async getAvailableRaces(
     rulesetId: string,
     formData: {
@@ -153,7 +152,7 @@ const CharactersMethods = {
 
       return { items: annotatedRaces, page: result.page, nextPage: result.nextPage };
     });
-  },
+  }
 
   async createCharacter(
     session: Session,
@@ -228,7 +227,7 @@ const CharactersMethods = {
         return newCharacter;
       });
     });
-  },
+  }
 
   async getCharacter(session: Session, characterId: string) {
     const record = await Characters.findOne(db, { id: characterId }, Visibility.All);
@@ -266,7 +265,7 @@ const CharactersMethods = {
       detailedCharacter,
       bondedByKind,
     };
-  },
+  }
 
   async updateCharacter(
     session: Session,
@@ -305,7 +304,7 @@ const CharactersMethods = {
       // need COW canonicalization against the character's ruleset.
       if (languageIds !== undefined) {
         await withRulesetScope(tx, characterRecord.rulesetId, async ({ rulesetData }) => {
-          await replaceCharacterLanguages(tx, characterRecord, rulesetData, languageIds);
+          await this.replaceCharacterLanguages(tx, characterRecord, rulesetData, languageIds);
         });
       }
 
@@ -318,7 +317,7 @@ const CharactersMethods = {
 
       return updatedCharacter;
     });
-  },
+  }
 
   async updateAbilities(session: Session, characterId: string, abilities: Record<string, number>) {
     return await withTransaction(async (tx) => {
@@ -342,14 +341,14 @@ const CharactersMethods = {
         });
       });
     });
-  },
+  }
 
   async updateLanguages(session: Session, characterId: string, languageIds: string[]) {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async ({ rulesetData }) => {
-        await replaceCharacterLanguages(tx, characterRecord, rulesetData, languageIds);
+        await this.replaceCharacterLanguages(tx, characterRecord, rulesetData, languageIds);
 
         await Activities.create(tx, {
           userId: session.userId,
@@ -359,7 +358,7 @@ const CharactersMethods = {
         });
       });
     });
-  },
+  }
 
   async getMyCharacters(
     session: Session,
@@ -438,7 +437,7 @@ const CharactersMethods = {
         };
       },
     );
-  },
+  }
 
   async getUnlinkedCharacters(
     session: Session,
@@ -456,7 +455,7 @@ const CharactersMethods = {
       { userId: session.userId, rulesetId: campaign.rulesetId, search: where.search },
       pagination,
     );
-  },
+  }
 
   async archiveCharacter(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
@@ -490,7 +489,7 @@ const CharactersMethods = {
 
       return archivedCharacter;
     });
-  },
+  }
 
   async hardDeleteCharacter(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
@@ -519,7 +518,7 @@ const CharactersMethods = {
 
       return { id: characterId };
     });
-  },
+  }
 
   async unarchiveCharacter(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
@@ -552,7 +551,7 @@ const CharactersMethods = {
 
       return unarchivedCharacter;
     });
-  },
+  }
 
   async generateShareToken(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
@@ -577,7 +576,7 @@ const CharactersMethods = {
 
       return updated;
     });
-  },
+  }
 
   async revokeShareToken(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
@@ -601,7 +600,7 @@ const CharactersMethods = {
 
       return updated;
     });
-  },
+  }
 
   async getSharedCharacter(shareToken: string) {
     const characterRecord = await Characters.findOne(db, { shareToken });
@@ -623,7 +622,7 @@ const CharactersMethods = {
       bondedByKind,
       portraitUrl,
     };
-  },
+  }
 
   async enqueuePdf(session: Session, characterId: string) {
     const characterRecord = await findExportableCharacter(session.userId, characterId);
@@ -632,7 +631,7 @@ const CharactersMethods = {
     }
 
     await enqueueCharacterPdf(session, characterRecord);
-  },
+  }
 
   async generateSharedPdf(shareToken: string) {
     const characterRecord = await Characters.findOne(db, { shareToken });
@@ -653,13 +652,7 @@ const CharactersMethods = {
       portraitUrl,
       kind: characterRecord.kind as CharacterKind,
     };
-  },
-} as const;
-
-class CharactersService extends BaseService<typeof CharactersMethods> {
-  static initialize() {
-    return new CharactersService(CharactersMethods);
   }
 }
 
-export default CharactersService;
+export default new CharactersService();

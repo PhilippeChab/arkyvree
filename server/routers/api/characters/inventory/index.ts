@@ -5,15 +5,12 @@ import { location } from "@/drizzle/schema.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { characterIdParam } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { CharacterInventoryService } from "@/server/services/characters/index.ts";
 
 const inventory = new Hono<SessionContext>()
   .get("/:characterId", zValidator("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
-    const result = await CharacterInventoryService.initialize().call("getInventory", c.var.requestSession, characterId);
-
-    return respond(c, result, 200);
+    return c.json(await CharacterInventoryService.getInventory(c.var.requestSession, characterId), 200);
   })
   .post(
     "/:characterId",
@@ -35,21 +32,21 @@ const inventory = new Hono<SessionContext>()
       const { characterId } = c.req.valid("param");
       const { itemId, quantity, equipped, location, totalCharges, remainingCharges, weaponSet, force } =
         c.req.valid("json");
-      const result = await CharacterInventoryService.initialize().call(
-        "addItem",
-        c.var.requestSession,
-        characterId,
-        itemId,
-        quantity,
-        equipped,
-        location,
-        totalCharges,
-        remainingCharges,
-        weaponSet,
-        force,
+      return c.json(
+        await CharacterInventoryService.addItem(
+          c.var.requestSession,
+          characterId,
+          itemId,
+          quantity,
+          equipped,
+          location,
+          totalCharges,
+          remainingCharges,
+          weaponSet,
+          force,
+        ),
+        201,
       );
-
-      return respond(c, result, 201);
     },
   )
   .put(
@@ -72,22 +69,22 @@ const inventory = new Hono<SessionContext>()
       const { characterId, itemId } = c.req.valid("param");
       const { quantity, equipped, location, totalCharges, remainingCharges, weaponSet, force, updatedAt } =
         c.req.valid("json");
-      const result = await CharacterInventoryService.initialize().call(
-        "updateItem",
-        c.var.requestSession,
-        characterId,
-        itemId,
-        quantity,
-        equipped,
-        location,
-        totalCharges,
-        remainingCharges,
-        weaponSet,
-        force,
-        updatedAt,
+      return c.json(
+        await CharacterInventoryService.updateItem(
+          c.var.requestSession,
+          characterId,
+          itemId,
+          quantity,
+          equipped,
+          location,
+          totalCharges,
+          remainingCharges,
+          weaponSet,
+          force,
+          updatedAt,
+        ),
+        200,
       );
-
-      return respond(c, result, 200);
     },
   )
   .delete(
@@ -95,14 +92,7 @@ const inventory = new Hono<SessionContext>()
     zValidator("param", z.object({ characterId: z.string().uuid(), itemId: z.string().uuid() })),
     async (c) => {
       const { characterId, itemId } = c.req.valid("param");
-      const result = await CharacterInventoryService.initialize().call(
-        "removeItem",
-        c.var.requestSession,
-        characterId,
-        itemId,
-      );
-
-      return respond(c, result, 200);
+      return c.json(await CharacterInventoryService.removeItem(c.var.requestSession, characterId, itemId), 200);
     },
   );
 

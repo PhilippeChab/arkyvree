@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 const saves = api.api.rulesets[":id"].saves;
@@ -25,12 +25,12 @@ describe("rulesets saves", () => {
     expect(await expectOk(save.$put({ param, json: update }))).toMatchObject(update);
 
     await expectOk(save.$delete({ param }));
-    expect((await save.$get({ param })).status).toBe(404);
+    await expectStatus(save.$get({ param }), 404);
   });
 
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await guestApi.api.rulesets[":id"].saves.$get({ param: { id }, query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.rulesets[":id"].saves.$get({ param: { id }, query: {} }), 401);
   });
 
   test("rejects a save without a name or a valid ability id", async () => {
@@ -41,16 +41,16 @@ describe("rulesets saves", () => {
       { name: "No ability" },
       { name: "Bad ability", abilityId: "not-a-uuid" },
     ]) {
-      expect((await saves.$post({ param: { id }, json: json as never })).status).toBe(400);
+      await expectStatus(saves.$post({ param: { id }, json: json as never }), 400);
     }
   });
 
   test("returns 404 for a missing ruleset or save", async () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await saves.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    await expectStatus(saves.$get({ param: { id: NIL_UUID }, query: {} }), 404);
     const param = { id, saveId: NIL_UUID };
-    expect((await save.$put({ param, json: { name: "Missing", abilityId: abilityMap["Wisdom"] } })).status).toBe(404);
-    expect((await save.$delete({ param })).status).toBe(404);
+    await expectStatus(save.$put({ param, json: { name: "Missing", abilityId: abilityMap["Wisdom"] } }), 404);
+    await expectStatus(save.$delete({ param }), 404);
   });
 });

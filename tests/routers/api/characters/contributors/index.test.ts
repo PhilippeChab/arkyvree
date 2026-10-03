@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { getSeedCtx } from "@/tests/helpers.ts";
 
 /** A character of the seeded user's, and a new user invited to contribute to it. */
@@ -63,7 +63,7 @@ describe("character contributors", () => {
 
     // Before accepting, the invitee isn't a contributor yet.
     const contributors = invitee.api.api.characters[":id"].contributors;
-    expect((await contributors.$get({ param: { id }, query: {} })).status).toBe(403);
+    await expectStatus(contributors.$get({ param: { id }, query: {} }), 403);
     expect(await expectOk(invites[":id"].accept.$post({ param: { id: invite.id } }))).toMatchObject({
       status: "Active",
     });
@@ -82,7 +82,7 @@ describe("character contributors", () => {
     const { id, invitee, invite } = await setup();
     await expectOk(invitee.api.api.characters.contributors.invites[":id"].accept.$post({ param: { id: invite.id } }));
     await expectOk(invitee.api.api.characters[":id"].contributors.leave.$post({ param: { id } }));
-    expect((await invitee.api.api.characters[":id"].contributors.$get({ param: { id }, query: {} })).status).toBe(403);
+    await expectStatus(invitee.api.api.characters[":id"].contributors.$get({ param: { id }, query: {} }), 403);
 
     const other = await createSignedInUser("removed");
     const second = await expectOk(
@@ -92,13 +92,14 @@ describe("character contributors", () => {
       api.api.characters[":id"].contributors[":contributorId"].$delete({ param: { id, contributorId: second.id } }),
     );
     // A removed invite can no longer be accepted.
-    expect(
-      (await other.api.api.characters.contributors.invites[":id"].accept.$post({ param: { id: second.id } })).status,
-    ).toBe(409);
+    await expectStatus(
+      other.api.api.characters.contributors.invites[":id"].accept.$post({ param: { id: second.id } }),
+      409,
+    );
   });
 
   test("requires a session", async () => {
     const { id } = await setup();
-    expect((await guestApi.api.characters[":id"].contributors.$get({ param: { id }, query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.characters[":id"].contributors.$get({ param: { id }, query: {} }), 401);
   });
 });

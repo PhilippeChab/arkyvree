@@ -39,21 +39,18 @@ import {
   getSeedCtx,
   invalidateSeededRuleset,
   makeSession,
-  methodsOf,
   NIL_UUID,
   queuedPdfJobs,
   uniqueId,
 } from "@/tests/helpers.ts";
 
-const CharactersMethods = methodsOf(CharactersService);
-
-type CharacterBody = Parameters<typeof CharactersMethods.createCharacter>[1];
+type CharacterBody = Parameters<typeof CharactersService.createCharacter>[1];
 const page = { limit: 100, page: 1 };
 
 /** A new human of the seeded ruleset, unless `values` say otherwise. */
 async function createCharacter(session: Session, values: Partial<CharacterBody> = {}) {
   const { rulesetId, raceMap } = await getSeedCtx();
-  return CharactersMethods.createCharacter(session, {
+  return CharactersService.createCharacter(session, {
     rulesetId,
     raceId: raceMap.pc["Human"],
     name: `Test Character ${uniqueId()}`,
@@ -118,8 +115,8 @@ describe("CharactersService", () => {
       const { session } = await createTestUser();
       const first = await createCharacter(session);
       for (let i = 0; i < 6; i++) await createCharacter(session);
-      await CharactersMethods.archiveCharacter(session, first.id);
-      expect(await CharactersMethods.unarchiveCharacter(session, first.id)).toMatchObject({
+      await CharactersService.archiveCharacter(session, first.id);
+      expect(await CharactersService.unarchiveCharacter(session, first.id)).toMatchObject({
         id: first.id,
         deletedAt: null,
       });
@@ -180,7 +177,7 @@ describe("CharactersService", () => {
     test("reads it built, changes only the fields sent, and refuses an edit from a stale copy", async () => {
       const { session } = await createTestUser();
       const created = await createCharacter(session, { deity: "Old Deity" });
-      expect(await CharactersMethods.getCharacter(session, created.id)).toMatchObject({
+      expect(await CharactersService.getCharacter(session, created.id)).toMatchObject({
         character: { id: created.id },
         detailedCharacter: expect.anything(),
       });
@@ -192,7 +189,7 @@ describe("CharactersService", () => {
         description: "Updated",
         notes: "Updated notes",
       } as const;
-      expect(await CharactersMethods.updateCharacter(session, created.id, changes)).toMatchObject({
+      expect(await CharactersService.updateCharacter(session, created.id, changes)).toMatchObject({
         ...changes,
         id: created.id,
         deity: "Old Deity",
@@ -200,7 +197,7 @@ describe("CharactersService", () => {
       });
 
       await expect(
-        CharactersMethods.updateCharacter(session, created.id, { age: 40, updatedAt: created.updatedAt }),
+        CharactersService.updateCharacter(session, created.id, { age: 40, updatedAt: created.updatedAt }),
       ).rejects.toThrow(ConflictError);
     });
 
@@ -216,7 +213,7 @@ describe("CharactersService", () => {
       const copy = (await cowEntity(db, "abilities", ctx.abilityMap["Strength"], fork.id, [], [])).id as string;
       invalidateRuleset(fork.id);
 
-      await CharactersMethods.updateAbilities(session, character.id, { [copy]: 17 });
+      await CharactersService.updateAbilities(session, character.id, { [copy]: 17 });
       const scores = await CharacterAbilities.findMany(db, { characterId: character.id });
       expect(scores.find((a) => a.abilityId === ctx.abilityMap["Strength"])?.score).toBe(17);
     });
@@ -225,24 +222,24 @@ describe("CharactersService", () => {
       const { session: owner } = await createTestUser();
       const { session: other } = await createTestUser();
       const character = await createCharacter(owner);
-      await CharactersMethods.generateShareToken(owner, character.id);
+      await CharactersService.generateShareToken(owner, character.id);
       const calls = (s: Session, id: string) => [
-        () => CharactersMethods.getCharacter(s, id),
-        () => CharactersMethods.updateCharacter(s, id, { age: 40 }),
-        () => CharactersMethods.enqueuePdf(s, id),
-        () => CharactersMethods.archiveCharacter(s, id),
-        () => CharactersMethods.generateShareToken(s, id),
-        () => CharactersMethods.revokeShareToken(s, id),
+        () => CharactersService.getCharacter(s, id),
+        () => CharactersService.updateCharacter(s, id, { age: 40 }),
+        () => CharactersService.enqueuePdf(s, id),
+        () => CharactersService.archiveCharacter(s, id),
+        () => CharactersService.generateShareToken(s, id),
+        () => CharactersService.revokeShareToken(s, id),
       ];
       // One at a time: the test's transaction has a single connection.
       for (const call of [...calls(owner, NIL_UUID), ...calls(other, character.id)])
         await expect(call()).rejects.toThrow(NotFoundError);
 
-      await CharactersMethods.archiveCharacter(owner, character.id);
+      await CharactersService.archiveCharacter(owner, character.id);
       for (const call of [
-        () => CharactersMethods.unarchiveCharacter(other, character.id),
-        () => CharactersMethods.unarchiveCharacter(owner, NIL_UUID),
-        () => CharactersMethods.hardDeleteCharacter(other, character.id),
+        () => CharactersService.unarchiveCharacter(other, character.id),
+        () => CharactersService.unarchiveCharacter(owner, NIL_UUID),
+        () => CharactersService.hardDeleteCharacter(other, character.id),
       ]) {
         await expect(call()).rejects.toThrow(NotFoundError);
       }
@@ -254,8 +251,8 @@ describe("CharactersService", () => {
       const { session } = await createTestUser();
       const { session: other } = await createTestUser();
       await createCharacter(other, { name: "Someone Else" });
-      const list = async (where: Parameters<typeof CharactersMethods.getMyCharacters>[1] = {}) =>
-        (await CharactersMethods.getMyCharacters(session, where, page)).items as {
+      const list = async (where: Parameters<typeof CharactersService.getMyCharacters>[1] = {}) =>
+        (await CharactersService.getMyCharacters(session, where, page)).items as {
           id: string;
           name: string;
           race?: unknown;
@@ -285,9 +282,9 @@ describe("CharactersService", () => {
     test("lists the archived ones apart, or all together", async () => {
       const { session } = await createTestUser();
       const [active, archived] = [await createCharacter(session), await createCharacter(session)];
-      await CharactersMethods.archiveCharacter(session, archived.id);
+      await CharactersService.archiveCharacter(session, archived.id);
       const list = async (visibility: Visibility) =>
-        ids((await CharactersMethods.getMyCharacters(session, { visibility }, page)).items as { id: string }[]).sort();
+        ids((await CharactersService.getMyCharacters(session, { visibility }, page)).items as { id: string }[]).sort();
 
       expect(await list(Visibility.UnarchivedOnly)).toEqual([active.id]);
       expect(await list(Visibility.ArchivedOnly)).toEqual([archived.id]);
@@ -302,7 +299,7 @@ describe("CharactersService", () => {
       for (let i = 0; i < 15; i++) await createCharacter(session);
 
       const unlinked = (pageNumber: number) =>
-        CharactersMethods.getUnlinkedCharacters(session, campaign.id, {}, { limit: 10, page: pageNumber });
+        CharactersService.getUnlinkedCharacters(session, campaign.id, {}, { limit: 10, page: pageNumber });
       const [first, second] = [await unlinked(1), await unlinked(2)];
       expect(first).toMatchObject({ page: 1, nextPage: 2 });
       expect(first.items).toHaveLength(10);
@@ -336,14 +333,14 @@ describe("CharactersService", () => {
       });
       const all = { levels: 1, skills: 1, feats: 1, languages: 1, inventory: 1 };
 
-      expect(await CharactersMethods.archiveCharacter(session, character.id)).toMatchObject({
+      expect(await CharactersService.archiveCharacter(session, character.id)).toMatchObject({
         id: character.id,
         deletedAt: expect.any(String),
       });
       expect(await Characters.findOne(db, { id: character.id }, Visibility.ArchivedOnly)).toBeDefined();
       expect(await children()).toEqual(all);
 
-      expect(await CharactersMethods.unarchiveCharacter(session, character.id)).toMatchObject({ deletedAt: null });
+      expect(await CharactersService.unarchiveCharacter(session, character.id)).toMatchObject({ deletedAt: null });
       expect(await children()).toEqual(all);
     });
 
@@ -380,8 +377,8 @@ describe("CharactersService", () => {
           await createTestAttachment("Character", familiar.id),
         ];
 
-        await CharactersMethods.archiveCharacter(session, character.id);
-        await CharactersMethods.hardDeleteCharacter(session, character.id);
+        await CharactersService.archiveCharacter(session, character.id);
+        await CharactersService.hardDeleteCharacter(session, character.id);
 
         for (const id of [character.id, familiar.id])
           expect(await Characters.findOne(db, { id }, Visibility.All)).toBeUndefined();
@@ -394,12 +391,12 @@ describe("CharactersService", () => {
       test("is refused for a character that isn't archived, or that plays in an active campaign", async () => {
         const { session } = await createTestUser();
         const character = await createCharacter(session);
-        await expect(CharactersMethods.hardDeleteCharacter(session, character.id)).rejects.toThrow(NotFoundError);
+        await expect(CharactersService.hardDeleteCharacter(session, character.id)).rejects.toThrow(NotFoundError);
 
         const { player } = await createTestCampaign(session.userId);
         await PlayerCharacters.create(db, { playerId: player.id, characterId: character.id });
-        await CharactersMethods.archiveCharacter(session, character.id);
-        await expect(CharactersMethods.hardDeleteCharacter(session, character.id)).rejects.toThrow(ConflictError);
+        await CharactersService.archiveCharacter(session, character.id);
+        await expect(CharactersService.hardDeleteCharacter(session, character.id)).rejects.toThrow(ConflictError);
       });
 
       test.each(["removed from the campaign", "in an archived campaign"])(
@@ -421,8 +418,8 @@ describe("CharactersService", () => {
               );
           else await Campaigns.archive(db, { id: campaign.id });
 
-          await CharactersMethods.archiveCharacter(session, character.id);
-          await CharactersMethods.hardDeleteCharacter(session, character.id);
+          await CharactersService.archiveCharacter(session, character.id);
+          await CharactersService.hardDeleteCharacter(session, character.id);
           expect(await Characters.findOne(db, { id: character.id }, Visibility.All)).toBeUndefined();
         },
       );
@@ -432,7 +429,7 @@ describe("CharactersService", () => {
   test("queues the character's PDF on the user's queue, and logs it", async () => {
     const { session } = await createTestUser();
     const character = await createCharacter(session);
-    await CharactersMethods.enqueuePdf(session, character.id);
+    await CharactersService.enqueuePdf(session, character.id);
 
     expect(await queuedPdfJobs(character.id)).toEqual([
       {
@@ -453,32 +450,32 @@ describe("CharactersService", () => {
     test("gives anyone with the token the built character and its PDF, until it's replaced or revoked", async () => {
       const { session } = await createTestUser();
       const character = await createCharacter(session);
-      const first = (await CharactersMethods.generateShareToken(session, character.id)).shareToken!;
-      expect(await CharactersMethods.getSharedCharacter(first)).toMatchObject({
+      const first = (await CharactersService.generateShareToken(session, character.id)).shareToken!;
+      expect(await CharactersService.getSharedCharacter(first)).toMatchObject({
         character: { id: character.id },
         detailedCharacter: expect.anything(),
       });
-      expect(await CharactersMethods.generateSharedPdf(first)).toMatchObject({
+      expect(await CharactersService.generateSharedPdf(first)).toMatchObject({
         detailedCharacter: expect.anything(),
         CharacterSheetComponent: expect.anything(),
       });
 
-      const second = (await CharactersMethods.generateShareToken(session, character.id)).shareToken!;
+      const second = (await CharactersService.generateShareToken(session, character.id)).shareToken!;
       expect(second).not.toBe(first);
-      expect(await CharactersMethods.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
+      expect(await CharactersService.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
       // Revoking what isn't shared is fine.
-      expect(await CharactersMethods.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
+      expect(await CharactersService.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
 
       for (const token of [first, second, NIL_UUID])
-        await expect(CharactersMethods.getSharedCharacter(token)).rejects.toThrow(NotFoundError);
-      await expect(CharactersMethods.generateSharedPdf(NIL_UUID)).rejects.toThrow(NotFoundError);
+        await expect(CharactersService.getSharedCharacter(token)).rejects.toThrow(NotFoundError);
+      await expect(CharactersService.generateSharedPdf(NIL_UUID)).rejects.toThrow(NotFoundError);
     });
   });
 
   describe("races a new character can take", () => {
     test("are all eligible on the seeded ruleset", async () => {
       const { rulesetId } = await getSeedCtx();
-      const { items, page: pageNumber } = await CharactersMethods.getAvailableRaces(rulesetId, {}, {}, page);
+      const { items, page: pageNumber } = await CharactersService.getAvailableRaces(rulesetId, {}, {}, page);
       expect(pageNumber).toBe(1);
       expect(items.map((r) => r.name)).toEqual(expect.arrayContaining(["Human", "Elf", "Dwarf"]));
       expect(items.filter((r) => !r.eligible)).toEqual([]);
@@ -506,7 +503,7 @@ describe("CharactersService", () => {
       });
       invalidateSeededRuleset(rulesetId);
       const eligible = async (form: object) =>
-        (await CharactersMethods.getAvailableRaces(rulesetId, form, {}, page)).items.find((r) => r.id === race.id)!
+        (await CharactersService.getAvailableRaces(rulesetId, form, {}, page)).items.find((r) => r.id === race.id)!
           .eligible;
 
       expect(await eligible({ [field]: allowed })).toBe(true);

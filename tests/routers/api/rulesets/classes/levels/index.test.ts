@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 const klass = api.api.rulesets[":id"].classes[":classId"];
@@ -80,9 +80,7 @@ describe("rulesets class levels", () => {
 
   test("requires a session", async () => {
     const { id, classId } = await setup();
-    expect(
-      (await guestApi.api.rulesets[":id"].classes[":classId"].levels.$get({ param: { id, classId } })).status,
-    ).toBe(401);
+    await expectStatus(guestApi.api.rulesets[":id"].classes[":classId"].levels.$get({ param: { id, classId } }), 401);
   });
 
   test("rejects a level without a number or out of 1–20", async () => {
@@ -92,18 +90,18 @@ describe("rulesets class levels", () => {
       { level: "1", bab: 1, skills: 4 },
       { level: 21, bab: 1, skills: 4 },
     ]) {
-      expect((await levels.$post({ param: { id, classId }, json: json as never })).status).toBe(400);
+      await expectStatus(levels.$post({ param: { id, classId }, json: json as never }), 400);
     }
   });
 
   test("returns 404 for a missing ruleset, class or level", async () => {
     const { id, classId } = await setup();
-    expect((await levels.$get({ param: { id: NIL_UUID, classId } })).status).toBe(404);
-    expect((await levels.$get({ param: { id, classId: NIL_UUID } })).status).toBe(404);
-    expect((await klass.spells.$get({ param: { id, classId: NIL_UUID } })).status).toBe(404);
+    await expectStatus(levels.$get({ param: { id: NIL_UUID, classId } }), 404);
+    await expectStatus(levels.$get({ param: { id, classId: NIL_UUID } }), 404);
+    await expectStatus(klass.spells.$get({ param: { id, classId: NIL_UUID } }), 404);
     const param = { id, classId, levelId: NIL_UUID };
-    expect((await level.$get({ param })).status).toBe(404);
-    expect((await level.$put({ param, json: { bab: 1 } })).status).toBe(404);
-    expect((await level.$delete({ param })).status).toBe(404);
+    await expectStatus(level.$get({ param }), 404);
+    await expectStatus(level.$put({ param, json: { bab: 1 } }), 404);
+    await expectStatus(level.$delete({ param }), 404);
   });
 });

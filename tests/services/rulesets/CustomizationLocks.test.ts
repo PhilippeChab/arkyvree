@@ -11,11 +11,7 @@ import { lockEntityForMutation, withRulesetScope } from "@/server/services/rules
 import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
 import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
 import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { createSeededTestRuleset, getSeedCtx, insertRows, makeSession, methodsOf } from "@/tests/helpers.ts";
-
-const ModifiersMethods = methodsOf(ModifiersService);
-const PropertiesMethods = methodsOf(PropertiesService);
-const RequirementsMethods = methodsOf(RequirementsService);
+import { createSeededTestRuleset, getSeedCtx, insertRows, makeSession } from "@/tests/helpers.ts";
 
 const pool = createTestPool();
 afterAll(() => pool.end());
@@ -108,21 +104,21 @@ test("every customization kind reports a row removed before the owner lock as mi
   const { session, rulesetId, featId, modifier, property, requirement } = await setupRemovedCustomizations();
   const mutations = [
     () =>
-      ModifiersMethods.updateEntityModifier(session, rulesetId, "feats", featId, modifier.id, {
+      ModifiersService.updateEntityModifier(session, rulesetId, "feats", featId, modifier.id, {
         target: modifier.target,
         value: "2",
         operator: "add",
       }),
-    () => ModifiersMethods.deleteEntityModifier(session, rulesetId, "feats", featId, modifier.id),
+    () => ModifiersService.deleteEntityModifier(session, rulesetId, "feats", featId, modifier.id),
     () =>
-      PropertiesMethods.updateEntityProperty(session, rulesetId, "feats", featId, property.id, {
+      PropertiesService.updateEntityProperty(session, rulesetId, "feats", featId, property.id, {
         type: "NOTE",
         value: "Edited",
       }),
-    () => PropertiesMethods.deleteEntityProperty(session, rulesetId, "feats", featId, property.id),
+    () => PropertiesService.deleteEntityProperty(session, rulesetId, "feats", featId, property.id),
     () =>
-      RequirementsMethods.updateEntityRequirement(session, rulesetId, "feats", featId, requirement.id, { level: "1" }),
-    () => RequirementsMethods.deleteEntityRequirement(session, rulesetId, "feats", featId, requirement.id),
+      RequirementsService.updateEntityRequirement(session, rulesetId, "feats", featId, requirement.id, { level: "1" }),
+    () => RequirementsService.deleteEntityRequirement(session, rulesetId, "feats", featId, requirement.id),
   ];
   for (const mutate of mutations) {
     await expect(mutate()).rejects.toThrow("no longer exists");

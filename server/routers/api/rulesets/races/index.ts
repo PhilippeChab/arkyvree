@@ -5,7 +5,6 @@ import { sizeType } from "@/drizzle/schema.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { RacesService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
@@ -27,15 +26,10 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, kind, orderBy, orderDir } = c.req.valid("query");
-
-      const racesService = RacesService.initialize();
-      const result = await racesService.call(
-        "getRulesetRaces",
-        id,
-        { search, childOnly, kind, orderBy, orderDir },
-        { limit, page },
+      return c.json(
+        await RacesService.getRulesetRaces(id, { search, childOnly, kind, orderBy, orderDir }, { limit, page }),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -43,10 +37,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), raceId: z.string().uuid() })),
     async (c) => {
       const { id, raceId } = c.req.valid("param");
-
-      const racesService = RacesService.initialize();
-      const result = await racesService.call("getRulesetRace", id, raceId);
-      return respond(c, result, 200);
+      return c.json(await RacesService.getRulesetRace(id, raceId), 200);
     },
   )
   .post(
@@ -67,10 +58,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const racesService = RacesService.initialize();
-      const result = await racesService.call("createRulesetRace", c.var.requestSession, id, body);
-      return respond(c, result, 200);
+      return c.json(await RacesService.createRulesetRace(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -92,10 +80,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, raceId } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const racesService = RacesService.initialize();
-      const result = await racesService.call("updateRulesetRace", c.var.requestSession, id, raceId, body);
-      return respond(c, result, 200);
+      return c.json(await RacesService.updateRulesetRace(c.var.requestSession, id, raceId, body), 200);
     },
   )
   .delete(
@@ -103,9 +88,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), raceId: z.string().uuid() })),
     async (c) => {
       const { id, raceId } = c.req.valid("param");
-
-      const racesService = RacesService.initialize();
-      const result = await racesService.call("deleteRulesetRace", c.var.requestSession, id, raceId);
-      return respond(c, result, 200);
+      return c.json(await RacesService.deleteRulesetRace(c.var.requestSession, id, raceId), 200);
     },
   );

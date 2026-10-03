@@ -10,10 +10,10 @@ import { secureHeaders } from "hono/secure-headers";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { isTest } from "@/server/environment.ts";
+import { toJson } from "@/server/errors/index.ts";
 import { requestLogger, type SessionContext } from "@/server/middlewares/index.ts";
 import apiRouter from "@/server/routers/api.tsx";
 import authenticationRouter from "@/server/routers/authentication/index.ts";
-import { errorResponse } from "@/server/routers/respond.ts";
 import staticRouter from "@/server/routers/static.ts";
 import wsRouter from "@/server/routers/ws.ts";
 import { collectingNotified, publishWsEvent } from "@/server/ws.ts";
@@ -109,7 +109,9 @@ const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
     if (err instanceof HTTPException) {
       return c.json({ error: "Forbidden", cause: "forbidden", message: "Forbidden" }, 403);
     }
-    return errorResponse(c, err);
+    // Everything a route or a service throws: the error in the API's envelope, with its status.
+    const [error, code] = toJson(err);
+    return c.json(error, code);
   });
 
 export type Application = typeof app;

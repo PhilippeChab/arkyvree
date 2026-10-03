@@ -6,7 +6,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Mechanics } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   entityToDelete,
@@ -18,7 +17,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const MechanicsMethods = {
+class MechanicsService {
   async getRulesetMechanics(
     rulesetId: string,
     where: {
@@ -37,7 +36,7 @@ const MechanicsMethods = {
         pagination,
       );
     });
-  },
+  }
 
   async getRulesetMechanic(rulesetId: string, mechanicId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -45,7 +44,7 @@ const MechanicsMethods = {
       const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
       return mechanic;
     });
-  },
+  }
 
   async createRulesetMechanic(
     session: Session,
@@ -87,7 +86,7 @@ const MechanicsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateRulesetMechanic(
     session: Session,
@@ -133,7 +132,7 @@ const MechanicsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteRulesetMechanic(session: Session, rulesetId: string, mechanicId: string) {
     const result = await withTransaction(async (tx) => {
@@ -163,13 +162,7 @@ const MechanicsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class MechanicsService extends BaseService<typeof MechanicsMethods> {
-  static initialize() {
-    return new MechanicsService(MechanicsMethods);
   }
 }
 
-export default MechanicsService;
+export default new MechanicsService();

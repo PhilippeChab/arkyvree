@@ -10,14 +10,7 @@ import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import ItemsService from "@/server/services/rulesets/ItemsService.ts";
 import RacesService from "@/server/services/rulesets/RacesService.ts";
 import RulesetsService from "@/server/services/RulesetsService.ts";
-import { createSeededTestRuleset, invalidateSeededRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
-
-const ClassLevelsMethods = methodsOf(ClassLevelsService);
-const ClassSkillsMethods = methodsOf(ClassSkillsService);
-const ClassesMethods = methodsOf(ClassesService);
-const ItemsMethods = methodsOf(ItemsService);
-const RacesMethods = methodsOf(RacesService);
-const RulesetsMethods = methodsOf(RulesetsService);
+import { createSeededTestRuleset, invalidateSeededRuleset, makeSession } from "@/tests/helpers.ts";
 
 type EntityType = "races" | "klasses" | "items";
 
@@ -50,7 +43,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
       });
     if (omitLastLevel) {
       const last = (await KlassLevels.findManyByKlass(db, { klassId: copy.id })).find((level) => level.level === 20)!;
-      await ClassLevelsMethods.deleteClassLevel(session, extension.id, copy.id, last.id);
+      await ClassLevelsService.deleteClassLevel(session, extension.id, copy.id, last.id);
     }
     await Rulesets.update(
       db,
@@ -60,7 +53,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     extensions.push(extension.id);
     sourceIds.push(copy.id);
   }
-  await RulesetsMethods.subscribeExtension(session, host.id, extensions);
+  await RulesetsService.subscribeExtension(session, host.id, extensions);
   const read = () =>
     withRulesetScope(db, host.id, async ({ rulesetData }) => {
       const id = rulesetData.canonicalize(source.id);
@@ -102,19 +95,19 @@ for (const entityType of ["races", "klasses", "items"] as const) {
   test(`${entityType}: ordinary edit copies all visible sibling customizations`, async () => {
     const { session, host, source, assertCopied } = await setup(entityType);
     if (entityType === "races")
-      await RacesMethods.updateRulesetRace(session, host.id, source.id, {
+      await RacesService.updateRulesetRace(session, host.id, source.id, {
         name: source.name,
         description: "edited description",
         size: "Medium",
         baseSpeed: 30,
       });
     else if (entityType === "klasses")
-      await ClassesMethods.updateRulesetKlass(session, host.id, source.id, {
+      await ClassesService.updateRulesetKlass(session, host.id, source.id, {
         name: source.name,
         description: "edited description",
       });
     else
-      await ItemsMethods.updateRulesetItem(session, host.id, source.id, {
+      await ItemsService.updateRulesetItem(session, host.id, source.id, {
         name: source.name,
         description: "edited description",
       });
@@ -135,14 +128,14 @@ for (const action of ["add skill", "remove skill", "create level", "update level
           .id,
       };
     });
-    if (action === "add skill") await ClassSkillsMethods.addClassSkill(session, host.id, source.id, otherSkill);
+    if (action === "add skill") await ClassSkillsService.addClassSkill(session, host.id, source.id, otherSkill);
     else if (action === "remove skill")
-      await ClassSkillsMethods.removeClassSkill(session, host.id, source.id, assignedSkill);
+      await ClassSkillsService.removeClassSkill(session, host.id, source.id, assignedSkill);
     else if (action === "create level")
-      await ClassLevelsMethods.createClassLevel(session, host.id, source.id, { level: 20, bab: 20, skills: 2 });
+      await ClassLevelsService.createClassLevel(session, host.id, source.id, { level: 20, bab: 20, skills: 2 });
     else if (action === "update level")
-      await ClassLevelsMethods.updateClassLevel(session, host.id, source.id, levelId, { skills: 3 });
-    else await ClassLevelsMethods.deleteClassLevel(session, host.id, source.id, levelId);
+      await ClassLevelsService.updateClassLevel(session, host.id, source.id, levelId, { skills: 3 });
+    else await ClassLevelsService.deleteClassLevel(session, host.id, source.id, levelId);
     await assertCopied();
   });
 }

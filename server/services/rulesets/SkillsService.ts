@@ -7,7 +7,6 @@ import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/e
 import { Skills } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   entityHasCharacterPicks,
@@ -21,7 +20,7 @@ import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
-const SkillsMethods = {
+class SkillsService {
   async getRulesetSkills(
     rulesetId: string,
     where: {
@@ -54,7 +53,7 @@ const SkillsMethods = {
         items: hooks.skills.enrichWithProperties(result.items, properties),
       };
     });
-  },
+  }
 
   async getRulesetSkill(rulesetId: string, skillId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -66,7 +65,7 @@ const SkillsMethods = {
       const [enriched] = hooks.skills.enrichWithProperties([skill], properties);
       return enriched;
     });
-  },
+  }
 
   async createRulesetSkill(
     session: Session,
@@ -123,7 +122,7 @@ const SkillsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateRulesetSkill(
     session: Session,
@@ -184,7 +183,7 @@ const SkillsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteRulesetSkill(session: Session, rulesetId: string, skillId: string) {
     const result = await withTransaction(async (tx) => {
@@ -219,13 +218,7 @@ const SkillsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class SkillsService extends BaseService<typeof SkillsMethods> {
-  static initialize() {
-    return new SkillsService(SkillsMethods);
   }
 }
 
-export default SkillsService;
+export default new SkillsService();

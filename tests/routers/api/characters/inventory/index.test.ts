@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
 
 const inventory = api.api.characters.inventory[":characterId"];
@@ -79,21 +79,21 @@ describe("character inventory", () => {
   test("refuses an item the character already carries", async () => {
     const { characterId, itemId } = await setup();
     await expectOk(inventory.$post({ param: { characterId }, json: { ...unequipped, itemId } }));
-    expect((await inventory.$post({ param: { characterId }, json: { ...unequipped, itemId } })).status).toBe(400);
+    await expectStatus(inventory.$post({ param: { characterId }, json: { ...unequipped, itemId } }), 400);
   });
 
   test("returns 404 for an item the character doesn't carry", async () => {
     const { characterId, itemId } = await setup();
-    expect((await entry.$put({ param: { characterId, itemId }, json: unequipped })).status).toBe(404);
-    expect((await entry.$delete({ param: { characterId, itemId } })).status).toBe(404);
+    await expectStatus(entry.$put({ param: { characterId, itemId }, json: unequipped }), 404);
+    await expectStatus(entry.$delete({ param: { characterId, itemId } }), 404);
   });
 
   test("requires a session", async () => {
     const { characterId, itemId } = await setup();
     const guest = guestApi.api.characters.inventory[":characterId"];
-    expect((await guest.$get({ param: { characterId } })).status).toBe(401);
-    expect((await guest.$post({ param: { characterId }, json: { ...unequipped, itemId } })).status).toBe(401);
-    expect((await guest[":itemId"].$put({ param: { characterId, itemId }, json: unequipped })).status).toBe(401);
-    expect((await guest[":itemId"].$delete({ param: { characterId, itemId } })).status).toBe(401);
+    await expectStatus(guest.$get({ param: { characterId } }), 401);
+    await expectStatus(guest.$post({ param: { characterId }, json: { ...unequipped, itemId } }), 401);
+    await expectStatus(guest[":itemId"].$put({ param: { characterId, itemId }, json: unequipped }), 401);
+    await expectStatus(guest[":itemId"].$delete({ param: { characterId, itemId } }), 401);
   });
 });

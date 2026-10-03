@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import { attachmentUploadRateLimit, denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import AttachmentsService from "@/server/services/AttachmentsService.ts";
 
 const directUploadBody = z.object({
@@ -29,14 +28,12 @@ const attachments = new Hono()
     ),
     async (c) => {
       const params = c.req.valid("query");
-      const result = await AttachmentsService.initialize().call("findOne", c.var.requestSession, params);
-      return respond(c, result, 200);
+      return c.json(await AttachmentsService.findOne(c.var.requestSession, params), 200);
     },
   )
   .post("/direct-uploads", denyDemoUser, attachmentUploadRateLimit, zValidator("json", directUploadBody), async (c) => {
     const params = c.req.valid("json");
-    const result = await AttachmentsService.initialize().call("createDirectUpload", c.var.requestSession, params);
-    return respond(c, result, 200);
+    return c.json(await AttachmentsService.createDirectUpload(c.var.requestSession, params), 200);
   })
   .post(
     "/:signedId/attach",
@@ -44,14 +41,12 @@ const attachments = new Hono()
     zValidator("param", z.object({ signedId: z.string().min(1) })),
     async (c) => {
       const { signedId } = c.req.valid("param");
-      const result = await AttachmentsService.initialize().call("attach", c.var.requestSession, signedId);
-      return respond(c, result, 200);
+      return c.json(await AttachmentsService.attach(c.var.requestSession, signedId), 200);
     },
   )
   .delete("/:id", denyDemoUser, zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    const result = await AttachmentsService.initialize().call("detach", c.var.requestSession, id);
-    return respond(c, result, 200);
+    return c.json(await AttachmentsService.detach(c.var.requestSession, id), 200);
   });
 
 export default attachments;

@@ -34,7 +34,7 @@ The codebase follows a **3-layer architecture** (Routers → Services → Reposi
 - Schema is defined in `/drizzle/schema.ts`
 - Routes use `zValidator` from `@/server/middlewares/index.ts` so validation failures use the standard API error envelope and preserve Hono response inference.
 - A route's common params and paging come from `server/routers/api/validation.ts` (`idParam`, `characterIdParam`, `page`, `limit` / `limitOf(n)`), the customization routes' from `server/routers/api/rulesets/customization/validation.ts` (`entityParams`, `ownerParams`). A query list (comma-separated ids, picks) is parsed by its schema's `transform`, not in the handler. Path params are camelCase (`:modifierId`)
-- A route answers its service call with `respond(c, result, status)` (`server/routers/respond.ts`): the value as JSON, or the error in the envelope. A route that shapes its own success answers a failure with `errorResponse(c, error)`.
+- A route answers with what its service returns: `return c.json(await XService.method(…), status)`. What a route or a service throws reaches the app's `onError` (`server/routers/application.ts`), which answers with the error in the API's envelope and its status: a route never catches a service's error to answer it. So a route's types list its successes only, and a test checks an error status with `expectStatus(response, status)` (`tests/api.ts`).
 - A response never carries a user's `passwordDigest`. Auth responses return the user through `toSafeUser` (`server/services/accounts.ts`), and a query that joins users selects their public columns (`id`, `username`, `emailAddress`), never the whole row.
 - `deletedAt IS NOT NULL` means **archived**. The codebase has two row-removal primitives — `repo.archive()` (soft) and `repo.delete()` (hard). Which one to use depends on the table. See [docs/persistence.md](./docs/persistence.md) for the full policy and decision rule. Quick rule: first-class user-facing entities archive by default; junctions, character-state, and customization rows always hard-delete.
 
@@ -44,7 +44,7 @@ The codebase follows a **3-layer architecture** (Routers → Services → Reposi
 - Use **individual parameters**, not payload/options objects: `linkCharacter(userId, campaignId, characterId, visibility)` not `linkCharacter(payload)`
 - Use **shared repository instances** from `@/server/repositories/index.ts`, never instantiate private copies
 - Paginated service methods follow: `method(id, where: { search?, orderBy?, orderDir? }, pagination: { limit, page })`
-- A service file exports only its class: routers call `XService.initialize().call("method", …)`, and tests the same through `methodsOf(XService)` (`tests/helpers.ts`). Anything else another file needs (a service, a job, a test) lives in a module next to it in `server/services/` (`rulesets/helpers.ts`, `characters/helpers.ts`, `attachments.ts`, `accounts.ts`), never in a service file
+- A service is a class used through its one shared instance, like a repository: its file exports `new XService()` and nothing else. Routers and tests call its methods on it (`XService.method(…)`), never detached, which would lose `this` (a test that passes one as a value binds it). A helper only that service uses is one of its `private` methods, at the top of the class. Anything else another file needs (a service, a job, a test) lives in a module next to it in `server/services/` (`rulesets/helpers.ts`, `characters/helpers.ts`, `attachments.ts`, `accounts.ts`), never in a service file
 
 **Permission Checks (Policy vs. Identity):**
 
@@ -193,8 +193,8 @@ Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `t
 
 **Shared helpers** — reuse them instead of inlining:
 
-- `tests/helpers.ts`: `methodsOf(XService)` for calling a service, users, sessions, rulesets (seeded forks), campaigns, characters, levels and contributors written straight to the database; `insertRows(table, rows)` for bulk setup, `findKlassLevel`, `queuedJobs` / `queuedPdfJobs` for what was queued; `getSeedCtx()` for the seeded ids; `invalidateSeededRuleset`
-- `tests/api.ts`: the typed API client as the seed user (`api`), a guest (`guestApi`) or a new user (`createSignedInUser`), and `expectOk`
+- `tests/helpers.ts`: users, sessions, rulesets (seeded forks), campaigns, characters, levels and contributors written straight to the database; `insertRows(table, rows)` for bulk setup, `findKlassLevel`, `queuedJobs` / `queuedPdfJobs` for what was queued; `getSeedCtx()` for the seeded ids; `invalidateSeededRuleset`
+- `tests/api.ts`: the typed API client as the seed user (`api`), a guest (`guestApi`) or a new user (`createSignedInUser`), `expectOk` (a 2xx response's body) and `expectStatus` (an error's status)
 - `tests/levelFixtures.ts`: seeded character builds, level plans and level-ups, and masters with their bonded creature
 - `tests/seeds/seededRows.ts`: a seeded ruleset's own rows, for the seed tests; `tests/seeds/freshSeed.ts`: a new system ruleset (or extension) for a seeder test to seed into, and what an entity was seeded with; `tests/storage.ts`: the fake storage backend
 - `tests/e2e/helpers.ts`: signing in (`signIn`, `signedInPage`, the form's `submitSignIn`), another user's or a guest's context (`openContext`, which the run's coverage records), `createCharacter`, `createCampaign`, `forkCoreRuleset` (all through the API), `uniqueName` (ruleset names are unique across users), invites (`invitePlayer`, `inviteContributor`, `answerInvite`), `openActionsMenu`, `filterList`, `apiResponse` waits. They scope dialog interactions to `[role="dialog"][aria-modal="true"]`. `tests/e2e/levelUpHelpers.ts` walks the Add Level wizard; the seeded users' credentials are `TEST_USERS` in `tests/fixtures/auth.fixture.ts`

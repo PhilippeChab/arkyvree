@@ -3,7 +3,6 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
-import { errorResponse } from "@/server/routers/respond.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import CharactersService from "@/server/services/CharactersService.ts";
@@ -13,12 +12,8 @@ const shared = new Hono()
   .get("/characters/:shareToken", zValidator("param", z.object({ shareToken: z.string().uuid() })), async (c) => {
     const { shareToken } = c.req.valid("param");
 
-    const result = await CharactersService.initialize().call("getSharedCharacter", shareToken);
-    const success = result[0];
-
-    if (!success) return errorResponse(c, result[2]);
-
-    const { character, detailedCharacter, bondedByKind, portraitUrl } = result[1];
+    const { character, detailedCharacter, bondedByKind, portraitUrl } =
+      await CharactersService.getSharedCharacter(shareToken);
     const response = buildFullCharacterResponse(character, detailedCharacter);
     return c.json(
       {
@@ -34,12 +29,8 @@ const shared = new Hono()
     try {
       const { shareToken } = c.req.valid("param");
 
-      const result = await CharactersService.initialize().call("generateSharedPdf", shareToken);
-      const success = result[0];
-
-      if (!success) return errorResponse(c, result[2]);
-
-      const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } = result[1];
+      const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } =
+        await CharactersService.generateSharedPdf(shareToken);
 
       const pdfBlob = await pdf(
         <CharacterSheetComponent detailedCharacter={detailedCharacter} portraitUrl={portraitUrl} kind={kind} />,

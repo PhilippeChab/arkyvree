@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createTestUser, NIL_UUID } from "@/tests/helpers.ts";
 
 const attachments = api.api.attachments;
@@ -31,18 +31,18 @@ describe("attachments", () => {
   test("refuses to attach to another user's record", async () => {
     const { user } = await createTestUser();
     const response = await attachments["direct-uploads"].$post({ json: { ...upload, recordId: user.id } });
-    expect(response.status).toBe(403);
+    await expectStatus(response, 403);
   });
 
   test("requires a session", async () => {
-    expect((await guestApi.api.attachments.$get({ query: avatar })).status).toBe(401);
+    await expectStatus(guestApi.api.attachments.$get({ query: avatar }), 401);
   });
 
   test("rejects a record id that isn't a UUID", async () => {
-    expect((await attachments.$get({ query: { ...avatar, recordId: "not-a-uuid" } })).status).toBe(400);
+    await expectStatus(attachments.$get({ query: { ...avatar, recordId: "not-a-uuid" } }), 400);
   });
 
   test("returns 404 for a missing attachment", async () => {
-    expect((await attachments[":id"].$delete({ param: { id: NIL_UUID } })).status).toBe(404);
+    await expectStatus(attachments[":id"].$delete({ param: { id: NIL_UUID } }), 404);
   });
 });

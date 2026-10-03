@@ -5,7 +5,6 @@ import { location } from "@/drizzle/schema.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { ItemsService } from "@/server/services/rulesets/index.ts";
 
 const itemBodySchema = z.object({
@@ -58,15 +57,10 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, orderBy, orderDir, isTemplate } = c.req.valid("query");
-
-      const itemsService = ItemsService.initialize();
-      const result = await itemsService.call(
-        "getRulesetItems",
-        id,
-        { search, childOnly, orderBy, orderDir, isTemplate },
-        { limit, page },
+      return c.json(
+        await ItemsService.getRulesetItems(id, { search, childOnly, orderBy, orderDir, isTemplate }, { limit, page }),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -81,10 +75,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { type } = c.req.valid("query");
-
-      const itemsService = ItemsService.initialize();
-      const result = await itemsService.call("getRulesetTemplates", id, type);
-      return respond(c, result, 200);
+      return c.json(await ItemsService.getRulesetTemplates(id, type), 200);
     },
   )
   .get(
@@ -92,19 +83,13 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), itemId: z.string().uuid() })),
     async (c) => {
       const { id, itemId } = c.req.valid("param");
-
-      const itemsService = ItemsService.initialize();
-      const result = await itemsService.call("getRulesetItem", id, itemId);
-      return respond(c, result, 200);
+      return c.json(await ItemsService.getRulesetItem(id, itemId), 200);
     },
   )
   .post("/:id/items", zValidator("param", idParam), zValidator("json", itemBodySchema), async (c) => {
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
-
-    const itemsService = ItemsService.initialize();
-    const result = await itemsService.call("createRulesetItem", c.var.requestSession, id, body);
-    return respond(c, result, 200);
+    return c.json(await ItemsService.createRulesetItem(c.var.requestSession, id, body), 200);
   })
   .post(
     "/:id/items/:itemId/duplicate",
@@ -113,10 +98,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, itemId } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const itemsService = ItemsService.initialize();
-      const result = await itemsService.call("duplicateRulesetItem", c.var.requestSession, id, itemId, body);
-      return respond(c, result, 200);
+      return c.json(await ItemsService.duplicateRulesetItem(c.var.requestSession, id, itemId, body), 200);
     },
   )
   .post(
@@ -142,10 +124,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, itemId } = c.req.valid("param");
       const { variants } = c.req.valid("json");
-
-      const itemsService = ItemsService.initialize();
-      const result = await itemsService.call("bulkCreateVariants", c.var.requestSession, id, itemId, variants);
-      return respond(c, result, 200);
+      return c.json(await ItemsService.bulkCreateVariants(c.var.requestSession, id, itemId, variants), 200);
     },
   )
   .put(
@@ -155,10 +134,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, itemId } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const itemsService = ItemsService.initialize();
-      const result = await itemsService.call("updateRulesetItem", c.var.requestSession, id, itemId, body);
-      return respond(c, result, 200);
+      return c.json(await ItemsService.updateRulesetItem(c.var.requestSession, id, itemId, body), 200);
     },
   )
   .delete(
@@ -166,9 +142,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), itemId: z.string().uuid() })),
     async (c) => {
       const { id, itemId } = c.req.valid("param");
-
-      const itemsService = ItemsService.initialize();
-      const result = await itemsService.call("deleteRulesetItem", c.var.requestSession, id, itemId);
-      return respond(c, result, 200);
+      return c.json(await ItemsService.deleteRulesetItem(c.var.requestSession, id, itemId), 200);
     },
   );

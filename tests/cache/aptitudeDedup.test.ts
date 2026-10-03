@@ -20,11 +20,7 @@ import { db } from "@/server/database/index.ts";
 import AptitudesService from "@/server/services/rulesets/AptitudesService.ts";
 import FeatsService from "@/server/services/rulesets/FeatsService.ts";
 import PowersService from "@/server/services/rulesets/PowersService.ts";
-import { createSeededTestRulesetWithExtensions, methodsOf } from "@/tests/helpers.ts";
-
-const AptitudesMethods = methodsOf(AptitudesService);
-const FeatsMethods = methodsOf(FeatsService);
-const PowersMethods = methodsOf(PowersService);
+import { createSeededTestRulesetWithExtensions } from "@/tests/helpers.ts";
 
 /**
  * A seeded fork that uses every extension of its base, so the COW layer sees
@@ -115,7 +111,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     const { ruleset } = await setup();
     // "Visage of the Deity, Lesser" is a CD spell with "Blackguard Spells" aptitude
     // Both DMG and CD create this aptitude — service should dedup
-    const { items } = await PowersMethods.getRulesetPowers(
+    const { items } = await PowersService.getRulesetPowers(
       ruleset.id,
       { search: "Visage of the Deity, Lesser" },
       { limit: 10, page: 1 },
@@ -140,7 +136,7 @@ describe("aptitude deduplication across sibling extensions", () => {
       .from(powersInRules)
       .where(and(eq(powersInRules.rulesetId, cdRuleset.id), eq(powersInRules.name, "Visage of the Deity, Lesser")));
 
-    const power = await PowersMethods.getRulesetPower(ruleset.id, spell.id);
+    const power = await PowersService.getRulesetPower(ruleset.id, spell.id);
     const aptNames = power.powersAptitudesInRules.map((pa) => pa.aptitudesInRule.name);
     const uniqueNames = new Set(aptNames);
     expect(aptNames.length).toBe(uniqueNames.size);
@@ -148,7 +144,7 @@ describe("aptitude deduplication across sibling extensions", () => {
 
   test("AptitudesService returns no duplicate aptitude names in list", async () => {
     const { ruleset } = await setup();
-    const { items } = await AptitudesMethods.getRulesetAptitudes(
+    const { items } = await AptitudesService.getRulesetAptitudes(
       ruleset.id,
       { scope: "spells" },
       { limit: 500, page: 1 },
@@ -167,7 +163,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     const winningApt = rulesetData.aptitudes.find((a) => a.name === "Blackguard Spells");
     expect(winningApt).toBeDefined();
 
-    const { items } = await FeatsMethods.getRulesetFeats(
+    const { items } = await FeatsService.getRulesetFeats(
       ruleset.id,
       { aptitudeId: winningApt!.id },
       { limit: 100, page: 1 },

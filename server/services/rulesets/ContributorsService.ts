@@ -8,56 +8,60 @@ import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Contributors, Notifications, Rulesets, Users } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists. */
-async function getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
-  const contributor = await Contributors.findOne(tx, { id: contributorId });
-  if (!contributor || contributor.userId !== session.userId) {
-    throw new NotFoundError("Contributor invite not found");
+class ContributorsService {
+  /**
+   * The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists.
+   */
+  private async getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
+    const contributor = await Contributors.findOne(tx, { id: contributorId });
+    if (!contributor || contributor.userId !== session.userId) {
+      throw new NotFoundError("Contributor invite not found");
+    }
+    if (contributor.status !== "Pending") {
+      throw new ConflictError("Invite is no longer pending");
+    }
+    return contributor;
   }
-  if (contributor.status !== "Pending") {
-    throw new ConflictError("Invite is no longer pending");
-  }
-  return contributor;
-}
 
-/** The invitee's answer: the invite's status, its notification read, and the activity its ruleset's managers are told of. */
-async function answerInvite(tx: Db, session: Session, contributorId: string, status: "Active" | "Rejected") {
-  const [updated] = await Contributors.update(tx, { status }, { id: contributorId });
-  await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributorId });
-  await createActivityWithNotifications(tx, {
-    userId: session.userId,
-    targetId: updated.id,
-    targetTable: getTableName(contributorsInRules),
-    type: status === "Active" ? "acceptContributorInvite" : "rejectContributorInvite",
-    data: { contributorId },
-  });
-  return updated;
-}
-
-/** A contributor the session's user may manage, with its ruleset and the policy that allowed it. */
-async function getManagedContributor(tx: Db, session: Session, contributorId: string) {
-  const contributor = await Contributors.findOne(tx, { id: contributorId });
-  if (!contributor) {
-    throw new NotFoundError("Contributor not found");
+  /**
+   * The invitee's answer: the invite's status, its notification read,
+   * and the activity its ruleset's managers are told of.
+   */
+  private async answerInvite(tx: Db, session: Session, contributorId: string, status: "Active" | "Rejected") {
+    const [updated] = await Contributors.update(tx, { status }, { id: contributorId });
+    await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributorId });
+    await createActivityWithNotifications(tx, {
+      userId: session.userId,
+      targetId: updated.id,
+      targetTable: getTableName(contributorsInRules),
+      type: status === "Active" ? "acceptContributorInvite" : "rejectContributorInvite",
+      data: { contributorId },
+    });
+    return updated;
   }
-  const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
-  if (!ruleset) {
-    throw new NotFoundError("Ruleset not found");
-  }
-  const policy = await getRulesetPolicy(tx, session, ruleset);
-  policy.canManageContributors();
-  return { contributor, ruleset, policy };
-}
 
-const ContributorsMethods = {
+  /** A contributor the session's user may manage, with its ruleset and the policy that allowed it. */
+  private async getManagedContributor(tx: Db, session: Session, contributorId: string) {
+    const contributor = await Contributors.findOne(tx, { id: contributorId });
+    if (!contributor) {
+      throw new NotFoundError("Contributor not found");
+    }
+    const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
+    if (!ruleset) {
+      throw new NotFoundError("Ruleset not found");
+    }
+    const policy = await getRulesetPolicy(tx, session, ruleset);
+    policy.canManageContributors();
+    return { contributor, ruleset, policy };
+  }
+
   async getUserContributorInvites(userId: string) {
     return await Contributors.findManyByUserId(db, { userId, status: "Pending" }, { limit: 10 });
-  },
+  }
 
   // Single invite for the current user, any status. Used by the invite-accept
   // page so a stale link still resolves to "Already accepted" / "no longer
@@ -71,7 +75,7 @@ const ContributorsMethods = {
       throw new NotFoundError("Contributor invite not found");
     }
     return invite;
-  },
+  }
 
   async getContributors(
     session: Session,
@@ -96,7 +100,7 @@ const ContributorsMethods = {
       ? { id: ownerUser.id, username: ownerUser.username, emailAddress: ownerUser.emailAddress }
       : null;
     return { ...paginated, owner };
-  },
+  }
 
   async inviteContributor(session: Session, rulesetId: string, email: string, role: ContributorRole) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
@@ -199,11 +203,11 @@ const ContributorsMethods = {
     });
 
     return contributor;
-  },
+  }
 
   async acceptContributorInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await getPendingInviteFor(tx, session, contributorId);
+      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
 
       const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
       if (!ruleset) {
@@ -213,21 +217,21 @@ const ContributorsMethods = {
         throw new ConflictError("This ruleset has been archived");
       }
 
-      return await answerInvite(tx, session, contributor.id, "Active");
+      return await this.answerInvite(tx, session, contributor.id, "Active");
     });
-  },
+  }
 
   async rejectContributorInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await getPendingInviteFor(tx, session, contributorId);
+      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
 
-      return await answerInvite(tx, session, contributor.id, "Rejected");
+      return await this.answerInvite(tx, session, contributor.id, "Rejected");
     });
-  },
+  }
 
   async revokeContributor(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const { contributor, policy } = await getManagedContributor(tx, session, contributorId);
+      const { contributor, policy } = await this.getManagedContributor(tx, session, contributorId);
 
       if (contributor.role === "Admin") {
         policy.canManageAdminContributors();
@@ -251,11 +255,11 @@ const ContributorsMethods = {
 
       return updated;
     });
-  },
+  }
 
   async updateContributorRole(session: Session, contributorId: string, role: ContributorRole) {
     return await withTransaction(async (tx) => {
-      const { contributor, ruleset, policy } = await getManagedContributor(tx, session, contributorId);
+      const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, contributorId);
 
       if (ruleset.status === "Archived") {
         throw new ConflictError("Cannot modify roles on an archived ruleset");
@@ -282,7 +286,7 @@ const ContributorsMethods = {
 
       return updated;
     });
-  },
+  }
 
   async leaveRuleset(session: Session, rulesetId: string) {
     return await withTransaction(async (tx) => {
@@ -322,13 +326,7 @@ const ContributorsMethods = {
 
       return updated;
     });
-  },
-} as const;
-
-class ContributorsService extends BaseService<typeof ContributorsMethods> {
-  static initialize() {
-    return new ContributorsService(ContributorsMethods);
   }
 }
 
-export default ContributorsService;
+export default new ContributorsService();

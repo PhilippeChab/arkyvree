@@ -34,23 +34,18 @@ import {
   createTestRuleset,
   createTestUserAndRuleset,
   insertRows,
-  methodsOf,
   NIL_UUID,
 } from "@/tests/helpers.ts";
-
-const ClassLevelsMethods = methodsOf(ClassLevelsService);
-const ClassesMethods = methodsOf(ClassesService);
-const FeatsMethods = methodsOf(FeatsService);
 
 /** A new user's empty ruleset with a class and an aptitude. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const klass = await ClassesMethods.createRulesetKlass(session, ruleset.id, { name: "Test Class" });
+  const klass = await ClassesService.createRulesetKlass(session, ruleset.id, { name: "Test Class" });
   const [aptitude] = await Aptitudes.create(db, { name: "Fighter Bonus Feat", rulesetId: ruleset.id });
   return { user, session, ruleset, klass, aptitude, poolTarget: `aptitudes.${stripSeparators(aptitude.name)}.allowed` };
 }
 
-type LevelBody = Omit<Parameters<typeof ClassLevelsMethods.createClassLevel>[3], "level">;
+type LevelBody = Omit<Parameters<typeof ClassLevelsService.createClassLevel>[3], "level">;
 
 function createLevel(
   session: Session,
@@ -59,7 +54,7 @@ function createLevel(
   level: number,
   body: Partial<LevelBody> = {},
 ) {
-  return ClassLevelsMethods.createClassLevel(session, rulesetId, klassId, { level, bab: level, skills: 4, ...body });
+  return ClassLevelsService.createClassLevel(session, rulesetId, klassId, { level, bab: level, skills: 4, ...body });
 }
 
 async function createSave(rulesetId: string, name: string) {
@@ -76,7 +71,7 @@ describe("ClassLevelsService", () => {
   describe("feats and saves", () => {
     test("lists a class's levels in order, with the feats they grant through an aptitude and their base saves", async () => {
       const { session, ruleset, klass, aptitude } = await setup();
-      const feat = await FeatsMethods.createRulesetFeat(session, ruleset.id, {
+      const feat = await FeatsService.createRulesetFeat(session, ruleset.id, {
         name: "Cleave",
         aptitudeIds: [aptitude.id],
       });
@@ -87,7 +82,7 @@ describe("ClassLevelsService", () => {
         saves: [{ saveId: fortitude.id, base: 2 }],
       });
 
-      expect(await ClassLevelsMethods.getClassLevels(ruleset.id, klass.id)).toMatchObject([
+      expect(await ClassLevelsService.getClassLevels(ruleset.id, klass.id)).toMatchObject([
         {
           level: 1,
           bab: 1,
@@ -111,7 +106,7 @@ describe("ClassLevelsService", () => {
         saves: [{ saveId: fortitude.id, base: 2 }],
       });
       const update = (body: Partial<LevelBody>) =>
-        ClassLevelsMethods.updateClassLevel(session, ruleset.id, klass.id, level.id, body);
+        ClassLevelsService.updateClassLevel(session, ruleset.id, klass.id, level.id, body);
       const links = async () => ({
         feats: (
           await db.select().from(klassLevelFeatsInRules).where(eq(klassLevelFeatsInRules.klassLevelId, level.id))
@@ -144,8 +139,8 @@ describe("ClassLevelsService", () => {
       modifiers: [{ target: "combat.bab" }],
       requirements: [{ target: "classes.testclass.level", value: "1" }],
     };
-    expect(await ClassLevelsMethods.getClassLevel(ruleset.id, klass.id, level.id)).toMatchObject(detail);
-    expect(await ClassLevelsMethods.getClassLevelById(ruleset.id, level.id)).toMatchObject({
+    expect(await ClassLevelsService.getClassLevel(ruleset.id, klass.id, level.id)).toMatchObject(detail);
+    expect(await ClassLevelsService.getClassLevelById(ruleset.id, level.id)).toMatchObject({
       ...detail,
       name: "Test Class",
     });
@@ -163,7 +158,7 @@ describe("ClassLevelsService", () => {
     });
 
     expect(
-      await ClassLevelsMethods.updateClassLevel(session, ruleset.id, klass.id, level.id, { bab: 3 }),
+      await ClassLevelsService.updateClassLevel(session, ruleset.id, klass.id, level.id, { bab: 3 }),
     ).toMatchObject({ bab: 3, skills: 4 });
     const properties = await Properties.findManyByEntity(db, { entityIds: [level.id], entityType: "klass_levels" });
     expect(properties.map((p) => p.type).sort()).toEqual([
@@ -187,7 +182,7 @@ describe("ClassLevelsService", () => {
         modifier(first.id, "aptitudes.wizardspells.1.uses", "1"),
       ]);
 
-      expect((await ClassLevelsMethods.getClassLevelFeatPools(ruleset.id, klass.id)).map((l) => l.featPools)).toEqual([
+      expect((await ClassLevelsService.getClassLevelFeatPools(ruleset.id, klass.id)).map((l) => l.featPools)).toEqual([
         { [aptitude.name]: 1 },
         { [aptitude.name]: 2 },
         { [aptitude.name]: 2 },
@@ -209,7 +204,7 @@ describe("ClassLevelsService", () => {
         });
       }
 
-      expect((await ClassLevelsMethods.getClassLevelFeatPools(ruleset.id, klass.id)).map((l) => l.featPools)).toEqual([
+      expect((await ClassLevelsService.getClassLevelFeatPools(ruleset.id, klass.id)).map((l) => l.featPools)).toEqual([
         { [aptitude.name]: 1 },
         { [aptitude.name]: 2 },
       ]);
@@ -230,7 +225,7 @@ describe("ClassLevelsService", () => {
       modifier(second.id, "aptitudes.wizardspells.1.uses", "1"),
     ]);
 
-    expect((await ClassLevelsMethods.getClassLevelSpells(ruleset.id, klass.id)).map((l) => l.spellsPerDay)).toEqual([
+    expect((await ClassLevelsService.getClassLevelSpells(ruleset.id, klass.id)).map((l) => l.spellsPerDay)).toEqual([
       { 0: 3, 1: 1 },
       { 0: 4, 1: 2 },
     ]);
@@ -242,8 +237,8 @@ describe("ClassLevelsService", () => {
     const { session: other } = await createTestUserAndRuleset();
     for (const change of [
       () => createLevel(other, ruleset.id, klass.id, 2),
-      () => ClassLevelsMethods.updateClassLevel(other, ruleset.id, klass.id, level.id, { bab: 3 }),
-      () => ClassLevelsMethods.deleteClassLevel(other, ruleset.id, klass.id, level.id),
+      () => ClassLevelsService.updateClassLevel(other, ruleset.id, klass.id, level.id, { bab: 3 }),
+      () => ClassLevelsService.deleteClassLevel(other, ruleset.id, klass.id, level.id),
     ])
       await expect(change()).rejects.toThrow(ForbiddenError);
   });
@@ -257,23 +252,23 @@ describe("ClassLevelsService", () => {
       ["create for a missing class", () => createLevel(session, ruleset.id, NIL_UUID, 2)],
       [
         "update in a missing ruleset",
-        () => ClassLevelsMethods.updateClassLevel(session, NIL_UUID, klass.id, level.id, { bab: 2 }),
+        () => ClassLevelsService.updateClassLevel(session, NIL_UUID, klass.id, level.id, { bab: 2 }),
       ],
       [
         "update for a missing class",
-        () => ClassLevelsMethods.updateClassLevel(session, ruleset.id, NIL_UUID, level.id, { bab: 2 }),
+        () => ClassLevelsService.updateClassLevel(session, ruleset.id, NIL_UUID, level.id, { bab: 2 }),
       ],
-      ["delete in a missing ruleset", () => ClassLevelsMethods.deleteClassLevel(session, NIL_UUID, klass.id, level.id)],
+      ["delete in a missing ruleset", () => ClassLevelsService.deleteClassLevel(session, NIL_UUID, klass.id, level.id)],
       [
         "delete for a missing class",
-        () => ClassLevelsMethods.deleteClassLevel(session, ruleset.id, NIL_UUID, level.id),
+        () => ClassLevelsService.deleteClassLevel(session, ruleset.id, NIL_UUID, level.id),
       ],
-      ["read for a missing class", () => ClassLevelsMethods.getClassLevel(ruleset.id, NIL_UUID, level.id)],
-      ["read a missing level", () => ClassLevelsMethods.getClassLevel(ruleset.id, klass.id, NIL_UUID)],
-      ["read by id through another ruleset", () => ClassLevelsMethods.getClassLevelById(other.ruleset.id, level.id)],
-      ["feat pools of a missing ruleset", () => ClassLevelsMethods.getClassLevelFeatPools(NIL_UUID, klass.id)],
-      ["feat pools of a missing class", () => ClassLevelsMethods.getClassLevelFeatPools(ruleset.id, NIL_UUID)],
-      ["spells of a missing ruleset", () => ClassLevelsMethods.getClassLevelSpells(NIL_UUID, klass.id)],
+      ["read for a missing class", () => ClassLevelsService.getClassLevel(ruleset.id, NIL_UUID, level.id)],
+      ["read a missing level", () => ClassLevelsService.getClassLevel(ruleset.id, klass.id, NIL_UUID)],
+      ["read by id through another ruleset", () => ClassLevelsService.getClassLevelById(other.ruleset.id, level.id)],
+      ["feat pools of a missing ruleset", () => ClassLevelsService.getClassLevelFeatPools(NIL_UUID, klass.id)],
+      ["feat pools of a missing class", () => ClassLevelsService.getClassLevelFeatPools(ruleset.id, NIL_UUID)],
+      ["spells of a missing ruleset", () => ClassLevelsService.getClassLevelSpells(NIL_UUID, klass.id)],
     ];
     // One at a time: each write opens a savepoint on the test's single connection.
     for (const [what, call] of cases) {
@@ -303,7 +298,7 @@ describe("ClassLevelsService", () => {
       ]);
       await Modifiers.create(db, modifier(level.id, "combat.bab", "1"));
 
-      await ClassLevelsMethods.deleteClassLevel(session, ruleset.id, klass.id, level.id);
+      await ClassLevelsService.deleteClassLevel(session, ruleset.id, klass.id, level.id);
 
       expect(await KlassLevels.findOne(db, { id: level.id })).toBeUndefined();
       for (const table of [klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules]) {
@@ -322,7 +317,7 @@ describe("ClassLevelsService", () => {
       const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
       await addCharacterLevel(character.id, level.id);
 
-      await expect(ClassLevelsMethods.deleteClassLevel(session, ruleset.id, klass.id, level.id)).rejects.toThrow(
+      await expect(ClassLevelsService.deleteClassLevel(session, ruleset.id, klass.id, level.id)).rejects.toThrow(
         ConflictError,
       );
     });
@@ -342,13 +337,13 @@ describe("ClassLevelsService", () => {
 
     test("reads the inherited class's levels", async () => {
       const { fork, klass, inheritedLevel } = await setupFork();
-      expect(await ClassLevelsMethods.getClassLevels(fork.id, klass.id)).toMatchObject([
+      expect(await ClassLevelsService.getClassLevels(fork.id, klass.id)).toMatchObject([
         { id: inheritedLevel.id, level: 1, bab: 1 },
       ]);
-      expect(await ClassLevelsMethods.getClassLevel(fork.id, klass.id, inheritedLevel.id)).toMatchObject({
+      expect(await ClassLevelsService.getClassLevel(fork.id, klass.id, inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
       });
-      expect(await ClassLevelsMethods.getClassLevelById(fork.id, inheritedLevel.id)).toMatchObject({
+      expect(await ClassLevelsService.getClassLevelById(fork.id, inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
         name: klass.name,
       });
@@ -370,12 +365,12 @@ describe("ClassLevelsService", () => {
       const { session, parent, fork, klass, inheritedLevel } = await setupFork();
       // Regression: the first edit copies the level mid-save, and a stat the edit leaves out was read as 0.
       expect(
-        await ClassLevelsMethods.updateClassLevel(session, fork.id, klass.id, inheritedLevel.id, { bab: 5 }),
+        await ClassLevelsService.updateClassLevel(session, fork.id, klass.id, inheritedLevel.id, { bab: 5 }),
       ).toMatchObject({ bab: 5, skills: 4 });
 
-      await ClassLevelsMethods.deleteClassLevel(session, fork.id, klass.id, inheritedLevel.id);
-      expect(await ClassLevelsMethods.getClassLevels(fork.id, klass.id)).toEqual([]);
-      expect(await ClassLevelsMethods.getClassLevels(parent.id, klass.id)).toMatchObject([
+      await ClassLevelsService.deleteClassLevel(session, fork.id, klass.id, inheritedLevel.id);
+      expect(await ClassLevelsService.getClassLevels(fork.id, klass.id)).toEqual([]);
+      expect(await ClassLevelsService.getClassLevels(parent.id, klass.id)).toMatchObject([
         { id: inheritedLevel.id, bab: 1, skills: 4 },
       ]);
     });
@@ -387,9 +382,9 @@ describe("ClassLevelsService", () => {
 
       await expect(createLevel(session, fork.id, other.klass.id, 1)).rejects.toThrow(NotFoundError);
       await expect(
-        ClassLevelsMethods.updateClassLevel(session, fork.id, other.klass.id, otherLevel.id, { bab: 2 }),
+        ClassLevelsService.updateClassLevel(session, fork.id, other.klass.id, otherLevel.id, { bab: 2 }),
       ).rejects.toThrow(NotFoundError);
-      await expect(ClassLevelsMethods.getClassLevelSpells(fork.id, other.klass.id)).rejects.toThrow(NotFoundError);
+      await expect(ClassLevelsService.getClassLevelSpells(fork.id, other.klass.id)).rejects.toThrow(NotFoundError);
     });
   });
 });

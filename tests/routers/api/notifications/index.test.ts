@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 /**
@@ -61,14 +61,14 @@ describe("notifications", () => {
   });
 
   test("requires a session", async () => {
-    expect((await guestApi.api.notifications.$get({ query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.notifications.$get({ query: {} }), 401);
   });
 
   test("returns 404 for a missing notification, or another user's, which stays unread", async () => {
-    expect((await api.api.notifications[":id"].read.$post({ param: { id: NIL_UUID } })).status).toBe(404);
+    await expectStatus(api.api.notifications[":id"].read.$post({ param: { id: NIL_UUID } }), 404);
     const { notifications } = await invite();
     const [theirs] = (await expectOk(notifications.$get({ query: {} }))).items;
-    expect((await api.api.notifications[":id"].read.$post({ param: { id: theirs.id } })).status).toBe(404);
+    await expectStatus(api.api.notifications[":id"].read.$post({ param: { id: theirs.id } }), 404);
     expect((await expectOk(notifications.unread.$get())).count).toBe(1);
   });
 });

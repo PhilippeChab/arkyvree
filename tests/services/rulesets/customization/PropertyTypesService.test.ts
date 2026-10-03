@@ -10,9 +10,7 @@ import {
   WEAPON_PROFICIENCY,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import PropertyTypesService from "@/server/services/rulesets/customization/PropertyTypesService.ts";
-import { createTestUserAndRuleset, insertRows, methodsOf } from "@/tests/helpers.ts";
-
-const PropertyTypesMethods = methodsOf(PropertyTypesService);
+import { createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
 
 const firstPage = { limit: 50, page: 1 };
 
@@ -54,8 +52,8 @@ async function setup() {
 describe("PropertyTypesService", () => {
   test("lists the engine's types for an entity type", async () => {
     const { ruleset } = await createTestUserAndRuleset();
-    const values = async (entityType: Parameters<typeof PropertyTypesMethods.getStaticPropertyTypes>[1]) =>
-      (await PropertyTypesMethods.getStaticPropertyTypes(ruleset.id, entityType)).map((t) => t.value);
+    const values = async (entityType: Parameters<typeof PropertyTypesService.getStaticPropertyTypes>[1]) =>
+      (await PropertyTypesService.getStaticPropertyTypes(ruleset.id, entityType)).map((t) => t.value);
 
     expect(await values("items")).toContain(WEAPON_PROFICIENCY);
     expect(await values("items")).not.toContain(SPELL_SCHOOL);
@@ -74,30 +72,30 @@ describe("PropertyTypesService", () => {
       { value: "custom_tier", entityType: "feats", usageCount: 1 },
       { value: WEAPON_PROFICIENCY, entityType: "items", usageCount: 1 },
     ];
-    expect(await PropertyTypesMethods.getCustomPropertyTypes(rulesetId)).toMatchObject(custom);
-    expect(await PropertyTypesMethods.getCustomPropertyTypes(rulesetId, "feats")).toMatchObject([
+    expect(await PropertyTypesService.getCustomPropertyTypes(rulesetId)).toMatchObject(custom);
+    expect(await PropertyTypesService.getCustomPropertyTypes(rulesetId, "feats")).toMatchObject([
       { value: "custom_tier" },
     ]);
 
-    const all = await PropertyTypesMethods.getPropertyTypes(rulesetId, "items");
-    const staticCount = (await PropertyTypesMethods.getStaticPropertyTypes(rulesetId, "items")).length;
+    const all = await PropertyTypesService.getPropertyTypes(rulesetId, "items");
+    const staticCount = (await PropertyTypesService.getStaticPropertyTypes(rulesetId, "items")).length;
     expect(all.slice(staticCount)).toMatchObject(custom.filter((type) => type.entityType === "items"));
   });
 
   test("searches engine types by name or description and custom types by name, ignoring case", async () => {
     const { rulesetId } = await setup();
     const search = async (query: string) =>
-      (await PropertyTypesMethods.searchPropertyTypes(rulesetId, query, "items")).map(
+      (await PropertyTypesService.searchPropertyTypes(rulesetId, query, "items")).map(
         (t) => `${t.value}${t.isStatic ? "" : " (custom)"}`,
       );
     expect(await search("CUSTOM_MAT")).toEqual(["custom_material (custom)"]);
     expect(await search("weapon_prof")).toEqual([WEAPON_PROFICIENCY, `${WEAPON_PROFICIENCY} (custom)`]);
-    expect(await search("")).toHaveLength((await PropertyTypesMethods.getPropertyTypes(rulesetId, "items")).length);
+    expect(await search("")).toHaveLength((await PropertyTypesService.getPropertyTypes(rulesetId, "items")).length);
   });
 
   test("completes types, custom ones described by their use, a page at a time", async () => {
     const { rulesetId } = await setup();
-    const { items } = await PropertyTypesMethods.getCompletions(rulesetId, "custom", firstPage);
+    const { items } = await PropertyTypesService.getCompletions(rulesetId, "custom", firstPage);
     expect(items).toEqual([
       {
         label: "custom_rarity",
@@ -129,7 +127,7 @@ describe("PropertyTypesService", () => {
       },
     ]);
 
-    const pages = [1, 2].map((page) => PropertyTypesMethods.getCompletions(rulesetId, "custom", { limit: 3, page }));
+    const pages = [1, 2].map((page) => PropertyTypesService.getCompletions(rulesetId, "custom", { limit: 3, page }));
     expect(await Promise.all(pages)).toMatchObject([
       { items: items.slice(0, 3), nextPage: 2 },
       { items: items.slice(3), nextPage: undefined },
@@ -139,7 +137,7 @@ describe("PropertyTypesService", () => {
   test("completes a type's values: the engine's, then the ruleset's own once each, sorted", async () => {
     const { rulesetId } = await setup();
     const values = async (type: string, query: string) =>
-      (await PropertyTypesMethods.getValueCompletions(rulesetId, type, query, firstPage)).items.map(
+      (await PropertyTypesService.getValueCompletions(rulesetId, type, query, firstPage)).items.map(
         (c) => `${c.value} (${c.kind})`,
       );
 

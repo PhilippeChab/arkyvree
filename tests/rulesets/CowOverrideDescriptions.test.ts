@@ -7,11 +7,8 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { refreshEntityData } from "@/server/services/rulesets/cow.ts";
 import FeatsService from "@/server/services/rulesets/FeatsService.ts";
 import PowersService from "@/server/services/rulesets/PowersService.ts";
-import { createSeededTestRuleset, getSeedCtx, makeSession, methodsOf } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 import { createSeedCharacter } from "@/tests/levelFixtures.ts";
-
-const FeatsMethods = methodsOf(FeatsService);
-const PowersMethods = methodsOf(PowersService);
 
 describe("refreshEntityData", () => {
   const rows = [
@@ -45,8 +42,8 @@ describe("A fork's own description of an inherited", () => {
       const description = `Overridden in the fork ${fork.id}`;
       const name = kind === "feat" ? "Toughness" : "Magic Missile";
       if (kind === "feat")
-        await FeatsMethods.updateRulesetFeat(session, fork.id, ctx.featMap[name], { name, description });
-      else await PowersMethods.updateRulesetPower(session, fork.id, ctx.powerMap[name], { name, description });
+        await FeatsService.updateRulesetFeat(session, fork.id, ctx.featMap[name], { name, description });
+      else await PowersService.updateRulesetPower(session, fork.id, ctx.powerMap[name], { name, description });
 
       const characterId = await createSeedCharacter(ctx, build, { rulesetId: fork.id });
       const levelIds = await addClassLevels(db, forkCtx, characterId, klass, [1], [hp]);

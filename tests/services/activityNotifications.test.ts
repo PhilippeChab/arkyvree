@@ -15,14 +15,7 @@ import {
   createTestRuleset,
   createTestUser,
   inviteToSlot,
-  methodsOf,
 } from "@/tests/helpers.ts";
-
-const CampaignInvitesMethods = methodsOf(InvitesService);
-const CharacterContributorsMethods = methodsOf(CharacterContributorsService);
-const ContributorsMethods = methodsOf(ContributorsService);
-const PropertiesMethods = methodsOf(PropertiesService);
-const FeatsMethods = methodsOf(FeatsService);
 
 type User = Awaited<ReturnType<typeof createTestUser>>;
 
@@ -47,10 +40,10 @@ describe("activity notifications", () => {
         await inviteToSlot(gm.session, slot, invitee.user.emailAddress);
         expect(await inbox(invitee)).toEqual([note("createCampaignInvite", gm)]);
       }
-      const [accepted] = await CampaignInvitesMethods.getUserInvites(accepting.user.id);
-      await CampaignInvitesMethods.acceptCampaignInvite(accepting.session, accepted.id);
-      const [rejected] = await CampaignInvitesMethods.getUserInvites(rejecting.user.id);
-      await CampaignInvitesMethods.rejectCampaignInvite(rejecting.session, rejected.id);
+      const [accepted] = await InvitesService.getUserInvites(accepting.user.id);
+      await InvitesService.acceptCampaignInvite(accepting.session, accepted.id);
+      const [rejected] = await InvitesService.getUserInvites(rejecting.user.id);
+      await InvitesService.rejectCampaignInvite(rejecting.session, rejected.id);
 
       expect(await inbox(gm)).toEqual([
         note("acceptCampaignInvite", accepting),
@@ -74,11 +67,11 @@ describe("activity notifications", () => {
       {
         create: async (owner: User) => (await createTestRuleset(owner.user.id)).id,
         invite: (owner: User, rulesetId: string, invitee: User) =>
-          ContributorsMethods.inviteContributor(owner.session, rulesetId, invitee.user.emailAddress, "Editor"),
-        accept: ContributorsMethods.acceptContributorInvite,
-        reject: ContributorsMethods.rejectContributorInvite,
-        revoke: ContributorsMethods.revokeContributor,
-        leave: ContributorsMethods.leaveRuleset,
+          ContributorsService.inviteContributor(owner.session, rulesetId, invitee.user.emailAddress, "Editor"),
+        accept: ContributorsService.acceptContributorInvite.bind(ContributorsService),
+        reject: ContributorsService.rejectContributorInvite.bind(ContributorsService),
+        revoke: ContributorsService.revokeContributor.bind(ContributorsService),
+        leave: ContributorsService.leaveRuleset.bind(ContributorsService),
         archive: (id: string) => Rulesets.archive(db, { id }),
         prefix: "",
         noun: "ContributorInvite",
@@ -90,11 +83,11 @@ describe("activity notifications", () => {
       {
         create: async (owner: User) => (await createTestCharacter(owner.user.id)).id,
         invite: (owner: User, characterId: string, invitee: User) =>
-          CharacterContributorsMethods.inviteContributor(owner.session, characterId, invitee.user.emailAddress),
-        accept: CharacterContributorsMethods.acceptContributorInvite,
-        reject: CharacterContributorsMethods.rejectContributorInvite,
-        revoke: CharacterContributorsMethods.revokeContributor,
-        leave: CharacterContributorsMethods.leaveCharacter,
+          CharacterContributorsService.inviteContributor(owner.session, characterId, invitee.user.emailAddress),
+        accept: CharacterContributorsService.acceptContributorInvite.bind(CharacterContributorsService),
+        reject: CharacterContributorsService.rejectContributorInvite.bind(CharacterContributorsService),
+        revoke: CharacterContributorsService.revokeContributor.bind(CharacterContributorsService),
+        leave: CharacterContributorsService.leaveCharacter.bind(CharacterContributorsService),
         archive: (id: string) => Characters.archive(db, { id }),
         prefix: "Character",
         noun: "CharacterContributorInvite",
@@ -146,7 +139,7 @@ describe("activity notifications", () => {
     const [owner, contributor] = await users(2);
     const ruleset = await createTestRuleset(owner.user.id);
     const { id } = await addRulesetContributor(ruleset.id, contributor.user, owner.user.id);
-    await ContributorsMethods.updateContributorRole(owner.session, id, "Viewer");
+    await ContributorsService.updateContributorRole(owner.session, id, "Viewer");
     expect(await inbox(contributor)).toEqual([note("updateContributorRole", owner)]);
   });
 
@@ -155,16 +148,16 @@ describe("activity notifications", () => {
     const ruleset = await createTestRuleset(owner.user.id);
     for (const contributor of [author, other]) await addRulesetContributor(ruleset.id, contributor.user, owner.user.id);
     const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
-    const feat = await FeatsMethods.createRulesetFeat(author.session, ruleset.id, {
+    const feat = await FeatsService.createRulesetFeat(author.session, ruleset.id, {
       name: "Notified Feat",
       description: "",
       aptitudeIds: [aptitude.id],
     });
-    await PropertiesMethods.createEntityProperty(author.session, ruleset.id, "feats", feat.id, {
+    await PropertiesService.createEntityProperty(author.session, ruleset.id, "feats", feat.id, {
       type: "NOTE",
       value: "A note",
     });
-    await FeatsMethods.deleteRulesetFeat(author.session, ruleset.id, feat.id);
+    await FeatsService.deleteRulesetFeat(author.session, ruleset.id, feat.id);
 
     const changes = [note("createFeat", author), note("createProperty", author), note("deleteFeat", author)];
     expect(await inbox(owner)).toEqual(changes);
@@ -176,7 +169,7 @@ describe("activity notifications", () => {
     const [owner] = await users(1);
     const ruleset = await createTestRuleset(owner.user.id);
     const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
-    await FeatsMethods.createRulesetFeat(owner.session, ruleset.id, {
+    await FeatsService.createRulesetFeat(owner.session, ruleset.id, {
       name: "Unnoticed Feat",
       description: "",
       aptitudeIds: [aptitude.id],

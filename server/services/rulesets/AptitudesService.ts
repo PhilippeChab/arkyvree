@@ -6,7 +6,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Aptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   entityHasCharacterPicks,
@@ -19,7 +18,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const AptitudesMethods = {
+class AptitudesService {
   async getRulesetAptitudes(
     rulesetId: string,
     where: {
@@ -44,7 +43,7 @@ const AptitudesMethods = {
         pagination,
       );
     });
-  },
+  }
 
   async getRulesetAptitude(rulesetId: string, aptitudeId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -52,7 +51,7 @@ const AptitudesMethods = {
       const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
       return aptitude;
     });
-  },
+  }
 
   async createRulesetAptitude(
     session: Session,
@@ -97,7 +96,7 @@ const AptitudesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateRulesetAptitude(
     session: Session,
@@ -143,7 +142,7 @@ const AptitudesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteRulesetAptitude(session: Session, rulesetId: string, aptitudeId: string) {
     const result = await withTransaction(async (tx) => {
@@ -176,13 +175,7 @@ const AptitudesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class AptitudesService extends BaseService<typeof AptitudesMethods> {
-  static initialize() {
-    return new AptitudesService(AptitudesMethods);
   }
 }
 
-export default AptitudesService;
+export default new AptitudesService();

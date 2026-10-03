@@ -4,7 +4,6 @@ import { z } from "zod";
 import { denyDemoUser, exportRateLimit, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
 import { characterIdParam, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import { errorResponse, respond } from "@/server/routers/respond.ts";
 import {
   buildBondedMap,
   buildBondedResponse,
@@ -42,14 +41,10 @@ const characters = new Hono()
     ),
     async (c) => {
       const { rulesetId, alignment, gender, limit, page, search } = c.req.valid("query");
-      const result = await CharactersService.initialize().call(
-        "getAvailableRaces",
-        rulesetId,
-        { alignment, gender },
-        { search },
-        { limit, page },
+      return c.json(
+        await CharactersService.getAvailableRaces(rulesetId, { alignment, gender }, { search }, { limit, page }),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   // Create a new character
@@ -93,8 +88,7 @@ const characters = new Hono()
       const characterData = c.req.valid("json");
 
       // Use the service to create character with session for activity logging
-      const result = await CharactersService.initialize().call("createCharacter", c.var.requestSession, characterData);
-      return respond(c, result, 201);
+      return c.json(await CharactersService.createCharacter(c.var.requestSession, characterData), 201);
     },
   )
   // List all characters
@@ -118,19 +112,20 @@ const characters = new Hono()
       const visibility = visibilityMap[query.visibility];
 
       // Use the service to get character list with session for activity logging
-      const result = await CharactersService.initialize().call(
-        "getMyCharacters",
-        c.var.requestSession,
-        {
-          visibility,
-          search: query.search,
-          orderBy: query.orderBy,
-          orderDir: query.orderDir,
-          accessRole: query.accessRole,
-        },
-        { limit: query.limit, page: query.page },
+      return c.json(
+        await CharactersService.getMyCharacters(
+          c.var.requestSession,
+          {
+            visibility,
+            search: query.search,
+            orderBy: query.orderBy,
+            orderDir: query.orderDir,
+            accessRole: query.accessRole,
+          },
+          { limit: query.limit, page: query.page },
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   // Get characters not in a campaign
@@ -148,25 +143,22 @@ const characters = new Hono()
     async (c) => {
       const { campaignId } = c.req.valid("param");
       const query = c.req.valid("query");
-      const result = await CharactersService.initialize().call(
-        "getUnlinkedCharacters",
-        c.var.requestSession,
-        campaignId,
-        { search: query.search },
-        { limit: query.limit, page: query.page },
+      return c.json(
+        await CharactersService.getUnlinkedCharacters(
+          c.var.requestSession,
+          campaignId,
+          { search: query.search },
+          { limit: query.limit, page: query.page },
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   // Enqueue async PDF generation
   .post("/:characterId/pdf", denyDemoUser, exportRateLimit, zValidator("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
 
-    const result = await CharactersService.initialize().call("enqueuePdf", c.var.requestSession, characterId);
-    const success = result[0];
-
-    if (!success) return errorResponse(c, result[2]);
-
+    await CharactersService.enqueuePdf(c.var.requestSession, characterId);
     return c.json({ message: "PDF generation started" }, 202);
   })
   // Update character
@@ -207,8 +199,7 @@ const characters = new Hono()
       const updateData = c.req.valid("json");
 
       // Use the service to update character with session for activity logging
-      const result = await CharactersService.initialize().call("updateCharacter", c.var.requestSession, id, updateData);
-      return respond(c, result, 200);
+      return c.json(await CharactersService.updateCharacter(c.var.requestSession, id, updateData), 200);
     },
   )
   .put(
@@ -219,16 +210,7 @@ const characters = new Hono()
       const { id } = c.req.valid("param");
       const { languageIds } = c.req.valid("json");
 
-      const result = await CharactersService.initialize().call(
-        "updateLanguages",
-        c.var.requestSession,
-        id,
-        languageIds,
-      );
-      const success = result[0];
-
-      if (!success) return errorResponse(c, result[2]);
-
+      await CharactersService.updateLanguages(c.var.requestSession, id, languageIds);
       return c.json({ success: true }, 200);
     },
   )
@@ -240,11 +222,7 @@ const characters = new Hono()
       const { id } = c.req.valid("param");
       const abilities = c.req.valid("json");
 
-      const result = await CharactersService.initialize().call("updateAbilities", c.var.requestSession, id, abilities);
-      const success = result[0];
-
-      if (!success) return errorResponse(c, result[2]);
-
+      await CharactersService.updateAbilities(c.var.requestSession, id, abilities);
       return c.json({ success: true }, 200);
     },
   )
@@ -253,12 +231,10 @@ const characters = new Hono()
     const { id } = c.req.valid("param");
 
     // Use the service to get character data with session for activity logging
-    const result = await CharactersService.initialize().call("getCharacter", c.var.requestSession, id);
-    const success = result[0];
-
-    if (!success) return errorResponse(c, result[2]);
-
-    const { character, detailedCharacter, bondedByKind } = result[1];
+    const { character, detailedCharacter, bondedByKind } = await CharactersService.getCharacter(
+      c.var.requestSession,
+      id,
+    );
 
     if (character.kind !== "pc") {
       const response = buildBondedResponse(character, detailedCharacter as Parameters<typeof buildBondedResponse>[1]);
@@ -272,47 +248,33 @@ const characters = new Hono()
   .delete("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
-    const result = await CharactersService.initialize().call("archiveCharacter", c.var.requestSession, id);
-    const success = result[0];
-
-    if (!success) return errorResponse(c, result[2]);
-
+    await CharactersService.archiveCharacter(c.var.requestSession, id);
     return c.json({ message: "Character archived successfully" }, 200);
   })
   // Generate share token
   .post("/:id/share", denyDemoUser, zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
-    const result = await CharactersService.initialize().call("generateShareToken", c.var.requestSession, id);
-    return respond(c, result, 200);
+    return c.json(await CharactersService.generateShareToken(c.var.requestSession, id), 200);
   })
   // Revoke share token
   .delete("/:id/share", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
-    const result = await CharactersService.initialize().call("revokeShareToken", c.var.requestSession, id);
-    return respond(c, result, 200);
+    return c.json(await CharactersService.revokeShareToken(c.var.requestSession, id), 200);
   })
   // Permanently delete an archived character
   .delete("/:id/permanent", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
-    const result = await CharactersService.initialize().call("hardDeleteCharacter", c.var.requestSession, id);
-    const success = result[0];
-
-    if (!success) return errorResponse(c, result[2]);
-
+    await CharactersService.hardDeleteCharacter(c.var.requestSession, id);
     return c.json({ message: "Character permanently deleted" }, 200);
   })
   // Unarchive character
   .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
-    const result = await CharactersService.initialize().call("unarchiveCharacter", c.var.requestSession, id);
-    const success = result[0];
-
-    if (!success) return errorResponse(c, result[2]);
-
+    await CharactersService.unarchiveCharacter(c.var.requestSession, id);
     return c.json({ message: "Character unarchived successfully" }, 200);
   });
 

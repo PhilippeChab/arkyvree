@@ -5,7 +5,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, CharacterInventory, Items } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
@@ -14,26 +13,26 @@ import type { Session } from "@/shared/relations.ts";
 
 import { validateCharges, validateEquipping } from "./inventory/validation.ts";
 
-/** An inventory entry's stored placement and charges: only an equipped item has a location, only a held one a set. */
-function entryFields(
-  equipped: boolean,
-  location: ItemLocation | null,
-  weaponSet: number | null,
-  totalCharges: number | null,
-  remainingCharges: number | null,
-) {
-  const resolvedLocation = equipped ? (location ?? null) : null;
-  const resolvedEquipped = !!resolvedLocation;
-  return {
-    equipped: resolvedEquipped,
-    location: resolvedLocation,
-    weaponSet: resolvedEquipped && isHandLocation(resolvedLocation) ? weaponSet : null,
-    totalCharges: totalCharges ?? null,
-    remainingCharges: remainingCharges ?? null,
-  };
-}
+class CharacterInventoryService {
+  /** An inventory entry's stored placement and charges: only an equipped item has a location, only a held one a set. */
+  private entryFields(
+    equipped: boolean,
+    location: ItemLocation | null,
+    weaponSet: number | null,
+    totalCharges: number | null,
+    remainingCharges: number | null,
+  ) {
+    const resolvedLocation = equipped ? (location ?? null) : null;
+    const resolvedEquipped = !!resolvedLocation;
+    return {
+      equipped: resolvedEquipped,
+      location: resolvedLocation,
+      weaponSet: resolvedEquipped && isHandLocation(resolvedLocation) ? weaponSet : null,
+      totalCharges: totalCharges ?? null,
+      remainingCharges: remainingCharges ?? null,
+    };
+  }
 
-const CharacterInventoryMethods = {
   async getInventory(session: Session, characterId: string) {
     // Visibility.All: an archived character's sheet still lists its items, read-only.
     const characterRecord = await getEditableCharacter(db, session, characterId, Visibility.All);
@@ -69,7 +68,7 @@ const CharacterInventoryMethods = {
         };
       });
     });
-  },
+  }
 
   async addItem(
     session: Session,
@@ -119,7 +118,7 @@ const CharacterInventoryMethods = {
           characterId,
           itemId,
           quantity,
-          ...entryFields(equipped, location, weaponSet, totalCharges, remainingCharges),
+          ...this.entryFields(equipped, location, weaponSet, totalCharges, remainingCharges),
         });
 
         await Activities.create(tx, {
@@ -132,7 +131,7 @@ const CharacterInventoryMethods = {
         return rows[0];
       });
     });
-  },
+  }
 
   async updateItem(
     session: Session,
@@ -168,7 +167,7 @@ const CharacterInventoryMethods = {
 
         const rows = await CharacterInventory.update(
           tx,
-          { quantity, ...entryFields(equipped, location, weaponSet, totalCharges, remainingCharges) },
+          { quantity, ...this.entryFields(equipped, location, weaponSet, totalCharges, remainingCharges) },
           { characterId, itemId, expectedUpdatedAt },
         );
         if (expectedUpdatedAt && rows.length === 0) {
@@ -185,7 +184,7 @@ const CharacterInventoryMethods = {
         return rows[0];
       });
     });
-  },
+  }
 
   async removeItem(session: Session, characterId: string, itemId: string) {
     return await withTransaction(async (tx) => {
@@ -209,13 +208,7 @@ const CharacterInventoryMethods = {
         return { success: true };
       });
     });
-  },
-} as const;
-
-class CharacterInventoryService extends BaseService<typeof CharacterInventoryMethods> {
-  static initialize() {
-    return new CharacterInventoryService(CharacterInventoryMethods);
   }
 }
 
-export default CharacterInventoryService;
+export default new CharacterInventoryService();

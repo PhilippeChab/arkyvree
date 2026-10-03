@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { apiAs, expectOk, guestApi, sessionIdFrom } from "@/tests/api.ts";
+import { apiAs, expectOk, expectStatus, guestApi, sessionIdFrom } from "@/tests/api.ts";
 import { NIL_UUID } from "@/tests/helpers.ts";
 
 /** Starts a demo and returns a client signed in as the demo user. */
@@ -27,10 +27,10 @@ describe("demo", () => {
   test("refuses what a demo user must not do", async () => {
     const { api } = await startDemo();
     // An email change would send a verification email to any address.
-    expect((await api.auth.profile.$put({ json: { emailAddress: "attacker@example.com" } })).status).toBe(403);
+    await expectStatus(api.auth.profile.$put({ json: { emailAddress: "attacker@example.com" } }), 403);
     // Deleting the account would orphan its rulesets.
-    expect((await api.auth["delete-account"].$post({ json: { password: "doesnt-matter" } })).status).toBe(403);
+    await expectStatus(api.auth["delete-account"].$post({ json: { password: "doesnt-matter" } }), 403);
     // A campaign would leave a players row behind when the demo expires.
-    expect((await api.api.campaigns.$post({ json: { name: "demo campaign", rulesetId: NIL_UUID } })).status).toBe(403);
+    await expectStatus(api.api.campaigns.$post({ json: { name: "demo campaign", rulesetId: NIL_UUID } }), 403);
   });
 });

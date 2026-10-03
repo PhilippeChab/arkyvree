@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { TargetPathsService } from "@/server/services/rulesets/index.ts";
 
 const targetPaths = new Hono()
@@ -24,10 +23,7 @@ const targetPaths = new Hono()
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
       const { path, kind } = c.req.valid("json");
-
-      const service = TargetPathsService.initialize();
-      const result = await service.call("validatePath", rulesetId, path, kind);
-      return respond(c, result, 200);
+      return c.json(await TargetPathsService.validatePath(rulesetId, path, kind), 200);
     },
   )
   /**
@@ -53,21 +49,20 @@ const targetPaths = new Hono()
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
       const { partialPath, position, kind, entityType, search, flat, limit, page } = c.req.valid("json");
-
-      const service = TargetPathsService.initialize();
-      const result = await service.call(
-        "getCompletions",
-        rulesetId,
-        partialPath,
-        position,
-        kind,
-        entityType,
-        search,
-        limit,
-        page,
-        flat,
+      return c.json(
+        await TargetPathsService.getCompletions(
+          rulesetId,
+          partialPath,
+          position,
+          kind,
+          entityType,
+          search,
+          limit,
+          page,
+          flat,
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   );
 

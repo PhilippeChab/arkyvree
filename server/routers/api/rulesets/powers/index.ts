@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { PowersService } from "@/server/services/rulesets/index.ts";
 
 const spellFields = {
@@ -40,15 +39,14 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, aptitudeId, level, orderBy, orderDir } = c.req.valid("query");
-
-      const powersService = PowersService.initialize();
-      const result = await powersService.call(
-        "getRulesetPowers",
-        id,
-        { search, childOnly, aptitudeId, level, orderBy, orderDir },
-        { limit, page },
+      return c.json(
+        await PowersService.getRulesetPowers(
+          id,
+          { search, childOnly, aptitudeId, level, orderBy, orderDir },
+          { limit, page },
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -56,10 +54,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), powerId: z.string().uuid() })),
     async (c) => {
       const { id, powerId } = c.req.valid("param");
-
-      const powersService = PowersService.initialize();
-      const result = await powersService.call("getRulesetPower", id, powerId);
-      return respond(c, result, 200);
+      return c.json(await PowersService.getRulesetPower(id, powerId), 200);
     },
   )
   .post(
@@ -89,10 +84,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const powersService = PowersService.initialize();
-      const result = await powersService.call("createRulesetPower", c.var.requestSession, id, body);
-      return respond(c, result, 200);
+      return c.json(await PowersService.createRulesetPower(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -123,10 +115,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, powerId } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const powersService = PowersService.initialize();
-      const result = await powersService.call("updateRulesetPower", c.var.requestSession, id, powerId, body);
-      return respond(c, result, 200);
+      return c.json(await PowersService.updateRulesetPower(c.var.requestSession, id, powerId, body), 200);
     },
   )
   .delete(
@@ -134,9 +123,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), powerId: z.string().uuid() })),
     async (c) => {
       const { id, powerId } = c.req.valid("param");
-
-      const powersService = PowersService.initialize();
-      const result = await powersService.call("deleteRulesetPower", c.var.requestSession, id, powerId);
-      return respond(c, result, 200);
+      return c.json(await PowersService.deleteRulesetPower(c.var.requestSession, id, powerId), 200);
     },
   );

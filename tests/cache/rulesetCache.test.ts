@@ -15,10 +15,7 @@ import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/
 import { cowEntity, invalidateCowData } from "@/server/services/rulesets/cow.ts";
 import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
 import FeatsService from "@/server/services/rulesets/FeatsService.ts";
-import { createTestRuleset, getSeedCtx, insertRows, makeSession, methodsOf, uniqueId } from "@/tests/helpers.ts";
-
-const ModifiersMethods = methodsOf(ModifiersService);
-const FeatsMethods = methodsOf(FeatsService);
+import { createTestRuleset, getSeedCtx, insertRows, makeSession, uniqueId } from "@/tests/helpers.ts";
 
 describe("rulesetCache", () => {
   async function getRuleset() {
@@ -418,7 +415,7 @@ describe("rulesetCache", () => {
       // Fork the seed and COW the feat through the service.
       const fork = await createFork(seed.id);
       const forkSession = makeSession(SEED_USER_ID);
-      await FeatsMethods.updateRulesetFeat(forkSession, fork.id, baseFeat.id, {
+      await FeatsService.updateRulesetFeat(forkSession, fork.id, baseFeat.id, {
         name: baseFeat.name,
         description: "COW'd",
       });
@@ -457,7 +454,7 @@ describe("rulesetCache", () => {
       expect(sampleFeat).toBeDefined();
 
       const forkSession = makeSession(SEED_USER_ID);
-      await FeatsMethods.updateRulesetFeat(forkSession, fork.id, sampleFeat.id, {
+      await FeatsService.updateRulesetFeat(forkSession, fork.id, sampleFeat.id, {
         name: sampleFeat.name,
         description: "Edited by fork (COW)",
       });
@@ -486,7 +483,7 @@ describe("rulesetCache", () => {
       const sampleFeat = sampleFeats[0];
 
       const forkSession = makeSession(SEED_USER_ID);
-      await FeatsMethods.deleteRulesetFeat(forkSession, fork.id, sampleFeat.id);
+      await FeatsService.deleteRulesetFeat(forkSession, fork.id, sampleFeat.id);
 
       const forkData = await composeFork(fork);
       const seedData = await getOrFetchRulesetData(seed.id, await getOrBuildCowData(seed));
@@ -533,7 +530,7 @@ describe("rulesetCache", () => {
       // Create a modifier on the inherited feat through the service (COWs the
       // feat + invalidates the fork's cache).
       const forkSession = makeSession(SEED_USER_ID);
-      await ModifiersMethods.createEntityModifier(forkSession, fork.id, "feats", sampleFeat.id, {
+      await ModifiersService.createEntityModifier(forkSession, fork.id, "feats", sampleFeat.id, {
         target: "abilities.strength.misc",
         value: "2",
         operator: "add",

@@ -48,10 +48,7 @@ import {
   createTestRuleset,
   createTestUserAndRuleset,
   makeSession,
-  methodsOf,
 } from "@/tests/helpers.ts";
-
-const AuthenticationMethods = methodsOf(AuthenticationService);
 
 /** The tables whose rows a customization can belong to, by the type it names them with. */
 const OWNERS = {
@@ -168,7 +165,7 @@ describe("customization cleanup", () => {
   });
 
   test("deletes a demo account's customizations with its rulesets and characters", async () => {
-    const { user } = await AuthenticationMethods.startDemo();
+    const { user } = await AuthenticationService.startDemo();
     // The fork comes with copies of the seeded ruleset's properties
     const fork = await createSeededTestRuleset(user.id);
     const { klassLevel } = await createTestKlassLevel(fork.id);
@@ -179,7 +176,7 @@ describe("customization cleanup", () => {
     expect(await Properties.findManyByEntity(db, { entityIds: [fork.id], entityType: "rulesets" })).not.toEqual([]);
 
     // Signing out purges a demo account, and the foreign keys' cascades its rulesets and characters
-    await AuthenticationMethods.signOut(makeSession(user.id));
+    await AuthenticationService.signOut(makeSession(user.id));
     expect(await Users.findOne(db, { id: user.id })).toBeUndefined();
     expect(await orphans()).toEqual([]);
   });

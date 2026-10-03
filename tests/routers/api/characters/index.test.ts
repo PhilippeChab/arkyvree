@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
 
 const characters = api.api.characters;
@@ -90,12 +90,12 @@ describe("characters", () => {
 
     await expectOk(character.$delete({ param: { id } }));
     await expectOk(character.permanent.$delete({ param: { id } }));
-    expect((await character.$get({ param: { id } })).status).toBe(404);
+    await expectStatus(character.$get({ param: { id } }), 404);
   });
 
   test("only deletes an archived character permanently", async () => {
     const { id } = await createCharacter();
-    expect((await character.permanent.$delete({ param: { id } })).status).toBe(404);
+    await expectStatus(character.permanent.$delete({ param: { id } }), 404);
   });
 
   test("enqueues a PDF of the character", async () => {
@@ -129,7 +129,7 @@ describe("characters", () => {
 
     test("returns 404 for an ability the ruleset doesn't have", async () => {
       const { id } = await createCharacter();
-      expect((await character.abilities.$put({ param: { id }, json: { [NIL_UUID]: 15 } })).status).toBe(404);
+      await expectStatus(character.abilities.$put({ param: { id }, json: { [NIL_UUID]: 15 } }), 404);
     });
   });
 
@@ -153,7 +153,7 @@ describe("characters", () => {
 
     test("rejects a language the ruleset doesn't have", async () => {
       const { id } = await createCharacter();
-      expect((await character.languages.$put({ param: { id }, json: { languageIds: [NIL_UUID] } })).status).toBe(400);
+      await expectStatus(character.languages.$put({ param: { id }, json: { languageIds: [NIL_UUID] } }), 400);
     });
   });
 
@@ -178,23 +178,22 @@ describe("characters", () => {
       const { id } = await createCharacter();
       const { shareToken } = await expectOk(character.share.$post({ param: { id } }));
       expect(await expectOk(character.share.$delete({ param: { id } }))).toMatchObject({ shareToken: null });
-      expect(
-        (await guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: shareToken! } })).status,
-      ).toBe(404);
+      await expectStatus(
+        guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: shareToken! } }),
+        404,
+      );
     });
 
     test("returns 404 for an unknown token", async () => {
-      expect(
-        (await guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: NIL_UUID } })).status,
-      ).toBe(404);
+      await expectStatus(guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: NIL_UUID } }), 404);
     });
   });
 
   test("requires a session", async () => {
     const { id } = await createCharacter();
-    expect((await guestApi.api.characters.$get({ query: {} })).status).toBe(401);
-    expect((await guestApi.api.characters[":id"].share.$post({ param: { id } })).status).toBe(401);
-    expect((await guestApi.api.characters[":id"].abilities.$put({ param: { id }, json: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.characters.$get({ query: {} }), 401);
+    await expectStatus(guestApi.api.characters[":id"].share.$post({ param: { id } }), 401);
+    await expectStatus(guestApi.api.characters[":id"].abilities.$put({ param: { id }, json: {} }), 401);
   });
 
   test("rejects a character without a name, or with an unknown alignment or gender", async () => {
@@ -216,15 +215,15 @@ describe("characters", () => {
       { ...valid, alignment: "Invalid Alignment" },
       { ...valid, gender: "InvalidGender" },
     ]) {
-      expect((await characters.$post({ json: json as never })).status).toBe(400);
+      await expectStatus(characters.$post({ json: json as never }), 400);
     }
   });
 
   test("returns 404 for a missing character", async () => {
     const param = { id: NIL_UUID };
-    expect((await character.$get({ param })).status).toBe(404);
-    expect((await character.$put({ param, json: { age: 30 } })).status).toBe(404);
-    expect((await character.$delete({ param })).status).toBe(404);
-    expect((await character.unarchive.$post({ param })).status).toBe(404);
+    await expectStatus(character.$get({ param }), 404);
+    await expectStatus(character.$put({ param, json: { age: 30 } }), 404);
+    await expectStatus(character.$delete({ param }), 404);
+    await expectStatus(character.unarchive.$post({ param }), 404);
   });
 });

@@ -6,7 +6,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   entityHasCharacterPicks,
@@ -20,7 +19,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const FeatsMethods = {
+class FeatsService {
   async getRulesetFeats(
     rulesetId: string,
     where: {
@@ -51,7 +50,7 @@ const FeatsMethods = {
       }
       return result;
     });
-  },
+  }
 
   async getRulesetFeatsGrouped(
     rulesetId: string,
@@ -78,7 +77,7 @@ const FeatsMethods = {
         pagination,
       );
     });
-  },
+  }
 
   async getRulesetFeat(rulesetId: string, featId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -91,7 +90,7 @@ const FeatsMethods = {
         requirements: rulesetData.requirementsByEntity.get(feat.id) ?? [],
       };
     });
-  },
+  }
 
   async createRulesetFeat(
     session: Session,
@@ -123,8 +122,8 @@ const FeatsMethods = {
           throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
         }
 
-        // Named as an ancestor the fork deleted, the feat stands in for it (`repointTombstoneSnapshot`), checks finding it
-        // by that name: generated if the ancestor was
+        // Named as an ancestor the fork deleted, the feat stands in for it (`repointTombstoneSnapshot`), checks
+        // finding it by that name: generated if the ancestor was
         const rows = await Feats.create(tx, {
           name: body.name,
           description: body.description,
@@ -157,7 +156,7 @@ const FeatsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateRulesetFeat(
     session: Session,
@@ -234,7 +233,7 @@ const FeatsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteRulesetFeat(session: Session, rulesetId: string, featId: string) {
     const result = await withTransaction(async (tx) => {
@@ -266,13 +265,7 @@ const FeatsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class FeatsService extends BaseService<typeof FeatsMethods> {
-  static initialize() {
-    return new FeatsService(FeatsMethods);
   }
 }
 
-export default FeatsService;
+export default new FeatsService();

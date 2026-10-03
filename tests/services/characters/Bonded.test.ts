@@ -20,7 +20,6 @@ import {
   createTestUser,
   getSeedCtx,
   makeSession,
-  methodsOf,
   queuedPdfJobs,
 } from "@/tests/helpers.ts";
 import {
@@ -34,11 +33,6 @@ import {
   SORCERER_1,
   WIZARD_1,
 } from "@/tests/levelFixtures.ts";
-
-const PlayerCharactersMethods = methodsOf(PlayerCharactersService);
-const CharacterContributorsMethods = methodsOf(CharacterContributorsService);
-const CharacterLevelsMethods = methodsOf(CharacterLevelsService);
-const CharactersMethods = methodsOf(CharactersService);
 
 const owner = makeSession();
 const familiarOf = (masterId: string) => Characters.findOne(db, { parentCharacterId: masterId, kind: "familiar" });
@@ -87,7 +81,7 @@ describe("Bonded creatures", () => {
         raceId: ctx.raceMap[kind][race],
       });
       expect(await CharacterLevels.findMany(db, { characterId: bonded.id })).toHaveLength(levels);
-      expect((await CharactersMethods.getCharacter(owner, masterId)).bondedByKind[kind]?.record).toMatchObject({
+      expect((await CharactersService.getCharacter(owner, masterId)).bondedByKind[kind]?.record).toMatchObject({
         id: bonded.id,
         kind,
       });
@@ -97,10 +91,10 @@ describe("Bonded creatures", () => {
   test("a companion loses a level with each of its druid's, and goes with the level that picked it", async () => {
     const { masterId, bonded } = await createDruidWithCompanion(3);
     const companionLevels = async () => (await CharacterLevels.findMany(db, { characterId: bonded.id })).length;
-    await CharacterLevelsMethods.removeLevel(owner, masterId);
+    await CharacterLevelsService.removeLevel(owner, masterId);
     expect(await companionLevels()).toBe(2);
-    await CharacterLevelsMethods.removeLevel(owner, masterId);
-    await CharacterLevelsMethods.removeLevel(owner, masterId);
+    await CharacterLevelsService.removeLevel(owner, masterId);
+    await CharacterLevelsService.removeLevel(owner, masterId);
     expect(await Characters.findOne(db, { parentCharacterId: masterId, kind: "animalcompanion" })).toBeUndefined();
   });
 
@@ -124,7 +118,7 @@ describe("Bonded creatures", () => {
     const [level] = await CharacterLevels.findMany(db, { characterId: masterId });
     const pick = (familiar: string[], force = false) => {
       const { skills, feats, powers } = picks(ctx, picking(WIZARD_1, "Familiar Bond", familiar));
-      return CharacterLevelsMethods.updateLevel(
+      return CharacterLevelsService.updateLevel(
         owner,
         masterId,
         level.id,
@@ -160,7 +154,7 @@ describe("Bonded creatures", () => {
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
 
     const { skills, feats, powers } = picks(ctx, WIZARD_1);
-    await CharacterLevelsMethods.updateLevel(owner, masterId, wizardLevel.id, WIZARD_1.hp, null, skills, feats, powers);
+    await CharacterLevelsService.updateLevel(owner, masterId, wizardLevel.id, WIZARD_1.hp, null, skills, feats, powers);
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
     expect((await build(new DetailedCharacter(master!))).getDetailedCharacterBonds().getBondedRace("familiar")).toBe(
       "Owl",
@@ -201,7 +195,7 @@ describe("CharactersService with bonded creatures", () => {
     const ctx = await getSeedCtx();
     const { session } = await createTestUser();
     await expect(
-      CharactersMethods.createCharacter(session, {
+      CharactersService.createCharacter(session, {
         rulesetId: ctx.rulesetId,
         raceId: ctx.raceMap.familiar["Cat"],
         name: "Cat PC",
@@ -222,69 +216,69 @@ describe("CharactersService with bonded creatures", () => {
 
   test("shows a master without a familiar with none, and one whose master is archived with it", async () => {
     const plain = await createSeedCharacter(await getSeedCtx(), "wizard");
-    expect((await CharactersMethods.getCharacter(owner, plain)).bondedByKind).toEqual({});
+    expect((await CharactersService.getCharacter(owner, plain)).bondedByKind).toEqual({});
     const { masterId } = await createWizardWithFamiliar();
-    await CharactersMethods.archiveCharacter(owner, masterId);
-    expect((await CharactersMethods.getCharacter(owner, masterId)).bondedByKind.familiar).toBeDefined();
+    await CharactersService.archiveCharacter(owner, masterId);
+    expect((await CharactersService.getCharacter(owner, masterId)).bondedByKind.familiar).toBeDefined();
   });
 
   test("opens a familiar on its own, for its master's player and contributors, even with the master archived", async () => {
     const { masterId, bonded } = await createWizardWithFamiliar();
     const { user, session: contributor } = await createTestUser();
     await addCharacterContributor(masterId, user, SEED_USER_ID);
-    expect(await CharactersMethods.getCharacter(owner, bonded.id)).toMatchObject({
+    expect(await CharactersService.getCharacter(owner, bonded.id)).toMatchObject({
       character: { id: bonded.id, kind: "familiar" },
       bondedByKind: {},
     });
-    expect((await CharactersMethods.getCharacter(contributor, bonded.id)).character.id).toBe(bonded.id);
-    await expect(CharactersMethods.getCharacter((await createTestUser()).session, bonded.id)).rejects.toThrow(
+    expect((await CharactersService.getCharacter(contributor, bonded.id)).character.id).toBe(bonded.id);
+    await expect(CharactersService.getCharacter((await createTestUser()).session, bonded.id)).rejects.toThrow(
       NotFoundError,
     );
 
-    await CharactersMethods.archiveCharacter(owner, masterId);
-    expect((await CharactersMethods.getCharacter(owner, bonded.id)).character.id).toBe(bonded.id);
+    await CharactersService.archiveCharacter(owner, masterId);
+    expect((await CharactersService.getCharacter(owner, bonded.id)).character.id).toBe(bonded.id);
   });
 
   test("renames a familiar and queues its PDF for its master's player and contributors, while the master isn't archived", async () => {
     const { masterId, bonded } = await createWizardWithFamiliar();
     const { user, session: contributor } = await createTestUser();
     await addCharacterContributor(masterId, user, SEED_USER_ID);
-    await CharactersMethods.updateCharacter(owner, bonded.id, { name: "Whiskers" });
-    await CharactersMethods.updateCharacter(contributor, bonded.id, { name: "Mittens" });
+    await CharactersService.updateCharacter(owner, bonded.id, { name: "Whiskers" });
+    await CharactersService.updateCharacter(contributor, bonded.id, { name: "Mittens" });
     expect((await Characters.findOne(db, { id: bonded.id }))?.name).toBe("Mittens");
     await expect(
-      CharactersMethods.updateCharacter((await createTestUser()).session, bonded.id, { name: "Nope" }),
+      CharactersService.updateCharacter((await createTestUser()).session, bonded.id, { name: "Nope" }),
     ).rejects.toThrow(NotFoundError);
-    await CharactersMethods.enqueuePdf(owner, bonded.id);
+    await CharactersService.enqueuePdf(owner, bonded.id);
     expect(await queuedPdfJobs(bonded.id)).toMatchObject([
       { task: "generatePdf", payload: { characterId: bonded.id } },
     ]);
 
-    await CharactersMethods.archiveCharacter(owner, masterId);
-    await expect(CharactersMethods.updateCharacter(owner, bonded.id, { name: "Ghost" })).rejects.toThrow(NotFoundError);
-    await expect(CharactersMethods.enqueuePdf(owner, bonded.id)).rejects.toThrow(NotFoundError);
+    await CharactersService.archiveCharacter(owner, masterId);
+    await expect(CharactersService.updateCharacter(owner, bonded.id, { name: "Ghost" })).rejects.toThrow(NotFoundError);
+    await expect(CharactersService.enqueuePdf(owner, bonded.id)).rejects.toThrow(NotFoundError);
   });
 
   test("shares a master with their familiar", async () => {
     const { masterId } = await createWizardWithFamiliar();
-    const { shareToken } = await CharactersMethods.generateShareToken(owner, masterId);
-    expect((await CharactersMethods.getSharedCharacter(shareToken!)).bondedByKind.familiar).toBeDefined();
+    const { shareToken } = await CharactersService.generateShareToken(owner, masterId);
+    expect((await CharactersService.getSharedCharacter(shareToken!)).bondedByKind.familiar).toBeDefined();
   });
 
   test.each([
-    ["archive", (id: string) => CharactersMethods.archiveCharacter(owner, id)],
-    ["unarchive", (id: string) => CharactersMethods.unarchiveCharacter(owner, id)],
-    ["share", (id: string) => CharactersMethods.generateShareToken(owner, id)],
-    ["stop sharing", (id: string) => CharactersMethods.revokeShareToken(owner, id)],
+    ["archive", (id: string) => CharactersService.archiveCharacter(owner, id)],
+    ["unarchive", (id: string) => CharactersService.unarchiveCharacter(owner, id)],
+    ["share", (id: string) => CharactersService.generateShareToken(owner, id)],
+    ["stop sharing", (id: string) => CharactersService.revokeShareToken(owner, id)],
     [
       "list the contributors of",
-      (id: string) => CharacterContributorsMethods.getContributors(owner, id, {}, { limit: 10, page: 1 }),
+      (id: string) => CharacterContributorsService.getContributors(owner, id, {}, { limit: 10, page: 1 }),
     ],
     [
       "invite a contributor to",
-      (id: string) => CharacterContributorsMethods.inviteContributor(owner, id, "anyone@example.com"),
+      (id: string) => CharacterContributorsService.inviteContributor(owner, id, "anyone@example.com"),
     ],
-    ["leave", (id: string) => CharacterContributorsMethods.leaveCharacter(owner, id)],
+    ["leave", (id: string) => CharacterContributorsService.leaveCharacter(owner, id)],
   ])("won't %s a familiar on its own", async (_, call) => {
     const { bonded } = await createWizardWithFamiliar();
     await expect(call(bonded.id)).rejects.toThrow(NotFoundError);
@@ -294,7 +288,7 @@ describe("CharactersService with bonded creatures", () => {
     const bondedIn = async (visibility: "Public" | "Partial", viewerRole?: "Player Character") => {
       const { masterId } = await createWizardWithFamiliar();
       const { campaign } = await createTestCampaign(SEED_USER_ID);
-      await PlayerCharactersMethods.linkCharacter(owner, campaign.id, masterId, visibility);
+      await PlayerCharactersService.linkCharacter(owner, campaign.id, masterId, visibility);
       let viewer = owner;
       if (viewerRole) {
         const { user, session } = await createTestUser();
@@ -302,7 +296,7 @@ describe("CharactersService with bonded creatures", () => {
         viewer = session;
       }
       return Object.keys(
-        (await PlayerCharactersMethods.getCampaignCharacter(viewer, campaign.id, masterId)).bondedByKind ?? {},
+        (await PlayerCharactersService.getCampaignCharacter(viewer, campaign.id, masterId)).bondedByKind ?? {},
       );
     };
     expect(await bondedIn("Public")).toEqual(["familiar"]);

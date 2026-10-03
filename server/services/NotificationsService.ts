@@ -1,12 +1,11 @@
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Notifications } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
 
 const ACTIONABLE_TYPES = ["createCampaignInvite", "inviteContributor", "inviteCharacterContributor"];
 
-const NotificationsMethods = {
+class NotificationsService {
   async getNotifications(
     session: Session,
     where: {
@@ -17,7 +16,7 @@ const NotificationsMethods = {
     pagination: { limit: number; page: number },
   ) {
     return await Notifications.findMany(db, { recipientId: session.userId, ...where }, pagination);
-  },
+  }
 
   async getUnreadSummary(session: Session, limit = 10) {
     const [count, items] = await Promise.all([
@@ -29,7 +28,7 @@ const NotificationsMethods = {
       ),
     ]);
     return { count, items: items.items };
-  },
+  }
 
   async markRead(session: Session, notificationId: string) {
     return await withTransaction(async (tx) => {
@@ -42,7 +41,7 @@ const NotificationsMethods = {
       }
       return result[0];
     });
-  },
+  }
 
   async markAllRead(session: Session) {
     return await withTransaction(async (tx) => {
@@ -51,13 +50,7 @@ const NotificationsMethods = {
         excludeTypes: ACTIONABLE_TYPES,
       });
     });
-  },
-} as const;
-
-class NotificationsService extends BaseService<typeof NotificationsMethods> {
-  static initialize() {
-    return new NotificationsService(NotificationsMethods);
   }
 }
 
-export default NotificationsService;
+export default new NotificationsService();

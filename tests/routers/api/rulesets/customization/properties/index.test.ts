@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 import { createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
 
@@ -48,7 +48,7 @@ describe("rulesets customization properties", () => {
     const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].properties.$get({
       param: { id, entityType: "feats", entityId },
     });
-    expect(response.status).toBe(401);
+    await expectStatus(response, 401);
   });
 
   test("rejects a property without a value", async () => {
@@ -57,15 +57,15 @@ describe("rulesets customization properties", () => {
       param: { id, entityType: "feats", entityId },
       json: { type: "special" } as never,
     });
-    expect(response.status).toBe(400);
+    await expectStatus(response, 400);
   });
 
   test("returns 404 for a missing ruleset, entity or property", async () => {
     const { id, entityId } = await setup();
-    expect((await properties.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } })).status).toBe(404);
-    expect((await properties.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } })).status).toBe(404);
+    await expectStatus(properties.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } }), 404);
+    await expectStatus(properties.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } }), 404);
     const param = { id, entityType: "feats" as const, entityId, propertyId: NIL_UUID };
-    expect((await property.$put({ param, json: { value: "missing", type: "test" } })).status).toBe(404);
-    expect((await property.$delete({ param })).status).toBe(404);
+    await expectStatus(property.$put({ param, json: { value: "missing", type: "test" } }), 404);
+    await expectStatus(property.$delete({ param }), 404);
   });
 });

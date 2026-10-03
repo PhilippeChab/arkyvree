@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { SavesService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
@@ -25,15 +24,10 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
-
-      const savesService = SavesService.initialize();
-      const result = await savesService.call(
-        "getRulesetSaves",
-        id,
-        { search, childOnly, orderBy, orderDir },
-        { limit, page },
+      return c.json(
+        await SavesService.getRulesetSaves(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -41,10 +35,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), saveId: z.string().uuid() })),
     async (c) => {
       const { id, saveId } = c.req.valid("param");
-
-      const savesService = SavesService.initialize();
-      const result = await savesService.call("getRulesetSave", id, saveId);
-      return respond(c, result, 200);
+      return c.json(await SavesService.getRulesetSave(id, saveId), 200);
     },
   )
   .post(
@@ -64,10 +55,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const savesService = SavesService.initialize();
-      const result = await savesService.call("createRulesetSave", c.var.requestSession, id, body);
-      return respond(c, result, 200);
+      return c.json(await SavesService.createRulesetSave(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -88,10 +76,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, saveId } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const savesService = SavesService.initialize();
-      const result = await savesService.call("updateRulesetSave", c.var.requestSession, id, saveId, body);
-      return respond(c, result, 200);
+      return c.json(await SavesService.updateRulesetSave(c.var.requestSession, id, saveId, body), 200);
     },
   )
   .delete(
@@ -99,9 +84,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), saveId: z.string().uuid() })),
     async (c) => {
       const { id, saveId } = c.req.valid("param");
-
-      const savesService = SavesService.initialize();
-      const result = await savesService.call("deleteRulesetSave", c.var.requestSession, id, saveId);
-      return respond(c, result, 200);
+      return c.json(await SavesService.deleteRulesetSave(c.var.requestSession, id, saveId), 200);
     },
   );

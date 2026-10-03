@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { AptitudesService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
@@ -26,15 +25,14 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, scope, orderBy, orderDir } = c.req.valid("query");
-
-      const aptitudesService = AptitudesService.initialize();
-      const result = await aptitudesService.call(
-        "getRulesetAptitudes",
-        id,
-        { search, childOnly, scope, orderBy, orderDir },
-        { limit, page },
+      return c.json(
+        await AptitudesService.getRulesetAptitudes(
+          id,
+          { search, childOnly, scope, orderBy, orderDir },
+          { limit, page },
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -42,10 +40,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), aptitudeId: z.string().uuid() })),
     async (c) => {
       const { id, aptitudeId } = c.req.valid("param");
-
-      const aptitudesService = AptitudesService.initialize();
-      const result = await aptitudesService.call("getRulesetAptitude", id, aptitudeId);
-      return respond(c, result, 200);
+      return c.json(await AptitudesService.getRulesetAptitude(id, aptitudeId), 200);
     },
   )
   .post(
@@ -61,10 +56,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const aptitudesService = AptitudesService.initialize();
-      const result = await aptitudesService.call("createRulesetAptitude", c.var.requestSession, id, body);
-      return respond(c, result, 200);
+      return c.json(await AptitudesService.createRulesetAptitude(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -81,10 +73,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, aptitudeId } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const aptitudesService = AptitudesService.initialize();
-      const result = await aptitudesService.call("updateRulesetAptitude", c.var.requestSession, id, aptitudeId, body);
-      return respond(c, result, 200);
+      return c.json(await AptitudesService.updateRulesetAptitude(c.var.requestSession, id, aptitudeId, body), 200);
     },
   )
   .delete(
@@ -92,9 +81,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), aptitudeId: z.string().uuid() })),
     async (c) => {
       const { id, aptitudeId } = c.req.valid("param");
-
-      const aptitudesService = AptitudesService.initialize();
-      const result = await aptitudesService.call("deleteRulesetAptitude", c.var.requestSession, id, aptitudeId);
-      return respond(c, result, 200);
+      return c.json(await AptitudesService.deleteRulesetAptitude(c.var.requestSession, id, aptitudeId), 200);
     },
   );

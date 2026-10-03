@@ -1,13 +1,12 @@
 import { pageOf } from "@/server/repositories/BaseRepository.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import type { PaginatedCompletions, PathCompletion, TargetPath } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/utils.ts";
 
 import { getTargetPathsWithLabels, validatePath } from "./targetPaths.ts";
 
-const TargetPathsMethods = {
-  validatePath,
+class TargetPathsService {
+  readonly validatePath = validatePath;
 
   /**
    * Get completion suggestions for a partial path (paginated).
@@ -200,13 +199,7 @@ const TargetPathsMethods = {
       : completions;
 
     return { ...pageOf(filtered, { limit, page }), segmentLabels };
-  },
-} as const;
-
-class TargetPathsService extends BaseService<typeof TargetPathsMethods> {
-  static initialize() {
-    return new TargetPathsService(TargetPathsMethods);
   }
 }
 
-export default TargetPathsService;
+export default new TargetPathsService();

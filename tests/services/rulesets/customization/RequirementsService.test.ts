@@ -7,9 +7,7 @@ import { db } from "@/server/database/index.ts";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Feats, Races, Requirements } from "@/server/repositories/index.ts";
 import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { createTestUserAndRuleset, methodsOf, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
-
-const RequirementsMethods = methodsOf(RequirementsService);
+import { createTestUserAndRuleset, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
 
 const chain = { level: "1", chainingOperator: "and" };
 const babAtLeast5 = { level: "1", target: "combat.bab", value: "5", operator: "greater_than_or_equal" };
@@ -44,7 +42,7 @@ describe("RequirementsService", () => {
   describe("getEntityRequirements", () => {
     test("lists a feat's or a race's requirements, a whole and/or tree", async () => {
       const { session, rulesetId, feat, race } = await setup();
-      expect(await RequirementsMethods.getEntityRequirements(rulesetId, "feats", feat.id)).toEqual([]);
+      expect(await RequirementsService.getEntityRequirements(rulesetId, "feats", feat.id)).toEqual([]);
 
       const tree = [
         chain,
@@ -54,8 +52,8 @@ describe("RequirementsService", () => {
         { level: "1.2.2", target: "combat.ac.total", value: "15", operator: "greater_than_or_equal" },
       ];
       for (const body of tree)
-        await RequirementsMethods.createEntityRequirement(session, rulesetId, "feats", feat.id, body);
-      const listed = await RequirementsMethods.getEntityRequirements(rulesetId, "feats", feat.id);
+        await RequirementsService.createEntityRequirement(session, rulesetId, "feats", feat.id, body);
+      const listed = await RequirementsService.getEntityRequirements(rulesetId, "feats", feat.id);
       expect(listed.map((r) => [r.level, r.chainingOperator]).sort()).toEqual([
         ["1", "and"],
         ["1.1", null],
@@ -64,18 +62,18 @@ describe("RequirementsService", () => {
         ["1.2.2", null],
       ]);
 
-      await RequirementsMethods.createEntityRequirement(session, rulesetId, "races", race.id, chain);
-      expect(await RequirementsMethods.getEntityRequirements(rulesetId, "races", race.id)).toMatchObject([
+      await RequirementsService.createEntityRequirement(session, rulesetId, "races", race.id, chain);
+      expect(await RequirementsService.getEntityRequirements(rulesetId, "races", race.id)).toMatchObject([
         { entityType: "races", entityId: race.id },
       ]);
     });
 
     test("throws NotFoundError for a missing ruleset or entity", async () => {
       const { rulesetId, feat } = await setup();
-      await expect(RequirementsMethods.getEntityRequirements(NIL_UUID, "feats", feat.id)).rejects.toThrow(
+      await expect(RequirementsService.getEntityRequirements(NIL_UUID, "feats", feat.id)).rejects.toThrow(
         NotFoundError,
       );
-      await expect(RequirementsMethods.getEntityRequirements(rulesetId, "feats", NIL_UUID)).rejects.toThrow(
+      await expect(RequirementsService.getEntityRequirements(rulesetId, "feats", NIL_UUID)).rejects.toThrow(
         NotFoundError,
       );
     });
@@ -84,7 +82,7 @@ describe("RequirementsService", () => {
   describe("createEntityRequirement", () => {
     test("creates a chaining requirement without a target", async () => {
       const { session, rulesetId, feat } = await setup();
-      const created = await RequirementsMethods.createEntityRequirement(session, rulesetId, "feats", feat.id, chain);
+      const created = await RequirementsService.createEntityRequirement(session, rulesetId, "feats", feat.id, chain);
       expect(created).toMatchObject({
         ...chain,
         target: null,
@@ -98,7 +96,7 @@ describe("RequirementsService", () => {
 
     test("creates a target requirement, its value type inferred from the path", async () => {
       const { session, rulesetId, feat } = await setup();
-      const created = await RequirementsMethods.createEntityRequirement(
+      const created = await RequirementsService.createEntityRequirement(
         session,
         rulesetId,
         "feats",
@@ -112,7 +110,7 @@ describe("RequirementsService", () => {
       const { session, rulesetId, feat } = await setup();
       const body = { ...babAtLeast5, target: "invalid.path.that.does.not.exist" };
       await expect(
-        RequirementsMethods.createEntityRequirement(session, rulesetId, "feats", feat.id, body),
+        RequirementsService.createEntityRequirement(session, rulesetId, "feats", feat.id, body),
       ).rejects.toThrow(BadRequestError);
     });
 
@@ -120,13 +118,13 @@ describe("RequirementsService", () => {
       const { session, rulesetId, feat } = await setup();
       const { session: other } = await createTestUserAndRuleset();
       await expect(
-        RequirementsMethods.createEntityRequirement(session, NIL_UUID, "feats", feat.id, chain),
+        RequirementsService.createEntityRequirement(session, NIL_UUID, "feats", feat.id, chain),
       ).rejects.toThrow(NotFoundError);
       await expect(
-        RequirementsMethods.createEntityRequirement(session, rulesetId, "feats", NIL_UUID, chain),
+        RequirementsService.createEntityRequirement(session, rulesetId, "feats", NIL_UUID, chain),
       ).rejects.toThrow(NotFoundError);
       await expect(
-        RequirementsMethods.createEntityRequirement(other, rulesetId, "feats", feat.id, chain),
+        RequirementsService.createEntityRequirement(other, rulesetId, "feats", feat.id, chain),
       ).rejects.toThrow(ForbiddenError);
     });
   });
@@ -134,8 +132,8 @@ describe("RequirementsService", () => {
   describe("updateEntityRequirement", () => {
     test("changes a chaining requirement's level and operator", async () => {
       const { session, rulesetId, feat } = await setup();
-      const created = await RequirementsMethods.createEntityRequirement(session, rulesetId, "feats", feat.id, chain);
-      const updated = await RequirementsMethods.updateEntityRequirement(
+      const created = await RequirementsService.createEntityRequirement(session, rulesetId, "feats", feat.id, chain);
+      const updated = await RequirementsService.updateEntityRequirement(
         session,
         rulesetId,
         "feats",
@@ -156,7 +154,7 @@ describe("RequirementsService", () => {
 
     test("changes a target requirement's target and value, inferring the new value type", async () => {
       const { session, rulesetId, feat } = await setup();
-      const created = await RequirementsMethods.createEntityRequirement(
+      const created = await RequirementsService.createEntityRequirement(
         session,
         rulesetId,
         "feats",
@@ -164,7 +162,7 @@ describe("RequirementsService", () => {
         babAtLeast5,
       );
       const update = { ...babAtLeast5, target: "combat.ac.total", value: "15" };
-      const updated = await RequirementsMethods.updateEntityRequirement(
+      const updated = await RequirementsService.updateEntityRequirement(
         session,
         rulesetId,
         "feats",
@@ -176,7 +174,7 @@ describe("RequirementsService", () => {
 
       const invalid = { ...babAtLeast5, target: "invalid.path.does.not.exist" };
       await expect(
-        RequirementsMethods.updateEntityRequirement(session, rulesetId, "feats", feat.id, created.id, invalid),
+        RequirementsService.updateEntityRequirement(session, rulesetId, "feats", feat.id, created.id, invalid),
       ).rejects.toThrow(BadRequestError);
     });
 
@@ -184,20 +182,20 @@ describe("RequirementsService", () => {
       const { session, rulesetId, feat } = await setup();
       const [otherFeat] = await Feats.create(db, { rulesetId, name: `Other Feat ${uniqueId()}` });
       const { session: other } = await createTestUserAndRuleset();
-      const created = await RequirementsMethods.createEntityRequirement(session, rulesetId, "feats", feat.id, chain);
+      const created = await RequirementsService.createEntityRequirement(session, rulesetId, "feats", feat.id, chain);
       const update = { level: "2", chainingOperator: "or" };
 
       await expect(
-        RequirementsMethods.updateEntityRequirement(session, NIL_UUID, "feats", feat.id, created.id, update),
+        RequirementsService.updateEntityRequirement(session, NIL_UUID, "feats", feat.id, created.id, update),
       ).rejects.toThrow(NotFoundError);
       await expect(
-        RequirementsMethods.updateEntityRequirement(session, rulesetId, "feats", feat.id, NIL_UUID, update),
+        RequirementsService.updateEntityRequirement(session, rulesetId, "feats", feat.id, NIL_UUID, update),
       ).rejects.toThrow(NotFoundError);
       await expect(
-        RequirementsMethods.updateEntityRequirement(session, rulesetId, "feats", otherFeat.id, created.id, update),
+        RequirementsService.updateEntityRequirement(session, rulesetId, "feats", otherFeat.id, created.id, update),
       ).rejects.toThrow(NotFoundError);
       await expect(
-        RequirementsMethods.updateEntityRequirement(other, rulesetId, "feats", feat.id, created.id, update),
+        RequirementsService.updateEntityRequirement(other, rulesetId, "feats", feat.id, created.id, update),
       ).rejects.toThrow(ForbiddenError);
     });
   });
@@ -209,7 +207,7 @@ describe("RequirementsService", () => {
         ["feats", feat.id],
         ["races", race.id],
       ] as const) {
-        const created = await RequirementsMethods.createEntityRequirement(
+        const created = await RequirementsService.createEntityRequirement(
           session,
           rulesetId,
           entityType,
@@ -217,7 +215,7 @@ describe("RequirementsService", () => {
           chain,
         );
         expect(
-          (await RequirementsMethods.deleteEntityRequirement(session, rulesetId, entityType, entityId, created.id)).id,
+          (await RequirementsService.deleteEntityRequirement(session, rulesetId, entityType, entityId, created.id)).id,
         ).toBe(created.id);
         expect(await Requirements.findOne(db, { id: created.id })).toBeUndefined();
         expect(await activityTypes(session.userId, created.id)).toEqual(["createRequirement", "deleteRequirement"]);
@@ -228,19 +226,19 @@ describe("RequirementsService", () => {
       const { session, rulesetId, feat } = await setup();
       const [otherFeat] = await Feats.create(db, { rulesetId, name: `Other Feat ${uniqueId()}` });
       const { session: other } = await createTestUserAndRuleset();
-      const created = await RequirementsMethods.createEntityRequirement(session, rulesetId, "feats", feat.id, chain);
+      const created = await RequirementsService.createEntityRequirement(session, rulesetId, "feats", feat.id, chain);
 
       await expect(
-        RequirementsMethods.deleteEntityRequirement(session, NIL_UUID, "feats", feat.id, created.id),
+        RequirementsService.deleteEntityRequirement(session, NIL_UUID, "feats", feat.id, created.id),
       ).rejects.toThrow(NotFoundError);
       await expect(
-        RequirementsMethods.deleteEntityRequirement(session, rulesetId, "feats", feat.id, NIL_UUID),
+        RequirementsService.deleteEntityRequirement(session, rulesetId, "feats", feat.id, NIL_UUID),
       ).rejects.toThrow(NotFoundError);
       await expect(
-        RequirementsMethods.deleteEntityRequirement(session, rulesetId, "feats", otherFeat.id, created.id),
+        RequirementsService.deleteEntityRequirement(session, rulesetId, "feats", otherFeat.id, created.id),
       ).rejects.toThrow(NotFoundError);
       await expect(
-        RequirementsMethods.deleteEntityRequirement(other, rulesetId, "feats", feat.id, created.id),
+        RequirementsService.deleteEntityRequirement(other, rulesetId, "feats", feat.id, created.id),
       ).rejects.toThrow(ForbiddenError);
     });
   });

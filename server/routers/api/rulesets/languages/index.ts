@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { LanguagesService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
@@ -25,15 +24,10 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
-
-      const languagesService = LanguagesService.initialize();
-      const result = await languagesService.call(
-        "getRulesetLanguages",
-        id,
-        { search, childOnly, orderBy, orderDir },
-        { limit, page },
+      return c.json(
+        await LanguagesService.getRulesetLanguages(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -41,10 +35,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), languageId: z.string().uuid() })),
     async (c) => {
       const { id, languageId } = c.req.valid("param");
-
-      const languagesService = LanguagesService.initialize();
-      const result = await languagesService.call("getRulesetLanguage", id, languageId);
-      return respond(c, result, 200);
+      return c.json(await LanguagesService.getRulesetLanguage(id, languageId), 200);
     },
   )
   .post(
@@ -64,10 +55,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const languagesService = LanguagesService.initialize();
-      const result = await languagesService.call("createRulesetLanguage", c.var.requestSession, id, body);
-      return respond(c, result, 200);
+      return c.json(await LanguagesService.createRulesetLanguage(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -88,10 +76,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, languageId } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const languagesService = LanguagesService.initialize();
-      const result = await languagesService.call("updateRulesetLanguage", c.var.requestSession, id, languageId, body);
-      return respond(c, result, 200);
+      return c.json(await LanguagesService.updateRulesetLanguage(c.var.requestSession, id, languageId, body), 200);
     },
   )
   .delete(
@@ -99,9 +84,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), languageId: z.string().uuid() })),
     async (c) => {
       const { id, languageId } = c.req.valid("param");
-
-      const languagesService = LanguagesService.initialize();
-      const result = await languagesService.call("deleteRulesetLanguage", c.var.requestSession, id, languageId);
-      return respond(c, result, 200);
+      return c.json(await LanguagesService.deleteRulesetLanguage(c.var.requestSession, id, languageId), 200);
     },
   );

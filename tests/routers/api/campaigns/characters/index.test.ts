@@ -5,7 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
-import { api, createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { getSeedCtx, NIL_UUID, queuedPdfJobs, silentJobHelpers, uniqueId } from "@/tests/helpers.ts";
 
 const characters = api.api.campaigns[":id"].characters;
@@ -99,7 +99,7 @@ describe("campaigns characters", () => {
     const characterId = await createCharacter("Fork Character", fork.id);
 
     const response = await characters.$post({ param: { id: campaignId }, json: { characterId } });
-    expect(response.status).toBe(400);
+    await expectStatus(response, 400);
     expect(await response.json()).toMatchObject({
       message: "Only characters built on the campaign's ruleset can be linked",
     });
@@ -108,7 +108,7 @@ describe("campaigns characters", () => {
   test("refuses to link the same character twice", async () => {
     const { campaignId, characterId } = await setup();
     await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId } }));
-    expect((await characters.$post({ param: { id: campaignId }, json: { characterId } })).status).toBe(409);
+    await expectStatus(characters.$post({ param: { id: campaignId }, json: { characterId } }), 409);
   });
 
   for (const visibility of ["Partial", "Public"] as const) {
@@ -228,7 +228,7 @@ describe("campaigns characters", () => {
         const response = await client.api.campaigns[":id"].characters[":characterId"].pdf.$post({
           param: { id: campaignId, characterId },
         });
-        expect(response.status).toBe(404);
+        await expectStatus(response, 404);
       }
     });
 
@@ -247,27 +247,25 @@ describe("campaigns characters", () => {
 
     test("returns 404 for a character not linked to the campaign", async () => {
       const { campaignId, characterId } = await setup();
-      expect((await character.pdf.$post({ param: { id: campaignId, characterId } })).status).toBe(404);
+      await expectStatus(character.pdf.$post({ param: { id: campaignId, characterId } }), 404);
     });
   });
 
   test("requires a session", async () => {
     const { campaignId, characterId } = await setup();
     const guest = guestApi.api.campaigns[":id"].characters;
-    expect((await guest.$get({ param: { id: campaignId }, query: {} })).status).toBe(401);
-    expect((await guest.$post({ param: { id: campaignId }, json: { characterId } })).status).toBe(401);
+    await expectStatus(guest.$get({ param: { id: campaignId }, query: {} }), 401);
+    await expectStatus(guest.$post({ param: { id: campaignId }, json: { characterId } }), 401);
   });
 
   test("rejects a link without a valid character id", async () => {
     const { campaignId } = await setup();
-    expect((await characters.$post({ param: { id: campaignId }, json: {} as never })).status).toBe(400);
-    expect((await characters.$post({ param: { id: campaignId }, json: { characterId: "not-a-uuid" } })).status).toBe(
-      400,
-    );
+    await expectStatus(characters.$post({ param: { id: campaignId }, json: {} as never }), 400);
+    await expectStatus(characters.$post({ param: { id: campaignId }, json: { characterId: "not-a-uuid" } }), 400);
   });
 
   test("returns 404 for a missing campaign", async () => {
     const { characterId } = await setup();
-    expect((await characters.$post({ param: { id: NIL_UUID }, json: { characterId } })).status).toBe(404);
+    await expectStatus(characters.$post({ param: { id: NIL_UUID }, json: { characterId } }), 404);
   });
 });

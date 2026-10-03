@@ -24,61 +24,60 @@ import {
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
 
 const CUSTOMIZATION_ENTITIES = new Set(["feats", "powers", "items", "races"]);
 
-async function resolveRulesSubEntity(targetTable: string, targetId: string): Promise<string | null> {
-  const sectionMap: Record<string, [string, (id: string) => Promise<{ rulesetId: string } | undefined>]> = {
-    feats: ["feats", (id) => Feats.findOne(db, { id })],
-    powers: ["powers", (id) => Powers.findOne(db, { id })],
-    skills: ["skills", (id) => Skills.findOne(db, { id })],
-    races: ["races", (id) => Races.findOne(db, { id })],
-    klasses: ["classes", (id) => Klasses.findOne(db, { id })],
-    items: ["items", (id) => Items.findOne(db, { id })],
-    saves: ["saves", (id) => Saves.findOne(db, { id })],
-    languages: ["languages", (id) => Languages.findOne(db, { id })],
-    aptitudes: ["aptitudes", (id) => Aptitudes.findOne(db, { id })],
-  };
+class ActivitiesService {
+  private async resolveRulesSubEntity(targetTable: string, targetId: string): Promise<string | null> {
+    const sectionMap: Record<string, [string, (id: string) => Promise<{ rulesetId: string } | undefined>]> = {
+      feats: ["feats", (id) => Feats.findOne(db, { id })],
+      powers: ["powers", (id) => Powers.findOne(db, { id })],
+      skills: ["skills", (id) => Skills.findOne(db, { id })],
+      races: ["races", (id) => Races.findOne(db, { id })],
+      klasses: ["classes", (id) => Klasses.findOne(db, { id })],
+      items: ["items", (id) => Items.findOne(db, { id })],
+      saves: ["saves", (id) => Saves.findOne(db, { id })],
+      languages: ["languages", (id) => Languages.findOne(db, { id })],
+      aptitudes: ["aptitudes", (id) => Aptitudes.findOne(db, { id })],
+    };
 
-  const entry = sectionMap[targetTable];
-  if (!entry) return null;
+    const entry = sectionMap[targetTable];
+    if (!entry) return null;
 
-  const [section, findOne] = entry;
-  const entity = await findOne(targetId);
-  if (!entity) return null;
+    const [section, findOne] = entry;
+    const entity = await findOne(targetId);
+    if (!entity) return null;
 
-  if (CUSTOMIZATION_ENTITIES.has(targetTable)) {
-    return `/rulesets/${entity.rulesetId}/${section}/${targetId}/customization`;
-  }
-  return `/rulesets/${entity.rulesetId}/${section}/${targetId}`;
-}
-
-async function resolveCustomizationUrl(entityId: string, entityType: string): Promise<string | null> {
-  if (entityType === "klass_levels") {
-    const klassLevel = await KlassLevels.findOne(db, { id: entityId });
-    if (!klassLevel) return null;
-    const klass = await Klasses.findOne(db, { id: klassLevel.klassId });
-    if (!klass) return null;
-    return `/rulesets/${klass.rulesetId}/${entityType}/${entityId}/customization`;
+    if (CUSTOMIZATION_ENTITIES.has(targetTable)) {
+      return `/rulesets/${entity.rulesetId}/${section}/${targetId}/customization`;
+    }
+    return `/rulesets/${entity.rulesetId}/${section}/${targetId}`;
   }
 
-  const repoMap: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
-    feats: (id) => Feats.findOne(db, { id }),
-    powers: (id) => Powers.findOne(db, { id }),
-    items: (id) => Items.findOne(db, { id }),
-    races: (id) => Races.findOne(db, { id }),
-  };
+  private async resolveCustomizationUrl(entityId: string, entityType: string): Promise<string | null> {
+    if (entityType === "klass_levels") {
+      const klassLevel = await KlassLevels.findOne(db, { id: entityId });
+      if (!klassLevel) return null;
+      const klass = await Klasses.findOne(db, { id: klassLevel.klassId });
+      if (!klass) return null;
+      return `/rulesets/${klass.rulesetId}/${entityType}/${entityId}/customization`;
+    }
 
-  const findOne = repoMap[entityType];
-  if (!findOne) return null;
-  const entity = await findOne(entityId);
-  if (!entity) return null;
-  return `/rulesets/${entity.rulesetId}/${entityType}/${entityId}/customization`;
-}
+    const repoMap: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
+      feats: (id) => Feats.findOne(db, { id }),
+      powers: (id) => Powers.findOne(db, { id }),
+      items: (id) => Items.findOne(db, { id }),
+      races: (id) => Races.findOne(db, { id }),
+    };
 
-const ActivitiesMethods = {
+    const findOne = repoMap[entityType];
+    if (!findOne) return null;
+    const entity = await findOne(entityId);
+    if (!entity) return null;
+    return `/rulesets/${entity.rulesetId}/${entityType}/${entityId}/customization`;
+  }
+
   async findActivities(
     session: Session,
     where: {
@@ -98,7 +97,7 @@ const ActivitiesMethods = {
       },
       pagination,
     );
-  },
+  }
 
   async resolveActivityUrl(
     session: Session,
@@ -122,7 +121,7 @@ const ActivitiesMethods = {
     }
 
     // Rules sub-entities (entity has rulesetId)
-    const rulesUrl = await resolveRulesSubEntity(targetTable, targetId);
+    const rulesUrl = await this.resolveRulesSubEntity(targetTable, targetId);
     if (rulesUrl) return rulesUrl;
 
     // Class sub-entities
@@ -195,29 +194,23 @@ const ActivitiesMethods = {
     if (targetTable === "modifiers") {
       const modifier = await Modifiers.findOne(db, { id: targetId });
       if (!modifier) return null;
-      return await resolveCustomizationUrl(modifier.sourceId, modifier.sourceType);
+      return await this.resolveCustomizationUrl(modifier.sourceId, modifier.sourceType);
     }
 
     if (targetTable === "requirements") {
       const requirement = await Requirements.findOne(db, { id: targetId });
       if (!requirement) return null;
-      return await resolveCustomizationUrl(requirement.entityId, requirement.entityType);
+      return await this.resolveCustomizationUrl(requirement.entityId, requirement.entityType);
     }
 
     if (targetTable === "properties") {
       const property = await Properties.findOne(db, { id: targetId });
       if (!property) return null;
-      return await resolveCustomizationUrl(property.entityId, property.entityType);
+      return await this.resolveCustomizationUrl(property.entityId, property.entityType);
     }
 
     return null;
-  },
-} as const;
-
-class ActivitiesService extends BaseService<typeof ActivitiesMethods> {
-  static initialize() {
-    return new ActivitiesService(ActivitiesMethods);
   }
 }
 
-export default ActivitiesService;
+export default new ActivitiesService();

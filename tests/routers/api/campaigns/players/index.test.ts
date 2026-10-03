@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createTestUser, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 const players = api.api.campaigns[":id"].players;
@@ -55,7 +55,7 @@ describe("campaigns players", () => {
     const { user } = await createTestUser();
     const json = { email: user.emailAddress, role: "Player Character" as const };
     await expectOk(players.$post({ param: { id }, json }));
-    expect((await players.$post({ param: { id }, json })).status).toBe(409);
+    await expectStatus(players.$post({ param: { id }, json }), 409);
   });
 
   test("updates a player's role and removes the player", async () => {
@@ -74,15 +74,13 @@ describe("campaigns players", () => {
 
   test("requires a session", async () => {
     const id = await createCampaign();
-    expect((await guestApi.api.campaigns[":id"].players.$get({ param: { id }, query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.campaigns[":id"].players.$get({ param: { id }, query: {} }), 401);
   });
 
   test("returns 404 for a missing campaign or player", async () => {
     const id = await createCampaign();
-    expect((await players.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
-    expect((await player.$put({ param: { id, playerId: NIL_UUID }, json: { role: "Player Character" } })).status).toBe(
-      404,
-    );
-    expect((await player.$delete({ param: { id, playerId: NIL_UUID } })).status).toBe(404);
+    await expectStatus(players.$get({ param: { id: NIL_UUID }, query: {} }), 404);
+    await expectStatus(player.$put({ param: { id, playerId: NIL_UUID }, json: { role: "Player Character" } }), 404);
+    await expectStatus(player.$delete({ param: { id, playerId: NIL_UUID } }), 404);
   });
 });

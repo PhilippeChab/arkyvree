@@ -4,16 +4,14 @@ import { db } from "@/server/database/index.ts";
 import { runCleanupTask } from "@/server/jobs/runCleanup.ts";
 import { Attachments, Users } from "@/server/repositories/index.ts";
 import AuthenticationService from "@/server/services/AuthenticationService.ts";
-import { createTestAttachment, createTestCharacter, methodsOf, silentJobHelpers } from "@/tests/helpers.ts";
-
-const AuthenticationMethods = methodsOf(AuthenticationService);
+import { createTestAttachment, createTestCharacter, silentJobHelpers } from "@/tests/helpers.ts";
 
 describe("runCleanup", () => {
   test("hard-deletes demo users whose expires_at has passed", async () => {
-    const expired = await AuthenticationMethods.startDemo();
+    const expired = await AuthenticationService.startDemo();
     await Users.update(db, { expiresAt: new Date(Date.now() - 1000).toISOString() }, { id: expired.user.id });
 
-    const fresh = await AuthenticationMethods.startDemo();
+    const fresh = await AuthenticationService.startDemo();
 
     await runCleanupTask({}, silentJobHelpers);
 
@@ -22,7 +20,7 @@ describe("runCleanup", () => {
   });
 
   test("deletes an expired demo user's attachments, and its characters'", async () => {
-    const expired = await AuthenticationMethods.startDemo();
+    const expired = await AuthenticationService.startDemo();
     await Users.update(db, { expiresAt: new Date(Date.now() - 1000).toISOString() }, { id: expired.user.id });
     const character = await createTestCharacter(expired.user.id);
     const attachments = [

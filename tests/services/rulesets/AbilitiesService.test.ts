@@ -3,16 +3,14 @@ import { describe, expect, test } from "bun:test";
 import { abilitiesInRules } from "@/drizzle/schema.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import AbilitiesService from "@/server/services/rulesets/AbilitiesService.ts";
-import { createTestUserAndRuleset, insertRows, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
-
-const AbilitiesMethods = methodsOf(AbilitiesService);
+import { createTestUserAndRuleset, insertRows, NIL_UUID } from "@/tests/helpers.ts";
 
 describe("AbilitiesService", () => {
   describe("getRulesetAbilities", () => {
     test("should return empty paginated result when no abilities exist", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      const result = await AbilitiesMethods.getRulesetAbilities(ruleset.id, {}, { limit: 10, page: 1 });
+      const result = await AbilitiesService.getRulesetAbilities(ruleset.id, {}, { limit: 10, page: 1 });
 
       expect(result.items).toEqual([]);
     });
@@ -26,7 +24,7 @@ describe("AbilitiesService", () => {
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
       ]);
 
-      const result = await AbilitiesMethods.getRulesetAbilities(ruleset.id, {}, { limit: 10, page: 1 });
+      const result = await AbilitiesService.getRulesetAbilities(ruleset.id, {}, { limit: 10, page: 1 });
 
       expect(result.items.length).toBe(3);
     });
@@ -39,7 +37,7 @@ describe("AbilitiesService", () => {
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
       ]);
 
-      const result = await AbilitiesMethods.getRulesetAbilities(
+      const result = await AbilitiesService.getRulesetAbilities(
         ruleset.id,
         { search: "Strength" },
         { limit: 10, page: 1 },
@@ -58,14 +56,14 @@ describe("AbilitiesService", () => {
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
       ]);
 
-      const result = await AbilitiesMethods.getRulesetAbilities(ruleset.id, {}, { limit: 2, page: 1 });
+      const result = await AbilitiesService.getRulesetAbilities(ruleset.id, {}, { limit: 2, page: 1 });
 
       expect(result.items.length).toBe(2);
       expect(result.nextPage).toBe(2);
     });
 
     test("should throw NotFoundError for non-existent ruleset", async () => {
-      await expect(AbilitiesMethods.getRulesetAbilities(NIL_UUID, {}, { limit: 10, page: 1 })).rejects.toThrow(
+      await expect(AbilitiesService.getRulesetAbilities(NIL_UUID, {}, { limit: 10, page: 1 })).rejects.toThrow(
         NotFoundError,
       );
     });

@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { toJson } from "@/server/errors/index.ts";
 import { sanitizedEmail, sanitizeText } from "@/server/routers/api/validation.ts";
 import { application } from "@/server/routers/application.ts";
-import { api, expectOk, SEED_SESSION_ID } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, SEED_SESSION_ID } from "@/tests/api.ts";
 
 const headers = { cookie: `session-id=${SEED_SESSION_ID}` };
 
@@ -16,7 +16,7 @@ describe("request validation", () => {
       body: JSON.stringify({ emailAddress: "not-an-email", password }),
     });
 
-    expect(response.status).toBe(400);
+    await expectStatus(response, 400);
     const body = await response.json();
     expect(body).toMatchObject({
       error: "BadRequestError",
@@ -31,7 +31,7 @@ describe("request validation", () => {
   test("invalid route parameters use the same error envelope", async () => {
     const response = await application.request("/api/characters/not-a-uuid", { headers });
 
-    expect(response.status).toBe(400);
+    await expectStatus(response, 400);
     expect(await response.json()).toMatchObject({
       error: "BadRequestError",
       issues: [{ category: "id", message: expect.any(String) }],
@@ -41,7 +41,7 @@ describe("request validation", () => {
   test("invalid query parameters return actionable field issues", async () => {
     const response = await application.request("/api/characters?limit=0&page=invalid", { headers });
 
-    expect(response.status).toBe(400);
+    await expectStatus(response, 400);
     expect(await response.json()).toMatchObject({
       error: "BadRequestError",
       issues: expect.arrayContaining([
@@ -69,7 +69,7 @@ for (const method of ["POST", "PUT"] as const) {
         `/api/rulesets/${id}/customization/feats/${id}/${segment}${method === "PUT" ? `/${id}` : ""}`,
         { method, headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(body) },
       );
-      expect(response.status).toBe(400);
+      await expectStatus(response, 400);
       expect(await response.json()).toMatchObject({ error: "BadRequestError", issues: expect.any(Array) });
     });
   }
@@ -85,7 +85,7 @@ test("modifier duplication rejects an invalid operator before a database mutatio
       body: JSON.stringify({ target: "abilities.strength.misc", value: "2", operator: "invalid" }),
     },
   );
-  expect(response.status).toBe(400);
+  await expectStatus(response, 400);
 });
 
 test("an unexpected error answers 500 with the standard envelope, keeping its message to the logs", () => {

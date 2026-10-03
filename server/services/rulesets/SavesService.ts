@@ -6,7 +6,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { KlassLevelSaves, Saves } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   entityToDelete,
@@ -18,7 +17,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const SavesMethods = {
+class SavesService {
   async getRulesetSaves(
     rulesetId: string,
     where: {
@@ -33,7 +32,7 @@ const SavesMethods = {
       const { sourceChain } = rulesetData.cow;
       return await Saves.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
-  },
+  }
 
   async getRulesetSave(rulesetId: string, saveId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -41,7 +40,7 @@ const SavesMethods = {
       const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
       return save;
     });
-  },
+  }
 
   async createRulesetSave(
     session: Session,
@@ -84,7 +83,7 @@ const SavesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateRulesetSave(
     session: Session,
@@ -131,7 +130,7 @@ const SavesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteRulesetSave(session: Session, rulesetId: string, saveId: string) {
     const result = await withTransaction(async (tx) => {
@@ -165,13 +164,7 @@ const SavesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class SavesService extends BaseService<typeof SavesMethods> {
-  static initialize() {
-    return new SavesService(SavesMethods);
   }
 }
 
-export default SavesService;
+export default new SavesService();

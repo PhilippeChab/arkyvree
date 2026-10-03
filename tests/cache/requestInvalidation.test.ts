@@ -9,11 +9,7 @@ import PropertiesService from "@/server/services/rulesets/customization/Properti
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths.ts";
 import FeatsService from "@/server/services/rulesets/FeatsService.ts";
 import RulesetsService from "@/server/services/RulesetsService.ts";
-import { createSeededTestRuleset, getSeedCtx, makeSession, methodsOf } from "@/tests/helpers.ts";
-
-const PropertiesMethods = methodsOf(PropertiesService);
-const FeatsMethods = methodsOf(FeatsService);
-const RulesetsMethods = methodsOf(RulesetsService);
+import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 
 afterEach(invalidateAll);
 
@@ -49,14 +45,14 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
     const extension = await createSeededTestRuleset(session.userId);
     await Rulesets.update(db, { kind: "extension", status: "Published", private: false }, { id: extension.id });
     const [feat] = await Feats.create(db, { rulesetId: extension.id, name: "Extension Marker" });
-    if (action === "unsubscribe") await RulesetsMethods.subscribeExtension(session, host.id, [extension.id]);
+    if (action === "unsubscribe") await RulesetsService.subscribeExtension(session, host.id, [extension.id]);
     invalidateAll();
     await overlap(
       () => getTargetPathsWithLabels(host.id, "requirement"),
       () =>
         action === "subscribe"
-          ? RulesetsMethods.subscribeExtension(session, host.id, [extension.id])
-          : RulesetsMethods.unsubscribeExtension(session, host.id, extension.id),
+          ? RulesetsService.subscribeExtension(session, host.id, [extension.id])
+          : RulesetsService.unsubscribeExtension(session, host.id, extension.id),
     );
     await runWithRequestCache(async () => {
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
@@ -82,13 +78,13 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
     let copyId: string | undefined;
     await overlap(read, async () => {
       if (scenario === "cow") {
-        const copy = await PropertiesMethods.createEntityProperty(session, fork.id, "feats", seed.featMap.Toughness, {
+        const copy = await PropertiesService.createEntityProperty(session, fork.id, "feats", seed.featMap.Toughness, {
           type: "QA",
           value: "1",
         });
         copyId = copy.resolvedEntityId;
       } else {
-        await FeatsMethods.updateRulesetFeat(session, fork.id, local.id, {
+        await FeatsService.updateRulesetFeat(session, fork.id, local.id, {
           name: "After Marker",
           description: "after",
         });

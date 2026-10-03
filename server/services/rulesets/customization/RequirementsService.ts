@@ -6,7 +6,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Requirements } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
 import {
   cowCustomizationForMutation,
@@ -19,7 +18,7 @@ import type { Session } from "@/shared/relations.ts";
 
 import { getTargetPathsWithLabels, resolvePathValueType } from "./targetPaths.ts";
 
-const RequirementsMethods = {
+class RequirementsService {
   async getEntityRequirements(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const resolvedId = rulesetData.canonicalize(entityId);
@@ -39,7 +38,7 @@ const RequirementsMethods = {
         return { ...r, valueLabel, targetLabels };
       });
     });
-  },
+  }
 
   async createEntityRequirement(
     session: Session,
@@ -109,7 +108,7 @@ const RequirementsMethods = {
     });
     invalidateRulesetEntities(rulesetId);
     return result;
-  },
+  }
 
   async updateEntityRequirement(
     session: Session,
@@ -212,7 +211,7 @@ const RequirementsMethods = {
     });
     invalidateRulesetEntities(rulesetId);
     return result;
-  },
+  }
 
   async deleteEntityRequirement(
     session: Session,
@@ -272,13 +271,7 @@ const RequirementsMethods = {
     });
     invalidateRulesetEntities(rulesetId);
     return result;
-  },
-} as const;
-
-class RequirementsService extends BaseService<typeof RequirementsMethods> {
-  static initialize() {
-    return new RequirementsService(RequirementsMethods);
   }
 }
 
-export default RequirementsService;
+export default new RequirementsService();

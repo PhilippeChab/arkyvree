@@ -7,7 +7,6 @@ import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Klasses } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   entityHasCharacterPicks,
@@ -20,7 +19,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const ClassesMethods = {
+class ClassesService {
   async getRulesetKlasses(
     rulesetId: string,
     where: {
@@ -40,7 +39,7 @@ const ClassesMethods = {
         pagination,
       );
     });
-  },
+  }
 
   async getRulesetKlass(rulesetId: string, klassId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
@@ -54,7 +53,7 @@ const ClassesMethods = {
 
       return { ...klass, bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId };
     });
-  },
+  }
 
   async createRulesetKlass(
     session: Session,
@@ -101,7 +100,7 @@ const ClassesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateRulesetKlass(
     session: Session,
@@ -148,7 +147,7 @@ const ClassesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteRulesetKlass(session: Session, rulesetId: string, klassId: string) {
     const result = await withTransaction(async (tx) => {
@@ -182,13 +181,7 @@ const ClassesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class ClassesService extends BaseService<typeof ClassesMethods> {
-  static initialize() {
-    return new ClassesService(ClassesMethods);
   }
 }
 
-export default ClassesService;
+export default new ClassesService();

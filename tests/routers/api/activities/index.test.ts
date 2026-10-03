@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
+import { createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 /** A new user whose only activities are forking the seeded ruleset, then adding an aptitude to the fork. */
@@ -46,10 +46,10 @@ describe("activities", () => {
     expect(await expectOk(resolve.$get({ param: { targetTable: "aptitudes", targetId: aptitude.id } }))).toEqual({
       url: `/rulesets/${fork.id}/aptitudes/${aptitude.id}`,
     });
-    expect((await resolve.$get({ param: { targetTable: "aptitudes", targetId: NIL_UUID } })).status).toBe(404);
+    await expectStatus(resolve.$get({ param: { targetTable: "aptitudes", targetId: NIL_UUID } }), 404);
   });
 
   test("requires a session", async () => {
-    expect((await guestApi.api.activities.$get({ query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.activities.$get({ query: {} }), 401);
   });
 });

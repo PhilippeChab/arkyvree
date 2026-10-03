@@ -20,18 +20,7 @@ import SavesService from "@/server/services/rulesets/SavesService.ts";
 import SkillsService from "@/server/services/rulesets/SkillsService.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createTestRuleset, createTestUserAndRuleset, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
-
-const AptitudesMethods = methodsOf(AptitudesService);
-const ClassesMethods = methodsOf(ClassesService);
-const FeatsMethods = methodsOf(FeatsService);
-const ItemsMethods = methodsOf(ItemsService);
-const LanguagesMethods = methodsOf(LanguagesService);
-const MechanicsMethods = methodsOf(MechanicsService);
-const PowersMethods = methodsOf(PowersService);
-const RacesMethods = methodsOf(RacesService);
-const SavesMethods = methodsOf(SavesService);
-const SkillsMethods = methodsOf(SkillsService);
+import { createTestRuleset, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 type Row = { id: string; name: string; rulesetId: string; updatedAt: string };
 type Page = { items: { id: string; name: string }[] };
@@ -59,105 +48,105 @@ const firstPage = { limit: 100, page: 1 };
 
 const SERVICES: Record<string, Service> = {
   aptitudes: {
-    list: (rulesetId, search) => AptitudesMethods.getRulesetAptitudes(rulesetId, { search }, firstPage),
-    get: AptitudesMethods.getRulesetAptitude,
-    create: (session, rulesetId, name) => AptitudesMethods.createRulesetAptitude(session, rulesetId, { name }),
+    list: (rulesetId, search) => AptitudesService.getRulesetAptitudes(rulesetId, { search }, firstPage),
+    get: AptitudesService.getRulesetAptitude.bind(AptitudesService),
+    create: (session, rulesetId, name) => AptitudesService.createRulesetAptitude(session, rulesetId, { name }),
     update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      AptitudesMethods.updateRulesetAptitude(session, rulesetId, id, { name, updatedAt }),
-    remove: AptitudesMethods.deleteRulesetAptitude,
+      AptitudesService.updateRulesetAptitude(session, rulesetId, id, { name, updatedAt }),
+    remove: AptitudesService.deleteRulesetAptitude.bind(AptitudesService),
   },
   feats: {
-    list: (rulesetId, search) => FeatsMethods.getRulesetFeats(rulesetId, { search }, firstPage),
-    get: FeatsMethods.getRulesetFeat,
+    list: (rulesetId, search) => FeatsService.getRulesetFeats(rulesetId, { search }, firstPage),
+    get: FeatsService.getRulesetFeat.bind(FeatsService),
     create: (session, rulesetId, name, refs) =>
-      FeatsMethods.createRulesetFeat(session, rulesetId, { name, aptitudeIds: [refs.featAptitudeId] }),
+      FeatsService.createRulesetFeat(session, rulesetId, { name, aptitudeIds: [refs.featAptitudeId] }),
     update: (session, rulesetId, id, name, refs, updatedAt) =>
-      FeatsMethods.updateRulesetFeat(session, rulesetId, id, { name, aptitudeIds: [refs.featAptitudeId], updatedAt }),
-    remove: FeatsMethods.deleteRulesetFeat,
+      FeatsService.updateRulesetFeat(session, rulesetId, id, { name, aptitudeIds: [refs.featAptitudeId], updatedAt }),
+    remove: FeatsService.deleteRulesetFeat.bind(FeatsService),
   },
   items: {
-    list: (rulesetId, search) => ItemsMethods.getRulesetItems(rulesetId, { search }, firstPage),
-    get: ItemsMethods.getRulesetItem,
-    create: (session, rulesetId, name) => ItemsMethods.createRulesetItem(session, rulesetId, { name }),
+    list: (rulesetId, search) => ItemsService.getRulesetItems(rulesetId, { search }, firstPage),
+    get: ItemsService.getRulesetItem.bind(ItemsService),
+    create: (session, rulesetId, name) => ItemsService.createRulesetItem(session, rulesetId, { name }),
     update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      ItemsMethods.updateRulesetItem(session, rulesetId, id, { name, updatedAt }),
-    remove: ItemsMethods.deleteRulesetItem,
+      ItemsService.updateRulesetItem(session, rulesetId, id, { name, updatedAt }),
+    remove: ItemsService.deleteRulesetItem.bind(ItemsService),
   },
   klasses: {
-    list: (rulesetId, search) => ClassesMethods.getRulesetKlasses(rulesetId, { search }, firstPage),
-    get: ClassesMethods.getRulesetKlass,
-    create: (session, rulesetId, name) => ClassesMethods.createRulesetKlass(session, rulesetId, { name }),
+    list: (rulesetId, search) => ClassesService.getRulesetKlasses(rulesetId, { search }, firstPage),
+    get: ClassesService.getRulesetKlass.bind(ClassesService),
+    create: (session, rulesetId, name) => ClassesService.createRulesetKlass(session, rulesetId, { name }),
     update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      ClassesMethods.updateRulesetKlass(session, rulesetId, id, { name, updatedAt }),
-    remove: ClassesMethods.deleteRulesetKlass,
+      ClassesService.updateRulesetKlass(session, rulesetId, id, { name, updatedAt }),
+    remove: ClassesService.deleteRulesetKlass.bind(ClassesService),
   },
   languages: {
-    list: (rulesetId, search) => LanguagesMethods.getRulesetLanguages(rulesetId, { search }, firstPage),
-    get: LanguagesMethods.getRulesetLanguage,
+    list: (rulesetId, search) => LanguagesService.getRulesetLanguages(rulesetId, { search }, firstPage),
+    get: LanguagesService.getRulesetLanguage.bind(LanguagesService),
     create: (session, rulesetId, name) =>
-      LanguagesMethods.createRulesetLanguage(session, rulesetId, { name, type: "Standard" }),
+      LanguagesService.createRulesetLanguage(session, rulesetId, { name, type: "Standard" }),
     update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      LanguagesMethods.updateRulesetLanguage(session, rulesetId, id, { name, type: "Standard", updatedAt }),
-    remove: LanguagesMethods.deleteRulesetLanguage,
+      LanguagesService.updateRulesetLanguage(session, rulesetId, id, { name, type: "Standard", updatedAt }),
+    remove: LanguagesService.deleteRulesetLanguage.bind(LanguagesService),
   },
   mechanics: {
-    list: (rulesetId, search) => MechanicsMethods.getRulesetMechanics(rulesetId, { search }, firstPage),
-    get: MechanicsMethods.getRulesetMechanic,
-    create: (session, rulesetId, name) => MechanicsMethods.createRulesetMechanic(session, rulesetId, { name }),
+    list: (rulesetId, search) => MechanicsService.getRulesetMechanics(rulesetId, { search }, firstPage),
+    get: MechanicsService.getRulesetMechanic.bind(MechanicsService),
+    create: (session, rulesetId, name) => MechanicsService.createRulesetMechanic(session, rulesetId, { name }),
     update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      MechanicsMethods.updateRulesetMechanic(session, rulesetId, id, { name, updatedAt }),
-    remove: MechanicsMethods.deleteRulesetMechanic,
+      MechanicsService.updateRulesetMechanic(session, rulesetId, id, { name, updatedAt }),
+    remove: MechanicsService.deleteRulesetMechanic.bind(MechanicsService),
   },
   powers: {
-    list: (rulesetId, search) => PowersMethods.getRulesetPowers(rulesetId, { search }, firstPage),
-    get: PowersMethods.getRulesetPower,
+    list: (rulesetId, search) => PowersService.getRulesetPowers(rulesetId, { search }, firstPage),
+    get: PowersService.getRulesetPower.bind(PowersService),
     create: (session, rulesetId, name, refs) =>
-      PowersMethods.createRulesetPower(session, rulesetId, { name, aptitudes: [{ id: refs.powerAptitudeId }] }),
+      PowersService.createRulesetPower(session, rulesetId, { name, aptitudes: [{ id: refs.powerAptitudeId }] }),
     update: (session, rulesetId, id, name, refs, updatedAt) =>
-      PowersMethods.updateRulesetPower(session, rulesetId, id, {
+      PowersService.updateRulesetPower(session, rulesetId, id, {
         name,
         aptitudes: [{ id: refs.powerAptitudeId }],
         updatedAt,
       }),
-    remove: PowersMethods.deleteRulesetPower,
+    remove: PowersService.deleteRulesetPower.bind(PowersService),
   },
   races: {
-    list: (rulesetId, search) => RacesMethods.getRulesetRaces(rulesetId, { search }, firstPage),
-    get: RacesMethods.getRulesetRace,
+    list: (rulesetId, search) => RacesService.getRulesetRaces(rulesetId, { search }, firstPage),
+    get: RacesService.getRulesetRace.bind(RacesService),
     create: (session, rulesetId, name) =>
-      RacesMethods.createRulesetRace(session, rulesetId, { name, size: "Medium", baseSpeed: 30 }),
+      RacesService.createRulesetRace(session, rulesetId, { name, size: "Medium", baseSpeed: 30 }),
     update: (session, rulesetId, id, name, _refs, updatedAt) =>
-      RacesMethods.updateRulesetRace(session, rulesetId, id, { name, size: "Medium", baseSpeed: 30, updatedAt }),
-    remove: RacesMethods.deleteRulesetRace,
+      RacesService.updateRulesetRace(session, rulesetId, id, { name, size: "Medium", baseSpeed: 30, updatedAt }),
+    remove: RacesService.deleteRulesetRace.bind(RacesService),
   },
   saves: {
-    list: (rulesetId, search) => SavesMethods.getRulesetSaves(rulesetId, { search }, firstPage),
-    get: SavesMethods.getRulesetSave,
+    list: (rulesetId, search) => SavesService.getRulesetSaves(rulesetId, { search }, firstPage),
+    get: SavesService.getRulesetSave.bind(SavesService),
     create: (session, rulesetId, name, refs) =>
-      SavesMethods.createRulesetSave(session, rulesetId, { name, abilityId: refs.abilityId }),
+      SavesService.createRulesetSave(session, rulesetId, { name, abilityId: refs.abilityId }),
     update: (session, rulesetId, id, name, refs, updatedAt) =>
-      SavesMethods.updateRulesetSave(session, rulesetId, id, { name, abilityId: refs.abilityId, updatedAt }),
-    remove: SavesMethods.deleteRulesetSave,
+      SavesService.updateRulesetSave(session, rulesetId, id, { name, abilityId: refs.abilityId, updatedAt }),
+    remove: SavesService.deleteRulesetSave.bind(SavesService),
   },
   skills: {
-    list: (rulesetId, search) => SkillsMethods.getRulesetSkills(rulesetId, { search }, firstPage),
-    get: SkillsMethods.getRulesetSkill,
+    list: (rulesetId, search) => SkillsService.getRulesetSkills(rulesetId, { search }, firstPage),
+    get: SkillsService.getRulesetSkill.bind(SkillsService),
     create: (session, rulesetId, name, refs) =>
-      SkillsMethods.createRulesetSkill(session, rulesetId, {
+      SkillsService.createRulesetSkill(session, rulesetId, {
         name,
         primaryAbilityId: refs.abilityId,
         impactedByWeight: false,
         usableWithoutTraining: true,
       }),
     update: (session, rulesetId, id, name, refs, updatedAt) =>
-      SkillsMethods.updateRulesetSkill(session, rulesetId, id, {
+      SkillsService.updateRulesetSkill(session, rulesetId, id, {
         name,
         primaryAbilityId: refs.abilityId,
         impactedByWeight: false,
         usableWithoutTraining: true,
         updatedAt,
       }),
-    remove: SkillsMethods.deleteRulesetSkill,
+    remove: SkillsService.deleteRulesetSkill.bind(SkillsService),
   },
 };
 
@@ -167,8 +156,8 @@ const ENTITY_TYPES = Object.keys(SERVICES);
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
   const [ability] = await Abilities.create(db, { rulesetId: ruleset.id, name: "Strength", description: "Strength" });
-  const featAptitude = await AptitudesMethods.createRulesetAptitude(session, ruleset.id, { name: "Feat Aptitude" });
-  const powerAptitude = await AptitudesMethods.createRulesetAptitude(session, ruleset.id, { name: "Power Aptitude" });
+  const featAptitude = await AptitudesService.createRulesetAptitude(session, ruleset.id, { name: "Feat Aptitude" });
+  const powerAptitude = await AptitudesService.createRulesetAptitude(session, ruleset.id, { name: "Power Aptitude" });
   const refs: Refs = { abilityId: ability.id, featAptitudeId: featAptitude.id, powerAptitudeId: powerAptitude.id };
   return { user, session, ruleset, refs };
 }

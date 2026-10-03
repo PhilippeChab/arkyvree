@@ -9,10 +9,7 @@ import {
   createTestCharacter,
   createTestRuleset,
   createTestUserAndRuleset,
-  methodsOf,
 } from "@/tests/helpers.ts";
-
-const ClassSkillsMethods = methodsOf(ClassSkillsService);
 
 /** A new user's empty ruleset with two classes and two skills. */
 async function setup() {
@@ -31,7 +28,7 @@ async function setup() {
 }
 
 const skillIdsOf = async (rulesetId: string, klassId: string) =>
-  (await ClassSkillsMethods.getClassSkills(rulesetId, klassId)).map((ks) => ks.skillId).sort();
+  (await ClassSkillsService.getClassSkills(rulesetId, klassId)).map((ks) => ks.skillId).sort();
 
 // Adding, listing and removing a class skill, and refusing one the class has, are covered in the class skills router test.
 describe("ClassSkillsService", () => {
@@ -42,10 +39,10 @@ describe("ClassSkillsService", () => {
       [fighter, swim],
       [rogue, climb],
     ] as const) {
-      await ClassSkillsMethods.addClassSkill(session, ruleset.id, klass.id, skill.id);
+      await ClassSkillsService.addClassSkill(session, ruleset.id, klass.id, skill.id);
     }
 
-    await ClassSkillsMethods.removeClassSkill(session, ruleset.id, fighter.id, climb.id);
+    await ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id);
     expect(await skillIdsOf(ruleset.id, fighter.id)).toEqual([swim.id]);
     expect(await skillIdsOf(ruleset.id, rogue.id)).toEqual([climb.id]);
   });
@@ -53,10 +50,10 @@ describe("ClassSkillsService", () => {
   test("refuses changes from anyone but the owner", async () => {
     const { ruleset, fighter, climb } = await setup();
     const { session: other } = await createTestUserAndRuleset();
-    await expect(ClassSkillsMethods.addClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+    await expect(ClassSkillsService.addClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
       ForbiddenError,
     );
-    await expect(ClassSkillsMethods.removeClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+    await expect(ClassSkillsService.removeClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
       ForbiddenError,
     );
   });
@@ -64,41 +61,41 @@ describe("ClassSkillsService", () => {
   test("doesn't find a class or skill of another ruleset, nor a skill the class doesn't have", async () => {
     const { session, ruleset, fighter, climb } = await setup();
     const other = await setup();
-    await expect(ClassSkillsMethods.getClassSkills(ruleset.id, other.fighter.id)).rejects.toThrow(NotFoundError);
-    await expect(ClassSkillsMethods.addClassSkill(session, ruleset.id, other.fighter.id, climb.id)).rejects.toThrow(
+    await expect(ClassSkillsService.getClassSkills(ruleset.id, other.fighter.id)).rejects.toThrow(NotFoundError);
+    await expect(ClassSkillsService.addClassSkill(session, ruleset.id, other.fighter.id, climb.id)).rejects.toThrow(
       NotFoundError,
     );
-    await expect(ClassSkillsMethods.addClassSkill(session, ruleset.id, fighter.id, other.climb.id)).rejects.toThrow(
+    await expect(ClassSkillsService.addClassSkill(session, ruleset.id, fighter.id, other.climb.id)).rejects.toThrow(
       NotFoundError,
     );
-    await expect(ClassSkillsMethods.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+    await expect(ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
       NotFoundError,
     );
-    await expect(ClassSkillsMethods.removeClassSkill(session, ruleset.id, other.fighter.id, climb.id)).rejects.toThrow(
+    await expect(ClassSkillsService.removeClassSkill(session, ruleset.id, other.fighter.id, climb.id)).rejects.toThrow(
       NotFoundError,
     );
   });
 
   test("refuses to remove a class skill while a character has a level in the class", async () => {
     const { user, session, ruleset, fighter, climb } = await setup();
-    await ClassSkillsMethods.addClassSkill(session, ruleset.id, fighter.id, climb.id);
+    await ClassSkillsService.addClassSkill(session, ruleset.id, fighter.id, climb.id);
     const [klassLevel] = await KlassLevels.create(db, { klassId: fighter.id, level: 1 });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, klassLevel.id);
 
-    await expect(ClassSkillsMethods.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+    await expect(ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
       ConflictError,
     );
   });
 
   test("in a fork, reads the inherited class's skills and changes them on the fork's copy of the class", async () => {
     const { user, session, ruleset: parent, fighter, climb, swim } = await setup();
-    await ClassSkillsMethods.addClassSkill(session, parent.id, fighter.id, climb.id);
+    await ClassSkillsService.addClassSkill(session, parent.id, fighter.id, climb.id);
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
     expect(await skillIdsOf(fork.id, fighter.id)).toEqual([climb.id]);
 
-    const added = await ClassSkillsMethods.addClassSkill(session, fork.id, fighter.id, swim.id);
-    const removed = await ClassSkillsMethods.removeClassSkill(session, fork.id, fighter.id, climb.id);
+    const added = await ClassSkillsService.addClassSkill(session, fork.id, fighter.id, swim.id);
+    const removed = await ClassSkillsService.removeClassSkill(session, fork.id, fighter.id, climb.id);
     const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, {
       sourceEntityId: fighter.id,
       rulesetId: fork.id,

@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { characterIdParam, limitOf, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { CharacterLevelsService } from "@/server/services/characters/index.ts";
 
 const isUuid = (v: string) => z.string().uuid().safeParse(v).success;
@@ -81,25 +80,24 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { limit, page, search, ...pending } = c.req.valid("query");
-      const result = await CharacterLevelsService.initialize().call(
-        "getAvailableKlasses",
-        c.var.requestSession,
-        characterId,
-        { search },
-        { limit, page },
-        pending.pendingLevelKlassLevelIds,
-        pending.pendingLevelAbilityIds,
-        pending.pendingFeatPicks,
-        pending.pendingSkillAllocations,
+      return c.json(
+        await CharacterLevelsService.getAvailableKlasses(
+          c.var.requestSession,
+          characterId,
+          { search },
+          { limit, page },
+          pending.pendingLevelKlassLevelIds,
+          pending.pendingLevelAbilityIds,
+          pending.pendingFeatPicks,
+          pending.pendingSkillAllocations,
+        ),
+        200,
       );
-
-      return respond(c, result, 200);
     },
   )
   .delete("/:characterId", zValidator("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
-    const result = await CharacterLevelsService.initialize().call("removeLevel", c.var.requestSession, characterId);
-    return respond(c, result, 200);
+    return c.json(await CharacterLevelsService.removeLevel(c.var.requestSession, characterId), 200);
   })
   .get(
     "/:characterId/attribute-slots",
@@ -114,15 +112,15 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { characterLevelId, pendingLevelCount } = c.req.valid("query");
-      const result = await CharacterLevelsService.initialize().call(
-        "getAttributeSlots",
-        c.var.requestSession,
-        characterId,
-        characterLevelId,
-        pendingLevelCount,
+      return c.json(
+        await CharacterLevelsService.getAttributeSlots(
+          c.var.requestSession,
+          characterId,
+          characterLevelId,
+          pendingLevelCount,
+        ),
+        200,
       );
-
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -140,19 +138,19 @@ const levels = new Hono<SessionContext>()
       const { characterId } = c.req.valid("param");
       const { klassId, level, characterLevelId, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } =
         c.req.valid("query");
-      const result = await CharacterLevelsService.initialize().call(
-        "getSkillSlots",
-        c.var.requestSession,
-        characterId,
-        klassId,
-        level,
-        characterLevelId,
-        abilityId,
-        pendingLevelKlassLevelIds,
-        pendingLevelAbilityIds,
+      return c.json(
+        await CharacterLevelsService.getSkillSlots(
+          c.var.requestSession,
+          characterId,
+          klassId,
+          level,
+          characterLevelId,
+          abilityId,
+          pendingLevelKlassLevelIds,
+          pendingLevelAbilityIds,
+        ),
+        200,
       );
-
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -175,26 +173,26 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const query = c.req.valid("query");
-      const result = await CharacterLevelsService.initialize().call(
-        "getAvailableFeats",
-        c.var.requestSession,
-        characterId,
-        query.aptitudeId,
-        query.klassId,
-        query.level,
-        {
-          search: query.search,
-          family: query.family,
-          selectedFeatPicks: query.selectedFeatPicks,
-          pendingLevelFeatPicks: query.pendingLevelFeatPicks,
-        },
-        { limit: query.limit, page: query.page },
-        query.characterLevelId,
-        query.pendingLevelKlassLevelIds,
-        query.pendingLevelAbilityIds,
+      return c.json(
+        await CharacterLevelsService.getAvailableFeats(
+          c.var.requestSession,
+          characterId,
+          query.aptitudeId,
+          query.klassId,
+          query.level,
+          {
+            search: query.search,
+            family: query.family,
+            selectedFeatPicks: query.selectedFeatPicks,
+            pendingLevelFeatPicks: query.pendingLevelFeatPicks,
+          },
+          { limit: query.limit, page: query.page },
+          query.characterLevelId,
+          query.pendingLevelKlassLevelIds,
+          query.pendingLevelAbilityIds,
+        ),
+        200,
       );
-
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -216,25 +214,25 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const query = c.req.valid("query");
-      const result = await CharacterLevelsService.initialize().call(
-        "getAvailableFeatsGrouped",
-        c.var.requestSession,
-        characterId,
-        query.aptitudeId,
-        query.klassId,
-        query.level,
-        {
-          search: query.search,
-          selectedFeatPicks: query.selectedFeatPicks,
-          pendingLevelFeatPicks: query.pendingLevelFeatPicks,
-        },
-        { limit: query.limit, page: query.page },
-        query.characterLevelId,
-        query.pendingLevelKlassLevelIds,
-        query.pendingLevelAbilityIds,
+      return c.json(
+        await CharacterLevelsService.getAvailableFeatsGrouped(
+          c.var.requestSession,
+          characterId,
+          query.aptitudeId,
+          query.klassId,
+          query.level,
+          {
+            search: query.search,
+            selectedFeatPicks: query.selectedFeatPicks,
+            pendingLevelFeatPicks: query.pendingLevelFeatPicks,
+          },
+          { limit: query.limit, page: query.page },
+          query.characterLevelId,
+          query.pendingLevelKlassLevelIds,
+          query.pendingLevelAbilityIds,
+        ),
+        200,
       );
-
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -244,11 +242,15 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { klassId, level, characterLevelId, pendingLevelKlassLevelIds } = c.req.valid("query");
-      const service = CharacterLevelsService.initialize();
       const result = characterLevelId
-        ? await service.call("getEditFeatSlots", c.var.requestSession, characterId, klassId, level, characterLevelId)
-        : await service.call(
-            "getFeatSlots",
+        ? await CharacterLevelsService.getEditFeatSlots(
+            c.var.requestSession,
+            characterId,
+            klassId,
+            level,
+            characterLevelId,
+          )
+        : await CharacterLevelsService.getFeatSlots(
             c.var.requestSession,
             characterId,
             klassId,
@@ -256,7 +258,7 @@ const levels = new Hono<SessionContext>()
             pendingLevelKlassLevelIds,
           );
 
-      return respond(c, result, 200);
+      return c.json(result, 200);
     },
   )
   .get(
@@ -266,11 +268,15 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { klassId, level, characterLevelId, pendingLevelKlassLevelIds } = c.req.valid("query");
-      const service = CharacterLevelsService.initialize();
       const result = characterLevelId
-        ? await service.call("getEditPowerSlots", c.var.requestSession, characterId, klassId, level, characterLevelId)
-        : await service.call(
-            "getPowerSlots",
+        ? await CharacterLevelsService.getEditPowerSlots(
+            c.var.requestSession,
+            characterId,
+            klassId,
+            level,
+            characterLevelId,
+          )
+        : await CharacterLevelsService.getPowerSlots(
             c.var.requestSession,
             characterId,
             klassId,
@@ -278,7 +284,7 @@ const levels = new Hono<SessionContext>()
             pendingLevelKlassLevelIds,
           );
 
-      return respond(c, result, 200);
+      return c.json(result, 200);
     },
   )
   .get(
@@ -304,38 +310,31 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const query = c.req.valid("query");
-      const result = await CharacterLevelsService.initialize().call(
-        "getAvailablePowers",
-        c.var.requestSession,
-        characterId,
-        query.aptitudeId,
-        query.klassId,
-        query.level,
-        {
-          powerLevel: query.powerLevel,
-          search: query.search,
-          excludeSchools: query.excludeSchools,
-          selectedFeatPicks: query.selectedFeatPicks,
-          pendingLevelFeatPicks: query.pendingLevelFeatPicks,
-        },
-        { limit: query.limit, page: query.page },
-        query.characterLevelId,
-        query.pendingLevelKlassLevelIds,
+      return c.json(
+        await CharacterLevelsService.getAvailablePowers(
+          c.var.requestSession,
+          characterId,
+          query.aptitudeId,
+          query.klassId,
+          query.level,
+          {
+            powerLevel: query.powerLevel,
+            search: query.search,
+            excludeSchools: query.excludeSchools,
+            selectedFeatPicks: query.selectedFeatPicks,
+            pendingLevelFeatPicks: query.pendingLevelFeatPicks,
+          },
+          { limit: query.limit, page: query.page },
+          query.characterLevelId,
+          query.pendingLevelKlassLevelIds,
+        ),
+        200,
       );
-
-      return respond(c, result, 200);
     },
   )
   .get("/:characterId/:characterLevelId", zValidator("param", levelParams), async (c) => {
     const { characterId, characterLevelId } = c.req.valid("param");
-    const result = await CharacterLevelsService.initialize().call(
-      "getLevel",
-      c.var.requestSession,
-      characterId,
-      characterLevelId,
-    );
-
-    return respond(c, result, 200);
+    return c.json(await CharacterLevelsService.getLevel(c.var.requestSession, characterId, characterLevelId), 200);
   })
   .put(
     "/:characterId/:characterLevelId",
@@ -354,20 +353,20 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId, characterLevelId } = c.req.valid("param");
       const { hp, abilityId, skills, feats, powers, force } = c.req.valid("json");
-      const result = await CharacterLevelsService.initialize().call(
-        "updateLevel",
-        c.var.requestSession,
-        characterId,
-        characterLevelId,
-        hp,
-        abilityId,
-        skills,
-        feats,
-        powers,
-        force,
+      return c.json(
+        await CharacterLevelsService.updateLevel(
+          c.var.requestSession,
+          characterId,
+          characterLevelId,
+          hp,
+          abilityId,
+          skills,
+          feats,
+          powers,
+          force,
+        ),
+        200,
       );
-
-      return respond(c, result, 200);
     },
   )
   .post(
@@ -391,15 +390,10 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { levels, abilityIds } = c.req.valid("json");
-      const result = await CharacterLevelsService.initialize().call(
-        "getLevelUpPreview",
-        c.var.requestSession,
-        characterId,
-        levels,
-        abilityIds,
+      return c.json(
+        await CharacterLevelsService.getLevelUpPreview(c.var.requestSession, characterId, levels, abilityIds),
+        200,
       );
-
-      return respond(c, result, 200);
     },
   )
   .post(
@@ -428,18 +422,18 @@ const levels = new Hono<SessionContext>()
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { levels, skills, feats, powers, force } = c.req.valid("json");
-      const result = await CharacterLevelsService.initialize().call(
-        "finalizeLevelUp",
-        c.var.requestSession,
-        characterId,
-        levels,
-        skills,
-        feats,
-        powers,
-        force,
+      return c.json(
+        await CharacterLevelsService.finalizeLevelUp(
+          c.var.requestSession,
+          characterId,
+          levels,
+          skills,
+          feats,
+          powers,
+          force,
+        ),
+        200,
       );
-
-      return respond(c, result, 200);
     },
   );
 

@@ -1,10 +1,9 @@
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Exports } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const ExportsMethods = {
+class ExportsService {
   async download(session: Session, exportId: string) {
     const exportRecord = await Exports.findOne(db, {
       id: exportId,
@@ -20,13 +19,7 @@ const ExportsMethods = {
     }
 
     return exportRecord;
-  },
-} as const;
-
-class ExportsService extends BaseService<typeof ExportsMethods> {
-  static initialize() {
-    return new ExportsService(ExportsMethods);
   }
 }
 
-export default ExportsService;
+export default new ExportsService();

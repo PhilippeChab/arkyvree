@@ -2,7 +2,6 @@ import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { pageOf, type Paginated } from "@/server/repositories/BaseRepository.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type {
@@ -11,26 +10,26 @@ import type {
   PropertyValueCompletion,
 } from "@/shared/customization/properties.ts";
 
-/**
- * The ruleset's custom property types (of one entity type, and containing `query`, when given): each with how many
- * properties use it, the most used first.
- */
-function countPropertyTypes(rulesetData: CachedRulesetData, entityType?: PropertyEntityType, query = "") {
-  const counts = new Map<string, { type: string; entityType: string; count: number }>();
-  const groups = entityType
-    ? [rulesetData.propertiesByEntityType.get(entityType) ?? []]
-    : [...rulesetData.propertiesByEntityType.values()];
-  for (const prop of groups.flat()) {
-    if (!prop.type.toLowerCase().includes(query)) continue;
-    const key = `${prop.entityType}:${prop.type}`;
-    const existing = counts.get(key);
-    if (existing) existing.count += 1;
-    else counts.set(key, { type: prop.type, entityType: prop.entityType, count: 1 });
+class PropertyTypesService {
+  /**
+   * The ruleset's custom property types (of one entity type, and containing `query`, when given): each with how many
+   * properties use it, the most used first.
+   */
+  private countPropertyTypes(rulesetData: CachedRulesetData, entityType?: PropertyEntityType, query = "") {
+    const counts = new Map<string, { type: string; entityType: string; count: number }>();
+    const groups = entityType
+      ? [rulesetData.propertiesByEntityType.get(entityType) ?? []]
+      : [...rulesetData.propertiesByEntityType.values()];
+    for (const prop of groups.flat()) {
+      if (!prop.type.toLowerCase().includes(query)) continue;
+      const key = `${prop.entityType}:${prop.type}`;
+      const existing = counts.get(key);
+      if (existing) existing.count += 1;
+      else counts.set(key, { type: prop.type, entityType: prop.entityType, count: 1 });
+    }
+    return [...counts.values()].sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
   }
-  return [...counts.values()].sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
-}
 
-const PropertyTypesMethods = {
   /**
    * Get all available property types (static + custom)
    */
@@ -39,7 +38,7 @@ const PropertyTypesMethods = {
     const customTypes = await this.getCustomPropertyTypes(rulesetId, entityType);
 
     return [...staticTypes, ...customTypes];
-  },
+  }
 
   /**
    * Get static property types via ruleset-specific provider
@@ -53,7 +52,7 @@ const PropertyTypesMethods = {
       isStatic: true,
       description,
     }));
-  },
+  }
 
   /**
    * Get custom property types composed from the ruleset (chain + COW).
@@ -62,14 +61,14 @@ const PropertyTypesMethods = {
    */
   async getCustomPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      return countPropertyTypes(rulesetData, entityType).map((c): PropertyType => ({
+      return this.countPropertyTypes(rulesetData, entityType).map((c): PropertyType => ({
         value: c.type,
         isStatic: false,
         entityType: c.entityType,
         usageCount: c.count,
       }));
     });
-  },
+  }
 
   /**
    * Search property types by query
@@ -92,7 +91,7 @@ const PropertyTypesMethods = {
     );
 
     return [...staticTypes, ...customTypes];
-  },
+  }
 
   /**
    * Get property type completions for autocomplete. Engine types come from the
@@ -124,7 +123,7 @@ const PropertyTypesMethods = {
           entityType,
         }));
 
-      const customCompletions = countPropertyTypes(rulesetData, entityType, lowercaseQuery).map(
+      const customCompletions = this.countPropertyTypes(rulesetData, entityType, lowercaseQuery).map(
         (c): PropertyTypeCompletion => ({
           label: c.type,
           value: c.type,
@@ -136,7 +135,7 @@ const PropertyTypesMethods = {
 
       return pageOf([...engineCompletions, ...customCompletions], pagination);
     });
-  },
+  }
 
   /**
    * Get value completions for a given property type. Engine values come from
@@ -178,13 +177,7 @@ const PropertyTypesMethods = {
 
       return pageOf([...engineCompletions, ...customCompletions], pagination);
     });
-  },
-} as const;
-
-class PropertyTypesService extends BaseService<typeof PropertyTypesMethods> {
-  static initialize() {
-    return new PropertyTypesService(PropertyTypesMethods);
   }
 }
 
-export default PropertyTypesService;
+export default new PropertyTypesService();

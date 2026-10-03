@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createTestRuleset } from "@/tests/helpers.ts";
 
 /** A ruleset owned by the seeded user, and another user invited to contribute to it. */
@@ -61,14 +61,15 @@ describe("rulesets contributors", () => {
     const { id } = await setup();
     const { api: outsider } = await createSignedInUser("outsider");
     const contributors = outsider.api.rulesets[":id"].contributors;
-    expect(
-      (await contributors.$post({ param: { id }, json: { email: "someone@example.com", role: "Editor" } })).status,
-    ).toBe(403);
-    expect((await contributors.$get({ param: { id }, query: {} })).status).toBe(403);
+    await expectStatus(
+      contributors.$post({ param: { id }, json: { email: "someone@example.com", role: "Editor" } }),
+      403,
+    );
+    await expectStatus(contributors.$get({ param: { id }, query: {} }), 403);
   });
 
   test("requires a session", async () => {
     const { id } = await setup();
-    expect((await guestApi.api.rulesets[":id"].contributors.$get({ param: { id }, query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.rulesets[":id"].contributors.$get({ param: { id }, query: {} }), 401);
   });
 });

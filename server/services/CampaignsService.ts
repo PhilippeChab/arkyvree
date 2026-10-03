@@ -5,12 +5,11 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Campaigns, Players, Rulesets } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const CampaignsMethods = {
+class CampaignsService {
   async getMyCampaigns(
     session: Session,
     where: {
@@ -22,7 +21,7 @@ const CampaignsMethods = {
     pagination: { limit: number; page: number },
   ) {
     return await Campaigns.findMany(db, { userId: session.userId, ...where }, pagination);
-  },
+  }
 
   async getCampaignById(session: Session, id: string) {
     const rows = await Campaigns.findOneWithPlayerCount(db, { id });
@@ -35,7 +34,7 @@ const CampaignsMethods = {
     const player = await CampaignsPolicy.member(db, session, id);
 
     return { ...campaign, currentUserRole: player.role };
-  },
+  }
 
   async createCampaign(
     session: Session,
@@ -80,7 +79,7 @@ const CampaignsMethods = {
         player,
       };
     });
-  },
+  }
 
   async updateCampaign(
     session: Session,
@@ -115,7 +114,7 @@ const CampaignsMethods = {
 
       return updatedCampaign;
     });
-  },
+  }
 
   async archiveCampaign(session: Session, id: string) {
     return await withTransaction(async (tx) => {
@@ -149,7 +148,8 @@ const CampaignsMethods = {
 
       return archivedCampaign;
     });
-  },
+  }
+
   async hardDeleteCampaign(session: Session, id: string) {
     return await withTransaction(async (tx) => {
       const existingCampaign = await Campaigns.findOne(tx, { id }, Visibility.ArchivedOnly);
@@ -173,7 +173,7 @@ const CampaignsMethods = {
 
       return { id };
     });
-  },
+  }
 
   async unarchiveCampaign(session: Session, id: string) {
     return await withTransaction(async (tx) => {
@@ -201,13 +201,7 @@ const CampaignsMethods = {
 
       return unarchivedCampaign;
     });
-  },
-} as const;
-
-class CampaignsService extends BaseService<typeof CampaignsMethods> {
-  static initialize() {
-    return new CampaignsService(CampaignsMethods);
   }
 }
 
-export default CampaignsService;
+export default new CampaignsService();

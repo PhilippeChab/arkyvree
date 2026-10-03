@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createSignedInUser, expectOk, guestApi } from "@/tests/api.ts";
+import { createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { getSeedCtx } from "@/tests/helpers.ts";
 
 describe("dashboard", () => {
@@ -27,6 +27,6 @@ describe("dashboard", () => {
   });
 
   test("requires a session", async () => {
-    expect((await guestApi.api.dashboard.stats.$get()).status).toBe(401);
+    await expectStatus(guestApi.api.dashboard.stats.$get(), 401);
   });
 });

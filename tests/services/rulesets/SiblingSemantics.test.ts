@@ -11,11 +11,7 @@ import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
 import RulesetsService from "@/server/services/RulesetsService.ts";
 import type { Requirement } from "@/shared/relations.ts";
-import { createSeededTestRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
-
-const AptitudesMethods = methodsOf(AptitudesService);
-const PropertiesMethods = methodsOf(PropertiesService);
-const RulesetsMethods = methodsOf(RulesetsService);
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
 afterEach(invalidateAll);
 
@@ -36,7 +32,7 @@ async function setup(
     );
     extensionIds.push(extension.id);
   }
-  await RulesetsMethods.subscribeExtension(session, host.id, reverseOrder ? [...extensionIds].reverse() : extensionIds);
+  await RulesetsService.subscribeExtension(session, host.id, reverseOrder ? [...extensionIds].reverse() : extensionIds);
   return { session, host };
 }
 
@@ -56,7 +52,7 @@ test("editing a shared aptitude preserves references from both extensions", asyn
       links: featIds.map((id) => rulesetData.featsById.get(id)!.featsAptitudesInRules[0].aptitudeId),
     }));
   expect(await read()).toEqual({ resolved: [aptitudeIds[0], aptitudeIds[0]], links: [aptitudeIds[0], aptitudeIds[0]] });
-  const local = await AptitudesMethods.updateRulesetAptitude(session, host.id, aptitudeIds[0], {
+  const local = await AptitudesService.updateRulesetAptitude(session, host.id, aptitudeIds[0], {
     name: "Audit Local Pool",
   });
   const warm = await read();
@@ -66,10 +62,10 @@ test("editing a shared aptitude preserves references from both extensions", asyn
     warm: { resolved: [local.id, local.id], links: [local.id, local.id] },
     cold: { resolved: [local.id, local.id], links: [local.id, local.id] },
   });
-  await AptitudesMethods.updateRulesetAptitude(session, host.id, local.id, { name: "Renamed Local Pool" });
+  await AptitudesService.updateRulesetAptitude(session, host.id, local.id, { name: "Renamed Local Pool" });
   expect(await read()).toEqual({ resolved: [local.id, local.id], links: [local.id, local.id] });
   for (const id of aptitudeIds) expect((await Aptitudes.findOne(db, { id }))?.name).toBe("Audit Shared Pool");
-  await RulesetsMethods.revertOverride(session, host.id, "aptitudes", aptitudeIds[0]);
+  await RulesetsService.revertOverride(session, host.id, "aptitudes", aptitudeIds[0]);
   expect(await read()).toEqual({ resolved: [aptitudeIds[0], aptitudeIds[0]], links: [aptitudeIds[0], aptitudeIds[0]] });
 });
 
@@ -122,7 +118,7 @@ for (const [chainingOperator, reverseOrder] of [
     const read = () =>
       withRulesetScope(db, host.id, async ({ rulesetData }) => rulesetData.requirementsByEntity.get(copies[0]) ?? []);
     const before = evaluate([await read()]);
-    await PropertiesMethods.createEntityProperty(session, host.id, "feats", copies[0], { type: "AUDIT", value: "1" });
+    await PropertiesService.createEntityProperty(session, host.id, "feats", copies[0], { type: "AUDIT", value: "1" });
     const after = evaluate([await read()]);
     invalidateAll();
     const cold = evaluate([await read()]);

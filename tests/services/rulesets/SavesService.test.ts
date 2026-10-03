@@ -5,9 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Klasses, KlassLevels, KlassLevelSaves } from "@/server/repositories/index.ts";
 import SavesService from "@/server/services/rulesets/SavesService.ts";
-import { createTestUserAndRuleset, insertRows, methodsOf } from "@/tests/helpers.ts";
-
-const SavesMethods = methodsOf(SavesService);
+import { createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
 
 /** A new user's empty ruleset with two abilities. */
 async function setup() {
@@ -23,14 +21,14 @@ async function setup() {
 describe("SavesService", () => {
   test("stores the ability a save rolls with", async () => {
     const { session, ruleset, constitution, wisdom } = await setup();
-    const save = await SavesMethods.createRulesetSave(session, ruleset.id, {
+    const save = await SavesService.createRulesetSave(session, ruleset.id, {
       name: "Fortitude",
       description: "Physical resistance",
       abilityId: constitution.id,
     });
     expect(save).toMatchObject({ name: "Fortitude", description: "Physical resistance", abilityId: constitution.id });
 
-    const updated = await SavesMethods.updateRulesetSave(session, ruleset.id, save.id, {
+    const updated = await SavesService.updateRulesetSave(session, ruleset.id, save.id, {
       name: "Will",
       description: "Mental resistance",
       abilityId: wisdom.id,
@@ -40,7 +38,7 @@ describe("SavesService", () => {
 
   test("refuses to delete a save that class levels grant", async () => {
     const { session, ruleset, constitution } = await setup();
-    const save = await SavesMethods.createRulesetSave(session, ruleset.id, {
+    const save = await SavesService.createRulesetSave(session, ruleset.id, {
       name: "Fortitude",
       abilityId: constitution.id,
     });
@@ -48,6 +46,6 @@ describe("SavesService", () => {
     const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
     await KlassLevelSaves.createMany(db, [{ klassLevelId: klassLevel.id, saveId: save.id, base: 2 }]);
 
-    await expect(SavesMethods.deleteRulesetSave(session, ruleset.id, save.id)).rejects.toThrow(ConflictError);
+    await expect(SavesService.deleteRulesetSave(session, ruleset.id, save.id)).rejects.toThrow(ConflictError);
   });
 });

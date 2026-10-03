@@ -4,6 +4,7 @@ import { Hono, type MiddlewareHandler } from "hono";
 
 import { toJson } from "@/server/errors/index.ts";
 import { rateLimit } from "@/server/middlewares/rateLimit.ts";
+import { expectStatus } from "@/tests/api.ts";
 
 /** An app behind `limiter`, answering errors as the application does. */
 function behind(limiter: MiddlewareHandler) {
@@ -40,7 +41,7 @@ describe("rateLimit", () => {
       expect((await app.request("/", from("10.0.0.1"))).status).toBe(200);
 
       const refused = await app.request("/", from("10.0.0.1"));
-      expect(refused.status).toBe(429);
+      await expectStatus(refused, 429);
       expect(await refused.json()).toMatchObject({ cause: "tooManyRequests" });
       expect((await app.request("/", from("10.0.0.2"))).status).toBe(200);
     });
@@ -49,11 +50,11 @@ describe("rateLimit", () => {
       const app = limited();
       await app.request("/", from("10.0.0.3, 172.16.0.1"));
       await app.request("/", from("10.0.0.3, 172.16.0.2"));
-      expect((await app.request("/", from("10.0.0.3"))).status).toBe(429);
+      await expectStatus(app.request("/", from("10.0.0.3")), 429);
 
       await app.request("/", { headers: { "x-real-ip": "10.0.0.4" } });
       await app.request("/", { headers: { "x-real-ip": "10.0.0.4" } });
-      expect((await app.request("/", { headers: { "x-real-ip": "10.0.0.4" } })).status).toBe(429);
+      await expectStatus(app.request("/", { headers: { "x-real-ip": "10.0.0.4" } }), 429);
       expect((await app.request("/", { headers: { "x-real-ip": "10.0.0.5" } })).status).toBe(200);
     });
   });
@@ -64,7 +65,7 @@ describe("rateLimit", () => {
     test("refuses an address past its limit, whatever its case, and counts each address apart", async () => {
       const app = limited();
       expect((await app.request("/", withEmail("Ada@example.com"))).status).toBe(200);
-      expect((await app.request("/", withEmail("ada@EXAMPLE.com"))).status).toBe(429);
+      await expectStatus(app.request("/", withEmail("ada@EXAMPLE.com")), 429);
       expect((await app.request("/", withEmail("grace@example.com"))).status).toBe(200);
     });
 
