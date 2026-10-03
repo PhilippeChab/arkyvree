@@ -209,10 +209,12 @@ const folderIndex = {
       if (!target) return;
       const tree = INDEXED_TREES.find((t) => target.startsWith(t));
       if (!tree) return;
-      // The nearest folder above the target that has an index: the one it's entered through.
+      // The nearest folder that has an index, from the target's own (a directory import) up: the one it's entered
+      // through.
+      const isDirectory = !/\.[a-z]+$/.test(target);
       let folder = null;
       for (
-        let dir = path.posix.dirname(target);
+        let dir = isDirectory ? target : path.posix.dirname(target);
         dir.length >= tree.length - 1 && dir.startsWith(tree.slice(0, -1));
         dir = path.posix.dirname(dir)
       ) {
@@ -223,7 +225,6 @@ const folderIndex = {
         }
       }
       if (!folder || file.startsWith(folder + "/")) return;
-      const isDirectory = !/\.[a-z]+$/.test(target);
       const index = isDirectory
         ? target === folder
         : path.posix.basename(target).replace(/\.tsx?$/, "") === "index" && path.posix.dirname(target) === folder;

@@ -108,10 +108,12 @@ describe("architecture rules", () => {
   test("a directory import of a folder is its index", () => {
     expect(
       lint({
-        "server/services/feats/index.ts": 'export { default as FeatsService } from "./FeatsService.ts";\n',
-        "server/services/feats/FeatsService.ts": "export default 1;\n",
+        "server/services/rulesets/index.ts": 'export { default as RulesetsService } from "./RulesetsService.ts";\n',
+        "server/services/rulesets/RulesetsService.ts": "export default 1;\n",
+        "server/services/rulesets/feats/index.ts": 'export { default as FeatsService } from "./FeatsService.ts";\n',
+        "server/services/rulesets/feats/FeatsService.ts": "export default 1;\n",
         "server/routers/r.ts":
-          'import { FeatsService } from "@/server/services/feats";\nexport const r = FeatsService;\n',
+          'import { RulesetsService } from "@/server/services/rulesets";\nimport { FeatsService } from "@/server/services/rulesets/feats";\nexport const r = [RulesetsService, FeatsService];\n',
       }),
     ).toEqual([]);
   });
