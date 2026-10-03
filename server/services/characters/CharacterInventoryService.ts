@@ -4,7 +4,7 @@ import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Activities, CharacterInventory, Characters, Items } from "@/server/repositories/index.ts";
+import { Activities, CharacterInventory, Items } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
@@ -12,22 +12,31 @@ import type { ItemLocation } from "@/shared/enums.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { validateEquipmentSlot, validateItemRequirements } from "./inventory/validation.ts";
+import { validateCharges, validateEquipping } from "./inventory/validation.ts";
+
+/** An inventory entry's stored placement and charges: only an equipped item has a location, only a held one a set. */
+function entryFields(
+  equipped: boolean,
+  location: ItemLocation | null,
+  weaponSet: number | null,
+  totalCharges: number | null,
+  remainingCharges: number | null,
+) {
+  const resolvedLocation = equipped ? (location ?? null) : null;
+  const resolvedEquipped = !!resolvedLocation;
+  return {
+    equipped: resolvedEquipped,
+    location: resolvedLocation,
+    weaponSet: resolvedEquipped && isHandLocation(resolvedLocation) ? weaponSet : null,
+    totalCharges: totalCharges ?? null,
+    remainingCharges: remainingCharges ?? null,
+  };
+}
 
 const CharacterInventoryMethods = {
   async getInventory(session: Session, characterId: string) {
     // Visibility.All: an archived character's sheet still lists its items, read-only.
-    const characterRecord = await Characters.findOneEditable(
-      db,
-      {
-        id: characterId,
-        userId: session.userId,
-      },
-      Visibility.All,
-    );
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
+    const characterRecord = await getEditableCharacter(db, session, characterId, Visibility.All);
 
     return await withRulesetScope(db, characterRecord.rulesetId, async ({ rulesetData }) => {
       // Inside withRulesetScope: CharacterInventory.findMany auto-resolves
@@ -95,55 +104,23 @@ const CharacterInventoryMethods = {
           throw new BadRequestError("Item does not belong to the character's ruleset");
         }
 
-        // Validate charges
-        if ((totalCharges === null) !== (remainingCharges === null)) {
-          throw new BadRequestError("Total charges and remaining charges must both be set or both be null");
-        }
-        if (totalCharges !== null && remainingCharges !== null && remainingCharges > totalCharges) {
-          throw new BadRequestError("Remaining charges cannot exceed total charges");
-        }
+        validateCharges(totalCharges, remainingCharges);
 
         const existing = await CharacterInventory.findOne(tx, { characterId, itemId });
         if (existing) {
           throw new BadRequestError("Item already in inventory");
         }
 
-        // Require weaponSet for hand slots
-        if (equipped && isHandLocation(location) && weaponSet === null) {
-          throw new BadRequestError("A weapon set is required when equipping to a hand slot");
-        }
-
-        // Validate equipment slot if equipped
         if (equipped && location) {
-          await validateEquipmentSlot(
-            tx,
-            characterId,
-            itemRecord,
-            location,
-            weaponSet,
-            characterRecord.raceId,
-            ruleset,
-            rulesetData,
-          );
-          if (!force) {
-            await validateItemRequirements(tx, characterRecord, itemRecord, ruleset, rulesetData);
-          }
+          await validateEquipping(tx, characterRecord, itemRecord, location, weaponSet, force, ruleset, rulesetData);
         }
 
-        const resolvedLocation = equipped ? (location ?? null) : null;
-        const resolvedEquipped = !!resolvedLocation;
-        const values = {
+        const rows = await CharacterInventory.create(tx, {
           characterId,
           itemId,
           quantity,
-          equipped: resolvedEquipped,
-          location: resolvedLocation,
-          weaponSet: resolvedEquipped && isHandLocation(resolvedLocation) ? weaponSet : null,
-          totalCharges: totalCharges ?? null,
-          remainingCharges: remainingCharges ?? null,
-        };
-
-        const rows = await CharacterInventory.create(tx, values);
+          ...entryFields(equipped, location, weaponSet, totalCharges, remainingCharges),
+        });
 
         await Activities.create(tx, {
           userId: session.userId,
@@ -179,52 +156,19 @@ const CharacterInventoryMethods = {
           throw new NotFoundError("Item not in inventory");
         }
 
-        // Validate charges
-        if ((totalCharges === null) !== (remainingCharges === null)) {
-          throw new BadRequestError("Total charges and remaining charges must both be set or both be null");
-        }
-        if (totalCharges !== null && remainingCharges !== null && remainingCharges > totalCharges) {
-          throw new BadRequestError("Remaining charges cannot exceed total charges");
-        }
+        validateCharges(totalCharges, remainingCharges);
 
-        // Require weaponSet for hand slots
-        if (equipped && isHandLocation(location) && weaponSet === null) {
-          throw new BadRequestError("A weapon set is required when equipping to a hand slot");
-        }
-
-        // Validate equipment slot if equipping
         if (equipped && location) {
           const itemRecord = rulesetData.itemsById.get(itemId);
           if (!itemRecord) {
             throw new NotFoundError("Item not found");
           }
-          await validateEquipmentSlot(
-            tx,
-            characterId,
-            itemRecord,
-            location,
-            weaponSet,
-            characterRecord.raceId,
-            ruleset,
-            rulesetData,
-          );
-          if (!force) {
-            await validateItemRequirements(tx, characterRecord, itemRecord, ruleset, rulesetData);
-          }
+          await validateEquipping(tx, characterRecord, itemRecord, location, weaponSet, force, ruleset, rulesetData);
         }
 
-        const resolvedLocation = equipped ? (location ?? null) : null;
-        const resolvedEquipped = !!resolvedLocation;
         const rows = await CharacterInventory.update(
           tx,
-          {
-            quantity,
-            equipped: resolvedEquipped,
-            location: resolvedLocation,
-            weaponSet: resolvedEquipped && isHandLocation(resolvedLocation) ? weaponSet : null,
-            totalCharges: totalCharges ?? null,
-            remainingCharges: remainingCharges ?? null,
-          },
+          { quantity, ...entryFields(equipped, location, weaponSet, totalCharges, remainingCharges) },
           { characterId, itemId, expectedUpdatedAt },
         );
         if (expectedUpdatedAt && rows.length === 0) {

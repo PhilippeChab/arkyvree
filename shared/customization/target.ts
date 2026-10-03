@@ -47,7 +47,8 @@ export interface PathCompletion {
 
 export interface PaginatedCompletions {
   items: PathCompletion[];
-  nextPage: number | null;
+  page: number;
+  nextPage: number | undefined;
   segmentLabels: Record<string, string>;
 }
 

@@ -1,9 +1,9 @@
-import { getTableName, sql } from "drizzle-orm";
+import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { pingWorker } from "@/server/queue.ts";
+import { addJob, pingWorker } from "@/server/queue.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Characters, PlayerCharacters } from "@/server/repositories/index.ts";
 import type { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
@@ -12,9 +12,17 @@ import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
-/** The character the session's user may edit (they own it or contribute to it), or a 404. */
-export async function getEditableCharacter(db: Db, session: Session, characterId: string) {
-  const character = await Characters.findOneEditable(db, { id: characterId, userId: session.userId });
+/**
+ * The character the session's user may edit (they own it or contribute to it), or a 404. `Visibility.All` finds an
+ * archived one too, whose sheet stays readable.
+ */
+export async function getEditableCharacter(
+  db: Db,
+  session: Session,
+  characterId: string,
+  visibility: Visibility = Visibility.UnarchivedOnly,
+) {
+  const character = await Characters.findOneEditable(db, { id: characterId, userId: session.userId }, visibility);
   if (!character) throw new NotFoundError("Character not found");
   return character;
 }
@@ -92,18 +100,11 @@ export async function enqueueCharacterPdf(
   campaignId?: string,
 ) {
   await withTransaction(async (tx) => {
-    await tx.execute(
-      sql`SELECT graphile_worker.add_job(
-        'generatePdf',
-        ${JSON.stringify({
-          userId: session.userId,
-          characterId: characterRecord.id,
-          characterName: characterRecord.name,
-          campaignId,
-        })}::json,
-        max_attempts := 2,
-        queue_name := ${"pdf-" + session.userId}
-      )`,
+    await addJob(
+      tx,
+      "generatePdf",
+      { userId: session.userId, characterId: characterRecord.id, characterName: characterRecord.name, campaignId },
+      { maxAttempts: 2, queueName: `pdf-${session.userId}` },
     );
 
     await Activities.create(tx, {

@@ -141,6 +141,12 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter> 
     });
   }
 
+  async findManyByIds(db: Db, where: { ids: string[] }) {
+    return await db.query.charactersInCharacter.findMany({
+      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
+    });
+  }
+
   async findOneEditable(
     db: Db,
     where: { id: string; userId: string },

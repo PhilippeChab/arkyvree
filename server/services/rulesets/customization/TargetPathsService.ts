@@ -1,3 +1,4 @@
+import { pageOf } from "@/server/repositories/BaseRepository.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import type { PaginatedCompletions, PathCompletion, TargetPath } from "@/shared/customization/target.ts";
@@ -43,10 +44,7 @@ const TargetPathsMethods = {
 
       matches.sort((a, b) => a.path.localeCompare(b.path));
 
-      const total = matches.length;
-      const start = (page - 1) * limit;
-      const slice = matches.slice(start, start + limit);
-      const items: PathCompletion[] = slice.map((p) => ({
+      const flatCompletions: PathCompletion[] = matches.map((p) => ({
         label: p.path.split(".").pop() ?? p.path,
         detail: p.description ?? p.path,
         documentation: p.description ?? p.path,
@@ -57,8 +55,7 @@ const TargetPathsMethods = {
         operators: p.operators,
         possibleValues: p.possibleValues,
       }));
-      const nextPage = start + limit < total ? page + 1 : null;
-      return { items, nextPage, segmentLabels };
+      return { ...pageOf(flatCompletions, { limit, page }), segmentLabels };
     }
 
     const generator = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createTargetPaths());
@@ -129,113 +126,60 @@ const TargetPathsMethods = {
           });
         }
       }
-    } else {
-      const endsWithDot = pathPrefix.endsWith(".");
+    } else if (segments[0] !== "") {
+      // A trailing dot leaves an empty last segment: every next segment under the prefix completes it. A prefix
+      // starting with a dot (".", ".a") names no path, and completes nothing.
+      const baseDot = segments.slice(0, -1).join(".") + ".";
+      const currentSegmentPrefix = lastSegment.toLowerCase();
 
-      if (endsWithDot) {
-        const basePrefix = pathPrefix;
-        const segmentInfo = new Map<
-          string,
-          { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined }
-        >();
+      const segmentInfo = new Map<
+        string,
+        { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined }
+      >();
 
-        for (const p of allPaths) {
-          if (!p.path.startsWith(basePrefix)) continue;
-          const nextSegment = p.path.substring(basePrefix.length).split(".")[0];
-          if (!nextSegment) continue;
+      for (const p of allPaths) {
+        if (!p.path.startsWith(baseDot)) continue;
+        const pathAfterBase = p.path.substring(baseDot.length);
+        const nextSegment = pathAfterBase.split(".")[0];
+        if (!nextSegment || !nextSegment.toLowerCase().startsWith(currentSegmentPrefix)) continue;
 
-          let info = segmentInfo.get(nextSegment);
-          if (!info) {
-            info = { examplePath: null, isGroup: false, groupDesc: undefined };
-            segmentInfo.set(nextSegment, info);
-          }
-
-          const fullPrefix = basePrefix + nextSegment;
-          if (!info.examplePath && (p.path.startsWith(fullPrefix + ".") || p.path === fullPrefix)) {
-            info.examplePath = p;
-          }
-          if (!info.isGroup && p.path.startsWith(fullPrefix + ".*")) {
-            info.isGroup = true;
-          }
-          if (!info.groupDesc && p.groupDescription && p.path.startsWith(fullPrefix + ".")) {
-            info.groupDesc = p.groupDescription;
-          }
+        let info = segmentInfo.get(nextSegment);
+        if (!info) {
+          info = { examplePath: null, isGroup: false, groupDesc: undefined };
+          segmentInfo.set(nextSegment, info);
         }
 
-        for (const [segment, info] of segmentInfo) {
-          const fullPrefix = basePrefix + segment;
-          const description = info.groupDesc || resolveDescription(fullPrefix, segment, info.examplePath?.description);
-          const isLeaf = !info.isGroup && info.examplePath?.path === fullPrefix;
-          completions.push({
-            label: segment,
-            detail: description,
-            documentation: description,
-            insertText: segment,
-            kind: info.isGroup ? "group" : "property",
-            ...(info.examplePath?.sortOrder !== undefined && { sortOrder: info.examplePath.sortOrder }),
-            ...(isLeaf &&
-              info.examplePath && {
-                path: info.examplePath.path,
-                valueType: info.examplePath.valueType,
-                operators: info.examplePath.operators,
-                possibleValues: info.examplePath.possibleValues,
-              }),
-          });
+        const fullPrefix = baseDot + nextSegment;
+        if (!info.examplePath && (p.path.startsWith(fullPrefix + ".") || p.path === fullPrefix)) {
+          info.examplePath = p;
         }
-      } else {
-        const basePrefix = segments.slice(0, -1).join(".");
-        const currentSegmentPrefix = lastSegment.toLowerCase();
-        const baseDot = basePrefix ? basePrefix + "." : "";
-
-        const segmentInfo = new Map<
-          string,
-          { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined }
-        >();
-
-        for (const p of allPaths) {
-          if (baseDot && !p.path.startsWith(baseDot)) continue;
-          const pathAfterBase = baseDot ? p.path.substring(baseDot.length) : p.path;
-          const nextSegment = pathAfterBase.split(".")[0];
-          if (!nextSegment || !nextSegment.toLowerCase().startsWith(currentSegmentPrefix)) continue;
-
-          let info = segmentInfo.get(nextSegment);
-          if (!info) {
-            info = { examplePath: null, isGroup: false, groupDesc: undefined };
-            segmentInfo.set(nextSegment, info);
-          }
-
-          const fullPrefix = baseDot + nextSegment;
-          if (!info.examplePath && (p.path.startsWith(fullPrefix + ".") || p.path === fullPrefix)) {
-            info.examplePath = p;
-          }
-          if (!info.isGroup && p.path.startsWith(fullPrefix + ".*")) {
-            info.isGroup = true;
-          }
-          if (!info.groupDesc && p.groupDescription && p.path.startsWith(fullPrefix + ".")) {
-            info.groupDesc = p.groupDescription;
-          }
+        if (!info.isGroup && p.path.startsWith(fullPrefix + ".*")) {
+          info.isGroup = true;
         }
-
-        for (const [segment, info] of segmentInfo) {
-          const fullPrefix = baseDot + segment;
-          const description = info.groupDesc || resolveDescription(fullPrefix, segment, info.examplePath?.description);
-          const isLeaf = !info.isGroup && info.examplePath?.path === fullPrefix;
-          completions.push({
-            label: segment,
-            detail: description,
-            documentation: description,
-            insertText: segment,
-            kind: info.isGroup ? "group" : "property",
-            ...(info.examplePath?.sortOrder !== undefined && { sortOrder: info.examplePath.sortOrder }),
-            ...(isLeaf &&
-              info.examplePath && {
-                path: info.examplePath.path,
-                valueType: info.examplePath.valueType,
-                operators: info.examplePath.operators,
-                possibleValues: info.examplePath.possibleValues,
-              }),
-          });
+        if (!info.groupDesc && p.groupDescription && p.path.startsWith(fullPrefix + ".")) {
+          info.groupDesc = p.groupDescription;
         }
+      }
+
+      for (const [segment, info] of segmentInfo) {
+        const fullPrefix = baseDot + segment;
+        const description = info.groupDesc || resolveDescription(fullPrefix, segment, info.examplePath?.description);
+        const isLeaf = !info.isGroup && info.examplePath?.path === fullPrefix;
+        completions.push({
+          label: segment,
+          detail: description,
+          documentation: description,
+          insertText: segment,
+          kind: info.isGroup ? "group" : "property",
+          ...(info.examplePath?.sortOrder !== undefined && { sortOrder: info.examplePath.sortOrder }),
+          ...(isLeaf &&
+            info.examplePath && {
+              path: info.examplePath.path,
+              valueType: info.examplePath.valueType,
+              operators: info.examplePath.operators,
+              possibleValues: info.examplePath.possibleValues,
+            }),
+        });
       }
     }
 
@@ -255,12 +199,7 @@ const TargetPathsMethods = {
         })
       : completions;
 
-    const total = filtered.length;
-    const start = (page - 1) * limit;
-    const items = filtered.slice(start, start + limit);
-    const nextPage = start + limit < total ? page + 1 : null;
-
-    return { items, nextPage, segmentLabels };
+    return { ...pageOf(filtered, { limit, page }), segmentLabels };
   },
 } as const;
 

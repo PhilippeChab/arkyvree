@@ -164,17 +164,7 @@ export default class RulesetsPolicy extends BasePolicy<Ruleset> {
    * check + COW tombstones already protect subscribers and characters.
    */
   canDeleteEntity({ inUse = false }: { inUse?: boolean } = {}) {
-    if (!this.entity.userId) {
-      throw new ForbiddenError("Cannot edit a base ruleset");
-    }
-
-    if (!this.isOwner && !this.isAdminContributor && !this.isEditorContributor) {
-      throw new ForbiddenError("Cannot edit another user's ruleset");
-    }
-
-    if (this.entity.status === "Archived") {
-      throw new UnprocessableEntityError("Archived rulesets are read-only");
-    }
+    this.canUpdateEntity();
 
     if (inUse) {
       throw new ConflictError("Cannot delete entities from a ruleset in use by characters");

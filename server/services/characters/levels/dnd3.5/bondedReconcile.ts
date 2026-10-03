@@ -1,10 +1,7 @@
-import { eq } from "drizzle-orm";
-
-import { characterAbilitiesInCharacter, charactersInCharacter } from "@/drizzle/schema.ts";
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
-import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
+import { CharacterAbilities, CharacterLevels, Characters } from "@/server/repositories/index.ts";
 import { getBondedRaceStats } from "@/server/rulesets/dnd3.5/bondedRaceData.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
@@ -42,7 +39,8 @@ async function createBonded(
   // Seed ability scores from the SRD stat block (Cat str=3, Heavy Warhorse
   // str=18, etc.). Falls back to 10 if no stat block exists for the race.
   const raceStats = getBondedRaceStats(raceName);
-  await tx.insert(characterAbilitiesInCharacter).values(
+  await CharacterAbilities.createMany(
+    tx,
     rulesetData.abilities.map((ability) => ({
       characterId: bonded.id,
       abilityId: ability.id,
@@ -113,12 +111,7 @@ async function reconcileBonded(
   // blocked here while a concurrent archiveCharacter ran. Without this
   // check we'd insert a fresh live bonded under a now-archived master
   // (the cascade already ran), leaving an orphan visible only by deep link.
-  const [lockedMaster] = await tx
-    .select({ id: charactersInCharacter.id, deletedAt: charactersInCharacter.deletedAt })
-    .from(charactersInCharacter)
-    .where(eq(charactersInCharacter.id, masterRecord.id))
-    .for("update");
-  if (!lockedMaster || lockedMaster.deletedAt !== null) return;
+  if (!(await Characters.lockById(tx, masterRecord.id))) return;
 
   const existing = await Characters.findOne(tx, {
     parentCharacterId: masterRecord.id,

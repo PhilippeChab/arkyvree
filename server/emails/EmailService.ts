@@ -1,8 +1,6 @@
-import { sql } from "drizzle-orm";
-
 import { db } from "@/server/database/index.ts";
 import { isTest } from "@/server/environment.ts";
-import { pingWorker } from "@/server/queue.ts";
+import { addJob, pingWorker } from "@/server/queue.ts";
 
 import type { EmailJobPayload } from "./templates.ts";
 
@@ -27,18 +25,11 @@ class EmailService {
       // queuing — undeliverable bounces would burn sender reputation.
       if (to.length === 0) return { success: true };
 
-      await db.execute(
-        sql`SELECT graphile_worker.add_job(
-          'sendEmail',
-          ${JSON.stringify({
-            to,
-            from,
-            subject: options.subject,
-            template: options.template,
-            props: options.props,
-          })}::json,
-          max_attempts := 5
-        )`,
+      await addJob(
+        db,
+        "sendEmail",
+        { to, from, subject: options.subject, template: options.template, props: options.props },
+        { maxAttempts: 5 },
       );
 
       pingWorker();

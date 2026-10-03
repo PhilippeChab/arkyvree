@@ -49,6 +49,9 @@ import type {
   Skill,
 } from "@/shared/relations.ts";
 
+/** An aptitude pool's (or one of its spell levels') slots. */
+type AptitudeSlots = { allowed: number; spent: number; available: number };
+
 export type ValidationIssue = {
   category: "aptitudes" | "skills" | "requirements" | "modifiers" | "integrity";
   message: string;
@@ -323,75 +326,68 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
     const issues: RequirementIssue[] = [];
 
-    for (const group of unmetRequirementGroups) {
-      const firstReq = group[0];
-      const entityName = this.resolveEntityName(firstReq.entityId, firstReq.entityType);
-      const targets = group.filter((r) => r.target).map((r) => r.target);
-      const label = entityName
-        ? `Unmet prerequisite on ${entityName} (${firstReq.entityType})`
-        : `Unmet prerequisite: ${targets.join(", ") || "unknown"}`;
-      issues.push({
-        category: "requirements",
-        message: label,
-        entityName,
-        entityType: firstReq.entityType,
-        requirementTree: this.formatRequirements(group),
-      });
-    }
-    for (const { warning, requirement } of invalidRequirements) {
-      const entityName = this.resolveEntityName(requirement.entityId, requirement.entityType);
-      issues.push({
-        category: "requirements",
-        message: entityName
-          ? `Invalid requirement on ${entityName} (${requirement.entityType}): ${warning}`
-          : `Invalid requirement: ${warning}`,
-        entityName,
-        entityType: requirement.entityType,
-      });
-    }
-
+    for (const group of unmetRequirementGroups) issues.push(this.unmetRequirementIssue(group, group[0]));
+    for (const invalid of invalidRequirements) issues.push(this.invalidRequirementIssue(invalid));
     return issues;
+  }
+
+  /** An unmet requirement group's issue: on the entity of `owner`, one of its requirements, or naming its targets. */
+  private unmetRequirementIssue(group: Requirement[], owner: Requirement): RequirementIssue {
+    const entityName = this.resolveEntityName(owner.entityId, owner.entityType);
+    const targets = group.filter((r) => r.target).map((r) => r.target);
+    return {
+      category: "requirements",
+      message: entityName
+        ? `Unmet prerequisite on ${entityName} (${owner.entityType})`
+        : `Unmet prerequisite: ${targets.join(", ") || "unknown"}`,
+      entityName,
+      entityType: owner.entityType,
+      requirementTree: this.formatRequirements(group),
+    };
+  }
+
+  private invalidRequirementIssue({
+    warning,
+    requirement,
+  }: {
+    warning: string;
+    requirement: Requirement;
+  }): RequirementIssue {
+    const entityName = this.resolveEntityName(requirement.entityId, requirement.entityType);
+    return {
+      category: "requirements",
+      message: entityName
+        ? `Invalid requirement on ${entityName} (${requirement.entityType}): ${warning}`
+        : `Invalid requirement: ${warning}`,
+      entityName,
+      entityType: requirement.entityType,
+    };
   }
 
   validate(): ValidationResult {
     const issues: ValidationIssue[] = [];
 
     // Check aptitudes: each should have available === 0
+    const slotIssue = (name: string, { allowed, spent, available }: AptitudeSlots) => {
+      if (allowed === ALLOWED_ALL || available === 0) return;
+      issues.push({
+        category: "aptitudes",
+        message:
+          available > 0
+            ? `${name}: ${available} unspent slot(s) (${spent}/${allowed})`
+            : `${name}: overspent by ${Math.abs(available)} (${spent}/${allowed})`,
+      });
+    };
     const aptitudes = this.detailedCharacterAptitudes.getAptitudes();
     for (const [key, aptitude] of Object.entries(aptitudes)) {
       if (this.detailedCharacterAptitudes.isLeveledAptitude(key)) {
         const aptitudeObj = aptitude as Record<string, unknown>;
-        for (let level = 0; level <= 9; level++) {
-          const levelData = aptitudeObj[String(level)] as
-            | { allowed: number; spent: number; available: number }
-            | undefined;
-          if (!levelData || (levelData.allowed === 0 && levelData.spent === 0)) continue;
-          if (levelData.allowed === ALLOWED_ALL) continue;
-          if (levelData.available > 0) {
-            issues.push({
-              category: "aptitudes",
-              message: `${aptitude.name} (level ${level}): ${levelData.available} unspent slot(s) (${levelData.spent}/${levelData.allowed})`,
-            });
-          } else if (levelData.available < 0) {
-            issues.push({
-              category: "aptitudes",
-              message: `${aptitude.name} (level ${level}): overspent by ${Math.abs(levelData.available)} (${levelData.spent}/${levelData.allowed})`,
-            });
-          }
+        for (let level = 0; level <= this.detailedCharacterAptitudes.maxSpellLevel; level++) {
+          const levelData = aptitudeObj[String(level)] as AptitudeSlots | undefined;
+          if (levelData) slotIssue(`${aptitude.name} (level ${level})`, levelData);
         }
       } else {
-        if (aptitude.allowed === ALLOWED_ALL) continue;
-        if (aptitude.available > 0) {
-          issues.push({
-            category: "aptitudes",
-            message: `${aptitude.name}: ${aptitude.available} unspent slot(s) (${aptitude.spent}/${aptitude.allowed})`,
-          });
-        } else if (aptitude.available < 0) {
-          issues.push({
-            category: "aptitudes",
-            message: `${aptitude.name}: overspent by ${Math.abs(aptitude.available)} (${aptitude.spent}/${aptitude.allowed})`,
-          });
-        }
+        slotIssue(aptitude.name, aptitude);
       }
     }
 
@@ -400,31 +396,9 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     for (const group of unmetRequirementGroups) {
       if (group.every((r) => r.entityType === "modifiers")) continue;
       if (group.every((r) => r.entityType === "items")) continue;
-      const firstReq = group.find((r) => r.entityType !== "modifiers") ?? group[0];
-      const entityName = this.resolveEntityName(firstReq.entityId, firstReq.entityType);
-      const targets = group.filter((r) => r.target).map((r) => r.target);
-      const label = entityName
-        ? `Unmet prerequisite on ${entityName} (${firstReq.entityType})`
-        : `Unmet prerequisite: ${targets.join(", ") || "unknown"}`;
-      issues.push({
-        category: "requirements",
-        message: label,
-        entityName,
-        entityType: firstReq.entityType,
-        requirementTree: this.formatRequirements(group),
-      });
+      issues.push(this.unmetRequirementIssue(group, group.find((r) => r.entityType !== "modifiers") ?? group[0]));
     }
-    for (const { warning, requirement } of invalidRequirements) {
-      const entityName = this.resolveEntityName(requirement.entityId, requirement.entityType);
-      issues.push({
-        category: "requirements",
-        message: entityName
-          ? `Invalid requirement on ${entityName} (${requirement.entityType}): ${warning}`
-          : `Invalid requirement: ${warning}`,
-        entityName,
-        entityType: requirement.entityType,
-      });
-    }
+    for (const invalid of invalidRequirements) issues.push(this.invalidRequirementIssue(invalid));
 
     // Check modifier issues
     const { skippedModifiers, unappliedModifiers } = this.detailedCharacterModifiers.getModifiers();

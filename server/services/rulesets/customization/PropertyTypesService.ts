@@ -1,6 +1,6 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
-import type { Paginated } from "@/server/repositories/BaseRepository.ts";
+import { pageOf, type Paginated } from "@/server/repositories/BaseRepository.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
@@ -134,16 +134,7 @@ const PropertyTypesMethods = {
         }),
       );
 
-      const all = [...engineCompletions, ...customCompletions];
-      const start = (pagination.page - 1) * pagination.limit;
-      const items = all.slice(start, start + pagination.limit);
-      const hasMore = start + pagination.limit < all.length;
-
-      return {
-        items,
-        page: pagination.page,
-        nextPage: hasMore ? pagination.page + 1 : undefined,
-      };
+      return pageOf([...engineCompletions, ...customCompletions], pagination);
     });
   },
 
@@ -185,16 +176,7 @@ const PropertyTypesMethods = {
         .sort((a, b) => a.localeCompare(b))
         .map((v): PropertyValueCompletion => ({ label: v, value: v, kind: "custom" }));
 
-      const all = [...engineCompletions, ...customCompletions];
-      const start = (pagination.page - 1) * pagination.limit;
-      const items = all.slice(start, start + pagination.limit);
-      const hasMore = start + pagination.limit < all.length;
-
-      return {
-        items,
-        page: pagination.page,
-        nextPage: hasMore ? pagination.page + 1 : undefined,
-      };
+      return pageOf([...engineCompletions, ...customCompletions], pagination);
     });
   },
 } as const;

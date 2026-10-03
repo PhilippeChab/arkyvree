@@ -27,6 +27,16 @@ export type Paginated<T> = {
   nextPage: number | undefined;
 };
 
+/** A page of a list held in memory, shaped like the repositories' pages. */
+export function pageOf<T>(items: T[], pagination: { limit: number; page: number }): Paginated<T> {
+  const start = (pagination.page - 1) * pagination.limit;
+  return {
+    items: items.slice(start, start + pagination.limit),
+    page: pagination.page,
+    nextPage: start + pagination.limit < items.length ? pagination.page + 1 : undefined,
+  };
+}
+
 /** A ruleset entity list's filters: the ruleset's own entities and its source chain's, and a campaign's on it. */
 export type RulesetEntityFilters<Extra extends object = object> = Extra & {
   rulesetId: string;
@@ -63,15 +73,16 @@ abstract class BaseRepository<T extends Table> {
 
   /** Call inside a transaction to lock a stored row before changing its children.
    * IDs are already resolved by the caller. Never memoize a locking read.
+   * `skipLocked`: a row another transaction holds counts as not found instead of being waited for.
    */
-  async lockById(db: Db, id: string, mode: "update" | "share" = "update"): Promise<boolean> {
+  async lockById(db: Db, id: string, mode: "update" | "share" = "update", skipLocked = false): Promise<boolean> {
     const columns = getTableColumns(this.table);
     if (!columns.id) throw new Error("Row locking requires an id column");
     const rows = await db
       .select({ locked: sql<number>`1` })
       .from(sql`${this.table}`)
       .where(and(eq(columns.id, id), columns.deletedAt ? isNull(columns.deletedAt) : undefined))
-      .for(mode);
+      .for(mode, skipLocked ? { skipLocked: true } : {});
     return rows.length > 0;
   }
 

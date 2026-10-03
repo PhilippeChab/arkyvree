@@ -1,6 +1,6 @@
-import { and, getTableName, inArray, isNull } from "drizzle-orm";
+import { getTableName } from "drizzle-orm";
 
-import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -154,9 +154,7 @@ const PlayerCharactersMethods = {
     const characterIds = linkedCharacters.map((pc) => pc.characterId);
 
     // Get character details using direct query with character IDs
-    const characters = await db.query.charactersInCharacter.findMany({
-      where: and(inArray(charactersInCharacter.id, characterIds), isNull(charactersInCharacter.deletedAt)),
-    });
+    const characters = await Characters.findManyByIds(db, { ids: characterIds });
 
     if (characters.length === 0) {
       return { items: [], page: paginationMeta.page, nextPage: paginationMeta.nextPage };

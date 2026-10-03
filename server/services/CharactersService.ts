@@ -240,17 +240,7 @@ const CharactersMethods = {
       if (!record.parentCharacterId) {
         throw new NotFoundError("Character not found");
       }
-      const masterRecord = await Characters.findOneEditable(
-        db,
-        {
-          id: record.parentCharacterId,
-          userId: session.userId,
-        },
-        Visibility.All,
-      );
-      if (!masterRecord) {
-        throw new NotFoundError("Character not found");
-      }
+      await getEditableCharacter(db, session, record.parentCharacterId, Visibility.All);
 
       const rulesetModule = await RulesetFactory.fromRulesetId(record.rulesetId);
       const detailedBonded = rulesetModule.createDetailedCharacter(record, record.kind as CharacterKind);
@@ -263,18 +253,7 @@ const CharactersMethods = {
       };
     }
 
-    const characterRecord = await Characters.findOneEditable(
-      db,
-      {
-        id: characterId,
-        userId: session.userId,
-      },
-      Visibility.All,
-    );
-
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
+    const characterRecord = await getEditableCharacter(db, session, characterId, Visibility.All);
 
     const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
