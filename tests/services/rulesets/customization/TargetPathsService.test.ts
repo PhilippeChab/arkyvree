@@ -177,6 +177,10 @@ describe("TargetPathsService", () => {
       ]);
     });
 
+    test("complete nothing after a leading dot, which names no path", async () => {
+      expect([(await complete(".", "modifier")).items, (await complete(".a", "modifier")).items]).toEqual([[], []]);
+    });
+
     test("complete a segment partly typed: its groups first, described, then its leaves", async () => {
       const items = (await complete("feats.weap", "modifier")).items;
       expect(items.slice(0, 2)).toMatchObject([

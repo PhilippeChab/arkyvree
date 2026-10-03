@@ -1,6 +1,6 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
-import type { Paginated } from "@/server/repositories/BaseRepository.ts";
+import { pageOf, type Paginated } from "@/server/repositories/BaseRepository.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
@@ -28,16 +28,6 @@ function countPropertyTypes(rulesetData: CachedRulesetData, entityType?: Propert
     else counts.set(key, { type: prop.type, entityType: prop.entityType, count: 1 });
   }
   return [...counts.values()].sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
-}
-
-/** A page of a list held in memory. */
-function pageOf<T>(items: T[], pagination: { limit: number; page: number }): Paginated<T> {
-  const start = (pagination.page - 1) * pagination.limit;
-  return {
-    items: items.slice(start, start + pagination.limit),
-    page: pagination.page,
-    nextPage: start + pagination.limit < items.length ? pagination.page + 1 : undefined,
-  };
 }
 
 const PropertyTypesMethods = {

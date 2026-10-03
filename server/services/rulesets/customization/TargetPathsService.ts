@@ -1,18 +1,10 @@
+import { pageOf } from "@/server/repositories/BaseRepository.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import type { PaginatedCompletions, PathCompletion, TargetPath } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/utils.ts";
 
 import { getTargetPathsWithLabels, validatePath } from "./targetPaths.ts";
-
-/** A page of completions, and the next page's number (null after the last). */
-function completionsPage(completions: PathCompletion[], page: number, limit: number) {
-  const start = (page - 1) * limit;
-  return {
-    items: completions.slice(start, start + limit),
-    nextPage: start + limit < completions.length ? page + 1 : null,
-  };
-}
 
 const TargetPathsMethods = {
   validatePath,
@@ -63,7 +55,7 @@ const TargetPathsMethods = {
         operators: p.operators,
         possibleValues: p.possibleValues,
       }));
-      return { ...completionsPage(flatCompletions, page, limit), segmentLabels };
+      return { ...pageOf(flatCompletions, { limit, page }), segmentLabels };
     }
 
     const generator = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createTargetPaths());
@@ -134,11 +126,11 @@ const TargetPathsMethods = {
           });
         }
       }
-    } else {
-      // A trailing dot leaves an empty last segment: every next segment under the prefix completes it.
-      const basePrefix = segments.slice(0, -1).join(".");
+    } else if (segments[0] !== "") {
+      // A trailing dot leaves an empty last segment: every next segment under the prefix completes it. A prefix
+      // starting with a dot (".", ".a") names no path, and completes nothing.
+      const baseDot = segments.slice(0, -1).join(".") + ".";
       const currentSegmentPrefix = lastSegment.toLowerCase();
-      const baseDot = basePrefix ? basePrefix + "." : "";
 
       const segmentInfo = new Map<
         string,
@@ -146,8 +138,8 @@ const TargetPathsMethods = {
       >();
 
       for (const p of allPaths) {
-        if (baseDot && !p.path.startsWith(baseDot)) continue;
-        const pathAfterBase = baseDot ? p.path.substring(baseDot.length) : p.path;
+        if (!p.path.startsWith(baseDot)) continue;
+        const pathAfterBase = p.path.substring(baseDot.length);
         const nextSegment = pathAfterBase.split(".")[0];
         if (!nextSegment || !nextSegment.toLowerCase().startsWith(currentSegmentPrefix)) continue;
 
@@ -207,7 +199,7 @@ const TargetPathsMethods = {
         })
       : completions;
 
-    return { ...completionsPage(filtered, page, limit), segmentLabels };
+    return { ...pageOf(filtered, { limit, page }), segmentLabels };
   },
 } as const;
 
