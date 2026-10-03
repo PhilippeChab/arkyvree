@@ -154,7 +154,7 @@ export interface CachedRulesetData {
   /** klassLevelId → klassLevelSaves[]. */
   klassLevelSavesByKlassLevelId: Map<string, KlassLevelSave[]>;
   /** `stripSeparators(aptitude.name)` → aptitudeId. Killed off 4+ inline rebuilds
-   *  of the same map across services (finalize, distribution, pickQueries, loader). */
+   *  of the same map across services (finalize, distribution, the pick queries, loader). */
   aptitudeIdBySlug: Map<string, string>;
   /** `spellPossessionSlug(aptitude.name)` → aptitudeId. Used by the "set powers.X.<apt>.known"
    *  modifier scan in the virtually-possessed-power resolution path. */
