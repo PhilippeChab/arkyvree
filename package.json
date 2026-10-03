@@ -15,7 +15,6 @@
     "dev:db:reset": "bun --env-file=.env scripts/db/reset.ts --with-test-data",
     "dev:db:studio": "drizzle-kit studio",
     "dev:db:pull": "drizzle-kit pull",
-    "dev:db:generate-sql": "drizzle-kit generate --schema ./drizzle/schema.ts --dialect postgresql --out ./drizzle/generated --name schema",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:packages": "bun --env-file=.env scripts/db/apply-packages.ts",

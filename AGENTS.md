@@ -33,7 +33,7 @@ The codebase follows a **3-layer architecture** (Routers → Services → Reposi
 - Repositories accept `db` via dependency injection
 - Schema is defined in `/drizzle/schema.ts`
 - Routes use `zValidator` from `@/server/middlewares/index.ts` so validation failures use the standard API error envelope and preserve Hono response inference.
-- A route's common params and paging come from `server/routers/api/validation.ts` (`idParam`, `characterIdParam`, `page`, `limit` / `limitOf(n)`), the customization routes' from `customization/validation.ts` (`entityParams`, `ownerParams`). A query list (comma-separated ids, picks) is parsed by its schema's `transform`, not in the handler. Path params are camelCase (`:modifierId`)
+- A route's common params and paging come from `server/routers/api/validation.ts` (`idParam`, `characterIdParam`, `page`, `limit` / `limitOf(n)`), the customization routes' from `server/routers/api/rulesets/customization/validation.ts` (`entityParams`, `ownerParams`). A query list (comma-separated ids, picks) is parsed by its schema's `transform`, not in the handler. Path params are camelCase (`:modifierId`)
 - A route answers its service call with `respond(c, result, status)` (`server/routers/respond.ts`): the value as JSON, or the error in the envelope. A route that shapes its own success answers a failure with `errorResponse(c, error)`.
 - A response never carries a user's `passwordDigest`. Auth responses return the user through `toSafeUser` (`server/services/accounts.ts`), and a query that joins users selects their public columns (`id`, `username`, `emailAddress`), never the whole row.
 - `deletedAt IS NOT NULL` means **archived**. The codebase has two row-removal primitives — `repo.archive()` (soft) and `repo.delete()` (hard). Which one to use depends on the table. See [docs/persistence.md](./docs/persistence.md) for the full policy and decision rule. Quick rule: first-class user-facing entities archive by default; junctions, character-state, and customization rows always hard-delete.
@@ -44,7 +44,7 @@ The codebase follows a **3-layer architecture** (Routers → Services → Reposi
 - Use **individual parameters**, not payload/options objects: `linkCharacter(userId, campaignId, characterId, visibility)` not `linkCharacter(payload)`
 - Use **shared repository instances** from `@/server/repositories/index.ts`, never instantiate private copies
 - Paginated service methods follow: `method(id, where: { search?, orderBy?, orderDir? }, pagination: { limit, page })`
-- A service file exports only its class: routers call `XService.initialize().call("method", …)`, and tests the same through `methodsOf(XService)` (`tests/helpers.ts`). Anything else another file needs (a service, a job, a test) lives in a module next to it (`rulesets/helpers.ts`, `characters/helpers.ts`, `attachments.ts`, `accounts.ts`), never in a service file
+- A service file exports only its class: routers call `XService.initialize().call("method", …)`, and tests the same through `methodsOf(XService)` (`tests/helpers.ts`). Anything else another file needs (a service, a job, a test) lives in a module next to it in `server/services/` (`rulesets/helpers.ts`, `characters/helpers.ts`, `attachments.ts`, `accounts.ts`), never in a service file
 
 **Permission Checks (Policy vs. Identity):**
 

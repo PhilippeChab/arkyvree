@@ -12,9 +12,8 @@
  *
  *   Copy primitives: `fetchEntityCustomizations` /
  *     `copyEntityCustomizations*` (the COW write path and the item /
- *     modifier duplicate flows), `ENTITY_TYPE_TO_SOURCE_TYPE` and
- *     `NAME_FALLBACK_ENTITY_TYPES` (`RulesetsService`'s extension and
- *     revert flows). A fork copies no rows: `cowEntity` copies an entity on its first edit.
+ *     modifier duplicate flows), and `NAME_FALLBACK_ENTITY_TYPES`
+ *     (`RulesetsService`'s extension flows). A fork copies no rows: `cowEntity` copies an entity on its first edit.
  *
  *   Framework internals (used by the cache compose step + the ruleset
  *     implementation layer — `DetailedCharacterDataLoader`, `TargetPaths`,
@@ -40,7 +39,7 @@ export {
   wasGeneratedFeat,
 } from "./entityNames.ts";
 export { entityHasCharacterPicks } from "./characterPicks.ts";
-export { ENTITY_TYPE_TO_SOURCE_TYPE, NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
+export { NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
 export { fetchEntityCustomizations } from "./customizations.ts";
 export { copyEntityCustomizations, copyEntityCustomizationsToMany } from "./copy.ts";
 

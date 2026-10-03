@@ -89,7 +89,6 @@ Constructed with `(session, character, isActiveContributor?)`. The boolean comes
 
 If none match → `ForbiddenError "You do not have access to this ruleset"`.
 
-
 Campaign character responses redact private notes for viewers without character edit rights or GM status. Share tokens are returned only to character editors. Partial responses explicitly allow identity and metadata, and clear equipment, skill budget, virtual abilities, spell tags, validation details, and bonded sheets as well as the normal build fields.
 
 ## Campaigns — `CampaignsPolicy`
@@ -119,9 +118,9 @@ Attachments (avatars, character portraits) don't go through a `BasePolicy` subcl
 | Record type | Write (`isOwner`) | Read (`isReader`) |
 |---|---|---|
 | `User` (avatar) | `session.userId === recordId` | any authenticated session |
-| `Character` (portrait) | `character.userId === session.userId` — **owner only** | any authenticated session |
+| `Character` (portrait) | a player character's **owner only**; a bonded character's: whoever can edit its master (owner or contributor) | any authenticated session |
 
-Note the divergence: a character's active contributor **can edit the character** via `CharactersPolicy.canUpdate` but **cannot upload or replace its portrait** — portrait writes are owner-only. If that's not the desired behavior, update the registered `isOwner` for `Character` to also accept active contributors.
+Note the divergence: a character's active contributor **can edit the character** (`getEditableCharacter`) but **cannot upload or replace its portrait** — a player character's portrait writes are owner-only. If that's not the desired behavior, update the registered `isOwner` for `Character` to also accept active contributors.
 
 Reads are intentionally permissive (`allowAuthenticated`) since avatar/portrait URLs add no exposure beyond pages that are already gated.
 
@@ -135,7 +134,7 @@ The three invite lifecycles share the same shape:
 | Accept / reject | Identity match: `invite.userId === session.userId` (or `contributor.userId === session.userId` for contributor rows). Throws `NotFoundError` rather than `ForbiddenError` to avoid leaking the existence of invites addressed to other users |
 | Leave (self-remove from contributor or self-remove from campaign) | Identity match: must be holding the row being removed. Throws `NotFoundError` otherwise |
 
-`acceptCampaignInvite`, `rejectCampaignInvite`, `acceptContributorInvite` (rulesets and characters), `leaveRuleset`, and `leaveCharacter` all follow this pattern. Campaign self-leave goes through `PlayersService.removePlayer` with the `isSelfRemoval = player.userId === session.userId` branch — same shape (identity match skips the GM gate). They're identity matches, not permission gates — see "Identity vs. policy" below.
+`acceptCampaignInvite`, `rejectCampaignInvite`, `acceptContributorInvite` (rulesets and characters), `leaveRuleset`, and `leaveCharacter` all follow this pattern. Campaign self-leave goes through `PlayersService.removeCampaignPlayer` with the `isSelfRemoval = player.userId === session.userId` branch — same shape (identity match skips the GM gate). They're identity matches, not permission gates — see "Identity vs. policy" below.
 
 ## Customizations — `CustomizationsPolicy`
 

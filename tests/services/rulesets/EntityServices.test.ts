@@ -10,7 +10,6 @@ import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/in
 import { Abilities, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import AptitudesService from "@/server/services/rulesets/AptitudesService.ts";
 import ClassesService from "@/server/services/rulesets/ClassesService.ts";
-import { ENTITY_TYPE_TO_SOURCE_TYPE } from "@/server/services/rulesets/cow/index.ts";
 import FeatsService from "@/server/services/rulesets/FeatsService.ts";
 import ItemsService from "@/server/services/rulesets/ItemsService.ts";
 import LanguagesService from "@/server/services/rulesets/LanguagesService.ts";
@@ -19,6 +18,7 @@ import PowersService from "@/server/services/rulesets/PowersService.ts";
 import RacesService from "@/server/services/rulesets/RacesService.ts";
 import SavesService from "@/server/services/rulesets/SavesService.ts";
 import SkillsService from "@/server/services/rulesets/SkillsService.ts";
+import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestRuleset, createTestUserAndRuleset, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
 
@@ -267,7 +267,7 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
 // Mechanics can't be customized, so nothing can point at them.
 describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %s", (entityType) => {
   const service = SERVICES[entityType];
-  const ownsModifiers = entityType in ENTITY_TYPE_TO_SOURCE_TYPE;
+  const ownsModifiers = new Set<string>(CUSTOMIZABLE_ENTITY_TYPES).has(entityType);
 
   /** Gives the entity a requirement, a property and, when its type can own one, a modifier with a requirement of its own. */
   async function customize(id: string) {

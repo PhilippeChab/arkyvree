@@ -32,6 +32,12 @@ User-initiated deletion of a ruleset entity in a draft hard-deletes the row. FK 
 - `canDeleteEntity({ inUse })` blocks deletion when a character on the **current ruleset** has picked the entity (see `RulesetsPolicy.canDeleteEntity` and the section in [rulesets.md](./rulesets.md)).
 - COW + tombstone snapshots handle the inherited-entity-in-a-fork case: deleting an inherited entity creates a COW first, then hard-deletes it; the snapshot stays as a tombstone so the source is hidden in the fork's view.
 
+### Generated feats
+
+Generated Skill Focus cleanup copies an inherited feat locally before deleting the copy. Its retained COW snapshot is a tombstone: the obsolete feat is hidden from the edited fork’s listings and level-up choices while the ancestor and sibling forks remain unchanged. Locally generated feats are deleted directly. Cleanup refuses to hide a feat already selected by a character in the edited ruleset or a subscribing descendant, including picks stored under an ancestor ID after the feat has been customized locally.
+
+Skill renames delete the old generated feat with its modifiers (and modifier requirements), requirements, properties, and junctions before generating its replacement. Generated feat names cannot be edited directly. Group membership does not own the group's feats: removing a spell or weapon does not delete the school's or weapon type's feats. Ordinary override restoration remains an explicit per-entity action; this adds no automatic restoration or dependency metadata.
+
 ## Archive — load-bearing
 
 Three groups where archive vs hard-delete makes a real, observable difference.
@@ -99,7 +105,7 @@ Others name their row the same way, and stay when it's deleted, on purpose:
 
 Both primitives, picked by entry point:
 
-- **GM removes a single player from a campaign** → hard-delete (`PlayersService.deleteByPlayerId`). Intentional removal, no preservation needed.
+- **GM removes a single player from a campaign** → hard-delete (`PlayersService.removeCampaignPlayer`). Intentional removal, no preservation needed.
 - **User account deletion** → archive (`AuthenticationService.archiveAllForUser`). The whole `deleteAccount` flow takes a "hide, don't destroy" approach to leave the user row's dependent state intact; membership rows go along.
 
 ### Demo `Users`
@@ -119,8 +125,8 @@ For items, the `source_item_id` FK is `RESTRICT` — `revertOverride` repoints c
 
 ## Decision rule for new code
 
-1. Is the table a junction, recomputed-on-edit state, customization, character-side state, ruleset entity, or auth-cleanup row? → **hard-delete** (throwing-stub `archive`).
-2. Does the table have status-driven lifecycle (Contributors-style enum)? → **hard-delete** (throwing-stub `archive`).
+1. Is the table a junction, recomputed-on-edit state, customization, character-side state, ruleset entity, or auth-cleanup row? → **hard-delete** (no `archive`).
+2. Does the table have status-driven lifecycle (Contributors-style enum)? → **hard-delete** (no `archive`).
 3. Is it Characters / Campaigns / Rulesets? → **archive** (recoverable user content).
 4. Is it the `Users` table (real users)? → **archive** (FK CASCADE avoidance).
 5. Is it a one-time auth token / cleanup-by-TTL record? → **hybrid**: archive on consume, hard-delete in the TTL sweep.
@@ -131,12 +137,3 @@ If you're adding a new repository that doesn't fit any of these, prefer hard-del
 ## When to update this doc
 
 If you add a new repository or change an existing service's removal pattern, update the relevant section. The categorization is intentionally derived-from-code, not aspirational — if something here doesn't match what the code actually does, the doc is wrong, not the code.
-
-Generated Skill Focus cleanup copies an inherited feat locally before deleting the copy. Its retained COW snapshot is a tombstone: the obsolete feat is hidden from the edited fork’s listings and level-up choices while the ancestor and sibling forks remain unchanged. Locally generated feats are deleted directly. Cleanup refuses to hide a feat already selected by a character in the edited ruleset or a subscribing descendant, including picks stored under an ancestor ID after the feat has been customized locally.
-
-Skill renames delete the old generated feat with its modifiers (and modifier
-requirements), requirements, properties, and junctions before generating its
-replacement. Generated feat names cannot be edited directly. Group membership
-does not own the group's feats: removing a spell or weapon does not delete the
-school's or weapon type's feats. Ordinary override restoration remains an explicit
-per-entity action; this adds no automatic restoration or dependency metadata.
