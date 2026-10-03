@@ -1,7 +1,6 @@
-import { and, eq, getTableName, inArray, isNull, sql } from "drizzle-orm";
-import { unionAll } from "drizzle-orm/pg-core";
+import { getTableName } from "drizzle-orm";
 
-import { entitySnapshotsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
+import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
@@ -15,11 +14,13 @@ import {
   CharacterLevelSkills,
   Characters,
   EntitySnapshots,
+  RulesetEntities,
   RulesetExtensions,
   Rulesets,
 } from "@/server/repositories/index.ts";
+import { RULESET_ENTITY_TYPES } from "@/server/repositories/rulesets/entityTables.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { ENTITY_REPOS, ENTITY_TABLES, NAME_FALLBACK_ENTITY_TYPES } from "@/server/services/rulesets/cow/index.ts";
+import { ENTITY_REPOS, NAME_FALLBACK_ENTITY_TYPES } from "@/server/services/rulesets/cow/index.ts";
 import type { EntityType } from "@/server/services/rulesets/cow/index.ts";
 import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -116,37 +117,8 @@ class RulesetExtensionsService {
 
     const rulesetIds = [hostId, ...newExtensionIds, ...existingExtensionRulesetIds];
 
-    const typesToCheck = (Object.keys(ENTITY_TABLES) as EntityType[]).filter((t) => t !== "aptitudes");
-
-    const subqueries = typesToCheck.map((entityType) => {
-      const table = ENTITY_TABLES[entityType];
-      return tx
-        .select({
-          entityType: sql<EntityType>`${entityType}::text`.as("entity_type"),
-          name: table.name,
-          rulesetId: table.rulesetId,
-        })
-        .from(table)
-        .leftJoin(
-          entitySnapshotsInRules,
-          and(
-            eq(entitySnapshotsInRules.forkedEntityId, table.id),
-            eq(entitySnapshotsInRules.rulesetId, table.rulesetId),
-            eq(entitySnapshotsInRules.entityType, entityType),
-          ),
-        )
-        .where(
-          and(
-            inArray(table.rulesetId, rulesetIds),
-            isNull(entitySnapshotsInRules.id),
-            isNull(table.deletedAt),
-            isNull(table.campaignId),
-          ),
-        );
-    });
-
-    const [first, second, ...rest] = subqueries;
-    const rows = await unionAll(first, second, ...rest);
+    const entityTypes = RULESET_ENTITY_TYPES.filter((t) => t !== "aptitudes");
+    const rows = await RulesetEntities.findNativeNames(tx, { rulesetIds, entityTypes });
 
     const ownersByType = new Map<EntityType, Map<string, Set<string>>>();
     for (const r of rows) {

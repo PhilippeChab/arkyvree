@@ -1,16 +1,3 @@
-import {
-  abilitiesInRules,
-  aptitudesInRules,
-  featsInRules,
-  itemsInRules,
-  klassesInRules,
-  languagesInRules,
-  mechanicsInRules,
-  powersInRules,
-  racesInRules,
-  savesInRules,
-  skillsInRules,
-} from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import {
   Abilities,
@@ -52,14 +39,10 @@ export interface EntityWithId {
 // universally for them.
 //
 // `NAME_FALLBACK_ENTITY_TYPES` is the canonical list — re-export it from
-// here and consume it in `RulesetsService.assertExtensionsNameCompatible`
+// here and consume it in `RulesetExtensionsService.assertExtensionsNameCompatible`
 // so the runtime pairing and the subscribe-time block agree on which
 // types pair.
 export const NAME_FALLBACK_ENTITY_TYPES = ["feats", "powers"] as const;
-export const NAME_FALLBACK_TABLES = [
-  { entityType: "feats", table: featsInRules },
-  { entityType: "powers", table: powersInRules },
-] as const;
 
 /**
  * What the COW code calls on any ruleset entity's repository. Properties, which TypeScript checks strictly, except
@@ -87,21 +70,6 @@ export const ENTITY_REPOS: Record<EntityType, EntityRepository> = {
   aptitudes: Aptitudes,
   mechanics: Mechanics,
 };
-
-/** Each entity type's table. */
-export const ENTITY_TABLES = {
-  abilities: abilitiesInRules,
-  saves: savesInRules,
-  skills: skillsInRules,
-  feats: featsInRules,
-  powers: powersInRules,
-  items: itemsInRules,
-  races: racesInRules,
-  languages: languagesInRules,
-  klasses: klassesInRules,
-  aptitudes: aptitudesInRules,
-  mechanics: mechanicsInRules,
-} as const;
 
 export const CUSTOMIZATION_REPOS = {
   property: Properties,

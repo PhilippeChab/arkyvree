@@ -39,7 +39,7 @@ export {
   wasGeneratedFeat,
 } from "./entityNames.ts";
 export { entityHasCharacterPicks } from "./characterPicks.ts";
-export { ENTITY_REPOS, ENTITY_TABLES, NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
+export { ENTITY_REPOS, NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
 export { fetchEntityCustomizations } from "./customizations.ts";
 export { copyEntityCustomizations, copyEntityCustomizationsToMany } from "./copy.ts";
 
