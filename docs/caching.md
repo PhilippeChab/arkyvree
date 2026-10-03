@@ -260,6 +260,10 @@ Services used to query the DB for single rows even after the cache was warm. The
 | `modifiersBySource` | A source's modifiers |
 | `requirementsByEntity` | An entity's requirements |
 | `entityIdsByPropertyLookup` (key `${entityType}:${type}:${value}`) | The entities with a property value |
+| `klassLevelFeatsByKlassLevel`, `klassLevelPowersByKlassLevel` | A class level's feat and power rows, without their entities |
+| `modifiersById` | Each modifier by id |
+| `leveledAptitudeIds` | The aptitudes counted by spell level (spell pools) |
+| `aptitudeIdBySlug`, `aptitudeIdBySpellSlug`, `featIdBySlug`, `powerIdsBySlug` | An aptitude, feat or powers by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `powers.<slug>.<aptitude>.known`) |
 
 All are derived from the composed arrays at compose time. They add a few hundred KB of pointer overhead per cached ruleset — negligible against the entity data itself.
 

@@ -4,14 +4,9 @@ import { EntitySnapshots, Klasses, KlassLevels, Modifiers, Rulesets } from "@/se
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
 import { type EntityType, hashEntity, type KlassRelationships } from "@/server/services/rulesets/hashing.ts";
+import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
-import {
-  CUSTOMIZATION_REPOS,
-  type CustomizationKind,
-  ENTITY_REPOS,
-  ENTITY_TYPE_TO_SOURCE_TYPE,
-  type EntityWithId,
-} from "./constants.ts";
+import { CUSTOMIZATION_REPOS, type CustomizationKind, ENTITY_REPOS, type EntityWithId } from "./constants.ts";
 import { copyEntityCustomizations, copyEntityRelationships } from "./copy.ts";
 import { fetchEntityCustomizations, fetchKlassLevelCustomizations, fetchKlassRelationships } from "./customizations.ts";
 import { buildOverrideMap, buildSourceChain } from "./overrideMap.ts";
@@ -40,7 +35,7 @@ export async function cowEntity(
   customizationIds?: Map<string, string>,
 ): Promise<EntityWithId> {
   const repo = ENTITY_REPOS[entityType];
-  const sourceType = ENTITY_TYPE_TO_SOURCE_TYPE[entityType];
+  const sourceType = isCustomizableEntityType(entityType) ? entityType : undefined;
 
   // A second first edit must wait for the copying transaction, then see its
   // committed snapshot. Keep this separate from the SELECT: under READ

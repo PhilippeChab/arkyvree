@@ -330,11 +330,11 @@ export interface CachedRulesetData {
   itemsById: Map<string, Item>;
   mechanicsById: Map<string, Mechanic>;
   klassLevelsById: Map<string, KlassLevel>;
-  /** Key: `${klassId}:${level}`. Replaces `KlassLevels.findOneByKlassAndLevel`. */
+  /** Key: `${klassId}:${level}`. */
   klassLevelByKlassAndLevel: Map<string, KlassLevel>;
-  /** klassId → klassLevels[] sorted by level. Replaces `KlassLevels.findManyByKlass`. */
+  /** klassId → klassLevels[] sorted by level. */
   klassLevelsByKlassId: Map<string, KlassLevel[]>;
-  /** entityId → properties[]. Replaces `Properties.findManyByEntity`. */
+  /** entityId → properties[]. */
   propertiesByEntity: Map<string, Property[]>;
   /** entityType → properties[] (e.g. "items" → all item properties across the chain).
    *  Covers the "group properties by entity type" pattern TargetPaths needs. */
@@ -343,37 +343,30 @@ export interface CachedRulesetData {
   klassLevelFeatsByKlassLevel: Map<string, KlassLevelFeat[]>;
   /** klassLevelId → klassLevelPowers[]. */
   klassLevelPowersByKlassLevel: Map<string, KlassLevelPower[]>;
-  /** klassLevelId → klassLevelFeats joined with their feats.
-   *  Replaces `KlassLevelFeats.findManyWithFeats`. */
+  /** klassLevelId → klassLevelFeats joined with their feats. */
   klassLevelFeatsWithFeatsByKlassLevel: Map<string, (KlassLevelFeat & { featsInRule: FeatWithAptitudes })[]>;
-  /** klassLevelId → klassLevelPowers joined with their powers.
-   *  Replaces `KlassLevelPowers.findManyWithPowers`. */
+  /** klassLevelId → klassLevelPowers joined with their powers. */
   klassLevelPowersWithPowersByKlassLevel: Map<string, (KlassLevelPower & { powersInRule: PowerWithAptitudes })[]>;
-  /** klassId → klassSkills joined with their skills.
-   *  Replaces `KlassSkills.findManyWithSkills`. */
+  /** klassId → klassSkills joined with their skills. */
   klassSkillsWithSkillsByKlass: Map<string, (KlassSkill & { skillsInRule: Skill })[]>;
-  /** Aptitude IDs that have at least one power linked in powers_aptitudes.
-   *  Replaces `PowersAptitudes.findDistinctAptitudeIds`. */
+  /** Aptitude IDs that have at least one power linked in powers_aptitudes. */
   aptitudeIdsByHavingPowers: Set<string>;
-  /** Modifier rows indexed by sourceId. Replaces ruleset-scoped
-   *  `Modifiers.findManyBySource` / `findManyBySourceIds`. */
+  /** Modifier rows indexed by sourceId. */
   modifiersBySource: Map<string, Modifier[]>;
-  /** Modifier rows indexed by id. Replaces ruleset-scoped `Modifiers.findOne`. */
+  /** Modifier rows indexed by id. */
   modifiersById: Map<string, Modifier>;
-  /** Requirement rows (non-sibling) indexed by entityId.
-   *  Replaces ruleset-scoped `Requirements.findManyByEntity*`. */
+  /** Requirement rows (non-sibling) indexed by entityId. */
   requirementsByEntity: Map<string, Requirement[]>;
   /** Reverse property index: `${entityType}:${type}:${value}` → entity IDs
-   *  matching that property. Replaces `Properties.findEntityIdsByPropertyValues`.
+   *  matching that property.
    *  Stays ruleset-agnostic — any (entityType, type, value) triple can be looked up. */
   entityIdsByPropertyLookup: Map<string, string[]>;
-  /** klassId → highest `level` among that klass's klass levels. Replaces
-   *  `KlassLevels.findMaxLevelByKlassIds` on the level-up class-browse path. */
+  /** klassId → highest `level` among that klass's klass levels (the level-up class list). */
   maxLevelByKlassId: Map<string, number>;
   /** klassId → klassSkills[] (bare rows, unjoined).
    *  Complements `klassSkillsWithSkillsByKlass` for callers that only need the link rows. */
   klassSkillsByKlassId: Map<string, KlassSkill[]>;
-  /** klassLevelId → klassLevelSaves[]. Replaces `klassLevelSaves.filter(by klassLevelId)`. */
+  /** klassLevelId → klassLevelSaves[]. */
   klassLevelSavesByKlassLevelId: Map<string, KlassLevelSave[]>;
   /** `stripSeparators(aptitude.name)` → aptitudeId. Killed off 4+ inline rebuilds
    *  of the same map across services (finalize, distribution, pickQueries, loader). */

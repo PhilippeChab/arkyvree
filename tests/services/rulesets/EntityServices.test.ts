@@ -18,7 +18,7 @@ import PowersService from "@/server/services/rulesets/PowersService.ts";
 import RacesService from "@/server/services/rulesets/RacesService.ts";
 import SavesService from "@/server/services/rulesets/SavesService.ts";
 import SkillsService from "@/server/services/rulesets/SkillsService.ts";
-import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
+import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestRuleset, createTestUserAndRuleset, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
 
@@ -267,7 +267,7 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
 // Mechanics can't be customized, so nothing can point at them.
 describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %s", (entityType) => {
   const service = SERVICES[entityType];
-  const ownsModifiers = new Set<string>(CUSTOMIZABLE_ENTITY_TYPES).has(entityType);
+  const ownsModifiers = isCustomizableEntityType(entityType);
 
   /** Gives the entity a requirement, a property and, when its type can own one, a modifier with a requirement of its own. */
   async function customize(id: string) {

@@ -17,7 +17,6 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import type { EntityType } from "@/server/services/rulesets/hashing.ts";
-import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 
 // ──────────────────────────────────────────────────────────────
 // Constants
@@ -28,11 +27,6 @@ export interface EntityWithId {
   rulesetId: string;
   [key: string]: unknown;
 }
-
-// Customization source type mapping: every customizable entity has modifiers, sourced by its own type
-export const ENTITY_TYPE_TO_SOURCE_TYPE: Record<string, string> = Object.fromEntries(
-  CUSTOMIZABLE_ENTITY_TYPES.map((entityType) => [entityType, entityType]),
-);
 
 // Tables that participate in the name-based sibling fallback. Limited to
 // feats and powers because those are the entity types D&D sourcebooks
