@@ -182,17 +182,18 @@ describe("conventions", () => {
       "test-placement tests/services/x/BarService.test.ts",
     ]);
   });
-  test("a concern sits in its file, its class is named for what it adds, and it holds no state", () => {
+  test("a concern sits in its file, its class is named for what it adds, and it holds no state", async () => {
     const concern = (fn: string, cls: string, member = "m() {}") =>
       `export function ${fn}<B extends Constructor<Base>>(Base: B) {\n  abstract class ${cls} extends Base {\n    ${member}\n  }\n  return ${cls};\n}\n`;
     expect(
-      lintRepo(
+      await lintRepo(
         {
           "server/a/Archives.ts": concern("Archives", "Archiving"),
           "server/a/Searches.ts": concern("Searches", "Searching"),
           "server/a/Stars.ts": concern("Stars", "Starring"),
           "server/a/ScopesToRuleset.ts": concern("ScopesToRuleset", "ScopingToRuleset"),
           "server/a/ArmorClass.ts": concern("ArmorClass", "WithArmorClass"),
+          "server/a/AppliesBonuses.ts": concern("AppliesBonuses", "ApplyingBonuses"),
           "server/a/Declares.ts": concern("Declares", "Declaring", "declare readonly table: T;"),
           "server/a/Misnamed.ts": concern("Publishes", "Publishing"),
           "server/a/Scoped.ts": concern("Scoped", "ScopedToRuleset"),

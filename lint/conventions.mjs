@@ -308,8 +308,13 @@ const testPlacement = {
   },
 };
 
-/** The `-ing` forms a third-person verb can take: `Archives` → `Archiving`, `Stars` → `Starring`, `Scopes` → `Scoping`. */
+/**
+ * The `-ing` forms a third-person verb can take: `Archives` → `Archiving`, `Stars` → `Starring`, `Scopes` → `Scoping`,
+ * `Applies` → `Applying`.
+ */
 function gerunds(verb) {
+  // Applies → Applying
+  if (verb.endsWith("ies")) return [`${verb.slice(0, -3)}ying`];
   const base = /(ch|sh|ss|x|z)es$/.test(verb) ? verb.slice(0, -2) : verb.slice(0, -1);
   return [`${base}ing`, `${base.replace(/e$/, "")}ing`, `${base}${base.at(-1)}ing`];
 }
