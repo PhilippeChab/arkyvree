@@ -29,6 +29,40 @@ import { stripSeparators } from "@/shared/utils.ts";
 import { ListsSpells } from "./concerns/ListsSpells.ts";
 
 class ClassLevelsService extends include(Object, ListsSpells) {
+  private buildClassLevelDetail<L extends KlassLevel>(
+    ruleset: { baseRules: BaseRules },
+    rulesetData: CachedRulesetData,
+    level: L,
+  ) {
+    const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+    const properties = rulesetData.propertiesByEntity.get(level.id) ?? [];
+    const modifiers = rulesetData.modifiersBySource.get(level.id) ?? [];
+    const requirements = rulesetData.requirementsByEntity.get(level.id) ?? [];
+    const levelFeats = rulesetData.klassLevelFeatsByKlassLevel.get(level.id) ?? [];
+    const levelSaves = rulesetData.klassLevelSavesByKlassLevelId.get(level.id) ?? [];
+
+    const featsData = levelFeats.map((lf) => {
+      const feat = rulesetData.featsById.get(lf.featId);
+      const aptitudeEntry = feat?.featsAptitudesInRules?.find((fa) => fa.aptitudeId === lf.aptitudeId);
+      return {
+        ...feat!,
+        aptitudeId: lf.aptitudeId,
+        aptitudeName: aptitudeEntry?.aptitudesInRule?.name ?? null,
+        free: lf.free,
+      };
+    });
+    const savesData = levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base }));
+
+    return {
+      ...hooks.classLevels.enrichWithProperties([level], properties)[0],
+      feats: featsData,
+      saves: savesData,
+      modifiers,
+      properties,
+      requirements,
+    };
+  }
+
   private async listClassLevels(rulesetId: string, classId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -69,40 +103,6 @@ class ClassLevelsService extends include(Object, ListsSpells) {
 
       return hooks.classLevels.enrichWithProperties(enrichedLevels, levelProperties);
     });
-  }
-
-  private buildClassLevelDetail<L extends KlassLevel>(
-    ruleset: { baseRules: BaseRules },
-    rulesetData: CachedRulesetData,
-    level: L,
-  ) {
-    const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-    const properties = rulesetData.propertiesByEntity.get(level.id) ?? [];
-    const modifiers = rulesetData.modifiersBySource.get(level.id) ?? [];
-    const requirements = rulesetData.requirementsByEntity.get(level.id) ?? [];
-    const levelFeats = rulesetData.klassLevelFeatsByKlassLevel.get(level.id) ?? [];
-    const levelSaves = rulesetData.klassLevelSavesByKlassLevelId.get(level.id) ?? [];
-
-    const featsData = levelFeats.map((lf) => {
-      const feat = rulesetData.featsById.get(lf.featId);
-      const aptitudeEntry = feat?.featsAptitudesInRules?.find((fa) => fa.aptitudeId === lf.aptitudeId);
-      return {
-        ...feat!,
-        aptitudeId: lf.aptitudeId,
-        aptitudeName: aptitudeEntry?.aptitudesInRule?.name ?? null,
-        free: lf.free,
-      };
-    });
-    const savesData = levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base }));
-
-    return {
-      ...hooks.classLevels.enrichWithProperties([level], properties)[0],
-      feats: featsData,
-      saves: savesData,
-      modifiers,
-      properties,
-      requirements,
-    };
   }
 
   async getClassLevel(rulesetId: string, classId: string, levelId: string) {

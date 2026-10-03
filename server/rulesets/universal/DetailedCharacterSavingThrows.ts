@@ -73,25 +73,6 @@ export default class DetailedCharacterSavingThrows {
 
   private readonly saveAbilityNames = new Map<string, string>();
 
-  getSavingThrow(savingThrowName: string): DetailedCharacterComprehensiveSavingThrows[string] {
-    return this.detailedCharacterSavingThrows[stripSeparators(savingThrowName)];
-  }
-
-  getSavingThrows(): DetailedCharacterComprehensiveSavingThrows {
-    return this.detailedCharacterSavingThrows;
-  }
-
-  updateTotal(savingThrowName: string) {
-    const savingThrow = this.detailedCharacterSavingThrows[savingThrowName];
-    savingThrow.total = savingThrow.base + savingThrow.ability + savingThrow.misc;
-  }
-
-  updateTotals() {
-    for (const savingThrowName of Object.keys(this.detailedCharacterSavingThrows)) {
-      this.updateTotal(savingThrowName);
-    }
-  }
-
   initialize(saves: RulesetSave[], rulesetAbilities: RulesetAbility[], klassLevelSaves: KlassLevelSave[]) {
     const abilityNames = new Map(rulesetAbilities.map((a) => [a.id, a.name]));
     const saveBaseValues = new Map<string, number>();
@@ -120,6 +101,25 @@ export default class DetailedCharacterSavingThrows {
         misc: 0,
         total: base + abilityMod,
       };
+    }
+  }
+
+  getSavingThrow(savingThrowName: string): DetailedCharacterComprehensiveSavingThrows[string] {
+    return this.detailedCharacterSavingThrows[stripSeparators(savingThrowName)];
+  }
+
+  getSavingThrows(): DetailedCharacterComprehensiveSavingThrows {
+    return this.detailedCharacterSavingThrows;
+  }
+
+  updateTotal(savingThrowName: string) {
+    const savingThrow = this.detailedCharacterSavingThrows[savingThrowName];
+    savingThrow.total = savingThrow.base + savingThrow.ability + savingThrow.misc;
+  }
+
+  updateTotals() {
+    for (const savingThrowName of Object.keys(this.detailedCharacterSavingThrows)) {
+      this.updateTotal(savingThrowName);
     }
   }
 

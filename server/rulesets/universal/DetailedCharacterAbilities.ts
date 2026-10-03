@@ -71,6 +71,33 @@ export default class DetailedCharacterAbilities {
     return Math.floor((total - CONSTANTS.ABILITY_MODIFIER_OFFSET) / CONSTANTS.ABILITY_MODIFIER_DIVISOR);
   }
 
+  initialize(characterAbilities: { abilityId: string; name: string; score: number }[], levels: CharacterLevel[]) {
+    // Initialize abilities from the character's ability scores
+    for (const { abilityId, name, score } of characterAbilities) {
+      const normalizedName = stripSeparators(name);
+      this.abilityIdToName.set(abilityId, normalizedName);
+
+      this.detailedCharacterAbilities[normalizedName] = {
+        base: score,
+        level: 0,
+        misc: 0,
+        total: score,
+        modifier: this.computeModifier(score),
+      };
+    }
+
+    // Apply level-up ability increases
+    for (const level of levels) {
+      if (level.abilityId) {
+        const normalizedName = this.abilityIdToName.get(level.abilityId);
+        if (normalizedName && this.detailedCharacterAbilities[normalizedName]) {
+          this.detailedCharacterAbilities[normalizedName].level += 1;
+          this.updateTotal(normalizedName);
+        }
+      }
+    }
+  }
+
   getAbilities() {
     return this.detailedCharacterAbilities;
   }
@@ -124,33 +151,6 @@ export default class DetailedCharacterAbilities {
   updateTotals(): void {
     for (const ability of Object.keys(this.detailedCharacterAbilities)) {
       this.updateTotal(ability);
-    }
-  }
-
-  initialize(characterAbilities: { abilityId: string; name: string; score: number }[], levels: CharacterLevel[]) {
-    // Initialize abilities from the character's ability scores
-    for (const { abilityId, name, score } of characterAbilities) {
-      const normalizedName = stripSeparators(name);
-      this.abilityIdToName.set(abilityId, normalizedName);
-
-      this.detailedCharacterAbilities[normalizedName] = {
-        base: score,
-        level: 0,
-        misc: 0,
-        total: score,
-        modifier: this.computeModifier(score),
-      };
-    }
-
-    // Apply level-up ability increases
-    for (const level of levels) {
-      if (level.abilityId) {
-        const normalizedName = this.abilityIdToName.get(level.abilityId);
-        if (normalizedName && this.detailedCharacterAbilities[normalizedName]) {
-          this.detailedCharacterAbilities[normalizedName].level += 1;
-          this.updateTotal(normalizedName);
-        }
-      }
     }
   }
 }

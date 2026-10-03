@@ -60,14 +60,6 @@ export default class DetailedCharacterFeats {
 
   private readonly detailedCharacterFeats: DetailedCharacterComprehensiveFeats = {};
 
-  getFeat(featName: string) {
-    return this.detailedCharacterFeats[stripSeparators(featName)] as FeatEntry | undefined;
-  }
-
-  getFeats() {
-    return this.detailedCharacterFeats;
-  }
-
   initialize(rulesetFeats: Feat[], possessedFeats: Feat[]) {
     const possessedCounts = new Map<string, number>();
     for (const feat of possessedFeats) {
@@ -85,6 +77,14 @@ export default class DetailedCharacterFeats {
         count,
       };
     }
+  }
+
+  getFeat(featName: string) {
+    return this.detailedCharacterFeats[stripSeparators(featName)] as FeatEntry | undefined;
+  }
+
+  getFeats() {
+    return this.detailedCharacterFeats;
   }
 
   injectGroupings(groupings: Record<string, Record<string, FeatEntry>>) {

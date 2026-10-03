@@ -70,6 +70,11 @@ interface SignedTokenPayload {
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 class AttachmentsService {
+  private buildKey(blobId: string, filename: string): string {
+    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
+    return `blobs/${blobId}/${safe}`;
+  }
+
   private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
     const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
     if (refs.length > 0) return null;
@@ -135,11 +140,6 @@ class AttachmentsService {
     if (!policy.contentTypes.includes(contentType)) {
       throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
     }
-  }
-
-  private buildKey(blobId: string, filename: string): string {
-    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
-    return `blobs/${blobId}/${safe}`;
   }
 
   private signToken(payload: Omit<SignedTokenPayload, "iat">): string {

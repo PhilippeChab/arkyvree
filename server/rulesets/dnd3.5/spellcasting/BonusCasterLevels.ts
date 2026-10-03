@@ -63,6 +63,17 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       }
     }
 
+    applyBonusCasterLevelModifiers(holders: Holders, feats: FeatWithPMR[]) {
+      // Filter to aptitudes.* targets only — we only want spell progression
+      const aptitudeModifiers = this.bonusKlassLevelModifiers.filter((m) => m.target.startsWith("aptitudes."));
+
+      for (const modifier of aptitudeModifiers) {
+        this.characterModifiers.evaluateModifier(modifier, holders);
+      }
+
+      this.syncDomainSpellAptitudes(feats);
+    }
+
     getBonusKlassLevelAttribution() {
       return this.bonusKlassLevelAttribution;
     }
@@ -73,17 +84,6 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
 
     getBonusKlassLevels() {
       return this.bonusKlassLevels;
-    }
-
-    applyBonusCasterLevelModifiers(holders: Holders, feats: FeatWithPMR[]) {
-      // Filter to aptitudes.* targets only — we only want spell progression
-      const aptitudeModifiers = this.bonusKlassLevelModifiers.filter((m) => m.target.startsWith("aptitudes."));
-
-      for (const modifier of aptitudeModifiers) {
-        this.characterModifiers.evaluateModifier(modifier, holders);
-      }
-
-      this.syncDomainSpellAptitudes(feats);
     }
 
     fetchBonusCasterLevelData(

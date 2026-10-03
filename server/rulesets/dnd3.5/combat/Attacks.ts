@@ -69,6 +69,19 @@ function adjustDamageForSize(baseDamage: string, size: string): string {
 /** A character's attacks: its base attack bonus, grapple, and each weapon's to-hit and damage. */
 export function Attacks<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithAttacks extends Base {
+    protected initializeBaseAttackBonus(
+      classes: ReturnType<DetailedCharacterClasses["getClasses"]>,
+      klassLevelProperties: Map<string, { bab: number; skills: number }>,
+    ): void {
+      const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
+        const lastLevel = klass.levels.at(-1);
+        if (!lastLevel) return acc;
+        return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
+      }, 0);
+
+      this.detailedCharacterCombat.bab = baseAttackBonusFromClasses;
+    }
+
     protected updateGrappleTotal() {
       const g = this.detailedCharacterCombat.grapple;
       g.bab = this.detailedCharacterCombat.bab;
@@ -97,17 +110,38 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       }
     }
 
-    protected initializeBaseAttackBonus(
-      classes: ReturnType<DetailedCharacterClasses["getClasses"]>,
-      klassLevelProperties: Map<string, { bab: number; skills: number }>,
-    ): void {
-      const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
-        const lastLevel = klass.levels.at(-1);
-        if (!lastLevel) return acc;
-        return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
-      }, 0);
+    /** Costs each weapon the character isn't proficient with the non-proficiency penalty: 4 to hit, nothing else. */
+    applyProficiencyPenalties(unproficientItemIds: Set<string>) {
+      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
+        for (const slotKey of WEAPON_SET_SLOTS) {
+          const weapon = weaponSet[slotKey];
+          if (!weapon?.itemId || !unproficientItemIds.has(weapon.itemId)) continue;
 
-      this.detailedCharacterCombat.bab = baseAttackBonusFromClasses;
+          weapon.proficient = false;
+          weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
+        }
+      }
+
+      this.updateWeaponsTotal();
+    }
+
+    applyWeaponFinesse(characterFeats: DetailedCharacterFeats): void {
+      const hasFinesse = characterFeats.getFeat("Weapon Finesse")?.possessed ?? false;
+      if (!hasFinesse) return;
+
+      const dexMod = this.characterAbilities.getAbilityModifier("Dexterity");
+
+      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
+        for (const slotKey of WEAPON_SET_SLOTS) {
+          const weapon = weaponSet[slotKey];
+          if (!weapon || !weapon.finessable) continue;
+          if (dexMod > weapon.tohit.strength) {
+            weapon.tohit.strength = dexMod;
+          }
+        }
+      }
+
+      this.updateWeaponsTotal();
     }
 
     addWeapon(
@@ -266,40 +300,6 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           weapon.damage.total = formatDamageTotal(weapon);
         }
       }
-    }
-
-    /** Costs each weapon the character isn't proficient with the non-proficiency penalty: 4 to hit, nothing else. */
-    applyProficiencyPenalties(unproficientItemIds: Set<string>) {
-      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
-        for (const slotKey of WEAPON_SET_SLOTS) {
-          const weapon = weaponSet[slotKey];
-          if (!weapon?.itemId || !unproficientItemIds.has(weapon.itemId)) continue;
-
-          weapon.proficient = false;
-          weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
-        }
-      }
-
-      this.updateWeaponsTotal();
-    }
-
-    applyWeaponFinesse(characterFeats: DetailedCharacterFeats): void {
-      const hasFinesse = characterFeats.getFeat("Weapon Finesse")?.possessed ?? false;
-      if (!hasFinesse) return;
-
-      const dexMod = this.characterAbilities.getAbilityModifier("Dexterity");
-
-      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
-        for (const slotKey of WEAPON_SET_SLOTS) {
-          const weapon = weaponSet[slotKey];
-          if (!weapon || !weapon.finessable) continue;
-          if (dexMod > weapon.tohit.strength) {
-            weapon.tohit.strength = dexMod;
-          }
-        }
-      }
-
-      this.updateWeaponsTotal();
     }
   }
   return WithAttacks;

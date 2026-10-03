@@ -50,14 +50,6 @@ export default class DetailedCharacterInventory {
 
   private rawItems: RawInventoryEntry[] = [];
 
-  getFlatInventory() {
-    return this.rawItems;
-  }
-
-  getInventory() {
-    return this.detailedCharacterInventory;
-  }
-
   initialize(inventory: RawInventoryEntry[]) {
     this.rawItems = inventory;
     for (const entry of inventory) {
@@ -126,5 +118,13 @@ export default class DetailedCharacterInventory {
     if (set0Mainhand?.name === "Unarmed Strike" && set0Mainhand.itemId === null) {
       this.characterWeapons.registerWeapon(0, "Main Hand", { name: "Unarmed Strike" } as unknown as Item);
     }
+  }
+
+  getFlatInventory() {
+    return this.rawItems;
+  }
+
+  getInventory() {
+    return this.detailedCharacterInventory;
   }
 }

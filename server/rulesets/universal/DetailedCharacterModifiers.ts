@@ -40,18 +40,6 @@ export default class DetailedCharacterModifiers {
     skippedModifiers: [],
   };
 
-  private resolveTemplateValue(
-    template: string,
-    holders: Holders,
-    modifier: Modifier,
-  ): number | string | boolean | null {
-    const expression = extractTemplateExpression(template);
-    if (!expression) return null;
-    return evaluateTemplateExpression(expression, holders, this.targetPaths, (warning) => {
-      this.detailedCharacterModifiers.skippedModifiers.push({ warning, modifier });
-    });
-  }
-
   private applyModifier(modifier: Modifier, result: TraversePathResult, holders: Holders) {
     const { value, valueType, operator } = modifier;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,6 +171,18 @@ export default class DetailedCharacterModifiers {
     if (holder.updateAvailables) {
       holder.updateAvailables();
     }
+  }
+
+  private resolveTemplateValue(
+    template: string,
+    holders: Holders,
+    modifier: Modifier,
+  ): number | string | boolean | null {
+    const expression = extractTemplateExpression(template);
+    if (!expression) return null;
+    return evaluateTemplateExpression(expression, holders, this.targetPaths, (warning) => {
+      this.detailedCharacterModifiers.skippedModifiers.push({ warning, modifier });
+    });
   }
 
   // ── Private methods ──────────────────────────────────────────────

@@ -136,10 +136,6 @@ export default class DetailedCharacterIdentity {
   protected readonly detailedCharacterIdentity: DetailedCharacterComprehensiveIdentity =
     {} as DetailedCharacterComprehensiveIdentity;
 
-  getIdentity() {
-    return this.detailedCharacterIdentity;
-  }
-
   initialize(character: Character, race: Race, languages: Language[]) {
     const classes = this.characterClasses.getClasses();
     const level = Object.values(classes).reduce((acc, klass) => acc + klass.level, 0);
@@ -167,5 +163,9 @@ export default class DetailedCharacterIdentity {
       level,
       xp: character.xp,
     };
+  }
+
+  getIdentity() {
+    return this.detailedCharacterIdentity;
   }
 }

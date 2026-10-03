@@ -88,6 +88,49 @@ export default class DetailedCharacterPowers {
 
   private readonly detailedCharacterPowers: DetailedCharacterComprehensivePowers = {};
 
+  initialize(
+    powers: (Power & { properties: Property[]; aptitudeId: string; powerLevel: number | null })[],
+    rulesetPowers: PowerWithAptitudes[],
+    rulesetAptitudes: Aptitude[],
+  ) {
+    this.addPowerEntries(powers);
+
+    // Build spell known data nested under each spell entry: spell → aptitude → { known }
+    // Exclude domain/specialist aptitudes — those are auto-granted, not "known"
+    const aptitudeIdToSlug = new Map<string, string>();
+    for (const apt of rulesetAptitudes) {
+      if (apt.name.includes("Domain") || apt.name.includes("Specialist")) continue;
+      aptitudeIdToSlug.set(apt.id, spellPossessionSlug(apt.name));
+    }
+
+    for (const power of rulesetPowers) {
+      const spellSlug = stripSeparators(power.name);
+      for (const pa of power.powersAptitudesInRules) {
+        if (pa.level == null) continue;
+        const aptSlug = aptitudeIdToSlug.get(pa.aptitudeId);
+        if (!aptSlug) continue;
+
+        if (!this.detailedCharacterPowers[spellSlug]) {
+          this.detailedCharacterPowers[spellSlug] = {} as Record<string, { known: boolean }>;
+        }
+        (this.detailedCharacterPowers[spellSlug] as Record<string, { known: boolean }>)[aptSlug] = { known: false };
+      }
+    }
+
+    // Mark known from character's actual powers
+    for (const power of powers) {
+      const aptSlug = aptitudeIdToSlug.get(power.aptitudeId);
+      if (!aptSlug) continue;
+
+      const spellEntry = this.detailedCharacterPowers[stripSeparators(power.name)] as
+        | Record<string, { known: boolean }>
+        | undefined;
+      if (spellEntry?.[aptSlug]) {
+        spellEntry[aptSlug].known = true;
+      }
+    }
+  }
+
   getFlatPowers(): Record<string, PowerEntry> {
     const result: Record<string, PowerEntry> = {};
     for (const [key, value] of Object.entries(this.detailedCharacterPowers)) {
@@ -134,49 +177,6 @@ export default class DetailedCharacterPowers {
       if ("dc" in value) {
         const dc = (value as PowerEntry).dc!;
         dc.total = dc.base + dc.level + dc.ability + dc.misc;
-      }
-    }
-  }
-
-  initialize(
-    powers: (Power & { properties: Property[]; aptitudeId: string; powerLevel: number | null })[],
-    rulesetPowers: PowerWithAptitudes[],
-    rulesetAptitudes: Aptitude[],
-  ) {
-    this.addPowerEntries(powers);
-
-    // Build spell known data nested under each spell entry: spell → aptitude → { known }
-    // Exclude domain/specialist aptitudes — those are auto-granted, not "known"
-    const aptitudeIdToSlug = new Map<string, string>();
-    for (const apt of rulesetAptitudes) {
-      if (apt.name.includes("Domain") || apt.name.includes("Specialist")) continue;
-      aptitudeIdToSlug.set(apt.id, spellPossessionSlug(apt.name));
-    }
-
-    for (const power of rulesetPowers) {
-      const spellSlug = stripSeparators(power.name);
-      for (const pa of power.powersAptitudesInRules) {
-        if (pa.level == null) continue;
-        const aptSlug = aptitudeIdToSlug.get(pa.aptitudeId);
-        if (!aptSlug) continue;
-
-        if (!this.detailedCharacterPowers[spellSlug]) {
-          this.detailedCharacterPowers[spellSlug] = {} as Record<string, { known: boolean }>;
-        }
-        (this.detailedCharacterPowers[spellSlug] as Record<string, { known: boolean }>)[aptSlug] = { known: false };
-      }
-    }
-
-    // Mark known from character's actual powers
-    for (const power of powers) {
-      const aptSlug = aptitudeIdToSlug.get(power.aptitudeId);
-      if (!aptSlug) continue;
-
-      const spellEntry = this.detailedCharacterPowers[stripSeparators(power.name)] as
-        | Record<string, { known: boolean }>
-        | undefined;
-      if (spellEntry?.[aptSlug]) {
-        spellEntry[aptSlug].known = true;
       }
     }
   }

@@ -14,10 +14,6 @@ import { stripSeparators } from "@/shared/utils.ts";
 /** The powers a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
 export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithKnownPowers extends Base {
-    getSpellTags() {
-      return this.spellTags;
-    }
-
     buildSpellTags(feats: FeatWithPMR[], rulesetAptitudes: Aptitude[]) {
       const characterFeatNames = new Set(feats.map((f) => f.name));
 
@@ -36,6 +32,10 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         if (!this.spellTags[link.powerId]) this.spellTags[link.powerId] = [];
         this.spellTags[link.powerId].push(tag);
       }
+    }
+
+    getSpellTags() {
+      return this.spellTags;
     }
 
     enrichAllKnownPowers(

@@ -155,6 +155,102 @@ export default class DetailedCharacterSkills {
     }
   }
 
+  initialize(
+    rulesetSkills: Skill[],
+    rulesetAbilities: RulesetAbility[],
+    raceSize: string,
+    skillProperties?: Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }>,
+  ) {
+    this.raceSize = raceSize;
+    const classes = this.characterClasses.getClasses();
+
+    // Build ability ID -> name lookup
+    const abilityNameById = new Map<string, string>();
+    for (const a of rulesetAbilities) {
+      abilityNameById.set(a.id, a.name);
+    }
+
+    // Build skill ID → name lookup from ruleset skills
+    const skillNameById = new Map<string, string>();
+    for (const s of rulesetSkills) {
+      skillNameById.set(s.id, s.name);
+    }
+
+    // Collect all class skill IDs + mark subtypes as innate
+    // (e.g., "Craft (Armorsmithing)" is innate if "Craft" is a class skill)
+    const allKlassSkillNames = new Set<string>();
+    const allKlassSkillIds = Object.values(classes).flatMap((klass) =>
+      klass.klassSkills.flatMap((klassSkill) => klassSkill.skillId),
+    );
+    for (const skillId of allKlassSkillIds) {
+      this.innateSkillIds.add(skillId);
+      const name = skillNameById.get(skillId);
+      if (name) allKlassSkillNames.add(name);
+    }
+    // Also mark subtypes of class skills as innate.
+    for (const skill of rulesetSkills) {
+      if (this.innateSkillIds.has(skill.id)) continue;
+      if (isSkillSubtypeOf(skill.name, allKlassSkillNames)) {
+        this.innateSkillIds.add(skill.id);
+      }
+    }
+
+    // Convert stored points to actual ranks per class-level.
+    // Points spent on a class skill (for that class) convert 1:1.
+    // Points spent on a cross-class skill convert at 0.5 ranks per point.
+    for (const klass of Object.values(classes)) {
+      const klassSkillIds = new Set(klass.klassSkills.map((ks) => ks.skillId));
+      const klassSkillNames = new Set(
+        klass.klassSkills.map((ks) => skillNameById.get(ks.skillId)).filter((n): n is string => !!n),
+      );
+
+      for (const level of klass.levels) {
+        for (const skill of level.skills) {
+          const isClassSkillById = klassSkillIds.has(skill.id);
+          const isClassSkillByName = !isClassSkillById && isSkillSubtypeOf(skill.name, klassSkillNames);
+          const isClassSkillForKlass = isClassSkillById || isClassSkillByName;
+          const ranksGained = isClassSkillForKlass ? skill.rank : skill.rank / 2;
+          const current = this.rankBySkillId.get(skill.id) ?? 0;
+          this.rankBySkillId.set(skill.id, current + ranksGained);
+        }
+      }
+    }
+
+    for (const skill of rulesetSkills) {
+      const props = skillProperties?.get(skill.id);
+      const impactedByWeight = props?.impactedByWeight ?? false;
+      const usableWithoutTraining = props?.usableWithoutTraining ?? true;
+
+      if (impactedByWeight) {
+        this.weightAffectedSkills.add(stripSeparators(skill.name));
+      }
+
+      const innate = this.innateSkillIds.has(skill.id);
+      const invested = this.rankBySkillId.get(skill.id) ?? 0;
+      const rank = invested;
+      const abilityName = abilityNameById.get(skill.primaryAbilityId) ?? "";
+      const ability = abilityName ? this.characterAbilities.getAbilityModifier(abilityName) : 0;
+      const weight = 0;
+      const misc = 0;
+      const size = skill.name === "Hide" ? (SIZE_HIDE_MOD[this.raceSize] ?? 0) : 0;
+      const total = rank + ability + size + misc - weight;
+
+      this.skillAbilityNames.set(stripSeparators(skill.name), abilityName);
+      this.detailedCharacterSkills[stripSeparators(skill.name)] = {
+        name: skill.name,
+        description: skill.description ?? undefined,
+        trained: usableWithoutTraining ? true : invested !== 0,
+        innate,
+        rank,
+        ability,
+        weight,
+        size,
+        misc,
+        total,
+      };
+    }
+  }
+
   /** Enriches ruleset skills with character-specific class/rank data for level-up UI. */
   getEnrichedSkills<T extends { id: string; name: string }>(
     allSkills: T[],
@@ -275,102 +371,6 @@ export default class DetailedCharacterSkills {
     this.recalculateArmorCheckPenalty();
     for (const skillName of Object.keys(this.detailedCharacterSkills)) {
       this.updateTotal(skillName);
-    }
-  }
-
-  initialize(
-    rulesetSkills: Skill[],
-    rulesetAbilities: RulesetAbility[],
-    raceSize: string,
-    skillProperties?: Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }>,
-  ) {
-    this.raceSize = raceSize;
-    const classes = this.characterClasses.getClasses();
-
-    // Build ability ID -> name lookup
-    const abilityNameById = new Map<string, string>();
-    for (const a of rulesetAbilities) {
-      abilityNameById.set(a.id, a.name);
-    }
-
-    // Build skill ID → name lookup from ruleset skills
-    const skillNameById = new Map<string, string>();
-    for (const s of rulesetSkills) {
-      skillNameById.set(s.id, s.name);
-    }
-
-    // Collect all class skill IDs + mark subtypes as innate
-    // (e.g., "Craft (Armorsmithing)" is innate if "Craft" is a class skill)
-    const allKlassSkillNames = new Set<string>();
-    const allKlassSkillIds = Object.values(classes).flatMap((klass) =>
-      klass.klassSkills.flatMap((klassSkill) => klassSkill.skillId),
-    );
-    for (const skillId of allKlassSkillIds) {
-      this.innateSkillIds.add(skillId);
-      const name = skillNameById.get(skillId);
-      if (name) allKlassSkillNames.add(name);
-    }
-    // Also mark subtypes of class skills as innate.
-    for (const skill of rulesetSkills) {
-      if (this.innateSkillIds.has(skill.id)) continue;
-      if (isSkillSubtypeOf(skill.name, allKlassSkillNames)) {
-        this.innateSkillIds.add(skill.id);
-      }
-    }
-
-    // Convert stored points to actual ranks per class-level.
-    // Points spent on a class skill (for that class) convert 1:1.
-    // Points spent on a cross-class skill convert at 0.5 ranks per point.
-    for (const klass of Object.values(classes)) {
-      const klassSkillIds = new Set(klass.klassSkills.map((ks) => ks.skillId));
-      const klassSkillNames = new Set(
-        klass.klassSkills.map((ks) => skillNameById.get(ks.skillId)).filter((n): n is string => !!n),
-      );
-
-      for (const level of klass.levels) {
-        for (const skill of level.skills) {
-          const isClassSkillById = klassSkillIds.has(skill.id);
-          const isClassSkillByName = !isClassSkillById && isSkillSubtypeOf(skill.name, klassSkillNames);
-          const isClassSkillForKlass = isClassSkillById || isClassSkillByName;
-          const ranksGained = isClassSkillForKlass ? skill.rank : skill.rank / 2;
-          const current = this.rankBySkillId.get(skill.id) ?? 0;
-          this.rankBySkillId.set(skill.id, current + ranksGained);
-        }
-      }
-    }
-
-    for (const skill of rulesetSkills) {
-      const props = skillProperties?.get(skill.id);
-      const impactedByWeight = props?.impactedByWeight ?? false;
-      const usableWithoutTraining = props?.usableWithoutTraining ?? true;
-
-      if (impactedByWeight) {
-        this.weightAffectedSkills.add(stripSeparators(skill.name));
-      }
-
-      const innate = this.innateSkillIds.has(skill.id);
-      const invested = this.rankBySkillId.get(skill.id) ?? 0;
-      const rank = invested;
-      const abilityName = abilityNameById.get(skill.primaryAbilityId) ?? "";
-      const ability = abilityName ? this.characterAbilities.getAbilityModifier(abilityName) : 0;
-      const weight = 0;
-      const misc = 0;
-      const size = skill.name === "Hide" ? (SIZE_HIDE_MOD[this.raceSize] ?? 0) : 0;
-      const total = rank + ability + size + misc - weight;
-
-      this.skillAbilityNames.set(stripSeparators(skill.name), abilityName);
-      this.detailedCharacterSkills[stripSeparators(skill.name)] = {
-        name: skill.name,
-        description: skill.description ?? undefined,
-        trained: usableWithoutTraining ? true : invested !== 0,
-        innate,
-        rank,
-        ability,
-        weight,
-        size,
-        misc,
-        total,
-      };
     }
   }
 

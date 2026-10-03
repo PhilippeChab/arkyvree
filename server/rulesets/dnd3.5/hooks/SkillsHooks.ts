@@ -8,23 +8,6 @@ import { cowEntityForCustomization, entityHasCharacterPicks } from "@/server/ser
 import { stripSeparators } from "@/shared/utils.ts";
 
 export class Dnd35SkillsHooks implements SkillsHooks {
-  async deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void> {
-    const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
-    if (!feat) return;
-    if (await entityHasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
-      throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
-    }
-
-    // Deleting the local COW copy leaves a tombstone snapshot: the obsolete
-    // inherited feat disappears from this fork while its ancestor stays intact.
-    const targetId = await cowEntityForCustomization(tx, rulesetId, "feats", feat.id);
-    // Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link, and
-    // the database deletes the feat's customizations.
-    // Soft-archive would block a future generateSkillFeat with the same name
-    // (the unique index on feats doesn't filter deleted_at).
-    await Feats.delete(tx, { id: targetId });
-  }
-
   buildProperties(
     skillId: string,
     body: { impactedByWeight: boolean; usableWithoutTraining: boolean },
@@ -51,6 +34,23 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     }
 
     return records;
+  }
+
+  async deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void> {
+    const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
+    if (!feat) return;
+    if (await entityHasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
+      throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
+    }
+
+    // Deleting the local COW copy leaves a tombstone snapshot: the obsolete
+    // inherited feat disappears from this fork while its ancestor stays intact.
+    const targetId = await cowEntityForCustomization(tx, rulesetId, "feats", feat.id);
+    // Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link, and
+    // the database deletes the feat's customizations.
+    // Soft-archive would block a future generateSkillFeat with the same name
+    // (the unique index on feats doesn't filter deleted_at).
+    await Feats.delete(tx, { id: targetId });
   }
 
   enrichWithProperties<T extends { id: string }>(

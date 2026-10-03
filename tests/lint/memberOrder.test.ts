@@ -3,9 +3,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { compareRoutes, verbGroup } from "@/lint/memberOrder.mjs";
+import { compareRoutes, lifecycleStep, verbGroup } from "@/lint/memberOrder.mjs";
 
-const [READ, CREATE, UPDATE, DELETE, ACTION] = [0, 1, 2, 3, 4];
+const [LIFECYCLE, READ, CREATE, UPDATE, DELETE, ACTION] = [0, 1, 2, 3, 4, 5];
 
 describe("member order", () => {
   test("groups a method by its leading verb", () => {
@@ -30,6 +30,17 @@ describe("member order", () => {
       DELETE,
       DELETE,
     ]);
+    // The lifecycle comes first, in pipeline order rather than by name.
+    expect(["loadSharedData", "preload", "initialize", "build", "applyLoadedData"].map(verbGroup)).toEqual([
+      LIFECYCLE,
+      LIFECYCLE,
+      LIFECYCLE,
+      LIFECYCLE,
+      LIFECYCLE,
+    ]);
+    expect(
+      ["build", "applyLoadedData", "preload", "loadSharedData"].sort((a, b) => lifecycleStep(a) - lifecycleStep(b)),
+    ).toEqual(["loadSharedData", "preload", "build", "applyLoadedData"]);
     // A verb is a whole word: `getter` isn't `get`, and the rest are actions.
     expect(["getter", "publishRuleset", "lockById", "me"].map(verbGroup)).toEqual([ACTION, ACTION, ACTION, ACTION]);
   });

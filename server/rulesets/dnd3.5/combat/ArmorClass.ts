@@ -15,17 +15,17 @@ import { type Property } from "@/shared/relations.ts";
 /** A character's armor class: its armor and shields, and the Dexterity bonus they leave it. */
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
+    protected initializeArmorClass(dexterityModifier: number): void {
+      this.detailedCharacterCombat.ac.dexterity = dexterityModifier;
+      this.updateArmorClassTotal();
+    }
+
     protected updateArmorClassTotal() {
       const ac = this.detailedCharacterCombat.ac;
       ac.size = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
       ac.total = ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.size + ac.misc;
       ac.touch = ac.total - ac.armor - ac.shield - ac.natural;
       ac.flatfooted = ac.total - Math.max(0, ac.dexterity);
-    }
-
-    protected initializeArmorClass(dexterityModifier: number): void {
-      this.detailedCharacterCombat.ac.dexterity = dexterityModifier;
-      this.updateArmorClassTotal();
     }
 
     protected recalculateDexterityAc(): void {

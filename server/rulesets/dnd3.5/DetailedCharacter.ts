@@ -168,6 +168,34 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     modifierOwner: Map<string, { name: string; type: string }>;
   };
 
+  protected buildHolders(): Holders {
+    return {
+      abilities: this.detailedCharacterAbilities,
+      skills: this.detailedCharacterSkills,
+      savingThrows: this.detailedCharacterSavingThrows,
+      combat: this.detailedCharacterCombat,
+      weapons: this.detailedCharacterWeapons,
+      armors: this.detailedCharacterArmors,
+      shields: this.detailedCharacterShields,
+      classes: this.detailedCharacterClasses,
+      feats: this.detailedCharacterFeats,
+      inventory: this.detailedCharacterInventory,
+      powers: this.detailedCharacterPowers,
+      identity: this.detailedCharacterIdentity,
+      aptitudes: this.detailedCharacterAptitudes,
+      bonded: this.detailedCharacterBonds,
+    };
+  }
+
+  protected applyLoadedData(data: Dnd35LoadedCharacterData) {
+    super.applyLoadedData(data);
+    this.skillPointAbilityId = data.skillPointAbilityId;
+    this.skillProperties = data.skillProperties;
+    this.klassLevelProperties = data.klassLevelProperties;
+    this.klassBonusSpellAbilityMap = data.klassBonusSpellAbilityMap;
+    this.klassCasterTypeMap = data.klassCasterTypeMap;
+  }
+
   private getDiagnosticsIndex() {
     if (this.diagnosticsIndex) return this.diagnosticsIndex;
     const featsById = new Map<string, FeatWithPMR>();
@@ -235,34 +263,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
   // ── Protected hooks (abstract implementations) ──────────────────
   protected createDataLoader(): DataLoader {
     return new DetailedCharacterDataLoader(this.character);
-  }
-
-  protected applyLoadedData(data: Dnd35LoadedCharacterData) {
-    super.applyLoadedData(data);
-    this.skillPointAbilityId = data.skillPointAbilityId;
-    this.skillProperties = data.skillProperties;
-    this.klassLevelProperties = data.klassLevelProperties;
-    this.klassBonusSpellAbilityMap = data.klassBonusSpellAbilityMap;
-    this.klassCasterTypeMap = data.klassCasterTypeMap;
-  }
-
-  protected buildHolders(): Holders {
-    return {
-      abilities: this.detailedCharacterAbilities,
-      skills: this.detailedCharacterSkills,
-      savingThrows: this.detailedCharacterSavingThrows,
-      combat: this.detailedCharacterCombat,
-      weapons: this.detailedCharacterWeapons,
-      armors: this.detailedCharacterArmors,
-      shields: this.detailedCharacterShields,
-      classes: this.detailedCharacterClasses,
-      feats: this.detailedCharacterFeats,
-      inventory: this.detailedCharacterInventory,
-      powers: this.detailedCharacterPowers,
-      identity: this.detailedCharacterIdentity,
-      aptitudes: this.detailedCharacterAptitudes,
-      bonded: this.detailedCharacterBonds,
-    };
   }
 
   protected normalizeData(): void {
@@ -390,6 +390,15 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   protected preRequirementProcessing(): void {
     this.detailedCharacterSpellcasting.initSpellcastingHolder(this.holders!, this.modifiers, this.klassCasterTypeMap);
+  }
+
+  // ── Public methods ──────────────────────────────────────────────
+  async build(
+    database?: Db,
+    projectedData?: Dnd35ProjectedCharacterData,
+    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
+  ) {
+    await super.build(database, projectedData, preloaded);
   }
 
   getDetailedCharacterArmors() {
@@ -548,15 +557,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       ...baseResult.issues.slice(aptitudeEndIndex),
     ];
     return { valid: issues.length === 0, issues };
-  }
-
-  // ── Public methods ──────────────────────────────────────────────
-  async build(
-    database?: Db,
-    projectedData?: Dnd35ProjectedCharacterData,
-    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
-  ) {
-    await super.build(database, projectedData, preloaded);
   }
 
   evaluateWithProjectedLevel(

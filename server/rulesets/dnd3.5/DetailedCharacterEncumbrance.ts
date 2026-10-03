@@ -91,6 +91,20 @@ export default class DetailedCharacterEncumbrance {
     return "overloaded";
   }
 
+  initialize(inventory: RawInventoryEntry[], raceSize: string): void {
+    this.raceSize = raceSize;
+
+    let totalWeight = 0;
+    for (const entry of inventory) {
+      const itemWeight = Number(entry.item.weight ?? 0);
+      const quantity = entry.quantity ?? 1;
+      totalWeight += itemWeight * quantity;
+    }
+
+    this.encumbrance.carriedweight = totalWeight;
+    this.updateTotals();
+  }
+
   getEncumberedSpeed(baseSpeed: number): number {
     if (ENCUMBERED_SPEED[baseSpeed] !== undefined) {
       return ENCUMBERED_SPEED[baseSpeed];
@@ -115,19 +129,5 @@ export default class DetailedCharacterEncumbrance {
     const penalties = ENCUMBRANCE_PENALTIES[this.encumbrance.load];
     this.encumbrance.maxdex = penalties.maxdex;
     this.encumbrance.checkpenalty = penalties.checkpenalty;
-  }
-
-  initialize(inventory: RawInventoryEntry[], raceSize: string): void {
-    this.raceSize = raceSize;
-
-    let totalWeight = 0;
-    for (const entry of inventory) {
-      const itemWeight = Number(entry.item.weight ?? 0);
-      const quantity = entry.quantity ?? 1;
-      totalWeight += itemWeight * quantity;
-    }
-
-    this.encumbrance.carriedweight = totalWeight;
-    this.updateTotals();
   }
 }
