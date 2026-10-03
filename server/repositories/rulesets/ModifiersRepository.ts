@@ -3,9 +3,11 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 
-class ModifiersRepository extends BaseRepository<typeof modifiersInCustomization> {
+class ModifiersRepository extends include(BaseRepository<typeof modifiersInCustomization>, GuardsStaleEdits) {
   constructor() {
     super(modifiersInCustomization);
   }

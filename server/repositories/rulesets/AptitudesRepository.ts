@@ -2,13 +2,15 @@ import { and, eq, inArray, isNotNull, isNull, notInArray } from "drizzle-orm";
 
 import { aptitudesInRules, featsAptitudesInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
 class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRules> {
   constructor() {
-    super(aptitudesInRules, "aptitudes");
+    super(aptitudesInRules);
   }
+
+  protected readonly entityType = "aptitudes";
 
   async findLeveledAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
     const rows = await db

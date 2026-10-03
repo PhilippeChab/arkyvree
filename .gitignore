@@ -1,5 +1,5 @@
 # Vite/Frontend
-node_modules/
+node_modules
 dist/
 dist-ssr/
 *.local

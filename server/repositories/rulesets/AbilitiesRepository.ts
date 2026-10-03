@@ -3,12 +3,24 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import { abilitiesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { type RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import { include } from "@/server/mixins.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
+import { ScopesToRuleset } from "@/server/repositories/concerns/ScopesToRuleset.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
-class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules> {
+class AbilitiesRepository extends include(
+  BaseRepository<typeof abilitiesInRules>,
+  Paginates,
+  Searches,
+  ScopesToRuleset,
+) {
   constructor() {
-    super(abilitiesInRules, "abilities");
+    super(abilitiesInRules);
   }
+
+  protected readonly entityType = "abilities";
 
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.abilitiesInRules.findMany({

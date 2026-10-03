@@ -2,11 +2,18 @@ import { and, eq, type InferInsertModel, isNull, not, or } from "drizzle-orm";
 
 import { contributorsInCharacter, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import type { ContributorStatus } from "@/server/repositories/rulesets/ContributorsRepository.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
-class CharacterContributorsRepository extends BaseRepository<typeof contributorsInCharacter> {
+class CharacterContributorsRepository extends include(
+  BaseRepository<typeof contributorsInCharacter>,
+  Paginates,
+  Searches,
+) {
   constructor() {
     super(contributorsInCharacter);
   }

@@ -2,13 +2,16 @@ import { and, eq, type InferInsertModel, isNull, not, or } from "drizzle-orm";
 
 import { contributorsInRules, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
 /** A contributor's status (the tables' CHECK constraint): ruleset and character contributors share it. */
 export type ContributorStatus = "Pending" | "Active" | "Rejected" | "Revoked";
 
-class ContributorsRepository extends BaseRepository<typeof contributorsInRules> {
+class ContributorsRepository extends include(BaseRepository<typeof contributorsInRules>, Paginates, Searches) {
   constructor() {
     super(contributorsInRules);
   }

@@ -10,9 +10,16 @@ import {
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { ChecksRulesetUse } from "@/server/repositories/concerns/ChecksRulesetUse.ts";
+import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 
-class CharacterLevelPowersRepository extends BaseRepository<typeof levelPowersInCharacter> {
+class CharacterLevelPowersRepository extends include(
+  BaseRepository<typeof levelPowersInCharacter>,
+  ChecksRulesetUse,
+  ResolvesCopies,
+) {
   constructor() {
     super(levelPowersInCharacter);
   }

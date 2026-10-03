@@ -2,13 +2,17 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import { include } from "@/server/mixins.ts";
+import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
+import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class KlassesRepository extends RulesetEntityRepository<typeof klassesInRules> {
+class KlassesRepository extends include(RulesetEntityRepository<typeof klassesInRules>, ResolvesCopies) {
   constructor() {
-    super(klassesInRules, "klasses");
+    super(klassesInRules);
   }
+
+  protected readonly entityType = "klasses";
 
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.klassesInRules.findMany({

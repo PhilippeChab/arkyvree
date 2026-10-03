@@ -10,13 +10,18 @@ import {
   savesInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import { include } from "@/server/mixins.ts";
+import { GrantsPerLevel } from "@/server/repositories/concerns/GrantsPerLevel.ts";
+import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
+import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class PowersRepository extends RulesetEntityRepository<typeof powersInRules> {
+class PowersRepository extends include(RulesetEntityRepository<typeof powersInRules>, ResolvesCopies, GrantsPerLevel) {
   constructor() {
-    super(powersInRules, "powers");
+    super(powersInRules);
   }
+
+  protected readonly entityType = "powers";
 
   async findAvailableByAptitude(
     db: Db,

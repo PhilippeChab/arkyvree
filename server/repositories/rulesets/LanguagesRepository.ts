@@ -2,13 +2,15 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { languagesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
 class LanguagesRepository extends RulesetEntityRepository<typeof languagesInRules> {
   constructor() {
-    super(languagesInRules, "languages");
+    super(languagesInRules);
   }
+
+  protected readonly entityType = "languages";
 
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.languagesInRules.findMany({

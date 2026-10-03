@@ -7,7 +7,7 @@ import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 class BlobsRepository extends BaseRepository<typeof blobsInStorage> {
   constructor() {
-    super(blobsInStorage, "blobs");
+    super(blobsInStorage);
   }
 
   async findOne(db: Db, where: { id: string } | { key: string }) {

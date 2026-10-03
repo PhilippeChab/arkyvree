@@ -1,52 +1,6 @@
-import {
-  and,
-  asc,
-  type Column,
-  desc,
-  eq,
-  getTableColumns,
-  ilike,
-  inArray,
-  type InferSelectModel,
-  isNull,
-  not,
-  notInArray,
-  or,
-  sql,
-  type SQL,
-  type Table,
-} from "drizzle-orm";
+import { and, asc, type Column, desc, eq, getTableColumns, isNull, not, sql, type SQL, type Table } from "drizzle-orm";
 
-import { entitySnapshotsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import { currentCowContext } from "@/server/database/cowContext.ts";
 import type { Db } from "@/server/database/index.ts";
-
-export type Paginated<T> = {
-  items: T[];
-  page: number;
-  nextPage: number | undefined;
-};
-
-/** A page of a list held in memory, shaped like the repositories' pages. */
-export function pageOf<T>(items: T[], pagination: { limit: number; page: number }): Paginated<T> {
-  const start = (pagination.page - 1) * pagination.limit;
-  return {
-    items: items.slice(start, start + pagination.limit),
-    page: pagination.page,
-    nextPage: start + pagination.limit < items.length ? pagination.page + 1 : undefined,
-  };
-}
-
-/** A ruleset entity list's filters: the ruleset's own entities and its source chain's, and a campaign's on it. */
-export type RulesetEntityFilters<Extra extends object = object> = Extra & {
-  rulesetId: string;
-  ancestorRulesetIds?: string[];
-  childOnly?: boolean;
-  campaignId?: string;
-  search?: string;
-  orderBy?: "name" | "createdAt" | "updatedAt";
-  orderDir?: "asc" | "desc";
-};
 
 export enum Visibility {
   All,
@@ -60,196 +14,20 @@ export const visibilityMap = {
   all: Visibility.All,
 } as const;
 
+/**
+ * A repository's core: its table, and what every query builds on. The rest is in the concerns a repository includes
+ * (`concerns/`): pagination, search, ruleset scoping, copy-on-write ids, stale-edit guards.
+ */
 abstract class BaseRepository<T extends Table> {
-  constructor(
-    protected readonly table: T,
-    private readonly entityType?: string,
-  ) {}
-
-  /**
-   * Predicate for composite-key WHERE clauses on an entity-id column. When
-   * a cowContext is active, expands to `WHERE col IN (target, ...preCowIds)`
-   * so a stored pre-COW row still matches a submitted post-COW id (and vice
-   * versa). Outside a cowContext this is a plain equality — same behaviour
-   * as before. Use for any repo column that stores a forkable entity id
-   * (e.g. itemId, abilityId, languageId, featId, powerId, skillId).
-   */
-  protected idMatches(column: Column, id: string): SQL {
-    const cow = currentCowContext();
-    if (!cow || cow.idResolveMap.size === 0) return eq(column, id);
-    const target = cow.idResolveMap.get(id) ?? id;
-    const candidates = new Set<string>([target]);
-    for (const [pre, post] of cow.idResolveMap) {
-      if (post === target) candidates.add(pre);
-    }
-    return candidates.size === 1 ? eq(column, target) : inArray(column, [...candidates]);
-  }
-
-  protected paginate(query: { limit: number; page: number }) {
-    return {
-      limit: query.limit + 1,
-      offset: (query.page - 1) * query.limit,
-    };
-  }
-
-  protected paginated<R>(rows: R[], query: { limit: number; page: number }) {
-    const limit = query.limit;
-
-    return {
-      items: rows.slice(0, limit),
-      page: query.page,
-      nextPage: rows.length > limit ? query.page + 1 : undefined,
-    };
-  }
-
-  protected search(search: string | undefined, columns: Column[]): SQL | false {
-    if (!search) return false;
-    return or(...columns.map((column) => ilike(column, `%${search}%`)))!;
-  }
-
-  protected fuzzySearch(search: string | undefined, columns: Column[]): SQL | false {
-    if (!search) return false;
-    return or(
-      ...columns.map((column) => ilike(column, `%${search}%`)),
-      ...columns.map((column) => sql`word_similarity(${search}, ${column}) > 0.7`),
-    )!;
-  }
-
-  protected searchOrderBy(search: string | undefined, columns: Column[], fallback: SQL): SQL {
-    if (!search) return fallback;
-    const ilikeMatch = or(...columns.map((c) => ilike(c, `%${search}%`)))!;
-    const nameIlikeMatch = ilike(columns[0], `%${search}%`);
-    const nameSimilarity = sql`word_similarity(${search}, ${columns[0]})`;
-    return sql`(CASE WHEN ${ilikeMatch} THEN 0 ELSE 1 END), (CASE WHEN ${nameIlikeMatch} THEN 0 ELSE 1 END), ${nameSimilarity} DESC, ${fallback}`;
-  }
-
-  /**
-   * Joins `rulesetsInRules` on `rulesetIdColumn` (a character's ruleset) when it's `rulesetId` or a ruleset built on
-   * it: a fork, or a ruleset subscribing to it as an extension. What an entity's in-use checks count.
-   */
-  protected rulesetOrDescendant(rulesetIdColumn: Column, rulesetId: string): SQL {
-    return and(
-      eq(rulesetsInRules.id, rulesetIdColumn),
-      or(
-        eq(rulesetsInRules.id, rulesetId),
-        sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${rulesetId}::uuid]`,
-        sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${rulesetId}::uuid]`,
-      ),
-    )!;
-  }
+  constructor(protected readonly table: T) {}
 
   protected orderBy(column: Column | SQL, direction: "asc" | "desc" = "asc"): SQL {
     return direction === "asc" ? asc(column) : desc(column);
   }
 
-  /**
-   * Optimistic-lock predicate. When `expectedUpdatedAt` is provided the caller
-   * is asserting "I read this row at this updated_at"; the UPDATE only matches
-   * if the row hasn't moved since. Returns `false` (no clause) when omitted,
-   * so existing callers stay unprotected until they opt in.
-   */
-  protected casUpdatedAt(expectedUpdatedAt: string | undefined): SQL | false {
-    if (!expectedUpdatedAt) return false;
-    // @ts-expect-error all entity tables have updatedAt
-    return eq(this.table.updatedAt, expectedUpdatedAt);
-  }
-
-  /**
-   * Build an `id NOT IN (...)` clause for a list of entity IDs. Returns `false`
-   * (sentinel for `this.where([...])`) when the exclude set is empty so no
-   * clause is emitted.
-   *
-   * Intended for service-layer callers that want to exclude sibling-loser IDs
-   * (from `rulesetData.cow.siblingIds`) at the SQL level, so pagination counts
-   * stay accurate. The sibling-loser set is computed at compose time and
-   * applies to raw repo queries that don't otherwise know the cache exists.
-   */
-  protected excludeIds(ids: Iterable<string> | undefined): SQL | false {
-    if (!ids) return false;
-    const arr = Array.isArray(ids) ? ids : [...ids];
-    if (arr.length === 0) return false;
-    // @ts-expect-error all ruleset tables have id
-    return notInArray(this.table.id, arr);
-  }
-
-  /**
-   * What each character level's class level grants (`granted`, by `klassLevelId`), with the level it's granted at.
-   * The class level is the one the caller passes, not the level's stored one: under copy-on-write, the copy's, whose
-   * grants a join on the stored id would never reach.
-   */
-  protected grantedAt<R extends { klassLevelId: string }>(
-    levels: { id: string; klassLevelId: string }[],
-    granted: R[],
-  ): (R & { characterLevelId: string })[] {
-    return levels.flatMap((level) =>
-      granted
-        .filter((row) => row.klassLevelId === level.klassLevelId)
-        .map((row) => ({ ...row, characterLevelId: level.id })),
-    );
-  }
-
-  protected buildRulesetCondition(db: Db, where: RulesetEntityFilters): SQL<unknown> {
-    const { ancestorRulesetIds, childOnly } = where;
-    // @ts-expect-error all ruleset tables have rulesetId and campaignId
-    const childOwned = and(eq(this.table.rulesetId, where.rulesetId), isNull(this.table.campaignId));
-
-    if (childOnly) {
-      return childOwned!;
-    }
-
-    const inheritedClauses = (ancestorRulesetIds ?? []).map((ancestorId, i) => {
-      const overriddenBy = [where.rulesetId, ...(ancestorRulesetIds ?? []).slice(0, i)];
-      const cowExcluded = notInArray(
-        // @ts-expect-error all ruleset tables have id
-        this.table.id,
-        db
-          .select({ id: entitySnapshotsInRules.sourceEntityId })
-          .from(entitySnapshotsInRules)
-          .where(
-            and(
-              inArray(entitySnapshotsInRules.rulesetId, overriddenBy),
-              eq(entitySnapshotsInRules.entityType, this.entityType!),
-            ),
-          ),
-      );
-      // @ts-expect-error all ruleset tables have rulesetId and campaignId
-      return and(eq(this.table.rulesetId, ancestorId), isNull(this.table.campaignId), cowExcluded);
-    });
-    const inherited = inheritedClauses.length > 0 ? or(...inheritedClauses) : undefined;
-
-    if (where.campaignId) {
-      const campaignOwned = and(
-        // @ts-expect-error all ruleset tables have rulesetId and campaignId
-        eq(this.table.rulesetId, where.rulesetId),
-        // @ts-expect-error all ruleset tables have campaignId
-        eq(this.table.campaignId, where.campaignId),
-      );
-      return or(childOwned, inherited, campaignOwned)!;
-    }
-
-    return inherited ? or(childOwned, inherited)! : childOwned!;
-  }
-
   /** Whether a row matches `where`, on the repositories that look rows up. */
   async exists<W>(this: { findOne(db: Db, where: W): Promise<unknown> }, db: Db, where: W) {
     return Boolean(await this.findOne(db, where));
-  }
-
-  async findAll<R extends InferSelectModel<T>>(
-    callback: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
-    limit = 100,
-  ): Promise<R[]> {
-    const items: R[] = [];
-    let page = 1;
-
-    while (true) {
-      const result = await callback({ limit, page });
-      items.push(...result.items);
-      if (!result.nextPage) break;
-      page = result.nextPage;
-    }
-
-    return items;
   }
 
   /** Call inside a transaction to lock a stored row before changing its children.
@@ -284,15 +62,6 @@ abstract class BaseRepository<T extends Table> {
 
   where(statements: (SQL | boolean)[]) {
     return and(...(statements.filter(Boolean) as SQL[]));
-  }
-
-  async withPagination<R extends InferSelectModel<T>>(
-    query: { limit: number; page: number },
-    callback: (paginate: { limit: number; offset: number }) => Promise<R[]>,
-  ) {
-    const rows = await callback(this.paginate(query));
-
-    return this.paginated(rows, query);
   }
 }
 

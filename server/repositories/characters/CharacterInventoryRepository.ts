@@ -3,9 +3,18 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import { charactersInCharacter, inventoryInCharacter, itemsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { ChecksRulesetUse } from "@/server/repositories/concerns/ChecksRulesetUse.ts";
+import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
+import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 
-class CharacterInventoryRepository extends BaseRepository<typeof inventoryInCharacter> {
+class CharacterInventoryRepository extends include(
+  BaseRepository<typeof inventoryInCharacter>,
+  ChecksRulesetUse,
+  ResolvesCopies,
+  GuardsStaleEdits,
+) {
   constructor() {
     super(inventoryInCharacter);
   }

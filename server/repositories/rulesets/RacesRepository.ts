@@ -2,13 +2,15 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { racesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
 class RacesRepository extends RulesetEntityRepository<typeof racesInRules> {
   constructor() {
-    super(racesInRules, "races");
+    super(racesInRules);
   }
+
+  protected readonly entityType = "races";
 
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.racesInRules.findMany({
