@@ -78,6 +78,30 @@ describe("character levels", () => {
       expect(await nextFighterLevel()).toMatchObject({ nextLevel: 3 });
     });
 
+    test("reads the feats picked in the query, leaving out what isn't a pick", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const general = ctx.aptMap["General"];
+      const cleave = async (selectedFeatPicks?: string) =>
+        (
+          await expectOk(
+            levels["available-feats"].$get({
+              param: { characterId },
+              query: {
+                aptitudeId: general,
+                klassId: ctx.klassMap.pc["Fighter"],
+                level: "1",
+                search: "Cleave",
+                selectedFeatPicks,
+              },
+            }),
+          )
+        ).items.find((feat) => feat.name === "Cleave");
+
+      // Cleave needs Power Attack: picked at this level, it's eligible
+      expect(await cleave()).toMatchObject({ eligible: false });
+      expect(await cleave(`not:ids,${ctx.featMap["Power Attack"]}:${general}`)).toMatchObject({ eligible: true });
+    });
+
     test("reports the slots a class level grants", async () => {
       const { characterId, ctx } = await createCharacter();
       const query = { klassId: ctx.klassMap.pc["Fighter"], level: "1" };

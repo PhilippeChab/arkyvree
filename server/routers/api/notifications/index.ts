@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
-import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { errorResponse, respond } from "@/server/routers/respond.ts";
 import NotificationsService from "@/server/services/NotificationsService.ts";
 
@@ -39,7 +39,7 @@ const notifications = new Hono()
     const result = await NotificationsService.initialize().call("getUnreadSummary", c.var.requestSession);
     return respond(c, result, 200);
   })
-  .post("/:id/read", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .post("/:id/read", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     const result = await NotificationsService.initialize().call("markRead", c.var.requestSession, id);
     return respond(c, result, 200);

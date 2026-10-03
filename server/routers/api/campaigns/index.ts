@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
-import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { errorResponse, respond } from "@/server/routers/respond.ts";
 import CampaignsService from "@/server/services/CampaignsService.ts";
 
@@ -43,7 +43,7 @@ export default new Hono()
       return respond(c, result, 200);
     },
   )
-  .post("/:id/unarchive", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     const result = await CampaignsService.initialize().call("unarchiveCampaign", c.var.requestSession, id);
@@ -53,7 +53,7 @@ export default new Hono()
 
     return c.json({ message: "Campaign unarchived successfully" }, 200);
   })
-  .get("/:id", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .get("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     const result = await CampaignsService.initialize().call("getCampaignById", c.var.requestSession, id);
@@ -79,7 +79,7 @@ export default new Hono()
   )
   .put(
     "/:id",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "json",
       z.object({
@@ -95,7 +95,7 @@ export default new Hono()
       return respond(c, result, 200);
     },
   )
-  .delete("/:id", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .delete("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     const result = await CampaignsService.initialize().call("archiveCampaign", c.var.requestSession, id);
@@ -105,7 +105,7 @@ export default new Hono()
 
     return c.json({ message: "Campaign archived successfully" }, 200);
   })
-  .delete("/:id/permanent", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .delete("/:id/permanent", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     const result = await CampaignsService.initialize().call("hardDeleteCampaign", c.var.requestSession, id);

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { PowersService } from "@/server/services/rulesets/index.ts";
 
@@ -23,7 +23,7 @@ const spellFields = {
 export default new Hono<SessionContext>()
   .get(
     "/:id/powers",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "query",
       z.object({
@@ -64,7 +64,7 @@ export default new Hono<SessionContext>()
   )
   .post(
     "/:id/powers",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "json",
       z.object({

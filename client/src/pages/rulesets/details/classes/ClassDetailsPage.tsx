@@ -175,9 +175,9 @@ export default function ClassDetailsPage() {
     if (!propertyId) {
       await endpoint.$post({ param, json: { type, value } });
     } else if (!value) {
-      await endpoint[":property_id"].$delete({ param: { ...param, property_id: propertyId } });
+      await endpoint[":propertyId"].$delete({ param: { ...param, propertyId } });
     } else {
-      await endpoint[":property_id"].$put({ param: { ...param, property_id: propertyId }, json: { type, value } });
+      await endpoint[":propertyId"].$put({ param: { ...param, propertyId }, json: { type, value } });
     }
   };
 

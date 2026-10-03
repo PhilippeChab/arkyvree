@@ -12,8 +12,17 @@ export const sanitizedEmail = z.string().email().transform(sanitizeEmail);
 /** Standard page parameter: positive integer, defaults to 1 */
 export const page = z.coerce.number().min(1).default(1);
 
+/** A page size: 1–100, defaulting to `fallback` */
+export const limitOf = (fallback: number) => z.coerce.number().min(1).max(100).default(fallback);
+
 /** Standard limit: 1–100, defaults to 10 */
-export const limit = z.coerce.number().min(1).max(100).default(10);
+export const limit = limitOf(10);
+
+/** A route's `:id` param */
+export const idParam = z.object({ id: z.string().uuid() });
+
+/** A route's `:characterId` param */
+export const characterIdParam = z.object({ characterId: z.string().uuid() });
 
 /** Standard orderDir */
 export const orderDirAsc = z.enum(["asc", "desc"]).default("asc");

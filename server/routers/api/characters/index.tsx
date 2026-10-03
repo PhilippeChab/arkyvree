@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { denyDemoUser, exportRateLimit, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
-import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { characterIdParam, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { errorResponse, respond } from "@/server/routers/respond.ts";
 import {
   buildBondedMap,
@@ -159,26 +159,20 @@ const characters = new Hono()
     },
   )
   // Enqueue async PDF generation
-  .post(
-    "/:characterId/pdf",
-    denyDemoUser,
-    exportRateLimit,
-    zValidator("param", z.object({ characterId: z.string().uuid() })),
-    async (c) => {
-      const { characterId } = c.req.valid("param");
+  .post("/:characterId/pdf", denyDemoUser, exportRateLimit, zValidator("param", characterIdParam), async (c) => {
+    const { characterId } = c.req.valid("param");
 
-      const result = await CharactersService.initialize().call("enqueuePdf", c.var.requestSession, characterId);
-      const success = result[0];
+    const result = await CharactersService.initialize().call("enqueuePdf", c.var.requestSession, characterId);
+    const success = result[0];
 
-      if (!success) return errorResponse(c, result[2]);
+    if (!success) return errorResponse(c, result[2]);
 
-      return c.json({ message: "PDF generation started" }, 202);
-    },
-  )
+    return c.json({ message: "PDF generation started" }, 202);
+  })
   // Update character
   .put(
     "/:id",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "json",
       z.object({
@@ -219,7 +213,7 @@ const characters = new Hono()
   )
   .put(
     "/:id/languages",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator("json", z.object({ languageIds: z.array(z.string().uuid()) })),
     async (c) => {
       const { id } = c.req.valid("param");
@@ -240,7 +234,7 @@ const characters = new Hono()
   )
   .put(
     "/:id/abilities",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator("json", z.record(z.string().uuid(), z.number().int().min(1).max(100))),
     async (c) => {
       const { id } = c.req.valid("param");
@@ -255,7 +249,7 @@ const characters = new Hono()
     },
   )
   // Get character data
-  .get("/:id", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .get("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     // Use the service to get character data with session for activity logging
@@ -275,7 +269,7 @@ const characters = new Hono()
     return c.json({ ...response, bonded: buildBondedMap(bondedByKind) }, 200);
   })
   // Archive character
-  .delete("/:id", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .delete("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     const result = await CharactersService.initialize().call("archiveCharacter", c.var.requestSession, id);
@@ -286,21 +280,21 @@ const characters = new Hono()
     return c.json({ message: "Character archived successfully" }, 200);
   })
   // Generate share token
-  .post("/:id/share", denyDemoUser, zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .post("/:id/share", denyDemoUser, zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     const result = await CharactersService.initialize().call("generateShareToken", c.var.requestSession, id);
     return respond(c, result, 200);
   })
   // Revoke share token
-  .delete("/:id/share", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .delete("/:id/share", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     const result = await CharactersService.initialize().call("revokeShareToken", c.var.requestSession, id);
     return respond(c, result, 200);
   })
   // Permanently delete an archived character
-  .delete("/:id/permanent", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .delete("/:id/permanent", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     const result = await CharactersService.initialize().call("hardDeleteCharacter", c.var.requestSession, id);
@@ -311,7 +305,7 @@ const characters = new Hono()
     return c.json({ message: "Character permanently deleted" }, 200);
   })
   // Unarchive character
-  .post("/:id/unarchive", zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     const result = await CharactersService.initialize().call("unarchiveCharacter", c.var.requestSession, id);

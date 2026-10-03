@@ -4,14 +4,14 @@ import { z } from "zod";
 import { sizeType } from "@/drizzle/schema.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { RacesService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
     "/:id/races",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "query",
       z.object({
@@ -51,7 +51,7 @@ export default new Hono<SessionContext>()
   )
   .post(
     "/:id/races",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "json",
       z.object({

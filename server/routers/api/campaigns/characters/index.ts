@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { denyDemoUser, exportRateLimit, zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { limit, page } from "@/server/routers/api/validation.ts";
+import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { errorResponse, respond } from "@/server/routers/respond.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
@@ -128,7 +128,7 @@ export default new Hono<SessionContext>()
   )
   .get(
     "/:id/characters",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "query",
       z.object({
@@ -154,7 +154,7 @@ export default new Hono<SessionContext>()
   )
   .post(
     "/:id/characters",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "json",
       z.object({

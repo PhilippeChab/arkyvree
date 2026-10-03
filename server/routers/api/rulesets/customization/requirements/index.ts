@@ -2,40 +2,25 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type SessionContext, zValidator } from "@/server/middlewares/index.ts";
-import { chainingOperator, requirementOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
+import {
+  chainingOperator,
+  ownerParams,
+  requirementOperator,
+} from "@/server/routers/api/rulesets/customization/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { RequirementsService } from "@/server/services/rulesets/index.ts";
-import { CUSTOMIZATION_OWNER_TYPES } from "@/shared/customization/entities.ts";
 
 export default new Hono<SessionContext>()
-  .get(
-    "/:id/customization/:entityType/:entityId/requirements",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().uuid(),
-        entityType: z.enum(CUSTOMIZATION_OWNER_TYPES),
-        entityId: z.string().uuid(),
-      }),
-    ),
-    async (c) => {
-      const { id, entityType, entityId } = c.req.valid("param");
+  .get("/:id/customization/:entityType/:entityId/requirements", zValidator("param", ownerParams), async (c) => {
+    const { id, entityType, entityId } = c.req.valid("param");
 
-      const requirementsService = RequirementsService.initialize();
-      const result = await requirementsService.call("getEntityRequirements", id, entityType, entityId);
-      return respond(c, result, 200);
-    },
-  )
+    const requirementsService = RequirementsService.initialize();
+    const result = await requirementsService.call("getEntityRequirements", id, entityType, entityId);
+    return respond(c, result, 200);
+  })
   .post(
     "/:id/customization/:entityType/:entityId/requirements",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().uuid(),
-        entityType: z.enum(CUSTOMIZATION_OWNER_TYPES),
-        entityId: z.string().uuid(),
-      }),
-    ),
+    zValidator("param", ownerParams),
     zValidator(
       "json",
       z.object({
@@ -64,16 +49,8 @@ export default new Hono<SessionContext>()
     },
   )
   .put(
-    "/:id/customization/:entityType/:entityId/requirements/:requirement_id",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().uuid(),
-        entityType: z.enum(CUSTOMIZATION_OWNER_TYPES),
-        entityId: z.string().uuid(),
-        requirement_id: z.string().uuid(),
-      }),
-    ),
+    "/:id/customization/:entityType/:entityId/requirements/:requirementId",
+    zValidator("param", ownerParams.extend({ requirementId: z.string().uuid() })),
     zValidator(
       "json",
       z.object({
@@ -87,7 +64,7 @@ export default new Hono<SessionContext>()
       }),
     ),
     async (c) => {
-      const { id, entityType, entityId, requirement_id } = c.req.valid("param");
+      const { id, entityType, entityId, requirementId } = c.req.valid("param");
       const body = c.req.valid("json");
 
       const requirementsService = RequirementsService.initialize();
@@ -97,25 +74,17 @@ export default new Hono<SessionContext>()
         id,
         entityType,
         entityId,
-        requirement_id,
+        requirementId,
         body,
       );
       return respond(c, result, 200);
     },
   )
   .delete(
-    "/:id/customization/:entityType/:entityId/requirements/:requirement_id",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().uuid(),
-        entityType: z.enum(CUSTOMIZATION_OWNER_TYPES),
-        entityId: z.string().uuid(),
-        requirement_id: z.string().uuid(),
-      }),
-    ),
+    "/:id/customization/:entityType/:entityId/requirements/:requirementId",
+    zValidator("param", ownerParams.extend({ requirementId: z.string().uuid() })),
     async (c) => {
-      const { id, entityType, entityId, requirement_id } = c.req.valid("param");
+      const { id, entityType, entityId, requirementId } = c.req.valid("param");
 
       const requirementsService = RequirementsService.initialize();
       const result = await requirementsService.call(
@@ -124,7 +93,7 @@ export default new Hono<SessionContext>()
         id,
         entityType,
         entityId,
-        requirement_id,
+        requirementId,
       );
       return respond(c, result, 200);
     },

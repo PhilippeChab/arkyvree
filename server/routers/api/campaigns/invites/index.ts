@@ -3,14 +3,14 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
     "/:id/invites",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "query",
       z.object({
