@@ -3,3 +3,9 @@
 
 # Lint helper order and import names, format with oxfmt (#85)
 23e0d66e074dd36b4c280057f64eead5c08f8892
+
+# Sort routers, services and repositories in CRUD order (#134)
+3460bbf3f853455de50e90d1323556e661edf784
+
+# Sort every class in CRUD order, its lifecycle first (#138)
+216630d0b21d74e0e993c59e80f89079d04e17ec
