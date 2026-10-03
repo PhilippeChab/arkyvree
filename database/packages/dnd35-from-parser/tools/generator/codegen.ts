@@ -199,6 +199,7 @@ export function featLines(feat: FeatSeed, uses: Set<string>): string[] {
     `    description: ${quote(feat.description)},`,
     ...(feat.stackable ? [`    stackable: true,`] : []),
     ...(feat.selectable === false ? [`    selectable: false,`] : []),
+    ...(feat.generated ? [`    generated: true,`] : []),
     `    aptitudes: [${feat.aptitudes.map(quote).join(", ")}],`,
     ...listField(
       "requirements",

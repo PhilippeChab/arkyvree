@@ -15,14 +15,21 @@ interface FeatFormFieldsProps {
   rulesetId: string;
   /** Aptitudes the form may already hold (the feat's own), so they show by name. */
   knownAptitudes?: Aptitude[];
+  /** A generated feat's name names its option (`Weapon Focus: Longsword`): it can't be changed. */
+  generated?: boolean;
 }
 
 /** Name, description and aptitudes of a feat; the aptitudes live in the form as `aptitudeIds`, sorted by name. */
-export function FeatFormFields({ form, rulesetId, knownAptitudes = [] }: FeatFormFieldsProps) {
+export function FeatFormFields({ form, rulesetId, knownAptitudes = [], generated = false }: FeatFormFieldsProps) {
   const aptitudes = useAptitudeLookup(knownAptitudes);
   return (
     <>
-      <NameField {...form.register("name", nameRules)} error={form.formState.errors.name} />
+      <NameField
+        {...form.register("name", nameRules)}
+        error={form.formState.errors.name}
+        disabled={generated}
+        helperText={generated ? "A generated feat keeps its name" : undefined}
+      />
       <DescriptionField {...form.register("description")} />
       <AptitudesAutocomplete
         rulesetId={rulesetId}

@@ -26,6 +26,7 @@ import { SkillsMethods } from "@/server/services/rulesets/SkillsService.ts";
 import { timingStorage } from "@/server/timing.ts";
 import {
   createSeededTestRuleset,
+  createSeededTestRulesetWithExtensions,
   createTestRuleset,
   createTestUser,
   createTestUserAndRuleset,
@@ -232,10 +233,10 @@ test("a fork's new skills and spells put their feats in the General aptitude it 
 
   await SkillsMethods.createRulesetSkill(session, fork.id, skill(parent.strength.id, "Swim"));
   await PowersMethods.createRulesetPower(session, fork.id, spell(parent.spells.id, "Lightning Bolt", "Evocation"));
-  for (const name of ["Skill Focus: Swim", "Spell Focus: Evocation"]) {
-    expect(await FeatsAptitudes.findMany(db, { featId: (await findFeat(fork.id, name)).id })).toMatchObject([
-      { aptitudeId: parent.general!.id },
-    ]);
+  for (const name of ["Skill Focus: Swim", "Spell Focus: Evocation", "Greater Spell Focus: Evocation"]) {
+    const feat = await findFeat(fork.id, name);
+    expect(feat.generated).toBe(true);
+    expect(await FeatsAptitudes.findMany(db, { featId: feat.id })).toMatchObject([{ aptitudeId: parent.general!.id }]);
   }
 });
 
@@ -375,6 +376,10 @@ describe("generated feats", () => {
     const session = makeSession();
     return { session, fork: await createSeededTestRuleset(session.userId) };
   };
+  const forkWithExtensions = async () => {
+    const session = makeSession();
+    return { session, fork: await createSeededTestRulesetWithExtensions(session.userId) };
+  };
 
   test.each([
     "Skill Focus",
@@ -382,12 +387,18 @@ describe("generated feats", () => {
     "Greater Spell Focus",
     "Weapon Focus",
     "Improved Critical",
+    "Simple Weapon Proficiency",
     "Martial Weapon Proficiency",
     "Rapid Reload",
     "Favored Enemy",
     "Favored Enemy Specialization",
+    "War Domain Weapon",
+    // The extensions' families
+    "Power Critical",
+    "Deity's Weapon Focus",
+    "Arcane Defense",
   ])("keep their %s names, inherited or copied into the fork", async (family) => {
-    const { session, fork } = await seededFork();
+    const { session, fork } = await forkWithExtensions();
     const feat = await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
       rulesetData.feats.find((row) => row.name.startsWith(`${family}: `))!,
     );
@@ -426,6 +437,37 @@ describe("generated feats", () => {
     expect(await FeatsMethods.updateRulesetFeat(session, fork.id, toughness.id, { name: "Resilience" })).toMatchObject({
       name: "Resilience",
     });
+  });
+
+  test("include a feat made in place of one the fork deleted, which stands in for it", async () => {
+    const { session, fork } = await seededFork();
+    const longsword = await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
+      rulesetData.feats.find((row) => row.name === "Weapon Focus: Longsword")!,
+    );
+    await FeatsMethods.deleteRulesetFeat(session, fork.id, longsword.id);
+    const made = await FeatsMethods.createRulesetFeat(session, fork.id, {
+      name: "Weapon Focus: Longsword",
+      aptitudeIds: [(await getSeedCtx()).aptMap["General"]],
+    });
+    expect(made.generated).toBe(true);
+  });
+
+  test("are the generators' feats, not those named like them", async () => {
+    const { session, fork } = await forkWithExtensions();
+    const own = await FeatsMethods.createRulesetFeat(session, fork.id, {
+      name: "Weapon Focus: Homebrew",
+      aptitudeIds: [(await getSeedCtx()).aptMap["General"]],
+    });
+    expect(await FeatsMethods.updateRulesetFeat(session, fork.id, own.id, { name: "Homebrew Focus" })).toMatchObject({
+      name: "Homebrew Focus",
+    });
+    // A class feature's option, written on its own
+    const option = await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
+      rulesetData.feats.find((row) => row.name.startsWith("Terrain Mastery: "))!,
+    );
+    expect(await FeatsMethods.updateRulesetFeat(session, fork.id, option.id, { name: "Desert Mastery" })).toMatchObject(
+      { name: "Desert Mastery" },
+    );
   });
 
   test("follow a skill renamed again and again, one at a time, dropping the customizations of a local copy", async () => {

@@ -8,6 +8,7 @@ import { stripSeparators } from "@/shared/utils.ts";
 const DEITYS_WEAPON_FOCUS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Deity's Weapon Focus: ${w}`,
   description: `You gain Weapon Focus with ${w} as granted by your deity.`,
+  generated: true,
   aptitudes: ["Deity's Weapon Focus"],
   modifiers: [
     {
@@ -23,6 +24,7 @@ const DEITYS_WEAPON_FOCUS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
 const DEITYS_WEAPON_SPECIALIZATION: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Deity's Weapon Specialization: ${w}`,
   description: `You gain Weapon Specialization with ${w} as granted by your deity.`,
+  generated: true,
   aptitudes: ["Deity's Weapon Specialization"],
   modifiers: [
     {

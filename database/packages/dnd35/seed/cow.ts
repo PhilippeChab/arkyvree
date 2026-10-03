@@ -95,6 +95,7 @@ async function cowFeat(db: Db, featId: string, rulesetId: string) {
       description: feat.description,
       stackable: feat.stackable,
       selectable: feat.selectable,
+      generated: feat.generated,
     })
     .returning({ id: featsInRules.id });
   const aptitudes = await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, featId));

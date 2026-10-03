@@ -223,9 +223,12 @@ Feat auto-generated per skill in `SkillsHooks.generateSkillFeat()`:
 - `Skill Focus: <name>` — +3 `skills.<stripped>.misc`, linked to General aptitude
 - Deleted on skill delete, regenerated on skill rename
 
-Generated feat names cannot be edited directly. The D&D feat hook protects the
-generated `Family: source` names before any COW copy or write; descriptions and
-customizations remain editable. Renaming a skill deletes its old generated feat
+Generated feat names cannot be edited directly. A feat is generated (`feats.generated`) when a family's feat is made
+for each of its options, its name naming the option (`Weapon Focus: Longsword`): by the seeds (the parser's template
+families, the per-weapon proficiencies, Favored Enemy per creature type, Deity's Weapon, War Domain Weapon) and by the
+app (a skill's Skill Focus, a school's Spell Focus). A fork's copy keeps it. `FeatsService` refuses a new name for one
+before any COW copy or write; descriptions and customizations remain editable. A feat merely named like one (a class
+feature's `Terrain Mastery: …` option, a user's own) can be renamed. Renaming a skill deletes its old generated feat
 and its customizations, then creates the replacement in the same transaction.
 
 ### Spells / Powers

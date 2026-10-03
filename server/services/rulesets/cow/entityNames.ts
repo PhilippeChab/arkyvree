@@ -95,3 +95,12 @@ export async function repointTombstoneSnapshot(
     contentHash: tombstone.contentHash,
   });
 }
+
+/**
+ * Whether the ancestor feat a fork deleted was generated, read by its stored id: a new feat with its name stands in
+ * for it (`repointTombstoneSnapshot`), and takes its mark.
+ */
+export async function wasGeneratedFeat(tx: Db, ancestorFeatId: string): Promise<boolean> {
+  const feat = await withCowContext(undefined, () => ENTITY_REPOS.feats.findOne(tx, { id: ancestorFeatId }));
+  return feat?.generated ?? false;
+}

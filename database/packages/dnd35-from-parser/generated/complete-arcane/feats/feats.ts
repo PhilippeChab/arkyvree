@@ -641,6 +641,7 @@ export const HERITAGE_FEATS: FeatSeed[] = [
 export const arcaneDefense: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   name: `Arcane Defense: ${s}`,
   description: `You get a +3 bonus on your saving throws against spells from the chosen school.`,
+  generated: true,
   aptitudes: ["General"],
   requirements: [
     eq(feat(`Spell Focus: ${s}`)),

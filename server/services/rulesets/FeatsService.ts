@@ -5,7 +5,6 @@ import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
@@ -14,6 +13,7 @@ import {
   entityHasCharacterPicks,
   lockEntityForMutation,
   repointTombstoneSnapshot,
+  wasGeneratedFeat,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
@@ -125,9 +125,12 @@ export const FeatsMethods = {
           throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
         }
 
+        // Named as an ancestor the fork deleted, the feat stands in for it (`repointTombstoneSnapshot`), checks finding it
+        // by that name: generated if the ancestor was
         const rows = await Feats.create(tx, {
           name: body.name,
           description: body.description,
+          generated: tombstoneAncestorId ? await wasGeneratedFeat(tx, tombstoneAncestorId) : false,
           rulesetId,
         });
         const feat = rows[0];
@@ -182,10 +185,8 @@ export const FeatsMethods = {
           throw new NotFoundError("Feat not found in this ruleset");
         }
 
-        if (
-          body.name !== feat.name &&
-          RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.feats.isGeneratedName(feat.name)
-        ) {
+        // A generated feat's name names its option (`Weapon Focus: Longsword`), which checks and generators find it by
+        if (body.name !== feat.name && feat.generated) {
           throw new BadRequestError("Generated feats cannot be renamed");
         }
 

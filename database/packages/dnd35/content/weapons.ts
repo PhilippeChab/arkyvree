@@ -119,12 +119,14 @@ export const weaponProficiencyFeats: FeatSeed[] = [
     description: `You are proficient with the ${w.toLowerCase()}.`,
     aptitudes: ["General"],
     selectable: false,
+    generated: true,
   })),
   ...MARTIAL_WEAPONS.map((w) => ({
     name: `Martial Weapon Proficiency: ${w}`,
     description: `You are proficient with the ${w.toLowerCase()}.`,
     aptitudes: ["General"],
     selectable: false,
+    generated: true,
   })),
 ];
 
@@ -135,6 +137,7 @@ export const weaponProficiencyFeats: FeatSeed[] = [
 export const spellWeaponFocusFeats: FeatSeed[] = ["Ranged Spell", "Touch Spell"].map((spell) => ({
   name: `Weapon Focus: ${spell}`,
   description: `You gain a +1 bonus on attack rolls you make with ${spell.toLowerCase()}s.`,
+  generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [gte("combat.bab", 1)],
   properties: [{ type: "FEAT_FAMILY", value: "Weapon Focus" }],

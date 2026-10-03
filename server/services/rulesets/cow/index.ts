@@ -28,7 +28,12 @@ export {
   cowEntityForCustomization,
 } from "./cowEntity.ts";
 export { withRulesetScope, withRulesetScopes } from "./cowData.ts";
-export { assertAncestorNamesHidden, assertEntityNameAvailable, repointTombstoneSnapshot } from "./entityNames.ts";
+export {
+  assertAncestorNamesHidden,
+  assertEntityNameAvailable,
+  repointTombstoneSnapshot,
+  wasGeneratedFeat,
+} from "./entityNames.ts";
 export { entityHasCharacterPicks } from "./characterPicks.ts";
 export { ENTITY_TYPE_TO_SOURCE_TYPE, NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
 export { fetchEntityCustomizations } from "./customizations.ts";

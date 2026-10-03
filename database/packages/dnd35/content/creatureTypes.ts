@@ -61,6 +61,7 @@ export const FAVORED_ENEMY_FAMILY = "Favored Enemy";
 const favoredEnemy: FeatSeed[] = CREATURE_TYPES.map((t) => ({
   name: `Favored Enemy: ${t}`,
   description: `Designate ${t} as a favored enemy. +2 on Bluff, Listen, Sense Motive, Spot, and Survival checks made against ${t}, and +2 on weapon damage rolls targeting them.`,
+  generated: true,
   aptitudes: [FAVORED_ENEMY_APTITUDE],
   properties: [{ type: "FEAT_FAMILY", value: FAVORED_ENEMY_FAMILY }],
 }));
@@ -69,6 +70,7 @@ const favoredEnemySpecializationVariants: FeatSeed[] = CREATURE_TYPES.map((t) =>
   name: `Favored Enemy Specialization: ${t}`,
   description: `Increases your favored enemy bonus against ${t} by +2. May be taken multiple times to stack the bonus further.`,
   stackable: true,
+  generated: true,
   aptitudes: [FAVORED_ENEMY_SPECIALIZATION_APTITUDE],
   requirements: [eq(feat(`Favored Enemy: ${t}`))],
   properties: [{ type: "FEAT_FAMILY", value: FAVORED_ENEMY_FAMILY }],

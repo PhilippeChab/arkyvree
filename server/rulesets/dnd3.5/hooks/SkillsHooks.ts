@@ -96,6 +96,7 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     const rows = await Feats.create(tx, {
       name: `Skill Focus: ${skillName}`,
       description: `You get a +3 bonus on all ${skillName} checks.`,
+      generated: true,
       rulesetId,
     });
     const feat = rows[0];

@@ -2,7 +2,6 @@ import type { ServiceHooks } from "@/server/rulesets/hooks/index.ts";
 
 import { Dnd35ClassesHooks } from "./ClassesHooks.ts";
 import { Dnd35ClassLevelsHooks } from "./ClassLevelsHooks.ts";
-import { Dnd35FeatsHooks } from "./FeatsHooks.ts";
 import { Dnd35InventoryHooks } from "./InventoryHooks.ts";
 import { Dnd35ItemsHooks } from "./ItemsHooks.ts";
 import { Dnd35LevelsHooks } from "./LevelsHooks.ts";
@@ -11,7 +10,6 @@ import { Dnd35SkillsHooks } from "./SkillsHooks.ts";
 
 export function createServiceHooks(): ServiceHooks {
   return {
-    feats: new Dnd35FeatsHooks(),
     classes: new Dnd35ClassesHooks(),
     items: new Dnd35ItemsHooks(),
     powers: new Dnd35PowersHooks(),
