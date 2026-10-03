@@ -1,4 +1,5 @@
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { withCowContext } from "@/server/database/cowContext.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Items, RulesetEntities, Rulesets } from "@/server/repositories/index.ts";
@@ -123,7 +124,11 @@ class RulesetChangesService {
       // before the cascade hard-deletes (RESTRICT FK). Klass_levels and dependent
       // character_levels are wiped via FK CASCADE on the parent klass row.
       if (entityType === "items") {
-        await Items.updateCopies(tx, { sourceItemId: entityId }, { sourceItemId: snapshot.forkedEntityId });
+        // Stored ids, with copy-on-write resolution off: a scope would resolve the source to its copy,
+        // repointing nothing.
+        await withCowContext(undefined, () =>
+          Items.updateCopies(tx, { sourceItemId: entityId }, { sourceItemId: snapshot.forkedEntityId }),
+        );
       }
       await deleteEntityWithCascade(tx, entityType, snapshot.forkedEntityId);
       await EntitySnapshots.deleteBySourceAndRuleset(tx, {
