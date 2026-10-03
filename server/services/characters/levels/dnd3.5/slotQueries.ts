@@ -9,9 +9,10 @@
 
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
+import { CharacterLevels } from "@/server/repositories/index.ts";
 import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -33,13 +34,7 @@ export async function getSkillSlots(
   pendingLevelKlassLevelIds?: string[],
   pendingLevelAbilityIds?: (string | undefined)[],
 ) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
@@ -133,13 +128,7 @@ export async function getFeatSlots(
   level: number,
   pendingLevelKlassLevelIds?: string[],
 ) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
@@ -202,13 +191,7 @@ export async function getEditFeatSlots(
   level: number,
   characterLevelId: string,
 ) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
@@ -283,13 +266,7 @@ export async function getPowerSlots(
   level: number,
   pendingLevelKlassLevelIds?: string[],
 ) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
@@ -344,14 +321,7 @@ export async function getAttributeSlots(
   excludeCharacterLevelId?: string,
   pendingLevelCount?: number,
 ) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
   const characterLevels = await CharacterLevels.findMany(db, { characterId });
@@ -386,13 +356,7 @@ export async function getEditPowerSlots(
   level: number,
   characterLevelId: string,
 ) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);

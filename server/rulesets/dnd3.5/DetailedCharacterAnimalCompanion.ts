@@ -1,9 +1,8 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 
-import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
-import { scaledFeats, scaledSkillTotals } from "./bondedScaling.ts";
+import { getBondedRaceStats } from "./bondedRaceData.ts";
 import type Dnd35DetailedCharacter from "./DetailedCharacter.ts";
-import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
+import DetailedCharacterAdvancingBonded from "./DetailedCharacterAdvancingBonded.ts";
 
 /**
  * SRD basics-table progression keyed by effective AC level (data-driven sum
@@ -59,20 +58,6 @@ function getAnimalCompanionEffectiveLevel(master: Dnd35DetailedCharacter): numbe
   return master.getDetailedCharacterBonds().getBondedLevel("animalcompanion");
 }
 
-const HD_PER_LEVEL_AVG = 4.5;
-
-function bab34(totalHD: number): number {
-  return Math.floor((totalHD * 3) / 4);
-}
-
-function goodSaveAt(hd: number): number {
-  return 2 + Math.floor(hd / 2);
-}
-
-function poorSaveAt(hd: number): number {
-  return Math.floor(hd / 3);
-}
-
 /**
  * Animal Companion mechanic (SRD Druid Animal Companion Basics):
  *   total HD = race.baseHD + bonusHD (from basics table at effective level).
@@ -80,13 +65,7 @@ function poorSaveAt(hd: number): number {
  *   armor stacks the race's base NA with the basics-table NA delta. Str/Dex
  *   bonuses apply on top of the race's ability modifiers.
  */
-export default class DetailedCharacterAnimalCompanion extends DetailedCharacterBonded {
-  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
-    const totalHD = this.cachedTotalHD ?? raceStats.baseHD;
-    this.applyGrantedFeats(scaledFeats(raceStats, totalHD), rulesetData);
-    this.applySkillTotals(scaledSkillTotals(raceStats, totalHD));
-  }
-
+export default class DetailedCharacterAnimalCompanion extends DetailedCharacterAdvancingBonded {
   protected async applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
     const effective = getAnimalCompanionEffectiveLevel(master);
@@ -94,7 +73,6 @@ export default class DetailedCharacterAnimalCompanion extends DetailedCharacterB
     const raceStats = getBondedRaceStats(this.race?.name);
     const baseHD = raceStats?.baseHD ?? 1;
     const totalHD = baseHD + row.bonusHD;
-    this.cachedTotalHD = totalHD;
 
     const abilities = this.detailedCharacterAbilities.getAbilities();
     if (row.strDex !== 0) {
@@ -108,15 +86,6 @@ export default class DetailedCharacterAnimalCompanion extends DetailedCharacterB
       }
     }
 
-    const combat = this.detailedCharacterCombat.getCombat();
-    combat.ac.natural = (raceStats?.baseNaturalArmor ?? 0) + row.natural;
-    combat.bab = bab34(totalHD);
-    combat.hp.base = Math.ceil(totalHD * HD_PER_LEVEL_AVG);
-    combat.hp.misc = 0;
-
-    const saves = this.detailedCharacterSavingThrows.getSavingThrows();
-    if (saves["fortitude"]) saves["fortitude"].base = goodSaveAt(totalHD);
-    if (saves["reflex"]) saves["reflex"].base = goodSaveAt(totalHD);
-    if (saves["will"]) saves["will"].base = poorSaveAt(totalHD);
+    this.applyHitDice(totalHD, (raceStats?.baseNaturalArmor ?? 0) + row.natural);
   }
 }

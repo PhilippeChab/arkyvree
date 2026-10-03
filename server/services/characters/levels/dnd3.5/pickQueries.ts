@@ -16,7 +16,6 @@ import {
   CharacterLevelPowers,
   CharacterLevels,
   CharacterLevelSkills,
-  Characters,
   Feats,
   Klasses,
   Powers,
@@ -24,6 +23,7 @@ import {
 import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { DetailedCharacterInterface, PreloadedRulesetData } from "@/server/rulesets/types.ts";
+import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type { KlassLevel, Requirement } from "@/shared/relations.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -122,13 +122,7 @@ export async function getAvailablePowers(
   excludeCharacterLevelId?: string,
   pendingLevelKlassLevelIds?: string[],
 ) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
@@ -243,13 +237,7 @@ export async function getAvailableFeats(
   pendingLevelKlassLevelIds?: string[],
   pendingLevelAbilityIds?: (string | undefined)[],
 ) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
@@ -350,13 +338,7 @@ export async function getAvailableFeatsGrouped(
   pendingLevelKlassLevelIds?: string[],
   pendingLevelAbilityIds?: (string | undefined)[],
 ) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
@@ -486,13 +468,7 @@ export async function getAvailableKlasses(
   pendingFeatPicks?: FeatPick[],
   pendingSkillAllocations?: { skillId: string; rank: number }[],
 ) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const { sourceChain } = rulesetData.cow;
@@ -663,13 +639,7 @@ export async function getAvailableKlasses(
 }
 
 export async function getLevel(session: Session, characterId: string, characterLevelId: string) {
-  const characterRecord = await Characters.findOneEditable(db, {
-    id: characterId,
-    userId: session.userId,
-  });
-  if (!characterRecord) {
-    throw new NotFoundError("Character not found");
-  }
+  const characterRecord = await getEditableCharacter(db, session, characterId);
 
   const characterLevel = await CharacterLevels.findOne(db, { id: characterLevelId });
   if (!characterLevel || characterLevel.characterId !== characterId) {

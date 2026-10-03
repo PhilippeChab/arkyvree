@@ -11,9 +11,7 @@ import { hashPassword, verifyPassword } from "@/server/password.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
-  CharacterContributors,
   Characters,
-  Contributors,
   EmailVerifications,
   Invites,
   OauthAccounts,
@@ -41,6 +39,7 @@ import type {
 } from "@/server/routers/authentication/validation.ts";
 import {
   linkGoogleAccountTo,
+  openSession,
   purgeDemoSessionUser,
   signInAsGoogleAccount,
   toSafeUser,
@@ -167,23 +166,7 @@ const AuthenticationMethods = {
 
       await purgeDemoSessionUser(tx, existingSessionId);
 
-      const sessionRows = await Sessions.create(tx, { userId: user.id });
-      const session = sessionRows[0];
-      if (!session) throw new InternalError("Could not create session");
-
-      await Activities.create(tx, {
-        userId: user.id,
-        targetId: session.id,
-        targetTable: getTableName(sessionsInAccount),
-        type: "signUp",
-      });
-
-      await Promise.all([
-        Invites.backfillUserId(tx, user.emailAddress, user.id),
-        Contributors.backfillUserId(tx, user.emailAddress, user.id),
-        CharacterContributors.backfillUserId(tx, user.emailAddress, user.id),
-      ]);
-
+      const session = await openSession(tx, user, "signUp");
       return { session, user: toSafeUser(user) };
     });
   },
@@ -249,24 +232,7 @@ const AuthenticationMethods = {
 
       await purgeDemoSessionUser(tx, existingSessionId);
 
-      const rows = await Sessions.create(tx, { userId: user.id });
-      const session = rows[0];
-      if (!session) throw new InternalError("Could not create session");
-
-      await Activities.create(tx, {
-        userId: user.id,
-        targetId: session.id,
-        targetTable: getTableName(sessionsInAccount),
-        type: "signIn",
-      });
-
-      // Backfill any pending invites/contributor invites matching this email
-      await Promise.all([
-        Invites.backfillUserId(tx, user.emailAddress, user.id),
-        Contributors.backfillUserId(tx, user.emailAddress, user.id),
-        CharacterContributors.backfillUserId(tx, user.emailAddress, user.id),
-      ]);
-
+      const session = await openSession(tx, user, "signIn");
       return { session, user: toSafeUser(user) };
     });
   },

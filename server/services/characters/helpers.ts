@@ -2,6 +2,7 @@ import { getTableName, sql } from "drizzle-orm";
 
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import { pingWorker } from "@/server/queue.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Characters, PlayerCharacters } from "@/server/repositories/index.ts";
@@ -10,6 +11,13 @@ import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character, Session } from "@/shared/relations.ts";
+
+/** The character the session's user may edit (they own it or contribute to it), or a 404. */
+export async function getEditableCharacter(db: Db, session: Session, characterId: string) {
+  const character = await Characters.findOneEditable(db, { id: characterId, userId: session.userId });
+  if (!character) throw new NotFoundError("Character not found");
+  return character;
+}
 
 export type BondedEntry = { record: Character; detailed: DetailedCharacterInterface };
 

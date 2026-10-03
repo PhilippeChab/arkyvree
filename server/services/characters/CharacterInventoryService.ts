@@ -6,6 +6,7 @@ import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } f
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, CharacterInventory, Characters, Items } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
+import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
@@ -74,13 +75,7 @@ const CharacterInventoryMethods = {
     force: boolean = false,
   ) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await Characters.findOneEditable(tx, {
-        id: characterId,
-        userId: session.userId,
-      });
-      if (!characterRecord) {
-        throw new NotFoundError("Character not found");
-      }
+      const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
         // Items.findOne is used here (rather than rulesetData.itemsById) because
@@ -176,13 +171,7 @@ const CharacterInventoryMethods = {
     expectedUpdatedAt?: string,
   ) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await Characters.findOneEditable(tx, {
-        id: characterId,
-        userId: session.userId,
-      });
-      if (!characterRecord) {
-        throw new NotFoundError("Character not found");
-      }
+      const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
         const existing = await CharacterInventory.findOne(tx, { characterId, itemId });
@@ -256,13 +245,7 @@ const CharacterInventoryMethods = {
 
   async removeItem(session: Session, characterId: string, itemId: string) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await Characters.findOneEditable(tx, {
-        id: characterId,
-        userId: session.userId,
-      });
-      if (!characterRecord) {
-        throw new NotFoundError("Character not found");
-      }
+      const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async () => {
         const existing = await CharacterInventory.findOne(tx, { characterId, itemId });

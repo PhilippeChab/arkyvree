@@ -1,8 +1,7 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 
-import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
-import { scaledFeats, scaledSkillTotals } from "./bondedScaling.ts";
-import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
+import { getBondedRaceStats } from "./bondedRaceData.ts";
+import DetailedCharacterAdvancingBonded from "./DetailedCharacterAdvancingBonded.ts";
 
 /**
  * SRD Paladin's Special Mount progression — keyed on paladin class level.
@@ -24,20 +23,6 @@ function bracketAt(paladinLevel: number): MountRow | null {
   return { bonusHD: 8, natural: 10, str: 4, int: 9 };
 }
 
-const HD_PER_LEVEL_AVG = 4.5;
-
-function bab34(totalHD: number): number {
-  return Math.floor((totalHD * 3) / 4);
-}
-
-function goodSaveAt(hd: number): number {
-  return 2 + Math.floor(hd / 2);
-}
-
-function poorSaveAt(hd: number): number {
-  return Math.floor(hd / 3);
-}
-
 /**
  * Paladin's Special Mount (SRD):
  *   total HD = race.baseHD + bonusHD (from the level-bracket table).
@@ -45,13 +30,7 @@ function poorSaveAt(hd: number): number {
  *   race base + bracket NA adj; Str gets bracket Str adj; Int is *set* to
  *   the bracket value (overriding the animal's natural Int 2).
  */
-export default class DetailedCharacterMount extends DetailedCharacterBonded {
-  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
-    const totalHD = this.cachedTotalHD ?? raceStats.baseHD;
-    this.applyGrantedFeats(scaledFeats(raceStats, totalHD), rulesetData);
-    this.applySkillTotals(scaledSkillTotals(raceStats, totalHD));
-  }
-
+export default class DetailedCharacterMount extends DetailedCharacterAdvancingBonded {
   protected async applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
     const effective = master.getDetailedCharacterBonds().getBondedLevel("mount");
@@ -59,7 +38,6 @@ export default class DetailedCharacterMount extends DetailedCharacterBonded {
     const raceStats = getBondedRaceStats(this.race?.name);
     const baseHD = raceStats?.baseHD ?? 1;
     const totalHD = baseHD + (row?.bonusHD ?? 0);
-    this.cachedTotalHD = totalHD;
 
     const abilities = this.detailedCharacterAbilities.getAbilities();
     if (row && row.str !== 0 && abilities["strength"]) {
@@ -73,21 +51,13 @@ export default class DetailedCharacterMount extends DetailedCharacterBonded {
       this.detailedCharacterAbilities.updateTotal("intelligence");
     }
 
-    const combat = this.detailedCharacterCombat.getCombat();
-    combat.ac.natural = (raceStats?.baseNaturalArmor ?? 0) + (row?.natural ?? 0);
-    combat.bab = bab34(totalHD);
-    combat.hp.base = Math.ceil(totalHD * HD_PER_LEVEL_AVG);
-    combat.hp.misc = 0;
-
-    const saves = this.detailedCharacterSavingThrows.getSavingThrows();
-    if (saves["fortitude"]) saves["fortitude"].base = goodSaveAt(totalHD);
-    if (saves["reflex"]) saves["reflex"].base = goodSaveAt(totalHD);
-    if (saves["will"]) saves["will"].base = poorSaveAt(totalHD);
+    this.applyHitDice(totalHD, (raceStats?.baseNaturalArmor ?? 0) + (row?.natural ?? 0));
 
     // Share Saving Throws (Special Mount, paladin 5+): each save uses
     // max(master, mount). Only applies once the mount exists, which by
     // construction means paladin >= 5.
     if (row) {
+      const saves = this.detailedCharacterSavingThrows.getSavingThrows();
       const masterSaves = master.getDetailedCharacterSavingThrows().getSavingThrows();
       for (const saveName of Object.keys(saves)) {
         if (masterSaves[saveName]) {

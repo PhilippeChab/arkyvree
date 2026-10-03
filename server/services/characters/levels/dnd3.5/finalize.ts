@@ -17,12 +17,12 @@ import {
   CharacterLevelPowers,
   CharacterLevels,
   CharacterLevelSkills,
-  Characters,
 } from "@/server/repositories/index.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { PreloadedRulesetData } from "@/server/rulesets/types.ts";
+import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
@@ -38,6 +38,7 @@ import {
   buildProjectedCharacterLevel,
   buildProjectedGivenFeats,
   buildProjectedSelections,
+  classSkillIds,
   getLevelIdsFromOnward,
   loadFeatCustomizations,
 } from "./helpers.ts";
@@ -81,13 +82,7 @@ export async function updateLevel(
   force: boolean = false,
 ) {
   return await withTransaction(async (tx) => {
-    const characterRecord = await Characters.findOneEditable(tx, {
-      id: characterId,
-      userId: session.userId,
-    });
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
+    const characterRecord = await getEditableCharacter(tx, session, characterId);
 
     return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
       const characterLevel = await CharacterLevels.findOne(tx, {
@@ -262,13 +257,7 @@ export async function updateLevel(
 /** Removes the most recent character level and all its children (skills, feats, powers). */
 export async function removeLevel(session: Session, characterId: string) {
   return await withTransaction(async (tx) => {
-    const characterRecord = await Characters.findOneEditable(tx, {
-      id: characterId,
-      userId: session.userId,
-    });
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
+    const characterRecord = await getEditableCharacter(tx, session, characterId);
 
     const lastLevel = await CharacterLevels.findHighestCharacterLevel(tx, {
       characterId,
@@ -326,13 +315,7 @@ export async function finalizeLevelUp(
   force: boolean = false,
 ) {
   return await withTransaction(async (tx) => {
-    const characterRecord = await Characters.findOneEditable(tx, {
-      id: characterId,
-      userId: session.userId,
-    });
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
+    const characterRecord = await getEditableCharacter(tx, session, characterId);
 
     return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -482,37 +465,18 @@ export async function finalizeLevelUp(
         rulesetData,
       );
 
-      // Compute per-level class skill IDs
-      const allKlassIds = [...new Set(levels.map((l) => l.klassId))];
-      const allKlassSkillRecords = allKlassIds.map(
-        (klassId) => rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [],
-      );
+      // Per-level class skill IDs
       const allSkills = rulesetData.skills;
-
-      const perLevelClassSkillIds: string[][] = [];
-      for (const { klass } of klassLevelEntries) {
-        const klassSkillRecords =
-          allKlassSkillRecords.find((records) => records.length > 0 && records[0].klassId === klass.id) ?? [];
-        const klassSkillIds = new Set(klassSkillRecords.map((ks) => ks.skillId));
-        const klassSkillNames = new Set(klassSkillRecords.map((ks) => ks.skillsInRule.name));
-        const levelClassSkillIds = allSkills
-          .filter((s) => klassSkillIds.has(s.id) || [...klassSkillNames].some((name) => s.name.startsWith(`${name} (`)))
-          .map((s) => s.id);
-        perLevelClassSkillIds.push(levelClassSkillIds);
-      }
+      const klassSkillRecords = (klassId: string) => rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [];
+      const perLevelClassSkillIds = klassLevelEntries.map(({ klass }) => {
+        const ids = classSkillIds(klassSkillRecords(klass.id), allSkills);
+        return allSkills.filter((s) => ids.has(s.id)).map((s) => s.id);
+      });
 
       // Build skill contexts (current rank + class skill status)
       const characterSkills = levelUpProjector.getCharacterSkills();
-      const mergedClassSkillIds = new Set(allKlassSkillRecords.flat().map((ks) => ks.skillId));
-      const mergedClassSkillNames = new Set(allKlassSkillRecords.flat().map((ks) => ks.skillsInRule.name));
-      for (const skill of allSkills) {
-        if (
-          !mergedClassSkillIds.has(skill.id) &&
-          [...mergedClassSkillNames].some((name) => skill.name.startsWith(`${name} (`))
-        ) {
-          mergedClassSkillIds.add(skill.id);
-        }
-      }
+      const allKlassIds = [...new Set(levels.map((l) => l.klassId))];
+      const mergedClassSkillIds = classSkillIds(allKlassIds.flatMap(klassSkillRecords), allSkills);
       const skillContexts = new Map<string, { isClassSkill: boolean; currentRank: number }>();
       for (const skill of allSkills) {
         const skillData = characterSkills[stripSeparators(skill.name)] as

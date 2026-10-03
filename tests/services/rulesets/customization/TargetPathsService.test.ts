@@ -1,18 +1,19 @@
 import { describe, expect, test } from "bun:test";
 
 import { NotFoundError } from "@/server/errors/index.ts";
+import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths.ts";
 import TargetPathsService from "@/server/services/rulesets/customization/TargetPathsService.ts";
 import { createTestRuleset, createTestUser, getSeedCtx, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
 
 const TargetPathsMethods = methodsOf(TargetPathsService);
 
 type Kind = "modifier" | "requirement";
-type EntityType = Parameters<typeof TargetPathsMethods.getTargetPathsWithLabels>[2];
+type EntityType = Parameters<typeof getTargetPathsWithLabels>[2];
 
 /** The seeded D&D 3.5 ruleset's target paths and segment labels. */
 async function seedPaths(kind: Kind, entityType?: EntityType) {
   const { rulesetId } = await getSeedCtx();
-  return await TargetPathsMethods.getTargetPathsWithLabels(rulesetId, kind, entityType);
+  return await getTargetPathsWithLabels(rulesetId, kind, entityType);
 }
 
 const isAptitudeGrant = (p: { category: string; path: string }) =>
@@ -113,13 +114,13 @@ describe("TargetPathsService", () => {
     const { rulesetId } = await getSeedCtx();
     const { user } = await createTestUser();
     const fork = await createTestRuleset(user.id, { rulesetId, ancestorRulesetIds: [rulesetId] });
-    const { paths, segmentLabels } = await TargetPathsMethods.getTargetPathsWithLabels(fork.id, "modifier");
+    const { paths, segmentLabels } = await getTargetPathsWithLabels(fork.id, "modifier");
     expect(paths.some((p) => p.path.startsWith("aptitudes.wizardspells.0."))).toBe(true);
     expect(segmentLabels.strength).toBe("Strength");
   });
 
   test("throws NotFoundError for a missing ruleset", async () => {
-    await expect(TargetPathsMethods.getTargetPathsWithLabels(NIL_UUID, "modifier")).rejects.toThrow(NotFoundError);
+    await expect(getTargetPathsWithLabels(NIL_UUID, "modifier")).rejects.toThrow(NotFoundError);
   });
 
   describe("completing a path", () => {

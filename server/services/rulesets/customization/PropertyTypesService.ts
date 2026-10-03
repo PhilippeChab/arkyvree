@@ -1,3 +1,4 @@
+import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import type { Paginated } from "@/server/repositories/BaseRepository.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
@@ -9,6 +10,25 @@ import type {
   PropertyTypeCompletion,
   PropertyValueCompletion,
 } from "@/shared/customization/properties.ts";
+
+/**
+ * The ruleset's custom property types (of one entity type, and containing `query`, when given): each with how many
+ * properties use it, the most used first.
+ */
+function countPropertyTypes(rulesetData: CachedRulesetData, entityType?: PropertyEntityType, query = "") {
+  const counts = new Map<string, { type: string; entityType: string; count: number }>();
+  const groups = entityType
+    ? [rulesetData.propertiesByEntityType.get(entityType) ?? []]
+    : [...rulesetData.propertiesByEntityType.values()];
+  for (const prop of groups.flat()) {
+    if (!prop.type.toLowerCase().includes(query)) continue;
+    const key = `${prop.entityType}:${prop.type}`;
+    const existing = counts.get(key);
+    if (existing) existing.count += 1;
+    else counts.set(key, { type: prop.type, entityType: prop.entityType, count: 1 });
+  }
+  return [...counts.values()].sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
+}
 
 const PropertyTypesMethods = {
   /**
@@ -42,28 +62,12 @@ const PropertyTypesMethods = {
    */
   async getCustomPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const counts = new Map<string, { type: string; entityType: string; count: number }>();
-      const sources = entityType
-        ? [rulesetData.propertiesByEntityType.get(entityType) ?? []]
-        : [...rulesetData.propertiesByEntityType.values()];
-
-      for (const group of sources) {
-        for (const prop of group) {
-          const key = `${prop.entityType}:${prop.type}`;
-          const existing = counts.get(key);
-          if (existing) existing.count += 1;
-          else counts.set(key, { type: prop.type, entityType: prop.entityType, count: 1 });
-        }
-      }
-
-      return [...counts.values()]
-        .sort((a, b) => b.count - a.count || a.type.localeCompare(b.type))
-        .map((c): PropertyType => ({
-          value: c.type,
-          isStatic: false,
-          entityType: c.entityType,
-          usageCount: c.count,
-        }));
+      return countPropertyTypes(rulesetData, entityType).map((c): PropertyType => ({
+        value: c.type,
+        isStatic: false,
+        entityType: c.entityType,
+        usageCount: c.count,
+      }));
     });
   },
 
@@ -120,30 +124,15 @@ const PropertyTypesMethods = {
           entityType,
         }));
 
-      const counts = new Map<string, { type: string; entityType: string; count: number }>();
-      const sources = entityType
-        ? [rulesetData.propertiesByEntityType.get(entityType) ?? []]
-        : [...rulesetData.propertiesByEntityType.values()];
-
-      for (const group of sources) {
-        for (const prop of group) {
-          if (query && !prop.type.toLowerCase().includes(lowercaseQuery)) continue;
-          const key = `${prop.entityType}:${prop.type}`;
-          const existing = counts.get(key);
-          if (existing) existing.count += 1;
-          else counts.set(key, { type: prop.type, entityType: prop.entityType, count: 1 });
-        }
-      }
-
-      const customCompletions: PropertyTypeCompletion[] = [...counts.values()]
-        .sort((a, b) => b.count - a.count || a.type.localeCompare(b.type))
-        .map((c): PropertyTypeCompletion => ({
+      const customCompletions = countPropertyTypes(rulesetData, entityType, lowercaseQuery).map(
+        (c): PropertyTypeCompletion => ({
           label: c.type,
           value: c.type,
           detail: `Used ${c.count} time${c.count !== 1 ? "s" : ""} in ${c.entityType}`,
           kind: "custom",
           entityType: c.entityType,
-        }));
+        }),
+      );
 
       const all = [...engineCompletions, ...customCompletions];
       const start = (pagination.page - 1) * pagination.limit;

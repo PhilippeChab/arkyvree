@@ -4,7 +4,7 @@ import { contributorsInRules } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService } from "@/server/emails";
 import { EmailTemplate } from "@/server/emails/templates.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Contributors, Notifications, Rulesets, Users } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
@@ -47,17 +47,7 @@ const ContributorsMethods = {
       throw new NotFoundError("Ruleset not found");
     }
 
-    // Must be owner or contributor to list contributors
-    const isOwner = ruleset.userId === session.userId;
-    if (!isOwner) {
-      const role = await Contributors.findActiveRole(db, {
-        userId: session.userId,
-        rulesetId,
-      });
-      if (!role) {
-        throw new ForbiddenError("You are not a contributor of this ruleset");
-      }
-    }
+    (await getRulesetPolicy(db, session, ruleset)).canReadContributors();
 
     const paginated = await Contributors.findMany(db, { rulesetId, ...where }, pagination);
     const ownerUser = ruleset.userId ? await Users.findOne(db, { id: ruleset.userId }) : null;

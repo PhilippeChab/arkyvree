@@ -3,25 +3,27 @@ import { getTableName } from "drizzle-orm";
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Activities, Characters, Modifiers } from "@/server/repositories/index.ts";
+import { Activities, Modifiers } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
-import TargetPathsService from "@/server/services/rulesets/customization/TargetPathsService.ts";
+import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
+import {
+  getTargetPathsWithLabels,
+  resolvePathValueType,
+} from "@/server/services/rulesets/customization/targetPaths.ts";
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 
 const CharacterModifiersMethods = {
   async getModifiers(session: Session, characterId: string) {
-    const character = await Characters.findOneEditable(db, { id: characterId, userId: session.userId });
-    if (!character) throw new NotFoundError("Character not found");
+    const character = await getEditableCharacter(db, session, characterId);
 
-    const [modifiers, pathsResult] = await Promise.all([
+    const [modifiers, { segmentLabels }] = await Promise.all([
       Modifiers.findManyBySource(db, {
         sourceIds: [characterId],
         sourceType: "characters",
       }),
-      TargetPathsService.initialize().call("getTargetPathsWithLabels", character.rulesetId, "modifier"),
+      getTargetPathsWithLabels(character.rulesetId, "modifier"),
     ]);
-    const { segmentLabels } = pathsResult[0] ? pathsResult[1] : { segmentLabels: {} };
 
     return modifiers.map((m) => ({ ...m, targetLabels: pickTargetLabels([m.target, m.value], segmentLabels) }));
   },
@@ -32,18 +34,9 @@ const CharacterModifiersMethods = {
     body: { target: string; value: string; operator: string },
   ) {
     return withTransaction(async (tx) => {
-      const character = await Characters.findOneEditable(tx, { id: characterId, userId: session.userId });
-      if (!character) throw new NotFoundError("Character not found");
+      const character = await getEditableCharacter(tx, session, characterId);
 
-      const pathsService = TargetPathsService.initialize();
-      const valueTypeResult = await pathsService.call(
-        "resolvePathValueType",
-        character.rulesetId,
-        body.target,
-        "modifier",
-      );
-      if (!valueTypeResult[0]) throw valueTypeResult[2];
-      const valueType = valueTypeResult[1];
+      const valueType = await resolvePathValueType(character.rulesetId, body.target, "modifier");
 
       const rows = await Modifiers.create(tx, {
         sourceId: characterId,
@@ -74,23 +67,14 @@ const CharacterModifiersMethods = {
     body: { target: string; value: string; operator: string; updatedAt?: string },
   ) {
     return withTransaction(async (tx) => {
-      const character = await Characters.findOneEditable(tx, { id: characterId, userId: session.userId });
-      if (!character) throw new NotFoundError("Character not found");
+      const character = await getEditableCharacter(tx, session, characterId);
 
       const existing = await Modifiers.findOne(tx, { id: modifierId });
       if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters") {
         throw new NotFoundError("Modifier not found");
       }
 
-      const pathsService = TargetPathsService.initialize();
-      const valueTypeResult = await pathsService.call(
-        "resolvePathValueType",
-        character.rulesetId,
-        body.target,
-        "modifier",
-      );
-      if (!valueTypeResult[0]) throw valueTypeResult[2];
-      const valueType = valueTypeResult[1];
+      const valueType = await resolvePathValueType(character.rulesetId, body.target, "modifier");
 
       const rows = await Modifiers.update(
         tx,
@@ -121,8 +105,7 @@ const CharacterModifiersMethods = {
 
   async deleteModifier(session: Session, characterId: string, modifierId: string) {
     return withTransaction(async (tx) => {
-      const character = await Characters.findOneEditable(tx, { id: characterId, userId: session.userId });
-      if (!character) throw new NotFoundError("Character not found");
+      const character = await getEditableCharacter(tx, session, characterId);
 
       const existing = await Modifiers.findOne(tx, { id: modifierId });
       if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters") {

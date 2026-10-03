@@ -19,7 +19,7 @@ import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import TargetPathsService from "./TargetPathsService.ts";
+import { getTargetPathsWithLabels, resolvePathValueType } from "./targetPaths.ts";
 
 const ModifiersMethods = {
   async getEntityModifiers(rulesetId: string, entityType: string, entityId: string) {
@@ -31,8 +31,7 @@ const ModifiersMethods = {
       const allMods = rulesetData.modifiersBySource.get(resolvedId) ?? [];
       const modifiers = allMods.filter((m) => m.sourceType === entityType);
 
-      const pathsResult = await TargetPathsService.initialize().call("getTargetPathsWithLabels", rulesetId, "modifier");
-      const { paths, segmentLabels } = pathsResult[0] ? pathsResult[1] : { paths: [], segmentLabels: {} };
+      const { paths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, "modifier");
       const pathMap = new Map(paths.map((p) => [p.path, p]));
 
       return modifiers.map((m) => {
@@ -58,8 +57,7 @@ const ModifiersMethods = {
 
       const requirements = rulesetData.requirementsByEntity.get(modifierId) ?? [];
       const modifierRequirements = requirements.filter((r) => r.entityType === "modifiers");
-      const pathsResult = await TargetPathsService.initialize().call("getTargetPathsWithLabels", rulesetId, "modifier");
-      const { segmentLabels } = pathsResult[0] ? pathsResult[1] : { segmentLabels: {} };
+      const { segmentLabels } = await getTargetPathsWithLabels(rulesetId, "modifier");
 
       return {
         ...modifier,
@@ -90,10 +88,7 @@ const ModifiersMethods = {
 
         const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
 
-        const pathsService = TargetPathsService.initialize();
-        const valueTypeResult = await pathsService.call("resolvePathValueType", rulesetId, body.target, "modifier");
-        if (!valueTypeResult[0]) throw valueTypeResult[2];
-        const inferredValueType = valueTypeResult[1];
+        const inferredValueType = await resolvePathValueType(rulesetId, body.target, "modifier");
 
         const rows = await Modifiers.create(tx, {
           sourceId: resolvedEntityId,
@@ -150,10 +145,7 @@ const ModifiersMethods = {
 
         const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
 
-        const pathsService = TargetPathsService.initialize();
-        const valueTypeResult = await pathsService.call("resolvePathValueType", rulesetId, body.target, "modifier");
-        if (!valueTypeResult[0]) throw valueTypeResult[2];
-        const inferredValueType = valueTypeResult[1];
+        const inferredValueType = await resolvePathValueType(rulesetId, body.target, "modifier");
 
         const rows = await Modifiers.create(tx, {
           sourceId: resolvedEntityId,
@@ -224,10 +216,7 @@ const ModifiersMethods = {
           modifierId,
         );
 
-        const pathsService = TargetPathsService.initialize();
-        const valueTypeResult = await pathsService.call("resolvePathValueType", rulesetId, body.target, "modifier");
-        if (!valueTypeResult[0]) throw valueTypeResult[2];
-        const inferredValueType = valueTypeResult[1];
+        const inferredValueType = await resolvePathValueType(rulesetId, body.target, "modifier");
 
         const expectedUpdatedAt = resolvedModifierId === modifierId ? body.updatedAt : undefined;
         const rows = await Modifiers.update(
