@@ -50,6 +50,15 @@
     "arkyvree/layers": "error",
     "arkyvree/queries-in-repositories": "error",
     "arkyvree/folder-index": "error",
+    // AGENTS.md's conventions (lint/conventions.mjs): imports through @/, no helpers.ts, the shared repository
+    // instances, route params / validation / errors, sorting through the repository, shared/'s runtime, `session`.
+    "arkyvree/no-parent-imports": "error",
+    "arkyvree/no-helpers-modules": "error",
+    "arkyvree/repository-instances": "error",
+    "arkyvree/route-conventions": "error",
+    "arkyvree/order-through-repository": "error",
+    "arkyvree/shared-runtime": "error",
+    "arkyvree/session-param": "error",
     // A file reads bottom-up: a helper sits above the code that uses it. Classes
     // are left out: a repository's instance class follows it.
     "no-use-before-define": [

@@ -1,6 +1,7 @@
 import { Document } from "@react-pdf/renderer";
 
-import type DetailedCharacter from "../DetailedCharacter.ts";
+import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+
 import DiagnosticsPage from "./DiagnosticsPage.tsx";
 import FeatsPage from "./FeatsPage.tsx";
 import InfoPage from "./InfoPage.tsx";

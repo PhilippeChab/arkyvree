@@ -31,6 +31,8 @@ const shared = new Hono()
     const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } =
       await CharacterSharingService.generateSharedPdf(shareToken);
 
+    // The render's own failure answers a PDF-specific 500; a service's error still reaches onError above.
+    // oxlint-disable-next-line arkyvree/route-conventions
     try {
       const pdfBlob = await pdf(
         <CharacterSheetComponent detailedCharacter={detailedCharacter} portraitUrl={portraitUrl} kind={kind} />,

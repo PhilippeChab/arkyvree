@@ -1,3 +1,4 @@
+import DependentCache from "@/server/cache/DependentCache.ts";
 import { withCowContext } from "@/server/database/cowContext.ts";
 import { db } from "@/server/database/index.ts";
 import { everyPage } from "@/server/repositories/concerns/Paginates.ts";
@@ -44,8 +45,6 @@ import type {
   RulesetSave,
   Skill,
 } from "@/shared/relations.ts";
-
-import DependentCache from "../DependentCache.ts";
 
 export interface RulesetRawData {
   abilities: RulesetAbility[];
