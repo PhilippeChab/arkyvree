@@ -14,6 +14,133 @@ import { stripSeparators } from "@/shared/text.ts";
 /** The powers a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
 export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithKnownPowers extends Base {
+    /**
+     * The class each power-giving aptitude belongs to, traced through the applied modifiers: a class level's (its class,
+     * or the class a bonus caster level advances), then a feat's for domain spells (the class whose level gave the feat).
+     */
+    private aptitudeClassNames() {
+      const appliedModifiers = this.characterModifiers.getModifiers().appliedModifiers;
+      const aptitudeIdToClassName = new Map<string, string>();
+      const classes = this.classes.getClasses();
+      const aptitudes = this.aptitudes.getAptitudes();
+      const aptitudePowerAptitudeIds = new Set(this.allAptitudePowers.map((p) => p.aptitudeId));
+      // The aptitude a modifier of this source type targets, when it gives powers and has no class yet.
+      const targetedAptitude = (modifier: (typeof appliedModifiers)[number], sourceType: string) => {
+        if (modifier.sourceType !== sourceType) return undefined;
+        const parts = modifier.target.split(".");
+        if (parts[0] !== "aptitudes") return undefined;
+        const aptitude = aptitudes[parts[1]];
+        if (!aptitude || !aptitudePowerAptitudeIds.has(aptitude.id)) return undefined;
+        return aptitudeIdToClassName.has(aptitude.id) ? undefined : aptitude;
+      };
+
+      for (const modifier of appliedModifiers) {
+        const aptitude = targetedAptitude(modifier, "klass_levels");
+        if (!aptitude) continue;
+        // Find which class owns this klass level
+        for (const [className, klassData] of Object.entries(classes)) {
+          if (klassData.levels.some((level) => level.klassLevel.id === modifier.sourceId)) {
+            aptitudeIdToClassName.set(aptitude.id, className);
+            break;
+          }
+        }
+        // Fallback: check bonus klass levels from caster level advancement
+        if (!aptitudeIdToClassName.has(aptitude.id)) {
+          const bonusClassName = this.bonusKlassLevelClassMap.get(modifier.sourceId);
+          if (bonusClassName) aptitudeIdToClassName.set(aptitude.id, bonusClassName);
+        }
+      }
+
+      // Map domain spell aptitudes via feat modifiers.
+      for (const modifier of appliedModifiers) {
+        const aptitude = targetedAptitude(modifier, "feats");
+        if (!aptitude || !aptitude.name.endsWith("Domain Spells")) continue;
+        // Trace feat → klassLevelId → class
+        for (const [className, klassData] of Object.entries(classes)) {
+          if (klassData.levels.some((level) => level.feats.some((f) => f.id === modifier.sourceId))) {
+            aptitudeIdToClassName.set(aptitude.id, className);
+            break;
+          }
+        }
+      }
+      return aptitudeIdToClassName;
+    }
+
+    /**
+     * The aptitude powers the character doesn't have yet, each given at the first level of its class and free. Domain
+     * spells merge into the class's main spell list.
+     */
+    private newKnownPowers(powers: PowerWithPMR[], aptitudeIdToClassName: Map<string, string>): PowerWithPMR[] {
+      const classes = this.classes.getClasses();
+      const aptitudes = this.aptitudes.getAptitudes();
+      // Build className → class spell aptitude ID map
+      const classNameToSpellAptitudeId = new Map<string, string>();
+      for (const [, clsName] of aptitudeIdToClassName) {
+        if (classNameToSpellAptitudeId.has(clsName)) continue;
+        const spellApt = aptitudes[`${clsName}spells`];
+        if (spellApt) classNameToSpellAptitudeId.set(clsName, spellApt.id);
+      }
+
+      // Deduplicate: exclude powers already present on the character
+      const existingPowerIds = new Set(powers.map((p) => p.id));
+      const newPowers: PowerWithPMR[] = [];
+      for (const power of this.allAptitudePowers) {
+        if (existingPowerIds.has(power.id)) continue;
+        const className = aptitudeIdToClassName.get(power.aptitudeId);
+        if (!className) continue;
+        const klassData = classes[className];
+        if (!klassData || klassData.levels.length === 0) continue;
+
+        const powerAptitude = Object.values(aptitudes).find((a: { id: string }) => a.id === power.aptitudeId) as
+          | { id: string; name: string }
+          | undefined;
+        const resolvedAptitudeId = powerAptitude?.name.endsWith("Domain Spells")
+          ? (classNameToSpellAptitudeId.get(className) ?? power.aptitudeId)
+          : power.aptitudeId;
+
+        const firstLevel = klassData.levels[0];
+        const enrichedPower: PowerWithPMR = {
+          ...power,
+          aptitudeId: resolvedAptitudeId,
+          klassLevelId: firstLevel.klassLevel.id,
+          characterLevelId: firstLevel.characterLevel.id,
+          free: true,
+          properties: this.aptitudePowerProperties.filter((p) => p.entityId === power.id),
+          modifiers: [],
+          requirements: [],
+        };
+        firstLevel.powers.push(enrichedPower);
+        newPowers.push(enrichedPower);
+      }
+      return newPowers;
+    }
+
+    /** Adds the new powers to the character: known in its spell map, and grouped with their DC ability. */
+    private registerKnownPowers(
+      newPowers: PowerWithPMR[],
+      klassLevels: KlassLevelWithPMR[],
+      rulesetAptitudes: Aptitude[],
+      klassBonusSpellAbilityMap: Map<string, string>,
+    ) {
+      this.characterPowers.addPowerEntries(newPowers);
+      for (const power of newPowers) {
+        // Mark as known in spell map
+        const apt = rulesetAptitudes.find((a) => a.id === power.aptitudeId);
+        if (apt) {
+          const entry = this.characterPowers.getSpellEntry(stripSeparators(power.name), spellPossessionSlug(apt.name));
+          if (entry) entry.known = true;
+        }
+
+        let abilityDcName: string | null = null;
+        const klassLevel = klassLevels.find((kl) => kl.id === power.klassLevelId);
+        if (klassLevel) {
+          abilityDcName = klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
+        }
+        this.powerGroupings.registerPower({ ...power, abilityDcName }, power.properties);
+      }
+      this.characterPowers.injectGroupings(this.powerGroupings.getPowerGroupings());
+    }
+
     buildSpellTags(feats: FeatWithPMR[], rulesetAptitudes: Aptitude[]) {
       const characterFeatNames = new Set(feats.map((f) => f.name));
 
@@ -38,7 +165,6 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       return this.spellTags;
     }
 
-    // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
     enrichAllKnownPowers(
       powers: PowerWithPMR[],
       klassLevels: KlassLevelWithPMR[],
@@ -46,130 +172,9 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       klassBonusSpellAbilityMap: Map<string, string>,
     ) {
       if (this.allAptitudePowers.length === 0) return;
-
-      // Map aptitude ID → class name by tracing applied modifiers with sourceType "klass_levels"
-      const appliedModifiers = this.characterModifiers.getModifiers().appliedModifiers;
-      const aptitudeIdToClassName = new Map<string, string>();
-      const classes = this.classes.getClasses();
-      const aptitudes = this.aptitudes.getAptitudes();
-      const aptitudePowerAptitudeIds = new Set(this.allAptitudePowers.map((p) => p.aptitudeId));
-
-      for (const modifier of appliedModifiers) {
-        if (modifier.sourceType !== "klass_levels") continue;
-        const parts = modifier.target.split(".");
-        if (parts[0] !== "aptitudes") continue;
-
-        const aptitudeKey = parts[1];
-        const aptitude = aptitudes[aptitudeKey];
-        if (!aptitude || !aptitudePowerAptitudeIds.has(aptitude.id)) continue;
-        if (aptitudeIdToClassName.has(aptitude.id)) continue;
-
-        // Find which class owns this klass level
-        for (const [className, klassData] of Object.entries(classes)) {
-          const ownsLevel = klassData.levels.some((level) => level.klassLevel.id === modifier.sourceId);
-          if (ownsLevel) {
-            aptitudeIdToClassName.set(aptitude.id, className);
-            break;
-          }
-        }
-
-        // Fallback: check bonus klass levels from caster level advancement
-        if (!aptitudeIdToClassName.has(aptitude.id)) {
-          const bonusClassName = this.bonusKlassLevelClassMap.get(modifier.sourceId);
-          if (bonusClassName) {
-            aptitudeIdToClassName.set(aptitude.id, bonusClassName);
-          }
-        }
-      }
-
-      // Map domain spell aptitudes via feat modifiers.
-      for (const modifier of appliedModifiers) {
-        if (modifier.sourceType !== "feats") continue;
-        const parts = modifier.target.split(".");
-        if (parts[0] !== "aptitudes") continue;
-
-        const aptitudeKey = parts[1];
-        const aptitude = aptitudes[aptitudeKey];
-        if (!aptitude || !aptitudePowerAptitudeIds.has(aptitude.id)) continue;
-        if (aptitudeIdToClassName.has(aptitude.id)) continue;
-        if (!aptitude.name.endsWith("Domain Spells")) continue;
-
-        // Trace feat → klassLevelId → class
-        for (const [className, klassData] of Object.entries(classes)) {
-          const ownsLevel = klassData.levels.some((level) => level.feats.some((f) => f.id === modifier.sourceId));
-          if (ownsLevel) {
-            aptitudeIdToClassName.set(aptitude.id, className);
-            break;
-          }
-        }
-      }
-
-      // Build className → class spell aptitude ID map
-      const classNameToSpellAptitudeId = new Map<string, string>();
-      for (const [, clsName] of aptitudeIdToClassName) {
-        if (classNameToSpellAptitudeId.has(clsName)) continue;
-        const spellApt = aptitudes[`${clsName}spells`];
-        if (spellApt) classNameToSpellAptitudeId.set(clsName, spellApt.id);
-      }
-
-      // Deduplicate: exclude powers already present on the character
-      const existingPowerIds = new Set(powers.map((p) => p.id));
-
-      const newPowers: PowerWithPMR[] = [];
-      for (const power of this.allAptitudePowers) {
-        if (existingPowerIds.has(power.id)) continue;
-
-        const className = aptitudeIdToClassName.get(power.aptitudeId);
-        if (!className) continue;
-
-        const klassData = classes[className];
-        if (!klassData || klassData.levels.length === 0) continue;
-
-        // Merge domain spells into the class's main spell list
-        const powerAptitude = Object.values(aptitudes).find((a: { id: string }) => a.id === power.aptitudeId) as
-          | { id: string; name: string }
-          | undefined;
-        const resolvedAptitudeId = powerAptitude?.name.endsWith("Domain Spells")
-          ? (classNameToSpellAptitudeId.get(className) ?? power.aptitudeId)
-          : power.aptitudeId;
-
-        const firstLevel = klassData.levels[0];
-        const enrichedPower: PowerWithPMR = {
-          ...power,
-          aptitudeId: resolvedAptitudeId,
-          klassLevelId: firstLevel.klassLevel.id,
-          characterLevelId: firstLevel.characterLevel.id,
-          free: true,
-          properties: this.aptitudePowerProperties.filter((p) => p.entityId === power.id),
-          modifiers: [],
-          requirements: [],
-        };
-
-        firstLevel.powers.push(enrichedPower);
-        newPowers.push(enrichedPower);
-      }
-
+      const newPowers = this.newKnownPowers(powers, this.aptitudeClassNames());
       if (newPowers.length > 0) {
-        this.characterPowers.addPowerEntries(newPowers);
-        for (const power of newPowers) {
-          // Mark as known in spell map
-          const apt = rulesetAptitudes.find((a) => a.id === power.aptitudeId);
-          if (apt) {
-            const entry = this.characterPowers.getSpellEntry(
-              stripSeparators(power.name),
-              spellPossessionSlug(apt.name),
-            );
-            if (entry) entry.known = true;
-          }
-
-          let abilityDcName: string | null = null;
-          const klassLevel = klassLevels.find((kl) => kl.id === power.klassLevelId);
-          if (klassLevel) {
-            abilityDcName = klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
-          }
-          this.powerGroupings.registerPower({ ...power, abilityDcName }, power.properties);
-        }
-        this.characterPowers.injectGroupings(this.powerGroupings.getPowerGroupings());
+        this.registerKnownPowers(newPowers, klassLevels, rulesetAptitudes, klassBonusSpellAbilityMap);
       }
     }
 

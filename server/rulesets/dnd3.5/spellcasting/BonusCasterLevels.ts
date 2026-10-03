@@ -4,12 +4,95 @@ import type { FeatWithPMR, KlassLevelWithPMR } from "@/server/rulesets/dnd3.5/De
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import type { Holders } from "@/server/rulesets/types.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
-import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
+import type { CharacterLevel, Klass, KlassLevel } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+/** A character level's key in the index of the class levels the character took. */
+const levelKey = (characterLevelId: string, klassLevelId: string) => `${characterLevelId}:${klassLevelId}`;
 
 /** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain spells they bring. */
 export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithBonusCasterLevels extends Base {
+    /** Attributes each bonus klass level to the class level that granted it ("Mystic Theurge Level 3"). */
+    private attributeBonusLevels(
+      bonusKlassLevels: KlassLevel[],
+      klassLevels: KlassLevelWithPMR[],
+      feats: FeatWithPMR[],
+      characterLevels: CharacterLevel[],
+      rulesetKlasses: Klass[],
+    ) {
+      // Pre-built indices so the attribution is O(classes × feats)
+      // instead of O(classes × klassLevels × feats × characterLevels).
+      const rulesetKlassById = new Map(rulesetKlasses.map((k) => [k.id, k]));
+      const takenAt = new Set(characterLevels.map((cl) => levelKey(cl.id, cl.klassLevelId)));
+      const bonusLevelsByKlassId = Map.groupBy(bonusKlassLevels, (kl) => kl.klassId);
+
+      for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
+        if (klassData.bonuscasterlevel <= 0) continue;
+
+        const target = `classes.${stripSeparators(className)}.bonuscasterlevel`;
+        const grantingLevels = this.grantingLevels(target, klassLevels, feats, takenAt, rulesetKlassById);
+        const receivingBonusLevels = (bonusLevelsByKlassId.get(klassData.klass.id) ?? []).toSorted(
+          (a, b) => a.level - b.level,
+        );
+        for (let i = 0; i < receivingBonusLevels.length && i < grantingLevels.length; i++) {
+          this.bonusKlassLevelAttribution.set(
+            receivingBonusLevels[i].id,
+            `${grantingLevels[i].klassName} Level ${grantingLevels[i].level}`,
+          );
+        }
+      }
+    }
+
+    /**
+     * The klass levels each class's bonus caster levels reach past its own level (up to 20), as `klassId:level`, with
+     * the class's name.
+     */
+    private bonusLevelClassNames() {
+      const classNameByLevel = new Map<string, string>();
+      for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
+        const bonus = klassData.bonuscasterlevel;
+        if (bonus <= 0) continue;
+
+        const actualLevel = klassData.level;
+        const effectiveLevel = Math.min(actualLevel + bonus, 20);
+        for (let level = actualLevel + 1; level <= effectiveLevel; level++) {
+          classNameByLevel.set(`${klassData.klass.id}:${level}`, className);
+        }
+      }
+      return classNameByLevel;
+    }
+
+    /**
+     * The class levels that granted the bonus caster levels `target` adds to, in level order: each level a feat adding
+     * to it was taken at, but for a class level that adds to it itself.
+     */
+    private grantingLevels(
+      target: string,
+      klassLevels: KlassLevelWithPMR[],
+      feats: FeatWithPMR[],
+      takenAt: Set<string>,
+      rulesetKlassById: Map<string, Klass>,
+    ) {
+      const featsWithTargetMod = feats.filter(
+        (f) => f.characterLevelId && f.modifiers.some((m) => m.target === target && m.operator === "add"),
+      );
+
+      const grantingLevels: Array<{ klassName: string; level: number }> = [];
+      for (const kl of klassLevels) {
+        if (kl.modifiers.some((m) => m.target === target && m.operator === "add")) continue;
+        for (const feat of featsWithTargetMod) {
+          if (!takenAt.has(levelKey(feat.characterLevelId, kl.id))) continue;
+          const klass = rulesetKlassById.get(kl.klassId);
+          grantingLevels.push({
+            klassName: klass?.name ?? "Unknown",
+            level: kl.level,
+          });
+        }
+      }
+      return grantingLevels.sort((a, b) => a.level - b.level);
+    }
+
     /**
      * Sync domain spell aptitude levels to match the parent class's accessible spell levels.
      */
@@ -86,7 +169,6 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       return this.bonusKlassLevels;
     }
 
-    // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
     fetchBonusCasterLevelData(
       rulesetData: CachedRulesetData,
       klassLevels: KlassLevelWithPMR[],
@@ -94,106 +176,24 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       characterLevels: CharacterLevel[],
       rulesetKlasses: Klass[],
     ) {
-      const characterClasses = this.classes.getCharacterClasses();
-      const klassLevelPairs: Array<{ klassId: string; level: number }> = [];
-      const pairToClassName = new Map<string, string>();
-
-      for (const [className, klassData] of Object.entries(characterClasses)) {
-        const bonus = klassData.bonuscasterlevel;
-        if (bonus <= 0) continue;
-
-        const actualLevel = klassData.level;
-        const effectiveLevel = Math.min(actualLevel + bonus, 20);
-
-        for (let level = actualLevel + 1; level <= effectiveLevel; level++) {
-          klassLevelPairs.push({ klassId: klassData.klass.id, level });
-          pairToClassName.set(`${klassData.klass.id}:${level}`, className);
-        }
-      }
-
-      if (klassLevelPairs.length === 0) return;
-
-      // Resolve bonus klass levels + their modifiers from the composed cache.
-      const bonusKlassLevels: KlassLevel[] = [];
-      for (const pair of klassLevelPairs) {
-        const kl = rulesetData.klassLevelByKlassAndLevel.get(`${pair.klassId}:${pair.level}`);
-        if (kl) bonusKlassLevels.push(kl);
-      }
+      const classNameByLevel = this.bonusLevelClassNames();
+      const bonusKlassLevels = [...classNameByLevel.keys()].flatMap(
+        (key) => rulesetData.klassLevelByKlassAndLevel.get(key) ?? [],
+      );
       if (bonusKlassLevels.length === 0) return;
 
-      const bonusKlassLevelModifiers: Modifier[] = [];
-      for (const kl of bonusKlassLevels) {
-        const mods = rulesetData.modifiersBySource.get(kl.id);
-        if (mods) {
-          for (const m of mods) {
-            if (m.sourceType === "klass_levels") bonusKlassLevelModifiers.push(m);
-          }
-        }
-      }
-      this.bonusKlassLevelModifiers = bonusKlassLevelModifiers;
-
+      this.bonusKlassLevelModifiers = bonusKlassLevels.flatMap((kl) =>
+        (rulesetData.modifiersBySource.get(kl.id) ?? []).filter((m) => m.sourceType === "klass_levels"),
+      );
       // Store bonus klass levels for source resolution in diagnostics
       this.bonusKlassLevels = bonusKlassLevels;
-
       for (const kl of bonusKlassLevels) {
-        const key = `${kl.klassId}:${kl.level}`;
-        const className = pairToClassName.get(key);
+        const className = classNameByLevel.get(`${kl.klassId}:${kl.level}`);
         if (className) {
           this.bonusKlassLevelClassMap.set(kl.id, className);
         }
       }
-
-      // Pre-built indices so the attribution loop below is O(classes × feats)
-      // instead of O(classes × klassLevels × feats × characterLevels).
-      const rulesetKlassById = new Map<string, Klass>();
-      for (const k of rulesetKlasses) rulesetKlassById.set(k.id, k);
-      const charLevelKey = (characterLevelId: string, klassLevelId: string) => `${characterLevelId}:${klassLevelId}`;
-      const charLevelIndex = new Set<string>();
-      for (const cl of characterLevels) {
-        charLevelIndex.add(charLevelKey(cl.id, cl.klassLevelId));
-      }
-      const bonusLevelsByKlassId = new Map<string, typeof bonusKlassLevels>();
-      for (const kl of bonusKlassLevels) {
-        const group = bonusLevelsByKlassId.get(kl.klassId);
-        if (group) group.push(kl);
-        else bonusLevelsByKlassId.set(kl.klassId, [kl]);
-      }
-
-      // Attribute each bonus klass level to the granting class level.
-      for (const [className, klassData] of Object.entries(characterClasses)) {
-        if (klassData.bonuscasterlevel <= 0) continue;
-
-        const target = `classes.${stripSeparators(className)}.bonuscasterlevel`;
-        // Feats granting this bonus — same answer regardless of which klass level
-        // we're checking, so compute once per class rather than per klass level.
-        const featsWithTargetMod = feats.filter(
-          (f) => f.characterLevelId && f.modifiers.some((m) => m.target === target && m.operator === "add"),
-        );
-
-        const grantingLevels: Array<{ klassName: string; level: number }> = [];
-        for (const kl of klassLevels) {
-          if (kl.modifiers.some((m) => m.target === target && m.operator === "add")) continue;
-          for (const feat of featsWithTargetMod) {
-            if (!charLevelIndex.has(charLevelKey(feat.characterLevelId, kl.id))) continue;
-            const klass = rulesetKlassById.get(kl.klassId);
-            grantingLevels.push({
-              klassName: klass?.name ?? "Unknown",
-              level: kl.level,
-            });
-          }
-        }
-        grantingLevels.sort((a, b) => a.level - b.level);
-
-        const receivingBonusLevels = (bonusLevelsByKlassId.get(klassData.klass.id) ?? [])
-          .slice()
-          .sort((a, b) => a.level - b.level);
-        for (let i = 0; i < receivingBonusLevels.length && i < grantingLevels.length; i++) {
-          this.bonusKlassLevelAttribution.set(
-            receivingBonusLevels[i].id,
-            `${grantingLevels[i].klassName} Level ${grantingLevels[i].level}`,
-          );
-        }
-      }
+      this.attributeBonusLevels(bonusKlassLevels, klassLevels, feats, characterLevels, rulesetKlasses);
     }
   }
   return WithBonusCasterLevels;

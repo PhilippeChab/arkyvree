@@ -43,6 +43,8 @@ type DetailedCharacterComprehensiveAptitudes = {
   };
 };
 
+type AptitudesById = Map<string, DetailedCharacterComprehensiveAptitudes[string]>;
+
 export default class DetailedCharacterAptitudes {
   constructor(
     private readonly characterIdentity: DetailedCharacterIdentity,
@@ -110,13 +112,8 @@ export default class DetailedCharacterAptitudes {
   // Track which aptitude keys are leveled (spell aptitudes)
   private readonly leveledAptitudeKeys = new Set<string>();
 
-  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
-  initialize(
-    aptitudes: Aptitude[],
-    klassLevelFeatCountsByAptitudeId: Record<string, number>,
-    klassLevelPowerCountsByAptitudeId: Record<string, number> = {},
-    leveledAptitudeIds: Set<string> = new Set(),
-  ) {
+  /** An entry per aptitude, with one per spell level for a leveled one. */
+  private buildEntries(aptitudes: Aptitude[], leveledAptitudeIds: Set<string>) {
     for (const aptitude of aptitudes) {
       const key = stripSeparators(aptitude.name);
       this.detailedCharacterComprehensiveAptitudes[key] = {
@@ -129,7 +126,6 @@ export default class DetailedCharacterAptitudes {
         spent: 0,
       };
 
-      // Create per-level sub-entries for leveled aptitudes
       if (leveledAptitudeIds.has(aptitude.id)) {
         this.leveledAptitudeKeys.add(key);
         const aptitudeObj = this.detailedCharacterComprehensiveAptitudes[key] as Record<string, unknown>;
@@ -143,66 +139,35 @@ export default class DetailedCharacterAptitudes {
         }
       }
     }
+  }
+
+  /**
+   * What each aptitude allows: the feats and the (non-free) powers the class levels grant through it, and a general
+   * feat at the first level and every third.
+   */
+  private applyAllowances(
+    aptitudeById: AptitudesById,
+    klassLevelFeatCountsByAptitudeId: Record<string, number>,
+    klassLevelPowerCountsByAptitudeId: Record<string, number>,
+  ) {
+    for (const counts of [klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId]) {
+      for (const [aptitudeId, count] of Object.entries(counts)) {
+        const aptitude = aptitudeById.get(aptitudeId);
+        if (aptitude) {
+          aptitude.allowed += count;
+        }
+      }
+    }
 
     const level = this.characterIdentity.getIdentity().meta.level;
+    this.detailedCharacterComprehensiveAptitudes["general"].allowed += level === 0 ? 0 : Math.floor(level / 3) + 1;
+  }
 
-    const generalAptitudeAmount = level === 0 ? 0 : Math.floor(level / 3) + 1;
-
-    // Count feats and powers taken for each aptitude (exclude free powers)
-    // For leveled aptitudes, count per-level spent
-    const spentByAptitudeId: Record<string, number> = {};
-    const spentByAptitudeIdAndLevel: Record<string, Record<number, number>> = {};
-    const classes = this.characterClasses.getClasses();
-
-    for (const klass of Object.values(classes)) {
-      for (const level of klass.levels) {
-        for (const feat of level.feats) {
-          spentByAptitudeId[feat.aptitudeId] = (spentByAptitudeId[feat.aptitudeId] || 0) + 1;
-        }
-        for (const power of level.powers) {
-          if (!power.free) {
-            if (power.powerLevel != null) {
-              // Per-level spent for spell aptitudes
-              if (!spentByAptitudeIdAndLevel[power.aptitudeId]) {
-                spentByAptitudeIdAndLevel[power.aptitudeId] = {};
-              }
-              spentByAptitudeIdAndLevel[power.aptitudeId][power.powerLevel] =
-                (spentByAptitudeIdAndLevel[power.aptitudeId][power.powerLevel] || 0) + 1;
-            } else {
-              // Flat spent for non-leveled aptitudes
-              spentByAptitudeId[power.aptitudeId] = (spentByAptitudeId[power.aptitudeId] || 0) + 1;
-            }
-          }
-        }
-      }
-    }
-
-    // Build reverse map for O(1) lookups by aptitude ID
-    const aptitudeById = new Map<string, DetailedCharacterComprehensiveAptitudes[string]>();
-    for (const aptitude of Object.values(this.detailedCharacterComprehensiveAptitudes)) {
-      aptitudeById.set(aptitude.id, aptitude);
-    }
-
-    // Set allowed for automatic class-level feats
-    for (const [aptitudeId, count] of Object.entries(klassLevelFeatCountsByAptitudeId)) {
-      const aptitude = aptitudeById.get(aptitudeId);
-      if (aptitude) {
-        aptitude.allowed += count;
-      }
-    }
-
-    // Set allowed for automatic class-level powers (non-free only)
-    for (const [aptitudeId, count] of Object.entries(klassLevelPowerCountsByAptitudeId)) {
-      const aptitude = aptitudeById.get(aptitudeId);
-      if (aptitude) {
-        aptitude.allowed += count;
-      }
-    }
-
-    const generalAptitude = this.detailedCharacterComprehensiveAptitudes["general"];
-    generalAptitude.allowed += generalAptitudeAmount;
-
-    // Set flat spent for non-leveled aptitudes
+  /** Sets what the character spent on each aptitude: flat, or per spell level for a leveled one. */
+  private applySpent(
+    aptitudeById: AptitudesById,
+    { spentByAptitudeId, spentByAptitudeIdAndLevel }: ReturnType<DetailedCharacterAptitudes["countSpent"]>,
+  ) {
     for (const [aptitudeId, count] of Object.entries(spentByAptitudeId)) {
       const aptitude = aptitudeById.get(aptitudeId);
       if (aptitude) {
@@ -211,7 +176,6 @@ export default class DetailedCharacterAptitudes {
       }
     }
 
-    // Set per-level spent for leveled (spell) aptitudes
     for (const [aptitudeId, levelSpent] of Object.entries(spentByAptitudeIdAndLevel)) {
       const aptitude = aptitudeById.get(aptitudeId);
       if (!aptitude) continue;
@@ -224,7 +188,45 @@ export default class DetailedCharacterAptitudes {
         }
       }
     }
+  }
 
+  /** The feats and the (non-free) powers the character took per aptitude, per spell level for a leveled power. */
+  private countSpent() {
+    const spentByAptitudeId: Record<string, number> = {};
+    const spentByAptitudeIdAndLevel: Record<string, Record<number, number>> = {};
+
+    for (const klass of Object.values(this.characterClasses.getClasses())) {
+      for (const level of klass.levels) {
+        for (const feat of level.feats) {
+          spentByAptitudeId[feat.aptitudeId] = (spentByAptitudeId[feat.aptitudeId] || 0) + 1;
+        }
+        for (const power of level.powers) {
+          if (power.free) continue;
+          if (power.powerLevel != null) {
+            spentByAptitudeIdAndLevel[power.aptitudeId] ??= {};
+            spentByAptitudeIdAndLevel[power.aptitudeId][power.powerLevel] =
+              (spentByAptitudeIdAndLevel[power.aptitudeId][power.powerLevel] || 0) + 1;
+          } else {
+            spentByAptitudeId[power.aptitudeId] = (spentByAptitudeId[power.aptitudeId] || 0) + 1;
+          }
+        }
+      }
+    }
+    return { spentByAptitudeId, spentByAptitudeIdAndLevel };
+  }
+
+  initialize(
+    aptitudes: Aptitude[],
+    klassLevelFeatCountsByAptitudeId: Record<string, number>,
+    klassLevelPowerCountsByAptitudeId: Record<string, number> = {},
+    leveledAptitudeIds: Set<string> = new Set(),
+  ) {
+    this.buildEntries(aptitudes, leveledAptitudeIds);
+    const aptitudeById: AptitudesById = new Map(
+      Object.values(this.detailedCharacterComprehensiveAptitudes).map((aptitude) => [aptitude.id, aptitude]),
+    );
+    this.applyAllowances(aptitudeById, klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId);
+    this.applySpent(aptitudeById, this.countSpent());
     this.updateAvailables();
   }
 
