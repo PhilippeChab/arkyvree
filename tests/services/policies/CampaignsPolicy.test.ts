@@ -6,7 +6,7 @@ import { playersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Players } from "@/server/repositories/index.ts";
-import CampaignsPolicy from "@/server/services/policies/CampaignsPolicy.ts";
+import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import { createTestUser, getSeedCtx } from "@/tests/helpers.ts";
 

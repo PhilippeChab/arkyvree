@@ -134,7 +134,7 @@ The three invite lifecycles share the same shape:
 | Accept / reject | Identity match: `invite.userId === session.userId` (or `contributor.userId === session.userId` for contributor rows). Throws `NotFoundError` rather than `ForbiddenError` to avoid leaking the existence of invites addressed to other users |
 | Leave (self-remove from contributor or self-remove from campaign) | Identity match: must be holding the row being removed. Throws `NotFoundError` otherwise |
 
-`acceptCampaignInvite`, `rejectCampaignInvite`, `acceptContributorInvite` (rulesets and characters), `leaveRuleset`, and `leaveCharacter` all follow this pattern. Campaign self-leave goes through `PlayersService.removeCampaignPlayer` with the `isSelfRemoval = player.userId === session.userId` branch — same shape (identity match skips the GM gate). They're identity matches, not permission gates — see "Identity vs. policy" below.
+`acceptCampaignInvite`, `rejectCampaignInvite`, `acceptContributorInvite` (rulesets and characters), `leaveRuleset`, and `leaveCharacter` all follow this pattern. Campaign self-leave goes through `CampaignPlayersService.removeCampaignPlayer` with the `isSelfRemoval = player.userId === session.userId` branch — same shape (identity match skips the GM gate). They're identity matches, not permission gates — see "Identity vs. policy" below.
 
 ## Customizations — `CustomizationsPolicy`
 
@@ -162,7 +162,7 @@ Anything that *throws* on the basis of ownership is a permission gate and belong
 |---|---|
 | `RulesetsPolicy` | `RulesetsService` (including extension subscribe / unsubscribe), the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `RulesetsPolicy.for`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset |
 | `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `getEditableCharacter` instead and skip the policy class — same effective rule, fewer object instantiations |
-| `CampaignsPolicy` | `CampaignsService`, `PlayersService`, campaigns sub-services |
+| `CampaignsPolicy` | `CampaignsService`, `CampaignPlayersService`, campaigns sub-services |
 | `CustomizationsPolicy` | `ModifiersService`, `PropertiesService`, `RequirementsService` (rulesets/customization). `CharacterModifiersService` uses `getEditableCharacter`, like the other character writes |
 | `AttachmentsService` registry | not a `BasePolicy` — uses `registerAttachable()` config map. Currently registered: `User` (avatar), `Character` (portrait) |
 

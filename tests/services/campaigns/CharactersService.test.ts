@@ -45,7 +45,7 @@ async function addLevels(characterId: string, levels: [string, number][]) {
   }
 }
 
-describe("PlayerCharactersService", () => {
+describe("CampaignCharactersService", () => {
   describe("linkCharacter", () => {
     test.each(["Public", "Private", "Partial"] as const)(
       "links the player's character with %s visibility",

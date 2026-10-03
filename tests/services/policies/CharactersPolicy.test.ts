@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
-import CharactersPolicy from "@/server/services/policies/CharactersPolicy.ts";
+import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import { createTestCharacter, createTestUser } from "@/tests/helpers.ts";
 
 /** A character of a new user's, with that user's session and a stranger's. */

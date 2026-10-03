@@ -15,7 +15,7 @@ async function setup() {
   return { user, session, campaign, gmPlayer };
 }
 
-describe("PlayersService", () => {
+describe("CampaignPlayersService", () => {
   describe("getCampaignPlayers", () => {
     test("lists and pages a campaign's players", async () => {
       const { user, session, campaign } = await setup();

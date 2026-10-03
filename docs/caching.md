@@ -113,7 +113,7 @@ Rare but real:
 
 - **Lineage checks that touch `rulesetId` fields.** `rulesetData.cow.sourceChain` is the ancestor chain. For validating that a submitted entity belongs to the character's ruleset or one of its ancestors, build `new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain])` and check `.has(entity.rulesetId)` (or use `sourceChain.includes(entity.rulesetId)` when the self id isn't relevant). Examples: `CharacterInventoryService.addItem`, `CharactersService.updateLanguages`.
 
-- **Multi-ruleset list enrichment.** Can't fit under a single `withRulesetScope`. Use `withRulesetScopes` — see `CharactersService.getMyCharacters` and `campaigns/CharactersService.getCampaignCharacters`.
+- **Multi-ruleset list enrichment.** Can't fit under a single `withRulesetScope`. Use `withRulesetScopes` — see `CharactersService.getMyCharacters` and `CampaignCharactersService.getCampaignCharacters`.
 
 Other historic manual patterns (`overrideMap.get(id) ?? id`, `resolveOverrides(rows, overrideMap)`, `canonicalize(id)`) are now handled by the repo Proxy and the `rulesetData.*` Map wrappers. If you find yourself tempted to write one, step back and check — you probably just need to be inside a scope.
 

@@ -41,7 +41,7 @@ async function signUpAndBackfill(email: string) {
   return { user, backfilled };
 }
 
-describe("InvitesService", () => {
+describe("CampaignInvitesService", () => {
   describe("an invite into a slot (updateCampaignPlayer)", () => {
     test("invites a user into an empty slot", async () => {
       const { invitee, slot, invite } = await setup();
