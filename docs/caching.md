@@ -37,7 +37,7 @@ Inside the scope:
   2. **Output FK resolution** — returned rows have every `*Id` field remapped to post-COW.
   3. **Composite-key expansion** — `CharacterAbilities.update(tx, values, { characterId, abilityId })` matches both the pre-COW stored row and post-COW client input through `BaseRepository.idMatches`.
 
-COW ownership resolution needs stored IDs. Inside `cow.ts`, use `withCowContext(undefined, () => Modifiers.findOne(db, { id }))` for that lookup. This existing infrastructure scope disables remapping for the read and restores the caller's context afterward. SQL stays in the shared repository; ordinary service reads continue to use `withRulesetScope`.
+COW ownership resolution needs stored IDs. Inside `cow/`, use `withCowContext(undefined, () => Modifiers.findOne(db, { id }))` for that lookup. This existing infrastructure scope disables remapping for the read and restores the caller's context afterward. SQL stays in the shared repository; ordinary service reads continue to use `withRulesetScope`.
 
 **Callers don't think about COW for lookups.** `rulesetData.featsById.get(id)` works whether `id` is pre-COW or post-COW. Character-scoped repo reads (`CharacterLevels.findMany`, etc.) return rows whose `*Id` fields are already post-COW when they happen inside a scope. The only place you reach past the scope is ruleset management (publish, extensions and reverts in `RulesetsService`) and framework internals (`DetailedCharacterDataLoader` for PMR distribution, `TargetPathsService` for path generation) — both are covered by `@internal` helpers described below.
 
@@ -137,7 +137,7 @@ From `server/services/rulesets/cow/`:
 
 For lineage checks (entity-belongs-to-sourceChain), `findScopedEntity`. For id canonicalization (pre-COW → post-COW) use `rulesetData.canonicalize(id)`. Sibling merging (aptitude links, modifiers, properties, requirements) is pre-baked into `rulesetData` by the compose step, so consumers only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
 
-From `server/cache/rulesetCache.ts` (re-exported via `server/cache/index.ts`):
+From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cache/index.ts`):
 
 | Symbol | Purpose |
 |---|---|
@@ -149,10 +149,10 @@ From `server/cache/rulesetCache.ts` (re-exported via `server/cache/index.ts`):
 
 ### Framework / copy primitives
 
-Used by the copy flows, `RulesetsService` (publish, extensions, reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
+Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`, `RulesetChangesService` (reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
-- **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateRulesetItem` / `bulkCreateVariants` and `ModifiersService.duplicateEntityModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow.ts` doesn't re-export.
-- **Extensions** (`RulesetsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
+- **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateRulesetItem` / `bulkCreateVariants` and `ModifiersService.duplicateEntityModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow/index.ts` doesn't export.
+- **Extensions** (`RulesetExtensionsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
 - **Override map**: `buildOverrideMap`, called only inside `cow/` (`getOrBuildCowData`, `cowEntity`).
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`getOrBuildCowData`, `cowEntity`) and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `getOrFetchRulesetData`, `invalidateCowData`, `invalidateAllCowData`.
@@ -283,7 +283,7 @@ Paginated / searched / filtered queries (e.g. `Feats.findManyByRulesetId({ searc
 
 Within a single HTTP request, two calls to the same `Repo.findOne(db, ...)` / `Repo.findMany(db, ...)` with the same args return the same `Promise`. The second caller piggybacks on the first's in-flight query — no second round trip.
 
-Why this matters: our read paths have legitimate architectural duplicates. `pickQueries.getAvailablePowers` calls `Characters.findOne`, then later `detailedCharacter.build()` internally calls `Rulesets.findOne` — the same rows the outer function already looked up.
+Why this matters: our read paths have legitimate architectural duplicates. `powerPicks.getAvailablePowers` calls `Characters.findOne`, then later `detailedCharacter.build()` internally calls `Rulesets.findOne` — the same rows the outer function already looked up.
 
 ### How it works
 
@@ -459,7 +459,7 @@ sequenceDiagram
 
 ## Adding a new entity to the ruleset cache
 
-1. Add the entity's type + an array field to `RulesetRawData` in `server/cache/rulesetCache.ts`.
+1. Add the entity's type + an array field to `RulesetRawData` in `server/cache/rulesetCache/rawData.ts`.
 2. Fetch it in the appropriate round of `fetchRulesetRawData` (rounds gate on dependencies — klass-level fetches need `klasses` first, customizations need all entity IDs).
 3. Add the composed array to `CachedRulesetData`.
 4. Extend the compose step: concat across chain → filter `isExcluded(id)` → `resolveOverrides` if it has FKs.
@@ -478,7 +478,7 @@ The Proxy detects writes by matching method names against a prefix list (`create
 ## References
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
-- `server/cache/rulesetCache.ts` — raw-tier cache, compose step (sibling merging + FK remap), accessor maps (incl. `cowResolvingMap` wrapper), invalidation
+- `server/cache/rulesetCache/` — the raw-tier cache (`rawData.ts`), the compose step with its sibling merging, FK remap and accessor maps, `cowResolvingMap` included (`compose.ts`), the target paths cache (`targetPaths.ts`) and invalidation (`invalidation.ts`)
 - `server/services/rulesets/cow/` — `withRulesetScope` / `withRulesetScopes`, COW data + override map, copy primitives, `resolveOverrides`, invalidation hooks
 - `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `currentCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup

@@ -5,25 +5,20 @@ import {
   authRateLimit,
   authSessionRateLimit,
   deleteSessionCookie,
-  denyDemoUser,
   getSessionCookie,
   sessionMiddleware,
   setSessionCookie,
   zValidator,
 } from "@/server/middlewares/index.ts";
+import account from "@/server/routers/authentication/account/index.ts";
+import linkedAccounts from "@/server/routers/authentication/linkedAccounts/index.ts";
 import {
-  DeleteAccountJson,
   ForgotPasswordJson,
   GoogleSignInJson,
   ResendVerificationJson,
   ResetPasswordJson,
-  SetPasswordJson,
   SignInJson,
   SignUpJson,
-  UnlinkOauthJson,
-  UpdatePasswordJson,
-  UpdateProfileJson,
-  VerifyEmailChangeJson,
   VerifyEmailJson,
 } from "@/server/routers/authentication/validation.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
@@ -82,57 +77,8 @@ export default new Hono()
   .get("/me", async (c) => {
     return c.json(await AuthenticationService.me(c.var.requestSession), 200);
   })
-  .put("/profile", denyDemoUser, zValidator("json", UpdateProfileJson), async (c) => {
-    const body = c.req.valid("json");
-    return c.json(
-      await AuthenticationService.updateProfile(c.var.requestSession, body.username, body.emailAddress),
-      200,
-    );
-  })
-  .put("/password", denyDemoUser, zValidator("json", UpdatePasswordJson), async (c) => {
-    const body = c.req.valid("json");
-    return c.json(
-      await AuthenticationService.updatePassword(c.var.requestSession, body.currentPassword, body.newPassword),
-      200,
-    );
-  })
-  .post("/set-password", denyDemoUser, zValidator("json", SetPasswordJson), async (c) => {
-    const body = c.req.valid("json");
-    return c.json(await AuthenticationService.setPassword(c.var.requestSession, body.newPassword), 200);
-  })
-  .get("/linked-accounts", async (c) => {
-    return c.json(await AuthenticationService.getLinkedAccounts(c.var.requestSession), 200);
-  })
-  .post("/link-google", denyDemoUser, zValidator("json", GoogleSignInJson), async (c) => {
-    const body = c.req.valid("json");
-    return c.json(await AuthenticationService.linkGoogleAccount(c.var.requestSession, body.idToken), 200);
-  })
-  .post("/unlink-oauth", denyDemoUser, zValidator("json", UnlinkOauthJson), async (c) => {
-    const body = c.req.valid("json");
-    return c.json(await AuthenticationService.unlinkOauthAccount(c.var.requestSession, body.provider), 200);
-  })
-  .post("/verify-email-change", denyDemoUser, zValidator("json", VerifyEmailChangeJson), async (c) => {
-    const body = c.req.valid("json");
-    return c.json(await AuthenticationService.verifyEmailChange(c.var.requestSession, body.code), 200);
-  })
-  .post("/cancel-email-change", denyDemoUser, async (c) => {
-    await AuthenticationService.cancelEmailChange(c.var.requestSession);
-    return c.json({ success: true }, 200);
-  })
-  .post("/resend-email-change", denyDemoUser, async (c) => {
-    await AuthenticationService.resendEmailChange(c.var.requestSession);
-    return c.json({ success: true }, 200);
-  })
-  .post("/delete-account", denyDemoUser, zValidator("json", DeleteAccountJson), async (c) => {
-    const body = c.req.valid("json");
-    await AuthenticationService.deleteAccount(c.var.requestSession, body.password);
-    deleteSessionCookie(c);
-    return c.json({ success: true }, 200);
-  })
-  .post("/complete-onboarding", async (c) => {
-    await AuthenticationService.completeOnboarding(c.var.requestSession);
-    return c.json({ success: true }, 200);
-  })
+  .route("/", account)
+  .route("/", linkedAccounts)
   .post("/sign-out", async (c) => {
     await AuthenticationService.signOut(c.var.requestSession);
     deleteSessionCookie(c);

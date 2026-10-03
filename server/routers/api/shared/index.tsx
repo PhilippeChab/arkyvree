@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
-import { CharactersService } from "@/server/services/characters/index.ts";
+import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 
 const shared = new Hono()
   // Get shared character data (public, no auth)
@@ -13,7 +13,7 @@ const shared = new Hono()
     const { shareToken } = c.req.valid("param");
 
     const { character, detailedCharacter, bondedByKind, portraitUrl } =
-      await CharactersService.getSharedCharacter(shareToken);
+      await CharacterSharingService.getSharedCharacter(shareToken);
     const response = buildFullCharacterResponse(character, detailedCharacter);
     return c.json(
       {
@@ -29,7 +29,7 @@ const shared = new Hono()
     const { shareToken } = c.req.valid("param");
     // Outside the try: a token that finds no character is a 404, not a failed render.
     const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } =
-      await CharactersService.generateSharedPdf(shareToken);
+      await CharacterSharingService.generateSharedPdf(shareToken);
 
     try {
       const pdfBlob = await pdf(

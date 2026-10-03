@@ -18,7 +18,7 @@ import {
   SEED_USER_ID,
 } from "@/database/seeds/helpers.ts";
 import { characterAbilitiesInCharacter, charactersInCharacter, inventoryInCharacter } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
+import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {

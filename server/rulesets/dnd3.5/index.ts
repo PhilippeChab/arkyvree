@@ -8,12 +8,12 @@ import Dnd35DetailedCharacterAnimalCompanion from "./DetailedCharacterAnimalComp
 import type Dnd35DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 import Dnd35DetailedCharacterFamiliar from "./DetailedCharacterFamiliar.ts";
 import Dnd35DetailedCharacterMount from "./DetailedCharacterMount.ts";
-import Dnd35DetailedCharacterSheet from "./DetailedCharacterSheet.tsx";
 import { createServiceHooks } from "./hooks/index.ts";
 import Dnd35LevelUpProjector from "./LevelUpProjector.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "./properties/index.ts";
 import Dnd35PropertyTypes from "./PropertyTypes.ts";
 import { seedTemplateItems } from "./seedTemplateItems.ts";
+import Dnd35DetailedCharacterSheet from "./sheet/DetailedCharacterSheet.tsx";
 import Dnd35TargetPaths from "./TargetPaths.ts";
 
 function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35DetailedCharacterBonded | null {

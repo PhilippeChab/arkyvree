@@ -38,7 +38,9 @@ import {
   StarredRulesets,
 } from "@/server/repositories/index.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { cowEntity } from "@/server/services/rulesets/cow/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -362,7 +364,7 @@ describe("RulesetsService", () => {
       ).rejects.toThrow(UnprocessableEntityError);
       const host = await fork(session, { id: rulesetId });
       const seedExtension = await Rulesets.findOne(db, { name: DND35_COMPLETE_WARRIOR_NAME });
-      await RulesetsService.subscribeExtension(session, host.id, [seedExtension!.id]);
+      await RulesetExtensionsService.subscribeExtension(session, host.id, [seedExtension!.id]);
       await expect(RulesetsService.publishRuleset(session, host.id, { kind: "extension" })).rejects.toThrow(
         UnprocessableEntityError,
       );
@@ -487,7 +489,7 @@ describe("RulesetsService", () => {
 
     test("lists the entities it modified, deleted and added", async () => {
       const { session, fork, modified, deleted } = await setupChanges();
-      expect(await RulesetsService.getChanges(session, fork.id)).toEqual([]);
+      expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
 
       const copy = await FeatsService.updateRulesetFeat(session, fork.id, modified.id, {
         name: "Power Attack",
@@ -496,7 +498,7 @@ describe("RulesetsService", () => {
       await FeatsService.deleteRulesetFeat(session, fork.id, deleted.id);
       const [added] = await Feats.create(db, { name: "Homebrew", rulesetId: fork.id });
 
-      const changes = await RulesetsService.getChanges(session, fork.id);
+      const changes = await RulesetChangesService.getChanges(session, fork.id);
       expect([...changes].sort((a, b) => a.name.localeCompare(b.name))).toEqual([
         { entityType: "feats", status: "deleted", sourceEntityId: deleted.id, name: "Cleave" },
         { entityType: "feats", status: "added", entityId: added.id, name: "Homebrew" },
@@ -512,13 +514,13 @@ describe("RulesetsService", () => {
 
     test("are only a fork's, and a private fork's only its members'", async () => {
       const { user, session } = await createTestUser();
-      await expect(RulesetsService.getChanges(session, (await createTestRuleset(user.id)).id)).rejects.toThrow(
+      await expect(RulesetChangesService.getChanges(session, (await createTestRuleset(user.id)).id)).rejects.toThrow(
         BadRequestError,
       );
-      await expect(RulesetsService.getChanges(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+      await expect(RulesetChangesService.getChanges(session, NIL_UUID)).rejects.toThrow(NotFoundError);
 
       const { fork } = await setupChanges({ private: true });
-      await expect(RulesetsService.getChanges(session, fork.id)).rejects.toThrow(ForbiddenError);
+      await expect(RulesetChangesService.getChanges(session, fork.id)).rejects.toThrow(ForbiddenError);
     });
 
     describe("reverting", () => {
@@ -539,9 +541,9 @@ describe("RulesetsService", () => {
         await Properties.create(db, { entityId: copy.id, entityType: "feats", type: "tag", value: "combat" });
         await Requirements.create(db, { entityId: copy.id, entityType: "feats", level: "1", chainingOperator: "and" });
 
-        await RulesetsService.revertOverride(session, fork.id, "feats", modified.id);
+        await RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id);
 
-        expect(await RulesetsService.getChanges(session, fork.id)).toEqual([]);
+        expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
         expect(await FeatsService.getRulesetFeat(fork.id, modified.id)).toMatchObject({
           id: modified.id,
           description: null,
@@ -557,7 +559,7 @@ describe("RulesetsService", () => {
       test("brings back an inherited feat the fork deleted", async () => {
         const { session, fork, deleted } = await setupChanges();
         await FeatsService.deleteRulesetFeat(session, fork.id, deleted.id);
-        await RulesetsService.revertOverride(session, fork.id, "feats", deleted.id);
+        await RulesetChangesService.revertOverride(session, fork.id, "feats", deleted.id);
         expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toEqual([]);
         expect(await FeatsService.getRulesetFeat(fork.id, deleted.id)).toMatchObject({ id: deleted.id });
       });
@@ -569,7 +571,7 @@ describe("RulesetsService", () => {
         await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
         const copy = await cowEntity(db, "klasses", klass.id, fork.id, [parent.id], []);
 
-        await RulesetsService.revertOverride(session, fork.id, "klasses", klass.id);
+        await RulesetChangesService.revertOverride(session, fork.id, "klasses", klass.id);
 
         expect(await KlassLevels.findManyByKlass(db, { klassId: copy.id as string })).toEqual([]);
         expect(
@@ -590,7 +592,7 @@ describe("RulesetsService", () => {
           sourceItemId: copy.id as string,
         });
 
-        await RulesetsService.revertOverride(session, fork.id, "items", template.id);
+        await RulesetChangesService.revertOverride(session, fork.id, "items", template.id);
         expect(await Items.findOne(db, { id: made.id })).toMatchObject({ sourceItemId: template.id });
       });
 
@@ -604,10 +606,10 @@ describe("RulesetsService", () => {
         });
 
         // Reverting deletes the copy, and with it the character's pick.
-        await expect(RulesetsService.revertOverride(session, fork.id, "feats", modified.id)).rejects.toThrow(
+        await expect(RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id)).rejects.toThrow(
           ConflictError,
         );
-        await expect(RulesetsService.revertOverride(session, fork.id, "feats", untouched.id)).rejects.toThrow(
+        await expect(RulesetChangesService.revertOverride(session, fork.id, "feats", untouched.id)).rejects.toThrow(
           NotFoundError,
         );
       });

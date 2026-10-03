@@ -13,6 +13,7 @@ import { CampaignCharactersService } from "@/server/services/campaigns/character
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import {
   addCharacterContributor,
   addOneLevel,
@@ -261,15 +262,15 @@ describe("CharactersService with bonded creatures", () => {
 
   test("shares a master with their familiar", async () => {
     const { masterId } = await createWizardWithFamiliar();
-    const { shareToken } = await CharactersService.generateShareToken(owner, masterId);
-    expect((await CharactersService.getSharedCharacter(shareToken!)).bondedByKind.familiar).toBeDefined();
+    const { shareToken } = await CharacterSharingService.generateShareToken(owner, masterId);
+    expect((await CharacterSharingService.getSharedCharacter(shareToken!)).bondedByKind.familiar).toBeDefined();
   });
 
   test.each([
     ["archive", (id: string) => CharactersService.archiveCharacter(owner, id)],
     ["unarchive", (id: string) => CharactersService.unarchiveCharacter(owner, id)],
-    ["share", (id: string) => CharactersService.generateShareToken(owner, id)],
-    ["stop sharing", (id: string) => CharactersService.revokeShareToken(owner, id)],
+    ["share", (id: string) => CharacterSharingService.generateShareToken(owner, id)],
+    ["stop sharing", (id: string) => CharacterSharingService.revokeShareToken(owner, id)],
     [
       "list the contributors of",
       (id: string) => CharacterContributorsService.getContributors(owner, id, {}, { limit: 10, page: 1 }),

@@ -1,0 +1,360 @@
+import { and, eq, getTableName, inArray, isNull, sql } from "drizzle-orm";
+import { unionAll } from "drizzle-orm/pg-core";
+
+import { entitySnapshotsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
+import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { type Db, db, withTransaction } from "@/server/database/index.ts";
+import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import {
+  Activities,
+  CharacterInventory,
+  CharacterLanguages,
+  CharacterLevelFeats,
+  CharacterLevelPowers,
+  CharacterLevels,
+  CharacterLevelSkills,
+  Characters,
+  EntitySnapshots,
+  RulesetExtensions,
+  Rulesets,
+} from "@/server/repositories/index.ts";
+import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { ENTITY_REPOS, ENTITY_TABLES, NAME_FALLBACK_ENTITY_TYPES } from "@/server/services/rulesets/cow/index.ts";
+import type { EntityType } from "@/server/services/rulesets/cow/index.ts";
+import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
+import type { Session } from "@/shared/relations.ts";
+
+class RulesetExtensionsService {
+  // Returns true iff any character on `hostRulesetId` has picked an entity that
+  // belongs to `extensionId` — either a direct extension entity or a host-owned
+  // COW shadow whose source entity belongs to the extension. Unsubscribe deletes
+  // those shadows, so a shadow pick would be silently orphaned without this
+  // check.
+  private async isExtensionInUseByHost(tx: Db, hostRulesetId: string, extensionId: string): Promise<boolean> {
+    // Group snapshots by entity type, then resolve each type's source entities
+    // in one batched query (avoids N+1 over snapshot count). Build a per-type
+    // list of host-owned shadow IDs whose source entity belongs to the extension.
+    const snapshots = await EntitySnapshots.findByRulesetId(tx, { rulesetId: hostRulesetId });
+    const sourceIdsByType: Partial<Record<EntityType, string[]>> = {};
+    for (const snap of snapshots) {
+      const type = snap.entityType as EntityType;
+      if (!ENTITY_REPOS[type]) continue;
+      (sourceIdsByType[type] ??= []).push(snap.sourceEntityId);
+    }
+
+    const shadowIdsByType: Partial<Record<EntityType, string[]>> = {};
+    for (const [type, ids] of Object.entries(sourceIdsByType) as [EntityType, string[]][]) {
+      const sources = await ENTITY_REPOS[type].findMany(tx, { ids });
+      const fromExt = new Set(sources.filter((s) => s.rulesetId === extensionId).map((s) => s.id));
+      const forked = snapshots
+        .filter((s) => s.entityType === type && fromExt.has(s.sourceEntityId))
+        .map((s) => s.forkedEntityId);
+      if (forked.length > 0) shadowIdsByType[type] = forked;
+    }
+    const shadow = (type: EntityType) => shadowIdsByType[type] ?? [];
+
+    return (
+      (await CharacterLevelFeats.existsByFeatPickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowFeatIds: shadow("feats"),
+      })) ||
+      (await CharacterLevelFeats.existsByAptitudePickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowAptitudeIds: shadow("aptitudes"),
+      })) ||
+      (await CharacterLevelSkills.existsBySkillPickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowSkillIds: shadow("skills"),
+      })) ||
+      (await CharacterLevelPowers.existsByPowerPickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowPowerIds: shadow("powers"),
+      })) ||
+      (await CharacterLevelPowers.existsByAptitudePickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowAptitudeIds: shadow("aptitudes"),
+      })) ||
+      (await CharacterLevels.existsByKlassPickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowKlassIds: shadow("klasses"),
+      })) ||
+      (await Characters.existsByRaceFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowRaceIds: shadow("races"),
+      })) ||
+      (await CharacterLanguages.existsByLanguagePickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowLanguageIds: shadow("languages"),
+      })) ||
+      (await CharacterInventory.existsByItemPickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowItemIds: shadow("items"),
+      }))
+    );
+  }
+
+  // Rejects a subscribe action that would surface two entities of the same name in
+  // the host's source chain. Compares locally-owned (non-shadow) rows in the host,
+  // already-subscribed extensions, and the new extensions; aptitudes are skipped
+  // because the sibling mechanism already dedups them by name at compose time.
+  private async assertExtensionsNameCompatible(
+    tx: Db,
+    hostId: string,
+    newExtensionIds: string[],
+    existingExtensionRulesetIds: string[],
+  ): Promise<void> {
+    if (newExtensionIds.length === 0) return;
+
+    const rulesetIds = [hostId, ...newExtensionIds, ...existingExtensionRulesetIds];
+
+    const typesToCheck = (Object.keys(ENTITY_TABLES) as EntityType[]).filter((t) => t !== "aptitudes");
+
+    const subqueries = typesToCheck.map((entityType) => {
+      const table = ENTITY_TABLES[entityType];
+      return tx
+        .select({
+          entityType: sql<EntityType>`${entityType}::text`.as("entity_type"),
+          name: table.name,
+          rulesetId: table.rulesetId,
+        })
+        .from(table)
+        .leftJoin(
+          entitySnapshotsInRules,
+          and(
+            eq(entitySnapshotsInRules.forkedEntityId, table.id),
+            eq(entitySnapshotsInRules.rulesetId, table.rulesetId),
+            eq(entitySnapshotsInRules.entityType, entityType),
+          ),
+        )
+        .where(
+          and(
+            inArray(table.rulesetId, rulesetIds),
+            isNull(entitySnapshotsInRules.id),
+            isNull(table.deletedAt),
+            isNull(table.campaignId),
+          ),
+        );
+    });
+
+    const [first, second, ...rest] = subqueries;
+    const rows = await unionAll(first, second, ...rest);
+
+    const ownersByType = new Map<EntityType, Map<string, Set<string>>>();
+    for (const r of rows) {
+      const type = r.entityType as EntityType;
+      let byName = ownersByType.get(type);
+      if (!byName) {
+        byName = new Map<string, Set<string>>();
+        ownersByType.set(type, byName);
+      }
+      let set = byName.get(r.name);
+      if (!set) {
+        set = new Set<string>();
+        byName.set(r.name, set);
+      }
+      set.add(r.rulesetId);
+    }
+
+    // Feats and powers participate in the runtime name-fallback pairing in
+    // cow/ — extension-only collisions on those types get merged into one
+    // entity at compose, so allow them. The host's own native rows can't be
+    // sibling-paired (host isn't part of its own source chain), so a
+    // host+extension collision would produce visible duplicates and must be
+    // blocked even for paired types. All other entity types (races, classes,
+    // abilities, etc.) have no name-fallback pairing — extension+extension
+    // collisions there would surface as UI duplicates, so block them.
+    const pairableTypes = new Set<EntityType>(NAME_FALLBACK_ENTITY_TYPES);
+    for (const [entityType, byName] of ownersByType) {
+      const isPairableType = pairableTypes.has(entityType);
+      for (const [name, ownerIds] of byName) {
+        if (ownerIds.size <= 1) continue;
+        const involvesNew = newExtensionIds.some((id) => ownerIds.has(id));
+        if (!involvesNew) continue;
+        if (isPairableType) {
+          const involvesHost = ownerIds.has(hostId);
+          if (!involvesHost) continue;
+          throw new ConflictError(`Cannot subscribe: ${entityType} "${name}" already exists in this ruleset`);
+        }
+        throw new ConflictError(
+          `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
+        );
+      }
+    }
+  }
+
+  async getSubscribedExtensions(_session: Session, id: string) {
+    const ruleset = await Rulesets.findOne(db, { id });
+    if (!ruleset) {
+      throw new NotFoundError("Ruleset not found");
+    }
+
+    const subscribed = await RulesetExtensions.findByRulesetId(db, { rulesetId: id });
+
+    return subscribed.map((ext) => ({
+      extensionId: ext.extensionId,
+      extensionName: ext.extensionName,
+      extensionDescription: ext.extensionDescription,
+      subscribedAt: ext.subscribedAt,
+      updateAvailable: ext.extensionUpdatedAt > ext.updatedAt,
+    }));
+  }
+
+  async subscribeExtension(session: Session, id: string, extensionIds: string[]) {
+    const result = await withTransaction(async (tx) => {
+      // 1. Validate ruleset
+      const childRuleset = await Rulesets.findOne(tx, { id });
+      if (!childRuleset) {
+        throw new NotFoundError("Ruleset not found");
+      }
+      new RulesetsPolicy(session, childRuleset).canSubscribeExtension();
+
+      // The host can't subscribe to anything if it's already being used as an
+      // extension by someone else — adding extensions to it would create
+      // transitive deps for those subscribers.
+      if (childRuleset.userId !== null) {
+        const subscribers = await Rulesets.findSubscribers(tx, id);
+        if (subscribers.length > 0) {
+          throw new UnprocessableEntityError(
+            "Cannot subscribe to extensions while this ruleset is being used as an extension",
+          );
+        }
+      }
+
+      // 2. Validate each extension
+      const newExtensionIds: string[] = [];
+      for (const extensionId of extensionIds) {
+        if (extensionId === id) {
+          throw new UnprocessableEntityError("Cannot subscribe to itself");
+        }
+        const extension = await Rulesets.findOne(tx, { id: extensionId });
+        if (!extension) {
+          throw new NotFoundError("Extension not found");
+        }
+        if (extension.kind !== "extension") {
+          throw new UnprocessableEntityError("Ruleset is not published as an extension");
+        }
+        if (extension.status !== "Published") {
+          throw new UnprocessableEntityError("Extension must be published");
+        }
+        if (extension.userId !== null && extension.private) {
+          throw new UnprocessableEntityError("Extension must be public");
+        }
+        // Both child and extension are forks of a base ruleset (fork-of-fork
+        // is blocked, extensions are forks of bases) so "share a common ancestor"
+        // collapses to "fork the same base."
+        if (childRuleset.rulesetId !== extension.rulesetId) {
+          throw new UnprocessableEntityError("Extension must share a common ancestor ruleset");
+        }
+        if (childRuleset.extensionRulesetIds.includes(extensionId)) {
+          throw new ConflictError("Already subscribed to this extension");
+        }
+        newExtensionIds.push(extensionId);
+      }
+
+      await this.assertExtensionsNameCompatible(tx, id, newExtensionIds, childRuleset.extensionRulesetIds);
+
+      // 3. Append all to extensionRulesetIds
+      await Rulesets.update(
+        tx,
+        { extensionRulesetIds: [...childRuleset.extensionRulesetIds, ...newExtensionIds] },
+        { id },
+      );
+
+      // 4. Upsert metadata rows
+      for (const extensionId of newExtensionIds) {
+        await RulesetExtensions.upsert(tx, { rulesetId: id, extensionId });
+      }
+
+      // 5. Log activity
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: id,
+        targetTable: getTableName(rulesetsInRules),
+        type: "subscribeExtension",
+        data: { extensionIds: newExtensionIds },
+      });
+
+      return { subscribed: true };
+    });
+
+    invalidateRuleset(id);
+    return result;
+  }
+
+  async unsubscribeExtension(session: Session, id: string, extensionId: string) {
+    const result = await withTransaction(async (tx) => {
+      // 1. Validate
+      const ruleset = await Rulesets.findOne(tx, { id });
+      if (!ruleset) {
+        throw new NotFoundError("Ruleset not found");
+      }
+      const policy = new RulesetsPolicy(session, ruleset);
+      policy.canUnsubscribeExtension();
+
+      if (!ruleset.extensionRulesetIds.includes(extensionId)) {
+        throw new NotFoundError("Not subscribed to this extension");
+      }
+
+      const inUse = await this.isExtensionInUseByHost(tx, id, extensionId);
+      policy.canUnsubscribeExtension({ inUse });
+
+      // 2. Clean up COW copies: find snapshots whose sourceEntityId belongs to the extension
+      const snapshots = await EntitySnapshots.findByRulesetId(tx, { rulesetId: id });
+      const extensionSnapshots = [];
+      for (const snap of snapshots) {
+        const entityType = snap.entityType as EntityType;
+        const repo = ENTITY_REPOS[entityType];
+        if (!repo) continue;
+        const sourceEntity = await repo.findOne(tx, { id: snap.sourceEntityId });
+        if (sourceEntity?.rulesetId === extensionId) {
+          extensionSnapshots.push(snap);
+        }
+      }
+
+      // Delete COW copies and their snapshots
+      for (const snap of extensionSnapshots) {
+        const entityType = snap.entityType as EntityType;
+        await deleteEntityWithCascade(tx, entityType, snap.forkedEntityId);
+        await EntitySnapshots.deleteBySourceAndRuleset(tx, {
+          sourceEntityId: snap.sourceEntityId,
+          rulesetId: id,
+        });
+      }
+
+      // 3. Remove extensionId from array
+      await Rulesets.update(
+        tx,
+        { extensionRulesetIds: ruleset.extensionRulesetIds.filter((eid) => eid !== extensionId) },
+        { id },
+      );
+
+      // 4. Soft-delete metadata row
+      await RulesetExtensions.archive(tx, { rulesetId: id, extensionId });
+
+      // 5. Log activity
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: id,
+        targetTable: getTableName(rulesetsInRules),
+        type: "unsubscribeExtension",
+        data: { extensionId },
+      });
+
+      return { unsubscribed: true };
+    });
+
+    invalidateRuleset(id);
+    return result;
+  }
+}
+
+export default new RulesetExtensionsService();

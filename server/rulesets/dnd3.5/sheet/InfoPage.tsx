@@ -1,0 +1,299 @@
+import { Image, Page, Text, View } from "@react-pdf/renderer";
+
+import type DetailedCharacter from "../DetailedCharacter.ts";
+import { formatModifier } from "./format.ts";
+import { FONT_SIZE, styles } from "./styles.ts";
+
+const InfoPage = ({
+  detailedCharacter,
+  portraitUrl,
+}: {
+  detailedCharacter: DetailedCharacter;
+  portraitUrl?: string | null;
+}) => {
+  const ruleset = detailedCharacter.getRuleset();
+  const identity = detailedCharacter.getDetailedCharacterIdentity();
+  const abilities = detailedCharacter.getDetailedCharacterAbilities();
+  const combat = detailedCharacter.getDetailedCharacterCombat();
+  const savingThrows = detailedCharacter.getDetailedCharacterSavingThrows();
+  const classes = detailedCharacter.getDetailedCharacterClasses();
+  const identityData = identity.getIdentity();
+  const abilityData = abilities.getAbilities();
+  const combatData = combat.getCombat();
+  const savingThrowData = savingThrows.getSavingThrows();
+  const classData = classes.getCharacterClasses();
+  return (
+    <Page size="A4" style={styles.page}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>{identityData.physiology.name}</Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+          <Text style={styles.subtitle}>
+            {identityData.physiology.race?.name || ""}{" "}
+            {Object.values(classData)
+              ?.map((cl) => `${cl.klass.name} (${cl.levels.length})`)
+              .join(" / ") || ""}
+          </Text>
+          <Text style={styles.subtitle}>{ruleset?.name ?? "D&D 3.5e"}</Text>
+        </View>
+      </View>
+
+      {/* Personal Details Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Personal Details</Text>
+        <View style={[styles.row, { justifyContent: "space-between", alignItems: "stretch", gap: 10 }]}>
+          {portraitUrl ? (
+            <Image src={portraitUrl} style={styles.portrait} />
+          ) : (
+            <View style={styles.portraitPlaceholder}>
+              <Text style={styles.portraitPlaceholderText}>No image</Text>
+            </View>
+          )}
+          <View style={{ width: "22%" }}>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerLabel}>Experience:</Text>
+              <Text style={styles.headerValue}>{identityData.meta.xp || 0}</Text>
+            </View>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerLabel}>Race:</Text>
+              <Text style={styles.headerValue}>{identityData.physiology.race?.name || "—"}</Text>
+            </View>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerLabel}>Age:</Text>
+              <Text style={styles.headerValue}>{identityData.physiology.age || "—"}</Text>
+            </View>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerLabel}>Height:</Text>
+              <Text style={styles.headerValue}>
+                {identityData.physiology.height ? `${identityData.physiology.height} cm` : "—"}
+              </Text>
+            </View>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerLabel}>Deity:</Text>
+              <Text style={styles.headerValue}>{identityData.beliefs.deity || "—"}</Text>
+            </View>
+          </View>
+          <View style={{ width: "22%" }}>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerLabel}>Alignment:</Text>
+              <Text style={styles.headerValue}>{identityData.beliefs.alignment || "Neutral"}</Text>
+            </View>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerLabel}>Gender:</Text>
+              <Text style={styles.headerValue}>{identityData.physiology.gender || "—"}</Text>
+            </View>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerLabel}>Size:</Text>
+              <Text style={styles.headerValue}>{identityData.physiology.race?.size || "Medium"}</Text>
+            </View>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerLabel}>Weight:</Text>
+              <Text style={styles.headerValue}>
+                {identityData.physiology.weight ? `${identityData.physiology.weight} kg` : "—"}
+              </Text>
+            </View>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerLabel}>Vision:</Text>
+              <Text style={styles.headerValue}>Normal</Text>
+            </View>
+          </View>
+        </View>
+        {identityData.physiology.languages.length > 0 && (
+          <Text style={[styles.headerValue, { marginTop: 6 }]}>
+            <Text style={styles.headerLabel}>Languages: </Text>
+            {identityData.physiology.languages.map((l) => l.name).join(", ")}
+          </Text>
+        )}
+        <View style={{ marginTop: 6 }}>
+          <View style={styles.headerRow}>
+            <Text style={styles.headerLabel}>Description:</Text>
+          </View>
+          {identityData.physiology.description ? (
+            <Text style={{ fontSize: FONT_SIZE.md, marginTop: 2, lineHeight: 1.4 }}>
+              {identityData.physiology.description}
+            </Text>
+          ) : (
+            <Text style={{ fontSize: FONT_SIZE.md, fontStyle: "italic", color: "#888" }}>—</Text>
+          )}
+        </View>
+        <View style={{ marginTop: 6 }}>
+          <View style={styles.headerRow}>
+            <Text style={styles.headerLabel}>Notes:</Text>
+          </View>
+          {identityData.background?.notes ? (
+            <Text style={{ fontSize: FONT_SIZE.md, marginTop: 2, lineHeight: 1.4 }}>
+              {identityData.background.notes}
+            </Text>
+          ) : (
+            <Text style={{ fontSize: FONT_SIZE.md, fontStyle: "italic", color: "#888" }}>—</Text>
+          )}
+        </View>
+      </View>
+
+      <View wrap={false}>
+        <View style={styles.twoColumn}>
+          {/* Left Column */}
+          <View style={styles.halfWidth}>
+            {/* Ability Scores */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Ability Scores</Text>
+              <View style={[styles.row, { justifyContent: "space-between" }]}>
+                {(
+                  [
+                    { label: "STR", key: "strength", name: "Strength" },
+                    { label: "DEX", key: "dexterity", name: "Dexterity" },
+                    { label: "CON", key: "constitution", name: "Constitution" },
+                    { label: "INT", key: "intelligence", name: "Intelligence" },
+                    { label: "WIS", key: "wisdom", name: "Wisdom" },
+                    { label: "CHA", key: "charisma", name: "Charisma" },
+                  ] as const
+                ).map(({ label, key, name }) => {
+                  const ab = abilityData[key];
+                  return (
+                    <View key={key} style={styles.abilityBox}>
+                      <Text style={styles.abilityName}>{label}</Text>
+                      <Text style={styles.abilityScore}>{ab?.total ?? 10}</Text>
+                      <Text style={styles.abilityMod}>{formatModifier(abilities.getAbilityModifier(name))}</Text>
+                      <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>
+                        {`${ab?.base ?? 10} / ${ab?.level ? `+${ab.level}` : "+0"} / ${ab?.misc ? formatModifier(ab.misc) : "+0"}`}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Saving Throws */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Saving Throws</Text>
+              <View style={[styles.row, { justifyContent: "space-between" }]}>
+                {Object.values(savingThrowData).map((save) => (
+                  <View key={save.name} style={styles.savingThrowBox}>
+                    <Text style={styles.abilityName}>{save.name}</Text>
+                    <Text style={styles.abilityMod}>{formatModifier(save.total)}</Text>
+                    <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>
+                      {`Base ${formatModifier(save.base)}  |  Abil ${formatModifier(save.ability)}  |  Misc ${formatModifier(save.misc)}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* Right Column */}
+          <View style={styles.halfWidth}>
+            {/* Combat Stats */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Combat Stats</Text>
+              <View style={[styles.row, { flexWrap: "wrap", justifyContent: "space-between" }]}>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>HP</Text>
+                  <Text style={styles.statValue}>{combatData.hp.total}</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>AC</Text>
+                  <Text style={styles.statValue}>{combatData.ac.total}</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>Touch AC</Text>
+                  <Text style={styles.statValue}>{combatData.ac.touch}</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>Flat-footed</Text>
+                  <Text style={styles.statValue}>{combatData.ac.flatfooted}</Text>
+                </View>
+              </View>
+              <View style={{ marginBottom: 4 }}>
+                <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", textAlign: "center" }}>
+                  {`Arm ${formatModifier(combatData.ac.armor ?? 0)}  Shld ${formatModifier(combatData.ac.shield ?? 0)}  Dex ${formatModifier(combatData.ac.dexterity ?? 0)}  Nat ${formatModifier(combatData.ac.natural ?? 0)}  Defl ${formatModifier(combatData.ac.deflection ?? 0)}  Misc ${formatModifier(combatData.ac.misc ?? 0)}`}
+                </Text>
+              </View>
+              <View style={[styles.row, { flexWrap: "wrap", justifyContent: "space-between" }]}>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>Initiative</Text>
+                  <Text style={styles.statValue}>{formatModifier(combatData.initiative.total)}</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>BAB</Text>
+                  <Text style={styles.statValue}>
+                    {(() => {
+                      const attacks: string[] = [];
+                      for (let b = combatData.bab; b > 0; b -= 5) attacks.push(formatModifier(b));
+                      return attacks.length > 0 ? attacks.join("/") : formatModifier(combatData.bab);
+                    })()}
+                  </Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>Grapple</Text>
+                  <Text style={styles.statValue}>{formatModifier(combatData.grapple.total)}</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>Speed</Text>
+                  <Text style={styles.statValue}>{combatData.speed.total} ft.</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Weapons & Combat */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Weapons & Combat</Text>
+          {Object.entries(combatData.weaponsets)
+            .sort(([a], [b]) => Number(a) - Number(b))
+            .map(([setIndex, set]) => {
+              const weapons = (["mainhand", "offhand", "twohanded"] as const)
+                .map((slotKey) => ({ slotKey, weapon: set[slotKey] }))
+                .filter(({ weapon }) => weapon !== null);
+
+              if (weapons.length === 0) return null;
+
+              return (
+                <View key={setIndex} style={{ marginBottom: 6 }}>
+                  <Text style={{ fontSize: FONT_SIZE.md, fontWeight: "bold", marginBottom: 3, color: "#444" }}>
+                    Set {Number(setIndex) + 1}
+                  </Text>
+                  <View style={[styles.tableRow, styles.tableHeader]}>
+                    <Text style={[styles.tableCell, { width: "27%", fontWeight: "bold" }]}>Weapon</Text>
+                    <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>Attack Bonus</Text>
+                    <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>Damage</Text>
+                    <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Critical</Text>
+                    <Text style={[styles.tableCell, { width: "11%", fontWeight: "bold" }]}>Range</Text>
+                    <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Type</Text>
+                  </View>
+                  {weapons.map(({ slotKey, weapon }) => (
+                    <View key={slotKey} style={styles.tableRow}>
+                      <View style={[styles.tableCell, { width: "27%" }]}>
+                        <Text>{weapon!.name}</Text>
+                        <Text style={{ fontSize: FONT_SIZE.sm, color: "#666" }}>
+                          {slotKey === "mainhand" ? "Main Hand" : slotKey === "offhand" ? "Off Hand" : "Two Handed"}
+                        </Text>
+                        {weapon!.proficient === false && (
+                          <Text style={{ fontSize: FONT_SIZE.xs, color: "#cc0000", fontWeight: "bold" }}>
+                            Not Proficient (-4)
+                          </Text>
+                        )}
+                      </View>
+                      <Text style={[styles.tableCell, { width: "18%" }]}>
+                        {weapon!.tohit.total.map(formatModifier).join("/")}
+                      </Text>
+                      <Text style={[styles.tableCell, { width: "18%" }]}>{weapon!.damage.total}</Text>
+                      <Text style={[styles.tableCell, { width: "13%" }]}>
+                        {21 - weapon!.damage.critical.range}/x{weapon!.damage.critical.multiplier}
+                      </Text>
+                      <Text style={[styles.tableCell, { width: "11%" }]}>
+                        {weapon!.range ? `${weapon!.range} ft.` : "Melee"}
+                      </Text>
+                      <Text style={[styles.tableCell, { width: "13%" }]}>{weapon!.damage.types.join(", ")}</Text>
+                    </View>
+                  ))}
+                </View>
+              );
+            })}
+        </View>
+      </View>
+    </Page>
+  );
+};
+
+export default InfoPage;

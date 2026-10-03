@@ -201,7 +201,7 @@ User's Fork (subscribed to A, then B)
 
 2. **Entity list filtering**: Sibling entities are filtered out of query results (only the winner is returned), so the user never sees duplicate feats.
 
-3. **Read-time merging** (built into the cache compose step in `server/cache/rulesetCache.ts`): `getOrFetchRulesetData` folds sibling contributions into the winner's buckets before services see them. Consumers read `rulesetData.featsById` / `rulesetData.powersById` / `rulesetData.modifiersBySource` / `rulesetData.requirementsByEntity` / `rulesetData.propertiesByEntity` and get pre-merged rows — no sibling helpers needed at call sites.
+3. **Read-time merging** (built into the cache compose step in `server/cache/rulesetCache/compose.ts`): `getOrFetchRulesetData` folds sibling contributions into the winner's buckets before services see them. Consumers read `rulesetData.featsById` / `rulesetData.powersById` / `rulesetData.modifiersBySource` / `rulesetData.requirementsByEntity` / `rulesetData.propertiesByEntity` and get pre-merged rows — no sibling helpers needed at call sites.
    - **Aptitudes**: sibling `feats_aptitudes` / `powers_aptitudes` are merged into the winner's inline array, deduped by resolved `aptitudeId` after FK remap.
    - **Requirements**: sibling requirement trees are appended at the top level (so they are ANDed with the winner's) with `entityId` remapped: a chain gets the next free integer level and a standalone keeps its level, suffixed on collision. Duplicate top-level standalone conditions are deduplicated on `target|operator|value`; conditions inside AND/OR chains are preserved to keep their boolean meaning, so two identical chains both remain. Display and copying share the same merge function (`mergeSiblingRequirements`). Display preserves each source row's UUID, and COW records its new copied UUID so edits target the exact requirement.
    - **Modifiers**: sibling modifiers are appended with `sourceId` remapped to the winner, deduped on `target|value|operator|valueType`. Dropped modifiers have their requirements dropped too.
@@ -334,7 +334,7 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
 The principle: only protect what the user *invested* in (their character
 picks). Author-owned data that breaks via cascade is recoverable by the author.
 
-The shared check lives in `cow.ts` as `entityHasCharacterPicks(tx, entityType,
+The shared check lives in `cow/characterPicks.ts` as `entityHasCharacterPicks(tx, entityType,
 entityId, rulesetId)` and is reused by every entity-delete service and
 `revertOverride`. One helper, one scoping rule, one source of truth.
 
@@ -435,7 +435,7 @@ server/
 │   │   └── levels/
 │   │       ├── CharacterLevelsService.ts  ← thin dispatcher; forwards to the ruleset impl
 │   │       └── dnd3.5/                    ← 3.5-only level-up flows
-│   │           ├── pickQueries.ts
+│   │           ├── classPicks.ts, featPicks.ts, powerPicks.ts, levelSelections.ts
 │   │           ├── slotQueries.ts
 │   │           ├── preview.ts
 │   │           ├── finalize.ts
@@ -542,7 +542,7 @@ Services that orchestrate 3.5-shaped flows (level-up, spell selection, wizard sc
 
 ```ts
 // Today
-import { getAvailableKlasses } from "./levels/dnd3.5/pickQueries.ts";
+import { getAvailableKlasses } from "./dnd3.5/classPicks.ts";
 // …
 class CharacterLevelsService {
   readonly getAvailableKlasses = getAvailableKlasses;
@@ -621,8 +621,10 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 
 | File | Purpose |
 |---|---|
-| `server/services/rulesets/cow/` (re-exported by `cow.ts`) | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `cowEntity`, `cowEntityForCustomization`, `buildOverrideMap` (+ `siblingMap`), `resolveOverrides`. `mergeSiblingData` (`siblingMerge.ts`) runs on the COW write path to bake sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache.ts`). |
-| `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset`, `subscribeExtension`, `unsubscribeExtension` |
+| `server/services/rulesets/cow/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `cowEntity`, `cowEntityForCustomization`, `buildOverrideMap` (+ `siblingMap`), `resolveOverrides`. `mergeSiblingData` (`siblingMerge.ts`) runs on the COW write path to bake sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache/compose.ts`). |
+| `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
+| `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getSubscribedExtensions` |
+| `server/services/rulesets/changes/RulesetChangesService.ts` | `getChanges`, `revertOverride` |
 | `server/services/policies/RulesetsPolicy.ts` | Authorization checks for all ruleset operations |
 | `server/services/rulesets/*/` | Entity services (feats, powers, classes, etc.) using the COW pattern |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |

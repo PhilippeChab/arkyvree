@@ -5,12 +5,14 @@ import { rulesetKind } from "@/drizzle/schema.ts";
 import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import abilities from "@/server/routers/api/rulesets/abilities/index.ts";
 import aptitudes from "@/server/routers/api/rulesets/aptitudes/index.ts";
+import changes from "@/server/routers/api/rulesets/changes/index.ts";
 import classes from "@/server/routers/api/rulesets/classes/index.ts";
 import contributorsRouter from "@/server/routers/api/rulesets/contributors/index.ts";
 import modifiers from "@/server/routers/api/rulesets/customization/modifiers/index.ts";
 import properties from "@/server/routers/api/rulesets/customization/properties/index.ts";
 import requirements from "@/server/routers/api/rulesets/customization/requirements/index.ts";
 import targetRouter from "@/server/routers/api/rulesets/customization/target/index.ts";
+import extensions from "@/server/routers/api/rulesets/extensions/index.ts";
 import feats from "@/server/routers/api/rulesets/feats/index.ts";
 import items from "@/server/routers/api/rulesets/items/index.ts";
 import languages from "@/server/routers/api/rulesets/languages/index.ts";
@@ -111,70 +113,8 @@ const authenticatedRulesets = new Hono()
       return c.json(await RulesetsService.updateRuleset(c.var.requestSession, id, body), 200);
     },
   )
-  .post(
-    "/:id/subscribe",
-    zValidator("param", idParam),
-    zValidator(
-      "json",
-      z.object({
-        extensionIds: z.array(z.string().uuid()).min(1),
-      }),
-    ),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(await RulesetsService.subscribeExtension(c.var.requestSession, id, body.extensionIds), 200);
-    },
-  )
-  .post(
-    "/:id/unsubscribe",
-    zValidator("param", idParam),
-    zValidator(
-      "json",
-      z.object({
-        extensionId: z.string().uuid(),
-      }),
-    ),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(await RulesetsService.unsubscribeExtension(c.var.requestSession, id, body.extensionId), 200);
-    },
-  )
-  .post(
-    "/:id/entities/:entityType/:entityId/restore",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().uuid(),
-        entityType: z.enum([
-          "saves",
-          "skills",
-          "feats",
-          "powers",
-          "items",
-          "races",
-          "languages",
-          "klasses",
-          "aptitudes",
-          "mechanics",
-        ]),
-        entityId: z.string().uuid(),
-      }),
-    ),
-    async (c) => {
-      const { id, entityType, entityId } = c.req.valid("param");
-      return c.json(await RulesetsService.revertOverride(c.var.requestSession, id, entityType, entityId), 200);
-    },
-  )
-  .get("/:id/changes", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await RulesetsService.getChanges(c.var.requestSession, id), 200);
-  })
-  .get("/:id/extensions", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await RulesetsService.getSubscribedExtensions(c.var.requestSession, id), 200);
-  })
+  .route("/", extensions)
+  .route("/", changes)
   .get(
     "/",
     zValidator(

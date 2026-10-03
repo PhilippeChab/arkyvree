@@ -40,6 +40,7 @@ import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import {
@@ -295,7 +296,7 @@ describe("LevelsService", () => {
           private: false,
         });
         const dmg = (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!;
-        await RulesetsService.subscribeExtension(session, fork.id, [dmg.id]);
+        await RulesetExtensionsService.subscribeExtension(session, fork.id, [dmg.id]);
         const blackguard = (await Klasses.findOne(db, { name: "Blackguard", rulesetId: dmg.id }))!;
 
         const characterId = await createSeedCharacter(ctx, "fighter", {

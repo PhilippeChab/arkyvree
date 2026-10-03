@@ -3,12 +3,12 @@ import { afterEach, expect, test } from "bun:test";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { aptitudesInRules, featsInRules, itemsInRules } from "@/drizzle/schema.ts";
-import { invalidateAll } from "@/server/cache/rulesetCache.ts";
+import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
@@ -89,7 +89,7 @@ test("the original name of a renamed extension copy is available", async () => {
     { kind: "extension", status: "Published", private: false, userId: null },
     { id: extension.id },
   );
-  await RulesetsService.subscribeExtension(session, fork.id, [extension.id]);
+  await RulesetExtensionsService.subscribeExtension(session, fork.id, [extension.id]);
   const renamed = await FeatsService.updateRulesetFeat(session, fork.id, extensionCopy.id, {
     name: "Toughness (Local)",
   });

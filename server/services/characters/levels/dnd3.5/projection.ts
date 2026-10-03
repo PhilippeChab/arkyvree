@@ -10,7 +10,7 @@
  * - buildProjectedSkillsFromAllocations — builds projected skills from skill allocation data
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { ProjectedCharacterData } from "@/server/rulesets/types.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 

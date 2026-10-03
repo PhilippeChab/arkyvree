@@ -1,14 +1,14 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { invalidateAll } from "@/server/cache/rulesetCache.ts";
+import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 
 afterEach(invalidateAll);
@@ -45,14 +45,14 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
     const extension = await createSeededTestRuleset(session.userId);
     await Rulesets.update(db, { kind: "extension", status: "Published", private: false }, { id: extension.id });
     const [feat] = await Feats.create(db, { rulesetId: extension.id, name: "Extension Marker" });
-    if (action === "unsubscribe") await RulesetsService.subscribeExtension(session, host.id, [extension.id]);
+    if (action === "unsubscribe") await RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id]);
     invalidateAll();
     await overlap(
       () => getTargetPathsWithLabels(host.id, "requirement"),
       () =>
         action === "subscribe"
-          ? RulesetsService.subscribeExtension(session, host.id, [extension.id])
-          : RulesetsService.unsubscribeExtension(session, host.id, extension.id),
+          ? RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id])
+          : RulesetExtensionsService.unsubscribeExtension(session, host.id, extension.id),
     );
     await runWithRequestCache(async () => {
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {

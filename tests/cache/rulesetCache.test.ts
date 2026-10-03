@@ -9,7 +9,7 @@ import {
   invalidateAll,
   invalidateRuleset,
   isRulesetRawDataPinned,
-} from "@/server/cache/rulesetCache.ts";
+} from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { cowEntity, invalidateCowData } from "@/server/services/rulesets/cow/index.ts";

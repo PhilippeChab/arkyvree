@@ -1,5 +1,5 @@
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
-import { getOrFetchRulesetRawData } from "@/server/cache/rulesetCache.ts";
+import { getOrFetchRulesetRawData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { Requirement } from "@/shared/relations.ts";

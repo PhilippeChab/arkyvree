@@ -1,13 +1,13 @@
 import { expect, test } from "bun:test";
 
-import { invalidateAll } from "@/server/cache/rulesetCache.ts";
+import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
-import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset, makeSession } from "@/tests/helpers.ts";
@@ -53,7 +53,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     extensions.push(extension.id);
     sourceIds.push(copy.id);
   }
-  await RulesetsService.subscribeExtension(session, host.id, extensions);
+  await RulesetExtensionsService.subscribeExtension(session, host.id, extensions);
   const read = () =>
     withRulesetScope(db, host.id, async ({ rulesetData }) => {
       const id = rulesetData.canonicalize(source.id);

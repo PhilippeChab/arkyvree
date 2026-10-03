@@ -116,7 +116,7 @@ describe("requestCache — repository Proxy memoization", () => {
   });
 
   test("Characters.findOne dedupes across multiple sub-calls in one request", async () => {
-    // Mimics the real dup pattern: pickQueries.getAvailablePowers and
+    // Mimics the real dup pattern: powerPicks.getAvailablePowers and
     // DetailedCharacterDataLoader both do Characters.findOne(db, {...}) /
     // Rulesets.findOne(db, {...}) in the same request. Different shaped args
     // remain distinct — same-shape args collapse to one promise.

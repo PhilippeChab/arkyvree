@@ -10,7 +10,7 @@ import {
   rulesetExtensionsInRules,
   type rulesetsInRules,
 } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
+import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Attachments,

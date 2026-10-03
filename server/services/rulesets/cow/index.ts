@@ -39,7 +39,7 @@ export {
   wasGeneratedFeat,
 } from "./entityNames.ts";
 export { entityHasCharacterPicks } from "./characterPicks.ts";
-export { NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
+export { ENTITY_REPOS, ENTITY_TABLES, NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
 export { fetchEntityCustomizations } from "./customizations.ts";
 export { copyEntityCustomizations, copyEntityCustomizationsToMany } from "./copy.ts";
 
@@ -47,7 +47,7 @@ export { copyEntityCustomizations, copyEntityCustomizationsToMany } from "./copy
 export { buildSourceChain, refreshEntityData, resolveOverrides } from "./overrideMap.ts";
 export { getOrBuildCowData, invalidateAllCowData, invalidateCowData } from "./cowData.ts";
 
-// Merging a fork's requirements with its sources' (rulesetCache.ts's compose step).
+// Merging a fork's requirements with its sources' (rulesetCache/compose.ts).
 export { mergeSiblingRequirements } from "./requirements.ts";
 
 export type { IdResolveMap } from "./overrideMap.ts";

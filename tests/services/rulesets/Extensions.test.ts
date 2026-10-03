@@ -35,6 +35,7 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { cowEntity, getOrBuildCowData, invalidateAllCowData } from "@/server/services/rulesets/cow/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -115,7 +116,7 @@ async function featsNamed(rulesetId: string, name: string) {
 describe("subscribing to an extension", () => {
   test("adds its content to the fork without copying it, and records the subscription", async () => {
     const { session, extension, draft } = await setupFork();
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
 
     expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([extension.id]);
     const trooper = await warriorFeat("Shock Trooper");
@@ -126,7 +127,7 @@ describe("subscribing to an extension", () => {
     expect(await RulesetExtensions.findByRulesetId(db, { rulesetId: draft.id })).toMatchObject([
       { extensionId: extension.id, extensionName: DND35_COMPLETE_WARRIOR_NAME },
     ]);
-    expect(await RulesetsService.getSubscribedExtensions(session, draft.id)).toMatchObject([
+    expect(await RulesetExtensionsService.getSubscribedExtensions(session, draft.id)).toMatchObject([
       { extensionId: extension.id, extensionName: DND35_COMPLETE_WARRIOR_NAME, updateAvailable: expect.any(Boolean) },
     ]);
     // Its feats count toward what publishing requires.
@@ -145,7 +146,7 @@ describe("subscribing to an extension", () => {
       ).length;
     };
     const before = await total();
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     // 599 feats, 21 of which override a base feat.
     expect(await total()).toBe(before + 578);
   });
@@ -154,9 +155,9 @@ describe("subscribing to an extension", () => {
     const { user, session, extension, draft } = await setupFork();
     const [systemExtension, homebrew] = [await createExtension(), await createExtension(user.id)];
     await Feats.create(db, { name: "Homebrew Feat", rulesetId: homebrew.id });
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     await RulesetsService.publishRuleset(session, draft.id);
-    await RulesetsService.subscribeExtension(session, draft.id, [systemExtension.id, homebrew.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [systemExtension.id, homebrew.id]);
 
     expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([
       extension.id,
@@ -170,7 +171,8 @@ describe("subscribing to an extension", () => {
   test("refuses what isn't a public published extension of the same base, and hosts that can't take one", async () => {
     const { user, session, extension, draft } = await setupFork();
     const { session: other } = await createTestUser();
-    const subscribe = (id: string, s = session, host = draft.id) => RulesetsService.subscribeExtension(s, host, [id]);
+    const subscribe = (id: string, s = session, host = draft.id) =>
+      RulesetExtensionsService.subscribeExtension(s, host, [id]);
     // Run one at a time: the test's transaction has a single connection.
     const refusals: [string, () => Promise<unknown>][] = [
       ["itself", async () => subscribe(draft.id)],
@@ -212,7 +214,7 @@ describe("subscribing to an extension", () => {
     await RulesetsService.archiveRuleset(session, archived.id);
     await expect(subscribe(extension.id, session, archived.id)).rejects.toThrow(UnprocessableEntityError);
     await expect(subscribe(extension.id, other)).rejects.toThrow(ForbiddenError);
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     await expect(subscribe(extension.id)).rejects.toThrow(ConflictError);
   });
 
@@ -223,8 +225,8 @@ describe("subscribing to an extension", () => {
     const { session: other } = await createTestUser();
     const homebrew = await forkBase(other);
     await RulesetsService.publishRuleset(other, homebrew.id, { kind: "extension" });
-    await RulesetsService.subscribeExtension(session, (await forkBase(session)).id, [homebrew.id]);
-    await expect(RulesetsService.subscribeExtension(other, homebrew.id, [extension.id])).rejects.toThrow(
+    await RulesetExtensionsService.subscribeExtension(session, (await forkBase(session)).id, [homebrew.id]);
+    await expect(RulesetExtensionsService.subscribeExtension(other, homebrew.id, [extension.id])).rejects.toThrow(
       UnprocessableEntityError,
     );
   });
@@ -235,12 +237,12 @@ describe("subscribing to an extension", () => {
     const homebrew = await forkBase(author);
     await RulesetsService.publishRuleset(author, homebrew.id, { kind: "extension" });
     const subscriber = await forkBase(session);
-    await RulesetsService.subscribeExtension(session, subscriber.id, [homebrew.id]);
+    await RulesetExtensionsService.subscribeExtension(session, subscriber.id, [homebrew.id]);
     await RulesetsService.archiveRuleset(author, homebrew.id);
 
     expect((await Rulesets.findOne(db, { id: subscriber.id }))!.extensionRulesetIds).toEqual([homebrew.id]);
     await expect(
-      RulesetsService.subscribeExtension(session, (await forkBase(session)).id, [homebrew.id]),
+      RulesetExtensionsService.subscribeExtension(session, (await forkBase(session)).id, [homebrew.id]),
     ).rejects.toThrow(UnprocessableEntityError);
   });
 
@@ -250,7 +252,7 @@ describe("subscribing to an extension", () => {
       const extension = await createExtension(user.id);
       await Feats.create(db, { name: "Clash", rulesetId: extension.id });
       await Feats.create(db, { name: "Clash", rulesetId: draft.id });
-      await expect(RulesetsService.subscribeExtension(session, draft.id, [extension.id])).rejects.toThrow(
+      await expect(RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id])).rejects.toThrow(
         ConflictError,
       );
 
@@ -258,9 +260,9 @@ describe("subscribing to an extension", () => {
       const [raceA, raceB] = [await createExtension(), await createExtension()];
       for (const { id } of [raceA, raceB])
         await Races.create(db, { name: "Tiefling", rulesetId: id, size: "Medium", baseSpeed: 30 });
-      await expect(RulesetsService.subscribeExtension(session, draft.id, [raceA.id, raceB.id])).rejects.toThrow(
-        ConflictError,
-      );
+      await expect(
+        RulesetExtensionsService.subscribeExtension(session, draft.id, [raceA.id, raceB.id]),
+      ).rejects.toThrow(ConflictError);
     });
 
     test("accepts same-named feats and aptitudes across extensions, an extension's copy of a base feat, and an old clash not involving the new extension", async () => {
@@ -278,8 +280,8 @@ describe("subscribing to an extension", () => {
       }
       // A copy of a base feat has the base feat's name.
       await cowEntity(db, "feats", featMap["Toughness"], c.id, c.ancestorRulesetIds, []);
-      await RulesetsService.subscribeExtension(session, draft.id, [a.id, b.id, c.id]);
-      await RulesetsService.subscribeExtension(session, draft.id, [d.id]);
+      await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id, c.id]);
+      await RulesetExtensionsService.subscribeExtension(session, draft.id, [d.id]);
 
       expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([a.id, b.id, c.id, d.id]);
       expect(await featsNamed(draft.id, "Shared Feat")).toHaveLength(1);
@@ -295,7 +297,7 @@ describe("subscribing to an extension", () => {
         await Powers.create(db, { name: "Reprint", rulesetId }),
         await Powers.create(db, { name: "Reprint", rulesetId: a.id }),
       ];
-      await RulesetsService.subscribeExtension(session, draft.id, [a.id, b.id]);
+      await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id]);
       invalidateAllCowData();
       const cow = await getOrBuildCowData((await Rulesets.findOne(db, { id: draft.id }))!);
 
@@ -331,7 +333,7 @@ describe("subscribing to an extension", () => {
         name: "Toughness",
         description: "Mine",
       });
-      await RulesetsService.subscribeExtension(session, draft.id, [a.id, b.id]);
+      await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id]);
 
       expect(await featsNamed(draft.id, "Toughness")).toHaveLength(1);
       // A pick saved with the extension's copy reaches the fork's, whose customizations stay its own.
@@ -346,7 +348,7 @@ describe("subscribing to an extension", () => {
       const [a, b] = [await createExtension(user.id), await createExtension(user.id)];
       for (const extension of [a, b])
         await cowEntity(db, "feats", featMap["Toughness"], extension.id, extension.ancestorRulesetIds, []);
-      await RulesetsService.subscribeExtension(session, draft.id, [a.id, b.id]);
+      await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id]);
       await FeatsService.updateRulesetFeat(session, draft.id, featMap["Toughness"], {
         name: "Toughness",
         description: "Mine",
@@ -359,21 +361,23 @@ describe("subscribing to an extension", () => {
 describe("unsubscribing from an extension", () => {
   test("removes its content, the fork's copies of it and the subscription; subscribing again shows the originals", async () => {
     const { session, extension, draft } = await setupFork();
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const monkeyGrip = await warriorFeat("Monkey Grip");
     await FeatsService.updateRulesetFeat(session, draft.id, monkeyGrip.id, {
       name: "Monkey Grip",
       description: "Mine",
     });
 
-    expect(await RulesetsService.unsubscribeExtension(session, draft.id, extension.id)).toEqual({ unsubscribed: true });
+    expect(await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).toEqual({
+      unsubscribed: true,
+    });
     expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([]);
     expect(await featsNamed(draft.id, "Monkey Grip")).toEqual([]);
     await expect(FeatsService.getRulesetFeat(draft.id, monkeyGrip.id)).rejects.toThrow(NotFoundError);
     expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id })).toEqual([]);
     expect(await RulesetExtensions.findByRulesetId(db, { rulesetId: draft.id })).toEqual([]);
 
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     expect((await FeatsService.getRulesetFeats(draft.id, { search: "Monkey Grip" }, firstPage)).items).toMatchObject([
       { id: monkeyGrip.id, rulesetId: extension.id },
     ]);
@@ -384,13 +388,13 @@ describe("unsubscribing from an extension", () => {
     const { session, extension, draft } = await setupFork();
     const other = await createExtension();
     const [otherFeat] = await Feats.create(db, { name: "Other Feat", rulesetId: other.id });
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id, other.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id, other.id]);
     const copy = await FeatsService.updateRulesetFeat(session, draft.id, otherFeat.id, {
       name: "Other Feat",
       description: "Mine",
     });
 
-    await RulesetsService.unsubscribeExtension(session, draft.id, extension.id);
+    await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id);
     expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([other.id]);
     expect(await featsNamed(draft.id, "Other Feat")).toMatchObject([{ id: copy.id }]);
   });
@@ -398,7 +402,7 @@ describe("unsubscribing from an extension", () => {
   test("removes the fork's copies of its content and keeps those of its base's, of every kind", async () => {
     const { user, session, draft } = await setupFork();
     const extension = await createExtension(user.id);
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const ctx = await getSeedCtx();
     const name = (kind: string) => `${kind} ${uniqueId()}`;
     // The core rules have no mechanics: one of the base's own
@@ -444,20 +448,24 @@ describe("unsubscribing from an extension", () => {
     expect(new Set(ofBase.map((copy) => copy.entityType))).toEqual(new Set(fromBase.map(([type]) => type)));
     expect(copies).toHaveLength(fromBase.length + fromExtension.length);
 
-    expect(await RulesetsService.unsubscribeExtension(session, draft.id, extension.id)).toEqual({ unsubscribed: true });
+    expect(await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).toEqual({
+      unsubscribed: true,
+    });
     expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id })).toEqual(ofBase);
   });
 
   test("is refused while a character picked its content, or the fork's copy of it, even an archived character", async () => {
     const { user, session, extension, draft } = await setupFork();
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const [monkeyGrip, trooper] = [await warriorFeat("Monkey Grip"), await warriorFeat("Shock Trooper")];
     // A character of the fork who picked nothing from the extension doesn't count.
     await createTestCharacter(user.id, { rulesetId: draft.id });
 
     const direct = await pickFeat(user.id, draft.id, monkeyGrip.id, monkeyGrip.aptitudeId);
     await Characters.archive(db, { id: direct.id });
-    await expect(RulesetsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(ConflictError);
+    await expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
+      ConflictError,
+    );
     await Characters.delete(db, { id: direct.id });
 
     const copy = await FeatsService.updateRulesetFeat(session, draft.id, trooper.id, {
@@ -465,19 +473,25 @@ describe("unsubscribing from an extension", () => {
       description: "Mine",
     });
     await pickFeat(user.id, draft.id, copy.id, trooper.aptitudeId);
-    await expect(RulesetsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(ConflictError);
+    await expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
+      ConflictError,
+    );
   });
 
   test("refuses an extension the fork doesn't use, another user, and an archived fork", async () => {
     const { session, extension, draft } = await setupFork();
     const { session: other } = await createTestUser();
-    await expect(RulesetsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(NotFoundError);
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
-    await expect(RulesetsService.unsubscribeExtension(other, draft.id, extension.id)).rejects.toThrow(ForbiddenError);
+    await expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
+      NotFoundError,
+    );
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
+    await expect(RulesetExtensionsService.unsubscribeExtension(other, draft.id, extension.id)).rejects.toThrow(
+      ForbiddenError,
+    );
 
     await RulesetsService.publishRuleset(session, draft.id);
     await RulesetsService.archiveRuleset(session, draft.id);
-    await expect(RulesetsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
+    await expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
       UnprocessableEntityError,
     );
   });
@@ -486,7 +500,7 @@ describe("unsubscribing from an extension", () => {
 describe("an extension's content in a fork", () => {
   test("is edited and deleted on the fork's copies, the extension's rows untouched", async () => {
     const { session, extension, draft } = await setupFork();
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const [monkeyGrip, buckler] = [await warriorFeat("Monkey Grip"), await warriorFeat("Improved Buckler Defense")];
 
     const copy = await FeatsService.updateRulesetFeat(session, draft.id, monkeyGrip.id, {
@@ -506,7 +520,7 @@ describe("an extension's content in a fork", () => {
   test("keeps its names: a new feat can't take one, even once the fork copied it", async () => {
     const { session, extension, draft } = await setupFork();
     const { aptMap } = await getSeedCtx();
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const create = (name: string) =>
       FeatsService.createRulesetFeat(session, draft.id, { name, aptitudeIds: [aptMap["General"]] });
 
@@ -523,7 +537,7 @@ describe("an extension's content in a fork", () => {
   test("keeps domain links on spells the extension copied", async () => {
     const { session, extension, draft } = await setupFork();
     const { aptMap } = await getSeedCtx();
-    await RulesetsService.subscribeExtension(session, draft.id, [extension.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
 
     const deathDomain = await PowersService.getRulesetPowers(
       draft.id,
@@ -544,7 +558,7 @@ describe("an extension's content in a fork", () => {
     // The Dungeon Master's Guide and Complete Divine both override Damage Reduction.
     const { user, session, draft } = await setupFork();
     const { abilityMap, aptMap, featMap, klassMap } = await getSeedCtx();
-    await RulesetsService.subscribeExtension(session, draft.id, [
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [
       (await seededRuleset(DND35_DMG_NAME)).id,
       (await seededRuleset(DND35_COMPLETE_DIVINE_NAME)).id,
     ]);
@@ -654,7 +668,7 @@ describe("two extensions overriding the same base entity", () => {
       extensions.push(extension.id);
     }
     const draft = await forkBase(session);
-    await RulesetsService.subscribeExtension(session, draft.id, extensions);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, extensions);
     return { session, draft, baseId, contributions };
   }
 
