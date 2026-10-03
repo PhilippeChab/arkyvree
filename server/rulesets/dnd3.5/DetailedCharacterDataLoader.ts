@@ -39,6 +39,7 @@ import type {
   Campaign,
   Character,
   CharacterLevel,
+  KlassLevel,
   Modifier,
   Player,
   PowerWithAptitudes,
@@ -76,6 +77,9 @@ export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
   klassBonusSpellAbilityMap: Map<string, string>;
   klassCasterTypeMap: Map<string, "Arcane" | "Divine">;
 }
+
+/** Resolves stored ids through the override map, when there is one. */
+type Resolve = <T extends Record<string, unknown>>(rows: T[]) => T[];
 
 export default class DetailedCharacterDataLoader {
   constructor(private readonly character: Character) {}
@@ -132,155 +136,108 @@ export default class DetailedCharacterDataLoader {
     return results;
   }
 
-  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
-  async load(
-    database: Db = db,
-    projectedData?: Dnd35ProjectedCharacterData,
-    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
-  ): Promise<Dnd35LoadedCharacterData> {
-    if (!preloaded) {
-      throw new Error("DetailedCharacterDataLoader.load() requires preloaded ruleset data — call via withRulesetScope");
-    }
-    const shared: SharedCharacterData =
-      "_shared" in preloaded
-        ? (preloaded._shared as SharedCharacterData)
-        : await this.loadSharedData(database, preloaded);
+  /** A character ability's score, with its ability's name. */
+  private abilityScore(
+    record: SharedCharacterData["characterAbilityRecords"][number],
+    abilityLookup: Map<string, string>,
+  ) {
+    return { abilityId: record.abilityId, name: abilityLookup.get(record.abilityId) ?? "Unknown", score: record.score };
+  }
 
-    const {
-      ruleset,
-      player,
-      campaign,
-      cowData,
-      rulesetData,
-      characterAbilityRecords,
-      race,
-      characterLanguages,
-      inventory,
-      rawCharacterLevels,
-    } = shared;
-    const overrideMap = cowData.idResolveMap;
-    const resolveId = (id: string) => overrideMap.get(id) ?? id;
-
-    const validRulesetIds = new Set([this.character.rulesetId, ...cowData.sourceChain]);
-
-    // Apply cached ruleset data
-    const {
-      abilities: rulesetAbilities,
-      saves: rulesetSaves,
-      skills: rulesetSkills,
-      feats: rulesetFeats,
-      powers: rulesetPowers,
-      aptitudes: rulesetAptitudes,
-      klasses: rulesetKlasses,
-      leveledAptitudeIds,
-    } = rulesetData;
-
-    // D&D 3.5-specific interpretation of the cache's raw property rows.
-    const skillProperties = new Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }>();
-    for (const prop of rulesetData.propertiesByEntityType.get("skills") ?? []) {
-      let entry = skillProperties.get(prop.entityId);
-      if (!entry) {
-        entry = { impactedByWeight: false, usableWithoutTraining: false };
-        skillProperties.set(prop.entityId, entry);
-      }
-      if (prop.type === SKILL_IMPACTED_BY_WEIGHT && prop.value === "true") {
-        entry.impactedByWeight = true;
-      }
-      if (prop.type === SKILL_USABLE_WITHOUT_TRAINING && prop.value === "true") {
-        entry.usableWithoutTraining = true;
-      }
-    }
-
-    // The skill-point-ability property is attached to whichever ruleset in the
-    // source chain declares it (usually the base), so look across every
-    // "rulesets"-scoped row rather than just the fork's own ID.
-    const skillPointAbilityProp = (rulesetData.propertiesByEntityType.get("rulesets") ?? []).find(
-      (p) => p.type === RULESET_SKILL_POINT_ABILITY_ID,
-    );
-    const skillPointAbilityId = skillPointAbilityProp?.value ? resolveId(skillPointAbilityProp.value) : null;
-
-    // Resolve character ability scores
-    const resolvedAbilityRecords =
-      overrideMap.size > 0 ? resolveOverrides(characterAbilityRecords, overrideMap) : characterAbilityRecords;
-    const abilityLookup = new Map(rulesetAbilities.map((a) => [a.id, a.name]));
-    const characterAbilityScores = resolvedAbilityRecords.map((ca) => ({
-      abilityId: ca.abilityId,
-      name: abilityLookup.get(ca.abilityId) ?? "Unknown",
-      score: ca.score,
-    }));
-
-    // Process character levels
-    const resolvedCharacterLevels =
-      overrideMap.size > 0 ? resolveOverrides(rawCharacterLevels, overrideMap) : rawCharacterLevels;
-    const excludeIds = projectedData?.excludeCharacterLevelIds ? new Set(projectedData.excludeCharacterLevelIds) : null;
-    const characterLevels = excludeIds
-      ? resolvedCharacterLevels.filter((l) => !excludeIds.has(l.id))
-      : resolvedCharacterLevels;
-    const allCharacterLevels = projectedData?.characterLevels
-      ? [...characterLevels, ...projectedData.characterLevels]
-      : characterLevels;
-    const realCharacterLevelIds = characterLevels.map((level) => level.id);
-    const klassLevelIds = allCharacterLevels.map((level) => level.klassLevelId);
-
-    // The join uses the stored item ID. Load the effective item so COW changes
-    // refresh its name and other fields, not just its ID.
-    const resolvedInventory = inventory.map((inv) => ({
-      ...inv,
-      itemsInRule: rulesetData.itemsById.get(inv.itemId) ?? inv.itemsInRule,
-    }));
-
-    // Derive IDs for Round 4. languagesById is wrapped by cowResolvingMap —
-    // stored pre-COW language ids auto-resolve on lookup.
-    const characterLanguageIds = characterLanguages.map((l) => l.languageId);
-    const equippedItemIds = resolvedInventory.filter((inv) => inv.equipped).map((inv) => inv.itemsInRule.id);
-
-    // ── Round 4: character-scoped queries (5); ruleset-scoped lookups resolve from cache ──
-    const rawRealSkills = await Skills.findPicks(database, {
-      characterLevelIds: realCharacterLevelIds,
-    });
-    const rawPickedFeats = await Feats.findPicks(database, {
-      characterLevelIds: realCharacterLevelIds,
-    });
-    // A saved level's class level, copied (copy-on-write) or not; a projected level's grants come with it
-    const rawGivenFeats = await Feats.findGrants(database, { levels: characterLevels });
-    const rawPickedPowers = await Powers.findPicks(database, {
-      characterLevelIds: realCharacterLevelIds,
-    });
-    const rawGivenPowers = await Powers.findGrants(database, { levels: characterLevels });
-
-    // Ruleset-scoped rows read from the composed cache's pre-built Maps.
-    const languages = [];
-    for (const id of characterLanguageIds) {
-      const lang = rulesetData.languagesById.get(id);
-      if (lang) languages.push(lang);
-    }
-
-    const klassLevelsRaw = [];
-    const klassLevelSaves = [];
-    for (const id of klassLevelIds) {
-      const kl = rulesetData.klassLevelsById.get(id);
-      if (kl) klassLevelsRaw.push(kl);
-      const saves = rulesetData.klassLevelSavesByKlassLevelId.get(id);
-      if (saves) klassLevelSaves.push(...saves);
-    }
-
-    // Derive klassIds from KlassLevels for Round 6
+  /**
+   * Ruleset-scoped rows read from the composed cache's pre-built Maps: the character's languages, class levels and
+   * their saves, and classes and their skills (one per level), and its classes once each. languagesById is wrapped by
+   * cowResolvingMap — stored pre-COW language ids auto-resolve on lookup.
+   */
+  private cachedRows(shared: SharedCharacterData, klassLevelIds: string[]) {
+    const { rulesetData } = shared;
+    const klassLevelsRaw = klassLevelIds.flatMap((id) => rulesetData.klassLevelsById.get(id) ?? []);
     const klassIds = klassLevelsRaw.map((level) => level.klassId);
+    return {
+      languages: shared.characterLanguages.flatMap((l) => rulesetData.languagesById.get(l.languageId) ?? []),
+      klassLevelsRaw,
+      klassLevelSaves: klassLevelIds.flatMap((id) => rulesetData.klassLevelSavesByKlassLevelId.get(id) ?? []),
+      klasses: klassIds.flatMap((id) => rulesetData.klassesById.get(id) ?? []),
+      klassSkills: klassIds.flatMap((id) => rulesetData.klassSkillsByKlassId.get(id) ?? []),
+      klassEntityIds: [...new Set(klassIds)],
+    };
+  }
 
-    // Process skills
-    const realSkills = overrideMap.size > 0 ? resolveOverrides(rawRealSkills, overrideMap) : rawRealSkills;
-    const skills = projectedData?.skills ? [...realSkills, ...projectedData.skills] : realSkills;
+  /**
+   * The character's modifiers and requirement groups, in order: its own modifiers, its race's, its equipped items',
+   * its class levels', its classes' (once per class), its feats' and its powers'. An auto-granted feat or power
+   * bypasses its own prereqs — the granting source is the gate. Then each modifier's requirements — spans ruleset
+   * (entityType='modifiers' rows indexed by modifier.id, including kept sibling-modifier rows merged by compose) +
+   * char/virtual modifier requirements (`extraRequirements`, which the cache misses).
+   */
+  private collectModifiers(
+    parts: {
+      characterSourcedModifiers: Modifier[];
+      race: RaceWithPMR;
+      inventory: InventoryEntry[];
+      klassLevels: KlassLevelWithPMR[];
+      klassEntityIds: string[];
+      feats: FeatWithPMR[];
+      powers: PowerWithPMR[];
+    },
+    rulesetData: CachedRulesetData,
+    extraRequirements: Requirement[],
+  ) {
+    const modifiers: Modifier[] = [...parts.characterSourcedModifiers, ...parts.race.modifiers];
+    const requirementGroups: Requirement[][] = [parts.race.requirements];
+    for (const inv of parts.inventory) {
+      if (!inv.equipped) continue;
+      modifiers.push(...inv.item.modifiers);
+      requirementGroups.push(inv.item.requirements);
+    }
+    for (const klassLevel of parts.klassLevels) {
+      modifiers.push(...klassLevel.modifiers);
+      requirementGroups.push(klassLevel.requirements);
+    }
+    // A class's own modifiers and requirements, once for a character with any level of it
+    for (const klassId of parts.klassEntityIds) {
+      modifiers.push(...(rulesetData.modifiersBySource.get(klassId) ?? []));
+      requirementGroups.push(rulesetData.requirementsByEntity.get(klassId) ?? []);
+    }
+    for (const feat of parts.feats) {
+      modifiers.push(...feat.modifiers);
+      if (feat.klassLevelFeatId || feat.virtual) continue;
+      requirementGroups.push(feat.requirements);
+    }
+    for (const power of parts.powers) {
+      modifiers.push(...power.modifiers);
+      if (power.free || power.virtual) continue;
+      requirementGroups.push(power.requirements);
+    }
 
-    // Process feats (dedup, merge picked+given)
-    const resolvedPickedFeats = overrideMap.size > 0 ? resolveOverrides(rawPickedFeats, overrideMap) : rawPickedFeats;
-    const resolvedGivenFeats = overrideMap.size > 0 ? resolveOverrides(rawGivenFeats, overrideMap) : rawGivenFeats;
-    const pickedFeats = refreshEntityData(resolvedPickedFeats, rulesetFeats, [
+    const extraReqsByEntityId = Map.groupBy(extraRequirements, (r) => r.entityId);
+    for (const modifier of modifiers) {
+      const fromRuleset = rulesetData.requirementsByEntity.get(modifier.id) ?? [];
+      const fromExtra = extraReqsByEntityId.get(modifier.id) ?? [];
+      if (fromExtra.length === 0) {
+        requirementGroups.push(fromRuleset);
+      } else {
+        requirementGroups.push([...fromRuleset, ...fromExtra]);
+      }
+    }
+    return { modifiers, requirementGroups };
+  }
+
+  /** The feats: picked and given (deduped), then projected, in character-level order; and the given per aptitude. */
+  private composeFeats(
+    picks: Awaited<ReturnType<DetailedCharacterDataLoader["fetchPicks"]>>,
+    rulesetFeats: CachedRulesetData["feats"],
+    projectedData: Dnd35ProjectedCharacterData | undefined,
+    allCharacterLevels: CharacterLevel[],
+    resolve: Resolve,
+  ) {
+    const pickedFeats = refreshEntityData(resolve(picks.pickedFeats), rulesetFeats, [
       "name",
       "description",
       "stackable",
       "selectable",
     ]);
-    const givenFeats = refreshEntityData(resolvedGivenFeats, rulesetFeats, [
+    const givenFeats = refreshEntityData(resolve(picks.givenFeats), rulesetFeats, [
       "name",
       "description",
       "stackable",
@@ -320,14 +277,37 @@ export default class DetailedCharacterDataLoader {
     allFeats.sort(
       (a, b) => (levelCreatedAt.get(a.characterLevelId) ?? 0) - (levelCreatedAt.get(b.characterLevelId) ?? 0),
     );
+    return { allFeats, klassLevelFeatCountsByAptitudeId };
+  }
 
-    // Process powers
-    const resolvedPickedPowers =
-      overrideMap.size > 0 ? resolveOverrides(rawPickedPowers, overrideMap) : rawPickedPowers;
-    const resolvedGivenPowers = overrideMap.size > 0 ? resolveOverrides(rawGivenPowers, overrideMap) : rawGivenPowers;
-    const pickedPowers = refreshEntityData(resolvedPickedPowers, rulesetPowers, ["name", "description"]);
-    const givenPowers = refreshEntityData(resolvedGivenPowers, rulesetPowers, ["name", "description"]);
+  /** The character's skills, feats and powers: saved picks and grants, COW-resolved, then the projected ones. */
+  private composePicks(
+    picks: Awaited<ReturnType<DetailedCharacterDataLoader["fetchPicks"]>>,
+    rulesetData: CachedRulesetData,
+    projectedData: Dnd35ProjectedCharacterData | undefined,
+    allCharacterLevels: CharacterLevel[],
+    resolve: Resolve,
+  ) {
+    const realSkills = resolve(picks.skills);
+    return {
+      skills: projectedData?.skills ? [...realSkills, ...projectedData.skills] : realSkills,
+      ...this.composeFeats(picks, rulesetData.feats, projectedData, allCharacterLevels, resolve),
+      ...this.composePowers(picks, rulesetData.powers, projectedData, allCharacterLevels, resolve),
+    };
+  }
 
+  /** The powers: picked, given, then projected; and the given (not free) per aptitude. */
+  private composePowers(
+    picks: Awaited<ReturnType<DetailedCharacterDataLoader["fetchPicks"]>>,
+    rulesetPowers: CachedRulesetData["powers"],
+    projectedData: Dnd35ProjectedCharacterData | undefined,
+    allCharacterLevels: CharacterLevel[],
+    resolve: Resolve,
+  ) {
+    const pickedPowers = refreshEntityData(resolve(picks.pickedPowers), rulesetPowers, ["name", "description"]);
+    const givenPowers = refreshEntityData(resolve(picks.givenPowers), rulesetPowers, ["name", "description"]);
+
+    const characterLevelIdSet = new Set(allCharacterLevels.map((l) => l.id));
     const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(
       (acc, power) => {
         if (!power.free && characterLevelIdSet.has(power.characterLevelId)) {
@@ -341,201 +321,20 @@ export default class DetailedCharacterDataLoader {
     const allPowers = projectedData?.powers
       ? [...pickedPowers, ...givenPowers, ...projectedData.powers]
       : [...pickedPowers, ...givenPowers];
+    return { allPowers, klassLevelPowerCountsByAptitudeId };
+  }
 
-    const featIds = allFeats.map((feat) => feat.id);
-    const powerIds = allPowers.map((power) => power.id);
-    // The character's classes, each once (`klassIds` has one per level)
-    const klassEntityIds = [...new Set(klassIds)];
-
-    // ── Round 5: klasses from cache + character-sourced modifiers only ──
-    // Every ruleset-scoped property/modifier/requirement is already indexed on
-    // rulesetData (propertiesByEntity, modifiersBySource, requirementsByEntity).
-    // The only pieces the cache can't know about are character-sourced modifiers
-    // (their sourceId is the character ID, not a ruleset entity).
-    const klasses = [];
-    const klassSkills = [];
-    for (const id of klassIds) {
-      const k = rulesetData.klassesById.get(id);
-      if (k) klasses.push(k);
-      const ks = rulesetData.klassSkillsByKlassId.get(id);
-      if (ks) klassSkills.push(...ks);
-    }
-
-    const characterSourcedModifiers = await Modifiers.findMany(database, {
-      sourceIds: [this.character.id],
-    });
-
-    // Flat modifier list scoped to this character — used by resolvePossessedFeatIds /
-    // resolvePossessedPowers (which scan for "set feats/powers.<slug>.possessed/known"
-    // targets). Built by O(entities) map lookups, not an O(all ruleset mods) filter.
-    const rulesetScopedModifierSources = [
-      race.id,
-      ...equippedItemIds,
-      ...klassEntityIds,
-      ...klassLevelIds,
-      ...featIds,
-      ...powerIds,
-    ];
-    const baseModifiers: Modifier[] = [];
-    for (const id of rulesetScopedModifierSources) {
-      const group = rulesetData.modifiersBySource.get(id);
-      if (group) baseModifiers.push(...group);
-    }
-    baseModifiers.push(...characterSourcedModifiers);
-
-    // ── Round 5b: Fetch modifiers from virtually possessed feats and powers ──
-    const characterFeatIdSet = new Set(featIds);
-    const virtuallyPossessedFeatIds = this.resolvePossessedFeatIds(
-      baseModifiers,
-      characterFeatIdSet,
-      rulesetData.featIdBySlug,
-    );
-
-    const characterPowerIdSet = new Set(powerIds);
-    const virtuallyPossessedPowers = this.resolvePossessedPowers(
-      baseModifiers,
-      characterPowerIdSet,
-      rulesetData.powerIdsBySlug,
-      rulesetData.powersById,
-      rulesetData.aptitudeIdBySpellSlug,
-    );
-
-    // ── Round 6: Requirements — cache covers ruleset modifiers (including
-    // those on virtually possessed feats/powers, since the unified `feats`
-    // and `powers` arrays below pull from `rulesetData.modifiersBySource`).
-    // Only character-direct modifiers can have requirements the cache misses.
-    const extraModifierRequirements =
-      characterSourcedModifiers.length > 0
-        ? await Requirements.findMany(database, {
-            entityIds: characterSourcedModifiers.map((m) => m.id),
-          })
-        : [];
-
-    // ── Per-load augmentation indices (everything else is pre-indexed on rulesetData) ──
-    const groupPush = <V>(map: Map<string, V[]>, key: string, val: V): void => {
-      const existing = map.get(key);
-      if (existing) existing.push(val);
-      else map.set(key, [val]);
-    };
-    const extraReqsByEntityId = new Map<string, Requirement[]>();
-    for (const r of extraModifierRequirements) groupPush(extraReqsByEntityId, r.entityId, r);
-
-    // ── Distribute PMR results ──
-    // All per-entity lookups below resolve via the cache's pre-built Maps
-    // (propertiesByEntity, modifiersBySource, requirementsByEntity) plus the
-    // three small augmentation Maps built above (sibling + extra-modifier reqs).
-    // Replaces the previous O(N×M) filter cascades.
-
-    const modifiers: Modifier[] = [];
-    const requirementGroups: Requirement[][] = [];
-
-    modifiers.push(...characterSourcedModifiers);
-
-    // Race properties/modifiers/requirements
-    const raceProperties = rulesetData.propertiesByEntity.get(race.id) ?? [];
-    const raceModifiers = rulesetData.modifiersBySource.get(race.id) ?? [];
-    const raceRequirements = rulesetData.requirementsByEntity.get(race.id) ?? [];
-    const raceWithPMR: RaceWithPMR = {
-      ...race,
-      properties: raceProperties,
-      modifiers: raceModifiers,
-      requirements: raceRequirements,
-    };
-    modifiers.push(...raceModifiers);
-    requirementGroups.push(raceRequirements);
-
-    // Item properties/modifiers/requirements (with template inheritance via sourceItemId). The base item's
-    // requirements are the proficiency with it: its template's, or its own when it is one. Its own on top of a
-    // template, or a plain item's, are its other requirements, which its modifiers need
-    const inventoryResult: InventoryEntry[] = resolvedInventory.map((inv) => {
-      const item = inv.itemsInRule;
-      const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
-      const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
-      const templateProperties = item.sourceItemId
-        ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []).filter((p) => !ownPropertyTypes.has(p.type))
-        : [];
-      const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
-      const templateRequirements = item.sourceItemId
-        ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
-        : [];
-      return {
-        ...inv,
-        item: {
-          ...item,
-          properties: [...templateProperties, ...ownProperties],
-          modifiers: inv.equipped ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
-          proficiency: item.isTemplate ? ownRequirements : templateRequirements,
-          requirements: item.isTemplate ? [] : ownRequirements,
-        },
-      };
-    });
-    for (const inv of inventoryResult) {
-      if (!inv.equipped) continue;
-      modifiers.push(...inv.item.modifiers);
-      requirementGroups.push(inv.item.requirements);
-    }
-
-    // Klass level properties/modifiers/requirements
-    const klassLevels: KlassLevelWithPMR[] = klassLevelsRaw
-      .map((level) => ({
-        ...level,
-        properties: rulesetData.propertiesByEntity.get(level.id) ?? [],
-        modifiers: rulesetData.modifiersBySource.get(level.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(level.id) ?? [],
-      }))
-      .sort((a, b) => a.level - b.level);
-    for (const klassLevel of klassLevels) {
-      modifiers.push(...klassLevel.modifiers);
-      requirementGroups.push(klassLevel.requirements);
-    }
-    // A class's own modifiers and requirements, once for a character with any level of it
-    for (const klassId of klassEntityIds) {
-      modifiers.push(...(rulesetData.modifiersBySource.get(klassId) ?? []));
-      requirementGroups.push(rulesetData.requirementsByEntity.get(klassId) ?? []);
-    }
-
-    // Build klass level properties map (bab, skills)
-    const klassLevelPropertiesMap = new Map<string, { bab: number; skills: number }>();
-    for (const klassLevel of klassLevels) {
-      let entry = klassLevelPropertiesMap.get(klassLevel.id);
-      if (!entry) {
-        entry = { bab: 0, skills: 0 };
-        klassLevelPropertiesMap.set(klassLevel.id, entry);
-      }
-      for (const prop of klassLevel.properties) {
-        if (prop.type === KLASS_LEVEL_BAB) {
-          entry.bab = Number(prop.value);
-        }
-        if (prop.type === KLASS_LEVEL_SKILL_POINTS) {
-          entry.skills = Number(prop.value);
-        }
-      }
-    }
-
-    // Klass properties (bonus spell ability + caster type)
-    const klassBonusSpellAbilityMap = new Map<string, string>();
-    const klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
-    for (const klassId of klassEntityIds) {
-      const props = rulesetData.propertiesByEntity.get(klassId);
-      if (!props) continue;
-      for (const prop of props) {
-        if (prop.type === KLASS_BONUS_SPELL_ABILITY_ID) {
-          const abilityName = abilityLookup.get(prop.value);
-          if (abilityName) {
-            klassBonusSpellAbilityMap.set(klassId, abilityName);
-          }
-        } else if (prop.type === KLASS_CASTER_TYPE) {
-          klassCasterTypeMap.set(klassId, prop.value as "Arcane" | "Divine");
-        }
-      }
-    }
-
-    // Feat properties/modifiers/requirements. Compose step pre-merges siblings
-    // into these buckets; consumers only read. Virtually possessed feats are
-    // appended with `virtual: true` so the rest of the pipeline sees one
-    // unified list — eliminates the parallel "real vs virtual" code paths
-    // (registerFeat, possessed counts, modifier loading) that historically
-    // missed cases like grouping DC bonuses on virtually-granted spells.
+  /**
+   * Feat properties/modifiers/requirements. Compose step pre-merges siblings into these buckets; consumers only read.
+   * Virtually possessed feats are appended with `virtual: true` so the rest of the pipeline sees one unified list —
+   * eliminates the parallel "real vs virtual" code paths (registerFeat, possessed counts, modifier loading) that
+   * historically missed cases like grouping DC bonuses on virtually-granted spells.
+   */
+  private featsWithPMR(
+    allFeats: ReturnType<DetailedCharacterDataLoader["composeFeats"]>["allFeats"],
+    virtuallyPossessedFeatIds: string[],
+    rulesetData: CachedRulesetData,
+  ): FeatWithPMR[] {
     const realFeatsWithPMR: FeatWithPMR[] = allFeats.map((feat) => ({
       ...feat,
       properties: rulesetData.propertiesByEntity.get(feat.id) ?? [],
@@ -557,15 +356,198 @@ export default class DetailedCharacterDataLoader {
         requirements: rulesetData.requirementsByEntity.get(featId) ?? [],
       });
     }
-    const feats: FeatWithPMR[] = [...realFeatsWithPMR, ...virtualFeatsWithPMR];
-    for (const feat of feats) {
-      modifiers.push(...feat.modifiers);
-      // Auto-granted feats bypass their own prereqs — the granting source is the gate.
-      if (feat.klassLevelFeatId || feat.virtual) continue;
-      requirementGroups.push(feat.requirements);
+    return [...realFeatsWithPMR, ...virtualFeatsWithPMR];
+  }
+
+  /**
+   * Round 5: character-sourced modifiers only. Every ruleset-scoped property/modifier/requirement is already indexed
+   * on rulesetData (propertiesByEntity, modifiersBySource, requirementsByEntity). The only pieces the cache can't know
+   * about are character-sourced modifiers (their sourceId is the character ID, not a ruleset entity). With them, the
+   * flat modifier list scoped to this character — used by resolvePossessedFeatIds / resolvePossessedPowers (which
+   * scan for "set feats/powers.<slug>.possessed/known" targets). Built by O(entities) map lookups, not an O(all ruleset
+   * mods) filter. Then the requirements of the character's own modifiers.
+   */
+  private async fetchModifiers(database: Db, rulesetData: CachedRulesetData, sourceIds: string[]) {
+    const characterSourcedModifiers = await Modifiers.findMany(database, {
+      sourceIds: [this.character.id],
+    });
+    const baseModifiers: Modifier[] = [];
+    for (const id of sourceIds) {
+      const group = rulesetData.modifiersBySource.get(id);
+      if (group) baseModifiers.push(...group);
+    }
+    baseModifiers.push(...characterSourcedModifiers);
+
+    // Round 6: Requirements — cache covers ruleset modifiers (including those on virtually possessed feats/powers,
+    // since the unified `feats` and `powers` arrays pull from `rulesetData.modifiersBySource`). Only
+    // character-direct modifiers can have requirements the cache misses.
+    const extraRequirements =
+      characterSourcedModifiers.length > 0
+        ? await Requirements.findMany(database, { entityIds: characterSourcedModifiers.map((m) => m.id) })
+        : [];
+    return { characterSourcedModifiers, baseModifiers, extraRequirements };
+  }
+
+  /** Round 4: character-scoped queries (5); ruleset-scoped lookups resolve from cache. */
+  private async fetchPicks(database: Db, realCharacterLevelIds: string[], characterLevels: CharacterLevel[]) {
+    const skills = await Skills.findPicks(database, {
+      characterLevelIds: realCharacterLevelIds,
+    });
+    const pickedFeats = await Feats.findPicks(database, {
+      characterLevelIds: realCharacterLevelIds,
+    });
+    // A saved level's class level, copied (copy-on-write) or not; a projected level's grants come with it
+    const givenFeats = await Feats.findGrants(database, { levels: characterLevels });
+    const pickedPowers = await Powers.findPicks(database, {
+      characterLevelIds: realCharacterLevelIds,
+    });
+    const givenPowers = await Powers.findGrants(database, { levels: characterLevels });
+    return { skills, pickedFeats, givenFeats, pickedPowers, givenPowers };
+  }
+
+  /** The D&D 3.5 reading of the cache's raw property rows: each skill's flags, and the skill-point ability. */
+  private interpretProperties(rulesetData: CachedRulesetData, resolveId: (id: string) => string) {
+    const skillProperties = new Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }>();
+    for (const prop of rulesetData.propertiesByEntityType.get("skills") ?? []) {
+      let entry = skillProperties.get(prop.entityId);
+      if (!entry) {
+        entry = { impactedByWeight: false, usableWithoutTraining: false };
+        skillProperties.set(prop.entityId, entry);
+      }
+      if (prop.type === SKILL_IMPACTED_BY_WEIGHT && prop.value === "true") {
+        entry.impactedByWeight = true;
+      }
+      if (prop.type === SKILL_USABLE_WITHOUT_TRAINING && prop.value === "true") {
+        entry.usableWithoutTraining = true;
+      }
     }
 
-    // Power properties/modifiers/requirements. Compose step pre-merges siblings.
+    // The skill-point-ability property is attached to whichever ruleset in the
+    // source chain declares it (usually the base), so look across every
+    // "rulesets"-scoped row rather than just the fork's own ID.
+    const skillPointAbilityProp = (rulesetData.propertiesByEntityType.get("rulesets") ?? []).find(
+      (p) => p.type === RULESET_SKILL_POINT_ABILITY_ID,
+    );
+    const skillPointAbilityId = skillPointAbilityProp?.value ? resolveId(skillPointAbilityProp.value) : null;
+    return { skillProperties, skillPointAbilityId };
+  }
+
+  /**
+   * Item properties/modifiers/requirements (with template inheritance via sourceItemId). The base item's requirements
+   * are the proficiency with it: its template's, or its own when it is one. Its own on top of a template, or a plain
+   * item's, are its other requirements, which its modifiers need
+   */
+  private inventoryWithPMR(
+    inventory: SharedCharacterData["inventory"],
+    rulesetData: CachedRulesetData,
+  ): InventoryEntry[] {
+    return inventory.map((inv) => {
+      const item = inv.itemsInRule;
+      const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
+      const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
+      const templateProperties = item.sourceItemId
+        ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []).filter((p) => !ownPropertyTypes.has(p.type))
+        : [];
+      const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
+      const templateRequirements = item.sourceItemId
+        ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
+        : [];
+      return {
+        ...inv,
+        item: {
+          ...item,
+          properties: [...templateProperties, ...ownProperties],
+          modifiers: inv.equipped ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
+          proficiency: item.isTemplate ? ownRequirements : templateRequirements,
+          requirements: item.isTemplate ? [] : ownRequirements,
+        },
+      };
+    });
+  }
+
+  /** Klass level properties/modifiers/requirements, and each level's bab and skill points. */
+  private klassLevelsWithPMR(klassLevelsRaw: KlassLevel[], rulesetData: CachedRulesetData) {
+    const klassLevels: KlassLevelWithPMR[] = klassLevelsRaw
+      .map((level) => ({
+        ...level,
+        properties: rulesetData.propertiesByEntity.get(level.id) ?? [],
+        modifiers: rulesetData.modifiersBySource.get(level.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(level.id) ?? [],
+      }))
+      .sort((a, b) => a.level - b.level);
+
+    const klassLevelProperties = new Map<string, { bab: number; skills: number }>();
+    for (const klassLevel of klassLevels) {
+      let entry = klassLevelProperties.get(klassLevel.id);
+      if (!entry) {
+        entry = { bab: 0, skills: 0 };
+        klassLevelProperties.set(klassLevel.id, entry);
+      }
+      for (const prop of klassLevel.properties) {
+        if (prop.type === KLASS_LEVEL_BAB) {
+          entry.bab = Number(prop.value);
+        }
+        if (prop.type === KLASS_LEVEL_SKILL_POINTS) {
+          entry.skills = Number(prop.value);
+        }
+      }
+    }
+    return { klassLevels, klassLevelProperties };
+  }
+
+  /** Klass properties (bonus spell ability + caster type). */
+  private klassProperties(
+    klassEntityIds: string[],
+    rulesetData: CachedRulesetData,
+    abilityLookup: Map<string, string>,
+  ) {
+    const klassBonusSpellAbilityMap = new Map<string, string>();
+    const klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
+    for (const klassId of klassEntityIds) {
+      const props = rulesetData.propertiesByEntity.get(klassId);
+      if (!props) continue;
+      for (const prop of props) {
+        if (prop.type === KLASS_BONUS_SPELL_ABILITY_ID) {
+          const abilityName = abilityLookup.get(prop.value);
+          if (abilityName) {
+            klassBonusSpellAbilityMap.set(klassId, abilityName);
+          }
+        } else if (prop.type === KLASS_CASTER_TYPE) {
+          klassCasterTypeMap.set(klassId, prop.value as "Arcane" | "Divine");
+        }
+      }
+    }
+    return { klassBonusSpellAbilityMap, klassCasterTypeMap };
+  }
+
+  /** The character's levels: the saved ones (but those a projection leaves out), then the projected ones. */
+  private levelsOf(
+    rawCharacterLevels: CharacterLevel[],
+    projectedData: Dnd35ProjectedCharacterData | undefined,
+    resolve: Resolve,
+  ) {
+    const resolvedCharacterLevels = resolve(rawCharacterLevels);
+    const excludeIds = projectedData?.excludeCharacterLevelIds ? new Set(projectedData.excludeCharacterLevelIds) : null;
+    const characterLevels = excludeIds
+      ? resolvedCharacterLevels.filter((l) => !excludeIds.has(l.id))
+      : resolvedCharacterLevels;
+    const allCharacterLevels = projectedData?.characterLevels
+      ? [...characterLevels, ...projectedData.characterLevels]
+      : characterLevels;
+    return {
+      characterLevels,
+      allCharacterLevels,
+      realCharacterLevelIds: characterLevels.map((level) => level.id),
+      klassLevelIds: allCharacterLevels.map((level) => level.klassLevelId),
+    };
+  }
+
+  /** Power properties/modifiers/requirements. Compose step pre-merges siblings. */
+  private powersWithPMR(
+    allPowers: ReturnType<DetailedCharacterDataLoader["composePowers"]>["allPowers"],
+    virtuallyPossessedPowers: { powerId: string; aptitudeId: string }[],
+    rulesetData: CachedRulesetData,
+  ): PowerWithPMR[] {
     const realPowersWithPMR: PowerWithPMR[] = allPowers.map((power) => ({
       ...power,
       properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
@@ -592,63 +574,147 @@ export default class DetailedCharacterDataLoader {
         requirements: rulesetData.requirementsByEntity.get(powerId) ?? [],
       });
     }
-    const powers: PowerWithPMR[] = [...realPowersWithPMR, ...virtualPowersWithPMR];
-    for (const power of powers) {
-      modifiers.push(...power.modifiers);
-      // Auto-granted powers bypass their own prereqs — the granting source is the gate.
-      if (power.free || power.virtual) continue;
-      requirementGroups.push(power.requirements);
-    }
+    return [...realPowersWithPMR, ...virtualPowersWithPMR];
+  }
 
-    // Modifier requirements — spans ruleset (entityType='modifiers' rows indexed
-    // by modifier.id, including kept sibling-modifier rows merged by compose) +
-    // char/virtual modifier requirements.
-    for (const modifier of modifiers) {
-      const fromRuleset = rulesetData.requirementsByEntity.get(modifier.id) ?? [];
-      const fromExtra = extraReqsByEntityId.get(modifier.id) ?? [];
-      if (fromExtra.length === 0) {
-        requirementGroups.push(fromRuleset);
-      } else {
-        requirementGroups.push([...fromRuleset, ...fromExtra]);
-      }
+  /** The race with its properties, modifiers and requirements. */
+  private raceWithPMR(race: Race, rulesetData: CachedRulesetData): RaceWithPMR {
+    return {
+      ...race,
+      properties: rulesetData.propertiesByEntity.get(race.id) ?? [],
+      modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
+      requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
+    };
+  }
+
+  /** The ruleset's own lists, as the loaded data carries them. */
+  private rulesetFields(rulesetData: CachedRulesetData) {
+    return {
+      rulesetAbilities: rulesetData.abilities,
+      rulesetSaves: rulesetData.saves,
+      rulesetSkills: rulesetData.skills,
+      rulesetFeats: rulesetData.feats,
+      rulesetFeatProperties: rulesetData.propertiesByEntityType.get("feats") ?? [],
+      rulesetPowers: rulesetData.powers,
+      rulesetPowerProperties: rulesetData.propertiesByEntityType.get("powers") ?? [],
+      rulesetAptitudes: rulesetData.aptitudes,
+      rulesetKlasses: rulesetData.klasses,
+      leveledAptitudeIds: rulesetData.leveledAptitudeIds,
+    };
+  }
+
+  /** The feats and powers the character's modifiers make it possess without a pick (`set feats.<slug>.possessed`). */
+  private virtualPossessions(
+    baseModifiers: Modifier[],
+    featIds: string[],
+    powerIds: string[],
+    rulesetData: CachedRulesetData,
+  ) {
+    return {
+      virtuallyPossessedFeatIds: this.resolvePossessedFeatIds(
+        baseModifiers,
+        new Set(featIds),
+        rulesetData.featIdBySlug,
+      ),
+      virtuallyPossessedPowers: this.resolvePossessedPowers(
+        baseModifiers,
+        new Set(powerIds),
+        rulesetData.powerIdsBySlug,
+        rulesetData.powersById,
+        rulesetData.aptitudeIdBySpellSlug,
+      ),
+    };
+  }
+
+  async load(
+    database: Db = db,
+    projectedData?: Dnd35ProjectedCharacterData,
+    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
+  ): Promise<Dnd35LoadedCharacterData> {
+    if (!preloaded) {
+      throw new Error("DetailedCharacterDataLoader.load() requires preloaded ruleset data — call via withRulesetScope");
     }
+    const shared: SharedCharacterData =
+      "_shared" in preloaded
+        ? (preloaded._shared as SharedCharacterData)
+        : await this.loadSharedData(database, preloaded);
+    const { ruleset, player, campaign, cowData, rulesetData, race } = shared;
+    const overrideMap = cowData.idResolveMap;
+    const resolve: Resolve = (rows) => (overrideMap.size > 0 ? resolveOverrides(rows, overrideMap) : rows);
+    const abilityLookup = new Map(rulesetData.abilities.map((a) => [a.id, a.name]));
+    const levels = this.levelsOf(shared.rawCharacterLevels, projectedData, resolve);
+
+    // The join uses the stored item ID. Load the effective item so COW changes
+    // refresh its name and other fields, not just its ID.
+    const resolvedInventory = shared.inventory.map((inv) => ({
+      ...inv,
+      itemsInRule: rulesetData.itemsById.get(inv.itemId) ?? inv.itemsInRule,
+    }));
+    const picks = await this.fetchPicks(database, levels.realCharacterLevelIds, levels.characterLevels);
+
+    const { languages, klassLevelsRaw, klassLevelSaves, klasses, klassSkills, klassEntityIds } = this.cachedRows(
+      shared,
+      levels.klassLevelIds,
+    );
+
+    const { skills, allFeats, klassLevelFeatCountsByAptitudeId, allPowers, klassLevelPowerCountsByAptitudeId } =
+      this.composePicks(picks, rulesetData, projectedData, levels.allCharacterLevels, resolve);
+    const featIds = allFeats.map((feat) => feat.id);
+    const powerIds = allPowers.map((power) => power.id);
+
+    const equippedItemIds = resolvedInventory.filter((inv) => inv.equipped).map((inv) => inv.itemsInRule.id);
+    const { characterSourcedModifiers, baseModifiers, extraRequirements } = await this.fetchModifiers(
+      database,
+      rulesetData,
+      [race.id, ...equippedItemIds, ...klassEntityIds, ...levels.klassLevelIds, ...featIds, ...powerIds],
+    );
+
+    // Round 5b: the modifiers of virtually possessed feats and powers.
+    const { virtuallyPossessedFeatIds, virtuallyPossessedPowers } = this.virtualPossessions(
+      baseModifiers,
+      featIds,
+      powerIds,
+      rulesetData,
+    );
+
+    // Distribute PMR results: per-entity lookups resolve via the cache's pre-built Maps.
+    const { klassLevels, klassLevelProperties } = this.klassLevelsWithPMR(klassLevelsRaw, rulesetData);
+    const parts = {
+      characterSourcedModifiers,
+      race: this.raceWithPMR(race, rulesetData),
+      inventory: this.inventoryWithPMR(resolvedInventory, rulesetData),
+      klassLevels,
+      klassEntityIds,
+      feats: this.featsWithPMR(allFeats, virtuallyPossessedFeatIds, rulesetData),
+      powers: this.powersWithPMR(allPowers, virtuallyPossessedPowers, rulesetData),
+    };
+    const { modifiers, requirementGroups } = this.collectModifiers(parts, rulesetData, extraRequirements);
 
     return {
       ruleset,
       player,
       campaign,
-      rulesetAbilities,
-      rulesetSaves,
-      rulesetSkills,
-      rulesetFeats,
-      rulesetFeatProperties: rulesetData.propertiesByEntityType.get("feats") ?? [],
-      rulesetPowers,
-      rulesetPowerProperties: rulesetData.propertiesByEntityType.get("powers") ?? [],
-      rulesetAptitudes,
-      rulesetKlasses,
-      leveledAptitudeIds,
-      skillPointAbilityId,
-      skillProperties,
-      characterAbilityScores,
-      race: raceWithPMR,
+      ...this.rulesetFields(rulesetData),
+      ...this.interpretProperties(rulesetData, (id) => overrideMap.get(id) ?? id),
+      characterAbilityScores: resolve(shared.characterAbilityRecords).map((ca) => this.abilityScore(ca, abilityLookup)),
+      race: parts.race,
       languages,
-      inventory: inventoryResult,
-      characterLevels: allCharacterLevels,
+      inventory: parts.inventory,
+      characterLevels: levels.allCharacterLevels,
       klassLevels,
       klassSkills,
       klassLevelSaves,
       klasses,
-      feats,
+      feats: parts.feats,
       skills,
-      powers,
+      powers: parts.powers,
       klassLevelFeatCountsByAptitudeId,
       klassLevelPowerCountsByAptitudeId,
-      klassLevelProperties: klassLevelPropertiesMap,
+      klassLevelProperties,
       modifiers,
       requirementGroups,
-      validRulesetIds,
-      klassBonusSpellAbilityMap,
-      klassCasterTypeMap,
+      validRulesetIds: new Set([this.character.rulesetId, ...cowData.sourceChain]),
+      ...this.klassProperties(klassEntityIds, rulesetData, abilityLookup),
     };
   }
 
