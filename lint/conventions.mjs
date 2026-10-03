@@ -15,6 +15,11 @@
  * - `shared-runtime`: `shared/` runs in the client too, so it uses neither Bun's APIs (`bun`, the `Bun` global) nor
  *   Node's (`node:fs`, `fs`).
  * - `session-param`: a `Session` parameter is named `session` (`_session` when it's unused).
+ * - `test-placement`: a test named after a module sits at that module's mirror (`tests/services/…` ↔
+ *   `server/services/…`); a test of a behavior across modules is free in its area.
+ * - `concern-shape`: a concern (`function X<B extends Constructor>(Base: B)`) sits in `X.ts`, its class is named for
+ *   what it adds (a verb's `-ing`, `Archives` → `Archiving`, or `With` a noun, `ArmorClass` → `WithArmorClass`), and
+ *   it adds methods, never state.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -303,6 +308,58 @@ const testPlacement = {
   },
 };
 
+/**
+ * The `-ing` forms a third-person verb can take: `Archives` → `Archiving`, `Stars` → `Starring`, `Scopes` → `Scoping`,
+ * `Applies` → `Applying`.
+ */
+function gerunds(verb) {
+  // Applies → Applying
+  if (verb.endsWith("ies")) return [`${verb.slice(0, -3)}ying`];
+  const base = /(ch|sh|ss|x|z)es$/.test(verb) ? verb.slice(0, -2) : verb.slice(0, -1);
+  return [`${base}ing`, `${base.replace(/e$/, "")}ing`, `${base}${base.at(-1)}ing`];
+}
+
+/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
+const isConcern = (fn) =>
+  fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
+  fn.typeParameters.params[0].constraint.typeName.name === "Constructor";
+
+const concernShape = {
+  meta: { type: "suggestion" },
+  create(context) {
+    const file = repoPath(context.filename);
+    return {
+      FunctionDeclaration(fn) {
+        if (!fn.id || !isConcern(fn) || fn.parent?.type !== "ExportNamedDeclaration") return;
+        const name = fn.id.name;
+        if (path.posix.basename(file).replace(/\.tsx?$/, "") !== name) {
+          context.report({ node: fn.id, message: `A concern sits in a file of its name: \`${name}.ts\`.` });
+        }
+        const [verb, rest] = [/^[A-Z][a-z]*/.exec(name)?.[0] ?? name, name.replace(/^[A-Z][a-z]*/, "")];
+        const allowed = [`With${name}`, ...(verb.endsWith("s") ? gerunds(verb).map((g) => g + rest) : [])];
+        for (const statement of fn.body.body) {
+          if (statement.type !== "ClassDeclaration") continue;
+          if (!allowed.includes(statement.id.name)) {
+            context.report({
+              node: statement.id,
+              message: `A concern's class is named for what it adds: \`${allowed.slice(1).join("` or `") || allowed[0]}\` (a verb, \`Archives\` → \`Archiving\`) or \`With${name}\` (a noun, \`ArmorClass\` → \`WithArmorClass\`), not \`${statement.id.name}\`.`,
+            });
+          }
+          for (const member of statement.body.body) {
+            if (member.type === "PropertyDefinition" && !member.declare) {
+              context.report({
+                node: member,
+                message:
+                  "A concern adds methods, never state: its class holds no field (the state goes in a base it builds on).",
+              });
+            }
+          }
+        }
+      },
+    };
+  },
+};
+
 export const rules = {
   "no-parent-imports": noParentImports,
   "no-helpers-modules": noHelpersModules,
@@ -312,4 +369,5 @@ export const rules = {
   "shared-runtime": sharedRuntime,
   "session-param": sessionParam,
   "test-placement": testPlacement,
+  "concern-shape": concernShape,
 };

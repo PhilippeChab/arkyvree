@@ -38,7 +38,7 @@ Lint holds the layers (`lint/architecture.mjs`) and the method names (`lint/meth
 Where code goes, by what it needs:
 
 - A step only one class takes, and small: a `private` method of that class
-- Methods that work on a class's state (`this`), split out of a large class or shared among classes of one kind: a concern, a mixin the class includes (`include(Base, A, B)`, `server/mixins.ts`), in a `concerns/` folder by the class
+- Methods that work on a class's state (`this`), split out of a large class or shared among classes of one kind: a concern, a mixin the class includes (`include(Base, A, B)`, `server/mixins.ts`), in a `concerns/` folder by the class. It's named for what it adds, in a file of its name: a verb when it adds behavior (`Archives`, its class `Archiving`), a noun when it adds a part of the model (`ArmorClass`, its class `WithArmorClass`). It adds methods, never state (`arkyvree/concern-shape`)
 - A function that needs no `this`, used by several services, jobs or tests: a helper, a module named for what it does (`characters/editableCharacter.ts`), in the folder of the service whose domain it is, exported through its `index.ts`. Never a `helpers` or `utils` grab bag (`arkyvree/no-helpers-modules`)
 - A query: a repository method (a query across every entity table: `RulesetEntities`)
 
