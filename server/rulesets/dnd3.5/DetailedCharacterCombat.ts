@@ -14,7 +14,7 @@ import { type CharacterLevel, type Item, type Property, type Race } from "@/shar
 
 import { ArmorClass } from "./combat/ArmorClass.ts";
 import { Attacks } from "./combat/Attacks.ts";
-import CombatState, { type DetailedCharacterComprehensiveCombat, type WeaponSet } from "./combat/CombatState.ts";
+import CombatState, { type DetailedCharacterComprehensiveCombat } from "./combat/CombatState.ts";
 import { HitPoints } from "./combat/HitPoints.ts";
 import { InitiativeAndSpeed } from "./combat/InitiativeAndSpeed.ts";
 
@@ -190,4 +190,3 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
 }
 
 export default DetailedCharacterCombat;
-export type { WeaponSet };

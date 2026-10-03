@@ -1,7 +1,7 @@
 import type { Constructor } from "@/server/mixins.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/server/rulesets/constants.ts";
 import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
-import type { WeaponSet, WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import { SLOT_MAP, type WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import {
   DAMAGE_TYPE,
   WEAPON_BASE_DAMAGE,
@@ -65,12 +65,6 @@ function adjustDamageForSize(baseDamage: string, size: string): string {
   const adjusted = Math.max(0, Math.min(DAMAGE_PROGRESSION.length - 1, index + step));
   return DAMAGE_PROGRESSION[adjusted];
 }
-
-const SLOT_MAP: Record<string, keyof WeaponSet> = {
-  "Main Hand": "mainhand",
-  "Off Hand": "offhand",
-  "Two Handed": "twohanded",
-};
 
 /** A character's attacks: its base attack bonus, grapple, and each weapon's to-hit and damage. */
 export function Attacks<B extends Constructor<CombatState>>(Base: B) {

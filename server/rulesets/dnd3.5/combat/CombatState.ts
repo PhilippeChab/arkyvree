@@ -44,6 +44,13 @@ export type WeaponSet = {
   twohanded: WeaponSlot | null;
 };
 
+/** A weapon slot's label, as an item's location names it, to its place in the weapon set. */
+export const SLOT_MAP: Record<string, keyof WeaponSet> = {
+  "Main Hand": "mainhand",
+  "Off Hand": "offhand",
+  "Two Handed": "twohanded",
+};
+
 export type DetailedCharacterComprehensiveCombat = {
   ac: {
     base: number;
