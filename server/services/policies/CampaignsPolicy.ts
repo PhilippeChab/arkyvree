@@ -14,7 +14,7 @@ export default class CampaignsPolicy extends BasePolicy<Campaign> {
   }
 
   /** The session's player row in the campaign, an archived campaign's too, or a 403: what reading a campaign takes. */
-  static async member(db: Db, session: Session, campaignId: string): Promise<Player> {
+  static async canRead(db: Db, session: Session, campaignId: string): Promise<Player> {
     const player = await Players.findOne(db, { userId: session.userId, campaignId }, Visibility.All);
     if (!player) throw new ForbiddenError("You are not a member of this campaign");
     return player;

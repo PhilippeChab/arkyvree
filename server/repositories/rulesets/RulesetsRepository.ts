@@ -65,6 +65,15 @@ class RulesetsRepository extends include(
     return result.count;
   }
 
+  async existsSubscriber(db: Db, hostId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ exists: sql<boolean>`true` })
+      .from(this.table)
+      .where(and(sql`${this.table.extensionRulesetIds} @> ARRAY[${hostId}]::uuid[]`, isNull(this.table.deletedAt)))
+      .limit(1);
+    return !!row;
+  }
+
   async findMany(
     db: Db,
     session: Session,
@@ -310,15 +319,6 @@ class RulesetsRepository extends include(
     return await db.query.rulesetsInRules.findMany({
       where: and(eq(this.table.system, true), isNull(this.table.deletedAt)),
     });
-  }
-
-  async hasSubscribers(db: Db, hostId: string): Promise<boolean> {
-    const [row] = await db
-      .select({ exists: sql<boolean>`true` })
-      .from(this.table)
-      .where(and(sql`${this.table.extensionRulesetIds} @> ARRAY[${hostId}]::uuid[]`, isNull(this.table.deletedAt)))
-      .limit(1);
-    return !!row;
   }
 
   async create(db: Db, values: InferInsertModel<typeof rulesetsInRules>) {

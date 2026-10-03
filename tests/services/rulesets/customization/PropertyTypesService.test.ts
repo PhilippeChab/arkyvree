@@ -85,7 +85,7 @@ describe("PropertyTypesService", () => {
   test("searches engine types by name or description and custom types by name, ignoring case", async () => {
     const { rulesetId } = await setup();
     const search = async (query: string) =>
-      (await PropertyTypesService.searchPropertyTypes(rulesetId, query, "items")).map(
+      (await PropertyTypesService.getMatchingPropertyTypes(rulesetId, query, "items")).map(
         (t) => `${t.value}${t.isStatic ? "" : " (custom)"}`,
       );
     expect(await search("CUSTOM_MAT")).toEqual(["custom_material (custom)"]);

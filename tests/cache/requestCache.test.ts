@@ -3,6 +3,7 @@
  * - Identical find calls inside one request coalesce to the same Promise.
  * - Different args → distinct keys → distinct promises.
  * - findOne vs findMany keyed separately.
+ * - A method is classified by its verb: reads memoize, writes clear, locks do neither.
  * - Store is per-request (separate runs never share state).
  * - No memoization outside a request context (no store installed).
  * - clearRequestCache invalidates — next call is a fresh promise.
@@ -14,7 +15,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { type SeedContext } from "@/database/seeds/helpers.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest, runWithRequestCache } from "@/server/database/requestCache.ts";
-import { Characters, Feats, Rulesets } from "@/server/repositories/index.ts";
+import { Characters, Feats, Notifications, Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 describe("requestCache — repository Proxy memoization", () => {
@@ -55,6 +56,24 @@ describe("requestCache — repository Proxy memoization", () => {
       const p2 = Feats.findMany(db, { ids: [featId] });
       expect(p1).not.toBe(p2);
       await Promise.all([p1, p2]);
+    });
+  });
+
+  test("a method is cached by its verb (methodVerbs.json): a read memoizes, a write clears, a lock does neither", async () => {
+    await runWithRequestCache(async () => {
+      const read = Rulesets.existsSubscriber(db, ctx.rulesetId);
+      expect(Rulesets.existsSubscriber(db, ctx.rulesetId)).toBe(read);
+      await read;
+
+      const lock = Rulesets.lockById(db, ctx.rulesetId, "share");
+      expect(Rulesets.lockById(db, ctx.rulesetId, "share")).not.toBe(lock);
+      await lock;
+      expect(Rulesets.existsSubscriber(db, ctx.rulesetId)).toBe(read);
+
+      await Notifications.markAllRead(db, { recipientId: NIL_UUID });
+      const fresh = Rulesets.existsSubscriber(db, ctx.rulesetId);
+      expect(fresh).not.toBe(read);
+      await fresh;
     });
   });
 

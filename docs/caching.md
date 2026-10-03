@@ -79,7 +79,7 @@ Also at compose time: the inline join rows on feats/powers (`powersAptitudesInRu
 
 ### Layer 2 — Character\* repo reads auto-resolve when a COW context is active
 
-`CharacterLevels`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterAbilities`, `CharacterInventory`, `CharacterLanguages` — plus any method named `*ByCharacter*` or `*ByKlassLevel*` on ruleset-scoped repos (e.g. `Feats.findManyByCharacterLevelIds`) — have their `find*` results post-processed. When a `cowContext` is active, every `*Id` field on every returned row is remapped to its post-COW form via `resolveRowOverrides`.
+`CharacterLevels`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterAbilities`, `CharacterInventory`, `CharacterLanguages` — plus any method named `*ByCharacter*` or `*ByKlassLevel*` on ruleset-scoped repos (e.g. `Feats.findManyByCharacterLevelIds`) — have their read results (`find*`, `exists*`, `count*`) post-processed. When a `cowContext` is active, every `*Id` field on every returned row is remapped to its post-COW form via `resolveRowOverrides`.
 
 ```ts
 // Inside a cowContext: row.klassLevelId / row.abilityId / row.featId /
@@ -151,7 +151,7 @@ From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cac
 
 Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`, `RulesetChangesService` (reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
-- **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateRulesetItem` / `bulkCreateVariants` and `ModifiersService.duplicateEntityModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow/index.ts` doesn't export.
+- **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateRulesetItem` / `createVariants` and `ModifiersService.duplicateEntityModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow/index.ts` doesn't export.
 - **Extensions** (`RulesetExtensionsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
 - **Override map**: `buildOverrideMap`, called only inside `cow/` (`getOrBuildCowData`, `cowEntity`).
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`getOrBuildCowData`, `cowEntity`) and target-path cache keys.
@@ -290,7 +290,7 @@ Why this matters: our read paths have legitimate architectural duplicates. `powe
 ```mermaid
 flowchart TD
     Start([Repo.findOne db, where]) --> Proxy{Repo is wrapped<br/>by Proxy}
-    Proxy -->|read method?<br/>find*/count*/exists| IsRead
+    Proxy -->|read verb?<br/>find/exists/count| IsRead
     IsRead -->|yes| IsDb{args 0 === globalDb?}
     IsDb -->|no: tx handle| Direct[Run original method<br/>no cache touch]
     IsDb -->|yes| Key[key = Repo.method + JSON.stringify args]
@@ -300,7 +300,7 @@ flowchart TD
     Run --> Save[store.set key, promise]
     Save --> ReturnNew[Return new promise]
     Run -.->|rejects| Evict[Evict key so retries re-run]
-    Proxy -->|write method<br/>create/update/archive/<br/>delete/save/upsert/<br/>insert/link/unlink/orphan/<br/>restore/unarchive| Clear[clearRequestCache before + after]
+    Proxy -->|write verb<br/>create/update/upsert/<br/>delete/archive/unarchive/<br/>mark/backfill/orphan/publish| Clear[clearRequestCache before + after]
 ```
 
 The store is an `AsyncLocalStorage<Map<string, Promise<unknown>>>` installed by a Hono middleware:
@@ -469,11 +469,11 @@ sequenceDiagram
 8. Update `tests/cache/rulesetCache.test.ts` with a smoke test (the existing compose+invalidation patterns are copy-paste templates); include a COW-fork assertion so regressions in the auto-resolve path are caught.
 9. Migrate callers: `Repo.findOne(db, { id })` inside a `withRulesetScope` → `rulesetData.<entity>ById.get(id)`. No canonicalize needed — the wrapper handles it. Either access pattern works; the cache Map is preferred when you already have `rulesetData` in scope.
 
-## Adding a new write-method prefix
+## A repository method's verb
 
-The Proxy detects writes by matching method names against a prefix list (`create`, `update`, `archive`, `unarchive`, `restore`, `delete`, `save`, `upsert`, `insert`, `link`, `unlink`, `orphan`) plus an explicit set of grandfathered full names (`publish`, `markRead`, `markReadByTarget`, `markAllRead`, `backfillUserId`, `claim`). If a repository adds a mutation whose name doesn't match any of those, update `isWriteMethod` in `server/repositories/withRequestCache.ts`. Otherwise a stale cached read could be returned after the mutation.
+The Proxy classifies a method by its verb, its first camelCase word (`find` in `findManyByUser`, `mark` in `markAllRead`), against `server/repositories/methodVerbs.json`: a `read` (`find`, `exists`, `count`) is memoized and sees copy-on-write ids, a `write` (`create`, `update`, `upsert`, `delete`, `archive`, `unarchive`, `mark`, `backfill`, `orphan`, `publish`) clears the cache before and after, and a `lock` does neither. Lint (`arkyvree/method-names`) holds every public repository method to one of these verbs, so a new method is classified by its name, with nothing to update here.
 
-**Prefer renaming over adding new matchers.** An `update*` name (say, `updateStatus`) is safer than another one-off verb because it can't drift into a future read method that gets misclassified (e.g. a hypothetical `markupSummary()` would have been caught by `prop.startsWith("mark")` as a spurious write — which is why the `mark*` prefix was dropped in favor of exact names).
+A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A verb added to `methodVerbs.json` joins its class for every repository at once: a read verb would memoize, a write verb would clear.
 
 ## References
 

@@ -91,6 +91,29 @@ class PropertyTypesService {
   }
 
   /**
+   * Search property types by query
+   */
+  async getMatchingPropertyTypes(
+    rulesetId: string,
+    query: string,
+    entityType?: PropertyEntityType,
+  ): Promise<PropertyType[]> {
+    const lowercaseQuery = query.toLowerCase();
+
+    const staticTypes = (await this.getStaticPropertyTypes(rulesetId, entityType)).filter(
+      (type) =>
+        type.value.toLowerCase().includes(lowercaseQuery) ||
+        (type.description && type.description.toLowerCase().includes(lowercaseQuery)),
+    );
+
+    const customTypes = (await this.getCustomPropertyTypes(rulesetId, entityType)).filter((type) =>
+      type.value.toLowerCase().includes(lowercaseQuery),
+    );
+
+    return [...staticTypes, ...customTypes];
+  }
+
+  /**
    * Get all available property types (static + custom)
    */
   async getPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
@@ -154,29 +177,6 @@ class PropertyTypesService {
 
       return pageOf([...engineCompletions, ...customCompletions], pagination);
     });
-  }
-
-  /**
-   * Search property types by query
-   */
-  async searchPropertyTypes(
-    rulesetId: string,
-    query: string,
-    entityType?: PropertyEntityType,
-  ): Promise<PropertyType[]> {
-    const lowercaseQuery = query.toLowerCase();
-
-    const staticTypes = (await this.getStaticPropertyTypes(rulesetId, entityType)).filter(
-      (type) =>
-        type.value.toLowerCase().includes(lowercaseQuery) ||
-        (type.description && type.description.toLowerCase().includes(lowercaseQuery)),
-    );
-
-    const customTypes = (await this.getCustomPropertyTypes(rulesetId, entityType)).filter((type) =>
-      type.value.toLowerCase().includes(lowercaseQuery),
-    );
-
-    return [...staticTypes, ...customTypes];
   }
 }
 

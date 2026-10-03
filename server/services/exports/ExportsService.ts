@@ -4,7 +4,7 @@ import { Exports } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ExportsService {
-  async download(session: Session, exportId: string) {
+  async getExport(session: Session, exportId: string) {
     const exportRecord = await Exports.findOne(db, {
       id: exportId,
       userId: session.userId,

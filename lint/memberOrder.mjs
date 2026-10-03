@@ -27,7 +27,8 @@ const VERB_GROUPS = [
 ];
 const ACTIONS = VERB_GROUPS.length;
 
-const startsWithVerb = (name, verb) => new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
+/** Whether `name` starts with the word `verb`: `find` starts `findOne`, not `finder`. */
+export const startsWithVerb = (name, verb) => new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
 
 /** A lifecycle method's step (`load` before `build`), or 0 for any other method. */
 export function lifecycleStep(name) {

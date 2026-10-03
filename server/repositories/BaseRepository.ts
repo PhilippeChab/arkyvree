@@ -25,6 +25,25 @@ abstract class BaseRepository<T extends Table> {
     return direction === "asc" ? asc(column) : desc(column);
   }
 
+  protected visibility(visibility: Visibility): boolean | SQL {
+    switch (visibility) {
+      case Visibility.All:
+        return false;
+      case Visibility.UnarchivedOnly:
+        // @ts-expect-error All tables have a deletedAt column
+        return isNull(this.table.deletedAt);
+      case Visibility.ArchivedOnly:
+        // @ts-expect-error All tables have a deletedAt column
+        return not(isNull(this.table.deletedAt));
+      default:
+        return false;
+    }
+  }
+
+  protected where(statements: (SQL | boolean)[]) {
+    return and(...(statements.filter(Boolean) as SQL[]));
+  }
+
   /** Whether a row matches `where`, on the repositories that look rows up. */
   async exists<W>(this: { findOne(db: Db, where: W): Promise<unknown> }, db: Db, where: W) {
     return Boolean(await this.findOne(db, where));
@@ -43,25 +62,6 @@ abstract class BaseRepository<T extends Table> {
       .where(and(eq(columns.id, id), columns.deletedAt ? isNull(columns.deletedAt) : undefined))
       .for(mode, skipLocked ? { skipLocked: true } : {});
     return rows.length > 0;
-  }
-
-  visibility(visibility: Visibility): boolean | SQL {
-    switch (visibility) {
-      case Visibility.All:
-        return false;
-      case Visibility.UnarchivedOnly:
-        // @ts-expect-error All tables have a deletedAt column
-        return isNull(this.table.deletedAt);
-      case Visibility.ArchivedOnly:
-        // @ts-expect-error All tables have a deletedAt column
-        return not(isNull(this.table.deletedAt));
-      default:
-        return false;
-    }
-  }
-
-  where(statements: (SQL | boolean)[]) {
-    return and(...(statements.filter(Boolean) as SQL[]));
   }
 }
 

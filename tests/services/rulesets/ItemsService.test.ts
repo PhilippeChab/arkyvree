@@ -166,7 +166,7 @@ describe("ItemsService", () => {
       });
       await customize(source.id);
 
-      const variants = await ItemsService.bulkCreateVariants(session, ruleset.id, source.id, [
+      const variants = await ItemsService.createVariants(session, ruleset.id, source.id, [
         { name: "Scroll of Healing", description: "Heals 1d8" },
         { name: "Scroll of Light" },
       ]);
@@ -199,10 +199,8 @@ describe("ItemsService", () => {
         sourceItemId: template.id,
       });
 
-      const [ofTemplate] = await ItemsService.bulkCreateVariants(session, ruleset.id, template.id, [
-        { name: "Sword +1" },
-      ]);
-      const [ofInstance] = await ItemsService.bulkCreateVariants(session, ruleset.id, instance.id, [
+      const [ofTemplate] = await ItemsService.createVariants(session, ruleset.id, template.id, [{ name: "Sword +1" }]);
+      const [ofInstance] = await ItemsService.createVariants(session, ruleset.id, instance.id, [
         { name: "Longsword +1" },
       ]);
       await expectTemplateInstance(ruleset.id, ofTemplate.id, template.id);
@@ -214,7 +212,7 @@ describe("ItemsService", () => {
       const source = await ItemsService.createRulesetItem(session, parent.id, { name: "Parent Scroll", weight: 0.1 });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-      const variants = await ItemsService.bulkCreateVariants(session, fork.id, source.id, [{ name: "Forked Scroll" }]);
+      const variants = await ItemsService.createVariants(session, fork.id, source.id, [{ name: "Forked Scroll" }]);
       expect(variants).toMatchObject([{ name: "Forked Scroll", rulesetId: fork.id, weight: "0.10" }]);
     });
 
@@ -223,7 +221,7 @@ describe("ItemsService", () => {
       const source = await ItemsService.createRulesetItem(session, ruleset.id, { name: "Scroll" });
       const { session: other } = await createTestUserAndRuleset();
       await expect(
-        ItemsService.bulkCreateVariants(other, ruleset.id, source.id, [{ name: "Stolen Scroll" }]),
+        ItemsService.createVariants(other, ruleset.id, source.id, [{ name: "Stolen Scroll" }]),
       ).rejects.toThrow(ForbiddenError);
     });
 
@@ -232,7 +230,7 @@ describe("ItemsService", () => {
       const source = await ItemsService.createRulesetItem(session, ruleset.id, { name: "Scroll" });
       await ItemsService.createRulesetItem(session, ruleset.id, { name: "Taken Name" });
       const create = (names: string[]) =>
-        ItemsService.bulkCreateVariants(
+        ItemsService.createVariants(
           session,
           ruleset.id,
           source.id,
@@ -245,9 +243,9 @@ describe("ItemsService", () => {
       );
       await expect(create(["Probe", "Probe"])).rejects.toThrow(ConflictError);
       await expect(create(["Probe Alpha", "Taken Name", "Probe Beta"])).rejects.toThrow(ConflictError);
-      await expect(
-        ItemsService.bulkCreateVariants(session, ruleset.id, NIL_UUID, [{ name: "Orphan" }]),
-      ).rejects.toThrow(NotFoundError);
+      await expect(ItemsService.createVariants(session, ruleset.id, NIL_UUID, [{ name: "Orphan" }])).rejects.toThrow(
+        NotFoundError,
+      );
 
       const { items } = await ItemsService.getRulesetItems(ruleset.id, { search: "Probe" }, { limit: 10, page: 1 });
       expect(items).toEqual([]);
@@ -264,9 +262,7 @@ describe("ItemsService", () => {
         description: "Edited in fork",
       });
       await ItemsService.deleteRulesetItem(session, fork.id, copy.id);
-      const [variant] = await ItemsService.bulkCreateVariants(session, fork.id, source.id, [
-        { name: "Ghostly Scroll" },
-      ]);
+      const [variant] = await ItemsService.createVariants(session, fork.id, source.id, [{ name: "Ghostly Scroll" }]);
 
       const snapshots = await EntitySnapshots.findByTypeAndRuleset(db, { rulesetId: fork.id, entityType: "items" });
       expect(snapshots).toMatchObject([{ sourceEntityId: inherited.id, forkedEntityId: variant.id }]);

@@ -3,6 +3,8 @@ import type { IdResolveMap } from "@/server/database/cowContext.ts";
 import { db as globalDb } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest } from "@/server/database/requestCache.ts";
 
+import methodVerbs from "./methodVerbs.json";
+
 // Inlined to avoid an initialization-time cycle with cow/ (which imports
 // this file). Remaps FK references on each row through the override map so
 // consumers comparing row.fooId against post-COW ids get a hit even when the
@@ -89,6 +91,12 @@ function canonicalizeArgs(args: unknown[]): unknown[] {
   return outArgs ?? args;
 }
 
+// A method's verb, its first camelCase word: what methodVerbs.json classifies it by. Lint holds every public
+// repository method to one of its verbs.
+const verbOf = (method: string) => /^[a-z]+/.exec(method)?.[0] ?? "";
+const READS = new Set(methodVerbs.read);
+const WRITES = new Set(methodVerbs.write);
+
 // Stable short id per cowData (identity-based via idResolveMap reference) so
 // the request-dedup cache key distinguishes two different cowContexts in the
 // same request. Without this, switching context between calls would let a
@@ -106,10 +114,11 @@ function getCowId(idResolveMap: IdResolveMap): string {
 
 /**
  * Wrap a repository in a Proxy that:
- * - Memoizes `find*` method calls within the current request (AsyncLocalStorage-scoped).
- * - Clears the request cache when a write method (`create`, `update`, `archive`,
- *   `delete*`, `save*`, `upsert*`) is called, so subsequent reads aren't stale.
- * - For character-scoped repos, post-processes `find*` results with
+ * - Memoizes read methods (`find*`, `exists*`, `count*`: methodVerbs.json's `read`) within the current request
+ *   (AsyncLocalStorage-scoped).
+ * - Clears the request cache when a write method (methodVerbs.json's `write`) is called, so subsequent reads
+ *   aren't stale.
+ * - For character-scoped repos, post-processes read results with
  *   `resolveOverrides` using the current cowContext so every *Id field on the
  *   returned row is post-COW without callers remembering to canonicalize.
  *
@@ -150,33 +159,8 @@ export function withRequestCache<T extends object>(name: string, repo: T, opts?:
     }
     return result;
   };
-  const isReadMethod = (prop: string) => prop.startsWith("find") || prop === "exists" || prop.startsWith("count");
-  // Any new mutating method must match one of these prefixes (or the explicit
-  // names below) so the Proxy clears the request cache on call. When adding a
-  // new repo method, prefer renaming to an existing prefix (e.g. `update*`)
-  // over adding more entries here — the one-offs below are grandfathered in.
-  const explicitWriteNames = new Set([
-    "publish",
-    "markRead",
-    "markReadByTarget",
-    "markAllRead",
-    "backfillUserId",
-    "claim",
-  ]);
-  const isWriteMethod = (prop: string) =>
-    prop.startsWith("create") ||
-    prop.startsWith("update") ||
-    prop.startsWith("archive") ||
-    prop.startsWith("unarchive") ||
-    prop.startsWith("restore") ||
-    prop.startsWith("delete") ||
-    prop.startsWith("save") ||
-    prop.startsWith("upsert") ||
-    prop.startsWith("insert") ||
-    prop.startsWith("link") ||
-    prop.startsWith("unlink") ||
-    prop.startsWith("orphan") ||
-    explicitWriteNames.has(prop);
+  const isReadMethod = (prop: string) => READS.has(verbOf(prop));
+  const isWriteMethod = (prop: string) => WRITES.has(verbOf(prop));
   return new Proxy(repo, {
     get(target, prop, receiver) {
       const value = Reflect.get(target, prop, receiver);

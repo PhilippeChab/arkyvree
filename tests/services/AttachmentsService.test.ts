@@ -287,7 +287,7 @@ describe("AttachmentsService", () => {
   describe("findOne", () => {
     test("returns null when no live attachment exists in the slot", async () => {
       const { session } = await createTestUser();
-      const result = await AttachmentsService.findOne(session, {
+      const result = await AttachmentsService.getAttachment(session, {
         recordType: "User",
         recordId: session.userId,
         name: "avatar",
@@ -300,7 +300,7 @@ describe("AttachmentsService", () => {
       const direct = await AttachmentsService.createDirectUpload(session, uploadParams(session.userId));
       await AttachmentsService.attach(session, direct.signedId);
 
-      const result = await AttachmentsService.findOne(session, {
+      const result = await AttachmentsService.getAttachment(session, {
         recordType: "User",
         recordId: session.userId,
         name: "avatar",

@@ -26,7 +26,7 @@ const activities = new Hono()
       const query = c.req.valid("query");
 
       return c.json(
-        await ActivitiesService.findActivities(
+        await ActivitiesService.getActivities(
           c.var.requestSession,
           {
             search: query.search,
@@ -54,7 +54,7 @@ const activities = new Hono()
     async (c) => {
       const { targetTable, targetId } = c.req.valid("param");
 
-      const value = await ActivitiesService.resolveActivityUrl(c.var.requestSession, targetTable, targetId);
+      const value = await ActivitiesService.getActivityUrl(c.var.requestSession, targetTable, targetId);
       if (!value) {
         return c.json(
           { error: "NotFoundError", cause: "notFound", message: "Entity not found or no link available" },

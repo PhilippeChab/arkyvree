@@ -1,37 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 
-const oxlint = path.resolve("node_modules/.bin/oxlint");
+import { lintRepo } from "./lintRepo.ts";
 
 /** A repo of `files` (path → source), linted by the architecture rules: each finding as `rule path`. */
-function lint(files: Record<string, string>, from = ".") {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "architecture-"));
-  for (const [file, source] of Object.entries(files)) {
-    fs.mkdirSync(path.join(dir, path.dirname(file)), { recursive: true });
-    fs.writeFileSync(path.join(dir, file), source);
-  }
-  fs.writeFileSync(
-    path.join(dir, ".oxlintrc.json"),
-    JSON.stringify({
-      jsPlugins: [path.resolve("lint/plugin.mjs")],
-      rules: {
-        "arkyvree/layers": "error",
-        "arkyvree/queries-in-repositories": "error",
-        "arkyvree/folder-index": "error",
-      },
-    }),
-  );
-  // Run from `from`, a folder of the repo: the rules find the root by its lint config, wherever oxlint runs.
-  const run = Bun.spawnSync([oxlint, "-f", "unix", "-c", path.join(dir, ".oxlintrc.json"), "."], {
-    cwd: path.join(dir, from),
-  });
-  fs.rmSync(dir, { recursive: true });
-  return [...run.stdout.toString().matchAll(/^\.?\/?([^:]+):\d+:\d+: .*\[Error\/arkyvree\(([a-z-]+)\)\]$/gm)]
-    .map(([, file, rule]) => `${rule} ${path.posix.join(from, file)}`)
-    .sort();
-}
+const lint = (files: Record<string, string>, from = ".") =>
+  lintRepo(files, ["layers", "queries-in-repositories", "folder-index"], from);
 
 describe("architecture rules", () => {
   test("a layer imports only what's below it: types the exceptions name, cow from the cache and the engine", () => {

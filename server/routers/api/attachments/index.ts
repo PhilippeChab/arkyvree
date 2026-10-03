@@ -28,7 +28,7 @@ const attachments = new Hono()
     ),
     async (c) => {
       const params = c.req.valid("query");
-      return c.json(await AttachmentsService.findOne(c.var.requestSession, params), 200);
+      return c.json(await AttachmentsService.getAttachment(c.var.requestSession, params), 200);
     },
   )
   .post("/direct-uploads", denyDemoUser, attachmentUploadRateLimit, zValidator("json", directUploadBody), async (c) => {

@@ -24,11 +24,11 @@ import {
 } from "@/tests/helpers.ts";
 
 const resolve = (targetTable: string, targetId: string, session: Session = makeSession()) =>
-  ActivitiesService.resolveActivityUrl(session, targetTable, targetId);
+  ActivitiesService.getActivityUrl(session, targetTable, targetId);
 
 const resolveAll = (targets: string[][]) => Promise.all(targets.map(([table, id]) => resolve(table, id)));
 
-describe("ActivitiesService.resolveActivityUrl", () => {
+describe("ActivitiesService.getActivityUrl", () => {
   test("links rulesets, characters and campaigns to their page, archived or not, and users and sessions nowhere", async () => {
     const { user } = await createTestUser();
     const ruleset = await createTestRuleset(user.id);

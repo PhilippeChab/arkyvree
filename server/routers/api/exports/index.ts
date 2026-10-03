@@ -7,7 +7,7 @@ import { ExportsService } from "@/server/services/exports/index.ts";
 const exports = new Hono().use(sessionMiddleware).get("/:id/download", zValidator("param", idParam), async (c) => {
   const { id } = c.req.valid("param");
 
-  const exportRecord = await ExportsService.download(c.var.requestSession, id);
+  const exportRecord = await ExportsService.getExport(c.var.requestSession, id);
 
   return new Response(new Uint8Array(exportRecord.data), {
     headers: {

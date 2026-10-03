@@ -75,7 +75,7 @@ export default new Hono()
   .use(authSessionRateLimit)
   .use(sessionMiddleware)
   .get("/me", async (c) => {
-    return c.json(await AuthenticationService.me(c.var.requestSession), 200);
+    return c.json(await AuthenticationService.getCurrentUser(c.var.requestSession), 200);
   })
   .route("/", account)
   .route("/", linkedAccounts)

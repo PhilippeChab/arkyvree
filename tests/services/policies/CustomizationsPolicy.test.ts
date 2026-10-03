@@ -34,7 +34,7 @@ const propertyOn = (entityId: string, entityType: string): Property => ({
 });
 
 describe("CustomizationsPolicy", () => {
-  test("sourceExists names the customized entity of each type", async () => {
+  test("canCustomize names the customized entity of each type", async () => {
     const { ruleset } = await createTestUserAndRuleset();
     const rulesetId = ruleset.id;
     const [feat] = await Feats.create(db, { rulesetId, name: "Test Feat" });
@@ -53,13 +53,13 @@ describe("CustomizationsPolicy", () => {
     });
 
     const names = await Promise.all([
-      CustomizationsPolicy.sourceExists(feat.id, "feats"),
-      CustomizationsPolicy.sourceExists(item.id, "items"),
-      CustomizationsPolicy.sourceExists(power.id, "powers"),
-      CustomizationsPolicy.sourceExists(race.id, "races"),
-      CustomizationsPolicy.sourceExists(klass.id, "klasses"),
-      CustomizationsPolicy.sourceExists(klassLevel.id, "klass_levels"),
-      CustomizationsPolicy.sourceExists(modifier.id, "modifiers"),
+      CustomizationsPolicy.canCustomize(feat.id, "feats"),
+      CustomizationsPolicy.canCustomize(item.id, "items"),
+      CustomizationsPolicy.canCustomize(power.id, "powers"),
+      CustomizationsPolicy.canCustomize(race.id, "races"),
+      CustomizationsPolicy.canCustomize(klass.id, "klasses"),
+      CustomizationsPolicy.canCustomize(klassLevel.id, "klass_levels"),
+      CustomizationsPolicy.canCustomize(modifier.id, "modifiers"),
     ]);
     expect(names).toEqual([
       "Test Feat",
@@ -72,25 +72,25 @@ describe("CustomizationsPolicy", () => {
     ]);
   });
 
-  test("sourceExists refuses a missing entity or an unsupported type", async () => {
+  test("canCustomize refuses a missing entity or an unsupported type", async () => {
     for (const type of ["feats", "items", "powers", "races", "klasses", "klass_levels", "modifiers", "characters"]) {
-      await expect(CustomizationsPolicy.sourceExists(NIL_UUID, type)).rejects.toThrow(NotFoundError);
+      await expect(CustomizationsPolicy.canCustomize(NIL_UUID, type)).rejects.toThrow(NotFoundError);
     }
-    await expect(CustomizationsPolicy.sourceExists(NIL_UUID, "invalid_type")).rejects.toThrow(
+    await expect(CustomizationsPolicy.canCustomize(NIL_UUID, "invalid_type")).rejects.toThrow(
       "invalid_type not supported",
     );
   });
 
-  test("sourceExists never looks outside the ruleset it's scoped to", async () => {
+  test("canCustomize never looks outside the ruleset it's scoped to", async () => {
     const { ruleset: mine } = await createTestUserAndRuleset();
     const { ruleset: theirs } = await createTestUserAndRuleset();
     const [feat] = await Feats.create(db, { rulesetId: theirs.id, name: "Their Feat" });
 
     await withRulesetScope(db, mine.id, async ({ rulesetData }) => {
-      await expect(CustomizationsPolicy.sourceExists(feat.id, "feats", rulesetData)).rejects.toThrow(NotFoundError);
+      await expect(CustomizationsPolicy.canCustomize(feat.id, "feats", rulesetData)).rejects.toThrow(NotFoundError);
     });
     await withRulesetScope(db, theirs.id, async ({ rulesetData }) => {
-      expect(await CustomizationsPolicy.sourceExists(feat.id, "feats", rulesetData)).toBe("Their Feat");
+      expect(await CustomizationsPolicy.canCustomize(feat.id, "feats", rulesetData)).toBe("Their Feat");
     });
   });
 

@@ -79,7 +79,7 @@ class CampaignInvitesService {
       throw new NotFoundError("Campaign not found");
     }
 
-    await CampaignsPolicy.member(db, session, campaignId);
+    await CampaignsPolicy.canRead(db, session, campaignId);
 
     return await Invites.findManyForCampaign(db, { campaignId, ...where }, pagination);
   }

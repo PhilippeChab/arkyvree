@@ -40,7 +40,7 @@ export function Variants<B extends Constructor>(Base: B) {
       });
     }
 
-    async bulkCreateVariants(
+    async createVariants(
       session: Session,
       rulesetId: string,
       sourceItemId: string,

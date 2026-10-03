@@ -101,7 +101,7 @@ Constructed with `(session, campaign)`. No constructor flags; `canUpdate`/`canDe
 | `canDelete` | **Game Master only** (archive) |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
 | `canModify` | anyone the other checks allow, on a campaign that isn't archived (archived campaigns are read-only; a Game Master can still revoke an invite) |
-| `CampaignsPolicy.member(db, session, campaignId)` (static) | any member, Player or Game Master, of the campaign archived or not: returns their player row. Reading a campaign, its players, invites and characters starts with it |
+| `CampaignsPolicy.canRead(db, session, campaignId)` (static) | any member, Player or Game Master, of the campaign archived or not: returns their player row. Reading a campaign, its players, invites and characters starts with it |
 
 **Campaign character visibility** is *not* a CAS-protected surface — only the linking player can change visibility on their own character (`updateCharacterVisibility` throws `ForbiddenError "You do not own this character in this campaign"` for everyone else, including the GM: an identity match on the link's player). This is single-user contention by design.
 
@@ -143,7 +143,7 @@ Modifiers, properties, and requirements live on a parent entity (a feat, item, k
 - Customizations on a **ruleset entity** are gated by `RulesetsPolicy.canUpdateEntity` (owner / Admin / Editor).
 - Customizations on a **character** (e.g. character modifiers) go through `CharactersService` and are gated by `getEditableCharacter` (owner / contributor).
 
-`CustomizationsPolicy.sourceExists` resolves a display name for the parent — used both for activity logging and to fail closed if the parent has been deleted between policy construction and write.
+`CustomizationsPolicy.canCustomize` fails closed if the parent has been deleted between policy construction and write, and returns the parent's display name for activity logging.
 
 ## Identity vs. policy
 
