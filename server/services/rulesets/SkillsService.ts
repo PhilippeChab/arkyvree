@@ -3,16 +3,17 @@ import { getTableName } from "drizzle-orm";
 import { skillsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Skills } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
-  cowEntity,
   entityHasCharacterPicks,
-  lockEntityForMutation,
+  entityToDelete,
+  entityToEdit,
+  findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -58,10 +59,7 @@ const SkillsMethods = {
   async getRulesetSkill(rulesetId: string, skillId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const skill = rulesetData.skillsById.get(skillId);
-      if (!skill || (skill.rulesetId !== rulesetId && !sourceChain.includes(skill.rulesetId))) {
-        throw new NotFoundError("Skill not found in this ruleset");
-      }
+      const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
       const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
       const properties = rulesetData.propertiesByEntity.get(skill.id) ?? [];
@@ -146,30 +144,14 @@ const SkillsMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const skill = rulesetData.skillsById.get(skillId);
-        const isOwned = skill && skill.rulesetId === rulesetId;
-        const isInherited = skill && sourceChain.includes(skill.rulesetId);
-        if (!skill || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Skill not found in this ruleset");
-        }
+        const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
         if (stripSeparators(body.name) === "budget") {
           throw new BadRequestError('"Budget" is a reserved skill name');
         }
 
-        let targetId = skill.id;
-        const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "skills",
-            skill.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        }
+        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "skills", skill);
+        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const { impactedByWeight, usableWithoutTraining, updatedAt: _u, ...skillData } = body;
@@ -212,27 +194,9 @@ const SkillsMethods = {
         const inUse = await entityHasCharacterPicks(tx, "skills", skillId, rulesetId);
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const skill = rulesetData.skillsById.get(skillId);
-        const isOwned = skill && skill.rulesetId === rulesetId;
-        const isInherited = skill && sourceChain.includes(skill.rulesetId);
-        if (!skill || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Skill not found in this ruleset");
-        }
+        const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
-        let targetId = skill.id;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "skills",
-            skill.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        } else {
-          await lockEntityForMutation(tx, "skills", targetId);
-        }
+        const targetId = await entityToDelete(tx, ruleset, sourceChain, "skills", skill);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);

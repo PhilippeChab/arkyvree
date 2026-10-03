@@ -3,13 +3,15 @@ import { getTableName } from "drizzle-orm";
 import { mechanicsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Mechanics } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
-  cowEntity,
+  entityToDelete,
+  entityToEdit,
+  findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -40,10 +42,7 @@ const MechanicsMethods = {
   async getRulesetMechanic(rulesetId: string, mechanicId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const mechanic = rulesetData.mechanicsById.get(mechanicId);
-      if (!mechanic || (mechanic.rulesetId !== rulesetId && !sourceChain.includes(mechanic.rulesetId))) {
-        throw new NotFoundError("Mechanic not found in this ruleset");
-      }
+      const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
       return mechanic;
     });
   },
@@ -106,26 +105,10 @@ const MechanicsMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const mechanic = rulesetData.mechanicsById.get(mechanicId);
-        const isOwned = mechanic && mechanic.rulesetId === rulesetId;
-        const isInherited = mechanic && sourceChain.includes(mechanic.rulesetId);
-        if (!mechanic || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Mechanic not found in this ruleset");
-        }
+        const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
 
-        let targetId = mechanic.id;
-        const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "mechanics",
-            mechanic.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        }
+        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "mechanics", mechanic);
+        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...mechanicData } = body;
         const rows = await Mechanics.update(tx, mechanicData, { id: targetId, expectedUpdatedAt });
@@ -160,25 +143,9 @@ const MechanicsMethods = {
         // Mechanics have no character-level pick table, so no in-use check.
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity();
 
-        const mechanic = rulesetData.mechanicsById.get(mechanicId);
-        const isOwned = mechanic && mechanic.rulesetId === rulesetId;
-        const isInherited = mechanic && sourceChain.includes(mechanic.rulesetId);
-        if (!mechanic || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Mechanic not found in this ruleset");
-        }
+        const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
 
-        let targetId = mechanic.id;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "mechanics",
-            mechanic.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        }
+        const targetId = await entityToDelete(tx, ruleset, sourceChain, "mechanics", mechanic);
 
         const rows = await Mechanics.delete(tx, { id: targetId });
         const deletedMechanic = rows[0];

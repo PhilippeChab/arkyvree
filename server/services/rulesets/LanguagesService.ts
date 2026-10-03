@@ -3,15 +3,16 @@ import { getTableName } from "drizzle-orm";
 import { languagesInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Languages } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
-  cowEntity,
   entityHasCharacterPicks,
-  lockEntityForMutation,
+  entityToDelete,
+  entityToEdit,
+  findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -42,10 +43,7 @@ const LanguagesMethods = {
   async getRulesetLanguage(rulesetId: string, languageId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const language = rulesetData.languagesById.get(languageId);
-      if (!language || (language.rulesetId !== rulesetId && !sourceChain.includes(language.rulesetId))) {
-        throw new NotFoundError("Language not found in this ruleset");
-      }
+      const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
       return language;
     });
   },
@@ -113,26 +111,10 @@ const LanguagesMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const language = rulesetData.languagesById.get(languageId);
-        const isOwned = language && language.rulesetId === rulesetId;
-        const isInherited = language && sourceChain.includes(language.rulesetId);
-        if (!language || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Language not found in this ruleset");
-        }
+        const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
 
-        let targetId = language.id;
-        const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "languages",
-            language.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        }
+        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "languages", language);
+        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...languageData } = body;
         const rows = await Languages.update(tx, languageData, { id: targetId, expectedUpdatedAt });
@@ -167,27 +149,9 @@ const LanguagesMethods = {
         const inUse = await entityHasCharacterPicks(tx, "languages", languageId, rulesetId);
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const language = rulesetData.languagesById.get(languageId);
-        const isOwned = language && language.rulesetId === rulesetId;
-        const isInherited = language && sourceChain.includes(language.rulesetId);
-        if (!language || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Language not found in this ruleset");
-        }
+        const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
 
-        let targetId = language.id;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "languages",
-            language.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        } else {
-          await lockEntityForMutation(tx, "languages", targetId);
-        }
+        const targetId = await entityToDelete(tx, ruleset, sourceChain, "languages", language);
 
         // The database deletes its customizations with it.
         const rows = await Languages.delete(tx, { id: targetId });

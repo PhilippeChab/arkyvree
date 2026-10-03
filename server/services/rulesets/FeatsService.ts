@@ -3,15 +3,16 @@ import { getTableName } from "drizzle-orm";
 import { featsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
-  cowEntity,
   entityHasCharacterPicks,
-  lockEntityForMutation,
+  entityToDelete,
+  entityToEdit,
+  findScopedEntity,
   repointTombstoneSnapshot,
   wasGeneratedFeat,
   withRulesetScope,
@@ -82,10 +83,7 @@ const FeatsMethods = {
   async getRulesetFeat(rulesetId: string, featId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const feat = rulesetData.featsById.get(featId);
-      if (!feat || (feat.rulesetId !== rulesetId && !sourceChain.includes(feat.rulesetId))) {
-        throw new NotFoundError("Feat not found in this ruleset");
-      }
+      const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
       return {
         ...feat,
         modifiers: rulesetData.modifiersBySource.get(feat.id) ?? [],
@@ -178,24 +176,15 @@ const FeatsMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const feat = rulesetData.featsById.get(featId);
-        const isOwned = feat && feat.rulesetId === rulesetId;
-        const isInherited = feat && sourceChain.includes(feat.rulesetId);
-        if (!feat || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Feat not found in this ruleset");
-        }
+        const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
 
         // A generated feat's name names its option (`Weapon Focus: Longsword`), which checks and generators find it by
         if (body.name !== feat.name && feat.generated) {
           throw new BadRequestError("Generated feats cannot be renamed");
         }
 
-        let targetId = feat.id;
-        const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
-        if (isInherited) {
-          const cowResult = await cowEntity(tx, "feats", feat.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id;
-        }
+        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "feats", feat);
+        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const rows = await Feats.update(
           tx,
@@ -255,20 +244,9 @@ const FeatsMethods = {
         const inUse = await entityHasCharacterPicks(tx, "feats", featId, rulesetId);
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const feat = rulesetData.featsById.get(featId);
-        const isOwned = feat && feat.rulesetId === rulesetId;
-        const isInherited = feat && sourceChain.includes(feat.rulesetId);
-        if (!feat || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Feat not found in this ruleset");
-        }
+        const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
 
-        let targetId = feat.id;
-        if (isInherited) {
-          const cowResult = await cowEntity(tx, "feats", feat.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id;
-        } else {
-          await lockEntityForMutation(tx, "feats", targetId);
-        }
+        const targetId = await entityToDelete(tx, ruleset, sourceChain, "feats", feat);
 
         // FK CASCADE on feats_aptitudes.feat_id and klass_level_feats.feat_id
         // wipes those join rows when the feat row is deleted.

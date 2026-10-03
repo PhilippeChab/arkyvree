@@ -1,8 +1,7 @@
 import { db } from "@/server/database/index.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
 import { Abilities } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { findScopedEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 
 const AbilitiesMethods = {
   async getRulesetAbilities(
@@ -30,10 +29,7 @@ const AbilitiesMethods = {
   async getRulesetAbility(rulesetId: string, abilityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const ability = rulesetData.abilitiesById.get(abilityId);
-      if (!ability || (ability.rulesetId !== rulesetId && !sourceChain.includes(ability.rulesetId))) {
-        throw new NotFoundError("Ability not found in this ruleset");
-      }
+      const ability = findScopedEntity(rulesetData.abilitiesById, abilityId, rulesetId, sourceChain, "Ability");
       return ability;
     });
   },

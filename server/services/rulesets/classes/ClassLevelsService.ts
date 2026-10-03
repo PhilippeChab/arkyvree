@@ -15,9 +15,10 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
-  cowEntity,
   cowEntityForCustomization,
   entityHasCharacterPicks,
+  entityToEdit,
+  findScopedEntity,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
 import { findRulesetPowers, getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
@@ -25,21 +26,10 @@ import type { BaseRules } from "@/shared/enums.ts";
 import type { KlassLevel, KlassLevelFeat, Modifier, Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
-function verifyKlassLineage(
-  klass: { rulesetId: string } | undefined,
-  rulesetId: string,
-  ancestorRulesetIds: string[],
-): asserts klass is { rulesetId: string } {
-  if (!klass || (klass.rulesetId !== rulesetId && !ancestorRulesetIds.includes(klass.rulesetId))) {
-    throw new NotFoundError("Class not found in this ruleset");
-  }
-}
-
 async function listClassLevels(rulesetId: string, classId: string) {
   return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
     const { sourceChain } = rulesetData.cow;
-    const klass = rulesetData.klassesById.get(classId);
-    verifyKlassLineage(klass, rulesetId, sourceChain);
+    const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
     const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
     const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
@@ -120,8 +110,7 @@ const ClassLevelsMethods = {
   async getClassLevel(rulesetId: string, classId: string, levelId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const klass = rulesetData.klassesById.get(classId);
-      verifyKlassLineage(klass, rulesetId, sourceChain);
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
       const level = rulesetData.klassLevelsById.get(levelId);
       if (!level || level.klassId !== klass.id) throw new NotFoundError("Class level not found");
@@ -137,8 +126,7 @@ const ClassLevelsMethods = {
       const level = rulesetData.klassLevelsById.get(classLevelId);
       if (!level) throw new NotFoundError("Class level not found");
 
-      const klass = rulesetData.klassesById.get(level.klassId);
-      verifyKlassLineage(klass, rulesetId, sourceChain);
+      const klass = findScopedEntity(rulesetData.klassesById, level.klassId, rulesetId, sourceChain, "Class");
 
       // `name` is attached so clients of getClassLevelById can show the class
       // name without a second fetch.
@@ -149,8 +137,7 @@ const ClassLevelsMethods = {
   async getClassLevelSpells(rulesetId: string, classId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const klass = rulesetData.klassesById.get(classId);
-      verifyKlassLineage(klass, rulesetId, sourceChain);
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
       const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
       const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
@@ -167,8 +154,7 @@ const ClassLevelsMethods = {
   async getClassLevelSpellsKnown(rulesetId: string, classId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const klass = rulesetData.klassesById.get(classId);
-      verifyKlassLineage(klass, rulesetId, sourceChain);
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
       const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
       const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
@@ -190,8 +176,7 @@ const ClassLevelsMethods = {
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const klass = rulesetData.klassesById.get(classId);
-      verifyKlassLineage(klass, rulesetId, sourceChain);
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
       const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
       const modifiers: Modifier[] = [];
@@ -230,8 +215,7 @@ const ClassLevelsMethods = {
   async getClassLevelFeatPools(rulesetId: string, classId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const klass = rulesetData.klassesById.get(classId);
-      verifyKlassLineage(klass, rulesetId, sourceChain);
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
       const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
       const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
@@ -283,25 +267,11 @@ const ClassLevelsMethods = {
         const { sourceChain } = rulesetData.cow;
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
-        const klass = rulesetData.klassesById.get(classId);
-        verifyKlassLineage(klass, rulesetId, sourceChain);
+        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
         klassRulesetId = klass.rulesetId;
 
-        // COW the klass if it's inherited — without this, the new level row
-        // would be inserted with klassId pointing at the parent ruleset's klass,
-        // corrupting the parent.
-        let targetKlassId = klass.id;
-        if (klass.rulesetId !== rulesetId) {
-          const cowResult = await cowEntity(
-            tx,
-            "klasses",
-            klass.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetKlassId = cowResult.id;
-        }
+        // Copy an inherited class: the new level row would otherwise belong to the parent ruleset's class.
+        const { id: targetKlassId } = await entityToEdit(tx, ruleset, sourceChain, "klasses", klass);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const { feats, saves, bab, skills, ...levelData } = body;
@@ -382,8 +352,7 @@ const ClassLevelsMethods = {
         const { sourceChain } = rulesetData.cow;
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
-        const klass = rulesetData.klassesById.get(classId);
-        verifyKlassLineage(klass, rulesetId, sourceChain);
+        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
         klassRulesetId = klass.rulesetId;
 
         const level = rulesetData.klassLevelsById.get(levelId);
@@ -472,8 +441,7 @@ const ClassLevelsMethods = {
 
         const inUse = await entityHasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
-        const klass = rulesetData.klassesById.get(classId);
-        verifyKlassLineage(klass, rulesetId, sourceChain);
+        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
         klassRulesetId = klass.rulesetId;
 
         const level = rulesetData.klassLevelsById.get(levelId);

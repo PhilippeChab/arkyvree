@@ -3,15 +3,16 @@ import { getTableName } from "drizzle-orm";
 import { aptitudesInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Aptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
-  cowEntity,
   entityHasCharacterPicks,
-  lockEntityForMutation,
+  entityToDelete,
+  entityToEdit,
+  findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -48,10 +49,7 @@ const AptitudesMethods = {
   async getRulesetAptitude(rulesetId: string, aptitudeId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const aptitude = rulesetData.aptitudesById.get(aptitudeId);
-      if (!aptitude || (aptitude.rulesetId !== rulesetId && !sourceChain.includes(aptitude.rulesetId))) {
-        throw new NotFoundError("Aptitude not found in this ruleset");
-      }
+      const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
       return aptitude;
     });
   },
@@ -117,26 +115,10 @@ const AptitudesMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const aptitude = rulesetData.aptitudesById.get(aptitudeId);
-        const isOwned = aptitude && aptitude.rulesetId === rulesetId;
-        const isInherited = aptitude && sourceChain.includes(aptitude.rulesetId);
-        if (!aptitude || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Aptitude not found in this ruleset");
-        }
+        const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
 
-        let targetId = aptitude.id;
-        const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "aptitudes",
-            aptitude.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        }
+        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "aptitudes", aptitude);
+        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...aptitudeData } = body;
         const rows = await Aptitudes.update(tx, aptitudeData, { id: targetId, expectedUpdatedAt });
@@ -171,27 +153,9 @@ const AptitudesMethods = {
         const inUse = await entityHasCharacterPicks(tx, "aptitudes", aptitudeId, rulesetId);
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const aptitude = rulesetData.aptitudesById.get(aptitudeId);
-        const isOwned = aptitude && aptitude.rulesetId === rulesetId;
-        const isInherited = aptitude && sourceChain.includes(aptitude.rulesetId);
-        if (!aptitude || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Aptitude not found in this ruleset");
-        }
+        const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
 
-        let targetId = aptitude.id;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "aptitudes",
-            aptitude.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        } else {
-          await lockEntityForMutation(tx, "aptitudes", targetId);
-        }
+        const targetId = await entityToDelete(tx, ruleset, sourceChain, "aptitudes", aptitude);
 
         // FK CASCADE on feats_aptitudes / powers_aptitudes / klass_level_feats /
         // klass_level_powers wipes the join rows pointing at this aptitude.

@@ -7,7 +7,12 @@ import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
-import { cowEntity, entityHasCharacterPicks, withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import {
+  entityHasCharacterPicks,
+  entityToEdit,
+  findScopedEntity,
+  withRulesetScope,
+} from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -15,10 +20,7 @@ const ClassSkillsMethods = {
   async getClassSkills(rulesetId: string, classId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const klass = rulesetData.klassesById.get(classId);
-      if (!klass || (klass.rulesetId !== rulesetId && !sourceChain.includes(klass.rulesetId))) {
-        throw new NotFoundError("Class not found in this ruleset");
-      }
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
       return rulesetData.klassSkillsWithSkillsByKlass.get(klass.id) ?? [];
     });
   },
@@ -28,40 +30,21 @@ const ClassSkillsMethods = {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
-        const rulesetIds = new Set([rulesetId, ...sourceChain]);
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const klass = rulesetData.klassesById.get(classId);
-        if (!klass || !rulesetIds.has(klass.rulesetId)) {
-          throw new NotFoundError("Class not found in this ruleset");
-        }
+        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
         klassRulesetId = klass.rulesetId;
 
-        const skill = rulesetData.skillsById.get(skillId);
-        if (!skill || !rulesetIds.has(skill.rulesetId)) {
-          throw new NotFoundError("Skill not found in this ruleset");
-        }
+        const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
         const existing = rulesetData.klassSkillsByKlassId.get(klass.id)?.some((ks) => ks.skillId === skill.id);
         if (existing) {
           throw new ConflictError("Skill is already assigned to this class");
         }
 
-        // COW the klass if inherited — without this, the new klass_skills row
-        // would point at the parent ruleset's klass.
-        let targetKlassId = klass.id;
-        if (klass.rulesetId !== rulesetId) {
-          const cowResult = await cowEntity(
-            tx,
-            "klasses",
-            klass.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetKlassId = cowResult.id;
-        }
+        // Copy an inherited class: the new klass_skills row would otherwise point at the parent ruleset's class.
+        const { id: targetKlassId } = await entityToEdit(tx, ruleset, sourceChain, "klasses", klass);
 
         const rows = await KlassSkills.create(tx, {
           klassId: targetKlassId,
@@ -94,10 +77,7 @@ const ClassSkillsMethods = {
         const inUse = await entityHasCharacterPicks(tx, "klasses", classId, rulesetId);
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const klass = rulesetData.klassesById.get(classId);
-        if (!klass || (klass.rulesetId !== rulesetId && !sourceChain.includes(klass.rulesetId))) {
-          throw new NotFoundError("Class not found in this ruleset");
-        }
+        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
         klassRulesetId = klass.rulesetId;
 
         const klassSkill = rulesetData.klassSkillsByKlassId.get(klass.id)?.find((ks) => ks.skillId === skillId);
@@ -107,20 +87,8 @@ const ClassSkillsMethods = {
 
         const skill = rulesetData.skillsById.get(skillId);
 
-        // COW the klass if inherited — otherwise hard-delete would wipe the
-        // klass_skills row from the parent ruleset.
-        let targetKlassId = klass.id;
-        if (klass.rulesetId !== rulesetId) {
-          const cowResult = await cowEntity(
-            tx,
-            "klasses",
-            klass.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetKlassId = cowResult.id;
-        }
+        // Copy an inherited class: the delete would otherwise remove the parent ruleset's klass_skills row.
+        const { id: targetKlassId } = await entityToEdit(tx, ruleset, sourceChain, "klasses", klass);
 
         const rows = await KlassSkills.delete(tx, { klassId: targetKlassId, skillId: klassSkill.skillId });
         const removedKlassSkill = rows[0];

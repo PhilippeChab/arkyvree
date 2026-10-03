@@ -33,7 +33,7 @@ import {
   loadBondedByKind,
 } from "@/server/services/characters/helpers.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
-import { withRulesetScope, withRulesetScopes } from "@/server/services/rulesets/cow.ts";
+import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/services/rulesets/cow.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Alignment, Gender } from "@/shared/enums.ts";
@@ -176,13 +176,13 @@ const CharactersMethods = {
       return await withRulesetScope(tx, characterData.rulesetId, async ({ ruleset, rulesetData }) => {
         await (await getRulesetPolicy(tx, session, ruleset)).canCreateCharacter(tx);
 
-        // Validate race belongs to this ruleset or any ancestor in its source chain.
-        const race = rulesetData.racesById.get(characterData.raceId);
-        if (!race) throw new NotFoundError("Race not found in this ruleset");
-        const validRulesetIds = new Set([characterData.rulesetId, ...rulesetData.cow.sourceChain]);
-        if (!validRulesetIds.has(race.rulesetId)) {
-          throw new NotFoundError("Race not found in this ruleset");
-        }
+        const race = findScopedEntity(
+          rulesetData.racesById,
+          characterData.raceId,
+          characterData.rulesetId,
+          rulesetData.cow.sourceChain,
+          "Race",
+        );
         if (race.kind !== "pc") {
           throw new BadRequestError("Race is not valid for a player character");
         }

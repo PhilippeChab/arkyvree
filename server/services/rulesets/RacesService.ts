@@ -3,15 +3,16 @@ import { getTableName } from "drizzle-orm";
 import { racesInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Races } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
-  cowEntity,
   entityHasCharacterPicks,
-  lockEntityForMutation,
+  entityToDelete,
+  entityToEdit,
+  findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -40,10 +41,7 @@ const RacesMethods = {
   async getRulesetRace(rulesetId: string, raceId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const race = rulesetData.racesById.get(raceId);
-      if (!race || (race.rulesetId !== rulesetId && !sourceChain.includes(race.rulesetId))) {
-        throw new NotFoundError("Race not found in this ruleset");
-      }
+      const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
       return {
         ...race,
         modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
@@ -120,19 +118,10 @@ const RacesMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const race = rulesetData.racesById.get(raceId);
-        const isOwned = race && race.rulesetId === rulesetId;
-        const isInherited = race && sourceChain.includes(race.rulesetId);
-        if (!race || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Race not found in this ruleset");
-        }
+        const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
 
-        let targetId = race.id;
-        const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
-        if (isInherited) {
-          const cowResult = await cowEntity(tx, "races", race.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id;
-        }
+        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "races", race);
+        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...raceData } = body;
         const rows = await Races.update(tx, raceData, { id: targetId, expectedUpdatedAt });
@@ -167,20 +156,9 @@ const RacesMethods = {
         const inUse = await entityHasCharacterPicks(tx, "races", raceId, rulesetId);
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const race = rulesetData.racesById.get(raceId);
-        const isOwned = race && race.rulesetId === rulesetId;
-        const isInherited = race && sourceChain.includes(race.rulesetId);
-        if (!race || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Race not found in this ruleset");
-        }
+        const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
 
-        let targetId = race.id;
-        if (isInherited) {
-          const cowResult = await cowEntity(tx, "races", race.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id;
-        } else {
-          await lockEntityForMutation(tx, "races", targetId);
-        }
+        const targetId = await entityToDelete(tx, ruleset, sourceChain, "races", race);
 
         // The database deletes its customizations with it.
         const rows = await Races.delete(tx, { id: targetId });

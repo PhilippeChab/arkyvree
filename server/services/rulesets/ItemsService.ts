@@ -3,7 +3,7 @@ import { getTableName, inArray } from "drizzle-orm";
 import { itemsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Items } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
@@ -13,10 +13,11 @@ import {
   assertEntityNameAvailable,
   copyEntityCustomizations,
   copyEntityCustomizationsToMany,
-  cowEntity,
   entityHasCharacterPicks,
+  entityToDelete,
+  entityToEdit,
   fetchEntityCustomizations,
-  lockEntityForMutation,
+  findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -88,10 +89,7 @@ const ItemsMethods = {
   async getRulesetItem(rulesetId: string, itemId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const item = rulesetData.itemsById.get(itemId);
-      if (!item || (item.rulesetId !== rulesetId && !sourceChain.includes(item.rulesetId))) {
-        throw new NotFoundError("Item not found in this ruleset");
-      }
+      const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
 
       // Template inheritance: if item has a sourceItemId, inherit properties and
       // requirements from the template. Own properties override template ones of
@@ -175,10 +173,7 @@ const ItemsMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const sourceItem = rulesetData.itemsById.get(sourceItemId);
-        if (!sourceItem || (sourceItem.rulesetId !== rulesetId && !sourceChain.includes(sourceItem.rulesetId))) {
-          throw new NotFoundError("Source item not found in this ruleset");
-        }
+        const sourceItem = findScopedEntity(rulesetData.itemsById, sourceItemId, rulesetId, sourceChain, "Source item");
 
         const { tombstoneAncestorId } = await assertEntityNameAvailable(
           tx,
@@ -253,10 +248,7 @@ const ItemsMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const source = rulesetData.itemsById.get(sourceItemId);
-        if (!source || (source.rulesetId !== rulesetId && !sourceChain.includes(source.rulesetId))) {
-          throw new NotFoundError("Source item not found in this ruleset");
-        }
+        const source = findScopedEntity(rulesetData.itemsById, sourceItemId, rulesetId, sourceChain, "Source item");
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const slot = hooks.items.resolveSlot(source.type, source.slot);
@@ -360,21 +352,12 @@ const ItemsMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const item = rulesetData.itemsById.get(itemId);
-        const isOwned = item && item.rulesetId === rulesetId;
-        const isInherited = item && sourceChain.includes(item.rulesetId);
-        if (!item || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Item not found in this ruleset");
-        }
+        const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
 
         validateTemplateSource(item.isTemplate, body.sourceItemId);
 
-        let targetId = item.id;
-        const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
-        if (isInherited) {
-          const cowResult = await cowEntity(tx, "items", item.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id;
-        }
+        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "items", item);
+        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const slot = hooks.items.resolveSlot(body.type, body.slot);
@@ -422,12 +405,7 @@ const ItemsMethods = {
         const inUse = await entityHasCharacterPicks(tx, "items", itemId, rulesetId);
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const item = rulesetData.itemsById.get(itemId);
-        const isOwned = item && item.rulesetId === rulesetId;
-        const isInherited = item && sourceChain.includes(item.rulesetId);
-        if (!item || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Item not found in this ruleset");
-        }
+        const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
 
         // If template, check for copies using the resolved ID
         if (item.isTemplate) {
@@ -437,13 +415,7 @@ const ItemsMethods = {
           }
         }
 
-        let targetId = item.id;
-        if (isInherited) {
-          const cowResult = await cowEntity(tx, "items", item.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id;
-        } else {
-          await lockEntityForMutation(tx, "items", targetId);
-        }
+        const targetId = await entityToDelete(tx, ruleset, sourceChain, "items", item);
 
         // The database deletes its customizations with it.
         const rows = await Items.delete(tx, { id: targetId });
