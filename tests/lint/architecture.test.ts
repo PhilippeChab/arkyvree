@@ -10,9 +10,9 @@ const lint = (files: Record<string, string>, from = ".") =>
   lintRepo(files, ["layers", "queries-in-repositories", "folder-index"], from);
 
 describe("architecture rules", () => {
-  test("a layer imports only what's below it: types the exceptions name, cow from the cache and the engine", () => {
+  test("a layer imports only what's below it: types the exceptions name, cow from the cache and the engine", async () => {
     expect(
-      lint({
+      await lint({
         "server/repositories/A.ts": 'import { x } from "@/server/services/s.ts";\nexport const a = x;\n',
         "server/database/d.ts": 'import type { R } from "@/server/repositories/r.ts";\nexport type D = R;\n',
         "server/services/s.ts": 'import r from "@/server/routers/r.ts";\nexport const x = r;\n',
@@ -29,9 +29,9 @@ describe("architecture rules", () => {
     ]);
   });
 
-  test("a query is built in a repository, or in the infrastructure that talks to Postgres", () => {
+  test("a query is built in a repository, or in the infrastructure that talks to Postgres", async () => {
     expect(
-      lint({
+      await lint({
         "server/services/s.ts": "export const s = (db) => db.select().from(t);\n",
         "server/services/r.ts": "export const r = (tx) => tx.query.users.findMany();\n",
         "server/services/u.ts": 'import { unionAll } from "drizzle-orm/pg-core";\nexport const u = unionAll;\n',
@@ -45,9 +45,9 @@ describe("architecture rules", () => {
     ]);
   });
 
-  test("code outside a folder with an index enters it through the index; inside it, and tests, import directly", () => {
+  test("code outside a folder with an index enters it through the index; inside it, and tests, import directly", async () => {
     expect(
-      lint({
+      await lint({
         "server/services/feats/index.ts": 'export { default as FeatsService } from "./FeatsService.ts";\n',
         "server/services/feats/FeatsService.ts": 'import { helper } from "./helper.ts";\nexport default helper;\n',
         "server/services/feats/helper.ts": "export const helper = 1;\n",
@@ -60,9 +60,9 @@ describe("architecture rules", () => {
       }),
     ).toEqual(["folder-index server/routers/bad.ts"]);
   });
-  test("the middlewares sit above the repositories, and the server reads content packages, not the seeders", () => {
+  test("the middlewares sit above the repositories, and the server reads content packages, not the seeders", async () => {
     expect(
-      lint({
+      await lint({
         "server/repositories/R.ts": 'import { m } from "@/server/middlewares/m.ts";\nexport const r = m;\n',
         "server/middlewares/m.ts": 'import { R } from "@/server/repositories/R.ts";\nexport const m = R;\n',
         "server/rulesets/seed.ts":
@@ -72,18 +72,18 @@ describe("architecture rules", () => {
     ).toEqual(["layers server/repositories/R.ts", "layers server/services/s.ts"]);
   });
 
-  test("a transaction's handle is named `tx`, which the query rule knows", () => {
+  test("a transaction's handle is named `tx`, which the query rule knows", async () => {
     expect(
-      lint({
+      await lint({
         "server/services/s.ts":
           "export const a = withTransaction(async (conn) => conn);\nexport const b = withTransaction(async (tx) => tx);\n",
       }),
     ).toEqual(["queries-in-repositories server/services/s.ts"]);
   });
 
-  test("a directory import of a folder is its index", () => {
+  test("a directory import of a folder is its index", async () => {
     expect(
-      lint({
+      await lint({
         "server/services/rulesets/index.ts": 'export { default as RulesetsService } from "./RulesetsService.ts";\n',
         "server/services/rulesets/RulesetsService.ts": "export default 1;\n",
         "server/services/rulesets/feats/index.ts": 'export { default as FeatsService } from "./FeatsService.ts";\n',
@@ -94,9 +94,9 @@ describe("architecture rules", () => {
     ).toEqual([]);
   });
 
-  test("the rules hold when oxlint runs from a subfolder", () => {
+  test("the rules hold when oxlint runs from a subfolder", async () => {
     expect(
-      lint(
+      await lint(
         { "server/repositories/A.ts": 'import { x } from "@/server/services/s.ts";\nexport const a = x;\n' },
         "server",
       ),

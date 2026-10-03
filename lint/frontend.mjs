@@ -2,7 +2,8 @@
  * The client's conventions (AGENTS.md's Frontend Architecture), as rules:
  *
  * - `accessible-icon-buttons`: an `IconButton` has an accessible name: an `aria-label` (or `aria-labelledby`), or a
- *   `Tooltip` right around it. A tooltip around a `<span>` (a disabled button's) doesn't name the button.
+ *   `Tooltip` right around it. A tooltip around a `<span>` (a disabled button's), or one with `describeChild`, doesn't
+ *   name the button. The attributes are written out: a spread (`{...buttonProps}`) doesn't count, whatever it holds.
  * - `dialog-conventions`: a `Dialog` goes full screen on a phone (`fullScreen={isMobile}`), and a form is never in a
  *   `Modal`, which skips the guard that keeps a dirty form open (`FormDialog`, `CreateDialog` and `EditDialog` have it).
  * - `query-keys`: every query key comes from `lib/queryKeys.ts`: a key written as an array starts by spreading one
@@ -38,8 +39,9 @@ const accessibleIconButtons = {
       JSXElement(node) {
         if (elementName(node) !== "IconButton") return;
         if (hasAttribute(node, "aria-label") || hasAttribute(node, "aria-labelledby")) return;
+        // A tooltip names its child, but not with `describeChild`, which makes its title a description.
         const parent = parentElement(node);
-        if (parent && elementName(parent) === "Tooltip") return;
+        if (parent && elementName(parent) === "Tooltip" && !hasAttribute(parent, "describeChild")) return;
         context.report({
           node: node.openingElement,
           message:
@@ -63,10 +65,12 @@ const dialogConventions = {
             message: "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.",
           });
         }
+        // component="form", or component={"form"}
+        const valueOf = (a) => (a.value?.type === "JSXExpressionContainer" ? a.value.expression.value : a.value?.value);
         const isForm =
           name === "form" ||
           node.openingElement.attributes.some(
-            (a) => a.type === "JSXAttribute" && a.name.name === "component" && a.value?.value === "form",
+            (a) => a.type === "JSXAttribute" && a.name.name === "component" && valueOf(a) === "form",
           );
         if (!isForm) return;
         for (let p = parentElement(node); p; p = parentElement(p)) {
@@ -106,6 +110,7 @@ const clientApis = {
   meta: { type: "suggestion" },
   create(context) {
     if (!inClient(context)) return {};
+    const muiNamespaces = new Set();
     return {
       CallExpression(node) {
         if (node.callee.type === "MemberExpression" && node.callee.property.name === "mutateAsync") {
@@ -115,8 +120,32 @@ const clientApis = {
           });
         }
       },
+      // const { mutateAsync } = useMutation(…)
+      Property(node) {
+        if (
+          node.parent?.type === "ObjectPattern" &&
+          node.key.type === "Identifier" &&
+          node.key.name === "mutateAsync"
+        ) {
+          context.report({
+            node,
+            message: "Run a mutation with `.mutate()` and its `onSuccess` / `onError`, not `.mutateAsync()`.",
+          });
+        }
+      },
+      // <Mui.CircularProgress />
+      JSXMemberExpression(node) {
+        if (node.property.name === "CircularProgress" && muiNamespaces.has(node.object.name)) {
+          context.report({
+            node,
+            message: "A loader is a `DiceSpinner` (`components/common`), never `CircularProgress`.",
+          });
+        }
+      },
       ImportDeclaration(node) {
         if (!String(node.source.value).startsWith("@mui/material")) return;
+        for (const s of node.specifiers ?? [])
+          if (s.type === "ImportNamespaceSpecifier") muiNamespaces.add(s.local.name);
         const named = (node.specifiers ?? []).some(
           (s) => s.type === "ImportSpecifier" && s.imported.name === "CircularProgress",
         );

@@ -179,7 +179,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 **Guidelines:**
 
-- Never skip failing tests or use mocks (`arkyvree/test-conventions`: no `.skip`, `.only`, `.todo`, `.if` / `.skipIf`, no `mock` / `spyOn`)
+- Never skip failing tests or use mocks (`arkyvree/test-conventions`: no `.skip`, `.only`, `.todo`, `.fixme`, `.if` / `.skipIf`, no `mock` / `spyOn`)
 - Use seed data from test database
 - Run with `bun run test`, or `bun run test:changed` for the files changed from the parent branch
 - E2E (`bun run test:e2e`) builds the client for production and serves it with the API from one server on port 8010 (`E2E_PORT`), on a database of its own (`<name>_e2e_<port>`): a copy of the e2e template (`<name>_e2e`), which `bun run test:db:reset` copies from the seeded test database, so a run never locks the unit tests' database. It runs on half the CPU cores locally; pass `--workers N` to change it for one run. `E2E_SKIP_BUILD=1` reuses the last build; `E2E_COVERAGE=1` reports the client code the journeys run (coverage/e2e)

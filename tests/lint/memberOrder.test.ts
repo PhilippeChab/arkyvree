@@ -13,7 +13,7 @@ setDefaultTimeout(30_000);
 const [LIFECYCLE, READ, CREATE, UPDATE, DELETE, ACTION] = [0, 1, 2, 3, 4, 5];
 
 describe("member order", () => {
-  test("groups a method by its leading verb", () => {
+  test("groups a method by its leading verb", async () => {
     expect(["findOne", "getRulesetFeats", "exists", "countActive", "isOwner", "validatePath"].map(verbGroup)).toEqual([
       READ,
       READ,
@@ -50,7 +50,7 @@ describe("member order", () => {
     expect(["getter", "publishRuleset", "lockById", "me"].map(verbGroup)).toEqual([ACTION, ACTION, ACTION, ACTION]);
   });
 
-  test("orders routes by method, then by path: fixed segments before parameters, parameters before wildcards", () => {
+  test("orders routes by method, then by path: fixed segments before parameters, parameters before wildcards", async () => {
     const routes = [
       { method: "delete", path: "/:id" },
       { method: "get", path: "/:id" },
@@ -73,7 +73,7 @@ describe("member order", () => {
     ]);
   });
 
-  test("puts a class and a router in order with oxlint --fix, keeping fields, comments and middleware runs", () => {
+  test("puts a class and a router in order with oxlint --fix, keeping fields, comments and middleware runs", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
     fs.mkdirSync(path.join(dir, "server/routers"), { recursive: true });
     const config = path.join(dir, ".oxlintrc.json");
@@ -121,7 +121,7 @@ describe("member order", () => {
         "",
       ].join("\n"),
     );
-    runOxlint(["-c", config, "--fix", dir]);
+    await runOxlint(["-c", config, "--fix", dir]);
 
     expect(fs.readFileSync(service, "utf8")).toBe(
       [
@@ -171,7 +171,7 @@ describe("member order", () => {
         "",
       ].join("\n"),
     );
-    runOxlint(["-c", config, "--fix", chainEnd]);
+    await runOxlint(["-c", config, "--fix", chainEnd]);
     expect(fs.readFileSync(chainEnd, "utf8")).toBe(
       [
         "export default new Hono() // head note",
@@ -182,7 +182,7 @@ describe("member order", () => {
       ].join("\n"),
     );
 
-    const check = runOxlint(["-c", config, dir]);
+    const check = await runOxlint(["-c", config, dir]);
     expect(check.exitCode).toBe(0);
     fs.rmSync(dir, { recursive: true });
   });
