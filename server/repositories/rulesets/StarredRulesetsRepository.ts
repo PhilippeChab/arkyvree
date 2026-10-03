@@ -64,11 +64,10 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(
-        this.where([
-          eq(this.table.userId, where.userId),
-          "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-          isNull(this.table.deletedAt),
-        ]),
+        this.writeWhere(
+          [eq(this.table.userId, where.userId)],
+          ["rulesetId" in where && eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)],
+        ),
       )
       .returning();
   }

@@ -33,7 +33,7 @@ class KlassLevelSavesRepository extends BaseRepository<typeof klassLevelSavesInR
     return await db
       .delete(this.table)
       .where(
-        this.where([
+        this.writeWhere([
           "klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId),
           "saveId" in where && eq(this.table.saveId, where.saveId),
         ]),

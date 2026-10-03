@@ -5,6 +5,8 @@ import path from "node:path";
 
 import { compareRoutes, lifecycleStep, verbGroup } from "@/lint/memberOrder.mjs";
 
+import { runOxlint } from "./lintRepo.ts";
+
 // The fix tests run oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);
 
@@ -119,8 +121,7 @@ describe("member order", () => {
         "",
       ].join("\n"),
     );
-    const oxlint = path.resolve("node_modules/.bin/oxlint");
-    Bun.spawnSync([oxlint, "--threads=1", "-c", config, "--fix", dir]);
+    runOxlint(["-c", config, "--fix", dir]);
 
     expect(fs.readFileSync(service, "utf8")).toBe(
       [
@@ -170,7 +171,7 @@ describe("member order", () => {
         "",
       ].join("\n"),
     );
-    Bun.spawnSync([oxlint, "--threads=1", "-c", config, "--fix", chainEnd]);
+    runOxlint(["-c", config, "--fix", chainEnd]);
     expect(fs.readFileSync(chainEnd, "utf8")).toBe(
       [
         "export default new Hono() // head note",
@@ -181,7 +182,7 @@ describe("member order", () => {
       ].join("\n"),
     );
 
-    const check = Bun.spawnSync([oxlint, "--threads=1", "-c", config, dir]);
+    const check = runOxlint(["-c", config, dir]);
     expect(check.exitCode).toBe(0);
     fs.rmSync(dir, { recursive: true });
   });

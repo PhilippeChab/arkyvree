@@ -68,15 +68,18 @@ class ModifiersRepository extends include(
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { ids: string[] } | { sourceIds: string[]; sourceType: string }) {
+  async delete(db: Db, where: { id: string } | { ids: string[] } | { sourceIds: string[]; sourceType: string }) {
     return await db
       .delete(this.table)
       .where(
-        this.where([
-          "ids" in where && inArray(this.table.id, where.ids),
-          "sourceIds" in where && inArray(this.table.sourceId, where.sourceIds),
-          "sourceType" in where && eq(this.table.sourceType, where.sourceType),
-        ]),
+        this.writeWhere(
+          [
+            "id" in where && eq(this.table.id, where.id),
+            "ids" in where && inArray(this.table.id, where.ids),
+            "sourceIds" in where && inArray(this.table.sourceId, where.sourceIds),
+          ],
+          ["sourceType" in where && eq(this.table.sourceType, where.sourceType)],
+        ),
       )
       .returning();
   }

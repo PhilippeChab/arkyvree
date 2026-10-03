@@ -40,11 +40,10 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(
-        this.where([
-          "id" in where && eq(this.table.id, where.id),
-          "userId" in where && eq(this.table.userId, where.userId),
-          isNull(this.table.deletedAt),
-        ]),
+        this.writeWhere(
+          ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
+          [isNull(this.table.deletedAt)],
+        ),
       )
       .returning();
   }

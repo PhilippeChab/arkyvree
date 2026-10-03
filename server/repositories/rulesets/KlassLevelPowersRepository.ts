@@ -28,7 +28,7 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
     return await db
       .delete(this.table)
       .where(
-        this.where([
+        this.writeWhere([
           "klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId),
           "powerId" in where && eq(this.table.powerId, where.powerId),
           "aptitudeId" in where && eq(this.table.aptitudeId, where.aptitudeId),

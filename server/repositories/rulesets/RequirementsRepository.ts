@@ -77,12 +77,14 @@ class RequirementsRepository extends include(
     return await db
       .delete(this.table)
       .where(
-        this.where([
-          "id" in where && eq(this.table.id, where.id),
-          "ids" in where && inArray(this.table.id, where.ids),
-          "entityIds" in where && inArray(this.table.entityId, where.entityIds),
-          "entityType" in where && eq(this.table.entityType, where.entityType),
-        ]),
+        this.writeWhere(
+          [
+            "id" in where && eq(this.table.id, where.id),
+            "ids" in where && inArray(this.table.id, where.ids),
+            "entityIds" in where && inArray(this.table.entityId, where.entityIds),
+          ],
+          ["entityType" in where && eq(this.table.entityType, where.entityType)],
+        ),
       )
       .returning();
   }

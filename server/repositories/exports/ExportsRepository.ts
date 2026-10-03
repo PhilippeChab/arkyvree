@@ -27,7 +27,7 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
     return await db
       .delete(this.table)
       .where(
-        this.where([
+        this.writeWhere([
           "id" in where && eq(this.table.id, where.id),
           "expiresBefore" in where && lt(this.table.expiresAt, where.expiresBefore),
         ]),

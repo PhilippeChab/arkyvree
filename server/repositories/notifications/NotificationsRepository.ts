@@ -88,13 +88,15 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
       .update(this.table)
       .set({ readAt: new Date().toISOString() })
       .where(
-        this.where([
-          "id" in where && eq(this.table.id, where.id),
-          eq(this.table.recipientId, where.recipientId),
-          "targetId" in where && eq(this.table.targetId, where.targetId),
-          "excludeTypes" in where && !!where.excludeTypes?.length && notInArray(this.table.type, where.excludeTypes),
-          isNull(this.table.readAt),
-        ]),
+        this.writeWhere(
+          [eq(this.table.recipientId, where.recipientId)],
+          [
+            "id" in where && eq(this.table.id, where.id),
+            "targetId" in where && eq(this.table.targetId, where.targetId),
+            "excludeTypes" in where && !!where.excludeTypes?.length && notInArray(this.table.type, where.excludeTypes),
+            isNull(this.table.readAt),
+          ],
+        ),
       )
       .returning();
   }
@@ -103,7 +105,7 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     return await db
       .delete(this.table)
       .where(
-        this.where([
+        this.writeWhere([
           "id" in where && eq(this.table.id, where.id),
           "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
         ]),

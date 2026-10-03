@@ -44,6 +44,16 @@ abstract class BaseRepository<T extends Table> {
     return and(...(statements.filter(Boolean) as SQL[]));
   }
 
+  /**
+   * A write's WHERE (`delete`, `archive`, `update`, `markRead`…): `keys`, the conditions that pick its rows, one per
+   * branch of its `where` union, and `rest`, those that narrow them (`isNull(deletedAt)`, `exceptId`). A `where` that
+   * matches no branch would pick every row, so it throws instead.
+   */
+  protected writeWhere(keys: (SQL | boolean)[], rest: (SQL | boolean)[] = []) {
+    if (!keys.some(Boolean)) throw new Error(`${this.constructor.name}: a write's where matches none of its branches`);
+    return this.where([...keys, ...rest]);
+  }
+
   /** Call inside a transaction to lock a stored row before changing its children.
    * IDs are already resolved by the caller. Never memoize a locking read.
    * `skipLocked`: a row another transaction holds counts as not found instead of being waited for.

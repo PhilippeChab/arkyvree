@@ -46,7 +46,7 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
     return await db
       .delete(this.table)
       .where(
-        this.where([
+        this.writeWhere([
           "featId" in where && eq(this.table.featId, where.featId),
           where.aptitudeId !== undefined && eq(this.table.aptitudeId, where.aptitudeId),
         ]),

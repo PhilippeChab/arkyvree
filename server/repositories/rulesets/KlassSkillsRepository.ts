@@ -30,7 +30,7 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules> {
     return await db
       .delete(this.table)
       .where(
-        this.where([
+        this.writeWhere([
           "klassId" in where && eq(this.table.klassId, where.klassId),
           "skillId" in where && eq(this.table.skillId, where.skillId),
         ]),
