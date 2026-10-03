@@ -143,6 +143,29 @@ describe("member order", () => {
         "",
       ].join("\n"),
     );
+    // A same-line comment on what becomes the last route: the chain's `;` stays on the code, before it.
+    const chainEnd = path.join(dir, "server/routers/chainEnd.ts");
+    fs.writeFileSync(
+      chainEnd,
+      [
+        "export default new Hono() // head note",
+        '  .delete("/:id", (c) => c) // about deleting',
+        '  .get("/a", (c) => c);',
+        "(later);",
+        "",
+      ].join("\n"),
+    );
+    Bun.spawnSync([oxlint, "-c", config, "--fix", chainEnd]);
+    expect(fs.readFileSync(chainEnd, "utf8")).toBe(
+      [
+        "export default new Hono() // head note",
+        '  .get("/a", (c) => c)',
+        '  .delete("/:id", (c) => c); // about deleting',
+        "(later);",
+        "",
+      ].join("\n"),
+    );
+
     const check = Bun.spawnSync([oxlint, "-c", config, dir]);
     expect(check.exitCode).toBe(0);
     fs.rmSync(dir, { recursive: true });

@@ -159,16 +159,29 @@ function checkChain(context, outermost) {
         route: { method: call.callee.property.name, path: call.arguments[0].value },
         // From the line after what it's called on, its comments and `.get(…)`, to the comment ending its own line.
         start: rangeOf(call.callee.object)[1] + trailingComment(text, rangeOf(call.callee.object)[1]),
+        codeEnd: rangeOf(call)[1],
         end: rangeOf(call)[1] + trailingComment(text, rangeOf(call)[1]),
       }));
       const sorted = [...items].sort((a, b) => compareRoutes(a.route, b.route) || a.index - b.index);
+      // What follows the run on its last line (the chain's `;`, a next call) stays right after the last route's
+      // code: a comment ending the new last route's line goes after it, not over it.
+      const runEnd = items.at(-1).end;
+      const lineEnd = text.indexOf("\n", runEnd);
+      const after = text.slice(runEnd, lineEnd === -1 ? text.length : lineEnd).trimEnd();
       reportOrder(
         context,
         items,
         sorted,
         {
-          range: [items[0].start, items.at(-1).end],
-          text: (order) => order.map((i) => text.slice(i.start, i.end)).join(""),
+          range: [items[0].start, runEnd + after.length],
+          text: (order) =>
+            order
+              .map((i, k) =>
+                k === order.length - 1
+                  ? text.slice(i.start, i.codeEnd) + after + text.slice(i.codeEnd, i.end)
+                  : text.slice(i.start, i.end),
+              )
+              .join(""),
         },
         "Routes go in CRUD order: GET, POST, PUT, PATCH, DELETE, by path in each (a fixed segment before a parameter).",
       );
