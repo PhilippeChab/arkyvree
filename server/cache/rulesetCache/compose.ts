@@ -21,7 +21,7 @@ import type {
   RulesetSave,
   Skill,
 } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import { type CachedCowData } from "./cowData.ts";
 import { getOrFetchRulesetRawData, type RulesetRawData } from "./rawData.ts";

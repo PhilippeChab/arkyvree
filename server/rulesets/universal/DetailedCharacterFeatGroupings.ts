@@ -2,7 +2,7 @@ import type DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCha
 import type { FeatEntry } from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Property } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "possessed", description: "Whether this feat is possessed", type: "boolean" as const },

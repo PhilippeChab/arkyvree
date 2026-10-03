@@ -9,7 +9,7 @@ import {
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 // ---------------------------------------------------------------------------
 // Skill name → slug mapping (extends base with paren-stripped variants)

@@ -1,7 +1,7 @@
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import { ALL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 import { SPELL_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 // Feats taken with a choice that isn't a feat of its own: "Energy Substitution (cold)" requires Energy Substitution
 const FEATS_WITH_A_CHOICE = ["Energy Substitution"];

@@ -7,7 +7,7 @@
 - Be DRY
 - Reuse existing patterns, naming
 - A file reads bottom-up: a helper sits above the code that uses it, in a file's sections too (oxlint's `no-use-before-define`). Functions that call each other keep one `oxlint-disable-next-line` saying so
-- `shared/` holds what more than one of the client, the server and the database packages use, grouped by domain (`customization/`, `dnd3.5/`): types, vocabulary and pure helpers, never code tied to one runtime (Bun's APIs, the database). It never imports `drizzle/schema.ts` at runtime, which would load the whole schema in the client: a database enum's options are written out in `shared/enums.ts`, checked against the schema and the database by `tests/shared/enums.test.ts`. Take the enum types (`ItemLocation`, `ContributorRole`, …) and the customizable entity types (`shared/customization/entities.ts`) from there rather than re-deriving them
+- `shared/` holds what more than one of the client, the server and the database packages use, grouped by domain (`customization/`, `dnd3.5/`): types, vocabulary and pure helpers, never code tied to one runtime (Bun's APIs, the database; `arkyvree/shared-runtime` refuses `bun` and `node:` imports). It never imports `drizzle/schema.ts` at runtime, which would load the whole schema in the client: a database enum's options are written out in `shared/enums.ts`, checked against the schema and the database by `tests/shared/enums.test.ts`. Take the enum types (`ItemLocation`, `ContributorRole`, …) and the customizable entity types (`shared/customization/entities.ts`) from there rather than re-deriving them
 - Every class and every router keeps one member order: the lifecycle (`load`, `preload`, `init` / `initialize`, `build`, `apply`, in that order, so a class that sets itself up reads top-down), reads, creates, updates, deletes, then the other actions, by name within each group (`arkyvree/member-order`, `lint/memberOrder.mjs`; `bun run lint --fix` sorts a file). A method's group is its leading verb: `find` / `get` / `exists` / `count` / `is` read, `create` / `add` / `duplicate` create, `update` / `set` / `mark` update, `delete` / `archive` / `unarchive` delete. A class keeps its constructor, statics and fields at the top, in their own order (a field's initializer may read an earlier one), then its private and protected methods, then its public ones, each in that order. A router's routes sort by HTTP method, then by path, a fixed segment before a parameter (Hono matches overlapping routes in registration order); a `.use()` or `.route()` ends the run it sorts, since middleware applies to what follows it. The rule is an oxlint JS plugin, in alpha, so oxlint's version is pinned
 - `oxfmt` formats the code (`bun run format`; CI runs `format:check`): 120 columns, the imports sorted and grouped. What tools write keeps their layout: the drizzle schema and relations (`drizzle-kit pull`) and the parser's `generated/`. A data table keeps one row per line under `// oxfmt-ignore`. oxlint's `sort-imports` sorts the names inside an import
 
@@ -15,7 +15,7 @@
 
 - Strict typing enabled
 - PascalCase for components/classes, camelCase for functions, 'use' prefix for hooks
-- Use `@/` path alias for cross-directory imports
+- Use `@/` path alias for cross-directory imports, never `../` (`arkyvree/no-parent-imports`: `bun run lint --fix` rewrites one)
 - Make sure typescript passes before finishing a task - use tsgo
 - Always use Hono's Infer types instead of recreating types in the frontend
 - Do not use any
@@ -39,7 +39,7 @@ Where code goes, by what it needs:
 
 - A step only one class takes, and small: a `private` method of that class
 - Methods that work on a class's state (`this`), split out of a large class or shared among classes of one kind: a concern, a mixin the class includes (`include(Base, A, B)`, `server/mixins.ts`), in a `concerns/` folder by the class
-- A function that needs no `this`, used by several services, jobs or tests: a helper, a module named for what it does (`characters/editableCharacter.ts`), in the folder of the service whose domain it is, exported through its `index.ts`. Never a `helpers.ts` grab bag
+- A function that needs no `this`, used by several services, jobs or tests: a helper, a module named for what it does (`characters/editableCharacter.ts`), in the folder of the service whose domain it is, exported through its `index.ts`. Never a `helpers` or `utils` grab bag (`arkyvree/no-helpers-modules`)
 - A query: a repository method (a query across every entity table: `RulesetEntities`)
 
 **Key Patterns:**
@@ -47,7 +47,7 @@ Where code goes, by what it needs:
 - Services use `withTransaction()` for **all mutations** (create, update, delete) to ensure atomicity
 - Repositories accept `db` via dependency injection
 - Schema is defined in `/drizzle/schema.ts`
-- Routes use `zValidator` from `@/server/middlewares/index.ts` so validation failures use the standard API error envelope and preserve Hono response inference.
+- Routes use `zValidator` from `@/server/middlewares/index.ts` so validation failures use the standard API error envelope and preserve Hono response inference (`arkyvree/route-conventions` holds it, camelCase path params, and no `try` in `server/routers/api/`).
 - A route's common params and paging come from `server/routers/api/validation.ts` (`idParam`, `characterIdParam`, `page`, `limit` / `limitOf(n)`), the customization routes' from `server/routers/api/rulesets/customization/validation.ts` (`entityParams`, `ownerParams`). A query list (comma-separated ids, picks) is parsed by its schema's `transform`, not in the handler. Path params are camelCase (`:modifierId`)
 - A route answers with what its service returns: `return c.json(await XService.method(…), status)`. What a route or a service throws reaches the app's `onError` (`server/routers/application.ts`; `wrapNonErrors` makes a thrown value that isn't an `Error` one first), which answers with the error in the API's envelope and its status: a route never catches a service's error to answer it. So a route's types list its successes only, and a test checks an error status with `expectStatus(response, status)` (`tests/api.ts`).
 - A response never carries a user's `passwordDigest`. Auth responses return the user through `toSafeUser` (`server/services/authentication/accounts.ts`), and a query that joins users selects their public columns (`id`, `username`, `emailAddress`), never the whole row.
@@ -55,9 +55,9 @@ Where code goes, by what it needs:
 
 **Service Conventions:**
 
-- Session parameter is always named `session: Session`, never `s`
+- Session parameter is always named `session: Session`, never `s` (`_session` when it's unused; `arkyvree/session-param`)
 - Use **individual parameters**, not payload/options objects: `linkCharacter(userId, campaignId, characterId, visibility)` not `linkCharacter(payload)`
-- Use **shared repository instances** from `@/server/repositories/index.ts`, never instantiate private copies. `withRequestCache` (`server/repositories/withRequestCache.ts`) wraps each one there. The repositories sit in folders by domain, like the services' top-level folders (`repositories/rulesets/FeatsRepository.ts`)
+- Use **shared repository instances** from `@/server/repositories/index.ts`, never instantiate private copies (`arkyvree/repository-instances`). `withRequestCache` (`server/repositories/withRequestCache.ts`) wraps each one there. The repositories sit in folders by domain, like the services' top-level folders (`repositories/rulesets/FeatsRepository.ts`)
 - Paginated service methods follow: `method(id, where: { search?, orderBy?, orderDir? }, pagination: { limit, page })`
 - A service is a class used through its one shared instance, like a repository: its file exports `new XService()` and nothing else. Routers and tests call its methods on it (`XService.method(…)`), never detached, which would lose `this` (a test that passes one as a value binds it)
 - Each service has a folder of its own, laid out like the routers (`rulesets/feats/FeatsService.ts`, `characters/inventory/CharacterInventoryService.ts`). A helper only that service uses is one of its `private` methods, at the top of the class, or a module in its folder when it's large (`inventory/validation.ts`, the level-up steps in `levels/dnd3.5/`). A helper several services use is a module in the folder of the service whose domain it is (`characters/editableCharacter.ts`, `characters/pdf.ts`, `activities/activityNotifications.ts`), named for what it does, never a `helpers.ts`. A folder's `index.ts` exports its service and what code outside the folder uses from it: code outside imports through it, files within the folder (its subfolders included) import each other directly
@@ -87,7 +87,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - `BaseRepository` holds a repository's core (`table`, `where`, `branchWhere`, `visibility`, `orderBy`, `lock`). Everything else is a concern in `server/repositories/concerns/`, a mixin the repository includes when it uses it, the way Ruby includes a module: `class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampaign>, Paginates, Searches)` (`include` from `server/mixins.ts`). The concerns are `Paginates` (`paginate`, `paginated`, `withPagination`; the `Paginated` type, `pageOf`, and `everyPage` for every page of a `findPage`), `Searches` (`search`, `fuzzySearch`, `searchOrderBy`), `ScopesToRuleset` (`buildRulesetCondition`, `RulesetEntityFilters`; the repository names its `entityType`), `ChecksRulesetUse` (`rulesetOrDescendant`), `ResolvesCopies` (`idMatches`, `excludeIds`), `GuardsStaleEdits` (`casUpdatedAt`), `GrantsPerLevel` (`grantedAt`) and `ChecksExistence` (`exists`, through `findOne`). A concern adds methods, never state
 - Use `this.withPagination(pagination, callback)` for paginated queries. For join queries that return non-model types, use `this.paginate()` / `this.paginated()` directly
 - Use `this.search(search, [columns])` for text search — returns `SQL | false`, use `|| undefined` when passing to `and()`
-- Use `this.orderBy(column, direction)` for sorting — never hardcode `desc()`/`asc()` directly
+- Use `this.orderBy(column, direction)` for sorting — never hardcode `desc()`/`asc()` directly (`arkyvree/order-through-repository`)
 - Search sentinel is `false` (not `undefined`) for consistency with `this.where()` filtering
 - A query across every ruleset entity's table is a `RulesetEntities` method (`repositories/rulesets/RulesetEntitiesRepository.ts`; `entityTables.ts` maps each type to its table and lists `RULESET_ENTITY_TYPES`). A read that must see stored ids, unresolved by copy-on-write (sibling losers), calls its repository inside `withCowContext(undefined, …)` instead of querying the table itself
 - A ruleset entity's repository extends `RulesetEntityRepository` (its `create` / `update` / `delete`, and the concerns every entity's list and edit use: `Paginates`, `Searches`, `ScopesToRuleset`, `GuardsStaleEdits`) and types its list's `where` as `RulesetEntityFilters<{ …its own filters }>`. A bulk insert is `createMany(db, rows[])`. An in-use check joins the character's ruleset with `this.rulesetOrDescendant(column, rulesetId)`

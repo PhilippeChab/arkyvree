@@ -1,6 +1,5 @@
+import DependentCache from "@/server/cache/DependentCache.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
-
-import DependentCache from "../DependentCache.ts";
 
 export const targetPathsAndLabelsCache = new DependentCache<{
   paths: TargetPath[];

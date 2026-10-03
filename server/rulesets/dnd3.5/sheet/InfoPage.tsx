@@ -1,6 +1,7 @@
 import { Image, Page, Text, View } from "@react-pdf/renderer";
 
-import type DetailedCharacter from "../DetailedCharacter.ts";
+import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+
 import { formatModifier } from "./format.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
 

@@ -12,7 +12,7 @@ import {
 import { seedFeats } from "@/database/packages/dnd35/seed/feats.ts";
 import { powersAptitudesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 /**
  * Seeds cleric domains: each a feat taken in Cleric Domain that gives its spell list ("X Domain Spells") a slot at

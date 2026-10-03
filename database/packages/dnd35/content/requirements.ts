@@ -3,7 +3,7 @@ import type {
   RequirementEntry,
   RequirementGroup,
 } from "@/database/packages/dnd35/content/types.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 // Builders the content's requirements are written with: `or(eq(feat("Dodge")), gte("combat.bab", 4))`. The
 // generator writes a check with the builder that makes exactly that check (`builderOf` in generator/codegen.ts), and

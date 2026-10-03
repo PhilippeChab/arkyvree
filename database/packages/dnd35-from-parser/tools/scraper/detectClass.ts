@@ -35,7 +35,7 @@ import {
   proficiencyRequirements,
   SIMPLE_WEAPONS,
 } from "@/database/packages/dnd35/content/weapons.ts";
-import { capitalize, stripSeparators } from "@/shared/utils.ts";
+import { capitalize, stripSeparators } from "@/shared/text.ts";
 
 // ---------------------------------------------------------------------------
 // BAB detection

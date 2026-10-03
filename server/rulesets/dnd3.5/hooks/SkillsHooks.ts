@@ -5,7 +5,7 @@ import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties } from "@/serve
 import { SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { PropertyRecord, SkillsHooks } from "@/server/rulesets/hooks/SkillsHooks.ts";
 import { cowEntityForCustomization, entityHasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 export class Dnd35SkillsHooks implements SkillsHooks {
   buildProperties(

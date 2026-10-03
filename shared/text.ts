@@ -1,3 +1,5 @@
+/** Text: a name or a label written for display, or reduced to a slug. */
+
 /** `s` with its first letter capitalized. */
 export const capitalize = (s: string) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
 

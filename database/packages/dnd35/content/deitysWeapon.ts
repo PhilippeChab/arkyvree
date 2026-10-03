@@ -1,6 +1,6 @@
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { ALL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 // Complete Divine's Deity's Weapon Focus and Specialization, one per weapon: the favored soul picks her deity's
 // at the levels her class features give a pick (3rd and 12th), and gets Weapon Focus or Specialization with it.

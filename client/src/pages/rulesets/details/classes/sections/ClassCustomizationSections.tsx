@@ -8,8 +8,11 @@ import {
   PropertiesSection,
   RequirementsSection,
 } from "@/client/src/pages/rulesets/customization/sections/index.ts";
+import {
+  classDetailQuery,
+  type ClassSection,
+} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
-import { classDetailQuery, type ClassSection } from "../classSectionQueries.ts";
 import type { ClassSectionProps } from "./types.ts";
 
 /** What a customization section of the class takes: the class, and where a copy of it goes. */

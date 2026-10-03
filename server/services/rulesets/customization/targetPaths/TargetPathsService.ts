@@ -1,7 +1,7 @@
 import { pageOf } from "@/server/repositories/concerns/Paginates.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { PaginatedCompletions, PathCompletion, TargetPath } from "@/shared/customization/target.ts";
-import { capitalize } from "@/shared/utils.ts";
+import { capitalize } from "@/shared/text.ts";
 
 import { getTargetPathsWithLabels, validatePath } from "./targetPaths.ts";
 

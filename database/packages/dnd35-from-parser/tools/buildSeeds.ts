@@ -58,7 +58,7 @@ import {
 } from "@/database/packages/dnd35/content/weapons.ts";
 import { CLASS_FEATURE_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
-import { capitalize } from "@/shared/utils.ts";
+import { capitalize } from "@/shared/text.ts";
 
 // ---------------------------------------------------------------------------
 // Existing feat lookup — set of known feat names

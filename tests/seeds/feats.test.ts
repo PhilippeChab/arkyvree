@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 
 import * as RULESET_NAMES from "@/database/packages/dnd35/names.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
 
 /** Every seeded ruleset's rows. */

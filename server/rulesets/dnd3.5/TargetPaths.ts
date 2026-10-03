@@ -35,7 +35,7 @@ import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedC
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import { Dnd35LevelsHooks } from "./hooks/LevelsHooks.ts";
 

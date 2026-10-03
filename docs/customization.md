@@ -125,7 +125,7 @@ See [docs/target-paths.md](./target-paths.md) for all available target paths.
 
 ## Normalization
 
-All entity names in paths use `stripSeparators()` from `shared/utils.ts`:
+All entity names in paths use `stripSeparators()` from `shared/text.ts`:
 
 ```ts
 export const stripSeparators = (s: string) =>

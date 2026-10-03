@@ -18,7 +18,7 @@ import {
   KLASS_LEVEL_BAB,
   KLASS_LEVEL_SKILL_POINTS,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 const BAB: Record<BabType, (level: number) => number> = {
   good: (level) => level,

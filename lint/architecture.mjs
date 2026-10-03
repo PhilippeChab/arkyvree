@@ -17,6 +17,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { onImports, targetOf } from "./imports.mjs";
 import { repoPath, rootOf } from "./paths.mjs";
 
 /** Each layer and what it must not import. `types`: imported for its types only, it's allowed. */
@@ -64,36 +65,6 @@ const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll",
 
 /** The trees whose folders are entered through their `index.ts`. */
 const INDEXED_TREES = ["server/services/", "client/src/components/"];
-
-/** An import's target, as a repo path: `@/x`, or relative to the importer. Packages have none. */
-function targetOf(importer, spec) {
-  if (spec.startsWith("@/")) return path.posix.normalize(spec.slice(2));
-  if (spec.startsWith(".")) return path.posix.normalize(path.posix.join(path.posix.dirname(importer), spec));
-  return null;
-}
-
-/** Whether an import brings in types only: `import type`, or every specifier `type`. */
-function typeOnly(node) {
-  if (node.importKind === "type" || node.exportKind === "type") return true;
-  const specifiers = node.specifiers ?? [];
-  return specifiers.length > 0 && specifiers.every((s) => s.importKind === "type" || s.exportKind === "type");
-}
-
-/** Every import and re-export a file makes: its node, its specifier, and whether it brings types only. */
-function onImports(callback) {
-  const visit = (node) => {
-    if (node.source && typeof node.source.value === "string") callback(node, node.source.value, typeOnly(node));
-  };
-  return {
-    ImportDeclaration: visit,
-    ExportNamedDeclaration: visit,
-    ExportAllDeclaration: visit,
-    ImportExpression(node) {
-      if (node.source?.type === "Literal" && typeof node.source.value === "string")
-        callback(node, node.source.value, false);
-    },
-  };
-}
 
 const layers = {
   meta: { type: "problem" },

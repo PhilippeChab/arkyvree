@@ -24,7 +24,7 @@ import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 // ---------------------------------------------------------------------------
 // Feat type → aptitudes

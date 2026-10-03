@@ -17,10 +17,10 @@ import type {
   RequirementEntry,
 } from "@/database/packages/dnd35/content/types.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 // Re-export stripSeparators — used as the slug function throughout the tools
-export { stripSeparators } from "@/shared/utils.ts";
+export { stripSeparators } from "@/shared/text.ts";
 
 export { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 

@@ -4,7 +4,7 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { findScopedEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { findRulesetPowers } from "@/server/services/rulesets/powers/index.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 /** A class's spells: its spell list, and what a class level casts and knows. */
 export function ListsSpells<B extends Constructor>(Base: B) {

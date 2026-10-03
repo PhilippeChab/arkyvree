@@ -1,9 +1,9 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
+import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
-import type DetailedCharacter from "../DetailedCharacter.ts";
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 

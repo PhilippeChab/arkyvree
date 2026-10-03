@@ -18,7 +18,7 @@ import {
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
 import type { Property, Session } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 class SkillsService {
   async getRulesetSkill(rulesetId: string, skillId: string) {

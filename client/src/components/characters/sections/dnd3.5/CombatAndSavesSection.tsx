@@ -3,7 +3,7 @@ import { Box, Stack, Typography } from "@mui/material";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankState } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import { capitalize } from "@/shared/utils.ts";
+import { capitalize } from "@/shared/text.ts";
 
 import { StatField } from "./statHelpers.tsx";
 import type { Dnd35CombatAndSavesSectionProps } from "./types.ts";
