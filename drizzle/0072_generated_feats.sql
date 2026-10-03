@@ -11,16 +11,18 @@ WHERE r."id" = f."ruleset_id" AND r."system" AND split_part(f."name", ': ', 1) I
   'Spell Focus', 'War Domain Weapon', 'Weapon Focus', 'Weapon Specialization'
 ) AND f."name" LIKE '%: _%';
 --> statement-breakpoint
--- A fork's Skill Focus of one of its skills, and Spell Focus of a school of its spells, which the app generated
+-- The feats the app generated in a fork: the Skill Focus of one of its skills (which goes with the skill), and a
+-- school's Spell Focus and Greater Spell Focus, which outlive the school's spells: by the bonus the generator gives them
+-- on the school's spells (`powers.groups.<school>.*.dc.misc`)
 UPDATE "rules"."feats" f SET "generated" = true
 FROM "rules"."rulesets" r
 WHERE r."id" = f."ruleset_id" AND NOT r."system" AND (
   EXISTS (SELECT FROM "rules"."skills" s WHERE s."ruleset_id" = f."ruleset_id" AND f."name" = 'Skill Focus: ' || s."name")
-  OR EXISTS (
-    SELECT FROM "customization"."properties" p JOIN "rules"."powers" pw ON pw."id" = p."entity_id"
-    WHERE p."entity_type" = 'powers' AND p."type" = 'SPELL_SCHOOL' AND pw."ruleset_id" = f."ruleset_id"
-      AND f."name" IN ('Spell Focus: ' || p."value", 'Greater Spell Focus: ' || p."value")
-  )
+  OR (split_part(f."name", ': ', 1) IN ('Spell Focus', 'Greater Spell Focus') AND EXISTS (
+    SELECT FROM "customization"."modifiers" m
+    WHERE m."source_type" = 'feats' AND m."source_id" = f."id" AND m."target" =
+      'powers.groups.' || lower(regexp_replace(substr(f."name", strpos(f."name", ': ') + 2), '[^a-zA-Z0-9]', '', 'g')) || '.*.dc.misc'
+  ))
 );
 --> statement-breakpoint
 -- A fork's copy of a feat keeps whether the feat it copies, back to the first one, was generated

@@ -233,7 +233,7 @@ test("a fork's new skills and spells put their feats in the General aptitude it 
 
   await SkillsMethods.createRulesetSkill(session, fork.id, skill(parent.strength.id, "Swim"));
   await PowersMethods.createRulesetPower(session, fork.id, spell(parent.spells.id, "Lightning Bolt", "Evocation"));
-  for (const name of ["Skill Focus: Swim", "Spell Focus: Evocation"]) {
+  for (const name of ["Skill Focus: Swim", "Spell Focus: Evocation", "Greater Spell Focus: Evocation"]) {
     const feat = await findFeat(fork.id, name);
     expect(feat.generated).toBe(true);
     expect(await FeatsAptitudes.findMany(db, { featId: feat.id })).toMatchObject([{ aptitudeId: parent.general!.id }]);
@@ -437,6 +437,19 @@ describe("generated feats", () => {
     expect(await FeatsMethods.updateRulesetFeat(session, fork.id, toughness.id, { name: "Resilience" })).toMatchObject({
       name: "Resilience",
     });
+  });
+
+  test("include a feat made in place of one the fork deleted, which stands in for it", async () => {
+    const { session, fork } = await seededFork();
+    const longsword = await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
+      rulesetData.feats.find((row) => row.name === "Weapon Focus: Longsword")!,
+    );
+    await FeatsMethods.deleteRulesetFeat(session, fork.id, longsword.id);
+    const made = await FeatsMethods.createRulesetFeat(session, fork.id, {
+      name: "Weapon Focus: Longsword",
+      aptitudeIds: [(await getSeedCtx()).aptMap["General"]],
+    });
+    expect(made.generated).toBe(true);
   });
 
   test("are the generators' feats, not those named like them", async () => {
