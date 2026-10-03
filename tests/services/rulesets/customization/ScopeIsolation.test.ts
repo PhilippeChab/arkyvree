@@ -7,11 +7,7 @@ import { cowEntityForCustomization } from "@/server/services/rulesets/cow.ts";
 import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
 import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
 import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { createSeededTestRuleset, invalidateSeededRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
-
-const ModifiersMethods = methodsOf(ModifiersService);
-const PropertiesMethods = methodsOf(PropertiesService);
-const RequirementsMethods = methodsOf(RequirementsService);
+import { createSeededTestRuleset, invalidateSeededRuleset, makeSession } from "@/tests/helpers.ts";
 
 async function setup() {
   const session = makeSession();
@@ -25,17 +21,17 @@ describe("ruleset customization isolation", () => {
   test("rejects foreign properties, modifiers, and requirements before writing", async () => {
     const { session, own, feat } = await setup();
     await expect(
-      PropertiesMethods.createEntityProperty(session, own.id, "feats", feat.id, { type: "test", value: "changed" }),
+      PropertiesService.createEntityProperty(session, own.id, "feats", feat.id, { type: "test", value: "changed" }),
     ).rejects.toThrow(NotFoundError);
     await expect(
-      ModifiersMethods.createEntityModifier(session, own.id, "feats", feat.id, {
+      ModifiersService.createEntityModifier(session, own.id, "feats", feat.id, {
         target: "combat.ac.misc",
         operator: "add",
         value: "1",
       }),
     ).rejects.toThrow(NotFoundError);
     await expect(
-      RequirementsMethods.createEntityRequirement(session, own.id, "feats", feat.id, {
+      RequirementsService.createEntityRequirement(session, own.id, "feats", feat.id, {
         level: "1",
         chainingOperator: "and",
       }),
@@ -60,16 +56,16 @@ describe("ruleset customization isolation", () => {
       chainingOperator: "and",
     });
     await expect(
-      PropertiesMethods.updateEntityProperty(session, own.id, "feats", feat.id, property.id, {
+      PropertiesService.updateEntityProperty(session, own.id, "feats", feat.id, property.id, {
         type: "test",
         value: "changed",
       }),
     ).rejects.toThrow(NotFoundError);
     await expect(
-      PropertiesMethods.deleteEntityProperty(session, own.id, "feats", feat.id, property.id),
+      PropertiesService.deleteEntityProperty(session, own.id, "feats", feat.id, property.id),
     ).rejects.toThrow(NotFoundError);
     await expect(
-      RequirementsMethods.deleteEntityRequirement(session, own.id, "feats", feat.id, requirement.id),
+      RequirementsService.deleteEntityRequirement(session, own.id, "feats", feat.id, requirement.id),
     ).rejects.toThrow(NotFoundError);
     expect((await Properties.findOne(db, { id: property.id }))?.value).toBe("original");
     expect(await Requirements.findOne(db, { id: requirement.id })).toBeDefined();
@@ -83,7 +79,7 @@ describe("ruleset customization isolation", () => {
   test("inherited customizations still copy their source", async () => {
     const { session, own } = await setup();
     const feat = (await Feats.findOne(db, { rulesetId: own.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
-    const property = await PropertiesMethods.createEntityProperty(session, own.id, "feats", feat.id, {
+    const property = await PropertiesService.createEntityProperty(session, own.id, "feats", feat.id, {
       type: "audit",
       value: "local",
     });
@@ -114,17 +110,17 @@ describe("modifier requirement ownership", () => {
     const { session, own } = await setup();
     const [feat] = await Feats.create(db, { rulesetId: own.id, name: "Local feat", description: "Local" });
     const modifier = await createModifier(feat.id);
-    const requirement = await RequirementsMethods.createEntityRequirement(session, own.id, "modifiers", modifier.id, {
+    const requirement = await RequirementsService.createEntityRequirement(session, own.id, "modifiers", modifier.id, {
       level: "1",
       chainingOperator: "and",
     });
     expect(requirement.entityId).toBe(modifier.id);
-    await RequirementsMethods.updateEntityRequirement(session, own.id, "modifiers", modifier.id, requirement.id, {
+    await RequirementsService.updateEntityRequirement(session, own.id, "modifiers", modifier.id, requirement.id, {
       level: "1",
       chainingOperator: "or",
     });
     expect((await Requirements.findOne(db, { id: requirement.id }))?.chainingOperator).toBe("or");
-    await RequirementsMethods.deleteEntityRequirement(session, own.id, "modifiers", modifier.id, requirement.id);
+    await RequirementsService.deleteEntityRequirement(session, own.id, "modifiers", modifier.id, requirement.id);
     expect(await Requirements.findOne(db, { id: requirement.id })).toBeUndefined();
   });
 
@@ -139,7 +135,7 @@ describe("modifier requirement ownership", () => {
       chainingOperator: "and",
     });
     invalidateSeededRuleset(feat.rulesetId);
-    const requirement = await RequirementsMethods.createEntityRequirement(session, own.id, "modifiers", modifier.id, {
+    const requirement = await RequirementsService.createEntityRequirement(session, own.id, "modifiers", modifier.id, {
       level: "2",
       chainingOperator: "or",
     });
@@ -154,12 +150,12 @@ describe("modifier requirement ownership", () => {
     expect(copies.some((r) => r.level === "1" && r.chainingOperator === "and")).toBe(true);
     expect(await Modifiers.findOne(db, { id: modifier.id })).toEqual(modifier);
     await expect(
-      RequirementsMethods.createEntityRequirement(session, own.id, "modifiers", modifier.id, {
+      RequirementsService.createEntityRequirement(session, own.id, "modifiers", modifier.id, {
         level: "3",
         chainingOperator: "and",
       }),
     ).rejects.toThrow(NotFoundError);
-    const second = await RequirementsMethods.createEntityRequirement(session, own.id, "modifiers", copied.id, {
+    const second = await RequirementsService.createEntityRequirement(session, own.id, "modifiers", copied.id, {
       level: "3",
       chainingOperator: "and",
     });
@@ -173,7 +169,7 @@ describe("modifier requirement ownership", () => {
     const { session, own, feat } = await setup();
     const modifier = await createModifier(feat.id);
     await expect(
-      RequirementsMethods.createEntityRequirement(session, own.id, "modifiers", modifier.id, {
+      RequirementsService.createEntityRequirement(session, own.id, "modifiers", modifier.id, {
         level: "1",
         chainingOperator: "and",
       }),
@@ -206,17 +202,17 @@ describe("stale ancestor customization IDs", () => {
         value: "ancestor",
       });
       invalidateSeededRuleset(feat.rulesetId);
-      const local = await PropertiesMethods.createEntityProperty(session, own.id, "feats", feat.id, {
+      const local = await PropertiesService.createEntityProperty(session, own.id, "feats", feat.id, {
         type: "local",
         value: "copy",
       });
       const operation =
         action === "update"
-          ? PropertiesMethods.updateEntityProperty(session, own.id, "feats", local.resolvedEntityId, original.id, {
+          ? PropertiesService.updateEntityProperty(session, own.id, "feats", local.resolvedEntityId, original.id, {
               type: "review",
               value: "changed",
             })
-          : PropertiesMethods.deleteEntityProperty(session, own.id, "feats", local.resolvedEntityId, original.id);
+          : PropertiesService.deleteEntityProperty(session, own.id, "feats", local.resolvedEntityId, original.id);
       await expect(operation).rejects.toThrow(NotFoundError);
       expect(await Properties.findOne(db, { id: original.id })).toEqual(original);
     });
@@ -230,17 +226,17 @@ describe("stale ancestor customization IDs", () => {
         chainingOperator: "and",
       });
       invalidateSeededRuleset(feat.rulesetId);
-      const local = await PropertiesMethods.createEntityProperty(session, own.id, "feats", feat.id, {
+      const local = await PropertiesService.createEntityProperty(session, own.id, "feats", feat.id, {
         type: "local",
         value: "copy",
       });
       const operation =
         action === "update"
-          ? RequirementsMethods.updateEntityRequirement(session, own.id, "feats", local.resolvedEntityId, original.id, {
+          ? RequirementsService.updateEntityRequirement(session, own.id, "feats", local.resolvedEntityId, original.id, {
               level: "2",
               chainingOperator: "or",
             })
-          : RequirementsMethods.deleteEntityRequirement(session, own.id, "feats", local.resolvedEntityId, original.id);
+          : RequirementsService.deleteEntityRequirement(session, own.id, "feats", local.resolvedEntityId, original.id);
       await expect(operation).rejects.toThrow(NotFoundError);
       expect(await Requirements.findOne(db, { id: original.id })).toEqual(original);
     });
@@ -264,7 +260,7 @@ test("editing the second identical inherited modifier keeps its own requirements
   await Requirements.create(db, { entityId: first.id, entityType: "modifiers", level: "1", chainingOperator: "and" });
   await Requirements.create(db, { entityId: second.id, entityType: "modifiers", level: "2", chainingOperator: "or" });
   invalidateSeededRuleset(feat.rulesetId);
-  const added = await RequirementsMethods.createEntityRequirement(session, own.id, "modifiers", second.id, {
+  const added = await RequirementsService.createEntityRequirement(session, own.id, "modifiers", second.id, {
     level: "3",
     chainingOperator: "and",
   });

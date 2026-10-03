@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { application } from "@/server/routers/application.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
-import { api, expectOk, guestApi, SEED_SESSION_ID } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi, SEED_SESSION_ID } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 import { createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
 
@@ -58,7 +58,7 @@ describe("rulesets customization modifiers", () => {
     expect((await expectOk(modifiers.$get({ param }))).map((m) => m.id).sort()).toEqual([created.id, copy.id].sort());
 
     await expectOk(modifier.$delete({ param: modifierParam }));
-    expect((await modifier.$get({ param: modifierParam })).status).toBe(404);
+    await expectStatus(modifier.$get({ param: modifierParam }), 404);
   });
 
   test.each([...CUSTOMIZABLE_ENTITY_TYPES])("adds a modifier to %s", async (entityType) => {
@@ -87,7 +87,7 @@ describe("rulesets customization modifiers", () => {
           body: JSON.stringify(body),
         },
       );
-      expect(response.status).toBe(400);
+      await expectStatus(response, 400);
     }
   });
 
@@ -96,7 +96,7 @@ describe("rulesets customization modifiers", () => {
     const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$get({
       param: { id, entityType: "feats", entityId },
     });
-    expect(response.status).toBe(401);
+    await expectStatus(response, 401);
   });
 
   test("rejects a modifier without a target", async () => {
@@ -105,18 +105,19 @@ describe("rulesets customization modifiers", () => {
       param: { id, entityType: "feats", entityId },
       json: { value: "2", operator: "add" } as never,
     });
-    expect(response.status).toBe(400);
+    await expectStatus(response, 400);
   });
 
   test("returns 404 for a missing ruleset, entity or modifier", async () => {
     const { id, entityId } = await setup();
-    expect((await modifiers.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } })).status).toBe(404);
-    expect((await modifiers.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } })).status).toBe(404);
+    await expectStatus(modifiers.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } }), 404);
+    await expectStatus(modifiers.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } }), 404);
     const param = { id, entityType: "feats" as const, entityId, modifierId: NIL_UUID };
-    expect((await modifier.$get({ param })).status).toBe(404);
-    expect(
-      (await modifier.$put({ param, json: { target: "abilities.wisdom.misc", value: "1", operator: "add" } })).status,
-    ).toBe(404);
-    expect((await modifier.$delete({ param })).status).toBe(404);
+    await expectStatus(modifier.$get({ param }), 404);
+    await expectStatus(
+      modifier.$put({ param, json: { target: "abilities.wisdom.misc", value: "1", operator: "add" } }),
+      404,
+    );
+    await expectStatus(modifier.$delete({ param }), 404);
   });
 });

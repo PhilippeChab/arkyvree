@@ -4,7 +4,6 @@ import { z } from "zod";
 import { denyDemoUser, exportRateLimit, zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
-import { errorResponse, respond } from "@/server/routers/respond.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/index.ts";
@@ -15,17 +14,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), characterId: z.string().uuid() })),
     async (c) => {
       const { id, characterId } = c.req.valid("param");
-      const result = await CampaignCharactersService.initialize().call(
-        "getCampaignCharacter",
-        c.var.requestSession,
-        id,
-        characterId,
-      );
-      const success = result[0];
-
-      if (!success) return errorResponse(c, result[2]);
-
-      const data = result[1];
+      const data = await CampaignCharactersService.getCampaignCharacter(c.var.requestSession, id, characterId);
       const response = buildFullCharacterResponse(data.character!, data.detailedCharacter!);
       const redactForViewer = <T extends { identity: { background: { privateNotes?: string } } }>(entry: T): T =>
         data.canViewPrivateNotes ? entry : redactPrivateNotes(entry, "");
@@ -91,16 +80,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), characterId: z.string().uuid() })),
     async (c) => {
       const { id, characterId } = c.req.valid("param");
-      const result = await CampaignCharactersService.initialize().call(
-        "enqueueCampaignCharacterPdf",
-        c.var.requestSession,
-        id,
-        characterId,
-      );
-      const success = result[0];
-
-      if (!success) return errorResponse(c, result[2]);
-
+      await CampaignCharactersService.enqueueCampaignCharacterPdf(c.var.requestSession, id, characterId);
       return c.json({ message: "PDF generation started" }, 202);
     },
   )
@@ -116,14 +96,10 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, characterId } = c.req.valid("param");
       const { visibility } = c.req.valid("json");
-      const result = await CampaignCharactersService.initialize().call(
-        "updateCharacterVisibility",
-        c.var.requestSession,
-        id,
-        characterId,
-        visibility,
+      return c.json(
+        await CampaignCharactersService.updateCharacterVisibility(c.var.requestSession, id, characterId, visibility),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -142,14 +118,15 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, orderBy, orderDir } = c.req.valid("query");
-      const result = await CampaignCharactersService.initialize().call(
-        "getCampaignCharacters",
-        c.var.requestSession,
-        id,
-        { search, orderBy, orderDir },
-        { limit, page },
+      return c.json(
+        await CampaignCharactersService.getCampaignCharacters(
+          c.var.requestSession,
+          id,
+          { search, orderBy, orderDir },
+          { limit, page },
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .post(
@@ -165,13 +142,9 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { characterId, visibility } = c.req.valid("json");
-      const result = await CampaignCharactersService.initialize().call(
-        "linkCharacter",
-        c.var.requestSession,
-        id,
-        characterId,
-        visibility,
+      return c.json(
+        await CampaignCharactersService.linkCharacter(c.var.requestSession, id, characterId, visibility),
+        201,
       );
-      return respond(c, result, 201);
     },
   );

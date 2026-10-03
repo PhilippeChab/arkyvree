@@ -8,46 +8,50 @@ import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { CharacterContributors, Characters, Notifications, Users } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists. */
-async function getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
-  const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
-  if (!contributor || contributor.userId !== session.userId) {
-    throw new NotFoundError("Contributor invite not found");
+class CharacterContributorsService {
+  /**
+   * The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists.
+   */
+  private async getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
+    const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
+    if (!contributor || contributor.userId !== session.userId) {
+      throw new NotFoundError("Contributor invite not found");
+    }
+    if (contributor.status !== "Pending") {
+      throw new ConflictError("Invite is no longer pending");
+    }
+    return contributor;
   }
-  if (contributor.status !== "Pending") {
-    throw new ConflictError("Invite is no longer pending");
+
+  /**
+   * The invitee's answer: the invite's status, its notification read,
+   * and the activity its character's owner is told of.
+   */
+  private async answerInvite(
+    tx: Db,
+    session: Session,
+    contributor: { id: string; characterId: string },
+    characterName: string | undefined,
+    status: "Active" | "Rejected",
+  ) {
+    const [updated] = await CharacterContributors.update(tx, { status }, { id: contributor.id });
+    await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributor.id });
+    await createActivityWithNotifications(tx, {
+      userId: session.userId,
+      targetId: updated.id,
+      targetTable: getTableName(contributorsInCharacter),
+      type: status === "Active" ? "acceptCharacterContributorInvite" : "rejectCharacterContributorInvite",
+      data: { contributorId: contributor.id, characterId: contributor.characterId, characterName },
+    });
+    return updated;
   }
-  return contributor;
-}
 
-/** The invitee's answer: the invite's status, its notification read, and the activity its character's owner is told of. */
-async function answerInvite(
-  tx: Db,
-  session: Session,
-  contributor: { id: string; characterId: string },
-  characterName: string | undefined,
-  status: "Active" | "Rejected",
-) {
-  const [updated] = await CharacterContributors.update(tx, { status }, { id: contributor.id });
-  await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributor.id });
-  await createActivityWithNotifications(tx, {
-    userId: session.userId,
-    targetId: updated.id,
-    targetTable: getTableName(contributorsInCharacter),
-    type: status === "Active" ? "acceptCharacterContributorInvite" : "rejectCharacterContributorInvite",
-    data: { contributorId: contributor.id, characterId: contributor.characterId, characterName },
-  });
-  return updated;
-}
-
-const CharacterContributorsMethods = {
   async getUserContributorInvites(userId: string) {
     return await CharacterContributors.findManyByUserId(db, { userId, status: "Pending" }, { limit: 10 });
-  },
+  }
 
   // Single invite for the current user, any status. Used by the invite-accept
   // page so a stale link still resolves to "Already accepted" / "no longer
@@ -61,7 +65,7 @@ const CharacterContributorsMethods = {
       throw new NotFoundError("Contributor invite not found");
     }
     return invite;
-  },
+  }
 
   async getContributors(
     session: Session,
@@ -90,7 +94,7 @@ const CharacterContributorsMethods = {
       ? { id: ownerUser.id, username: ownerUser.username, emailAddress: ownerUser.emailAddress }
       : null;
     return { ...paginated, owner };
-  },
+  }
 
   async inviteContributor(session: Session, characterId: string, email: string) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
@@ -183,11 +187,11 @@ const CharacterContributorsMethods = {
     });
 
     return contributor;
-  },
+  }
 
   async acceptContributorInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await getPendingInviteFor(tx, session, contributorId);
+      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
       if (!character) {
@@ -197,19 +201,19 @@ const CharacterContributorsMethods = {
         throw new ConflictError("This character has been archived and can no longer be edited");
       }
 
-      return await answerInvite(tx, session, contributor, character.name, "Active");
+      return await this.answerInvite(tx, session, contributor, character.name, "Active");
     });
-  },
+  }
 
   async rejectContributorInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await getPendingInviteFor(tx, session, contributorId);
+      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
 
-      return await answerInvite(tx, session, contributor, character?.name, "Rejected");
+      return await this.answerInvite(tx, session, contributor, character?.name, "Rejected");
     });
-  },
+  }
 
   async revokeContributor(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
@@ -243,7 +247,7 @@ const CharacterContributorsMethods = {
 
       return updated;
     });
-  },
+  }
 
   async leaveCharacter(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
@@ -274,13 +278,7 @@ const CharacterContributorsMethods = {
 
       return updated;
     });
-  },
-} as const;
-
-class CharacterContributorsService extends BaseService<typeof CharacterContributorsMethods> {
-  static initialize() {
-    return new CharacterContributorsService(CharacterContributorsMethods);
   }
 }
 
-export default CharacterContributorsService;
+export default new CharacterContributorsService();

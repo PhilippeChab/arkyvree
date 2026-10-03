@@ -16,13 +16,9 @@ import {
   createTestRuleset,
   createTestUser,
   getSeedCtx,
-  methodsOf,
   NIL_UUID,
   uniqueId,
 } from "@/tests/helpers.ts";
-
-const CharacterInventoryMethods = methodsOf(CharacterInventoryService);
-const CharactersMethods = methodsOf(CharactersService);
 
 type Placement = {
   quantity?: number;
@@ -46,7 +42,7 @@ const add = (
     force = false,
   }: Placement = {},
 ) =>
-  CharacterInventoryMethods.addItem(
+  CharacterInventoryService.addItem(
     session,
     characterId,
     itemId,
@@ -73,7 +69,7 @@ const update = (
   }: Placement = {},
   updatedAt?: string,
 ) =>
-  CharacterInventoryMethods.updateItem(
+  CharacterInventoryService.updateItem(
     session,
     characterId,
     itemId,
@@ -119,7 +115,7 @@ async function createItem(
 /** A human character of the seeded ruleset (or of `values`' ruleset and race). */
 async function createCharacter(session: Session, values: { rulesetId?: string; raceId?: string } = {}) {
   const { rulesetId, raceMap } = await getSeedCtx();
-  return CharactersMethods.createCharacter(session, {
+  return CharactersService.createCharacter(session, {
     rulesetId,
     raceId: raceMap.pc["Human"],
     name: `Test Character ${uniqueId()}`,
@@ -154,7 +150,7 @@ async function setup(race?: { size: SizeType }) {
 describe("InventoryService", () => {
   test("lists what the character carries with each item's customizations, removed items gone, archived characters included", async () => {
     const { session, character, item, newItem } = await setup();
-    expect(await CharacterInventoryMethods.getInventory(session, character.id)).toEqual([]);
+    expect(await CharacterInventoryService.getInventory(session, character.id)).toEqual([]);
     await Properties.create(db, {
       entityId: item.id,
       entityType: "items",
@@ -182,7 +178,7 @@ describe("InventoryService", () => {
     const removed = await newItem();
     await add(session, character.id, item.id, { quantity: 3 });
     await add(session, character.id, removed.id);
-    expect(await CharacterInventoryMethods.removeItem(session, character.id, removed.id)).toEqual({ success: true });
+    expect(await CharacterInventoryService.removeItem(session, character.id, removed.id)).toEqual({ success: true });
 
     const expected = [
       {
@@ -197,9 +193,9 @@ describe("InventoryService", () => {
         },
       },
     ];
-    expect(await CharacterInventoryMethods.getInventory(session, character.id)).toMatchObject(expected);
-    await CharactersMethods.archiveCharacter(session, character.id);
-    expect(await CharacterInventoryMethods.getInventory(session, character.id)).toMatchObject(expected);
+    expect(await CharacterInventoryService.getInventory(session, character.id)).toMatchObject(expected);
+    await CharactersService.archiveCharacter(session, character.id);
+    expect(await CharacterInventoryService.getInventory(session, character.id)).toMatchObject(expected);
   });
 
   describe("adding and changing an item", () => {
@@ -253,7 +249,7 @@ describe("InventoryService", () => {
       await expect(add(session, character.id, item.id)).rejects.toThrow(BadRequestError);
       await expect(add(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
       await expect(update(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(CharacterInventoryMethods.removeItem(session, character.id, NIL_UUID)).rejects.toThrow(
+      await expect(CharacterInventoryService.removeItem(session, character.id, NIL_UUID)).rejects.toThrow(
         NotFoundError,
       );
     });
@@ -263,16 +259,16 @@ describe("InventoryService", () => {
       const { session: other } = await createTestUser();
       await add(session, character.id, item.id);
       const calls = (s: Session, characterId: string) => [
-        () => CharacterInventoryMethods.getInventory(s, characterId),
+        () => CharacterInventoryService.getInventory(s, characterId),
         () => add(s, characterId, item.id),
         () => update(s, characterId, item.id),
-        () => CharacterInventoryMethods.removeItem(s, characterId, item.id),
+        () => CharacterInventoryService.removeItem(s, characterId, item.id),
       ];
       // One at a time: the test's transaction has a single connection.
       for (const call of [...calls(session, NIL_UUID), ...calls(other, character.id)])
         await expect(call()).rejects.toThrow(NotFoundError);
 
-      await CharactersMethods.archiveCharacter(session, character.id);
+      await CharactersService.archiveCharacter(session, character.id);
       await expect(add(session, character.id, (await newItem()).id)).rejects.toThrow(NotFoundError);
       await expect(update(session, character.id, item.id, { quantity: 2 })).rejects.toThrow(NotFoundError);
     });

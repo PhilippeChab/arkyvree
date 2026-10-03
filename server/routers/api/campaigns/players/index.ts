@@ -4,7 +4,6 @@ import { z } from "zod";
 import { role as campaignRole } from "@/drizzle/schema.ts";
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirAsc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/index.ts";
 
 export default new Hono<SessionContext>()
@@ -24,16 +23,15 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, orderBy, orderDir } = c.req.valid("query");
-
-      const campaignPlayersService = CampaignPlayersService.initialize();
-      const result = await campaignPlayersService.call(
-        "getCampaignPlayers",
-        c.var.requestSession,
-        id,
-        { search, orderBy, orderDir },
-        { limit, page },
+      return c.json(
+        await CampaignPlayersService.getCampaignPlayers(
+          c.var.requestSession,
+          id,
+          { search, orderBy, orderDir },
+          { limit, page },
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .post(
@@ -50,9 +48,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { role, email } = c.req.valid("json");
-      const campaignPlayersService = CampaignPlayersService.initialize();
-      const result = await campaignPlayersService.call("addCampaignPlayer", c.var.requestSession, id, role, email);
-      return respond(c, result, 200);
+      return c.json(await CampaignPlayersService.addCampaignPlayer(c.var.requestSession, id, role, email), 200);
     },
   )
   .put(
@@ -68,16 +64,10 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, playerId } = c.req.valid("param");
       const { role, email } = c.req.valid("json");
-      const campaignPlayersService = CampaignPlayersService.initialize();
-      const result = await campaignPlayersService.call(
-        "updateCampaignPlayer",
-        c.var.requestSession,
-        id,
-        playerId,
-        role,
-        email,
+      return c.json(
+        await CampaignPlayersService.updateCampaignPlayer(c.var.requestSession, id, playerId, role, email),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .delete(
@@ -91,8 +81,6 @@ export default new Hono<SessionContext>()
     ),
     async (c) => {
       const { id, playerId } = c.req.valid("param");
-      const campaignPlayersService = CampaignPlayersService.initialize();
-      const result = await campaignPlayersService.call("removeCampaignPlayer", c.var.requestSession, id, playerId);
-      return respond(c, result, 200);
+      return c.json(await CampaignPlayersService.removeCampaignPlayer(c.var.requestSession, id, playerId), 200);
     },
   );

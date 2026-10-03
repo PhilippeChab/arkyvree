@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const paths = api.api.rulesets[":id"].customization.target.paths;
@@ -59,16 +59,14 @@ describe("rulesets customization target paths", () => {
       param: { id },
       json: root,
     });
-    expect(response.status).toBe(401);
+    await expectStatus(response, 401);
   });
 
   test("rejects an unknown kind or missing fields", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await paths.completions.$post({ param: { id }, json: { ...root, kind: "invalid" } as never })).status).toBe(
-      400,
-    );
-    expect((await paths.completions.$post({ param: { id }, json: { partialPath: "test" } as never })).status).toBe(400);
-    expect((await paths.validate.$post({ param: { id }, json: {} as never })).status).toBe(400);
+    await expectStatus(paths.completions.$post({ param: { id }, json: { ...root, kind: "invalid" } as never }), 400);
+    await expectStatus(paths.completions.$post({ param: { id }, json: { partialPath: "test" } as never }), 400);
+    await expectStatus(paths.validate.$post({ param: { id }, json: {} as never }), 400);
   });
 
   test("returns 404 for a missing ruleset", async () => {
@@ -76,6 +74,6 @@ describe("rulesets customization target paths", () => {
       param: { id: NIL_UUID },
       json: { path: "abilities.strength.misc", kind: "modifier" },
     });
-    expect(response.status).toBe(404);
+    await expectStatus(response, 404);
   });
 });

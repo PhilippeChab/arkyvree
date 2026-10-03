@@ -55,3 +55,18 @@ export async function expectOk<T extends ClientResponse<unknown>>(response: T | 
     throw new Error(`${error.message}: ${JSON.stringify(error.detail?.data)}`, { cause: error });
   }
 }
+
+/**
+ * The response, once it answered `status`: an error, which a route's types don't list (they list what it returns,
+ * and what it throws reaches the app's `onError`). Any other status fails the test with the response's body.
+ */
+export async function expectStatus<T extends { status: number; clone(): { text(): Promise<string> } }>(
+  response: T | Promise<T>,
+  status: number,
+) {
+  const awaited = await response;
+  if (awaited.status !== status) {
+    throw new Error(`Expected status ${status}, got ${awaited.status}: ${await awaited.clone().text()}`);
+  }
+  return awaited;
+}

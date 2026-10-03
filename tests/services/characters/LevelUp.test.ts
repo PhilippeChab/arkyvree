@@ -13,7 +13,7 @@ import {
   CharacterLevelSkills,
 } from "@/server/repositories/index.ts";
 import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
-import { getSeedCtx, makeSession, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
+import { getSeedCtx, makeSession, NIL_UUID } from "@/tests/helpers.ts";
 import {
   addFighterLevels,
   type BUILDS,
@@ -23,8 +23,6 @@ import {
   levelUp,
   picks,
 } from "@/tests/levelFixtures.ts";
-
-const CharacterLevelsMethods = methodsOf(CharacterLevelsService);
 
 const session = makeSession(SEED_USER_ID);
 
@@ -46,7 +44,7 @@ function finalizeBatch(
     hp,
     abilityId: ability ? ctx.abilityMap[ability] : null,
   }));
-  return CharacterLevelsMethods.finalizeLevelUp(session, characterId, batch, skills, feats, powers, force);
+  return CharacterLevelsService.finalizeLevelUp(session, characterId, batch, skills, feats, powers, force);
 }
 
 /** Fighter levels 1 to `count`, as a batch. */
@@ -344,7 +342,7 @@ describe("previewing a level-up", () => {
     levels: [string, number][],
     abilities: (string | null)[] = levels.map(() => null),
   ) =>
-    CharacterLevelsMethods.getLevelUpPreview(
+    CharacterLevelsService.getLevelUpPreview(
       session,
       characterId,
       levels.map(([klass, level]) => ({ klassId: ctx.klassMap.pc[klass], level })),
@@ -427,7 +425,7 @@ describe("the feats of a level in a batch", () => {
       xp: 6000,
       abilities: { Strength: options.strength ?? 14 },
     });
-    const { levelDetails } = await CharacterLevelsMethods.getLevelUpPreview(
+    const { levelDetails } = await CharacterLevelsService.getLevelUpPreview(
       session,
       characterId,
       FIGHTER_LEVELS.slice(0, level).map((_, i) => ({ klassId: ctx.klassMap.pc["Fighter"], level: i + 1 })),
@@ -437,7 +435,7 @@ describe("the feats of a level in a batch", () => {
       featId: ctx.featMap[name],
       aptitudeId: ctx.aptMap["General"],
     }));
-    const { items } = await CharacterLevelsMethods.getAvailableFeatsGrouped(
+    const { items } = await CharacterLevelsService.getAvailableFeatsGrouped(
       session,
       characterId,
       ctx.aptMap["General"],
@@ -480,7 +478,7 @@ describe("re-saving a level", () => {
     await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1]);
     const resave = (plan: Partial<LevelPlan> & { abilityId?: string | null }, force = false) => {
       const { skills, feats, powers } = picks(ctx, { ...FIGHTER_LEVELS[0], ...plan });
-      return CharacterLevelsMethods.updateLevel(
+      return CharacterLevelsService.updateLevel(
         session,
         characterId,
         first.id,
@@ -544,7 +542,7 @@ describe("re-saving a level", () => {
     const level = await levelUp(session, ctx, characterId, "Wizard", 1, plan);
     const { skills, feats, powers } = picks(ctx, { ...plan, feats: { ...plan.feats, "Prohibited School": [] } });
     await expect(
-      CharacterLevelsMethods.updateLevel(session, characterId, level.id, 4, null, skills, feats, powers),
+      CharacterLevelsService.updateLevel(session, characterId, level.id, 4, null, skills, feats, powers),
     ).rejects.toThrow(/Prohibited School.*unspent/);
   });
 

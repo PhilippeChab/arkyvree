@@ -6,7 +6,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Races } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   entityHasCharacterPicks,
@@ -20,7 +19,7 @@ import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const RacesMethods = {
+class RacesService {
   async getRulesetRaces(
     rulesetId: string,
     where: {
@@ -36,7 +35,7 @@ const RacesMethods = {
       const { sourceChain } = rulesetData.cow;
       return await Races.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
-  },
+  }
 
   async getRulesetRace(rulesetId: string, raceId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -49,7 +48,7 @@ const RacesMethods = {
         requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
       };
     });
-  },
+  }
 
   async createRulesetRace(
     session: Session,
@@ -98,7 +97,7 @@ const RacesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateRulesetRace(
     session: Session,
@@ -146,7 +145,7 @@ const RacesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteRulesetRace(session: Session, rulesetId: string, raceId: string) {
     const result = await withTransaction(async (tx) => {
@@ -176,13 +175,7 @@ const RacesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class RacesService extends BaseService<typeof RacesMethods> {
-  static initialize() {
-    return new RacesService(RacesMethods);
   }
 }
 
-export default RacesService;
+export default new RacesService();

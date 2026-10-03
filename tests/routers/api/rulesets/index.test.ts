@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 const rulesets = api.api.rulesets;
@@ -59,7 +59,7 @@ describe("rulesets", () => {
 
   test("refuses to star a draft", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID, { private: false });
-    expect((await ruleset.star.$post({ param: { id } })).status).toBe(403);
+    await expectStatus(ruleset.star.$post({ param: { id } }), 403);
   });
 
   test("subscribes a fork to an extension, lists it and unsubscribes", async () => {
@@ -98,15 +98,15 @@ describe("rulesets", () => {
   });
 
   test("requires a session", async () => {
-    expect((await guestApi.api.rulesets.$get({ query: {} })).status).toBe(401);
-    expect((await guestApi.api.rulesets[":id"].$get({ param: { id: NIL_UUID } })).status).toBe(401);
+    await expectStatus(guestApi.api.rulesets.$get({ query: {} }), 401);
+    await expectStatus(guestApi.api.rulesets[":id"].$get({ param: { id: NIL_UUID } }), 401);
   });
 
   test("returns 404 for a missing ruleset", async () => {
     const param = { id: NIL_UUID };
-    expect((await ruleset.$get({ param })).status).toBe(404);
-    expect((await ruleset.star.$post({ param })).status).toBe(404);
-    expect((await ruleset.archive.$post({ param })).status).toBe(404);
-    expect((await ruleset.changes.$get({ param })).status).toBe(404);
+    await expectStatus(ruleset.$get({ param }), 404);
+    await expectStatus(ruleset.star.$post({ param }), 404);
+    await expectStatus(ruleset.archive.$post({ param }), 404);
+    await expectStatus(ruleset.changes.$get({ param }), 404);
   });
 });

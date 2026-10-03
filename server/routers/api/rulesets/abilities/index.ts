@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { AbilitiesService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
@@ -25,15 +24,10 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
-
-      const abilitiesService = AbilitiesService.initialize();
-      const result = await abilitiesService.call(
-        "getRulesetAbilities",
-        id,
-        { search, childOnly, orderBy, orderDir },
-        { limit, page },
+      return c.json(
+        await AbilitiesService.getRulesetAbilities(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -41,9 +35,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), abilityId: z.string().uuid() })),
     async (c) => {
       const { id, abilityId } = c.req.valid("param");
-
-      const abilitiesService = AbilitiesService.initialize();
-      const result = await abilitiesService.call("getRulesetAbility", id, abilityId);
-      return respond(c, result, 200);
+      return c.json(await AbilitiesService.getRulesetAbility(id, abilityId), 200);
     },
   );

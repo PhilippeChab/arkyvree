@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const mechanics = api.api.rulesets[":id"].mechanics;
@@ -27,24 +27,24 @@ describe("rulesets mechanics", () => {
     expect(updated).toMatchObject({ name: "Renamed Mechanic", description: "Updated" });
 
     await expectOk(mechanic.$delete({ param }));
-    expect((await mechanic.$get({ param })).status).toBe(404);
+    await expectStatus(mechanic.$get({ param }), 404);
   });
 
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await guestApi.api.rulesets[":id"].mechanics.$get({ param: { id }, query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.rulesets[":id"].mechanics.$get({ param: { id }, query: {} }), 401);
   });
 
   test("rejects a mechanic without a name", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await mechanics.$post({ param: { id }, json: { name: "" } })).status).toBe(400);
+    await expectStatus(mechanics.$post({ param: { id }, json: { name: "" } }), 400);
   });
 
   test("returns 404 for a missing ruleset or mechanic", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await mechanics.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    await expectStatus(mechanics.$get({ param: { id: NIL_UUID }, query: {} }), 404);
     const param = { id, mechanicId: NIL_UUID };
-    expect((await mechanic.$put({ param, json: { name: "Missing" } })).status).toBe(404);
-    expect((await mechanic.$delete({ param })).status).toBe(404);
+    await expectStatus(mechanic.$put({ param, json: { name: "Missing" } }), 404);
+    await expectStatus(mechanic.$delete({ param }), 404);
   });
 });

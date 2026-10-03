@@ -16,12 +16,7 @@ import {
   createTestRuleset,
   createTestUserAndRuleset,
   insertRows,
-  methodsOf,
 } from "@/tests/helpers.ts";
-
-const ClassLevelsMethods = methodsOf(ClassLevelsService);
-const FeatsMethods = methodsOf(FeatsService);
-const PowersMethods = methodsOf(PowersService);
 
 /** A new user's empty ruleset with three aptitudes. */
 async function setup() {
@@ -55,32 +50,32 @@ describe("FeatsService", () => {
         ruleset,
         aptitudeIds: [combat, metamagic, general],
       } = await setup();
-      const feat = await FeatsMethods.createRulesetFeat(session, ruleset.id, {
+      const feat = await FeatsService.createRulesetFeat(session, ruleset.id, {
         name: "Power Attack",
         aptitudeIds: [combat, metamagic],
       });
       expect(await linkedAptitudeIds(feat.id)).toEqual([combat, metamagic].sort());
 
-      await FeatsMethods.updateRulesetFeat(session, ruleset.id, feat.id, {
+      await FeatsService.updateRulesetFeat(session, ruleset.id, feat.id, {
         name: "Power Attack",
         aptitudeIds: [general],
       });
       expect(await linkedAptitudeIds(feat.id)).toEqual([general]);
 
-      await FeatsMethods.updateRulesetFeat(session, ruleset.id, feat.id, {
+      await FeatsService.updateRulesetFeat(session, ruleset.id, feat.id, {
         name: "Power Attack",
         description: "Renamed only",
       });
       expect(await linkedAptitudeIds(feat.id)).toEqual([general]);
 
-      await FeatsMethods.updateRulesetFeat(session, ruleset.id, feat.id, { name: "Power Attack", aptitudeIds: [] });
+      await FeatsService.updateRulesetFeat(session, ruleset.id, feat.id, { name: "Power Attack", aptitudeIds: [] });
       expect(await linkedAptitudeIds(feat.id)).toEqual([]);
     });
 
     test("refuses a new feat without an aptitude", async () => {
       const { session, ruleset } = await setup();
       await expect(
-        FeatsMethods.createRulesetFeat(session, ruleset.id, { name: "Orphan Feat", aptitudeIds: [] }),
+        FeatsService.createRulesetFeat(session, ruleset.id, { name: "Orphan Feat", aptitudeIds: [] }),
       ).rejects.toThrow(BadRequestError);
     });
 
@@ -90,20 +85,20 @@ describe("FeatsService", () => {
         ruleset,
         aptitudeIds: [combat, spells],
       } = await setup();
-      await PowersMethods.createRulesetPower(session, ruleset.id, {
+      await PowersService.createRulesetPower(session, ruleset.id, {
         name: "Magic Missile",
         aptitudes: [{ id: spells }],
       });
       await expect(
-        FeatsMethods.createRulesetFeat(session, ruleset.id, { name: "Spell Feat", aptitudeIds: [spells] }),
+        FeatsService.createRulesetFeat(session, ruleset.id, { name: "Spell Feat", aptitudeIds: [spells] }),
       ).rejects.toThrow(ConflictError);
 
-      const feat = await FeatsMethods.createRulesetFeat(session, ruleset.id, {
+      const feat = await FeatsService.createRulesetFeat(session, ruleset.id, {
         name: "Combat Feat",
         aptitudeIds: [combat],
       });
       await expect(
-        FeatsMethods.updateRulesetFeat(session, ruleset.id, feat.id, { name: "Combat Feat", aptitudeIds: [spells] }),
+        FeatsService.updateRulesetFeat(session, ruleset.id, feat.id, { name: "Combat Feat", aptitudeIds: [spells] }),
       ).rejects.toThrow(ConflictError);
     });
   });
@@ -115,13 +110,13 @@ describe("FeatsService", () => {
       aptitudeIds: [combat, general],
     } = await setup();
     for (const name of ["Focus: Axe", "Focus: Sword"]) {
-      const feat = await FeatsMethods.createRulesetFeat(session, ruleset.id, { name, aptitudeIds: [combat] });
+      const feat = await FeatsService.createRulesetFeat(session, ruleset.id, { name, aptitudeIds: [combat] });
       await Properties.create(db, { entityId: feat.id, entityType: "feats", type: "FEAT_FAMILY", value: "Focus" });
     }
-    await FeatsMethods.createRulesetFeat(session, ruleset.id, { name: "Cleave", aptitudeIds: [combat] });
-    await FeatsMethods.createRulesetFeat(session, ruleset.id, { name: "Alertness", aptitudeIds: [general] });
+    await FeatsService.createRulesetFeat(session, ruleset.id, { name: "Cleave", aptitudeIds: [combat] });
+    await FeatsService.createRulesetFeat(session, ruleset.id, { name: "Alertness", aptitudeIds: [general] });
 
-    const grouped = await FeatsMethods.getRulesetFeatsGrouped(
+    const grouped = await FeatsService.getRulesetFeatsGrouped(
       ruleset.id,
       { aptitudeId: combat },
       { limit: 10, page: 1 },
@@ -138,19 +133,19 @@ describe("FeatsService", () => {
       ruleset,
       aptitudeIds: [combat],
     } = await setup();
-    const feat = await FeatsMethods.createRulesetFeat(session, ruleset.id, {
+    const feat = await FeatsService.createRulesetFeat(session, ruleset.id, {
       name: "Doomed Feat",
       aptitudeIds: [combat],
     });
     const [klass] = await Klasses.create(db, { name: "Granting Class", rulesetId: ruleset.id, hd: 10 });
-    await ClassLevelsMethods.createClassLevel(session, ruleset.id, klass.id, {
+    await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
       level: 1,
       bab: 1,
       skills: 2,
       feats: [{ featId: feat.id, aptitudeId: combat }],
     });
 
-    await FeatsMethods.deleteRulesetFeat(session, ruleset.id, feat.id);
+    await FeatsService.deleteRulesetFeat(session, ruleset.id, feat.id);
 
     expect(await linkedAptitudeIds(feat.id)).toEqual([]);
     expect(await db.select().from(klassLevelFeatsInRules).where(eq(klassLevelFeatsInRules.featId, feat.id))).toEqual(
@@ -166,16 +161,16 @@ describe("FeatsService", () => {
         ruleset,
         aptitudeIds: [combat],
       } = await setup();
-      const feat = await FeatsMethods.createRulesetFeat(session, ruleset.id, {
+      const feat = await FeatsService.createRulesetFeat(session, ruleset.id, {
         name: "Picked Feat",
         aptitudeIds: [combat],
       });
       const character = await pickFeat(user.id, ruleset.id, feat.id, combat);
-      await expect(FeatsMethods.deleteRulesetFeat(session, ruleset.id, feat.id)).rejects.toThrow(ConflictError);
+      await expect(FeatsService.deleteRulesetFeat(session, ruleset.id, feat.id)).rejects.toThrow(ConflictError);
 
       // An archived character keeps its picks so unarchiving restores them.
       await Characters.archive(db, { id: character.id });
-      await expect(FeatsMethods.deleteRulesetFeat(session, ruleset.id, feat.id)).rejects.toThrow(ConflictError);
+      await expect(FeatsService.deleteRulesetFeat(session, ruleset.id, feat.id)).rejects.toThrow(ConflictError);
     });
 
     test("is refused when a character of a fork picked it", async () => {
@@ -185,13 +180,13 @@ describe("FeatsService", () => {
         ruleset: parent,
         aptitudeIds: [combat],
       } = await setup();
-      const feat = await FeatsMethods.createRulesetFeat(session, parent.id, {
+      const feat = await FeatsService.createRulesetFeat(session, parent.id, {
         name: "Inherited Feat",
         aptitudeIds: [combat],
       });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
       await pickFeat(user.id, fork.id, feat.id, combat);
-      await expect(FeatsMethods.deleteRulesetFeat(session, parent.id, feat.id)).rejects.toThrow(ConflictError);
+      await expect(FeatsService.deleteRulesetFeat(session, parent.id, feat.id)).rejects.toThrow(ConflictError);
     });
 
     test("is refused when a character of a ruleset using it as an extension picked it", async () => {
@@ -201,13 +196,13 @@ describe("FeatsService", () => {
         ruleset: extension,
         aptitudeIds: [combat],
       } = await setup();
-      const feat = await FeatsMethods.createRulesetFeat(session, extension.id, {
+      const feat = await FeatsService.createRulesetFeat(session, extension.id, {
         name: "Extension Feat",
         aptitudeIds: [combat],
       });
       const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
       await pickFeat(user.id, host.id, feat.id, combat);
-      await expect(FeatsMethods.deleteRulesetFeat(session, extension.id, feat.id)).rejects.toThrow(ConflictError);
+      await expect(FeatsService.deleteRulesetFeat(session, extension.id, feat.id)).rejects.toThrow(ConflictError);
     });
 
     test("is allowed when the ruleset's characters didn't pick it", async () => {
@@ -218,11 +213,11 @@ describe("FeatsService", () => {
         aptitudeIds: [combat],
       } = await setup();
       await createTestCharacter(user.id, { rulesetId: ruleset.id });
-      const feat = await FeatsMethods.createRulesetFeat(session, ruleset.id, {
+      const feat = await FeatsService.createRulesetFeat(session, ruleset.id, {
         name: "Unpicked Feat",
         aptitudeIds: [combat],
       });
-      expect(await FeatsMethods.deleteRulesetFeat(session, ruleset.id, feat.id)).toMatchObject({ id: feat.id });
+      expect(await FeatsService.deleteRulesetFeat(session, ruleset.id, feat.id)).toMatchObject({ id: feat.id });
     });
   });
 
@@ -235,18 +230,18 @@ describe("FeatsService", () => {
       ruleset: parent,
       aptitudeIds: [combat],
     } = await setup();
-    const source = await FeatsMethods.createRulesetFeat(session, parent.id, {
+    const source = await FeatsService.createRulesetFeat(session, parent.id, {
       name: "Endurance",
       aptitudeIds: [combat],
     });
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-    const copy = await FeatsMethods.updateRulesetFeat(session, fork.id, source.id, {
+    const copy = await FeatsService.updateRulesetFeat(session, fork.id, source.id, {
       name: "Endurance",
       description: "Edited in fork",
     });
-    await FeatsMethods.deleteRulesetFeat(session, fork.id, copy.id);
-    const recreated = await FeatsMethods.createRulesetFeat(session, fork.id, {
+    await FeatsService.deleteRulesetFeat(session, fork.id, copy.id);
+    const recreated = await FeatsService.createRulesetFeat(session, fork.id, {
       name: "Endurance",
       aptitudeIds: [combat],
     });

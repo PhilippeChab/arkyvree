@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const properties = api.api.rulesets[":id"].customization.properties;
@@ -68,20 +68,18 @@ describe("rulesets customization property types", () => {
       param: { id },
       query: {},
     });
-    expect(response.status).toBe(401);
+    await expectStatus(response, 401);
   });
 
   test("rejects an unknown entity type, an empty search or a missing value type", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await types.$get({ param: { id }, query: { entityType: "invalid" as never } })).status).toBe(400);
-    expect((await types.search.$get({ param: { id }, query: { query: "" } })).status).toBe(400);
-    expect((await types.search.$get({ param: { id }, query: {} as never })).status).toBe(400);
-    expect((await properties.values.completions.$get({ param: { id }, query: { type: "", query: "" } })).status).toBe(
-      400,
-    );
+    await expectStatus(types.$get({ param: { id }, query: { entityType: "invalid" as never } }), 400);
+    await expectStatus(types.search.$get({ param: { id }, query: { query: "" } }), 400);
+    await expectStatus(types.search.$get({ param: { id }, query: {} as never }), 400);
+    await expectStatus(properties.values.completions.$get({ param: { id }, query: { type: "", query: "" } }), 400);
   });
 
   test("returns 404 for a missing ruleset", async () => {
-    expect((await types.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    await expectStatus(types.$get({ param: { id: NIL_UUID }, query: {} }), 404);
   });
 });

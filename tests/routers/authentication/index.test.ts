@@ -6,7 +6,7 @@ import { emailVerificationsInAccount, sessionsInAccount } from "@/drizzle/schema
 import { db } from "@/server/database/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
 import { EmailVerifications, OauthAccounts, PasswordResets, Users } from "@/server/repositories/index.ts";
-import { apiAs, expectOk, guestApi, sessionIdFrom, signedInApi } from "@/tests/api.ts";
+import { apiAs, expectOk, expectStatus, guestApi, sessionIdFrom, signedInApi } from "@/tests/api.ts";
 import { uniqueId } from "@/tests/helpers.ts";
 
 const auth = guestApi.auth;
@@ -50,7 +50,7 @@ describe("authentication", () => {
       const response = await auth["sign-up"].$post({
         json: { emailAddress: newEmail("mismatch"), password, passwordConfirmation: `${password}-other` },
       });
-      expect(response.status).toBe(400);
+      await expectStatus(response, 400);
       expect(await response.json()).toMatchObject({
         issues: [{ category: "passwordConfirmation", message: "Passwords do not match" }],
       });
@@ -72,7 +72,7 @@ describe("authentication", () => {
     test("refuses a wrong code", async () => {
       const email = newEmail("badcode");
       await signUp(email);
-      expect((await auth["verify-email"].$post({ json: { emailAddress: email, code: "000000" } })).status).toBe(401);
+      await expectStatus(auth["verify-email"].$post({ json: { emailAddress: email, code: "000000" } }), 401);
     });
 
     test("resends the verification code", async () => {
@@ -98,14 +98,14 @@ describe("authentication", () => {
       expect(me).not.toHaveProperty("passwordDigest");
 
       await expectOk(client.auth["sign-out"].$post());
-      expect((await client.auth.me.$get()).status).toBe(401);
+      await expectStatus(client.auth.me.$get(), 401);
     });
 
     test("refuses to sign in before the email is verified", async () => {
       const email = newEmail("unverified");
       await signUp(email);
       const response = await auth["sign-in"].$post({ json: { emailAddress: email, password } });
-      expect(response.status).toBe(401);
+      await expectStatus(response, 401);
       expect(await response.json()).toMatchObject({ message: expect.stringContaining("Email not verified") });
     });
 
@@ -115,11 +115,11 @@ describe("authentication", () => {
         .update(sessionsInAccount)
         .set({ expiresAt: new Date(Date.now() - 1000).toISOString() })
         .where(eq(sessionsInAccount.id, sessionId));
-      expect((await api.auth.me.$get()).status).toBe(401);
+      await expectStatus(api.auth.me.$get(), 401);
     });
 
     test("requires a session for /me", async () => {
-      expect((await auth.me.$get()).status).toBe(401);
+      await expectStatus(auth.me.$get(), 401);
     });
   });
 
@@ -134,7 +134,7 @@ describe("authentication", () => {
       expect(updated).toMatchObject({ username: "testusername", emailAddress: email, pendingEmailAddress: changed });
       expect(updated).not.toHaveProperty("passwordDigest");
 
-      expect((await api.auth["verify-email-change"].$post({ json: { code: "000000" } })).status).toBe(401);
+      await expectStatus(api.auth["verify-email-change"].$post({ json: { code: "000000" } }), 401);
       const verified = await expectOk(
         api.auth["verify-email-change"].$post({ json: { code: await latestVerificationCode(user.id) } }),
       );
@@ -146,7 +146,7 @@ describe("authentication", () => {
       const first = await signUpAndVerify("taken");
       const { api } = await signUpAndVerify("taker");
       const response = await api.auth.profile.$put({ json: { emailAddress: first.email } });
-      expect(response.status).toBe(400);
+      await expectStatus(response, 400);
       expect(await response.json()).toMatchObject({ message: expect.stringContaining("Email address already in use") });
     });
 
@@ -194,7 +194,7 @@ describe("authentication", () => {
           newPasswordConfirmation: "newpassword456",
         },
       });
-      expect(response.status).toBe(401);
+      await expectStatus(response, 401);
       expect(await response.json()).toMatchObject({
         message: expect.stringContaining("Current password is incorrect"),
       });
@@ -211,7 +211,7 @@ describe("authentication", () => {
         newPasswordConfirmation: "resetpassword1234",
       };
 
-      expect((await auth["reset-password"].$post({ json: { ...reset, code: "000000" } })).status).toBe(401);
+      await expectStatus(auth["reset-password"].$post({ json: { ...reset, code: "000000" } }), 401);
       const { code } = (await PasswordResets.findOne(db, { userId: user.id }))!;
       expect(await expectOk(auth["reset-password"].$post({ json: { ...reset, code } }))).toEqual({ success: true });
       await expectOk(auth["sign-in"].$post({ json: { emailAddress: email, password: "resetpassword1234" } }));
@@ -230,10 +230,10 @@ describe("authentication", () => {
       const mismatched = await api.auth["set-password"].$post({
         json: { ...json, newPasswordConfirmation: "different1" },
       });
-      expect(mismatched.status).toBe(400);
+      await expectStatus(mismatched, 400);
       expect(await expectOk(api.auth["set-password"].$post({ json }))).toEqual({ success: true });
       await expectOk(auth["sign-in"].$post({ json: { emailAddress: email, password: "firstpassword1" } }));
-      expect((await api.auth["set-password"].$post({ json })).status).toBe(400);
+      await expectStatus(api.auth["set-password"].$post({ json }), 400);
     });
   });
 
@@ -265,19 +265,19 @@ describe("authentication", () => {
         providerAccountId: `google-${uniqueId()}`,
       });
       const api = await signedInApi(user.id);
-      expect((await api.auth["unlink-oauth"].$post({ json: { provider: "google" } })).status).toBe(400);
+      await expectStatus(api.auth["unlink-oauth"].$post({ json: { provider: "google" } }), 400);
     });
   });
 
   describe("account deletion", () => {
     test("deletes the account with its password and ends the session", async () => {
       const { api } = await signUpAndVerify("delete");
-      expect((await api.auth["delete-account"].$post({ json: { password: "wrongpassword" } })).status).toBe(401);
+      await expectStatus(api.auth["delete-account"].$post({ json: { password: "wrongpassword" } }), 401);
 
       const response = await api.auth["delete-account"].$post({ json: { password } });
       expect(await expectOk(response)).toEqual({ success: true });
       expect(response.headers.get("set-cookie")).toContain(`${SESSION_COOKIE_NAME}=`);
-      expect((await api.auth.me.$get()).status).toBe(401);
+      await expectStatus(api.auth.me.$get(), 401);
     });
   });
 });

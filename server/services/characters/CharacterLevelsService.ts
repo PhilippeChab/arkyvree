@@ -1,5 +1,3 @@
-import BaseService from "@/server/services/BaseService.ts";
-
 import { finalizeLevelUp, removeLevel, updateLevel } from "./levels/dnd3.5/finalize.ts";
 import {
   getAvailableFeats,
@@ -22,28 +20,22 @@ import {
   getSkillSlots,
 } from "./levels/dnd3.5/slotQueries.ts";
 
-const CharacterLevelsMethods = {
-  getAttributeSlots,
-  getSkillSlots,
-  getFeatSlots,
-  getEditFeatSlots,
-  getPowerSlots,
-  getEditPowerSlots,
-  getAvailableKlasses,
-  getAvailablePowers,
-  getAvailableFeats,
-  getAvailableFeatsGrouped,
-  getLevel,
-  removeLevel,
-  updateLevel,
-  finalizeLevelUp,
-  getLevelUpPreview,
-} as const;
-
-class CharacterLevelsService extends BaseService<typeof CharacterLevelsMethods> {
-  static initialize() {
-    return new CharacterLevelsService(CharacterLevelsMethods);
-  }
+class CharacterLevelsService {
+  readonly getAttributeSlots = getAttributeSlots;
+  readonly getSkillSlots = getSkillSlots;
+  readonly getFeatSlots = getFeatSlots;
+  readonly getEditFeatSlots = getEditFeatSlots;
+  readonly getPowerSlots = getPowerSlots;
+  readonly getEditPowerSlots = getEditPowerSlots;
+  readonly getAvailableKlasses = getAvailableKlasses;
+  readonly getAvailablePowers = getAvailablePowers;
+  readonly getAvailableFeats = getAvailableFeats;
+  readonly getAvailableFeatsGrouped = getAvailableFeatsGrouped;
+  readonly getLevel = getLevel;
+  readonly removeLevel = removeLevel;
+  readonly updateLevel = updateLevel;
+  readonly finalizeLevelUp = finalizeLevelUp;
+  readonly getLevelUpPreview = getLevelUpPreview;
 }
 
-export default CharacterLevelsService;
+export default new CharacterLevelsService();

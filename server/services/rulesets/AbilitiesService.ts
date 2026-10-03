@@ -1,9 +1,8 @@
 import { db } from "@/server/database/index.ts";
 import { Abilities } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { findScopedEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 
-const AbilitiesMethods = {
+class AbilitiesService {
   async getRulesetAbilities(
     rulesetId: string,
     where: {
@@ -24,7 +23,7 @@ const AbilitiesMethods = {
         pagination,
       );
     });
-  },
+  }
 
   async getRulesetAbility(rulesetId: string, abilityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -32,13 +31,7 @@ const AbilitiesMethods = {
       const ability = findScopedEntity(rulesetData.abilitiesById, abilityId, rulesetId, sourceChain, "Ability");
       return ability;
     });
-  },
-} as const;
-
-class AbilitiesService extends BaseService<typeof AbilitiesMethods> {
-  static initialize() {
-    return new AbilitiesService(AbilitiesMethods);
   }
 }
 
-export default AbilitiesService;
+export default new AbilitiesService();

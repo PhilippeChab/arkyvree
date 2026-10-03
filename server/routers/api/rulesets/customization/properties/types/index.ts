@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { PropertyTypesService } from "@/server/services/rulesets/index.ts";
 
 const propertyTypes = new Hono()
@@ -25,9 +24,7 @@ const propertyTypes = new Hono()
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
       const { entityType } = c.req.valid("query");
-      const service = PropertyTypesService.initialize();
-      const result = await service.call("getPropertyTypes", rulesetId, entityType);
-      return respond(c, result, 200);
+      return c.json(await PropertyTypesService.getPropertyTypes(rulesetId, entityType), 200);
     },
   )
   /**
@@ -49,9 +46,7 @@ const propertyTypes = new Hono()
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
       const { query, entityType } = c.req.valid("query");
-      const service = PropertyTypesService.initialize();
-      const result = await service.call("searchPropertyTypes", rulesetId, query, entityType);
-      return respond(c, result, 200);
+      return c.json(await PropertyTypesService.searchPropertyTypes(rulesetId, query, entityType), 200);
     },
   )
   /**
@@ -75,15 +70,10 @@ const propertyTypes = new Hono()
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
       const { query, entityType, limit: limitValue, page: pageValue } = c.req.valid("query");
-      const service = PropertyTypesService.initialize();
-      const result = await service.call(
-        "getCompletions",
-        rulesetId,
-        query,
-        { limit: limitValue, page: pageValue },
-        entityType,
+      return c.json(
+        await PropertyTypesService.getCompletions(rulesetId, query, { limit: limitValue, page: pageValue }, entityType),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   /**
@@ -105,12 +95,13 @@ const propertyTypes = new Hono()
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
       const { type, query, limit: limitValue, page: pageValue } = c.req.valid("query");
-      const service = PropertyTypesService.initialize();
-      const result = await service.call("getValueCompletions", rulesetId, type, query, {
-        limit: limitValue,
-        page: pageValue,
-      });
-      return respond(c, result, 200);
+      return c.json(
+        await PropertyTypesService.getValueCompletions(rulesetId, type, query, {
+          limit: limitValue,
+          page: pageValue,
+        }),
+        200,
+      );
     },
   );
 

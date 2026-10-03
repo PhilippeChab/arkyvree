@@ -4,7 +4,6 @@ import { z } from "zod";
 import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import { errorResponse, respond } from "@/server/routers/respond.ts";
 import CampaignsService from "@/server/services/CampaignsService.ts";
 
 import playerCharacters from "./characters/index.ts";
@@ -34,30 +33,26 @@ export default new Hono()
 
       const visibility = visibilityMap[query.visibility];
 
-      const result = await CampaignsService.initialize().call(
-        "getMyCampaigns",
-        c.var.requestSession,
-        { visibility, search: query.search, orderBy: query.orderBy, orderDir: query.orderDir },
-        { limit: query.limit, page: query.page },
+      return c.json(
+        await CampaignsService.getMyCampaigns(
+          c.var.requestSession,
+          { visibility, search: query.search, orderBy: query.orderBy, orderDir: query.orderDir },
+          { limit: query.limit, page: query.page },
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
-    const result = await CampaignsService.initialize().call("unarchiveCampaign", c.var.requestSession, id);
-    const success = result[0];
-
-    if (!success) return errorResponse(c, result[2]);
-
+    await CampaignsService.unarchiveCampaign(c.var.requestSession, id);
     return c.json({ message: "Campaign unarchived successfully" }, 200);
   })
   .get("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
-    const result = await CampaignsService.initialize().call("getCampaignById", c.var.requestSession, id);
-    return respond(c, result, 200);
+    return c.json(await CampaignsService.getCampaignById(c.var.requestSession, id), 200);
   })
   .post(
     "/",
@@ -73,8 +68,7 @@ export default new Hono()
     async (c) => {
       const data = c.req.valid("json");
 
-      const result = await CampaignsService.initialize().call("createCampaign", c.var.requestSession, data);
-      return respond(c, result, 201);
+      return c.json(await CampaignsService.createCampaign(c.var.requestSession, data), 201);
     },
   )
   .put(
@@ -91,27 +85,18 @@ export default new Hono()
       const { id } = c.req.valid("param");
       const data = c.req.valid("json");
 
-      const result = await CampaignsService.initialize().call("updateCampaign", c.var.requestSession, id, data);
-      return respond(c, result, 200);
+      return c.json(await CampaignsService.updateCampaign(c.var.requestSession, id, data), 200);
     },
   )
   .delete("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
-    const result = await CampaignsService.initialize().call("archiveCampaign", c.var.requestSession, id);
-    const success = result[0];
-
-    if (!success) return errorResponse(c, result[2]);
-
+    await CampaignsService.archiveCampaign(c.var.requestSession, id);
     return c.json({ message: "Campaign archived successfully" }, 200);
   })
   .delete("/:id/permanent", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
-    const result = await CampaignsService.initialize().call("hardDeleteCampaign", c.var.requestSession, id);
-    const success = result[0];
-
-    if (!success) return errorResponse(c, result[2]);
-
+    await CampaignsService.hardDeleteCampaign(c.var.requestSession, id);
     return c.json({ message: "Campaign permanently deleted" }, 200);
   });

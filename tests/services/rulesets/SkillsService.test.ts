@@ -14,13 +14,9 @@ import {
   createTestKlassLevel,
   createTestUserAndRuleset,
   insertRows,
-  methodsOf,
 } from "@/tests/helpers.ts";
 
-const ClassesMethods = methodsOf(ClassesService);
-const SkillsMethods = methodsOf(SkillsService);
-
-type SkillBody = Parameters<typeof SkillsMethods.createRulesetSkill>[2];
+type SkillBody = Parameters<typeof SkillsService.createRulesetSkill>[2];
 
 /** A new user's empty ruleset with three abilities, and a skill body using its Strength. */
 async function setup() {
@@ -51,10 +47,10 @@ describe("SkillsService", () => {
       impactedByWeight: false,
       usableWithoutTraining: false,
     });
-    expect(await SkillsMethods.createRulesetSkill(session, ruleset.id, body())).toMatchObject(body());
-    expect(await SkillsMethods.createRulesetSkill(session, ruleset.id, spellcraft)).toMatchObject(spellcraft);
+    expect(await SkillsService.createRulesetSkill(session, ruleset.id, body())).toMatchObject(body());
+    expect(await SkillsService.createRulesetSkill(session, ruleset.id, spellcraft)).toMatchObject(spellcraft);
 
-    const { items } = await SkillsMethods.getRulesetSkills(ruleset.id, {}, { limit: 10, page: 1 });
+    const { items } = await SkillsService.getRulesetSkills(ruleset.id, {}, { limit: 10, page: 1 });
     expect(items).toMatchObject([
       { name: "Climb", impactedByWeight: true, usableWithoutTraining: true },
       { name: "Spellcraft", impactedByWeight: false, usableWithoutTraining: false },
@@ -63,9 +59,9 @@ describe("SkillsService", () => {
 
   test("updates every field, and the cached list shows the change", async () => {
     const { session, ruleset, abilityMap, body } = await setup();
-    const created = await SkillsMethods.createRulesetSkill(session, ruleset.id, body({ impactedByWeight: false }));
+    const created = await SkillsService.createRulesetSkill(session, ruleset.id, body({ impactedByWeight: false }));
     // Read the list once so the ruleset's cache holds the old values.
-    await SkillsMethods.getRulesetSkills(ruleset.id, {}, { limit: 10, page: 1 });
+    await SkillsService.getRulesetSkills(ruleset.id, {}, { limit: 10, page: 1 });
 
     const update = body({
       name: "Jump",
@@ -74,8 +70,8 @@ describe("SkillsService", () => {
       impactedByWeight: true,
       usableWithoutTraining: false,
     });
-    expect(await SkillsMethods.updateRulesetSkill(session, ruleset.id, created.id, update)).toMatchObject(update);
-    const after = await SkillsMethods.getRulesetSkills(ruleset.id, {}, { limit: 10, page: 1 });
+    expect(await SkillsService.updateRulesetSkill(session, ruleset.id, created.id, update)).toMatchObject(update);
+    const after = await SkillsService.getRulesetSkills(ruleset.id, {}, { limit: 10, page: 1 });
     expect(after.items).toMatchObject([
       { id: created.id, name: "Jump", impactedByWeight: true, usableWithoutTraining: false },
     ]);
@@ -83,21 +79,21 @@ describe("SkillsService", () => {
 
   test("deletes the class skills that point at a deleted skill", async () => {
     const { session, ruleset, body } = await setup();
-    const skill = await SkillsMethods.createRulesetSkill(session, ruleset.id, body());
-    const klass = await ClassesMethods.createRulesetKlass(session, ruleset.id, { name: "Skilled Class" });
+    const skill = await SkillsService.createRulesetSkill(session, ruleset.id, body());
+    const klass = await ClassesService.createRulesetKlass(session, ruleset.id, { name: "Skilled Class" });
     await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
 
-    await SkillsMethods.deleteRulesetSkill(session, ruleset.id, skill.id);
+    await SkillsService.deleteRulesetSkill(session, ruleset.id, skill.id);
     expect(await db.select().from(klassSkillsInRules).where(eq(klassSkillsInRules.skillId, skill.id))).toEqual([]);
   });
 
   test("refuses to delete a skill a character put ranks in", async () => {
     const { user, session, ruleset, body } = await setup();
-    const skill = await SkillsMethods.createRulesetSkill(session, ruleset.id, body());
+    const skill = await SkillsService.createRulesetSkill(session, ruleset.id, body());
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     const { klassLevel } = await createTestKlassLevel(ruleset.id);
     await addCharacterLevel(character.id, klassLevel.id, { skills: [{ skillId: skill.id, rank: 1 }] });
 
-    await expect(SkillsMethods.deleteRulesetSkill(session, ruleset.id, skill.id)).rejects.toThrow(ConflictError);
+    await expect(SkillsService.deleteRulesetSkill(session, ruleset.id, skill.id)).rejects.toThrow(ConflictError);
   });
 });

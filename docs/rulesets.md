@@ -543,21 +543,24 @@ Services that orchestrate 3.5-shaped flows (level-up, spell selection, wizard sc
 // Today
 import { getAvailableKlasses } from "./levels/dnd3.5/pickQueries.ts";
 // …
-const CharacterLevelsMethods = { getAvailableKlasses, … };
+class CharacterLevelsService {
+  readonly getAvailableKlasses = getAvailableKlasses;
+  …
+}
 
 // With multiple rulesets (sketch)
 import * as dnd35 from "./levels/dnd3.5/index.ts";
 import * as pf2e from "./levels/pf2e/index.ts";
 
-const CharacterLevelsMethods = {
-  getAvailableKlasses: async (session, characterId, where, pagination) => {
+class CharacterLevelsService {
+  async getAvailableKlasses(session, characterId, where, pagination) {
     const ruleset = await getCharacterRuleset(characterId);
     if (ruleset.name === "Dungeons & Dragons: 3.5") return dnd35.getAvailableKlasses(session, characterId, where, pagination);
     if (ruleset.name === "Pathfinder 2e")           return pf2e.getAvailableKlasses(session, characterId, where, pagination);
     throw new BadRequestError(`Unsupported ruleset: ${ruleset.name}`);
-  },
+  }
   …
-};
+}
 ```
 
 Entity CRUD services (`FeatsService`, `PowersService`, `AptitudesService`, `RulesetsService`) are ruleset-agnostic — they operate on rows of the generic schema. These stay in `server/services/rulesets/` and don't get split.

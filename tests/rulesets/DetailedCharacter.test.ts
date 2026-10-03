@@ -47,11 +47,8 @@ import {
   getSeedCtx,
   invalidateSeededRuleset,
   makeSession,
-  methodsOf,
   NIL_UUID,
 } from "@/tests/helpers.ts";
-
-const ClassesMethods = methodsOf(ClassesService);
 
 /** A seeded character of the seed user's, by name. */
 async function seeded(name: string): Promise<Character> {
@@ -1049,7 +1046,7 @@ describe("DetailedCharacter", () => {
       };
       expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
 
-      await ClassesMethods.updateRulesetKlass(makeSession(), fork.id, archmage.id, {
+      await ClassesService.updateRulesetKlass(makeSession(), fork.id, archmage.id, {
         name: "Archmage",
         description: "Ours",
       });

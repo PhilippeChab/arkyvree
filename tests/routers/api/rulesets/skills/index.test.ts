@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 const skills = api.api.rulesets[":id"].skills;
@@ -31,12 +31,12 @@ describe("rulesets skills", () => {
     expect(await expectOk(skill.$put({ param, json: update }))).toMatchObject(update);
 
     await expectOk(skill.$delete({ param }));
-    expect((await skill.$get({ param })).status).toBe(404);
+    await expectStatus(skill.$get({ param }), 404);
   });
 
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await guestApi.api.rulesets[":id"].skills.$get({ param: { id }, query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.rulesets[":id"].skills.$get({ param: { id }, query: {} }), 401);
   });
 
   test("rejects a skill without a name or with an ability that isn't an id", async () => {
@@ -52,14 +52,14 @@ describe("rulesets skills", () => {
       { ...valid, name: "" },
       { ...valid, primaryAbilityId: "Wisdom" },
     ]) {
-      expect((await skills.$post({ param: { id }, json })).status).toBe(400);
+      await expectStatus(skills.$post({ param: { id }, json }), 400);
     }
   });
 
   test("returns 404 for a missing ruleset or skill", async () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await skills.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    await expectStatus(skills.$get({ param: { id: NIL_UUID }, query: {} }), 404);
     const param = { id, skillId: NIL_UUID };
     const json = {
       name: "Missing",
@@ -67,7 +67,7 @@ describe("rulesets skills", () => {
       impactedByWeight: false,
       usableWithoutTraining: true,
     };
-    expect((await skill.$put({ param, json })).status).toBe(404);
-    expect((await skill.$delete({ param })).status).toBe(404);
+    await expectStatus(skill.$put({ param, json }), 404);
+    await expectStatus(skill.$delete({ param }), 404);
   });
 });

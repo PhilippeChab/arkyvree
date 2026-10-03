@@ -4,7 +4,6 @@ import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
 import { urlFor } from "@/server/services/attachments.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { getStorage } from "@/server/storage/s3.ts";
 import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -59,43 +58,6 @@ registerAttachable("Character", {
   names: ["portrait"],
 });
 
-function getAttachableConfig(recordType: string): AttachableConfig {
-  const config = ATTACHABLE_TYPES.get(recordType);
-  if (!config) throw new BadRequestError(`Unsupported record type: ${recordType}`);
-  return config;
-}
-
-async function assertCanAttach(session: Session, recordType: string, recordId: string): Promise<void> {
-  const config = getAttachableConfig(recordType);
-  if (!(await config.isOwner(session, recordId))) {
-    throw new ForbiddenError("Not authorized to attach to this record");
-  }
-}
-
-async function assertCanRead(session: Session, recordType: string, recordId: string): Promise<void> {
-  const config = getAttachableConfig(recordType);
-  if (!(await config.isReader(session, recordId))) {
-    throw new ForbiddenError("Not authorized to view this attachment");
-  }
-}
-
-function assertWithinPolicy(recordType: string, byteSize: number, contentType: string): void {
-  const { policy } = getAttachableConfig(recordType);
-  if (byteSize > policy.maxBytes) {
-    throw new BadRequestError(`File exceeds maximum size of ${policy.maxBytes} bytes`);
-  }
-  if (!policy.contentTypes.includes(contentType)) {
-    throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
-  }
-}
-
-function assertValidName(recordType: string, name: string): void {
-  const { names } = getAttachableConfig(recordType);
-  if (!names.includes(name)) {
-    throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
-  }
-}
-
 interface SignedTokenPayload {
   blobId: string;
   recordType: string;
@@ -106,73 +68,110 @@ interface SignedTokenPayload {
 
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
-function getSigningSecret(): string {
-  const secret = process.env.SIGNING_SECRET;
-  if (!secret) throw new InternalError("SIGNING_SECRET is not configured");
-  return secret;
-}
-
-function signToken(payload: Omit<SignedTokenPayload, "iat">): string {
-  const full: SignedTokenPayload = { ...payload, iat: Date.now() };
-  // Top-level key sort gives stable serialization since SignedTokenPayload
-  // is flat. Switch to a recursive canonical serializer if any field ever
-  // becomes a nested object.
-  const data = Buffer.from(JSON.stringify(full, Object.keys(full).sort())).toString("base64url");
-  const sig = createHmac("sha256", getSigningSecret()).update(data).digest("base64url");
-  return `${data}.${sig}`;
-}
-
-function verifyToken(token: string): SignedTokenPayload {
-  const [data, sig] = token.split(".");
-  if (!data || !sig) throw new BadRequestError("Invalid signed id");
-  const expected = createHmac("sha256", getSigningSecret()).update(data).digest("base64url");
-  const sigBuf = Buffer.from(sig);
-  const expectedBuf = Buffer.from(expected);
-  if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) {
-    throw new BadRequestError("Invalid signed id");
+class AttachmentsService {
+  private getAttachableConfig(recordType: string): AttachableConfig {
+    const config = ATTACHABLE_TYPES.get(recordType);
+    if (!config) throw new BadRequestError(`Unsupported record type: ${recordType}`);
+    return config;
   }
-  let payload: SignedTokenPayload;
-  try {
-    payload = JSON.parse(Buffer.from(data, "base64url").toString());
-  } catch {
-    throw new BadRequestError("Invalid signed id");
+
+  private async assertCanAttach(session: Session, recordType: string, recordId: string): Promise<void> {
+    const config = this.getAttachableConfig(recordType);
+    if (!(await config.isOwner(session, recordId))) {
+      throw new ForbiddenError("Not authorized to attach to this record");
+    }
   }
-  if (typeof payload.iat !== "number" || Date.now() - payload.iat > TOKEN_TTL_MS) {
-    throw new BadRequestError("Signed id has expired");
+
+  private async assertCanRead(session: Session, recordType: string, recordId: string): Promise<void> {
+    const config = this.getAttachableConfig(recordType);
+    if (!(await config.isReader(session, recordId))) {
+      throw new ForbiddenError("Not authorized to view this attachment");
+    }
   }
-  return payload;
-}
 
-function buildKey(blobId: string, filename: string): string {
-  const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
-  return `blobs/${blobId}/${safe}`;
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  if (typeof err !== "object" || err === null) return false;
-  const e = err as { code?: string; cause?: { code?: string } };
-  return e.code === "23505" || e.cause?.code === "23505";
-}
-
-async function findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
-  const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
-  if (refs.length > 0) return null;
-  const blob = await Blobs.findOne(tx, { id: blobId });
-  if (!blob) return null;
-  return { id: blob.id, key: blob.key };
-}
-
-async function purgeOrphan(orphan: { id: string; key: string } | null): Promise<void> {
-  if (!orphan) return;
-  try {
-    await getStorage().deleteObject(orphan.key);
-    await Blobs.delete(db, { id: orphan.id });
-  } catch (err) {
-    console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
+  private assertWithinPolicy(recordType: string, byteSize: number, contentType: string): void {
+    const { policy } = this.getAttachableConfig(recordType);
+    if (byteSize > policy.maxBytes) {
+      throw new BadRequestError(`File exceeds maximum size of ${policy.maxBytes} bytes`);
+    }
+    if (!policy.contentTypes.includes(contentType)) {
+      throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
+    }
   }
-}
 
-const AttachmentsMethods = {
+  private assertValidName(recordType: string, name: string): void {
+    const { names } = this.getAttachableConfig(recordType);
+    if (!names.includes(name)) {
+      throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
+    }
+  }
+
+  private getSigningSecret(): string {
+    const secret = process.env.SIGNING_SECRET;
+    if (!secret) throw new InternalError("SIGNING_SECRET is not configured");
+    return secret;
+  }
+
+  private signToken(payload: Omit<SignedTokenPayload, "iat">): string {
+    const full: SignedTokenPayload = { ...payload, iat: Date.now() };
+    // Top-level key sort gives stable serialization since SignedTokenPayload
+    // is flat. Switch to a recursive canonical serializer if any field ever
+    // becomes a nested object.
+    const data = Buffer.from(JSON.stringify(full, Object.keys(full).sort())).toString("base64url");
+    const sig = createHmac("sha256", this.getSigningSecret()).update(data).digest("base64url");
+    return `${data}.${sig}`;
+  }
+
+  private verifyToken(token: string): SignedTokenPayload {
+    const [data, sig] = token.split(".");
+    if (!data || !sig) throw new BadRequestError("Invalid signed id");
+    const expected = createHmac("sha256", this.getSigningSecret()).update(data).digest("base64url");
+    const sigBuf = Buffer.from(sig);
+    const expectedBuf = Buffer.from(expected);
+    if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) {
+      throw new BadRequestError("Invalid signed id");
+    }
+    let payload: SignedTokenPayload;
+    try {
+      payload = JSON.parse(Buffer.from(data, "base64url").toString());
+    } catch {
+      throw new BadRequestError("Invalid signed id");
+    }
+    if (typeof payload.iat !== "number" || Date.now() - payload.iat > TOKEN_TTL_MS) {
+      throw new BadRequestError("Signed id has expired");
+    }
+    return payload;
+  }
+
+  private buildKey(blobId: string, filename: string): string {
+    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
+    return `blobs/${blobId}/${safe}`;
+  }
+
+  private isUniqueViolation(err: unknown): boolean {
+    if (typeof err !== "object" || err === null) return false;
+    const e = err as { code?: string; cause?: { code?: string } };
+    return e.code === "23505" || e.cause?.code === "23505";
+  }
+
+  private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
+    const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
+    if (refs.length > 0) return null;
+    const blob = await Blobs.findOne(tx, { id: blobId });
+    if (!blob) return null;
+    return { id: blob.id, key: blob.key };
+  }
+
+  private async purgeOrphan(orphan: { id: string; key: string } | null): Promise<void> {
+    if (!orphan) return;
+    try {
+      await getStorage().deleteObject(orphan.key);
+      await Blobs.delete(db, { id: orphan.id });
+    } catch (err) {
+      console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
+    }
+  }
+
   async createDirectUpload(
     session: Session,
     params: {
@@ -184,12 +183,12 @@ const AttachmentsMethods = {
       byteSize: number;
     },
   ) {
-    await assertCanAttach(session, params.recordType, params.recordId);
-    assertValidName(params.recordType, params.name);
-    assertWithinPolicy(params.recordType, params.byteSize, params.contentType);
+    await this.assertCanAttach(session, params.recordType, params.recordId);
+    this.assertValidName(params.recordType, params.name);
+    this.assertWithinPolicy(params.recordType, params.byteSize, params.contentType);
 
     const blobId = randomUUID();
-    const key = buildKey(blobId, params.filename);
+    const key = this.buildKey(blobId, params.filename);
 
     const blob = await withTransaction(async (tx: Db) => {
       const rows = await Blobs.create(tx, {
@@ -207,7 +206,7 @@ const AttachmentsMethods = {
     const presignedUrl = getStorage().presignPut(key, {
       contentType: params.contentType,
     });
-    const signedId = signToken({
+    const signedId = this.signToken({
       blobId: blob.id,
       recordType: params.recordType,
       recordId: params.recordId,
@@ -219,12 +218,12 @@ const AttachmentsMethods = {
       presignedUrl,
       headers: { "Content-Type": params.contentType },
     };
-  },
+  }
 
   async attach(session: Session, signedId: string) {
-    const payload = verifyToken(signedId);
-    await assertCanAttach(session, payload.recordType, payload.recordId);
-    assertValidName(payload.recordType, payload.name);
+    const payload = this.verifyToken(signedId);
+    await this.assertCanAttach(session, payload.recordType, payload.recordId);
+    this.assertValidName(payload.recordType, payload.name);
 
     // Check upload size before opening the tx — S3 round-trip would otherwise
     // hold a DB connection for the duration. The one-shot recheck inside the
@@ -271,7 +270,7 @@ const AttachmentsMethods = {
         });
         attachment = rows[0];
       } catch (err) {
-        if (isUniqueViolation(err)) {
+        if (this.isUniqueViolation(err)) {
           throw new ConflictError("Slot is already attached by a concurrent request");
         }
         throw err;
@@ -281,17 +280,17 @@ const AttachmentsMethods = {
       const updated = await Blobs.update(tx, { attachedAt: new Date().toISOString() }, { id: blob.id });
       const attachedBlob = updated[0] ?? blob;
 
-      const orphan = existing ? await findOrphanedBlob(tx, existing.blobId) : null;
+      const orphan = existing ? await this.findOrphanedBlob(tx, existing.blobId) : null;
 
       return { attachment, blob: attachedBlob, orphan };
     });
 
-    await purgeOrphan(result.orphan);
+    await this.purgeOrphan(result.orphan);
     return { attachment: result.attachment, blob: result.blob };
-  },
+  }
 
   async findOne(session: Session, params: { recordType: string; recordId: string; name: string }) {
-    await assertCanRead(session, params.recordType, params.recordId);
+    await this.assertCanRead(session, params.recordType, params.recordId);
     const row = await Attachments.findOneWithBlob(db, {
       recordType: params.recordType,
       recordId: params.recordId,
@@ -299,28 +298,22 @@ const AttachmentsMethods = {
     });
     if (!row) return null;
     return { id: row.id, url: urlFor(row) };
-  },
+  }
 
   async detach(session: Session, attachmentId: string) {
     const result = await withTransaction(async (tx: Db) => {
       const attachment = await Attachments.findOne(tx, { id: attachmentId });
       if (!attachment) throw new NotFoundError("Attachment not found");
-      await assertCanAttach(session, attachment.recordType, attachment.recordId);
+      await this.assertCanAttach(session, attachment.recordType, attachment.recordId);
 
       await Attachments.delete(tx, { id: attachment.id });
-      const orphan = await findOrphanedBlob(tx, attachment.blobId);
+      const orphan = await this.findOrphanedBlob(tx, attachment.blobId);
       return { id: attachment.id, orphan };
     });
 
-    await purgeOrphan(result.orphan);
+    await this.purgeOrphan(result.orphan);
     return { id: result.id };
-  },
-} as const;
-
-class AttachmentsService extends BaseService<typeof AttachmentsMethods> {
-  static initialize() {
-    return new AttachmentsService(AttachmentsMethods);
   }
 }
 
-export default AttachmentsService;
+export default new AttachmentsService();

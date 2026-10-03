@@ -14,7 +14,6 @@ import {
   Players,
 } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   enqueueCharacterPdf,
   findExportableCharacter,
@@ -26,7 +25,7 @@ import type { Session } from "@/shared/relations.ts";
 
 type VisibilityType = "Private" | "Public" | "Partial";
 
-const PlayerCharactersMethods = {
+class PlayerCharactersService {
   async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: VisibilityType) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
@@ -81,7 +80,7 @@ const PlayerCharactersMethods = {
 
       return linkedCharacter;
     });
-  },
+  }
 
   async updateCharacterVisibility(
     session: Session,
@@ -115,7 +114,7 @@ const PlayerCharactersMethods = {
 
       return updated;
     });
-  },
+  }
 
   async getCampaignCharacters(
     session: Session,
@@ -230,7 +229,7 @@ const PlayerCharactersMethods = {
         };
       },
     );
-  },
+  }
 
   async getCampaignCharacter(session: Session, campaignId: string, characterId: string) {
     // Verify the requesting user is a campaign member
@@ -280,7 +279,7 @@ const PlayerCharactersMethods = {
       detailedCharacter,
       bondedByKind,
     };
-  },
+  }
 
   async enqueueCampaignCharacterPdf(session: Session, campaignId: string, characterId: string) {
     // Not found for every refusal, as for the character's own export.
@@ -288,13 +287,7 @@ const PlayerCharactersMethods = {
     if (!character) throw new NotFoundError("Character not found in this campaign");
 
     await enqueueCharacterPdf(session, character, campaignId);
-  },
-};
-
-class PlayerCharactersService extends BaseService<typeof PlayerCharactersMethods> {
-  static initialize() {
-    return new PlayerCharactersService(PlayerCharactersMethods);
   }
 }
 
-export default PlayerCharactersService;
+export default new PlayerCharactersService();

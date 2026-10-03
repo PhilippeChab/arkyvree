@@ -4,7 +4,6 @@ import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, Modifiers } from "@/server/repositories/index.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
 import {
   getTargetPathsWithLabels,
@@ -13,7 +12,7 @@ import {
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const CharacterModifiersMethods = {
+class CharacterModifiersService {
   async getModifiers(session: Session, characterId: string) {
     const character = await getEditableCharacter(db, session, characterId);
 
@@ -26,7 +25,7 @@ const CharacterModifiersMethods = {
     ]);
 
     return modifiers.map((m) => ({ ...m, targetLabels: pickTargetLabels([m.target, m.value], segmentLabels) }));
-  },
+  }
 
   async createModifier(
     session: Session,
@@ -58,7 +57,7 @@ const CharacterModifiersMethods = {
 
       return modifier;
     });
-  },
+  }
 
   async updateModifier(
     session: Session,
@@ -101,7 +100,7 @@ const CharacterModifiersMethods = {
 
       return modifier;
     });
-  },
+  }
 
   async deleteModifier(session: Session, characterId: string, modifierId: string) {
     return withTransaction(async (tx) => {
@@ -130,13 +129,7 @@ const CharacterModifiersMethods = {
 
       return modifier;
     });
-  },
-};
-
-class CharacterModifiersService extends BaseService<typeof CharacterModifiersMethods> {
-  static initialize() {
-    return new CharacterModifiersService(CharacterModifiersMethods);
   }
 }
 
-export default CharacterModifiersService;
+export default new CharacterModifiersService();

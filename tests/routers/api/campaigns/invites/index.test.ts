@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { EmailVerifications, Users } from "@/server/repositories/index.ts";
-import { api, apiAs, createSignedInUser, expectOk, guestApi, sessionIdFrom } from "@/tests/api.ts";
+import { api, apiAs, createSignedInUser, expectOk, expectStatus, guestApi, sessionIdFrom } from "@/tests/api.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
 
 const invites = api.api.campaigns.invites;
@@ -84,17 +84,15 @@ describe("campaigns invites", () => {
 
   test("requires a session", async () => {
     const { campaignId } = await createInviteForNewUser();
-    expect((await guestApi.api.campaigns[":id"].invites.$get({ param: { id: campaignId }, query: {} })).status).toBe(
-      401,
-    );
+    await expectStatus(guestApi.api.campaigns[":id"].invites.$get({ param: { id: campaignId }, query: {} }), 401);
   });
 
   test("returns 404 for a missing campaign or invite", async () => {
-    expect((await api.api.campaigns[":id"].invites.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    await expectStatus(api.api.campaigns[":id"].invites.$get({ param: { id: NIL_UUID }, query: {} }), 404);
     const param = { inviteId: NIL_UUID };
-    expect((await invites[":inviteId"].$get({ param })).status).toBe(404);
-    expect((await invites[":inviteId"].accept.$post({ param })).status).toBe(404);
-    expect((await invites[":inviteId"].reject.$post({ param })).status).toBe(404);
-    expect((await invites[":inviteId"].revoke.$post({ param })).status).toBe(404);
+    await expectStatus(invites[":inviteId"].$get({ param }), 404);
+    await expectStatus(invites[":inviteId"].accept.$post({ param }), 404);
+    await expectStatus(invites[":inviteId"].reject.$post({ param }), 404);
+    await expectStatus(invites[":inviteId"].revoke.$post({ param }), 404);
   });
 });

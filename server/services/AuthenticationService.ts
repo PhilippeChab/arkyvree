@@ -30,7 +30,6 @@ import {
   toSafeUser,
 } from "@/server/services/accounts.ts";
 import { purgeAttachmentsForRecords } from "@/server/services/attachments.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import type { Session } from "@/shared/relations.ts";
 
 const DUMMY_HASH = await hashPassword("dummy-password-for-timing-normalization");
@@ -50,47 +49,47 @@ interface GoogleTokenPayload {
   exp: number;
 }
 
-async function verifyGoogleIdToken(idToken: string): Promise<GoogleTokenPayload> {
-  const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
-  if (!response.ok) {
-    throw new UnauthorizedError("Invalid Google ID token");
+class AuthenticationService {
+  private async verifyGoogleIdToken(idToken: string): Promise<GoogleTokenPayload> {
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
+    if (!response.ok) {
+      throw new UnauthorizedError("Invalid Google ID token");
+    }
+
+    const payload = (await response.json()) as GoogleTokenPayload;
+
+    if (!GOOGLE_CLIENT_ID || payload.aud !== GOOGLE_CLIENT_ID) {
+      throw new UnauthorizedError("Invalid Google ID token audience");
+    }
+
+    if (payload.iss !== "accounts.google.com" && payload.iss !== "https://accounts.google.com") {
+      throw new UnauthorizedError("Invalid Google ID token issuer");
+    }
+
+    if (!payload.email_verified) {
+      throw new UnauthorizedError("Google email not verified");
+    }
+
+    if (payload.exp * 1000 < Date.now()) {
+      throw new UnauthorizedError("Google ID token expired");
+    }
+
+    return payload;
   }
 
-  const payload = (await response.json()) as GoogleTokenPayload;
-
-  if (!GOOGLE_CLIENT_ID || payload.aud !== GOOGLE_CLIENT_ID) {
-    throw new UnauthorizedError("Invalid Google ID token audience");
+  private generateVerificationCode(): string {
+    const buffer = new Uint32Array(1);
+    crypto.getRandomValues(buffer);
+    return (10000000 + (buffer[0] % 90000000)).toString();
   }
 
-  if (payload.iss !== "accounts.google.com" && payload.iss !== "https://accounts.google.com") {
-    throw new UnauthorizedError("Invalid Google ID token issuer");
+  private timingSafeCompare(a: string, b: string): boolean {
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
+    if (bufA.byteLength !== bufB.byteLength) return false;
+    return timingSafeEqual(bufA, bufB);
   }
 
-  if (!payload.email_verified) {
-    throw new UnauthorizedError("Google email not verified");
-  }
-
-  if (payload.exp * 1000 < Date.now()) {
-    throw new UnauthorizedError("Google ID token expired");
-  }
-
-  return payload;
-}
-
-function generateVerificationCode(): string {
-  const buffer = new Uint32Array(1);
-  crypto.getRandomValues(buffer);
-  return (10000000 + (buffer[0] % 90000000)).toString();
-}
-
-function timingSafeCompare(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.byteLength !== bufB.byteLength) return false;
-  return timingSafeEqual(bufA, bufB);
-}
-
-const AuthenticationMethods = {
   async signUp(emailAddress: string, password: string) {
     const { user, code } = await withTransaction(async (tx) => {
       // Visibility.All: a deleted account keeps its email on the (unique)
@@ -103,7 +102,7 @@ const AuthenticationMethods = {
       const user = rows[0];
       if (!user) throw new InternalError("Could not create user");
 
-      const code = generateVerificationCode();
+      const code = this.generateVerificationCode();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
       await EmailVerifications.create(tx, { userId: user.id, code, expiresAt });
 
@@ -118,7 +117,7 @@ const AuthenticationMethods = {
     });
 
     return { user };
-  },
+  }
 
   async verifyEmail(emailAddress: string, code: string, existingSessionId?: string) {
     return await withTransaction(async (tx) => {
@@ -132,7 +131,7 @@ const AuthenticationMethods = {
       const verification = await EmailVerifications.findOne(tx, { userId: user.id });
       if (!verification) throw new UnauthorizedError("Invalid email or code");
 
-      if (!timingSafeCompare(verification.code, code)) {
+      if (!this.timingSafeCompare(verification.code, code)) {
         throw new UnauthorizedError("Invalid email or code");
       }
 
@@ -148,7 +147,7 @@ const AuthenticationMethods = {
       const session = await openSession(tx, user, "signUp");
       return { session, user: toSafeUser(user) };
     });
-  },
+  }
 
   async resendVerification(emailAddress: string) {
     const { code } = await withTransaction(async (tx) => {
@@ -165,7 +164,7 @@ const AuthenticationMethods = {
 
       await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
 
-      const code = generateVerificationCode();
+      const code = this.generateVerificationCode();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
       await EmailVerifications.create(tx, { userId: user.id, code, expiresAt });
 
@@ -182,7 +181,7 @@ const AuthenticationMethods = {
     }
 
     return { success: true };
-  },
+  }
 
   async signIn(emailAddress: string, password: string, existingSessionId?: string) {
     const user = await Users.findOne(db, { emailAddress });
@@ -214,7 +213,7 @@ const AuthenticationMethods = {
       const session = await openSession(tx, user, "signIn");
       return { session, user: toSafeUser(user) };
     });
-  },
+  }
 
   async signOut(session: Session) {
     return await withTransaction(async (tx) => {
@@ -235,14 +234,14 @@ const AuthenticationMethods = {
         type: "signOut",
       });
     });
-  },
+  }
 
   async me(session: Session) {
     const user = await Users.findOne(db, { id: session.userId });
     if (!user) throw new InternalError("User not found");
 
     return toSafeUser(user);
-  },
+  }
 
   // Returns an existing valid demo session if `existingSessionId` is one;
   // otherwise mints a fresh demo user + session. Cleanup of expired demo
@@ -276,7 +275,7 @@ const AuthenticationMethods = {
 
       return { session, user: toSafeUser(user), reused: false as const };
     });
-  },
+  }
 
   async updateProfile(session: Session, username: string | undefined, emailAddress: string | undefined) {
     const { safeUser, emailChangeCode, newEmailAddress } = await withTransaction(async (tx) => {
@@ -319,7 +318,7 @@ const AuthenticationMethods = {
       if (newEmailAddress) {
         await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
 
-        emailChangeCode = generateVerificationCode();
+        emailChangeCode = this.generateVerificationCode();
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
         await EmailVerifications.create(tx, { userId: user.id, code: emailChangeCode, expiresAt });
       }
@@ -344,7 +343,7 @@ const AuthenticationMethods = {
     }
 
     return safeUser;
-  },
+  }
 
   async forgotPassword(emailAddress: string) {
     const { code } = await withTransaction(async (tx) => {
@@ -359,7 +358,7 @@ const AuthenticationMethods = {
 
       await PasswordResets.archiveAllForUser(tx, { userId: user.id });
 
-      const code = generateVerificationCode();
+      const code = this.generateVerificationCode();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
       await PasswordResets.create(tx, { userId: user.id, code, expiresAt });
 
@@ -376,7 +375,7 @@ const AuthenticationMethods = {
     }
 
     return { success: true };
-  },
+  }
 
   async resetPassword(emailAddress: string, code: string, newPassword: string) {
     return await withTransaction(async (tx) => {
@@ -386,7 +385,7 @@ const AuthenticationMethods = {
       const reset = await PasswordResets.findOne(tx, { userId: user.id });
       if (!reset) throw new UnauthorizedError("Invalid email or code");
 
-      if (!timingSafeCompare(reset.code, code)) {
+      if (!this.timingSafeCompare(reset.code, code)) {
         throw new UnauthorizedError("Invalid email or code");
       }
 
@@ -408,7 +407,7 @@ const AuthenticationMethods = {
 
       return { success: true };
     });
-  },
+  }
 
   async verifyEmailChange(session: Session, code: string) {
     const safeUser = await withTransaction(async (tx) => {
@@ -422,7 +421,7 @@ const AuthenticationMethods = {
       const verification = await EmailVerifications.findOne(tx, { userId: user.id });
       if (!verification) throw new UnauthorizedError("Invalid code");
 
-      if (!timingSafeCompare(verification.code, code)) {
+      if (!this.timingSafeCompare(verification.code, code)) {
         throw new UnauthorizedError("Invalid code");
       }
 
@@ -461,7 +460,7 @@ const AuthenticationMethods = {
     });
 
     return safeUser;
-  },
+  }
 
   async cancelEmailChange(session: Session) {
     return await withTransaction(async (tx) => {
@@ -478,7 +477,7 @@ const AuthenticationMethods = {
         type: "cancelEmailChange",
       });
     });
-  },
+  }
 
   async resendEmailChange(session: Session) {
     const { code, pendingEmailAddress } = await withTransaction(async (tx) => {
@@ -499,7 +498,7 @@ const AuthenticationMethods = {
 
       await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
 
-      const code = generateVerificationCode();
+      const code = this.generateVerificationCode();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
       await EmailVerifications.create(tx, { userId: user.id, code, expiresAt });
 
@@ -514,7 +513,7 @@ const AuthenticationMethods = {
     });
 
     return { success: true };
-  },
+  }
 
   async updatePassword(session: Session, currentPassword: string, newPassword: string) {
     return await withTransaction(async (tx) => {
@@ -553,13 +552,13 @@ const AuthenticationMethods = {
 
       return { success: true };
     });
-  },
+  }
 
   async completeOnboarding(session: Session) {
     await withTransaction(async (tx) => {
       await Users.update(tx, { onboardingCompletedAt: new Date().toISOString() }, { id: session.userId });
     });
-  },
+  }
 
   async deleteAccount(session: Session, password: string | undefined) {
     const userId = session.userId;
@@ -608,11 +607,12 @@ const AuthenticationMethods = {
 
       return { success: true };
     });
-  },
+  }
+
   async signInWithGoogle(idToken: string, existingSessionId?: string) {
-    const payload = await verifyGoogleIdToken(idToken);
+    const payload = await this.verifyGoogleIdToken(idToken);
     return await signInAsGoogleAccount(payload, existingSessionId);
-  },
+  }
 
   async setPassword(session: Session, newPassword: string) {
     return await withTransaction(async (tx) => {
@@ -635,17 +635,17 @@ const AuthenticationMethods = {
 
       return { success: true };
     });
-  },
+  }
 
   async getLinkedAccounts(session: Session) {
     const accounts = await OauthAccounts.findManyByUser(db, { userId: session.userId });
     return accounts.map((a) => ({ provider: a.provider, linkedAt: a.createdAt }));
-  },
+  }
 
   async linkGoogleAccount(session: Session, idToken: string) {
-    const payload = await verifyGoogleIdToken(idToken);
+    const payload = await this.verifyGoogleIdToken(idToken);
     return await linkGoogleAccountTo(session, payload.sub);
-  },
+  }
 
   async unlinkOauthAccount(session: Session, provider: string) {
     return await withTransaction(async (tx) => {
@@ -673,13 +673,7 @@ const AuthenticationMethods = {
 
       return { success: true };
     });
-  },
-} as const;
-
-class AuthenticationService extends BaseService<typeof AuthenticationMethods> {
-  static initialize() {
-    return new AuthenticationService(AuthenticationMethods);
   }
 }
 
-export default AuthenticationService;
+export default new AuthenticationService();

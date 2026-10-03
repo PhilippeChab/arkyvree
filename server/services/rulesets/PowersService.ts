@@ -7,7 +7,6 @@ import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/e
 import { FeatsAptitudes, Powers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   entityHasCharacterPicks,
@@ -39,7 +38,7 @@ interface PowerBody {
   updatedAt?: string;
 }
 
-const PowersMethods = {
+class PowersService {
   async getRulesetPowers(
     rulesetId: string,
     where: Parameters<typeof findRulesetPowers>[3],
@@ -48,7 +47,7 @@ const PowersMethods = {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
       findRulesetPowers(db, rulesetData, rulesetId, where, pagination),
     );
-  },
+  }
 
   async getRulesetPower(rulesetId: string, powerId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -61,7 +60,7 @@ const PowersMethods = {
         requirements: rulesetData.requirementsByEntity.get(power.id) ?? [],
       };
     });
-  },
+  }
 
   async createRulesetPower(session: Session, rulesetId: string, body: PowerBody) {
     const result = await withTransaction(async (tx) => {
@@ -134,7 +133,7 @@ const PowersMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateRulesetPower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
     const result = await withTransaction(async (tx) => {
@@ -243,7 +242,7 @@ const PowersMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteRulesetPower(session: Session, rulesetId: string, powerId: string) {
     const result = await withTransaction(async (tx) => {
@@ -276,13 +275,7 @@ const PowersMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class PowersService extends BaseService<typeof PowersMethods> {
-  static initialize() {
-    return new PowersService(PowersMethods);
   }
 }
 
-export default PowersService;
+export default new PowersService();

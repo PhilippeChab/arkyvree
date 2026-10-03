@@ -3,9 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths.ts";
 import TargetPathsService from "@/server/services/rulesets/customization/TargetPathsService.ts";
-import { createTestRuleset, createTestUser, getSeedCtx, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
-
-const TargetPathsMethods = methodsOf(TargetPathsService);
+import { createTestRuleset, createTestUser, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 type Kind = "modifier" | "requirement";
 type EntityType = Parameters<typeof getTargetPathsWithLabels>[2];
@@ -135,7 +133,7 @@ describe("TargetPathsService", () => {
       }: { search?: string; limit?: number; page?: number; flat?: boolean } = {},
     ) => {
       const { rulesetId } = await getSeedCtx();
-      return await TargetPathsMethods.getCompletions(
+      return await TargetPathsService.getCompletions(
         rulesetId,
         partialPath,
         partialPath.length,
@@ -217,7 +215,7 @@ describe("TargetPathsService", () => {
 
   describe("validating a path", () => {
     const validate = async (path: string, kind: Kind = "modifier") =>
-      TargetPathsMethods.validatePath((await getSeedCtx()).rulesetId, path, kind);
+      TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind);
 
     test("accepts a full path", async () => {
       expect(await validate("abilities.strength.misc")).toMatchObject({ isValid: true, errors: [], suggestions: [] });

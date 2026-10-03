@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { addClassLevels, addPowers, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRulesetWithExtensions, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
 import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/levelFixtures.ts";
 
@@ -291,7 +291,7 @@ describe("character levels", () => {
         param: { characterId, characterLevelId: created.id },
         json: { hp: 11, abilityId: null, ...fighter1(ctx) },
       });
-      expect(response.status).toBe(400);
+      await expectStatus(response, 400);
     });
 
     test("edits an earlier level without touching the later ones", async () => {
@@ -480,7 +480,7 @@ describe("character levels", () => {
 
     test("returns 404 for a character without levels", async () => {
       const { characterId } = await createCharacter();
-      expect((await levels.$delete({ param: { characterId } })).status).toBe(404);
+      await expectStatus(levels.$delete({ param: { characterId } }), 404);
     });
   });
 
@@ -505,7 +505,7 @@ describe("character levels", () => {
       }),
       guest.$delete({ param: { characterId } }),
     ]);
-    expect(responses.map((r) => r.status)).toEqual(responses.map(() => 401));
+    for (const response of responses) await expectStatus(response, 401);
   });
 
   test("returns 404 for a missing character, class level or character level", async () => {
@@ -515,18 +515,16 @@ describe("character levels", () => {
     const query = { klassId, level: "1" };
     const noPicks = { skills: {}, feats: {}, powers: {} };
 
-    expect((await levels["available-classes"].$get({ param: missing, query: {} })).status).toBe(404);
-    expect((await levels["attribute-slots"].$get({ param: missing, query: {} })).status).toBe(404);
-    expect((await levels["skill-slots"].$get({ param: missing, query })).status).toBe(404);
-    expect((await levels["feat-slots"].$get({ param: missing, query })).status).toBe(404);
-    expect((await levels["power-slots"].$get({ param: missing, query })).status).toBe(404);
-    expect((await finalize(NIL_UUID, klassId, 1, 8, noPicks)).status).toBe(404);
-    expect((await levels.$delete({ param: missing })).status).toBe(404);
-    expect((await finalize(characterId, klassId, 999, 8, noPicks)).status).toBe(404);
+    await expectStatus(levels["available-classes"].$get({ param: missing, query: {} }), 404);
+    await expectStatus(levels["attribute-slots"].$get({ param: missing, query: {} }), 404);
+    await expectStatus(levels["skill-slots"].$get({ param: missing, query }), 404);
+    await expectStatus(levels["feat-slots"].$get({ param: missing, query }), 404);
+    await expectStatus(levels["power-slots"].$get({ param: missing, query }), 404);
+    await expectStatus(finalize(NIL_UUID, klassId, 1, 8, noPicks), 404);
+    await expectStatus(levels.$delete({ param: missing }), 404);
+    await expectStatus(finalize(characterId, klassId, 999, 8, noPicks), 404);
     const characterLevel = { characterId, characterLevelId: NIL_UUID };
-    expect((await level.$get({ param: characterLevel })).status).toBe(404);
-    expect((await level.$put({ param: characterLevel, json: { hp: 5, abilityId: null, ...noPicks } })).status).toBe(
-      404,
-    );
+    await expectStatus(level.$get({ param: characterLevel }), 404);
+    await expectStatus(level.$put({ param: characterLevel, json: { hp: 5, abilityId: null, ...noPicks } }), 404);
   });
 });

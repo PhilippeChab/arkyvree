@@ -62,7 +62,6 @@ import {
   StarredRulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   buildSourceChain,
@@ -102,219 +101,219 @@ const ENTITY_TABLES = {
   mechanics: mechanicsInRules,
 } as const;
 
-// Returns true iff any character on `hostRulesetId` has picked an entity that
-// belongs to `extensionId` — either a direct extension entity or a host-owned
-// COW shadow whose source entity belongs to the extension. Unsubscribe deletes
-// those shadows, so a shadow pick would be silently orphaned without this
-// check.
-async function isExtensionInUseByHost(tx: Db, hostRulesetId: string, extensionId: string): Promise<boolean> {
-  // Group snapshots by entity type, then resolve each type's source entities
-  // in one batched query (avoids N+1 over snapshot count). Build a per-type
-  // list of host-owned shadow IDs whose source entity belongs to the extension.
-  const snapshots = await EntitySnapshots.findByRulesetId(tx, { rulesetId: hostRulesetId });
-  const sourceIdsByType: Partial<Record<EntityType, string[]>> = {};
-  for (const snap of snapshots) {
-    const type = snap.entityType as EntityType;
-    if (!ENTITY_REPOS[type]) continue;
-    (sourceIdsByType[type] ??= []).push(snap.sourceEntityId);
+class RulesetsService {
+  // Returns true iff any character on `hostRulesetId` has picked an entity that
+  // belongs to `extensionId` — either a direct extension entity or a host-owned
+  // COW shadow whose source entity belongs to the extension. Unsubscribe deletes
+  // those shadows, so a shadow pick would be silently orphaned without this
+  // check.
+  private async isExtensionInUseByHost(tx: Db, hostRulesetId: string, extensionId: string): Promise<boolean> {
+    // Group snapshots by entity type, then resolve each type's source entities
+    // in one batched query (avoids N+1 over snapshot count). Build a per-type
+    // list of host-owned shadow IDs whose source entity belongs to the extension.
+    const snapshots = await EntitySnapshots.findByRulesetId(tx, { rulesetId: hostRulesetId });
+    const sourceIdsByType: Partial<Record<EntityType, string[]>> = {};
+    for (const snap of snapshots) {
+      const type = snap.entityType as EntityType;
+      if (!ENTITY_REPOS[type]) continue;
+      (sourceIdsByType[type] ??= []).push(snap.sourceEntityId);
+    }
+
+    const shadowIdsByType: Partial<Record<EntityType, string[]>> = {};
+    for (const [type, ids] of Object.entries(sourceIdsByType) as [EntityType, string[]][]) {
+      const sources = await ENTITY_REPOS[type].findMany(tx, { ids });
+      const fromExt = new Set(sources.filter((s) => s.rulesetId === extensionId).map((s) => s.id));
+      const forked = snapshots
+        .filter((s) => s.entityType === type && fromExt.has(s.sourceEntityId))
+        .map((s) => s.forkedEntityId);
+      if (forked.length > 0) shadowIdsByType[type] = forked;
+    }
+    const shadow = (type: EntityType) => shadowIdsByType[type] ?? [];
+
+    return (
+      (await CharacterLevelFeats.existsByFeatPickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowFeatIds: shadow("feats"),
+      })) ||
+      (await CharacterLevelFeats.existsByAptitudePickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowAptitudeIds: shadow("aptitudes"),
+      })) ||
+      (await CharacterLevelSkills.existsBySkillPickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowSkillIds: shadow("skills"),
+      })) ||
+      (await CharacterLevelPowers.existsByPowerPickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowPowerIds: shadow("powers"),
+      })) ||
+      (await CharacterLevelPowers.existsByAptitudePickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowAptitudeIds: shadow("aptitudes"),
+      })) ||
+      (await CharacterLevels.existsByKlassPickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowKlassIds: shadow("klasses"),
+      })) ||
+      (await Characters.existsByRaceFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowRaceIds: shadow("races"),
+      })) ||
+      (await CharacterLanguages.existsByLanguagePickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowLanguageIds: shadow("languages"),
+      })) ||
+      (await CharacterInventory.existsByItemPickFromExtension(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowItemIds: shadow("items"),
+      }))
+    );
   }
 
-  const shadowIdsByType: Partial<Record<EntityType, string[]>> = {};
-  for (const [type, ids] of Object.entries(sourceIdsByType) as [EntityType, string[]][]) {
-    const sources = await ENTITY_REPOS[type].findMany(tx, { ids });
-    const fromExt = new Set(sources.filter((s) => s.rulesetId === extensionId).map((s) => s.id));
-    const forked = snapshots
-      .filter((s) => s.entityType === type && fromExt.has(s.sourceEntityId))
-      .map((s) => s.forkedEntityId);
-    if (forked.length > 0) shadowIdsByType[type] = forked;
-  }
-  const shadow = (type: EntityType) => shadowIdsByType[type] ?? [];
+  // Hard-deletes an entity along with its junctions and customizations
+  // (and, for klasses, its klass_levels). Used by revertOverride and
+  // unsubscribeExtension.
+  private async deleteEntityWithCascade(tx: Db, entityType: EntityType, entityId: string) {
+    // A tombstone may already have no row. Still clean up any remaining children
+    // when restoring it; creation cannot succeed against an absent owner.
+    await ENTITY_REPOS[entityType].lockById(tx, entityId);
 
-  return (
-    (await CharacterLevelFeats.existsByFeatPickFromExtension(tx, {
-      hostRulesetId,
-      extensionRulesetId: extensionId,
-      shadowFeatIds: shadow("feats"),
-    })) ||
-    (await CharacterLevelFeats.existsByAptitudePickFromExtension(tx, {
-      hostRulesetId,
-      extensionRulesetId: extensionId,
-      shadowAptitudeIds: shadow("aptitudes"),
-    })) ||
-    (await CharacterLevelSkills.existsBySkillPickFromExtension(tx, {
-      hostRulesetId,
-      extensionRulesetId: extensionId,
-      shadowSkillIds: shadow("skills"),
-    })) ||
-    (await CharacterLevelPowers.existsByPowerPickFromExtension(tx, {
-      hostRulesetId,
-      extensionRulesetId: extensionId,
-      shadowPowerIds: shadow("powers"),
-    })) ||
-    (await CharacterLevelPowers.existsByAptitudePickFromExtension(tx, {
-      hostRulesetId,
-      extensionRulesetId: extensionId,
-      shadowAptitudeIds: shadow("aptitudes"),
-    })) ||
-    (await CharacterLevels.existsByKlassPickFromExtension(tx, {
-      hostRulesetId,
-      extensionRulesetId: extensionId,
-      shadowKlassIds: shadow("klasses"),
-    })) ||
-    (await Characters.existsByRaceFromExtension(tx, {
-      hostRulesetId,
-      extensionRulesetId: extensionId,
-      shadowRaceIds: shadow("races"),
-    })) ||
-    (await CharacterLanguages.existsByLanguagePickFromExtension(tx, {
-      hostRulesetId,
-      extensionRulesetId: extensionId,
-      shadowLanguageIds: shadow("languages"),
-    })) ||
-    (await CharacterInventory.existsByItemPickFromExtension(tx, {
-      hostRulesetId,
-      extensionRulesetId: extensionId,
-      shadowItemIds: shadow("items"),
-    }))
-  );
-}
-
-// Hard-deletes an entity along with its junctions and customizations
-// (and, for klasses, its klass_levels). Used by revertOverride and
-// unsubscribeExtension.
-async function deleteEntityWithCascade(tx: Db, entityType: EntityType, entityId: string) {
-  // A tombstone may already have no row. Still clean up any remaining children
-  // when restoring it; creation cannot succeed against an absent owner.
-  await ENTITY_REPOS[entityType].lockById(tx, entityId);
-
-  // 1. Delete join tables
-  if (entityType === "feats") {
-    await FeatsAptitudes.delete(tx, { featId: entityId });
-    await KlassLevelFeats.deleteByFeatId(tx, { featId: entityId });
-  } else if (entityType === "powers") {
-    await PowersAptitudes.delete(tx, { powerId: entityId });
-    await KlassLevelPowers.deleteByPowerId(tx, { powerId: entityId });
-  } else if (entityType === "aptitudes") {
-    await KlassLevelFeats.deleteByAptitudeId(tx, { aptitudeId: entityId });
-    await FeatsAptitudes.deleteByAptitudeId(tx, { aptitudeId: entityId });
-    await PowersAptitudes.deleteByAptitudeId(tx, { aptitudeId: entityId });
-    await KlassLevelPowers.deleteByAptitudeId(tx, { aptitudeId: entityId });
-  } else if (entityType === "skills") {
-    await KlassSkills.deleteBySkillId(tx, { skillId: entityId });
-  } else if (entityType === "saves") {
-    await KlassLevelSaves.deleteBySaveId(tx, { saveId: entityId });
-  } else if (entityType === "klasses") {
-    const levels = await KlassLevels.findManyByKlass(tx, { klassId: entityId });
-    const levelIds = levels.map((l) => l.id);
-    if (levelIds.length > 0) {
-      for (const levelId of levelIds) {
-        await KlassLevelFeats.deleteByKlassLevelId(tx, { klassLevelId: levelId });
-        await KlassLevelPowers.deleteByKlassLevelId(tx, { klassLevelId: levelId });
-        await KlassLevelSaves.deleteByKlassLevelId(tx, { klassLevelId: levelId });
+    // 1. Delete join tables
+    if (entityType === "feats") {
+      await FeatsAptitudes.delete(tx, { featId: entityId });
+      await KlassLevelFeats.deleteByFeatId(tx, { featId: entityId });
+    } else if (entityType === "powers") {
+      await PowersAptitudes.delete(tx, { powerId: entityId });
+      await KlassLevelPowers.deleteByPowerId(tx, { powerId: entityId });
+    } else if (entityType === "aptitudes") {
+      await KlassLevelFeats.deleteByAptitudeId(tx, { aptitudeId: entityId });
+      await FeatsAptitudes.deleteByAptitudeId(tx, { aptitudeId: entityId });
+      await PowersAptitudes.deleteByAptitudeId(tx, { aptitudeId: entityId });
+      await KlassLevelPowers.deleteByAptitudeId(tx, { aptitudeId: entityId });
+    } else if (entityType === "skills") {
+      await KlassSkills.deleteBySkillId(tx, { skillId: entityId });
+    } else if (entityType === "saves") {
+      await KlassLevelSaves.deleteBySaveId(tx, { saveId: entityId });
+    } else if (entityType === "klasses") {
+      const levels = await KlassLevels.findManyByKlass(tx, { klassId: entityId });
+      const levelIds = levels.map((l) => l.id);
+      if (levelIds.length > 0) {
+        for (const levelId of levelIds) {
+          await KlassLevelFeats.deleteByKlassLevelId(tx, { klassLevelId: levelId });
+          await KlassLevelPowers.deleteByKlassLevelId(tx, { klassLevelId: levelId });
+          await KlassLevelSaves.deleteByKlassLevelId(tx, { klassLevelId: levelId });
+        }
+        for (const level of levels) {
+          await KlassLevels.delete(tx, { id: level.id });
+        }
       }
-      for (const level of levels) {
-        await KlassLevels.delete(tx, { id: level.id });
+      await KlassSkills.deleteByKlassId(tx, { klassId: entityId });
+    }
+    // items.source_item_id is RESTRICT — callers that may hit references (revertOverride)
+    // must repoint copies before invoking this.
+
+    // 2. Delete the entity itself: the database deletes its customizations
+    await ENTITY_REPOS[entityType].delete(tx, { id: entityId });
+  }
+
+  // Rejects a subscribe action that would surface two entities of the same name in
+  // the host's source chain. Compares locally-owned (non-shadow) rows in the host,
+  // already-subscribed extensions, and the new extensions; aptitudes are skipped
+  // because the sibling mechanism already dedups them by name at compose time.
+  private async assertExtensionsNameCompatible(
+    tx: Db,
+    hostId: string,
+    newExtensionIds: string[],
+    existingExtensionRulesetIds: string[],
+  ): Promise<void> {
+    if (newExtensionIds.length === 0) return;
+
+    const rulesetIds = [hostId, ...newExtensionIds, ...existingExtensionRulesetIds];
+
+    const typesToCheck = (Object.keys(ENTITY_TABLES) as EntityType[]).filter((t) => t !== "aptitudes");
+
+    const subqueries = typesToCheck.map((entityType) => {
+      const table = ENTITY_TABLES[entityType];
+      return tx
+        .select({
+          entityType: sql<EntityType>`${entityType}::text`.as("entity_type"),
+          name: table.name,
+          rulesetId: table.rulesetId,
+        })
+        .from(table)
+        .leftJoin(
+          entitySnapshotsInRules,
+          and(
+            eq(entitySnapshotsInRules.forkedEntityId, table.id),
+            eq(entitySnapshotsInRules.rulesetId, table.rulesetId),
+            eq(entitySnapshotsInRules.entityType, entityType),
+          ),
+        )
+        .where(
+          and(
+            inArray(table.rulesetId, rulesetIds),
+            isNull(entitySnapshotsInRules.id),
+            isNull(table.deletedAt),
+            isNull(table.campaignId),
+          ),
+        );
+    });
+
+    const [first, second, ...rest] = subqueries;
+    const rows = await unionAll(first, second, ...rest);
+
+    const ownersByType = new Map<EntityType, Map<string, Set<string>>>();
+    for (const r of rows) {
+      const type = r.entityType as EntityType;
+      let byName = ownersByType.get(type);
+      if (!byName) {
+        byName = new Map<string, Set<string>>();
+        ownersByType.set(type, byName);
+      }
+      let set = byName.get(r.name);
+      if (!set) {
+        set = new Set<string>();
+        byName.set(r.name, set);
+      }
+      set.add(r.rulesetId);
+    }
+
+    // Feats and powers participate in the runtime name-fallback pairing in
+    // cow.ts — extension-only collisions on those types get merged into one
+    // entity at compose, so allow them. The host's own native rows can't be
+    // sibling-paired (host isn't part of its own source chain), so a
+    // host+extension collision would produce visible duplicates and must be
+    // blocked even for paired types. All other entity types (races, classes,
+    // abilities, etc.) have no name-fallback pairing — extension+extension
+    // collisions there would surface as UI duplicates, so block them.
+    const pairableTypes = new Set<EntityType>(NAME_FALLBACK_ENTITY_TYPES);
+    for (const [entityType, byName] of ownersByType) {
+      const isPairableType = pairableTypes.has(entityType);
+      for (const [name, ownerIds] of byName) {
+        if (ownerIds.size <= 1) continue;
+        const involvesNew = newExtensionIds.some((id) => ownerIds.has(id));
+        if (!involvesNew) continue;
+        if (isPairableType) {
+          const involvesHost = ownerIds.has(hostId);
+          if (!involvesHost) continue;
+          throw new ConflictError(`Cannot subscribe: ${entityType} "${name}" already exists in this ruleset`);
+        }
+        throw new ConflictError(
+          `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
+        );
       }
     }
-    await KlassSkills.deleteByKlassId(tx, { klassId: entityId });
-  }
-  // items.source_item_id is RESTRICT — callers that may hit references (revertOverride)
-  // must repoint copies before invoking this.
-
-  // 2. Delete the entity itself: the database deletes its customizations
-  await ENTITY_REPOS[entityType].delete(tx, { id: entityId });
-}
-
-// Rejects a subscribe action that would surface two entities of the same name in
-// the host's source chain. Compares locally-owned (non-shadow) rows in the host,
-// already-subscribed extensions, and the new extensions; aptitudes are skipped
-// because the sibling mechanism already dedups them by name at compose time.
-async function assertExtensionsNameCompatible(
-  tx: Db,
-  hostId: string,
-  newExtensionIds: string[],
-  existingExtensionRulesetIds: string[],
-): Promise<void> {
-  if (newExtensionIds.length === 0) return;
-
-  const rulesetIds = [hostId, ...newExtensionIds, ...existingExtensionRulesetIds];
-
-  const typesToCheck = (Object.keys(ENTITY_TABLES) as EntityType[]).filter((t) => t !== "aptitudes");
-
-  const subqueries = typesToCheck.map((entityType) => {
-    const table = ENTITY_TABLES[entityType];
-    return tx
-      .select({
-        entityType: sql<EntityType>`${entityType}::text`.as("entity_type"),
-        name: table.name,
-        rulesetId: table.rulesetId,
-      })
-      .from(table)
-      .leftJoin(
-        entitySnapshotsInRules,
-        and(
-          eq(entitySnapshotsInRules.forkedEntityId, table.id),
-          eq(entitySnapshotsInRules.rulesetId, table.rulesetId),
-          eq(entitySnapshotsInRules.entityType, entityType),
-        ),
-      )
-      .where(
-        and(
-          inArray(table.rulesetId, rulesetIds),
-          isNull(entitySnapshotsInRules.id),
-          isNull(table.deletedAt),
-          isNull(table.campaignId),
-        ),
-      );
-  });
-
-  const [first, second, ...rest] = subqueries;
-  const rows = await unionAll(first, second, ...rest);
-
-  const ownersByType = new Map<EntityType, Map<string, Set<string>>>();
-  for (const r of rows) {
-    const type = r.entityType as EntityType;
-    let byName = ownersByType.get(type);
-    if (!byName) {
-      byName = new Map<string, Set<string>>();
-      ownersByType.set(type, byName);
-    }
-    let set = byName.get(r.name);
-    if (!set) {
-      set = new Set<string>();
-      byName.set(r.name, set);
-    }
-    set.add(r.rulesetId);
   }
 
-  // Feats and powers participate in the runtime name-fallback pairing in
-  // cow.ts — extension-only collisions on those types get merged into one
-  // entity at compose, so allow them. The host's own native rows can't be
-  // sibling-paired (host isn't part of its own source chain), so a
-  // host+extension collision would produce visible duplicates and must be
-  // blocked even for paired types. All other entity types (races, classes,
-  // abilities, etc.) have no name-fallback pairing — extension+extension
-  // collisions there would surface as UI duplicates, so block them.
-  const pairableTypes = new Set<EntityType>(NAME_FALLBACK_ENTITY_TYPES);
-  for (const [entityType, byName] of ownersByType) {
-    const isPairableType = pairableTypes.has(entityType);
-    for (const [name, ownerIds] of byName) {
-      if (ownerIds.size <= 1) continue;
-      const involvesNew = newExtensionIds.some((id) => ownerIds.has(id));
-      if (!involvesNew) continue;
-      if (isPairableType) {
-        const involvesHost = ownerIds.has(hostId);
-        if (!involvesHost) continue;
-        throw new ConflictError(`Cannot subscribe: ${entityType} "${name}" already exists in this ruleset`);
-      }
-      throw new ConflictError(
-        `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
-      );
-    }
-  }
-}
-
-const RulesetsMethods = {
   async getAllRulesets(
     session: Session,
     where: {
@@ -368,7 +367,7 @@ const RulesetsMethods = {
       ...rulesets,
       items,
     };
-  },
+  }
 
   async getRulesetById(session: Session, id: string) {
     const ruleset = await Rulesets.findOne(db, { id });
@@ -396,7 +395,7 @@ const RulesetsMethods = {
       isStarrable: isStarrable(ruleset),
       isUsedAsExtension,
     };
-  },
+  }
 
   async forkRuleset(session: Session, id: string, body: { name: string; description?: string; private: boolean }) {
     const result = await withTransaction(async (tx) => {
@@ -475,7 +474,7 @@ const RulesetsMethods = {
 
     invalidateRuleset(result.id);
     return result;
-  },
+  }
 
   async archiveRuleset(session: Session, id: string) {
     return await withTransaction(async (tx) => {
@@ -502,7 +501,7 @@ const RulesetsMethods = {
 
       return archivedRuleset;
     });
-  },
+  }
 
   async unarchiveRuleset(session: Session, id: string) {
     const result = await withTransaction(async (tx) => {
@@ -531,7 +530,7 @@ const RulesetsMethods = {
     });
     invalidateRuleset(id);
     return result;
-  },
+  }
 
   async publishRuleset(session: Session, id: string, body: { kind?: RulesetKind } = {}) {
     const result = await withTransaction(async (tx) => {
@@ -603,7 +602,7 @@ const RulesetsMethods = {
 
     invalidateRuleset(id);
     return result;
-  },
+  }
 
   async starRuleset(session: Session, rulesetId: string) {
     return await withTransaction(async (tx) => {
@@ -618,13 +617,13 @@ const RulesetsMethods = {
 
       await StarredRulesets.createOrRestore(tx, { userId: session.userId, rulesetId });
     });
-  },
+  }
 
   async unstarRuleset(session: Session, rulesetId: string) {
     return await withTransaction(async (tx) => {
       await StarredRulesets.archive(tx, { userId: session.userId, rulesetId });
     });
-  },
+  }
 
   async updateRuleset(
     session: Session,
@@ -667,7 +666,7 @@ const RulesetsMethods = {
 
     invalidateRuleset(id);
     return result;
-  },
+  }
 
   async subscribeExtension(session: Session, id: string, extensionIds: string[]) {
     const result = await withTransaction(async (tx) => {
@@ -721,7 +720,7 @@ const RulesetsMethods = {
         newExtensionIds.push(extensionId);
       }
 
-      await assertExtensionsNameCompatible(tx, id, newExtensionIds, childRuleset.extensionRulesetIds);
+      await this.assertExtensionsNameCompatible(tx, id, newExtensionIds, childRuleset.extensionRulesetIds);
 
       // 3. Append all to extensionRulesetIds
       await Rulesets.update(
@@ -749,7 +748,7 @@ const RulesetsMethods = {
 
     invalidateRuleset(id);
     return result;
-  },
+  }
 
   async unsubscribeExtension(session: Session, id: string, extensionId: string) {
     const result = await withTransaction(async (tx) => {
@@ -765,7 +764,7 @@ const RulesetsMethods = {
         throw new NotFoundError("Not subscribed to this extension");
       }
 
-      const inUse = await isExtensionInUseByHost(tx, id, extensionId);
+      const inUse = await this.isExtensionInUseByHost(tx, id, extensionId);
       policy.canUnsubscribeExtension({ inUse });
 
       // 2. Clean up COW copies: find snapshots whose sourceEntityId belongs to the extension
@@ -784,7 +783,7 @@ const RulesetsMethods = {
       // Delete COW copies and their snapshots
       for (const snap of extensionSnapshots) {
         const entityType = snap.entityType as EntityType;
-        await deleteEntityWithCascade(tx, entityType, snap.forkedEntityId);
+        await this.deleteEntityWithCascade(tx, entityType, snap.forkedEntityId);
         await EntitySnapshots.deleteBySourceAndRuleset(tx, {
           sourceEntityId: snap.sourceEntityId,
           rulesetId: id,
@@ -815,7 +814,7 @@ const RulesetsMethods = {
 
     invalidateRuleset(id);
     return result;
-  },
+  }
 
   async getChanges(session: Session, rulesetId: string) {
     const ruleset = await Rulesets.findOne(db, { id: rulesetId });
@@ -906,7 +905,7 @@ const RulesetsMethods = {
     }
 
     return changes;
-  },
+  }
 
   async revertOverride(session: Session, rulesetId: string, entityType: EntityType, entityId: string) {
     const result = await withTransaction(async (tx) => {
@@ -942,7 +941,7 @@ const RulesetsMethods = {
           .set({ sourceItemId: entityId })
           .where(eq(itemsInRules.sourceItemId, snapshot.forkedEntityId));
       }
-      await deleteEntityWithCascade(tx, entityType, snapshot.forkedEntityId);
+      await this.deleteEntityWithCascade(tx, entityType, snapshot.forkedEntityId);
       await EntitySnapshots.deleteBySourceAndRuleset(tx, {
         sourceEntityId: entityId,
         rulesetId,
@@ -953,7 +952,7 @@ const RulesetsMethods = {
 
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async getSubscribedExtensions(_session: Session, id: string) {
     const ruleset = await Rulesets.findOne(db, { id });
@@ -970,13 +969,7 @@ const RulesetsMethods = {
       subscribedAt: ext.subscribedAt,
       updateAvailable: ext.extensionUpdatedAt > ext.updatedAt,
     }));
-  },
-} as const;
-
-class RulesetsService extends BaseService<typeof RulesetsMethods> {
-  static initialize() {
-    return new RulesetsService(RulesetsMethods);
   }
 }
 
-export default RulesetsService;
+export default new RulesetsService();

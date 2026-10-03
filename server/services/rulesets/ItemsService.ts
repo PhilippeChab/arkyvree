@@ -7,7 +7,6 @@ import { ConflictError, STALE_ENTITY_MESSAGE, UnprocessableEntityError } from "@
 import { Items } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   assertAncestorNamesHidden,
   assertEntityNameAvailable,
@@ -37,84 +36,84 @@ interface ItemBody {
   updatedAt?: string;
 }
 
-function validateTemplateSource(isTemplate: boolean, sourceItemId?: string) {
-  if (isTemplate && sourceItemId) {
-    throw new UnprocessableEntityError("Template items cannot have a source item");
+class ItemsService {
+  private validateTemplateSource(isTemplate: boolean, sourceItemId?: string) {
+    if (isTemplate && sourceItemId) {
+      throw new UnprocessableEntityError("Template items cannot have a source item");
+    }
   }
-}
 
-/** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
-function templateOf(item: { id: string; isTemplate: boolean; sourceItemId: string | null }) {
-  return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
-}
+  /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
+  private templateOf(item: { id: string; isTemplate: boolean; sourceItemId: string | null }) {
+    return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
+  }
 
-/**
- * Adds an item to the ruleset. A duplicate of the item `duplicatedItemId` points at the same template, and takes its
- * customizations when it isn't a template itself; a template's copies get their properties from the template.
- */
-async function addRulesetItem(session: Session, rulesetId: string, body: ItemBody, duplicatedItemId?: string) {
-  const result = await withTransaction(async (tx) => {
-    return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-      (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
+  /**
+   * Adds an item to the ruleset. A duplicate of the item `duplicatedItemId` points at the same template, and takes its
+   * customizations when it isn't a template itself; a template's copies get their properties from the template.
+   */
+  private async addRulesetItem(session: Session, rulesetId: string, body: ItemBody, duplicatedItemId?: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-      const source = duplicatedItemId
-        ? findScopedEntity(
-            rulesetData.itemsById,
-            duplicatedItemId,
-            rulesetId,
-            rulesetData.cow.sourceChain,
-            "Source item",
-          )
-        : undefined;
-      if (!source) validateTemplateSource(body.isTemplate ?? false, body.sourceItemId);
+        const source = duplicatedItemId
+          ? findScopedEntity(
+              rulesetData.itemsById,
+              duplicatedItemId,
+              rulesetId,
+              rulesetData.cow.sourceChain,
+              "Source item",
+            )
+          : undefined;
+        if (!source) this.validateTemplateSource(body.isTemplate ?? false, body.sourceItemId);
 
-      const { tombstoneAncestorId } = await assertEntityNameAvailable(
-        tx,
-        rulesetId,
-        rulesetData.cow,
-        "items",
-        body.name,
-      );
+        const { tombstoneAncestorId } = await assertEntityNameAvailable(
+          tx,
+          rulesetId,
+          rulesetData.cow,
+          "items",
+          body.name,
+        );
 
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-      const rows = await Items.create(tx, {
-        name: body.name,
-        description: body.description,
-        type: body.type,
-        slot: hooks.items.resolveSlot(body.type, body.slot),
-        rulesetId,
-        weight: body.weight?.toString(),
-        costGp: body.costGp?.toString(),
-        sourceItemId: source ? templateOf(source) : body.sourceItemId,
-        isTemplate: source ? false : (body.isTemplate ?? false),
+        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const rows = await Items.create(tx, {
+          name: body.name,
+          description: body.description,
+          type: body.type,
+          slot: hooks.items.resolveSlot(body.type, body.slot),
+          rulesetId,
+          weight: body.weight?.toString(),
+          costGp: body.costGp?.toString(),
+          sourceItemId: source ? this.templateOf(source) : body.sourceItemId,
+          isTemplate: source ? false : (body.isTemplate ?? false),
+        });
+        const item = rows[0];
+
+        if (tombstoneAncestorId) {
+          await repointTombstoneSnapshot(tx, rulesetId, "items", tombstoneAncestorId, item.id);
+        }
+
+        if (source && !source.isTemplate) {
+          const cust = (await fetchEntityCustomizations(tx, [source.id], "items", "items")).get(source.id);
+          if (cust) await copyEntityCustomizations(tx, source.id, item.id, "items", cust);
+        }
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: item.id,
+          targetTable: getTableName(itemsInRules),
+          type: "createItem",
+          data: { entityName: item.name },
+        });
+
+        return item;
       });
-      const item = rows[0];
-
-      if (tombstoneAncestorId) {
-        await repointTombstoneSnapshot(tx, rulesetId, "items", tombstoneAncestorId, item.id);
-      }
-
-      if (source && !source.isTemplate) {
-        const cust = (await fetchEntityCustomizations(tx, [source.id], "items", "items")).get(source.id);
-        if (cust) await copyEntityCustomizations(tx, source.id, item.id, "items", cust);
-      }
-
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: item.id,
-        targetTable: getTableName(itemsInRules),
-        type: "createItem",
-        data: { entityName: item.name },
-      });
-
-      return item;
     });
-  });
-  invalidateRuleset(rulesetId);
-  return result;
-}
+    invalidateRuleset(rulesetId);
+    return result;
+  }
 
-const ItemsMethods = {
   async getRulesetItems(
     rulesetId: string,
     where: {
@@ -142,7 +141,7 @@ const ItemsMethods = {
         })),
       };
     });
-  },
+  }
 
   async getRulesetItem(rulesetId: string, itemId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -166,22 +165,22 @@ const ItemsMethods = {
 
       return { ...item, modifiers, properties, requirements };
     });
-  },
+  }
 
   async getRulesetTemplates(rulesetId: string, type?: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       return await Items.findTemplates(db, { rulesetId, ancestorRulesetIds: sourceChain, type });
     });
-  },
+  }
 
   async createRulesetItem(session: Session, rulesetId: string, body: ItemBody) {
-    return await addRulesetItem(session, rulesetId, body);
-  },
+    return await this.addRulesetItem(session, rulesetId, body);
+  }
 
   async duplicateRulesetItem(session: Session, rulesetId: string, sourceItemId: string, body: ItemBody) {
-    return await addRulesetItem(session, rulesetId, body, sourceItemId);
-  },
+    return await this.addRulesetItem(session, rulesetId, body, sourceItemId);
+  }
 
   async bulkCreateVariants(
     session: Session,
@@ -266,7 +265,7 @@ const ItemsMethods = {
             rulesetId,
             weight: source.weight,
             costGp: source.costGp,
-            sourceItemId: templateOf(source),
+            sourceItemId: this.templateOf(source),
             isTemplate: false,
           });
           const item = rows[0];
@@ -301,7 +300,7 @@ const ItemsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateRulesetItem(session: Session, rulesetId: string, itemId: string, body: ItemBody) {
     const result = await withTransaction(async (tx) => {
@@ -312,7 +311,7 @@ const ItemsMethods = {
 
         const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
 
-        validateTemplateSource(item.isTemplate, body.sourceItemId);
+        this.validateTemplateSource(item.isTemplate, body.sourceItemId);
 
         const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "items", item);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
@@ -353,7 +352,7 @@ const ItemsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteRulesetItem(session: Session, rulesetId: string, itemId: string) {
     const result = await withTransaction(async (tx) => {
@@ -392,13 +391,7 @@ const ItemsMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class ItemsService extends BaseService<typeof ItemsMethods> {
-  static initialize() {
-    return new ItemsService(ItemsMethods);
   }
 }
 
-export default ItemsService;
+export default new ItemsService();

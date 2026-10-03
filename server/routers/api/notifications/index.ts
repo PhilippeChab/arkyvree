@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import { errorResponse, respond } from "@/server/routers/respond.ts";
 import NotificationsService from "@/server/services/NotificationsService.ts";
 
 const notifications = new Hono()
@@ -26,28 +25,25 @@ const notifications = new Hono()
     async (c) => {
       const query = c.req.valid("query");
 
-      const result = await NotificationsService.initialize().call(
-        "getNotifications",
-        c.var.requestSession,
-        { unreadOnly: query.unreadOnly, search: query.search, orderDir: query.orderDir },
-        { limit: query.limit, page: query.page },
+      return c.json(
+        await NotificationsService.getNotifications(
+          c.var.requestSession,
+          { unreadOnly: query.unreadOnly, search: query.search, orderDir: query.orderDir },
+          { limit: query.limit, page: query.page },
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get("/unread", async (c) => {
-    const result = await NotificationsService.initialize().call("getUnreadSummary", c.var.requestSession);
-    return respond(c, result, 200);
+    return c.json(await NotificationsService.getUnreadSummary(c.var.requestSession), 200);
   })
   .post("/:id/read", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    const result = await NotificationsService.initialize().call("markRead", c.var.requestSession, id);
-    return respond(c, result, 200);
+    return c.json(await NotificationsService.markRead(c.var.requestSession, id), 200);
   })
   .post("/read-all", async (c) => {
-    const result = await NotificationsService.initialize().call("markAllRead", c.var.requestSession);
-    const success = result[0];
-    if (!success) return errorResponse(c, result[2]);
+    await NotificationsService.markAllRead(c.var.requestSession);
     return c.json({ success: true }, 200);
   });
 

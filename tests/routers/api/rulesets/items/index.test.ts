@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const items = api.api.rulesets[":id"].items;
@@ -28,7 +28,7 @@ describe("rulesets items", () => {
     expect(updated).toMatchObject({ name: "Renamed Item", description: "Updated", weight: "3.20", costGp: "200.00" });
 
     await expectOk(item.$delete({ param }));
-    expect((await item.$get({ param })).status).toBe(404);
+    await expectStatus(item.$get({ param }), 404);
   });
 
   test("lists the templates of one type", async () => {
@@ -74,7 +74,7 @@ describe("rulesets items", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const source = await expectOk(items.$post({ param: { id }, json: { name: "Bulk Cap Source" } }));
     const variants = Array.from({ length: 51 }, (_, i) => ({ name: `Cap Variant ${i}` }));
-    expect((await item.variants.$post({ param: { id, itemId: source.id }, json: { variants } })).status).toBe(400);
+    await expectStatus(item.variants.$post({ param: { id, itemId: source.id }, json: { variants } }), 400);
   });
 
   test("accepts the updatedAt it returned and refuses it once stale", async () => {
@@ -84,27 +84,27 @@ describe("rulesets items", () => {
     const { updatedAt } = await expectOk(item.$get({ param }));
 
     expect((await item.$put({ param, json: { name: "Edit One", updatedAt } })).status).toBe(200);
-    expect((await item.$put({ param, json: { name: "Edit Two", updatedAt } })).status).toBe(409);
+    await expectStatus(item.$put({ param, json: { name: "Edit Two", updatedAt } }), 409);
   });
 
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await guestApi.api.rulesets[":id"].items.$get({ param: { id }, query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.rulesets[":id"].items.$get({ param: { id }, query: {} }), 401);
   });
 
   test("rejects an item without a name or with a non-numeric weight or cost", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     for (const json of [{ name: "" }, { name: "Item", weight: "heavy" }, { name: "Item", costGp: "cheap" }]) {
-      expect((await items.$post({ param: { id }, json: json as never })).status).toBe(400);
+      await expectStatus(items.$post({ param: { id }, json: json as never }), 400);
     }
   });
 
   test("returns 404 for a missing ruleset or item", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await items.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    await expectStatus(items.$get({ param: { id: NIL_UUID }, query: {} }), 404);
     const param = { id, itemId: NIL_UUID };
-    expect((await item.$get({ param })).status).toBe(404);
-    expect((await item.$put({ param, json: { name: "Missing" } })).status).toBe(404);
-    expect((await item.$delete({ param })).status).toBe(404);
+    await expectStatus(item.$get({ param }), 404);
+    await expectStatus(item.$put({ param, json: { name: "Missing" } }), 404);
+    await expectStatus(item.$delete({ param }), 404);
   });
 });

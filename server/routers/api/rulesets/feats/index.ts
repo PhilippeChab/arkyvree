@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { FeatsService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
@@ -24,15 +23,10 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, aptitudeId } = c.req.valid("query");
-
-      const featsService = FeatsService.initialize();
-      const result = await featsService.call(
-        "getRulesetFeatsGrouped",
-        id,
-        { search, childOnly, aptitudeId },
-        { limit, page },
+      return c.json(
+        await FeatsService.getRulesetFeatsGrouped(id, { search, childOnly, aptitudeId }, { limit, page }),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -54,15 +48,14 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, aptitudeId, family, orderBy, orderDir } = c.req.valid("query");
-
-      const featsService = FeatsService.initialize();
-      const result = await featsService.call(
-        "getRulesetFeats",
-        id,
-        { search, childOnly, aptitudeId, family, orderBy, orderDir },
-        { limit, page },
+      return c.json(
+        await FeatsService.getRulesetFeats(
+          id,
+          { search, childOnly, aptitudeId, family, orderBy, orderDir },
+          { limit, page },
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -70,10 +63,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), featId: z.string().uuid() })),
     async (c) => {
       const { id, featId } = c.req.valid("param");
-
-      const featsService = FeatsService.initialize();
-      const result = await featsService.call("getRulesetFeat", id, featId);
-      return respond(c, result, 200);
+      return c.json(await FeatsService.getRulesetFeat(id, featId), 200);
     },
   )
   .post(
@@ -93,10 +83,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const featsService = FeatsService.initialize();
-      const result = await featsService.call("createRulesetFeat", c.var.requestSession, id, body);
-      return respond(c, result, 200);
+      return c.json(await FeatsService.createRulesetFeat(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -117,10 +104,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, featId } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const featsService = FeatsService.initialize();
-      const result = await featsService.call("updateRulesetFeat", c.var.requestSession, id, featId, body);
-      return respond(c, result, 200);
+      return c.json(await FeatsService.updateRulesetFeat(c.var.requestSession, id, featId, body), 200);
     },
   )
   .delete(
@@ -128,9 +112,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), featId: z.string().uuid() })),
     async (c) => {
       const { id, featId } = c.req.valid("param");
-
-      const featsService = FeatsService.initialize();
-      const result = await featsService.call("deleteRulesetFeat", c.var.requestSession, id, featId);
-      return respond(c, result, 200);
+      return c.json(await FeatsService.deleteRulesetFeat(c.var.requestSession, id, featId), 200);
     },
   );

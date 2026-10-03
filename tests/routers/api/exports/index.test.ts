@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createSignedInUser, guestApi } from "@/tests/api.ts";
+import { createSignedInUser, expectStatus, guestApi } from "@/tests/api.ts";
 import { createExport } from "@/tests/helpers.ts";
 
 describe("exports", () => {
@@ -19,12 +19,12 @@ describe("exports", () => {
     const { user } = await createSignedInUser("owner");
     const { id } = await createExport(user.id);
     const { api: other } = await createSignedInUser("other");
-    expect((await other.api.exports[":id"].download.$get({ param: { id } })).status).toBe(404);
+    await expectStatus(other.api.exports[":id"].download.$get({ param: { id } }), 404);
   });
 
   test("requires a session", async () => {
     const { user } = await createSignedInUser("owner");
     const { id } = await createExport(user.id);
-    expect((await guestApi.api.exports[":id"].download.$get({ param: { id } })).status).toBe(401);
+    await expectStatus(guestApi.api.exports[":id"].download.$get({ param: { id } }), 401);
   });
 });

@@ -7,11 +7,7 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import CharacterInventoryService from "@/server/services/characters/CharacterInventoryService.ts";
 import CharactersService from "@/server/services/CharactersService.ts";
 import ItemsService from "@/server/services/rulesets/ItemsService.ts";
-import { createSeededTestRuleset, getSeedCtx, methodsOf } from "@/tests/helpers.ts";
-
-const CharacterInventoryMethods = methodsOf(CharacterInventoryService);
-const CharactersMethods = methodsOf(CharactersService);
-const ItemsMethods = methodsOf(ItemsService);
+import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
 
 async function setup() {
   const user = await Users.findOne(db, { emailAddress: "testuser1@example.com" });
@@ -22,7 +18,7 @@ async function setup() {
   const item = await Items.findOne(db, { rulesetId: seed.rulesetId, name: "Heavy Mace" });
   if (!item) throw new Error("Seed item not found");
 
-  const character = await CharactersMethods.createCharacter(session, {
+  const character = await CharactersService.createCharacter(session, {
     rulesetId: ruleset.id,
     raceId: seed.raceMap.pc["Human"],
     name: "Inventory override regression",
@@ -34,7 +30,7 @@ async function setup() {
     height: "180 cm",
     weight: "80 kg",
   });
-  await CharacterInventoryMethods.addItem(session, character.id, item.id, 2, true, "Main Hand", null, null, 0);
+  await CharacterInventoryService.addItem(session, character.id, item.id, 2, true, "Main Hand", null, null, 0);
   return { session, ruleset, item, character };
 }
 
@@ -44,7 +40,7 @@ describe("COW inventory item details", () => {
       const { session, ruleset, item, character } = await setup();
       const readInventory = async () => {
         if (view === "editable inventory") {
-          return CharacterInventoryMethods.getInventory(session, character.id);
+          return CharacterInventoryService.getInventory(session, character.id);
         }
         const detailedCharacter = new DetailedCharacter(character);
         await detailedCharacter.build();
@@ -52,7 +48,7 @@ describe("COW inventory item details", () => {
       };
 
       expect((await readInventory())[0].item.name).toBe(item.name);
-      const updated = await ItemsMethods.updateRulesetItem(session, ruleset.id, item.id, {
+      const updated = await ItemsService.updateRulesetItem(session, ruleset.id, item.id, {
         name: "Forked war mace",
         description: "A renamed mace in this fork.",
         type: "Weapon",
@@ -77,7 +73,7 @@ describe("COW inventory item details", () => {
       // Reading a fork does not rewrite the pick or change the parent item.
       const stored = await CharacterInventory.findOne(db, { characterId: character.id, itemId: item.id });
       expect(stored?.itemId).toBe(item.id);
-      const parent = await ItemsMethods.getRulesetItem(item.rulesetId, item.id);
+      const parent = await ItemsService.getRulesetItem(item.rulesetId, item.id);
       expect(parent.name).toBe(item.name);
       expect(parent.description).toBe(item.description);
     });
@@ -85,7 +81,7 @@ describe("COW inventory item details", () => {
 
   test("campaign/shared character equipment uses the override's name and description", async () => {
     const { session, ruleset, item, character } = await setup();
-    const updated = await ItemsMethods.updateRulesetItem(session, ruleset.id, item.id, {
+    const updated = await ItemsService.updateRulesetItem(session, ruleset.id, item.id, {
       name: "Campaign war mace",
       description: "Campaign-specific equipment description.",
       type: "Weapon",

@@ -27,12 +27,9 @@ import {
   createTestUser,
   inviteToSlot,
   makeSession,
-  methodsOf,
   NIL_UUID,
   uniqueId,
 } from "@/tests/helpers.ts";
-
-const AuthenticationMethods = methodsOf(AuthenticationService);
 
 function credentials() {
   const suffix = uniqueId();
@@ -48,9 +45,9 @@ async function codeFor(userId: string) {
 
 /** A new verified user, signed in. */
 async function signUpAndVerify(account = credentials()) {
-  const { user } = await AuthenticationMethods.signUp(account.emailAddress, account.password);
+  const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
   await Users.update(db, { emailVerifiedAt: new Date().toISOString() }, { id: user.id });
-  const signedIn = await AuthenticationMethods.signIn(account.emailAddress, account.password);
+  const signedIn = await AuthenticationService.signIn(account.emailAddress, account.password);
   return { ...signedIn, account };
 }
 
@@ -78,7 +75,7 @@ describe("AuthenticationService", () => {
   describe("signing up", () => {
     test("makes an unverified user with an Argon2 hash, sends an 8-character code and signs nobody in", async () => {
       const account = credentials();
-      const result = await AuthenticationMethods.signUp(account.emailAddress, account.password);
+      const result = await AuthenticationService.signUp(account.emailAddress, account.password);
       expect("session" in result).toBe(false);
       expect(result.user).toMatchObject({ emailAddress: account.emailAddress, emailVerifiedAt: null });
       expect(result.user.passwordDigest).toStartWith("$argon2");
@@ -91,27 +88,27 @@ describe("AuthenticationService", () => {
     test("refuses an email a deleted account still holds", async () => {
       // The deleted row keeps the email's unique index: this must be a conflict, not a constraint crash.
       const { session, account } = await signUpAndVerify();
-      await AuthenticationMethods.deleteAccount(session, account.password);
-      await expect(AuthenticationMethods.signUp(account.emailAddress, account.password)).rejects.toThrow(ConflictError);
+      await AuthenticationService.deleteAccount(session, account.password);
+      await expect(AuthenticationService.signUp(account.emailAddress, account.password)).rejects.toThrow(ConflictError);
     });
   });
 
   describe("verifying the email", () => {
     test("signs the user in with the code sent, once", async () => {
       const account = credentials();
-      const { user } = await AuthenticationMethods.signUp(account.emailAddress, account.password);
+      const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
       const code = await codeFor(user.id);
-      expect(await AuthenticationMethods.verifyEmail(account.emailAddress, code)).toMatchObject({
+      expect(await AuthenticationService.verifyEmail(account.emailAddress, code)).toMatchObject({
         session: { userId: user.id },
         user: { id: user.id },
       });
-      await expect(AuthenticationMethods.verifyEmail(account.emailAddress, code)).rejects.toThrow(BadRequestError);
+      await expect(AuthenticationService.verifyEmail(account.emailAddress, code)).rejects.toThrow(BadRequestError);
     });
 
     test("refuses a wrong or expired code", async () => {
       const account = credentials();
-      const { user } = await AuthenticationMethods.signUp(account.emailAddress, account.password);
-      await expect(AuthenticationMethods.verifyEmail(account.emailAddress, "000000")).rejects.toThrow(
+      const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
+      await expect(AuthenticationService.verifyEmail(account.emailAddress, "000000")).rejects.toThrow(
         UnauthorizedError,
       );
 
@@ -120,29 +117,29 @@ describe("AuthenticationService", () => {
         .update(emailVerificationsInAccount)
         .set({ expiresAt: ago(1000) })
         .where(eq(emailVerificationsInAccount.id, verification.id));
-      await expect(AuthenticationMethods.verifyEmail(account.emailAddress, verification.code)).rejects.toThrow(
+      await expect(AuthenticationService.verifyEmail(account.emailAddress, verification.code)).rejects.toThrow(
         UnauthorizedError,
       );
     });
 
     test("resends a new code once the old one is five minutes old, and tells nothing about unknown or verified emails", async () => {
       const account = credentials();
-      const { user } = await AuthenticationMethods.signUp(account.emailAddress, account.password);
+      const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
       const old = (await EmailVerifications.findOne(db, { userId: user.id }))!;
       await db
         .update(emailVerificationsInAccount)
         .set({ createdAt: ago(6 * 60 * 1000) })
         .where(eq(emailVerificationsInAccount.id, old.id));
 
-      await AuthenticationMethods.resendVerification(account.emailAddress);
+      await AuthenticationService.resendVerification(account.emailAddress);
       const fresh = (await EmailVerifications.findOne(db, { userId: user.id }))!;
       expect(fresh.id).not.toBe(old.id);
       expect(fresh.code).toHaveLength(8);
 
-      expect(await AuthenticationMethods.resendVerification("nonexistent@example.com")).toEqual({
+      expect(await AuthenticationService.resendVerification("nonexistent@example.com")).toEqual({
         success: true,
       });
-      expect(await AuthenticationMethods.resendVerification((await signUpAndVerify()).account.emailAddress)).toEqual({
+      expect(await AuthenticationService.resendVerification((await signUpAndVerify()).account.emailAddress)).toEqual({
         success: true,
       });
     });
@@ -158,13 +155,13 @@ describe("AuthenticationService", () => {
       const invites = [await invite(account.emailAddress), await invite(account.emailAddress)];
       expect(invites.map((i) => i.userId)).toEqual([null, null]);
 
-      const { user } = await AuthenticationMethods.signUp(account.emailAddress, account.password);
-      await AuthenticationMethods.verifyEmail(account.emailAddress, await codeFor(user.id));
+      const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
+      await AuthenticationService.verifyEmail(account.emailAddress, await codeFor(user.id));
       for (const { id } of invites) expect(await Invites.findOne(db, { id })).toMatchObject({ userId: user.id });
 
       // Signing in claims those sent later.
       const later = await invite(account.emailAddress);
-      await AuthenticationMethods.signIn(account.emailAddress, account.password);
+      await AuthenticationService.signIn(account.emailAddress, account.password);
       expect(await Invites.findOne(db, { id: later.id })).toMatchObject({ userId: user.id });
     });
   });
@@ -173,7 +170,7 @@ describe("AuthenticationService", () => {
     test("opens a new week-long session each time", async () => {
       const { session: first, user, account } = await signUpAndVerify();
       const before = Date.now();
-      const second = await AuthenticationMethods.signIn(account.emailAddress, account.password);
+      const second = await AuthenticationService.signIn(account.emailAddress, account.password);
       const after = Date.now();
 
       expect(second.user).toMatchObject({ id: user.id, emailAddress: account.emailAddress });
@@ -187,12 +184,12 @@ describe("AuthenticationService", () => {
     test("refuses an unknown email, a wrong password and an unverified email", async () => {
       const { account } = await signUpAndVerify();
       const invalid = new UnauthorizedError("Invalid email or password");
-      await expect(AuthenticationMethods.signIn("nonexistent@example.com", "password1234")).rejects.toEqual(invalid);
-      await expect(AuthenticationMethods.signIn(account.emailAddress, "wrong-password")).rejects.toEqual(invalid);
+      await expect(AuthenticationService.signIn("nonexistent@example.com", "password1234")).rejects.toEqual(invalid);
+      await expect(AuthenticationService.signIn(account.emailAddress, "wrong-password")).rejects.toEqual(invalid);
 
       const unverified = credentials();
-      await AuthenticationMethods.signUp(unverified.emailAddress, unverified.password);
-      await expect(AuthenticationMethods.signIn(unverified.emailAddress, unverified.password)).rejects.toEqual(
+      await AuthenticationService.signUp(unverified.emailAddress, unverified.password);
+      await expect(AuthenticationService.signIn(unverified.emailAddress, unverified.password)).rejects.toEqual(
         new UnauthorizedError("Email not verified"),
       );
     });
@@ -211,34 +208,34 @@ describe("AuthenticationService", () => {
       );
 
       // A wrong password against it is refused, and leaves it as it is
-      await expect(AuthenticationMethods.signIn(account.emailAddress, "wrong-password")).rejects.toThrow(
+      await expect(AuthenticationService.signIn(account.emailAddress, "wrong-password")).rejects.toThrow(
         UnauthorizedError,
       );
       expect((await Users.findOne(db, { id: user.id }))!.passwordDigest).not.toStartWith("$argon2");
 
-      await AuthenticationMethods.signIn(account.emailAddress, account.password);
+      await AuthenticationService.signIn(account.emailAddress, account.password);
       expect((await Users.findOne(db, { id: user.id }))!.passwordDigest).toStartWith("$argon2");
     });
   });
 
   test("signs out, ending the session, and refuses a session that doesn't exist", async () => {
     const { session } = await signUpAndVerify();
-    await AuthenticationMethods.signOut(session);
+    await AuthenticationService.signOut(session);
     expect(await Sessions.findOne(db, { id: session.id })).toBeUndefined();
-    await expect(AuthenticationMethods.signOut(missingSession)).rejects.toEqual(new InternalError("Session not found"));
+    await expect(AuthenticationService.signOut(missingSession)).rejects.toEqual(new InternalError("Session not found"));
   });
 
   test("reads the signed-in user without the password digest", async () => {
     const { session, user, account } = await signUpAndVerify();
-    const me = await AuthenticationMethods.me(session);
+    const me = await AuthenticationService.me(session);
     expect(me).toMatchObject({ id: user.id, emailAddress: account.emailAddress, createdAt: expect.any(String) });
     expect("passwordDigest" in me).toBe(false);
-    await expect(AuthenticationMethods.me(missingSession)).rejects.toEqual(new InternalError("User not found"));
+    await expect(AuthenticationService.me(missingSession)).rejects.toEqual(new InternalError("User not found"));
   });
 
   describe("the demo", () => {
     test("makes a verified user with a made-up email that expires with its session", async () => {
-      const demo = await AuthenticationMethods.startDemo();
+      const demo = await AuthenticationService.startDemo();
       expect(demo).toMatchObject({
         reused: false,
         user: {
@@ -251,48 +248,48 @@ describe("AuthenticationService", () => {
     });
 
     test("carries on with the demo session it's given, ignores an unknown one, and refuses a real user's", async () => {
-      const first = await AuthenticationMethods.startDemo();
-      expect(await AuthenticationMethods.startDemo(first.session.id)).toMatchObject({
+      const first = await AuthenticationService.startDemo();
+      expect(await AuthenticationService.startDemo(first.session.id)).toMatchObject({
         reused: true,
         session: { id: first.session.id },
         user: { id: first.user.id },
       });
-      expect(await AuthenticationMethods.startDemo(NIL_UUID)).toMatchObject({ reused: false });
+      expect(await AuthenticationService.startDemo(NIL_UUID)).toMatchObject({ reused: false });
       // It would replace their cookie with a demo one.
-      await expect(AuthenticationMethods.startDemo((await signUpAndVerify()).session.id)).rejects.toThrow(
+      await expect(AuthenticationService.startDemo((await signUpAndVerify()).session.id)).rejects.toThrow(
         BadRequestError,
       );
     });
 
     test("never touches an expired demo user: sweeping them is the cleanup job's", async () => {
-      const expired = await AuthenticationMethods.startDemo();
+      const expired = await AuthenticationService.startDemo();
       await Users.update(db, { expiresAt: ago(1000) }, { id: expired.user.id });
-      expect((await AuthenticationMethods.startDemo()).user.id).not.toBe(expired.user.id);
+      expect((await AuthenticationService.startDemo()).user.id).not.toBe(expired.user.id);
       expect(await Users.findOne(db, { id: expired.user.id })).toBeDefined();
     });
 
     test("deletes the demo user when it signs out, or signs in or verifies a real account, but not when that fails", async () => {
-      const signedOut = await AuthenticationMethods.startDemo();
-      await AuthenticationMethods.signOut(signedOut.session);
+      const signedOut = await AuthenticationService.startDemo();
+      await AuthenticationService.signOut(signedOut.session);
       expect(await Users.findOne(db, { id: signedOut.user.id })).toBeUndefined();
       expect(await Sessions.findOne(db, { id: signedOut.session.id })).toBeUndefined();
 
       const { account } = await signUpAndVerify();
-      const failing = await AuthenticationMethods.startDemo();
+      const failing = await AuthenticationService.startDemo();
       await expect(
-        AuthenticationMethods.signIn(account.emailAddress, "wrong-password", failing.session.id),
+        AuthenticationService.signIn(account.emailAddress, "wrong-password", failing.session.id),
       ).rejects.toThrow(UnauthorizedError);
       expect(await Users.findOne(db, { id: failing.user.id })).toBeDefined();
       expect(
-        (await AuthenticationMethods.signIn(account.emailAddress, account.password, failing.session.id)).user
+        (await AuthenticationService.signIn(account.emailAddress, account.password, failing.session.id)).user
           .emailAddress,
       ).toBe(account.emailAddress);
       expect(await Users.findOne(db, { id: failing.user.id })).toBeUndefined();
 
-      const verifying = await AuthenticationMethods.startDemo();
+      const verifying = await AuthenticationService.startDemo();
       const newAccount = credentials();
-      const { user } = await AuthenticationMethods.signUp(newAccount.emailAddress, newAccount.password);
-      await AuthenticationMethods.verifyEmail(newAccount.emailAddress, await codeFor(user.id), verifying.session.id);
+      const { user } = await AuthenticationService.signUp(newAccount.emailAddress, newAccount.password);
+      await AuthenticationService.verifyEmail(newAccount.emailAddress, await codeFor(user.id), verifying.session.id);
       expect(await Users.findOne(db, { id: verifying.user.id })).toBeUndefined();
     });
   });
@@ -300,7 +297,7 @@ describe("AuthenticationService", () => {
   describe("the profile", () => {
     test("renames the user, and holds a new email until its code comes back", async () => {
       const { session, user, account } = await signUpAndVerify();
-      const renamed = await AuthenticationMethods.updateProfile(session, "newusername", undefined);
+      const renamed = await AuthenticationService.updateProfile(session, "newusername", undefined);
       expect(renamed).toMatchObject({
         username: "newusername",
         emailAddress: account.emailAddress,
@@ -309,11 +306,11 @@ describe("AuthenticationService", () => {
       expect("passwordDigest" in renamed).toBe(false);
 
       const newEmail = `new-${account.emailAddress}`;
-      expect(await AuthenticationMethods.updateProfile(session, undefined, newEmail)).toMatchObject({
+      expect(await AuthenticationService.updateProfile(session, undefined, newEmail)).toMatchObject({
         emailAddress: account.emailAddress,
         pendingEmailAddress: newEmail,
       });
-      expect(await AuthenticationMethods.verifyEmailChange(session, await codeFor(user.id))).toMatchObject({
+      expect(await AuthenticationService.verifyEmailChange(session, await codeFor(user.id))).toMatchObject({
         emailAddress: newEmail,
         pendingEmailAddress: null,
       });
@@ -322,33 +319,33 @@ describe("AuthenticationService", () => {
     test("refuses an email or a username another account uses", async () => {
       const { account: taken } = await signUpAndVerify();
       const { session: first } = await signUpAndVerify();
-      await AuthenticationMethods.updateProfile(first, "uniqueusername", undefined);
+      await AuthenticationService.updateProfile(first, "uniqueusername", undefined);
       const { session } = await signUpAndVerify();
-      await expect(AuthenticationMethods.updateProfile(session, undefined, taken.emailAddress)).rejects.toThrow(
+      await expect(AuthenticationService.updateProfile(session, undefined, taken.emailAddress)).rejects.toThrow(
         BadRequestError,
       );
-      await expect(AuthenticationMethods.updateProfile(session, "uniqueusername", undefined)).rejects.toThrow(
+      await expect(AuthenticationService.updateProfile(session, "uniqueusername", undefined)).rejects.toThrow(
         BadRequestError,
       );
     });
 
     test("refuses to confirm a new email with a wrong or expired code, without one pending, or once another account took it", async () => {
       const { session, user, account } = await signUpAndVerify();
-      await expect(AuthenticationMethods.verifyEmailChange(session, "123456")).rejects.toThrow(BadRequestError);
+      await expect(AuthenticationService.verifyEmailChange(session, "123456")).rejects.toThrow(BadRequestError);
 
       const contested = `contested-${uniqueId()}@example.com`;
-      await AuthenticationMethods.updateProfile(session, undefined, contested);
-      await expect(AuthenticationMethods.verifyEmailChange(session, "000000")).rejects.toThrow(UnauthorizedError);
+      await AuthenticationService.updateProfile(session, undefined, contested);
+      await expect(AuthenticationService.verifyEmailChange(session, "000000")).rejects.toThrow(UnauthorizedError);
       const verification = (await EmailVerifications.findOne(db, { userId: user.id }))!;
 
       const otherAccount = credentials();
-      const other = await AuthenticationMethods.signUp(otherAccount.emailAddress, otherAccount.password);
+      const other = await AuthenticationService.signUp(otherAccount.emailAddress, otherAccount.password);
       await Users.update(
         db,
         { emailAddress: contested, emailVerifiedAt: new Date().toISOString() },
         { id: other.user.id },
       );
-      await expect(AuthenticationMethods.verifyEmailChange(session, verification.code)).rejects.toThrow(
+      await expect(AuthenticationService.verifyEmailChange(session, verification.code)).rejects.toThrow(
         BadRequestError,
       );
 
@@ -356,7 +353,7 @@ describe("AuthenticationService", () => {
         .update(emailVerificationsInAccount)
         .set({ expiresAt: ago(1000) })
         .where(eq(emailVerificationsInAccount.id, verification.id));
-      await expect(AuthenticationMethods.verifyEmailChange(session, verification.code)).rejects.toThrow(
+      await expect(AuthenticationService.verifyEmailChange(session, verification.code)).rejects.toThrow(
         UnauthorizedError,
       );
       expect((await Users.findOne(db, { id: user.id }))!.emailAddress).toBe(account.emailAddress);
@@ -364,19 +361,19 @@ describe("AuthenticationService", () => {
 
     test("resends a pending email's code after five minutes, and cancels the change", async () => {
       const { session, user, account } = await signUpAndVerify();
-      await expect(AuthenticationMethods.resendEmailChange(session)).rejects.toThrow(BadRequestError);
-      await AuthenticationMethods.updateProfile(session, undefined, `new-${account.emailAddress}`);
-      await expect(AuthenticationMethods.resendEmailChange(session)).rejects.toThrow(BadRequestError);
+      await expect(AuthenticationService.resendEmailChange(session)).rejects.toThrow(BadRequestError);
+      await AuthenticationService.updateProfile(session, undefined, `new-${account.emailAddress}`);
+      await expect(AuthenticationService.resendEmailChange(session)).rejects.toThrow(BadRequestError);
 
       const old = (await EmailVerifications.findOne(db, { userId: user.id }))!;
       await db
         .update(emailVerificationsInAccount)
         .set({ createdAt: ago(6 * 60 * 1000) })
         .where(eq(emailVerificationsInAccount.id, old.id));
-      expect(await AuthenticationMethods.resendEmailChange(session)).toEqual({ success: true });
+      expect(await AuthenticationService.resendEmailChange(session)).toEqual({ success: true });
       expect((await EmailVerifications.findOne(db, { userId: user.id }))!.id).not.toBe(old.id);
 
-      await AuthenticationMethods.cancelEmailChange(session);
+      await AuthenticationService.cancelEmailChange(session);
       expect(await Users.findOne(db, { id: user.id })).toMatchObject({ pendingEmailAddress: null });
     });
   });
@@ -386,7 +383,7 @@ describe("AuthenticationService", () => {
       const { session, account } = await signUpAndVerify();
       const [other] = await Sessions.create(db, { userId: session.userId });
       const change = (currentPassword: string, newPassword: string) =>
-        AuthenticationMethods.updatePassword(session, currentPassword, newPassword);
+        AuthenticationService.updatePassword(session, currentPassword, newPassword);
 
       await expect(change("wrongpassword", "newpassword1234")).rejects.toEqual(
         new UnauthorizedError("Current password is incorrect"),
@@ -396,29 +393,29 @@ describe("AuthenticationService", () => {
 
       expect(await Sessions.findOne(db, { id: other.id })).toBeUndefined();
       expect(await Sessions.findOne(db, { id: session.id })).toBeDefined();
-      expect((await AuthenticationMethods.signIn(account.emailAddress, "newpassword1234")).user.id).toBe(
+      expect((await AuthenticationService.signIn(account.emailAddress, "newpassword1234")).user.id).toBe(
         session.userId,
       );
     });
 
     test("is set once for an account without one", async () => {
       const { session } = await createPasswordlessUser();
-      expect(await AuthenticationMethods.setPassword(session, "firstpassword1")).toEqual({ success: true });
-      await expect(AuthenticationMethods.setPassword(session, "second12345")).rejects.toThrow(BadRequestError);
+      expect(await AuthenticationService.setPassword(session, "firstpassword1")).toEqual({ success: true });
+      await expect(AuthenticationService.setPassword(session, "second12345")).rejects.toThrow(BadRequestError);
     });
 
     describe("forgotten", () => {
       test("sends a reset code, once every five minutes, and tells nothing about unknown emails", async () => {
         const { user, account } = await signUpAndVerify();
-        expect(await AuthenticationMethods.forgotPassword(account.emailAddress)).toEqual({
+        expect(await AuthenticationService.forgotPassword(account.emailAddress)).toEqual({
           success: true,
         });
         const reset = (await PasswordResets.findOne(db, { userId: user.id }))!;
         expect(reset.code).toHaveLength(8);
 
-        await AuthenticationMethods.forgotPassword(account.emailAddress);
+        await AuthenticationService.forgotPassword(account.emailAddress);
         expect((await PasswordResets.findOne(db, { userId: user.id }))!.id).toBe(reset.id);
-        expect(await AuthenticationMethods.forgotPassword("nonexistent@example.com")).toEqual({
+        expect(await AuthenticationService.forgotPassword("nonexistent@example.com")).toEqual({
           success: true,
         });
       });
@@ -427,29 +424,29 @@ describe("AuthenticationService", () => {
         const { session, user, account } = await signUpAndVerify();
         const [second] = await Sessions.create(db, { userId: user.id });
         const { session: someoneElse } = await signUpAndVerify();
-        await AuthenticationMethods.forgotPassword(account.emailAddress);
+        await AuthenticationService.forgotPassword(account.emailAddress);
         const reset = (await PasswordResets.findOne(db, { userId: user.id }))!;
         const resetWith = (code: string) =>
-          AuthenticationMethods.resetPassword(account.emailAddress, code, "replacement1234");
+          AuthenticationService.resetPassword(account.emailAddress, code, "replacement1234");
 
         await expect(resetWith("000000")).rejects.toThrow(UnauthorizedError);
         expect(await resetWith(reset.code)).toEqual({ success: true });
 
         for (const { id } of [session, second]) expect(await Sessions.findOne(db, { id })).toBeUndefined();
         expect(await Sessions.findOne(db, { id: someoneElse.id })).toBeDefined();
-        expect((await AuthenticationMethods.signIn(account.emailAddress, "replacement1234")).user.id).toBe(user.id);
+        expect((await AuthenticationService.signIn(account.emailAddress, "replacement1234")).user.id).toBe(user.id);
       });
 
       test("refuses an expired code", async () => {
         const { user, account } = await signUpAndVerify();
-        await AuthenticationMethods.forgotPassword(account.emailAddress);
+        await AuthenticationService.forgotPassword(account.emailAddress);
         const reset = (await PasswordResets.findOne(db, { userId: user.id }))!;
         await db
           .update(passwordResetsInAccount)
           .set({ expiresAt: ago(1000) })
           .where(eq(passwordResetsInAccount.id, reset.id));
         await expect(
-          AuthenticationMethods.resetPassword(account.emailAddress, reset.code, "newpassword1234"),
+          AuthenticationService.resetPassword(account.emailAddress, reset.code, "newpassword1234"),
         ).rejects.toThrow(UnauthorizedError);
       });
     });
@@ -457,8 +454,8 @@ describe("AuthenticationService", () => {
 
   test("refuses to unlink a provider that isn't linked", async () => {
     const { session } = await signUpAndVerify();
-    await expect(AuthenticationMethods.unlinkOauthAccount(session, "google")).rejects.toThrow(BadRequestError);
-    expect(await AuthenticationMethods.getLinkedAccounts(session)).toEqual([]);
+    await expect(AuthenticationService.unlinkOauthAccount(session, "google")).rejects.toThrow(BadRequestError);
+    expect(await AuthenticationService.getLinkedAccounts(session)).toEqual([]);
   });
 
   // What follows Google verifying an ID token: the Google account's id (`sub`) and email
@@ -479,7 +476,7 @@ describe("AuthenticationService", () => {
         emailVerifiedAt: expect.any(String),
       });
       expect((await Invites.findOne(db, { id: invite!.id }))!.userId).toBe(user.id);
-      expect(await AuthenticationMethods.getLinkedAccounts(makeSession(user.id))).toMatchObject([
+      expect(await AuthenticationService.getLinkedAccounts(makeSession(user.id))).toMatchObject([
         { provider: "google" },
       ]);
 
@@ -490,20 +487,20 @@ describe("AuthenticationService", () => {
 
     test("links the account with its email, and verifies it", async () => {
       const account = credentials();
-      const { user } = await AuthenticationMethods.signUp(account.emailAddress, account.password);
+      const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
       expect(user.emailVerifiedAt).toBeNull();
 
       const signedIn = await signInAsGoogleAccount(googleAccount(account.emailAddress));
       expect(signedIn.user).toMatchObject({ id: user.id, hasPassword: true, emailVerifiedAt: expect.any(String) });
       expect(await EmailVerifications.findOne(db, { userId: user.id })).toBeUndefined();
-      expect(await AuthenticationMethods.getLinkedAccounts(makeSession(user.id))).toMatchObject([
+      expect(await AuthenticationService.getLinkedAccounts(makeSession(user.id))).toMatchObject([
         { provider: "google" },
       ]);
     });
 
     test("refuses the email of a deleted account", async () => {
       const { session, account } = await signUpAndVerify();
-      await AuthenticationMethods.deleteAccount(session, account.password);
+      await AuthenticationService.deleteAccount(session, account.password);
       await expect(signInAsGoogleAccount(googleAccount(account.emailAddress))).rejects.toThrow(ConflictError);
     });
 
@@ -524,16 +521,16 @@ describe("AuthenticationService", () => {
     test("unlinks an account from a user with a password, but not from one without", async () => {
       const { session } = await signUpAndVerify();
       await linkGoogleAccountTo(session, googleAccount().sub);
-      expect(await AuthenticationMethods.unlinkOauthAccount(session, "google")).toEqual({
+      expect(await AuthenticationService.unlinkOauthAccount(session, "google")).toEqual({
         success: true,
       });
-      expect(await AuthenticationMethods.getLinkedAccounts(session)).toEqual([]);
+      expect(await AuthenticationService.getLinkedAccounts(session)).toEqual([]);
 
       const { user } = await signInAsGoogleAccount(googleAccount());
-      await expect(AuthenticationMethods.unlinkOauthAccount(makeSession(user.id), "google")).rejects.toThrow(
+      await expect(AuthenticationService.unlinkOauthAccount(makeSession(user.id), "google")).rejects.toThrow(
         "without a password set",
       );
-      expect(await AuthenticationMethods.getLinkedAccounts(makeSession(user.id))).toHaveLength(1);
+      expect(await AuthenticationService.getLinkedAccounts(makeSession(user.id))).toHaveLength(1);
     });
   });
 
@@ -544,7 +541,7 @@ describe("AuthenticationService", () => {
       const ruleset = await createTestRuleset(user.id, { private: false });
       await createTestCampaign(user.id);
 
-      expect(await AuthenticationMethods.deleteAccount(session, account.password)).toEqual({
+      expect(await AuthenticationService.deleteAccount(session, account.password)).toEqual({
         success: true,
       });
 
@@ -553,15 +550,15 @@ describe("AuthenticationService", () => {
       expect(await Players.findMany(db, { userId: user.id })).toEqual([]);
       expect(await Sessions.findOne(db, { id: session.id })).toBeUndefined();
       expect(await Rulesets.findOne(db, { id: ruleset.id })).toMatchObject({ userId: null });
-      await expect(AuthenticationMethods.signIn(account.emailAddress, account.password)).rejects.toThrow(
+      await expect(AuthenticationService.signIn(account.emailAddress, account.password)).rejects.toThrow(
         UnauthorizedError,
       );
     });
 
     test("asks for the password when there is one", async () => {
       const { session } = await signUpAndVerify();
-      await expect(AuthenticationMethods.deleteAccount(session, "wrong-password")).rejects.toThrow(UnauthorizedError);
-      await expect(AuthenticationMethods.deleteAccount(session, undefined)).rejects.toEqual(
+      await expect(AuthenticationService.deleteAccount(session, "wrong-password")).rejects.toThrow(UnauthorizedError);
+      await expect(AuthenticationService.deleteAccount(session, undefined)).rejects.toEqual(
         new BadRequestError("Password is required"),
       );
 
@@ -571,7 +568,7 @@ describe("AuthenticationService", () => {
         provider: "google",
         providerAccountId: `google-${uniqueId()}`,
       });
-      expect(await AuthenticationMethods.deleteAccount(passwordless.session, undefined)).toEqual({
+      expect(await AuthenticationService.deleteAccount(passwordless.session, undefined)).toEqual({
         success: true,
       });
       expect(await Users.findOne(db, { id: passwordless.user.id })).toBeUndefined();

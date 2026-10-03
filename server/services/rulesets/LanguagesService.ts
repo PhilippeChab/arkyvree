@@ -6,7 +6,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Languages } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
   entityHasCharacterPicks,
@@ -19,7 +18,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const LanguagesMethods = {
+class LanguagesService {
   async getRulesetLanguages(
     rulesetId: string,
     where: {
@@ -38,7 +37,7 @@ const LanguagesMethods = {
         pagination,
       );
     });
-  },
+  }
 
   async getRulesetLanguage(rulesetId: string, languageId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -46,7 +45,7 @@ const LanguagesMethods = {
       const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
       return language;
     });
-  },
+  }
 
   async createRulesetLanguage(
     session: Session,
@@ -92,7 +91,7 @@ const LanguagesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateRulesetLanguage(
     session: Session,
@@ -139,7 +138,7 @@ const LanguagesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteRulesetLanguage(session: Session, rulesetId: string, languageId: string) {
     const result = await withTransaction(async (tx) => {
@@ -170,13 +169,7 @@ const LanguagesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class LanguagesService extends BaseService<typeof LanguagesMethods> {
-  static initialize() {
-    return new LanguagesService(LanguagesMethods);
   }
 }
 
-export default LanguagesService;
+export default new LanguagesService();

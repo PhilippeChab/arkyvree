@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const races = api.api.rulesets[":id"].races;
@@ -24,12 +24,12 @@ describe("rulesets races", () => {
     expect(await expectOk(race.$put({ param, json: update }))).toMatchObject(update);
 
     await expectOk(race.$delete({ param }));
-    expect((await race.$get({ param })).status).toBe(404);
+    await expectStatus(race.$get({ param }), 404);
   });
 
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await guestApi.api.rulesets[":id"].races.$get({ param: { id }, query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.rulesets[":id"].races.$get({ param: { id }, query: {} }), 401);
   });
 
   test("rejects a race without a name, with an unknown size or a non-numeric speed", async () => {
@@ -40,15 +40,15 @@ describe("rulesets races", () => {
       { ...valid, size: "Colossal-ish" },
       { ...valid, baseSpeed: "fast" },
     ]) {
-      expect((await races.$post({ param: { id }, json: json as never })).status).toBe(400);
+      await expectStatus(races.$post({ param: { id }, json: json as never }), 400);
     }
   });
 
   test("returns 404 for a missing ruleset or race", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await races.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    await expectStatus(races.$get({ param: { id: NIL_UUID }, query: {} }), 404);
     const param = { id, raceId: NIL_UUID };
-    expect((await race.$put({ param, json: { name: "Missing", size: "Medium", baseSpeed: 30 } })).status).toBe(404);
-    expect((await race.$delete({ param })).status).toBe(404);
+    await expectStatus(race.$put({ param, json: { name: "Missing", size: "Medium", baseSpeed: 30 } }), 404);
+    await expectStatus(race.$delete({ param }), 404);
   });
 });

@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { ClassesService } from "@/server/services/rulesets/index.ts";
 
 import classLevels from "./levels/index.ts";
@@ -35,14 +34,10 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, kind, orderBy, orderDir } = c.req.valid("query");
-      const classesService = ClassesService.initialize();
-      const result = await classesService.call(
-        "getRulesetKlasses",
-        id,
-        { search, childOnly, kind, orderBy, orderDir },
-        { limit, page },
+      return c.json(
+        await ClassesService.getRulesetKlasses(id, { search, childOnly, kind, orderBy, orderDir }, { limit, page }),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .get(
@@ -50,9 +45,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
     async (c) => {
       const { id, classId } = c.req.valid("param");
-      const classesService = ClassesService.initialize();
-      const result = await classesService.call("getRulesetKlass", id, classId);
-      return respond(c, result, 200);
+      return c.json(await ClassesService.getRulesetKlass(id, classId), 200);
     },
   )
   .post(
@@ -72,9 +65,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-      const classesService = ClassesService.initialize();
-      const result = await classesService.call("createRulesetKlass", c.var.requestSession, id, body);
-      return respond(c, result, 201);
+      return c.json(await ClassesService.createRulesetKlass(c.var.requestSession, id, body), 201);
     },
   )
   .put(
@@ -95,9 +86,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classId } = c.req.valid("param");
       const body = c.req.valid("json");
-      const classesService = ClassesService.initialize();
-      const result = await classesService.call("updateRulesetKlass", c.var.requestSession, id, classId, body);
-      return respond(c, result, 200);
+      return c.json(await ClassesService.updateRulesetKlass(c.var.requestSession, id, classId, body), 200);
     },
   )
   .delete(
@@ -105,8 +94,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
     async (c) => {
       const { id, classId } = c.req.valid("param");
-      const classesService = ClassesService.initialize();
-      const result = await classesService.call("deleteRulesetKlass", c.var.requestSession, id, classId);
-      return respond(c, result, 200);
+      return c.json(await ClassesService.deleteRulesetKlass(c.var.requestSession, id, classId), 200);
     },
   );

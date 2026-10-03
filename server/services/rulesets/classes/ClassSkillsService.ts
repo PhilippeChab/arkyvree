@@ -6,7 +6,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import {
   entityHasCharacterPicks,
   entityToEdit,
@@ -16,14 +15,14 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-const ClassSkillsMethods = {
+class ClassSkillsService {
   async getClassSkills(rulesetId: string, classId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
       return rulesetData.klassSkillsWithSkillsByKlass.get(klass.id) ?? [];
     });
-  },
+  }
 
   async addClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {
     let klassRulesetId: string | undefined;
@@ -66,7 +65,7 @@ const ClassSkillsMethods = {
     invalidateRuleset(rulesetId);
     if (klassRulesetId && klassRulesetId !== rulesetId) invalidateRuleset(klassRulesetId);
     return result;
-  },
+  }
 
   async removeClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {
     let klassRulesetId: string | undefined;
@@ -107,13 +106,7 @@ const ClassSkillsMethods = {
     invalidateRuleset(rulesetId);
     if (klassRulesetId && klassRulesetId !== rulesetId) invalidateRuleset(klassRulesetId);
     return result;
-  },
-} as const;
-
-class ClassSkillsService extends BaseService<typeof ClassSkillsMethods> {
-  static initialize() {
-    return new ClassSkillsService(ClassSkillsMethods);
   }
 }
 
-export default ClassSkillsService;
+export default new ClassSkillsService();

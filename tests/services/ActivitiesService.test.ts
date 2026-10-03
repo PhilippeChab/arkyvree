@@ -20,15 +20,11 @@ import {
   createTestUser,
   getSeedCtx,
   makeSession,
-  methodsOf,
   NIL_UUID,
 } from "@/tests/helpers.ts";
 
-const ActivitiesMethods = methodsOf(ActivitiesService);
-const PlayerCharactersMethods = methodsOf(PlayerCharactersService);
-
 const resolve = (targetTable: string, targetId: string, session: Session = makeSession()) =>
-  ActivitiesMethods.resolveActivityUrl(session, targetTable, targetId);
+  ActivitiesService.resolveActivityUrl(session, targetTable, targetId);
 
 const resolveAll = (targets: string[][]) => Promise.all(targets.map(([table, id]) => resolve(table, id)));
 
@@ -108,7 +104,7 @@ describe("ActivitiesService.resolveActivityUrl", () => {
     const { user, session } = await createTestUser();
     const { campaign, player } = await createTestCampaign(user.id);
     const character = await createTestCharacter(user.id);
-    await PlayerCharactersMethods.linkCharacter(session, campaign.id, character.id, "Public");
+    await PlayerCharactersService.linkCharacter(session, campaign.id, character.id, "Public");
     const [invite] = await Invites.create(db, { playerId: player.id, email: "invited@example.com" });
 
     expect(

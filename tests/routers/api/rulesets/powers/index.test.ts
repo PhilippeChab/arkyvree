@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { api, expectOk, guestApi } from "@/tests/api.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const powers = api.api.rulesets[":id"].powers;
@@ -35,12 +35,12 @@ describe("rulesets powers", () => {
     expect(updated).toMatchObject({ name: "Renamed Power", description: "Updated" });
 
     await expectOk(power.$delete({ param }));
-    expect((await power.$get({ param })).status).toBe(404);
+    await expectStatus(power.$get({ param }), 404);
   });
 
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    expect((await guestApi.api.rulesets[":id"].powers.$get({ param: { id }, query: {} })).status).toBe(401);
+    await expectStatus(guestApi.api.rulesets[":id"].powers.$get({ param: { id }, query: {} }), 401);
   });
 
   test("rejects a power without a name, with malformed aptitudes or a level above 9", async () => {
@@ -50,17 +50,17 @@ describe("rulesets powers", () => {
       { name: "Power", aptitudes: aptitudeId },
       { name: "Power", aptitudes: [{ id: aptitudeId, level: 10 }] },
     ]) {
-      expect((await powers.$post({ param: { id }, json: json as never })).status).toBe(400);
+      await expectStatus(powers.$post({ param: { id }, json: json as never }), 400);
     }
   });
 
   test("returns 404 for a missing ruleset or power", async () => {
     const { id } = await setup();
-    expect((await powers.$get({ param: { id: NIL_UUID }, query: {} })).status).toBe(404);
+    await expectStatus(powers.$get({ param: { id: NIL_UUID }, query: {} }), 404);
     const param = { id, powerId: NIL_UUID };
-    expect((await power.$get({ param })).status).toBe(404);
-    expect((await power.$put({ param, json: { name: "Missing" } })).status).toBe(404);
-    expect((await power.$delete({ param })).status).toBe(404);
+    await expectStatus(power.$get({ param }), 404);
+    await expectStatus(power.$put({ param, json: { name: "Missing" } }), 404);
+    await expectStatus(power.$delete({ param }), 404);
   });
 
   test("refuses a power in an aptitude that feats already use", async () => {
@@ -72,6 +72,6 @@ describe("rulesets powers", () => {
       param: { id },
       json: { name: "Test Spell", aptitudes: [{ id: aptitudeId }] },
     });
-    expect(response.status).toBe(409);
+    await expectStatus(response, 409);
   });
 });

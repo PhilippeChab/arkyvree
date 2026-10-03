@@ -8,7 +8,6 @@ import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Campaigns, Invites, PlayerCharacters, Players, Users } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import type { Invite, Player, Session } from "@/shared/relations.ts";
@@ -21,103 +20,109 @@ type InviteEmailData = {
   email: string;
 };
 
-/** Core invite creation logic — must be called within a transaction. */
-async function createInviteInTransaction(tx: Db, session: Session, player: Player, email: string) {
-  const campaign = await Campaigns.findOne(tx, { id: player.campaignId }, Visibility.All);
-  if (!campaign) {
-    throw new NotFoundError("Campaign not found");
-  }
-  const policy = new CampaignsPolicy(session, campaign);
-  policy.canModify();
-  await policy.canUpdate();
+class PlayersService {
+  /** Core invite creation logic — must be called within a transaction. */
+  private async createInviteInTransaction(tx: Db, session: Session, player: Player, email: string) {
+    const campaign = await Campaigns.findOne(tx, { id: player.campaignId }, Visibility.All);
+    if (!campaign) {
+      throw new NotFoundError("Campaign not found");
+    }
+    const policy = new CampaignsPolicy(session, campaign);
+    policy.canModify();
+    await policy.canUpdate();
 
-  // Look up user by email (may not exist)
-  const user = await Users.findOne(tx, { emailAddress: email });
+    // Look up user by email (may not exist)
+    const user = await Users.findOne(tx, { emailAddress: email });
 
-  // Check if there's already a pending invite for this player slot
-  const existingInvite = await Invites.findOne(tx, { playerId: player.id, status: "Pending" });
-  if (existingInvite) {
-    throw new ConflictError("This player slot already has a pending invite");
-  }
-
-  if (user) {
-    // Check if the user already has a player slot for this campaign
-    const existingPlayer = await Players.findOne(tx, { userId: user.id, campaignId: player.campaignId });
-    if (existingPlayer) {
-      throw new ConflictError("User already has a player slot for this campaign");
+    // Check if there's already a pending invite for this player slot
+    const existingInvite = await Invites.findOne(tx, { playerId: player.id, status: "Pending" });
+    if (existingInvite) {
+      throw new ConflictError("This player slot already has a pending invite");
     }
 
-    // Check if the user already has a pending invite for this campaign
-    const campaignPlayers = await Players.findMany(tx, {
-      campaignId: player.campaignId,
-    });
-    const campaignPlayerIds = campaignPlayers.map((p) => p.id);
-    const existingPendingInvite = await Invites.findOne(tx, {
-      userId: user.id,
-      playerIds: campaignPlayerIds,
-      status: "Pending",
-    });
-    if (existingPendingInvite) {
-      throw new ConflictError("User already has a pending invite for this campaign");
+    if (user) {
+      // Check if the user already has a player slot for this campaign
+      const existingPlayer = await Players.findOne(tx, { userId: user.id, campaignId: player.campaignId });
+      if (existingPlayer) {
+        throw new ConflictError("User already has a player slot for this campaign");
+      }
+
+      // Check if the user already has a pending invite for this campaign
+      const campaignPlayers = await Players.findMany(tx, {
+        campaignId: player.campaignId,
+      });
+      const campaignPlayerIds = campaignPlayers.map((p) => p.id);
+      const existingPendingInvite = await Invites.findOne(tx, {
+        userId: user.id,
+        playerIds: campaignPlayerIds,
+        status: "Pending",
+      });
+      if (existingPendingInvite) {
+        throw new ConflictError("User already has a pending invite for this campaign");
+      }
+    } else {
+      // For email-only invites, check by email across the campaign
+      const campaignPlayers = await Players.findMany(tx, {
+        campaignId: player.campaignId,
+      });
+      const campaignPlayerIds = campaignPlayers.map((p) => p.id);
+      const existingPendingInvite = await Invites.findOne(tx, {
+        email,
+        playerIds: campaignPlayerIds,
+        status: "Pending",
+      });
+      if (existingPendingInvite) {
+        throw new ConflictError("This email already has a pending invite for this campaign");
+      }
     }
-  } else {
-    // For email-only invites, check by email across the campaign
-    const campaignPlayers = await Players.findMany(tx, {
-      campaignId: player.campaignId,
-    });
-    const campaignPlayerIds = campaignPlayers.map((p) => p.id);
-    const existingPendingInvite = await Invites.findOne(tx, {
+
+    const rows = await Invites.create(tx, {
       email,
-      playerIds: campaignPlayerIds,
-      status: "Pending",
+      userId: user?.id,
+      playerId: player.id,
     });
-    if (existingPendingInvite) {
-      throw new ConflictError("This email already has a pending invite for this campaign");
-    }
+    const invite = rows[0];
+
+    await createActivityWithNotifications(tx, {
+      userId: session.userId,
+      targetId: invite.id,
+      targetTable: getTableName(invitesInCampaign),
+      type: "createCampaignInvite",
+      data: {
+        email,
+        invitedUserId: user?.id,
+        playerId: player.id,
+        campaignName: campaign.name,
+        campaignId: campaign.id,
+      },
+    });
+
+    const inviterUser = await Users.findOne(tx, { id: session.userId });
+
+    return {
+      invite,
+      campaignName: campaign.name,
+      inviteeName: user?.username || email.split("@")[0],
+      inviterName: inviterUser?.username || inviterUser?.emailAddress.split("@")[0] || "Someone",
+      email,
+    };
   }
 
-  const rows = await Invites.create(tx, {
-    email,
-    userId: user?.id,
-    playerId: player.id,
-  });
-  const invite = rows[0];
+  /** Send the invite email (fire-and-forget, call after transaction commits). */
+  private sendInviteEmail(data: InviteEmailData) {
+    emailService.send({
+      to: data.email,
+      subject: `You've been invited to join ${data.campaignName}`,
+      template: EmailTemplate.CampaignInvitation,
+      props: {
+        inviteeName: data.inviteeName,
+        inviterName: data.inviterName,
+        campaignName: data.campaignName,
+        inviteId: data.invite.id,
+      },
+    });
+  }
 
-  await createActivityWithNotifications(tx, {
-    userId: session.userId,
-    targetId: invite.id,
-    targetTable: getTableName(invitesInCampaign),
-    type: "createCampaignInvite",
-    data: { email, invitedUserId: user?.id, playerId: player.id, campaignName: campaign.name, campaignId: campaign.id },
-  });
-
-  const inviterUser = await Users.findOne(tx, { id: session.userId });
-
-  return {
-    invite,
-    campaignName: campaign.name,
-    inviteeName: user?.username || email.split("@")[0],
-    inviterName: inviterUser?.username || inviterUser?.emailAddress.split("@")[0] || "Someone",
-    email,
-  };
-}
-
-/** Send the invite email (fire-and-forget, call after transaction commits). */
-function sendInviteEmail(data: InviteEmailData) {
-  emailService.send({
-    to: data.email,
-    subject: `You've been invited to join ${data.campaignName}`,
-    template: EmailTemplate.CampaignInvitation,
-    props: {
-      inviteeName: data.inviteeName,
-      inviterName: data.inviterName,
-      campaignName: data.campaignName,
-      inviteId: data.invite.id,
-    },
-  });
-}
-
-const CampaignPlayersMethods = {
   async getCampaignPlayers(
     session: Session,
     campaignId: string,
@@ -132,7 +137,7 @@ const CampaignPlayersMethods = {
     await CampaignsPolicy.member(db, session, campaignId);
 
     return await Players.findManyForCampaign(db, { campaignId, ...where }, pagination, Visibility.All);
-  },
+  }
 
   async addCampaignPlayer(session: Session, campaignId: string, role: CampaignRole, email?: string) {
     let emailData: InviteEmailData | null = null;
@@ -162,7 +167,7 @@ const CampaignPlayersMethods = {
 
       let invite: Invite | null = null;
       if (email) {
-        emailData = await createInviteInTransaction(tx, session, player, email);
+        emailData = await this.createInviteInTransaction(tx, session, player, email);
         invite = emailData.invite;
       }
 
@@ -170,11 +175,11 @@ const CampaignPlayersMethods = {
     });
 
     if (emailData) {
-      sendInviteEmail(emailData);
+      this.sendInviteEmail(emailData);
     }
 
     return { player, invite };
-  },
+  }
 
   async updateCampaignPlayer(
     session: Session,
@@ -222,7 +227,7 @@ const CampaignPlayersMethods = {
           throw new ConflictError("Player already has a pending invite");
         }
 
-        emailData = await createInviteInTransaction(tx, session, updatedPlayer, email);
+        emailData = await this.createInviteInTransaction(tx, session, updatedPlayer, email);
         invite = emailData.invite;
       }
 
@@ -238,11 +243,11 @@ const CampaignPlayersMethods = {
     });
 
     if (emailData) {
-      sendInviteEmail(emailData);
+      this.sendInviteEmail(emailData);
     }
 
     return { player: updatedPlayer, invite };
-  },
+  }
 
   async removeCampaignPlayer(session: Session, campaignId: string, playerId: string) {
     return await withTransaction(async (tx) => {
@@ -286,13 +291,7 @@ const CampaignPlayersMethods = {
 
       return removedPlayer;
     });
-  },
-} as const;
-
-class PlayersService extends BaseService<typeof CampaignPlayersMethods> {
-  static initialize() {
-    return new PlayersService(CampaignPlayersMethods);
   }
 }
 
-export default PlayersService;
+export default new PlayersService();

@@ -6,7 +6,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
-import BaseService from "@/server/services/BaseService.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
 import {
   cowCustomizationForMutation,
@@ -16,22 +15,22 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Property, Session } from "@/shared/relations.ts";
 
-/**
- * A property shown on the entity, looked up like requirements and modifiers:
- * its own and visible sibling contributions. A derived item also shows its
- * template's properties; editing one creates an override on the item.
- */
-function findEntityProperty(rulesetData: CachedRulesetData, entityType: string, entityId: string, propertyId: string) {
-  const matches = (p: Property) => p.id === propertyId && p.entityType === entityType;
-  const own = rulesetData.propertiesByEntity.get(entityId)?.find(matches);
-  if (own) return { property: own, fromTemplate: false };
-  const sourceItemId = entityType === "items" ? rulesetData.itemsById.get(entityId)?.sourceItemId : undefined;
-  const inherited = sourceItemId ? rulesetData.propertiesByEntity.get(sourceItemId)?.find(matches) : undefined;
-  if (inherited) return { property: inherited, fromTemplate: true };
-  throw new NotFoundError("Property not found for this entity");
-}
+class PropertiesService {
+  /**
+   * A property shown on the entity, looked up like requirements and modifiers:
+   * its own and visible sibling contributions. A derived item also shows its
+   * template's properties; editing one creates an override on the item.
+   */
+  private findEntityProperty(rulesetData: CachedRulesetData, entityType: string, entityId: string, propertyId: string) {
+    const matches = (p: Property) => p.id === propertyId && p.entityType === entityType;
+    const own = rulesetData.propertiesByEntity.get(entityId)?.find(matches);
+    if (own) return { property: own, fromTemplate: false };
+    const sourceItemId = entityType === "items" ? rulesetData.itemsById.get(entityId)?.sourceItemId : undefined;
+    const inherited = sourceItemId ? rulesetData.propertiesByEntity.get(sourceItemId)?.find(matches) : undefined;
+    if (inherited) return { property: inherited, fromTemplate: true };
+    throw new NotFoundError("Property not found for this entity");
+  }
 
-const PropertiesMethods = {
   async getEntityProperties(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);
@@ -39,7 +38,7 @@ const PropertiesMethods = {
       const all = rulesetData.propertiesByEntity.get(effectiveEntityId) ?? [];
       return all.filter((p) => p.entityType === entityType);
     });
-  },
+  }
 
   async createEntityProperty(
     session: Session,
@@ -83,7 +82,7 @@ const PropertiesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async updateEntityProperty(
     session: Session,
@@ -105,7 +104,12 @@ const PropertiesMethods = {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const { property, fromTemplate } = findEntityProperty(rulesetData, entityType, effectiveEntityId, propertyId);
+        const { property, fromTemplate } = this.findEntityProperty(
+          rulesetData,
+          entityType,
+          effectiveEntityId,
+          propertyId,
+        );
 
         const customizationPolicy = new CustomizationsPolicy(session, property);
         await customizationPolicy.canUpdate();
@@ -166,7 +170,7 @@ const PropertiesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
+  }
 
   async deleteEntityProperty(
     session: Session,
@@ -182,7 +186,12 @@ const PropertiesMethods = {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
 
-        const { property, fromTemplate } = findEntityProperty(rulesetData, entityType, effectiveEntityId, propertyId);
+        const { property, fromTemplate } = this.findEntityProperty(
+          rulesetData,
+          entityType,
+          effectiveEntityId,
+          propertyId,
+        );
         if (fromTemplate) {
           // Template property: nothing to delete on the derived item since it doesn't own it.
           throw new BadRequestError("Cannot delete a property inherited from a template");
@@ -217,13 +226,7 @@ const PropertiesMethods = {
     });
     invalidateRuleset(rulesetId);
     return result;
-  },
-} as const;
-
-class PropertiesService extends BaseService<typeof PropertiesMethods> {
-  static initialize() {
-    return new PropertiesService(PropertiesMethods);
   }
 }
 
-export default PropertiesService;
+export default new PropertiesService();

@@ -10,11 +10,7 @@ import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
 import FeatsService from "@/server/services/rulesets/FeatsService.ts";
 import ItemsService from "@/server/services/rulesets/ItemsService.ts";
 import RulesetsService from "@/server/services/RulesetsService.ts";
-import { createSeededTestRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
-
-const FeatsMethods = methodsOf(FeatsService);
-const ItemsMethods = methodsOf(ItemsService);
-const RulesetsMethods = methodsOf(RulesetsService);
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
 afterEach(invalidateAll);
 
@@ -38,9 +34,9 @@ async function setup() {
 test("creating a feat with a renamed override's original name keeps the override", async () => {
   const { session, fork, general, baseFeat } = await setup();
   const source = await baseFeat("Alertness");
-  const renamed = await FeatsMethods.updateRulesetFeat(session, fork.id, source.id, { name: "Alertness (Local)" });
+  const renamed = await FeatsService.updateRulesetFeat(session, fork.id, source.id, { name: "Alertness (Local)" });
 
-  const created = await FeatsMethods.createRulesetFeat(session, fork.id, {
+  const created = await FeatsService.createRulesetFeat(session, fork.id, {
     name: "Alertness",
     aptitudeIds: [general.id],
   });
@@ -64,7 +60,7 @@ test("bulk item variants with a renamed override's original name keep the overri
       eq(itemsInRules.type, "Other"),
     ),
   }))!;
-  const renamed = await ItemsMethods.updateRulesetItem(session, fork.id, source.id, {
+  const renamed = await ItemsService.updateRulesetItem(session, fork.id, source.id, {
     name: `${source.name} (Local)`,
     description: source.description,
     type: source.type,
@@ -73,7 +69,7 @@ test("bulk item variants with a renamed override's original name keep the overri
     costGp: Number(source.costGp),
   });
 
-  const [created] = await ItemsMethods.bulkCreateVariants(session, fork.id, renamed.id, [{ name: source.name }]);
+  const [created] = await ItemsService.bulkCreateVariants(session, fork.id, renamed.id, [{ name: source.name }]);
 
   const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, { sourceEntityId: source.id, rulesetId: fork.id });
   expect(snapshot?.forkedEntityId).toBe(renamed.id);
@@ -93,12 +89,12 @@ test("the original name of a renamed extension copy is available", async () => {
     { kind: "extension", status: "Published", private: false, userId: null },
     { id: extension.id },
   );
-  await RulesetsMethods.subscribeExtension(session, fork.id, [extension.id]);
-  const renamed = await FeatsMethods.updateRulesetFeat(session, fork.id, extensionCopy.id, {
+  await RulesetsService.subscribeExtension(session, fork.id, [extension.id]);
+  const renamed = await FeatsService.updateRulesetFeat(session, fork.id, extensionCopy.id, {
     name: "Toughness (Local)",
   });
 
-  const created = await FeatsMethods.createRulesetFeat(session, fork.id, {
+  const created = await FeatsService.createRulesetFeat(session, fork.id, {
     name: "Toughness",
     aptitudeIds: [general.id],
   });
@@ -117,6 +113,6 @@ test("the original name of a renamed extension copy is available", async () => {
 test("a visible inherited feat still blocks its name", async () => {
   const { session, fork, general } = await setup();
   await expect(
-    FeatsMethods.createRulesetFeat(session, fork.id, { name: "Alertness", aptitudeIds: [general.id] }),
+    FeatsService.createRulesetFeat(session, fork.id, { name: "Alertness", aptitudeIds: [general.id] }),
   ).rejects.toThrow("Name already exists in the source chain");
 });

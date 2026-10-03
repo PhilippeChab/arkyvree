@@ -8,10 +8,7 @@ import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@
 import { Abilities, Activities, Feats, Items, Powers, Races, Requirements } from "@/server/repositories/index.ts";
 import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
 import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { createTestKlassLevel, createTestUserAndRuleset, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
-
-const ModifiersMethods = methodsOf(ModifiersService);
-const RequirementsMethods = methodsOf(RequirementsService);
+import { createTestKlassLevel, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", operator: "add" };
 
@@ -53,7 +50,7 @@ describe("ModifiersService", () => {
   test("creates, reads, lists, updates and deletes a modifier of every entity type that owns them", async () => {
     const { session, rulesetId, owners } = await setup();
     for (const [entityType, entityId] of Object.entries(owners)) {
-      const created = await ModifiersMethods.createEntityModifier(
+      const created = await ModifiersService.createEntityModifier(
         session,
         rulesetId,
         entityType,
@@ -67,28 +64,28 @@ describe("ModifiersService", () => {
         valueType: "number",
       });
 
-      expect(await ModifiersMethods.getEntityModifiers(rulesetId, entityType, entityId)).toMatchObject([
+      expect(await ModifiersService.getEntityModifiers(rulesetId, entityType, entityId)).toMatchObject([
         { id: created.id, targetLabels: { strength: "Strength" } },
       ]);
-      expect(await ModifiersMethods.getEntityModifier(rulesetId, entityType, entityId, created.id)).toMatchObject({
+      expect(await ModifiersService.getEntityModifier(rulesetId, entityType, entityId, created.id)).toMatchObject({
         id: created.id,
         requirements: [],
       });
 
       const update = { ...strengthBonus, value: "4" };
       expect(
-        await ModifiersMethods.updateEntityModifier(session, rulesetId, entityType, entityId, created.id, update),
+        await ModifiersService.updateEntityModifier(session, rulesetId, entityType, entityId, created.id, update),
       ).toMatchObject(update);
-      await ModifiersMethods.deleteEntityModifier(session, rulesetId, entityType, entityId, created.id);
-      expect(await ModifiersMethods.getEntityModifiers(rulesetId, entityType, entityId)).toEqual([]);
+      await ModifiersService.deleteEntityModifier(session, rulesetId, entityType, entityId, created.id);
+      expect(await ModifiersService.getEntityModifiers(rulesetId, entityType, entityId)).toEqual([]);
     }
   });
 
   test("keeps several modifiers on one target", async () => {
     const { session, rulesetId, feat } = await setup();
     for (const value of ["2", "3"])
-      await ModifiersMethods.createEntityModifier(session, rulesetId, "feats", feat.id, { ...strengthBonus, value });
-    expect((await ModifiersMethods.getEntityModifiers(rulesetId, "feats", feat.id)).map((m) => m.value).sort()).toEqual(
+      await ModifiersService.createEntityModifier(session, rulesetId, "feats", feat.id, { ...strengthBonus, value });
+    expect((await ModifiersService.getEntityModifiers(rulesetId, "feats", feat.id)).map((m) => m.value).sort()).toEqual(
       ["2", "3"],
     );
   });
@@ -96,38 +93,38 @@ describe("ModifiersService", () => {
   test("refuses an unknown target", async () => {
     const { session, rulesetId, feat } = await setup();
     const invalid = { ...strengthBonus, target: "invalid.path.that.does.not.exist" };
-    await expect(ModifiersMethods.createEntityModifier(session, rulesetId, "feats", feat.id, invalid)).rejects.toThrow(
+    await expect(ModifiersService.createEntityModifier(session, rulesetId, "feats", feat.id, invalid)).rejects.toThrow(
       BadRequestError,
     );
-    const created = await ModifiersMethods.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus);
+    const created = await ModifiersService.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus);
     await expect(
-      ModifiersMethods.updateEntityModifier(session, rulesetId, "feats", feat.id, created.id, invalid),
+      ModifiersService.updateEntityModifier(session, rulesetId, "feats", feat.id, created.id, invalid),
     ).rejects.toThrow(BadRequestError);
   });
 
   test("refuses a missing ruleset, entity or modifier, another entity's modifier and another user", async () => {
     const { session, rulesetId, feat, item } = await setup();
     const { session: other } = await createTestUserAndRuleset();
-    const created = await ModifiersMethods.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus);
+    const created = await ModifiersService.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus);
 
-    await expect(ModifiersMethods.getEntityModifiers(NIL_UUID, "feats", feat.id)).rejects.toThrow(NotFoundError);
-    await expect(ModifiersMethods.getEntityModifiers(rulesetId, "feats", NIL_UUID)).rejects.toThrow(NotFoundError);
-    await expect(ModifiersMethods.getEntityModifier(rulesetId, "feats", feat.id, NIL_UUID)).rejects.toThrow(
+    await expect(ModifiersService.getEntityModifiers(NIL_UUID, "feats", feat.id)).rejects.toThrow(NotFoundError);
+    await expect(ModifiersService.getEntityModifiers(rulesetId, "feats", NIL_UUID)).rejects.toThrow(NotFoundError);
+    await expect(ModifiersService.getEntityModifier(rulesetId, "feats", feat.id, NIL_UUID)).rejects.toThrow(
       NotFoundError,
     );
     await expect(
-      ModifiersMethods.createEntityModifier(session, rulesetId, "feats", NIL_UUID, strengthBonus),
+      ModifiersService.createEntityModifier(session, rulesetId, "feats", NIL_UUID, strengthBonus),
     ).rejects.toThrow(NotFoundError);
     await expect(
-      ModifiersMethods.createEntityModifier(other, rulesetId, "feats", feat.id, strengthBonus),
+      ModifiersService.createEntityModifier(other, rulesetId, "feats", feat.id, strengthBonus),
     ).rejects.toThrow(ForbiddenError);
     for (const change of [
       (s = session, entityId = feat.id, id = created.id) =>
-        ModifiersMethods.updateEntityModifier(s, rulesetId, "feats", entityId, id, strengthBonus),
+        ModifiersService.updateEntityModifier(s, rulesetId, "feats", entityId, id, strengthBonus),
       (s = session, entityId = feat.id, id = created.id) =>
-        ModifiersMethods.deleteEntityModifier(s, rulesetId, "feats", entityId, id),
+        ModifiersService.deleteEntityModifier(s, rulesetId, "feats", entityId, id),
       (s = session, entityId = feat.id, id = created.id) =>
-        ModifiersMethods.duplicateEntityModifier(s, rulesetId, "feats", entityId, id, strengthBonus),
+        ModifiersService.duplicateEntityModifier(s, rulesetId, "feats", entityId, id, strengthBonus),
     ]) {
       await expect(change(session, feat.id, NIL_UUID)).rejects.toThrow(NotFoundError);
       await expect(change(session, item.id)).rejects.toThrow(NotFoundError);
@@ -137,9 +134,9 @@ describe("ModifiersService", () => {
 
   test("refuses an edit started from a stale copy", async () => {
     const { session, rulesetId, feat } = await setup();
-    const created = await ModifiersMethods.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus);
+    const created = await ModifiersService.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus);
     const edit = (value: string) =>
-      ModifiersMethods.updateEntityModifier(session, rulesetId, "feats", feat.id, created.id, {
+      ModifiersService.updateEntityModifier(session, rulesetId, "feats", feat.id, created.id, {
         ...strengthBonus,
         value,
         updatedAt: created.updatedAt,
@@ -150,12 +147,12 @@ describe("ModifiersService", () => {
 
   test("duplicates a modifier with a copy of its requirement tree", async () => {
     const { session, rulesetId, feat } = await setup();
-    const source = await ModifiersMethods.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus);
-    await RequirementsMethods.createEntityRequirement(session, rulesetId, "modifiers", source.id, {
+    const source = await ModifiersService.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus);
+    await RequirementsService.createEntityRequirement(session, rulesetId, "modifiers", source.id, {
       level: "1",
       chainingOperator: "and",
     });
-    await RequirementsMethods.createEntityRequirement(session, rulesetId, "modifiers", source.id, {
+    await RequirementsService.createEntityRequirement(session, rulesetId, "modifiers", source.id, {
       level: "1.1",
       target: "combat.bab",
       value: "5",
@@ -166,7 +163,7 @@ describe("ModifiersService", () => {
       entityType: "modifiers",
     });
 
-    const copy = await ModifiersMethods.duplicateEntityModifier(session, rulesetId, "feats", feat.id, source.id, {
+    const copy = await ModifiersService.duplicateEntityModifier(session, rulesetId, "feats", feat.id, source.id, {
       ...strengthBonus,
       value: "3",
     });
@@ -190,16 +187,16 @@ describe("ModifiersService", () => {
     test("deletes its requirements, keeping its and their activities", async () => {
       const { session, rulesetId, feat } = await setup();
       const [modifier, sibling] = [
-        await ModifiersMethods.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus),
-        await ModifiersMethods.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus),
+        await ModifiersService.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus),
+        await ModifiersService.createEntityModifier(session, rulesetId, "feats", feat.id, strengthBonus),
       ];
       const group = { level: "1", chainingOperator: "and" } as const;
       const requirements = [
-        await RequirementsMethods.createEntityRequirement(session, rulesetId, "modifiers", modifier.id, group),
-        await RequirementsMethods.createEntityRequirement(session, rulesetId, "modifiers", sibling.id, group),
+        await RequirementsService.createEntityRequirement(session, rulesetId, "modifiers", modifier.id, group),
+        await RequirementsService.createEntityRequirement(session, rulesetId, "modifiers", sibling.id, group),
       ];
 
-      await ModifiersMethods.deleteEntityModifier(session, rulesetId, "feats", feat.id, modifier.id);
+      await ModifiersService.deleteEntityModifier(session, rulesetId, "feats", feat.id, modifier.id);
 
       expect(await Requirements.findManyByEntity(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual(
         [],

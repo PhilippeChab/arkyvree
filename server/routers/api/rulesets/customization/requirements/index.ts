@@ -7,16 +7,12 @@ import {
   ownerParams,
   requirementOperator,
 } from "@/server/routers/api/rulesets/customization/validation.ts";
-import { respond } from "@/server/routers/respond.ts";
 import { RequirementsService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get("/:id/customization/:entityType/:entityId/requirements", zValidator("param", ownerParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
-
-    const requirementsService = RequirementsService.initialize();
-    const result = await requirementsService.call("getEntityRequirements", id, entityType, entityId);
-    return respond(c, result, 200);
+    return c.json(await RequirementsService.getEntityRequirements(id, entityType, entityId), 200);
   })
   .post(
     "/:id/customization/:entityType/:entityId/requirements",
@@ -35,17 +31,10 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, entityType, entityId } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const requirementsService = RequirementsService.initialize();
-      const result = await requirementsService.call(
-        "createEntityRequirement",
-        c.var.requestSession,
-        id,
-        entityType,
-        entityId,
-        body,
+      return c.json(
+        await RequirementsService.createEntityRequirement(c.var.requestSession, id, entityType, entityId, body),
+        201,
       );
-      return respond(c, result, 201);
     },
   )
   .put(
@@ -66,18 +55,17 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, entityType, entityId, requirementId } = c.req.valid("param");
       const body = c.req.valid("json");
-
-      const requirementsService = RequirementsService.initialize();
-      const result = await requirementsService.call(
-        "updateEntityRequirement",
-        c.var.requestSession,
-        id,
-        entityType,
-        entityId,
-        requirementId,
-        body,
+      return c.json(
+        await RequirementsService.updateEntityRequirement(
+          c.var.requestSession,
+          id,
+          entityType,
+          entityId,
+          requirementId,
+          body,
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   )
   .delete(
@@ -85,16 +73,15 @@ export default new Hono<SessionContext>()
     zValidator("param", ownerParams.extend({ requirementId: z.string().uuid() })),
     async (c) => {
       const { id, entityType, entityId, requirementId } = c.req.valid("param");
-
-      const requirementsService = RequirementsService.initialize();
-      const result = await requirementsService.call(
-        "deleteEntityRequirement",
-        c.var.requestSession,
-        id,
-        entityType,
-        entityId,
-        requirementId,
+      return c.json(
+        await RequirementsService.deleteEntityRequirement(
+          c.var.requestSession,
+          id,
+          entityType,
+          entityId,
+          requirementId,
+        ),
+        200,
       );
-      return respond(c, result, 200);
     },
   );
