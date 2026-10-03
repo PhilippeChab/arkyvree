@@ -1,6 +1,6 @@
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { type CachedRulesetData, getOrFetchRulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { withCowContext } from "@/server/database/cowContext.ts";
+import { type CowData, type IdResolveMap, type OverrideMap, withCowContext } from "@/server/database/cowContext.ts";
 import { db, type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Aptitudes, EntitySnapshots, KlassLevels, Rulesets } from "@/server/repositories/index.ts";
@@ -9,27 +9,13 @@ import {
   assertCowMapsConsistent,
   buildOverrideMap,
   buildSourceChain,
-  type IdResolveMap,
   newIdResolveMap,
   newOverrideMap,
-  type OverrideMap,
 } from "./overrideMap.ts";
 
 // ──────────────────────────────────────────────────────────────
 // Cached COW data
 // ──────────────────────────────────────────────────────────────
-
-export interface CowData {
-  sourceChain: string[];
-  /** Compose-skip semantic — see {@link OverrideMap}. */
-  overrideMap: OverrideMap;
-  /** ID-canonicalize semantic — see {@link IdResolveMap}. Superset of `overrideMap`. */
-  idResolveMap: IdResolveMap;
-  /** Maps a winning COW'd entity ID → sibling-loser COW'd entity IDs */
-  siblingMap: Map<string, string[]>;
-  /** Flattened set of every sibling ID, precomputed from siblingMap */
-  siblingIds: Set<string>;
-}
 
 const cowDataCache = new DependentCache<CowData>();
 

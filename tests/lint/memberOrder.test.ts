@@ -45,7 +45,7 @@ describe("member order", () => {
     expect(["getter", "publishRuleset", "lockById", "me"].map(verbGroup)).toEqual([ACTION, ACTION, ACTION, ACTION]);
   });
 
-  test("orders routes by method, then by path: a fixed segment before a parameter, a parameter before a wildcard", () => {
+  test("orders routes by method, then by path: fixed segments before parameters, parameters before wildcards", () => {
     const routes = [
       { method: "delete", path: "/:id" },
       { method: "get", path: "/:id" },
@@ -75,7 +75,7 @@ describe("member order", () => {
     fs.writeFileSync(
       config,
       JSON.stringify({
-        jsPlugins: [path.resolve("lint/memberOrder.mjs")],
+        jsPlugins: [path.resolve("lint/plugin.mjs")],
         rules: { "arkyvree/member-order": "error" },
       }),
     );
