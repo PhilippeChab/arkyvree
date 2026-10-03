@@ -20,10 +20,6 @@ class BlobsRepository extends BaseRepository<typeof blobsInStorage> {
   }
 
   /**
-   * The blobs the sweep deletes, oldest first: no attachment refers to them, and they were attached once, or uploaded
-   * before `createdBefore` and never attached.
-   */
-  /**
    * The blobs no attachment refers to, the sweep's candidates (their id and storage key): attached once, or uploaded
    * before `createdBefore` and never attached. The oldest first.
    */
