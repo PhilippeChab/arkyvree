@@ -31,14 +31,14 @@
  * Source: SRD Monster Manual entries (cross-checked via d20srd.org).
  */
 
-export type NaturalAttack = {
+type NaturalAttack = {
   name: string;
   damage: string;
   type: string;
   count?: number;
 };
 
-export type BondedRaceAbilities = {
+type BondedRaceAbilities = {
   strength: number;
   dexterity: number;
   constitution: number;

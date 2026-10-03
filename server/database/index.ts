@@ -20,4 +20,4 @@ if (isTestMode) {
 
 export const db = dbModule.db;
 export const withTransaction = dbModule.withTransaction;
-export type { Db, Transaction } from "./production.ts";
+export type { Db } from "./production.ts";
