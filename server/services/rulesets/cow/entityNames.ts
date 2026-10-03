@@ -1,10 +1,10 @@
 import { withCowContext } from "@/server/database/cowContext.ts";
+import type { CowData } from "@/server/database/cowContext.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Feats } from "@/server/repositories/index.ts";
 
 import { ENTITY_REPOS } from "./constants.ts";
-import type { CowData } from "./cowData.ts";
 import type { EntityType } from "./hashing.ts";
 
 /**

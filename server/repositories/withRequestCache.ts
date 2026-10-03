@@ -1,7 +1,7 @@
 import { currentCowContext } from "@/server/database/cowContext.ts";
+import type { IdResolveMap } from "@/server/database/cowContext.ts";
 import { db as globalDb } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest } from "@/server/database/requestCache.ts";
-import type { IdResolveMap } from "@/server/services/rulesets/cow/index.ts";
 
 // Inlined to avoid an initialization-time cycle with cow/ (which imports
 // this file). Remaps FK references on each row through the override map so

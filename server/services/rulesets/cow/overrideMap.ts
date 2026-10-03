@@ -1,26 +1,8 @@
+import type { IdResolveMap, OverrideMap } from "@/server/database/cowContext.ts";
 import type { Db } from "@/server/database/index.ts";
 import { EntitySnapshots, RulesetEntities } from "@/server/repositories/index.ts";
 
 import { NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
-
-/**
- * Branded `Map<string, string>` carrying compose-skip semantic. Keys are
- * source-entity IDs of true COW overrides — read by `compose()` to drop
- * the source row when a child has overridden it. The brand stops it being
- * passed where an `IdResolveMap` is expected (or vice versa). Construct via
- * `newOverrideMap()` only.
- */
-export type OverrideMap = Map<string, string> & { readonly __brand: "OverrideMap" };
-
-/**
- * Branded `Map<string, string>` carrying id-canonicalize semantic. Maps any
- * "stale" id (true override source, aptitude name-grouping loser, snapshot
- * sibling loser) to its canonical winner. Read by the repo Proxy
- * (`canonicalizeArgs`, `resolveRowOverrides`), `idMatches` (`ResolvesCopies`),
- * `cowResolvingMap`, and `resolveOverrides`. Construct via
- * `newIdResolveMap(seed?)` only.
- */
-export type IdResolveMap = Map<string, string> & { readonly __brand: "IdResolveMap" };
 
 export function newOverrideMap(entries?: Iterable<readonly [string, string]>): OverrideMap {
   return new Map<string, string>(entries) as OverrideMap;

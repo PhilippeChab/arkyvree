@@ -5,7 +5,8 @@
  * Usage: bun run prod:impersonate <email>
  */
 import { db } from "@/server/database/index.ts";
-import { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } from "@/server/middlewares/session.ts";
+import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
+import { SESSION_TTL_SECONDS } from "@/server/repositories/accounts/sessionTtl.ts";
 import { Sessions, Users } from "@/server/repositories/index.ts";
 import { AUTH_STORAGE_KEY } from "@/shared/auth.ts";
 

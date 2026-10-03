@@ -2,8 +2,9 @@ import { and, eq, isNotNull, isNull, lt, ne, or } from "drizzle-orm";
 
 import { sessionsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { SESSION_TTL_MS } from "@/server/middlewares/session.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+
+import { SESSION_TTL_MS } from "./sessionTtl.ts";
 
 class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
   constructor() {

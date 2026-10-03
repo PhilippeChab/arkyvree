@@ -4,14 +4,13 @@ import { createMiddleware } from "hono/factory";
 
 import { db } from "@/server/database/index.ts";
 import { UnauthorizedError } from "@/server/errors/index.ts";
+import { SESSION_TTL_SECONDS } from "@/server/repositories/accounts/sessionTtl.ts";
 import { Sessions, Users } from "@/server/repositories/index.ts";
 import type { Session, User } from "@/shared/relations.ts";
 
 export const SESSION_COOKIE_NAME = "session-id";
 const SESSION_CONTEXT_KEY = "requestSession";
 const USER_CONTEXT_KEY = "requestUser";
-export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-export const SESSION_TTL_SECONDS = SESSION_TTL_MS / 1000;
 
 export type SessionContext = {
   Variables: {
