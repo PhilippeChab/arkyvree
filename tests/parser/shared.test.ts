@@ -12,7 +12,7 @@ import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 const STRENGTH: Modifier = { target: "abilities.strength.misc", operator: "add", value: "2", valueType: "number" };
 const DEXTERITY: Modifier = { target: "abilities.dexterity.misc", operator: "add", value: "2", valueType: "number" };

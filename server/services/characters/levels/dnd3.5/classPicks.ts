@@ -11,7 +11,7 @@ import type { DetailedCharacterInterface, PreloadedRulesetData } from "@/server/
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { KlassLevel, Requirement, Session } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import {
   buildPendingCharacterLevels,

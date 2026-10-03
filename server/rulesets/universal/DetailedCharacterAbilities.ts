@@ -1,7 +1,7 @@
 import { CONSTANTS } from "@/server/rulesets/constants.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type CharacterLevel, type RulesetAbility } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "base", description: "Base score before modifiers", type: "number" as const, requirementOnly: true },

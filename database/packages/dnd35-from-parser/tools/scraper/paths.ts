@@ -5,7 +5,7 @@ import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterS
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 // ---------------------------------------------------------------------------
 // Path validation — reuses actual server components to stay in sync

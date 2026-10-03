@@ -3,7 +3,7 @@ import type DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedChara
 import { WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { Item, Property } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 const SLOT_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
 

@@ -1,6 +1,6 @@
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type Aptitude } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";
 import type DetailedCharacterIdentity from "./DetailedCharacterIdentity.ts";

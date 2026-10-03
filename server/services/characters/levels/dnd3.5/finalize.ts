@@ -25,7 +25,7 @@ import type { PreloadedRulesetData } from "@/server/rulesets/types.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import { reconcileAllBondedKinds } from "./bondedReconcile.ts";
 import { plannedClassSkills } from "./classes.ts";

@@ -3,7 +3,7 @@ import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mu
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
-import { capitalize } from "@/shared/utils.ts";
+import { capitalize } from "@/shared/text.ts";
 
 import type { BaseRules, LeveledUpAttribute } from "./levelUp/index.ts";
 

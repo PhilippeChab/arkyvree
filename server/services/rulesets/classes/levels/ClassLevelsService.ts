@@ -24,7 +24,7 @@ import {
 } from "@/server/services/rulesets/cow/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { KlassLevel, KlassLevelFeat, Modifier, Property, Session } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import { ListsSpells } from "./concerns/ListsSpells.ts";
 

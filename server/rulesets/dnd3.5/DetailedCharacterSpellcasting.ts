@@ -2,7 +2,7 @@ import { include } from "@/server/mixins.ts";
 import type { Holders } from "@/server/rulesets/types.ts";
 import { type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import { BonusCasterLevels } from "./spellcasting/BonusCasterLevels.ts";
 import { KnownPowers } from "./spellcasting/KnownPowers.ts";

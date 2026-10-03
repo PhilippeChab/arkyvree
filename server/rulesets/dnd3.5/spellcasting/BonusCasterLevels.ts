@@ -5,7 +5,7 @@ import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/Spellc
 import type { Holders } from "@/server/rulesets/types.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 /** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain spells they bring. */
 export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base: B) {

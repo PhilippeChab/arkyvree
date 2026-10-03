@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { capitalize, initialOf, stripSeparators } from "@/shared/utils.ts";
+import { capitalize, initialOf, stripSeparators } from "@/shared/text.ts";
 
 describe("Text", () => {
   test("is capitalized by its first letter only", () => {

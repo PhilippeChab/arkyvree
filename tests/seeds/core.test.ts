@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains/data.ts";
 import { CREATURE_TYPES } from "@/database/packages/dnd35/content/creatureTypes.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 import { describeRequirement, seededRows } from "@/tests/seeds/seededRows.ts";
 
 const proficiency = (kind: string, weapon: string) => [

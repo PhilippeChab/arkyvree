@@ -1,7 +1,7 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
 import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import { capitalize } from "@/shared/utils.ts";
+import { capitalize } from "@/shared/text.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";

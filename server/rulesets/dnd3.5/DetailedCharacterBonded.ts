@@ -6,7 +6,7 @@ import { Characters } from "@/server/repositories/index.ts";
 import type { ValidationIssue, ValidationResult } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 

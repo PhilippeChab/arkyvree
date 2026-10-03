@@ -5,7 +5,7 @@ import type { SeedContext } from "@/database/packages/dnd35/seed/context.ts";
 import { insertAll, insertGatedSpellSlots, spellListSlots } from "@/database/packages/dnd35/seed/customization.ts";
 import { powersAptitudesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 /**
  * Gives each school's specialist feat a slot at each spell level of its spell list ("X Specialist Spells"), once

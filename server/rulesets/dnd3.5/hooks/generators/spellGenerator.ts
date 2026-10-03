@@ -13,7 +13,7 @@ import {
   SPELL_SUBSCHOOL,
   SPELL_TARGET,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 export interface SpellFields {
   school: string;

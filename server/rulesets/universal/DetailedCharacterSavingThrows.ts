@@ -1,6 +1,6 @@
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { KlassLevelSave, RulesetAbility, RulesetSave } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import type DetailedCharacterAbilities from "./DetailedCharacterAbilities.ts";
 import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";

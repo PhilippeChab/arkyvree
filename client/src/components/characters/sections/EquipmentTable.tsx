@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
-import { capitalize } from "@/shared/utils.ts";
+import { capitalize } from "@/shared/text.ts";
 
 import { type EncumbranceData, type EquipmentRow, formatSlotDisplay } from "./equipment.ts";
 

@@ -1,4 +1,4 @@
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 export const SPELL_SCHOOLS = [
   "Abjuration",

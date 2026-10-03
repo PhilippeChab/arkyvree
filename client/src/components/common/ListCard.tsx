@@ -1,7 +1,7 @@
 import { Avatar, Box, Stack, Typography } from "@mui/material";
 import type { ComponentProps, ReactNode } from "react";
 
-import { initialOf } from "@/shared/utils.ts";
+import { initialOf } from "@/shared/text.ts";
 
 import { StyledCard } from "./StyledCard.tsx";
 

@@ -35,7 +35,7 @@ import type {
 } from "@/database/packages/dnd35/content/types.ts";
 import { spellWeaponFocusFeats, weaponProficiencyFeats } from "@/database/packages/dnd35/content/weapons.ts";
 import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools.ts";
-import { stripSeparators } from "@/shared/utils.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 // ---------------------------------------------------------------------------
 // The feats a feat reference makes
@@ -394,7 +394,7 @@ const IMPORTS: ImportTable = [
   ],
   ["@/database/packages/dnd35/content/skills.ts", ["SKILL_NAMES"]],
   ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
-  ["@/shared/utils.ts", ["stripSeparators"]],
+  ["@/shared/text.ts", ["stripSeparators"]],
   ["@/database/packages/dnd35/content/wizardSchools.ts", ["wizardSchoolFeats"]],
   ["@/database/packages/dnd35/content/creatureTypes.ts", ["favoredEnemyFeats"]],
   ["@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts", ["WIZARD_SCHOOLS"]],

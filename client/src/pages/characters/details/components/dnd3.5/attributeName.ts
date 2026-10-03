@@ -1,4 +1,4 @@
-import { capitalize } from "@/shared/utils.ts";
+import { capitalize } from "@/shared/text.ts";
 
 import type { AttributesData } from "./levelUp/index.ts";
 

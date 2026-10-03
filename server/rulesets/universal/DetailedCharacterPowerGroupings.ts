@@ -2,7 +2,7 @@ import type DetailedCharacterAbilities from "@/server/rulesets/universal/Detaile
 import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { Property } from "@/shared/relations.ts";
-import { capitalize, stripSeparators } from "@/shared/utils.ts";
+import { capitalize, stripSeparators } from "@/shared/text.ts";
 
 export type PowerDc = {
   base: number;
