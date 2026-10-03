@@ -41,8 +41,14 @@ export default new GoodService();
 `,
         "server/services/Find.ts": "class FindService {\n  findOne() {}\n}\nexport default new FindService();\n",
         "server/services/Me.ts": "class MeService {\n  static me() {}\n}\nexport default new MeService();\n",
+        "server/services/Field.ts":
+          "import { tally } from './tally.ts';\nclass FieldService {\n  readonly tally = tally;\n  readonly getTally = tally;\n}\nexport default new FieldService();\n",
       }),
-    ).toEqual(["method-names server/services/Find.ts", "method-names server/services/Me.ts"]);
+    ).toEqual([
+      "method-names server/services/Field.ts",
+      "method-names server/services/Find.ts",
+      "method-names server/services/Me.ts",
+    ]);
   });
 
   test("a policy checks with can or is, and builds one with for", () => {

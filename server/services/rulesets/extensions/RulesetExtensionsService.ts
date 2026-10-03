@@ -2,6 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { withCowContext } from "@/server/database/cowContext.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
@@ -54,52 +55,55 @@ class RulesetExtensionsService {
     }
     const shadow = (type: EntityType) => shadowIdsByType[type] ?? [];
 
-    return (
-      (await CharacterLevelFeats.existsByFeatPickFromExtension(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowFeatIds: shadow("feats"),
-      })) ||
-      (await CharacterLevelFeats.existsByAptitudePickFromExtension(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowAptitudeIds: shadow("aptitudes"),
-      })) ||
-      (await CharacterLevelSkills.existsBySkillPickFromExtension(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowSkillIds: shadow("skills"),
-      })) ||
-      (await CharacterLevelPowers.existsByPowerPickFromExtension(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowPowerIds: shadow("powers"),
-      })) ||
-      (await CharacterLevelPowers.existsByAptitudePickFromExtension(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowAptitudeIds: shadow("aptitudes"),
-      })) ||
-      (await CharacterLevels.existsByKlassPickFromExtension(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowKlassIds: shadow("klasses"),
-      })) ||
-      (await Characters.existsByRaceFromExtension(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowRaceIds: shadow("races"),
-      })) ||
-      (await CharacterLanguages.existsByLanguagePickFromExtension(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowLanguageIds: shadow("languages"),
-      })) ||
-      (await CharacterInventory.existsByItemPickFromExtension(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowItemIds: shadow("items"),
-      }))
+    // Shadow ids as stored: a shadow can be a sibling loser, whose id copy-on-write would read as its winner's.
+    return await withCowContext(
+      undefined,
+      async () =>
+        (await CharacterLevelFeats.existsByFeatPickFromExtension(tx, {
+          hostRulesetId,
+          extensionRulesetId: extensionId,
+          shadowFeatIds: shadow("feats"),
+        })) ||
+        (await CharacterLevelFeats.existsByAptitudePickFromExtension(tx, {
+          hostRulesetId,
+          extensionRulesetId: extensionId,
+          shadowAptitudeIds: shadow("aptitudes"),
+        })) ||
+        (await CharacterLevelSkills.existsBySkillPickFromExtension(tx, {
+          hostRulesetId,
+          extensionRulesetId: extensionId,
+          shadowSkillIds: shadow("skills"),
+        })) ||
+        (await CharacterLevelPowers.existsByPowerPickFromExtension(tx, {
+          hostRulesetId,
+          extensionRulesetId: extensionId,
+          shadowPowerIds: shadow("powers"),
+        })) ||
+        (await CharacterLevelPowers.existsByAptitudePickFromExtension(tx, {
+          hostRulesetId,
+          extensionRulesetId: extensionId,
+          shadowAptitudeIds: shadow("aptitudes"),
+        })) ||
+        (await CharacterLevels.existsByKlassPickFromExtension(tx, {
+          hostRulesetId,
+          extensionRulesetId: extensionId,
+          shadowKlassIds: shadow("klasses"),
+        })) ||
+        (await Characters.existsByRaceFromExtension(tx, {
+          hostRulesetId,
+          extensionRulesetId: extensionId,
+          shadowRaceIds: shadow("races"),
+        })) ||
+        (await CharacterLanguages.existsByLanguagePickFromExtension(tx, {
+          hostRulesetId,
+          extensionRulesetId: extensionId,
+          shadowLanguageIds: shadow("languages"),
+        })) ||
+        (await CharacterInventory.existsByItemPickFromExtension(tx, {
+          hostRulesetId,
+          extensionRulesetId: extensionId,
+          shadowItemIds: shadow("items"),
+        })),
     );
   }
 

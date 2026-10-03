@@ -23,9 +23,9 @@ const REPOSITORY = JSON.parse(
 
 // oxfmt-ignore
 const SERVICE_ACTIONS = [
-  "accept", "attach", "cancel", "complete", "detach", "enqueue", "forgot", "fork", "generate", "invite", "leave", "link",
-  "publish", "reject", "resend", "reset", "revert", "revoke", "sign", "star", "start", "subscribe", "unlink", "unstar",
-  "unsubscribe", "verify",
+  "accept", "attach", "cancel", "complete", "detach", "enqueue", "finalize", "forgot", "fork", "generate", "invite",
+  "leave", "link", "publish", "reject", "resend", "reset", "revert", "revoke", "sign", "star", "start", "subscribe",
+  "unlink", "unstar", "unsubscribe", "validate", "verify",
 ];
 
 /** Each layer's verbs, the most specific folder first. */
@@ -50,11 +50,13 @@ const VOCABULARIES = [
   },
 ];
 
+/** A function a field holds: written there, or another one's (`readonly finalizeLevelUp = finalizeLevelUp`). */
+const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "Identifier", "MemberExpression"];
+
 const isMethod = (member) =>
   (member.type === "MethodDefinition" || member.type === "TSAbstractMethodDefinition"
     ? member.kind === "method"
-    : member.type === "PropertyDefinition" &&
-      ["ArrowFunctionExpression", "FunctionExpression"].includes(member.value?.type)) && !member.computed;
+    : member.type === "PropertyDefinition" && FUNCTION_VALUES.includes(member.value?.type)) && !member.computed;
 
 const isPublic = (member) =>
   (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
