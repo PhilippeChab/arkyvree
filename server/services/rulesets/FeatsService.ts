@@ -13,9 +13,9 @@ import {
   entityHasCharacterPicks,
   lockEntityForMutation,
   repointTombstoneSnapshot,
+  wasGeneratedFeat,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
-import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -127,13 +127,10 @@ export const FeatsMethods = {
 
         // Named as an ancestor the fork deleted, the feat stands in for it (`repointTombstoneSnapshot`), checks finding it
         // by that name: generated if the ancestor was
-        const ancestor = tombstoneAncestorId
-          ? await withCowContext(undefined, () => Feats.findOne(tx, { id: tombstoneAncestorId }))
-          : undefined;
         const rows = await Feats.create(tx, {
           name: body.name,
           description: body.description,
-          generated: ancestor?.generated ?? false,
+          generated: tombstoneAncestorId ? await wasGeneratedFeat(tx, tombstoneAncestorId) : false,
           rulesetId,
         });
         const feat = rows[0];
