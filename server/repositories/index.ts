@@ -1,4 +1,5 @@
 import { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/schema.ts";
+import RulesetEntitiesRepository from "@/server/repositories/rulesets/RulesetEntitiesRepository.ts";
 
 import AccountCodesRepository from "./accounts/AccountCodesRepository.ts";
 import OauthAccountsRepository from "./accounts/OauthAccountsRepository.ts";
@@ -62,6 +63,7 @@ export const EmailVerifications = withRequestCache(
   new AccountCodesRepository(emailVerificationsInAccount),
 );
 export const EntitySnapshots = withRequestCache("EntitySnapshots", new EntitySnapshotsRepository(), { skipCow: true });
+export const RulesetEntities = withRequestCache("RulesetEntities", new RulesetEntitiesRepository(), { skipCow: true });
 export const Exports = withRequestCache("Exports", new ExportsRepository());
 export const PasswordResets = withRequestCache("PasswordResets", new AccountCodesRepository(passwordResetsInAccount));
 export const CharacterLevels = withRequestCache("CharacterLevels", new CharacterLevelsRepository());

@@ -29,22 +29,12 @@ import {
   Skills,
   Users,
 } from "@/server/repositories/index.ts";
+import { RULESET_ENTITY_TYPES } from "@/server/repositories/rulesets/entityTables.ts";
 import { noteNotified } from "@/server/ws.ts";
 import type { ChangedField } from "@/shared/activity.ts";
 
-// Tables whose entities have a direct rulesetId
-const RULESET_ENTITY_TABLES = new Set([
-  "feats",
-  "powers",
-  "skills",
-  "races",
-  "klasses",
-  "items",
-  "saves",
-  "languages",
-  "aptitudes",
-  "mechanics",
-]);
+// Ruleset entities' tables, named like their types (abilities raise no activity)
+const RULESET_ENTITY_TABLES = new Set<string>(RULESET_ENTITY_TYPES.filter((type) => type !== "abilities"));
 
 // Customization tables whose source entities have a rulesetId
 const CUSTOMIZATION_TABLES = new Set(["modifiers", "requirements", "properties"]);

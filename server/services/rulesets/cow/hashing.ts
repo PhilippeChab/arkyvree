@@ -1,3 +1,4 @@
+import type { RulesetEntityType } from "@/server/repositories/rulesets/entityTables.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 interface EntityCustomizations {
@@ -15,18 +16,8 @@ interface KlassRelationships {
   klassSkills: { klassId: string; skillId: string }[];
 }
 
-type EntityType =
-  | "abilities"
-  | "saves"
-  | "skills"
-  | "feats"
-  | "powers"
-  | "items"
-  | "races"
-  | "languages"
-  | "klasses"
-  | "aptitudes"
-  | "mechanics";
+/** A ruleset entity's type: the repositories' tables name them. */
+type EntityType = RulesetEntityType;
 
 // Fields to exclude from hashing — metadata and FK references whose UUIDs differ across forks
 const EXCLUDED_FIELDS = new Set([

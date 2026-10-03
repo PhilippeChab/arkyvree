@@ -1,11 +1,7 @@
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
-import { unionAll } from "drizzle-orm/pg-core";
-
-import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { EntitySnapshots } from "@/server/repositories/index.ts";
+import { EntitySnapshots, RulesetEntities } from "@/server/repositories/index.ts";
 
-import { NAME_FALLBACK_TABLES } from "./constants.ts";
+import { NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
 
 /**
  * Branded `Map<string, string>` carrying compose-skip semantic. Keys are
@@ -200,35 +196,10 @@ export async function buildOverrideMap(
   // ancestors-only. Dedupe so this pass behaves the same from either call site.
   const dedupedChain = [...new Set([...(extensionRulesetIds ?? []), ...ancestorRulesetIds])];
   if (extensionSet.size > 0 && dedupedChain.length > 1) {
-    const subqueries = NAME_FALLBACK_TABLES.map(({ entityType, table }) =>
-      db
-        .select({
-          entityType: sql<string>`${entityType}::text`.as("entity_type"),
-          id: table.id,
-          name: table.name,
-          rulesetId: table.rulesetId,
-        })
-        .from(table)
-        .leftJoin(
-          entitySnapshotsInRules,
-          and(
-            eq(entitySnapshotsInRules.forkedEntityId, table.id),
-            eq(entitySnapshotsInRules.rulesetId, table.rulesetId),
-            eq(entitySnapshotsInRules.entityType, entityType),
-          ),
-        )
-        .where(
-          and(
-            inArray(table.rulesetId, dedupedChain),
-            isNull(entitySnapshotsInRules.id),
-            isNull(table.deletedAt),
-            isNull(table.campaignId),
-          ),
-        ),
-    );
-
-    const [first, second, ...rest] = subqueries;
-    const rows = await unionAll(first, second, ...rest);
+    const rows = await RulesetEntities.findNativeNames(db, {
+      rulesetIds: dedupedChain,
+      entityTypes: [...NAME_FALLBACK_ENTITY_TYPES],
+    });
 
     const chainIndex = new Map(dedupedChain.map((id, i) => [id, i]));
 

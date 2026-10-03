@@ -1,7 +1,7 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
-import { playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
+import { campaignsInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -11,6 +11,24 @@ import { Searches } from "@/server/repositories/concerns/Searches.ts";
 class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>, Paginates, Searches) {
   constructor() {
     super(playersInCampaign);
+  }
+
+  /** Whether the user plays in a live campaign on the ruleset: what lets a member create on a private ruleset. */
+  async existsOnRuleset(db: Db, where: { userId: string; rulesetId: string }) {
+    const [row] = await db
+      .select({ one: sql`1` })
+      .from(this.table)
+      .innerJoin(campaignsInCampaign, eq(this.table.campaignId, campaignsInCampaign.id))
+      .where(
+        and(
+          eq(this.table.userId, where.userId),
+          isNull(this.table.deletedAt),
+          isNull(campaignsInCampaign.deletedAt),
+          eq(campaignsInCampaign.rulesetId, where.rulesetId),
+        ),
+      )
+      .limit(1);
+    return Boolean(row);
   }
 
   async findMany(

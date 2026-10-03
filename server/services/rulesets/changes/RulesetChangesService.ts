@@ -1,12 +1,11 @@
-import { eq, inArray } from "drizzle-orm";
-
-import { itemsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { withCowContext } from "@/server/database/cowContext.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
+import { EntitySnapshots, Items, RulesetEntities, Rulesets } from "@/server/repositories/index.ts";
+import { RULESET_ENTITY_TYPES } from "@/server/repositories/rulesets/entityTables.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { ENTITY_TABLES, entityHasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
+import { entityHasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
 import type { EntityType } from "@/server/services/rulesets/cow/index.ts";
 import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -43,17 +42,13 @@ class RulesetChangesService {
     // Walk every entity type so we can emit "added" rows for locally-owned
     // entities that aren't tracked by any snapshot, alongside the snapshot-
     // tracked "modified"/"deleted" rows.
-    for (const entityType of Object.keys(ENTITY_TABLES) as (keyof typeof ENTITY_TABLES)[]) {
-      const table = ENTITY_TABLES[entityType];
+    for (const entityType of RULESET_ENTITY_TYPES) {
       const typeSnapshots = snapshotsByType.get(entityType) ?? [];
       const forkedIds = typeSnapshots.map((s) => s.forkedEntityId);
 
       // Locally-owned rows. Forked entity ids that have a snapshot are COWs
       // (modified/deleted); the rest are locally-created (added).
-      const localRows = await db
-        .select({ id: table.id, name: table.name })
-        .from(table)
-        .where(eq(table.rulesetId, rulesetId));
+      const localRows = await RulesetEntities.findNames(db, entityType, { rulesetId });
       const forkedIdSet = new Set(forkedIds);
       const localById = new Map(localRows.map((r) => [r.id, r]));
 
@@ -71,10 +66,7 @@ class RulesetChangesService {
 
       // Tombstones (COW hard-deleted) need the source entity's name as a fallback.
       const sourceIds = typeSnapshots.map((s) => s.sourceEntityId);
-      const sourceRows = await db
-        .select({ id: table.id, name: table.name })
-        .from(table)
-        .where(inArray(table.id, sourceIds));
+      const sourceRows = await RulesetEntities.findNames(db, entityType, { ids: sourceIds });
       const sourceById = new Map(sourceRows.map((r) => [r.id, r]));
 
       for (const snap of typeSnapshots) {
@@ -132,10 +124,11 @@ class RulesetChangesService {
       // before the cascade hard-deletes (RESTRICT FK). Klass_levels and dependent
       // character_levels are wiped via FK CASCADE on the parent klass row.
       if (entityType === "items") {
-        await tx
-          .update(itemsInRules)
-          .set({ sourceItemId: entityId })
-          .where(eq(itemsInRules.sourceItemId, snapshot.forkedEntityId));
+        // Stored ids, with copy-on-write resolution off: a scope would resolve the source to its copy,
+        // repointing nothing.
+        await withCowContext(undefined, () =>
+          Items.updateCopies(tx, { sourceItemId: entityId }, { sourceItemId: snapshot.forkedEntityId }),
+        );
       }
       await deleteEntityWithCascade(tx, entityType, snapshot.forkedEntityId);
       await EntitySnapshots.deleteBySourceAndRuleset(tx, {

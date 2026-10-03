@@ -1,8 +1,9 @@
+import { withCowContext } from "@/server/database/cowContext.ts";
 import type { Db } from "@/server/database/index.ts";
 import { FeatsAptitudes, Modifiers, PowersAptitudes, Properties, Requirements } from "@/server/repositories/index.ts";
 
 import { copyEntityCustomizations } from "./copy.ts";
-import { fetchSiblingCustomizationsRaw } from "./customizations.ts";
+import { fetchSiblingCustomizations } from "./customizations.ts";
 import type { EntityType } from "./hashing.ts";
 import { mergeSiblingRequirements } from "./requirements.ts";
 
@@ -26,7 +27,7 @@ export async function mergeSiblingData(
   // loser rows, so it reads through Drizzle directly (the proxy wraps repos
   // for application-code convenience; this is infrastructure copying raw
   // rows by id).
-  const siblingCusts = await fetchSiblingCustomizationsRaw(tx, siblingIds, entityType, sourceType);
+  const siblingCusts = await fetchSiblingCustomizations(tx, siblingIds, entityType, sourceType);
 
   // 1. Merge sibling requirements as a proper recursive forest merge.
   // Build the target's forest, then for each sibling: deduplicate standalone
@@ -117,7 +118,7 @@ export async function mergeSiblingData(
     }
   }
 
-  // 4. Merge sibling aptitude links — sibling reads bypass the proxy (loser
+  // 4. Merge sibling aptitude links — sibling reads turn copy-on-write resolution off (loser
   // ids would otherwise be canonicalized to the winner). Existing reads on
   // targetEntityId go through the repo since the new id isn't in idResolveMap.
   if (entityType === "feats") {
@@ -125,9 +126,7 @@ export async function mergeSiblingData(
     const existingAptIds = new Set(existingAptitudes.map((a) => a.aptitudeId));
     const newAptitudeLinks: Array<{ featId: string; aptitudeId: string }> = [];
     for (const siblingId of siblingIds) {
-      const sibAptitudes = await tx.query.featsAptitudesInRules.findMany({
-        where: (fa, { and: a, eq: e, isNull: n }) => a(e(fa.featId, siblingId), n(fa.deletedAt)),
-      });
+      const sibAptitudes = await withCowContext(undefined, () => FeatsAptitudes.findMany(tx, { featId: siblingId }));
       for (const sa of sibAptitudes) {
         if (!existingAptIds.has(sa.aptitudeId)) {
           existingAptIds.add(sa.aptitudeId);
@@ -145,9 +144,7 @@ export async function mergeSiblingData(
 
     const newAptitudeLinks: Array<{ powerId: string; aptitudeId: string; level: number | null }> = [];
     for (const siblingId of siblingIds) {
-      const sibAptitudes = await tx.query.powersAptitudesInRules.findMany({
-        where: (pa, { and: a, eq: e, isNull: n }) => a(e(pa.powerId, siblingId), n(pa.deletedAt)),
-      });
+      const sibAptitudes = await withCowContext(undefined, () => PowersAptitudes.findMany(tx, { powerId: siblingId }));
       for (const sa of sibAptitudes) {
         if (!existingAptIds.has(sa.aptitudeId)) {
           existingAptIds.add(sa.aptitudeId);

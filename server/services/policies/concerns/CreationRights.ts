@@ -1,9 +1,7 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
-
-import { campaignsInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
+import { Players } from "@/server/repositories/index.ts";
 import type RulesetRoles from "@/server/services/policies/RulesetRoles.ts";
 
 /** Who may create a campaign or a character on a ruleset. */
@@ -28,19 +26,10 @@ export function CreationRights<B extends Constructor<RulesetRoles>>(Base: B) {
         return true;
       }
 
-      const [campaignAccess] = await tx
-        .select({ one: sql`1` })
-        .from(playersInCampaign)
-        .innerJoin(campaignsInCampaign, eq(playersInCampaign.campaignId, campaignsInCampaign.id))
-        .where(
-          and(
-            eq(playersInCampaign.userId, this.session.userId),
-            isNull(playersInCampaign.deletedAt),
-            isNull(campaignsInCampaign.deletedAt),
-            eq(campaignsInCampaign.rulesetId, this.entity.id),
-          ),
-        )
-        .limit(1);
+      const campaignAccess = await Players.existsOnRuleset(tx, {
+        userId: this.session.userId,
+        rulesetId: this.entity.id,
+      });
 
       if (!campaignAccess) {
         throw new ForbiddenError("You do not have access to this ruleset");

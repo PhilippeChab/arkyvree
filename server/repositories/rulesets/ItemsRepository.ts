@@ -87,6 +87,14 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
       orderBy: [this.orderBy(this.table.name)],
     });
   }
+
+  /** Repoints the copies of one item at another: what a revert does before the copy it reverts is deleted. */
+  async updateCopies(db: Db, values: { sourceItemId: string }, where: { sourceItemId: string }) {
+    return await db
+      .update(this.table)
+      .set({ sourceItemId: values.sourceItemId })
+      .where(eq(this.table.sourceItemId, where.sourceItemId));
+  }
 }
 
 export default ItemsRepository;
