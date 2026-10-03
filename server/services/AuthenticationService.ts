@@ -22,21 +22,6 @@ import {
   StarredRulesets,
   Users,
 } from "@/server/repositories/index.ts";
-import type {
-  DeleteAccountJson,
-  ForgotPasswordJson,
-  GoogleSignInJson,
-  ResendVerificationJson,
-  ResetPasswordJson,
-  SetPasswordJson,
-  SignInJson,
-  SignUpJson,
-  UnlinkOauthJson,
-  UpdatePasswordJson,
-  UpdateProfileJson,
-  VerifyEmailChangeJson,
-  VerifyEmailJson,
-} from "@/server/routers/authentication/validation.ts";
 import {
   linkGoogleAccountTo,
   openSession,
@@ -106,14 +91,8 @@ function timingSafeCompare(a: string, b: string): boolean {
 }
 
 const AuthenticationMethods = {
-  async signUp(params: SignUpJson) {
+  async signUp(emailAddress: string, password: string) {
     const { user, code } = await withTransaction(async (tx) => {
-      if (params.password !== params.passwordConfirmation) {
-        throw new BadRequestError("Passwords do not match");
-      }
-
-      const { emailAddress, password } = params;
-
       // Visibility.All: a deleted account keeps its email on the (unique)
       // users_email index, so re-registering with it must 409 here rather than
       // sail past an unarchived-only check and blow up on the constraint.
@@ -132,7 +111,7 @@ const AuthenticationMethods = {
     });
 
     await emailService.send({
-      to: params.emailAddress,
+      to: emailAddress,
       subject: "Verify your email",
       template: EmailTemplate.EmailVerification,
       props: { code },
@@ -141,9 +120,9 @@ const AuthenticationMethods = {
     return { user };
   },
 
-  async verifyEmail(params: VerifyEmailJson, existingSessionId?: string) {
+  async verifyEmail(emailAddress: string, code: string, existingSessionId?: string) {
     return await withTransaction(async (tx) => {
-      const user = await Users.findOne(tx, { emailAddress: params.emailAddress });
+      const user = await Users.findOne(tx, { emailAddress });
       if (!user) throw new UnauthorizedError("Invalid email or code");
 
       if (user.emailVerifiedAt) {
@@ -153,7 +132,7 @@ const AuthenticationMethods = {
       const verification = await EmailVerifications.findOne(tx, { userId: user.id });
       if (!verification) throw new UnauthorizedError("Invalid email or code");
 
-      if (!timingSafeCompare(verification.code, params.code)) {
+      if (!timingSafeCompare(verification.code, code)) {
         throw new UnauthorizedError("Invalid email or code");
       }
 
@@ -171,9 +150,9 @@ const AuthenticationMethods = {
     });
   },
 
-  async resendVerification(params: ResendVerificationJson) {
+  async resendVerification(emailAddress: string) {
     const { code } = await withTransaction(async (tx) => {
-      const user = await Users.findOne(tx, { emailAddress: params.emailAddress });
+      const user = await Users.findOne(tx, { emailAddress });
       if (!user) return { code: null };
 
       if (user.emailVerifiedAt) return { code: null };
@@ -195,7 +174,7 @@ const AuthenticationMethods = {
 
     if (code) {
       await emailService.send({
-        to: params.emailAddress,
+        to: emailAddress,
         subject: "Verify your email",
         template: EmailTemplate.EmailVerification,
         props: { code },
@@ -205,19 +184,19 @@ const AuthenticationMethods = {
     return { success: true };
   },
 
-  async signIn(params: SignInJson, existingSessionId?: string) {
-    const user = await Users.findOne(db, { emailAddress: params.emailAddress });
+  async signIn(emailAddress: string, password: string, existingSessionId?: string) {
+    const user = await Users.findOne(db, { emailAddress });
     if (!user) {
-      await verifyPassword(params.password, DUMMY_HASH);
+      await verifyPassword(password, DUMMY_HASH);
       throw new UnauthorizedError("Invalid email or password");
     }
 
     if (!user.passwordDigest) {
-      await verifyPassword(params.password, DUMMY_HASH);
+      await verifyPassword(password, DUMMY_HASH);
       throw new UnauthorizedError("Invalid email or password");
     }
 
-    const { verified, needsRehash } = await verifyPassword(params.password, user.passwordDigest);
+    const { verified, needsRehash } = await verifyPassword(password, user.passwordDigest);
     if (!verified) throw new UnauthorizedError("Invalid email or password");
 
     if (!user.emailVerifiedAt) {
@@ -226,7 +205,7 @@ const AuthenticationMethods = {
 
     return await withTransaction(async (tx) => {
       if (needsRehash) {
-        const newHash = await hashPassword(params.password);
+        const newHash = await hashPassword(password);
         await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
       }
 
@@ -299,27 +278,25 @@ const AuthenticationMethods = {
     });
   },
 
-  async updateProfile(session: Session, params: UpdateProfileJson) {
-    const { safeUser, emailChangeCode } = await withTransaction(async (tx) => {
+  async updateProfile(session: Session, username: string | undefined, emailAddress: string | undefined) {
+    const { safeUser, emailChangeCode, newEmailAddress } = await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
 
-      const isEmailChange = params.emailAddress && params.emailAddress !== user.emailAddress;
+      const newEmailAddress = emailAddress && emailAddress !== user.emailAddress ? emailAddress : undefined;
 
       // Check if email is being changed and is already taken
-      if (isEmailChange) {
-        const existingUser = await Users.findOne(tx, {
-          emailAddress: params.emailAddress!,
-        });
+      if (newEmailAddress) {
+        const existingUser = await Users.findOne(tx, { emailAddress: newEmailAddress });
         if (existingUser) {
           throw new BadRequestError("Email address already in use");
         }
       }
 
       // Check if username is being changed and is already taken
-      if (params.username && params.username !== user.username) {
+      if (username && username !== user.username) {
         const existingUser = await Users.findOne(tx, {
-          username: params.username,
+          username,
         });
         if (existingUser) {
           throw new BadRequestError("Username already in use");
@@ -327,10 +304,10 @@ const AuthenticationMethods = {
       }
 
       const updateData: Partial<InferInsertModel<typeof usersInAccount>> = {};
-      if (isEmailChange) {
-        updateData.pendingEmailAddress = params.emailAddress!;
+      if (newEmailAddress) {
+        updateData.pendingEmailAddress = newEmailAddress;
       }
-      if (params.username !== undefined) updateData.username = params.username;
+      if (username !== undefined) updateData.username = username;
 
       const rows = await Users.update(tx, updateData, { id: session.userId });
       const updatedUser = rows[0];
@@ -339,7 +316,7 @@ const AuthenticationMethods = {
       let emailChangeCode: string | null = null;
 
       // If email is changing, create verification code
-      if (isEmailChange) {
+      if (newEmailAddress) {
         await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
 
         emailChangeCode = generateVerificationCode();
@@ -354,12 +331,12 @@ const AuthenticationMethods = {
         type: "updateProfile",
       });
 
-      return { safeUser: toSafeUser(updatedUser), emailChangeCode };
+      return { safeUser: toSafeUser(updatedUser), emailChangeCode, newEmailAddress };
     });
 
-    if (emailChangeCode) {
+    if (emailChangeCode && newEmailAddress) {
       await emailService.send({
-        to: params.emailAddress!,
+        to: newEmailAddress,
         subject: "Confirm your new email",
         template: EmailTemplate.EmailChangeVerification,
         props: { code: emailChangeCode },
@@ -369,9 +346,9 @@ const AuthenticationMethods = {
     return safeUser;
   },
 
-  async forgotPassword(params: ForgotPasswordJson) {
+  async forgotPassword(emailAddress: string) {
     const { code } = await withTransaction(async (tx) => {
-      const user = await Users.findOne(tx, { emailAddress: params.emailAddress });
+      const user = await Users.findOne(tx, { emailAddress });
       if (!user) return { code: null };
 
       const existing = await PasswordResets.findOne(tx, { userId: user.id });
@@ -391,7 +368,7 @@ const AuthenticationMethods = {
 
     if (code) {
       await emailService.send({
-        to: params.emailAddress,
+        to: emailAddress,
         subject: "Reset your password",
         template: EmailTemplate.PasswordReset,
         props: { code },
@@ -401,15 +378,15 @@ const AuthenticationMethods = {
     return { success: true };
   },
 
-  async resetPassword(params: ResetPasswordJson) {
+  async resetPassword(emailAddress: string, code: string, newPassword: string) {
     return await withTransaction(async (tx) => {
-      const user = await Users.findOne(tx, { emailAddress: params.emailAddress });
+      const user = await Users.findOne(tx, { emailAddress });
       if (!user) throw new UnauthorizedError("Invalid email or code");
 
       const reset = await PasswordResets.findOne(tx, { userId: user.id });
       if (!reset) throw new UnauthorizedError("Invalid email or code");
 
-      if (!timingSafeCompare(reset.code, params.code)) {
+      if (!timingSafeCompare(reset.code, code)) {
         throw new UnauthorizedError("Invalid email or code");
       }
 
@@ -417,7 +394,7 @@ const AuthenticationMethods = {
         throw new UnauthorizedError("Reset code expired");
       }
 
-      const newHash = await hashPassword(params.newPassword);
+      const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
       await PasswordResets.archive(tx, { id: reset.id });
       await Sessions.archiveAllForUser(tx, { userId: user.id });
@@ -433,7 +410,7 @@ const AuthenticationMethods = {
     });
   },
 
-  async verifyEmailChange(session: Session, params: VerifyEmailChangeJson) {
+  async verifyEmailChange(session: Session, code: string) {
     const safeUser = await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
@@ -445,7 +422,7 @@ const AuthenticationMethods = {
       const verification = await EmailVerifications.findOne(tx, { userId: user.id });
       if (!verification) throw new UnauthorizedError("Invalid code");
 
-      if (!timingSafeCompare(verification.code, params.code)) {
+      if (!timingSafeCompare(verification.code, code)) {
         throw new UnauthorizedError("Invalid code");
       }
 
@@ -539,7 +516,7 @@ const AuthenticationMethods = {
     return { success: true };
   },
 
-  async updatePassword(session: Session, params: UpdatePasswordJson) {
+  async updatePassword(session: Session, currentPassword: string, newPassword: string) {
     return await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
@@ -549,19 +526,19 @@ const AuthenticationMethods = {
       }
 
       // Verify current password
-      const { verified } = await verifyPassword(params.currentPassword, user.passwordDigest);
+      const { verified } = await verifyPassword(currentPassword, user.passwordDigest);
       if (!verified) {
         throw new UnauthorizedError("Current password is incorrect");
       }
 
       // Ensure new password is different
-      const { verified: sameAsOld } = await verifyPassword(params.newPassword, user.passwordDigest);
+      const { verified: sameAsOld } = await verifyPassword(newPassword, user.passwordDigest);
       if (sameAsOld) {
         throw new BadRequestError("New password must be different from current password");
       }
 
       // Update password
-      const newHash = await hashPassword(params.newPassword);
+      const newHash = await hashPassword(newPassword);
       const rows = await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
       const updatedUser = rows[0];
       if (!updatedUser) throw new InternalError("Failed to update password");
@@ -584,7 +561,7 @@ const AuthenticationMethods = {
     });
   },
 
-  async deleteAccount(session: Session, params: DeleteAccountJson) {
+  async deleteAccount(session: Session, password: string | undefined) {
     const userId = session.userId;
 
     // Password check first — outside the tx so a bad password doesn't
@@ -593,10 +570,10 @@ const AuthenticationMethods = {
     if (!user) throw new InternalError("User not found");
 
     if (user.passwordDigest) {
-      if (!params.password) {
+      if (!password) {
         throw new BadRequestError("Password is required");
       }
-      const { verified } = await verifyPassword(params.password, user.passwordDigest);
+      const { verified } = await verifyPassword(password, user.passwordDigest);
       if (!verified) {
         throw new UnauthorizedError("Incorrect password");
       }
@@ -632,12 +609,12 @@ const AuthenticationMethods = {
       return { success: true };
     });
   },
-  async signInWithGoogle(params: GoogleSignInJson, existingSessionId?: string) {
-    const payload = await verifyGoogleIdToken(params.idToken);
+  async signInWithGoogle(idToken: string, existingSessionId?: string) {
+    const payload = await verifyGoogleIdToken(idToken);
     return await signInAsGoogleAccount(payload, existingSessionId);
   },
 
-  async setPassword(session: Session, params: SetPasswordJson) {
+  async setPassword(session: Session, newPassword: string) {
     return await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
@@ -646,11 +623,7 @@ const AuthenticationMethods = {
         throw new BadRequestError("Password already set. Use change password instead.");
       }
 
-      if (params.newPassword !== params.newPasswordConfirmation) {
-        throw new BadRequestError("Passwords do not match");
-      }
-
-      const newHash = await hashPassword(params.newPassword);
+      const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
 
       await Activities.create(tx, {
@@ -669,12 +642,12 @@ const AuthenticationMethods = {
     return accounts.map((a) => ({ provider: a.provider, linkedAt: a.createdAt }));
   },
 
-  async linkGoogleAccount(session: Session, params: GoogleSignInJson) {
-    const payload = await verifyGoogleIdToken(params.idToken);
+  async linkGoogleAccount(session: Session, idToken: string) {
+    const payload = await verifyGoogleIdToken(idToken);
     return await linkGoogleAccountTo(session, payload.sub);
   },
 
-  async unlinkOauthAccount(session: Session, params: UnlinkOauthJson) {
+  async unlinkOauthAccount(session: Session, provider: string) {
     return await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
@@ -685,7 +658,7 @@ const AuthenticationMethods = {
 
       const oauthAccount = await OauthAccounts.findOne(tx, {
         userId: session.userId,
-        provider: params.provider,
+        provider,
       });
       if (!oauthAccount) throw new BadRequestError("OAuth provider not linked");
 
