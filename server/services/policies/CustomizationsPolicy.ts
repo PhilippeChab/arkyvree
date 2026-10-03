@@ -74,7 +74,7 @@ export default class CustomizationsPolicy extends BasePolicy<CustomizationEntity
     return name;
   }
 
-  async canUpdate() {
+  async canDelete() {
     const recordId = "sourceId" in this.entity ? this.entity.sourceId : this.entity.entityId;
     const recordType = "sourceType" in this.entity ? this.entity.sourceType : this.entity.entityType;
     await CustomizationsPolicy.sourceExists(recordId, recordType);
@@ -82,7 +82,7 @@ export default class CustomizationsPolicy extends BasePolicy<CustomizationEntity
     return true;
   }
 
-  async canDelete() {
+  async canUpdate() {
     const recordId = "sourceId" in this.entity ? this.entity.sourceId : this.entity.entityId;
     const recordType = "sourceType" in this.entity ? this.entity.sourceType : this.entity.entityType;
     await CustomizationsPolicy.sourceExists(recordId, recordType);

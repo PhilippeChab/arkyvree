@@ -97,6 +97,11 @@ export type DetailedCharacterComprehensiveCombat = {
 
 /** What a character's combat sheet holds, which its concerns (armor class, hit points, attacks…) compute. */
 export default abstract class CombatState {
+  constructor(
+    protected readonly characterAbilities: DetailedCharacterAbilities,
+    protected readonly characterClasses: DetailedCharacterClasses,
+  ) {}
+
   protected readonly detailedCharacterCombat: DetailedCharacterComprehensiveCombat = {
     ac: {
       base: CONSTANTS.DEFAULT_AC_BASE,
@@ -150,14 +155,14 @@ export default abstract class CombatState {
   };
 
   protected shieldMaxDex = Infinity;
-  protected hasSpeedReducingArmor = false;
-  protected characterSkills: DetailedCharacterSkills | null = null;
-  protected characterEncumbrance: DetailedCharacterEncumbrance | null = null;
-  protected raceSize = "Medium";
-  protected hitDiceOverride: number | null = null;
 
-  constructor(
-    protected readonly characterAbilities: DetailedCharacterAbilities,
-    protected readonly characterClasses: DetailedCharacterClasses,
-  ) {}
+  protected hasSpeedReducingArmor = false;
+
+  protected characterSkills: DetailedCharacterSkills | null = null;
+
+  protected characterEncumbrance: DetailedCharacterEncumbrance | null = null;
+
+  protected raceSize = "Medium";
+
+  protected hitDiceOverride: number | null = null;
 }

@@ -29,6 +29,29 @@ import type { Session } from "@/shared/relations.ts";
 const CUSTOMIZATION_ENTITIES = new Set(["feats", "powers", "items", "races"]);
 
 class ActivitiesService {
+  private async resolveCustomizationUrl(entityId: string, entityType: string): Promise<string | null> {
+    if (entityType === "klass_levels") {
+      const klassLevel = await KlassLevels.findOne(db, { id: entityId });
+      if (!klassLevel) return null;
+      const klass = await Klasses.findOne(db, { id: klassLevel.klassId });
+      if (!klass) return null;
+      return `/rulesets/${klass.rulesetId}/${entityType}/${entityId}/customization`;
+    }
+
+    const repoMap: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
+      feats: (id) => Feats.findOne(db, { id }),
+      powers: (id) => Powers.findOne(db, { id }),
+      items: (id) => Items.findOne(db, { id }),
+      races: (id) => Races.findOne(db, { id }),
+    };
+
+    const findOne = repoMap[entityType];
+    if (!findOne) return null;
+    const entity = await findOne(entityId);
+    if (!entity) return null;
+    return `/rulesets/${entity.rulesetId}/${entityType}/${entityId}/customization`;
+  }
+
   private async resolveRulesSubEntity(targetTable: string, targetId: string): Promise<string | null> {
     const sectionMap: Record<string, [string, (id: string) => Promise<{ rulesetId: string } | undefined>]> = {
       feats: ["feats", (id) => Feats.findOne(db, { id })],
@@ -53,29 +76,6 @@ class ActivitiesService {
       return `/rulesets/${entity.rulesetId}/${section}/${targetId}/customization`;
     }
     return `/rulesets/${entity.rulesetId}/${section}/${targetId}`;
-  }
-
-  private async resolveCustomizationUrl(entityId: string, entityType: string): Promise<string | null> {
-    if (entityType === "klass_levels") {
-      const klassLevel = await KlassLevels.findOne(db, { id: entityId });
-      if (!klassLevel) return null;
-      const klass = await Klasses.findOne(db, { id: klassLevel.klassId });
-      if (!klass) return null;
-      return `/rulesets/${klass.rulesetId}/${entityType}/${entityId}/customization`;
-    }
-
-    const repoMap: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
-      feats: (id) => Feats.findOne(db, { id }),
-      powers: (id) => Powers.findOne(db, { id }),
-      items: (id) => Items.findOne(db, { id }),
-      races: (id) => Races.findOne(db, { id }),
-    };
-
-    const findOne = repoMap[entityType];
-    if (!findOne) return null;
-    const entity = await findOne(entityId);
-    if (!entity) return null;
-    return `/rulesets/${entity.rulesetId}/${entityType}/${entityId}/customization`;
   }
 
   async findActivities(

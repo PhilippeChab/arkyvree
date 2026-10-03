@@ -26,20 +26,6 @@ function isNotFound(err: unknown): boolean {
 }
 
 class S3StorageBackend implements StorageBackend {
-  presignPut(key: string, opts: { contentType: string; expiresIn?: number }): string {
-    return Bun.s3.presign(key, {
-      method: "PUT",
-      expiresIn: opts.expiresIn ?? 300,
-      type: opts.contentType,
-    });
-  }
-
-  publicUrl(key: string): string {
-    const base = process.env.S3_PUBLIC_URL;
-    if (!base) throw new InternalError("S3_PUBLIC_URL is not configured");
-    return `${base.replace(/\/$/, "")}/${key}`;
-  }
-
   async deleteObject(key: string): Promise<void> {
     await Bun.s3.delete(key);
   }
@@ -56,6 +42,20 @@ class S3StorageBackend implements StorageBackend {
       if (isNotFound(err)) return null;
       throw err;
     }
+  }
+
+  presignPut(key: string, opts: { contentType: string; expiresIn?: number }): string {
+    return Bun.s3.presign(key, {
+      method: "PUT",
+      expiresIn: opts.expiresIn ?? 300,
+      type: opts.contentType,
+    });
+  }
+
+  publicUrl(key: string): string {
+    const base = process.env.S3_PUBLIC_URL;
+    if (!base) throw new InternalError("S3_PUBLIC_URL is not configured");
+    return `${base.replace(/\/$/, "")}/${key}`;
   }
 }
 

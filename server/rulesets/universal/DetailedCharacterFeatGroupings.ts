@@ -24,6 +24,11 @@ function familyGroup(): FeatGroup {
 }
 
 export default class DetailedCharacterFeatGroupings {
+  constructor(
+    private readonly detailedCharacterFeats: DetailedCharacterFeats,
+    private readonly groupingProperties: readonly string[],
+  ) {}
+
   static getSegmentLabels(): Record<string, string> {
     return { possessed: "Possessed", [FAMILY_COUNT]: "Count" };
   }
@@ -64,10 +69,9 @@ export default class DetailedCharacterFeatGroupings {
 
   private readonly featGroupings: FeatGroupingsData = {};
 
-  constructor(
-    private readonly detailedCharacterFeats: DetailedCharacterFeats,
-    private readonly groupingProperties: readonly string[],
-  ) {}
+  getFeatGroupings(): FeatGroupingsData {
+    return this.featGroupings;
+  }
 
   registerFeat(feat: { name: string }, properties: Property[]): void {
     for (const prop of properties) {
@@ -93,9 +97,5 @@ export default class DetailedCharacterFeatGroupings {
       }
       this.featGroupings[normalizedFamily][variant] = featState;
     }
-  }
-
-  getFeatGroupings(): FeatGroupingsData {
-    return this.featGroupings;
   }
 }

@@ -44,26 +44,7 @@ import TargetPaths from "./TargetPaths.ts";
 import type { Dnd35ProjectedCharacterData } from "./types.ts";
 
 export default class DetailedCharacter extends AbstractDetailedCharacter {
-  // ── Dnd3.5-specific sub-systems ─────────────────────────────────
-  protected readonly detailedCharacterSkills: DetailedCharacterSkills;
-  protected readonly detailedCharacterCombat: DetailedCharacterCombat;
-  protected readonly detailedCharacterWeapons: DetailedCharacterWeapons;
-  protected readonly detailedCharacterArmors: DetailedCharacterArmors;
-  protected readonly detailedCharacterShields: DetailedCharacterShields;
-  protected readonly detailedCharacterEncumbrance: DetailedCharacterEncumbrance;
-  protected readonly detailedCharacterInventory: DetailedCharacterInventory;
-  protected readonly detailedCharacterSpellcasting: DetailedCharacterSpellcasting;
-  protected readonly detailedCharacterBonds: DetailedCharacterBonds;
-
-  // ── Dnd3.5-specific data ────────────────────────────────────────
-  protected skillPointAbilityId: string | null = null;
-  protected skillProperties: Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }> = new Map();
-  protected klassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
-  protected klassBonusSpellAbilityMap = new Map<string, string>();
-  protected klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
-
   // ── Constructor ─────────────────────────────────────────────────
-
   constructor(character: Character) {
     super(character);
 
@@ -140,10 +121,70 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterBonds = new DetailedCharacterBonds();
   }
 
-  // ── Protected hooks (abstract implementations) ──────────────────
+  // ── Dnd3.5-specific sub-systems ─────────────────────────────────
+  protected readonly detailedCharacterSkills: DetailedCharacterSkills;
 
-  protected createDataLoader(): DataLoader {
-    return new DetailedCharacterDataLoader(this.character);
+  protected readonly detailedCharacterCombat: DetailedCharacterCombat;
+
+  protected readonly detailedCharacterWeapons: DetailedCharacterWeapons;
+
+  protected readonly detailedCharacterArmors: DetailedCharacterArmors;
+
+  protected readonly detailedCharacterShields: DetailedCharacterShields;
+
+  protected readonly detailedCharacterEncumbrance: DetailedCharacterEncumbrance;
+
+  protected readonly detailedCharacterInventory: DetailedCharacterInventory;
+
+  protected readonly detailedCharacterSpellcasting: DetailedCharacterSpellcasting;
+
+  protected readonly detailedCharacterBonds: DetailedCharacterBonds;
+
+  // ── Dnd3.5-specific data ────────────────────────────────────────
+  protected skillPointAbilityId: string | null = null;
+
+  protected skillProperties: Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }> = new Map();
+
+  protected klassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
+
+  protected klassBonusSpellAbilityMap = new Map<string, string>();
+
+  protected klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
+
+  // ── Diagnostics ─────────────────────────────────────────────────
+  // Diagnostic helpers (resolveEntityName / resolveModifierSourceName) run
+  // per unmet-requirement when formatting validation errors. Build lookup
+  // maps once on first use and reuse across subsequent resolve calls.
+  // The index is cached for the lifetime of the DetailedCharacter instance;
+  // it relies on `feats` / `powers` / `inventory` / `klassLevels` / `race`
+  // / `rulesetKlasses` being immutable after `build()` returns. If any
+  // future code mutates those post-build, invalidate this field first.
+  private diagnosticsIndex?: {
+    featsById: Map<string, FeatWithPMR>;
+    powersById: Map<string, PowerWithPMR>;
+    klassLevelsById: Map<string, KlassLevelWithPMR>;
+    rulesetKlassesById: Map<string, Klass>;
+    inventoryByItemId: Map<string, InventoryEntry>;
+    modifierOwner: Map<string, { name: string; type: string }>;
+  };
+
+  protected buildHolders(): Holders {
+    return {
+      abilities: this.detailedCharacterAbilities,
+      skills: this.detailedCharacterSkills,
+      savingThrows: this.detailedCharacterSavingThrows,
+      combat: this.detailedCharacterCombat,
+      weapons: this.detailedCharacterWeapons,
+      armors: this.detailedCharacterArmors,
+      shields: this.detailedCharacterShields,
+      classes: this.detailedCharacterClasses,
+      feats: this.detailedCharacterFeats,
+      inventory: this.detailedCharacterInventory,
+      powers: this.detailedCharacterPowers,
+      identity: this.detailedCharacterIdentity,
+      aptitudes: this.detailedCharacterAptitudes,
+      bonded: this.detailedCharacterBonds,
+    };
   }
 
   protected applyLoadedData(data: Dnd35LoadedCharacterData) {
@@ -153,6 +194,75 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.klassLevelProperties = data.klassLevelProperties;
     this.klassBonusSpellAbilityMap = data.klassBonusSpellAbilityMap;
     this.klassCasterTypeMap = data.klassCasterTypeMap;
+  }
+
+  private getDiagnosticsIndex() {
+    if (this.diagnosticsIndex) return this.diagnosticsIndex;
+    const featsById = new Map<string, FeatWithPMR>();
+    for (const f of this.feats) featsById.set(f.id, f);
+    const powersById = new Map<string, PowerWithPMR>();
+    for (const p of this.powers) powersById.set(p.id, p);
+    const klassLevelsById = new Map<string, KlassLevelWithPMR>();
+    for (const kl of this.klassLevels) klassLevelsById.set(kl.id, kl);
+    const rulesetKlassesById = new Map<string, Klass>();
+    for (const k of this.rulesetKlasses) rulesetKlassesById.set(k.id, k);
+    const inventoryByItemId = new Map<string, InventoryEntry>();
+    for (const inv of this.inventory) {
+      inventoryByItemId.set(inv.item.id, inv);
+      if (inv.item.sourceItemId) inventoryByItemId.set(inv.item.sourceItemId, inv);
+    }
+
+    // Flat modifier.id → owning entity index. Built once by iterating every
+    // entity that owns modifiers so resolveModifierSourceName becomes O(1).
+    const modifierOwner = new Map<string, { name: string; type: string }>();
+    for (const feat of this.feats) {
+      for (const m of feat.modifiers) modifierOwner.set(m.id, { name: feat.name, type: "feats" });
+    }
+    for (const inv of this.inventory) {
+      for (const m of inv.item.modifiers) modifierOwner.set(m.id, { name: inv.item.name, type: "items" });
+    }
+    if (this.race?.modifiers) {
+      for (const m of this.race.modifiers) modifierOwner.set(m.id, { name: this.race.name, type: "races" });
+    }
+    for (const kl of this.klassLevels) {
+      const klass = rulesetKlassesById.get(kl.klassId);
+      const label = klass ? `${klass.name} Level ${kl.level}` : `Level ${kl.level}`;
+      for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "klass_levels" });
+    }
+    for (const power of this.powers) {
+      for (const m of power.modifiers) modifierOwner.set(m.id, { name: power.name, type: "powers" });
+    }
+
+    this.diagnosticsIndex = {
+      featsById,
+      powersById,
+      klassLevelsById,
+      rulesetKlassesById,
+      inventoryByItemId,
+      modifierOwner,
+    };
+    return this.diagnosticsIndex;
+  }
+
+  protected getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
+    const budget: ValidationIssue[] = [];
+    const { available, spent, total } = this.detailedCharacterSkills.getSkillBudget();
+    if (available > 0) {
+      budget.push({ category: "skills", message: `${available} unspent skill point(s) (${spent}/${total})` });
+    } else if (available < 0) {
+      budget.push({
+        category: "skills",
+        message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})`,
+      });
+    }
+    const characterLevel = this.detailedCharacterIdentity.getIdentity().meta.level;
+    const ranks = this.detailedCharacterSkills.getValidationIssues(characterLevel);
+    return { budget, ranks };
+  }
+
+  // ── Protected hooks (abstract implementations) ──────────────────
+  protected createDataLoader(): DataLoader {
+    return new DetailedCharacterDataLoader(this.character);
   }
 
   protected normalizeData(): void {
@@ -241,39 +351,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterSkills.updateTotals();
   }
 
-  protected buildHolders(): Holders {
-    return {
-      abilities: this.detailedCharacterAbilities,
-      skills: this.detailedCharacterSkills,
-      savingThrows: this.detailedCharacterSavingThrows,
-      combat: this.detailedCharacterCombat,
-      weapons: this.detailedCharacterWeapons,
-      armors: this.detailedCharacterArmors,
-      shields: this.detailedCharacterShields,
-      classes: this.detailedCharacterClasses,
-      feats: this.detailedCharacterFeats,
-      inventory: this.detailedCharacterInventory,
-      powers: this.detailedCharacterPowers,
-      identity: this.detailedCharacterIdentity,
-      aptitudes: this.detailedCharacterAptitudes,
-      bonded: this.detailedCharacterBonds,
-    };
-  }
-
-  protected preRequirementProcessing(): void {
-    this.detailedCharacterSpellcasting.initSpellcastingHolder(this.holders!, this.modifiers, this.klassCasterTypeMap);
-  }
-
-  protected postRequirementProcessing(): void {
-    // A weapon's proficiency is its base item's requirements (`DetailedCharacterDataLoader`), apart from its others
-    const unproficientItemIds = new Set(
-      this.inventory
-        .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency]))
-        .map((inv) => inv.item.id),
-    );
-    this.detailedCharacterCombat.applyProficiencyPenalties(unproficientItemIds);
-  }
-
   protected async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {
     this.detailedCharacterSkills.refreshAbilityModifiers();
 
@@ -301,39 +378,21 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterSpellcasting.buildSpellTags(this.feats, this.rulesetAptitudes);
   }
 
-  override validate() {
-    const baseResult = super.validate();
-    const { budget: skillBudgetIssues, ranks: skillRankIssues } = this.getSkillValidationIssues();
-
-    // Insert skill issues after aptitude issues to preserve original ordering
-    const aptitudeEndIndex = baseResult.issues.findLastIndex((i) => i.category === "aptitudes") + 1;
-    const issues = [
-      ...baseResult.issues.slice(0, aptitudeEndIndex),
-      ...skillBudgetIssues,
-      ...skillRankIssues,
-      ...baseResult.issues.slice(aptitudeEndIndex),
-    ];
-    return { valid: issues.length === 0, issues };
+  protected postRequirementProcessing(): void {
+    // A weapon's proficiency is its base item's requirements (`DetailedCharacterDataLoader`), apart from its others
+    const unproficientItemIds = new Set(
+      this.inventory
+        .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency]))
+        .map((inv) => inv.item.id),
+    );
+    this.detailedCharacterCombat.applyProficiencyPenalties(unproficientItemIds);
   }
 
-  protected getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
-    const budget: ValidationIssue[] = [];
-    const { available, spent, total } = this.detailedCharacterSkills.getSkillBudget();
-    if (available > 0) {
-      budget.push({ category: "skills", message: `${available} unspent skill point(s) (${spent}/${total})` });
-    } else if (available < 0) {
-      budget.push({
-        category: "skills",
-        message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})`,
-      });
-    }
-    const characterLevel = this.detailedCharacterIdentity.getIdentity().meta.level;
-    const ranks = this.detailedCharacterSkills.getValidationIssues(characterLevel);
-    return { budget, ranks };
+  protected preRequirementProcessing(): void {
+    this.detailedCharacterSpellcasting.initSpellcastingHolder(this.holders!, this.modifiers, this.klassCasterTypeMap);
   }
 
   // ── Public methods ──────────────────────────────────────────────
-
   async build(
     database?: Db,
     projectedData?: Dnd35ProjectedCharacterData,
@@ -342,42 +401,16 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     await super.build(database, projectedData, preloaded);
   }
 
-  evaluateWithProjectedLevel(
-    klassName: string,
-    klassLevel: KlassLevel,
-    characterLevel: CharacterLevel,
-    requirementGroups: Requirement[][],
-  ): boolean {
-    this.detailedCharacterClasses.addProjectedLevel(klassName, klassLevel, characterLevel);
-    const result = this.areRequirementsMet(requirementGroups);
-    this.detailedCharacterClasses.removeProjectedLevel(klassName);
-    return result;
-  }
-
-  // ── Getters ─────────────────────────────────────────────────────
-
-  getDetailedCharacterSkills() {
-    return this.detailedCharacterSkills;
-  }
-
-  getDetailedCharacterCombat() {
-    return this.detailedCharacterCombat;
-  }
-
-  getDetailedCharacterSavingThrows() {
-    return this.detailedCharacterSavingThrows;
-  }
-
-  getDetailedCharacterWeapons() {
-    return this.detailedCharacterWeapons;
-  }
-
   getDetailedCharacterArmors() {
     return this.detailedCharacterArmors;
   }
 
-  getDetailedCharacterShields() {
-    return this.detailedCharacterShields;
+  getDetailedCharacterBonds() {
+    return this.detailedCharacterBonds;
+  }
+
+  getDetailedCharacterCombat() {
+    return this.detailedCharacterCombat;
   }
 
   getDetailedCharacterEncumbrance() {
@@ -388,8 +421,30 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     return this.detailedCharacterInventory;
   }
 
-  getDetailedCharacterBonds() {
-    return this.detailedCharacterBonds;
+  getDetailedCharacterSavingThrows() {
+    return this.detailedCharacterSavingThrows;
+  }
+
+  getDetailedCharacterShields() {
+    return this.detailedCharacterShields;
+  }
+
+  // ── Getters ─────────────────────────────────────────────────────
+  getDetailedCharacterSkills() {
+    return this.detailedCharacterSkills;
+  }
+
+  getDetailedCharacterWeapons() {
+    return this.detailedCharacterWeapons;
+  }
+
+  getSpellTags() {
+    return this.detailedCharacterSpellcasting.getSpellTags();
+  }
+
+  getSpellcasting(): { arcane: number; divine: number } {
+    const holder = this.holders?.["spellcasting"];
+    return holder ? holder.getSpellcasting() : { arcane: 0, divine: 0 };
   }
 
   getVirtuallyPossessedPowerIds() {
@@ -436,81 +491,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       });
     }
     return results;
-  }
-
-  getSpellTags() {
-    return this.detailedCharacterSpellcasting.getSpellTags();
-  }
-
-  getSpellcasting(): { arcane: number; divine: number } {
-    const holder = this.holders?.["spellcasting"];
-    return holder ? holder.getSpellcasting() : { arcane: 0, divine: 0 };
-  }
-
-  // ── Diagnostics ─────────────────────────────────────────────────
-  // Diagnostic helpers (resolveEntityName / resolveModifierSourceName) run
-  // per unmet-requirement when formatting validation errors. Build lookup
-  // maps once on first use and reuse across subsequent resolve calls.
-  // The index is cached for the lifetime of the DetailedCharacter instance;
-  // it relies on `feats` / `powers` / `inventory` / `klassLevels` / `race`
-  // / `rulesetKlasses` being immutable after `build()` returns. If any
-  // future code mutates those post-build, invalidate this field first.
-
-  private diagnosticsIndex?: {
-    featsById: Map<string, FeatWithPMR>;
-    powersById: Map<string, PowerWithPMR>;
-    klassLevelsById: Map<string, KlassLevelWithPMR>;
-    rulesetKlassesById: Map<string, Klass>;
-    inventoryByItemId: Map<string, InventoryEntry>;
-    modifierOwner: Map<string, { name: string; type: string }>;
-  };
-
-  private getDiagnosticsIndex() {
-    if (this.diagnosticsIndex) return this.diagnosticsIndex;
-    const featsById = new Map<string, FeatWithPMR>();
-    for (const f of this.feats) featsById.set(f.id, f);
-    const powersById = new Map<string, PowerWithPMR>();
-    for (const p of this.powers) powersById.set(p.id, p);
-    const klassLevelsById = new Map<string, KlassLevelWithPMR>();
-    for (const kl of this.klassLevels) klassLevelsById.set(kl.id, kl);
-    const rulesetKlassesById = new Map<string, Klass>();
-    for (const k of this.rulesetKlasses) rulesetKlassesById.set(k.id, k);
-    const inventoryByItemId = new Map<string, InventoryEntry>();
-    for (const inv of this.inventory) {
-      inventoryByItemId.set(inv.item.id, inv);
-      if (inv.item.sourceItemId) inventoryByItemId.set(inv.item.sourceItemId, inv);
-    }
-
-    // Flat modifier.id → owning entity index. Built once by iterating every
-    // entity that owns modifiers so resolveModifierSourceName becomes O(1).
-    const modifierOwner = new Map<string, { name: string; type: string }>();
-    for (const feat of this.feats) {
-      for (const m of feat.modifiers) modifierOwner.set(m.id, { name: feat.name, type: "feats" });
-    }
-    for (const inv of this.inventory) {
-      for (const m of inv.item.modifiers) modifierOwner.set(m.id, { name: inv.item.name, type: "items" });
-    }
-    if (this.race?.modifiers) {
-      for (const m of this.race.modifiers) modifierOwner.set(m.id, { name: this.race.name, type: "races" });
-    }
-    for (const kl of this.klassLevels) {
-      const klass = rulesetKlassesById.get(kl.klassId);
-      const label = klass ? `${klass.name} Level ${kl.level}` : `Level ${kl.level}`;
-      for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "klass_levels" });
-    }
-    for (const power of this.powers) {
-      for (const m of power.modifiers) modifierOwner.set(m.id, { name: power.name, type: "powers" });
-    }
-
-    this.diagnosticsIndex = {
-      featsById,
-      powersById,
-      klassLevelsById,
-      rulesetKlassesById,
-      inventoryByItemId,
-      modifierOwner,
-    };
-    return this.diagnosticsIndex;
   }
 
   resolveEntityName(entityId: string, entityType: string): string | undefined {
@@ -562,5 +542,32 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     const name = this.resolveEntityName(modifier.sourceId, modifier.sourceType);
     if (name) return { name, type: modifier.sourceType };
     return this.getDiagnosticsIndex().modifierOwner.get(modifier.id);
+  }
+
+  override validate() {
+    const baseResult = super.validate();
+    const { budget: skillBudgetIssues, ranks: skillRankIssues } = this.getSkillValidationIssues();
+
+    // Insert skill issues after aptitude issues to preserve original ordering
+    const aptitudeEndIndex = baseResult.issues.findLastIndex((i) => i.category === "aptitudes") + 1;
+    const issues = [
+      ...baseResult.issues.slice(0, aptitudeEndIndex),
+      ...skillBudgetIssues,
+      ...skillRankIssues,
+      ...baseResult.issues.slice(aptitudeEndIndex),
+    ];
+    return { valid: issues.length === 0, issues };
+  }
+
+  evaluateWithProjectedLevel(
+    klassName: string,
+    klassLevel: KlassLevel,
+    characterLevel: CharacterLevel,
+    requirementGroups: Requirement[][],
+  ): boolean {
+    this.detailedCharacterClasses.addProjectedLevel(klassName, klassLevel, characterLevel);
+    const result = this.areRequirementsMet(requirementGroups);
+    this.detailedCharacterClasses.removeProjectedLevel(klassName);
+    return result;
   }
 }

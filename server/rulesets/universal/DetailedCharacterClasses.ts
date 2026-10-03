@@ -206,12 +206,12 @@ export default class DetailedCharacterClasses {
     }
   }
 
-  getClasses() {
-    return this.detailedCharacterClasses;
-  }
-
   getCharacterClasses() {
     return Object.fromEntries(Object.entries(this.detailedCharacterClasses).filter(([, klass]) => klass.level > 0));
+  }
+
+  getClasses() {
+    return this.detailedCharacterClasses;
   }
 
   addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: CharacterLevel): void {

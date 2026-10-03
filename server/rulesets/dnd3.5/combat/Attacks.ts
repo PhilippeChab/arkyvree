@@ -69,6 +69,81 @@ function adjustDamageForSize(baseDamage: string, size: string): string {
 /** A character's attacks: its base attack bonus, grapple, and each weapon's to-hit and damage. */
 export function Attacks<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithAttacks extends Base {
+    protected initializeBaseAttackBonus(
+      classes: ReturnType<DetailedCharacterClasses["getClasses"]>,
+      klassLevelProperties: Map<string, { bab: number; skills: number }>,
+    ): void {
+      const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
+        const lastLevel = klass.levels.at(-1);
+        if (!lastLevel) return acc;
+        return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
+      }, 0);
+
+      this.detailedCharacterCombat.bab = baseAttackBonusFromClasses;
+    }
+
+    protected updateGrappleTotal() {
+      const g = this.detailedCharacterCombat.grapple;
+      g.bab = this.detailedCharacterCombat.bab;
+      g.strength = this.characterAbilities.getAbilityModifier("Strength");
+      g.size = SIZE_GRAPPLE_MOD[this.raceSize] ?? 0;
+      g.total = g.bab + g.strength + g.size + g.misc;
+    }
+
+    protected updateWeaponsTotal() {
+      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
+        for (const slotKey of WEAPON_SET_SLOTS) {
+          const weapon = weaponSet[slotKey];
+          if (!weapon) continue;
+
+          if (weapon.damage.strmultiplier !== null) {
+            const strMod = this.characterAbilities.getAbilityModifier("Strength");
+            weapon.damage.strength = Math.floor(strMod * weapon.damage.strmultiplier);
+          }
+
+          weapon.tohit.size = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
+          const tohitBonuses = weapon.tohit.strength + weapon.tohit.magic + weapon.tohit.misc + weapon.tohit.size;
+          weapon.tohit.total = iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + tohitBonuses);
+
+          weapon.damage.total = formatDamageTotal(weapon);
+        }
+      }
+    }
+
+    /** Costs each weapon the character isn't proficient with the non-proficiency penalty: 4 to hit, nothing else. */
+    applyProficiencyPenalties(unproficientItemIds: Set<string>) {
+      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
+        for (const slotKey of WEAPON_SET_SLOTS) {
+          const weapon = weaponSet[slotKey];
+          if (!weapon?.itemId || !unproficientItemIds.has(weapon.itemId)) continue;
+
+          weapon.proficient = false;
+          weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
+        }
+      }
+
+      this.updateWeaponsTotal();
+    }
+
+    applyWeaponFinesse(characterFeats: DetailedCharacterFeats): void {
+      const hasFinesse = characterFeats.getFeat("Weapon Finesse")?.possessed ?? false;
+      if (!hasFinesse) return;
+
+      const dexMod = this.characterAbilities.getAbilityModifier("Dexterity");
+
+      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
+        for (const slotKey of WEAPON_SET_SLOTS) {
+          const weapon = weaponSet[slotKey];
+          if (!weapon || !weapon.finessable) continue;
+          if (dexMod > weapon.tohit.strength) {
+            weapon.tohit.strength = dexMod;
+          }
+        }
+      }
+
+      this.updateWeaponsTotal();
+    }
+
     addWeapon(
       setIndex: number,
       slot: "Main Hand" | "Off Hand" | "Two Handed",
@@ -215,61 +290,6 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       }
     }
 
-    protected initializeBaseAttackBonus(
-      classes: ReturnType<DetailedCharacterClasses["getClasses"]>,
-      klassLevelProperties: Map<string, { bab: number; skills: number }>,
-    ): void {
-      const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
-        const lastLevel = klass.levels.at(-1);
-        if (!lastLevel) return acc;
-        return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
-      }, 0);
-
-      this.detailedCharacterCombat.bab = baseAttackBonusFromClasses;
-    }
-
-    protected updateGrappleTotal() {
-      const g = this.detailedCharacterCombat.grapple;
-      g.bab = this.detailedCharacterCombat.bab;
-      g.strength = this.characterAbilities.getAbilityModifier("Strength");
-      g.size = SIZE_GRAPPLE_MOD[this.raceSize] ?? 0;
-      g.total = g.bab + g.strength + g.size + g.misc;
-    }
-
-    /** Costs each weapon the character isn't proficient with the non-proficiency penalty: 4 to hit, nothing else. */
-    applyProficiencyPenalties(unproficientItemIds: Set<string>) {
-      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
-        for (const slotKey of WEAPON_SET_SLOTS) {
-          const weapon = weaponSet[slotKey];
-          if (!weapon?.itemId || !unproficientItemIds.has(weapon.itemId)) continue;
-
-          weapon.proficient = false;
-          weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
-        }
-      }
-
-      this.updateWeaponsTotal();
-    }
-
-    applyWeaponFinesse(characterFeats: DetailedCharacterFeats): void {
-      const hasFinesse = characterFeats.getFeat("Weapon Finesse")?.possessed ?? false;
-      if (!hasFinesse) return;
-
-      const dexMod = this.characterAbilities.getAbilityModifier("Dexterity");
-
-      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
-        for (const slotKey of WEAPON_SET_SLOTS) {
-          const weapon = weaponSet[slotKey];
-          if (!weapon || !weapon.finessable) continue;
-          if (dexMod > weapon.tohit.strength) {
-            weapon.tohit.strength = dexMod;
-          }
-        }
-      }
-
-      this.updateWeaponsTotal();
-    }
-
     adjustWeaponDamageForSize() {
       for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
         for (const slotKey of WEAPON_SET_SLOTS) {
@@ -277,26 +297,6 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           if (!weapon) continue;
 
           weapon.damage.base = adjustDamageForSize(weapon.damage.base, this.raceSize);
-          weapon.damage.total = formatDamageTotal(weapon);
-        }
-      }
-    }
-
-    protected updateWeaponsTotal() {
-      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
-        for (const slotKey of WEAPON_SET_SLOTS) {
-          const weapon = weaponSet[slotKey];
-          if (!weapon) continue;
-
-          if (weapon.damage.strmultiplier !== null) {
-            const strMod = this.characterAbilities.getAbilityModifier("Strength");
-            weapon.damage.strength = Math.floor(strMod * weapon.damage.strmultiplier);
-          }
-
-          weapon.tohit.size = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
-          const tohitBonuses = weapon.tohit.strength + weapon.tohit.magic + weapon.tohit.misc + weapon.tohit.size;
-          weapon.tohit.total = iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + tohitBonuses);
-
           weapon.damage.total = formatDamageTotal(weapon);
         }
       }

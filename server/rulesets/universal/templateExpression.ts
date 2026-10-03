@@ -34,8 +34,9 @@ type Token =
   | { type: "PUNC"; value: "(" | ")" | "," | "+" | "-" | "*" | "/" };
 
 class Tokenizer {
-  private pos = 0;
   constructor(private readonly src: string) {}
+
+  private pos = 0;
 
   tokenize(): Token[] {
     const tokens: Token[] = [];
@@ -95,19 +96,9 @@ type AstNode =
   | { type: "unary"; op: "-"; arg: AstNode };
 
 class Parser {
-  private pos = 0;
   constructor(private readonly tokens: Token[]) {}
 
-  parse(): AstNode {
-    const node = this.parseExpr();
-    if (this.pos !== this.tokens.length) throw new Error(`Unexpected trailing tokens at ${this.pos}`);
-    return node;
-  }
-
-  // Pratt-style precedence: + - lowest, * / next, unary - tightest before primary
-  private parseExpr(): AstNode {
-    return this.parseAddSub();
-  }
+  private pos = 0;
 
   private parseAddSub(): AstNode {
     let left = this.parseMulDiv();
@@ -119,6 +110,11 @@ class Parser {
     return left;
   }
 
+  // Pratt-style precedence: + - lowest, * / next, unary - tightest before primary
+  private parseExpr(): AstNode {
+    return this.parseAddSub();
+  }
+
   private parseMulDiv(): AstNode {
     let left = this.parseUnary();
     while (this.peekPunc("*") || this.peekPunc("/")) {
@@ -127,14 +123,6 @@ class Parser {
       left = { type: "binop", op, left, right };
     }
     return left;
-  }
-
-  private parseUnary(): AstNode {
-    if (this.peekPunc("-")) {
-      this.pos++;
-      return { type: "unary", op: "-", arg: this.parseUnary() };
-    }
-    return this.parsePrimary();
   }
 
   private parsePrimary(): AstNode {
@@ -178,9 +166,23 @@ class Parser {
     throw new Error(`Unexpected token: ${JSON.stringify(tok)}`);
   }
 
+  private parseUnary(): AstNode {
+    if (this.peekPunc("-")) {
+      this.pos++;
+      return { type: "unary", op: "-", arg: this.parseUnary() };
+    }
+    return this.parsePrimary();
+  }
+
   private peekPunc(c: string): boolean {
     const t = this.tokens[this.pos];
     return !!t && t.type === "PUNC" && t.value === c;
+  }
+
+  parse(): AstNode {
+    const node = this.parseExpr();
+    if (this.pos !== this.tokens.length) throw new Error(`Unexpected trailing tokens at ${this.pos}`);
+    return node;
   }
 }
 

@@ -71,8 +71,9 @@ export default class DetailedCharacterBonds {
     return acc;
   }, {} as DetailedCharacterComprehensiveBonds);
 
-  getBonds(): DetailedCharacterComprehensiveBonds {
-    return this.bonds;
+  /** Effective level for a given bonded slot. */
+  getBondedLevel(slug: BondedKind): number {
+    return this.bonds[slug]?.level ?? 0;
   }
 
   /** Resolved race name for a given bonded slot, or null if no race is set. */
@@ -81,8 +82,7 @@ export default class DetailedCharacterBonds {
     return value && value.length > 0 ? value : null;
   }
 
-  /** Effective level for a given bonded slot. */
-  getBondedLevel(slug: BondedKind): number {
-    return this.bonds[slug]?.level ?? 0;
+  getBonds(): DetailedCharacterComprehensiveBonds {
+    return this.bonds;
   }
 }

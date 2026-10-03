@@ -3,16 +3,14 @@ import { Sentry } from "@/server/sentry.ts";
 type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
 
 class BaseError extends Error {
-  code!: Code;
-
   static fromError(error: Error) {
     return new InternalError(error.message, { cause: error.cause });
   }
+
+  code!: Code;
 }
 
 export class BadRequestError extends BaseError {
-  issues?: ErrorJson["issues"];
-
   constructor(message = "Bad Request", options?: ErrorOptions & { issues?: ErrorJson["issues"] }) {
     super(message, options);
     this.name = "BadRequestError";
@@ -20,6 +18,8 @@ export class BadRequestError extends BaseError {
     this.code = 400;
     this.issues = options?.issues;
   }
+
+  issues?: ErrorJson["issues"];
 }
 
 export class UnauthorizedError extends BaseError {

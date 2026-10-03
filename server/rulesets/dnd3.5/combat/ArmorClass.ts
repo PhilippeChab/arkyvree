@@ -15,12 +15,36 @@ import { type Property } from "@/shared/relations.ts";
 /** A character's armor class: its armor and shields, and the Dexterity bonus they leave it. */
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
-    setArmorsData(armors: ArmorsData): void {
-      this.detailedCharacterCombat.armors = armors;
+    protected initializeArmorClass(dexterityModifier: number): void {
+      this.detailedCharacterCombat.ac.dexterity = dexterityModifier;
+      this.updateArmorClassTotal();
     }
 
-    setShieldsData(shields: ShieldsData): void {
-      this.detailedCharacterCombat.shields = shields;
+    protected updateArmorClassTotal() {
+      const ac = this.detailedCharacterCombat.ac;
+      ac.size = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
+      ac.total = ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.size + ac.misc;
+      ac.touch = ac.total - ac.armor - ac.shield - ac.natural;
+      ac.flatfooted = ac.total - Math.max(0, ac.dexterity);
+    }
+
+    protected recalculateDexterityAc(): void {
+      const baseDexMod = this.characterAbilities.getAbilityModifier("Dexterity");
+
+      // Find the minimum maxdex across all unique armors
+      const uniqueArmors = new Set(Object.values(this.detailedCharacterCombat.armors));
+      let minMaxDex = Infinity;
+      for (const armor of uniqueArmors) {
+        minMaxDex = Math.min(minMaxDex, armor.maxdex);
+      }
+
+      // Also consider shield dex cap
+      minMaxDex = Math.min(minMaxDex, this.shieldMaxDex);
+
+      // Also consider encumbrance dex cap
+      minMaxDex = Math.min(minMaxDex, this.detailedCharacterCombat.encumbrance.maxdex);
+
+      this.detailedCharacterCombat.ac.dexterity = minMaxDex === Infinity ? baseDexMod : Math.min(baseDexMod, minMaxDex);
     }
 
     addArmor(properties: Property[]) {
@@ -62,36 +86,12 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
       this.updateArmorClassTotal();
     }
 
-    protected initializeArmorClass(dexterityModifier: number): void {
-      this.detailedCharacterCombat.ac.dexterity = dexterityModifier;
-      this.updateArmorClassTotal();
+    setArmorsData(armors: ArmorsData): void {
+      this.detailedCharacterCombat.armors = armors;
     }
 
-    protected recalculateDexterityAc(): void {
-      const baseDexMod = this.characterAbilities.getAbilityModifier("Dexterity");
-
-      // Find the minimum maxdex across all unique armors
-      const uniqueArmors = new Set(Object.values(this.detailedCharacterCombat.armors));
-      let minMaxDex = Infinity;
-      for (const armor of uniqueArmors) {
-        minMaxDex = Math.min(minMaxDex, armor.maxdex);
-      }
-
-      // Also consider shield dex cap
-      minMaxDex = Math.min(minMaxDex, this.shieldMaxDex);
-
-      // Also consider encumbrance dex cap
-      minMaxDex = Math.min(minMaxDex, this.detailedCharacterCombat.encumbrance.maxdex);
-
-      this.detailedCharacterCombat.ac.dexterity = minMaxDex === Infinity ? baseDexMod : Math.min(baseDexMod, minMaxDex);
-    }
-
-    protected updateArmorClassTotal() {
-      const ac = this.detailedCharacterCombat.ac;
-      ac.size = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
-      ac.total = ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.size + ac.misc;
-      ac.touch = ac.total - ac.armor - ac.shield - ac.natural;
-      ac.flatfooted = ac.total - Math.max(0, ac.dexterity);
+    setShieldsData(shields: ShieldsData): void {
+      this.detailedCharacterCombat.shields = shields;
     }
   }
   return WithArmorClass;

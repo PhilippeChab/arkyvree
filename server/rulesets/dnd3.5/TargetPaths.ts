@@ -130,6 +130,205 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPathsTraverser {
+  private traversePath(
+    holder: Holder,
+    elements: string[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    currentValue: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    parentObject: any,
+    lastKey: string,
+    maxDepth: number = 0,
+    pathParts: string[] = [],
+  ): TraversePathResult[] {
+    if (maxDepth > 10) {
+      return [
+        {
+          holder,
+          object: null,
+          data: null,
+          key: lastKey,
+          resolvedPath: null,
+          error: `Max depth reached`,
+        },
+      ];
+    }
+
+    maxDepth++;
+    const [next, ...rest] = elements;
+
+    if (next === "*" || next.endsWith("*")) {
+      const prefix = next === "*" ? "" : stripSeparators(next.slice(0, -1));
+      const entries = Object.entries(currentValue);
+      const results: TraversePathResult[] = [];
+      for (const [key, value] of entries) {
+        // Skip null values and non-object primitives
+        if (value === null || typeof value !== "object") {
+          continue;
+        }
+        const formattedKey = stripSeparators(key);
+        if (formattedKey && (!prefix || formattedKey.startsWith(prefix))) {
+          if (rest.length === 0) {
+            return [
+              {
+                holder,
+                object: null,
+                data: null,
+                key: lastKey,
+                resolvedPath: null,
+                error: `Wildcard modifier not supported as last element`,
+              },
+            ];
+          } else {
+            // If there are more elements, recursively process them.
+            // If the matched value is a group (nested object without the next path element),
+            // expand into its children with a wildcard so each child is tested.
+            const nextElement = stripSeparators(rest[0]);
+            if (nextElement && !(nextElement in value)) {
+              // Value doesn't have the next path element directly — treat it as a group
+              // and recurse with a wildcard into its children
+              results.push(
+                ...this.traversePath(holder, ["*", ...rest], value, currentValue, key, maxDepth, [
+                  ...pathParts,
+                  formattedKey,
+                ]),
+              );
+            } else {
+              results.push(
+                ...this.traversePath(holder, rest, value, currentValue, key, maxDepth, [...pathParts, formattedKey]),
+              );
+            }
+          }
+        }
+      }
+
+      return results;
+    }
+
+    const formattedKey = stripSeparators(next);
+    // Only a skill's name also reaches its subtypes, the skills its name starts ("craft" → "craftarmorsmithing").
+    // Anywhere else, a name another starts is another entry: a feat's ("dodge" isn't "dodgebonusswashbuckler",
+    // "light" isn't "lightningreflexes"), checked by its family's group if it has one (`feats.weaponfocus.*`)
+    const reachesSubtypes = rest.length > 0 && pathParts[0] === "skills";
+    if (formattedKey && formattedKey in currentValue) {
+      if (reachesSubtypes) {
+        const subtypeMatches = Object.entries(currentValue).filter(
+          ([key, value]) =>
+            value !== null &&
+            typeof value === "object" &&
+            stripSeparators(key).startsWith(formattedKey) &&
+            stripSeparators(key) !== formattedKey,
+        );
+        if (subtypeMatches.length > 0) {
+          const results: TraversePathResult[] = [];
+          // Include exact match
+          results.push(
+            ...this.traversePath(
+              holder,
+              rest,
+              currentValue[formattedKey] as Record<string, unknown>,
+              currentValue,
+              formattedKey,
+              maxDepth,
+              [...pathParts, formattedKey],
+            ),
+          );
+          // Include subtype matches
+          for (const [key, value] of subtypeMatches) {
+            const subtypeKey = stripSeparators(key);
+            results.push(
+              ...this.traversePath(holder, rest, value as Record<string, unknown>, currentValue, subtypeKey, maxDepth, [
+                ...pathParts,
+                subtypeKey,
+              ]),
+            );
+          }
+          return results;
+        }
+      }
+      parentObject = currentValue;
+      lastKey = formattedKey;
+      currentValue = parentObject[formattedKey];
+      pathParts = [...pathParts, formattedKey];
+      elements = rest;
+    } else if (formattedKey && reachesSubtypes) {
+      // A skill not found may name only its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…):
+      // expand to all of them like an implicit wildcard
+      const prefixMatches = Object.entries(currentValue).filter(
+        ([key, value]) =>
+          value !== null &&
+          typeof value === "object" &&
+          stripSeparators(key).startsWith(formattedKey) &&
+          stripSeparators(key) !== formattedKey,
+      );
+      if (prefixMatches.length > 0) {
+        const results: TraversePathResult[] = [];
+        for (const [key, value] of prefixMatches) {
+          const prefixKey = stripSeparators(key);
+          results.push(
+            ...this.traversePath(holder, rest, value as Record<string, unknown>, currentValue, prefixKey, maxDepth, [
+              ...pathParts,
+              prefixKey,
+            ]),
+          );
+        }
+        return results;
+      }
+      return [
+        {
+          holder,
+          object: null,
+          data: null,
+          key: formattedKey,
+          resolvedPath: null,
+          error: `Element not found: ${next}`,
+        },
+      ];
+    } else {
+      return [
+        {
+          holder,
+          object: null,
+          data: null,
+          key: formattedKey,
+          resolvedPath: null,
+          error: `Element not found: ${next}`,
+        },
+      ];
+    }
+
+    if (elements.length !== 0) {
+      return this.traversePath(holder, elements, currentValue, parentObject, lastKey, maxDepth, pathParts);
+    }
+
+    return [
+      {
+        holder,
+        object: parentObject,
+        data: currentValue,
+        key: lastKey,
+        resolvedPath: pathParts.join("."),
+        error: null,
+      },
+    ];
+  }
+
+  getCategories(): string[] {
+    return [...DND35_CATEGORIES];
+  }
+
+  getCategoryDescriptions(): Record<string, string> {
+    return { ...CATEGORY_DESCRIPTIONS };
+  }
+
+  getGroupDescriptionTemplates(): Record<string, string> {
+    return { ...GROUP_DESCRIPTION_TEMPLATES };
+  }
+
+  getPathDescriptions(): Record<string, string> {
+    return { ...PATH_DESCRIPTIONS };
+  }
+
   async getTargetPathsAndLabels(
     rulesetData: CachedRulesetData,
     kind: "modifier" | "requirement",
@@ -336,22 +535,6 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     }
 
     return { paths, segmentLabels };
-  }
-
-  getCategories(): string[] {
-    return [...DND35_CATEGORIES];
-  }
-
-  getCategoryDescriptions(): Record<string, string> {
-    return { ...CATEGORY_DESCRIPTIONS };
-  }
-
-  getPathDescriptions(): Record<string, string> {
-    return { ...PATH_DESCRIPTIONS };
-  }
-
-  getGroupDescriptionTemplates(): Record<string, string> {
-    return { ...GROUP_DESCRIPTION_TEMPLATES };
   }
 
   traversePathInit(target: string, holders: Holders, context?: { sourceId?: string }): TraversePathResult[] {
@@ -573,188 +756,5 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
         },
       ];
     }
-  }
-
-  private traversePath(
-    holder: Holder,
-    elements: string[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    currentValue: any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    parentObject: any,
-    lastKey: string,
-    maxDepth: number = 0,
-    pathParts: string[] = [],
-  ): TraversePathResult[] {
-    if (maxDepth > 10) {
-      return [
-        {
-          holder,
-          object: null,
-          data: null,
-          key: lastKey,
-          resolvedPath: null,
-          error: `Max depth reached`,
-        },
-      ];
-    }
-
-    maxDepth++;
-    const [next, ...rest] = elements;
-
-    if (next === "*" || next.endsWith("*")) {
-      const prefix = next === "*" ? "" : stripSeparators(next.slice(0, -1));
-      const entries = Object.entries(currentValue);
-      const results: TraversePathResult[] = [];
-      for (const [key, value] of entries) {
-        // Skip null values and non-object primitives
-        if (value === null || typeof value !== "object") {
-          continue;
-        }
-        const formattedKey = stripSeparators(key);
-        if (formattedKey && (!prefix || formattedKey.startsWith(prefix))) {
-          if (rest.length === 0) {
-            return [
-              {
-                holder,
-                object: null,
-                data: null,
-                key: lastKey,
-                resolvedPath: null,
-                error: `Wildcard modifier not supported as last element`,
-              },
-            ];
-          } else {
-            // If there are more elements, recursively process them.
-            // If the matched value is a group (nested object without the next path element),
-            // expand into its children with a wildcard so each child is tested.
-            const nextElement = stripSeparators(rest[0]);
-            if (nextElement && !(nextElement in value)) {
-              // Value doesn't have the next path element directly — treat it as a group
-              // and recurse with a wildcard into its children
-              results.push(
-                ...this.traversePath(holder, ["*", ...rest], value, currentValue, key, maxDepth, [
-                  ...pathParts,
-                  formattedKey,
-                ]),
-              );
-            } else {
-              results.push(
-                ...this.traversePath(holder, rest, value, currentValue, key, maxDepth, [...pathParts, formattedKey]),
-              );
-            }
-          }
-        }
-      }
-
-      return results;
-    }
-
-    const formattedKey = stripSeparators(next);
-    // Only a skill's name also reaches its subtypes, the skills its name starts ("craft" → "craftarmorsmithing").
-    // Anywhere else, a name another starts is another entry: a feat's ("dodge" isn't "dodgebonusswashbuckler",
-    // "light" isn't "lightningreflexes"), checked by its family's group if it has one (`feats.weaponfocus.*`)
-    const reachesSubtypes = rest.length > 0 && pathParts[0] === "skills";
-    if (formattedKey && formattedKey in currentValue) {
-      if (reachesSubtypes) {
-        const subtypeMatches = Object.entries(currentValue).filter(
-          ([key, value]) =>
-            value !== null &&
-            typeof value === "object" &&
-            stripSeparators(key).startsWith(formattedKey) &&
-            stripSeparators(key) !== formattedKey,
-        );
-        if (subtypeMatches.length > 0) {
-          const results: TraversePathResult[] = [];
-          // Include exact match
-          results.push(
-            ...this.traversePath(
-              holder,
-              rest,
-              currentValue[formattedKey] as Record<string, unknown>,
-              currentValue,
-              formattedKey,
-              maxDepth,
-              [...pathParts, formattedKey],
-            ),
-          );
-          // Include subtype matches
-          for (const [key, value] of subtypeMatches) {
-            const subtypeKey = stripSeparators(key);
-            results.push(
-              ...this.traversePath(holder, rest, value as Record<string, unknown>, currentValue, subtypeKey, maxDepth, [
-                ...pathParts,
-                subtypeKey,
-              ]),
-            );
-          }
-          return results;
-        }
-      }
-      parentObject = currentValue;
-      lastKey = formattedKey;
-      currentValue = parentObject[formattedKey];
-      pathParts = [...pathParts, formattedKey];
-      elements = rest;
-    } else if (formattedKey && reachesSubtypes) {
-      // A skill not found may name only its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…):
-      // expand to all of them like an implicit wildcard
-      const prefixMatches = Object.entries(currentValue).filter(
-        ([key, value]) =>
-          value !== null &&
-          typeof value === "object" &&
-          stripSeparators(key).startsWith(formattedKey) &&
-          stripSeparators(key) !== formattedKey,
-      );
-      if (prefixMatches.length > 0) {
-        const results: TraversePathResult[] = [];
-        for (const [key, value] of prefixMatches) {
-          const prefixKey = stripSeparators(key);
-          results.push(
-            ...this.traversePath(holder, rest, value as Record<string, unknown>, currentValue, prefixKey, maxDepth, [
-              ...pathParts,
-              prefixKey,
-            ]),
-          );
-        }
-        return results;
-      }
-      return [
-        {
-          holder,
-          object: null,
-          data: null,
-          key: formattedKey,
-          resolvedPath: null,
-          error: `Element not found: ${next}`,
-        },
-      ];
-    } else {
-      return [
-        {
-          holder,
-          object: null,
-          data: null,
-          key: formattedKey,
-          resolvedPath: null,
-          error: `Element not found: ${next}`,
-        },
-      ];
-    }
-
-    if (elements.length !== 0) {
-      return this.traversePath(holder, elements, currentValue, parentObject, lastKey, maxDepth, pathParts);
-    }
-
-    return [
-      {
-        holder,
-        object: parentObject,
-        data: currentValue,
-        key: lastKey,
-        resolvedPath: pathParts.join("."),
-        error: null,
-      },
-    ];
   }
 }

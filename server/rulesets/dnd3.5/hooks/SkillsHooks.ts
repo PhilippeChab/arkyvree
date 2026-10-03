@@ -36,6 +36,23 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     return records;
   }
 
+  async deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void> {
+    const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
+    if (!feat) return;
+    if (await entityHasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
+      throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
+    }
+
+    // Deleting the local COW copy leaves a tombstone snapshot: the obsolete
+    // inherited feat disappears from this fork while its ancestor stays intact.
+    const targetId = await cowEntityForCustomization(tx, rulesetId, "feats", feat.id);
+    // Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link, and
+    // the database deletes the feat's customizations.
+    // Soft-archive would block a future generateSkillFeat with the same name
+    // (the unique index on feats doesn't filter deleted_at).
+    await Feats.delete(tx, { id: targetId });
+  }
+
   enrichWithProperties<T extends { id: string }>(
     skills: T[],
     properties: { entityId: string; type: string; value: string }[],
@@ -64,23 +81,6 @@ export class Dnd35SkillsHooks implements SkillsHooks {
         usableWithoutTraining: props?.usableWithoutTraining ?? false,
       };
     });
-  }
-
-  async syncProperties(
-    tx: Db,
-    skillId: string,
-    body: { impactedByWeight: boolean; usableWithoutTraining: boolean },
-  ): Promise<void> {
-    await Properties.deleteMany(tx, {
-      entityIds: [skillId],
-      entityType: "skills",
-      types: [SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING],
-    });
-
-    const records = this.buildProperties(skillId, body);
-    if (records.length > 0) {
-      await Properties.createMany(tx, records);
-    }
   }
 
   async generateSkillFeat(tx: Db, rulesetId: string, sourceChain: string[], skillName: string): Promise<void> {
@@ -115,20 +115,20 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     ]);
   }
 
-  async deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void> {
-    const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
-    if (!feat) return;
-    if (await entityHasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
-      throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
-    }
+  async syncProperties(
+    tx: Db,
+    skillId: string,
+    body: { impactedByWeight: boolean; usableWithoutTraining: boolean },
+  ): Promise<void> {
+    await Properties.deleteMany(tx, {
+      entityIds: [skillId],
+      entityType: "skills",
+      types: [SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING],
+    });
 
-    // Deleting the local COW copy leaves a tombstone snapshot: the obsolete
-    // inherited feat disappears from this fork while its ancestor stays intact.
-    const targetId = await cowEntityForCustomization(tx, rulesetId, "feats", feat.id);
-    // Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link, and
-    // the database deletes the feat's customizations.
-    // Soft-archive would block a future generateSkillFeat with the same name
-    // (the unique index on feats doesn't filter deleted_at).
-    await Feats.delete(tx, { id: targetId });
+    const records = this.buildProperties(skillId, body);
+    if (records.length > 0) {
+      await Properties.createMany(tx, records);
+    }
   }
 }

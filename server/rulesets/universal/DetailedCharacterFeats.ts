@@ -79,19 +79,19 @@ export default class DetailedCharacterFeats {
     }
   }
 
-  injectGroupings(groupings: Record<string, Record<string, FeatEntry>>) {
-    for (const [key, group] of Object.entries(groupings)) {
-      if (!(key in this.detailedCharacterFeats)) {
-        this.detailedCharacterFeats[key] = group;
-      }
-    }
+  getFeat(featName: string) {
+    return this.detailedCharacterFeats[stripSeparators(featName)] as FeatEntry | undefined;
   }
 
   getFeats() {
     return this.detailedCharacterFeats;
   }
 
-  getFeat(featName: string) {
-    return this.detailedCharacterFeats[stripSeparators(featName)] as FeatEntry | undefined;
+  injectGroupings(groupings: Record<string, Record<string, FeatEntry>>) {
+    for (const [key, group] of Object.entries(groupings)) {
+      if (!(key in this.detailedCharacterFeats)) {
+        this.detailedCharacterFeats[key] = group;
+      }
+    }
   }
 }

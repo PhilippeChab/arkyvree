@@ -125,14 +125,6 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
     return paths;
   }
 
-  setSkills(skills: DetailedCharacterSkills) {
-    this.characterSkills = skills;
-  }
-
-  setEncumbranceSource(encumbrance: DetailedCharacterEncumbrance) {
-    this.characterEncumbrance = encumbrance;
-  }
-
   initialize(race: Race, klassLevelProperties: Map<string, { bab: number; skills: number }>) {
     this.raceSize = race.size;
 
@@ -170,6 +162,14 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
 
   getCombat(): DetailedCharacterComprehensiveCombat {
     return this.detailedCharacterCombat;
+  }
+
+  setEncumbranceSource(encumbrance: DetailedCharacterEncumbrance) {
+    this.characterEncumbrance = encumbrance;
+  }
+
+  setSkills(skills: DetailedCharacterSkills) {
+    this.characterSkills = skills;
   }
 
   updateTotals() {

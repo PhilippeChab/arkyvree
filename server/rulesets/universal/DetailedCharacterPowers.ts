@@ -88,24 +88,6 @@ export default class DetailedCharacterPowers {
 
   private readonly detailedCharacterPowers: DetailedCharacterComprehensivePowers = {};
 
-  addPowerEntries(powers: (Power & { properties: Property[] })[]) {
-    for (const power of powers) {
-      const propertiesMap: Record<string, string> = {};
-      for (const prop of power.properties) {
-        if (prop.type in propertiesMap) {
-          propertiesMap[prop.type] += `, ${prop.value}`;
-        } else {
-          propertiesMap[prop.type] = prop.value;
-        }
-      }
-
-      this.detailedCharacterPowers[stripSeparators(power.name)] = {
-        power,
-        properties: propertiesMap,
-      };
-    }
-  }
-
   initialize(
     powers: (Power & { properties: Property[]; aptitudeId: string; powerLevel: number | null })[],
     rulesetPowers: PowerWithAptitudes[],
@@ -149,23 +131,6 @@ export default class DetailedCharacterPowers {
     }
   }
 
-  injectGroupings(groupings: Record<string, Record<string, PowerDc>>) {
-    if (Object.keys(groupings).length === 0) return;
-    const namespace: PowerGroupsNamespace = {};
-    for (const [key, group] of Object.entries(groupings)) {
-      const wrapped: PowerGroupEntry = {};
-      for (const [powerKey, dc] of Object.entries(group)) {
-        wrapped[powerKey] = { dc };
-      }
-      namespace[key] = wrapped;
-    }
-    this.detailedCharacterPowers.groups = namespace;
-  }
-
-  getPowers() {
-    return this.detailedCharacterPowers;
-  }
-
   getFlatPowers(): Record<string, PowerEntry> {
     const result: Record<string, PowerEntry> = {};
     for (const [key, value] of Object.entries(this.detailedCharacterPowers)) {
@@ -180,9 +145,31 @@ export default class DetailedCharacterPowers {
     return this.detailedCharacterPowers[stripSeparators(name)] as PowerEntry | undefined;
   }
 
+  getPowers() {
+    return this.detailedCharacterPowers;
+  }
+
   getSpellEntry(spellSlug: string, aptitudeSlug: string): { known: boolean } | undefined {
     const entry = this.detailedCharacterPowers[spellSlug] as Record<string, { known: boolean }> | undefined;
     return entry?.[aptitudeSlug];
+  }
+
+  addPowerEntries(powers: (Power & { properties: Property[] })[]) {
+    for (const power of powers) {
+      const propertiesMap: Record<string, string> = {};
+      for (const prop of power.properties) {
+        if (prop.type in propertiesMap) {
+          propertiesMap[prop.type] += `, ${prop.value}`;
+        } else {
+          propertiesMap[prop.type] = prop.value;
+        }
+      }
+
+      this.detailedCharacterPowers[stripSeparators(power.name)] = {
+        power,
+        properties: propertiesMap,
+      };
+    }
   }
 
   updateTotals(): void {
@@ -192,5 +179,18 @@ export default class DetailedCharacterPowers {
         dc.total = dc.base + dc.level + dc.ability + dc.misc;
       }
     }
+  }
+
+  injectGroupings(groupings: Record<string, Record<string, PowerDc>>) {
+    if (Object.keys(groupings).length === 0) return;
+    const namespace: PowerGroupsNamespace = {};
+    for (const [key, group] of Object.entries(groupings)) {
+      const wrapped: PowerGroupEntry = {};
+      for (const [powerKey, dc] of Object.entries(group)) {
+        wrapped[powerKey] = { dc };
+      }
+      namespace[key] = wrapped;
+    }
+    this.detailedCharacterPowers.groups = namespace;
   }
 }

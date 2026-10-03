@@ -67,6 +67,10 @@ export default class DetailedCharacterAbilities {
   // Map abilityId -> normalized ability name for level-up lookups
   private readonly abilityIdToName: Map<string, string> = new Map();
 
+  private computeModifier(total: number): number {
+    return Math.floor((total - CONSTANTS.ABILITY_MODIFIER_OFFSET) / CONSTANTS.ABILITY_MODIFIER_DIVISOR);
+  }
+
   initialize(characterAbilities: { abilityId: string; name: string; score: number }[], levels: CharacterLevel[]) {
     // Initialize abilities from the character's ability scores
     for (const { abilityId, name, score } of characterAbilities) {
@@ -137,12 +141,6 @@ export default class DetailedCharacterAbilities {
     return this.computeModifier(ability.base + ability.level);
   }
 
-  updateTotals(): void {
-    for (const ability of Object.keys(this.detailedCharacterAbilities)) {
-      this.updateTotal(ability);
-    }
-  }
-
   updateTotal(abilityName: string): void {
     const normalizedAbility = stripSeparators(abilityName);
     const ability = this.detailedCharacterAbilities[normalizedAbility];
@@ -150,7 +148,9 @@ export default class DetailedCharacterAbilities {
     ability.modifier = this.computeModifier(ability.total);
   }
 
-  private computeModifier(total: number): number {
-    return Math.floor((total - CONSTANTS.ABILITY_MODIFIER_OFFSET) / CONSTANTS.ABILITY_MODIFIER_DIVISOR);
+  updateTotals(): void {
+    for (const ability of Object.keys(this.detailedCharacterAbilities)) {
+      this.updateTotal(ability);
+    }
   }
 }

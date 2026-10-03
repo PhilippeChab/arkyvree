@@ -33,6 +33,8 @@ type WeaponGroup = Record<string, NonNullable<WeaponSet[keyof WeaponSet]>>;
 type WeaponsData = Record<string, WeaponGroup>;
 
 export default class DetailedCharacterWeapons {
+  constructor(private readonly characterCombat: DetailedCharacterCombat) {}
+
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_WEAPON_PATHS, { weapons: "Weapons", weapon: "Weapon", tohit: "To Hit" });
   }
@@ -71,7 +73,13 @@ export default class DetailedCharacterWeapons {
 
   private readonly weapons: WeaponsData = {};
 
-  constructor(private readonly characterCombat: DetailedCharacterCombat) {}
+  getWeapons(): WeaponsData {
+    return this.weapons;
+  }
+
+  updateTotals(): void {
+    this.characterCombat.updateTotals();
+  }
 
   registerWeapon(setIndex: number, slot: string, item: Item, properties: Property[] = []): void {
     const slotKey = SLOT_MAP[slot];
@@ -109,13 +117,5 @@ export default class DetailedCharacterWeapons {
       }
       this.weapons["unarmedstrike"][weaponKey] = weaponRef;
     }
-  }
-
-  getWeapons(): WeaponsData {
-    return this.weapons;
-  }
-
-  updateTotals(): void {
-    this.characterCombat.updateTotals();
   }
 }

@@ -46,6 +46,11 @@ export function isSkillSubtypeOf(name: string, names: Set<string>): boolean {
 }
 
 export default class DetailedCharacterSkills {
+  constructor(
+    private readonly characterAbilities: DetailedCharacterAbilities,
+    private readonly characterClasses: DetailedCharacterClasses,
+  ) {}
+
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_PATHS);
   }
@@ -91,34 +96,63 @@ export default class DetailedCharacterSkills {
   }
 
   private readonly skillBudget = { total: 0, available: 0, spent: 0, perlevel: 0 };
+
   private readonly innateSkillIds: Set<string> = new Set<string>();
+
   private readonly rankBySkillId: Map<string, number> = new Map<string, number>();
+
   private readonly detailedCharacterSkills: DetailedCharacterComprehensiveSkills =
     {} as DetailedCharacterComprehensiveSkills;
+
   private readonly weightAffectedSkills: Set<string> = new Set<string>();
+
   private readonly skillAbilityNames = new Map<string, string>();
+
   private characterArmors: { getArmors(): ArmorsData } | null = null;
+
   private characterShields: { getShields(): ShieldsData } | null = null;
+
   private characterEncumbrance: {
     getEncumbrance(): { checkpenalty: number };
   } | null = null;
+
   private skillPointRulesetAbilities: RulesetAbility[] = [];
+
   private skillPointAbilityId: string | null = null;
+
   private skillPointKlassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
+
   private raceSize = "Medium";
 
-  constructor(
-    private readonly characterAbilities: DetailedCharacterAbilities,
-    private readonly characterClasses: DetailedCharacterClasses,
-  ) {}
+  // ── Private methods ─────────────────────────────────────────────
+  private recalculateArmorCheckPenalty() {
+    let armorPenalty = 0;
 
-  setArmorSources(armors: { getArmors(): ArmorsData }, shields: { getShields(): ShieldsData }) {
-    this.characterArmors = armors;
-    this.characterShields = shields;
-  }
+    if (this.characterArmors) {
+      const uniqueArmors = new Set(Object.values(this.characterArmors.getArmors()));
+      for (const armor of uniqueArmors) {
+        armorPenalty += armor.checkpenalty;
+      }
+    }
 
-  setEncumbranceSource(encumbrance: { getEncumbrance(): { checkpenalty: number } }) {
-    this.characterEncumbrance = encumbrance;
+    if (this.characterShields) {
+      const uniqueShields = new Set(Object.values(this.characterShields.getShields()));
+      for (const shield of uniqueShields) {
+        armorPenalty += shield.checkpenalty;
+      }
+    }
+
+    // D&D 3.5: use the worse (more negative) of armor+shield penalty vs encumbrance penalty
+    const encumbrancePenalty = this.characterEncumbrance ? this.characterEncumbrance.getEncumbrance().checkpenalty : 0;
+    const effectivePenalty = Math.min(armorPenalty, encumbrancePenalty);
+    const weight = Math.abs(effectivePenalty);
+
+    for (const skillName of this.weightAffectedSkills) {
+      const skill = this.detailedCharacterSkills[skillName];
+      if (skill) {
+        skill.weight = weight;
+      }
+    }
   }
 
   initialize(
@@ -217,28 +251,6 @@ export default class DetailedCharacterSkills {
     }
   }
 
-  // ── Setters ─────────────────────────────────────────────────────
-
-  setSkillPointDependencies(
-    rulesetAbilities: RulesetAbility[],
-    skillPointAbilityId: string | null,
-    klassLevelProperties: Map<string, { bab: number; skills: number }>,
-  ) {
-    this.skillPointRulesetAbilities = rulesetAbilities;
-    this.skillPointAbilityId = skillPointAbilityId;
-    this.skillPointKlassLevelProperties = klassLevelProperties;
-  }
-
-  // ── Getters ─────────────────────────────────────────────────────
-
-  getSkills() {
-    return this.detailedCharacterSkills;
-  }
-
-  getSkillBudget() {
-    return this.skillBudget;
-  }
-
   /** Enriches ruleset skills with character-specific class/rank data for level-up UI. */
   getEnrichedSkills<T extends { id: string; name: string }>(
     allSkills: T[],
@@ -253,6 +265,15 @@ export default class DetailedCharacterSkills {
         currentRank: skillData?.rank || 0,
       };
     });
+  }
+
+  getSkillBudget() {
+    return this.skillBudget;
+  }
+
+  // ── Getters ─────────────────────────────────────────────────────
+  getSkills() {
+    return this.detailedCharacterSkills;
   }
 
   getValidationIssues(characterLevel: number): ValidationIssue[] {
@@ -274,32 +295,28 @@ export default class DetailedCharacterSkills {
     return issues;
   }
 
-  // ── Update methods ──────────────────────────────────────────────
+  setArmorSources(armors: { getArmors(): ArmorsData }, shields: { getShields(): ShieldsData }) {
+    this.characterArmors = armors;
+    this.characterShields = shields;
+  }
 
-  refreshAbilityModifiers() {
-    for (const [skillName, skill] of Object.entries(this.detailedCharacterSkills)) {
-      const abilityName = this.skillAbilityNames.get(skillName);
-      if (abilityName) {
-        skill.ability = this.characterAbilities.getAbilityModifier(abilityName);
-      }
-    }
-    this.updateTotals();
+  setEncumbranceSource(encumbrance: { getEncumbrance(): { checkpenalty: number } }) {
+    this.characterEncumbrance = encumbrance;
+  }
+
+  // ── Setters ─────────────────────────────────────────────────────
+  setSkillPointDependencies(
+    rulesetAbilities: RulesetAbility[],
+    skillPointAbilityId: string | null,
+    klassLevelProperties: Map<string, { bab: number; skills: number }>,
+  ) {
+    this.skillPointRulesetAbilities = rulesetAbilities;
+    this.skillPointAbilityId = skillPointAbilityId;
+    this.skillPointKlassLevelProperties = klassLevelProperties;
   }
 
   updateAvailables() {
     this.updateSkillPointTotals();
-  }
-
-  updateTotals() {
-    this.recalculateArmorCheckPenalty();
-    for (const skillName of Object.keys(this.detailedCharacterSkills)) {
-      this.updateTotal(skillName);
-    }
-  }
-
-  updateTotal(skillName: string) {
-    const skill = this.detailedCharacterSkills[skillName];
-    skill.total = skill.rank + skill.ability + skill.size + skill.misc - skill.weight;
   }
 
   updateSkillPointTotals() {
@@ -345,35 +362,26 @@ export default class DetailedCharacterSkills {
     this.skillBudget.available = total - spent;
   }
 
-  // ── Private methods ─────────────────────────────────────────────
+  updateTotal(skillName: string) {
+    const skill = this.detailedCharacterSkills[skillName];
+    skill.total = skill.rank + skill.ability + skill.size + skill.misc - skill.weight;
+  }
 
-  private recalculateArmorCheckPenalty() {
-    let armorPenalty = 0;
+  updateTotals() {
+    this.recalculateArmorCheckPenalty();
+    for (const skillName of Object.keys(this.detailedCharacterSkills)) {
+      this.updateTotal(skillName);
+    }
+  }
 
-    if (this.characterArmors) {
-      const uniqueArmors = new Set(Object.values(this.characterArmors.getArmors()));
-      for (const armor of uniqueArmors) {
-        armorPenalty += armor.checkpenalty;
+  // ── Update methods ──────────────────────────────────────────────
+  refreshAbilityModifiers() {
+    for (const [skillName, skill] of Object.entries(this.detailedCharacterSkills)) {
+      const abilityName = this.skillAbilityNames.get(skillName);
+      if (abilityName) {
+        skill.ability = this.characterAbilities.getAbilityModifier(abilityName);
       }
     }
-
-    if (this.characterShields) {
-      const uniqueShields = new Set(Object.values(this.characterShields.getShields()));
-      for (const shield of uniqueShields) {
-        armorPenalty += shield.checkpenalty;
-      }
-    }
-
-    // D&D 3.5: use the worse (more negative) of armor+shield penalty vs encumbrance penalty
-    const encumbrancePenalty = this.characterEncumbrance ? this.characterEncumbrance.getEncumbrance().checkpenalty : 0;
-    const effectivePenalty = Math.min(armorPenalty, encumbrancePenalty);
-    const weight = Math.abs(effectivePenalty);
-
-    for (const skillName of this.weightAffectedSkills) {
-      const skill = this.detailedCharacterSkills[skillName];
-      if (skill) {
-        skill.weight = weight;
-      }
-    }
+    this.updateTotals();
   }
 }

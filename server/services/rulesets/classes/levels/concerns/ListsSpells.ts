@@ -9,6 +9,40 @@ import { stripSeparators } from "@/shared/utils.ts";
 /** A class's spells: its spell list, and what a class level casts and knows. */
 export function ListsSpells<B extends Constructor>(Base: B) {
   abstract class ListingSpells extends Base {
+    async getClassLevelSpells(rulesetId: string, classId: string) {
+      return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+
+        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
+        const modifiers: Modifier[] = [];
+        for (const level of levels) {
+          const ms = rulesetData.modifiersBySource.get(level.id);
+          if (ms) modifiers.push(...ms);
+        }
+
+        return hooks.classLevels.enrichWithSpellsPerDay(levels, modifiers);
+      });
+    }
+
+    async getClassLevelSpellsKnown(rulesetId: string, classId: string) {
+      return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+
+        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
+        const modifiers: Modifier[] = [];
+        for (const level of levels) {
+          const ms = rulesetData.modifiersBySource.get(level.id);
+          if (ms) modifiers.push(...ms);
+        }
+
+        return hooks.classLevels.enrichWithSpellsKnown(levels, modifiers);
+      });
+    }
+
     async getClassSpellList(
       rulesetId: string,
       classId: string,
@@ -50,40 +84,6 @@ export function ListsSpells<B extends Constructor>(Base: B) {
           { aptitudeId: aptitude.id, level: where.level, search: where.search },
           pagination,
         );
-      });
-    }
-
-    async getClassLevelSpells(rulesetId: string, classId: string) {
-      return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-        const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
-        const modifiers: Modifier[] = [];
-        for (const level of levels) {
-          const ms = rulesetData.modifiersBySource.get(level.id);
-          if (ms) modifiers.push(...ms);
-        }
-
-        return hooks.classLevels.enrichWithSpellsPerDay(levels, modifiers);
-      });
-    }
-
-    async getClassLevelSpellsKnown(rulesetId: string, classId: string) {
-      return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-        const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-        const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
-        const modifiers: Modifier[] = [];
-        for (const level of levels) {
-          const ms = rulesetData.modifiersBySource.get(level.id);
-          if (ms) modifiers.push(...ms);
-        }
-
-        return hooks.classLevels.enrichWithSpellsKnown(levels, modifiers);
       });
     }
   }

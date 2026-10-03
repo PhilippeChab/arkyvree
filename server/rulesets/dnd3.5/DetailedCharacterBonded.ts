@@ -13,33 +13,23 @@ import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.t
 export default abstract class DetailedCharacterBonded extends Dnd35DetailedCharacter {
   protected cachedTotalHD: number | null = null;
 
-  protected override async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {
-    await super.postModifierProcessing(rulesetData);
-
-    if (this.character.parentCharacterId) {
-      await this.applyMasterDerivation(this.character.parentCharacterId, rulesetData);
-      this.detailedCharacterSkills.refreshAbilityModifiers();
-      this.detailedCharacterSavingThrows.refreshAbilityModifiers();
-    }
-
-    const raceStats = getBondedRaceStats(this.race?.name);
-    if (raceStats) {
-      if (raceStats.naturalAttacks.length > 0) {
-        this.detailedCharacterCombat.setNaturalAttacks(raceStats.naturalAttacks);
+  protected async loadMaster(
+    parentCharacterId: string,
+    rulesetData: CachedRulesetData,
+  ): Promise<Dnd35DetailedCharacter> {
+    return await memoizeRequest(`bonded-master:${parentCharacterId}`, async () => {
+      const masterRecord = await Characters.findOne(db, { id: parentCharacterId }, Visibility.All);
+      if (!masterRecord) {
+        throw new Error(`Bonded's master not found: ${parentCharacterId}`);
       }
-      this.applyRaceDefaults(raceStats, rulesetData);
-    }
-
-    if (this.cachedTotalHD !== null) {
-      this.detailedCharacterCombat.setHitDiceOverride(this.cachedTotalHD);
-    }
-    this.detailedCharacterCombat.applyWeaponFinesse(this.detailedCharacterFeats);
-    this.detailedCharacterCombat.updateTotals();
-  }
-
-  protected applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
-    this.applyGrantedFeats(raceStats.baseFeats ?? [], rulesetData);
-    this.applySkillTotals(raceStats.baseSkillTotals ?? {});
+      const composed = new Dnd35DetailedCharacter(masterRecord);
+      await composed.build(db, undefined, {
+        ruleset: this.ruleset!,
+        cowData: rulesetData.cow,
+        rulesetData,
+      });
+      return composed;
+    });
   }
 
   protected applyGrantedFeats(featNames: string[], rulesetData: CachedRulesetData): void {
@@ -63,6 +53,13 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     }
   }
 
+  protected abstract applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void>;
+
+  protected applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
+    this.applyGrantedFeats(raceStats.baseFeats ?? [], rulesetData);
+    this.applySkillTotals(raceStats.baseSkillTotals ?? {});
+  }
+
   protected applySkillTotals(totals: Record<string, number>): void {
     if (Object.keys(totals).length === 0) return;
     const skills = this.detailedCharacterSkills.getSkills();
@@ -77,29 +74,32 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     this.detailedCharacterSkills.updateTotals();
   }
 
-  protected abstract applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void>;
-
-  protected async loadMaster(
-    parentCharacterId: string,
-    rulesetData: CachedRulesetData,
-  ): Promise<Dnd35DetailedCharacter> {
-    return await memoizeRequest(`bonded-master:${parentCharacterId}`, async () => {
-      const masterRecord = await Characters.findOne(db, { id: parentCharacterId }, Visibility.All);
-      if (!masterRecord) {
-        throw new Error(`Bonded's master not found: ${parentCharacterId}`);
-      }
-      const composed = new Dnd35DetailedCharacter(masterRecord);
-      await composed.build(db, undefined, {
-        ruleset: this.ruleset!,
-        cowData: rulesetData.cow,
-        rulesetData,
-      });
-      return composed;
-    });
-  }
-
   protected override getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
     return { budget: [], ranks: [] };
+  }
+
+  protected override async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {
+    await super.postModifierProcessing(rulesetData);
+
+    if (this.character.parentCharacterId) {
+      await this.applyMasterDerivation(this.character.parentCharacterId, rulesetData);
+      this.detailedCharacterSkills.refreshAbilityModifiers();
+      this.detailedCharacterSavingThrows.refreshAbilityModifiers();
+    }
+
+    const raceStats = getBondedRaceStats(this.race?.name);
+    if (raceStats) {
+      if (raceStats.naturalAttacks.length > 0) {
+        this.detailedCharacterCombat.setNaturalAttacks(raceStats.naturalAttacks);
+      }
+      this.applyRaceDefaults(raceStats, rulesetData);
+    }
+
+    if (this.cachedTotalHD !== null) {
+      this.detailedCharacterCombat.setHitDiceOverride(this.cachedTotalHD);
+    }
+    this.detailedCharacterCombat.applyWeaponFinesse(this.detailedCharacterFeats);
+    this.detailedCharacterCombat.updateTotals();
   }
 
   override validate(): ValidationResult {

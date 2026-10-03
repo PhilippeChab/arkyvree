@@ -40,6 +40,8 @@ type ShieldsData = Record<string, ShieldSlot>;
 export type { ShieldsData };
 
 export default class DetailedCharacterShields {
+  constructor(private readonly characterCombat: DetailedCharacterCombat) {}
+
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_SHIELD_PATHS, { shields: "Shields", ...SEGMENT_LABELS });
   }
@@ -68,7 +70,20 @@ export default class DetailedCharacterShields {
 
   private readonly shields: ShieldsData = {};
 
-  constructor(private readonly characterCombat: DetailedCharacterCombat) {}
+  getShields(): ShieldsData {
+    return this.shields;
+  }
+
+  updateTotals(): void {
+    const uniqueShields = new Set(Object.values(this.shields));
+    let totalShieldAc = 0;
+    for (const shield of uniqueShields) {
+      shield.ac.total = shield.ac.bonus + shield.ac.misc;
+      totalShieldAc += shield.ac.total;
+    }
+    this.characterCombat.getCombat().ac.shield = totalShieldAc;
+    this.characterCombat.updateTotals();
+  }
 
   registerShield(item: Item, properties: Property[]): void {
     const shieldType = properties.find((p) => p.type === SHIELD_PROFICIENCY);
@@ -104,20 +119,5 @@ export default class DetailedCharacterShields {
     }
 
     this.characterCombat.addShield(properties);
-  }
-
-  getShields(): ShieldsData {
-    return this.shields;
-  }
-
-  updateTotals(): void {
-    const uniqueShields = new Set(Object.values(this.shields));
-    let totalShieldAc = 0;
-    for (const shield of uniqueShields) {
-      shield.ac.total = shield.ac.bonus + shield.ac.misc;
-      totalShieldAc += shield.ac.total;
-    }
-    this.characterCombat.getCombat().ac.shield = totalShieldAc;
-    this.characterCombat.updateTotals();
   }
 }

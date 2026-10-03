@@ -6,26 +6,6 @@ import type RulesetRoles from "@/server/services/policies/RulesetRoles.ts";
 export function EntityRights<B extends Constructor<RulesetRoles>>(Base: B) {
   abstract class WithEntityRights extends Base {
     /**
-     * Used by entity services for creating/updating entities (feats, skills, etc.).
-     * Owner, Admin, and Editor contributors are allowed.
-     */
-    canUpdateEntity() {
-      if (!this.entity.userId) {
-        throw new ForbiddenError("Cannot edit a base ruleset");
-      }
-
-      if (!this.isOwner && !this.isAdminContributor && !this.isEditorContributor) {
-        throw new ForbiddenError("Cannot edit another user's ruleset");
-      }
-
-      if (this.entity.status === "Archived") {
-        throw new UnprocessableEntityError("Archived rulesets are read-only");
-      }
-
-      return true;
-    }
-
-    /**
      * `inUse` means: deleting this entity would orphan a character pick on the
      * current ruleset, any descendant fork, or any host ruleset that subscribes
      * to this one as an extension. Nothing else.
@@ -51,6 +31,26 @@ export function EntityRights<B extends Constructor<RulesetRoles>>(Base: B) {
 
       if (inUse) {
         throw new ConflictError("Cannot delete entities from a ruleset in use by characters");
+      }
+
+      return true;
+    }
+
+    /**
+     * Used by entity services for creating/updating entities (feats, skills, etc.).
+     * Owner, Admin, and Editor contributors are allowed.
+     */
+    canUpdateEntity() {
+      if (!this.entity.userId) {
+        throw new ForbiddenError("Cannot edit a base ruleset");
+      }
+
+      if (!this.isOwner && !this.isAdminContributor && !this.isEditorContributor) {
+        throw new ForbiddenError("Cannot edit another user's ruleset");
+      }
+
+      if (this.entity.status === "Archived") {
+        throw new UnprocessableEntityError("Archived rulesets are read-only");
       }
 
       return true;

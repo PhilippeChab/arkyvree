@@ -1,9 +1,11 @@
 /**
- * One member order for the routers, the services and the repositories: reads, creates, updates, deletes, then the
- * other actions, by name within each group. `oxlint --fix` puts a file in order.
+ * One member order for every class and every router: the lifecycle (load, preload, initialize, build, apply, in that
+ * order), reads, creates, updates, deletes, then the other actions, by name within each group. `oxlint --fix` puts a
+ * file in order.
  *
- * - A service's or a repository's methods group by their leading verb (`findOne` reads, `archiveCharacter` deletes).
- *   The constructor and the `private` / `protected` helpers stay at the top, in their own order.
+ * - A class's methods group by their leading verb (`findOne` reads, `archiveCharacter` deletes): its private and
+ *   protected methods first, then its public ones. The constructor, statics and fields stay at the top, in their own
+ *   order (a field's initializer may read an earlier one).
  * - A router's routes group by HTTP method (GET, POST, PUT, PATCH, DELETE), then sort by path: a fixed segment
  *   before a parameter, which Hono needs anyway (it matches overlapping routes in the order they're registered).
  *   A run of routes ends at a `.use()`, `.route()` or anything else: middleware applies to what follows it.
@@ -11,8 +13,13 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-/** A method's group, by its leading verb: a word followed by a capital or nothing (`get`, `getRuleset`). */
+/**
+ * A method's group, by its leading verb: a word followed by a capital or nothing (`get`, `getRuleset`). The lifecycle
+ * comes first, in pipeline order rather than by name: a class that sets itself up reads top-down.
+ */
+const LIFECYCLE = ["load", "preload", "init", "initialize", "build", "apply"];
 const VERB_GROUPS = [
+  LIFECYCLE,
   ["find", "get", "list", "exists", "count", "search", "has", "is", "resolve", "validate", "download"],
   ["create", "add", "insert", "duplicate", "bulkCreate"],
   ["update", "set", "mark", "replace", "upsert", "backfill"],
@@ -20,24 +27,32 @@ const VERB_GROUPS = [
 ];
 const ACTIONS = VERB_GROUPS.length;
 
+const startsWithVerb = (name, verb) => new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
+
+/** A lifecycle method's step (`load` before `build`), or 0 for any other method. */
+export function lifecycleStep(name) {
+  return LIFECYCLE.findIndex((verb) => startsWithVerb(name, verb)) + 1;
+}
+
 export function verbGroup(name) {
-  const index = VERB_GROUPS.findIndex((verbs) => verbs.some((verb) => new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name)));
+  const index = VERB_GROUPS.findIndex((verbs) => verbs.some((verb) => startsWithVerb(name, verb)));
   return index === -1 ? ACTIONS : index;
 }
 
 /**
- * Where a class member goes: [rank, name]. Members ranked below 0 keep their order, at the top: the constructor,
- * statics, private and protected members, and fields, whose initializers run in order (one may read another).
+ * Where a class member goes: [rank, group, lifecycle step, name]. The constructor (-4), statics (-3) and fields (-2)
+ * keep their order; private and protected methods (-1), then public ones (0), sort by verb group (the lifecycle by
+ * step), then name.
  */
 export function memberRank(member) {
-  if (member.kind === "constructor") return [-3, ""];
-  if (member.static) return [-2, ""];
-  if (member.type !== "MethodDefinition" && member.type !== "TSAbstractMethodDefinition") return [-1, ""];
-  const isPublic = !member.accessibility || member.accessibility === "public";
-  if (!isPublic || member.key?.type === "PrivateIdentifier") return [-1, ""];
+  if (member.kind === "constructor") return [-4, 0, 0, ""];
+  if (member.static) return [-3, 0, 0, ""];
+  if (member.type !== "MethodDefinition" && member.type !== "TSAbstractMethodDefinition") return [-2, 0, 0, ""];
   const name = member.key?.name ?? member.key?.value;
-  if (typeof name !== "string") return [-1, ""];
-  return [verbGroup(name), name];
+  if (typeof name !== "string") return [-2, 0, 0, ""];
+  const isPublic =
+    (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
+  return [isPublic ? 0 : -1, verbGroup(name), lifecycleStep(name), name];
 }
 
 const ROUTE_METHODS = ["get", "post", "put", "patch", "delete"];
@@ -68,11 +83,15 @@ export function compareRoutes(a, b) {
 }
 
 const compareMembers = (a, b) => {
-  const [rankA, nameA] = a.rank;
-  const [rankB, nameB] = b.rank;
+  const [rankA, groupA, stepA, nameA] = a.rank;
+  const [rankB, groupB, stepB, nameB] = b.rank;
   if (rankA !== rankB) return rankA - rankB;
-  if (rankA < 0) return a.index - b.index;
+  // The constructor, statics and fields keep their order.
+  if (rankA < -1) return a.index - b.index;
+  if (groupA !== groupB) return groupA - groupB;
+  if (stepA !== stepB) return stepA - stepB;
   if (nameA !== nameB) return nameA < nameB ? -1 : 1;
+  // A getter and its setter, or an overload's signatures and body, stay in their order.
   return a.index - b.index;
 };
 
@@ -133,7 +152,8 @@ function checkClass(context, body) {
         (tail ? "\n\n" + indent + tail : "") +
         "\n}",
     },
-    "Members go in CRUD order: reads, creates, updates, deletes, then the other actions, by name in each group.",
+    "Members go in order: the lifecycle (load, preload, initialize, build, apply), reads, creates, updates, " +
+      "deletes, then the other actions, by name in each group.",
   );
 }
 
@@ -203,8 +223,7 @@ export default {
       create(context) {
         return {
           ClassBody(body) {
-            const name = body.parent?.id?.name ?? "";
-            if (/(Service|Repository)$/.test(name)) checkClass(context, body);
+            checkClass(context, body);
           },
           CallExpression(call) {
             if (!/\/server\/routers\//.test(context.filename)) return;

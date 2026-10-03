@@ -5,9 +5,15 @@ import type RulesetRoles from "@/server/services/policies/RulesetRoles.ts";
 /** Who may see and manage a ruleset's contributors. */
 export function ContributorRights<B extends Constructor<RulesetRoles>>(Base: B) {
   abstract class WithContributorRights extends Base {
-    canReadContributors() {
-      if (!this.isOwner && !this.isContributor) {
-        throw new ForbiddenError("You are not a contributor of this ruleset");
+    /**
+     * Owner-only narrowing of canManageContributors: invite/assign/revoke/change
+     * role on an Admin contributor. An Admin contributor can manage other
+     * Editor/Viewer contributors via canManageContributors but cannot touch
+     * Admin-tier rows.
+     */
+    canManageAdminContributors() {
+      if (!this.isOwner) {
+        throw new ForbiddenError("Only the owner can manage Admin contributors");
       }
       return true;
     }
@@ -24,15 +30,9 @@ export function ContributorRights<B extends Constructor<RulesetRoles>>(Base: B) 
       return true;
     }
 
-    /**
-     * Owner-only narrowing of canManageContributors: invite/assign/revoke/change
-     * role on an Admin contributor. An Admin contributor can manage other
-     * Editor/Viewer contributors via canManageContributors but cannot touch
-     * Admin-tier rows.
-     */
-    canManageAdminContributors() {
-      if (!this.isOwner) {
-        throw new ForbiddenError("Only the owner can manage Admin contributors");
+    canReadContributors() {
+      if (!this.isOwner && !this.isContributor) {
+        throw new ForbiddenError("You are not a contributor of this ruleset");
       }
       return true;
     }

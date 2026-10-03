@@ -17,6 +17,8 @@ type DetailedCharacterComprehensiveRequirements = {
 };
 
 export default class DetailedCharacterRequirements {
+  constructor(private readonly targetPaths: TargetPathsTraverser) {}
+
   private readonly detailedCharacterRequirements: DetailedCharacterComprehensiveRequirements = {
     requirements: [],
     invalidRequirements: [],
@@ -24,62 +26,81 @@ export default class DetailedCharacterRequirements {
     fulfilledRequirementGroups: [],
   };
 
-  constructor(private readonly targetPaths: TargetPathsTraverser) {}
+  private buildTree(nodes: Node[]): Node[] {
+    if (nodes.length === 0) return [];
 
-  evaluateRequirements(holders: Holders, requirements: Requirement[][]) {
-    for (const group of requirements) {
-      this.evaluateRequirementsGroup(group, holders);
+    // Sort nodes by level to ensure proper hierarchy
+    const sortedNodes = nodes.sort((a, b) => {
+      const aLevel = parseFloat(a.requirement.level);
+      const bLevel = parseFloat(b.requirement.level);
+      return aLevel - bLevel;
+    });
+
+    const tree: Node[] = [];
+    const nodeMap = new Map<string, Node>();
+
+    // First pass: Create a map of all nodes by their level
+    for (const node of sortedNodes) {
+      nodeMap.set(node.requirement.level, node);
     }
-  }
 
-  private evaluateRequirementsGroup(requirements: Requirement[], holders: Holders) {
-    const nodes: Node[] = [];
+    // Second pass: Build the hierarchy
+    for (const node of sortedNodes) {
+      const level = node.requirement.level;
+      const levelParts = level.split(".");
 
-    for (const requirement of requirements) {
-      if (requirement.chainingOperator !== null) {
-        nodes.push({
-          requirement,
-          fulfilled: null,
-          children: [],
-        });
-      } else if (requirement.target) {
-        const results = this.targetPaths.traversePathInit(requirement.target, holders);
-        const validResults: TraversePathResult[] = [];
+      if (levelParts.length === 1) {
+        // Root level node (e.g., "1", "2", "3")
+        tree.push(node);
+      } else {
+        // Child node (e.g., "1.1", "1.2", "1.2.1")
+        const parentLevel = levelParts.slice(0, -1).join(".");
+        const parentNode = nodeMap.get(parentLevel);
 
-        for (const result of results) {
-          if (result.error) {
+        if (parentNode) {
+          // Validate: only chaining operator nodes can have children
+          if (!parentNode.requirement.chainingOperator) {
             this.detailedCharacterRequirements.invalidRequirements.push({
-              warning: result.error,
-              requirement,
+              warning: `Condition node at level ${parentNode.requirement.level} cannot have children. Child level ${level} discarded.`,
+              requirement: node.requirement,
             });
+            // Discard this node - don't add it anywhere
           } else {
-            validResults.push(result);
+            parentNode.children.push(node);
           }
-        }
-
-        // A path that names nothing gave errors: the requirement is invalid, not unmet. One that resolves is met
-        // when any of what it reaches satisfies it (a wildcard reaches several), so unmet when it reaches nothing
-        if (validResults.length > 0 || results.length === 0) {
-          const fulfilled = validResults.some((result) => this.evaluateRequirement(requirement, result, holders));
-
-          nodes.push({
-            requirement,
-            fulfilled,
-            children: [],
-          });
+        } else {
+          // If parent doesn't exist, add to root level
+          // This handles cases where the hierarchy might be incomplete
+          tree.push(node);
         }
       }
     }
 
-    const tree = this.buildTree(nodes);
+    return tree;
+  }
 
-    // Process the tree to determine overall fulfillment
-    const isGroupFulfilled = this.evaluateTree(tree);
+  private evaluateNode(node: Node): boolean {
+    // If this is a chaining operator node
+    if (node.requirement.chainingOperator) {
+      if (node.children.length === 0) {
+        // Chaining node with no children is considered unfulfilled
+        return false;
+      }
 
-    if (isGroupFulfilled) {
-      this.detailedCharacterRequirements.fulfilledRequirementGroups.push(requirements);
+      // Apply the chaining operator to children
+      switch (node.requirement.chainingOperator) {
+        case "and":
+          return node.children.every((child) => this.evaluateNode(child));
+        case "or":
+          return node.children.some((child) => this.evaluateNode(child));
+        default:
+          return false;
+      }
     } else {
-      this.detailedCharacterRequirements.unmetRequirementGroups.push(requirements);
+      // This is a condition node, fulfilled should always be boolean (not null)
+      // After validation, condition nodes should never have children
+      const fulfilled = node.fulfilled!;
+      return fulfilled;
     }
   }
 
@@ -295,57 +316,55 @@ export default class DetailedCharacterRequirements {
     }
   }
 
-  private buildTree(nodes: Node[]): Node[] {
-    if (nodes.length === 0) return [];
+  private evaluateRequirementsGroup(requirements: Requirement[], holders: Holders) {
+    const nodes: Node[] = [];
 
-    // Sort nodes by level to ensure proper hierarchy
-    const sortedNodes = nodes.sort((a, b) => {
-      const aLevel = parseFloat(a.requirement.level);
-      const bLevel = parseFloat(b.requirement.level);
-      return aLevel - bLevel;
-    });
+    for (const requirement of requirements) {
+      if (requirement.chainingOperator !== null) {
+        nodes.push({
+          requirement,
+          fulfilled: null,
+          children: [],
+        });
+      } else if (requirement.target) {
+        const results = this.targetPaths.traversePathInit(requirement.target, holders);
+        const validResults: TraversePathResult[] = [];
 
-    const tree: Node[] = [];
-    const nodeMap = new Map<string, Node>();
-
-    // First pass: Create a map of all nodes by their level
-    for (const node of sortedNodes) {
-      nodeMap.set(node.requirement.level, node);
-    }
-
-    // Second pass: Build the hierarchy
-    for (const node of sortedNodes) {
-      const level = node.requirement.level;
-      const levelParts = level.split(".");
-
-      if (levelParts.length === 1) {
-        // Root level node (e.g., "1", "2", "3")
-        tree.push(node);
-      } else {
-        // Child node (e.g., "1.1", "1.2", "1.2.1")
-        const parentLevel = levelParts.slice(0, -1).join(".");
-        const parentNode = nodeMap.get(parentLevel);
-
-        if (parentNode) {
-          // Validate: only chaining operator nodes can have children
-          if (!parentNode.requirement.chainingOperator) {
+        for (const result of results) {
+          if (result.error) {
             this.detailedCharacterRequirements.invalidRequirements.push({
-              warning: `Condition node at level ${parentNode.requirement.level} cannot have children. Child level ${level} discarded.`,
-              requirement: node.requirement,
+              warning: result.error,
+              requirement,
             });
-            // Discard this node - don't add it anywhere
           } else {
-            parentNode.children.push(node);
+            validResults.push(result);
           }
-        } else {
-          // If parent doesn't exist, add to root level
-          // This handles cases where the hierarchy might be incomplete
-          tree.push(node);
+        }
+
+        // A path that names nothing gave errors: the requirement is invalid, not unmet. One that resolves is met
+        // when any of what it reaches satisfies it (a wildcard reaches several), so unmet when it reaches nothing
+        if (validResults.length > 0 || results.length === 0) {
+          const fulfilled = validResults.some((result) => this.evaluateRequirement(requirement, result, holders));
+
+          nodes.push({
+            requirement,
+            fulfilled,
+            children: [],
+          });
         }
       }
     }
 
-    return tree;
+    const tree = this.buildTree(nodes);
+
+    // Process the tree to determine overall fulfillment
+    const isGroupFulfilled = this.evaluateTree(tree);
+
+    if (isGroupFulfilled) {
+      this.detailedCharacterRequirements.fulfilledRequirementGroups.push(requirements);
+    } else {
+      this.detailedCharacterRequirements.unmetRequirementGroups.push(requirements);
+    }
   }
 
   private evaluateTree(nodes: Node[]): boolean {
@@ -355,32 +374,13 @@ export default class DetailedCharacterRequirements {
     return nodes.every((node) => this.evaluateNode(node));
   }
 
-  private evaluateNode(node: Node): boolean {
-    // If this is a chaining operator node
-    if (node.requirement.chainingOperator) {
-      if (node.children.length === 0) {
-        // Chaining node with no children is considered unfulfilled
-        return false;
-      }
-
-      // Apply the chaining operator to children
-      switch (node.requirement.chainingOperator) {
-        case "and":
-          return node.children.every((child) => this.evaluateNode(child));
-        case "or":
-          return node.children.some((child) => this.evaluateNode(child));
-        default:
-          return false;
-      }
-    } else {
-      // This is a condition node, fulfilled should always be boolean (not null)
-      // After validation, condition nodes should never have children
-      const fulfilled = node.fulfilled!;
-      return fulfilled;
-    }
-  }
-
   getRequirements() {
     return this.detailedCharacterRequirements;
+  }
+
+  evaluateRequirements(holders: Holders, requirements: Requirement[][]) {
+    for (const group of requirements) {
+      this.evaluateRequirementsGroup(group, holders);
+    }
   }
 }

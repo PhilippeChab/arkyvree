@@ -70,10 +70,45 @@ interface SignedTokenPayload {
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 class AttachmentsService {
+  private buildKey(blobId: string, filename: string): string {
+    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
+    return `blobs/${blobId}/${safe}`;
+  }
+
+  private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
+    const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
+    if (refs.length > 0) return null;
+    const blob = await Blobs.findOne(tx, { id: blobId });
+    if (!blob) return null;
+    return { id: blob.id, key: blob.key };
+  }
+
   private getAttachableConfig(recordType: string): AttachableConfig {
     const config = ATTACHABLE_TYPES.get(recordType);
     if (!config) throw new BadRequestError(`Unsupported record type: ${recordType}`);
     return config;
+  }
+
+  private getSigningSecret(): string {
+    const secret = process.env.SIGNING_SECRET;
+    if (!secret) throw new InternalError("SIGNING_SECRET is not configured");
+    return secret;
+  }
+
+  private isUniqueViolation(err: unknown): boolean {
+    if (typeof err !== "object" || err === null) return false;
+    const e = err as { code?: string; cause?: { code?: string } };
+    return e.code === "23505" || e.cause?.code === "23505";
+  }
+
+  private async purgeOrphan(orphan: { id: string; key: string } | null): Promise<void> {
+    if (!orphan) return;
+    try {
+      await getStorage().deleteObject(orphan.key);
+      await Blobs.delete(db, { id: orphan.id });
+    } catch (err) {
+      console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
+    }
   }
 
   private async assertCanAttach(session: Session, recordType: string, recordId: string): Promise<void> {
@@ -90,6 +125,13 @@ class AttachmentsService {
     }
   }
 
+  private assertValidName(recordType: string, name: string): void {
+    const { names } = this.getAttachableConfig(recordType);
+    if (!names.includes(name)) {
+      throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
+    }
+  }
+
   private assertWithinPolicy(recordType: string, byteSize: number, contentType: string): void {
     const { policy } = this.getAttachableConfig(recordType);
     if (byteSize > policy.maxBytes) {
@@ -98,19 +140,6 @@ class AttachmentsService {
     if (!policy.contentTypes.includes(contentType)) {
       throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
     }
-  }
-
-  private assertValidName(recordType: string, name: string): void {
-    const { names } = this.getAttachableConfig(recordType);
-    if (!names.includes(name)) {
-      throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
-    }
-  }
-
-  private getSigningSecret(): string {
-    const secret = process.env.SIGNING_SECRET;
-    if (!secret) throw new InternalError("SIGNING_SECRET is not configured");
-    return secret;
   }
 
   private signToken(payload: Omit<SignedTokenPayload, "iat">): string {
@@ -142,35 +171,6 @@ class AttachmentsService {
       throw new BadRequestError("Signed id has expired");
     }
     return payload;
-  }
-
-  private buildKey(blobId: string, filename: string): string {
-    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
-    return `blobs/${blobId}/${safe}`;
-  }
-
-  private isUniqueViolation(err: unknown): boolean {
-    if (typeof err !== "object" || err === null) return false;
-    const e = err as { code?: string; cause?: { code?: string } };
-    return e.code === "23505" || e.cause?.code === "23505";
-  }
-
-  private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
-    const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
-    if (refs.length > 0) return null;
-    const blob = await Blobs.findOne(tx, { id: blobId });
-    if (!blob) return null;
-    return { id: blob.id, key: blob.key };
-  }
-
-  private async purgeOrphan(orphan: { id: string; key: string } | null): Promise<void> {
-    if (!orphan) return;
-    try {
-      await getStorage().deleteObject(orphan.key);
-      await Blobs.delete(db, { id: orphan.id });
-    } catch (err) {
-      console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
-    }
   }
 
   async findOne(session: Session, params: { recordType: string; recordId: string; name: string }) {

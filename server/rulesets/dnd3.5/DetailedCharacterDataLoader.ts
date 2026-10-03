@@ -80,49 +80,56 @@ export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
 export default class DetailedCharacterDataLoader {
   constructor(private readonly character: Character) {}
 
-  async loadSharedData(database: Db = db, preloaded: PreloadedRulesetData): Promise<SharedCharacterData> {
-    const { ruleset, cowData, rulesetData } = preloaded;
-
-    // Character's race — read from the composed ruleset cache.
-    // racesById auto-resolves stored pre-COW ids via cowResolvingMap.
-    const race = rulesetData.racesById.get(this.character.raceId);
-    if (!race) {
-      throw new Error("Race not found");
+  /**
+   * Scans modifiers for "set feats.<slug>.possessed = true" targets and returns
+   * the IDs of the possessed feats that aren't already in the character's feat list.
+   */
+  private resolvePossessedFeatIds(
+    modifiers: Modifier[],
+    existingFeatIds: Set<string>,
+    featIdBySlug: Map<string, string>,
+  ): string[] {
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    for (const mod of modifiers) {
+      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
+      const parts = mod.target.split(".");
+      if (parts.length !== 3 || parts[0] !== "feats" || parts[2] !== "possessed") continue;
+      const featId = featIdBySlug.get(parts[1]);
+      if (!featId || existingFeatIds.has(featId) || seen.has(featId)) continue;
+      seen.add(featId);
+      ids.push(featId);
     }
+    return ids;
+  }
 
-    // Campaign context + character core data, all in parallel. Ruleset /
-    // cowData / rulesetData arrive pre-loaded from `withRulesetScope`.
-    const playerCharacter = await PlayerCharacters.findOne(database, {
-      characterId: this.character.id,
-    });
-    const player = playerCharacter ? await Players.findOne(database, { id: playerCharacter.playerId }) : undefined;
-
-    const campaign = player ? await Campaigns.findOne(database, { id: player.campaignId }) : undefined;
-    const characterAbilityRecords = await CharacterAbilities.findMany(database, {
-      characterId: this.character.id,
-    });
-    const characterLanguages = await CharacterLanguages.findMany(database, {
-      characterId: this.character.id,
-    });
-    const inventory = await CharacterInventoryRepository.findMany(database, {
-      characterId: this.character.id,
-    });
-    const rawCharacterLevels = await CharacterLevels.findMany(database, {
-      characterId: this.character.id,
-    });
-
-    return {
-      ruleset,
-      player,
-      campaign,
-      cowData,
-      rulesetData,
-      characterAbilityRecords,
-      race,
-      characterLanguages,
-      inventory,
-      rawCharacterLevels,
-    };
+  private resolvePossessedPowers(
+    modifiers: Modifier[],
+    existingPowerIds: Set<string>,
+    powerIdsBySlug: Map<string, string[]>,
+    powersById: Map<string, PowerWithAptitudes>,
+    aptitudeIdBySpellSlug: Map<string, string>,
+  ): { powerId: string; aptitudeId: string }[] {
+    const results: { powerId: string; aptitudeId: string }[] = [];
+    for (const mod of modifiers) {
+      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
+      const parts = mod.target.split(".");
+      // powers.<spellSlug>.<aptSlug>.known
+      if (parts.length !== 4 || parts[0] !== "powers" || parts[3] !== "known") continue;
+      const aptitudeId = aptitudeIdBySpellSlug.get(parts[2]);
+      if (!aptitudeId) continue;
+      const candidateIds = powerIdsBySlug.get(parts[1]);
+      if (!candidateIds) continue;
+      for (const id of candidateIds) {
+        const power = powersById.get(id);
+        if (!power) continue;
+        if (!power.powersAptitudesInRules.some((pa) => pa.aptitudeId === aptitudeId)) continue;
+        if (existingPowerIds.has(power.id)) break;
+        results.push({ powerId: power.id, aptitudeId });
+        break;
+      }
+    }
+    return results;
   }
 
   async load(
@@ -644,55 +651,48 @@ export default class DetailedCharacterDataLoader {
     };
   }
 
-  /**
-   * Scans modifiers for "set feats.<slug>.possessed = true" targets and returns
-   * the IDs of the possessed feats that aren't already in the character's feat list.
-   */
-  private resolvePossessedFeatIds(
-    modifiers: Modifier[],
-    existingFeatIds: Set<string>,
-    featIdBySlug: Map<string, string>,
-  ): string[] {
-    const ids: string[] = [];
-    const seen = new Set<string>();
-    for (const mod of modifiers) {
-      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
-      const parts = mod.target.split(".");
-      if (parts.length !== 3 || parts[0] !== "feats" || parts[2] !== "possessed") continue;
-      const featId = featIdBySlug.get(parts[1]);
-      if (!featId || existingFeatIds.has(featId) || seen.has(featId)) continue;
-      seen.add(featId);
-      ids.push(featId);
-    }
-    return ids;
-  }
+  async loadSharedData(database: Db = db, preloaded: PreloadedRulesetData): Promise<SharedCharacterData> {
+    const { ruleset, cowData, rulesetData } = preloaded;
 
-  private resolvePossessedPowers(
-    modifiers: Modifier[],
-    existingPowerIds: Set<string>,
-    powerIdsBySlug: Map<string, string[]>,
-    powersById: Map<string, PowerWithAptitudes>,
-    aptitudeIdBySpellSlug: Map<string, string>,
-  ): { powerId: string; aptitudeId: string }[] {
-    const results: { powerId: string; aptitudeId: string }[] = [];
-    for (const mod of modifiers) {
-      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
-      const parts = mod.target.split(".");
-      // powers.<spellSlug>.<aptSlug>.known
-      if (parts.length !== 4 || parts[0] !== "powers" || parts[3] !== "known") continue;
-      const aptitudeId = aptitudeIdBySpellSlug.get(parts[2]);
-      if (!aptitudeId) continue;
-      const candidateIds = powerIdsBySlug.get(parts[1]);
-      if (!candidateIds) continue;
-      for (const id of candidateIds) {
-        const power = powersById.get(id);
-        if (!power) continue;
-        if (!power.powersAptitudesInRules.some((pa) => pa.aptitudeId === aptitudeId)) continue;
-        if (existingPowerIds.has(power.id)) break;
-        results.push({ powerId: power.id, aptitudeId });
-        break;
-      }
+    // Character's race — read from the composed ruleset cache.
+    // racesById auto-resolves stored pre-COW ids via cowResolvingMap.
+    const race = rulesetData.racesById.get(this.character.raceId);
+    if (!race) {
+      throw new Error("Race not found");
     }
-    return results;
+
+    // Campaign context + character core data, all in parallel. Ruleset /
+    // cowData / rulesetData arrive pre-loaded from `withRulesetScope`.
+    const playerCharacter = await PlayerCharacters.findOne(database, {
+      characterId: this.character.id,
+    });
+    const player = playerCharacter ? await Players.findOne(database, { id: playerCharacter.playerId }) : undefined;
+
+    const campaign = player ? await Campaigns.findOne(database, { id: player.campaignId }) : undefined;
+    const characterAbilityRecords = await CharacterAbilities.findMany(database, {
+      characterId: this.character.id,
+    });
+    const characterLanguages = await CharacterLanguages.findMany(database, {
+      characterId: this.character.id,
+    });
+    const inventory = await CharacterInventoryRepository.findMany(database, {
+      characterId: this.character.id,
+    });
+    const rawCharacterLevels = await CharacterLevels.findMany(database, {
+      characterId: this.character.id,
+    });
+
+    return {
+      ruleset,
+      player,
+      campaign,
+      cowData,
+      rulesetData,
+      characterAbilityRecords,
+      race,
+      characterLanguages,
+      inventory,
+      rawCharacterLevels,
+    };
   }
 }

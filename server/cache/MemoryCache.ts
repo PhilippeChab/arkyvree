@@ -26,12 +26,6 @@ export function isCacheEnabled(): boolean {
 }
 
 export default class MemoryCache<T> {
-  private store = new Map<string, CacheEntry<T>>();
-  private pinned = new Set<string>();
-  private defaultTtl: number;
-  private maxSize: number;
-  private sweepTimer: ReturnType<typeof setInterval> | null = null;
-
   constructor(options: MemoryCacheOptions | number = {}) {
     // Support legacy signature: new MemoryCache(ttlMs)
     if (typeof options === "number") {
@@ -48,6 +42,44 @@ export default class MemoryCache<T> {
     // Don't keep the process alive just for cache sweeping
     if (typeof this.sweepTimer === "object" && "unref" in this.sweepTimer) {
       this.sweepTimer.unref();
+    }
+  }
+
+  private store = new Map<string, CacheEntry<T>>();
+
+  private pinned = new Set<string>();
+
+  private defaultTtl: number;
+
+  private maxSize: number;
+
+  private sweepTimer: ReturnType<typeof setInterval> | null = null;
+
+  /** Evict the entry with the earliest expiration (oldest). Pinned entries are skipped. */
+  private evictOldest(): void {
+    let oldestKey: string | null = null;
+    let oldestExpiry = Infinity;
+
+    for (const [key, entry] of this.store) {
+      if (this.pinned.has(key)) continue;
+      if (entry.expiresAt < oldestExpiry) {
+        oldestExpiry = entry.expiresAt;
+        oldestKey = key;
+      }
+    }
+
+    if (oldestKey) {
+      this.store.delete(oldestKey);
+    }
+  }
+
+  /** Remove all expired entries. Called automatically by the sweep timer. */
+  private sweep(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.store) {
+      if (now > entry.expiresAt && !this.pinned.has(key)) {
+        this.store.delete(key);
+      }
     }
   }
 
@@ -73,6 +105,10 @@ export default class MemoryCache<T> {
     return entry.value;
   }
 
+  isPinned(key: string): boolean {
+    return this.pinned.has(key);
+  }
+
   set(key: string, value: T, ttl?: number): void {
     if (!globalCacheEnabled) return;
     // If at capacity and this is a new key, evict the oldest unpinned entry.
@@ -95,6 +131,11 @@ export default class MemoryCache<T> {
     this.pinned.delete(key);
   }
 
+  invalidateAll(): void {
+    this.store.clear();
+    this.pinned.clear();
+  }
+
   invalidateByPrefix(prefix: string): void {
     for (const key of this.store.keys()) {
       if (key.startsWith(prefix)) {
@@ -110,48 +151,11 @@ export default class MemoryCache<T> {
     }
   }
 
-  invalidateAll(): void {
-    this.store.clear();
-    this.pinned.clear();
-  }
-
   pin(key: string): void {
     this.pinned.add(key);
   }
 
   unpin(key: string): void {
     this.pinned.delete(key);
-  }
-
-  isPinned(key: string): boolean {
-    return this.pinned.has(key);
-  }
-
-  /** Remove all expired entries. Called automatically by the sweep timer. */
-  private sweep(): void {
-    const now = Date.now();
-    for (const [key, entry] of this.store) {
-      if (now > entry.expiresAt && !this.pinned.has(key)) {
-        this.store.delete(key);
-      }
-    }
-  }
-
-  /** Evict the entry with the earliest expiration (oldest). Pinned entries are skipped. */
-  private evictOldest(): void {
-    let oldestKey: string | null = null;
-    let oldestExpiry = Infinity;
-
-    for (const [key, entry] of this.store) {
-      if (this.pinned.has(key)) continue;
-      if (entry.expiresAt < oldestExpiry) {
-        oldestExpiry = entry.expiresAt;
-        oldestKey = key;
-      }
-    }
-
-    if (oldestKey) {
-      this.store.delete(oldestKey);
-    }
   }
 }

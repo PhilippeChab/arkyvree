@@ -60,6 +60,11 @@ type DetailedCharacterComprehensiveIdentity = {
 };
 
 export default class DetailedCharacterIdentity {
+  constructor(
+    protected readonly characterAbilities: DetailedCharacterAbilities,
+    protected readonly characterClasses: DetailedCharacterClasses,
+  ) {}
+
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(
       [
@@ -130,11 +135,6 @@ export default class DetailedCharacterIdentity {
 
   protected readonly detailedCharacterIdentity: DetailedCharacterComprehensiveIdentity =
     {} as DetailedCharacterComprehensiveIdentity;
-
-  constructor(
-    protected readonly characterAbilities: DetailedCharacterAbilities,
-    protected readonly characterClasses: DetailedCharacterClasses,
-  ) {}
 
   initialize(character: Character, race: Race, languages: Language[]) {
     const classes = this.characterClasses.getClasses();

@@ -46,6 +46,35 @@ export function Archives<B extends Constructor>(Base: B) {
       });
     }
 
+    async hardDeleteCharacter(session: Session, characterId: string) {
+      return await withTransaction(async (tx) => {
+        const existingCharacter = await Characters.findOne(
+          tx,
+          { id: characterId, userId: session.userId },
+          Visibility.ArchivedOnly,
+        );
+
+        if (!existingCharacter || existingCharacter.kind !== "pc") {
+          throw new NotFoundError("Character not found");
+        }
+
+        await new CharactersPolicy(session, existingCharacter).canHardDelete();
+
+        // Bonded children cascade via FK on delete, and the database deletes
+        // their attachments and modifiers with them.
+        await Characters.delete(tx, { id: characterId });
+
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: characterId,
+          targetTable: getTableName(charactersInCharacter),
+          type: "hardDeleteCharacter",
+        });
+
+        return { id: characterId };
+      });
+    }
+
     async unarchiveCharacter(session: Session, characterId: string) {
       return await withTransaction(async (tx) => {
         const existingCharacter = await Characters.findOne(
@@ -76,35 +105,6 @@ export function Archives<B extends Constructor>(Base: B) {
         });
 
         return unarchivedCharacter;
-      });
-    }
-
-    async hardDeleteCharacter(session: Session, characterId: string) {
-      return await withTransaction(async (tx) => {
-        const existingCharacter = await Characters.findOne(
-          tx,
-          { id: characterId, userId: session.userId },
-          Visibility.ArchivedOnly,
-        );
-
-        if (!existingCharacter || existingCharacter.kind !== "pc") {
-          throw new NotFoundError("Character not found");
-        }
-
-        await new CharactersPolicy(session, existingCharacter).canHardDelete();
-
-        // Bonded children cascade via FK on delete, and the database deletes
-        // their attachments and modifiers with them.
-        await Characters.delete(tx, { id: characterId });
-
-        await Activities.create(tx, {
-          userId: session.userId,
-          targetId: characterId,
-          targetTable: getTableName(charactersInCharacter),
-          type: "hardDeleteCharacter",
-        });
-
-        return { id: characterId };
       });
     }
   }

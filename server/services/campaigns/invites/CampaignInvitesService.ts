@@ -10,6 +10,19 @@ import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
 class CampaignInvitesService {
+  /** The campaign of an invite's player slot, archived or not. */
+  private async getInviteCampaign(tx: Db, invite: Invite) {
+    const player = await Players.findOne(tx, { id: invite.playerId });
+    if (!player) {
+      throw new NotFoundError("Player not found");
+    }
+    const campaign = await Campaigns.findOne(tx, { id: player.campaignId }, Visibility.All);
+    if (!campaign) {
+      throw new NotFoundError("Campaign not found");
+    }
+    return campaign;
+  }
+
   /**
    * The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists.
    */
@@ -22,19 +35,6 @@ class CampaignInvitesService {
       throw new ConflictError("Invite is no longer pending");
     }
     return invite;
-  }
-
-  /** The campaign of an invite's player slot, archived or not. */
-  private async getInviteCampaign(tx: Db, invite: Invite) {
-    const player = await Players.findOne(tx, { id: invite.playerId });
-    if (!player) {
-      throw new NotFoundError("Player not found");
-    }
-    const campaign = await Campaigns.findOne(tx, { id: player.campaignId }, Visibility.All);
-    if (!campaign) {
-      throw new NotFoundError("Campaign not found");
-    }
-    return campaign;
   }
 
   /**

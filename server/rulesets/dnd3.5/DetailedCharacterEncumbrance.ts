@@ -39,6 +39,8 @@ export type EncumbranceData = {
 };
 
 export default class DetailedCharacterEncumbrance {
+  constructor(private readonly characterAbilities: DetailedCharacterAbilities) {}
+
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_PATHS, SEGMENT_LABELS);
   }
@@ -68,48 +70,6 @@ export default class DetailedCharacterEncumbrance {
 
   private raceSize = "Medium";
 
-  constructor(private readonly characterAbilities: DetailedCharacterAbilities) {}
-
-  initialize(inventory: RawInventoryEntry[], raceSize: string): void {
-    this.raceSize = raceSize;
-
-    let totalWeight = 0;
-    for (const entry of inventory) {
-      const itemWeight = Number(entry.item.weight ?? 0);
-      const quantity = entry.quantity ?? 1;
-      totalWeight += itemWeight * quantity;
-    }
-
-    this.encumbrance.carriedweight = totalWeight;
-    this.updateTotals();
-  }
-
-  getEncumbrance(): EncumbranceData {
-    return this.encumbrance;
-  }
-
-  updateTotals(): void {
-    const strTotal = this.characterAbilities.getAbility("Strength")?.total ?? 0;
-    const heavyLoad = this.getCarryingCapacity(strTotal);
-    const sizeMultiplier = SIZE_CARRY_MULTIPLIERS[this.raceSize] ?? 1;
-
-    this.encumbrance.heavyload = Math.floor(heavyLoad * sizeMultiplier);
-    this.encumbrance.mediumload = Math.floor((this.encumbrance.heavyload * 2) / 3);
-    this.encumbrance.lightload = Math.floor(this.encumbrance.heavyload / 3);
-    this.encumbrance.load = this.getLoadCategory(this.encumbrance.carriedweight, this.encumbrance.heavyload);
-
-    const penalties = ENCUMBRANCE_PENALTIES[this.encumbrance.load];
-    this.encumbrance.maxdex = penalties.maxdex;
-    this.encumbrance.checkpenalty = penalties.checkpenalty;
-  }
-
-  getEncumberedSpeed(baseSpeed: number): number {
-    if (ENCUMBERED_SPEED[baseSpeed] !== undefined) {
-      return ENCUMBERED_SPEED[baseSpeed];
-    }
-    return Math.floor((baseSpeed * 2) / 3);
-  }
-
   private getCarryingCapacity(str: number): number {
     if (str <= 0) return 0;
     if (str < CARRYING_CAPACITY.length) return CARRYING_CAPACITY[str];
@@ -129,5 +89,45 @@ export default class DetailedCharacterEncumbrance {
     if (weight <= mediumLoad) return "medium";
     if (weight <= heavyLoad) return "heavy";
     return "overloaded";
+  }
+
+  initialize(inventory: RawInventoryEntry[], raceSize: string): void {
+    this.raceSize = raceSize;
+
+    let totalWeight = 0;
+    for (const entry of inventory) {
+      const itemWeight = Number(entry.item.weight ?? 0);
+      const quantity = entry.quantity ?? 1;
+      totalWeight += itemWeight * quantity;
+    }
+
+    this.encumbrance.carriedweight = totalWeight;
+    this.updateTotals();
+  }
+
+  getEncumberedSpeed(baseSpeed: number): number {
+    if (ENCUMBERED_SPEED[baseSpeed] !== undefined) {
+      return ENCUMBERED_SPEED[baseSpeed];
+    }
+    return Math.floor((baseSpeed * 2) / 3);
+  }
+
+  getEncumbrance(): EncumbranceData {
+    return this.encumbrance;
+  }
+
+  updateTotals(): void {
+    const strTotal = this.characterAbilities.getAbility("Strength")?.total ?? 0;
+    const heavyLoad = this.getCarryingCapacity(strTotal);
+    const sizeMultiplier = SIZE_CARRY_MULTIPLIERS[this.raceSize] ?? 1;
+
+    this.encumbrance.heavyload = Math.floor(heavyLoad * sizeMultiplier);
+    this.encumbrance.mediumload = Math.floor((this.encumbrance.heavyload * 2) / 3);
+    this.encumbrance.lightload = Math.floor(this.encumbrance.heavyload / 3);
+    this.encumbrance.load = this.getLoadCategory(this.encumbrance.carriedweight, this.encumbrance.heavyload);
+
+    const penalties = ENCUMBRANCE_PENALTIES[this.encumbrance.load];
+    this.encumbrance.maxdex = penalties.maxdex;
+    this.encumbrance.checkpenalty = penalties.checkpenalty;
   }
 }
