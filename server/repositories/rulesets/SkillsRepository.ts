@@ -2,13 +2,15 @@ import { and, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
 
 import { klassLevelsInRules, levelsInCharacter, levelSkillsInCharacter, skillsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
 class SkillsRepository extends RulesetEntityRepository<typeof skillsInRules> {
   constructor() {
-    super(skillsInRules, "skills");
+    super(skillsInRules);
   }
+
+  protected readonly entityType = "skills";
 
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.skillsInRules.findMany({

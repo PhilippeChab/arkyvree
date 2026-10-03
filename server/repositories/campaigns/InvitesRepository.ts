@@ -3,9 +3,11 @@ import { and, eq, getTableColumns, ilike, inArray, isNull, or } from "drizzle-or
 
 import { invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 
-class InvitesRepository extends BaseRepository<typeof invitesInCampaign> {
+class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>, Paginates) {
   constructor() {
     super(invitesInCampaign);
   }

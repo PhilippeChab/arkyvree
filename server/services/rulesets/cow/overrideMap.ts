@@ -20,7 +20,7 @@ export type OverrideMap = Map<string, string> & { readonly __brand: "OverrideMap
  * Branded `Map<string, string>` carrying id-canonicalize semantic. Maps any
  * "stale" id (true override source, aptitude name-grouping loser, snapshot
  * sibling loser) to its canonical winner. Read by the repo Proxy
- * (`canonicalizeArgs`, `resolveRowOverrides`), `BaseRepository.idMatches`,
+ * (`canonicalizeArgs`, `resolveRowOverrides`), `idMatches` (`ResolvesCopies`),
  * `cowResolvingMap`, and `resolveOverrides`. Construct via
  * `newIdResolveMap(seed?)` only.
  */

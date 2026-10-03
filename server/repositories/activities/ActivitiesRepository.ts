@@ -3,9 +3,12 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import { activitiesInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
-class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount> {
+class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAccount>, Paginates, Searches) {
   constructor() {
     super(activitiesInAccount);
   }

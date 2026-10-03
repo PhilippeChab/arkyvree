@@ -1,4 +1,4 @@
-import { pageOf } from "@/server/repositories/BaseRepository.ts";
+import { pageOf } from "@/server/repositories/concerns/Paginates.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { PaginatedCompletions, PathCompletion, TargetPath } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/utils.ts";

@@ -8,9 +8,16 @@ import {
   playersInCampaign,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
-class PlayerCharactersRepository extends BaseRepository<typeof playerCharactersInCampaign> {
+class PlayerCharactersRepository extends include(
+  BaseRepository<typeof playerCharactersInCampaign>,
+  Paginates,
+  Searches,
+) {
   constructor() {
     super(playerCharactersInCampaign);
   }

@@ -9,10 +9,19 @@ import {
   starredRulesetsInAccount,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
+import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
+import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import type { Session } from "@/shared/relations.ts";
 
-class RulesetsRepository extends BaseRepository<typeof rulesetsInRules> {
+class RulesetsRepository extends include(
+  BaseRepository<typeof rulesetsInRules>,
+  Paginates,
+  Searches,
+  GuardsStaleEdits,
+) {
   constructor() {
     super(rulesetsInRules);
   }

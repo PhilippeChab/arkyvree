@@ -9,9 +9,22 @@ import {
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
+import { ChecksRulesetUse } from "@/server/repositories/concerns/ChecksRulesetUse.ts";
+import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
+import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
-class CharactersRepository extends BaseRepository<typeof charactersInCharacter> {
+class CharactersRepository extends include(
+  BaseRepository<typeof charactersInCharacter>,
+  Paginates,
+  Searches,
+  ChecksRulesetUse,
+  ResolvesCopies,
+  GuardsStaleEdits,
+) {
   constructor() {
     super(charactersInCharacter);
   }

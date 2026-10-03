@@ -3,9 +3,14 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import { characterAbilitiesInCharacter } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 
-class CharacterAbilitiesRepository extends BaseRepository<typeof characterAbilitiesInCharacter> {
+class CharacterAbilitiesRepository extends include(
+  BaseRepository<typeof characterAbilitiesInCharacter>,
+  ResolvesCopies,
+) {
   constructor() {
     super(characterAbilitiesInCharacter);
   }

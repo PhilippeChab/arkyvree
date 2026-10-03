@@ -35,7 +35,7 @@ Inside the scope:
 - A `cowContext` is activated, which turns on three automatic behaviours in the repository Proxy:
   1. **Input canonicalization** — `Items.findOne({ id: preCowId })` rewrites `id` to post-COW before hitting Postgres.
   2. **Output FK resolution** — returned rows have every `*Id` field remapped to post-COW.
-  3. **Composite-key expansion** — `CharacterAbilities.update(tx, values, { characterId, abilityId })` matches both the pre-COW stored row and post-COW client input through `BaseRepository.idMatches`.
+  3. **Composite-key expansion** — `CharacterAbilities.update(tx, values, { characterId, abilityId })` matches both the pre-COW stored row and post-COW client input through `idMatches` (the `ResolvesCopies` concern).
 
 COW ownership resolution needs stored IDs. Inside `cow/`, use `withCowContext(undefined, () => Modifiers.findOne(db, { id }))` for that lookup. This existing infrastructure scope disables remapping for the read and restores the caller's context afterward. SQL stays in the shared repository; ordinary service reads continue to use `withRulesetScope`.
 
@@ -109,7 +109,7 @@ Every downstream read inside `fn` — including nested `detailedCharacter.build(
 
 Rare but real:
 
-- **Character-scoped composite-key stored rows.** `idMatches` (in `BaseRepository`) already handles this for `CharacterAbilities` / `CharacterInventory` / `CharacterLanguages` / `CharacterLevel{Feats,Powers,Skills}`: inside cowContext, a composite WHERE on an entity-id column automatically expands to `IN (target, ...preCowIds)` to match legacy pre-COW rows. If you're adding a new character-scoped repo with a composite key on a forkable id field, use `this.idMatches(this.table.fooId, where.fooId)` in its `findOne` / `update` / `delete` predicates (see `CharacterInventoryRepository` for the pattern).
+- **Character-scoped composite-key stored rows.** `idMatches` (the `ResolvesCopies` concern, `server/repositories/concerns/`) already handles this for `CharacterAbilities` / `CharacterInventory` / `CharacterLanguages` / `CharacterLevel{Feats,Powers,Skills}`: inside cowContext, a composite WHERE on an entity-id column automatically expands to `IN (target, ...preCowIds)` to match legacy pre-COW rows. If you're adding a new character-scoped repo with a composite key on a forkable id field, use `this.idMatches(this.table.fooId, where.fooId)` in its `findOne` / `update` / `delete` predicates (see `CharacterInventoryRepository` for the pattern).
 
 - **Lineage checks that touch `rulesetId` fields.** `rulesetData.cow.sourceChain` is the ancestor chain. For validating that a submitted entity belongs to the character's ruleset or one of its ancestors, build `new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain])` and check `.has(entity.rulesetId)` (or use `sourceChain.includes(entity.rulesetId)` when the self id isn't relevant). Examples: `CharacterInventoryService.addItem`, `CharactersService.updateLanguages`.
 
@@ -158,7 +158,7 @@ Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`,
 - **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `getOrFetchRulesetData`, `invalidateCowData`, `invalidateAllCowData`.
 - **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `resolveOverrides`.
 - **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `getOrFetchRulesetRawData`, `isRulesetRawDataPinned`.
-- **AsyncLocalStorage wiring**: `withCowContext`, `currentCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy and `BaseRepository.idMatches`.
+- **AsyncLocalStorage wiring**: `withCowContext`, `currentCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy and `idMatches` (`ResolvesCopies`).
 
 ## Ruleset Cache
 
@@ -483,7 +483,7 @@ The Proxy detects writes by matching method names against a prefix list (`create
 - `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `currentCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
-- `server/repositories/BaseRepository.ts` — `idMatches()` predicate for cowContext-aware composite-key WHERE clauses
+- `server/repositories/concerns/ResolvesCopies.ts` — `idMatches()` predicate for cowContext-aware composite-key WHERE clauses
 - `server/rulesets/AbstractDetailedCharacter.ts` — `build()` wraps in `withRulesetScope` and hands preloaded ruleset data to the data loader
 - `server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts` — requires `PreloadedRulesetData`; never fetches ruleset-level state itself
 - `server/timing.ts` — hit/miss counters surfaced in request logs

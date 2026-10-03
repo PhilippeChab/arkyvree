@@ -3,9 +3,16 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import { charactersInCharacter, languagesInCharacter, languagesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { ChecksRulesetUse } from "@/server/repositories/concerns/ChecksRulesetUse.ts";
+import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 
-class CharacterLanguagesRepository extends BaseRepository<typeof languagesInCharacter> {
+class CharacterLanguagesRepository extends include(
+  BaseRepository<typeof languagesInCharacter>,
+  ChecksRulesetUse,
+  ResolvesCopies,
+) {
   constructor() {
     super(languagesInCharacter);
   }

@@ -7,7 +7,7 @@ import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> {
   constructor() {
-    super(attachmentsInStorage, "attachments");
+    super(attachmentsInStorage);
   }
 
   async findManyByBlobIds(db: Db, where: { blobIds: string[] }) {

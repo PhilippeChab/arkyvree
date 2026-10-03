@@ -3,9 +3,12 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import { playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { include } from "@/server/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
+import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
-class PlayersRepository extends BaseRepository<typeof playersInCampaign> {
+class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>, Paginates, Searches) {
   constructor() {
     super(playersInCampaign);
   }
