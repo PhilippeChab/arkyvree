@@ -38,9 +38,9 @@ import {
   buildProjectedCharacterLevel,
   buildProjectedGivenFeats,
   buildProjectedSelections,
-  classSkillIds,
   getLevelIdsFromOnward,
   loadFeatCustomizations,
+  plannedClassSkills,
 } from "./helpers.ts";
 import { validateAndFetchLevelSelections } from "./validation.ts";
 
@@ -465,25 +465,21 @@ export async function finalizeLevelUp(
         rulesetData,
       );
 
-      // Per-level class skill IDs
       const allSkills = rulesetData.skills;
-      const klassSkillRecords = (klassId: string) => rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [];
-      const perLevelClassSkillIds = klassLevelEntries.map(({ klass }) => {
-        const ids = classSkillIds(klassSkillRecords(klass.id), allSkills);
-        return allSkills.filter((s) => ids.has(s.id)).map((s) => s.id);
-      });
+      const classSkills = plannedClassSkills(
+        rulesetData,
+        klassLevelEntries.map(({ klass }) => klass.id),
+      );
 
       // Build skill contexts (current rank + class skill status)
       const characterSkills = levelUpProjector.getCharacterSkills();
-      const allKlassIds = [...new Set(levels.map((l) => l.klassId))];
-      const mergedClassSkillIds = classSkillIds(allKlassIds.flatMap(klassSkillRecords), allSkills);
       const skillContexts = new Map<string, { isClassSkill: boolean; currentRank: number }>();
       for (const skill of allSkills) {
         const skillData = characterSkills[stripSeparators(skill.name)] as
           | { innate?: boolean; rank?: number }
           | undefined;
         skillContexts.set(skill.id, {
-          isClassSkill: skillData?.innate ?? mergedClassSkillIds.has(skill.id),
+          isClassSkill: skillData?.innate ?? classSkills.merged.has(skill.id),
           currentRank: skillData?.rank || 0,
         });
       }
@@ -534,7 +530,7 @@ export async function finalizeLevelUp(
       // Run distribution
       const distributionData: PerLevelDistributionData = {
         perLevelSkillPoints,
-        perLevelClassSkillIds,
+        perLevelClassSkillIds: classSkills.perLevel,
         perLevelFeatSlots,
         perLevelPowerSlots,
         baseCharacterLevel: baseExistingLevels.length,
