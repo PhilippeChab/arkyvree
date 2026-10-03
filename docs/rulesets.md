@@ -421,8 +421,8 @@ server/
 │       ├── DetailedCharacter.ts           (extends AbstractDetailedCharacter)
 │       ├── DetailedCharacterDataLoader.ts
 │       ├── DetailedCharacterSkills.ts     (3.5 rank system)
-│       ├── DetailedCharacterCombat.ts     (BAB, attacks)
-│       ├── DetailedCharacterSpellcasting.ts
+│       ├── DetailedCharacterCombat.ts     (includes combat/: ArmorClass, HitPoints, Attacks, InitiativeAndSpeed)
+│       ├── DetailedCharacterSpellcasting.ts (includes spellcasting/: BonusCasterLevels, KnownPowers)
 │       ├── LevelUpProjector.ts            (3.5 projector impl)
 │       ├── TargetPaths.ts
 │       ├── buildCharacterResponse.ts      (3.5 API response shape)
