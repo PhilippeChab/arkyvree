@@ -21,7 +21,7 @@ export type RulesetEntityFilters<Extra extends object = object> = Extra & {
  * campaign's. A repository that includes it names its `entityType`, the type its copies' snapshots record.
  */
 export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Base: B) {
-  abstract class ScopedToRuleset extends Base {
+  abstract class ScopingToRuleset extends Base {
     protected abstract readonly entityType: string;
 
     protected buildRulesetCondition(db: Db, where: RulesetEntityFilters): SQL<unknown> {
@@ -66,5 +66,5 @@ export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Ba
       return inherited ? or(childOwned, inherited)! : childOwned!;
     }
   }
-  return ScopedToRuleset;
+  return ScopingToRuleset;
 }

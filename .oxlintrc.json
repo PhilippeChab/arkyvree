@@ -60,6 +60,7 @@
     "arkyvree/shared-runtime": "error",
     "arkyvree/session-param": "error",
     "arkyvree/test-placement": "error",
+    "arkyvree/concern-shape": "error",
     // The client's conventions (lint/frontend.mjs) and the tests' (lint/testing.mjs).
     "arkyvree/accessible-icon-buttons": "error",
     "arkyvree/dialog-conventions": "error",
