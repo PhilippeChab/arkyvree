@@ -278,8 +278,8 @@ class CampaignPlayersService {
       const removedPlayer = player;
 
       await Players.delete(tx, { id: playerId });
-      await Invites.deleteByPlayerId(tx, { playerId });
-      await PlayerCharacters.deleteByPlayerId(tx, { playerId });
+      await Invites.delete(tx, { playerId });
+      await PlayerCharacters.delete(tx, { playerId });
 
       await Activities.create(tx, {
         userId: session.userId,

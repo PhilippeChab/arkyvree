@@ -5,9 +5,14 @@ import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { ChecksExistence } from "@/server/repositories/concerns/ChecksExistence.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 
-class ModifiersRepository extends include(BaseRepository<typeof modifiersInCustomization>, GuardsStaleEdits) {
+class ModifiersRepository extends include(
+  BaseRepository<typeof modifiersInCustomization>,
+  GuardsStaleEdits,
+  ChecksExistence,
+) {
   constructor() {
     super(modifiersInCustomization);
   }
@@ -63,7 +68,7 @@ class ModifiersRepository extends include(BaseRepository<typeof modifiersInCusto
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteMany(db: Db, where: { ids: string[] } | { sourceIds: string[]; sourceType: string }) {
+  async delete(db: Db, where: { ids: string[] } | { sourceIds: string[]; sourceType: string }) {
     return await db
       .delete(this.table)
       .where(

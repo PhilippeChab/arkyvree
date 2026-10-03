@@ -46,17 +46,27 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     return await db.insert(this.table).values(values).returning();
   }
 
-  async deleteBySourceAndRuleset(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
+  async delete(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
     return await db
       .delete(this.table)
       .where(and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)));
   }
 
-  /** Call inside the copying transaction, before reading its snapshot. */
-  async lockForCopy(db: Db, rulesetId: string, sourceEntityId: string) {
-    // There may be no snapshot row to lock yet. Scope the advisory lock to
-    // this fork/source pair so unrelated copies can proceed independently.
-    await db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`cow:${rulesetId}:${sourceEntityId}`}, 0))`);
+  /**
+   * Locks a row (`{ id }`), or a fork's copy of a source entity (`{ rulesetId, sourceEntityId }`): an advisory lock
+   * scoped to the pair, since there may be no snapshot row to lock yet, so unrelated copies proceed independently.
+   */
+  async lock(
+    db: Db,
+    where: { id: string } | { rulesetId: string; sourceEntityId: string },
+    mode: "update" | "share" = "update",
+    skipLocked = false,
+  ): Promise<boolean> {
+    if ("id" in where) return await super.lock(db, where, mode, skipLocked);
+    await db.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`cow:${where.rulesetId}:${where.sourceEntityId}`}, 0))`,
+    );
+    return true;
   }
 }
 

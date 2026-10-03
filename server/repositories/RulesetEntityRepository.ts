@@ -15,6 +15,7 @@ import type {
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { ChecksExistence } from "@/server/repositories/concerns/ChecksExistence.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 import { ScopesToRuleset } from "@/server/repositories/concerns/ScopesToRuleset.ts";
@@ -32,10 +33,17 @@ type RulesetEntityTable =
   | typeof savesInRules
   | typeof skillsInRules;
 
-/** A ruleset entity's repository: the writes every entity's service makes the same way. Each reads its own table. */
-/** What every ruleset entity's repository includes: its list (pages, search, the ruleset's scope) and edits. */
-const RulesetEntityBase = include(BaseRepository, Paginates, Searches, ScopesToRuleset, GuardsStaleEdits);
+/** What every ruleset entity's repository includes: its list (pages, search, the ruleset's scope), edits and `exists`. */
+const RulesetEntityBase = include(
+  BaseRepository,
+  Paginates,
+  Searches,
+  ScopesToRuleset,
+  GuardsStaleEdits,
+  ChecksExistence,
+);
 
+/** A ruleset entity's repository: the writes every entity's service makes the same way. Each reads its own table. */
 abstract class RulesetEntityRepository<T extends RulesetEntityTable> extends RulesetEntityBase<T> {
   // Through the concerns, `table` reads as `Table & T`: its own type is T.
   declare protected readonly table: T;

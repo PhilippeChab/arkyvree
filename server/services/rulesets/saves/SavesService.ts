@@ -142,7 +142,7 @@ class SavesService {
         // Saves don't have a character-pick path — class-side check instead.
         // klass_level_saves.save_id is ON DELETE RESTRICT, so this is just for
         // the friendlier error.
-        const inUse = await KlassLevelSaves.existsBySaveId(tx, { saveId: save.id });
+        const inUse = await KlassLevelSaves.exists(tx, { saveId: save.id });
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
         const targetId = await entityToDelete(tx, ruleset, sourceChain, "saves", save);

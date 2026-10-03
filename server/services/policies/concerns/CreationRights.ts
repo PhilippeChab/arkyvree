@@ -26,7 +26,7 @@ export function CreationRights<B extends Constructor<RulesetRoles>>(Base: B) {
         return true;
       }
 
-      const campaignAccess = await Players.existsOnRuleset(tx, {
+      const campaignAccess = await Players.exists(tx, {
         userId: this.session.userId,
         rulesetId: this.entity.id,
       });

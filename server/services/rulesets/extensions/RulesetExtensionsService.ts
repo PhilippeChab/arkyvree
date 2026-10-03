@@ -59,47 +59,47 @@ class RulesetExtensionsService {
     return await withCowContext(
       undefined,
       async () =>
-        (await CharacterLevelFeats.existsByFeatPickFromExtension(tx, {
+        (await CharacterLevelFeats.exists(tx, {
           hostRulesetId,
           extensionRulesetId: extensionId,
           shadowFeatIds: shadow("feats"),
         })) ||
-        (await CharacterLevelFeats.existsByAptitudePickFromExtension(tx, {
+        (await CharacterLevelFeats.exists(tx, {
           hostRulesetId,
           extensionRulesetId: extensionId,
           shadowAptitudeIds: shadow("aptitudes"),
         })) ||
-        (await CharacterLevelSkills.existsBySkillPickFromExtension(tx, {
+        (await CharacterLevelSkills.exists(tx, {
           hostRulesetId,
           extensionRulesetId: extensionId,
           shadowSkillIds: shadow("skills"),
         })) ||
-        (await CharacterLevelPowers.existsByPowerPickFromExtension(tx, {
+        (await CharacterLevelPowers.exists(tx, {
           hostRulesetId,
           extensionRulesetId: extensionId,
           shadowPowerIds: shadow("powers"),
         })) ||
-        (await CharacterLevelPowers.existsByAptitudePickFromExtension(tx, {
+        (await CharacterLevelPowers.exists(tx, {
           hostRulesetId,
           extensionRulesetId: extensionId,
           shadowAptitudeIds: shadow("aptitudes"),
         })) ||
-        (await CharacterLevels.existsByKlassPickFromExtension(tx, {
+        (await CharacterLevels.exists(tx, {
           hostRulesetId,
           extensionRulesetId: extensionId,
           shadowKlassIds: shadow("klasses"),
         })) ||
-        (await Characters.existsByRaceFromExtension(tx, {
+        (await Characters.exists(tx, {
           hostRulesetId,
           extensionRulesetId: extensionId,
           shadowRaceIds: shadow("races"),
         })) ||
-        (await CharacterLanguages.existsByLanguagePickFromExtension(tx, {
+        (await CharacterLanguages.exists(tx, {
           hostRulesetId,
           extensionRulesetId: extensionId,
           shadowLanguageIds: shadow("languages"),
         })) ||
-        (await CharacterInventory.existsByItemPickFromExtension(tx, {
+        (await CharacterInventory.exists(tx, {
           hostRulesetId,
           extensionRulesetId: extensionId,
           shadowItemIds: shadow("items"),
@@ -300,7 +300,7 @@ class RulesetExtensionsService {
       for (const snap of extensionSnapshots) {
         const entityType = snap.entityType as EntityType;
         await deleteEntityWithCascade(tx, entityType, snap.forkedEntityId);
-        await EntitySnapshots.deleteBySourceAndRuleset(tx, {
+        await EntitySnapshots.delete(tx, {
           sourceEntityId: snap.sourceEntityId,
           rulesetId: id,
         });

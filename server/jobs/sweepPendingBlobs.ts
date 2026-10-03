@@ -18,7 +18,7 @@ type SweepResult = "swept" | "failed" | "skipped";
 
 async function sweepOne(blobId: string, key: string, logger: Logger): Promise<SweepResult> {
   return await withTransaction(async (tx) => {
-    if (!(await Blobs.lockById(tx, blobId, "update", true))) return "skipped";
+    if (!(await Blobs.lock(tx, { id: blobId }, "update", true))) return "skipped";
 
     const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
     if (refs.length > 0) return "skipped";

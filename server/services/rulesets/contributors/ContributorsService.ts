@@ -48,7 +48,7 @@ class ContributorsService {
    */
   private async answerInvite(tx: Db, session: Session, contributorId: string, status: "Active" | "Rejected") {
     const [updated] = await Contributors.update(tx, { status }, { id: contributorId });
-    await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributorId });
+    await Notifications.markRead(tx, { recipientId: session.userId, targetId: contributorId });
     await createActivityWithNotifications(tx, {
       userId: session.userId,
       targetId: updated.id,

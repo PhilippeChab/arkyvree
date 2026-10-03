@@ -10,7 +10,7 @@ class KlassLevelSavesRepository extends BaseRepository<typeof klassLevelSavesInR
     super(klassLevelSavesInRules);
   }
 
-  async existsBySaveId(db: Db, where: { saveId: string }) {
+  async exists(db: Db, where: { saveId: string }) {
     const result = await db.query.klassLevelSavesInRules.findFirst({
       where: and(eq(this.table.saveId, where.saveId), isNull(this.table.deletedAt)),
     });
@@ -29,14 +29,19 @@ class KlassLevelSavesRepository extends BaseRepository<typeof klassLevelSavesInR
   }
 
   // Exception to soft-delete: disposable configuration data
-  async deleteByKlassLevelId(db: Db, where: { klassLevelId: string }) {
-    return await db.delete(this.table).where(eq(this.table.klassLevelId, where.klassLevelId)).returning();
+  async delete(db: Db, where: { klassLevelId: string } | { saveId: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.where([
+          "klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId),
+          "saveId" in where && eq(this.table.saveId, where.saveId),
+        ]),
+      )
+      .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteBySaveId(db: Db, where: { saveId: string }) {
-    return await db.delete(this.table).where(eq(this.table.saveId, where.saveId)).returning();
-  }
 }
 
 export default KlassLevelSavesRepository;

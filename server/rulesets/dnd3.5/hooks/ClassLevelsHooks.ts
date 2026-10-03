@@ -205,7 +205,7 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
   }
 
   async syncProperties(tx: Db, levelId: string, body: { bab: number; skills: number }): Promise<void> {
-    await Properties.deleteMany(tx, {
+    await Properties.delete(tx, {
       entityIds: [levelId],
       entityType: "klass_levels",
       types: [KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS],

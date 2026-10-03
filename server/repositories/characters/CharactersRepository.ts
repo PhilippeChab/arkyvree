@@ -29,22 +29,18 @@ class CharactersRepository extends include(
     super(charactersInCharacter);
   }
 
-  async count(db: Db, where: { userId: string }) {
-    const [result] = await db
-      .select({ count: count() })
-      .from(charactersInCharacter)
-      .where(
-        and(
-          isNull(charactersInCharacter.deletedAt),
-          eq(charactersInCharacter.userId, where.userId),
-          eq(charactersInCharacter.kind, "pc"),
-        ),
-      );
-
-    return result.count;
+  // Archived characters count — see `project_archive_preserves_picks` memory.
+  private async existsRacePick(db: Db, where: { raceId: string; rulesetId: string }) {
+    const rows = await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(this.table.rulesetId, where.rulesetId))
+      .where(this.idMatches(this.table.raceId, where.raceId))
+      .limit(1);
+    return rows.length > 0;
   }
 
-  async existsByRaceFromExtension(
+  private async existsRacePickFromExtension(
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowRaceIds: string[] },
   ) {
@@ -61,15 +57,33 @@ class CharactersRepository extends include(
     return rows.length > 0;
   }
 
-  // Archived characters count — see `project_archive_preserves_picks` memory.
-  async existsByRaceId(db: Db, where: { raceId: string; rulesetId: string }) {
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(this.table.rulesetId, where.rulesetId))
-      .where(this.idMatches(this.table.raceId, where.raceId))
-      .limit(1);
-    return rows.length > 0;
+  async count(db: Db, where: { userId: string }) {
+    const [result] = await db
+      .select({ count: count() })
+      .from(charactersInCharacter)
+      .where(
+        and(
+          isNull(charactersInCharacter.deletedAt),
+          eq(charactersInCharacter.userId, where.userId),
+          eq(charactersInCharacter.kind, "pc"),
+        ),
+      );
+
+    return result.count;
+  }
+
+  /**
+   * Whether a character on the ruleset (or a descendant) is of the race, or, with an extension, of one of its races:
+   * an in-use check.
+   */
+  async exists(
+    db: Db,
+    where:
+      | { raceId: string; rulesetId: string }
+      | { hostRulesetId: string; extensionRulesetId: string; shadowRaceIds: string[] },
+  ): Promise<boolean> {
+    if ("raceId" in where) return await this.existsRacePick(db, where);
+    return await this.existsRacePickFromExtension(db, where);
   }
 
   async findIdsByUserIds(db: Db, where: { userIds: string[] }) {
@@ -304,27 +318,26 @@ class CharactersRepository extends include(
       .returning();
   }
 
-  async archive(db: Db, where: { id: string }) {
+  /** Archives a character and its children (`{ id }`), or every character a user owns (`{ userId }`). */
+  async archive(db: Db, where: { id: string } | { userId: string }) {
     const archived = await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .where(
+        this.where([
+          "id" in where && eq(this.table.id, where.id),
+          "userId" in where && eq(this.table.userId, where.userId),
+          isNull(this.table.deletedAt),
+        ]),
+      )
       .returning();
-    if (archived.length > 0) {
+    if ("id" in where && archived.length > 0) {
       await db
         .update(this.table)
         .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
         .where(and(eq(this.table.parentCharacterId, where.id), isNull(this.table.deletedAt)));
     }
     return archived;
-  }
-
-  async archiveAllForUser(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
   }
 
   /** Hard delete — bonded children are reconcile-managed, not user-archived. */

@@ -37,7 +37,7 @@ class AuthenticationService {
         if (elapsed < 5 * 60 * 1000) return { code: null };
       }
 
-      await PasswordResets.archiveAllForUser(tx, { userId: user.id });
+      await PasswordResets.archive(tx, { userId: user.id });
 
       const code = generateVerificationCode();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
@@ -71,7 +71,7 @@ class AuthenticationService {
         if (elapsed < 5 * 60 * 1000) return { code: null };
       }
 
-      await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
+      await EmailVerifications.archive(tx, { userId: user.id });
 
       const code = generateVerificationCode();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
@@ -111,7 +111,7 @@ class AuthenticationService {
       const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
       await PasswordResets.archive(tx, { id: reset.id });
-      await Sessions.archiveAllForUser(tx, { userId: user.id });
+      await Sessions.archive(tx, { userId: user.id });
 
       await Activities.create(tx, {
         userId: user.id,

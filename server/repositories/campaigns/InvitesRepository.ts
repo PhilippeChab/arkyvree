@@ -149,7 +149,7 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
       .returning();
   }
 
-  async archiveAllForUser(db: Db, where: { userId: string }) {
+  async archive(db: Db, where: { userId: string }) {
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
@@ -158,7 +158,7 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
   }
 
   // Hard delete — used when intentionally removing a player from a campaign
-  async deleteByPlayerId(db: Db, where: { playerId: string }) {
+  async delete(db: Db, where: { playerId: string }) {
     return await db.delete(this.table).where(eq(this.table.playerId, where.playerId)).returning();
   }
 }

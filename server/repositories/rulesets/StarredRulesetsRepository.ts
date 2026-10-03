@@ -9,7 +9,7 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
     super(starredRulesetsInAccount);
   }
 
-  async countByRulesetId(db: Db, where: { rulesetId: string }) {
+  async count(db: Db, where: { rulesetId: string }) {
     const [row] = await db
       .select({ count: count() })
       .from(this.table)
@@ -17,7 +17,8 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
     return row?.count ?? 0;
   }
 
-  async countByRulesetIds(db: Db, where: { rulesetIds: string[] }) {
+  /** Each ruleset's star count, by ruleset id (a ruleset without stars has no entry). */
+  async countPerRuleset(db: Db, where: { rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0) return new Map<string, number>();
     const rows = await db
       .select({ rulesetId: this.table.rulesetId, count: count() })
@@ -43,7 +44,8 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
     });
   }
 
-  async createOrRestore(db: Db, values: { userId: string; rulesetId: string }) {
+  /** Stars the ruleset, or restores an archived star. */
+  async upsert(db: Db, values: { userId: string; rulesetId: string }) {
     return await db
       .insert(this.table)
       .values(values)
@@ -57,25 +59,17 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
       .returning();
   }
 
-  async archive(db: Db, where: { userId: string; rulesetId: string }) {
+  async archive(db: Db, where: { userId: string; rulesetId: string } | { userId: string }) {
     return await db
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(
-        and(
+        this.where([
           eq(this.table.userId, where.userId),
-          eq(this.table.rulesetId, where.rulesetId),
+          "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
           isNull(this.table.deletedAt),
-        ),
+        ]),
       )
-      .returning();
-  }
-
-  async archiveAllForUser(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
       .returning();
   }
 }

@@ -17,8 +17,8 @@ export function EntityRights<B extends Constructor<RulesetRoles>>(Base: B) {
      * the character (level_feats_in_character.feat_id), so the character-side
      * check covers that case.
      *
-     * The Character* repos' existsBy* methods take { id, rulesetId } and
-     * internally join on rulesets to also count characters whose host ruleset
+     * The Character* repos' in-use exists takes { <entity>Id, rulesetId } and
+     * internally joins on rulesets to also count characters whose host ruleset
      * either descends from this ruleset (ancestor_ruleset_ids array overlap)
      * or subscribes to it as an extension (extension_ruleset_ids array overlap).
      * Don't include characters from sibling/parent rulesets — they're unrelated.

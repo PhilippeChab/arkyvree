@@ -19,7 +19,7 @@ class CharacterInventoryRepository extends include(
     super(inventoryInCharacter);
   }
 
-  async existsByItemId(db: Db, where: { itemId: string; rulesetId: string }) {
+  private async existsItemPick(db: Db, where: { itemId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.itemId })
       .from(this.table)
@@ -31,7 +31,7 @@ class CharacterInventoryRepository extends include(
   }
 
   // Archived characters count — see `project_archive_preserves_picks` memory.
-  async existsByItemPickFromExtension(
+  private async existsItemPickFromExtension(
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowItemIds: string[] },
   ) {
@@ -53,6 +53,20 @@ class CharacterInventoryRepository extends include(
       .where(and(isNull(this.table.deletedAt), itemCondition))
       .limit(1);
     return rows.length > 0;
+  }
+
+  /**
+   * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
+   * an in-use check.
+   */
+  async exists(
+    db: Db,
+    where:
+      | { itemId: string; rulesetId: string }
+      | { hostRulesetId: string; extensionRulesetId: string; shadowItemIds: string[] },
+  ): Promise<boolean> {
+    if ("itemId" in where) return await this.existsItemPick(db, where);
+    return await this.existsItemPickFromExtension(db, where);
   }
 
   async findMany(db: Db, where: { characterId: string }) {

@@ -26,18 +26,21 @@ class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInR
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteByAptitudeId(db: Db, where: { aptitudeId: string }) {
-    return await db.delete(this.table).where(eq(this.table.aptitudeId, where.aptitudeId)).returning();
-  }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteByFeatId(db: Db, where: { featId: string }) {
-    return await db.delete(this.table).where(eq(this.table.featId, where.featId)).returning();
-  }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteByKlassLevelId(db: Db, where: { klassLevelId: string }) {
-    return await db.delete(this.table).where(eq(this.table.klassLevelId, where.klassLevelId)).returning();
+  async delete(db: Db, where: { klassLevelId: string } | { featId: string } | { aptitudeId: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.where([
+          "klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId),
+          "featId" in where && eq(this.table.featId, where.featId),
+          "aptitudeId" in where && eq(this.table.aptitudeId, where.aptitudeId),
+        ]),
+      )
+      .returning();
   }
 }
 

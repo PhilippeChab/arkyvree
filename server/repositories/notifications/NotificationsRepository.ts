@@ -1,4 +1,4 @@
-import { and, count, eq, gte, isNull, lt, notInArray } from "drizzle-orm";
+import { count, eq, gte, isNull, lt, notInArray } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import { notificationsInAccount } from "@/drizzle/schema.ts";
@@ -13,7 +13,8 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     super(notificationsInAccount);
   }
 
-  async countUnread(db: Db, where: { recipientId: string }) {
+  /** The recipient's unread notifications from the last three months: what the bell counts. */
+  async count(db: Db, where: { recipientId: string; unread: true }) {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
@@ -75,38 +76,25 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     return await db.insert(this.table).values(values).returning();
   }
 
-  async markAllRead(db: Db, where: { recipientId: string; excludeTypes?: string[] }) {
+  /** Marks the recipient's notifications read: one (`id`), those about a target (`targetId`), or all but some types. */
+  async markRead(
+    db: Db,
+    where:
+      | { id: string; recipientId: string }
+      | { recipientId: string; targetId: string }
+      | { recipientId: string; excludeTypes?: string[] },
+  ) {
     return await db
       .update(this.table)
       .set({ readAt: new Date().toISOString() })
       .where(
         this.where([
+          "id" in where && eq(this.table.id, where.id),
           eq(this.table.recipientId, where.recipientId),
+          "targetId" in where && eq(this.table.targetId, where.targetId),
+          "excludeTypes" in where && !!where.excludeTypes?.length && notInArray(this.table.type, where.excludeTypes),
           isNull(this.table.readAt),
-          where.excludeTypes && where.excludeTypes.length > 0 ? notInArray(this.table.type, where.excludeTypes) : false,
         ]),
-      )
-      .returning();
-  }
-
-  async markRead(db: Db, where: { id: string; recipientId: string }) {
-    return await db
-      .update(this.table)
-      .set({ readAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), eq(this.table.recipientId, where.recipientId), isNull(this.table.readAt)))
-      .returning();
-  }
-
-  async markReadByTarget(db: Db, where: { recipientId: string; targetId: string }) {
-    return await db
-      .update(this.table)
-      .set({ readAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.recipientId, where.recipientId),
-          eq(this.table.targetId, where.targetId),
-          isNull(this.table.readAt),
-        ),
       )
       .returning();
   }

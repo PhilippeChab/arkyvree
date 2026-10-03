@@ -52,23 +52,19 @@ class PowersAptitudesRepository extends BaseRepository<typeof powersAptitudesInR
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { powerId: string; aptitudeId?: string }) {
-    const conditions = [eq(this.table.powerId, where.powerId)];
-
-    if (where.aptitudeId) {
-      conditions.push(eq(this.table.aptitudeId, where.aptitudeId));
-    }
-
+  async delete(db: Db, where: { powerId: string; aptitudeId?: string } | { aptitudeId: string }) {
     return await db
       .delete(this.table)
-      .where(and(...conditions))
+      .where(
+        this.where([
+          "powerId" in where && eq(this.table.powerId, where.powerId),
+          where.aptitudeId !== undefined && eq(this.table.aptitudeId, where.aptitudeId),
+        ]),
+      )
       .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async deleteByAptitudeId(db: Db, where: { aptitudeId: string }) {
-    return await db.delete(this.table).where(eq(this.table.aptitudeId, where.aptitudeId)).returning();
-  }
 }
 
 export default PowersAptitudesRepository;

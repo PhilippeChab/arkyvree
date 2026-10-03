@@ -306,7 +306,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         }
 
         if (feats !== undefined) {
-          await KlassLevelFeats.deleteByKlassLevelId(tx, { klassLevelId: resolvedLevelId });
+          await KlassLevelFeats.delete(tx, { klassLevelId: resolvedLevelId });
 
           if (feats.length > 0) {
             await KlassLevelFeats.createMany(
@@ -322,7 +322,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         }
 
         if (saves !== undefined) {
-          await KlassLevelSaves.deleteByKlassLevelId(tx, { klassLevelId: resolvedLevelId });
+          await KlassLevelSaves.delete(tx, { klassLevelId: resolvedLevelId });
 
           if (saves.length > 0) {
             await KlassLevelSaves.createMany(

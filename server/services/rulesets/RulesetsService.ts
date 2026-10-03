@@ -53,7 +53,7 @@ class RulesetsService extends include(Object, Stars, Archives, Publishes) {
     const rulesetIds = rulesets.items.map((r) => r.id);
     const [starred, starCounts] = await Promise.all([
       StarredRulesets.findMany(db, { userId: session.userId }),
-      StarredRulesets.countByRulesetIds(db, { rulesetIds }),
+      StarredRulesets.countPerRuleset(db, { rulesetIds }),
     ]);
     const starredSet = new Set(starred.map((s) => s.rulesetId));
 
@@ -87,11 +87,11 @@ class RulesetsService extends include(Object, Stars, Archives, Publishes) {
 
     const [star, starCount, contributorRole, isUsedAsExtension] = await Promise.all([
       StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
-      StarredRulesets.countByRulesetId(db, { rulesetId: id }),
+      StarredRulesets.count(db, { rulesetId: id }),
       ruleset.userId && ruleset.userId !== session.userId
         ? Contributors.findActiveRole(db, { userId: session.userId, rulesetId: id })
         : null,
-      Rulesets.existsSubscriber(db, id),
+      Rulesets.exists(db, { extensionRulesetId: id }),
     ]);
 
     const parent = ruleset.rulesetId ? await Rulesets.findOne(db, { id: ruleset.rulesetId }) : undefined;

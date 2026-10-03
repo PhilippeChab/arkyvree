@@ -226,9 +226,9 @@ export async function updateLevel(
       }
 
       // Delete old children and update the character level
-      await CharacterLevelSkills.deleteByCharacterLevelId(tx, { characterLevelId });
-      await CharacterLevelFeats.deleteByCharacterLevelId(tx, { characterLevelId });
-      await CharacterLevelPowers.deleteByCharacterLevelId(tx, { characterLevelId });
+      await CharacterLevelSkills.delete(tx, { characterLevelId });
+      await CharacterLevelFeats.delete(tx, { characterLevelId });
+      await CharacterLevelPowers.delete(tx, { characterLevelId });
 
       await CharacterLevels.update(
         tx,
@@ -266,13 +266,13 @@ export async function removeLevel(session: Session, characterId: string) {
       throw new NotFoundError("No level to remove.");
     }
 
-    await CharacterLevelSkills.deleteByCharacterLevelId(tx, {
+    await CharacterLevelSkills.delete(tx, {
       characterLevelId: lastLevel.id,
     });
-    await CharacterLevelFeats.deleteByCharacterLevelId(tx, {
+    await CharacterLevelFeats.delete(tx, {
       characterLevelId: lastLevel.id,
     });
-    await CharacterLevelPowers.deleteByCharacterLevelId(tx, {
+    await CharacterLevelPowers.delete(tx, {
       characterLevelId: lastLevel.id,
     });
     await CharacterLevels.delete(tx, { id: lastLevel.id });

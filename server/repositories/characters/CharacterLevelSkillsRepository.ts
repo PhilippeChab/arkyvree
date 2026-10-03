@@ -23,7 +23,7 @@ class CharacterLevelSkillsRepository extends include(
     super(levelSkillsInCharacter);
   }
 
-  async existsBySkillId(db: Db, where: { skillId: string; rulesetId: string }) {
+  private async existsSkillPick(db: Db, where: { skillId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.skillId })
       .from(this.table)
@@ -36,7 +36,7 @@ class CharacterLevelSkillsRepository extends include(
   }
 
   // Archived characters count — see `project_archive_preserves_picks` memory.
-  async existsBySkillPickFromExtension(
+  private async existsSkillPickFromExtension(
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowSkillIds: string[] },
   ) {
@@ -61,6 +61,20 @@ class CharacterLevelSkillsRepository extends include(
     return rows.length > 0;
   }
 
+  /**
+   * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
+   * an in-use check.
+   */
+  async exists(
+    db: Db,
+    where:
+      | { skillId: string; rulesetId: string }
+      | { hostRulesetId: string; extensionRulesetId: string; shadowSkillIds: string[] },
+  ): Promise<boolean> {
+    if ("skillId" in where) return await this.existsSkillPick(db, where);
+    return await this.existsSkillPickFromExtension(db, where);
+  }
+
   async findMany(db: Db, where: { characterLevelIds: string[] }) {
     return await db.query.levelSkillsInCharacter.findMany({
       where: and(inArray(this.table.characterLevelId, where.characterLevelIds), isNull(this.table.deletedAt)),
@@ -73,7 +87,7 @@ class CharacterLevelSkillsRepository extends include(
   }
 
   // Exception to soft-delete: old picks are disposable when re-finalizing a level
-  async deleteByCharacterLevelId(db: Db, where: { characterLevelId: string }) {
+  async delete(db: Db, where: { characterLevelId: string }) {
     return await db.delete(this.table).where(eq(this.table.characterLevelId, where.characterLevelId));
   }
 }
