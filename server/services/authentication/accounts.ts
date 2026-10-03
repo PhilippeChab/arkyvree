@@ -1,8 +1,8 @@
 import { getTableName, type InferSelectModel } from "drizzle-orm";
 
-import { oauthAccountsInAccount, sessionsInAccount, type usersInAccount } from "@/drizzle/schema.ts";
+import { sessionsInAccount, type usersInAccount } from "@/drizzle/schema.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, InternalError } from "@/server/errors/index.ts";
+import { ConflictError, InternalError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
@@ -14,7 +14,6 @@ import {
   Sessions,
   Users,
 } from "@/server/repositories/index.ts";
-import type { Session } from "@/shared/relations.ts";
 
 /** The user as a response carries it: whether a password is set, never its digest. */
 export function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
@@ -128,37 +127,5 @@ export async function signInAsGoogleAccount(payload: { sub: string; email: strin
 
     const session = await openSession(tx, user, "signUp", { provider: "google" });
     return { session, user: toSafeUser(user) };
-  });
-}
-
-/** Links the Google account `googleAccountId` (Google verified it) to the session's user. */
-export async function linkGoogleAccountTo(session: Session, googleAccountId: string) {
-  return await withTransaction(async (tx) => {
-    const existing = await OauthAccounts.findOne(tx, {
-      provider: "google",
-      providerAccountId: googleAccountId,
-    });
-    if (existing) {
-      if (existing.userId === session.userId) {
-        throw new BadRequestError("This Google account is already linked to your account");
-      }
-      throw new BadRequestError("This Google account is already linked to another user");
-    }
-
-    await OauthAccounts.create(tx, {
-      userId: session.userId,
-      provider: "google",
-      providerAccountId: googleAccountId,
-    });
-
-    await Activities.create(tx, {
-      userId: session.userId,
-      targetId: session.userId,
-      targetTable: getTableName(oauthAccountsInAccount),
-      type: "linkOauth",
-      data: { provider: "google" },
-    });
-
-    return { success: true };
   });
 }
