@@ -104,7 +104,7 @@ class ItemsService extends include(Object, Variants) {
     return result;
   }
 
-  async getRulesetItem(rulesetId: string, itemId: string) {
+  async getItem(rulesetId: string, itemId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
@@ -128,7 +128,7 @@ class ItemsService extends include(Object, Variants) {
     });
   }
 
-  async getRulesetItems(
+  async getItems(
     rulesetId: string,
     where: {
       childOnly?: boolean;
@@ -153,15 +153,15 @@ class ItemsService extends include(Object, Variants) {
     });
   }
 
-  async createRulesetItem(session: Session, rulesetId: string, body: ItemBody) {
+  async createItem(session: Session, rulesetId: string, body: ItemBody) {
     return await this.addRulesetItem(session, rulesetId, body);
   }
 
-  async duplicateRulesetItem(session: Session, rulesetId: string, sourceItemId: string, body: ItemBody) {
+  async duplicateItem(session: Session, rulesetId: string, sourceItemId: string, body: ItemBody) {
     return await this.addRulesetItem(session, rulesetId, body, sourceItemId);
   }
 
-  async updateRulesetItem(session: Session, rulesetId: string, itemId: string, body: ItemBody) {
+  async updateItem(session: Session, rulesetId: string, itemId: string, body: ItemBody) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -213,7 +213,7 @@ class ItemsService extends include(Object, Variants) {
     return result;
   }
 
-  async deleteRulesetItem(session: Session, rulesetId: string, itemId: string) {
+  async deleteItem(session: Session, rulesetId: string, itemId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;

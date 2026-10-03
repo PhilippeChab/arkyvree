@@ -521,7 +521,7 @@ describe("LevelsService", () => {
         free: true,
       });
       await addOneLevel(session, character.id, klass.id, 1, 8, null, {}, {}, {}, true);
-      await ClassesService.updateRulesetKlass(session, ruleset.id, klass.id, {
+      await ClassesService.updateClass(session, ruleset.id, klass.id, {
         name: "Test Class",
         description: "Ours",
       });
@@ -1095,7 +1095,7 @@ describe("LevelsService", () => {
         });
         const characterId = await createSeedCharacter(ctx, "wizard", { xp: 3000, rulesetId: fork.id });
         await levelUp(session, ctx, characterId, "Wizard", 1, WIZARD_1);
-        await FeatsService.updateRulesetFeat(session, fork.id, ctx.featMap["Prohibit Illusion"], {
+        await FeatsService.updateFeat(session, fork.id, ctx.featMap["Prohibit Illusion"], {
           name: "Prohibit Illusion",
           description: "Copied",
         });

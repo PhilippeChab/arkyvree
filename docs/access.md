@@ -105,9 +105,9 @@ Constructed with `(session, campaign)`. No constructor flags; `canUpdate`/`canDe
 
 **Campaign character visibility** is *not* a CAS-protected surface — only the linking player can change visibility on their own character (`updateCharacterVisibility` throws `ForbiddenError "You do not own this character in this campaign"` for everyone else, including the GM: an identity match on the link's player). This is single-user contention by design.
 
-**Partial visibility filtering**: `getCampaignCharacters` strips `description` and `levels` for characters with `visibility: "Partial"` when the viewer is neither the owner nor a GM.
+**Partial visibility filtering**: `CampaignCharactersService.getCharacters` strips `description` and `levels` for characters with `visibility: "Partial"` when the viewer is neither the owner nor a GM.
 
-**`canEdit` on the campaign-character detail response**: `getCampaignCharacter` returns `isOwner` (link-slot ownership in the campaign), `canEdit` (character owner OR active character contributor), and `canDownloadPdf` (`canEdit` OR Game Master). The campaign character view shows "Edit Character" to `canEdit` only, and "Download PDF" to `canDownloadPdf` — `isOwner` is kept on the response for any future UI that needs the strict campaign-link semantics.
+**`canEdit` on the campaign-character detail response**: `CampaignCharactersService.getCharacter` returns `isOwner` (link-slot ownership in the campaign), `canEdit` (character owner OR active character contributor), and `canDownloadPdf` (`canEdit` OR Game Master). The campaign character view shows "Edit Character" to `canEdit` only, and "Download PDF" to `canDownloadPdf` — `isOwner` is kept on the response for any future UI that needs the strict campaign-link semantics.
 
 **PDF export of a campaign character** (`POST /campaigns/:id/characters/:characterId/pdf`): the character must be linked to the campaign; its editors and the Game Master may export it, whatever its visibility, since the GM already sees the full sheet. Archived campaigns still allow it: archiving makes a campaign read-only, and its character pages stay viewable. Every refusal is a 404, as for the character's own `POST /characters/:id/pdf`. Both go through `findExportableCharacter`, which the PDF worker runs again when the job starts, so access lost in between cancels the export.
 
@@ -134,7 +134,7 @@ The three invite lifecycles share the same shape:
 | Accept / reject | Identity match: `invite.userId === session.userId` (or `contributor.userId === session.userId` for contributor rows). Throws `NotFoundError` rather than `ForbiddenError` to avoid leaking the existence of invites addressed to other users |
 | Leave (self-remove from contributor or self-remove from campaign) | Identity match: must be holding the row being removed. Throws `NotFoundError` otherwise |
 
-`acceptCampaignInvite`, `rejectCampaignInvite`, `acceptContributorInvite` (rulesets and characters), `leaveRuleset`, and `leaveCharacter` all follow this pattern. Campaign self-leave goes through `CampaignPlayersService.removeCampaignPlayer` with the `isSelfRemoval = player.userId === session.userId` branch — same shape (identity match skips the GM gate). They're identity matches, not permission gates — see "Identity vs. policy" below.
+The invite services' `acceptInvite` and `rejectInvite` (campaigns, rulesets and characters), `leaveRuleset`, and `leaveCharacter` all follow this pattern. Campaign self-leave goes through `CampaignPlayersService.removePlayer` with the `isSelfRemoval = player.userId === session.userId` branch — same shape (identity match skips the GM gate). They're identity matches, not permission gates — see "Identity vs. policy" below.
 
 ## Customizations — `CustomizationsPolicy`
 
@@ -149,7 +149,7 @@ Modifiers, properties, and requirements live on a parent entity (a feat, item, k
 
 There are still a few inline `entity.userId === session.userId` checks in services. Those are **identity matches**, not permission gates — they're answering "is this me?" rather than "may I do this?". Keep them inline, don't move them into a policy:
 
-- `acceptCampaignInvite` / `acceptContributorInvite`: "is this invite addressed to me?"
+- The invite services' `acceptInvite`: "is this invite addressed to me?"
 - OAuth-link checks: "did I just link this account to myself?"
 - Self-removal predicates: `isSelfRemoval = player.userId === session.userId` branches behavior, doesn't gate it.
 - Boolean predicates returned by attachment registration: `Attachable.isOwner = (s, id) => character?.userId === s.userId`.

@@ -20,7 +20,7 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 class ClassesService {
-  async getRulesetKlass(rulesetId: string, klassId: string) {
+  async getClass(rulesetId: string, klassId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
@@ -34,7 +34,7 @@ class ClassesService {
     });
   }
 
-  async getRulesetKlasses(
+  async getClasses(
     rulesetId: string,
     where: {
       childOnly?: boolean;
@@ -55,7 +55,7 @@ class ClassesService {
     });
   }
 
-  async createRulesetKlass(
+  async createClass(
     session: Session,
     rulesetId: string,
     body: {
@@ -102,7 +102,7 @@ class ClassesService {
     return result;
   }
 
-  async updateRulesetKlass(
+  async updateClass(
     session: Session,
     rulesetId: string,
     klassId: string,
@@ -149,7 +149,7 @@ class ClassesService {
     return result;
   }
 
-  async deleteRulesetKlass(session: Session, rulesetId: string, klassId: string) {
+  async deleteClass(session: Session, rulesetId: string, klassId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;

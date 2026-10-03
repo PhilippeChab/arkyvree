@@ -70,6 +70,18 @@ export default new GoodService();
     ]);
   });
 
+  test("a service method names its resource, never an id lookup or the session's scope", () => {
+    expect(
+      lint({
+        "server/services/Good.ts":
+          "class GoodService {\n  getCampaign() {}\n  signIn() {}\n  markAllRead() {}\n}\nexport default new GoodService();\n",
+        "server/services/ById.ts":
+          "class ByIdService {\n  getCampaignById() {}\n}\nexport default new ByIdService();\n",
+        "server/services/My.ts": "class MyService {\n  getMyStats() {}\n}\nexport default new MyService();\n",
+      }),
+    ).toEqual(["method-names server/services/ById.ts", "method-names server/services/My.ts"]);
+  });
+
   test("a policy checks with can or is, and builds one with for", () => {
     expect(
       lint({

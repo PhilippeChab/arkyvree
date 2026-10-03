@@ -34,7 +34,7 @@ export default new Hono()
       const visibility = visibilityMap[query.visibility];
 
       return c.json(
-        await CampaignsService.getMyCampaigns(
+        await CampaignsService.getCampaigns(
           c.var.requestSession,
           { visibility, search: query.search, orderBy: query.orderBy, orderDir: query.orderDir },
           { limit: query.limit, page: query.page },
@@ -46,7 +46,7 @@ export default new Hono()
   .get("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
-    return c.json(await CampaignsService.getCampaignById(c.var.requestSession, id), 200);
+    return c.json(await CampaignsService.getCampaign(c.var.requestSession, id), 200);
   })
   .post(
     "/",

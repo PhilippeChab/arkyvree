@@ -25,7 +25,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await MechanicsService.getRulesetMechanics(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
+        await MechanicsService.getMechanics(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
         200,
       );
     },
@@ -35,7 +35,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), mechanicId: z.string().uuid() })),
     async (c) => {
       const { id, mechanicId } = c.req.valid("param");
-      return c.json(await MechanicsService.getRulesetMechanic(id, mechanicId), 200);
+      return c.json(await MechanicsService.getMechanic(id, mechanicId), 200);
     },
   )
   .post(
@@ -54,7 +54,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await MechanicsService.createRulesetMechanic(c.var.requestSession, id, body), 200);
+      return c.json(await MechanicsService.createMechanic(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -74,7 +74,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, mechanicId } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await MechanicsService.updateRulesetMechanic(c.var.requestSession, id, mechanicId, body), 200);
+      return c.json(await MechanicsService.updateMechanic(c.var.requestSession, id, mechanicId, body), 200);
     },
   )
   .delete(
@@ -82,6 +82,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), mechanicId: z.string().uuid() })),
     async (c) => {
       const { id, mechanicId } = c.req.valid("param");
-      return c.json(await MechanicsService.deleteRulesetMechanic(c.var.requestSession, id, mechanicId), 200);
+      return c.json(await MechanicsService.deleteMechanic(c.var.requestSession, id, mechanicId), 200);
     },
   );

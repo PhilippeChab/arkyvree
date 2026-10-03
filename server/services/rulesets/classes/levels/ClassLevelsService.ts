@@ -117,21 +117,6 @@ class ClassLevelsService extends include(Object, ListsSpells) {
     });
   }
 
-  async getClassLevelById(rulesetId: string, classLevelId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-
-      const level = rulesetData.klassLevelsById.get(classLevelId);
-      if (!level) throw new NotFoundError("Class level not found");
-
-      const klass = findScopedEntity(rulesetData.klassesById, level.klassId, rulesetId, sourceChain, "Class");
-
-      // `name` is attached so clients of getClassLevelById can show the class
-      // name without a second fetch.
-      return this.buildClassLevelDetail(ruleset, rulesetData, { ...level, name: klass.name });
-    });
-  }
-
   async getClassLevelFeatPools(rulesetId: string, classId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -166,6 +151,21 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         [...levelModifiers, ...remappedFeatModifiers],
         rulesetData.aptitudes,
       );
+    });
+  }
+
+  async getClassLevelWithClassName(rulesetId: string, classLevelId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+
+      const level = rulesetData.klassLevelsById.get(classLevelId);
+      if (!level) throw new NotFoundError("Class level not found");
+
+      const klass = findScopedEntity(rulesetData.klassesById, level.klassId, rulesetId, sourceChain, "Class");
+
+      // `name` is attached so clients of getClassLevelWithClassName can show the class
+      // name without a second fetch.
+      return this.buildClassLevelDetail(ruleset, rulesetData, { ...level, name: klass.name });
     });
   }
 

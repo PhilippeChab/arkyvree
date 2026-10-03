@@ -8,14 +8,14 @@ import { ModifiersService } from "@/server/services/rulesets/customization/modif
 export default new Hono<SessionContext>()
   .get("/:id/customization/:entityType/:entityId/modifiers", zValidator("param", entityParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
-    return c.json(await ModifiersService.getEntityModifiers(id, entityType, entityId), 200);
+    return c.json(await ModifiersService.getModifiers(id, entityType, entityId), 200);
   })
   .get(
     "/:id/customization/:entityType/:entityId/modifiers/:modifierId",
     zValidator("param", ownerParams.extend({ modifierId: z.string().uuid() })),
     async (c) => {
       const { id, entityType, entityId, modifierId } = c.req.valid("param");
-      return c.json(await ModifiersService.getEntityModifier(id, entityType, entityId, modifierId), 200);
+      return c.json(await ModifiersService.getModifier(id, entityType, entityId, modifierId), 200);
     },
   )
   .post(
@@ -32,10 +32,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, entityType, entityId } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(
-        await ModifiersService.createEntityModifier(c.var.requestSession, id, entityType, entityId, body),
-        201,
-      );
+      return c.json(await ModifiersService.createModifier(c.var.requestSession, id, entityType, entityId, body), 201);
     },
   )
   .post(
@@ -53,14 +50,7 @@ export default new Hono<SessionContext>()
       const { id, entityType, entityId, modifierId } = c.req.valid("param");
       const body = c.req.valid("json");
       return c.json(
-        await ModifiersService.duplicateEntityModifier(
-          c.var.requestSession,
-          id,
-          entityType,
-          entityId,
-          modifierId,
-          body,
-        ),
+        await ModifiersService.duplicateModifier(c.var.requestSession, id, entityType, entityId, modifierId, body),
         201,
       );
     },
@@ -81,7 +71,7 @@ export default new Hono<SessionContext>()
       const { id, entityType, entityId, modifierId } = c.req.valid("param");
       const body = c.req.valid("json");
       return c.json(
-        await ModifiersService.updateEntityModifier(c.var.requestSession, id, entityType, entityId, modifierId, body),
+        await ModifiersService.updateModifier(c.var.requestSession, id, entityType, entityId, modifierId, body),
         200,
       );
     },
@@ -92,7 +82,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, entityType, entityId, modifierId } = c.req.valid("param");
       return c.json(
-        await ModifiersService.deleteEntityModifier(c.var.requestSession, id, entityType, entityId, modifierId),
+        await ModifiersService.deleteModifier(c.var.requestSession, id, entityType, entityId, modifierId),
         200,
       );
     },

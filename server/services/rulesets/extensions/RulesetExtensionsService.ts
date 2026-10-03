@@ -167,7 +167,7 @@ class RulesetExtensionsService {
     }
   }
 
-  async getSubscribedExtensions(_session: Session, id: string) {
+  async getExtensions(_session: Session, id: string) {
     const ruleset = await Rulesets.findOne(db, { id });
     if (!ruleset) {
       throw new NotFoundError("Ruleset not found");

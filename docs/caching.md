@@ -22,7 +22,7 @@ return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) =>
   // ... read / write anything. Auto-COW is on.
 });
 
-// Multi-ruleset list enrichment (getMyCharacters / getCampaignCharacters):
+// Multi-ruleset list enrichment (CharactersService.getCharacters / CampaignCharactersService.getCharacters):
 return await withRulesetScopes(db, rulesetIds, async (rulesetDataByRulesetId) => {
   // ... stitch results from several rulesets. No ambient context
   // since only one can be active at a time; lookups use the map.
@@ -113,7 +113,7 @@ Rare but real:
 
 - **Lineage checks that touch `rulesetId` fields.** `rulesetData.cow.sourceChain` is the ancestor chain. For validating that a submitted entity belongs to the character's ruleset or one of its ancestors, build `new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain])` and check `.has(entity.rulesetId)` (or use `sourceChain.includes(entity.rulesetId)` when the self id isn't relevant). Examples: `CharacterInventoryService.addItem`, `CharactersService.updateLanguages`.
 
-- **Multi-ruleset list enrichment.** Can't fit under a single `withRulesetScope`. Use `withRulesetScopes` — see `CharactersService.getMyCharacters` and `CampaignCharactersService.getCampaignCharacters`.
+- **Multi-ruleset list enrichment.** Can't fit under a single `withRulesetScope`. Use `withRulesetScopes` — see `CharactersService.getCharacters` and `CampaignCharactersService.getCharacters`.
 
 Other historic manual patterns (`overrideMap.get(id) ?? id`, `resolveOverrides(rows, overrideMap)`, `canonicalize(id)`) are now handled by the repo Proxy and the `rulesetData.*` Map wrappers. If you find yourself tempted to write one, step back and check — you probably just need to be inside a scope.
 
@@ -151,7 +151,7 @@ From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cac
 
 Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`, `RulesetChangesService` (reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
-- **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateRulesetItem` / `createVariants` and `ModifiersService.duplicateEntityModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow/index.ts` doesn't export.
+- **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateItem` / `createVariants` and `ModifiersService.duplicateModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow/index.ts` doesn't export.
 - **Extensions** (`RulesetExtensionsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
 - **Override map**: `buildOverrideMap`, called only inside `cow/` (`getOrBuildCowData`, `cowEntity`).
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`getOrBuildCowData`, `cowEntity`) and target-path cache keys.

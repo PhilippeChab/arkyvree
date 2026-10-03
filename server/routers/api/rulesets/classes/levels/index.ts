@@ -12,7 +12,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), classLevelId: z.string().uuid() })),
     async (c) => {
       const { id, classLevelId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevelById(id, classLevelId), 200);
+      return c.json(await ClassLevelsService.getClassLevelWithClassName(id, classLevelId), 200);
     },
   )
   .get(

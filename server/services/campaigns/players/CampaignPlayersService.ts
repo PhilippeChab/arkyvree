@@ -123,7 +123,7 @@ class CampaignPlayersService {
     });
   }
 
-  async getCampaignPlayers(
+  async getPlayers(
     session: Session,
     campaignId: string,
     where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
@@ -139,7 +139,7 @@ class CampaignPlayersService {
     return await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
   }
 
-  async addCampaignPlayer(session: Session, campaignId: string, role: CampaignRole, email?: string) {
+  async addPlayer(session: Session, campaignId: string, role: CampaignRole, email?: string) {
     let emailData: InviteEmailData | null = null;
 
     const { player, invite } = await withTransaction(async (tx) => {
@@ -181,13 +181,7 @@ class CampaignPlayersService {
     return { player, invite };
   }
 
-  async updateCampaignPlayer(
-    session: Session,
-    campaignId: string,
-    playerId: string,
-    role: CampaignRole,
-    email?: string,
-  ) {
+  async updatePlayer(session: Session, campaignId: string, playerId: string, role: CampaignRole, email?: string) {
     let emailData: InviteEmailData | null = null;
 
     const { updatedPlayer, invite } = await withTransaction(async (tx) => {
@@ -249,7 +243,7 @@ class CampaignPlayersService {
     return { player: updatedPlayer, invite };
   }
 
-  async removeCampaignPlayer(session: Session, campaignId: string, playerId: string) {
+  async removePlayer(session: Session, campaignId: string, playerId: string) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
       if (!campaign) {

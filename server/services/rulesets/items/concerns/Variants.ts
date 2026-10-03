@@ -33,7 +33,7 @@ export function Variants<B extends Constructor>(Base: B) {
       return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
     }
 
-    async getRulesetTemplates(rulesetId: string, type?: string) {
+    async getTemplates(rulesetId: string, type?: string) {
       return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
         return await Items.findMany(db, { rulesetId, ancestorRulesetIds: sourceChain, type, isTemplate: true });

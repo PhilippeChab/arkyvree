@@ -24,7 +24,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await CampaignPlayersService.getCampaignPlayers(
+        await CampaignPlayersService.getPlayers(
           c.var.requestSession,
           id,
           { search, orderBy, orderDir },
@@ -48,7 +48,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { role, email } = c.req.valid("json");
-      return c.json(await CampaignPlayersService.addCampaignPlayer(c.var.requestSession, id, role, email), 200);
+      return c.json(await CampaignPlayersService.addPlayer(c.var.requestSession, id, role, email), 200);
     },
   )
   .put(
@@ -64,10 +64,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, playerId } = c.req.valid("param");
       const { role, email } = c.req.valid("json");
-      return c.json(
-        await CampaignPlayersService.updateCampaignPlayer(c.var.requestSession, id, playerId, role, email),
-        200,
-      );
+      return c.json(await CampaignPlayersService.updatePlayer(c.var.requestSession, id, playerId, role, email), 200);
     },
   )
   .delete(
@@ -81,6 +78,6 @@ export default new Hono<SessionContext>()
     ),
     async (c) => {
       const { id, playerId } = c.req.valid("param");
-      return c.json(await CampaignPlayersService.removeCampaignPlayer(c.var.requestSession, id, playerId), 200);
+      return c.json(await CampaignPlayersService.removePlayer(c.var.requestSession, id, playerId), 200);
     },
   );

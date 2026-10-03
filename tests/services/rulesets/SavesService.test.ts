@@ -21,14 +21,14 @@ async function setup() {
 describe("SavesService", () => {
   test("stores the ability a save rolls with", async () => {
     const { session, ruleset, constitution, wisdom } = await setup();
-    const save = await SavesService.createRulesetSave(session, ruleset.id, {
+    const save = await SavesService.createSave(session, ruleset.id, {
       name: "Fortitude",
       description: "Physical resistance",
       abilityId: constitution.id,
     });
     expect(save).toMatchObject({ name: "Fortitude", description: "Physical resistance", abilityId: constitution.id });
 
-    const updated = await SavesService.updateRulesetSave(session, ruleset.id, save.id, {
+    const updated = await SavesService.updateSave(session, ruleset.id, save.id, {
       name: "Will",
       description: "Mental resistance",
       abilityId: wisdom.id,
@@ -38,7 +38,7 @@ describe("SavesService", () => {
 
   test("refuses to delete a save that class levels grant", async () => {
     const { session, ruleset, constitution } = await setup();
-    const save = await SavesService.createRulesetSave(session, ruleset.id, {
+    const save = await SavesService.createSave(session, ruleset.id, {
       name: "Fortitude",
       abilityId: constitution.id,
     });
@@ -46,6 +46,6 @@ describe("SavesService", () => {
     const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
     await KlassLevelSaves.createMany(db, [{ klassLevelId: klassLevel.id, saveId: save.id, base: 2 }]);
 
-    await expect(SavesService.deleteRulesetSave(session, ruleset.id, save.id)).rejects.toThrow(ConflictError);
+    await expect(SavesService.deleteSave(session, ruleset.id, save.id)).rejects.toThrow(ConflictError);
   });
 });

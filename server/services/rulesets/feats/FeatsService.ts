@@ -20,7 +20,7 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
-  async getRulesetFeat(rulesetId: string, featId: string) {
+  async getFeat(rulesetId: string, featId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
@@ -33,7 +33,34 @@ class FeatsService {
     });
   }
 
-  async getRulesetFeats(
+  async getFeatGroups(
+    rulesetId: string,
+    where: { childOnly?: boolean; aptitudeId?: string; search?: string },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain, overrideMap, siblingIds } = rulesetData.cow;
+      // A sibling aptitude is matched by its winner's id in the composed cache,
+      // but the SQL grouping query reads raw join rows — feats are still linked
+      // to the pre-dedup aptitudeIds (winner + losers) in the DB. So we widen
+      // the filter to cover every id that currently maps to the winner.
+      let aptitudeIds: string[] | undefined;
+      if (where.aptitudeId) {
+        aptitudeIds = [where.aptitudeId];
+        for (const [loser, winner] of overrideMap) {
+          if (winner === where.aptitudeId) aptitudeIds.push(loser);
+        }
+      }
+      const excludeIds = siblingIds.size > 0 ? [...siblingIds] : undefined;
+      return await Feats.findGroupPage(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, aptitudeIds, excludeIds, ...where },
+        pagination,
+      );
+    });
+  }
+
+  async getFeats(
     rulesetId: string,
     where: {
       childOnly?: boolean;
@@ -61,34 +88,7 @@ class FeatsService {
     });
   }
 
-  async getRulesetFeatsGrouped(
-    rulesetId: string,
-    where: { childOnly?: boolean; aptitudeId?: string; search?: string },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain, overrideMap, siblingIds } = rulesetData.cow;
-      // A sibling aptitude is matched by its winner's id in the composed cache,
-      // but the SQL grouping query reads raw join rows — feats are still linked
-      // to the pre-dedup aptitudeIds (winner + losers) in the DB. So we widen
-      // the filter to cover every id that currently maps to the winner.
-      let aptitudeIds: string[] | undefined;
-      if (where.aptitudeId) {
-        aptitudeIds = [where.aptitudeId];
-        for (const [loser, winner] of overrideMap) {
-          if (winner === where.aptitudeId) aptitudeIds.push(loser);
-        }
-      }
-      const excludeIds = siblingIds.size > 0 ? [...siblingIds] : undefined;
-      return await Feats.findGroupPage(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, aptitudeIds, excludeIds, ...where },
-        pagination,
-      );
-    });
-  }
-
-  async createRulesetFeat(
+  async createFeat(
     session: Session,
     rulesetId: string,
     body: {
@@ -154,7 +154,7 @@ class FeatsService {
     return result;
   }
 
-  async updateRulesetFeat(
+  async updateFeat(
     session: Session,
     rulesetId: string,
     featId: string,
@@ -231,7 +231,7 @@ class FeatsService {
     return result;
   }
 
-  async deleteRulesetFeat(session: Session, rulesetId: string, featId: string) {
+  async deleteFeat(session: Session, rulesetId: string, featId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;

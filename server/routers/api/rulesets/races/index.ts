@@ -27,7 +27,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, kind, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await RacesService.getRulesetRaces(id, { search, childOnly, kind, orderBy, orderDir }, { limit, page }),
+        await RacesService.getRaces(id, { search, childOnly, kind, orderBy, orderDir }, { limit, page }),
         200,
       );
     },
@@ -37,7 +37,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), raceId: z.string().uuid() })),
     async (c) => {
       const { id, raceId } = c.req.valid("param");
-      return c.json(await RacesService.getRulesetRace(id, raceId), 200);
+      return c.json(await RacesService.getRace(id, raceId), 200);
     },
   )
   .post(
@@ -58,7 +58,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await RacesService.createRulesetRace(c.var.requestSession, id, body), 200);
+      return c.json(await RacesService.createRace(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -80,7 +80,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, raceId } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await RacesService.updateRulesetRace(c.var.requestSession, id, raceId, body), 200);
+      return c.json(await RacesService.updateRace(c.var.requestSession, id, raceId, body), 200);
     },
   )
   .delete(
@@ -88,6 +88,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), raceId: z.string().uuid() })),
     async (c) => {
       const { id, raceId } = c.req.valid("param");
-      return c.json(await RacesService.deleteRulesetRace(c.var.requestSession, id, raceId), 200);
+      return c.json(await RacesService.deleteRace(c.var.requestSession, id, raceId), 200);
     },
   );

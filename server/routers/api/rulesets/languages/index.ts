@@ -25,7 +25,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await LanguagesService.getRulesetLanguages(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
+        await LanguagesService.getLanguages(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
         200,
       );
     },
@@ -35,7 +35,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), languageId: z.string().uuid() })),
     async (c) => {
       const { id, languageId } = c.req.valid("param");
-      return c.json(await LanguagesService.getRulesetLanguage(id, languageId), 200);
+      return c.json(await LanguagesService.getLanguage(id, languageId), 200);
     },
   )
   .post(
@@ -55,7 +55,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await LanguagesService.createRulesetLanguage(c.var.requestSession, id, body), 200);
+      return c.json(await LanguagesService.createLanguage(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -76,7 +76,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, languageId } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await LanguagesService.updateRulesetLanguage(c.var.requestSession, id, languageId, body), 200);
+      return c.json(await LanguagesService.updateLanguage(c.var.requestSession, id, languageId, body), 200);
     },
   )
   .delete(
@@ -84,6 +84,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), languageId: z.string().uuid() })),
     async (c) => {
       const { id, languageId } = c.req.valid("param");
-      return c.json(await LanguagesService.deleteRulesetLanguage(c.var.requestSession, id, languageId), 200);
+      return c.json(await LanguagesService.deleteLanguage(c.var.requestSession, id, languageId), 200);
     },
   );

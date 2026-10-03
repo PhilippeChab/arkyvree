@@ -7,11 +7,11 @@ import { CharacterContributorsService } from "@/server/services/characters/contr
 
 export default new Hono<SessionContext>()
   .get("/contributors/invites/me", async (c) => {
-    return c.json(await CharacterContributorsService.getUserContributorInvites(c.var.requestSession.userId), 200);
+    return c.json(await CharacterContributorsService.getUserInvites(c.var.requestSession.userId), 200);
   })
   .get("/contributors/invites/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    return c.json(await CharacterContributorsService.getContributorInvite(c.var.requestSession, id), 200);
+    return c.json(await CharacterContributorsService.getInvite(c.var.requestSession, id), 200);
   })
   .get(
     "/:id/contributors",
@@ -42,11 +42,11 @@ export default new Hono<SessionContext>()
   )
   .post("/contributors/invites/:id/accept", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    return c.json(await CharacterContributorsService.acceptContributorInvite(c.var.requestSession, id), 200);
+    return c.json(await CharacterContributorsService.acceptInvite(c.var.requestSession, id), 200);
   })
   .post("/contributors/invites/:id/reject", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    return c.json(await CharacterContributorsService.rejectContributorInvite(c.var.requestSession, id), 200);
+    return c.json(await CharacterContributorsService.rejectInvite(c.var.requestSession, id), 200);
   })
   .post(
     "/:id/contributors",

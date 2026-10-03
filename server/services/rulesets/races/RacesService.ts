@@ -20,7 +20,7 @@ import type { SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class RacesService {
-  async getRulesetRace(rulesetId: string, raceId: string) {
+  async getRace(rulesetId: string, raceId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
@@ -33,7 +33,7 @@ class RacesService {
     });
   }
 
-  async getRulesetRaces(
+  async getRaces(
     rulesetId: string,
     where: {
       childOnly?: boolean;
@@ -50,7 +50,7 @@ class RacesService {
     });
   }
 
-  async createRulesetRace(
+  async createRace(
     session: Session,
     rulesetId: string,
     body: {
@@ -99,7 +99,7 @@ class RacesService {
     return result;
   }
 
-  async updateRulesetRace(
+  async updateRace(
     session: Session,
     rulesetId: string,
     raceId: string,
@@ -147,7 +147,7 @@ class RacesService {
     return result;
   }
 
-  async deleteRulesetRace(session: Session, rulesetId: string, raceId: string) {
+  async deleteRace(session: Session, rulesetId: string, raceId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;

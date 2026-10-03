@@ -95,19 +95,19 @@ for (const entityType of ["races", "klasses", "items"] as const) {
   test(`${entityType}: ordinary edit copies all visible sibling customizations`, async () => {
     const { session, host, source, assertCopied } = await setup(entityType);
     if (entityType === "races")
-      await RacesService.updateRulesetRace(session, host.id, source.id, {
+      await RacesService.updateRace(session, host.id, source.id, {
         name: source.name,
         description: "edited description",
         size: "Medium",
         baseSpeed: 30,
       });
     else if (entityType === "klasses")
-      await ClassesService.updateRulesetKlass(session, host.id, source.id, {
+      await ClassesService.updateClass(session, host.id, source.id, {
         name: source.name,
         description: "edited description",
       });
     else
-      await ItemsService.updateRulesetItem(session, host.id, source.id, {
+      await ItemsService.updateItem(session, host.id, source.id, {
         name: source.name,
         description: "edited description",
       });

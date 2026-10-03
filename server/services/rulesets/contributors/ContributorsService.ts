@@ -59,20 +59,6 @@ class ContributorsService {
     return updated;
   }
 
-  // Single invite for the current user, any status. Used by the invite-accept
-  // page so a stale link still resolves to "Already accepted" / "no longer
-  // pending" copy instead of "Not found".
-  async getContributorInvite(session: Session, contributorId: string) {
-    const invite = await Contributors.findOneWithRuleset(db, {
-      id: contributorId,
-      userId: session.userId,
-    });
-    if (!invite) {
-      throw new NotFoundError("Contributor invite not found");
-    }
-    return invite;
-  }
-
   async getContributors(
     session: Session,
     rulesetId: string,
@@ -98,7 +84,21 @@ class ContributorsService {
     return { ...paginated, owner };
   }
 
-  async getUserContributorInvites(userId: string) {
+  // Single invite for the current user, any status. Used by the invite-accept
+  // page so a stale link still resolves to "Already accepted" / "no longer
+  // pending" copy instead of "Not found".
+  async getInvite(session: Session, contributorId: string) {
+    const invite = await Contributors.findOneWithRuleset(db, {
+      id: contributorId,
+      userId: session.userId,
+    });
+    if (!invite) {
+      throw new NotFoundError("Contributor invite not found");
+    }
+    return invite;
+  }
+
+  async getUserInvites(userId: string) {
     return await Contributors.findManyWithRuleset(db, { userId, status: "Pending" }, { limit: 10 });
   }
 
@@ -133,7 +133,7 @@ class ContributorsService {
     });
   }
 
-  async acceptContributorInvite(session: Session, contributorId: string) {
+  async acceptInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
       const contributor = await this.getPendingInviteFor(tx, session, contributorId);
 
@@ -292,7 +292,7 @@ class ContributorsService {
     });
   }
 
-  async rejectContributorInvite(session: Session, contributorId: string) {
+  async rejectInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
       const contributor = await this.getPendingInviteFor(tx, session, contributorId);
 

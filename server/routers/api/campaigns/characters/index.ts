@@ -26,7 +26,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await CampaignCharactersService.getCampaignCharacters(
+        await CampaignCharactersService.getCharacters(
           c.var.requestSession,
           id,
           { search, orderBy, orderDir },
@@ -41,7 +41,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), characterId: z.string().uuid() })),
     async (c) => {
       const { id, characterId } = c.req.valid("param");
-      const data = await CampaignCharactersService.getCampaignCharacter(c.var.requestSession, id, characterId);
+      const data = await CampaignCharactersService.getCharacter(c.var.requestSession, id, characterId);
       const response = buildFullCharacterResponse(data.character!, data.detailedCharacter!);
       const redactForViewer = <T extends { identity: { background: { privateNotes?: string } } }>(entry: T): T =>
         data.canViewPrivateNotes ? entry : redactPrivateNotes(entry, "");
@@ -126,7 +126,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), characterId: z.string().uuid() })),
     async (c) => {
       const { id, characterId } = c.req.valid("param");
-      await CampaignCharactersService.enqueueCampaignCharacterPdf(c.var.requestSession, id, characterId);
+      await CampaignCharactersService.enqueuePdf(c.var.requestSession, id, characterId);
       return c.json({ message: "PDF generation started" }, 202);
     },
   )

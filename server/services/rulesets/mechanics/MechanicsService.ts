@@ -18,7 +18,7 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 class MechanicsService {
-  async getRulesetMechanic(rulesetId: string, mechanicId: string) {
+  async getMechanic(rulesetId: string, mechanicId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
@@ -26,7 +26,7 @@ class MechanicsService {
     });
   }
 
-  async getRulesetMechanics(
+  async getMechanics(
     rulesetId: string,
     where: {
       childOnly?: boolean;
@@ -42,7 +42,7 @@ class MechanicsService {
     });
   }
 
-  async createRulesetMechanic(
+  async createMechanic(
     session: Session,
     rulesetId: string,
     body: {
@@ -84,7 +84,7 @@ class MechanicsService {
     return result;
   }
 
-  async updateRulesetMechanic(
+  async updateMechanic(
     session: Session,
     rulesetId: string,
     mechanicId: string,
@@ -130,7 +130,7 @@ class MechanicsService {
     return result;
   }
 
-  async deleteRulesetMechanic(session: Session, rulesetId: string, mechanicId: string) {
+  async deleteMechanic(session: Session, rulesetId: string, mechanicId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;

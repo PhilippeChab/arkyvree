@@ -21,7 +21,7 @@ import type { Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 class SkillsService {
-  async getRulesetSkill(rulesetId: string, skillId: string) {
+  async getSkill(rulesetId: string, skillId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
@@ -33,7 +33,7 @@ class SkillsService {
     });
   }
 
-  async getRulesetSkills(
+  async getSkills(
     rulesetId: string,
     where: {
       childOnly?: boolean;
@@ -63,7 +63,7 @@ class SkillsService {
     });
   }
 
-  async createRulesetSkill(
+  async createSkill(
     session: Session,
     rulesetId: string,
     body: {
@@ -120,7 +120,7 @@ class SkillsService {
     return result;
   }
 
-  async updateRulesetSkill(
+  async updateSkill(
     session: Session,
     rulesetId: string,
     skillId: string,
@@ -181,7 +181,7 @@ class SkillsService {
     return result;
   }
 
-  async deleteRulesetSkill(session: Session, rulesetId: string, skillId: string) {
+  async deleteSkill(session: Session, rulesetId: string, skillId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;

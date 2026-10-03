@@ -25,7 +25,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await AbilitiesService.getRulesetAbilities(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
+        await AbilitiesService.getAbilities(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
         200,
       );
     },
@@ -35,6 +35,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), abilityId: z.string().uuid() })),
     async (c) => {
       const { id, abilityId } = c.req.valid("param");
-      return c.json(await AbilitiesService.getRulesetAbility(id, abilityId), 200);
+      return c.json(await AbilitiesService.getAbility(id, abilityId), 200);
     },
   );

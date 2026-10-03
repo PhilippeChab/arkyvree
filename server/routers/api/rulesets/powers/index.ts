@@ -40,11 +40,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, aptitudeId, level, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await PowersService.getRulesetPowers(
-          id,
-          { search, childOnly, aptitudeId, level, orderBy, orderDir },
-          { limit, page },
-        ),
+        await PowersService.getPowers(id, { search, childOnly, aptitudeId, level, orderBy, orderDir }, { limit, page }),
         200,
       );
     },
@@ -54,7 +50,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), powerId: z.string().uuid() })),
     async (c) => {
       const { id, powerId } = c.req.valid("param");
-      return c.json(await PowersService.getRulesetPower(id, powerId), 200);
+      return c.json(await PowersService.getPower(id, powerId), 200);
     },
   )
   .post(
@@ -84,7 +80,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await PowersService.createRulesetPower(c.var.requestSession, id, body), 200);
+      return c.json(await PowersService.createPower(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -115,7 +111,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, powerId } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await PowersService.updateRulesetPower(c.var.requestSession, id, powerId, body), 200);
+      return c.json(await PowersService.updatePower(c.var.requestSession, id, powerId, body), 200);
     },
   )
   .delete(
@@ -123,6 +119,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), powerId: z.string().uuid() })),
     async (c) => {
       const { id, powerId } = c.req.valid("param");
-      return c.json(await PowersService.deleteRulesetPower(c.var.requestSession, id, powerId), 200);
+      return c.json(await PowersService.deletePower(c.var.requestSession, id, powerId), 200);
     },
   );

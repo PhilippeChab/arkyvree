@@ -57,8 +57,8 @@ const copiedCustomizations = {
 const noCustomizations = { modifiers: [], properties: [], requirements: [] };
 
 /** A template with a property and a requirement, which its instances read, and a modifier, which they don't. */
-async function createTemplate(session: Parameters<typeof ItemsService.createRulesetItem>[0], rulesetId: string) {
-  const template = await ItemsService.createRulesetItem(session, rulesetId, {
+async function createTemplate(session: Parameters<typeof ItemsService.createItem>[0], rulesetId: string) {
+  const template = await ItemsService.createItem(session, rulesetId, {
     name: "Sword Template",
     isTemplate: true,
   });
@@ -68,7 +68,7 @@ async function createTemplate(session: Parameters<typeof ItemsService.createRule
 
 async function expectTemplateInstance(rulesetId: string, itemId: string, templateId: string) {
   expect(await customizationsOf(itemId)).toEqual(noCustomizations);
-  const view = await ItemsService.getRulesetItem(rulesetId, itemId);
+  const view = await ItemsService.getItem(rulesetId, itemId);
   expect(view).toMatchObject({
     sourceItemId: templateId,
     isTemplate: false,
@@ -83,37 +83,37 @@ async function expectTemplateInstance(rulesetId: string, itemId: string, templat
 describe("ItemsService", () => {
   test("stores weight and cost to the hundredth, and nothing when they're left out", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const scroll = await ItemsService.createRulesetItem(session, ruleset.id, {
+    const scroll = await ItemsService.createItem(session, ruleset.id, {
       name: "Scroll",
       weight: 0.5,
       costGp: 2.25,
     });
     expect(scroll).toMatchObject({ weight: "0.50", costGp: "2.25" });
-    expect(
-      await ItemsService.createRulesetItem(session, ruleset.id, { name: "Feather", weight: 0, costGp: 0 }),
-    ).toMatchObject({ weight: "0.00", costGp: "0.00" });
-    expect(await ItemsService.createRulesetItem(session, ruleset.id, { name: "Rock" })).toMatchObject({
+    expect(await ItemsService.createItem(session, ruleset.id, { name: "Feather", weight: 0, costGp: 0 })).toMatchObject(
+      { weight: "0.00", costGp: "0.00" },
+    );
+    expect(await ItemsService.createItem(session, ruleset.id, { name: "Rock" })).toMatchObject({
       weight: null,
       costGp: null,
     });
 
     expect(
-      await ItemsService.updateRulesetItem(session, ruleset.id, scroll.id, { name: "Scroll", weight: 10, costGp: 100 }),
+      await ItemsService.updateItem(session, ruleset.id, scroll.id, { name: "Scroll", weight: 10, costGp: 100 }),
     ).toMatchObject({ weight: "10.00", costGp: "100.00" });
   });
 
   test("puts armor on the torso and shields in the off hand, whatever slot is asked for", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     expect(
-      await ItemsService.createRulesetItem(session, ruleset.id, { name: "Chainmail", type: "Armor", slot: "Other" }),
+      await ItemsService.createItem(session, ruleset.id, { name: "Chainmail", type: "Armor", slot: "Other" }),
     ).toMatchObject({ slot: "Torso" });
-    expect(await ItemsService.createRulesetItem(session, ruleset.id, { name: "Ring", slot: "Finger" })).toMatchObject({
+    expect(await ItemsService.createItem(session, ruleset.id, { name: "Ring", slot: "Finger" })).toMatchObject({
       slot: "Finger",
     });
 
-    const buckler = await ItemsService.createRulesetItem(session, ruleset.id, { name: "Buckler", slot: "Other" });
+    const buckler = await ItemsService.createItem(session, ruleset.id, { name: "Buckler", slot: "Other" });
     expect(
-      await ItemsService.updateRulesetItem(session, ruleset.id, buckler.id, {
+      await ItemsService.updateItem(session, ruleset.id, buckler.id, {
         name: "Buckler",
         type: "Shield",
         slot: "Other",
@@ -124,10 +124,10 @@ describe("ItemsService", () => {
   describe("duplicating", () => {
     test("copies the item's customizations, each modifier with its own requirements", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      const source = await ItemsService.createRulesetItem(session, ruleset.id, { name: "Cloak" });
+      const source = await ItemsService.createItem(session, ruleset.id, { name: "Cloak" });
       const modifier = await customize(source.id);
 
-      const copy = await ItemsService.duplicateRulesetItem(session, ruleset.id, source.id, { name: "Cloak Copy" });
+      const copy = await ItemsService.duplicateItem(session, ruleset.id, source.id, { name: "Cloak Copy" });
       const copied = await customizationsOf(copy.id);
       expect(copied).toMatchObject(copiedCustomizations);
       expect(copied.modifiers[0].id).not.toBe(modifier.id);
@@ -137,22 +137,22 @@ describe("ItemsService", () => {
     test("makes a template's copy an instance of it, with no customizations of its own", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const template = await createTemplate(session, ruleset.id);
-      const copy = await ItemsService.duplicateRulesetItem(session, ruleset.id, template.id, { name: "Sword" });
+      const copy = await ItemsService.duplicateItem(session, ruleset.id, template.id, { name: "Sword" });
       await expectTemplateInstance(ruleset.id, copy.id, template.id);
     });
 
     test("throws NotFoundError for a source outside the ruleset", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      await expect(
-        ItemsService.duplicateRulesetItem(session, ruleset.id, NIL_UUID, { name: "No Source" }),
-      ).rejects.toThrow(NotFoundError);
+      await expect(ItemsService.duplicateItem(session, ruleset.id, NIL_UUID, { name: "No Source" })).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 
   describe("variants", () => {
     test("copy the source's type, slot, weight, cost and customizations, and take their own names and descriptions", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      const source = await ItemsService.createRulesetItem(session, ruleset.id, {
+      const source = await ItemsService.createItem(session, ruleset.id, {
         name: "Scroll",
         description: "Blank",
         type: "Other",
@@ -190,7 +190,7 @@ describe("ItemsService", () => {
     test("of a template, or of an instance of one, are instances of that template", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const template = await createTemplate(session, ruleset.id);
-      const instance = await ItemsService.createRulesetItem(session, ruleset.id, {
+      const instance = await ItemsService.createItem(session, ruleset.id, {
         name: "Longsword",
         sourceItemId: template.id,
       });
@@ -205,7 +205,7 @@ describe("ItemsService", () => {
 
     test("can come from an item the ruleset inherits", async () => {
       const { user, session, ruleset: parent } = await createTestUserAndRuleset();
-      const source = await ItemsService.createRulesetItem(session, parent.id, { name: "Parent Scroll", weight: 0.1 });
+      const source = await ItemsService.createItem(session, parent.id, { name: "Parent Scroll", weight: 0.1 });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
       const variants = await ItemsService.createVariants(session, fork.id, source.id, [{ name: "Forked Scroll" }]);
@@ -214,7 +214,7 @@ describe("ItemsService", () => {
 
     test("are refused to anyone but the owner", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      const source = await ItemsService.createRulesetItem(session, ruleset.id, { name: "Scroll" });
+      const source = await ItemsService.createItem(session, ruleset.id, { name: "Scroll" });
       const { session: other } = await createTestUserAndRuleset();
       await expect(
         ItemsService.createVariants(other, ruleset.id, source.id, [{ name: "Stolen Scroll" }]),
@@ -223,8 +223,8 @@ describe("ItemsService", () => {
 
     test("are refused all together when there are none, more than 50, a repeated name or a taken one", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      const source = await ItemsService.createRulesetItem(session, ruleset.id, { name: "Scroll" });
-      await ItemsService.createRulesetItem(session, ruleset.id, { name: "Taken Name" });
+      const source = await ItemsService.createItem(session, ruleset.id, { name: "Scroll" });
+      await ItemsService.createItem(session, ruleset.id, { name: "Taken Name" });
       const create = (names: string[]) =>
         ItemsService.createVariants(
           session,
@@ -243,21 +243,21 @@ describe("ItemsService", () => {
         NotFoundError,
       );
 
-      const { items } = await ItemsService.getRulesetItems(ruleset.id, { search: "Probe" }, { limit: 10, page: 1 });
+      const { items } = await ItemsService.getItems(ruleset.id, { search: "Probe" }, { limit: 10, page: 1 });
       expect(items).toEqual([]);
     });
 
     test("point the fork's tombstone at a variant named after a deleted copy", async () => {
       const { user, session, ruleset: parent } = await createTestUserAndRuleset();
-      const inherited = await ItemsService.createRulesetItem(session, parent.id, { name: "Ghostly Scroll" });
-      const source = await ItemsService.createRulesetItem(session, parent.id, { name: "Bulk Source" });
+      const inherited = await ItemsService.createItem(session, parent.id, { name: "Ghostly Scroll" });
+      const source = await ItemsService.createItem(session, parent.id, { name: "Bulk Source" });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-      const copy = await ItemsService.updateRulesetItem(session, fork.id, inherited.id, {
+      const copy = await ItemsService.updateItem(session, fork.id, inherited.id, {
         name: "Ghostly Scroll",
         description: "Edited in fork",
       });
-      await ItemsService.deleteRulesetItem(session, fork.id, copy.id);
+      await ItemsService.deleteItem(session, fork.id, copy.id);
       const [variant] = await ItemsService.createVariants(session, fork.id, source.id, [{ name: "Ghostly Scroll" }]);
 
       const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id, entityType: "items" });
@@ -267,11 +267,11 @@ describe("ItemsService", () => {
 
   test("refuses to delete an item in a character's inventory, even through a ruleset using it as an extension", async () => {
     const { user, session, ruleset: extension } = await createTestUserAndRuleset();
-    const item = await ItemsService.createRulesetItem(session, extension.id, { name: "Extension Item" });
+    const item = await ItemsService.createItem(session, extension.id, { name: "Extension Item" });
     const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     await db.insert(inventoryInCharacter).values({ characterId: character.id, itemId: item.id, quantity: 1 });
 
-    await expect(ItemsService.deleteRulesetItem(session, extension.id, item.id)).rejects.toThrow(ConflictError);
+    await expect(ItemsService.deleteItem(session, extension.id, item.id)).rejects.toThrow(ConflictError);
   });
 });

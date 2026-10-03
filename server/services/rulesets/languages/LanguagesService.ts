@@ -19,7 +19,7 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 class LanguagesService {
-  async getRulesetLanguage(rulesetId: string, languageId: string) {
+  async getLanguage(rulesetId: string, languageId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
@@ -27,7 +27,7 @@ class LanguagesService {
     });
   }
 
-  async getRulesetLanguages(
+  async getLanguages(
     rulesetId: string,
     where: {
       childOnly?: boolean;
@@ -43,7 +43,7 @@ class LanguagesService {
     });
   }
 
-  async createRulesetLanguage(
+  async createLanguage(
     session: Session,
     rulesetId: string,
     body: {
@@ -89,7 +89,7 @@ class LanguagesService {
     return result;
   }
 
-  async updateRulesetLanguage(
+  async updateLanguage(
     session: Session,
     rulesetId: string,
     languageId: string,
@@ -136,7 +136,7 @@ class LanguagesService {
     return result;
   }
 
-  async deleteRulesetLanguage(session: Session, rulesetId: string, languageId: string) {
+  async deleteLanguage(session: Session, rulesetId: string, languageId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;

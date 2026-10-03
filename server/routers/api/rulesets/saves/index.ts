@@ -24,10 +24,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
-      return c.json(
-        await SavesService.getRulesetSaves(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
-        200,
-      );
+      return c.json(await SavesService.getSaves(id, { search, childOnly, orderBy, orderDir }, { limit, page }), 200);
     },
   )
   .get(
@@ -35,7 +32,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), saveId: z.string().uuid() })),
     async (c) => {
       const { id, saveId } = c.req.valid("param");
-      return c.json(await SavesService.getRulesetSave(id, saveId), 200);
+      return c.json(await SavesService.getSave(id, saveId), 200);
     },
   )
   .post(
@@ -55,7 +52,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await SavesService.createRulesetSave(c.var.requestSession, id, body), 200);
+      return c.json(await SavesService.createSave(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -76,7 +73,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, saveId } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await SavesService.updateRulesetSave(c.var.requestSession, id, saveId, body), 200);
+      return c.json(await SavesService.updateSave(c.var.requestSession, id, saveId, body), 200);
     },
   )
   .delete(
@@ -84,6 +81,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), saveId: z.string().uuid() })),
     async (c) => {
       const { id, saveId } = c.req.valid("param");
-      return c.json(await SavesService.deleteRulesetSave(c.var.requestSession, id, saveId), 200);
+      return c.json(await SavesService.deleteSave(c.var.requestSession, id, saveId), 200);
     },
   );

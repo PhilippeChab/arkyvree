@@ -22,7 +22,7 @@ import type { Session } from "@/shared/relations.ts";
 type VisibilityType = "Private" | "Public" | "Partial";
 
 class CampaignCharactersService {
-  async getCampaignCharacter(session: Session, campaignId: string, characterId: string) {
+  async getCharacter(session: Session, campaignId: string, characterId: string) {
     // Verify the requesting user is a campaign member
     const member = await CampaignsPolicy.canRead(db, session, campaignId);
 
@@ -72,7 +72,7 @@ class CampaignCharactersService {
     };
   }
 
-  async getCampaignCharacters(
+  async getCharacters(
     session: Session,
     campaignId: string,
     where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
@@ -221,7 +221,7 @@ class CampaignCharactersService {
     });
   }
 
-  async enqueueCampaignCharacterPdf(session: Session, campaignId: string, characterId: string) {
+  async enqueuePdf(session: Session, campaignId: string, characterId: string) {
     // Not found for every refusal, as for the character's own export.
     const character = await findExportableCharacter(session.userId, characterId, campaignId);
     if (!character) throw new NotFoundError("Character not found in this campaign");

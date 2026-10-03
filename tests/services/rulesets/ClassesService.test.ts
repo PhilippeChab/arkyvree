@@ -38,30 +38,30 @@ import {
 describe("ClassesService", () => {
   test("stores a class's hit die, a d8 unless one is given", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const warrior = await ClassesService.createRulesetKlass(session, ruleset.id, {
+    const warrior = await ClassesService.createClass(session, ruleset.id, {
       name: "Warrior",
       description: "A mighty warrior",
       hd: 12,
     });
     expect(warrior).toMatchObject({ name: "Warrior", description: "A mighty warrior", hd: 12 });
-    expect(
-      (await ClassesService.updateRulesetKlass(session, ruleset.id, warrior.id, { name: "Warrior", hd: 10 })).hd,
-    ).toBe(10);
+    expect((await ClassesService.updateClass(session, ruleset.id, warrior.id, { name: "Warrior", hd: 10 })).hd).toBe(
+      10,
+    );
 
-    expect((await ClassesService.createRulesetKlass(session, ruleset.id, { name: "Mage" })).hd).toBe(8);
+    expect((await ClassesService.createClass(session, ruleset.id, { name: "Mage" })).hd).toBe(8);
     // 0 is no hit die: the default applies.
-    expect((await ClassesService.createRulesetKlass(session, ruleset.id, { name: "Commoner", hd: 0 })).hd).toBe(8);
+    expect((await ClassesService.createClass(session, ruleset.id, { name: "Commoner", hd: 0 })).hd).toBe(8);
   });
 
   test("exposes the ability a class's bonus spells come from", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const fighter = await ClassesService.createRulesetKlass(session, ruleset.id, { name: "Fighter" });
-    expect(await ClassesService.getRulesetKlass(ruleset.id, fighter.id)).toMatchObject({
+    const fighter = await ClassesService.createClass(session, ruleset.id, { name: "Fighter" });
+    expect(await ClassesService.getClass(ruleset.id, fighter.id)).toMatchObject({
       bonusSpellAbilityId: null,
       bonusSpellPropertyId: null,
     });
 
-    const wizard = await ClassesService.createRulesetKlass(session, ruleset.id, { name: "Wizard", hd: 4 });
+    const wizard = await ClassesService.createClass(session, ruleset.id, { name: "Wizard", hd: 4 });
     const [intelligence] = await insertRows(abilitiesInRules, [
       { name: "Intelligence", description: "Intelligence", rulesetId: ruleset.id },
     ]);
@@ -71,7 +71,7 @@ describe("ClassesService", () => {
       type: KLASS_BONUS_SPELL_ABILITY_ID,
       value: intelligence.id,
     });
-    expect(await ClassesService.getRulesetKlass(ruleset.id, wizard.id)).toMatchObject({
+    expect(await ClassesService.getClass(ruleset.id, wizard.id)).toMatchObject({
       bonusSpellAbilityId: intelligence.id,
       bonusSpellPropertyId: property.id,
     });
@@ -87,7 +87,7 @@ describe("ClassesService", () => {
     const [save] = await Saves.create(db, { name: "Class Save", abilityId: ability.id, rulesetId });
     const [skill] = await Skills.create(db, { name: "Class Skill", primaryAbilityId: ability.id, rulesetId });
 
-    const klass = await ClassesService.createRulesetKlass(session, rulesetId, { name: "Doomed Class" });
+    const klass = await ClassesService.createClass(session, rulesetId, { name: "Doomed Class" });
     await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
     const level = await ClassLevelsService.createClassLevel(session, rulesetId, klass.id, {
       level: 1,
@@ -106,7 +106,7 @@ describe("ClassesService", () => {
       operator: "add",
     });
 
-    await ClassesService.deleteRulesetKlass(session, rulesetId, klass.id);
+    await ClassesService.deleteClass(session, rulesetId, klass.id);
 
     expect(await KlassLevels.findOne(db, { id: level.id })).toBeUndefined();
     expect(
@@ -124,7 +124,7 @@ describe("ClassesService", () => {
 
   test("copies an inherited class into a fork with its levels, their modifiers and those modifiers' requirements", async () => {
     const { user, session, ruleset: parent } = await createTestUserAndRuleset();
-    const klass = await ClassesService.createRulesetKlass(session, parent.id, { name: "Cleric" });
+    const klass = await ClassesService.createClass(session, parent.id, { name: "Cleric" });
     const level = await ClassLevelsService.createClassLevel(session, parent.id, klass.id, {
       level: 1,
       bab: 0,
@@ -146,7 +146,7 @@ describe("ClassesService", () => {
     });
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-    const copy = await ClassesService.updateRulesetKlass(session, fork.id, klass.id, {
+    const copy = await ClassesService.updateClass(session, fork.id, klass.id, {
       name: "Cleric",
       description: "Forked",
     });
@@ -168,7 +168,7 @@ describe("ClassesService", () => {
 
   test("refuses to delete a class a character has a level in", async () => {
     const { user, session, ruleset } = await createTestUserAndRuleset();
-    const klass = await ClassesService.createRulesetKlass(session, ruleset.id, { name: "Taken Class" });
+    const klass = await ClassesService.createClass(session, ruleset.id, { name: "Taken Class" });
     const level = await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
       level: 1,
       bab: 1,
@@ -177,6 +177,6 @@ describe("ClassesService", () => {
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, level.id);
 
-    await expect(ClassesService.deleteRulesetKlass(session, ruleset.id, klass.id)).rejects.toThrow(ConflictError);
+    await expect(ClassesService.deleteClass(session, ruleset.id, klass.id)).rejects.toThrow(ConflictError);
   });
 });

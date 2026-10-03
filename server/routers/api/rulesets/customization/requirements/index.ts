@@ -12,7 +12,7 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 export default new Hono<SessionContext>()
   .get("/:id/customization/:entityType/:entityId/requirements", zValidator("param", ownerParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
-    return c.json(await RequirementsService.getEntityRequirements(id, entityType, entityId), 200);
+    return c.json(await RequirementsService.getRequirements(id, entityType, entityId), 200);
   })
   .post(
     "/:id/customization/:entityType/:entityId/requirements",
@@ -32,7 +32,7 @@ export default new Hono<SessionContext>()
       const { id, entityType, entityId } = c.req.valid("param");
       const body = c.req.valid("json");
       return c.json(
-        await RequirementsService.createEntityRequirement(c.var.requestSession, id, entityType, entityId, body),
+        await RequirementsService.createRequirement(c.var.requestSession, id, entityType, entityId, body),
         201,
       );
     },
@@ -56,7 +56,7 @@ export default new Hono<SessionContext>()
       const { id, entityType, entityId, requirementId } = c.req.valid("param");
       const body = c.req.valid("json");
       return c.json(
-        await RequirementsService.updateEntityRequirement(
+        await RequirementsService.updateRequirement(
           c.var.requestSession,
           id,
           entityType,
@@ -74,13 +74,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, entityType, entityId, requirementId } = c.req.valid("param");
       return c.json(
-        await RequirementsService.deleteEntityRequirement(
-          c.var.requestSession,
-          id,
-          entityType,
-          entityId,
-          requirementId,
-        ),
+        await RequirementsService.deleteRequirement(c.var.requestSession, id, entityType, entityId, requirementId),
         200,
       );
     },

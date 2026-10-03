@@ -105,7 +105,7 @@ Others name their row the same way, and stay when it's deleted, on purpose:
 
 Both primitives, picked by entry point:
 
-- **GM removes a single player from a campaign** → hard-delete (`CampaignPlayersService.removeCampaignPlayer`). Intentional removal, no preservation needed.
+- **GM removes a single player from a campaign** → hard-delete (`CampaignPlayersService.removePlayer`). Intentional removal, no preservation needed.
 - **User account deletion** → archive (`AccountService.deleteAccount`, each repository's `archive({ userId })`). The whole `deleteAccount` flow takes a "hide, don't destroy" approach to leave the user row's dependent state intact; membership rows go along.
 
 ### Demo `Users`

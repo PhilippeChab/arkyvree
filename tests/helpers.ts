@@ -197,15 +197,9 @@ export async function createTestCampaign(userId: string, rulesetId?: string) {
   return { campaign, player };
 }
 
-/** Invites `email` into a campaign's player slot, as its Game Master does (`updateCampaignPlayer`). */
+/** Invites `email` into a campaign's player slot, as its Game Master does (`CampaignPlayersService.updatePlayer`). */
 export async function inviteToSlot(gmSession: Session, slot: Player, email: string) {
-  const { invite } = await CampaignPlayersService.updateCampaignPlayer(
-    gmSession,
-    slot.campaignId,
-    slot.id,
-    slot.role,
-    email,
-  );
+  const { invite } = await CampaignPlayersService.updatePlayer(gmSession, slot.campaignId, slot.id, slot.role, email);
   if (!invite) throw new Error("The invite wasn't created");
   return invite;
 }

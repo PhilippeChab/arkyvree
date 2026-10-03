@@ -12,7 +12,7 @@ export default new Hono<SessionContext>()
   })
   .get("/invites/:inviteId", zValidator("param", z.object({ inviteId: z.string().uuid() })), async (c) => {
     const { inviteId } = c.req.valid("param");
-    return c.json(await CampaignInvitesService.getCampaignInvite(c.var.requestSession, inviteId), 200);
+    return c.json(await CampaignInvitesService.getInvite(c.var.requestSession, inviteId), 200);
   })
   .get(
     "/:id/invites",
@@ -31,7 +31,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await CampaignInvitesService.getCampaignInvites(
+        await CampaignInvitesService.getInvites(
           c.var.requestSession,
           id,
           { search, orderBy, orderDir },
@@ -43,14 +43,14 @@ export default new Hono<SessionContext>()
   )
   .post("/invites/:inviteId/accept", zValidator("param", z.object({ inviteId: z.string().uuid() })), async (c) => {
     const { inviteId } = c.req.valid("param");
-    return c.json(await CampaignInvitesService.acceptCampaignInvite(c.var.requestSession, inviteId), 200);
+    return c.json(await CampaignInvitesService.acceptInvite(c.var.requestSession, inviteId), 200);
   })
   .post("/invites/:inviteId/reject", zValidator("param", z.object({ inviteId: z.string().uuid() })), async (c) => {
     const { inviteId } = c.req.valid("param");
-    return c.json(await CampaignInvitesService.rejectCampaignInvite(c.var.requestSession, inviteId), 200);
+    return c.json(await CampaignInvitesService.rejectInvite(c.var.requestSession, inviteId), 200);
   })
   .post("/invites/:inviteId/revoke", zValidator("param", z.object({ inviteId: z.string().uuid() })), async (c) => {
     const { inviteId } = c.req.valid("param");
 
-    return c.json(await CampaignInvitesService.revokeCampaignInvite(c.var.requestSession, inviteId), 200);
+    return c.json(await CampaignInvitesService.revokeInvite(c.var.requestSession, inviteId), 200);
   });

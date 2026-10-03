@@ -86,7 +86,7 @@ class ModifiersService {
     return result;
   }
 
-  async getEntityModifier(rulesetId: string, entityType: string, entityId: string, modifierId: string) {
+  async getModifier(rulesetId: string, entityType: string, entityId: string, modifierId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);
 
@@ -112,7 +112,7 @@ class ModifiersService {
     });
   }
 
-  async getEntityModifiers(rulesetId: string, entityType: string, entityId: string) {
+  async getModifiers(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const resolvedId = rulesetData.canonicalize(entityId);
       await CustomizationsPolicy.canCustomize(resolvedId, entityType, rulesetData);
@@ -132,7 +132,7 @@ class ModifiersService {
     });
   }
 
-  async createEntityModifier(
+  async createModifier(
     session: Session,
     rulesetId: string,
     entityType: string,
@@ -142,7 +142,7 @@ class ModifiersService {
     return await this.addEntityModifier(session, rulesetId, entityType, entityId, body);
   }
 
-  async duplicateEntityModifier(
+  async duplicateModifier(
     session: Session,
     rulesetId: string,
     entityType: string,
@@ -153,7 +153,7 @@ class ModifiersService {
     return await this.addEntityModifier(session, rulesetId, entityType, entityId, body, sourceModifierId);
   }
 
-  async updateEntityModifier(
+  async updateModifier(
     session: Session,
     rulesetId: string,
     entityType: string,
@@ -225,13 +225,7 @@ class ModifiersService {
     return result;
   }
 
-  async deleteEntityModifier(
-    session: Session,
-    rulesetId: string,
-    entityType: string,
-    entityId: string,
-    modifierId: string,
-  ) {
+  async deleteModifier(session: Session, rulesetId: string, entityType: string, entityId: string, modifierId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();

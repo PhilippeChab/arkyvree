@@ -1046,7 +1046,7 @@ describe("DetailedCharacter", () => {
       };
       expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
 
-      await ClassesService.updateRulesetKlass(makeSession(), fork.id, archmage.id, {
+      await ClassesService.updateClass(makeSession(), fork.id, archmage.id, {
         name: "Archmage",
         description: "Ours",
       });

@@ -10,14 +10,14 @@ import { createTestCharacter, createTestRuleset, createTestUserAndRuleset } from
 describe("LanguagesService", () => {
   test("stores a language's type and description", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const created = await LanguagesService.createRulesetLanguage(session, ruleset.id, {
+    const created = await LanguagesService.createLanguage(session, ruleset.id, {
       name: "Draconic",
       description: "Spoken by dragons",
       type: "Exotic",
     });
     expect(created).toMatchObject({ type: "Exotic", description: "Spoken by dragons" });
 
-    const updated = await LanguagesService.updateRulesetLanguage(session, ruleset.id, created.id, {
+    const updated = await LanguagesService.updateLanguage(session, ruleset.id, created.id, {
       name: "Draconic",
       description: "Common among kobolds",
       type: "Standard",
@@ -27,7 +27,7 @@ describe("LanguagesService", () => {
 
   test("refuses to delete a language that a character of a subscribing ruleset speaks", async () => {
     const { user, session, ruleset: extension } = await createTestUserAndRuleset();
-    const language = await LanguagesService.createRulesetLanguage(session, extension.id, {
+    const language = await LanguagesService.createLanguage(session, extension.id, {
       name: "Extension Tongue",
       type: "Standard",
     });
@@ -35,8 +35,6 @@ describe("LanguagesService", () => {
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     await db.insert(languagesInCharacter).values({ characterId: character.id, languageId: language.id });
 
-    await expect(LanguagesService.deleteRulesetLanguage(session, extension.id, language.id)).rejects.toThrow(
-      ConflictError,
-    );
+    await expect(LanguagesService.deleteLanguage(session, extension.id, language.id)).rejects.toThrow(ConflictError);
   });
 });

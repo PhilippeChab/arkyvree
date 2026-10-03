@@ -24,7 +24,35 @@ import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 
 class RulesetsService extends include(Object, Stars, Archives, Publishes) {
-  async getAllRulesets(
+  async getRuleset(session: Session, id: string) {
+    const ruleset = await Rulesets.findOne(db, { id });
+    if (!ruleset) {
+      throw new NotFoundError("Ruleset not found");
+    }
+
+    const [star, starCount, contributorRole, isUsedAsExtension] = await Promise.all([
+      StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
+      StarredRulesets.count(db, { rulesetId: id }),
+      ruleset.userId && ruleset.userId !== session.userId
+        ? Contributors.findRole(db, { userId: session.userId, rulesetId: id })
+        : null,
+      Rulesets.exists(db, { extensionRulesetId: id }),
+    ]);
+
+    const parent = ruleset.rulesetId ? await Rulesets.findOne(db, { id: ruleset.rulesetId }) : undefined;
+
+    return {
+      ...ruleset,
+      rulesetName: parent?.name,
+      isStarred: !!star,
+      starCount,
+      contributorRole,
+      isStarrable: this.isStarrable(ruleset),
+      isUsedAsExtension,
+    };
+  }
+
+  async getRulesets(
     session: Session,
     where: {
       scope?:
@@ -75,34 +103,6 @@ class RulesetsService extends include(Object, Stars, Archives, Publishes) {
     return {
       ...rulesets,
       items,
-    };
-  }
-
-  async getRulesetById(session: Session, id: string) {
-    const ruleset = await Rulesets.findOne(db, { id });
-    if (!ruleset) {
-      throw new NotFoundError("Ruleset not found");
-    }
-
-    const [star, starCount, contributorRole, isUsedAsExtension] = await Promise.all([
-      StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
-      StarredRulesets.count(db, { rulesetId: id }),
-      ruleset.userId && ruleset.userId !== session.userId
-        ? Contributors.findRole(db, { userId: session.userId, rulesetId: id })
-        : null,
-      Rulesets.exists(db, { extensionRulesetId: id }),
-    ]);
-
-    const parent = ruleset.rulesetId ? await Rulesets.findOne(db, { id: ruleset.rulesetId }) : undefined;
-
-    return {
-      ...ruleset,
-      rulesetName: parent?.name,
-      isStarred: !!star,
-      starCount,
-      contributorRole,
-      isStarrable: this.isStarrable(ruleset),
-      isUsedAsExtension,
     };
   }
 

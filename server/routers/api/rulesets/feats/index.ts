@@ -27,11 +27,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, aptitudeId, family, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await FeatsService.getRulesetFeats(
-          id,
-          { search, childOnly, aptitudeId, family, orderBy, orderDir },
-          { limit, page },
-        ),
+        await FeatsService.getFeats(id, { search, childOnly, aptitudeId, family, orderBy, orderDir }, { limit, page }),
         200,
       );
     },
@@ -52,10 +48,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, aptitudeId } = c.req.valid("query");
-      return c.json(
-        await FeatsService.getRulesetFeatsGrouped(id, { search, childOnly, aptitudeId }, { limit, page }),
-        200,
-      );
+      return c.json(await FeatsService.getFeatGroups(id, { search, childOnly, aptitudeId }, { limit, page }), 200);
     },
   )
   .get(
@@ -63,7 +56,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), featId: z.string().uuid() })),
     async (c) => {
       const { id, featId } = c.req.valid("param");
-      return c.json(await FeatsService.getRulesetFeat(id, featId), 200);
+      return c.json(await FeatsService.getFeat(id, featId), 200);
     },
   )
   .post(
@@ -83,7 +76,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await FeatsService.createRulesetFeat(c.var.requestSession, id, body), 200);
+      return c.json(await FeatsService.createFeat(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -104,7 +97,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, featId } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await FeatsService.updateRulesetFeat(c.var.requestSession, id, featId, body), 200);
+      return c.json(await FeatsService.updateFeat(c.var.requestSession, id, featId, body), 200);
     },
   )
   .delete(
@@ -112,6 +105,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), featId: z.string().uuid() })),
     async (c) => {
       const { id, featId } = c.req.valid("param");
-      return c.json(await FeatsService.deleteRulesetFeat(c.var.requestSession, id, featId), 200);
+      return c.json(await FeatsService.deleteFeat(c.var.requestSession, id, featId), 200);
     },
   );

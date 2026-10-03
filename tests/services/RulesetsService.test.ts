@@ -120,7 +120,7 @@ describe("RulesetsService", () => {
       return { session, rulesets };
     }
 
-    type Scope = Parameters<typeof RulesetsService.getAllRulesets>[1]["scope"];
+    type Scope = Parameters<typeof RulesetsService.getRulesets>[1]["scope"];
     type Name = keyof Awaited<ReturnType<typeof setupListing>>["rulesets"];
 
     // docs/access.md describes each scope.
@@ -145,7 +145,7 @@ describe("RulesetsService", () => {
       const { session, rulesets } = await setupListing();
       const nameById = new Map(Object.entries(rulesets).map(([name, ruleset]) => [ruleset.id, name]));
       for (const [scope, expected] of SCOPES) {
-        const { items } = await RulesetsService.getAllRulesets(session, { scope }, firstPage);
+        const { items } = await RulesetsService.getRulesets(session, { scope }, firstPage);
         const listed = items.flatMap((r) => nameById.get(r.id) ?? []).sort();
         expect({ scope, listed }).toEqual({ scope, listed: [...expected].sort() });
       }
@@ -153,7 +153,7 @@ describe("RulesetsService", () => {
 
     test("tells each ruleset's parent, stars and whether it can be starred", async () => {
       const { session, rulesets } = await setupListing();
-      const { items } = await RulesetsService.getAllRulesets(session, { scope: "extensions" }, firstPage);
+      const { items } = await RulesetsService.getRulesets(session, { scope: "extensions" }, firstPage);
       expect(items.find((r) => r.id === rulesets.othersExtension.id)).toMatchObject({
         rulesetName: rulesets.base.name,
         isStarred: true,
@@ -171,7 +171,7 @@ describe("RulesetsService", () => {
         await createTestRuleset(user.id, { name, createdAt: `2026-01-0${day + 1}T00:00:00Z` });
 
       const search = (orderDir: "asc" | "desc", page = 1, limit = 3) =>
-        RulesetsService.getAllRulesets(session, { search: "Search", orderBy: "createdAt", orderDir }, { limit, page });
+        RulesetsService.getRulesets(session, { search: "Search", orderBy: "createdAt", orderDir }, { limit, page });
       expect((await search("asc")).items.map((r) => r.name)).toEqual(names);
       expect((await search("desc")).items.map((r) => r.name)).toEqual([...names].reverse());
       expect(await search("asc", 2, 2)).toMatchObject({ items: [{ name: names[2] }], page: 2 });
@@ -192,7 +192,7 @@ describe("RulesetsService", () => {
     await addRulesetContributor(ruleset.id, user, owner.id, "Admin");
     await RulesetsService.starRuleset(session, ruleset.id);
 
-    expect(await RulesetsService.getRulesetById(session, ruleset.id)).toMatchObject({
+    expect(await RulesetsService.getRuleset(session, ruleset.id)).toMatchObject({
       id: ruleset.id,
       rulesetName: parent.name,
       isStarred: true,
@@ -201,7 +201,7 @@ describe("RulesetsService", () => {
       contributorRole: "Admin",
       isUsedAsExtension: false,
     });
-    await expect(RulesetsService.getRulesetById(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+    await expect(RulesetsService.getRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
   });
 
   describe("forking", () => {
@@ -214,7 +214,7 @@ describe("RulesetsService", () => {
         extensionRulesetIds: [extension.id],
       });
       const [aptitude] = await Aptitudes.create(db, { name: "General", rulesetId: parent.id });
-      const feat = await FeatsService.createRulesetFeat({ ...session, userId: owner.id }, parent.id, {
+      const feat = await FeatsService.createFeat({ ...session, userId: owner.id }, parent.id, {
         name: "Toughness",
         aptitudeIds: [aptitude.id],
       });
@@ -239,7 +239,7 @@ describe("RulesetsService", () => {
       });
       expect((await Feats.findPage(db, { rulesetId: created.id }, firstPage)).items).toEqual([]);
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toEqual([]);
-      expect(await FeatsService.getRulesetFeat(created.id, feat.id)).toMatchObject({
+      expect(await FeatsService.getFeat(created.id, feat.id)).toMatchObject({
         id: feat.id,
         featsAptitudesInRules: [{ aptitudeId: aptitude.id }],
       });
@@ -493,11 +493,11 @@ describe("RulesetsService", () => {
       const { session, fork, modified, deleted } = await setupChanges();
       expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
 
-      const copy = await FeatsService.updateRulesetFeat(session, fork.id, modified.id, {
+      const copy = await FeatsService.updateFeat(session, fork.id, modified.id, {
         name: "Power Attack",
         description: "Changed",
       });
-      await FeatsService.deleteRulesetFeat(session, fork.id, deleted.id);
+      await FeatsService.deleteFeat(session, fork.id, deleted.id);
       const [added] = await Feats.create(db, { name: "Homebrew", rulesetId: fork.id });
 
       const changes = await RulesetChangesService.getChanges(session, fork.id);
@@ -528,7 +528,7 @@ describe("RulesetsService", () => {
     describe("reverting", () => {
       test("deletes a modified feat's copy with its customizations and aptitude links, showing the parent's again", async () => {
         const { session, fork, modified } = await setupChanges();
-        const copy = await FeatsService.updateRulesetFeat(session, fork.id, modified.id, {
+        const copy = await FeatsService.updateFeat(session, fork.id, modified.id, {
           name: "Power Attack",
           description: "Changed",
         });
@@ -546,7 +546,7 @@ describe("RulesetsService", () => {
         await RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id);
 
         expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
-        expect(await FeatsService.getRulesetFeat(fork.id, modified.id)).toMatchObject({
+        expect(await FeatsService.getFeat(fork.id, modified.id)).toMatchObject({
           id: modified.id,
           description: null,
         });
@@ -560,10 +560,10 @@ describe("RulesetsService", () => {
 
       test("brings back an inherited feat the fork deleted", async () => {
         const { session, fork, deleted } = await setupChanges();
-        await FeatsService.deleteRulesetFeat(session, fork.id, deleted.id);
+        await FeatsService.deleteFeat(session, fork.id, deleted.id);
         await RulesetChangesService.revertOverride(session, fork.id, "feats", deleted.id);
         expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toEqual([]);
-        expect(await FeatsService.getRulesetFeat(fork.id, deleted.id)).toMatchObject({ id: deleted.id });
+        expect(await FeatsService.getFeat(fork.id, deleted.id)).toMatchObject({ id: deleted.id });
       });
 
       test("deletes a copied class's levels and class skills", async () => {

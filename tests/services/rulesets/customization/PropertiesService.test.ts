@@ -39,22 +39,20 @@ async function activityTypes(userId: string, propertyId: string) {
 describe("PropertiesService", () => {
   test("creates, lists, updates and deletes a property, keeping its activities", async () => {
     const { session, rulesetId, feat } = await setup();
-    expect(await PropertiesService.getEntityProperties(rulesetId, "feats", feat.id)).toEqual([]);
+    expect(await PropertiesService.getProperties(rulesetId, "feats", feat.id)).toEqual([]);
 
-    const created = await PropertiesService.createEntityProperty(session, rulesetId, "feats", feat.id, acBonus);
+    const created = await PropertiesService.createProperty(session, rulesetId, "feats", feat.id, acBonus);
     expect(created).toMatchObject({ ...acBonus, entityType: "feats", entityId: feat.id });
-    expect(await PropertiesService.getEntityProperties(rulesetId, "feats", feat.id)).toMatchObject([
-      { id: created.id },
-    ]);
+    expect(await PropertiesService.getProperties(rulesetId, "feats", feat.id)).toMatchObject([{ id: created.id }]);
     expect(
-      await PropertiesService.updateEntityProperty(session, rulesetId, "feats", feat.id, created.id, {
+      await PropertiesService.updateProperty(session, rulesetId, "feats", feat.id, created.id, {
         type: "AC_BONUS",
         value: "8",
       }),
     ).toMatchObject({ id: created.id, value: "8" });
 
-    await PropertiesService.deleteEntityProperty(session, rulesetId, "feats", feat.id, created.id);
-    expect(await PropertiesService.getEntityProperties(rulesetId, "feats", feat.id)).toEqual([]);
+    await PropertiesService.deleteProperty(session, rulesetId, "feats", feat.id, created.id);
+    expect(await PropertiesService.getProperties(rulesetId, "feats", feat.id)).toEqual([]);
     expect(await activityTypes(session.userId, created.id)).toEqual([
       "createProperty",
       "deleteProperty",
@@ -65,21 +63,21 @@ describe("PropertiesService", () => {
   test("refuses a missing ruleset, entity or property, another entity's property and another user", async () => {
     const { session, rulesetId, feat, templateProperty } = await setup();
     const { session: other } = await createTestUserAndRuleset();
-    const created = await PropertiesService.createEntityProperty(session, rulesetId, "feats", feat.id, acBonus);
+    const created = await PropertiesService.createProperty(session, rulesetId, "feats", feat.id, acBonus);
 
-    await expect(PropertiesService.getEntityProperties(NIL_UUID, "feats", feat.id)).rejects.toThrow(NotFoundError);
-    await expect(PropertiesService.getEntityProperties(rulesetId, "feats", NIL_UUID)).rejects.toThrow(NotFoundError);
-    await expect(
-      PropertiesService.createEntityProperty(session, rulesetId, "feats", NIL_UUID, acBonus),
-    ).rejects.toThrow(NotFoundError);
-    await expect(PropertiesService.createEntityProperty(other, rulesetId, "feats", feat.id, acBonus)).rejects.toThrow(
+    await expect(PropertiesService.getProperties(NIL_UUID, "feats", feat.id)).rejects.toThrow(NotFoundError);
+    await expect(PropertiesService.getProperties(rulesetId, "feats", NIL_UUID)).rejects.toThrow(NotFoundError);
+    await expect(PropertiesService.createProperty(session, rulesetId, "feats", NIL_UUID, acBonus)).rejects.toThrow(
+      NotFoundError,
+    );
+    await expect(PropertiesService.createProperty(other, rulesetId, "feats", feat.id, acBonus)).rejects.toThrow(
       ForbiddenError,
     );
     for (const change of [
       (s = session, entityId = feat.id, id = created.id) =>
-        PropertiesService.updateEntityProperty(s, rulesetId, "feats", entityId, id, acBonus),
+        PropertiesService.updateProperty(s, rulesetId, "feats", entityId, id, acBonus),
       (s = session, entityId = feat.id, id = created.id) =>
-        PropertiesService.deleteEntityProperty(s, rulesetId, "feats", entityId, id),
+        PropertiesService.deleteProperty(s, rulesetId, "feats", entityId, id),
     ]) {
       await expect(change(session, feat.id, NIL_UUID)).rejects.toThrow(NotFoundError);
       // Only an item made from a template reaches the template's properties.
@@ -90,9 +88,9 @@ describe("PropertiesService", () => {
 
   test("refuses an edit started from a stale copy", async () => {
     const { session, rulesetId, feat } = await setup();
-    const created = await PropertiesService.createEntityProperty(session, rulesetId, "feats", feat.id, acBonus);
+    const created = await PropertiesService.createProperty(session, rulesetId, "feats", feat.id, acBonus);
     const edit = (value: string) =>
-      PropertiesService.updateEntityProperty(session, rulesetId, "feats", feat.id, created.id, {
+      PropertiesService.updateProperty(session, rulesetId, "feats", feat.id, created.id, {
         ...acBonus,
         value,
         updatedAt: created.updatedAt,
@@ -104,7 +102,7 @@ describe("PropertiesService", () => {
   describe("on an item made from a template", () => {
     test("overrides a template property on the item, leaving the template's", async () => {
       const { session, rulesetId, derived, templateProperty } = await setup();
-      const override = await PropertiesService.updateEntityProperty(
+      const override = await PropertiesService.updateProperty(
         session,
         rulesetId,
         "items",
@@ -119,12 +117,12 @@ describe("PropertiesService", () => {
 
     test("updates the item's own properties in place", async () => {
       const { session, rulesetId, derived } = await setup();
-      const own = await PropertiesService.createEntityProperty(session, rulesetId, "items", derived.id, {
+      const own = await PropertiesService.createProperty(session, rulesetId, "items", derived.id, {
         type: "WEIGHT",
         value: "3",
       });
       expect(
-        await PropertiesService.updateEntityProperty(session, rulesetId, "items", derived.id, own.id, {
+        await PropertiesService.updateProperty(session, rulesetId, "items", derived.id, own.id, {
           type: "WEIGHT",
           value: "5",
         }),
@@ -134,7 +132,7 @@ describe("PropertiesService", () => {
     test("refuses to delete a template property", async () => {
       const { session, rulesetId, derived, templateProperty } = await setup();
       await expect(
-        PropertiesService.deleteEntityProperty(session, rulesetId, "items", derived.id, templateProperty.id),
+        PropertiesService.deleteProperty(session, rulesetId, "items", derived.id, templateProperty.id),
       ).rejects.toThrow(BadRequestError);
       expect(await Properties.findOne(db, { id: templateProperty.id })).toBeDefined();
     });

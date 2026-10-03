@@ -24,10 +24,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, orderBy, orderDir } = c.req.valid("query");
-      return c.json(
-        await SkillsService.getRulesetSkills(id, { search, childOnly, orderBy, orderDir }, { limit, page }),
-        200,
-      );
+      return c.json(await SkillsService.getSkills(id, { search, childOnly, orderBy, orderDir }, { limit, page }), 200);
     },
   )
   .get(
@@ -35,7 +32,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), skillId: z.string().uuid() })),
     async (c) => {
       const { id, skillId } = c.req.valid("param");
-      return c.json(await SkillsService.getRulesetSkill(id, skillId), 200);
+      return c.json(await SkillsService.getSkill(id, skillId), 200);
     },
   )
   .post(
@@ -57,7 +54,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await SkillsService.createRulesetSkill(c.var.requestSession, id, body), 200);
+      return c.json(await SkillsService.createSkill(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -80,7 +77,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, skillId } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await SkillsService.updateRulesetSkill(c.var.requestSession, id, skillId, body), 200);
+      return c.json(await SkillsService.updateSkill(c.var.requestSession, id, skillId, body), 200);
     },
   )
   .delete(
@@ -88,6 +85,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), skillId: z.string().uuid() })),
     async (c) => {
       const { id, skillId } = c.req.valid("param");
-      return c.json(await SkillsService.deleteRulesetSkill(c.var.requestSession, id, skillId), 200);
+      return c.json(await SkillsService.deleteSkill(c.var.requestSession, id, skillId), 200);
     },
   );
