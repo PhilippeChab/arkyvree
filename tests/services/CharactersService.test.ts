@@ -26,6 +26,7 @@ import {
   Requirements,
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
+import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import { cowEntity } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
@@ -222,14 +223,14 @@ describe("CharactersService", () => {
       const { session: owner } = await createTestUser();
       const { session: other } = await createTestUser();
       const character = await createCharacter(owner);
-      await CharactersService.generateShareToken(owner, character.id);
+      await CharacterSharingService.generateShareToken(owner, character.id);
       const calls = (s: Session, id: string) => [
         () => CharactersService.getCharacter(s, id),
         () => CharactersService.updateCharacter(s, id, { age: 40 }),
         () => CharactersService.enqueuePdf(s, id),
         () => CharactersService.archiveCharacter(s, id),
-        () => CharactersService.generateShareToken(s, id),
-        () => CharactersService.revokeShareToken(s, id),
+        () => CharacterSharingService.generateShareToken(s, id),
+        () => CharacterSharingService.revokeShareToken(s, id),
       ];
       // One at a time: the test's transaction has a single connection.
       for (const call of [...calls(owner, NIL_UUID), ...calls(other, character.id)])
@@ -450,25 +451,25 @@ describe("CharactersService", () => {
     test("gives anyone with the token the built character and its PDF, until it's replaced or revoked", async () => {
       const { session } = await createTestUser();
       const character = await createCharacter(session);
-      const first = (await CharactersService.generateShareToken(session, character.id)).shareToken!;
-      expect(await CharactersService.getSharedCharacter(first)).toMatchObject({
+      const first = (await CharacterSharingService.generateShareToken(session, character.id)).shareToken!;
+      expect(await CharacterSharingService.getSharedCharacter(first)).toMatchObject({
         character: { id: character.id },
         detailedCharacter: expect.anything(),
       });
-      expect(await CharactersService.generateSharedPdf(first)).toMatchObject({
+      expect(await CharacterSharingService.generateSharedPdf(first)).toMatchObject({
         detailedCharacter: expect.anything(),
         CharacterSheetComponent: expect.anything(),
       });
 
-      const second = (await CharactersService.generateShareToken(session, character.id)).shareToken!;
+      const second = (await CharacterSharingService.generateShareToken(session, character.id)).shareToken!;
       expect(second).not.toBe(first);
-      expect(await CharactersService.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
+      expect(await CharacterSharingService.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
       // Revoking what isn't shared is fine.
-      expect(await CharactersService.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
+      expect(await CharacterSharingService.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
 
       for (const token of [first, second, NIL_UUID])
-        await expect(CharactersService.getSharedCharacter(token)).rejects.toThrow(NotFoundError);
-      await expect(CharactersService.generateSharedPdf(NIL_UUID)).rejects.toThrow(NotFoundError);
+        await expect(CharacterSharingService.getSharedCharacter(token)).rejects.toThrow(NotFoundError);
+      await expect(CharacterSharingService.generateSharedPdf(NIL_UUID)).rejects.toThrow(NotFoundError);
     });
   });
 

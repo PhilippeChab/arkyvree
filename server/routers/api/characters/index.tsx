@@ -18,6 +18,7 @@ import inventory from "./inventory/index.ts";
 // ruleset at this layer and pick the matching implementation.
 import levels from "./levels/dnd3.5/index.ts";
 import modifiers from "./modifiers/index.ts";
+import sharing from "./sharing/index.ts";
 
 const characters = new Hono()
   .use(sessionMiddleware)
@@ -251,18 +252,7 @@ const characters = new Hono()
     await CharactersService.archiveCharacter(c.var.requestSession, id);
     return c.json({ message: "Character archived successfully" }, 200);
   })
-  // Generate share token
-  .post("/:id/share", denyDemoUser, zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-
-    return c.json(await CharactersService.generateShareToken(c.var.requestSession, id), 200);
-  })
-  // Revoke share token
-  .delete("/:id/share", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-
-    return c.json(await CharactersService.revokeShareToken(c.var.requestSession, id), 200);
-  })
+  .route("/", sharing)
   // Permanently delete an archived character
   .delete("/:id/permanent", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");

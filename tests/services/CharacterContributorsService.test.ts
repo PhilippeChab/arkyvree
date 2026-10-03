@@ -5,6 +5,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/in
 import { CharacterContributors, Users } from "@/server/repositories/index.ts";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
+import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestUser, getSeedCtx, uniqueId } from "@/tests/helpers.ts";
 
@@ -184,8 +185,12 @@ describe("CharacterContributorsService", () => {
       await CharactersService.enqueuePdf(inviteeSession, character.id);
 
       await expect(CharactersService.archiveCharacter(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
-      await expect(CharactersService.generateShareToken(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
-      await expect(CharactersService.revokeShareToken(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
+      await expect(CharacterSharingService.generateShareToken(inviteeSession, character.id)).rejects.toThrow(
+        NotFoundError,
+      );
+      await expect(CharacterSharingService.revokeShareToken(inviteeSession, character.id)).rejects.toThrow(
+        NotFoundError,
+      );
       await expect(
         CharacterContributorsService.inviteContributor(inviteeSession, character.id, "x@example.com"),
       ).rejects.toThrow(ForbiddenError);
