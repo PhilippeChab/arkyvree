@@ -47,7 +47,7 @@ export { copyEntityCustomizations, copyEntityCustomizationsToMany } from "./copy
 export { buildSourceChain, refreshEntityData, resolveOverrides } from "./overrideMap.ts";
 export { getOrBuildCowData, invalidateAllCowData, invalidateCowData } from "./cowData.ts";
 
-// Merging a fork's requirements with its sources' (rulesetCache.ts's compose step).
+// Merging a fork's requirements with its sources' (rulesetCache/compose.ts).
 export { mergeSiblingRequirements } from "./requirements.ts";
 
 export type { IdResolveMap } from "./overrideMap.ts";

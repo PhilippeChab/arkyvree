@@ -8,7 +8,7 @@
  * - getLevel — retrieves saved selections for an existing character level
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {

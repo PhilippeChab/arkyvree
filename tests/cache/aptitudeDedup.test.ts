@@ -15,7 +15,7 @@ import {
   powersInRules,
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
-import { getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache.ts";
+import { getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";

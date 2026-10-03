@@ -3,7 +3,7 @@ import { afterAll, afterEach, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { invalidateAll } from "@/server/cache/rulesetCache.ts";
+import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";

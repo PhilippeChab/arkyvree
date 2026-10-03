@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 
 import { getBondedRaceStats } from "./bondedRaceData.ts";
 import DetailedCharacterAdvancingBonded from "./DetailedCharacterAdvancingBonded.ts";

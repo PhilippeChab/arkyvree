@@ -1,4 +1,4 @@
-import { getOrFetchTargetPathsAndLabels } from "@/server/cache/rulesetCache.ts";
+import { getOrFetchTargetPathsAndLabels } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";

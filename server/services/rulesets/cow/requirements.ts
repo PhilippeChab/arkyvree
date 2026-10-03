@@ -2,7 +2,7 @@ import type { Requirement } from "@/shared/relations.ts";
 
 // ──────────────────────────────────────────────────────────────
 // Requirement forest model (used by siblingMerge.ts + the
-// matching read-time compose in rulesetCache.ts)
+// matching read-time compose in rulesetCache/compose.ts)
 //
 // Every entity's requirements form a forest of trees:
 //   - Each top-level entry is a root (no `.` parent prefix).

@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { memoizeRequest } from "@/server/database/requestCache.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";

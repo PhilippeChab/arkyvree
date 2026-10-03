@@ -9,7 +9,7 @@
  * inherit a dialect that doesn't apply to them.
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { LevelUpProjector, ProjectedCharacterData } from "@/server/rulesets/types.ts";
 import type { Power, Skill } from "@/shared/relations.ts";

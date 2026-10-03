@@ -11,7 +11,7 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import { type SeedContext } from "@/database/seeds/helpers.ts";
 import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache.ts";
+import { type CachedRulesetData, getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx } from "@/tests/helpers.ts";

@@ -1,5 +1,5 @@
 import DependentCache from "@/server/cache/DependentCache.ts";
-import { type CachedRulesetData, getOrFetchRulesetData } from "@/server/cache/rulesetCache.ts";
+import { type CachedRulesetData, getOrFetchRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withCowContext } from "@/server/database/cowContext.ts";
 import { db, type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";

@@ -5,7 +5,7 @@
  * - distributePoolSelections — distributes pooled user selections (skills, feats, powers) into per-level payloads
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 export interface PerLevelDistributionData {

@@ -2,7 +2,7 @@ import "@/server/instrument-web.ts";
 import "@/server/log.ts";
 import { sql } from "drizzle-orm";
 
-import { warmSystemRulesetCache } from "@/server/cache/rulesetCache.ts";
+import { warmSystemRulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { shutdownOtel } from "@/server/otel.ts";
 import { application } from "@/server/routers/application.ts";

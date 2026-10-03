@@ -2,7 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
-import { invalidateAll, invalidateRuleset } from "@/server/cache/rulesetCache.ts";
+import { invalidateAll, invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
 import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";

@@ -6,7 +6,7 @@
  * - getKlassLevel — a class's level from the composed ruleset, or a 404
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { isSkillSubtypeOf } from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
 

@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { invalidateAll } from "@/server/cache/rulesetCache.ts";
+import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";

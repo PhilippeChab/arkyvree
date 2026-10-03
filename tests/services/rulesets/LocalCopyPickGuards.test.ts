@@ -3,7 +3,7 @@ import { afterEach, expect, test } from "bun:test";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { itemsInRules, languagesInRules, racesInRules } from "@/drizzle/schema.ts";
-import { invalidateAll } from "@/server/cache/rulesetCache.ts";
+import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, CharacterLanguages, Characters } from "@/server/repositories/index.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";

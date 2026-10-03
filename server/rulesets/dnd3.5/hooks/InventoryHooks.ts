@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { WEAPON_SIZE } from "@/server/rulesets/dnd3.5/properties/index.ts";

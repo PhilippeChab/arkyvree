@@ -6,7 +6,7 @@
  * - validateCharges / validateEquipping — what adding or updating an inventory entry checks
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterInventory } from "@/server/repositories/index.ts";

@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { invalidateAll } from "@/server/cache/rulesetCache.ts";
+import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Abilities, Aptitudes, Feats, FeatsAptitudes, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";

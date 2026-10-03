@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassSkillsInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
+import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";

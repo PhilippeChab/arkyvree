@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, invalidateRuleset } from "@/server/cache/rulesetCache.ts";
+import { type CachedRulesetData, invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
