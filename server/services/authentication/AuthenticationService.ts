@@ -19,6 +19,13 @@ const DUMMY_HASH = await hashPassword("dummy-password-for-timing-normalization")
 const DEMO_TTL_MS = 60 * 60 * 1000;
 
 class AuthenticationService {
+  async getCurrentUser(session: Session) {
+    const user = await Users.findOne(db, { id: session.userId });
+    if (!user) throw new InternalError("User not found");
+
+    return toSafeUser(user);
+  }
+
   async forgotPassword(emailAddress: string) {
     const { code } = await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { emailAddress });
@@ -49,13 +56,6 @@ class AuthenticationService {
     }
 
     return { success: true };
-  }
-
-  async me(session: Session) {
-    const user = await Users.findOne(db, { id: session.userId });
-    if (!user) throw new InternalError("User not found");
-
-    return toSafeUser(user);
   }
 
   async resendVerification(emailAddress: string) {

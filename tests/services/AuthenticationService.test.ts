@@ -229,10 +229,12 @@ describe("AuthenticationService", () => {
 
   test("reads the signed-in user without the password digest", async () => {
     const { session, user, account } = await signUpAndVerify();
-    const me = await AuthenticationService.me(session);
+    const me = await AuthenticationService.getCurrentUser(session);
     expect(me).toMatchObject({ id: user.id, emailAddress: account.emailAddress, createdAt: expect.any(String) });
     expect("passwordDigest" in me).toBe(false);
-    await expect(AuthenticationService.me(missingSession)).rejects.toEqual(new InternalError("User not found"));
+    await expect(AuthenticationService.getCurrentUser(missingSession)).rejects.toEqual(
+      new InternalError("User not found"),
+    );
   });
 
   describe("the demo", () => {

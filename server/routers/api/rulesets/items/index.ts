@@ -124,7 +124,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, itemId } = c.req.valid("param");
       const { variants } = c.req.valid("json");
-      return c.json(await ItemsService.bulkCreateVariants(c.var.requestSession, id, itemId, variants), 200);
+      return c.json(await ItemsService.createVariants(c.var.requestSession, id, itemId, variants), 200);
     },
   )
   .put(

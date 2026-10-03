@@ -91,7 +91,7 @@ class RulesetsService extends include(Object, Stars, Archives, Publishes) {
       ruleset.userId && ruleset.userId !== session.userId
         ? Contributors.findActiveRole(db, { userId: session.userId, rulesetId: id })
         : null,
-      Rulesets.hasSubscribers(db, id),
+      Rulesets.existsSubscriber(db, id),
     ]);
 
     const parent = ruleset.rulesetId ? await Rulesets.findOne(db, { id: ruleset.rulesetId }) : undefined;

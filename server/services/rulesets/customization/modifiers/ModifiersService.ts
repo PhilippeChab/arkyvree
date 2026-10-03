@@ -39,7 +39,7 @@ class ModifiersService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
         if (sourceModifierId) {
           const sourceModifier = rulesetData.modifiersById.get(sourceModifierId);
@@ -90,14 +90,14 @@ class ModifiersService {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);
 
-      const parentName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+      const parentName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
       const modifier = rulesetData.modifiersById.get(modifierId);
       if (!modifier) throw new NotFoundError("Modifier not found");
 
       const sourceName =
         modifier.sourceId === effectiveEntityId && modifier.sourceType === entityType
           ? parentName
-          : await CustomizationsPolicy.sourceExists(modifier.sourceId, modifier.sourceType, rulesetData);
+          : await CustomizationsPolicy.canCustomize(modifier.sourceId, modifier.sourceType, rulesetData);
 
       const requirements = rulesetData.requirementsByEntity.get(modifierId) ?? [];
       const modifierRequirements = requirements.filter((r) => r.entityType === "modifiers");
@@ -115,7 +115,7 @@ class ModifiersService {
   async getEntityModifiers(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const resolvedId = rulesetData.canonicalize(entityId);
-      await CustomizationsPolicy.sourceExists(resolvedId, entityType, rulesetData);
+      await CustomizationsPolicy.canCustomize(resolvedId, entityType, rulesetData);
       // Compose step pre-merges sibling modifiers into the winner's bucket with
       // sourceId remapped. Filter by sourceType to isolate the requested family.
       const allMods = rulesetData.modifiersBySource.get(resolvedId) ?? [];
@@ -171,7 +171,7 @@ class ModifiersService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
         const modifier = rulesetData.modifiersById.get(modifierId);
         if (!modifier || modifier.sourceId !== effectiveEntityId || modifier.sourceType !== entityType) {
@@ -209,7 +209,7 @@ class ModifiersService {
         }
         const updatedModifier = rows[0];
 
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: updatedModifier.id,
@@ -237,7 +237,7 @@ class ModifiersService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
         const modifier = rulesetData.modifiersById.get(modifierId);
         if (!modifier || modifier.sourceId !== effectiveEntityId || modifier.sourceType !== entityType) {
@@ -260,7 +260,7 @@ class ModifiersService {
         const rows = await Modifiers.deleteMany(tx, { ids: [resolvedModifierId] });
         const deletedModifier = rows[0];
 
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: deletedModifier.id,

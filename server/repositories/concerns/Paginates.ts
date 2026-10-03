@@ -39,6 +39,15 @@ export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B)
       };
     }
 
+    protected async withPagination<R>(
+      query: { limit: number; page: number },
+      callback: (paginate: { limit: number; offset: number }) => Promise<R[]>,
+    ) {
+      const rows = await callback(this.paginate(query));
+
+      return this.paginated(rows, query);
+    }
+
     /** Every page of a paginated query, together. */
     async findAll<R>(
       callback: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
@@ -55,15 +64,6 @@ export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B)
       }
 
       return items;
-    }
-
-    async withPagination<R>(
-      query: { limit: number; page: number },
-      callback: (paginate: { limit: number; offset: number }) => Promise<R[]>,
-    ) {
-      const rows = await callback(this.paginate(query));
-
-      return this.paginated(rows, query);
     }
   }
   return Paginating;

@@ -173,7 +173,7 @@ class AttachmentsService {
     return payload;
   }
 
-  async findOne(session: Session, params: { recordType: string; recordId: string; name: string }) {
+  async getAttachment(session: Session, params: { recordType: string; recordId: string; name: string }) {
     await this.assertCanRead(session, params.recordType, params.recordId);
     const row = await Attachments.findOneWithBlob(db, {
       recordType: params.recordType,

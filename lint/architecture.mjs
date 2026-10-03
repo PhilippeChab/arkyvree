@@ -17,6 +17,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { repoPath, rootOf } from "./paths.mjs";
+
 /** Each layer and what it must not import. `types`: imported for its types only, it's allowed. */
 const ABOVE_REPOSITORIES = [
   "server/cache/",
@@ -62,19 +64,6 @@ const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll",
 
 /** The trees whose folders are entered through their `index.ts`. */
 const INDEXED_TREES = ["server/services/", "client/src/components/"];
-
-const rootCache = new Map();
-/** The repo's root: the nearest folder above the file that holds the lint config, wherever oxlint runs from. */
-function rootOf(file) {
-  const start = path.dirname(file);
-  if (rootCache.has(start)) return rootCache.get(start);
-  let dir = start;
-  while (!fs.existsSync(path.join(dir, ".oxlintrc.json")) && path.dirname(dir) !== dir) dir = path.dirname(dir);
-  rootCache.set(start, dir);
-  return dir;
-}
-
-const repoPath = (file) => path.relative(rootOf(file), file).split(path.sep).join("/");
 
 /** An import's target, as a repo path: `@/x`, or relative to the importer. Packages have none. */
 function targetOf(importer, spec) {

@@ -69,7 +69,7 @@ test("bulk item variants with a renamed override's original name keep the overri
     costGp: Number(source.costGp),
   });
 
-  const [created] = await ItemsService.bulkCreateVariants(session, fork.id, renamed.id, [{ name: source.name }]);
+  const [created] = await ItemsService.createVariants(session, fork.id, renamed.id, [{ name: source.name }]);
 
   const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, { sourceEntityId: source.id, rulesetId: fork.id });
   expect(snapshot?.forkedEntityId).toBe(renamed.id);

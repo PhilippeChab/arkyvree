@@ -78,7 +78,7 @@ class ActivitiesService {
     return `/rulesets/${entity.rulesetId}/${section}/${targetId}`;
   }
 
-  async findActivities(
+  async getActivities(
     session: Session,
     where: {
       search?: string;
@@ -99,7 +99,7 @@ class ActivitiesService {
     );
   }
 
-  async resolveActivityUrl(
+  async getActivityUrl(
     session: Session,
     targetTable: string,
     targetId: string,

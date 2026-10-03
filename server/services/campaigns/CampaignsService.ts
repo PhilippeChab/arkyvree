@@ -17,7 +17,7 @@ class CampaignsService {
       throw new NotFoundError("Campaign not found");
     }
 
-    const player = await CampaignsPolicy.member(db, session, id);
+    const player = await CampaignsPolicy.canRead(db, session, id);
 
     return { ...campaign, currentUserRole: player.role };
   }

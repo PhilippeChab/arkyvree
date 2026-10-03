@@ -1,9 +1,12 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, setDefaultTimeout, test } from "bun:test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
 import { compareRoutes, lifecycleStep, verbGroup } from "@/lint/memberOrder.mjs";
+
+// The fix tests run oxlint, which a busy suite can slow past the default 5s.
+setDefaultTimeout(30_000);
 
 const [LIFECYCLE, READ, CREATE, UPDATE, DELETE, ACTION] = [0, 1, 2, 3, 4, 5];
 
@@ -117,7 +120,7 @@ describe("member order", () => {
       ].join("\n"),
     );
     const oxlint = path.resolve("node_modules/.bin/oxlint");
-    Bun.spawnSync([oxlint, "-c", config, "--fix", dir]);
+    Bun.spawnSync([oxlint, "--threads=1", "-c", config, "--fix", dir]);
 
     expect(fs.readFileSync(service, "utf8")).toBe(
       [
@@ -167,7 +170,7 @@ describe("member order", () => {
         "",
       ].join("\n"),
     );
-    Bun.spawnSync([oxlint, "-c", config, "--fix", chainEnd]);
+    Bun.spawnSync([oxlint, "--threads=1", "-c", config, "--fix", chainEnd]);
     expect(fs.readFileSync(chainEnd, "utf8")).toBe(
       [
         "export default new Hono() // head note",
@@ -178,7 +181,7 @@ describe("member order", () => {
       ].join("\n"),
     );
 
-    const check = Bun.spawnSync([oxlint, "-c", config, dir]);
+    const check = Bun.spawnSync([oxlint, "--threads=1", "-c", config, dir]);
     expect(check.exitCode).toBe(0);
     fs.rmSync(dir, { recursive: true });
   });

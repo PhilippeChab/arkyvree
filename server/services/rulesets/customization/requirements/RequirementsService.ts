@@ -23,7 +23,7 @@ class RequirementsService {
   async getEntityRequirements(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const resolvedId = rulesetData.canonicalize(entityId);
-      await CustomizationsPolicy.sourceExists(resolvedId, entityType, rulesetData);
+      await CustomizationsPolicy.canCustomize(resolvedId, entityType, rulesetData);
       // Compose step pre-merges sibling requirements (OR-chain-aware) into the
       // winner's bucket with entityId remapped. Filter by entityType.
       const allReqs = rulesetData.requirementsByEntity.get(resolvedId) ?? [];
@@ -60,7 +60,7 @@ class RequirementsService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
         const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
 
@@ -132,7 +132,7 @@ class RequirementsService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
         const requirement = rulesetData.requirementsByEntity
           .get(effectiveEntityId)
@@ -141,7 +141,7 @@ class RequirementsService {
           throw new NotFoundError("Requirement not found for this entity");
         }
 
-        // Policy check BEFORE COW — sourceExists uses global db, not tx
+        // Policy check BEFORE COW — canCustomize uses global db, not tx
         const customizationPolicy = new CustomizationsPolicy(session, requirement);
         await customizationPolicy.canUpdate();
 
@@ -194,7 +194,7 @@ class RequirementsService {
           throw new InternalError("Failed to update requirement");
         }
 
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: updatedRequirement.id,
@@ -226,7 +226,7 @@ class RequirementsService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
         const requirement = rulesetData.requirementsByEntity
           .get(effectiveEntityId)
@@ -235,7 +235,7 @@ class RequirementsService {
           throw new NotFoundError("Requirement not found for this entity");
         }
 
-        // Policy check BEFORE COW — sourceExists uses global db, not tx
+        // Policy check BEFORE COW — canCustomize uses global db, not tx
         const customizationPolicy = new CustomizationsPolicy(session, requirement);
         await customizationPolicy.canDelete();
 
@@ -251,7 +251,7 @@ class RequirementsService {
         const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
         const deletedRequirement = rows[0];
 
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: deletedRequirement.id,

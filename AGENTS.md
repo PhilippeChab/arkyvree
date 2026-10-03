@@ -28,11 +28,12 @@ The codebase follows a **3-layer architecture** (Routers → Services → Reposi
 2. **Services** (`/server/services`): Business logic, transaction management, error handling
 3. **Repositories** (`/server/repositories`): SQL queries (Drizzle ORM), accept `db: Db` parameter
 
-Lint holds the layers (`lint/architecture.mjs`):
+Lint holds the layers (`lint/architecture.mjs`) and the method names (`lint/methodNames.mjs`):
 
 - **`arkyvree/layers`**: a layer imports only what's below it, from `server/database/` up through `server/repositories/`, then `server/cache/` and the engine (`server/rulesets/`), then `server/services/`, `server/jobs/` and `server/routers/`. `server/middlewares/` sits on the repositories, beside the services. The cache and the engine use copy-on-write from `services/rulesets/cow/`, the one exception. The server reads the content packages' data (`database/packages/`), never the seeders or scripts. `shared/` imports nothing app-specific (the schema's types only), and the client takes only types from the server
 - **`arkyvree/queries-in-repositories`**: a query (`db.select`, `tx.update`, `db.query.…`, `unionAll`) is built in `server/repositories/` or `server/database/`. Elsewhere in the server, only the infrastructure that talks to Postgres itself builds one: the job queue, websocket notifications and the health checks. A transaction's handle is named `tx` (`withTransaction(async (tx) => …)`), the name the rule knows a query by
 - **`arkyvree/folder-index`**: code outside a folder that has an `index.ts` imports it through that index (the service folders, `cow/`, `policies/`, the client's component folders). Files within the folder import each other directly, and a test may reach a folder's own modules
+- **`arkyvree/method-names`**: a public method starts with a verb its layer knows. A repository reads with `find`, `exists` or `count`, writes with `create`, `update`, `upsert`, `delete`, `archive`, `unarchive`, `mark`, `backfill`, `orphan` or `publish`, and locks with `lock`: `server/repositories/methodVerbs.json`, which the request cache classifies its methods by (a read is memoized within the request and sees copy-on-write ids, a write clears the cache). A service reads with `get`, creates with `create`, `add` or `duplicate`, updates with `update`, `set` or `mark`, deletes with `delete`, `remove`, `archive`, `unarchive` or `hardDelete`, or takes one of the actions `lint/methodNames.mjs` lists (`fork`, `publish`, `invite`, `accept`…). A policy checks with `can` (it throws, or returns what it checked) or `is` (a yes or no), and `for` builds one. Private and protected methods name themselves
 
 Where code goes, by what it needs:
 

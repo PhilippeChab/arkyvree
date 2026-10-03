@@ -33,7 +33,7 @@ class PropertiesService {
   async getEntityProperties(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);
-      await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+      await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
       const all = rulesetData.propertiesByEntity.get(effectiveEntityId) ?? [];
       return all.filter((p) => p.entityType === entityType);
     });
@@ -55,7 +55,7 @@ class PropertiesService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
         const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
 
@@ -101,7 +101,7 @@ class PropertiesService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
         const { property, fromTemplate } = this.findEntityProperty(
           rulesetData,
@@ -125,7 +125,7 @@ class PropertiesService {
           });
           const newProperty = rows[0];
 
-          const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+          const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: newProperty.id,
@@ -155,7 +155,7 @@ class PropertiesService {
         }
         const updatedProperty = rows[0];
 
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: updatedProperty.id,
@@ -183,7 +183,7 @@ class PropertiesService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
         const { property, fromTemplate } = this.findEntityProperty(
           rulesetData,
@@ -211,7 +211,7 @@ class PropertiesService {
         const rows = await Properties.delete(tx, { id: resolvedPropertyId });
         const deletedProperty = rows[0];
 
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: deletedProperty.id,

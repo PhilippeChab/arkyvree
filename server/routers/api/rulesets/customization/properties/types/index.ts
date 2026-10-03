@@ -73,7 +73,7 @@ const propertyTypes = new Hono()
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
       const { query, entityType } = c.req.valid("query");
-      return c.json(await PropertyTypesService.searchPropertyTypes(rulesetId, query, entityType), 200);
+      return c.json(await PropertyTypesService.getMatchingPropertyTypes(rulesetId, query, entityType), 200);
     },
   )
   /**

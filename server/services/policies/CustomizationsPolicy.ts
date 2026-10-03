@@ -18,10 +18,10 @@ import BasePolicy from "./BasePolicy.ts";
 type CustomizationEntity = Modifier | Requirement | Property;
 
 export default class CustomizationsPolicy extends BasePolicy<CustomizationEntity> {
-  /** Resolve the source within the composed ruleset when a scope is supplied.
-   * Never fall back to a global lookup for an entity outside that scope.
+  /** Whether the source can be customized: it exists (a 404 otherwise), within the composed ruleset when a scope is
+   * supplied, never falling back to a global lookup for an entity outside that scope. Returns its display name.
    */
-  static async sourceExists(sourceId: string, sourceType: string, rulesetData?: CachedRulesetData): Promise<string> {
+  static async canCustomize(sourceId: string, sourceType: string, rulesetData?: CachedRulesetData): Promise<string> {
     let name: string | undefined;
 
     switch (sourceType) {
@@ -77,7 +77,7 @@ export default class CustomizationsPolicy extends BasePolicy<CustomizationEntity
   async canDelete() {
     const recordId = "sourceId" in this.entity ? this.entity.sourceId : this.entity.entityId;
     const recordType = "sourceType" in this.entity ? this.entity.sourceType : this.entity.entityType;
-    await CustomizationsPolicy.sourceExists(recordId, recordType);
+    await CustomizationsPolicy.canCustomize(recordId, recordType);
 
     return true;
   }
@@ -85,7 +85,7 @@ export default class CustomizationsPolicy extends BasePolicy<CustomizationEntity
   async canUpdate() {
     const recordId = "sourceId" in this.entity ? this.entity.sourceId : this.entity.entityId;
     const recordType = "sourceType" in this.entity ? this.entity.sourceType : this.entity.entityType;
-    await CustomizationsPolicy.sourceExists(recordId, recordType);
+    await CustomizationsPolicy.canCustomize(recordId, recordType);
 
     return true;
   }

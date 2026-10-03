@@ -44,6 +44,8 @@
     "no-console": "error",
     // Routers, services and repositories in CRUD order (lint/memberOrder.mjs): `bun run lint --fix` sorts them.
     "arkyvree/member-order": "error",
+    // A public method starts with a verb its layer knows (lint/methodNames.mjs): repositories, services, policies.
+    "arkyvree/method-names": "error",
     // The architecture (lint/architecture.mjs): what each layer imports, where queries are built, folder indexes.
     "arkyvree/layers": "error",
     "arkyvree/queries-in-repositories": "error",

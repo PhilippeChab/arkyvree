@@ -24,7 +24,7 @@ type VisibilityType = "Private" | "Public" | "Partial";
 class CampaignCharactersService {
   async getCampaignCharacter(session: Session, campaignId: string, characterId: string) {
     // Verify the requesting user is a campaign member
-    const member = await CampaignsPolicy.member(db, session, campaignId);
+    const member = await CampaignsPolicy.canRead(db, session, campaignId);
 
     const link = await PlayerCharacters.findOne(db, { characterId, campaignId });
     if (!link) throw new NotFoundError("Character not found in this campaign");
@@ -78,7 +78,7 @@ class CampaignCharactersService {
     where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
     pagination: { limit: number; page: number },
   ) {
-    const member = await CampaignsPolicy.member(db, session, campaignId);
+    const member = await CampaignsPolicy.canRead(db, session, campaignId);
 
     const isGM = member.role === "Game Master";
 
@@ -200,7 +200,7 @@ class CampaignCharactersService {
       }
       new CampaignsPolicy(session, campaign).canModify();
 
-      const player = await CampaignsPolicy.member(tx, session, campaignId);
+      const player = await CampaignsPolicy.canRead(tx, session, campaignId);
 
       const link = await PlayerCharacters.findOne(tx, { characterId });
       if (!link || link.playerId !== player.id) {
