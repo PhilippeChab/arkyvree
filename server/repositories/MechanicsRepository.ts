@@ -1,39 +1,13 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
 
 import { mechanicsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class MechanicsRepository extends BaseRepository<typeof mechanicsInRules> {
+class MechanicsRepository extends RulesetEntityRepository<typeof mechanicsInRules> {
   constructor() {
     super(mechanicsInRules, "mechanics");
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof mechanicsInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof mechanicsInRules>>,
-    where: { id: string; expectedUpdatedAt?: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
-  }
-
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
   async findOne(
@@ -53,32 +27,11 @@ class MechanicsRepository extends BaseRepository<typeof mechanicsInRules> {
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.mechanicsInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: (mechanics, { asc }) => [asc(mechanics.name)],
+      orderBy: [this.orderBy(this.table.name)],
     });
   }
 
-  async findManyByRulesetId(
-    db: Db,
-    where:
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        }
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          campaignId: string;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        },
-    pagination: { limit: number; page: number },
-  ) {
+  async findManyByRulesetId(db: Db, where: RulesetEntityFilters, pagination: { limit: number; page: number }) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
     const searchColumns = [this.table.name, this.table.description];
     const searchConditions = this.fuzzySearch(search, searchColumns);

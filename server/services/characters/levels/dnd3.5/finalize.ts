@@ -62,9 +62,9 @@ async function insertLevelChildren(
   );
 
   await Promise.all([
-    CharacterLevelSkills.create(tx, skillRows),
-    CharacterLevelFeats.create(tx, featRows),
-    CharacterLevelPowers.create(tx, powerRows),
+    CharacterLevelSkills.createMany(tx, skillRows),
+    CharacterLevelFeats.createMany(tx, featRows),
+    CharacterLevelPowers.createMany(tx, powerRows),
   ]);
 }
 

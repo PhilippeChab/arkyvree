@@ -3,6 +3,7 @@ import { and, eq, type InferInsertModel, isNull, not, or } from "drizzle-orm";
 import { contributorsInCharacter, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import type { ContributorStatus } from "@/server/repositories/ContributorsRepository.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
 class CharacterContributorsRepository extends BaseRepository<typeof contributorsInCharacter> {
@@ -44,8 +45,8 @@ class CharacterContributorsRepository extends BaseRepository<typeof contributors
     db: Db,
     where:
       | { id: string }
-      | { characterId: string; userId: string; status: "Pending" | "Active" | "Rejected" | "Revoked" }
-      | { characterId: string; email: string; status: "Pending" | "Active" | "Rejected" | "Revoked" },
+      | { characterId: string; userId: string; status: ContributorStatus }
+      | { characterId: string; email: string; status: ContributorStatus },
   ) {
     return await db.query.contributorsInCharacter.findFirst({
       where: this.where([
@@ -121,7 +122,7 @@ class CharacterContributorsRepository extends BaseRepository<typeof contributors
 
   async findManyByUserId(
     db: Db,
-    where: { userId: string; status: "Pending" | "Active" | "Rejected" | "Revoked" },
+    where: { userId: string; status: ContributorStatus },
     pagination: { limit: number } = { limit: 100 },
   ) {
     return await db.query.contributorsInCharacter.findMany({

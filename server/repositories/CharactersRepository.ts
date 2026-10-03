@@ -1,4 +1,4 @@
-import { and, count, desc, eq, exists, inArray, isNull, not, or, sql } from "drizzle-orm";
+import { and, count, eq, exists, inArray, isNull, not, or, sql } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import {
@@ -95,17 +95,7 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter> 
     const rows = await db
       .select({ id: this.table.id })
       .from(this.table)
-      .innerJoin(
-        rulesetsInRules,
-        and(
-          eq(rulesetsInRules.id, this.table.rulesetId),
-          or(
-            eq(rulesetsInRules.id, where.rulesetId),
-            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          ),
-        ),
-      )
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(this.table.rulesetId, where.rulesetId))
       .where(this.idMatches(this.table.raceId, where.raceId))
       .limit(1);
     return rows.length > 0;
@@ -315,7 +305,7 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter> 
             this.search(where.search, [charactersInCharacter.name]) || undefined,
           ),
         )
-        .orderBy(desc(charactersInCharacter.createdAt))
+        .orderBy(this.orderBy(charactersInCharacter.createdAt, "desc"))
         .limit(limit)
         .offset(offset);
 

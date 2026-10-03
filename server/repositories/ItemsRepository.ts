@@ -1,39 +1,13 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class ItemsRepository extends BaseRepository<typeof itemsInRules> {
+class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
   constructor() {
     super(itemsInRules, "items");
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof itemsInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof itemsInRules>>,
-    where: { id: string; expectedUpdatedAt?: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
-  }
-
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
   async findOne(
@@ -53,32 +27,13 @@ class ItemsRepository extends BaseRepository<typeof itemsInRules> {
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.itemsInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: (items, { asc }) => [asc(items.name)],
+      orderBy: [this.orderBy(this.table.name)],
     });
   }
 
   async findManyByRulesetId(
     db: Db,
-    where:
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          isTemplate?: boolean;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        }
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          campaignId: string;
-          isTemplate?: boolean;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        },
+    where: RulesetEntityFilters<{ isTemplate?: boolean }>,
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
@@ -109,7 +64,7 @@ class ItemsRepository extends BaseRepository<typeof itemsInRules> {
         isNull(this.table.deletedAt),
         "type" in where && where.type ? eq(this.table.type, where.type) : false,
       ]),
-      orderBy: (items, { asc }) => [asc(items.name)],
+      orderBy: [this.orderBy(this.table.name)],
     });
   }
 

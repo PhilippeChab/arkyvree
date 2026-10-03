@@ -1,39 +1,13 @@
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class KlassesRepository extends BaseRepository<typeof klassesInRules> {
+class KlassesRepository extends RulesetEntityRepository<typeof klassesInRules> {
   constructor() {
     super(klassesInRules, "klasses");
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof klassesInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof klassesInRules>>,
-    where: { id: string; expectedUpdatedAt?: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
-  }
-
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
   async findOne(
@@ -53,36 +27,13 @@ class KlassesRepository extends BaseRepository<typeof klassesInRules> {
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.klassesInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: (klasses, { asc }) => [asc(klasses.name)],
+      orderBy: [this.orderBy(this.table.name)],
     });
   }
 
   async findManyByRulesetId(
     db: Db,
-    where:
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          characterId?: string;
-          siblingLoserIds?: Iterable<string>;
-          kind?: string;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        }
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          characterId?: string;
-          siblingLoserIds?: Iterable<string>;
-          kind?: string;
-          campaignId: string;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        },
+    where: RulesetEntityFilters<{ characterId?: string; siblingLoserIds?: Iterable<string>; kind?: string }>,
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc", characterId, siblingLoserIds, kind } = where;
@@ -93,15 +44,18 @@ class KlassesRepository extends BaseRepository<typeof klassesInRules> {
 
     const orderByClause = characterId
       ? [
-          desc(sql`COALESCE((
-            SELECT MAX(kl.level)
-            FROM rules.klass_levels kl
-            JOIN character.levels cl ON cl.klass_level_id = kl.id
-            WHERE kl.klass_id = ${this.table.id}
-            AND cl.character_id = ${characterId}
-            AND cl.deleted_at IS NULL
-          ), 0)`),
-          asc(this.table.name),
+          this.orderBy(
+            sql`COALESCE((
+              SELECT MAX(kl.level)
+              FROM rules.klass_levels kl
+              JOIN character.levels cl ON cl.klass_level_id = kl.id
+              WHERE kl.klass_id = ${this.table.id}
+              AND cl.character_id = ${characterId}
+              AND cl.deleted_at IS NULL
+            ), 0)`,
+            "desc",
+          ),
+          this.orderBy(this.table.name),
         ]
       : this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir));
 

@@ -1,3 +1,4 @@
+import { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/schema.ts";
 import { db as globalDb } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest } from "@/server/database/requestCache.ts";
 import type { IdResolveMap } from "@/server/services/rulesets/cow.ts";
@@ -104,6 +105,7 @@ function getCowId(idResolveMap: IdResolveMap): string {
   return id;
 }
 import AbilitiesRepository from "@/server/repositories/AbilitiesRepository.ts";
+import AccountCodesRepository from "@/server/repositories/AccountCodesRepository.ts";
 import ActivitiesRepository from "@/server/repositories/ActivitiesRepository.ts";
 import AptitudesRepository from "@/server/repositories/AptitudesRepository.ts";
 import AttachmentsRepository from "@/server/repositories/AttachmentsRepository.ts";
@@ -119,7 +121,6 @@ import CharacterLevelSkillsRepository from "@/server/repositories/CharacterLevel
 import CharacterLevelsRepository from "@/server/repositories/CharacterLevelsRepository.ts";
 import CharactersRepository from "@/server/repositories/CharactersRepository.ts";
 import ContributorsRepository from "@/server/repositories/ContributorsRepository.ts";
-import EmailVerificationsRepository from "@/server/repositories/EmailVerificationsRepository.ts";
 import EntitySnapshotsRepository from "@/server/repositories/EntitySnapshotsRepository.ts";
 import ExportsRepository from "@/server/repositories/ExportsRepository.ts";
 import FeatsAptitudesRepository from "@/server/repositories/FeatsAptitudesRepository.ts";
@@ -137,7 +138,6 @@ import MechanicsRepository from "@/server/repositories/MechanicsRepository.ts";
 import ModifiersRepository from "@/server/repositories/ModifiersRepository.ts";
 import NotificationsRepository from "@/server/repositories/NotificationsRepository.ts";
 import OauthAccountsRepository from "@/server/repositories/OauthAccountsRepository.ts";
-import PasswordResetsRepository from "@/server/repositories/PasswordResetsRepository.ts";
 import PlayerCharactersRepository from "@/server/repositories/PlayerCharactersRepository.ts";
 import PlayersRepository from "@/server/repositories/PlayersRepository.ts";
 import PowersAptitudesRepository from "@/server/repositories/PowersAptitudesRepository.ts";
@@ -301,10 +301,13 @@ export const Sessions = withRequestCache("Sessions", new SessionsRepository());
 export const Activities = withRequestCache("Activities", new ActivitiesRepository());
 export const Notifications = withRequestCache("Notifications", new NotificationsRepository());
 export const Characters = withRequestCache("Characters", new CharactersRepository());
-export const EmailVerifications = withRequestCache("EmailVerifications", new EmailVerificationsRepository());
+export const EmailVerifications = withRequestCache(
+  "EmailVerifications",
+  new AccountCodesRepository(emailVerificationsInAccount),
+);
 export const EntitySnapshots = withRequestCache("EntitySnapshots", new EntitySnapshotsRepository(), { skipCow: true });
 export const Exports = withRequestCache("Exports", new ExportsRepository());
-export const PasswordResets = withRequestCache("PasswordResets", new PasswordResetsRepository());
+export const PasswordResets = withRequestCache("PasswordResets", new AccountCodesRepository(passwordResetsInAccount));
 export const CharacterLevels = withRequestCache("CharacterLevels", new CharacterLevelsRepository());
 export const CharacterLevelSkills = withRequestCache("CharacterLevelSkills", new CharacterLevelSkillsRepository());
 export const CharacterLevelPowers = withRequestCache("CharacterLevelPowers", new CharacterLevelPowersRepository());

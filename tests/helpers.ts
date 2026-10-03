@@ -285,15 +285,15 @@ type LevelPicks = {
 export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: LevelPicks = {}) {
   const [level] = await CharacterLevels.create(db, { characterId, klassLevelId, hp: 1 });
   const characterLevelId = level.id;
-  await CharacterLevelFeats.create(
+  await CharacterLevelFeats.createMany(
     db,
     (picks.feats ?? []).map((pick) => ({ ...pick, characterLevelId })),
   );
-  await CharacterLevelPowers.create(
+  await CharacterLevelPowers.createMany(
     db,
     (picks.powers ?? []).map((pick) => ({ ...pick, characterLevelId })),
   );
-  await CharacterLevelSkills.create(
+  await CharacterLevelSkills.createMany(
     db,
     (picks.skills ?? []).map((pick) => ({ ...pick, characterLevelId })),
   );

@@ -1,5 +1,4 @@
-import { and, asc, count, eq, getTableColumns, inArray, isNull, notInArray, sql } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { and, count, eq, getTableColumns, inArray, isNull, notInArray, sql } from "drizzle-orm";
 
 import {
   featsAptitudesInRules,
@@ -11,37 +10,12 @@ import {
   propertiesInCustomization,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class FeatsRepository extends BaseRepository<typeof featsInRules> {
+class FeatsRepository extends RulesetEntityRepository<typeof featsInRules> {
   constructor() {
     super(featsInRules, "feats");
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof featsInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof featsInRules>>,
-    where: { id: string; expectedUpdatedAt?: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
-  }
-
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
   async findOne(
@@ -68,7 +42,7 @@ class FeatsRepository extends BaseRepository<typeof featsInRules> {
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.featsInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: (feats, { asc }) => [asc(feats.name)],
+      orderBy: [this.orderBy(this.table.name)],
       with: {
         featsAptitudesInRules: {
           with: {
@@ -81,28 +55,7 @@ class FeatsRepository extends BaseRepository<typeof featsInRules> {
 
   async findManyByRulesetId(
     db: Db,
-    where:
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          aptitudeId?: string;
-          family?: string;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        }
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          aptitudeId?: string;
-          family?: string;
-          campaignId: string;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        },
+    where: RulesetEntityFilters<{ aptitudeId?: string; family?: string }>,
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
@@ -297,7 +250,7 @@ class FeatsRepository extends BaseRepository<typeof featsInRules> {
           this.excludeIds(siblingLoserIds),
         ]),
       )
-      .orderBy(asc(featsInRules.name))
+      .orderBy(this.orderBy(featsInRules.name))
       .limit(limit)
       .offset(offset);
 

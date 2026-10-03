@@ -313,11 +313,9 @@ describe("an inherited skill's Skill Focus", () => {
     const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
     const [levelId] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
     // A pick stays under the ancestor's id after the fork copies the feat.
-    await CharacterLevelFeats.create(db, {
-      characterLevelId: levelId,
-      aptitudeId: ctx.aptMap.General,
-      featId: feat.id,
-    });
+    await CharacterLevelFeats.createMany(db, [
+      { characterLevelId: levelId, aptitudeId: ctx.aptMap.General, featId: feat.id },
+    ]);
     const copy =
       picked === "inherited" ? undefined : await cowEntity(db, "feats", feat.id, fork.id, fork.ancestorRulesetIds, []);
 

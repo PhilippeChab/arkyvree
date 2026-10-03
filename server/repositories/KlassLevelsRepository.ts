@@ -36,7 +36,7 @@ class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
   async findManyByKlass(db: Db, where: { klassId: string }) {
     return await db.query.klassLevelsInRules.findMany({
       where: and(eq(this.table.klassId, where.klassId), isNull(this.table.deletedAt)),
-      orderBy: (levels, { asc }) => [asc(levels.level)],
+      orderBy: [this.orderBy(this.table.level)],
     });
   }
 
@@ -44,7 +44,7 @@ class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
     if (where.klassIds.length === 0) return [];
     return await db.query.klassLevelsInRules.findMany({
       where: and(inArray(this.table.klassId, where.klassIds), isNull(this.table.deletedAt)),
-      orderBy: (levels, { asc }) => [asc(levels.level)],
+      orderBy: [this.orderBy(this.table.level)],
     });
   }
 }

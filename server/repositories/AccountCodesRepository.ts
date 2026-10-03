@@ -1,14 +1,13 @@
 import { and, eq, isNull, lt } from "drizzle-orm";
 
-import { passwordResetsInAccount } from "@/drizzle/schema.ts";
+import type { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class PasswordResetsRepository extends BaseRepository<typeof passwordResetsInAccount> {
-  constructor() {
-    super(passwordResetsInAccount);
-  }
-
+/** The codes a user is emailed, one table per use: verifying an email, resetting a password. */
+class AccountCodesRepository extends BaseRepository<
+  typeof emailVerificationsInAccount | typeof passwordResetsInAccount
+> {
   async create(db: Db, values: { userId: string; code: string; expiresAt: string }) {
     return await db.insert(this.table).values(values).returning();
   }
@@ -40,16 +39,22 @@ class PasswordResetsRepository extends BaseRepository<typeof passwordResetsInAcc
       .returning();
   }
 
+  /** The user's latest code, or the one `id` names. */
   async findOne(db: Db, where: { userId: string } | { id: string }) {
-    return await db.query.passwordResetsInAccount.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "userId" in where && eq(this.table.userId, where.userId),
-        isNull(this.table.deletedAt),
-      ]),
-      orderBy: (table, { desc }) => [desc(table.createdAt)],
-    });
+    const codes = await db
+      .select()
+      .from(this.table)
+      .where(
+        this.where([
+          "id" in where && eq(this.table.id, where.id),
+          "userId" in where && eq(this.table.userId, where.userId),
+          isNull(this.table.deletedAt),
+        ]),
+      )
+      .orderBy(this.orderBy(this.table.createdAt, "desc"))
+      .limit(1);
+    return codes.at(0);
   }
 }
 
-export default PasswordResetsRepository;
+export default AccountCodesRepository;

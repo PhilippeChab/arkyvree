@@ -1,5 +1,4 @@
-import { and, asc, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
 
 import {
   klassLevelPowersInRules,
@@ -11,37 +10,12 @@ import {
   savesInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class PowersRepository extends BaseRepository<typeof powersInRules> {
+class PowersRepository extends RulesetEntityRepository<typeof powersInRules> {
   constructor() {
     super(powersInRules, "powers");
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof powersInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof powersInRules>>,
-    where: { id: string; expectedUpdatedAt?: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
-  }
-
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
   async findOne(
@@ -69,34 +43,13 @@ class PowersRepository extends BaseRepository<typeof powersInRules> {
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.powersInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: (powers, { asc }) => [asc(powers.name)],
+      orderBy: [this.orderBy(this.table.name)],
     });
   }
 
   async findManyByRulesetId(
     db: Db,
-    where:
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          aptitudeId?: string;
-          level?: number;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        }
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          aptitudeId?: string;
-          level?: number;
-          campaignId: string;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        },
+    where: RulesetEntityFilters<{ aptitudeId?: string; level?: number }>,
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
@@ -185,7 +138,7 @@ class PowersRepository extends BaseRepository<typeof powersInRules> {
           ...(powerLevel != null ? [eq(powersAptitudesInRules.level, powerLevel)] : []),
         ]),
       )
-      .orderBy(asc(powersInRules.name))
+      .orderBy(this.orderBy(powersInRules.name))
       .limit(limit)
       .offset(offset);
 

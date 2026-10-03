@@ -5,6 +5,9 @@ import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
+/** A contributor's status (the tables' CHECK constraint): ruleset and character contributors share it. */
+export type ContributorStatus = "Pending" | "Active" | "Rejected" | "Revoked";
+
 class ContributorsRepository extends BaseRepository<typeof contributorsInRules> {
   constructor() {
     super(contributorsInRules);
@@ -44,8 +47,8 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules> 
     db: Db,
     where:
       | { id: string }
-      | { rulesetId: string; userId: string; status: "Pending" | "Active" | "Rejected" | "Revoked" }
-      | { rulesetId: string; email: string; status: "Pending" | "Active" | "Rejected" | "Revoked" },
+      | { rulesetId: string; userId: string; status: ContributorStatus }
+      | { rulesetId: string; email: string; status: ContributorStatus },
   ) {
     return await db.query.contributorsInRules.findFirst({
       where: this.where([
@@ -121,7 +124,7 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules> 
 
   async findManyByUserId(
     db: Db,
-    where: { userId: string; status: "Pending" | "Active" | "Rejected" | "Revoked" },
+    where: { userId: string; status: ContributorStatus },
     pagination: { limit: number } = { limit: 100 },
   ) {
     return await db.query.contributorsInRules.findMany({

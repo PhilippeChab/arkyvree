@@ -17,7 +17,7 @@ import {
   type Table,
 } from "drizzle-orm";
 
-import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
+import { entitySnapshotsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { currentCowContext } from "@/server/services/rulesets/cowContext.ts";
 
@@ -25,6 +25,17 @@ export type Paginated<T> = {
   items: T[];
   page: number;
   nextPage: number | undefined;
+};
+
+/** A ruleset entity list's filters: the ruleset's own entities and its source chain's, and a campaign's on it. */
+export type RulesetEntityFilters<Extra extends object = object> = Extra & {
+  rulesetId: string;
+  ancestorRulesetIds?: string[];
+  childOnly?: boolean;
+  campaignId?: string;
+  search?: string;
+  orderBy?: "name" | "createdAt" | "updatedAt";
+  orderDir?: "asc" | "desc";
 };
 
 export enum Visibility {
@@ -151,7 +162,22 @@ abstract class BaseRepository<T extends Table> {
     return sql`(CASE WHEN ${ilikeMatch} THEN 0 ELSE 1 END), (CASE WHEN ${nameIlikeMatch} THEN 0 ELSE 1 END), ${nameSimilarity} DESC, ${fallback}`;
   }
 
-  protected orderBy(column: Column, direction: "asc" | "desc" = "asc"): SQL {
+  /**
+   * Joins `rulesetsInRules` on `rulesetIdColumn` (a character's ruleset) when it's `rulesetId` or a ruleset built on
+   * it: a fork, or a ruleset subscribing to it as an extension. What an entity's in-use checks count.
+   */
+  protected rulesetOrDescendant(rulesetIdColumn: Column, rulesetId: string): SQL {
+    return and(
+      eq(rulesetsInRules.id, rulesetIdColumn),
+      or(
+        eq(rulesetsInRules.id, rulesetId),
+        sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${rulesetId}::uuid]`,
+        sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${rulesetId}::uuid]`,
+      ),
+    )!;
+  }
+
+  protected orderBy(column: Column | SQL, direction: "asc" | "desc" = "asc"): SQL {
     return direction === "asc" ? asc(column) : desc(column);
   }
 
@@ -201,10 +227,7 @@ abstract class BaseRepository<T extends Table> {
     );
   }
 
-  protected buildRulesetCondition(
-    db: Db,
-    where: { rulesetId: string; ancestorRulesetIds?: string[]; childOnly?: boolean; campaignId?: string },
-  ): SQL<unknown> {
+  protected buildRulesetCondition(db: Db, where: RulesetEntityFilters): SQL<unknown> {
     const { ancestorRulesetIds, childOnly } = where;
     // @ts-expect-error all ruleset tables have rulesetId and campaignId
     const childOwned = and(eq(this.table.rulesetId, where.rulesetId), isNull(this.table.campaignId));

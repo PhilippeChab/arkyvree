@@ -1,5 +1,5 @@
 import type { InferInsertModel } from "drizzle-orm";
-import { and, desc, eq, getTableColumns, ilike, inArray, isNull, or } from "drizzle-orm";
+import { and, eq, getTableColumns, ilike, inArray, isNull, or } from "drizzle-orm";
 
 import { invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -80,7 +80,7 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign> {
             },
           }
         : undefined,
-      orderBy: [desc(this.table.createdAt)],
+      orderBy: [this.orderBy(this.table.createdAt, "desc")],
       limit: pagination.limit,
     });
   }
