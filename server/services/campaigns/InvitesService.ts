@@ -40,8 +40,7 @@ const CampaignInvitesMethods = {
       throw new NotFoundError("Campaign not found");
     }
 
-    const player = await Players.findOne(db, { userId: session.userId, campaignId });
-    if (!player) throw new ForbiddenError("You are not a member of this campaign");
+    await CampaignsPolicy.member(db, session, campaignId);
 
     return await Invites.findManyForCampaign(db, { campaignId, ...where }, pagination);
   },

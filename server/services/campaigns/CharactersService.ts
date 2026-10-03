@@ -20,6 +20,7 @@ import {
   findExportableCharacter,
   loadBondedByKind,
 } from "@/server/services/characters/helpers.ts";
+import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { withRulesetScopes } from "@/server/services/rulesets/cow.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -32,9 +33,7 @@ const PlayerCharactersMethods = {
       if (!campaign) {
         throw new NotFoundError("Campaign not found");
       }
-      if (campaign.deletedAt) {
-        throw new ForbiddenError("Cannot modify an archived campaign");
-      }
+      new CampaignsPolicy(session, campaign).canModify();
 
       const player = await Players.findOne(tx, {
         campaignId,
@@ -95,14 +94,9 @@ const PlayerCharactersMethods = {
       if (!campaign) {
         throw new NotFoundError("Campaign not found");
       }
-      if (campaign.deletedAt) {
-        throw new ForbiddenError("Cannot modify an archived campaign");
-      }
+      new CampaignsPolicy(session, campaign).canModify();
 
-      const player = await Players.findOne(tx, { campaignId, userId: session.userId });
-      if (!player) {
-        throw new ForbiddenError("You are not a member of this campaign");
-      }
+      const player = await CampaignsPolicy.member(tx, session, campaignId);
 
       const link = await PlayerCharacters.findOne(tx, { characterId });
       if (!link || link.playerId !== player.id) {
@@ -129,8 +123,7 @@ const PlayerCharactersMethods = {
     where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
     pagination: { limit: number; page: number },
   ) {
-    const member = await Players.findOne(db, { userId: session.userId, campaignId }, Visibility.All);
-    if (!member) throw new ForbiddenError("You are not a member of this campaign");
+    const member = await CampaignsPolicy.member(db, session, campaignId);
 
     const isGM = member.role === "Game Master";
 
@@ -243,8 +236,7 @@ const PlayerCharactersMethods = {
 
   async getCampaignCharacter(session: Session, campaignId: string, characterId: string) {
     // Verify the requesting user is a campaign member
-    const member = await Players.findOne(db, { userId: session.userId, campaignId });
-    if (!member) throw new ForbiddenError("You are not a member of this campaign");
+    const member = await CampaignsPolicy.member(db, session, campaignId);
 
     const link = await PlayerCharacters.findOne(db, { characterId, campaignId });
     if (!link) throw new NotFoundError("Character not found in this campaign");

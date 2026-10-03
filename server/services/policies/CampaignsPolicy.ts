@@ -1,8 +1,8 @@
-import { db } from "@/server/database/index.ts";
+import { type Db, db } from "@/server/database/index.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Players } from "@/server/repositories/index.ts";
-import { type Campaign } from "@/shared/relations.ts";
+import type { Campaign, Player, Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
 
@@ -11,6 +11,19 @@ export default class CampaignsPolicy extends BasePolicy<Campaign> {
   static async isGameMaster(userId: string, campaignId: string): Promise<boolean> {
     const player = await Players.findOne(db, { userId, campaignId });
     return player?.role === "Game Master";
+  }
+
+  /** The session's player row in the campaign, an archived campaign's too, or a 403: what reading a campaign takes. */
+  static async member(db: Db, session: Session, campaignId: string): Promise<Player> {
+    const player = await Players.findOne(db, { userId: session.userId, campaignId }, Visibility.All);
+    if (!player) throw new ForbiddenError("You are not a member of this campaign");
+    return player;
+  }
+
+  /** An archived campaign is read-only. */
+  canModify() {
+    if (this.entity.deletedAt) throw new ForbiddenError("Cannot modify an archived campaign");
+    return true;
   }
 
   async canUpdate() {

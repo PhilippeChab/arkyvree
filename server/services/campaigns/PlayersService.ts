@@ -4,7 +4,7 @@ import { invitesInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { emailService } from "@/server/emails";
 import { EmailTemplate } from "@/server/emails/templates.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Campaigns, Invites, PlayerCharacters, Players, Users } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
@@ -27,11 +27,9 @@ async function createInviteInTransaction(tx: Db, session: Session, player: Playe
   if (!campaign) {
     throw new NotFoundError("Campaign not found");
   }
-  if (campaign.deletedAt) {
-    throw new ForbiddenError("Cannot modify an archived campaign");
-  }
-
-  await new CampaignsPolicy(session, campaign).canUpdate();
+  const policy = new CampaignsPolicy(session, campaign);
+  policy.canModify();
+  await policy.canUpdate();
 
   // Look up user by email (may not exist)
   const user = await Users.findOne(tx, { emailAddress: email });
@@ -131,8 +129,7 @@ const CampaignPlayersMethods = {
       throw new NotFoundError("Campaign not found");
     }
 
-    const player = await Players.findOne(db, { userId: session.userId, campaignId }, Visibility.All);
-    if (!player) throw new ForbiddenError("You are not a member of this campaign");
+    await CampaignsPolicy.member(db, session, campaignId);
 
     return await Players.findManyForCampaign(db, { campaignId, ...where }, pagination, Visibility.All);
   },
@@ -145,11 +142,9 @@ const CampaignPlayersMethods = {
       if (!campaign) {
         throw new NotFoundError("Campaign not found");
       }
-      if (campaign.deletedAt) {
-        throw new ForbiddenError("Cannot modify an archived campaign");
-      }
-
-      await new CampaignsPolicy(session, campaign).canUpdate();
+      const policy = new CampaignsPolicy(session, campaign);
+      policy.canModify();
+      await policy.canUpdate();
 
       const rows = await Players.create(tx, {
         campaignId,
@@ -195,11 +190,9 @@ const CampaignPlayersMethods = {
       if (!campaign) {
         throw new NotFoundError("Campaign not found");
       }
-      if (campaign.deletedAt) {
-        throw new ForbiddenError("Cannot modify an archived campaign");
-      }
-
-      await new CampaignsPolicy(session, campaign).canUpdate();
+      const policy = new CampaignsPolicy(session, campaign);
+      policy.canModify();
+      await policy.canUpdate();
 
       const player = await Players.findOne(tx, { id: playerId, campaignId });
       if (!player) {
@@ -257,9 +250,7 @@ const CampaignPlayersMethods = {
       if (!campaign) {
         throw new NotFoundError("Campaign not found");
       }
-      if (campaign.deletedAt) {
-        throw new ForbiddenError("Cannot modify an archived campaign");
-      }
+      new CampaignsPolicy(session, campaign).canModify();
 
       const player = await Players.findOne(tx, { id: playerId });
       if (!player || player.campaignId !== campaignId) {
