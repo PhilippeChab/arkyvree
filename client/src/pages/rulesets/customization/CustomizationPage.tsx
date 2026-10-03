@@ -19,6 +19,7 @@ import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import {
@@ -81,16 +82,6 @@ const TABS: SectionTab<TabSection>[] = [
 // A modifier can only carry requirements.
 const tabsFor = (type: CustomizationOwnerType) =>
   type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
-
-const ENTITY_LABELS: Record<CustomizationOwnerType, string> = {
-  feats: "Feat",
-  klass_levels: "Class Level",
-  klasses: "Class",
-  items: "Item",
-  powers: "Power",
-  races: "Race",
-  modifiers: "Modifier",
-};
 
 // Entities with an editor on this page, which can also be deleted from it.
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
@@ -214,7 +205,7 @@ function CustomizationView({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const type = data.type;
-  const label = ENTITY_LABELS[type];
+  const label = entityTypeLabel(type, ruleset.baseRules);
   const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId, entityId);
   const state = entityPageState(location.state);
   const listPath = state.from ?? `/rulesets/${rulesetId}/${type}`;
@@ -416,7 +407,7 @@ export default function CustomizationPage() {
             ? `Invalid entity type: ${entityType}`
             : !ruleset && (rulesetError || !entityError)
               ? loadFailureMessage("Ruleset", rulesetError)
-              : loadFailureMessage(ENTITY_LABELS[validType], entityError)
+              : loadFailureMessage(entityTypeLabel(validType, ruleset?.baseRules), entityError)
         }
         backLabel="Back to Ruleset"
         onBack={() => navigate(`/rulesets/${rulesetId}`)}

@@ -13,6 +13,7 @@ import { formatCost, formatCount, formatDecimal, formatSigned, formatWeight } fr
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { extractTemplateExpression, extractTemplatePath, isTemplateValue } from "@/client/src/lib/templateValues.ts";
 import { confirmPasswordRules, emailRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { valuesEqual } from "@/client/src/lib/valuesEqual.ts";
@@ -156,6 +157,17 @@ describe("A template value", () => {
         "a.b",
       ].map(extractTemplatePath),
     ).toEqual(["abilities.charisma.modifier", "abilities.charisma.modifier", null, null, null]);
+  });
+});
+
+describe("An entity type", () => {
+  test("is named in its ruleset's words, singular or plural, else the engine's", () => {
+    expect(entityTypeLabel("powers", "Dungeons & Dragons: 3.5")).toBe("Spell");
+    expect(entityTypeLabel("powers", "Dungeons & Dragons: 3.5", true)).toBe("Spells");
+    expect(entityTypeLabel("powers", undefined)).toBe("Power");
+    expect(entityTypeLabel("klasses", "Dungeons & Dragons: 3.5", true)).toBe("Classes");
+    // A type with no word keeps its key
+    expect(entityTypeLabel("widgets", "Dungeons & Dragons: 3.5")).toBe("widgets");
   });
 });
 
