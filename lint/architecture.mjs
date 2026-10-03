@@ -2,11 +2,12 @@
  * The architecture, as rules: what each layer may import, where queries are built, and how a folder is entered.
  *
  * - `layers`: a layer imports only what's below it (database < repositories < cache, the engine < services < jobs <
- *   routers). The cache and the engine use copy-on-write from `services/rulesets/cow/`, its one exception. `shared/`
- *   imports nothing app-specific (the schema's types only), and the client takes only types from the server.
+ *   routers; the middlewares sit on the repositories, beside the services). The cache and the engine use copy-on-write
+ *   from `services/rulesets/cow/`, its one exception. The server reads the content packages, never the seeders.
+ *   `shared/` imports nothing app-specific (the schema's types only), and the client takes only types from the server.
  * - `queries-in-repositories`: a query is built in `server/repositories/` or `server/database/`, nowhere else in the
  *   server, but for the infrastructure that talks to Postgres itself (the job queue, websocket notifications, health
- *   checks).
+ *   checks). A transaction's handle is named `tx`, the name it knows a query by.
  * - `folder-index`: code outside a folder that has an `index.ts` imports it through that index (the service folders,
  *   `cow/`, `policies/`, the client's component folders). Files within the folder import each other directly, and a
  *   test may reach a folder's own modules (a pure module's unit test).
@@ -17,34 +18,32 @@ import fs from "node:fs";
 import path from "node:path";
 
 /** Each layer and what it must not import. `types`: imported for its types only, it's allowed. */
+const ABOVE_REPOSITORIES = [
+  "server/cache/",
+  "server/services/",
+  "server/rulesets/",
+  "server/jobs/",
+  "server/middlewares/",
+  "server/routers/",
+];
 const LAYERS = [
-  {
-    layer: "server/database/",
-    deny: [
-      "server/repositories/",
-      "server/cache/",
-      "server/services/",
-      "server/rulesets/",
-      "server/jobs/",
-      "server/routers/",
-    ],
-  },
-  {
-    layer: "server/repositories/",
-    deny: ["server/cache/", "server/services/", "server/rulesets/", "server/jobs/", "server/routers/"],
-  },
+  { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
+  { layer: "server/repositories/", deny: ABOVE_REPOSITORIES },
   {
     layer: "server/cache/",
-    deny: ["server/services/", "server/jobs/", "server/routers/"],
+    deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
     allow: ["server/services/rulesets/cow/"],
   },
   {
     layer: "server/rulesets/",
-    deny: ["server/services/", "server/jobs/", "server/routers/"],
+    deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
     allow: ["server/services/rulesets/cow/"],
   },
-  { layer: "server/services/", deny: ["server/jobs/", "server/routers/"] },
-  { layer: "server/jobs/", deny: ["server/routers/"] },
+  { layer: "server/services/", deny: ["server/jobs/", "server/middlewares/", "server/routers/"] },
+  { layer: "server/jobs/", deny: ["server/middlewares/", "server/routers/"] },
+  { layer: "server/middlewares/", deny: ["server/services/", "server/jobs/", "server/routers/"] },
+  // The server reads the content packages' data (a new ruleset's template items), never the seeders or scripts.
+  { layer: "server/", deny: ["database/"], allow: ["database/packages/"] },
   { layer: "shared/", deny: ["server/", "client/", "database/", "drizzle/"], types: ["drizzle/"] },
   { layer: "client/", deny: ["server/", "database/", "drizzle/"], types: ["server/", "drizzle/"] },
 ];
@@ -64,11 +63,18 @@ const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll",
 /** The trees whose folders are entered through their `index.ts`. */
 const INDEXED_TREES = ["server/services/", "client/src/components/"];
 
-const repoPath = (context, file) =>
-  path
-    .relative(context.cwd ?? process.cwd(), file)
-    .split(path.sep)
-    .join("/");
+const rootCache = new Map();
+/** The repo's root: the nearest folder above the file that holds the lint config, wherever oxlint runs from. */
+function rootOf(file) {
+  const start = path.dirname(file);
+  if (rootCache.has(start)) return rootCache.get(start);
+  let dir = start;
+  while (!fs.existsSync(path.join(dir, ".oxlintrc.json")) && path.dirname(dir) !== dir) dir = path.dirname(dir);
+  rootCache.set(start, dir);
+  return dir;
+}
+
+const repoPath = (file) => path.relative(rootOf(file), file).split(path.sep).join("/");
 
 /** An import's target, as a repo path: `@/x`, or relative to the importer. Packages have none. */
 function targetOf(importer, spec) {
@@ -103,21 +109,24 @@ function onImports(callback) {
 const layers = {
   meta: { type: "problem" },
   create(context) {
-    const file = repoPath(context, context.filename);
-    const rule = LAYERS.find((l) => file.startsWith(l.layer));
-    if (!rule) return {};
+    const file = repoPath(context.filename);
+    const rules = LAYERS.filter((l) => file.startsWith(l.layer));
+    if (!rules.length) return {};
     return onImports((node, spec, types) => {
       const target = targetOf(file, spec);
       if (!target) return;
-      const denied = rule.deny.find((d) => target.startsWith(d));
-      if (!denied) return;
-      if (rule.allow?.some((a) => target.startsWith(a))) return;
-      if (types && rule.types?.some((t) => target.startsWith(t))) return;
-      const typesOnly = rule.types?.some((t) => denied.startsWith(t)) ? " (types only)" : "";
-      context.report({
-        node,
-        message: `${rule.layer} doesn't import from ${denied}${typesOnly}: a layer imports what's below it.`,
-      });
+      for (const rule of rules) {
+        const denied = rule.deny.find((d) => target.startsWith(d));
+        if (!denied) continue;
+        if (rule.allow?.some((a) => target.startsWith(a))) continue;
+        if (types && rule.types?.some((t) => target.startsWith(t))) continue;
+        const typesOnly = rule.types?.some((t) => denied.startsWith(t)) ? " (types only)" : "";
+        context.report({
+          node,
+          message: `${rule.layer} doesn't import from ${denied}${typesOnly}: a layer imports what's below it.`,
+        });
+        return;
+      }
     });
   },
 };
@@ -125,7 +134,7 @@ const layers = {
 const queriesInRepositories = {
   meta: { type: "problem" },
   create(context) {
-    const file = repoPath(context, context.filename);
+    const file = repoPath(context.filename);
     if (!file.startsWith("server/") || QUERY_HOMES.some((h) => file.startsWith(h)) || QUERY_INFRASTRUCTURE.has(file))
       return {};
     const message = "A query is built in a repository (server/repositories/): call its method instead.";
@@ -153,6 +162,23 @@ const queriesInRepositories = {
           context.report({ node, message });
         }
       },
+      // withTransaction((tx) => …), db.transaction((tx) => …): the handle this rule knows is `tx`.
+      "CallExpression:exit"(node) {
+        const callee = node.callee;
+        const opensTransaction =
+          (callee.type === "Identifier" && callee.name === "withTransaction") ||
+          (callee.type === "MemberExpression" && callee.property.name === "transaction");
+        const handler = node.arguments.find(
+          (a) => a.type === "ArrowFunctionExpression" || a.type === "FunctionExpression",
+        );
+        const handle = handler?.params[0];
+        if (opensTransaction && handle && !(handle.type === "Identifier" && handle.name === "tx")) {
+          context.report({
+            node: handle,
+            message: "A transaction's handle is named `tx`: the query rule knows queries by it.",
+          });
+        }
+      },
       // unionAll and the other set operators
       ImportDeclaration(node) {
         if (!String(node.source.value).startsWith("drizzle-orm")) return;
@@ -175,8 +201,8 @@ const hasIndex = (dir) => {
 const folderIndex = {
   meta: { type: "problem" },
   create(context) {
-    const root = context.cwd ?? process.cwd();
-    const file = repoPath(context, context.filename);
+    const root = rootOf(context.filename);
+    const file = repoPath(context.filename);
     if (file.startsWith("tests/")) return {};
     return onImports((node, spec) => {
       const target = targetOf(file, spec);
@@ -197,8 +223,10 @@ const folderIndex = {
         }
       }
       if (!folder || file.startsWith(folder + "/")) return;
-      const index =
-        path.posix.basename(target).replace(/\.tsx?$/, "") === "index" && path.posix.dirname(target) === folder;
+      const isDirectory = !/\.[a-z]+$/.test(target);
+      const index = isDirectory
+        ? target === folder
+        : path.posix.basename(target).replace(/\.tsx?$/, "") === "index" && path.posix.dirname(target) === folder;
       if (!index) {
         context.report({
           node,

@@ -6,7 +6,7 @@ import path from "node:path";
 const oxlint = path.resolve("node_modules/.bin/oxlint");
 
 /** A repo of `files` (path → source), linted by the architecture rules: each finding as `rule path`. */
-function lint(files: Record<string, string>) {
+function lint(files: Record<string, string>, from = ".") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "architecture-"));
   for (const [file, source] of Object.entries(files)) {
     fs.mkdirSync(path.join(dir, path.dirname(file)), { recursive: true });
@@ -23,10 +23,13 @@ function lint(files: Record<string, string>) {
       },
     }),
   );
-  const run = Bun.spawnSync([oxlint, "-f", "unix", "."], { cwd: dir });
+  // Run from `from`, a folder of the repo: the rules find the root by its lint config, wherever oxlint runs.
+  const run = Bun.spawnSync([oxlint, "-f", "unix", "-c", path.join(dir, ".oxlintrc.json"), "."], {
+    cwd: path.join(dir, from),
+  });
   fs.rmSync(dir, { recursive: true });
   return [...run.stdout.toString().matchAll(/^\.?\/?([^:]+):\d+:\d+: .*\[Error\/arkyvree\(([a-z-]+)\)\]$/gm)]
-    .map(([, file, rule]) => `${rule} ${file}`)
+    .map(([, file, rule]) => `${rule} ${path.posix.join(from, file)}`)
     .sort();
 }
 
@@ -80,5 +83,45 @@ describe("architecture rules", () => {
           'import { helper } from "@/server/services/feats/helper.ts";\nexport const t = helper;\n',
       }),
     ).toEqual(["folder-index server/routers/bad.ts"]);
+  });
+  test("the middlewares sit above the repositories, and the server reads content packages, not the seeders", () => {
+    expect(
+      lint({
+        "server/repositories/R.ts": 'import { m } from "@/server/middlewares/m.ts";\nexport const r = m;\n',
+        "server/middlewares/m.ts": 'import { R } from "@/server/repositories/R.ts";\nexport const m = R;\n',
+        "server/rulesets/seed.ts":
+          'import { items } from "@/database/packages/dnd35/seed/items.ts";\nexport const s = items;\n',
+        "server/services/s.ts": 'import { SEED } from "@/database/seeds/helpers.ts";\nexport const s = SEED;\n',
+      }),
+    ).toEqual(["layers server/repositories/R.ts", "layers server/services/s.ts"]);
+  });
+
+  test("a transaction's handle is named `tx`, which the query rule knows", () => {
+    expect(
+      lint({
+        "server/services/s.ts":
+          "export const a = withTransaction(async (conn) => conn);\nexport const b = withTransaction(async (tx) => tx);\n",
+      }),
+    ).toEqual(["queries-in-repositories server/services/s.ts"]);
+  });
+
+  test("a directory import of a folder is its index", () => {
+    expect(
+      lint({
+        "server/services/feats/index.ts": 'export { default as FeatsService } from "./FeatsService.ts";\n',
+        "server/services/feats/FeatsService.ts": "export default 1;\n",
+        "server/routers/r.ts":
+          'import { FeatsService } from "@/server/services/feats";\nexport const r = FeatsService;\n',
+      }),
+    ).toEqual([]);
+  });
+
+  test("the rules hold when oxlint runs from a subfolder", () => {
+    expect(
+      lint(
+        { "server/repositories/A.ts": 'import { x } from "@/server/services/s.ts";\nexport const a = x;\n' },
+        "server",
+      ),
+    ).toEqual(["layers server/repositories/A.ts"]);
   });
 });
