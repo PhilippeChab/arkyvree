@@ -490,7 +490,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `tests/cache/rulesetCache.test.ts` — compose + invalidation + pinning semantics + COW-fork auto-resolve
 - `tests/cache/joinMaps.test.ts` — accessor-map parity with replaced repo queries
 - `tests/cache/requestCache.test.ts` — dedup semantics + tx bypass + post-mutation invalidation
-- `tests/services/characters/LevelsService.test.ts` — COW fork regression (wizard prohibited-school feat COW'd)
+- `tests/services/characters/levels/CharacterLevelsService.test.ts` — COW fork regression (wizard prohibited-school feat COW'd)
 
 The PDF worker disables process-wide MemoryCache reuse so each job reads current rules after web edits. Web requests keep their raw cache. Each in-flight read uses its promise identity as a token for its cache key. Invalidation removes only reads depending on the edited ruleset; a late completion may finish for its caller but cannot repopulate the cache or remove a newer pending read. This replaces global generation counters without an unbounded per-ruleset counter registry.
 

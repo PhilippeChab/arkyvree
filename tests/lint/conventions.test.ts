@@ -165,4 +165,21 @@ describe("conventions", () => {
       "session-param server/services/union.ts",
     ]);
   });
+  test("a test named after a module sits at that module's mirror; a scenario test sits anywhere in its area", () => {
+    expect(
+      lintRepo(
+        {
+          "server/services/x/FooService.ts": "export default 1;\n",
+          "tests/services/x/FooService.test.ts": "export const t = 1;\n",
+          "tests/services/FooService.test.ts": "export const t = 1;\n",
+          "tests/services/Scenario.test.ts": "export const t = 1;\n",
+          "tests/services/x/BarService.test.ts": "export const t = 1;\n",
+        },
+        ["test-placement"],
+      ),
+    ).toEqual([
+      "test-placement tests/services/FooService.test.ts",
+      "test-placement tests/services/x/BarService.test.ts",
+    ]);
+  });
 });

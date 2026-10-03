@@ -163,5 +163,5 @@ Per project decisions, these are not e2e-tested:
 - Spells, items, class sections and customizations are edited in `customization.e2e.ts` and `item-template-source.e2e.ts` only; `pages.e2e.ts` loads the rest
 - Higher-level ability bumps (level 8 / 12 / 16 / 20 — level 4 covers the path)
 - The hosted PDF download tail (worker → notification → blob) end to end in the browser.
-  `tests/services/CharactersService.test.ts` checks enqueueing, `tests/jobs/generatePdf.test.ts` runs the job
+  `tests/services/characters/CharactersService.test.ts` checks enqueueing, `tests/jobs/generatePdf.test.ts` runs the job
   (sheet rendered, export stored, player notified), and `bun run test:pdf-bundle` checks the compiled worker bundle.

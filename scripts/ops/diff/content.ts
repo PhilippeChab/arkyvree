@@ -1,6 +1,6 @@
 // What the seeds write, read from a database so two can be compared (diff-prod.ts): every system ruleset's rows, each
-// by a business key built from names, since every seed draws new ids. tests/scripts/diff/content.test.ts changes every
-// column of every table below and checks the comparison sees it.
+// by a business key built from names, since every seed draws new ids. tests/scripts/ops/diff/content.test.ts changes
+// every column of every table below and checks the comparison sees it.
 
 import { collectDiff, diffIsEmpty, type IdentifiedRow, stripVolatile, type TableDiff } from "./rows.ts";
 
