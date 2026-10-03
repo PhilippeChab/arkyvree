@@ -35,6 +35,36 @@ export async function purgeDemoSessionUser(tx: Db, sessionId: string | undefined
 }
 
 /**
+ * A new session for `user`, with its activity (`signIn`, or `signUp` for a new account): the invites sent to their
+ * email before they had an account become theirs.
+ */
+export async function openSession(
+  tx: Db,
+  user: { id: string; emailAddress: string },
+  type: "signIn" | "signUp",
+  data?: { provider: "google" },
+) {
+  const [session] = await Sessions.create(tx, { userId: user.id });
+  if (!session) throw new InternalError("Could not create session");
+
+  await Activities.create(tx, {
+    userId: user.id,
+    targetId: session.id,
+    targetTable: getTableName(sessionsInAccount),
+    type,
+    data,
+  });
+
+  await Promise.all([
+    Invites.backfillUserId(tx, user.emailAddress, user.id),
+    Contributors.backfillUserId(tx, user.emailAddress, user.id),
+    CharacterContributors.backfillUserId(tx, user.emailAddress, user.id),
+  ]);
+
+  return session;
+}
+
+/**
  * Signs in the owner of a Google account Google has verified (`sub` and `email` from its ID token): its returning
  * user, the account with its email (which it links and verifies), or a new user.
  */
@@ -54,18 +84,7 @@ export async function signInAsGoogleAccount(payload: { sub: string; email: strin
       const user = await Users.findOne(tx, { id: existingOauth.userId });
       if (!user) throw new InternalError("User not found");
 
-      const rows = await Sessions.create(tx, { userId: user.id });
-      const session = rows[0];
-      if (!session) throw new InternalError("Could not create session");
-
-      await Activities.create(tx, {
-        userId: user.id,
-        targetId: session.id,
-        targetTable: getTableName(sessionsInAccount),
-        type: "signIn",
-        data: { provider: "google" },
-      });
-
+      const session = await openSession(tx, user, "signIn", { provider: "google" });
       return { session, user: toSafeUser(user) };
     }
 
@@ -92,24 +111,7 @@ export async function signInAsGoogleAccount(payload: { sub: string; email: strin
         await EmailVerifications.archiveAllForUser(tx, { userId: existingUser.id });
       }
 
-      const rows = await Sessions.create(tx, { userId: existingUser.id });
-      const session = rows[0];
-      if (!session) throw new InternalError("Could not create session");
-
-      await Activities.create(tx, {
-        userId: existingUser.id,
-        targetId: session.id,
-        targetTable: getTableName(sessionsInAccount),
-        type: "signIn",
-        data: { provider: "google" },
-      });
-
-      await Promise.all([
-        Invites.backfillUserId(tx, existingUser.emailAddress, existingUser.id),
-        Contributors.backfillUserId(tx, existingUser.emailAddress, existingUser.id),
-        CharacterContributors.backfillUserId(tx, existingUser.emailAddress, existingUser.id),
-      ]);
-
+      const session = await openSession(tx, existingUser, "signIn", { provider: "google" });
       return { session, user: toSafeUser(linkedUser) };
     }
 
@@ -124,24 +126,7 @@ export async function signInAsGoogleAccount(payload: { sub: string; email: strin
       providerAccountId: payload.sub,
     });
 
-    const rows = await Sessions.create(tx, { userId: user.id });
-    const session = rows[0];
-    if (!session) throw new InternalError("Could not create session");
-
-    await Activities.create(tx, {
-      userId: user.id,
-      targetId: session.id,
-      targetTable: getTableName(sessionsInAccount),
-      type: "signUp",
-      data: { provider: "google" },
-    });
-
-    await Promise.all([
-      Invites.backfillUserId(tx, user.emailAddress, user.id),
-      Contributors.backfillUserId(tx, user.emailAddress, user.id),
-      CharacterContributors.backfillUserId(tx, user.emailAddress, user.id),
-    ]);
-
+    const session = await openSession(tx, user, "signUp", { provider: "google" });
     return { session, user: toSafeUser(user) };
   });
 }

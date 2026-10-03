@@ -29,13 +29,14 @@ Constructed with `(session, ruleset, contributorRole?)`. Pass the contributor ro
 | `canPublish` | **owner only** | Draft → Published; can't be delegated to Admin |
 | `canFork` | anyone (any session) | source must be Published and be a base ruleset (`rulesetId IS NULL`) |
 | `canSubscribeExtension` | **owner only** | private to the owner of the host fork |
-
-Reading and listing rulesets is enforced by the `findMany` scopes, not the policy. Rulesets are never hard-deleted: they're archived (`canUpdate`).
 | `canUnsubscribeExtension({ inUse })` | **owner only** | adds the in-use guard on top of `canSubscribeExtension` |
 | `canManageContributors` | owner, **Admin** | invite / revoke / role-change |
 | `canManageAdminContributors` | **owner only** | narrowing of the above for touching `Admin`-tier rows |
+| `canReadContributors` | owner, any contributor | lists the contributors |
 | `canUnarchive` | **owner only** | Archived → Draft |
 | `canViewChanges` | public rulesets: anyone; private: owner + any contributor | overrides metadata |
+
+Reading and listing rulesets is enforced by the `findMany` scopes, not the policy. Rulesets are never hard-deleted: they're archived (`canUpdate`).
 
 **Listing scopes** (`RulesetsRepository.findMany`, used by the create-character wizard, dashboard, etc.):
 
@@ -77,7 +78,7 @@ Constructed with `(session, character, isActiveContributor?)`. The boolean comes
 | `canManageContributors` | **owner only** |
 | `canReadContributors` | owner, active contributor |
 
-**Editing and archiving aren't policy methods.** `Characters.findOneEditable(db, { id, userId })` returns the character iff the session user can edit it (owner OR active contributor), and the write services call it as their first guard so the rest of the function can assume edit rights. Archiving looks the character up by its owner (`Characters.findOne(db, { id, userId })`): anyone else gets a 404. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
+**Editing and archiving aren't policy methods.** `getEditableCharacter(db, session, characterId)` (`server/services/characters/helpers.ts`, over `Characters.findOneEditable`) returns the character iff the session user can edit it (owner OR active contributor), or a 404, and the write services call it as their first guard so the rest of the function can assume edit rights. Archiving looks the character up by its owner (`Characters.findOne(db, { id, userId })`): anyone else gets a 404. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
 
 **Character creation against a ruleset** — `CharactersService.createCharacter` calls `RulesetsPolicy.canCreateCharacter` (through `getRulesetPolicy`), and `CampaignsService` calls `canCreateCampaign`, which applies the same rule. A deleted ruleset is a 404 (`Ruleset not found`) before the policy runs; an extension or an archived ruleset is refused (`UnprocessableEntityError "Choose an active playable ruleset"`). Otherwise the ruleset must be one of:
 
@@ -139,7 +140,7 @@ The three invite lifecycles share the same shape:
 Modifiers, properties, and requirements live on a parent entity (a feat, item, klass, race, power, klass-level, modifier, or character). The policy only validates that the parent still exists; the actual gating delegates to whichever policy owns the parent:
 
 - Customizations on a **ruleset entity** are gated by `RulesetsPolicy.canUpdateEntity` (owner / Admin / Editor).
-- Customizations on a **character** (e.g. character modifiers) go through `CharactersService` and are gated by `Characters.findOneEditable` (owner / contributor).
+- Customizations on a **character** (e.g. character modifiers) go through `CharactersService` and are gated by `getEditableCharacter` (owner / contributor).
 
 `CustomizationsPolicy.sourceExists` resolves a display name for the parent — used both for activity logging and to fail closed if the parent has been deleted between policy construction and write.
 
@@ -159,9 +160,9 @@ Anything that *throws* on the basis of ownership is a permission gate and belong
 | Policy | Service callers |
 |---|---|
 | `RulesetsPolicy` | `RulesetsService` (including extension subscribe / unsubscribe), the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `getRulesetPolicy` in `server/services/rulesets/helpers.ts`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset |
-| `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `Characters.findOneEditable` instead and skip the policy class — same effective rule, fewer object instantiations |
+| `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `getEditableCharacter` instead and skip the policy class — same effective rule, fewer object instantiations |
 | `CampaignsPolicy` | `CampaignsService`, `PlayersService`, campaigns sub-services |
-| `CustomizationsPolicy` | `ModifiersService`, `PropertiesService`, `RequirementsService` (rulesets/customization). `CharacterModifiersService` uses `Characters.findOneEditable`, like the other character writes |
+| `CustomizationsPolicy` | `ModifiersService`, `PropertiesService`, `RequirementsService` (rulesets/customization). `CharacterModifiersService` uses `getEditableCharacter`, like the other character writes |
 | `AttachmentsService` registry | not a `BasePolicy` — uses `registerAttachable()` config map. Currently registered: `User` (avatar), `Character` (portrait) |
 
 Campaign creation validates ruleset access before inserting the campaign or GM membership. It uses the character-creation access policy: public published, owner, contributor, or existing active campaign membership. Archived rulesets and extensions cannot be used to create campaigns or characters. A newly requested campaign cannot grant its own ruleset access.

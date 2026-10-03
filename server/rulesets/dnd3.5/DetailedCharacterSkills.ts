@@ -34,6 +34,17 @@ type DetailedCharacterComprehensiveSkills = {
   };
 };
 
+/**
+ * Whether the skill `name` is a subtype of one of `names`: a subtype names itself "<base> (<variant>)", and a
+ * user-authored ruleset can nest them ("Knowledge (Arcana) (Ancient)"), so every " (" is a possible base's end.
+ */
+export function isSkillSubtypeOf(name: string, names: Set<string>): boolean {
+  for (let idx = name.indexOf(" ("); idx > 0; idx = name.indexOf(" (", idx + 1)) {
+    if (names.has(name.slice(0, idx))) return true;
+  }
+  return false;
+}
+
 export default class DetailedCharacterSkills {
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_PATHS);
@@ -142,21 +153,10 @@ export default class DetailedCharacterSkills {
       const name = skillNameById.get(skillId);
       if (name) allKlassSkillNames.add(name);
     }
-    // Also mark subtypes of class skills as innate. Subtypes name themselves
-    // "<base> (<variant>)" (and user-authored rulesets can nest —
-    // "Knowledge (Arcana) (Ancient)"). The old code did `startsWith(name + " (")`
-    // which matches at ANY " (" boundary, so we check every " (" position
-    // rather than only the first one to preserve semantics. O(parens) Set.has
-    // calls per skill — still a big win over O(classSkillNames) startsWith scans.
-    const hasClassSkillPrefix = (name: string, names: Set<string>): boolean => {
-      for (let idx = name.indexOf(" ("); idx > 0; idx = name.indexOf(" (", idx + 1)) {
-        if (names.has(name.slice(0, idx))) return true;
-      }
-      return false;
-    };
+    // Also mark subtypes of class skills as innate.
     for (const skill of rulesetSkills) {
       if (this.innateSkillIds.has(skill.id)) continue;
-      if (hasClassSkillPrefix(skill.name, allKlassSkillNames)) {
+      if (isSkillSubtypeOf(skill.name, allKlassSkillNames)) {
         this.innateSkillIds.add(skill.id);
       }
     }
@@ -173,7 +173,7 @@ export default class DetailedCharacterSkills {
       for (const level of klass.levels) {
         for (const skill of level.skills) {
           const isClassSkillById = klassSkillIds.has(skill.id);
-          const isClassSkillByName = !isClassSkillById && hasClassSkillPrefix(skill.name, klassSkillNames);
+          const isClassSkillByName = !isClassSkillById && isSkillSubtypeOf(skill.name, klassSkillNames);
           const isClassSkillForKlass = isClassSkillById || isClassSkillByName;
           const ranksGained = isClassSkillForKlass ? skill.rank : skill.rank / 2;
           const current = this.rankBySkillId.get(skill.id) ?? 0;

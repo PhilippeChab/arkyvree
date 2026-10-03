@@ -30,6 +30,7 @@ import {
   enqueueCharacterPdf,
   findEditableCharacterOrBonded,
   findExportableCharacter,
+  getEditableCharacter,
   loadBondedByKind,
 } from "@/server/services/characters/helpers.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
@@ -342,14 +343,7 @@ const CharactersMethods = {
 
   async updateAbilities(session: Session, characterId: string, abilities: Record<string, number>) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await Characters.findOneEditable(tx, {
-        id: characterId,
-        userId: session.userId,
-      });
-
-      if (!characterRecord) {
-        throw new NotFoundError("Character not found");
-      }
+      const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async () => {
         // Repo composite WHERE auto-expands abilityId through cowContext so
@@ -373,14 +367,7 @@ const CharactersMethods = {
 
   async updateLanguages(session: Session, characterId: string, languageIds: string[]) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await Characters.findOneEditable(tx, {
-        id: characterId,
-        userId: session.userId,
-      });
-
-      if (!characterRecord) {
-        throw new NotFoundError("Character not found");
-      }
+      const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async ({ rulesetData }) => {
         await replaceCharacterLanguages(tx, characterRecord, rulesetData, languageIds);

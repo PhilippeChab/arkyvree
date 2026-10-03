@@ -195,6 +195,13 @@ export default class RulesetsPolicy extends BasePolicy<Ruleset> {
     return true;
   }
 
+  canReadContributors() {
+    if (!this.isOwner && !this.isContributor) {
+      throw new ForbiddenError("You are not a contributor of this ruleset");
+    }
+    return true;
+  }
+
   /**
    * Owner-only narrowing of canManageContributors: invite/assign/revoke/change
    * role on an Admin contributor. An Admin contributor can manage other

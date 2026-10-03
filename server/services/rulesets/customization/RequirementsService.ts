@@ -3,13 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { invalidateRulesetEntities } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import {
-  BadRequestError,
-  ConflictError,
-  InternalError,
-  NotFoundError,
-  STALE_ENTITY_MESSAGE,
-} from "@/server/errors/index.ts";
+import { ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Requirements } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
@@ -23,7 +17,7 @@ import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import TargetPathsService from "./TargetPathsService.ts";
+import { getTargetPathsWithLabels, resolvePathValueType } from "./targetPaths.ts";
 
 const RequirementsMethods = {
   async getEntityRequirements(rulesetId: string, entityType: string, entityId: string) {
@@ -35,8 +29,7 @@ const RequirementsMethods = {
       const allReqs = rulesetData.requirementsByEntity.get(resolvedId) ?? [];
       const requirements = allReqs.filter((r) => r.entityType === entityType);
 
-      const result = await TargetPathsService.initialize().call("getTargetPathsWithLabels", rulesetId, "requirement");
-      const { paths, segmentLabels } = result[0] ? result[1] : { paths: [], segmentLabels: {} };
+      const { paths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, "requirement");
       const pathMap = new Map(paths.map((p) => [p.path, p]));
 
       return requirements.map((r) => {
@@ -73,29 +66,7 @@ const RequirementsMethods = {
 
         let requirement;
         if (body.target) {
-          const pathsService = TargetPathsService.initialize();
-          const validationResult = await pathsService.call("validatePath", rulesetId, body.target, "requirement");
-
-          if (!validationResult[0]) {
-            throw new BadRequestError("Failed to validate modifier path");
-          }
-
-          const validation = validationResult[1];
-          if (!validation.isValid) {
-            throw new BadRequestError(`Invalid modifier path: ${validation.errors[0]?.message || "Unknown error"}`);
-          }
-
-          const allPathsResult = await pathsService.call("getTargetPathsWithLabels", rulesetId, "requirement");
-          if (!allPathsResult[0]) {
-            throw new BadRequestError("Failed to get requirement paths");
-          }
-
-          const pathDefinition = allPathsResult[1].paths.find((p) => p.path === body.target);
-          if (!pathDefinition) {
-            throw new BadRequestError(`Path not found: ${body.target}`);
-          }
-
-          const inferredValueType = pathDefinition.valueType;
+          const inferredValueType = await resolvePathValueType(rulesetId, body.target, "requirement");
 
           const rows = await Requirements.create(tx, {
             entityId: resolvedEntityId,
@@ -186,29 +157,7 @@ const RequirementsMethods = {
 
         let updatedRequirement;
         if (body.target) {
-          const pathsService = TargetPathsService.initialize();
-          const validationResult = await pathsService.call("validatePath", rulesetId, body.target, "requirement");
-
-          if (!validationResult[0]) {
-            throw new BadRequestError("Failed to validate modifier path");
-          }
-
-          const validation = validationResult[1];
-          if (!validation.isValid) {
-            throw new BadRequestError(`Invalid modifier path: ${validation.errors[0]?.message || "Unknown error"}`);
-          }
-
-          const allPathsResult = await pathsService.call("getTargetPathsWithLabels", rulesetId, "requirement");
-          if (!allPathsResult[0]) {
-            throw new BadRequestError("Failed to get requirement paths");
-          }
-
-          const pathDefinition = allPathsResult[1].paths.find((p) => p.path === body.target);
-          if (!pathDefinition) {
-            throw new BadRequestError(`Path not found: ${body.target}`);
-          }
-
-          const inferredValueType = pathDefinition.valueType;
+          const inferredValueType = await resolvePathValueType(rulesetId, body.target, "requirement");
           const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
           const rows = await Requirements.update(
             tx,

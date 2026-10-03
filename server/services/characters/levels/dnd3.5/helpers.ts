@@ -9,9 +9,11 @@
  * - buildProjectedCharacterLevel — creates a temporary character level for projection
  * - buildPendingCharacterLevels — creates projected levels from pending batch data
  * - buildProjectedSkillsFromAllocations — builds projected skills from skill allocation data
+ * - classSkillIds — the skills a class's skill list makes class skills, subtypes included
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
+import { isSkillSubtypeOf } from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
 import type { ProjectedCharacterData } from "@/server/rulesets/types.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
@@ -236,4 +238,17 @@ export function buildProjectedSkillsFromAllocations(
       return { ...skill, klassLevelId, characterLevelId, rank };
     })
     .filter((s): s is NonNullable<typeof s> => s !== null);
+}
+
+/** The skills class skill records make class skills: theirs, and the ruleset's subtypes of them ("Craft (…)" of Craft). */
+export function classSkillIds(
+  records: { skillId: string; skillsInRule: { name: string } }[],
+  skills: { id: string; name: string }[],
+): Set<string> {
+  const ids = new Set(records.map((record) => record.skillId));
+  const names = new Set(records.map((record) => record.skillsInRule.name));
+  for (const skill of skills) {
+    if (isSkillSubtypeOf(skill.name, names)) ids.add(skill.id);
+  }
+  return ids;
 }

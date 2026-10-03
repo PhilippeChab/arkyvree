@@ -10,11 +10,9 @@ import {
 } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import TargetPathsService from "@/server/services/rulesets/customization/TargetPathsService.ts";
+import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths.ts";
 import { timingStorage } from "@/server/timing.ts";
-import { createSeededTestRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
-
-const TargetPathsMethods = methodsOf(TargetPathsService);
+import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
 afterEach(invalidateAll);
 
@@ -73,15 +71,15 @@ test("target-path service invalidates extension subscribers but retains an unrel
   await Rulesets.update(db, { extensionRulesetIds: [edited.id] }, { id: host.id });
   const [feat] = await Feats.create(db, { rulesetId: edited.id, name: "Performance Marker", description: "Before" });
   invalidateAll();
-  const before = await TargetPathsMethods.getTargetPathsWithLabels(host.id, "requirement");
-  const untouched = await TargetPathsMethods.getTargetPathsWithLabels(unrelated.id, "requirement");
+  const before = await getTargetPathsWithLabels(host.id, "requirement");
+  const untouched = await getTargetPathsWithLabels(unrelated.id, "requirement");
   expect(before.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(true);
   await Feats.update(db, { name: "Updated Marker" }, { id: feat.id });
   invalidateRuleset(edited.id);
-  const next = await TargetPathsMethods.getTargetPathsWithLabels(host.id, "requirement");
+  const next = await getTargetPathsWithLabels(host.id, "requirement");
   expect(next.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(false);
   expect(next.paths.some((path) => path.path === "feats.updatedmarker.possessed")).toBe(true);
-  expect(await TargetPathsMethods.getTargetPathsWithLabels(unrelated.id, "requirement")).toBe(untouched);
+  expect(await getTargetPathsWithLabels(unrelated.id, "requirement")).toBe(untouched);
 });
 
 for (const invalidate of ["dependency", "all"] as const) {
