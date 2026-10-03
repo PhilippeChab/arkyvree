@@ -59,6 +59,7 @@
     "arkyvree/order-through-repository": "error",
     "arkyvree/shared-runtime": "error",
     "arkyvree/session-param": "error",
+    "arkyvree/test-placement": "error",
     // A file reads bottom-up: a helper sits above the code that uses it. Classes
     // are left out: a repository's instance class follows it.
     "no-use-before-define": [

@@ -18,10 +18,12 @@
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
+import fs from "node:fs";
 import { isBuiltin } from "node:module";
+import path from "node:path";
 
 import { onImports, targetOf } from "./imports.mjs";
-import { repoPath } from "./paths.mjs";
+import { repoPath, rootOf } from "./paths.mjs";
 
 const noParentImports = {
   meta: { type: "suggestion", fixable: "code" },
@@ -231,6 +233,76 @@ const sessionParam = {
   },
 };
 
+/** Each test area and the source tree it mirrors. */
+const TEST_MIRRORS = [
+  ["tests/services/", "server/services/"],
+  ["tests/routers/", "server/routers/"],
+  ["tests/jobs/", "server/jobs/"],
+  ["tests/cache/", "server/cache/"],
+  ["tests/rulesets/", "server/rulesets/"],
+  ["tests/middlewares/", "server/middlewares/"],
+  ["tests/emails/", "server/emails/"],
+  ["tests/shared/", "shared/"],
+  ["tests/client/", "client/src/"],
+  ["tests/lint/", "lint/"],
+  ["tests/scripts/", "scripts/"],
+];
+
+const moduleCache = new Map();
+/** Every module under `tree` (a repo path), by its name without the extension: `FeatsService` → its paths. */
+function modulesIn(root, tree) {
+  const key = `${root}:${tree}`;
+  if (!moduleCache.has(key)) {
+    const byName = new Map();
+    const walk = (dir) => {
+      if (!fs.existsSync(path.join(root, dir))) return;
+      for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
+        const rel = `${dir}${entry.name}`;
+        if (entry.isDirectory()) walk(`${rel}/`);
+        else if (/\.(tsx?|mjs)$/.test(entry.name) && !/\.d\.m?ts$/.test(entry.name)) {
+          const name = entry.name.replace(/\.(tsx?|mjs)$/, "");
+          byName.set(name, [...(byName.get(name) ?? []), rel]);
+        }
+      }
+    };
+    walk(tree);
+    moduleCache.set(key, byName);
+  }
+  return moduleCache.get(key);
+}
+
+const testPlacement = {
+  meta: { type: "suggestion" },
+  create(context) {
+    const file = repoPath(context.filename);
+    const mirror = TEST_MIRRORS.find(([tests]) => file.startsWith(tests));
+    if (!mirror || !file.endsWith(".test.ts")) return {};
+    const [tests, tree] = mirror;
+    const name = path.posix.basename(file, ".test.ts");
+    const mirrored = `${tree}${path.posix.dirname(file.slice(tests.length))}/`.replace(/\/\.\/$/, "/");
+    const modules = modulesIn(rootOf(context.filename), tree).get(name);
+    return {
+      Program(node) {
+        if (modules) {
+          if (modules.some((m) => path.posix.dirname(m) + "/" === mirrored)) return;
+          const at = modules.map((m) =>
+            `${tests}${path.posix.dirname(m.slice(tree.length))}/${name}.test.ts`.replace("/./", "/"),
+          );
+          context.report({
+            node,
+            message: `A test named after \`${name}\` sits at its module's mirror: ${at.join(" or ")}.`,
+          });
+        } else if (/(Service|Policy|Repository)$/.test(name)) {
+          context.report({
+            node,
+            message: `\`${name}.test.ts\` is named after a module, but there's no \`${name}\` in ${tree}.`,
+          });
+        }
+      },
+    };
+  },
+};
+
 export const rules = {
   "no-parent-imports": noParentImports,
   "no-helpers-modules": noHelpersModules,
@@ -239,4 +311,5 @@ export const rules = {
   "order-through-repository": orderThroughRepository,
   "shared-runtime": sharedRuntime,
   "session-param": sessionParam,
+  "test-placement": testPlacement,
 };
