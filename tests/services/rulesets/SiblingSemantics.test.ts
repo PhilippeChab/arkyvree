@@ -7,9 +7,10 @@ import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
+import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
-import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
@@ -32,7 +33,11 @@ async function setup(
     );
     extensionIds.push(extension.id);
   }
-  await RulesetsService.subscribeExtension(session, host.id, reverseOrder ? [...extensionIds].reverse() : extensionIds);
+  await RulesetExtensionsService.subscribeExtension(
+    session,
+    host.id,
+    reverseOrder ? [...extensionIds].reverse() : extensionIds,
+  );
   return { session, host };
 }
 
@@ -65,7 +70,7 @@ test("editing a shared aptitude preserves references from both extensions", asyn
   await AptitudesService.updateRulesetAptitude(session, host.id, local.id, { name: "Renamed Local Pool" });
   expect(await read()).toEqual({ resolved: [local.id, local.id], links: [local.id, local.id] });
   for (const id of aptitudeIds) expect((await Aptitudes.findOne(db, { id }))?.name).toBe("Audit Shared Pool");
-  await RulesetsService.revertOverride(session, host.id, "aptitudes", aptitudeIds[0]);
+  await RulesetChangesService.revertOverride(session, host.id, "aptitudes", aptitudeIds[0]);
   expect(await read()).toEqual({ resolved: [aptitudeIds[0], aptitudeIds[0]], links: [aptitudeIds[0], aptitudeIds[0]] });
 });
 

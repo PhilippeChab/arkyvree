@@ -15,12 +15,13 @@ import {
   Requirements,
   Rulesets,
 } from "@/server/repositories/index.ts";
+import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { timingStorage } from "@/server/timing.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
@@ -51,7 +52,7 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
         : (await repo.create(db, { name: "Sibling write fixture", rulesetId: extension.id }))[0];
     extensions.push({ extension, copy });
   }
-  await RulesetsService.subscribeExtension(
+  await RulesetExtensionsService.subscribeExtension(
     session,
     host.id,
     extensions.map((e) => e.extension.id),
@@ -114,7 +115,7 @@ for (const entityType of ["feats", "powers"] as const) {
         const snapshots = await EntitySnapshots.findByRulesetId(db, { rulesetId: host.id });
         expect(snapshots).toHaveLength(1);
         expect(snapshots[0].sourceEntityId).toBe(winnerId);
-        await RulesetsService.revertOverride(session, host.id, entityType, winnerId);
+        await RulesetChangesService.revertOverride(session, host.id, entityType, winnerId);
         expect(
           (await PropertiesService.getEntityProperties(host.id, entityType, winnerId)).filter(
             (p) => p.type === property.type,
@@ -194,7 +195,7 @@ for (const entityType of ["feats", "powers"] as const) {
         for (const id of [winnerId, loser.id, local.resolvedEntityId]) expect(entities.get(id)).toBeUndefined();
         expect(rulesetData.requirementsByEntity.get(local.resolvedEntityId) ?? []).toEqual([]);
       });
-      await RulesetsService.revertOverride(session, host.id, entityType, winnerId);
+      await RulesetChangesService.revertOverride(session, host.id, entityType, winnerId);
       const restored = await RequirementsService.getEntityRequirements(host.id, entityType, winnerId);
       expect(restored.filter((r) => r.target === requirement.target)).toEqual([
         expect.objectContaining({ value: requirement.value, operator: requirement.operator }),
@@ -401,20 +402,20 @@ test("installing another extension preserves the local override and exposes unre
     value: "1",
   });
   invalidateAll();
-  await RulesetsService.unsubscribeExtension(session, host.id, loserRulesetId);
+  await RulesetExtensionsService.unsubscribeExtension(session, host.id, loserRulesetId);
   const local = await PropertiesService.createEntityProperty(session, host.id, "feats", winnerId, {
     type: "LOCAL",
     value: "1",
   });
   const [unrelated] = await Feats.create(db, { name: "Unrelated extension feat", rulesetId: loserRulesetId });
-  await RulesetsService.subscribeExtension(session, host.id, [loserRulesetId]);
+  await RulesetExtensionsService.subscribeExtension(session, host.id, [loserRulesetId]);
   const visible = await PropertiesService.getEntityProperties(host.id, "feats", local.resolvedEntityId);
   expect(visible.some((p) => p.id === property.id)).toBe(false);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
     expect(rulesetData.featsById.has(unrelated.id)).toBe(true);
     expect(rulesetData.canonicalize(loser.id)).toBe(local.resolvedEntityId);
   });
-  await RulesetsService.revertOverride(session, host.id, "feats", winnerId);
+  await RulesetChangesService.revertOverride(session, host.id, "feats", winnerId);
   const restored = await PropertiesService.getEntityProperties(host.id, "feats", winnerId);
   expect(restored.some((p) => p.id === property.id)).toBe(true);
 });
@@ -451,7 +452,7 @@ for (const entityType of ["feats", "powers"] as const) {
           [0, 1, 2],
         ]) {
           const fork = await createSeededTestRuleset(session.userId);
-          await RulesetsService.subscribeExtension(
+          await RulesetExtensionsService.subscribeExtension(
             session,
             fork.id,
             order.map((i) => extensions[i].extension.id),

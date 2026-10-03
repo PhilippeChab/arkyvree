@@ -15,6 +15,7 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
+import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
@@ -239,13 +240,13 @@ describe("customizing an inherited feat", () => {
   test("lists it among the fork's changes until it's reverted", async () => {
     const { session, fork, feat, owners } = await setup();
     const featChanges = async () =>
-      (await RulesetsService.getChanges(session, fork.id)).filter((c) => c.entityType === "feats");
+      (await RulesetChangesService.getChanges(session, fork.id)).filter((c) => c.entityType === "feats");
     expect(await featChanges()).toEqual([]);
 
     await ModifiersService.updateEntityModifier(session, fork.id, "feats", feat.id, owners.modifiers, dexterityBonus);
     expect(await featChanges()).toMatchObject([{ status: "modified", sourceEntityId: feat.id }]);
 
-    await RulesetsService.revertOverride(session, fork.id, "feats", feat.id);
+    await RulesetChangesService.revertOverride(session, fork.id, "feats", feat.id);
     expect(await featChanges()).toEqual([]);
     expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toEqual([]);
   });

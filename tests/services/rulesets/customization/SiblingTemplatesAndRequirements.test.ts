@@ -7,7 +7,7 @@ import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repos
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { api, expectStatus } from "@/tests/api.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
@@ -53,7 +53,7 @@ async function setup(
       { id: extension.id },
     );
   }
-  await RulesetsService.subscribeExtension(session, host.id, extensionIds);
+  await RulesetExtensionsService.subscribeExtension(session, host.id, extensionIds);
   return { session, host, source, copies };
 }
 

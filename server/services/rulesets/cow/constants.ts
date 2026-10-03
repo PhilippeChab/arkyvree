@@ -1,4 +1,16 @@
-import { featsInRules, powersInRules } from "@/drizzle/schema.ts";
+import {
+  abilitiesInRules,
+  aptitudesInRules,
+  featsInRules,
+  itemsInRules,
+  klassesInRules,
+  languagesInRules,
+  mechanicsInRules,
+  powersInRules,
+  racesInRules,
+  savesInRules,
+  skillsInRules,
+} from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import {
   Abilities,
@@ -75,6 +87,21 @@ export const ENTITY_REPOS: Record<EntityType, EntityRepository> = {
   aptitudes: Aptitudes,
   mechanics: Mechanics,
 };
+
+/** Each entity type's table. */
+export const ENTITY_TABLES = {
+  abilities: abilitiesInRules,
+  saves: savesInRules,
+  skills: skillsInRules,
+  feats: featsInRules,
+  powers: powersInRules,
+  items: itemsInRules,
+  races: racesInRules,
+  languages: languagesInRules,
+  klasses: klassesInRules,
+  aptitudes: aptitudesInRules,
+  mechanics: mechanicsInRules,
+} as const;
 
 export const CUSTOMIZATION_REPOS = {
   property: Properties,
