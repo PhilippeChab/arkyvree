@@ -24,6 +24,7 @@ export async function getLevel(session: Session, characterId: string, characterL
     throw new NotFoundError("Character level not found");
   }
 
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ rulesetData }) => {
     // Inside withRulesetScope every Character* repo read below returns rows
     // with *Id fields already remapped to post-COW, and rulesetData's id

@@ -53,8 +53,8 @@
     "parser:sync": "bun database/packages/dnd35-from-parser/tools/sync.ts",
     "parser:overrides": "bun database/packages/dnd35-from-parser/tools/overrides.ts",
     "parser:validate": "bun database/packages/dnd35-from-parser/tools/validate.ts",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
+    "lint": "oxlint --report-unused-disable-directives-severity=error",
+    "lint:fix": "oxlint --fix --report-unused-disable-directives-severity=error",
     "format": "oxfmt '**/*.{ts,tsx,js,mjs,cjs}'",
     "format:check": "oxfmt --check '**/*.{ts,tsx,js,mjs,cjs}'",
     "test:pdf-bundle": "bun scripts/check-pdf-bundle.ts"

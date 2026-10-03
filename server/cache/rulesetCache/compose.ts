@@ -182,6 +182,7 @@ export interface CachedRulesetData {
  * with each ancestor in the source chain, applying COW exclusions, sibling filtering,
  * and FK override resolution. Ancestor data is pulled from the pinned tier-1 cache.
  */
+// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export async function getOrFetchRulesetData(
   rulesetId: string,
   cowData: CachedCowData,

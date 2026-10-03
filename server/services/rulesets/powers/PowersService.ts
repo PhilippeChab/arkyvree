@@ -139,6 +139,7 @@ class PowersService {
 
   async updatePower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
     const result = await withTransaction(async (tx) => {
+      // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 

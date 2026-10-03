@@ -82,6 +82,7 @@ export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ances
  * extensions vs. ancestors of the fork. Required for sibling detection;
  * if omitted, only true overrides are returned.
  */
+// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export async function buildOverrideMap(
   db: Db,
   rulesetId: string,

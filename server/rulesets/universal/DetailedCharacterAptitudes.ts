@@ -110,6 +110,7 @@ export default class DetailedCharacterAptitudes {
   // Track which aptitude keys are leveled (spell aptitudes)
   private readonly leveledAptitudeKeys = new Set<string>();
 
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   initialize(
     aptitudes: Aptitude[],
     klassLevelFeatCountsByAptitudeId: Record<string, number>,

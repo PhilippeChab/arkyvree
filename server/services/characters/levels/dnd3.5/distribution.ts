@@ -38,6 +38,7 @@ interface DistributedLevel {
  * Baseline unspent slots (e.g., Human racial bonus) are captured by the
  * full character build and added to the first level's delta.
  */
+// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export function computePerLevelAptitudeSlots(
   rulesetData: CachedRulesetData,
   klassLevelIds: string[],
@@ -171,6 +172,7 @@ export function computePerLevelAptitudeSlots(
  * Distributes pool-level selections into per-level payloads using the
  * per-level slot/point data computed by computePerLevelAptitudeSlots.
  */
+// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export function distributePoolSelections(
   data: PerLevelDistributionData,
   skills: Record<string, number>,

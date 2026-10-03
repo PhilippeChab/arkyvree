@@ -108,6 +108,7 @@ class RulesetsRepository extends include(
     });
   }
 
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   async findPage(
     db: Db,
     session: Session,

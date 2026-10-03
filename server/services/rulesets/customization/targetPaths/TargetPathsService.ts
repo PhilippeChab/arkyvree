@@ -12,6 +12,7 @@ class TargetPathsService {
    * Get completion suggestions for a partial path (paginated).
    * Uses cached paths+labels so subsequent calls are instant.
    */
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   async getCompletions(
     rulesetId: string,
     partialPath: string,

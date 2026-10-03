@@ -132,6 +132,7 @@ export default class DetailedCharacterDataLoader {
     return results;
   }
 
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   async load(
     database: Db = db,
     projectedData?: Dnd35ProjectedCharacterData,

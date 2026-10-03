@@ -35,6 +35,7 @@ export async function getAvailableKlasses(
 ) {
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const { sourceChain } = rulesetData.cow;
 

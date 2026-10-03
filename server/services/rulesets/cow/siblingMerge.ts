@@ -13,6 +13,7 @@ import { mergeSiblingRequirements } from "./requirements.ts";
  * from sibling extension copies (requirements, modifiers, aptitude links) so the
  * child fork starts from the full merged view.
  */
+// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export async function mergeSiblingData(
   tx: Db,
   targetEntityId: string,

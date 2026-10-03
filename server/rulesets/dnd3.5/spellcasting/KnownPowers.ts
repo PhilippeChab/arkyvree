@@ -38,6 +38,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       return this.spellTags;
     }
 
+    // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
     enrichAllKnownPowers(
       powers: PowerWithPMR[],
       klassLevels: KlassLevelWithPMR[],

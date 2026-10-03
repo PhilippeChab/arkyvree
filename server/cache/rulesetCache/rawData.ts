@@ -78,6 +78,7 @@ function buildRawCacheKey(rulesetId: string, campaignId?: string): string {
   return campaignId ? `${rulesetId}:${campaignId}` : rulesetId;
 }
 
+// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 async function fetchRulesetRawData(
   rulesetId: string,
   campaignId?: string,
