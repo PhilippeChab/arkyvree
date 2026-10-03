@@ -10,6 +10,7 @@ import {
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { everyPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
   Aptitudes,
   Characters,
@@ -124,7 +125,7 @@ describe("subscribing to an extension", () => {
       id: trooper.id,
       rulesetId: extension.id,
     });
-    expect(await RulesetExtensions.findByRulesetId(db, { rulesetId: draft.id })).toMatchObject([
+    expect(await RulesetExtensions.findMany(db, { rulesetId: draft.id })).toMatchObject([
       { extensionId: extension.id, extensionName: DND35_COMPLETE_WARRIOR_NAME },
     ]);
     expect(await RulesetExtensionsService.getSubscribedExtensions(session, draft.id)).toMatchObject([
@@ -140,9 +141,7 @@ describe("subscribing to an extension", () => {
       const { extensionRulesetIds, ancestorRulesetIds } = (await Rulesets.findOne(db, { id: draft.id }))!;
       const sourceChain = [...extensionRulesetIds, ...ancestorRulesetIds];
       return (
-        await Feats.findAll((page) =>
-          Feats.findManyByRulesetId(db, { rulesetId: draft.id, ancestorRulesetIds: sourceChain }, page),
-        )
+        await everyPage((page) => Feats.findPage(db, { rulesetId: draft.id, ancestorRulesetIds: sourceChain }, page))
       ).length;
     };
     const before = await total();
@@ -164,7 +163,7 @@ describe("subscribing to an extension", () => {
       systemExtension.id,
       homebrew.id,
     ]);
-    expect(await RulesetExtensions.findByRulesetId(db, { rulesetId: draft.id })).toHaveLength(3);
+    expect(await RulesetExtensions.findMany(db, { rulesetId: draft.id })).toHaveLength(3);
     expect(await featsNamed(draft.id, "Homebrew Feat")).toHaveLength(1);
   });
 
@@ -374,14 +373,14 @@ describe("unsubscribing from an extension", () => {
     expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([]);
     expect(await featsNamed(draft.id, "Monkey Grip")).toEqual([]);
     await expect(FeatsService.getRulesetFeat(draft.id, monkeyGrip.id)).rejects.toThrow(NotFoundError);
-    expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id })).toEqual([]);
-    expect(await RulesetExtensions.findByRulesetId(db, { rulesetId: draft.id })).toEqual([]);
+    expect(await EntitySnapshots.findMany(db, { rulesetId: draft.id })).toEqual([]);
+    expect(await RulesetExtensions.findMany(db, { rulesetId: draft.id })).toEqual([]);
 
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     expect((await FeatsService.getRulesetFeats(draft.id, { search: "Monkey Grip" }, firstPage)).items).toMatchObject([
       { id: monkeyGrip.id, rulesetId: extension.id },
     ]);
-    expect(await RulesetExtensions.findByRulesetId(db, { rulesetId: draft.id })).toHaveLength(1);
+    expect(await RulesetExtensions.findMany(db, { rulesetId: draft.id })).toHaveLength(1);
   });
 
   test("keeps the other extensions and the fork's copies of theirs", async () => {
@@ -443,7 +442,7 @@ describe("unsubscribing from an extension", () => {
 
     for (const [type, id] of [...fromBase, ...fromExtension])
       await cowEntity(db, type, id, draft.id, draft.ancestorRulesetIds, [extension.id]);
-    const copies = await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id });
+    const copies = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
     const ofBase = copies.filter((copy) => fromBase.some(([, id]) => copy.sourceEntityId === id));
     expect(new Set(ofBase.map((copy) => copy.entityType))).toEqual(new Set(fromBase.map(([type]) => type)));
     expect(copies).toHaveLength(fromBase.length + fromExtension.length);
@@ -451,7 +450,7 @@ describe("unsubscribing from an extension", () => {
     expect(await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).toEqual({
       unsubscribed: true,
     });
-    expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id })).toEqual(ofBase);
+    expect(await EntitySnapshots.findMany(db, { rulesetId: draft.id })).toEqual(ofBase);
   });
 
   test("is refused while a character picked its content, or the fork's copy of it, even an archived character", async () => {
@@ -566,7 +565,7 @@ describe("an extension's content in a fork", () => {
     await db
       .insert(characterAbilitiesInCharacter)
       .values(Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 10 })));
-    const barbarianLevels = (await KlassLevels.findManyByKlass(db, { klassId: klassMap.pc["Barbarian"] }))
+    const barbarianLevels = (await KlassLevels.findMany(db, { klassId: klassMap.pc["Barbarian"] }))
       .filter((l) => l.level <= 7)
       .sort((a, b) => a.level - b.level);
     for (const level of barbarianLevels) {
@@ -710,17 +709,17 @@ describe("two extensions overriding the same base entity", () => {
     test("editing it in the fork gives the fork's copy both extensions' aptitudes, requirements and modifiers", async () => {
       const { session, draft, baseId, contributions } = await setupSiblings(entityType);
       await entity.edit(session, draft.id, baseId);
-      const [snapshot] = await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id });
+      const [snapshot] = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
       const copyId = snapshot.forkedEntityId;
 
       expect((await entity.links(copyId)).map((l) => l.aptitudeId)).toEqual(
         expect.arrayContaining(contributions.map((c) => c.aptitudeId)),
       );
+      expect((await Requirements.findMany(db, { entityIds: [copyId], entityType })).map((r) => r.target)).toEqual(
+        expect.arrayContaining(contributions.map((c) => c.requirement)),
+      );
       expect(
-        (await Requirements.findManyByEntity(db, { entityIds: [copyId], entityType })).map((r) => r.target),
-      ).toEqual(expect.arrayContaining(contributions.map((c) => c.requirement)));
-      expect(
-        (await Modifiers.findManyBySource(db, { sourceIds: [copyId], sourceType: entityType })).map((m) => m.target),
+        (await Modifiers.findMany(db, { sourceIds: [copyId], sourceType: entityType })).map((m) => m.target),
       ).toEqual(expect.arrayContaining(contributions.map((c) => c.modifier)));
     });
   });
@@ -731,7 +730,7 @@ describe("two extensions overriding the same base entity", () => {
     const { session, draft, baseId, contributions } = await setupSiblings("feats");
     // Find which extension's copy wins, then undo that trial copy.
     await ENTITIES.feats.edit(session, draft.id, baseId);
-    const [trial] = await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id });
+    const [trial] = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
     await Feats.delete(db, { id: trial.forkedEntityId });
     await EntitySnapshots.delete(db, { sourceEntityId: trial.sourceEntityId, rulesetId: draft.id });
     const loser = contributions.find((c) => c.copyId !== trial.sourceEntityId)!;
@@ -750,8 +749,8 @@ describe("two extensions overriding the same base entity", () => {
     }
 
     await ENTITIES.feats.edit(session, draft.id, baseId);
-    const [snapshot] = await EntitySnapshots.findByRulesetId(db, { rulesetId: draft.id });
-    const requirements = await Requirements.findManyByEntity(db, {
+    const [snapshot] = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
+    const requirements = await Requirements.findMany(db, {
       entityIds: [snapshot.forkedEntityId],
       entityType: "feats",
     });

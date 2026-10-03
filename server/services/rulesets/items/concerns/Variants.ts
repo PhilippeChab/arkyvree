@@ -36,7 +36,7 @@ export function Variants<B extends Constructor>(Base: B) {
     async getRulesetTemplates(rulesetId: string, type?: string) {
       return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
-        return await Items.findTemplates(db, { rulesetId, ancestorRulesetIds: sourceChain, type });
+        return await Items.findMany(db, { rulesetId, ancestorRulesetIds: sourceChain, type, isTemplate: true });
       });
     }
 
@@ -72,12 +72,12 @@ export function Variants<B extends Constructor>(Base: B) {
           // ancestor conflicts, then the shared visibility / tombstone check
           // used by `assertEntityNameAvailable`. Avoids N × sourceChain serial
           // round-trips when N can be up to 50.
-          const ownConflicts = await Items.findByNamesInRulesets(tx, { rulesetIds: [rulesetId], names });
+          const ownConflicts = await Items.findMany(tx, { rulesetIds: [rulesetId], names });
           if (ownConflicts.length > 0) {
             throw new ConflictError(`Name already exists in this ruleset: ${ownConflicts[0].name}`);
           }
 
-          const ancestorConflicts = await Items.findByNamesInRulesets(tx, { rulesetIds: sourceChain, names });
+          const ancestorConflicts = await Items.findMany(tx, { rulesetIds: sourceChain, names });
           const tombstoned = await assertAncestorNamesHidden(
             tx,
             rulesetId,

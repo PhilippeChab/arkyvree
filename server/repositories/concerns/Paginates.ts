@@ -19,6 +19,24 @@ export function pageOf<T>(items: T[], pagination: { limit: number; page: number 
   };
 }
 
+/** Every page of a paginated query, together: `everyPage((pagination) => Feats.findPage(db, filters, pagination))`. */
+export async function everyPage<R>(
+  fetchPage: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
+  limit = 100,
+): Promise<R[]> {
+  const items: R[] = [];
+  let page = 1;
+
+  while (true) {
+    const result = await fetchPage({ limit, page });
+    items.push(...result.items);
+    if (!result.nextPage) break;
+    page = result.nextPage;
+  }
+
+  return items;
+}
+
 /** A list a page at a time: a query fetches one row past the page to know whether another follows. */
 export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B) {
   abstract class Paginating extends Base {
@@ -46,24 +64,6 @@ export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B)
       const rows = await callback(this.paginate(query));
 
       return this.paginated(rows, query);
-    }
-
-    /** Every page of a paginated query, together. */
-    async findAll<R>(
-      callback: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
-      limit = 100,
-    ): Promise<R[]> {
-      const items: R[] = [];
-      let page = 1;
-
-      while (true) {
-        const result = await callback({ limit, page });
-        items.push(...result.items);
-        if (!result.nextPage) break;
-        page = result.nextPage;
-      }
-
-      return items;
     }
   }
   return Paginating;

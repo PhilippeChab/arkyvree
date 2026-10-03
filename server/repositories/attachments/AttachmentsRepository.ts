@@ -10,7 +10,7 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
     super(attachmentsInStorage);
   }
 
-  async findManyByBlobIds(db: Db, where: { blobIds: string[] }) {
+  async findMany(db: Db, where: { blobIds: string[] }) {
     if (where.blobIds.length === 0) return [];
     return await db.query.attachmentsInStorage.findMany({
       where: inArray(this.table.blobId, where.blobIds),

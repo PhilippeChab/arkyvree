@@ -1,5 +1,6 @@
 import { withCowContext } from "@/server/database/cowContext.ts";
 import { db } from "@/server/database/index.ts";
+import { everyPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
   Abilities,
   Aptitudes,
@@ -82,24 +83,24 @@ async function fetchRulesetRawData(
   rulesetId: string,
   campaignId?: string,
 ): Promise<{ data: RulesetRawData; pinned: boolean }> {
-  const findManyByRulesetId = campaignId
+  const filters = campaignId
     ? { rulesetId, campaignId, ancestorRulesetIds: [] }
     : { rulesetId, ancestorRulesetIds: [] };
 
   // Round 1: fetch entities + ruleset metadata (for pin decision) in parallel.
   const [abilities, saves, skills, feats, powers, aptitudes, klasses, races, languages, items, mechanics, ruleset] =
     await Promise.all([
-      Abilities.findAll((pagination) => Abilities.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-      Saves.findAll((pagination) => Saves.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-      Skills.findAll((pagination) => Skills.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-      Feats.findAll((pagination) => Feats.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-      Powers.findAll((pagination) => Powers.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-      Aptitudes.findAll((pagination) => Aptitudes.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-      Klasses.findAll((pagination) => Klasses.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-      Races.findAll((pagination) => Races.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-      Languages.findAll((pagination) => Languages.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-      Items.findAll((pagination) => Items.findManyByRulesetId(db, findManyByRulesetId, pagination)),
-      Mechanics.findAll((pagination) => Mechanics.findManyByRulesetId(db, findManyByRulesetId, pagination)),
+      everyPage((pagination) => Abilities.findPage(db, filters, pagination)),
+      everyPage((pagination) => Saves.findPage(db, filters, pagination)),
+      everyPage((pagination) => Skills.findPage(db, filters, pagination)),
+      everyPage((pagination) => Feats.findPage(db, filters, pagination)),
+      everyPage((pagination) => Powers.findPage(db, filters, pagination)),
+      everyPage((pagination) => Aptitudes.findPage(db, filters, pagination)),
+      everyPage((pagination) => Klasses.findPage(db, filters, pagination)),
+      everyPage((pagination) => Races.findPage(db, filters, pagination)),
+      everyPage((pagination) => Languages.findPage(db, filters, pagination)),
+      everyPage((pagination) => Items.findPage(db, filters, pagination)),
+      everyPage((pagination) => Mechanics.findPage(db, filters, pagination)),
       campaignId ? Promise.resolve(null) : Rulesets.findOne(db, { id: rulesetId }),
     ]);
 
@@ -110,10 +111,10 @@ async function fetchRulesetRawData(
   // properties/modifiers/requirements attached to class-level rows (KLASS_LEVEL_BAB,
   // KLASS_LEVEL_SKILL_POINTS, class-feature modifiers, etc.).
   const [klassLevels, klassSkills, leveledAptitudeIds] = await Promise.all([
-    klassIds.length > 0 ? KlassLevels.findManyByKlassIds(db, { klassIds }) : Promise.resolve<KlassLevel[]>([]),
+    klassIds.length > 0 ? KlassLevels.findMany(db, { klassIds }) : Promise.resolve<KlassLevel[]>([]),
     klassIds.length > 0 ? KlassSkills.findMany(db, { klassIds }) : Promise.resolve<KlassSkill[]>([]),
     aptitudes.length > 0
-      ? Aptitudes.findLeveledAptitudeIds(db, { aptitudeIds: aptitudes.map((a) => a.id) })
+      ? Aptitudes.findLeveledIds(db, { aptitudeIds: aptitudes.map((a) => a.id) })
       : Promise.resolve(new Set<string>()),
   ]);
 
@@ -139,10 +140,10 @@ async function fetchRulesetRawData(
   const propertyEntityIds = [...customizationEntityIds, rulesetId];
   const [properties, modifiers, klassLevelFeats, klassLevelPowers, klassLevelSaves] = await Promise.all([
     propertyEntityIds.length > 0
-      ? Properties.findManyByEntityIds(db, { entityIds: propertyEntityIds })
+      ? Properties.findMany(db, { entityIds: propertyEntityIds })
       : Promise.resolve<Property[]>([]),
     customizationEntityIds.length > 0
-      ? Modifiers.findManyBySourceIds(db, { sourceIds: customizationEntityIds })
+      ? Modifiers.findMany(db, { sourceIds: customizationEntityIds })
       : Promise.resolve<Modifier[]>([]),
     klassLevelIds.length > 0 ? KlassLevelFeats.findMany(db, { klassLevelIds }) : Promise.resolve<KlassLevelFeat[]>([]),
     klassLevelIds.length > 0
@@ -154,9 +155,7 @@ async function fetchRulesetRawData(
   // Round 4: requirements (need modifier IDs for entityType='modifiers' lookups).
   const requirementEntityIds = [...customizationEntityIds, ...modifiers.map((m) => m.id)];
   const requirements =
-    requirementEntityIds.length > 0
-      ? await Requirements.findManyByEntityIds(db, { entityIds: requirementEntityIds })
-      : [];
+    requirementEntityIds.length > 0 ? await Requirements.findMany(db, { entityIds: requirementEntityIds }) : [];
 
   const data: RulesetRawData = {
     abilities,

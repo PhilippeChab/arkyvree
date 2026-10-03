@@ -177,7 +177,7 @@ class AccountService {
       // Drop polymorphic attachment rows for the user + their characters so
       // the sweep can reclaim S3 objects. archive() leaves rows in place, so
       // without this the avatar + every portrait leak forever.
-      const characterIds = await Characters.findIdsByUserIds(tx, { userIds: [userId] });
+      const characterIds = await Characters.findIds(tx, { userIds: [userId] });
       await purgeAttachmentsForRecords(tx, "User", [userId]);
       await purgeAttachmentsForRecords(tx, "Character", characterIds);
 

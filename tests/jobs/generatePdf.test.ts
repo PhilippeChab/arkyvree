@@ -11,7 +11,7 @@ import { createTestCharacter, createTestUser, silentJobHelpers } from "@/tests/h
 
 /** A seeded character of the seed user's, by name. */
 async function seeded(name: string) {
-  const { items } = await Characters.findMany(
+  const { items } = await Characters.findPage(
     db,
     { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly },
     { limit: 100, page: 1 },
@@ -21,7 +21,7 @@ async function seeded(name: string) {
 
 /** The notifications of `type` a user got, newest first. */
 async function notificationsOf(userId: string, type: string) {
-  const { items } = await Notifications.findMany(db, { recipientId: userId }, { limit: 50, page: 1 });
+  const { items } = await Notifications.findPage(db, { recipientId: userId }, { limit: 50, page: 1 });
   return items.filter((n) => n.type === type);
 }
 

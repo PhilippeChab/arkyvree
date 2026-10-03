@@ -88,7 +88,7 @@ class CharacterLevelsRepository extends include(
     return await this.existsKlassPickFromExtension(db, where);
   }
 
-  async findHighestCharacterLevel(db: Db, where: { characterId: string }) {
+  async findLatest(db: Db, where: { characterId: string }) {
     const result = await db
       .select(getTableColumns(this.table))
       .from(this.table)
@@ -110,7 +110,7 @@ class CharacterLevelsRepository extends include(
     });
   }
 
-  async findMaxKlassLevelsByCharacter(db: Db, where: { characterId: string }) {
+  async findMaxKlassLevels(db: Db, where: { characterId: string }) {
     const result = await db
       .select({
         klassId: klassLevelsInRules.klassId,

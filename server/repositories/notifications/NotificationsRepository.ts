@@ -32,7 +32,7 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     return result[0]?.count ?? 0;
   }
 
-  async findMany(
+  async findPage(
     db: Db,
     where: {
       recipientId: string;

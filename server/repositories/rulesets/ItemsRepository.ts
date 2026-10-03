@@ -12,7 +12,20 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
 
   protected readonly entityType = "items";
 
-  async findByNamesInRulesets(db: Db, where: { rulesetIds: string[]; names: string[] }) {
+  private async findByIds(db: Db, where: { ids: string[] }) {
+    return await db.query.itemsInRules.findMany({
+      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
+      orderBy: [this.orderBy(this.table.name)],
+    });
+  }
+
+  private async findCopies(db: Db, where: { sourceItemId: string }) {
+    return await db.query.itemsInRules.findMany({
+      where: this.where([eq(this.table.sourceItemId, where.sourceItemId), isNull(this.table.deletedAt)]),
+    });
+  }
+
+  private async findNamed(db: Db, where: { rulesetIds: string[]; names: string[] }) {
     if (where.rulesetIds.length === 0 || where.names.length === 0) return [];
     return await db.query.itemsInRules.findMany({
       where: this.where([
@@ -20,24 +33,56 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
         inArray(this.table.name, where.names),
         isNull(this.table.deletedAt),
       ]),
-      columns: { id: true, name: true, rulesetId: true },
     });
   }
 
-  async findCopies(db: Db, where: { sourceItemId: string }) {
-    return await db.query.itemsInRules.findMany({
-      where: this.where([eq(this.table.sourceItemId, where.sourceItemId), isNull(this.table.deletedAt)]),
-    });
-  }
+  private async findTemplates(
+    db: Db,
+    where: { rulesetId: string; ancestorRulesetIds?: string[]; type?: string; isTemplate: true },
+  ) {
+    const rulesetCondition = this.buildRulesetCondition(db, where);
 
-  async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.itemsInRules.findMany({
-      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
+      where: this.where([
+        rulesetCondition,
+        eq(this.table.isTemplate, true),
+        isNull(this.table.deletedAt),
+        "type" in where && where.type ? eq(this.table.type, where.type) : false,
+      ]),
       orderBy: [this.orderBy(this.table.name)],
     });
   }
 
-  async findManyByRulesetId(
+  /** Items by id, by name in some rulesets, the copies of an item (`sourceItemId`), or a ruleset's templates. */
+  async findMany(
+    db: Db,
+    where:
+      | { ids: string[] }
+      | { rulesetIds: string[]; names: string[] }
+      | { sourceItemId: string }
+      | { rulesetId: string; ancestorRulesetIds?: string[]; type?: string; isTemplate: true },
+  ) {
+    if ("ids" in where) return await this.findByIds(db, where);
+    if ("names" in where) return await this.findNamed(db, where);
+    if ("sourceItemId" in where) return await this.findCopies(db, where);
+    return await this.findTemplates(db, where);
+  }
+
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+  ) {
+    return await db.query.itemsInRules.findFirst({
+      where: this.where([
+        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+        "id" in where && eq(this.table.id, where.id),
+        "name" in where && eq(this.table.name, where.name),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+  }
+
+  async findPage(
     db: Db,
     where: RulesetEntityFilters<{ isTemplate?: boolean }>,
     pagination: { limit: number; page: number },
@@ -57,34 +102,6 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
         limit,
         offset,
       });
-    });
-  }
-
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
-  ) {
-    return await db.query.itemsInRules.findFirst({
-      where: this.where([
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "id" in where && eq(this.table.id, where.id),
-        "name" in where && eq(this.table.name, where.name),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
-  async findTemplates(db: Db, where: { rulesetId: string; ancestorRulesetIds?: string[]; type?: string }) {
-    const rulesetCondition = this.buildRulesetCondition(db, where);
-
-    return await db.query.itemsInRules.findMany({
-      where: this.where([
-        rulesetCondition,
-        eq(this.table.isTemplate, true),
-        isNull(this.table.deletedAt),
-        "type" in where && where.type ? eq(this.table.type, where.type) : false,
-      ]),
-      orderBy: [this.orderBy(this.table.name)],
     });
   }
 

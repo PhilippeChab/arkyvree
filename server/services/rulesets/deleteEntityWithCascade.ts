@@ -36,7 +36,7 @@ export async function deleteEntityWithCascade(tx: Db, entityType: EntityType, en
   } else if (entityType === "saves") {
     await KlassLevelSaves.delete(tx, { saveId: entityId });
   } else if (entityType === "klasses") {
-    const levels = await KlassLevels.findManyByKlass(tx, { klassId: entityId });
+    const levels = await KlassLevels.findMany(tx, { klassId: entityId });
     const levelIds = levels.map((l) => l.id);
     if (levelIds.length > 0) {
       for (const levelId of levelIds) {

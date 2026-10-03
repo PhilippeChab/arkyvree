@@ -13,7 +13,7 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
     super(activitiesInAccount);
   }
 
-  async findMany(
+  async findPage(
     db: Db,
     where: {
       userId: string;

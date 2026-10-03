@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { eq, inArray, isNull } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
@@ -10,17 +10,14 @@ class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
     super(klassLevelsInRules);
   }
 
-  async findManyByKlass(db: Db, where: { klassId: string }) {
+  async findMany(db: Db, where: { klassId: string } | { klassIds: string[] }) {
+    if ("klassIds" in where && where.klassIds.length === 0) return [];
     return await db.query.klassLevelsInRules.findMany({
-      where: and(eq(this.table.klassId, where.klassId), isNull(this.table.deletedAt)),
-      orderBy: [this.orderBy(this.table.level)],
-    });
-  }
-
-  async findManyByKlassIds(db: Db, where: { klassIds: string[] }) {
-    if (where.klassIds.length === 0) return [];
-    return await db.query.klassLevelsInRules.findMany({
-      where: and(inArray(this.table.klassId, where.klassIds), isNull(this.table.deletedAt)),
+      where: this.where([
+        "klassId" in where && eq(this.table.klassId, where.klassId),
+        "klassIds" in where && inArray(this.table.klassId, where.klassIds),
+        isNull(this.table.deletedAt),
+      ]),
       orderBy: [this.orderBy(this.table.level)],
     });
   }

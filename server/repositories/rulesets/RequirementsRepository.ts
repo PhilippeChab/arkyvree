@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { eq, inArray, isNull } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
@@ -17,20 +17,14 @@ class RequirementsRepository extends include(
     super(requirementsInCustomization);
   }
 
-  async findManyByEntity(db: Db, where: { entityIds: string[]; entityType: string }) {
+  async findMany(db: Db, where: { entityIds: string[]; entityType: string } | { entityIds: string[] }) {
+    if (!("entityType" in where) && where.entityIds.length === 0) return [];
     return await db.query.requirementsInCustomization.findMany({
-      where: and(
+      where: this.where([
         inArray(this.table.entityId, where.entityIds),
-        eq(this.table.entityType, where.entityType),
+        "entityType" in where && eq(this.table.entityType, where.entityType),
         isNull(this.table.deletedAt),
-      ),
-    });
-  }
-
-  async findManyByEntityIds(db: Db, where: { entityIds: string[] }) {
-    if (where.entityIds.length === 0) return [];
-    return await db.query.requirementsInCustomization.findMany({
-      where: and(inArray(this.table.entityId, where.entityIds), isNull(this.table.deletedAt)),
+      ]),
     });
   }
 

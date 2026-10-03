@@ -63,7 +63,7 @@ class ContributorsService {
   // page so a stale link still resolves to "Already accepted" / "no longer
   // pending" copy instead of "Not found".
   async getContributorInvite(session: Session, contributorId: string) {
-    const invite = await Contributors.findOneForUser(db, {
+    const invite = await Contributors.findOneWithRuleset(db, {
       id: contributorId,
       userId: session.userId,
     });
@@ -90,7 +90,7 @@ class ContributorsService {
 
     (await RulesetsPolicy.for(db, session, ruleset)).canReadContributors();
 
-    const paginated = await Contributors.findMany(db, { rulesetId, ...where }, pagination);
+    const paginated = await Contributors.findPage(db, { rulesetId, ...where }, pagination);
     const ownerUser = ruleset.userId ? await Users.findOne(db, { id: ruleset.userId }) : null;
     const owner = ownerUser
       ? { id: ownerUser.id, username: ownerUser.username, emailAddress: ownerUser.emailAddress }
@@ -99,7 +99,7 @@ class ContributorsService {
   }
 
   async getUserContributorInvites(userId: string) {
-    return await Contributors.findManyByUserId(db, { userId, status: "Pending" }, { limit: 10 });
+    return await Contributors.findManyWithRuleset(db, { userId, status: "Pending" }, { limit: 10 });
   }
 
   async updateContributorRole(session: Session, contributorId: string, role: ContributorRole) {
@@ -259,7 +259,7 @@ class ContributorsService {
         throw new NotFoundError("Ruleset not found");
       }
 
-      const role = await Contributors.findActiveRole(tx, {
+      const role = await Contributors.findRole(tx, {
         userId: session.userId,
         rulesetId,
       });

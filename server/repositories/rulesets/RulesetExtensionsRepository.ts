@@ -9,7 +9,7 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
     super(rulesetExtensionsInRules);
   }
 
-  async findByRulesetId(db: Db, where: { rulesetId: string }) {
+  async findMany(db: Db, where: { rulesetId: string }) {
     return await db
       .select({
         rulesetId: this.table.rulesetId,

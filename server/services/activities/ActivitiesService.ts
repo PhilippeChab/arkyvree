@@ -89,7 +89,7 @@ class ActivitiesService {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await Activities.findMany(
+    return await Activities.findPage(
       db,
       {
         userId: session.userId,

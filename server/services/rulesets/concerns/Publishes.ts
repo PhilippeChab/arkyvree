@@ -42,22 +42,22 @@ export function Publishes<B extends Constructor>(Base: B) {
         // they're add-ons layered onto rulesets that already have the basics.
         if (targetKind !== "extension") {
           const sourceChain = buildSourceChain(ruleset);
-          const races = await Races.findManyByRulesetId(
+          const races = await Races.findPage(
             tx,
             { rulesetId: id, ancestorRulesetIds: sourceChain, kind: "pc" },
             { limit: 1, page: 1 },
           );
-          const klasses = await Klasses.findManyByRulesetId(
+          const klasses = await Klasses.findPage(
             tx,
             { rulesetId: id, ancestorRulesetIds: sourceChain, kind: "pc" },
             { limit: 1, page: 1 },
           );
-          const skills = await Skills.findManyByRulesetId(
+          const skills = await Skills.findPage(
             tx,
             { rulesetId: id, ancestorRulesetIds: sourceChain },
             { limit: 1, page: 1 },
           );
-          const feats = await Feats.findManyByRulesetId(
+          const feats = await Feats.findPage(
             tx,
             { rulesetId: id, ancestorRulesetIds: sourceChain },
             { limit: 1, page: 1 },

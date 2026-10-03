@@ -136,7 +136,7 @@ class CampaignPlayersService {
 
     await CampaignsPolicy.canRead(db, session, campaignId);
 
-    return await Players.findManyForCampaign(db, { campaignId, ...where }, pagination, Visibility.All);
+    return await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
   }
 
   async addCampaignPlayer(session: Session, campaignId: string, role: CampaignRole, email?: string) {

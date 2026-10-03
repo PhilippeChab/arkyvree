@@ -47,10 +47,8 @@ test("each target's copied modifier requirement belongs to that target's modifie
     customizations,
   );
   for (const target of targets) {
-    const [modifier] = await Modifiers.findManyBySource(db, { sourceIds: [target.id], sourceType: "feats" });
-    expect(await Requirements.findManyByEntity(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(
-      1,
-    );
+    const [modifier] = await Modifiers.findMany(db, { sourceIds: [target.id], sourceType: "feats" });
+    expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(1);
   }
 });
 
@@ -72,9 +70,7 @@ test("a modifier requirement is never copied onto the source's own modifier", as
   await expect(
     copyEntityCustomizationsToMany(db, [targets[0].id], "feats", { ...customizations, modifiers: [] }),
   ).rejects.toThrow("outside the copied set");
-  expect(await Requirements.findManyByEntity(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(
-    1,
-  );
+  expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(1);
 });
 
 test("modifiers are not silently dropped for entity types that cannot own them", async () => {

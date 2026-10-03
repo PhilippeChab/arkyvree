@@ -32,7 +32,7 @@ class CampaignsService {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await Campaigns.findMany(db, { userId: session.userId, ...where }, pagination);
+    return await Campaigns.findPage(db, { userId: session.userId, ...where }, pagination);
   }
 
   async createCampaign(

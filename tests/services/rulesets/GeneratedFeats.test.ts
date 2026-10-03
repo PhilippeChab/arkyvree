@@ -131,10 +131,10 @@ describe("Spell Focus", () => {
       await findFeat(ruleset.id, "Spell Focus: Evocation"),
       await findFeat(ruleset.id, "Greater Spell Focus: Evocation"),
     ];
-    expect(await Modifiers.findManyBySource(db, { sourceIds: [focus.id], sourceType: "feats" })).toMatchObject([
+    expect(await Modifiers.findMany(db, { sourceIds: [focus.id], sourceType: "feats" })).toMatchObject([
       { target: "powers.groups.evocation.*.dc.misc", operator: "add", value: "1" },
     ]);
-    expect(await Requirements.findManyByEntity(db, { entityIds: [greater.id], entityType: "feats" })).toMatchObject([
+    expect(await Requirements.findMany(db, { entityIds: [greater.id], entityType: "feats" })).toMatchObject([
       { target: "feats.spellfocusevocation.possessed", operator: "equal", value: "true" },
     ]);
   });
@@ -184,7 +184,7 @@ describe("Skill Focus", () => {
 
     expect(feat.description).toBe("You get a +3 bonus on all Knowledge (Arcana) checks.");
     expect(await FeatsAptitudes.findMany(db, { featId: feat.id })).toMatchObject([{ aptitudeId: general!.id }]);
-    expect(await Modifiers.findManyBySource(db, { sourceIds: [feat.id], sourceType: "feats" })).toMatchObject([
+    expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toMatchObject([
       { target: "skills.knowledgearcana.misc", operator: "add", value: "3", valueType: "number" },
     ]);
   });
@@ -210,7 +210,7 @@ describe("Skill Focus", () => {
     await SkillsService.updateRulesetSkill(session, ruleset.id, climb.id, skill(strength.id, "Athletics"));
     expect(await featNames(ruleset.id)).toEqual(["Skill Focus: Athletics"]);
     const renamed = await findFeat(ruleset.id, "Skill Focus: Athletics");
-    expect(await Modifiers.findManyBySource(db, { sourceIds: [renamed.id], sourceType: "feats" })).toMatchObject([
+    expect(await Modifiers.findMany(db, { sourceIds: [renamed.id], sourceType: "feats" })).toMatchObject([
       { target: "skills.athletics.misc" },
     ]);
 
@@ -259,13 +259,13 @@ describe("an inherited skill's Skill Focus", () => {
     "is hidden from the fork when it'd %s the skill, the ancestor's rows untouched",
     async (operation) => {
       const { session, fork, climb, climbBody, feat } = await seededFork();
-      const modifiers = await Modifiers.findManyBySource(db, { sourceIds: [feat.id], sourceType: "feats" });
+      const modifiers = await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" });
       if (operation === "rename")
         await SkillsService.updateRulesetSkill(session, fork.id, climb.id, { ...climbBody, name: "Mountaineering" });
       else await SkillsService.deleteRulesetSkill(session, fork.id, climb.id);
 
       expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
-      expect(await Modifiers.findManyBySource(db, { sourceIds: [feat.id], sourceType: "feats" })).toEqual(modifiers);
+      expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toEqual(modifiers);
       expect(await Skills.findOne(db, { id: climb.id })).toEqual(climb);
       expect(await featNames(fork.id, "Skill Focus: Climb")).toEqual([]);
       expect(await featNames(fork.id, "Skill Focus: Mountaineering")).toEqual(
@@ -403,9 +403,7 @@ describe("generated feats", () => {
     await expect(
       FeatsService.updateRulesetFeat(session, fork.id, feat.id, { name: "Renamed generated feat" }),
     ).rejects.toThrow("Generated feats cannot be renamed");
-    expect(
-      await EntitySnapshots.findBySourceAndRuleset(db, { rulesetId: fork.id, sourceEntityId: feat.id }),
-    ).toBeUndefined();
+    expect(await EntitySnapshots.findOne(db, { rulesetId: fork.id, sourceEntityId: feat.id })).toBeUndefined();
 
     const local = await FeatsService.updateRulesetFeat(session, fork.id, feat.id, {
       name: feat.name,
@@ -476,7 +474,7 @@ describe("generated feats", () => {
       name: feat.name,
       description: "Local customization",
     });
-    const [modifier] = await Modifiers.findManyBySource(db, { sourceIds: [local.id], sourceType: "feats" });
+    const [modifier] = await Modifiers.findMany(db, { sourceIds: [local.id], sourceType: "feats" });
     for (const [entityId, entityType] of [
       [local.id, "feats"],
       [modifier.id, "modifiers"],
@@ -504,9 +502,9 @@ describe("generated feats", () => {
       });
     }
     expect(await Feats.findOne(db, { id: local.id })).toBeUndefined();
-    expect(await Modifiers.findManyBySource(db, { sourceIds: [local.id], sourceType: "feats" })).toEqual([]);
-    expect(await Requirements.findManyByEntityIds(db, { entityIds: [local.id, modifier.id] })).toEqual([]);
-    expect(await Properties.findManyByEntity(db, { entityIds: [local.id], entityType: "feats" })).toEqual([]);
+    expect(await Modifiers.findMany(db, { sourceIds: [local.id], sourceType: "feats" })).toEqual([]);
+    expect(await Requirements.findMany(db, { entityIds: [local.id, modifier.id] })).toEqual([]);
+    expect(await Properties.findMany(db, { entityIds: [local.id], entityType: "feats" })).toEqual([]);
     expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
   });
 

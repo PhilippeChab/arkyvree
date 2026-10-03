@@ -383,9 +383,7 @@ describe("CharactersService", () => {
 
         for (const id of [character.id, familiar.id])
           expect(await Characters.findOne(db, { id }, Visibility.All)).toBeUndefined();
-        expect(await Modifiers.findManyBySource(db, { sourceIds: [character.id], sourceType: "characters" })).toEqual(
-          [],
-        );
+        expect(await Modifiers.findMany(db, { sourceIds: [character.id], sourceType: "characters" })).toEqual([]);
         for (const { id } of portraits) expect(await Attachments.findOne(db, { id })).toBeUndefined();
       });
 
@@ -443,7 +441,7 @@ describe("CharactersService", () => {
         }),
       },
     ]);
-    const { items } = await Activities.findMany(db, { userId: session.userId, type: "generatePdf" }, page);
+    const { items } = await Activities.findPage(db, { userId: session.userId, type: "generatePdf" }, page);
     expect(items.map((a) => a.targetId)).toEqual([character.id]);
   });
 

@@ -48,7 +48,7 @@ describe("ActivitiesService.getActivityUrl", () => {
   test("links a ruleset's entities to their page, or their customization when they have one", async () => {
     const { rulesetId: r, featMap, powerMap, itemMap, raceMap, skillMap, aptMap, klassMap } = await getSeedCtx();
     const fighter = klassMap.pc["Fighter"];
-    const [level] = await KlassLevels.findManyByKlass(db, { klassId: fighter });
+    const [level] = await KlassLevels.findMany(db, { klassId: fighter });
     for (const [table, id, url] of [
       ["feats", featMap["Toughness"], `/rulesets/${r}/feats/${featMap["Toughness"]}/customization`],
       ["powers", powerMap["Magic Missile"], `/rulesets/${r}/powers/${powerMap["Magic Missile"]}/customization`],
@@ -66,8 +66,8 @@ describe("ActivitiesService.getActivityUrl", () => {
 
   test("links a customization to its entity's customization page", async () => {
     const { rulesetId: r, featMap, itemMap, klassMap } = await getSeedCtx();
-    const [clericLevel] = await KlassLevels.findManyByKlass(db, { klassId: klassMap.pc["Cleric"] });
-    const [featModifier] = await Modifiers.findManyBySource(db, {
+    const [clericLevel] = await KlassLevels.findMany(db, { klassId: klassMap.pc["Cleric"] });
+    const [featModifier] = await Modifiers.findMany(db, {
       sourceIds: [featMap["Toughness"]],
       sourceType: "feats",
     });
@@ -79,11 +79,11 @@ describe("ActivitiesService.getActivityUrl", () => {
       valueType: "number",
       operator: "add",
     });
-    const [requirement] = await Requirements.findManyByEntity(db, {
+    const [requirement] = await Requirements.findMany(db, {
       entityIds: [featMap["Weapon Focus: Longsword"]],
       entityType: "feats",
     });
-    const [property] = await Properties.findManyByEntity(db, {
+    const [property] = await Properties.findMany(db, {
       entityIds: [itemMap["Longsword"]],
       entityType: "items",
     });

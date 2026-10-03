@@ -57,6 +57,42 @@ class CharactersRepository extends include(
     return rows.length > 0;
   }
 
+  /** A character the user may edit: theirs, or one they contribute to. */
+  private async findEditable(
+    db: Db,
+    where: { id: string; userId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    const rows = await db
+      .select()
+      .from(charactersInCharacter)
+      .where(
+        this.where([
+          eq(charactersInCharacter.id, where.id),
+          eq(charactersInCharacter.kind, "pc"),
+          or(
+            eq(charactersInCharacter.userId, where.userId),
+            exists(
+              db
+                .select({ one: sql`1` })
+                .from(contributorsInCharacter)
+                .where(
+                  and(
+                    eq(contributorsInCharacter.characterId, charactersInCharacter.id),
+                    eq(contributorsInCharacter.userId, where.userId),
+                    eq(contributorsInCharacter.status, "Active"),
+                    isNull(contributorsInCharacter.deletedAt),
+                  ),
+                ),
+            ),
+          )!,
+          this.visibility(visibility),
+        ]),
+      )
+      .limit(1);
+    return rows[0];
+  }
+
   async count(db: Db, where: { userId: string }) {
     const [result] = await db
       .select({ count: count() })
@@ -86,7 +122,7 @@ class CharactersRepository extends include(
     return await this.existsRacePickFromExtension(db, where);
   }
 
-  async findIdsByUserIds(db: Db, where: { userIds: string[] }) {
+  async findIds(db: Db, where: { userIds: string[] }) {
     if (where.userIds.length === 0) return [];
     const rows = await db
       .select({ id: this.table.id })
@@ -95,7 +131,39 @@ class CharactersRepository extends include(
     return rows.map((r) => r.id);
   }
 
-  async findMany(
+  async findMany(db: Db, where: { ids: string[] }) {
+    return await db.query.charactersInCharacter.findMany({
+      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
+    });
+  }
+
+  async findOne(
+    db: Db,
+    where:
+      | { id: string }
+      | { id: string; userId: string }
+      | { shareToken: string }
+      | { parentCharacterId: string; kind: "familiar" | "animalcompanion" | "mount" }
+      | { id: string; editorId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    if ("editorId" in where) return await this.findEditable(db, { id: where.id, userId: where.editorId }, visibility);
+    const isUserFacing = "userId" in where || "shareToken" in where;
+    return await db.query.charactersInCharacter.findFirst({
+      where: this.where([
+        "id" in where && eq(this.table.id, where.id),
+        "userId" in where && eq(this.table.userId, where.userId),
+        "shareToken" in where && eq(this.table.shareToken, where.shareToken),
+        "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
+        "kind" in where && eq(this.table.kind, where.kind),
+        isUserFacing && eq(this.table.kind, "pc"),
+        this.visibility(visibility),
+      ]),
+    });
+  }
+
+  /** The user's characters, owned or contributed to. */
+  async findPage(
     db: Db,
     where: {
       userId: string;
@@ -176,71 +244,8 @@ class CharactersRepository extends include(
     });
   }
 
-  async findManyByIds(db: Db, where: { ids: string[] }) {
-    return await db.query.charactersInCharacter.findMany({
-      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-    });
-  }
-
-  async findOne(
-    db: Db,
-    where:
-      | { id: string }
-      | { id: string; userId: string }
-      | { shareToken: string }
-      | { parentCharacterId: string; kind: "familiar" | "animalcompanion" | "mount" },
-    visibility: Visibility = Visibility.UnarchivedOnly,
-  ) {
-    const isUserFacing = "userId" in where || "shareToken" in where;
-    return await db.query.charactersInCharacter.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "shareToken" in where && eq(this.table.shareToken, where.shareToken),
-        "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
-        "kind" in where && eq(this.table.kind, where.kind),
-        isUserFacing && eq(this.table.kind, "pc"),
-        this.visibility(visibility),
-      ]),
-    });
-  }
-
-  async findOneEditable(
-    db: Db,
-    where: { id: string; userId: string },
-    visibility: Visibility = Visibility.UnarchivedOnly,
-  ) {
-    const rows = await db
-      .select()
-      .from(charactersInCharacter)
-      .where(
-        this.where([
-          eq(charactersInCharacter.id, where.id),
-          eq(charactersInCharacter.kind, "pc"),
-          or(
-            eq(charactersInCharacter.userId, where.userId),
-            exists(
-              db
-                .select({ one: sql`1` })
-                .from(contributorsInCharacter)
-                .where(
-                  and(
-                    eq(contributorsInCharacter.characterId, charactersInCharacter.id),
-                    eq(contributorsInCharacter.userId, where.userId),
-                    eq(contributorsInCharacter.status, "Active"),
-                    isNull(contributorsInCharacter.deletedAt),
-                  ),
-                ),
-            ),
-          )!,
-          this.visibility(visibility),
-        ]),
-      )
-      .limit(1);
-    return rows[0];
-  }
-
-  async findUnlinked(
+  /** The user's characters on the ruleset that no campaign links: what a campaign can link. */
+  async findUnlinkedPage(
     db: Db,
     where: { userId: string; rulesetId: string; search?: string },
     pagination: { limit: number; page: number },

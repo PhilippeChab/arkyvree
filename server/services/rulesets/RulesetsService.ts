@@ -47,7 +47,7 @@ class RulesetsService extends include(Object, Stars, Archives, Publishes) {
     },
     pagination: { limit: number; page: number },
   ) {
-    const rulesets = await Rulesets.findMany(db, session, where, pagination);
+    const rulesets = await Rulesets.findPage(db, session, where, pagination);
 
     // Batch-check starred status + star counts
     const rulesetIds = rulesets.items.map((r) => r.id);
@@ -61,8 +61,7 @@ class RulesetsService extends include(Object, Stars, Archives, Publishes) {
     const parentRulesetIds = [
       ...new Set(rulesets.items.map((r) => r.rulesetId).filter((id): id is string => id !== null)),
     ];
-    const parentRulesets =
-      parentRulesetIds.length > 0 ? await Rulesets.findManyByIds(db, { ids: parentRulesetIds }) : [];
+    const parentRulesets = parentRulesetIds.length > 0 ? await Rulesets.findMany(db, { ids: parentRulesetIds }) : [];
     const parentNameMap = new Map(parentRulesets.map((r) => [r.id, r.name]));
 
     const items = rulesets.items.map((ruleset) => ({
@@ -89,7 +88,7 @@ class RulesetsService extends include(Object, Stars, Archives, Publishes) {
       StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
       StarredRulesets.count(db, { rulesetId: id }),
       ruleset.userId && ruleset.userId !== session.userId
-        ? Contributors.findActiveRole(db, { userId: session.userId, rulesetId: id })
+        ? Contributors.findRole(db, { userId: session.userId, rulesetId: id })
         : null,
       Rulesets.exists(db, { extensionRulesetId: id }),
     ]);
@@ -191,7 +190,7 @@ class RulesetsService extends include(Object, Stars, Archives, Publishes) {
       }
 
       // 3. Copy ruleset-level properties as-is (parent entity IDs — resolveOverrides handles at read time)
-      const sourceRulesetProperties = await Properties.findManyByEntity(tx, {
+      const sourceRulesetProperties = await Properties.findMany(tx, {
         entityIds: [id],
         entityType: "rulesets",
       });
@@ -208,7 +207,7 @@ class RulesetsService extends include(Object, Stars, Archives, Publishes) {
 
       // 4. Seed template items if source ruleset didn't have any (pre-migration rulesets)
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      const sourceTemplates = await Items.findTemplates(tx, { rulesetId: id });
+      const sourceTemplates = await Items.findMany(tx, { rulesetId: id, isTemplate: true });
       if (sourceTemplates.length === 0) {
         await rulesetModule.seedTemplateItems(tx, newRuleset.id);
       }

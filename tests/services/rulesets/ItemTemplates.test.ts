@@ -92,7 +92,7 @@ describe("Item templates", () => {
         value: "Adamantine",
       });
       const damage = (
-        await Properties.findManyByEntity(db, { entityIds: [(await template("Longsword")).id], entityType: "items" })
+        await Properties.findMany(db, { entityIds: [(await template("Longsword")).id], entityType: "items" })
       ).find((p) => p.type === "WEAPON_BASE_DAMAGE");
       await Properties.update(db, { value: "2d6" }, { id: damage!.id });
       invalidateSeededRuleset(ruleset.rulesetId!);
@@ -162,9 +162,7 @@ describe("Item templates", () => {
       await expect(
         ItemsService.updateRulesetItem(session, ruleset.id, mace.id, { name: mace.name, sourceItemId: mace.id }),
       ).rejects.toThrow("Template items cannot have a source item");
-      expect(
-        await EntitySnapshots.findBySourceAndRuleset(db, { rulesetId: ruleset.id, sourceEntityId: mace.id }),
-      ).toBeUndefined();
+      expect(await EntitySnapshots.findOne(db, { rulesetId: ruleset.id, sourceEntityId: mace.id })).toBeUndefined();
     });
 
     test("even when an edit claims it's a regular item", async () => {

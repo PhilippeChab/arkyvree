@@ -146,7 +146,7 @@ describe("PowersService", () => {
 
     await PowersService.updateRulesetPower(session, ruleset.id, power.id, { name: "Fireball", school: "Conjuration" });
 
-    const properties = await Properties.findManyByEntity(db, { entityIds: [power.id], entityType: "powers" });
+    const properties = await Properties.findMany(db, { entityIds: [power.id], entityType: "powers" });
     expect(properties.map(({ type, value }) => ({ type, value })).sort((a, b) => a.type.localeCompare(b.type))).toEqual(
       [
         { type: "SIGNATURE_SPELL", value: "true" },

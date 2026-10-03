@@ -47,7 +47,7 @@ class ClassesService {
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain, siblingIds } = rulesetData.cow;
-      return await Klasses.findManyByRulesetId(
+      return await Klasses.findPage(
         db,
         { rulesetId, ancestorRulesetIds: sourceChain, siblingLoserIds: siblingIds, ...where },
         pagination,

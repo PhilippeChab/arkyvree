@@ -160,7 +160,7 @@ describe("ClassLevelsService", () => {
     expect(
       await ClassLevelsService.updateClassLevel(session, ruleset.id, klass.id, level.id, { bab: 3 }),
     ).toMatchObject({ bab: 3, skills: 4 });
-    const properties = await Properties.findManyByEntity(db, { entityIds: [level.id], entityType: "klass_levels" });
+    const properties = await Properties.findMany(db, { entityIds: [level.id], entityType: "klass_levels" });
     expect(properties.map((p) => p.type).sort()).toEqual([
       "CLASS_FEATURE",
       "KLASS_LEVEL_BAB",
@@ -304,11 +304,9 @@ describe("ClassLevelsService", () => {
       for (const table of [klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules]) {
         expect(await db.select().from(table).where(eq(table.klassLevelId, level.id))).toEqual([]);
       }
-      expect(await Modifiers.findManyBySource(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
-      expect(await Requirements.findManyByEntity(db, { entityIds: [level.id], entityType: "klass_levels" })).toEqual(
-        [],
-      );
-      expect(await Properties.findManyByEntity(db, { entityIds: [level.id], entityType: "klass_levels" })).toEqual([]);
+      expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
+      expect(await Requirements.findMany(db, { entityIds: [level.id], entityType: "klass_levels" })).toEqual([]);
+      expect(await Properties.findMany(db, { entityIds: [level.id], entityType: "klass_levels" })).toEqual([]);
     });
 
     test("is refused while a character has taken it", async () => {
@@ -353,12 +351,12 @@ describe("ClassLevelsService", () => {
       const { session, fork, klass } = await setupFork();
       const created = await createLevel(session, fork.id, klass.id, 2);
 
-      const snapshot = await EntitySnapshots.findBySourceAndRuleset(db, {
+      const snapshot = await EntitySnapshots.findOne(db, {
         sourceEntityId: klass.id,
         rulesetId: fork.id,
       });
       expect(created.klassId).toBe(snapshot!.forkedEntityId);
-      expect((await KlassLevels.findManyByKlass(db, { klassId: klass.id })).map((l) => l.level)).toEqual([1]);
+      expect((await KlassLevels.findMany(db, { klassId: klass.id })).map((l) => l.level)).toEqual([1]);
     });
 
     test("edits and deletes the fork's copy of an inherited level, leaving the parent's", async () => {

@@ -16,30 +16,74 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
     super(contributorsInRules);
   }
 
-  async findActiveByRulesetId(db: Db, where: { rulesetId: string }) {
+  async findMany(db: Db, where: { rulesetId: string; status: ContributorStatus }) {
     return await db.query.contributorsInRules.findMany({
       where: this.where([
         eq(this.table.rulesetId, where.rulesetId),
-        eq(this.table.status, "Active"),
+        eq(this.table.status, where.status),
         isNull(this.table.deletedAt),
       ]),
     });
   }
 
-  async findActiveRole(db: Db, where: { userId: string; rulesetId: string }): Promise<ContributorRole | null> {
-    const contributor = await db.query.contributorsInRules.findFirst({
+  async findManyWithRuleset(
+    db: Db,
+    where: { userId: string; status: ContributorStatus },
+    pagination: { limit: number } = { limit: 100 },
+  ) {
+    return await db.query.contributorsInRules.findMany({
       where: this.where([
         eq(this.table.userId, where.userId),
-        eq(this.table.rulesetId, where.rulesetId),
-        eq(this.table.status, "Active"),
+        eq(this.table.status, where.status),
+        isNull(this.table.deletedAt),
+      ]),
+      with: {
+        rulesetsInRule: {
+          columns: { id: true, name: true },
+        },
+      },
+      orderBy: [this.orderBy(this.table.createdAt, "desc")],
+      limit: pagination.limit,
+    });
+  }
+
+  async findOne(
+    db: Db,
+    where:
+      | { id: string }
+      | { rulesetId: string; userId: string; status: ContributorStatus }
+      | { rulesetId: string; email: string; status: ContributorStatus },
+  ) {
+    return await db.query.contributorsInRules.findFirst({
+      where: this.where([
+        "id" in where && eq(this.table.id, where.id),
+        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+        "userId" in where && eq(this.table.userId, where.userId),
+        "email" in where && eq(this.table.email, where.email),
+        "status" in where && eq(this.table.status, where.status),
         isNull(this.table.deletedAt),
       ]),
     });
-
-    return contributor?.role ?? null;
   }
 
-  async findMany(
+  // Single invite for a specific user, any status. Caller is responsible for
+  // scoping by userId so a stranger can't probe other people's invite ids.
+  async findOneWithRuleset(db: Db, where: { id: string; userId: string }) {
+    return await db.query.contributorsInRules.findFirst({
+      where: this.where([
+        eq(this.table.id, where.id),
+        eq(this.table.userId, where.userId),
+        isNull(this.table.deletedAt),
+      ]),
+      with: {
+        rulesetsInRule: {
+          columns: { id: true, name: true, status: true },
+        },
+      },
+    });
+  }
+
+  async findPage(
     db: Db,
     where: { rulesetId: string; search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
     pagination: { limit: number; page: number },
@@ -86,61 +130,17 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
     return this.paginated(items, pagination);
   }
 
-  async findManyByUserId(
-    db: Db,
-    where: { userId: string; status: ContributorStatus },
-    pagination: { limit: number } = { limit: 100 },
-  ) {
-    return await db.query.contributorsInRules.findMany({
+  async findRole(db: Db, where: { userId: string; rulesetId: string }): Promise<ContributorRole | null> {
+    const contributor = await db.query.contributorsInRules.findFirst({
       where: this.where([
         eq(this.table.userId, where.userId),
-        eq(this.table.status, where.status),
+        eq(this.table.rulesetId, where.rulesetId),
+        eq(this.table.status, "Active"),
         isNull(this.table.deletedAt),
       ]),
-      with: {
-        rulesetsInRule: {
-          columns: { id: true, name: true },
-        },
-      },
-      orderBy: [this.orderBy(this.table.createdAt, "desc")],
-      limit: pagination.limit,
     });
-  }
 
-  async findOne(
-    db: Db,
-    where:
-      | { id: string }
-      | { rulesetId: string; userId: string; status: ContributorStatus }
-      | { rulesetId: string; email: string; status: ContributorStatus },
-  ) {
-    return await db.query.contributorsInRules.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "email" in where && eq(this.table.email, where.email),
-        "status" in where && eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
-  // Single invite for a specific user, any status. Caller is responsible for
-  // scoping by userId so a stranger can't probe other people's invite ids.
-  async findOneForUser(db: Db, where: { id: string; userId: string }) {
-    return await db.query.contributorsInRules.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        eq(this.table.userId, where.userId),
-        isNull(this.table.deletedAt),
-      ]),
-      with: {
-        rulesetsInRule: {
-          columns: { id: true, name: true, status: true },
-        },
-      },
-    });
+    return contributor?.role ?? null;
   }
 
   async create(

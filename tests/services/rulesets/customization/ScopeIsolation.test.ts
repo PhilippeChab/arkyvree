@@ -36,9 +36,9 @@ describe("ruleset customization isolation", () => {
         chainingOperator: "and",
       }),
     ).rejects.toThrow(NotFoundError);
-    expect(await Properties.findManyByEntity(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(0);
-    expect(await Modifiers.findManyBySource(db, { sourceIds: [feat.id], sourceType: "feats" })).toHaveLength(0);
-    expect(await Requirements.findManyByEntity(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(0);
+    expect(await Properties.findMany(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(0);
+    expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toHaveLength(0);
+    expect(await Requirements.findMany(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(0);
   });
 
   test("rejects changing or deleting existing foreign rows", async () => {
@@ -86,9 +86,7 @@ describe("ruleset customization isolation", () => {
     expect(property.resolvedEntityId).not.toBe(feat.id);
     expect((await Feats.findOne(db, { id: property.resolvedEntityId }))?.rulesetId).toBe(own.id);
     expect(
-      (await Properties.findManyByEntity(db, { entityIds: [feat.id], entityType: "feats" })).some(
-        (p) => p.type === "audit",
-      ),
+      (await Properties.findMany(db, { entityIds: [feat.id], entityType: "feats" })).some((p) => p.type === "audit"),
     ).toBe(false);
   });
 });
@@ -142,10 +140,8 @@ describe("modifier requirement ownership", () => {
     expect(requirement.entityId).not.toBe(modifier.id);
     const copied = (await Modifiers.findOne(db, { id: requirement.entityId }))!;
     expect((await Feats.findOne(db, { id: copied.sourceId }))?.rulesetId).toBe(own.id);
-    expect(await Requirements.findManyByEntity(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([
-      original,
-    ]);
-    const copies = await Requirements.findManyByEntity(db, { entityIds: [copied.id], entityType: "modifiers" });
+    expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([original]);
+    const copies = await Requirements.findMany(db, { entityIds: [copied.id], entityType: "modifiers" });
     expect(copies).toHaveLength(2);
     expect(copies.some((r) => r.level === "1" && r.chainingOperator === "and")).toBe(true);
     expect(await Modifiers.findOne(db, { id: modifier.id })).toEqual(modifier);
@@ -160,9 +156,7 @@ describe("modifier requirement ownership", () => {
       chainingOperator: "and",
     });
     expect(second.entityId).toBe(copied.id);
-    expect(await Requirements.findManyByEntity(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([
-      original,
-    ]);
+    expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([original]);
   });
 
   test("rejects a modifier owned by an unrelated ruleset", async () => {
@@ -175,9 +169,7 @@ describe("modifier requirement ownership", () => {
       }),
     ).rejects.toThrow(NotFoundError);
     await expect(cowEntityForCustomization(db, own.id, "modifiers", modifier.id)).rejects.toThrow(NotFoundError);
-    expect(await Requirements.findManyByEntity(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(
-      0,
-    );
+    expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(0);
   });
 
   test("rejects unsupported or missing modifier owners", async () => {
@@ -264,7 +256,7 @@ test("editing the second identical inherited modifier keeps its own requirements
     level: "3",
     chainingOperator: "and",
   });
-  const requirements = await Requirements.findManyByEntity(db, {
+  const requirements = await Requirements.findMany(db, {
     entityIds: [added.entityId],
     entityType: "modifiers",
   });

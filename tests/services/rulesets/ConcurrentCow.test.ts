@@ -43,7 +43,7 @@ test("COW waits for a competing copy transaction and continues after rollback", 
     const copied = await copying;
     expect(copied.id).not.toBe(sourceId);
     expect((await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], [])).id).toBe(copied.id);
-    expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toHaveLength(1);
+    expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toHaveLength(1);
     expect((await Feats.findOne(db, { id: sourceId }))?.rulesetId).toBe(seed.rulesetId);
   } finally {
     try {
@@ -81,7 +81,7 @@ test("a tombstoned copy can be recreated without duplicating snapshots", async (
   await Feats.delete(db, { id: first.id });
   const second = await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
   expect(second.id).not.toBe(first.id);
-  const snapshots = await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id });
+  const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id });
   expect(snapshots).toHaveLength(1);
   expect(snapshots[0].forkedEntityId).toBe(second.id);
 });

@@ -290,16 +290,16 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
 
   /** The entity's customizations, and the ids of its modifiers' requirements. */
   async function customizationsOf(id: string) {
-    const modifiers = await Modifiers.findManyBySource(db, { sourceIds: [id], sourceType: entityType });
-    const modifierRequirements = await Requirements.findManyByEntity(db, {
+    const modifiers = await Modifiers.findMany(db, { sourceIds: [id], sourceType: entityType });
+    const modifierRequirements = await Requirements.findMany(db, {
       entityIds: modifiers.map((m) => m.id),
       entityType: "modifiers",
     });
     return {
       modifiers,
       modifierRequirementIds: modifierRequirements.map((r) => r.id),
-      requirements: await Requirements.findManyByEntity(db, { entityIds: [id], entityType }),
-      properties: await Properties.findManyByEntity(db, { entityIds: [id], entityType, type: "NOTE" }),
+      requirements: await Requirements.findMany(db, { entityIds: [id], entityType }),
+      properties: await Properties.findMany(db, { entityIds: [id], entityType, type: "NOTE" }),
     };
   }
 

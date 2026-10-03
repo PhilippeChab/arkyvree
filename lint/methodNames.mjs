@@ -3,7 +3,8 @@
  * one needs no choosing.
  *
  * - A repository's verbs are `server/repositories/methodVerbs.json`'s, which the request cache classifies its methods
- *   by: reads (`find`, `exists`, `count`), writes (`create`, `update`, …) and `lock`.
+ *   by: reads (`find`, `exists`, `count`), writes (`create`, `update`, …) and `lock`. Its name says what it returns,
+ *   never how it filters (`findManyByUser`, `archiveAllForUser`): filters go in its `where`, one method per verb.
  * - A service reads with `get`, creates (`create`, `add`, `duplicate`), updates (`update`, `set`, `mark`), deletes
  *   (`delete`, `remove`, `archive`, `unarchive`, `hardDelete`), or takes one of the actions below.
  * - A policy checks: `can` (it throws, or returns what it checked) or `is` (a yes or no). `for` builds one.
@@ -35,6 +36,7 @@ const VOCABULARIES = [
     what: "A repository method",
     verbs: [...REPOSITORY.read, ...REPOSITORY.write, ...REPOSITORY.lock],
     where: "server/repositories/methodVerbs.json",
+    filters: true,
   },
   { layer: "server/services/policies/", what: "A policy method", verbs: ["can", "is", "for"] },
   {
@@ -52,6 +54,9 @@ const VOCABULARIES = [
 
 /** A function a field holds: written there, or another one's (`readonly finalizeLevelUp = finalizeLevelUp`). */
 const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "Identifier", "MemberExpression"];
+
+/** A word that names a filter, which goes in the method's `where`: `By` in `findManyByUser`. */
+const FILTER_WORD = /(?<=[a-z0-9])(By|For|In|On|From|All)(?=[A-Z0-9]|$)/;
 
 const isMethod = (member) =>
   (member.type === "MethodDefinition" || member.type === "TSAbstractMethodDefinition"
@@ -73,11 +78,18 @@ const methodNames = {
         for (const member of body.body) {
           if (!isMethod(member) || !isPublic(member)) continue;
           const name = member.key.name ?? member.key.value;
-          if (typeof name !== "string" || vocabulary.verbs.some((verb) => startsWithVerb(name, verb))) continue;
-          context.report({
-            node: member.key,
-            message: `${vocabulary.what} starts with one of its layer's verbs (${listed}): \`${name}\` doesn't.`,
-          });
+          if (typeof name !== "string") continue;
+          if (!vocabulary.verbs.some((verb) => startsWithVerb(name, verb))) {
+            context.report({
+              node: member.key,
+              message: `${vocabulary.what} starts with one of its layer's verbs (${listed}): \`${name}\` doesn't.`,
+            });
+          } else if (vocabulary.filters && FILTER_WORD.test(name)) {
+            context.report({
+              node: member.key,
+              message: `\`${name}\` names a filter (\`${FILTER_WORD.exec(name)[1]}\`): a repository has one method per verb, its filters in its \`where\`, and a variant is named by what it returns.`,
+            });
+          }
         }
       },
     };

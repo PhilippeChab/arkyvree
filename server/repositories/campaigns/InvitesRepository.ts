@@ -38,7 +38,47 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
     });
   }
 
-  async findManyForCampaign(
+  async findOne(
+    db: Db,
+    where:
+      | { id: string }
+      | { playerId: string; status: string }
+      | { userId: string; playerIds: string[]; status: string }
+      | { email: string; playerIds: string[]; status: string },
+  ) {
+    return await db.query.invitesInCampaign.findFirst({
+      where: this.where([
+        "id" in where && eq(this.table.id, where.id),
+        "userId" in where && eq(this.table.userId, where.userId),
+        "email" in where && eq(this.table.email, where.email),
+        "playerId" in where && eq(this.table.playerId, where.playerId),
+        "playerIds" in where && inArray(this.table.playerId, where.playerIds),
+        "status" in where && eq(this.table.status, where.status),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+  }
+
+  // Single invite for a specific user, any status. Caller is responsible for
+  // scoping by userId so a stranger can't probe other people's invite ids.
+  async findOneWithCampaign(db: Db, where: { id: string; userId: string }) {
+    return await db.query.invitesInCampaign.findFirst({
+      where: this.where([
+        eq(this.table.id, where.id),
+        eq(this.table.userId, where.userId),
+        isNull(this.table.deletedAt),
+      ]),
+      with: {
+        playersInCampaign: {
+          with: {
+            campaignsInCampaign: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findPage(
     db: Db,
     where: { campaignId: string; search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
     pagination: { limit: number; page: number },
@@ -77,46 +117,6 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
       .offset(offset);
 
     return this.paginated(rows, pagination);
-  }
-
-  async findOne(
-    db: Db,
-    where:
-      | { id: string }
-      | { playerId: string; status: string }
-      | { userId: string; playerIds: string[]; status: string }
-      | { email: string; playerIds: string[]; status: string },
-  ) {
-    return await db.query.invitesInCampaign.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "email" in where && eq(this.table.email, where.email),
-        "playerId" in where && eq(this.table.playerId, where.playerId),
-        "playerIds" in where && inArray(this.table.playerId, where.playerIds),
-        "status" in where && eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
-  // Single invite for a specific user, any status. Caller is responsible for
-  // scoping by userId so a stranger can't probe other people's invite ids.
-  async findOneForUser(db: Db, where: { id: string; userId: string }) {
-    return await db.query.invitesInCampaign.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        eq(this.table.userId, where.userId),
-        isNull(this.table.deletedAt),
-      ]),
-      with: {
-        playersInCampaign: {
-          with: {
-            campaignsInCampaign: true,
-          },
-        },
-      },
-    });
   }
 
   async create(db: Db, values: { email: string; userId?: string; playerId: string }) {

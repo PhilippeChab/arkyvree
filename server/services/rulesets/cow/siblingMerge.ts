@@ -22,7 +22,7 @@ export async function mergeSiblingData(
   customizationIds?: Map<string, string>,
 ): Promise<void> {
   // Sibling-loser ids are aliased to their winners in idResolveMap, so the
-  // repo proxy would rewrite `findManyBySource(siblingIds)` to fetch the
+  // repo proxy would rewrite `Modifiers.findMany({ sourceIds: siblingIds })` to fetch the
   // winner's rows. mergeSiblingData explicitly wants the literal stored
   // loser rows, so it reads through Drizzle directly (the proxy wraps repos
   // for application-code convenience; this is infrastructure copying raw
@@ -34,7 +34,7 @@ export async function mergeSiblingData(
   // roots and append intact trees at fresh
   // top-level positions on the target. Top-level AND across all rows combines
   // them: `(target) AND (sibling_1) AND (sibling_2) AND ...`.
-  const targetReqs = await Requirements.findManyByEntity(tx, { entityIds: [targetEntityId], entityType });
+  const targetReqs = await Requirements.findMany(tx, { entityIds: [targetEntityId], entityType });
   const newReqs = mergeSiblingRequirements(
     targetReqs,
     [...siblingCusts.values()].map((cust) => cust.requirements),
@@ -53,7 +53,7 @@ export async function mergeSiblingData(
 
   // 2. Merge sibling modifiers (deduplicate by target+value+operator+valueType)
   if (sourceType) {
-    const targetModifiers = await Modifiers.findManyBySource(tx, { sourceIds: [targetEntityId], sourceType });
+    const targetModifiers = await Modifiers.findMany(tx, { sourceIds: [targetEntityId], sourceType });
     const existingModKeys = new Set(targetModifiers.map((m) => `${m.target}|${m.value}|${m.operator}|${m.valueType}`));
 
     for (const [siblingId, sibCust] of siblingCusts) {
@@ -84,7 +84,7 @@ export async function mergeSiblingData(
   }
 
   // 3. Merge sibling properties (deduplicate by type+value)
-  const targetProperties = await Properties.findManyByEntity(tx, { entityIds: [targetEntityId], entityType });
+  const targetProperties = await Properties.findMany(tx, { entityIds: [targetEntityId], entityType });
   const existingPropKeys = new Set(targetProperties.map((p) => `${p.type}|${p.value}`));
 
   const sourcePropertyIds: string[] = [];

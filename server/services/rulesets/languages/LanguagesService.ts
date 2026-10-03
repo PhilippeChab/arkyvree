@@ -39,11 +39,7 @@ class LanguagesService {
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      return await Languages.findManyByRulesetId(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
-        pagination,
-      );
+      return await Languages.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
   }
 

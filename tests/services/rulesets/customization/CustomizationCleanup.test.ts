@@ -173,7 +173,7 @@ describe("customization cleanup", () => {
     await customize("feats", await createOwner("feats", user.id, fork.id));
     await customize("klass_levels", klassLevel.id);
     await customize("characters", character.id);
-    expect(await Properties.findManyByEntity(db, { entityIds: [fork.id], entityType: "rulesets" })).not.toEqual([]);
+    expect(await Properties.findMany(db, { entityIds: [fork.id], entityType: "rulesets" })).not.toEqual([]);
 
     // Signing out purges a demo account, and the foreign keys' cascades its rulesets and characters
     await AuthenticationService.signOut(makeSession(user.id));

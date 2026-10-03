@@ -10,24 +10,11 @@ class BlobsRepository extends BaseRepository<typeof blobsInStorage> {
     super(blobsInStorage);
   }
 
-  async findOne(db: Db, where: { id: string } | { key: string }) {
-    return await db.query.blobsInStorage.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "key" in where && eq(this.table.key, where.key),
-      ]),
-    });
-  }
-
   /**
    * The blobs the sweep deletes, oldest first: no attachment refers to them, and they were attached once, or uploaded
    * before `createdBefore` and never attached.
    */
-  async findSweepCandidates(
-    db: Db,
-    where: { createdBefore: string; excludeIds: string[] },
-    pagination: { limit: number },
-  ) {
+  async findMany(db: Db, where: { createdBefore: string; excludeIds: string[] }, pagination: { limit: number }) {
     return await db
       .select({ id: this.table.id, key: this.table.key })
       .from(this.table)
@@ -45,6 +32,15 @@ class BlobsRepository extends BaseRepository<typeof blobsInStorage> {
       )
       .orderBy(this.orderBy(this.table.createdAt))
       .limit(pagination.limit);
+  }
+
+  async findOne(db: Db, where: { id: string } | { key: string }) {
+    return await db.query.blobsInStorage.findFirst({
+      where: this.where([
+        "id" in where && eq(this.table.id, where.id),
+        "key" in where && eq(this.table.key, where.key),
+      ]),
+    });
   }
 
   async create(db: Db, values: InferInsertModel<typeof blobsInStorage>) {

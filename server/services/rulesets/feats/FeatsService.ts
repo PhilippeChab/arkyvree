@@ -47,11 +47,7 @@ class FeatsService {
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain, siblingIds } = rulesetData.cow;
-      const result = await Feats.findManyByRulesetId(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
-        pagination,
-      );
+      const result = await Feats.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
       // Filter sibling losers (if any) and replace each row's aptitude links
       // with the compose-step version (sibling-merged + FK-remapped).
       if (sourceChain.length > 0 && !where.childOnly) {
@@ -84,7 +80,7 @@ class FeatsService {
         }
       }
       const excludeIds = siblingIds.size > 0 ? [...siblingIds] : undefined;
-      return await Feats.findManyGroupedByRulesetId(
+      return await Feats.findGroupPage(
         db,
         { rulesetId, ancestorRulesetIds: sourceChain, aptitudeIds, excludeIds, ...where },
         pagination,
@@ -117,7 +113,7 @@ class FeatsService {
           throw new BadRequestError("At least one aptitude must be selected for the feat");
         }
 
-        const spellAptitudes = await PowersAptitudes.findDistinctAptitudeIds(tx, { aptitudeIds: body.aptitudeIds });
+        const spellAptitudes = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds });
         if (spellAptitudes.length > 0) {
           throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
         }
@@ -202,7 +198,7 @@ class FeatsService {
           await FeatsAptitudes.delete(tx, { featId: targetId });
 
           if (body.aptitudeIds.length > 0) {
-            const spellAptitudes = await PowersAptitudes.findDistinctAptitudeIds(tx, { aptitudeIds: body.aptitudeIds });
+            const spellAptitudes = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds });
             if (spellAptitudes.length > 0) {
               throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
             }

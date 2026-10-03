@@ -53,7 +53,7 @@ class CharacterContributorsService {
   // page so a stale link still resolves to "Already accepted" / "no longer
   // pending" copy instead of "Not found".
   async getContributorInvite(session: Session, contributorId: string) {
-    const invite = await CharacterContributors.findOneForUser(db, {
+    const invite = await CharacterContributors.findOneWithCharacter(db, {
       id: contributorId,
       userId: session.userId,
     });
@@ -78,13 +78,13 @@ class CharacterContributorsService {
       throw new NotFoundError("Character not found");
     }
 
-    const role = await CharacterContributors.findActiveRole(db, {
+    const role = await CharacterContributors.findRole(db, {
       userId: session.userId,
       characterId,
     });
     new CharactersPolicy(session, character, role !== null).canReadContributors();
 
-    const paginated = await CharacterContributors.findMany(db, { characterId, ...where }, pagination);
+    const paginated = await CharacterContributors.findPage(db, { characterId, ...where }, pagination);
     const ownerUser = await Users.findOne(db, { id: character.userId });
     const owner = ownerUser
       ? { id: ownerUser.id, username: ownerUser.username, emailAddress: ownerUser.emailAddress }
@@ -93,7 +93,7 @@ class CharacterContributorsService {
   }
 
   async getUserContributorInvites(userId: string) {
-    return await CharacterContributors.findManyByUserId(db, { userId, status: "Pending" }, { limit: 10 });
+    return await CharacterContributors.findManyWithCharacter(db, { userId, status: "Pending" }, { limit: 10 });
   }
 
   async acceptContributorInvite(session: Session, contributorId: string) {

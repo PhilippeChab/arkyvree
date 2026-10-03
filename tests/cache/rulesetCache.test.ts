@@ -11,6 +11,7 @@ import {
   isRulesetRawDataPinned,
 } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
+import { everyPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { cowEntity, invalidateCowData } from "@/server/services/rulesets/cow/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
@@ -447,9 +448,7 @@ describe("rulesetCache", () => {
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
 
-      const sampleFeats = await Feats.findAll((p) =>
-        Feats.findManyByRulesetId(db, { rulesetId: seed.id, ancestorRulesetIds: [] }, p),
-      );
+      const sampleFeats = await everyPage((p) => Feats.findPage(db, { rulesetId: seed.id, ancestorRulesetIds: [] }, p));
       const sampleFeat = sampleFeats[0];
       expect(sampleFeat).toBeDefined();
 
@@ -477,9 +476,7 @@ describe("rulesetCache", () => {
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
 
-      const sampleFeats = await Feats.findAll((p) =>
-        Feats.findManyByRulesetId(db, { rulesetId: seed.id, ancestorRulesetIds: [] }, p),
-      );
+      const sampleFeats = await everyPage((p) => Feats.findPage(db, { rulesetId: seed.id, ancestorRulesetIds: [] }, p));
       const sampleFeat = sampleFeats[0];
 
       const forkSession = makeSession(SEED_USER_ID);
@@ -521,8 +518,8 @@ describe("rulesetCache", () => {
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
 
-      const [sampleFeat] = await Feats.findAll((p) =>
-        Feats.findManyByRulesetId(db, { rulesetId: seed.id, ancestorRulesetIds: [] }, p),
+      const [sampleFeat] = await everyPage((p) =>
+        Feats.findPage(db, { rulesetId: seed.id, ancestorRulesetIds: [] }, p),
       );
       const before = await composeFork(fork);
       const modifierCountBefore = (before.modifiersBySource.get(sampleFeat.id) ?? []).length;

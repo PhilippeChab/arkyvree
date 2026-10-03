@@ -58,7 +58,7 @@ class CampaignInvitesService {
   // page so a stale link still resolves to "Already accepted" / "no longer
   // pending" copy instead of "Not found".
   async getCampaignInvite(session: Session, inviteId: string) {
-    const invite = await Invites.findOneForUser(db, {
+    const invite = await Invites.findOneWithCampaign(db, {
       id: inviteId,
       userId: session.userId,
     });
@@ -81,7 +81,7 @@ class CampaignInvitesService {
 
     await CampaignsPolicy.canRead(db, session, campaignId);
 
-    return await Invites.findManyForCampaign(db, { campaignId, ...where }, pagination);
+    return await Invites.findPage(db, { campaignId, ...where }, pagination);
   }
 
   async getUserInvites(userId: string) {

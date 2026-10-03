@@ -15,13 +15,13 @@ class NotificationsService {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await Notifications.findMany(db, { recipientId: session.userId, ...where }, pagination);
+    return await Notifications.findPage(db, { recipientId: session.userId, ...where }, pagination);
   }
 
   async getUnreadSummary(session: Session, limit = 10) {
     const [count, items] = await Promise.all([
       Notifications.count(db, { recipientId: session.userId, unread: true }),
-      Notifications.findMany(
+      Notifications.findPage(
         db,
         { recipientId: session.userId, unreadOnly: true, orderDir: "desc" },
         { limit, page: 1 },

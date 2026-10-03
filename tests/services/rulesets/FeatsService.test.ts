@@ -246,7 +246,7 @@ describe("FeatsService", () => {
       aptitudeIds: [combat],
     });
 
-    const snapshots = await EntitySnapshots.findByTypeAndRuleset(db, { rulesetId: fork.id, entityType: "feats" });
+    const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id, entityType: "feats" });
     expect(snapshots).toMatchObject([{ sourceEntityId: source.id, forkedEntityId: recreated.id }]);
   });
 });

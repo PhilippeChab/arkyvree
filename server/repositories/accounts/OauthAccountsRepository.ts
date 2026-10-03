@@ -9,7 +9,7 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
     super(oauthAccountsInAccount);
   }
 
-  async findManyByUser(db: Db, where: { userId: string }) {
+  async findMany(db: Db, where: { userId: string }) {
     return await db.query.oauthAccountsInAccount.findMany({
       where: and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)),
     });

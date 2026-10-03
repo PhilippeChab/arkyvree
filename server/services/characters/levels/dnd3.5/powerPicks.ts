@@ -91,8 +91,8 @@ export async function getAvailablePowers(
     const characterLevels =
       excludeIdSet.size > 0 ? allCharacterLevels.filter((l) => !excludeIdSet.has(l.id)) : allCharacterLevels;
     const characterLevelIds = characterLevels.map((lvl) => lvl.id);
-    const pickedPowers = await Powers.findManyByCharacterLevelIds(db, { characterLevelIds });
-    const givenPowers = await Powers.findManyGrantedAt(db, { levels: characterLevels });
+    const pickedPowers = await Powers.findPicks(db, { characterLevelIds });
+    const givenPowers = await Powers.findGrants(db, { levels: characterLevels });
     const excludePowerIds = [...pickedPowers, ...givenPowers]
       .filter((power) => power.aptitudeId === aptitudeId)
       .map((power) => power.id);
@@ -118,7 +118,7 @@ export async function getAvailablePowers(
     );
     excludePowerIds.push(...wizardExcluded);
 
-    const result = await Powers.findAvailableByAptitude(
+    const result = await Powers.findOptionPage(
       db,
       {
         rulesetId: characterRecord.rulesetId,

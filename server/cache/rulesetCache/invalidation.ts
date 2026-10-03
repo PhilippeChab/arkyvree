@@ -45,6 +45,6 @@ export function invalidateAll(): void {
  * Call once at server boot so the first user doesn't pay the cold-read cost.
  */
 export async function warmSystemRulesetCache(): Promise<void> {
-  const systemRulesets = await Rulesets.findSystemOwned(db);
+  const systemRulesets = await Rulesets.findMany(db, { system: true });
   await Promise.all(systemRulesets.map((r) => getOrFetchRulesetRawData(r.id)));
 }

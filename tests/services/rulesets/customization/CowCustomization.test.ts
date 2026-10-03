@@ -125,7 +125,7 @@ const dexterityAtLeast = {
 
 const KINDS: Record<string, Kind> = {
   modifiers: {
-    rowsOf: (sourceType, sourceId) => Modifiers.findManyBySource(db, { sourceIds: [sourceId], sourceType }),
+    rowsOf: (sourceType, sourceId) => Modifiers.findMany(db, { sourceIds: [sourceId], sourceType }),
     list: ModifiersService.getEntityModifiers.bind(ModifiersService),
     create: (s, rulesetId, type, ownerId) =>
       ModifiersService.createEntityModifier(s, rulesetId, type, ownerId, dexterityBonus),
@@ -134,7 +134,7 @@ const KINDS: Record<string, Kind> = {
     remove: ModifiersService.deleteEntityModifier.bind(ModifiersService),
   },
   properties: {
-    rowsOf: (entityType, entityId) => Properties.findManyByEntity(db, { entityIds: [entityId], entityType }),
+    rowsOf: (entityType, entityId) => Properties.findMany(db, { entityIds: [entityId], entityType }),
     list: PropertiesService.getEntityProperties.bind(PropertiesService),
     create: (s, rulesetId, type, ownerId) =>
       PropertiesService.createEntityProperty(s, rulesetId, type, ownerId, { type: "tag", value: "fork" }),
@@ -143,7 +143,7 @@ const KINDS: Record<string, Kind> = {
     remove: PropertiesService.deleteEntityProperty.bind(PropertiesService),
   },
   requirements: {
-    rowsOf: (entityType, entityId) => Requirements.findManyByEntity(db, { entityIds: [entityId], entityType }),
+    rowsOf: (entityType, entityId) => Requirements.findMany(db, { entityIds: [entityId], entityType }),
     list: RequirementsService.getEntityRequirements.bind(RequirementsService),
     create: (s, rulesetId, type, ownerId) =>
       RequirementsService.createEntityRequirement(s, rulesetId, type, ownerId, dexterityAtLeast),
@@ -185,7 +185,7 @@ describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
       ownerType === "klasses" || ownerType === "klass_levels"
         ? { entityType: "klasses", sourceEntityId: klass.id }
         : { entityType: "feats", sourceEntityId: feat.id };
-    expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toMatchObject([copied]);
+    expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toMatchObject([copied]);
     expect(await kind.rowsOf(ownerType, ownerId)).toEqual(parentRows);
   });
 
@@ -215,8 +215,7 @@ describe.each(["modifiers", "properties", "requirements"])("the %s of a feat the
     const parentRows = await kind.rowsOf("feats", feat.id);
     // The URL keeps the source's id after an edit copied the feat.
     await FeatsService.updateRulesetFeat(session, fork.id, feat.id, { name: feat.name, description: "Copied" });
-    const copyId = (await EntitySnapshots.findBySourceAndRuleset(db, { sourceEntityId: feat.id, rulesetId: fork.id }))!
-      .forkedEntityId;
+    const copyId = (await EntitySnapshots.findOne(db, { sourceEntityId: feat.id, rulesetId: fork.id }))!.forkedEntityId;
     const [copied] = await kind.rowsOf("feats", copyId);
 
     expect((await kind.list(fork.id, "feats", feat.id)).map((r) => r.id)).toEqual([copied.id]);
@@ -231,7 +230,7 @@ describe.each(["modifiers", "properties", "requirements"])("the %s of a feat the
     });
 
     expect((await kind.rowsOf("feats", copyId)).map((r) => r.id)).toEqual([created.id]);
-    expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toHaveLength(1);
+    expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toHaveLength(1);
     expect(await kind.rowsOf("feats", feat.id)).toEqual(parentRows);
   });
 });
@@ -248,7 +247,7 @@ describe("customizing an inherited feat", () => {
 
     await RulesetChangesService.revertOverride(session, fork.id, "feats", feat.id);
     expect(await featChanges()).toEqual([]);
-    expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: fork.id })).toEqual([]);
+    expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toEqual([]);
   });
 
   test("copies nothing when the ruleset owns the feat", async () => {
@@ -267,6 +266,6 @@ describe("customizing an inherited feat", () => {
         value: "3",
       }),
     ).toMatchObject({ id: modifier.id, resolvedEntityId: feat.id });
-    expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: ruleset.id })).toEqual([]);
+    expect(await EntitySnapshots.findMany(db, { rulesetId: ruleset.id })).toEqual([]);
   });
 });

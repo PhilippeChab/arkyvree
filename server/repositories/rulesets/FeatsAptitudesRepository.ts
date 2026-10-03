@@ -10,7 +10,7 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
     super(featsAptitudesInRules);
   }
 
-  async findDistinctAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
+  async findAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
     if (where.aptitudeIds.length === 0) return [];
     const rows = await db
       .selectDistinct({ aptitudeId: this.table.aptitudeId })

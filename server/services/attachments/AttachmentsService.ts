@@ -48,9 +48,9 @@ registerAttachable("Character", {
     if (character.kind === "pc") return character.userId === session.userId;
     // Bonded children flow permission through the master (owner or active contributor).
     if (!character.parentCharacterId) return false;
-    const master = await Characters.findOneEditable(db, {
+    const master = await Characters.findOne(db, {
       id: character.parentCharacterId,
-      userId: session.userId,
+      editorId: session.userId,
     });
     return !!master;
   },
@@ -76,7 +76,7 @@ class AttachmentsService {
   }
 
   private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
-    const refs = await Attachments.findManyByBlobIds(tx, { blobIds: [blobId] });
+    const refs = await Attachments.findMany(tx, { blobIds: [blobId] });
     if (refs.length > 0) return null;
     const blob = await Blobs.findOne(tx, { id: blobId });
     if (!blob) return null;

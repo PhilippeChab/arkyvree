@@ -112,7 +112,7 @@ for (const entityType of ["feats", "powers"] as const) {
             value: "stale",
           }),
         ).rejects.toThrow(NotFoundError);
-        const snapshots = await EntitySnapshots.findByRulesetId(db, { rulesetId: host.id });
+        const snapshots = await EntitySnapshots.findMany(db, { rulesetId: host.id });
         expect(snapshots).toHaveLength(1);
         expect(snapshots[0].sourceEntityId).toBe(winnerId);
         await RulesetChangesService.revertOverride(session, host.id, entityType, winnerId);
@@ -257,7 +257,7 @@ for (const entityType of ["feats", "powers"] as const) {
                 );
         expect(result.resolvedEntityId).not.toBe(modifier.id);
         expect(await Modifiers.findOne(db, { id: modifier.id })).toEqual(modifier);
-        expect(await Requirements.findManyByEntity(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([
+        expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([
           original,
         ]);
         const copies = await ModifiersService.getEntityModifiers(host.id, entityType, winnerId);
@@ -313,9 +313,9 @@ for (const entityType of ["feats", "powers"] as const) {
         expect(visible.filter((m) => m.target === modifier.target)).toEqual(
           action === "update" ? [expect.objectContaining({ id: result.id, value: "5" })] : [],
         );
-        expect(
-          await Requirements.findManyByEntity(db, { entityIds: [result.id], entityType: "modifiers" }),
-        ).toHaveLength(action === "update" ? 1 : 0);
+        expect(await Requirements.findMany(db, { entityIds: [result.id], entityType: "modifiers" })).toHaveLength(
+          action === "update" ? 1 : 0,
+        );
         expect(await Requirements.findOne(db, { id: original.id })).toEqual(original);
         expect(await Modifiers.findOne(db, { id: modifier.id })).toEqual(modifier);
       });
@@ -349,7 +349,7 @@ test("deduplicated sibling property and modifier IDs are not writable", async ()
       chainingOperator: "and",
     }),
   ).rejects.toThrow(NotFoundError);
-  expect(await EntitySnapshots.findByRulesetId(db, { rulesetId: host.id })).toHaveLength(0);
+  expect(await EntitySnapshots.findMany(db, { rulesetId: host.id })).toHaveLength(0);
 });
 
 test("copying sibling modifiers and their requirements stays batched", async () => {
@@ -464,7 +464,7 @@ for (const entityType of ["feats", "powers"] as const) {
             modifier: rulesetData.modifiersBySource.get(winnerId)!.find((m) => m.target === modifierValues.target)!,
           }));
           expect(visible.property.description).toBe(`Extension ${order[1]}`);
-          const sourceRequirements = await Requirements.findManyByEntity(db, {
+          const sourceRequirements = await Requirements.findMany(db, {
             entityIds: [visible.modifier.id],
             entityType: "modifiers",
           });
@@ -492,7 +492,7 @@ for (const entityType of ["feats", "powers"] as const) {
               { level: "2", chainingOperator: "and" },
             );
             expect(added.resolvedEntityId).not.toBe(visible.modifier.id);
-            const copiedRequirements = await Requirements.findManyByEntity(db, {
+            const copiedRequirements = await Requirements.findMany(db, {
               entityIds: [added.resolvedEntityId],
               entityType: "modifiers",
             });
@@ -501,7 +501,7 @@ for (const entityType of ["feats", "powers"] as const) {
               sourceRequirements[0].chainingOperator,
             );
             expect(
-              await Requirements.findManyByEntity(db, { entityIds: [visible.modifier.id], entityType: "modifiers" }),
+              await Requirements.findMany(db, { entityIds: [visible.modifier.id], entityType: "modifiers" }),
             ).toEqual(sourceRequirements);
           }
         }

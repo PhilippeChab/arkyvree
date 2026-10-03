@@ -178,7 +178,7 @@ describe("CampaignPlayersService", () => {
       expect((await CampaignPlayersService.removeCampaignPlayer(session, campaign.id, player.id)).id).toBe(player.id);
       expect(await Players.findOne(db, { id: player.id })).toBeUndefined();
       expect(await Invites.findMany(db, { playerId: player.id })).toEqual([]);
-      const { items } = await Activities.findMany(db, { userId: session.userId }, { limit: 100, page: 1 });
+      const { items } = await Activities.findPage(db, { userId: session.userId }, { limit: 100, page: 1 });
       expect(items.map((a) => `${a.targetTable} ${a.type}`).sort()).toEqual([
         "invites createCampaignInvite",
         "players addCampaignPlayer",

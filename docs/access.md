@@ -36,9 +36,9 @@ Constructed with `(session, ruleset, contributorRole?)`. Pass the contributor ro
 | `canUnarchive` | **owner only** | Archived → Draft |
 | `canViewChanges` | public rulesets: anyone; private: owner + any contributor | overrides metadata |
 
-Reading and listing rulesets is enforced by the `findMany` scopes, not the policy. Rulesets are never hard-deleted: they're archived (`canUpdate`).
+Reading and listing rulesets is enforced by the `findPage` scopes, not the policy. Rulesets are never hard-deleted: they're archived (`canUpdate`).
 
-**Listing scopes** (`RulesetsRepository.findMany`, used by the create-character wizard, dashboard, etc.):
+**Listing scopes** (`RulesetsRepository.findPage`, used by the create-character wizard, dashboard, etc.):
 
 | `scope` query param | Returns |
 |---|---|
@@ -78,7 +78,7 @@ Constructed with `(session, character, isActiveContributor?)`. The boolean comes
 | `canManageContributors` | **owner only** |
 | `canReadContributors` | owner, active contributor |
 
-**Editing and archiving aren't policy methods.** `getEditableCharacter(db, session, characterId)` (`server/services/characters/editableCharacter.ts`, over `Characters.findOneEditable`) returns the character iff the session user can edit it (owner OR active contributor), or a 404, and the write services call it as their first guard so the rest of the function can assume edit rights. Archiving looks the character up by its owner (`Characters.findOne(db, { id, userId })`): anyone else gets a 404. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
+**Editing and archiving aren't policy methods.** `getEditableCharacter(db, session, characterId)` (`server/services/characters/editableCharacter.ts`, over `Characters.findOne(db, { id, editorId })`) returns the character iff the session user can edit it (owner OR active contributor), or a 404, and the write services call it as their first guard so the rest of the function can assume edit rights. Archiving looks the character up by its owner (`Characters.findOne(db, { id, userId })`): anyone else gets a 404. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
 
 **Character creation against a ruleset** — `CharactersService.createCharacter` calls `RulesetsPolicy.canCreateCharacter` (through `RulesetsPolicy.for`), and `CampaignsService` calls `canCreateCampaign`, which applies the same rule. A deleted ruleset is a 404 (`Ruleset not found`) before the policy runs; an extension or an archived ruleset is refused (`UnprocessableEntityError "Choose an active playable ruleset"`). Otherwise the ruleset must be one of:
 

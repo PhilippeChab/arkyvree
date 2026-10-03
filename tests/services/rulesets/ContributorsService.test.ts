@@ -225,13 +225,13 @@ describe("ContributorsService", () => {
     });
   });
 
-  describe("Contributors.findActiveRole", () => {
+  describe("Contributors.findRole", () => {
     test("is the role of an active contributor, and null for anyone else", async () => {
       const { ownerSession, ruleset } = await setup();
       const { user } = await addContributor(ownerSession, ruleset.id, "Editor");
       const { user: stranger } = await createTestUser("stranger");
-      expect(await Contributors.findActiveRole(db, { userId: user.id, rulesetId: ruleset.id })).toBe("Editor");
-      expect(await Contributors.findActiveRole(db, { userId: stranger.id, rulesetId: ruleset.id })).toBeNull();
+      expect(await Contributors.findRole(db, { userId: user.id, rulesetId: ruleset.id })).toBe("Editor");
+      expect(await Contributors.findRole(db, { userId: stranger.id, rulesetId: ruleset.id })).toBeNull();
     });
   });
 });

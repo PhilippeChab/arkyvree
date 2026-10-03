@@ -24,7 +24,7 @@ const note = (type: string, actor: User) => `${type} from ${actor.user.id}`;
 
 /** What `recipient` was notified of. */
 async function inbox(recipient: User) {
-  const { items } = await Notifications.findMany(db, { recipientId: recipient.user.id }, { limit: 50, page: 1 });
+  const { items } = await Notifications.findPage(db, { recipientId: recipient.user.id }, { limit: 50, page: 1 });
   return items.map((n) => `${n.type} from ${n.actorId}`).sort();
 }
 

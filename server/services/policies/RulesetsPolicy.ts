@@ -15,7 +15,7 @@ class RulesetsPolicy extends include(RulesetRoles, EntityRights, ContributorRigh
   static async for(db: Db, session: Session, ruleset: Ruleset) {
     let role = null;
     if (ruleset.userId && ruleset.userId !== session.userId) {
-      role = await Contributors.findActiveRole(db, { userId: session.userId, rulesetId: ruleset.id });
+      role = await Contributors.findRole(db, { userId: session.userId, rulesetId: ruleset.id });
     }
     return new RulesetsPolicy(session, ruleset, role);
   }

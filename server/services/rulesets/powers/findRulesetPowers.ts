@@ -18,11 +18,7 @@ export async function findRulesetPowers(
   pagination: { limit: number; page: number },
 ) {
   const { sourceChain, siblingIds } = rulesetData.cow;
-  const result = await Powers.findManyByRulesetId(
-    db,
-    { rulesetId, ancestorRulesetIds: sourceChain, ...where },
-    pagination,
-  );
+  const result = await Powers.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
   // Filter sibling losers (if any) and replace each row's aptitude links
   // with the compose-step version (sibling-merged + FK-remapped). The
   // rest of the DB row (savesInRule join, etc.) is kept as-is.

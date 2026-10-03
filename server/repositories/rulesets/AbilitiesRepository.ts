@@ -31,7 +31,21 @@ class AbilitiesRepository extends include(
     });
   }
 
-  async findManyByRulesetId(db: Db, where: RulesetEntityFilters, pagination: { limit: number; page: number }) {
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+  ) {
+    return await db.query.abilitiesInRules.findFirst({
+      where: this.where([
+        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+        "id" in where && eq(this.table.id, where.id),
+        "name" in where && eq(this.table.name, where.name),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+  }
+
+  async findPage(db: Db, where: RulesetEntityFilters, pagination: { limit: number; page: number }) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
     const searchColumns = [this.table.name, this.table.description];
     const searchConditions = this.fuzzySearch(search, searchColumns);
@@ -45,20 +59,6 @@ class AbilitiesRepository extends include(
         limit,
         offset,
       });
-    });
-  }
-
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
-  ) {
-    return await db.query.abilitiesInRules.findFirst({
-      where: this.where([
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "id" in where && eq(this.table.id, where.id),
-        "name" in where && eq(this.table.name, where.name),
-        isNull(this.table.deletedAt),
-      ]),
     });
   }
 
