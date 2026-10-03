@@ -54,14 +54,17 @@ export const NAME_FALLBACK_TABLES = [
   { entityType: "powers", table: powersInRules },
 ] as const;
 
-/** What the COW code calls on any ruleset entity's repository. */
+/**
+ * What the COW code calls on any ruleset entity's repository. Properties, which TypeScript checks strictly, except
+ * `create`: a method, whose looser check lets each repository's insert model stand for a copied row.
+ */
 interface EntityRepository {
-  lockById(db: Db, id: string, mode?: "update" | "share"): Promise<boolean>;
-  exists(db: Db, where: { id: string }): Promise<boolean>;
-  findOne(db: Db, where: { id: string } | { name: string; rulesetId: string }): Promise<EntityWithId | undefined>;
-  findMany(db: Db, where: { ids: string[] }): Promise<EntityWithId[]>;
+  lockById: (db: Db, id: string, mode?: "update" | "share") => Promise<boolean>;
+  exists: (db: Db, where: { id: string }) => Promise<boolean>;
+  findOne: (db: Db, where: { id: string } | { name: string; rulesetId: string }) => Promise<EntityWithId | undefined>;
+  findMany: (db: Db, where: { ids: string[] }) => Promise<EntityWithId[]>;
   create(db: Db, values: Record<string, unknown>): Promise<EntityWithId[]>;
-  delete(db: Db, where: { id: string }): Promise<unknown>;
+  delete: (db: Db, where: { id: string }) => Promise<unknown>;
 }
 
 export const ENTITY_REPOS: Record<EntityType, EntityRepository> = {
