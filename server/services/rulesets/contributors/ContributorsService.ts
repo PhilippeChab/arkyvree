@@ -167,7 +167,6 @@ class ContributorsService {
         policy.canManageAdminContributors();
       }
 
-      // Look up user by email
       const user = await Users.findOne(tx, { emailAddress: email });
 
       // Cannot invite the owner
@@ -267,7 +266,6 @@ class ContributorsService {
         throw new NotFoundError("You are not a contributor of this ruleset");
       }
 
-      // Find the active contributor record
       const contributor = await Contributors.findOne(tx, {
         rulesetId,
         userId: session.userId,

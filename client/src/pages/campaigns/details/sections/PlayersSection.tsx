@@ -90,7 +90,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedInviteId, setSelectedInviteId] = useState<string | null>(null);
 
-  // Get permissions for this campaign
   const { canManagePlayers, canManageInvites } = useCampaignPermissions(campaign);
   const currentUserId = useAuthStore((s) => s.user?.id);
 

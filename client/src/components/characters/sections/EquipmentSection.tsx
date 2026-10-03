@@ -142,7 +142,6 @@ export function EquipmentSection({
     [editItemColumns, editItemProperties],
   );
 
-  // Slot conflict warnings
   const addSlotWarning = useMemo(
     () => getSlotConflictWarning(addLocation, addWeaponSet, inventoryItems),
     [addLocation, addWeaponSet, inventoryItems],
@@ -177,7 +176,6 @@ export function EquipmentSection({
     enabled: addDialogOpen,
   });
 
-  // Mutations
   const addMutation = useMutation({
     mutationFn: async ({ data, force = false }: { data: InventoryFormData; force?: boolean }) => {
       if (!data.selectedItem) throw new Error("No item selected");

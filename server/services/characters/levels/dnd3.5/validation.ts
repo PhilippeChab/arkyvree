@@ -143,7 +143,6 @@ export async function validateAndFetchLevelSelections(
     }
   }
 
-  // Build aptitude maps
   const featToAptitude = new Map<string, string>();
   for (const [aptitudeId, ids] of Object.entries(feats)) {
     for (const id of ids) {

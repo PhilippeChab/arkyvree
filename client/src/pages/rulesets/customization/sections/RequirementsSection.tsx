@@ -87,7 +87,6 @@ export function RequirementsSection({
   // Parent level for contextual "Add Child" (null = root)
   const [createParentLevel, setCreateParentLevel] = useState<string | null>(null);
 
-  // Requirement type state management
   const [createRequirementType, setCreateRequirementType] = useState<RequirementType>("condition");
   const [editRequirementType, setEditRequirementType] = useState<RequirementType>("condition");
 
@@ -325,7 +324,6 @@ export function RequirementsSection({
     }
   };
 
-  // Render a single tree node
   const renderRequirementNode = (node: RequirementTreeNode): React.ReactNode => {
     const requirement = node.requirement;
     const requirementIsChaining = isChaining(requirement);

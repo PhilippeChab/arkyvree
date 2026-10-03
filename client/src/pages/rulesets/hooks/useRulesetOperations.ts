@@ -24,7 +24,6 @@ export function useRulesetOperations() {
   const snackbar = useSnackbar();
   const navigate = useNavigate();
 
-  // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [forkDialogOpen, setForkDialogOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
@@ -37,7 +36,6 @@ export function useRulesetOperations() {
     extensionName: string;
   } | null>(null);
 
-  // Selected item state
   const [selectedRuleset, setSelectedRuleset] = useState<Ruleset | null>(null);
 
   /** Refetches a ruleset and the lists that show it. */
@@ -47,11 +45,9 @@ export function useRulesetOperations() {
       queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.lists }),
     ]);
 
-  // Forms
   const editForm = useForm<EditRulesetFormData>();
   const forkForm = useForm<ForkRulesetFormData>();
 
-  // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, updatedAt }: { id: string; data: EditRulesetFormData; updatedAt?: string }) => {
       return parseResponse(
@@ -72,7 +68,6 @@ export function useRulesetOperations() {
     },
   });
 
-  // Fork mutation
   const forkMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: ForkRulesetFormData }) => {
       return parseResponse(
@@ -96,7 +91,6 @@ export function useRulesetOperations() {
     },
   });
 
-  // Archive mutation
   const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
       return parseResponse(
@@ -115,7 +109,6 @@ export function useRulesetOperations() {
     },
   });
 
-  // Unarchive mutation
   const unarchiveMutation = useMutation({
     mutationFn: async (id: string) => {
       return parseResponse(
@@ -135,7 +128,6 @@ export function useRulesetOperations() {
 
   const toggleStar = useToggleRulesetStar();
 
-  // Publish mutation
   const publishMutation = useMutation({
     mutationFn: async ({ id, kind }: { id: string; kind?: PublishKind }) => {
       return parseResponse(
@@ -155,7 +147,6 @@ export function useRulesetOperations() {
     },
   });
 
-  // Subscribe extension mutation
   const subscribeMutation = useMutation({
     mutationFn: async ({ id, extensionIds }: { id: string; extensionIds: string[] }) => {
       return parseResponse(
@@ -177,7 +168,6 @@ export function useRulesetOperations() {
     },
   });
 
-  // Unsubscribe extension mutation
   const unsubscribeMutation = useMutation({
     mutationFn: async ({ id, extensionId }: { id: string; extensionId: string }) => {
       return parseResponse(
@@ -198,7 +188,6 @@ export function useRulesetOperations() {
     },
   });
 
-  // Handlers
   const handleEdit = (ruleset: Ruleset) => {
     setSelectedRuleset(ruleset);
     editForm.reset({
@@ -283,7 +272,6 @@ export function useRulesetOperations() {
   };
 
   return {
-    // Dialog states
     editDialogOpen,
     setEditDialogOpen,
     forkDialogOpen,
@@ -298,15 +286,12 @@ export function useRulesetOperations() {
     setUnsubscribeDialogOpen,
     unsubscribeTarget,
 
-    // Selected item
     selectedRuleset,
     setSelectedRuleset,
 
-    // Forms
     editForm,
     forkForm,
 
-    // Mutations
     updateMutation,
     forkMutation,
     archiveMutation,
@@ -315,7 +300,6 @@ export function useRulesetOperations() {
     subscribeMutation,
     unsubscribeMutation,
 
-    // Handlers
     handleEdit,
     handleFork,
     handleArchive,

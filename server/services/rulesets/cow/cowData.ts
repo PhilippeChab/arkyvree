@@ -13,10 +13,6 @@ import {
   newOverrideMap,
 } from "./overrideMap.ts";
 
-// ──────────────────────────────────────────────────────────────
-// Cached COW data
-// ──────────────────────────────────────────────────────────────
-
 const cowDataCache = new DependentCache<CowData>();
 
 async function buildCowData(ruleset: {

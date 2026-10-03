@@ -18,10 +18,6 @@ import {
 
 import type { EntityType } from "./hashing.ts";
 
-// ──────────────────────────────────────────────────────────────
-// Constants
-// ──────────────────────────────────────────────────────────────
-
 export interface EntityWithId {
   id: string;
   rulesetId: string;

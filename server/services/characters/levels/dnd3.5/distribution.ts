@@ -64,7 +64,6 @@ export function computePerLevelAptitudeSlots(
   const featPoolRegex = /^aptitudes\.(\w+)\.allowed$/;
   const spellPoolRegex = /^aptitudes\.(\w+)\.(\d+)\.allowed$/;
 
-  // Find the General aptitude ID
   const generalAptId = aptitudeSlugToId.get("general");
   const generalFormula = (charLevel: number) => (charLevel === 0 ? 0 : Math.floor(charLevel / 3) + 1);
 

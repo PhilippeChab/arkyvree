@@ -10,8 +10,6 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { BaseRules, LevelUpFormData } from "./levelUpTypes.ts";
 import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
-// ── Step content types ────────────────────────────────────────────────
-
 export const editStepContent = ["hp", "attributes", "skills", "feats", "powers", "review"] as const;
 
 export const editStepLabels = [
@@ -22,8 +20,6 @@ export const editStepLabels = [
   "Select Spells",
   "Review Changes",
 ];
-
-// ── Hook ──────────────────────────────────────────────────────────────
 
 interface UseLevelWizardParams {
   open: boolean;
@@ -64,7 +60,6 @@ export function useLevelWizard({
   } = base;
   const levelUpSections = getLevelUpSections(baseRules);
 
-  // Step index mapping
   const attributeStep = editStepContent.indexOf("attributes");
   const skillsStep = editStepContent.indexOf("skills");
   const featsStep = editStepContent.indexOf("feats");
@@ -93,8 +88,6 @@ export function useLevelWizard({
   const selectedClass = watch("selectedClass");
   const selectedHP = watch("selectedHP");
   const selectedAttribute = watch("selectedAttribute");
-
-  // ── Queries ───────────────────────────────────────────────────────
 
   const levels = rpc.api.characters.levels[":characterId"];
   const param = { characterId };
@@ -231,8 +224,6 @@ export function useLevelWizard({
 
   const adjustedFeatPools = useAdjustedFeatPools(featData?.aptitudePools, base);
 
-  // ── Mutation ──────────────────────────────────────────────────────
-
   const resetWizard = useCallback(() => {
     onReset?.();
     resetPicks();
@@ -264,8 +255,6 @@ export function useLevelWizard({
     },
     onError: handleSaveError,
   });
-
-  // ── Handlers ──────────────────────────────────────────────────────
 
   const isLastStep = activeStep === editStepContent.length - 1;
 
@@ -327,13 +316,11 @@ export function useLevelWizard({
     selectedAttribute,
     isLastStep,
 
-    // HP roll
     hpRolling,
     hpSettled,
     hpDisplayValue,
     triggerHpRoll,
 
-    // Queries
     attributeData,
     isLoadingAttributes,
     attributesError,
@@ -355,7 +342,6 @@ export function useLevelWizard({
 
     finalizeMutation,
 
-    // Handlers
     handleNext,
     handleCancel,
     handleConfirmCancel,

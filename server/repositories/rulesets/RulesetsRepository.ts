@@ -135,7 +135,6 @@ class RulesetsRepository extends include(
   ) {
     const { scope, search, orderBy = "createdAt", orderDir = "desc" } = where || {};
 
-    // Base conditions
     const conditions: (SQL | undefined)[] = [];
 
     // Filtering
@@ -302,13 +301,11 @@ class RulesetsRepository extends include(
       );
     }
 
-    // Search by name
     const searchCondition = this.search(search, [this.table.name]);
     if (searchCondition) {
       conditions.push(searchCondition);
     }
 
-    // Order
     const orderField = orderBy === "updatedAt" ? this.table.updatedAt : this.table.createdAt;
     const order = this.orderBy(orderField, orderDir);
 

@@ -206,7 +206,6 @@ class CampaignPlayersService {
         }
       }
 
-      // Update the player role
       const rows = await Players.update(tx, { role }, { id: playerId });
       const updatedPlayer = rows[0];
 

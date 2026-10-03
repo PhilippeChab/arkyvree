@@ -53,8 +53,6 @@ import type {
 // `Dnd35ProjectedCharacterData` is imported directly from `./types.ts`.
 export type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR };
 
-// ── Exported types ──────────────────────────────────────────────────
-
 /** Internal bag of rounds 1-3 DB results shared across projected/baseline builds. */
 interface SharedCharacterData {
   ruleset: Ruleset;

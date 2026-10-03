@@ -29,7 +29,7 @@ class CharactersRepository extends include(
     super(charactersInCharacter);
   }
 
-  // Archived characters count — see `project_archive_preserves_picks` memory.
+  // Archived characters count: one can be restored, and its picks must still resolve.
   private async existsRacePick(db: Db, where: { raceId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.id })

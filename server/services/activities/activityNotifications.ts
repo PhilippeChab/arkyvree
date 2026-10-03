@@ -186,7 +186,6 @@ async function resolveRecipients(
       const invitedUserId = d.invitedUserId as string | undefined;
       if (invitedUserId) recipients.add(invitedUserId);
     } else if (type === "acceptCampaignInvite" || type === "rejectCampaignInvite") {
-      // Notify campaign GMs
       const gms = await getCampaignGMsForInvite(db, targetId);
       for (const gm of gms) recipients.add(gm);
     }

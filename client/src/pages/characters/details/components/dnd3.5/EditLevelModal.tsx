@@ -59,8 +59,6 @@ export function EditLevelModal({ open, onClose, characterId, baseRules, editingL
     enabled: open && !!editingLevelId,
   });
 
-  // ── Pre-populate form ───────────────────────────────────────────────
-
   const { setValue: wizardSetValue } = wizard;
 
   // Set selectedClass + basic fields from edit data
@@ -111,8 +109,6 @@ export function EditLevelModal({ open, onClose, characterId, baseRules, editingL
     isLoadingLevel || (!!editLevelData && !wizard.selectedClass) || wizard.isLoadingFeats || wizard.isLoadingPowers;
   const step = editStepContent[wizard.activeStep];
   const failed = !editLevelData || (step === "feats" && !wizard.featData) || (step === "powers" && !wizard.powerData);
-
-  // ── Render steps ────────────────────────────────────────────────────
 
   const Sections = wizard.levelUpSections;
 

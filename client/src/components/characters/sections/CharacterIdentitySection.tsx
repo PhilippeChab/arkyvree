@@ -125,7 +125,6 @@ export function CharacterIdentitySection({
   const { isDirty, isSubmitting } = form.formState;
   useDirtyForm(isDirty);
 
-  // ── Inline-edit for character name ───────────────────────────────
   // Lives outside the main form so users can rename without opening the
   // Save flow (and vice versa). Click the name → TextField; Enter/blur
   // saves, Escape cancels. Save is a direct PUT; response invalidates
@@ -167,7 +166,6 @@ export function CharacterIdentitySection({
     }
   };
 
-  // ── Languages ────────────────────────────────────────────────────
   // Staged via the form like every other field — selections only persist
   // when the user clicks Save, matching the rest of the identity section.
   const { data: availableLanguages } = useRulesetLanguages(rulesetId, !readOnly);

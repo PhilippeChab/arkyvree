@@ -212,7 +212,7 @@ export function withRequestCache<T extends object>(name: string, repo: T, opts?:
           // Canonicalize entity-id inputs in where/values args. For stored
           // composite-key rows that remain pre-COW, repos additionally define
           // *IdMatches() predicates that expand to a WHERE IN over all override
-          // siblings (see CharacterInventoryRepository.itemIdMatches).
+          // siblings (the ResolvesCopies concern's `idMatches`).
           // skipCow repos (EntitySnapshots) hold raw pre/post-COW ids by
           // design; canonicalizing their write args would corrupt the mapping.
           const effectiveArgs = opts?.skipCow ? args : canonicalizeArgs(args);

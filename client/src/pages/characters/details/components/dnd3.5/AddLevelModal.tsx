@@ -9,8 +9,6 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { addStepContent, addStepLabels, type BaseRules, useAddLevelWizard } from "./levelUp/index.ts";
 import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 
-// ── Entry point ──────────────────────────────────────────────────────
-
 interface AddLevelModalProps {
   open: boolean;
   onClose: () => void;
@@ -25,8 +23,6 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
     characterId,
     baseRules,
   });
-
-  // ── Class selection ────────────────────────────────────────────────
 
   const [klassSearch, setKlassSearch] = useState("");
   const debouncedKlassSearch = useDebouncedValue(klassSearch);
@@ -112,8 +108,6 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
       return () => clearTimeout(id);
     }
   }, [wizard.activeStep, renderedStep]);
-
-  // ── Render steps ───────────────────────────────────────────────────
 
   const Sections = wizard.levelUpSections;
 

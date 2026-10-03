@@ -349,7 +349,6 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
   const selectedAlignment = watch("alignment");
   const selectedGender = watch("gender");
 
-  // Fetch rulesets
   const [rulesetSearch, setRulesetSearch] = useState("");
   const debouncedRulesetSearch = useDebouncedValue(rulesetSearch);
 

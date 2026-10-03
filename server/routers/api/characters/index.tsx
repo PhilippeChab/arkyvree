@@ -26,7 +26,6 @@ const characters = new Hono()
   .route("/levels", levels)
   .route("/inventory", inventory)
   .route("/modifiers", modifiers)
-  // List all characters
   .get(
     "/",
     zValidator(
@@ -111,7 +110,6 @@ const characters = new Hono()
       );
     },
   )
-  // Get character data
   .get("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
@@ -129,7 +127,6 @@ const characters = new Hono()
     const response = buildFullCharacterResponse(character, detailedCharacter);
     return c.json({ ...response, bonded: buildBondedMap(bondedByKind) }, 200);
   })
-  // Create a new character
   .post(
     "/",
     zValidator(
@@ -180,7 +177,6 @@ const characters = new Hono()
     await CharactersService.enqueuePdf(c.var.requestSession, characterId);
     return c.json({ message: "PDF generation started" }, 202);
   })
-  // Update character
   .put(
     "/:id",
     zValidator("param", idParam),
@@ -245,7 +241,6 @@ const characters = new Hono()
       return c.json({ success: true }, 200);
     },
   )
-  // Archive character
   .delete("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
@@ -253,7 +248,6 @@ const characters = new Hono()
     return c.json({ message: "Character archived successfully" }, 200);
   })
   .route("/", sharing)
-  // Unarchive character
   .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
