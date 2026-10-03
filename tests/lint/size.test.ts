@@ -12,9 +12,9 @@ const statements = (n: number, indent = "  ") =>
   Array.from({ length: n }, (_, i) => `${indent}const v${i} = ${i};`).join("\n");
 
 describe("function-length", () => {
-  test("a function holds at most its limit of its own lines: blank lines, comments and nested functions aside", () => {
+  test("a function holds at most its limit of its own lines: blank lines, comments and nested functions aside", async () => {
     expect(
-      lintRepo(
+      await lintRepo(
         {
           "server/ok.ts": `export function ok() {\n${statements(MAX_OWN_LINES - 2)}\n}\n`,
           "server/long.ts": `export function long() {\n${statements(MAX_OWN_LINES)}\n}\n`,

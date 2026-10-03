@@ -81,7 +81,6 @@ export default function CharacterDetailsPage() {
     const characterIsBonded = character && "kind" in character && character.kind !== "pc";
     if (location.state?.openLevelUp && character && !characterIsBonded && !openedLevelUp.current) {
       openedLevelUp.current = true;
-      // oxlint-disable-next-line react/set-state-in-effect
       setAddLevelOpen(true);
       navigate(location.pathname, { replace: true, state: {} });
     }
