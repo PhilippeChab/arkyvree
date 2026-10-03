@@ -2,11 +2,9 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
-import { limit, page } from "@/server/routers/api/validation.ts";
+import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { TargetPathsService } from "@/server/services/rulesets/index.ts";
-
-const idParam = z.object({ id: z.string().uuid() });
 
 const targetPaths = new Hono()
   /**
