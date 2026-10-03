@@ -11,7 +11,7 @@ import { BadRequestError } from "@/server/errors/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
 
-import { loadFeatCustomizations } from "./helpers.ts";
+import { loadFeatCustomizations } from "./projection.ts";
 
 /**
  * Shared validation for level selections used by both updateLevel and finalizeLevelUp.

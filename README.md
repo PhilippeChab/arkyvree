@@ -102,7 +102,7 @@ server/
       validation.ts     # Shared Zod schemas (pagination, sorting)
     authentication/     # Auth routes
     static.ts           # Static file serving + SEO
-  services/
+  services/             # One folder per service, laid out like routers/api
     campaigns/          # Campaign, player, invite services
     characters/         # Character, inventory, levels, modifiers services
       levels/           # Level-up wizard (slot queries, pick queries, finalize, batch)

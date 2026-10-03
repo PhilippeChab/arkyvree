@@ -7,10 +7,10 @@ import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
-import { lockEntityForMutation, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
-import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
-import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
+import { lockEntityForMutation, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
+import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
+import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
+import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { createSeededTestRuleset, getSeedCtx, insertRows, makeSession } from "@/tests/helpers.ts";
 
 const pool = createTestPool();

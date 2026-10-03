@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { PowersService } from "@/server/services/rulesets/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 
 const spellFields = {
   school: z.string().optional(),

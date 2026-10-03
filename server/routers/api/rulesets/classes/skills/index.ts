@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { ClassSkillsService } from "@/server/services/rulesets/index.ts";
+import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 
 export default new Hono<SessionContext>()
   .get(

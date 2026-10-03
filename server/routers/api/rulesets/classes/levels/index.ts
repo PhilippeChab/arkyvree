@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { limit, page } from "@/server/routers/api/validation.ts";
-import { ClassLevelsService } from "@/server/services/rulesets/index.ts";
+import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 
 export default new Hono<SessionContext>()
   .get(

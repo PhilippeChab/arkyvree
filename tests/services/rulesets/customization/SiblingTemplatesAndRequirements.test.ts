@@ -4,11 +4,11 @@ import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
-import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
-import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
-import ItemsService from "@/server/services/rulesets/ItemsService.ts";
-import RulesetsService from "@/server/services/RulesetsService.ts";
+import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
+import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
+import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { api, expectStatus } from "@/tests/api.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 

@@ -3,8 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterContributors, Users } from "@/server/repositories/index.ts";
-import CharacterContributorsService from "@/server/services/CharacterContributorsService.ts";
-import CharactersService from "@/server/services/CharactersService.ts";
+import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestUser, getSeedCtx, uniqueId } from "@/tests/helpers.ts";
 

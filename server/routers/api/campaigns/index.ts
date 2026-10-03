@@ -4,7 +4,7 @@ import { z } from "zod";
 import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import CampaignsService from "@/server/services/CampaignsService.ts";
+import { CampaignsService } from "@/server/services/campaigns/index.ts";
 
 import playerCharacters from "./characters/index.ts";
 import invites from "./invites/index.ts";

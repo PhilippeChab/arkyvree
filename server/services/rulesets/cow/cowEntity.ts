@@ -1,15 +1,15 @@
+import { withCowContext } from "@/server/database/cowContext.ts";
 import type { Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Klasses, KlassLevels, Modifiers, Rulesets } from "@/server/repositories/index.ts";
-import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
-import { resolveCustomizationId } from "@/server/services/rulesets/customization/resolveCustomizationId.ts";
-import { type EntityType, hashEntity, type KlassRelationships } from "@/server/services/rulesets/hashing.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
 import { CUSTOMIZATION_REPOS, type CustomizationKind, ENTITY_REPOS, type EntityWithId } from "./constants.ts";
 import { copyEntityCustomizations, copyEntityRelationships } from "./copy.ts";
 import { fetchEntityCustomizations, fetchKlassLevelCustomizations, fetchKlassRelationships } from "./customizations.ts";
+import { type EntityType, hashEntity, type KlassRelationships } from "./hashing.ts";
 import { buildOverrideMap, buildSourceChain } from "./overrideMap.ts";
+import { resolveCustomizationId } from "./resolveCustomizationId.ts";
 import { mergeSiblingData } from "./siblingMerge.ts";
 
 /** Serialize child writes with deletion/revert of their stored owner. */

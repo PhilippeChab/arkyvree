@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import ActivitiesService from "@/server/services/ActivitiesService.ts";
+import { ActivitiesService } from "@/server/services/activities/index.ts";
 
 const activities = new Hono()
   .use(sessionMiddleware)

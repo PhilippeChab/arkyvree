@@ -10,7 +10,7 @@ import {
 } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths.ts";
+import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { timingStorage } from "@/server/timing.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 

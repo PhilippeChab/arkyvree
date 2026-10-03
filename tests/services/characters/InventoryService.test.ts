@@ -7,8 +7,8 @@ import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Items, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
-import CharacterInventoryService from "@/server/services/characters/CharacterInventoryService.ts";
-import CharactersService from "@/server/services/CharactersService.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
+import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 import {

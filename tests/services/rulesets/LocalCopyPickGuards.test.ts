@@ -6,11 +6,11 @@ import { itemsInRules, languagesInRules, racesInRules } from "@/drizzle/schema.t
 import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, CharacterLanguages, Characters } from "@/server/repositories/index.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import ItemsService from "@/server/services/rulesets/ItemsService.ts";
-import LanguagesService from "@/server/services/rulesets/LanguagesService.ts";
-import RacesService from "@/server/services/rulesets/RacesService.ts";
-import RulesetsService from "@/server/services/RulesetsService.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { ItemsService } from "@/server/services/rulesets/items/index.ts";
+import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
+import { RacesService } from "@/server/services/rulesets/races/index.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
 afterEach(invalidateAll);

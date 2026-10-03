@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { withCowContext } from "@/server/database/cowContext.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
-import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
+import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { timingStorage } from "@/server/timing.ts";
 import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
 

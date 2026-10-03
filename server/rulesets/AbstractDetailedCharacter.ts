@@ -27,7 +27,7 @@ import type DetailedCharacterPowerGroupings from "@/server/rulesets/universal/De
 import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import type DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type {
   Aptitude,
   Campaign,

@@ -16,7 +16,8 @@ import {
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
-import type { EntityType } from "@/server/services/rulesets/hashing.ts";
+
+import type { EntityType } from "./hashing.ts";
 
 // ──────────────────────────────────────────────────────────────
 // Constants

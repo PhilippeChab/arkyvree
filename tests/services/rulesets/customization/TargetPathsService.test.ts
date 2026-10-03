@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import { NotFoundError } from "@/server/errors/index.ts";
-import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths.ts";
-import TargetPathsService from "@/server/services/rulesets/customization/TargetPathsService.ts";
+import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { createTestRuleset, createTestUser, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 type Kind = "modifier" | "requirement";

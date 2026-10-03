@@ -23,9 +23,9 @@ import {
   Requirements,
   Saves,
 } from "@/server/repositories/index.ts";
-import ClassLevelsService from "@/server/services/rulesets/classes/ClassLevelsService.ts";
-import ClassesService from "@/server/services/rulesets/ClassesService.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
+import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 import {

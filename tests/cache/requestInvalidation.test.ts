@@ -4,11 +4,11 @@ import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
-import RulesetsService from "@/server/services/RulesetsService.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
+import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
+import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 
 afterEach(invalidateAll);

@@ -6,7 +6,7 @@ import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { EntitySnapshots, Feats } from "@/server/repositories/index.ts";
-import { cowEntity } from "@/server/services/rulesets/cow.ts";
+import { cowEntity } from "@/server/services/rulesets/cow/index.ts";
 import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
 
 const pool = createTestPool();

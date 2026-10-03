@@ -9,7 +9,7 @@ import {
   buildBondedResponse,
   buildFullCharacterResponse,
 } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
-import CharactersService from "@/server/services/CharactersService.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
 
 import contributors from "./contributors/index.ts";
 import inventory from "./inventory/index.ts";

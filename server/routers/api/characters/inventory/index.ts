@@ -5,7 +5,7 @@ import { location } from "@/drizzle/schema.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { characterIdParam } from "@/server/routers/api/validation.ts";
-import { CharacterInventoryService } from "@/server/services/characters/index.ts";
+import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 
 const inventory = new Hono<SessionContext>()
   .get("/:characterId", zValidator("param", characterIdParam), async (c) => {

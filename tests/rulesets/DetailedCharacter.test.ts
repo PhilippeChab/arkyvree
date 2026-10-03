@@ -37,7 +37,7 @@ import {
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
-import ClassesService from "@/server/services/rulesets/ClassesService.ts";
+import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
 import {

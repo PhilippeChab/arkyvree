@@ -32,12 +32,12 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import { cowEntity, getOrBuildCowData, invalidateAllCowData } from "@/server/services/rulesets/cow.ts";
-import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
-import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
-import PowersService from "@/server/services/rulesets/PowersService.ts";
-import RulesetsService from "@/server/services/RulesetsService.ts";
+import { cowEntity, getOrBuildCowData, invalidateAllCowData } from "@/server/services/rulesets/cow/index.ts";
+import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
+import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
   addCharacterLevel,

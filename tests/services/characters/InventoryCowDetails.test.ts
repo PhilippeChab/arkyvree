@@ -4,9 +4,9 @@ import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Items, Sessions, Users } from "@/server/repositories/index.ts";
 import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import CharacterInventoryService from "@/server/services/characters/CharacterInventoryService.ts";
-import CharactersService from "@/server/services/CharactersService.ts";
-import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
+import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
+import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
 
 async function setup() {

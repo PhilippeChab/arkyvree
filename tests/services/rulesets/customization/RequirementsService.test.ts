@@ -6,7 +6,7 @@ import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Feats, Races, Requirements } from "@/server/repositories/index.ts";
-import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
+import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { createTestUserAndRuleset, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
 
 const chain = { level: "1", chainingOperator: "and" };

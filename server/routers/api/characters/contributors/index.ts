@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirDesc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
-import CharacterContributorsService from "@/server/services/CharacterContributorsService.ts";
+import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 
 export default new Hono<SessionContext>()
   .get(

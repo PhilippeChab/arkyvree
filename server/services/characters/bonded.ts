@@ -1,0 +1,31 @@
+import { db } from "@/server/database/index.ts";
+import { Visibility } from "@/server/repositories/BaseRepository.ts";
+import { Characters } from "@/server/repositories/index.ts";
+import type { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
+import { BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
+import type { Character } from "@/shared/relations.ts";
+
+export type BondedEntry = { record: Character; detailed: DetailedCharacterInterface };
+
+export async function loadBondedByKind(
+  rulesetModule: Awaited<ReturnType<typeof RulesetFactory.fromRulesetId>>,
+  masterId: string,
+): Promise<Partial<Record<BondedKind, BondedEntry>>> {
+  const out: Partial<Record<BondedKind, BondedEntry>> = {};
+  for (const kind of BONDED_KIND_SLUGS) {
+    const record = await Characters.findOne(
+      db,
+      {
+        parentCharacterId: masterId,
+        kind,
+      },
+      Visibility.All,
+    );
+    if (!record) continue;
+    const detailed = rulesetModule.createDetailedCharacter(record, kind);
+    await detailed.build();
+    out[kind] = { record, detailed };
+  }
+  return out;
+}

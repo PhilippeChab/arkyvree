@@ -5,7 +5,7 @@ import { location } from "@/drizzle/schema.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { ItemsService } from "@/server/services/rulesets/index.ts";
+import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 
 const itemBodySchema = z.object({
   name: z.string().min(1),

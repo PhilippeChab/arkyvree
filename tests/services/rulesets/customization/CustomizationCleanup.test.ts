@@ -40,7 +40,7 @@ import {
   Skills,
   Users,
 } from "@/server/repositories/index.ts";
-import AuthenticationService from "@/server/services/AuthenticationService.ts";
+import { AuthenticationService } from "@/server/services/authentication/index.ts";
 import {
   createSeededTestRuleset,
   createTestCharacter,

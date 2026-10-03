@@ -3,12 +3,22 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { campaignsInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { Contributors } from "@/server/repositories/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
 
 export default class RulesetsPolicy extends BasePolicy<Ruleset> {
+  /** The session's policy on `ruleset`: a contributor's rights come from their active role on it. */
+  static async for(db: Db, session: Session, ruleset: Ruleset) {
+    let role = null;
+    if (ruleset.userId && ruleset.userId !== session.userId) {
+      role = await Contributors.findActiveRole(db, { userId: session.userId, rulesetId: ruleset.id });
+    }
+    return new RulesetsPolicy(session, ruleset, role);
+  }
+
   private readonly contributorRole: ContributorRole | null;
 
   constructor(session: Session, entity: Ruleset, contributorRole: ContributorRole | null = null) {

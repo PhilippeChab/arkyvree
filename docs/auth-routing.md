@@ -91,7 +91,7 @@ The flag distinguishes "your demo just expired" from "please sign in" so the use
 
 ## Stale-cookie defense (server-side)
 
-If the client and server desync (localStorage cleared while cookie persists, browser cookie restored from another origin, etc.), `server/services/AuthenticationService.ts` defends with `purgeDemoSessionUser`:
+If the client and server desync (localStorage cleared while cookie persists, browser cookie restored from another origin, etc.), `server/services/authentication/AuthenticationService.ts` defends with `purgeDemoSessionUser`:
 
 - Called inside `signIn`, `verifyEmail`, `signInWithGoogle` transactions.
 - If the inbound session cookie points at a demo user, hard-deletes that user before issuing the new real session.
@@ -124,7 +124,7 @@ There's no `BroadcastChannel`-based active sync today. Recovery happens lazily v
 | `client/src/hooks/useStartDemo.ts` | POSTs `/api/demo/start`, navigates to `/dashboard` |
 | `server/middlewares/session.ts` | Cookie config, session validation middleware |
 | `server/middlewares/denyDemoUser.ts` | Server-side gate for collaboration/profile mutations |
-| `server/services/AuthenticationService.ts` | `signIn`, `signUp`, `verifyEmail`, `signOut`, `startDemo`, `purgeDemoSessionUser` |
+| `server/services/authentication/AuthenticationService.ts` | `signIn`, `signUp`, `verifyEmail`, `signOut`, `startDemo`, `purgeDemoSessionUser` |
 | `server/routers/authentication/index.ts` | `/auth/*` routes |
 | `server/routers/api/demo/index.ts` | `/api/demo/start` route |
 | `server/routers/api/shared/index.tsx` | `/api/shared/*` public routes (no auth middleware) |

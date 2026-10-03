@@ -37,11 +37,11 @@ import {
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
-import CharactersService from "@/server/services/CharactersService.ts";
-import ClassesService from "@/server/services/rulesets/ClassesService.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
-import RulesetsService from "@/server/services/RulesetsService.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
+import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import {
   addCharacterLevel,
   addOneLevel,

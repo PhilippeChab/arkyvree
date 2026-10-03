@@ -5,8 +5,8 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { Exports, Notifications } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind } from "@/server/rulesets/types.ts";
-import { urlForSlot } from "@/server/services/attachments.ts";
-import { characterPdfTargetTable, findExportableCharacter } from "@/server/services/characters/helpers.ts";
+import { urlForSlot } from "@/server/services/attachments/index.ts";
+import { characterPdfTargetTable, findExportableCharacter } from "@/server/services/characters/index.ts";
 import { publishWsEvent } from "@/server/ws.ts";
 
 interface GeneratePdfPayload {

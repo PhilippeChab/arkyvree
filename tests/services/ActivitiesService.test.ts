@@ -10,8 +10,8 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
-import ActivitiesService from "@/server/services/ActivitiesService.ts";
-import PlayerCharactersService from "@/server/services/campaigns/CharactersService.ts";
+import { ActivitiesService } from "@/server/services/activities/index.ts";
+import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
   createTestCampaign,
@@ -104,7 +104,7 @@ describe("ActivitiesService.resolveActivityUrl", () => {
     const { user, session } = await createTestUser();
     const { campaign, player } = await createTestCampaign(user.id);
     const character = await createTestCharacter(user.id);
-    await PlayerCharactersService.linkCharacter(session, campaign.id, character.id, "Public");
+    await CampaignCharactersService.linkCharacter(session, campaign.id, character.id, "Public");
     const [invite] = await Invites.create(db, { playerId: player.id, email: "invited@example.com" });
 
     expect(

@@ -12,9 +12,9 @@ import {
 } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
-import { cowEntity, invalidateCowData } from "@/server/services/rulesets/cow.ts";
-import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import { cowEntity, invalidateCowData } from "@/server/services/rulesets/cow/index.ts";
+import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { createTestRuleset, getSeedCtx, insertRows, makeSession, uniqueId } from "@/tests/helpers.ts";
 
 describe("rulesetCache", () => {

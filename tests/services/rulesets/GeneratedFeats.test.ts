@@ -16,13 +16,13 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import { Dnd35SkillsHooks } from "@/server/rulesets/dnd3.5/hooks/SkillsHooks.ts";
-import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
-import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
-import ItemsService from "@/server/services/rulesets/ItemsService.ts";
-import PowersService from "@/server/services/rulesets/PowersService.ts";
-import SkillsService from "@/server/services/rulesets/SkillsService.ts";
+import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
+import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { ItemsService } from "@/server/services/rulesets/items/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { timingStorage } from "@/server/timing.ts";
 import {
   createSeededTestRuleset,

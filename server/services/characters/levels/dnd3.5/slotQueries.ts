@@ -14,19 +14,18 @@ import { CharacterLevels } from "@/server/repositories/index.ts";
 import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
-import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { classSkillIds, getKlassLevel } from "./classes.ts";
 import {
   buildPendingCharacterLevels,
   buildProjectedCharacterLevel,
   buildProjectedGivenFeats,
-  classSkillIds,
-  getKlassLevel,
   getLevelIdsFromOnward,
   loadFeatCustomizations,
-} from "./helpers.ts";
+} from "./projection.ts";
 
 /** What a level-up step projects: a new level after the levels planned before it, or an edit of one of the character's. */
 type LevelProjection = {

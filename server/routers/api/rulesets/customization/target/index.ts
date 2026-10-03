@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
-import { TargetPathsService } from "@/server/services/rulesets/index.ts";
+import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 
 const targetPaths = new Hono()
   /**

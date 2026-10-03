@@ -14,7 +14,7 @@ The first two are in-memory data stores; the third is an AsyncLocalStorage-backe
 
 ## How services interact with this
 
-Services never call the cache or COW plumbing directly. The single entry point is one of two helpers from `server/services/rulesets/cow.ts`:
+Services never call the cache or COW plumbing directly. The single entry point is one of two helpers from `server/services/rulesets/cow/`:
 
 ```ts
 // Single-ruleset operation (every CRUD, character-scoped action):
@@ -103,7 +103,7 @@ Every downstream read inside `fn` — including nested `detailedCharacter.build(
 
 `withRulesetScopes(tx, rulesetIds, fn)` is the multi-ruleset variant for list endpoints that span characters from several rulesets at once. It pre-loads `rulesetData` for every unique id and hands the map to `fn`, without activating a cowContext (a single context can only represent one ruleset). Inside `fn`, all lookups go through the per-ruleset `rulesetData.*` Maps, which each wrap their own overrideMap and therefore still auto-resolve.
 
-`withCowContext` / `currentCowContext` are infrastructure primitives (`cowContext.ts`, marked `@internal`) — application code never calls them directly.
+`withCowContext` / `currentCowContext` are infrastructure primitives (`server/database/cowContext.ts`, marked `@internal`) — application code never calls them directly.
 
 ### When you DO need to think about COW
 
@@ -123,7 +123,7 @@ The cow + rulesetCache modules have two kinds of callers. The split is by owners
 
 ### Consumer API (services + routes)
 
-From `server/services/rulesets/cow.ts`:
+From `server/services/rulesets/cow/`:
 
 | Symbol | Purpose |
 |---|---|
@@ -158,7 +158,7 @@ Used by the copy flows, `RulesetsService` (publish, extensions, reverts) and the
 - **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `getOrFetchRulesetData`, `invalidateCowData`, `invalidateAllCowData`.
 - **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `resolveOverrides`.
 - **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `getOrFetchRulesetRawData`, `isRulesetRawDataPinned`.
-- **AsyncLocalStorage wiring**: `withCowContext`, `currentCowContext` (`cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy and `BaseRepository.idMatches`.
+- **AsyncLocalStorage wiring**: `withCowContext`, `currentCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy and `BaseRepository.idMatches`.
 
 ## Ruleset Cache
 
@@ -479,8 +479,8 @@ The Proxy detects writes by matching method names against a prefix list (`create
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
 - `server/cache/rulesetCache.ts` — raw-tier cache, compose step (sibling merging + FK remap), accessor maps (incl. `cowResolvingMap` wrapper), invalidation
-- `server/services/rulesets/cow.ts` — `withRulesetScope` / `withRulesetScopes`, COW data + override map, copy primitives, `resolveOverrides`, invalidation hooks
-- `server/services/rulesets/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `currentCowContext` (infrastructure)
+- `server/services/rulesets/cow/` — `withRulesetScope` / `withRulesetScopes`, COW data + override map, copy primitives, `resolveOverrides`, invalidation hooks
+- `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `currentCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/index.ts` — Proxy wrapping every repo with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
 - `server/repositories/BaseRepository.ts` — `idMatches()` predicate for cowContext-aware composite-key WHERE clauses

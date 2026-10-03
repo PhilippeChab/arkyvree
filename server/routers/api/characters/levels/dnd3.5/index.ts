@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { characterIdParam, limitOf, page } from "@/server/routers/api/validation.ts";
-import { CharacterLevelsService } from "@/server/services/characters/index.ts";
+import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
 const isUuid = (v: string) => z.string().uuid().safeParse(v).success;
 

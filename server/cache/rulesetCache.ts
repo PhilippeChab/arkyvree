@@ -1,3 +1,4 @@
+import { withCowContext } from "@/server/database/cowContext.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Abilities,
@@ -29,8 +30,7 @@ import {
   invalidateCowData,
   mergeSiblingRequirements,
   resolveOverrides,
-} from "@/server/services/rulesets/cow.ts";
-import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
+} from "@/server/services/rulesets/cow/index.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
@@ -59,7 +59,7 @@ import { stripSeparators } from "@/shared/utils.ts";
 import DependentCache from "./DependentCache.ts";
 
 // ──────────────────────────────────────────────────────────────
-// COW data cache (delegates to cow.ts cache)
+// COW data cache (delegates to cow/'s cache)
 // ──────────────────────────────────────────────────────────────
 
 export type CachedCowData = CowData;
@@ -443,7 +443,7 @@ async function getOrFetchRulesetData(
   const mechanics = compose((r) => r.mechanics);
 
   // Klass levels: `overrideMap` carries klass-level id pairs for COW'd klasses
-  // (back-filled by cow.ts after `buildOverrideMap`), so isExcluded covers both
+  // (back-filled by cow/ after `buildOverrideMap`), so isExcluded covers both
   // entity-level and klass-level IDs uniformly. Additionally drop levels whose
   // parent klass is a sibling loser — siblingIds only has klass IDs, not klass-
   // level IDs.

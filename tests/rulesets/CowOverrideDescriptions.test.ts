@@ -4,9 +4,9 @@ import { addClassLevels, addFeats, addPowers } from "@/database/seeds/helpers.ts
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import { refreshEntityData } from "@/server/services/rulesets/cow.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
-import PowersService from "@/server/services/rulesets/PowersService.ts";
+import { refreshEntityData } from "@/server/services/rulesets/cow/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 import { createSeedCharacter } from "@/tests/levelFixtures.ts";
 

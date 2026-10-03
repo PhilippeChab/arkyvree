@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import NotificationsService from "@/server/services/NotificationsService.ts";
+import { NotificationsService } from "@/server/services/notifications/index.ts";
 
 const notifications = new Hono()
   .use(sessionMiddleware)

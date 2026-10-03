@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { runCleanupTask } from "@/server/jobs/runCleanup.ts";
 import { Attachments, Users } from "@/server/repositories/index.ts";
-import AuthenticationService from "@/server/services/AuthenticationService.ts";
+import { AuthenticationService } from "@/server/services/authentication/index.ts";
 import { createTestAttachment, createTestCharacter, silentJobHelpers } from "@/tests/helpers.ts";
 
 describe("runCleanup", () => {

@@ -1,11 +1,11 @@
+import { withCowContext } from "@/server/database/cowContext.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Feats } from "@/server/repositories/index.ts";
-import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
-import type { EntityType } from "@/server/services/rulesets/hashing.ts";
 
 import { ENTITY_REPOS } from "./constants.ts";
 import type { CowData } from "./cowData.ts";
+import type { EntityType } from "./hashing.ts";
 
 /**
  * Shared by the single and batched pre-create name checks. Throws a

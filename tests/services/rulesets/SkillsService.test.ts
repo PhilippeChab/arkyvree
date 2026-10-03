@@ -6,8 +6,8 @@ import { abilitiesInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";
-import ClassesService from "@/server/services/rulesets/ClassesService.ts";
-import SkillsService from "@/server/services/rulesets/SkillsService.ts";
+import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
+import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import {
   addCharacterLevel,
   createTestCharacter,

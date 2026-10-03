@@ -23,11 +23,12 @@ import {
 import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { DetailedCharacterInterface, PreloadedRulesetData } from "@/server/rulesets/types.ts";
-import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Character, KlassLevel, Requirement, Ruleset, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
+import { getKlassLevel } from "./classes.ts";
 import {
   buildPendingCharacterLevels,
   buildProjectedCharacterLevel,
@@ -35,10 +36,9 @@ import {
   buildProjectedGivenFeats,
   buildProjectedSkillsFromAllocations,
   type FeatPick,
-  getKlassLevel,
   getLevelIdsFromOnward,
   loadFeatCustomizations,
-} from "./helpers.ts";
+} from "./projection.ts";
 import { annotateRequirements } from "./validation.ts";
 
 /** Resolves aptitude-targeting modifiers (aptitudes.<slug>.allowed) for feats, grouped by feat ID. */

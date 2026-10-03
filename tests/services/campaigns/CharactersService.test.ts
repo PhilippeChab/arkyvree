@@ -6,7 +6,7 @@ import { klassLevelsInRules, playerCharactersInCampaign } from "@/drizzle/schema
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, CharacterLevels, Characters, Players } from "@/server/repositories/index.ts";
-import PlayerCharactersService from "@/server/services/campaigns/CharactersService.ts";
+import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import {
   addCharacterContributor,
   createTestCampaign,
@@ -19,7 +19,7 @@ import {
 type Visibility = "Private" | "Public" | "Partial";
 
 const link = (userId: string, campaignId: string, characterId: string, visibility: Visibility = "Public") =>
-  PlayerCharactersService.linkCharacter(makeSession(userId), campaignId, characterId, visibility);
+  CampaignCharactersService.linkCharacter(makeSession(userId), campaignId, characterId, visibility);
 
 /** A new user playing in the campaign, with a character of theirs linked with `visibility`. */
 async function joinWithCharacter(campaignId: string, visibility: Visibility) {
@@ -31,7 +31,7 @@ async function joinWithCharacter(campaignId: string, visibility: Visibility) {
 }
 
 const list = (userId: string, campaignId: string, pagination = { limit: 10, page: 1 }) =>
-  PlayerCharactersService.getCampaignCharacters(makeSession(userId), campaignId, {}, pagination);
+  CampaignCharactersService.getCampaignCharacters(makeSession(userId), campaignId, {}, pagination);
 
 /** Gives the character the seeded class levels, as `[class, level]` pairs. */
 async function addLevels(characterId: string, levels: [string, number][]) {
@@ -229,7 +229,7 @@ describe("PlayerCharactersService", () => {
       for (const visibility of ["Private", "Public", "Partial"] as const) {
         const character = await createTestCharacter(user.id);
         await link(user.id, campaign.id, character.id, visibility);
-        const result = await PlayerCharactersService.getCampaignCharacter(
+        const result = await CampaignCharactersService.getCampaignCharacter(
           makeSession(user.id),
           campaign.id,
           character.id,
@@ -244,7 +244,7 @@ describe("PlayerCharactersService", () => {
       const { campaign } = await createTestCampaign(gm.id);
       const viewer = await joinWithCharacter(campaign.id, "Private");
       const get = (characterId: string) =>
-        PlayerCharactersService.getCampaignCharacter(makeSession(viewer.user.id), campaign.id, characterId);
+        CampaignCharactersService.getCampaignCharacter(makeSession(viewer.user.id), campaign.id, characterId);
 
       const publicOne = await joinWithCharacter(campaign.id, "Public");
       expect(await get(publicOne.character.id)).toMatchObject({ visibility: "Public", canEdit: false });
@@ -271,7 +271,7 @@ describe("PlayerCharactersService", () => {
       const contributor = await joinWithCharacter(campaign.id, "Private");
       await addCharacterContributor(character.id, contributor.user, owner.id);
 
-      const result = await PlayerCharactersService.getCampaignCharacter(
+      const result = await CampaignCharactersService.getCampaignCharacter(
         makeSession(contributor.user.id),
         campaign.id,
         character.id,
@@ -287,11 +287,11 @@ describe("PlayerCharactersService", () => {
       const { user: stranger } = await createTestUser();
 
       await expect(
-        PlayerCharactersService.getCampaignCharacter(makeSession(stranger.id), campaign.id, linked.id),
+        CampaignCharactersService.getCampaignCharacter(makeSession(stranger.id), campaign.id, linked.id),
       ).rejects.toThrow(ForbiddenError);
       const unlinked = await createTestCharacter(user.id);
       await expect(
-        PlayerCharactersService.getCampaignCharacter(makeSession(user.id), campaign.id, unlinked.id),
+        CampaignCharactersService.getCampaignCharacter(makeSession(user.id), campaign.id, unlinked.id),
       ).rejects.toThrow(NotFoundError);
     });
   });
