@@ -6,7 +6,8 @@ const oxlint = path.resolve("node_modules/.bin/oxlint");
 
 /**
  * A repo of `files` (path → source), linted by our `rules` (`arkyvree/…`) from `from`, one of its folders: each
- * finding as `rule path`. The rules find the root by its lint config, wherever oxlint runs.
+ * finding as `rule path`. The rules find the root by its lint config, wherever oxlint runs. One thread: the suite's
+ * other workers keep the rest of the cores.
  */
 export function lintRepo(files: Record<string, string>, rules: string[], from = ".") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
@@ -21,7 +22,7 @@ export function lintRepo(files: Record<string, string>, rules: string[], from = 
       rules: Object.fromEntries(rules.map((rule) => [`arkyvree/${rule}`, "error"])),
     }),
   );
-  const run = Bun.spawnSync([oxlint, "-f", "unix", "-c", path.join(dir, ".oxlintrc.json"), "."], {
+  const run = Bun.spawnSync([oxlint, "--threads=1", "-f", "unix", "-c", path.join(dir, ".oxlintrc.json"), "."], {
     cwd: path.join(dir, from),
   });
   fs.rmSync(dir, { recursive: true });
