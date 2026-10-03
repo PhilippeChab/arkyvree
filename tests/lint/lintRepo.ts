@@ -4,22 +4,37 @@ import path from "node:path";
 
 const oxlint = path.resolve("node_modules/.bin/oxlint");
 
+/** One oxlint run: its output, its exit code, and whether it was killed for running past 15s. */
+async function runOnce(args: string[], cwd?: string) {
+  const proc = Bun.spawn([oxlint, "--threads=1", ...args], { cwd, stdout: "pipe", stderr: "pipe" });
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    proc.kill();
+  }, 15_000);
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  clearTimeout(timer);
+  return { stdout, stderr, exitCode, timedOut };
+}
+
 /**
- * Runs oxlint on one thread (the suite's other workers keep the rest of the cores). A run that hangs, seen now and then
- * under a full suite, is killed after 15s and run again; a second hang fails with oxlint's stderr.
+ * Runs oxlint on one thread (the suite's other workers keep the rest of the cores), asynchronously: Bun's `spawnSync`
+ * can miss a child's exit under a busy suite and block its worker for good. A run past 15s is killed and run again;
+ * a second fails with oxlint's stderr.
  */
-export function runOxlint(args: string[], cwd?: string) {
-  const run = () => Bun.spawnSync([oxlint, "--threads=1", ...args], { cwd, timeout: 15_000 });
-  // A killed run's exit code can read as success (0) with nothing on stdout: only the timeout flag tells.
-  const hung = (result: ReturnType<typeof run>) =>
-    `(${args.join(" ")}; exit ${result.exitCode}, signal ${result.signalCode}): ${result.stderr.toString()}`;
-  let result = run();
-  if (result.exitedDueToTimeout) {
-    // oxlint-disable-next-line no-console
+export async function runOxlint(args: string[], cwd?: string) {
+  const hung = (result: Awaited<ReturnType<typeof runOnce>>) =>
+    `(${args.join(" ")}; exit ${result.exitCode}): ${result.stderr}`;
+  let result = await runOnce(args, cwd);
+  if (result.timedOut) {
     console.warn(`oxlint hung once, running it again ${hung(result)}`);
-    result = run();
+    result = await runOnce(args, cwd);
   }
-  if (result.exitedDueToTimeout) throw new Error(`oxlint hung twice ${hung(result)}`);
+  if (result.timedOut) throw new Error(`oxlint hung twice ${hung(result)}`);
   return result;
 }
 
@@ -27,7 +42,7 @@ export function runOxlint(args: string[], cwd?: string) {
  * A repo of `files` (path → source), linted by our `rules` (`arkyvree/…`) from `from`, one of its folders: each
  * finding as `rule path`. The rules find the root by its lint config, wherever oxlint runs.
  */
-export function lintRepo(files: Record<string, string>, rules: string[], from = ".") {
+export async function lintRepo(files: Record<string, string>, rules: string[], from = ".") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
   for (const [file, source] of Object.entries(files)) {
     fs.mkdirSync(path.join(dir, path.dirname(file)), { recursive: true });
@@ -40,9 +55,9 @@ export function lintRepo(files: Record<string, string>, rules: string[], from = 
       rules: Object.fromEntries(rules.map((rule) => [`arkyvree/${rule}`, "error"])),
     }),
   );
-  const run = runOxlint(["-f", "unix", "-c", path.join(dir, ".oxlintrc.json"), "."], path.join(dir, from));
+  const run = await runOxlint(["-f", "unix", "-c", path.join(dir, ".oxlintrc.json"), "."], path.join(dir, from));
   fs.rmSync(dir, { recursive: true });
-  return [...run.stdout.toString().matchAll(/^\.?\/?([^:]+):\d+:\d+: .*\[Error\/arkyvree\(([a-z-]+)\)\]$/gm)]
+  return [...run.stdout.matchAll(/^\.?\/?([^:]+):\d+:\d+: .*\[Error\/arkyvree\(([a-z-]+)\)\]$/gm)]
     .map(([, file, rule]) => `${rule} ${path.posix.join(from, file)}`)
     .sort();
 }

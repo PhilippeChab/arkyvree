@@ -99,13 +99,13 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Develop mobile first — all new components and layouts must work on small screens (375px) before scaling up
 - Use `useIsMobile()` hook (`client/src/hooks/useIsMobile.ts`) for mobile-specific branching
 - Use MUI responsive sx props (`{ xs: ..., sm: ..., md: ... }`) over static values
-- All `<Dialog>` components must include `fullScreen={isMobile}`. A full-screen dialog has no backdrop to tap, so every dialog needs its own way out: a Close or Cancel button
+- All `<Dialog>` components must include `fullScreen={isMobile}` (`arkyvree/dialog-conventions`). A full-screen dialog has no backdrop to tap, so every dialog needs its own way out: a Close or Cancel button
 - Never use hover-only interactions without a touch-friendly fallback. A table's row actions spread `ROW_ACTIONS_HOVER_SX` into the row's `sx` and `ROW_ACTIONS_SX` into their box (`className="row-actions"`): revealed on hover with a pointer, always shown on touch screens and while focused
 
 **Components:**
 
 - Functional components with explicit prop interfaces
-- Every control has an accessible name. An icon-only `IconButton` takes an `aria-label` (a `Tooltip` around it names it, but not when the tooltip wraps a `<span>` for a disabled button). A `Tooltip` on an element that already has text (a chip, a list option, a labelled button) takes `describeChild`, otherwise its title replaces the element's name. A switch or checkbox is the `control` of a `FormControlLabel`, and a dialog without a `DialogTitle` points `aria-labelledby` at its heading
+- Every control has an accessible name. An icon-only `IconButton` takes an `aria-label` (a `Tooltip` around it names it, but not when the tooltip wraps a `<span>` for a disabled button; `arkyvree/accessible-icon-buttons`). A `Tooltip` on an element that already has text (a chip, a list option, a labelled button) takes `describeChild`, otherwise its title replaces the element's name. A switch or checkbox is the `control` of a `FormControlLabel`, and a dialog without a `DialogTitle` points `aria-labelledby` at its heading
 - Everything a click opens is reachable from the keyboard. A row or card that opens or expands on click spreads `clickableProps(onActivate)` and puts `CLICKABLE_SX` in its `sx` (`components/common`): focusable, activated with Enter or Space, with a focus ring. A control inside it stops its click from reaching the row
 - Group related components in folders with `index.ts` exports. Code outside a folder imports it through its `index.ts`, never a file inside it; files within the folder (its subfolders included) import each other directly, and a subfolder with its own `index.ts` is imported through that
 - An `index.ts` exports what code outside its folder uses. An entry, or a whole `index.ts`, that nothing imports is dead code: delete it. Page folders have none: routes import each page file directly (most lazily, so each gets its own chunk)
@@ -116,7 +116,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - `ApiError` includes `status` (HTTP code) and `errorName` (server error class name)
 - The RPC fetch throws `ApiError` on every non-2xx response, so never check `response.ok`. Read bodies with `parseResponse(rpc.api.x.$get(...))` (re-exported from `rpc.ts`), which also narrows to the success type. To react to a specific status (e.g. show "not found"), catch `ApiError` and test `error.status`
 - Use `InferRequestType` / `InferResponseType` from `hono/client` for all API types — never recreate manually
-- Queries shared between a page and a prefetch (sidebar hover, card hover) live in `client/src/lib/queries.ts` as `queryOptions` factories, so the key, page size and params can't drift apart. Ruleset and campaign tab lists do the same in `pages/rulesets/details/sectionQueries.ts` and `pages/campaigns/details/sectionQueries.ts`, and so do the detail pages that a table row prefetches on hover: the customization page's entity in `pages/rulesets/customization/entityQueries.ts`, the simple entity pages (abilities, skills, saves…) in `pages/rulesets/details/entities/entityDetailQueries.ts`, and the class page and its tabs in `pages/rulesets/details/classes/classSectionQueries.ts`. A page renders with its factory and the hover prefetch (ruleset tab, campaign card, table row) goes through it. Every query key comes from `lib/queryKeys.ts`
+- Queries shared between a page and a prefetch (sidebar hover, card hover) live in `client/src/lib/queries.ts` as `queryOptions` factories, so the key, page size and params can't drift apart. Ruleset and campaign tab lists do the same in `pages/rulesets/details/sectionQueries.ts` and `pages/campaigns/details/sectionQueries.ts`, and so do the detail pages that a table row prefetches on hover: the customization page's entity in `pages/rulesets/customization/entityQueries.ts`, the simple entity pages (abilities, skills, saves…) in `pages/rulesets/details/entities/entityDetailQueries.ts`, and the class page and its tabs in `pages/rulesets/details/classes/classSectionQueries.ts`. A page renders with its factory and the hover prefetch (ruleset tab, campaign card, table row) goes through it. Every query key comes from `lib/queryKeys.ts` (`arkyvree/query-keys`: a key written as an array spreads one first)
 
 **State Management:**
 
@@ -140,7 +140,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Infinite listboxes: `useListboxQuery(options)` returns the loaded `items` and the listbox's `onScroll`; give the listbox `ScrollSafeListbox`. Several queries behind one listbox share a `createListboxScrollHandler([...])` (`lib/listboxScroll.ts`); flatten any other infinite query with `pageItems(data)` (`lib/pageItems.ts`)
 - A query that can't run yet passes `skipToken` as its `queryFn` (not `enabled` plus a guard or `!` in the `queryFn`); `enabled` is for plain on/off gates
 - Untyped JSON (activity and notification payloads, stored state) is read through `isRecord` (`shared/isRecord.ts`) guards, not casts
-- Mutations use `.mutate()` with `onSuccess`/`onError` callbacks, not `.mutateAsync()`
+- Mutations use `.mutate()` with `onSuccess`/`onError` callbacks, not `.mutateAsync()` (`arkyvree/client-apis`)
 
 **Shared UI building blocks** (`components/common`): `PageHeader` (top of every list / account page), `ListCard` + `ListCardGrid` + `InfoPill` (ruleset, character and campaign grids), `DetailPageHeader` + `SectionTabs` (ruleset / campaign pages), `PageActionButton` (the create action in a list page header and empty state), `LoadMoreButton` (paginated lists), `BlankState` (empty lists; pass the icon component, it applies the standard size and tint), `SectionContent` (a tab's centered column), `PageError` (a page that failed to load, with its way back; `loadFailureMessage(what, error)` from `lib/errorMessage.ts` gives its text. Show it only when there's no data (`if (!data)`), so a failed background refetch doesn't replace a loaded page. Pages showing a record others control (campaign, campaign character, shared sheet) also show it on `accessLost(error)`: a 404 / 403 means it was deleted or access was revoked), `ActionMenuItem` (a page's action menu item, colored by intent), `NameField` / `DescriptionField` / `EmailField` / `PasswordField` (with `nameRules` from `lib/validation.ts`; a number field validated by the form takes `wholeNumberRules(min, required?)` from there instead of a native `min`, which would block the submit before the field shows why), `SelectField` (a form's select), `RulesetPicker` + `BaseRulesetAlert` (a create dialog's ruleset), `ValidationIssueList`. A select outside a form is a `TextField select`: `FormControl` + `InputLabel` + `Select` leaves the combobox without an accessible name. Ruleset tables use `DescriptionCell` and `AptitudeChipsCell`, and spell lists `SpellLevelFilter` (`pages/rulesets/components`). Formatting helpers live in `lib/formatNumeric.ts` (`formatSigned`, `formatCount`, `formatCost`, `formatWeight`) and `lib/errorMessage.ts`; an empty value reads "—". Reuse them rather than restyling a copy.
 
@@ -152,7 +152,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 **Loading Indicators:**
 
-- Always use `<DiceSpinner>` (`components/common/DiceSpinner.tsx`) — never MUI `CircularProgress`
+- Always use `<DiceSpinner>` (`components/common/DiceSpinner.tsx`) — never MUI `CircularProgress` (`arkyvree/client-apis`)
 - For Buttons, use the wrapper API so the button doesn't shrink when loading flips: `<DiceSpinner size="small" loading={isPending}>Save</DiceSpinner>` as the Button child. Pair with `disabled={isPending}`. Keep any static `startIcon` outside the wrapper.
 - For Suspense fallbacks and full-section loaders, use standalone `<DiceSpinner />` (default medium); it centers itself, so give it the block's spacing through `sx` (`<DiceSpinner sx={{ py: 4 }} />`) instead of wrapping it in a Box
 
@@ -162,7 +162,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
   - **`CreateDialog` / `EditDialog`** (from `StandardDialogs.tsx`): standard create / edit shapes. Default for create or update flows.
   - **`FormDialog`**: any other dialog that contains a React Hook Form. Binds the form, registers with the global dirty-tracker, blocks backdrop / Escape close while dirty.
   - **`ConfirmDialog` / `DeleteDialog`** (from `StandardDialogs.tsx`): yes/no confirmations. Set `confirmColor` by intent (`warning` for Archive / Leave, `success` for Publish, `error` for destructive) and `confirmLabel` to the action ("Archive Character", not "Confirm"). `DeleteDialog` is the `error` preset.
-  - **`Modal`**: info dialogs and manager dialogs that don't bind a form. **Never wrap a `<form>` in `Modal`** — Modal skips the dirty-close guard, so backdrop click / Escape discards typed input.
+  - **`Modal`**: info dialogs and manager dialogs that don't bind a form. **Never wrap a `<form>` in `Modal`** — Modal skips the dirty-close guard, so backdrop click / Escape discards typed input (`arkyvree/dialog-conventions`).
 - Dialog title and action-bar styling come from the theme — use a plain `<DialogTitle>` and `<DialogActions>` without extra typography or padding.
 - Manager dialogs with both a list and an invite form: keep the outer `Modal` for the manager and put the form in a nested `FormDialog` opened from an Invite button.
 - Edit dialogs receive a `form` prop (from React Hook Form) — parent calls `form.reset({ ...data })` before opening
@@ -179,11 +179,11 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 
 **Guidelines:**
 
-- Never skip failing tests or use mocks
+- Never skip failing tests or use mocks (`arkyvree/test-conventions`: no `.skip`, `.only`, `.todo`, `.fixme`, `.if` / `.skipIf`, no `mock` / `spyOn`)
 - Use seed data from test database
 - Run with `bun run test`, or `bun run test:changed` for the files changed from the parent branch
 - E2E (`bun run test:e2e`) builds the client for production and serves it with the API from one server on port 8010 (`E2E_PORT`), on a database of its own (`<name>_e2e_<port>`): a copy of the e2e template (`<name>_e2e`), which `bun run test:db:reset` copies from the seeded test database, so a run never locks the unit tests' database. It runs on half the CPU cores locally; pass `--workers N` to change it for one run. `E2E_SKIP_BUILD=1` reuses the last build; `E2E_COVERAGE=1` reports the client code the journeys run (coverage/e2e)
-- E2E setup goes through the API (`signIn`, `forkCoreRuleset`, `createCharacter`, `createCampaign`, or `apiOf(page)` from `tests/e2e/api.ts`): a journey clicks through only what it tests. Select by role and accessible name, never by `data-testid` (the production build strips MUI's). Every e2e file imports `test` / `expect` from `tests/e2e/fixtures.ts`
+- E2E setup goes through the API (`signIn`, `forkCoreRuleset`, `createCharacter`, `createCampaign`, or `apiOf(page)` from `tests/e2e/api.ts`): a journey clicks through only what it tests. Select by role and accessible name, never by `data-testid` (the production build strips MUI's). Every e2e file imports `test` / `expect` from `tests/e2e/fixtures.ts` (`arkyvree/test-conventions` holds both)
 
 **Test Structure:**
 

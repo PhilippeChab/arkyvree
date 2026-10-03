@@ -9,9 +9,9 @@ import { lintRepo, runOxlint } from "./lintRepo.ts";
 setDefaultTimeout(30_000);
 
 describe("conventions", () => {
-  test("a file imports another folder's module through @/, and --fix rewrites a ../ import", () => {
+  test("a file imports another folder's module through @/, and --fix rewrites a ../ import", async () => {
     expect(
-      lintRepo(
+      await lintRepo(
         {
           "server/a/b/c.ts": 'import { d } from "../d.ts";\nimport { e } from "./e.ts";\nexport const c = [d, e];\n',
           "server/a/b/e.ts": 'import { d } from "@/server/a/d.ts";\nexport const e = d;\n',
@@ -32,16 +32,16 @@ describe("conventions", () => {
         rules: { "arkyvree/no-parent-imports": "error" },
       }),
     );
-    runOxlint(["-c", config, "--fix", dir]);
+    await runOxlint(["-c", config, "--fix", dir]);
     expect(fs.readFileSync(path.join(dir, "server/a/b/c.ts"), "utf8")).toStartWith(
       'import { d } from "@/server/a/d.ts";',
     );
     fs.rmSync(dir, { recursive: true });
   });
 
-  test("a helper is a module named for what it does, in the app's code", () => {
+  test("a helper is a module named for what it does, in the app's code", async () => {
     expect(
-      lintRepo(
+      await lintRepo(
         {
           "server/services/x/helpers.ts": "export const x = 1;\n",
           "client/src/lib/helpers.tsx": "export const y = 1;\n",
@@ -60,9 +60,9 @@ describe("conventions", () => {
     ]);
   });
 
-  test("only the repositories' index builds a repository", () => {
+  test("only the repositories' index builds a repository", async () => {
     expect(
-      lintRepo(
+      await lintRepo(
         {
           "server/repositories/index.ts": "export const Feats = new FeatsRepository();\n",
           "server/services/s.ts": "export const feats = new FeatsRepository();\n",
@@ -72,9 +72,9 @@ describe("conventions", () => {
     ).toEqual(["repository-instances server/services/s.ts"]);
   });
 
-  test("a route's params are camelCase, it validates with the app's zValidator, and it doesn't catch", () => {
+  test("a route's params are camelCase, it validates with the app's zValidator, and it doesn't catch", async () => {
     expect(
-      lintRepo(
+      await lintRepo(
         {
           "server/routers/api/good.ts": 'export const r = app.get("/:id/feats/:featId", (c) => c);\n',
           "server/routers/api/params.ts": 'export const r = app.get("/:id/feats/:feat_id", (c) => c);\n',
@@ -104,9 +104,9 @@ describe("conventions", () => {
     ]);
   });
 
-  test("the server sorts through the repository's orderBy", () => {
+  test("the server sorts through the repository's orderBy", async () => {
     expect(
-      lintRepo(
+      await lintRepo(
         {
           "server/repositories/BaseRepository.ts":
             'import { asc, desc } from "drizzle-orm";\nexport const o = [asc, desc];\n',
@@ -122,9 +122,9 @@ describe("conventions", () => {
     ]);
   });
 
-  test("shared/ imports neither Bun's APIs nor Node's", () => {
+  test("shared/ imports neither Bun's APIs nor Node's", async () => {
     expect(
-      lintRepo(
+      await lintRepo(
         {
           "shared/a.ts": 'import fs from "node:fs";\nexport const a = fs;\n',
           "shared/b.ts": 'import { $ } from "bun";\nexport const b = $;\n',
@@ -143,9 +143,9 @@ describe("conventions", () => {
     ]);
   });
 
-  test("a Session parameter is named session", () => {
+  test("a Session parameter is named session", async () => {
     expect(
-      lintRepo(
+      await lintRepo(
         {
           "server/services/good.ts":
             "export function f(session: Session, _session: Session) {}\nexport class P {\n  constructor(protected readonly session: Session) {}\n}\n",
@@ -165,9 +165,9 @@ describe("conventions", () => {
       "session-param server/services/union.ts",
     ]);
   });
-  test("a test named after a module sits at that module's mirror; a scenario test sits anywhere in its area", () => {
+  test("a test named after a module sits at that module's mirror; a scenario test sits anywhere in its area", async () => {
     expect(
-      lintRepo(
+      await lintRepo(
         {
           "server/services/x/FooService.ts": "export default 1;\n",
           "tests/services/x/FooService.test.ts": "export const t = 1;\n",
