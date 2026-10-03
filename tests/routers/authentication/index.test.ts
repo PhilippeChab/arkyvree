@@ -46,6 +46,16 @@ describe("authentication", () => {
       expect(response.headers.get("set-cookie") ?? "").not.toContain(SESSION_COOKIE_NAME);
     });
 
+    test("refuses a password that doesn't match its confirmation", async () => {
+      const response = await auth["sign-up"].$post({
+        json: { emailAddress: newEmail("mismatch"), password, passwordConfirmation: `${password}-other` },
+      });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        issues: [{ category: "passwordConfirmation", message: "Passwords do not match" }],
+      });
+    });
+
     test("verifies the email with the code sent, signing the user in", async () => {
       const email = newEmail("verify");
       const user = await signUp(email);
@@ -217,6 +227,10 @@ describe("authentication", () => {
       const api = await signedInApi(user.id);
       const json = { newPassword: "firstpassword1", newPasswordConfirmation: "firstpassword1" };
 
+      const mismatched = await api.auth["set-password"].$post({
+        json: { ...json, newPasswordConfirmation: "different1" },
+      });
+      expect(mismatched.status).toBe(400);
       expect(await expectOk(api.auth["set-password"].$post({ json }))).toEqual({ success: true });
       await expectOk(auth["sign-in"].$post({ json: { emailAddress: email, password: "firstpassword1" } }));
       expect((await api.auth["set-password"].$post({ json })).status).toBe(400);

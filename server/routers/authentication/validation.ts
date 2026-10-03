@@ -15,6 +15,10 @@ export const SignUpJson = z
       password: sanitizeText(input.password),
       passwordConfirmation: sanitizeText(input.passwordConfirmation),
     };
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: "Passwords do not match",
+    path: ["passwordConfirmation"],
   });
 
 export const SignInJson = z
@@ -111,13 +115,6 @@ export const ResetPasswordJson = z
     path: ["newPasswordConfirmation"],
   });
 
-export type SignUpJson = z.infer<typeof SignUpJson>;
-export type SignInJson = z.infer<typeof SignInJson>;
-export type UpdateProfileJson = z.infer<typeof UpdateProfileJson>;
-export type UpdatePasswordJson = z.infer<typeof UpdatePasswordJson>;
-export type VerifyEmailJson = z.infer<typeof VerifyEmailJson>;
-export type ResendVerificationJson = z.infer<typeof ResendVerificationJson>;
-export type ForgotPasswordJson = z.infer<typeof ForgotPasswordJson>;
 export const VerifyEmailChangeJson = z
   .object({
     code: z.string(),
@@ -173,10 +170,3 @@ export const UnlinkOauthJson = z
       provider: sanitizeText(input.provider),
     };
   });
-
-export type ResetPasswordJson = z.infer<typeof ResetPasswordJson>;
-export type VerifyEmailChangeJson = z.infer<typeof VerifyEmailChangeJson>;
-export type DeleteAccountJson = z.infer<typeof DeleteAccountJson>;
-export type GoogleSignInJson = z.infer<typeof GoogleSignInJson>;
-export type SetPasswordJson = z.infer<typeof SetPasswordJson>;
-export type UnlinkOauthJson = z.infer<typeof UnlinkOauthJson>;
