@@ -19,11 +19,13 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
     include?: { campaign: boolean },
   ) {
     return await db.query.invitesInCampaign.findMany({
-      where: this.where([
-        "userId" in where && eq(this.table.userId, where.userId),
-        "playerId" in where && eq(this.table.playerId, where.playerId),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "userId" in where && eq(this.table.userId, where.userId),
+          "playerId" in where && eq(this.table.playerId, where.playerId),
+        ],
+        [isNull(this.table.deletedAt)],
+      ),
       with: include?.campaign
         ? {
             playersInCampaign: {
@@ -47,15 +49,19 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
       | { email: string; playerIds: string[]; status: string },
   ) {
     return await db.query.invitesInCampaign.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "email" in where && eq(this.table.email, where.email),
-        "playerId" in where && eq(this.table.playerId, where.playerId),
-        "playerIds" in where && inArray(this.table.playerId, where.playerIds),
-        "status" in where && eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "id" in where && eq(this.table.id, where.id),
+          "userId" in where && eq(this.table.userId, where.userId),
+          "email" in where && eq(this.table.email, where.email),
+          "playerId" in where && eq(this.table.playerId, where.playerId),
+        ],
+        [
+          "playerIds" in where && inArray(this.table.playerId, where.playerIds),
+          "status" in where && eq(this.table.status, where.status),
+          isNull(this.table.deletedAt),
+        ],
+      ),
     });
   }
 

@@ -83,13 +83,15 @@ class RulesetsRepository extends include(
   /** Rulesets by id, those subscribing to an extension (`extensionRulesetId`), or the system's own (`system`). */
   async findMany(db: Db, where: { ids: string[] } | { extensionRulesetId: string } | { system: true }) {
     return await db.query.rulesetsInRules.findMany({
-      where: this.where([
-        "ids" in where && inArray(this.table.id, where.ids),
-        "extensionRulesetId" in where &&
-          sql`${this.table.extensionRulesetIds} @> ARRAY[${where.extensionRulesetId}]::uuid[]`,
-        "system" in where && eq(this.table.system, where.system),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "ids" in where && inArray(this.table.id, where.ids),
+          "extensionRulesetId" in where &&
+            sql`${this.table.extensionRulesetIds} @> ARRAY[${where.extensionRulesetId}]::uuid[]`,
+          "system" in where && eq(this.table.system, where.system),
+        ],
+        [isNull(this.table.deletedAt)],
+      ),
     });
   }
 

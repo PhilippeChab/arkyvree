@@ -55,19 +55,23 @@ class PlayerCharactersRepository extends include(
       | { characterId: string; campaignId: string },
   ) {
     return await db.query.playerCharactersInCampaign.findFirst({
-      where: this.where([
-        "playerId" in where && eq(this.table.playerId, where.playerId),
-        "characterId" in where && eq(this.table.characterId, where.characterId),
-        "campaignId" in where &&
-          inArray(
-            this.table.playerId,
-            db
-              .select({ id: playersInCampaign.id })
-              .from(playersInCampaign)
-              .where(and(eq(playersInCampaign.campaignId, where.campaignId), isNull(playersInCampaign.deletedAt))),
-          ),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "playerId" in where && eq(this.table.playerId, where.playerId),
+          "characterId" in where && eq(this.table.characterId, where.characterId),
+        ],
+        [
+          "campaignId" in where &&
+            inArray(
+              this.table.playerId,
+              db
+                .select({ id: playersInCampaign.id })
+                .from(playersInCampaign)
+                .where(and(eq(playersInCampaign.campaignId, where.campaignId), isNull(playersInCampaign.deletedAt))),
+            ),
+          isNull(this.table.deletedAt),
+        ],
+      ),
     });
   }
 
@@ -101,14 +105,14 @@ class PlayerCharactersRepository extends include(
 
     return this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.playerCharactersInCampaign.findMany({
-        where: this.where([
-          "playerIds" in where && inArray(playerCharactersInCampaign.playerId, where.playerIds),
-          "playerId" in where && eq(this.table.playerId, where.playerId),
-          "characterId" in where && eq(this.table.characterId, where.characterId),
-          isNull(this.table.deletedAt),
-          searchCondition,
-          visibilityCondition,
-        ]),
+        where: this.branchWhere(
+          [
+            "playerIds" in where && inArray(playerCharactersInCampaign.playerId, where.playerIds),
+            "playerId" in where && eq(this.table.playerId, where.playerId),
+            "characterId" in where && eq(this.table.characterId, where.characterId),
+          ],
+          [isNull(this.table.deletedAt), searchCondition, visibilityCondition],
+        ),
         with: {
           charactersInCharacter: true,
         },

@@ -21,6 +21,16 @@ export const visibilityMap = {
 abstract class BaseRepository<T extends Table> {
   constructor(protected readonly table: T) {}
 
+  /**
+   * A WHERE built from a `where` union: `keys`, the conditions that pick its rows, one per branch, and `rest`, those
+   * that narrow them (`isNull(deletedAt)`, `rulesetId`, `status`). A `where` that matches no branch would pick every
+   * row (a write would reach them all, a read return any), so it throws instead.
+   */
+  protected branchWhere(keys: (SQL | boolean)[], rest: (SQL | boolean)[] = []) {
+    if (!keys.some(Boolean)) throw new Error(`${this.constructor.name}: a where that matches none of its branches`);
+    return this.where([...keys, ...rest]);
+  }
+
   protected orderBy(column: Column | SQL, direction: "asc" | "desc" = "asc"): SQL {
     return direction === "asc" ? asc(column) : desc(column);
   }
@@ -42,16 +52,6 @@ abstract class BaseRepository<T extends Table> {
 
   protected where(statements: (SQL | boolean)[]) {
     return and(...(statements.filter(Boolean) as SQL[]));
-  }
-
-  /**
-   * A write's WHERE (`delete`, `archive`, `update`, `markRead`…): `keys`, the conditions that pick its rows, one per
-   * branch of its `where` union, and `rest`, those that narrow them (`isNull(deletedAt)`, `exceptId`). A `where` that
-   * matches no branch would pick every row, so it throws instead.
-   */
-  protected writeWhere(keys: (SQL | boolean)[], rest: (SQL | boolean)[] = []) {
-    if (!keys.some(Boolean)) throw new Error(`${this.constructor.name}: a write's where matches none of its branches`);
-    return this.where([...keys, ...rest]);
   }
 
   /** Call inside a transaction to lock a stored row before changing its children.

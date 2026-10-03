@@ -27,7 +27,7 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(
-        this.writeWhere(
+        this.branchWhere(
           ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
           ["exceptId" in where && !!where.exceptId && ne(this.table.id, where.exceptId), isNull(this.table.deletedAt)],
         ),
@@ -39,7 +39,7 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
     return await db
       .delete(this.table)
       .where(
-        this.writeWhere([
+        this.branchWhere([
           "id" in where && eq(this.table.id, where.id),
           "expiredOrArchivedBefore" in where &&
             (or(isNotNull(this.table.deletedAt), lt(this.table.expiresAt, where.expiredOrArchivedBefore)) ?? false),

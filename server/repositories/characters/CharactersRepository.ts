@@ -137,6 +137,10 @@ class CharactersRepository extends include(
     });
   }
 
+  /**
+   * A character by id; its owner's (`{ id, userId }`), or one the user may edit (`{ id, editorId }`: theirs, or one they
+   * actively contribute to); by share token; or a character's bonded creature.
+   */
   async findOne(
     db: Db,
     where:
@@ -150,15 +154,19 @@ class CharactersRepository extends include(
     if ("editorId" in where) return await this.findEditable(db, { id: where.id, userId: where.editorId }, visibility);
     const isUserFacing = "userId" in where || "shareToken" in where;
     return await db.query.charactersInCharacter.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "shareToken" in where && eq(this.table.shareToken, where.shareToken),
-        "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
-        "kind" in where && eq(this.table.kind, where.kind),
-        isUserFacing && eq(this.table.kind, "pc"),
-        this.visibility(visibility),
-      ]),
+      where: this.branchWhere(
+        [
+          "id" in where && eq(this.table.id, where.id),
+          "shareToken" in where && eq(this.table.shareToken, where.shareToken),
+          "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
+        ],
+        [
+          "userId" in where && eq(this.table.userId, where.userId),
+          "kind" in where && eq(this.table.kind, where.kind),
+          isUserFacing && eq(this.table.kind, "pc"),
+          this.visibility(visibility),
+        ],
+      ),
     });
   }
 
@@ -329,7 +337,7 @@ class CharactersRepository extends include(
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(
-        this.writeWhere(
+        this.branchWhere(
           ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
           [isNull(this.table.deletedAt)],
         ),

@@ -14,11 +14,10 @@ class AccountCodesRepository extends BaseRepository<
       .select()
       .from(this.table)
       .where(
-        this.where([
-          "id" in where && eq(this.table.id, where.id),
-          "userId" in where && eq(this.table.userId, where.userId),
-          isNull(this.table.deletedAt),
-        ]),
+        this.branchWhere(
+          ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
+          [isNull(this.table.deletedAt)],
+        ),
       )
       .orderBy(this.orderBy(this.table.createdAt, "desc"))
       .limit(1);
@@ -34,7 +33,7 @@ class AccountCodesRepository extends BaseRepository<
       .update(this.table)
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(
-        this.writeWhere(
+        this.branchWhere(
           ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
           [isNull(this.table.deletedAt)],
         ),
@@ -46,7 +45,7 @@ class AccountCodesRepository extends BaseRepository<
     return await db
       .delete(this.table)
       .where(
-        this.writeWhere([
+        this.branchWhere([
           "id" in where && eq(this.table.id, where.id),
           "expiresBefore" in where && lt(this.table.expiresAt, where.expiresBefore),
         ]),

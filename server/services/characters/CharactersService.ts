@@ -77,7 +77,7 @@ class CharactersService extends include(Object, Archives) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
 
-      // Races.findManyByRulesetId output has its FK fields auto-resolved by
+      // Races.findPage's output has its FK fields auto-resolved by
       // the Proxy since cowContext is active. No manual resolveOverrides pass.
       const result = await Races.findPage(
         db,

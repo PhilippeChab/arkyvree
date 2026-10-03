@@ -63,7 +63,7 @@ export async function sweepPendingBlobs(
   // the success-count's worth of progress per iteration.
   const failedIds = new Set<string>();
   while (true) {
-    const candidates = await Blobs.findMany(
+    const candidates = await Blobs.findOrphans(
       db,
       { createdBefore: cutoff, excludeIds: [...failedIds] },
       { limit: batch },

@@ -81,7 +81,7 @@ class PropertiesRepository extends include(
     return await db
       .delete(this.table)
       .where(
-        this.writeWhere(
+        this.branchWhere(
           [
             "id" in where && eq(this.table.id, where.id),
             "ids" in where && inArray(this.table.id, where.ids),

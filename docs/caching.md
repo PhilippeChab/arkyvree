@@ -79,7 +79,7 @@ Also at compose time: the inline join rows on feats/powers (`powersAptitudesInRu
 
 ### Layer 2 — Character\* repo reads auto-resolve when a COW context is active
 
-Every repository's reads (`find*`, `exists*`, `count*`) but `EntitySnapshots`' (`skipCow`) have their results post-processed. The ones carrying stored ids are the Character\* repos' (`CharacterLevels`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterAbilities`, `CharacterInventory`, `CharacterLanguages`) and the ruleset repos' reads of picks and grants (`Feats.findPicks`, `Feats.findGrants`). When a `cowContext` is active, every `*Id` field on every returned row is remapped to its post-COW form via `resolveRowOverrides`.
+Every repository's reads (`find*`, `exists*`, `count*`) but `EntitySnapshots`' and `RulesetEntities`' (`skipCow`) have their results post-processed. The ones carrying stored ids are the Character\* repos' (`CharacterLevels`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterAbilities`, `CharacterInventory`, `CharacterLanguages`) and the ruleset repos' reads of picks and grants (`Feats.findPicks`, `Feats.findGrants`). When a `cowContext` is active, every `*Id` field on every returned row is remapped to its post-COW form via `resolveRowOverrides`.
 
 ```ts
 // Inside a cowContext: row.klassLevelId / row.abilityId / row.featId /

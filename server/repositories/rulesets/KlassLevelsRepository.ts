@@ -13,11 +13,13 @@ class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
   async findMany(db: Db, where: { klassId: string } | { klassIds: string[] }) {
     if ("klassIds" in where && where.klassIds.length === 0) return [];
     return await db.query.klassLevelsInRules.findMany({
-      where: this.where([
-        "klassId" in where && eq(this.table.klassId, where.klassId),
-        "klassIds" in where && inArray(this.table.klassId, where.klassIds),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "klassId" in where && eq(this.table.klassId, where.klassId),
+          "klassIds" in where && inArray(this.table.klassId, where.klassIds),
+        ],
+        [isNull(this.table.deletedAt)],
+      ),
       orderBy: [this.orderBy(this.table.level)],
     });
   }

@@ -55,14 +55,18 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
       | { rulesetId: string; email: string; status: ContributorStatus },
   ) {
     return await db.query.contributorsInRules.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "email" in where && eq(this.table.email, where.email),
-        "status" in where && eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "id" in where && eq(this.table.id, where.id),
+          "userId" in where && eq(this.table.userId, where.userId),
+          "email" in where && eq(this.table.email, where.email),
+        ],
+        [
+          "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+          "status" in where && eq(this.table.status, where.status),
+          isNull(this.table.deletedAt),
+        ],
+      ),
     });
   }
 
@@ -130,6 +134,7 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
     return this.paginated(items, pagination);
   }
 
+  /** The user's role on the ruleset as an active contributor, or null: what the ruleset's policy grants by. */
   async findRole(db: Db, where: { userId: string; rulesetId: string }): Promise<ContributorRole | null> {
     const contributor = await db.query.contributorsInRules.findFirst({
       where: this.where([

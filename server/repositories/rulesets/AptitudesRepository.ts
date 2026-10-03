@@ -36,12 +36,10 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
     where: { id: string } | { id: string; rulesetId: string } | { name: string } | { name: string; rulesetId: string },
   ) {
     return await db.query.aptitudesInRules.findFirst({
-      where: this.where([
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "name" in where && eq(this.table.name, where.name),
-        "id" in where && eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        ["name" in where && eq(this.table.name, where.name), "id" in where && eq(this.table.id, where.id)],
+        ["rulesetId" in where && eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)],
+      ),
     });
   }
 

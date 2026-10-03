@@ -47,14 +47,18 @@ class CharacterContributorsRepository extends include(
       | { characterId: string; email: string; status: ContributorStatus },
   ) {
     return await db.query.contributorsInCharacter.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "characterId" in where && eq(this.table.characterId, where.characterId),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "email" in where && eq(this.table.email, where.email),
-        "status" in where && eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [
+          "id" in where && eq(this.table.id, where.id),
+          "userId" in where && eq(this.table.userId, where.userId),
+          "email" in where && eq(this.table.email, where.email),
+        ],
+        [
+          "characterId" in where && eq(this.table.characterId, where.characterId),
+          "status" in where && eq(this.table.status, where.status),
+          isNull(this.table.deletedAt),
+        ],
+      ),
     });
   }
 
@@ -122,6 +126,7 @@ class CharacterContributorsRepository extends include(
     return this.paginated(items, pagination);
   }
 
+  /** The user's role on the character as an active contributor, or null. */
   async findRole(db: Db, where: { userId: string; characterId: string }): Promise<ContributorRole | null> {
     const contributor = await db.query.contributorsInCharacter.findFirst({
       where: this.where([

@@ -62,7 +62,7 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
     return await db
       .delete(this.table)
       .where(
-        this.writeWhere([
+        this.branchWhere([
           "id" in where && eq(this.table.id, where.id),
           "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
         ]),

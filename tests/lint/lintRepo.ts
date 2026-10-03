@@ -11,7 +11,11 @@ const oxlint = path.resolve("node_modules/.bin/oxlint");
 export function runOxlint(args: string[], cwd?: string) {
   const run = () => Bun.spawnSync([oxlint, "--threads=1", ...args], { cwd, timeout: 15_000 });
   let result = run();
-  if (result.exitCode === null) result = run();
+  if (result.exitCode === null) {
+    // oxlint-disable-next-line no-console
+    console.warn(`oxlint hung once (${args.join(" ")}), running it again: ${result.stderr.toString()}`);
+    result = run();
+  }
   if (result.exitCode === null) throw new Error(`oxlint hung twice (${args.join(" ")}): ${result.stderr.toString()}`);
   return result;
 }

@@ -21,12 +21,16 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     if ("rulesetIds" in where && where.rulesetIds.length === 0) return [];
     if ("sourceEntityIds" in where && where.sourceEntityIds.length === 0) return [];
     return await db.query.entitySnapshotsInRules.findMany({
-      where: this.where([
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "rulesetIds" in where && inArray(this.table.rulesetId, where.rulesetIds),
-        "entityType" in where && eq(this.table.entityType, where.entityType),
-        "sourceEntityIds" in where && inArray(this.table.sourceEntityId, where.sourceEntityIds),
-      ]),
+      where: this.branchWhere(
+        [
+          "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+          "rulesetIds" in where && inArray(this.table.rulesetId, where.rulesetIds),
+        ],
+        [
+          "entityType" in where && eq(this.table.entityType, where.entityType),
+          "sourceEntityIds" in where && inArray(this.table.sourceEntityId, where.sourceEntityIds),
+        ],
+      ),
     });
   }
 
