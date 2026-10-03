@@ -129,81 +129,281 @@ const CATEGORY_LABELS: Record<string, string> = {
   bonded: "Bonded",
 };
 
+/** Each category's holder, and the getter that hands its data to a path. */
+const CATEGORY_HOLDERS: Record<string, { holderKey: string; getter: string }> = {
+  abilities: { holderKey: "abilities", getter: "getAbilities" },
+  skills: { holderKey: "skills", getter: "getSkills" },
+  saves: { holderKey: "savingThrows", getter: "getSavingThrows" },
+  combat: { holderKey: "combat", getter: "getCombat" },
+  classes: { holderKey: "classes", getter: "getClasses" },
+  feats: { holderKey: "feats", getter: "getFeats" },
+  powers: { holderKey: "powers", getter: "getPowers" },
+  identity: { holderKey: "identity", getter: "getIdentity" },
+  aptitudes: { holderKey: "aptitudes", getter: "getAptitudes" },
+  spellcasting: { holderKey: "spellcasting", getter: "getSpellcasting" },
+  bonded: { holderKey: "bonded", getter: "getBonds" },
+};
+
+/** The combat sub-paths a weapon's modifier targets on itself: its own slot's to-hit, damage, strength multiplier. */
+const WEAPON_SUB_PATHS = ["tohit", "damage", "strmultiplier"] as const;
+
+/** A path that reaches no value, with why. */
+const failed = (holder: Holder | null, key: string, error: string): TraversePathResult[] => [
+  { holder, object: null, data: null, key, resolvedPath: null, error },
+];
+
+/** The distinct slugs of the properties' values of `type`. */
+const slugsOf = (properties: { type: string; value: string }[], type: string) => [
+  ...new Set(properties.filter((p) => p.type === type).map((p) => stripSeparators(p.value))),
+];
+
+/** The entries of `value` that are objects and whose slug starts with `slug` (but isn't it): a skill's subtypes. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const subtypesOf = (value: any, slug: string) =>
+  Object.entries(value).filter(
+    ([key, entry]) =>
+      entry !== null &&
+      typeof entry === "object" &&
+      stripSeparators(key).startsWith(slug) &&
+      stripSeparators(key) !== slug,
+  );
+
+/**
+ * The groupings the ruleset's properties and powers define, which the paths are generated for: weapons by type
+ * (e.g. "longsword") and proficiency category (e.g. "exotic"), each armor and shield type, spell schools and
+ * descriptors (wildcard DC paths), each leveled power (flat DC paths), and feat families with their display names.
+ */
+function collectGroupings(rulesetData: CachedRulesetData) {
+  const { powers, propertiesByEntityType } = rulesetData;
+  const itemProperties = propertiesByEntityType.get("items") ?? [];
+  const powerProperties = propertiesByEntityType.get("powers") ?? [];
+  const featProperties = propertiesByEntityType.get("feats") ?? [];
+
+  const featGroupingLabels: Record<string, string> = {};
+  for (const prop of featProperties) {
+    if (prop.type === FEAT_FAMILY) featGroupingLabels[stripSeparators(prop.value)] = prop.value;
+  }
+
+  // Detect leveled aptitudes from powers with non-null level on the junction table
+  const leveledAptitudeIds = new Set<string>();
+  for (const power of powers) {
+    for (const pa of power.powersAptitudesInRules) {
+      if (pa.level != null) leveledAptitudeIds.add(pa.aptitudeId);
+    }
+  }
+
+  return {
+    powersWithProperties: powers.map((power) => ({
+      ...power,
+      properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
+    })),
+    weaponGroupings: [
+      ...new Set([...slugsOf(itemProperties, WEAPON_TYPE), ...slugsOf(itemProperties, WEAPON_PROFICIENCY)]),
+    ],
+    armorGroupings: slugsOf(itemProperties, ARMOR_TYPE),
+    shieldGroupings: slugsOf(itemProperties, SHIELD_TYPE),
+    schoolGroupings: slugsOf(powerProperties, SPELL_SCHOOL),
+    descriptorGroupings: slugsOf(powerProperties, SPELL_DESCRIPTOR),
+    individualPowerDcNames: [
+      ...new Set(
+        powers
+          .filter((p) => p.powersAptitudesInRules.some((pa) => pa.level != null))
+          .map((p) => stripSeparators(p.name)),
+      ),
+    ],
+    featGroupings: slugsOf(featProperties, FEAT_FAMILY),
+    featGroupingLabels,
+    leveledAptitudeIds,
+  };
+}
+
+/** Every target path, from the DetailedCharacter components' static generators, and the requirement-only spellcasting. */
+function generatePaths(rulesetData: CachedRulesetData, kind: "modifier" | "requirement"): TargetPath[] {
+  const { abilities, saves, skills, feats, aptitudes, klasses } = rulesetData;
+  const groupings = collectGroupings(rulesetData);
+  const paths: TargetPath[] = [
+    ...DetailedCharacterSkills.generateTargetPaths(skills, kind),
+    ...DetailedCharacterClasses.generateTargetPaths(klasses, kind),
+    ...DetailedCharacterFeats.generateTargetPaths(feats, kind),
+    ...DetailedCharacterFeatGroupings.generateTargetPaths(groupings.featGroupings, kind, groupings.featGroupingLabels),
+    ...DetailedCharacterWeapons.generateTargetPaths(groupings.weaponGroupings, kind),
+    ...DetailedCharacterArmors.generateTargetPaths(groupings.armorGroupings, kind),
+    ...DetailedCharacterShields.generateTargetPaths(groupings.shieldGroupings, kind),
+    ...DetailedCharacterPowers.generateTargetPaths(groupings.powersWithProperties, aptitudes, kind),
+    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.schoolGroupings, kind, true, "school"),
+    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.descriptorGroupings, kind, true, "descriptor"),
+    ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.individualPowerDcNames, kind, false),
+    ...DetailedCharacterAptitudes.generateTargetPaths(
+      aptitudes,
+      kind,
+      groupings.leveledAptitudeIds,
+      Dnd35LevelsHooks.MAX_SPELL_LEVEL,
+    ),
+    ...DetailedCharacterCombat.generateTargetPaths(kind),
+    ...DetailedCharacterEncumbrance.generateTargetPaths(kind),
+    ...DetailedCharacterAbilities.generateTargetPaths(abilities, kind),
+    ...DetailedCharacterSavingThrows.generateTargetPaths(saves, kind),
+    ...DetailedCharacterIdentity.generateTargetPaths(kind),
+    ...DetailedCharacterBonds.generateTargetPaths(kind),
+  ];
+
+  if (kind === "requirement") {
+    const numericOps = [
+      "equal",
+      "not_equal",
+      "greater_than",
+      "less_than",
+      "greater_than_or_equal",
+      "less_than_or_equal",
+    ];
+    paths.push(
+      {
+        path: "spellcasting.arcane",
+        category: "spellcasting",
+        description: "Max arcane spell level castable",
+        valueType: "number",
+        operators: numericOps,
+      },
+      {
+        path: "spellcasting.divine",
+        category: "spellcasting",
+        description: "Max divine spell level castable",
+        valueType: "number",
+        operators: numericOps,
+      },
+    );
+  }
+  return paths;
+}
+
+/** Each path segment's display label: the categories', the components' structural ones, and the ruleset's names. */
+function segmentLabelsOf(rulesetData: CachedRulesetData): Record<string, string> {
+  const { abilities, saves, skills, feats, items, aptitudes, klasses, powers, propertiesByEntityType } = rulesetData;
+  const segmentLabels: Record<string, string> = {
+    "*": "All",
+    ...CATEGORY_LABELS,
+    ...DetailedCharacterAbilities.getSegmentLabels(),
+    ...DetailedCharacterSavingThrows.getSegmentLabels(),
+    ...DetailedCharacterSkills.getSegmentLabels(),
+    ...DetailedCharacterClasses.getSegmentLabels(),
+    ...DetailedCharacterFeats.getSegmentLabels(),
+    ...DetailedCharacterFeatGroupings.getSegmentLabels(),
+    ...DetailedCharacterPowers.getSegmentLabels(),
+    ...DetailedCharacterPowerGroupings.getSegmentLabels(),
+    ...DetailedCharacterAptitudes.getSegmentLabels(),
+    ...DetailedCharacterCombat.getSegmentLabels(),
+    ...DetailedCharacterEncumbrance.getSegmentLabels(),
+    ...DetailedCharacterWeapons.getSegmentLabels(),
+    ...DetailedCharacterArmors.getSegmentLabels(),
+    ...DetailedCharacterShields.getSegmentLabels(),
+    ...DetailedCharacterIdentity.getSegmentLabels(),
+    ...DetailedCharacterBonds.getSegmentLabels(),
+    // D&D 3.5 surfaces power groupings as schools in the path picker.
+    groups: "Schools",
+  };
+
+  for (const entity of [...abilities, ...saves, ...skills, ...feats, ...items, ...aptitudes, ...klasses, ...powers]) {
+    segmentLabels[stripSeparators(entity.name)] = entity.name;
+  }
+
+  // Spell possession slug labels (e.g. "wizard" → "Wizard" for "Wizard Spells" aptitude)
+  for (const apt of aptitudes) {
+    const slug = spellPossessionSlug(apt.name);
+    if (!(slug in segmentLabels)) segmentLabels[slug] = apt.name.replace(/ Spells$/, "");
+  }
+
+  // Property values (weapon types, armor types, etc.)
+  // Skip purely numeric values (e.g. ARMOR_CHECK_PENALTY "-1" → key "1") to avoid
+  // clobbering spell level labels
+  for (const prop of propertiesByEntityType.get("items") ?? []) {
+    const normalized = stripSeparators(prop.value);
+    if (normalized && !/^\d+$/.test(normalized)) segmentLabels[normalized] = prop.value;
+  }
+
+  // Feat property values (e.g. "weaponfocus" → "Weapon Focus")
+  // For feat families, also add wildcard label (e.g. "weaponfocus*" → "Weapon Focus (Any)")
+  for (const prop of propertiesByEntityType.get("feats") ?? []) {
+    const normalizedValue = stripSeparators(prop.value);
+    if (normalizedValue && !(normalizedValue in segmentLabels)) segmentLabels[normalizedValue] = prop.value;
+    if (prop.type === FEAT_FAMILY && normalizedValue) {
+      const wildcardKey = `${normalizedValue}*`;
+      if (!(wildcardKey in segmentLabels)) segmentLabels[wildcardKey] = `${prop.value} (Any)`;
+    }
+  }
+
+  // Power property type names (e.g. SPELL_SCHOOL → "Spell School")
+  // and power property values (e.g. "evocation" → "Evocation")
+  for (const prop of propertiesByEntityType.get("powers") ?? []) {
+    if (!(prop.type in segmentLabels)) segmentLabels[prop.type] = formatPropertyType(prop.type);
+    const normalizedValue = stripSeparators(prop.value);
+    if (normalizedValue && !/^\d+$/.test(normalizedValue) && !(normalizedValue in segmentLabels)) {
+      segmentLabels[normalizedValue] = prop.value;
+    }
+  }
+  return segmentLabels;
+}
+
 export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPathsTraverser {
-  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
+  /** A category's data, from its holder's getter, traversed with the rest of the path. */
+  private traverseCategory(target: string, category: string, rest: string[], holders: Holders): TraversePathResult[] {
+    const mapping = CATEGORY_HOLDERS[category];
+    if (!mapping) return failed(null, target, `Unknown category: ${category}`);
+    const holder = holders[mapping.holderKey];
+    if (!holder) return failed(null, target, `${CATEGORY_LABELS[category]} holder not found`);
+    const data = typeof holder[mapping.getter] === "function" ? holder[mapping.getter]() : undefined;
+    if (!data) return failed(holder, target, `${CATEGORY_LABELS[category]} not found`);
+    return this.traversePath(holder, rest, data, category, 0, [category]);
+  }
+
+  /** Each of `entries` traversed with the rest of the path, under its own slug: a skill and its subtypes. */
+  private traverseEach(
+    holder: Holder,
+    entries: [string, unknown][],
+    rest: string[],
+    maxDepth: number,
+    pathParts: string[],
+  ): TraversePathResult[] {
+    return entries.flatMap(([key, value]) => {
+      const slug = stripSeparators(key);
+      return this.traversePath(holder, rest, value as Record<string, unknown>, slug, maxDepth, [...pathParts, slug]);
+    });
+  }
+
+  /** items.weapons / items.armors / items.shields: a grouping's equipped items. Null for another sub-category. */
+  private traverseItemGroup(target: string, rest: string[], holders: Holders): TraversePathResult[] | null {
+    const [subcategory, grouping, ...subPath] = rest;
+    if (subcategory !== "weapons" && subcategory !== "armors" && subcategory !== "shields") return null;
+    const holder = holders[subcategory];
+    if (!holder) return failed(null, target, `${subcategory} holder not found`);
+    const pathParts = ["items", subcategory, stripSeparators(grouping)];
+
+    if (subcategory === "weapons") {
+      const group = holder.getWeapons()[stripSeparators(grouping)];
+      if (!group) return [];
+      return Object.entries(group).flatMap(([key, weapon]) =>
+        this.traversePath(holder, subPath, weapon, key, 0, pathParts),
+      );
+    }
+    const getterMap = { armors: "getArmors", shields: "getShields" } as const;
+    const group = holder[getterMap[subcategory]]()[stripSeparators(grouping)];
+    if (!group) return [];
+    return this.traversePath(holder, subPath, group, grouping, 0, pathParts);
+  }
+
   private traversePath(
     holder: Holder,
     elements: string[],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     currentValue: any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    parentObject: any,
     lastKey: string,
     maxDepth: number = 0,
     pathParts: string[] = [],
   ): TraversePathResult[] {
-    if (maxDepth > 10) {
-      return [
-        {
-          holder,
-          object: null,
-          data: null,
-          key: lastKey,
-          resolvedPath: null,
-          error: `Max depth reached`,
-        },
-      ];
-    }
-
+    if (maxDepth > 10) return failed(holder, lastKey, `Max depth reached`);
     maxDepth++;
     const [next, ...rest] = elements;
-
     if (next === "*" || next.endsWith("*")) {
-      const prefix = next === "*" ? "" : stripSeparators(next.slice(0, -1));
-      const entries = Object.entries(currentValue);
-      const results: TraversePathResult[] = [];
-      for (const [key, value] of entries) {
-        // Skip null values and non-object primitives
-        if (value === null || typeof value !== "object") {
-          continue;
-        }
-        const formattedKey = stripSeparators(key);
-        if (formattedKey && (!prefix || formattedKey.startsWith(prefix))) {
-          if (rest.length === 0) {
-            return [
-              {
-                holder,
-                object: null,
-                data: null,
-                key: lastKey,
-                resolvedPath: null,
-                error: `Wildcard modifier not supported as last element`,
-              },
-            ];
-          } else {
-            // If there are more elements, recursively process them.
-            // If the matched value is a group (nested object without the next path element),
-            // expand into its children with a wildcard so each child is tested.
-            const nextElement = stripSeparators(rest[0]);
-            if (nextElement && !(nextElement in value)) {
-              // Value doesn't have the next path element directly — treat it as a group
-              // and recurse with a wildcard into its children
-              results.push(
-                ...this.traversePath(holder, ["*", ...rest], value, currentValue, key, maxDepth, [
-                  ...pathParts,
-                  formattedKey,
-                ]),
-              );
-            } else {
-              results.push(
-                ...this.traversePath(holder, rest, value, currentValue, key, maxDepth, [...pathParts, formattedKey]),
-              );
-            }
-          }
-        }
-      }
-
-      return results;
+      return this.traverseWildcard(holder, next, rest, currentValue, lastKey, maxDepth, pathParts);
     }
 
     const formattedKey = stripSeparators(next);
@@ -211,107 +411,99 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     // Anywhere else, a name another starts is another entry: a feat's ("dodge" isn't "dodgebonusswashbuckler",
     // "light" isn't "lightningreflexes"), checked by its family's group if it has one (`feats.weaponfocus.*`)
     const reachesSubtypes = rest.length > 0 && pathParts[0] === "skills";
-    if (formattedKey && formattedKey in currentValue) {
-      if (reachesSubtypes) {
-        const subtypeMatches = Object.entries(currentValue).filter(
-          ([key, value]) =>
-            value !== null &&
-            typeof value === "object" &&
-            stripSeparators(key).startsWith(formattedKey) &&
-            stripSeparators(key) !== formattedKey,
-        );
-        if (subtypeMatches.length > 0) {
-          const results: TraversePathResult[] = [];
-          // Include exact match
-          results.push(
-            ...this.traversePath(
-              holder,
-              rest,
-              currentValue[formattedKey] as Record<string, unknown>,
-              currentValue,
-              formattedKey,
-              maxDepth,
-              [...pathParts, formattedKey],
-            ),
-          );
-          // Include subtype matches
-          for (const [key, value] of subtypeMatches) {
-            const subtypeKey = stripSeparators(key);
-            results.push(
-              ...this.traversePath(holder, rest, value as Record<string, unknown>, currentValue, subtypeKey, maxDepth, [
-                ...pathParts,
-                subtypeKey,
-              ]),
-            );
-          }
-          return results;
-        }
-      }
-      parentObject = currentValue;
-      lastKey = formattedKey;
-      currentValue = parentObject[formattedKey];
-      pathParts = [...pathParts, formattedKey];
-      elements = rest;
-    } else if (formattedKey && reachesSubtypes) {
+    if (!formattedKey) return failed(holder, formattedKey, `Element not found: ${next}`);
+    if (!(formattedKey in currentValue)) {
       // A skill not found may name only its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…):
       // expand to all of them like an implicit wildcard
-      const prefixMatches = Object.entries(currentValue).filter(
-        ([key, value]) =>
-          value !== null &&
-          typeof value === "object" &&
-          stripSeparators(key).startsWith(formattedKey) &&
-          stripSeparators(key) !== formattedKey,
+      const prefixMatches = reachesSubtypes ? subtypesOf(currentValue, formattedKey) : [];
+      if (prefixMatches.length === 0) return failed(holder, formattedKey, `Element not found: ${next}`);
+      return this.traverseEach(holder, prefixMatches, rest, maxDepth, pathParts);
+    }
+    const subtypeMatches = reachesSubtypes ? subtypesOf(currentValue, formattedKey) : [];
+    if (subtypeMatches.length > 0) {
+      // The skill itself, then its subtypes.
+      return this.traverseEach(
+        holder,
+        [[formattedKey, currentValue[formattedKey]], ...subtypeMatches],
+        rest,
+        maxDepth,
+        pathParts,
       );
-      if (prefixMatches.length > 0) {
-        const results: TraversePathResult[] = [];
-        for (const [key, value] of prefixMatches) {
-          const prefixKey = stripSeparators(key);
-          results.push(
-            ...this.traversePath(holder, rest, value as Record<string, unknown>, currentValue, prefixKey, maxDepth, [
-              ...pathParts,
-              prefixKey,
-            ]),
-          );
-        }
-        return results;
-      }
-      return [
-        {
-          holder,
-          object: null,
-          data: null,
-          key: formattedKey,
-          resolvedPath: null,
-          error: `Element not found: ${next}`,
-        },
-      ];
-    } else {
-      return [
-        {
-          holder,
-          object: null,
-          data: null,
-          key: formattedKey,
-          resolvedPath: null,
-          error: `Element not found: ${next}`,
-        },
-      ];
     }
 
-    if (elements.length !== 0) {
-      return this.traversePath(holder, elements, currentValue, parentObject, lastKey, maxDepth, pathParts);
+    const path = [...pathParts, formattedKey];
+    if (rest.length !== 0) {
+      return this.traversePath(holder, rest, currentValue[formattedKey], formattedKey, maxDepth, path);
     }
-
     return [
       {
         holder,
-        object: parentObject,
-        data: currentValue,
-        key: lastKey,
-        resolvedPath: pathParts.join("."),
+        object: currentValue,
+        data: currentValue[formattedKey],
+        key: formattedKey,
+        resolvedPath: path.join("."),
         error: null,
       },
     ];
+  }
+
+  /**
+   * combat.tohit.* / combat.damage.* etc. — a self-targeting weapon modifier: it resolves to the weapon slot(s) its
+   * source item occupies.
+   */
+  private traverseSourceWeapon(rest: string[], holders: Holders, sourceId: string | undefined): TraversePathResult[] {
+    if (!sourceId) return [];
+    const combatHolder = holders["combat"];
+    if (!combatHolder) return [];
+    const weaponsHolder = holders["weapons"];
+    if (!weaponsHolder) return [];
+
+    const combat = combatHolder.getCombat();
+    const results: TraversePathResult[] = [];
+    for (const weaponSet of Object.values(combat.weaponsets)) {
+      for (const [, weapon] of Object.entries(weaponSet as Record<string, unknown>)) {
+        if (
+          weapon &&
+          typeof weapon === "object" &&
+          "itemId" in weapon &&
+          (weapon as { itemId: string | null }).itemId === sourceId
+        ) {
+          results.push(...this.traversePath(weaponsHolder, rest, weapon, rest[0], 0, ["combat"]));
+        }
+      }
+    }
+    return results;
+  }
+
+  /**
+   * A wildcard element (`*`, or `prefix*`): every object entry whose slug starts with the prefix, each traversed with
+   * the rest of the path. A matched entry without the next element is a group: its children are tested with a
+   * wildcard in turn. A wildcard can't end a path.
+   */
+  private traverseWildcard(
+    holder: Holder,
+    next: string,
+    rest: string[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    currentValue: any,
+    lastKey: string,
+    maxDepth: number,
+    pathParts: string[],
+  ): TraversePathResult[] {
+    const prefix = next === "*" ? "" : stripSeparators(next.slice(0, -1));
+    const results: TraversePathResult[] = [];
+    for (const [key, value] of Object.entries(currentValue)) {
+      // Skip null values and non-object primitives
+      if (value === null || typeof value !== "object") continue;
+      const formattedKey = stripSeparators(key);
+      if (!formattedKey || (prefix && !formattedKey.startsWith(prefix))) continue;
+      if (rest.length === 0) return failed(holder, lastKey, `Wildcard modifier not supported as last element`);
+      const nextElement = stripSeparators(rest[0]);
+      // A value without the next path element is a group: recurse with a wildcard into its children.
+      const elements = nextElement && !(nextElement in value) ? ["*", ...rest] : rest;
+      results.push(...this.traversePath(holder, elements, value, key, maxDepth, [...pathParts, formattedKey]));
+    }
+    return results;
   }
 
   getCategories(): string[] {
@@ -330,434 +522,33 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     return { ...PATH_DESCRIPTIONS };
   }
 
-  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   async getTargetPathsAndLabels(
     rulesetData: CachedRulesetData,
     kind: "modifier" | "requirement",
   ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
-    const { abilities, saves, skills, feats, items, aptitudes, klasses, powers, propertiesByEntityType } = rulesetData;
-
-    const itemProperties = propertiesByEntityType.get("items") ?? [];
-    const powerProperties = propertiesByEntityType.get("powers") ?? [];
-    const featProperties = propertiesByEntityType.get("feats") ?? [];
-
-    // Build paths
-    const powersWithProperties = powers.map((power) => ({
-      ...power,
-      properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
-    }));
-
-    // Collect weapon groupings: by type (e.g. "longsword") and by proficiency category (e.g. "exotic")
-    const weaponGroupings = [
-      ...new Set([
-        ...itemProperties.filter((p) => p.type === WEAPON_TYPE).map((p) => stripSeparators(p.value)),
-        ...itemProperties.filter((p) => p.type === WEAPON_PROFICIENCY).map((p) => stripSeparators(p.value)),
-      ]),
-    ];
-
-    // Collect armor type values for armor target paths (each armor type gets its own grouping)
-    const armorGroupings = [
-      ...new Set(itemProperties.filter((p) => p.type === ARMOR_TYPE).map((p) => stripSeparators(p.value))),
-    ];
-
-    // Collect shield type values for shield target paths (each shield type gets its own grouping)
-    const shieldGroupings = [
-      ...new Set(itemProperties.filter((p) => p.type === SHIELD_TYPE).map((p) => stripSeparators(p.value))),
-    ];
-
-    // Collect unique power grouping values for power DC target paths (wildcard paths)
-    const schoolGroupings = [
-      ...new Set(powerProperties.filter((p) => p.type === SPELL_SCHOOL).map((p) => stripSeparators(p.value))),
-    ];
-    const descriptorGroupings = [
-      ...new Set(powerProperties.filter((p) => p.type === SPELL_DESCRIPTOR).map((p) => stripSeparators(p.value))),
-    ];
-
-    // Individual power DC target paths (flat paths, no wildcard)
-    const individualPowerDcNames = [
-      ...new Set(
-        powers
-          .filter((p) => p.powersAptitudesInRules.some((pa) => pa.level != null))
-          .map((p) => stripSeparators(p.name)),
-      ),
-    ];
-
-    // Collect unique feat family values for feat grouping target paths
-    const featGroupings = [
-      ...new Set(featProperties.filter((p) => p.type === FEAT_FAMILY).map((p) => stripSeparators(p.value))),
-    ];
-
-    // Build slug→display-name map for feat groupings
-    const featGroupingLabels: Record<string, string> = {};
-    for (const prop of featProperties) {
-      if (prop.type === FEAT_FAMILY) {
-        featGroupingLabels[stripSeparators(prop.value)] = prop.value;
-      }
-    }
-
-    // Detect leveled aptitudes from powers with non-null level on the junction table
-    const leveledAptitudeIds = new Set<string>();
-    for (const power of powers) {
-      for (const pa of power.powersAptitudesInRules) {
-        if (pa.level != null) {
-          leveledAptitudeIds.add(pa.aptitudeId);
-        }
-      }
-    }
-
-    // Generate all paths using static methods from DetailedCharacter components
-    const paths: TargetPath[] = [
-      ...DetailedCharacterSkills.generateTargetPaths(skills, kind),
-      ...DetailedCharacterClasses.generateTargetPaths(klasses, kind),
-      ...DetailedCharacterFeats.generateTargetPaths(feats, kind),
-      ...DetailedCharacterFeatGroupings.generateTargetPaths(featGroupings, kind, featGroupingLabels),
-      ...DetailedCharacterWeapons.generateTargetPaths(weaponGroupings, kind),
-      ...DetailedCharacterArmors.generateTargetPaths(armorGroupings, kind),
-      ...DetailedCharacterShields.generateTargetPaths(shieldGroupings, kind),
-      ...DetailedCharacterPowers.generateTargetPaths(powersWithProperties, aptitudes, kind),
-      ...DetailedCharacterPowerGroupings.generateTargetPaths(schoolGroupings, kind, true, "school"),
-      ...DetailedCharacterPowerGroupings.generateTargetPaths(descriptorGroupings, kind, true, "descriptor"),
-      ...DetailedCharacterPowerGroupings.generateTargetPaths(individualPowerDcNames, kind, false),
-      ...DetailedCharacterAptitudes.generateTargetPaths(
-        aptitudes,
-        kind,
-        leveledAptitudeIds,
-        Dnd35LevelsHooks.MAX_SPELL_LEVEL,
-      ),
-      ...DetailedCharacterCombat.generateTargetPaths(kind),
-      ...DetailedCharacterEncumbrance.generateTargetPaths(kind),
-      ...DetailedCharacterAbilities.generateTargetPaths(abilities, kind),
-      ...DetailedCharacterSavingThrows.generateTargetPaths(saves, kind),
-      ...DetailedCharacterIdentity.generateTargetPaths(kind),
-      ...DetailedCharacterBonds.generateTargetPaths(kind),
-    ];
-
-    // Spellcasting paths (requirement-only)
-    if (kind === "requirement") {
-      const numericOps = [
-        "equal",
-        "not_equal",
-        "greater_than",
-        "less_than",
-        "greater_than_or_equal",
-        "less_than_or_equal",
-      ];
-      paths.push(
-        {
-          path: "spellcasting.arcane",
-          category: "spellcasting",
-          description: "Max arcane spell level castable",
-          valueType: "number",
-          operators: numericOps,
-        },
-        {
-          path: "spellcasting.divine",
-          category: "spellcasting",
-          description: "Max divine spell level castable",
-          valueType: "number",
-          operators: numericOps,
-        },
-      );
-    }
-
-    // Build segment labels
-    const segmentLabels: Record<string, string> = {
-      "*": "All",
-      // Category labels
-      ...CATEGORY_LABELS,
-      // Structural segment labels from each DetailedCharacter class
-      ...DetailedCharacterAbilities.getSegmentLabels(),
-      ...DetailedCharacterSavingThrows.getSegmentLabels(),
-      ...DetailedCharacterSkills.getSegmentLabels(),
-      ...DetailedCharacterClasses.getSegmentLabels(),
-      ...DetailedCharacterFeats.getSegmentLabels(),
-      ...DetailedCharacterFeatGroupings.getSegmentLabels(),
-      ...DetailedCharacterPowers.getSegmentLabels(),
-      ...DetailedCharacterPowerGroupings.getSegmentLabels(),
-      ...DetailedCharacterAptitudes.getSegmentLabels(),
-      ...DetailedCharacterCombat.getSegmentLabels(),
-      ...DetailedCharacterEncumbrance.getSegmentLabels(),
-      ...DetailedCharacterWeapons.getSegmentLabels(),
-      ...DetailedCharacterArmors.getSegmentLabels(),
-      ...DetailedCharacterShields.getSegmentLabels(),
-      ...DetailedCharacterIdentity.getSegmentLabels(),
-      ...DetailedCharacterBonds.getSegmentLabels(),
-      // D&D 3.5 surfaces power groupings as schools in the path picker.
-      groups: "Schools",
-    };
-
-    // Entity labels from DB
-    for (const entity of [...abilities, ...saves, ...skills, ...feats, ...items, ...aptitudes, ...klasses, ...powers]) {
-      segmentLabels[stripSeparators(entity.name)] = entity.name;
-    }
-
-    // Spell possession slug labels (e.g. "wizard" → "Wizard" for "Wizard Spells" aptitude)
-    for (const apt of aptitudes) {
-      const slug = spellPossessionSlug(apt.name);
-      if (!(slug in segmentLabels)) {
-        segmentLabels[slug] = apt.name.replace(/ Spells$/, "");
-      }
-    }
-
-    // Property values (weapon types, armor types, etc.)
-    // Skip purely numeric values (e.g. ARMOR_CHECK_PENALTY "-1" → key "1") to avoid
-    // clobbering spell level labels
-    for (const prop of itemProperties) {
-      const normalized = stripSeparators(prop.value);
-      if (normalized && !/^\d+$/.test(normalized)) {
-        segmentLabels[normalized] = prop.value;
-      }
-    }
-
-    // Feat property values (e.g. "weaponfocus" → "Weapon Focus")
-    // For feat families, also add wildcard label (e.g. "weaponfocus*" → "Weapon Focus (Any)")
-    for (const prop of featProperties) {
-      const normalizedValue = stripSeparators(prop.value);
-      if (normalizedValue && !(normalizedValue in segmentLabels)) {
-        segmentLabels[normalizedValue] = prop.value;
-      }
-      if (prop.type === FEAT_FAMILY && normalizedValue) {
-        const wildcardKey = `${normalizedValue}*`;
-        if (!(wildcardKey in segmentLabels)) {
-          segmentLabels[wildcardKey] = `${prop.value} (Any)`;
-        }
-      }
-    }
-
-    // Power property type names (e.g. SPELL_SCHOOL → "Spell School")
-    // and power property values (e.g. "evocation" → "Evocation")
-    for (const prop of powerProperties) {
-      if (!(prop.type in segmentLabels)) {
-        segmentLabels[prop.type] = formatPropertyType(prop.type);
-      }
-      const normalizedValue = stripSeparators(prop.value);
-      if (normalizedValue && !/^\d+$/.test(normalizedValue) && !(normalizedValue in segmentLabels)) {
-        segmentLabels[normalizedValue] = prop.value;
-      }
-    }
-
-    return { paths, segmentLabels };
+    return { paths: generatePaths(rulesetData, kind), segmentLabels: segmentLabelsOf(rulesetData) };
   }
 
-  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
+  /** A target's values: its category's data walked by the path (dot notation: category.item.property). */
   traversePathInit(target: string, holders: Holders, context?: { sourceId?: string }): TraversePathResult[] {
     try {
-      // Handle dot notation: category.item.property
-      const parts = target.split(".");
-      const [category, ...rest] = parts;
-
-      let holder: Holder | null = null;
-      let data = undefined;
-
-      // Special case: combat.tohit.* / combat.damage.* etc. — self-targeting weapon modifier
-      // Resolves to the specific weapon slot(s) occupied by the modifier's source item
-      const WEAPON_SUB_PATHS = ["tohit", "damage", "strmultiplier"] as const;
-      if (
-        category === "combat" &&
-        rest.length > 0 &&
-        WEAPON_SUB_PATHS.includes(rest[0] as (typeof WEAPON_SUB_PATHS)[number])
-      ) {
-        const sourceId = context?.sourceId;
-        if (!sourceId) return [];
-
-        const combatHolder = holders["combat"];
-        if (!combatHolder) return [];
-
-        const weaponsHolder = holders["weapons"];
-        if (!weaponsHolder) return [];
-
-        const combat = combatHolder.getCombat();
-        const results: TraversePathResult[] = [];
-
-        for (const weaponSet of Object.values(combat.weaponsets)) {
-          for (const [, weapon] of Object.entries(weaponSet as Record<string, unknown>)) {
-            if (
-              weapon &&
-              typeof weapon === "object" &&
-              "itemId" in weapon &&
-              (weapon as { itemId: string | null }).itemId === sourceId
-            ) {
-              results.push(...this.traversePath(weaponsHolder, rest, weapon, weapon, rest[0], 0, [category]));
-            }
-          }
-        }
-
-        return results;
+      const [category, ...rest] = target.split(".");
+      if (category === "combat" && WEAPON_SUB_PATHS.includes(rest[0] as (typeof WEAPON_SUB_PATHS)[number])) {
+        return this.traverseSourceWeapon(rest, holders, context?.sourceId);
       }
-
-      // Special case: items.weapons / items.armors / items.shields sub-groups
       if (category === "items" && rest.length > 0) {
-        const subcategory = rest[0] as "weapons" | "armors" | "shields";
-
-        if (subcategory === "weapons") {
-          holder = holders["weapons"];
-          if (!holder) {
-            return [
-              {
-                holder: null,
-                object: null,
-                data: null,
-                key: target,
-                resolvedPath: null,
-                error: `${subcategory} holder not found`,
-              },
-            ];
-          }
-
-          const [, grouping, ...subPath] = rest;
-          const groupData = holder.getWeapons();
-          const group = groupData[stripSeparators(grouping)];
-          if (!group) return [];
-
-          const results: TraversePathResult[] = [];
-          for (const [key, weapon] of Object.entries(group)) {
-            results.push(
-              ...this.traversePath(holder, subPath, weapon, weapon, key, 0, [
-                category,
-                subcategory,
-                stripSeparators(grouping),
-              ]),
-            );
-          }
-          return results;
-        }
-
-        if (subcategory === "armors" || subcategory === "shields") {
-          const holderKey = subcategory;
-          holder = holders[holderKey];
-          if (!holder) {
-            return [
-              {
-                holder: null,
-                object: null,
-                data: null,
-                key: target,
-                resolvedPath: null,
-                error: `${subcategory} holder not found`,
-              },
-            ];
-          }
-
-          const getterMap = { armors: "getArmors", shields: "getShields" } as const;
-          const [, grouping, ...subPath] = rest;
-          const groupData = holder[getterMap[subcategory]]();
-          const group = groupData[stripSeparators(grouping)];
-          if (!group) return [];
-
-          return this.traversePath(holder, subPath, group, group, grouping, 0, [
-            category,
-            subcategory,
-            stripSeparators(grouping),
-          ]);
-        }
+        const items = this.traverseItemGroup(target, rest, holders);
+        if (items) return items;
       }
-
-      // Special case: skills.budget sub-path
-      if (category === "skills" && rest.length > 0 && rest[0] === "budget") {
-        holder = holders["skills"];
-        if (!holder) {
-          return [
-            {
-              holder: null,
-              object: null,
-              data: null,
-              key: target,
-              resolvedPath: null,
-              error: "Skills holder not found",
-            },
-          ];
-        }
+      if (category === "skills" && rest[0] === "budget") {
+        const holder = holders["skills"];
+        if (!holder) return failed(null, target, "Skills holder not found");
         const budgetData = holder.getSkillBudget();
-        const [, ...subPath] = rest;
-        return this.traversePath(holder, subPath, budgetData, budgetData, "budget", 0, [category, "budget"]);
+        return this.traversePath(holder, rest.slice(1), budgetData, "budget", 0, [category, "budget"]);
       }
-
-      // Map category names to holder keys and getter methods
-      const categoryMap: Record<string, { holderKey: string; getter: string }> = {
-        abilities: { holderKey: "abilities", getter: "getAbilities" },
-        skills: { holderKey: "skills", getter: "getSkills" },
-        saves: { holderKey: "savingThrows", getter: "getSavingThrows" },
-        combat: { holderKey: "combat", getter: "getCombat" },
-        classes: { holderKey: "classes", getter: "getClasses" },
-        feats: { holderKey: "feats", getter: "getFeats" },
-        powers: { holderKey: "powers", getter: "getPowers" },
-        identity: { holderKey: "identity", getter: "getIdentity" },
-        aptitudes: { holderKey: "aptitudes", getter: "getAptitudes" },
-        spellcasting: { holderKey: "spellcasting", getter: "getSpellcasting" },
-        bonded: { holderKey: "bonded", getter: "getBonds" },
-      };
-
-      const mapping = categoryMap[category];
-      if (!mapping) {
-        return [
-          {
-            holder,
-            object: null,
-            data: null,
-            key: target,
-            resolvedPath: null,
-            error: `Unknown category: ${category}`,
-          },
-        ];
-      }
-
-      holder = holders[mapping.holderKey];
-      if (!holder) {
-        return [
-          {
-            holder: null,
-            object: null,
-            data: null,
-            key: target,
-            resolvedPath: null,
-            error: `${CATEGORY_LABELS[category]} holder not found`,
-          },
-        ];
-      }
-
-      const getterFn = holder[mapping.getter];
-      if (typeof getterFn === "function") {
-        data = holder[mapping.getter]();
-      }
-
-      if (!data) {
-        return [
-          {
-            holder,
-            object: null,
-            data: null,
-            key: target,
-            resolvedPath: null,
-            error: `${CATEGORY_LABELS[category]} not found`,
-          },
-        ];
-      }
-
-      if (data) {
-        return this.traversePath(holder, rest, data, data, category, 0, [category]);
-      }
-
-      return [
-        {
-          holder,
-          object: null,
-          data: null,
-          key: target,
-          resolvedPath: null,
-          error: `Data not found`,
-        },
-      ];
+      return this.traverseCategory(target, category, rest, holders);
     } catch (error) {
-      return [
-        {
-          holder: null,
-          object: null,
-          data: null,
-          key: target,
-          resolvedPath: null,
-          error: `Failed to traverse path: ${error}`,
-        },
-      ];
+      return failed(null, target, `Failed to traverse path: ${error}`);
     }
   }
 }
