@@ -73,12 +73,21 @@ function trackSlowQuery(sql: string | undefined, queryStart: number): void {
   store.slowQueries.push({ sql, durationMs });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function wrapPrototypeQuery(proto: { query: (...args: any[]) => any }): void {
+function isThenable(value: unknown): value is Promise<unknown> {
+  return typeof value === "object" && value !== null && "then" in value && typeof value.then === "function";
+}
+
+/** The SQL text of a `query` call's first argument: a string, or a config with `text`. */
+function queryText(arg: unknown): string | undefined {
+  if (typeof arg === "string") return arg;
+  if (typeof arg === "object" && arg !== null && "text" in arg && typeof arg.text === "string") return arg.text;
+  return undefined;
+}
+
+function wrapPrototypeQuery(proto: { query(...args: unknown[]): unknown }): void {
   const original = proto.query;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  proto.query = function (this: any, ...args: any[]) {
+  proto.query = function (this: unknown, ...args: unknown[]) {
     const result = original.apply(this, args);
 
     // Only measure when the result is a promise (no callback provided).
@@ -86,11 +95,11 @@ function wrapPrototypeQuery(proto: { query: (...args: any[]) => any }): void {
     // client.query(text, values, CALLBACK) which returns undefined —
     // so Client.prototype.query patch won't fire for pool-routed queries,
     // and Pool.prototype.query patch won't double-count transaction queries.
-    if (result && typeof result.then === "function") {
+    if (isThenable(result)) {
       onQueryStart();
       const queryStart = performance.now();
-      const sql = typeof args[0] === "string" ? args[0] : args[0]?.text;
-      return (result as Promise<unknown>).then(
+      const sql = queryText(args[0]);
+      return result.then(
         (res) => {
           onQueryEnd();
           trackSlowQuery(sql, queryStart);
@@ -105,8 +114,7 @@ function wrapPrototypeQuery(proto: { query: (...args: any[]) => any }): void {
     }
 
     return result;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any;
+  };
 }
 
 let patched = false;

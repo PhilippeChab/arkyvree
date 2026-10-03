@@ -10,7 +10,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { isTest } from "@/server/environment.ts";
-import { requestLogger } from "@/server/middlewares/index.ts";
+import { requestLogger, type SessionContext } from "@/server/middlewares/index.ts";
 import apiRouter from "@/server/routers/api.tsx";
 import authenticationRouter from "@/server/routers/authentication/index.ts";
 import { errorResponse } from "@/server/routers/respond.ts";
@@ -38,7 +38,8 @@ const cors = buildCors({
 const enforceCanonicalHost = process.env.NODE_ENV === "production" && !!process.env.APP_URL;
 const canonicalHost = enforceCanonicalHost ? new URL(process.env.APP_URL!).host : null;
 
-const app = new Hono()
+// The session is set only on the routes behind the session middleware.
+const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
   .use("*", async (c, next) => {
     if (!canonicalHost) return next();
     if (c.req.path === "/health") return next();
@@ -98,12 +99,8 @@ const app = new Hono()
       const publish = (userId: string, type: "activities:updated" | "notifications:updated") =>
         publishWsEvent(userId, { type }).catch((err) => console.error("[ws] Failed to publish event:", err));
       for (const userId of notified) publish(userId, "notifications:updated");
-      try {
-        const session = c.get("requestSession" as never) as { userId: string } | undefined;
-        if (session) publish(session.userId, "activities:updated");
-      } catch {
-        // Session middleware didn't run (e.g. unauthenticated route)
-      }
+      const session = c.get("requestSession");
+      if (session) publish(session.userId, "activities:updated");
     }
   })
   .route("/api", apiRouter)
