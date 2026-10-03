@@ -3,16 +3,17 @@ import { getTableName } from "drizzle-orm";
 import { powersInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { FeatsAptitudes, Powers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
-  cowEntity,
   entityHasCharacterPicks,
-  lockEntityForMutation,
+  entityToDelete,
+  entityToEdit,
+  findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -41,14 +42,7 @@ interface PowerBody {
 const PowersMethods = {
   async getRulesetPowers(
     rulesetId: string,
-    where: {
-      childOnly?: boolean;
-      aptitudeId?: string;
-      level?: number;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
+    where: Parameters<typeof findRulesetPowers>[3],
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
@@ -59,10 +53,7 @@ const PowersMethods = {
   async getRulesetPower(rulesetId: string, powerId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const power = rulesetData.powersById.get(powerId);
-      if (!power || (power.rulesetId !== rulesetId && !sourceChain.includes(power.rulesetId))) {
-        throw new NotFoundError("Power not found in this ruleset");
-      }
+      const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
       return {
         ...power,
         modifiers: rulesetData.modifiersBySource.get(power.id) ?? [],
@@ -152,26 +143,10 @@ const PowersMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const power = rulesetData.powersById.get(powerId);
-        const isOwned = power && power.rulesetId === rulesetId;
-        const isInherited = power && sourceChain.includes(power.rulesetId);
-        if (!power || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Power not found in this ruleset");
-        }
+        const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
 
-        let targetId = power.id;
-        const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "powers",
-            power.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        }
+        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "powers", power);
+        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
 
@@ -278,27 +253,9 @@ const PowersMethods = {
         const inUse = await entityHasCharacterPicks(tx, "powers", powerId, rulesetId);
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const power = rulesetData.powersById.get(powerId);
-        const isOwned = power && power.rulesetId === rulesetId;
-        const isInherited = power && sourceChain.includes(power.rulesetId);
-        if (!power || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Power not found in this ruleset");
-        }
+        const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
 
-        let targetId = power.id;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "powers",
-            power.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        } else {
-          await lockEntityForMutation(tx, "powers", targetId);
-        }
+        const targetId = await entityToDelete(tx, ruleset, sourceChain, "powers", power);
 
         // FK CASCADE on powers_aptitudes.power_id and klass_level_powers.power_id
         // wipes those join rows when the power row is deleted.

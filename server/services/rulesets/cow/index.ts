@@ -4,8 +4,10 @@
  *
  *   Consumer surface (any service or route):
  *     `withRulesetScope` / `withRulesetScopes` for single / multi-ruleset
- *     reads. `cowEntity` / `cowEntityForCustomization` and the
- *     `lockEntityForMutation` / `entityHasCharacterPicks` helpers for admin CRUD mutations.
+ *     reads. `findScopedEntity` finds an entity in the composed view, and
+ *     `entityToEdit` / `entityToDelete` the row a CRUD mutation writes (copying
+ *     it when inherited). `cowEntity` / `cowEntityForCustomization` and the
+ *     `lockEntityForMutation` / `entityHasCharacterPicks` helpers for the rest.
  *     `cowCustomizationForMutation` resolves the row a customization update or delete changes.
  *
  *   Copy primitives: `fetchEntityCustomizations` /
@@ -26,6 +28,9 @@ export {
   cowCustomizationForMutation,
   cowEntity,
   cowEntityForCustomization,
+  entityToDelete,
+  entityToEdit,
+  findScopedEntity,
 } from "./cowEntity.ts";
 export { withRulesetScope, withRulesetScopes } from "./cowData.ts";
 export {

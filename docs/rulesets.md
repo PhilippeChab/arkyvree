@@ -340,28 +340,27 @@ entityId, rulesetId)` and is reused by every entity-delete service and
 
 ## Entity Services Pattern
 
-All entity services follow the same COW-aware pattern:
+Every entity service works in the ruleset's scope (`withRulesetScope`): reads come from its composed view, and writes to an inherited entity go to the fork's copy, made on its first edit (`server/services/rulesets/cow/cowEntity.ts`):
 
 ```ts
-// Read (list)
-const sourceChain = buildSourceChain(ruleset);
-const result = await Feats.findManyByRulesetId(db, {
-  rulesetId,
-  ancestorRulesetIds: sourceChain,
-  ...where,
-}, pagination);
-if (sourceChain.length > 0) {
-  const overrideMap = await buildOverrideMap(db, rulesetId, sourceChain);
-  result.items = resolveOverrides(result.items, overrideMap);
-}
+// Read (list): the repository reads the ruleset and its source chain
+return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
+  Saves.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: rulesetData.cow.sourceChain, ...where }, pagination),
+);
 
-// Write (update/delete) — COW if inherited
-const isInherited = sourceChain.includes(entity.rulesetId);
-if (isInherited) {
-  const cowResult = await cowEntity(tx, "feats", entityId, rulesetId, sourceChain);
-  targetId = cowResult.id; // operate on the local copy
-}
+// Read (one), and the start of every write: the entity in the composed view, or a 404
+const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
+
+// Update: the fork's own entity, or the copy of an inherited one (whose updatedAt isn't the client's)
+const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "saves", save);
+await Saves.update(tx, data, { id: targetId, expectedUpdatedAt: copied ? undefined : body.updatedAt });
+
+// Delete: the same, and the fork's own entity is locked first
+const targetId = await entityToDelete(tx, ruleset, sourceChain, "saves", save);
+await Saves.delete(tx, { id: targetId });
 ```
+
+A create checks the name against the composed view first (`assertEntityNameAvailable`), and points a tombstone it hides at the new entity (`repointTombstoneSnapshot`).
 
 ## Legal
 

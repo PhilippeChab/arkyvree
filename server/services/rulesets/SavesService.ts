@@ -3,14 +3,15 @@ import { getTableName } from "drizzle-orm";
 import { savesInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { KlassLevelSaves, Saves } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
-  cowEntity,
-  lockEntityForMutation,
+  entityToDelete,
+  entityToEdit,
+  findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -37,10 +38,7 @@ const SavesMethods = {
   async getRulesetSave(rulesetId: string, saveId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const save = rulesetData.savesById.get(saveId);
-      if (!save || (save.rulesetId !== rulesetId && !sourceChain.includes(save.rulesetId))) {
-        throw new NotFoundError("Save not found in this ruleset");
-      }
+      const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
       return save;
     });
   },
@@ -105,19 +103,10 @@ const SavesMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const save = rulesetData.savesById.get(saveId);
-        const isOwned = save && save.rulesetId === rulesetId;
-        const isInherited = save && sourceChain.includes(save.rulesetId);
-        if (!save || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Save not found in this ruleset");
-        }
+        const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
 
-        let targetId = save.id;
-        const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
-        if (isInherited) {
-          const cowResult = await cowEntity(tx, "saves", save.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id;
-        }
+        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "saves", save);
+        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...saveData } = body;
         const rows = await Saves.update(tx, saveData, { id: targetId, expectedUpdatedAt });
@@ -149,12 +138,7 @@ const SavesMethods = {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
-        const save = rulesetData.savesById.get(saveId);
-        const isOwned = save && save.rulesetId === rulesetId;
-        const isInherited = save && sourceChain.includes(save.rulesetId);
-        if (!save || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Save not found in this ruleset");
-        }
+        const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
 
         // Saves don't have a character-pick path — class-side check instead.
         // klass_level_saves.save_id is ON DELETE RESTRICT, so this is just for
@@ -162,13 +146,7 @@ const SavesMethods = {
         const inUse = await KlassLevelSaves.existsBySaveId(tx, { saveId: save.id });
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        let targetId = save.id;
-        if (isInherited) {
-          const cowResult = await cowEntity(tx, "saves", save.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id;
-        } else {
-          await lockEntityForMutation(tx, "saves", targetId);
-        }
+        const targetId = await entityToDelete(tx, ruleset, sourceChain, "saves", save);
 
         // The database deletes its customizations with it.
         const rows = await Saves.delete(tx, { id: targetId });

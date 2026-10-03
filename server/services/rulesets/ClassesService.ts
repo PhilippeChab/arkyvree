@@ -3,16 +3,17 @@ import { getTableName } from "drizzle-orm";
 import { klassesInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Klasses } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
   assertEntityNameAvailable,
-  cowEntity,
   entityHasCharacterPicks,
-  lockEntityForMutation,
+  entityToDelete,
+  entityToEdit,
+  findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
@@ -44,10 +45,7 @@ const ClassesMethods = {
   async getRulesetKlass(rulesetId: string, klassId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const klass = rulesetData.klassesById.get(klassId);
-      if (!klass || (klass.rulesetId !== rulesetId && !sourceChain.includes(klass.rulesetId))) {
-        throw new NotFoundError("Class not found in this ruleset");
-      }
+      const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
 
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const properties = rulesetData.propertiesByEntity.get(klass.id) ?? [];
@@ -122,26 +120,10 @@ const ClassesMethods = {
 
         (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
 
-        const klass = rulesetData.klassesById.get(klassId);
-        const isOwned = klass && klass.rulesetId === rulesetId;
-        const isInherited = klass && sourceChain.includes(klass.rulesetId);
-        if (!klass || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Class not found in this ruleset");
-        }
+        const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
 
-        let targetId = klass.id;
-        const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "klasses",
-            klass.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        }
+        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "klasses", klass);
+        const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...klassData } = body;
         const rows = await Klasses.update(tx, klassData, { id: targetId, expectedUpdatedAt });
@@ -176,27 +158,9 @@ const ClassesMethods = {
         const inUse = await entityHasCharacterPicks(tx, "klasses", klassId, rulesetId);
         (await getRulesetPolicy(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const klass = rulesetData.klassesById.get(klassId);
-        const isOwned = klass && klass.rulesetId === rulesetId;
-        const isInherited = klass && sourceChain.includes(klass.rulesetId);
-        if (!klass || (!isOwned && !isInherited)) {
-          throw new NotFoundError("Class not found in this ruleset");
-        }
+        const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
 
-        let targetId = klass.id;
-        if (isInherited) {
-          const cowResult = await cowEntity(
-            tx,
-            "klasses",
-            klass.id,
-            rulesetId,
-            sourceChain,
-            ruleset.extensionRulesetIds,
-          );
-          targetId = cowResult.id;
-        } else {
-          await lockEntityForMutation(tx, "klasses", targetId);
-        }
+        const targetId = await entityToDelete(tx, ruleset, sourceChain, "klasses", klass);
 
         // FK CASCADE wipes klass_levels (and their klass_level_feats /
         // klass_level_powers / klass_level_saves), klass_skills, and any
