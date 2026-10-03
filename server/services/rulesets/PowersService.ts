@@ -186,7 +186,7 @@ export const PowersMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         }
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
@@ -275,10 +275,7 @@ export const PowersMethods = {
           data: {
             baseRules: ruleset.baseRules,
             entityName: body.name,
-            changedFields: getChangedFields(
-              power as Record<string, unknown>,
-              body as unknown as Record<string, unknown>,
-            ),
+            changedFields: getChangedFields(power, body),
           },
         });
 
@@ -314,7 +311,7 @@ export const PowersMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         } else {
           await lockEntityForMutation(tx, "powers", targetId);
         }

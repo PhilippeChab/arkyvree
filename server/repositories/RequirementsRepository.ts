@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class RequirementsRepository extends BaseRepository<typeof requirementsInCustomization, RequirementInstance> {
+class RequirementsRepository extends BaseRepository<typeof requirementsInCustomization> {
   constructor() {
     super(requirementsInCustomization);
   }
@@ -83,12 +83,6 @@ class RequirementsRepository extends BaseRepository<typeof requirementsInCustomi
       where: and(inArray(this.table.entityId, where.entityIds), isNull(this.table.deletedAt)),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof requirementsInCustomization>) {
-    return new RequirementInstance(instance);
-  }
 }
-
-class RequirementInstance extends Instance<InferSelectModel<typeof requirementsInCustomization>> {}
 
 export default RequirementsRepository;

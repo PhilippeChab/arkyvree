@@ -38,7 +38,7 @@ const connectionString = workerId ? baseUrl.replace(/\/([^/?]+)(\?|$)/, `/$1_w${
 const schemaWithRelations = { ...schema, ...relations };
 
 // Test database setup - use pg for manual transaction control
-export const pool = new PgPool({ connectionString });
+const pool = new PgPool({ connectionString });
 const _db = drizzlePg(pool as NodePgClient, { schema: schemaWithRelations });
 
 // Test database override state
@@ -58,33 +58,21 @@ export const db = new Proxy(_db, {
 
 export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
   // In a test, the test's own transaction: this one is a savepoint in it, which a failure rolls back as in production.
-  const testDb = globalThis.__getTestDb?.();
-  if (testDb) {
-    const result = await testDb.transaction(callback);
-    clearRequestCache();
-    return result;
-  }
-
-  const txDb = drizzlePg(pool as NodePgClient, { schema: schemaWithRelations });
-  const result = await txDb.transaction(callback);
+  const result = await (globalThis.__getTestDb?.() ?? _db).transaction(callback);
   clearRequestCache();
   return result;
 }
 
-export type Transaction = PgTransaction<
+type Transaction = PgTransaction<
   PgQueryResultHKT,
   typeof schemaWithRelations,
   ExtractTablesWithRelations<typeof schemaWithRelations>
 >;
-export type Db = typeof db | Transaction;
+type Db = typeof db | Transaction;
 
 // HELPER FUNCTIONS (used by test setup)
 export function setTestDb(testDb: Db | null) {
   _testDb = testDb;
-}
-
-export function getTestDb(): Db | null {
-  return _testDb;
 }
 
 export function createTestPool() {

@@ -15,14 +15,14 @@ import type { LevelUpProjector, ProjectedCharacterData } from "@/server/rulesets
 import type { Power, Skill } from "@/shared/relations.ts";
 
 /** A projected skill row with a 3.5 rank allocation. */
-export type Dnd35ProjectedSkill = Skill & {
+type Dnd35ProjectedSkill = Skill & {
   klassLevelId: string;
   characterLevelId: string;
   rank: number;
 };
 
 /** A projected power row with 3.5 spell-level and save-name fields. */
-export type Dnd35ProjectedPower = Power & {
+type Dnd35ProjectedPower = Power & {
   klassLevelId: string;
   characterLevelId: string;
   aptitudeId: string;

@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNotNull, isNull, notInArray } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { aptitudesInRules, featsAptitudesInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class AptitudesRepository extends BaseRepository<typeof aptitudesInRules, AptitudeInstance> {
+class AptitudesRepository extends BaseRepository<typeof aptitudesInRules> {
   constructor() {
     super(aptitudesInRules, "aptitudes");
   }
@@ -125,12 +125,6 @@ class AptitudesRepository extends BaseRepository<typeof aptitudesInRules, Aptitu
       );
     return new Set(rows.map((r) => r.aptitudeId));
   }
-
-  withInstance(instance: InferSelectModel<typeof aptitudesInRules>) {
-    return new AptitudeInstance(instance);
-  }
 }
-
-class AptitudeInstance extends Instance<InferSelectModel<typeof aptitudesInRules>> {}
 
 export default AptitudesRepository;

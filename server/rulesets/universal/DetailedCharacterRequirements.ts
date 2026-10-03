@@ -9,7 +9,7 @@ type Node = {
   children: Node[];
 };
 
-export type DetailedCharacterComprehensiveRequirements = {
+type DetailedCharacterComprehensiveRequirements = {
   requirements: Requirement[][];
   invalidRequirements: { warning: string; requirement: Requirement }[];
   unmetRequirementGroups: Requirement[][];

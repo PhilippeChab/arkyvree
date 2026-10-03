@@ -57,8 +57,8 @@ export async function cowEntity(
   });
   if (existingSnapshot) {
     const exists = await repo.lockById(tx, existingSnapshot.forkedEntityId);
-    const existing = exists ? await repo.findOne(tx, { id: existingSnapshot.forkedEntityId } as never) : undefined;
-    if (existing) return existing as EntityWithId;
+    const existing = exists ? await repo.findOne(tx, { id: existingSnapshot.forkedEntityId }) : undefined;
+    if (existing) return existing;
     await EntitySnapshots.deleteBySourceAndRuleset(tx, {
       sourceEntityId: entityId,
       rulesetId: childRulesetId,
@@ -69,22 +69,15 @@ export async function cowEntity(
   if (!(await repo.lockById(tx, entityId, "share"))) {
     throw new NotFoundError("Customization source no longer exists; refresh the entity");
   }
-  const parentEntity = await repo.findOne(tx, { id: entityId } as never);
+  const parentEntity = await repo.findOne(tx, { id: entityId });
   if (!parentEntity) {
     throw new Error(`Parent entity not found: ${entityType}/${entityId}`);
   }
 
   // 2. Copy entity to child ruleset
-  const {
-    id: _id,
-    createdAt: _ca,
-    updatedAt: _ua,
-    deletedAt: _da,
-    rulesetId: _rid,
-    ...entityData
-  } = parentEntity as Record<string, unknown>;
-  const newRows = await repo.create(tx, { ...entityData, rulesetId: childRulesetId } as never);
-  const newEntity = newRows[0] as EntityWithId;
+  const { id: _id, createdAt: _ca, updatedAt: _ua, deletedAt: _da, rulesetId: _rid, ...entityData } = parentEntity;
+  const newRows = await repo.create(tx, { ...entityData, rulesetId: childRulesetId });
+  const newEntity = newRows[0];
 
   // 3. Copy customizations
   const customizations = await fetchEntityCustomizations(tx, [entityId], entityType, sourceType);
@@ -136,12 +129,7 @@ export async function cowEntity(
     }
   }
 
-  const contentHash = hashEntity(
-    entityType,
-    parentEntity as Record<string, unknown>,
-    entityCustomizations,
-    klassRelationships,
-  );
+  const contentHash = hashEntity(entityType, parentEntity, entityCustomizations, klassRelationships);
 
   await EntitySnapshots.create(tx, {
     rulesetId: childRulesetId,
@@ -237,7 +225,7 @@ export async function cowEntityForCustomization(
     const level = await KlassLevels.findOne(tx, { id: entityId });
     if (!level) throw new NotFoundError("Customization source not found in this ruleset");
 
-    const klass = await Klasses.findOne(tx, { id: level.klassId } as never);
+    const klass = await Klasses.findOne(tx, { id: level.klassId });
     if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
 
     if (klass.rulesetId === rulesetId) {
@@ -261,7 +249,7 @@ export async function cowEntityForCustomization(
       customizationIds,
     );
     // Find the new level by matching level number (levels aren't individually snapshotted)
-    const newLevels = await KlassLevels.findManyByKlass(tx, { klassId: cowResult.id as string });
+    const newLevels = await KlassLevels.findManyByKlass(tx, { klassId: cowResult.id });
     const newLevel = newLevels.find((l) => l.level === level.level);
     if (!newLevel) throw new NotFoundError("Copied class level not found");
     return newLevel.id;
@@ -284,15 +272,14 @@ export async function cowEntityForCustomization(
   if (!cowType) throw new NotFoundError("Customization source not found in this ruleset");
 
   const repo = ENTITY_REPOS[cowType];
-  const entity = await repo.findOne(tx, { id: entityId } as never);
+  const entity = await repo.findOne(tx, { id: entityId });
   if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
 
-  const entityRecord = entity as Record<string, unknown>;
-  if (entityRecord.rulesetId === rulesetId) {
+  if (entity.rulesetId === rulesetId) {
     await lockEntityForMutation(tx, cowType, entity.id);
     return entity.id;
   }
-  if (!sourceChain.includes(entityRecord.rulesetId as string))
+  if (!sourceChain.includes(entity.rulesetId))
     throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
   const cowResult = await cowEntity(

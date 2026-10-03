@@ -18,7 +18,7 @@ export interface PerLevelDistributionData {
   skillContexts: Map<string, { isClassSkill: boolean; currentRank: number }>;
 }
 
-export interface DistributedLevel {
+interface DistributedLevel {
   skills: Record<string, number>;
   feats: Record<string, string[]>;
   powers: Record<string, string[]>;

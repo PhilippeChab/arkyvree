@@ -1,14 +1,11 @@
-import { and, eq, type InferInsertModel, type InferSelectModel, isNull, not, or } from "drizzle-orm";
+import { and, eq, type InferInsertModel, isNull, not, or } from "drizzle-orm";
 
 import { contributorsInCharacter, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
-class CharacterContributorsRepository extends BaseRepository<
-  typeof contributorsInCharacter,
-  CharacterContributorInstance
-> {
+class CharacterContributorsRepository extends BaseRepository<typeof contributorsInCharacter> {
   constructor() {
     super(contributorsInCharacter);
   }
@@ -174,12 +171,6 @@ class CharacterContributorsRepository extends BaseRepository<
       )
       .returning();
   }
-
-  withInstance(instance: InferSelectModel<typeof contributorsInCharacter>) {
-    return new CharacterContributorInstance(instance);
-  }
 }
-
-class CharacterContributorInstance extends Instance<InferSelectModel<typeof contributorsInCharacter>> {}
 
 export default CharacterContributorsRepository;

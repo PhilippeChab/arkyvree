@@ -1,5 +1,5 @@
 import { and, count, desc, eq, exists, inArray, isNull, not, or, sql } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import {
   charactersInCharacter,
@@ -9,9 +9,9 @@ import {
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 
-class CharactersRepository extends BaseRepository<typeof charactersInCharacter, CharacterInstance> {
+class CharactersRepository extends BaseRepository<typeof charactersInCharacter> {
   constructor() {
     super(charactersInCharacter);
   }
@@ -337,12 +337,6 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter, 
 
     return result.count;
   }
-
-  withInstance(instance: InferSelectModel<typeof charactersInCharacter>) {
-    return new CharacterInstance(instance);
-  }
 }
-
-class CharacterInstance extends Instance<InferSelectModel<typeof charactersInCharacter>> {}
 
 export default CharactersRepository;

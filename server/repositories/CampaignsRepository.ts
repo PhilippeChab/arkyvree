@@ -1,11 +1,11 @@
 import { and, count, eq, isNull, not, sql } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { campaignsInCampaign, playersInCampaign, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 
-class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign, CampaignInstance> {
+class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign> {
   constructor() {
     super(campaignsInCampaign);
   }
@@ -145,12 +145,6 @@ class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign, Cam
 
     return result.count;
   }
-
-  withInstance(instance: InferSelectModel<typeof campaignsInCampaign>) {
-    return new CampaignInstance(instance);
-  }
 }
-
-class CampaignInstance extends Instance<InferSelectModel<typeof campaignsInCampaign>> {}
 
 export default CampaignsRepository;

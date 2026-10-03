@@ -1,14 +1,11 @@
 import { and, eq, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { characterAbilitiesInCharacter } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class CharacterAbilitiesRepository extends BaseRepository<
-  typeof characterAbilitiesInCharacter,
-  CharacterAbilityInstance
-> {
+class CharacterAbilitiesRepository extends BaseRepository<typeof characterAbilitiesInCharacter> {
   constructor() {
     super(characterAbilitiesInCharacter);
   }
@@ -41,12 +38,6 @@ class CharacterAbilitiesRepository extends BaseRepository<
       where: and(eq(this.table.characterId, where.characterId), isNull(this.table.deletedAt)),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof characterAbilitiesInCharacter>) {
-    return new CharacterAbilityInstance(instance);
-  }
 }
-
-class CharacterAbilityInstance extends Instance<InferSelectModel<typeof characterAbilitiesInCharacter>> {}
 
 export default CharacterAbilitiesRepository;

@@ -36,7 +36,7 @@ export const CREATURE_TYPES = [
   "Vermin",
 ] as const;
 
-export type CreatureType = (typeof CREATURE_TYPES)[number];
+type CreatureType = (typeof CREATURE_TYPES)[number];
 
 export function findCreatureType(text: string): CreatureType | null {
   if (!text) return null;

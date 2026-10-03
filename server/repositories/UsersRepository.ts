@@ -1,11 +1,11 @@
-import { and, eq, type InferInsertModel, type InferSelectModel, isNotNull, isNull, like, lt } from "drizzle-orm";
+import { and, eq, type InferInsertModel, isNotNull, isNull, like, lt } from "drizzle-orm";
 
 import { usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { hashPassword } from "@/server/password.ts";
-import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 
-class UsersRepository extends BaseRepository<typeof usersInAccount, UserInstance> {
+class UsersRepository extends BaseRepository<typeof usersInAccount> {
   constructor() {
     super(usersInAccount);
   }
@@ -71,12 +71,6 @@ class UsersRepository extends BaseRepository<typeof usersInAccount, UserInstance
       ]),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof usersInAccount>) {
-    return new UserInstance(instance);
-  }
 }
-
-class UserInstance extends Instance<InferSelectModel<typeof usersInAccount>> {}
 
 export default UsersRepository;

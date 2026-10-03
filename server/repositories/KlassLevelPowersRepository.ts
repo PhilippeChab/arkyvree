@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { klassLevelPowersInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersInRules, KlassLevelPowerInstance> {
+class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersInRules> {
   constructor() {
     super(klassLevelPowersInRules);
   }
@@ -35,12 +35,6 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
       where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof klassLevelPowersInRules>) {
-    return new KlassLevelPowerInstance(instance);
-  }
 }
-
-class KlassLevelPowerInstance extends Instance<InferSelectModel<typeof klassLevelPowersInRules>> {}
 
 export default KlassLevelPowersRepository;

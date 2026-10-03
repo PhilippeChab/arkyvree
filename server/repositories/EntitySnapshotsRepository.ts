@@ -1,11 +1,11 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInRules, EntitySnapshotInstance> {
+class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInRules> {
   constructor() {
     super(entitySnapshotsInRules);
   }
@@ -58,12 +58,6 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
       .delete(this.table)
       .where(and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)));
   }
-
-  withInstance(instance: InferSelectModel<typeof entitySnapshotsInRules>) {
-    return new EntitySnapshotInstance(instance);
-  }
 }
-
-class EntitySnapshotInstance extends Instance<InferSelectModel<typeof entitySnapshotsInRules>> {}
 
 export default EntitySnapshotsRepository;

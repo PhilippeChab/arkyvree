@@ -183,7 +183,7 @@ export type RequirementIssue = {
   requirementTree?: string;
 };
 
-export type ProjectedFeat = Feat & {
+type ProjectedFeat = Feat & {
   klassLevelId: string;
   characterLevelId: string;
   aptitudeId: string;

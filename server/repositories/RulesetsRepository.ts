@@ -1,5 +1,5 @@
 import { and, count, eq, exists, inArray, isNotNull, isNull, not, or, sql } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel, SQL } from "drizzle-orm";
+import type { InferInsertModel, SQL } from "drizzle-orm";
 
 import {
   campaignsInCampaign,
@@ -9,10 +9,10 @@ import {
   starredRulesetsInAccount,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import type { Session } from "@/shared/relations.ts";
 
-class RulesetsRepository extends BaseRepository<typeof rulesetsInRules, RulesetInstance> {
+class RulesetsRepository extends BaseRepository<typeof rulesetsInRules> {
   constructor() {
     super(rulesetsInRules);
   }
@@ -365,12 +365,6 @@ class RulesetsRepository extends BaseRepository<typeof rulesetsInRules, RulesetI
 
     return result.count;
   }
-
-  withInstance(instance: InferSelectModel<typeof rulesetsInRules>) {
-    return new RulesetInstance(instance);
-  }
 }
-
-class RulesetInstance extends Instance<InferSelectModel<typeof rulesetsInRules>> {}
 
 export default RulesetsRepository;

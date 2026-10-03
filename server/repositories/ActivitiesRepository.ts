@@ -1,11 +1,11 @@
 import { eq, gte, isNull, lt } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { activitiesInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount, ActivityInstance> {
+class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount> {
   constructor() {
     super(activitiesInAccount);
   }
@@ -65,12 +65,6 @@ class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount, Ac
       });
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof activitiesInAccount>) {
-    return new ActivityInstance(instance);
-  }
 }
-
-class ActivityInstance extends Instance<InferSelectModel<typeof activitiesInAccount>> {}
 
 export default ActivitiesRepository;

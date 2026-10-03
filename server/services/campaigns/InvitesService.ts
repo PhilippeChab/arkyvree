@@ -11,10 +11,10 @@ import { Campaigns, Invites, Notifications, Players, Users } from "@/server/repo
 import { createActivityWithNotifications } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
-import type { Player, Session } from "@/shared/relations.ts";
+import type { Invite, Player, Session } from "@/shared/relations.ts";
 
 export type InviteEmailData = {
-  invite: { id: string };
+  invite: Invite;
   campaignName: string;
   inviteeName: string;
   inviterName: string;

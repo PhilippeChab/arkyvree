@@ -1,11 +1,11 @@
 import { eq, lt } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { exportsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class ExportsRepository extends BaseRepository<typeof exportsInAccount, ExportInstance> {
+class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
   constructor() {
     super(exportsInAccount);
   }
@@ -33,12 +33,6 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount, ExportIn
         ]),
       );
   }
-
-  withInstance(instance: InferSelectModel<typeof exportsInAccount>) {
-    return new ExportInstance(instance);
-  }
 }
-
-class ExportInstance extends Instance<InferSelectModel<typeof exportsInAccount>> {}
 
 export default ExportsRepository;

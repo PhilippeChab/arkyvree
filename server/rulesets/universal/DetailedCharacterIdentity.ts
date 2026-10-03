@@ -34,7 +34,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   xp: "Experience Points",
 };
 
-export type DetailedCharacterComprehensiveIdentity = {
+type DetailedCharacterComprehensiveIdentity = {
   physiology: {
     name: string;
     description: string;
@@ -167,9 +167,5 @@ export default class DetailedCharacterIdentity {
 
   getIdentity() {
     return this.detailedCharacterIdentity;
-  }
-
-  getSection(sectionName: "physiology" | "beliefs" | "background" | "meta") {
-    return this.detailedCharacterIdentity[sectionName];
   }
 }

@@ -27,7 +27,7 @@ export const MAX_FINGER_ITEMS = 2;
 export const isHandLocation = (location: unknown): location is HandLocation => isOneOf(location, HAND_LOCATIONS);
 
 /** An equipped inventory entry, as the slot rules read it. */
-export interface EquippedEntry {
+interface EquippedEntry {
   location: string | null;
   /** Stored from 0; null outside the hands. */
   weaponSet: number | null;
@@ -44,7 +44,7 @@ export type SlotConflictReason = "occupied" | "fingers" | "hands" | "twoHanded" 
  * - `twoHanded`: a hand can't take an item while `entry` is two-handed in the same set;
  * - `sameHand`: `entry` is already in that hand in the same set.
  */
-export type SlotConflict<T extends EquippedEntry> =
+type SlotConflict<T extends EquippedEntry> =
   | { reason: Exclude<SlotConflictReason, "fingers">; entry: T }
   | { reason: "fingers" };
 

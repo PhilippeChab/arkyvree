@@ -70,12 +70,12 @@ function normalize(v: unknown): string {
  * Compare an existing entity with an update body and return a list of changes.
  * Short fields include before/after values; long text fields only note the change.
  */
-export function getChangedFields(existing: Record<string, unknown>, body: Record<string, unknown>): ChangedField[] {
+export function getChangedFields(existing: object, body: object): ChangedField[] {
+  const before = new Map(Object.entries(existing));
   const changes: ChangedField[] = [];
-  for (const key of Object.keys(body)) {
-    if (!(key in existing)) continue;
-    const oldVal = existing[key];
-    const newVal = body[key];
+  for (const [key, newVal] of Object.entries(body)) {
+    if (!before.has(key)) continue;
+    const oldVal = before.get(key);
     if (oldVal == null && newVal == null) continue;
     if (normalize(oldVal) === normalize(newVal)) continue;
 

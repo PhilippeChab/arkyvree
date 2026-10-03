@@ -131,7 +131,7 @@ export const RacesMethods = {
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
           const cowResult = await cowEntity(tx, "races", race.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         }
 
         const { updatedAt: _u, ...raceData } = body;
@@ -148,10 +148,7 @@ export const RacesMethods = {
           type: "updateRace",
           data: {
             entityName: body.name,
-            changedFields: getChangedFields(
-              race as Record<string, unknown>,
-              body as unknown as Record<string, unknown>,
-            ),
+            changedFields: getChangedFields(race, body),
           },
         });
 
@@ -180,7 +177,7 @@ export const RacesMethods = {
         let targetId = race.id;
         if (isInherited) {
           const cowResult = await cowEntity(tx, "races", race.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         } else {
           await lockEntityForMutation(tx, "races", targetId);
         }

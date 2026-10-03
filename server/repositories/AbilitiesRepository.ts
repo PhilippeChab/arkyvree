@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { abilitiesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules, AbilityInstance> {
+class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules> {
   constructor() {
     super(abilitiesInRules, "abilities");
   }
@@ -18,11 +18,15 @@ class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules, Abilit
     throw new Error("Abilities are immutable and cannot be deleted");
   }
 
-  async findOne(db: Db, where: { id: string } | { id: string; rulesetId: string }) {
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+  ) {
     return await db.query.abilitiesInRules.findFirst({
       where: this.where([
         "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        eq(this.table.id, where.id),
+        "id" in where && eq(this.table.id, where.id),
+        "name" in where && eq(this.table.name, where.name),
         isNull(this.table.deletedAt),
       ]),
     });
@@ -72,12 +76,6 @@ class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules, Abilit
       });
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof abilitiesInRules>) {
-    return new AbilityInstance(instance);
-  }
 }
-
-class AbilityInstance extends Instance<InferSelectModel<typeof abilitiesInRules>> {}
 
 export default AbilitiesRepository;

@@ -12,7 +12,7 @@ type SendArgs = {
   from?: string;
 } & EmailJobPayload;
 
-export class EmailService {
+class EmailService {
   async send(options: SendArgs): Promise<{ success: boolean; error?: string }> {
     if (isTest()) {
       return { success: false, error: "Email service not configured" };

@@ -9,11 +9,11 @@ const WEAPON_LOCATION_MAP = {
   "Two Handed": "twohanded",
 } as const satisfies Record<HandLocation, string>;
 
-export type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[HandLocation];
+type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[HandLocation];
 
 type EquipmentSlot = Lowercase<Exclude<ItemLocation, HandLocation>>;
 
-export type InventorySlot = EquipmentSlot | WeaponSetSlot;
+type InventorySlot = EquipmentSlot | WeaponSetSlot;
 
 const LOCATION_TO_SLOT: Record<string, InventorySlot> = Object.fromEntries(
   LOCATION_OPTIONS.map((loc) => [

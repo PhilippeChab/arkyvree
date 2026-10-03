@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class PropertiesRepository extends BaseRepository<typeof propertiesInCustomization, PropertyInstance> {
+class PropertiesRepository extends BaseRepository<typeof propertiesInCustomization> {
   constructor() {
     super(propertiesInCustomization);
   }
@@ -98,12 +98,6 @@ class PropertiesRepository extends BaseRepository<typeof propertiesInCustomizati
       where: and(inArray(this.table.entityId, where.entityIds), isNull(this.table.deletedAt)),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof propertiesInCustomization>) {
-    return new PropertyInstance(instance);
-  }
 }
-
-class PropertyInstance extends Instance<InferSelectModel<typeof propertiesInCustomization>> {}
 
 export default PropertiesRepository;

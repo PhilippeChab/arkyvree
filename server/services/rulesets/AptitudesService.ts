@@ -135,7 +135,7 @@ export const AptitudesMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         }
 
         const { updatedAt: _u, ...aptitudeData } = body;
@@ -152,7 +152,7 @@ export const AptitudesMethods = {
           type: "updateAptitude",
           data: {
             entityName: body.name,
-            changedFields: getChangedFields(aptitude as Record<string, unknown>, body as Record<string, unknown>),
+            changedFields: getChangedFields(aptitude, body),
           },
         });
 
@@ -188,7 +188,7 @@ export const AptitudesMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         } else {
           await lockEntityForMutation(tx, "aptitudes", targetId);
         }

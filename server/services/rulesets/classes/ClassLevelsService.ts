@@ -299,7 +299,7 @@ export const ClassLevelsMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetKlassId = cowResult.id as string;
+          targetKlassId = cowResult.id;
         }
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;

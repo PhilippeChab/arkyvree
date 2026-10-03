@@ -118,8 +118,8 @@ export function buildProjectedAutoGrantedFeats<T extends { id: string }>(
       characterLevelId,
       aptitudeId: rec.aptitudeId,
       modifiers: featCustomizations.modifiers.get(rec.featsInRule.id) ?? [],
-      properties: [] as never[],
-      requirements: [] as never[],
+      properties: [],
+      requirements: [],
     }));
 }
 
@@ -208,8 +208,8 @@ export function buildProjectedGivenFeats<T extends { id: string }>(
     characterLevelId,
     aptitudeId: rec.aptitudeId,
     modifiers: customizations.modifiers.get(rec.featsInRule.id) ?? [],
-    properties: [] as never[],
-    requirements: [] as never[],
+    properties: [],
+    requirements: [],
   }));
 }
 

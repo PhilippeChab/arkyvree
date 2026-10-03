@@ -140,7 +140,7 @@ export const ClassesMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         }
 
         const { updatedAt: _u, ...klassData } = body;
@@ -157,7 +157,7 @@ export const ClassesMethods = {
           type: "updateKlass",
           data: {
             entityName: body.name,
-            changedFields: getChangedFields(klass as Record<string, unknown>, body as Record<string, unknown>),
+            changedFields: getChangedFields(klass, body),
           },
         });
 
@@ -193,7 +193,7 @@ export const ClassesMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         } else {
           await lockEntityForMutation(tx, "klasses", targetId);
         }

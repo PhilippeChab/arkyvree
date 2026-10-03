@@ -61,7 +61,7 @@ export const CampaignPlayersMethods = {
       let invite: Invite | null = null;
       if (email) {
         emailData = await createInviteInTransaction(tx, session, player, email);
-        invite = emailData.invite as Invite;
+        invite = emailData.invite;
       }
 
       return { player, invite };
@@ -123,7 +123,7 @@ export const CampaignPlayersMethods = {
         }
 
         emailData = await createInviteInTransaction(tx, session, updatedPlayer, email);
-        invite = emailData.invite as Invite;
+        invite = emailData.invite;
       }
 
       await Activities.create(tx, {

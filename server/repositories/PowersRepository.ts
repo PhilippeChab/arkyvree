@@ -1,5 +1,5 @@
 import { and, asc, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import {
   klassLevelPowersInRules,
@@ -11,9 +11,9 @@ import {
   savesInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class PowersRepository extends BaseRepository<typeof powersInRules, PowerInstance> {
+class PowersRepository extends BaseRepository<typeof powersInRules> {
   constructor() {
     super(powersInRules, "powers");
   }
@@ -249,12 +249,6 @@ class PowersRepository extends BaseRepository<typeof powersInRules, PowerInstanc
       );
     return this.grantedAt(where.levels, granted);
   }
-
-  withInstance(instance: InferSelectModel<typeof powersInRules>) {
-    return new PowerInstance(instance);
-  }
 }
-
-class PowerInstance extends Instance<InferSelectModel<typeof powersInRules>> {}
 
 export default PowersRepository;

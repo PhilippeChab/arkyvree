@@ -1,11 +1,11 @@
 import { eq } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { blobsInStorage } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class BlobsRepository extends BaseRepository<typeof blobsInStorage, BlobInstance> {
+class BlobsRepository extends BaseRepository<typeof blobsInStorage> {
   constructor() {
     super(blobsInStorage, "blobs");
   }
@@ -34,12 +34,6 @@ class BlobsRepository extends BaseRepository<typeof blobsInStorage, BlobInstance
       ]),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof blobsInStorage>) {
-    return new BlobInstance(instance);
-  }
 }
-
-class BlobInstance extends Instance<InferSelectModel<typeof blobsInStorage>> {}
 
 export default BlobsRepository;

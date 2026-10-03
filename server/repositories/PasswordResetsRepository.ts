@@ -1,11 +1,10 @@
 import { and, eq, isNull, lt } from "drizzle-orm";
-import type { InferSelectModel } from "drizzle-orm";
 
 import { passwordResetsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class PasswordResetsRepository extends BaseRepository<typeof passwordResetsInAccount, PasswordResetInstance> {
+class PasswordResetsRepository extends BaseRepository<typeof passwordResetsInAccount> {
   constructor() {
     super(passwordResetsInAccount);
   }
@@ -51,12 +50,6 @@ class PasswordResetsRepository extends BaseRepository<typeof passwordResetsInAcc
       orderBy: (table, { desc }) => [desc(table.createdAt)],
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof passwordResetsInAccount>) {
-    return new PasswordResetInstance(instance);
-  }
 }
-
-class PasswordResetInstance extends Instance<InferSelectModel<typeof passwordResetsInAccount>> {}
 
 export default PasswordResetsRepository;

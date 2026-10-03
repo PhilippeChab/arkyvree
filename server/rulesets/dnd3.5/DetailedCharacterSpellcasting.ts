@@ -44,10 +44,6 @@ export default class DetailedCharacterSpellcasting {
     private readonly characterModifiers: DetailedCharacterModifiers,
   ) {}
 
-  getBonusKlassLevelClassMap() {
-    return this.bonusKlassLevelClassMap;
-  }
-
   getBonusKlassLevelModifiers() {
     return this.bonusKlassLevelModifiers;
   }
@@ -58,10 +54,6 @@ export default class DetailedCharacterSpellcasting {
 
   getBonusKlassLevelAttribution() {
     return this.bonusKlassLevelAttribution;
-  }
-
-  getAptitudePowerProperties() {
-    return this.aptitudePowerProperties;
   }
 
   getSpellTags() {

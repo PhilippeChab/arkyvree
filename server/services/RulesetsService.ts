@@ -121,10 +121,7 @@ async function isExtensionInUseByHost(tx: Db, hostRulesetId: string, extensionId
 
   const shadowIdsByType: Partial<Record<EntityType, string[]>> = {};
   for (const [type, ids] of Object.entries(sourceIdsByType) as [EntityType, string[]][]) {
-    const sources = (await ENTITY_REPOS[type].findMany(tx, { ids } as never)) as Array<{
-      id: string;
-      rulesetId: string;
-    }>;
+    const sources = await ENTITY_REPOS[type].findMany(tx, { ids });
     const fromExt = new Set(sources.filter((s) => s.rulesetId === extensionId).map((s) => s.id));
     const forked = snapshots
       .filter((s) => s.entityType === type && fromExt.has(s.sourceEntityId))
@@ -225,7 +222,7 @@ async function deleteEntityWithCascade(tx: Db, entityType: EntityType, entityId:
   // must repoint copies before invoking this.
 
   // 2. Delete the entity itself: the database deletes its customizations
-  await ENTITY_REPOS[entityType].delete(tx, { id: entityId } as never);
+  await ENTITY_REPOS[entityType].delete(tx, { id: entityId });
 }
 
 // Rejects a subscribe action that would surface two entities of the same name in
@@ -778,8 +775,8 @@ export const RulesetsMethods = {
         const entityType = snap.entityType as EntityType;
         const repo = ENTITY_REPOS[entityType];
         if (!repo) continue;
-        const sourceEntity = await repo.findOne(tx, { id: snap.sourceEntityId } as never);
-        if (sourceEntity && (sourceEntity as Record<string, unknown>).rulesetId === extensionId) {
+        const sourceEntity = await repo.findOne(tx, { id: snap.sourceEntityId });
+        if (sourceEntity?.rulesetId === extensionId) {
           extensionSnapshots.push(snap);
         }
       }

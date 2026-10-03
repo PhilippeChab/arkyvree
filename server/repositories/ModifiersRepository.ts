@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class ModifiersRepository extends BaseRepository<typeof modifiersInCustomization, ModifierInstance> {
+class ModifiersRepository extends BaseRepository<typeof modifiersInCustomization> {
   constructor() {
     super(modifiersInCustomization);
   }
@@ -73,12 +73,6 @@ class ModifiersRepository extends BaseRepository<typeof modifiersInCustomization
       where: and(inArray(this.table.sourceId, where.sourceIds), isNull(this.table.deletedAt)),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof modifiersInCustomization>) {
-    return new ModifierInstance(instance);
-  }
 }
-
-class ModifierInstance extends Instance<InferSelectModel<typeof modifiersInCustomization>> {}
 
 export default ModifiersRepository;

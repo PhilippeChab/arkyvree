@@ -60,7 +60,7 @@ export const ClassSkillsMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetKlassId = cowResult.id as string;
+          targetKlassId = cowResult.id;
         }
 
         const rows = await KlassSkills.create(tx, {
@@ -119,7 +119,7 @@ export const ClassSkillsMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetKlassId = cowResult.id as string;
+          targetKlassId = cowResult.id;
         }
 
         const rows = await KlassSkills.delete(tx, { klassId: targetKlassId, skillId: klassSkill.skillId });
