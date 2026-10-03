@@ -314,7 +314,7 @@ async function assertExtensionsNameCompatible(
   }
 }
 
-export const RulesetsMethods = {
+const RulesetsMethods = {
   async getAllRulesets(
     session: Session,
     where: {

@@ -3,8 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { languagesInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { LanguagesMethods } from "@/server/services/rulesets/LanguagesService.ts";
-import { createTestCharacter, createTestRuleset, createTestUserAndRuleset } from "@/tests/helpers.ts";
+import LanguagesService from "@/server/services/rulesets/LanguagesService.ts";
+import { createTestCharacter, createTestRuleset, createTestUserAndRuleset, methodsOf } from "@/tests/helpers.ts";
+
+const LanguagesMethods = methodsOf(LanguagesService);
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("LanguagesService", () => {

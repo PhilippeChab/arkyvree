@@ -6,8 +6,10 @@ import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Feats, Items, Properties } from "@/server/repositories/index.ts";
-import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import { createTestUserAndRuleset, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
+
+const PropertiesMethods = methodsOf(PropertiesService);
 
 const acBonus = { type: "AC_BONUS", value: "5", description: "Armor class bonus" };
 

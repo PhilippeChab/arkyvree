@@ -4,7 +4,7 @@ import { Abilities } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
 
-export const AbilitiesMethods = {
+const AbilitiesMethods = {
   async getRulesetAbilities(
     rulesetId: string,
     where: {

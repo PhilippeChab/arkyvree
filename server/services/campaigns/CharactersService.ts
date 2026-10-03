@@ -15,13 +15,17 @@ import {
 } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import BaseService from "@/server/services/BaseService.ts";
-import { enqueueCharacterPdf, findExportableCharacter, loadBondedByKind } from "@/server/services/CharactersService.ts";
+import {
+  enqueueCharacterPdf,
+  findExportableCharacter,
+  loadBondedByKind,
+} from "@/server/services/characters/helpers.ts";
 import { withRulesetScopes } from "@/server/services/rulesets/cow.ts";
 import type { Session } from "@/shared/relations.ts";
 
 type VisibilityType = "Private" | "Public" | "Partial";
 
-export const PlayerCharactersMethods = {
+const PlayerCharactersMethods = {
   async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: VisibilityType) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);

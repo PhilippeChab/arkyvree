@@ -39,8 +39,8 @@ import {
 } from "@/server/repositories/index.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { cowEntity } from "@/server/services/rulesets/cow.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
   addCharacterLevel,
@@ -52,9 +52,13 @@ import {
   createTestUser,
   getSeedCtx,
   insertRows,
+  methodsOf,
   NIL_UUID,
   uniqueId,
 } from "@/tests/helpers.ts";
+
+const FeatsMethods = methodsOf(FeatsService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 const firstPage = { limit: 100, page: 1 };

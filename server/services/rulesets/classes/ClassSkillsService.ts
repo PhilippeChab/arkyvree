@@ -11,7 +11,7 @@ import { cowEntity, entityHasCharacterPicks, withRulesetScope } from "@/server/s
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-export const ClassSkillsMethods = {
+const ClassSkillsMethods = {
   async getClassSkills(rulesetId: string, classId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;

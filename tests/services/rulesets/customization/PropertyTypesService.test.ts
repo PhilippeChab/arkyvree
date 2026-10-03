@@ -9,8 +9,10 @@ import {
   SPELL_SCHOOL,
   WEAPON_PROFICIENCY,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import { PropertyTypesMethods } from "@/server/services/rulesets/customization/PropertyTypesService.ts";
-import { createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
+import PropertyTypesService from "@/server/services/rulesets/customization/PropertyTypesService.ts";
+import { createTestUserAndRuleset, insertRows, methodsOf } from "@/tests/helpers.ts";
+
+const PropertyTypesMethods = methodsOf(PropertyTypesService);
 
 const firstPage = { limit: 50, page: 1 };
 

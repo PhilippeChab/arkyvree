@@ -25,7 +25,7 @@ import type { Session } from "@/shared/relations.ts";
 
 import TargetPathsService from "./TargetPathsService.ts";
 
-export const RequirementsMethods = {
+const RequirementsMethods = {
   async getEntityRequirements(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const resolvedId = rulesetData.canonicalize(entityId);

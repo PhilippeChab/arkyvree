@@ -17,7 +17,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-export const SavesMethods = {
+const SavesMethods = {
   async getRulesetSaves(
     rulesetId: string,
     where: {

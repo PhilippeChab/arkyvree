@@ -7,11 +7,16 @@ import { invalidateAll } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, CharacterLanguages, Characters } from "@/server/repositories/index.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
-import { LanguagesMethods } from "@/server/services/rulesets/LanguagesService.ts";
-import { RacesMethods } from "@/server/services/rulesets/RacesService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import LanguagesService from "@/server/services/rulesets/LanguagesService.ts";
+import RacesService from "@/server/services/rulesets/RacesService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
+import { createSeededTestRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
+
+const ItemsMethods = methodsOf(ItemsService);
+const LanguagesMethods = methodsOf(LanguagesService);
+const RacesMethods = methodsOf(RacesService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 afterEach(invalidateAll);
 

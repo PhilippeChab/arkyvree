@@ -40,7 +40,7 @@ import {
   Skills,
   Users,
 } from "@/server/repositories/index.ts";
-import { AuthenticationMethods } from "@/server/services/AuthenticationService.ts";
+import AuthenticationService from "@/server/services/AuthenticationService.ts";
 import {
   createSeededTestRuleset,
   createTestCharacter,
@@ -48,7 +48,10 @@ import {
   createTestRuleset,
   createTestUserAndRuleset,
   makeSession,
+  methodsOf,
 } from "@/tests/helpers.ts";
+
+const AuthenticationMethods = methodsOf(AuthenticationService);
 
 /** The tables whose rows a customization can belong to, by the type it names them with. */
 const OWNERS = {

@@ -10,9 +10,11 @@ import {
 } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import { TargetPathsMethods } from "@/server/services/rulesets/customization/TargetPathsService.ts";
+import TargetPathsService from "@/server/services/rulesets/customization/TargetPathsService.ts";
 import { timingStorage } from "@/server/timing.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
+
+const TargetPathsMethods = methodsOf(TargetPathsService);
 
 afterEach(invalidateAll);
 

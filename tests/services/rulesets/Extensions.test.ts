@@ -33,11 +33,11 @@ import {
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { cowEntity, getOrBuildCowData, invalidateAllCowData } from "@/server/services/rulesets/cow.ts";
-import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
-import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
+import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
+import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import PowersService from "@/server/services/rulesets/PowersService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
   addCharacterLevel,
@@ -47,8 +47,15 @@ import {
   createTestUser,
   getSeedCtx,
   invalidateSeededRuleset,
+  methodsOf,
   uniqueId,
 } from "@/tests/helpers.ts";
+
+const ModifiersMethods = methodsOf(ModifiersService);
+const RequirementsMethods = methodsOf(RequirementsService);
+const FeatsMethods = methodsOf(FeatsService);
+const PowersMethods = methodsOf(PowersService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 const firstPage = { limit: 50, page: 1 };

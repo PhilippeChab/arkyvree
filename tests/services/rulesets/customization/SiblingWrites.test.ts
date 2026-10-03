@@ -16,14 +16,21 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
-import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
+import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
+import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import PowersService from "@/server/services/rulesets/PowersService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
 import { timingStorage } from "@/server/timing.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
+
+const ModifiersMethods = methodsOf(ModifiersService);
+const PropertiesMethods = methodsOf(PropertiesService);
+const RequirementsMethods = methodsOf(RequirementsService);
+const FeatsMethods = methodsOf(FeatsService);
+const PowersMethods = methodsOf(PowersService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 type EntityType = "feats" | "powers";
 type Pairing = "snapshot" | "name";

@@ -18,7 +18,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-export const AptitudesMethods = {
+const AptitudesMethods = {
   async getRulesetAptitudes(
     rulesetId: string,
     where: {

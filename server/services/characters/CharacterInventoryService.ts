@@ -13,7 +13,7 @@ import type { Session } from "@/shared/relations.ts";
 
 import { validateEquipmentSlot, validateItemRequirements } from "./inventory/validation.ts";
 
-export const CharacterInventoryMethods = {
+const CharacterInventoryMethods = {
   async getInventory(session: Session, characterId: string) {
     // Visibility.All: an archived character's sheet still lists its items, read-only.
     const characterRecord = await Characters.findOneEditable(

@@ -20,8 +20,7 @@ import {
   entityHasCharacterPicks,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
-import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
-import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
+import { findRulesetPowers, getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { KlassLevel, KlassLevelFeat, Modifier, Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
@@ -113,7 +112,7 @@ function buildClassLevelDetail<L extends KlassLevel>(
   };
 }
 
-export const ClassLevelsMethods = {
+const ClassLevelsMethods = {
   async getClassLevels(rulesetId: string, classId: string) {
     return await listClassLevels(rulesetId, classId);
   },
@@ -209,16 +208,18 @@ export const ClassLevelsMethods = {
       }
 
       if (slugs.size === 0) {
-        return { items: [], total: 0, page: pagination.page, limit: pagination.limit, nextPage: null };
+        return { items: [], page: pagination.page, nextPage: undefined };
       }
 
       const candidates = rulesetData.aptitudes.filter((a) => slugs.has(stripSeparators(a.name)));
       const aptitude = candidates.find((a) => a.rulesetId === klass.rulesetId) ?? candidates[0];
       if (!aptitude) {
-        return { items: [], total: 0, page: pagination.page, limit: pagination.limit, nextPage: null };
+        return { items: [], page: pagination.page, nextPage: undefined };
       }
 
-      return PowersMethods.getRulesetPowers(
+      return await findRulesetPowers(
+        db,
+        rulesetData,
         rulesetId,
         { aptitudeId: aptitude.id, level: where.level, search: where.search },
         pagination,

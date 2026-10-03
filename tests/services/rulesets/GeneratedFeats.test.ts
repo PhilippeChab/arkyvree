@@ -16,13 +16,13 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import { Dnd35SkillsHooks } from "@/server/rulesets/dnd3.5/hooks/SkillsHooks.ts";
-import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
+import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { ItemsMethods } from "@/server/services/rulesets/ItemsService.ts";
-import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
-import { SkillsMethods } from "@/server/services/rulesets/SkillsService.ts";
+import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import PowersService from "@/server/services/rulesets/PowersService.ts";
+import SkillsService from "@/server/services/rulesets/SkillsService.ts";
 import { timingStorage } from "@/server/timing.ts";
 import {
   createSeededTestRuleset,
@@ -32,8 +32,16 @@ import {
   createTestUserAndRuleset,
   getSeedCtx,
   makeSession,
+  methodsOf,
 } from "@/tests/helpers.ts";
 import { createSeedCharacter } from "@/tests/levelFixtures.ts";
+
+const CharacterLevelsMethods = methodsOf(CharacterLevelsService);
+const PropertiesMethods = methodsOf(PropertiesService);
+const FeatsMethods = methodsOf(FeatsService);
+const ItemsMethods = methodsOf(ItemsService);
+const PowersMethods = methodsOf(PowersService);
+const SkillsMethods = methodsOf(SkillsService);
 
 /** A ruleset of its own with Strength, a spell list and, unless left out, the General aptitude generated feats go in. */
 async function bareRuleset({ general = true } = {}) {

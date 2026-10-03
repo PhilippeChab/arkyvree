@@ -6,7 +6,7 @@ import { klassLevelsInRules, playerCharactersInCampaign } from "@/drizzle/schema
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, CharacterLevels, Characters, Players } from "@/server/repositories/index.ts";
-import { PlayerCharactersMethods } from "@/server/services/campaigns/CharactersService.ts";
+import PlayerCharactersService from "@/server/services/campaigns/CharactersService.ts";
 import {
   addCharacterContributor,
   createTestCampaign,
@@ -14,7 +14,10 @@ import {
   createTestUser,
   getSeedCtx,
   makeSession,
+  methodsOf,
 } from "@/tests/helpers.ts";
+
+const PlayerCharactersMethods = methodsOf(PlayerCharactersService);
 
 type Visibility = "Private" | "Public" | "Partial";
 

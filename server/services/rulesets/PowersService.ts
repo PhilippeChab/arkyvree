@@ -16,7 +16,7 @@ import {
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow.ts";
-import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
+import { findRulesetPowers, getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
 interface PowerBody {
@@ -38,7 +38,7 @@ interface PowerBody {
   updatedAt?: string;
 }
 
-export const PowersMethods = {
+const PowersMethods = {
   async getRulesetPowers(
     rulesetId: string,
     where: {
@@ -51,25 +51,9 @@ export const PowersMethods = {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain, siblingIds } = rulesetData.cow;
-      const result = await Powers.findManyByRulesetId(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...where },
-        pagination,
-      );
-      // Filter sibling losers (if any) and replace each row's aptitude links
-      // with the compose-step version (sibling-merged + FK-remapped). The
-      // rest of the DB row (savesInRule join, etc.) is kept as-is.
-      if (sourceChain.length > 0 && !where.childOnly) {
-        const filtered = siblingIds.size > 0 ? result.items.filter((p) => !siblingIds.has(p.id)) : result.items;
-        result.items = filtered.map((p) => {
-          const merged = rulesetData.powersById.get(p.id);
-          return merged ? { ...p, powersAptitudesInRules: merged.powersAptitudesInRules } : p;
-        });
-      }
-      return result;
-    });
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
+      findRulesetPowers(db, rulesetData, rulesetId, where, pagination),
+    );
   },
 
   async getRulesetPower(rulesetId: string, powerId: string) {

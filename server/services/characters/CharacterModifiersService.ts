@@ -9,7 +9,7 @@ import TargetPathsService from "@/server/services/rulesets/customization/TargetP
 import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 
-export const CharacterModifiersMethods = {
+const CharacterModifiersMethods = {
   async getModifiers(session: Session, characterId: string) {
     const character = await Characters.findOneEditable(db, { id: characterId, userId: session.userId });
     if (!character) throw new NotFoundError("Character not found");
@@ -150,8 +150,10 @@ export const CharacterModifiersMethods = {
   },
 };
 
-export default class CharacterModifiersService extends BaseService<typeof CharacterModifiersMethods> {
+class CharacterModifiersService extends BaseService<typeof CharacterModifiersMethods> {
   static initialize() {
     return new CharacterModifiersService(CharacterModifiersMethods);
   }
 }
+
+export default CharacterModifiersService;

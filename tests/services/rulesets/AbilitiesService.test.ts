@@ -2,8 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { abilitiesInRules } from "@/drizzle/schema.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { AbilitiesMethods } from "@/server/services/rulesets/AbilitiesService.ts";
-import { createTestUserAndRuleset, insertRows, NIL_UUID } from "@/tests/helpers.ts";
+import AbilitiesService from "@/server/services/rulesets/AbilitiesService.ts";
+import { createTestUserAndRuleset, insertRows, methodsOf, NIL_UUID } from "@/tests/helpers.ts";
+
+const AbilitiesMethods = methodsOf(AbilitiesService);
 
 describe("AbilitiesService", () => {
   describe("getRulesetAbilities", () => {

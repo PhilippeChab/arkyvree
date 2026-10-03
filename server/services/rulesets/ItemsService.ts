@@ -42,7 +42,7 @@ function validateTemplateSource(isTemplate: boolean, sourceItemId?: string) {
   }
 }
 
-export const ItemsMethods = {
+const ItemsMethods = {
   async getRulesetItems(
     rulesetId: string,
     where: {

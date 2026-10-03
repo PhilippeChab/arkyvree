@@ -4,10 +4,14 @@ import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { cowEntityForCustomization } from "@/server/services/rulesets/cow.ts";
-import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
-import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { createSeededTestRuleset, invalidateSeededRuleset, makeSession } from "@/tests/helpers.ts";
+import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
+import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
+import { createSeededTestRuleset, invalidateSeededRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
+
+const ModifiersMethods = methodsOf(ModifiersService);
+const PropertiesMethods = methodsOf(PropertiesService);
+const RequirementsMethods = methodsOf(RequirementsService);
 
 async function setup() {
   const session = makeSession();

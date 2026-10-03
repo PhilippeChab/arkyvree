@@ -15,13 +15,19 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
-import { ModifiersMethods } from "@/server/services/rulesets/customization/ModifiersService.ts";
-import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { RequirementsMethods } from "@/server/services/rulesets/customization/RequirementsService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
+import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
+import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createTestRuleset, createTestUser, insertRows } from "@/tests/helpers.ts";
+import { createTestRuleset, createTestUser, insertRows, methodsOf } from "@/tests/helpers.ts";
+
+const ModifiersMethods = methodsOf(ModifiersService);
+const PropertiesMethods = methodsOf(PropertiesService);
+const RequirementsMethods = methodsOf(RequirementsService);
+const FeatsMethods = methodsOf(FeatsService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 const requirement = { valueType: "number", operator: "greater_than_or_equal" } as const;
 

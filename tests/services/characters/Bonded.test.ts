@@ -9,10 +9,10 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import DetailedCharacterAnimalCompanion from "@/server/rulesets/dnd3.5/DetailedCharacterAnimalCompanion.ts";
 import DetailedCharacterFamiliar from "@/server/rulesets/dnd3.5/DetailedCharacterFamiliar.ts";
 import DetailedCharacterMount from "@/server/rulesets/dnd3.5/DetailedCharacterMount.ts";
-import { PlayerCharactersMethods } from "@/server/services/campaigns/CharactersService.ts";
-import { CharacterContributorsMethods } from "@/server/services/CharacterContributorsService.ts";
-import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
-import { CharactersMethods } from "@/server/services/CharactersService.ts";
+import PlayerCharactersService from "@/server/services/campaigns/CharactersService.ts";
+import CharacterContributorsService from "@/server/services/CharacterContributorsService.ts";
+import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
+import CharactersService from "@/server/services/CharactersService.ts";
 import {
   addCharacterContributor,
   addOneLevel,
@@ -20,6 +20,7 @@ import {
   createTestUser,
   getSeedCtx,
   makeSession,
+  methodsOf,
   queuedPdfJobs,
 } from "@/tests/helpers.ts";
 import {
@@ -33,6 +34,11 @@ import {
   SORCERER_1,
   WIZARD_1,
 } from "@/tests/levelFixtures.ts";
+
+const PlayerCharactersMethods = methodsOf(PlayerCharactersService);
+const CharacterContributorsMethods = methodsOf(CharacterContributorsService);
+const CharacterLevelsMethods = methodsOf(CharacterLevelsService);
+const CharactersMethods = methodsOf(CharactersService);
 
 const owner = makeSession();
 const familiarOf = (masterId: string) => Characters.findOne(db, { parentCharacterId: masterId, kind: "familiar" });

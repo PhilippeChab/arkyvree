@@ -22,7 +22,7 @@ import {
   getSkillSlots,
 } from "./levels/dnd3.5/slotQueries.ts";
 
-export const CharacterLevelsMethods = {
+const CharacterLevelsMethods = {
   getAttributeSlots,
   getSkillSlots,
   getFeatSlots,

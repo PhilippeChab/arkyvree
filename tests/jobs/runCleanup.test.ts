@@ -3,8 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { runCleanupTask } from "@/server/jobs/runCleanup.ts";
 import { Attachments, Users } from "@/server/repositories/index.ts";
-import { AuthenticationMethods } from "@/server/services/AuthenticationService.ts";
-import { createTestAttachment, createTestCharacter, silentJobHelpers } from "@/tests/helpers.ts";
+import AuthenticationService from "@/server/services/AuthenticationService.ts";
+import { createTestAttachment, createTestCharacter, methodsOf, silentJobHelpers } from "@/tests/helpers.ts";
+
+const AuthenticationMethods = methodsOf(AuthenticationService);
 
 describe("runCleanup", () => {
   test("hard-deletes demo users whose expires_at has passed", async () => {

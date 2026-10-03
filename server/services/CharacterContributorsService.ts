@@ -12,7 +12,7 @@ import BaseService from "@/server/services/BaseService.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
-export const CharacterContributorsMethods = {
+const CharacterContributorsMethods = {
   async getUserContributorInvites(userId: string) {
     return await CharacterContributors.findManyByUserId(db, { userId, status: "Pending" }, { limit: 10 });
   },

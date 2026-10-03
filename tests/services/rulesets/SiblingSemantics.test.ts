@@ -6,12 +6,16 @@ import { Abilities, Aptitudes, Feats, FeatsAptitudes, Requirements, Rulesets } f
 import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
-import { AptitudesMethods } from "@/server/services/rulesets/AptitudesService.ts";
+import AptitudesService from "@/server/services/rulesets/AptitudesService.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import { PropertiesMethods } from "@/server/services/rulesets/customization/PropertiesService.ts";
-import { RulesetsMethods } from "@/server/services/RulesetsService.ts";
+import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import RulesetsService from "@/server/services/RulesetsService.ts";
 import type { Requirement } from "@/shared/relations.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, makeSession, methodsOf } from "@/tests/helpers.ts";
+
+const AptitudesMethods = methodsOf(AptitudesService);
+const PropertiesMethods = methodsOf(PropertiesService);
+const RulesetsMethods = methodsOf(RulesetsService);
 
 afterEach(invalidateAll);
 

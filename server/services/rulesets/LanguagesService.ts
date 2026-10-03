@@ -18,7 +18,7 @@ import {
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { Session } from "@/shared/relations.ts";
 
-export const LanguagesMethods = {
+const LanguagesMethods = {
   async getRulesetLanguages(
     rulesetId: string,
     where: {

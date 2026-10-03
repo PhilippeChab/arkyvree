@@ -544,13 +544,13 @@ Services that orchestrate 3.5-shaped flows (level-up, spell selection, wizard sc
 // Today
 import { getAvailableKlasses } from "./levels/dnd3.5/pickQueries.ts";
 // …
-export const CharacterLevelsMethods = { getAvailableKlasses, … };
+const CharacterLevelsMethods = { getAvailableKlasses, … };
 
 // With multiple rulesets (sketch)
 import * as dnd35 from "./levels/dnd3.5/index.ts";
 import * as pf2e from "./levels/pf2e/index.ts";
 
-export const CharacterLevelsMethods = {
+const CharacterLevelsMethods = {
   getAvailableKlasses: async (session, characterId, where, pagination) => {
     const ruleset = await getCharacterRuleset(characterId);
     if (ruleset.name === "Dungeons & Dragons: 3.5") return dnd35.getAvailableKlasses(session, characterId, where, pagination);

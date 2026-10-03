@@ -6,8 +6,18 @@ import { playersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, Players, Users } from "@/server/repositories/index.ts";
-import { CampaignInvitesMethods } from "@/server/services/campaigns/InvitesService.ts";
-import { createTestCampaign, createTestUser, makeSession, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
+import InvitesService from "@/server/services/campaigns/InvitesService.ts";
+import {
+  createTestCampaign,
+  createTestUser,
+  inviteToSlot,
+  makeSession,
+  methodsOf,
+  NIL_UUID,
+  uniqueId,
+} from "@/tests/helpers.ts";
+
+const CampaignInvitesMethods = methodsOf(InvitesService);
 
 async function createEmptySlot(campaignId: string) {
   const [slot] = await Players.create(db, { campaignId, role: "Player Character" });
@@ -20,7 +30,7 @@ async function setup() {
   const invitee = await createTestUser("invitee");
   const { campaign } = await createTestCampaign(gm.id);
   const slot = await createEmptySlot(campaign.id);
-  const invite = await CampaignInvitesMethods.createCampaignInvite(gmSession, slot, invitee.user.emailAddress);
+  const invite = await inviteToSlot(gmSession, slot, invitee.user.emailAddress);
   return { gmSession, invitee, campaign, slot, invite };
 }
 
@@ -30,7 +40,7 @@ async function setupEmailOnly() {
   const { campaign } = await createTestCampaign(gm.id);
   const slot = await createEmptySlot(campaign.id);
   const email = `email-only-${uniqueId()}@example.com`;
-  const invite = await CampaignInvitesMethods.createCampaignInvite(gmSession, slot, email);
+  const invite = await inviteToSlot(gmSession, slot, email);
   return { gmSession, campaign, slot, email, invite };
 }
 
@@ -42,7 +52,7 @@ async function signUpAndBackfill(email: string) {
 }
 
 describe("InvitesService", () => {
-  describe("createCampaignInvite", () => {
+  describe("an invite into a slot (updateCampaignPlayer)", () => {
     test("invites a user into an empty slot", async () => {
       const { invitee, slot, invite } = await setup();
       expect(invite).toMatchObject({ userId: invitee.user.id, playerId: slot.id, status: "Pending" });
@@ -65,18 +75,14 @@ describe("InvitesService", () => {
         updatedAt: now,
         deletedAt: null,
       };
-      await expect(
-        CampaignInvitesMethods.createCampaignInvite(session, orphanSlot, "someone@example.com"),
-      ).rejects.toThrow(NotFoundError);
+      await expect(inviteToSlot(session, orphanSlot, "someone@example.com")).rejects.toThrow(NotFoundError);
     });
 
     test("refuses a second invite for the same user, to the same slot or another one", async () => {
       const { gmSession, invitee, campaign, slot } = await setup();
       const otherSlot = await createEmptySlot(campaign.id);
       for (const target of [slot, otherSlot]) {
-        await expect(
-          CampaignInvitesMethods.createCampaignInvite(gmSession, target, invitee.user.emailAddress),
-        ).rejects.toThrow(ConflictError);
+        await expect(inviteToSlot(gmSession, target, invitee.user.emailAddress)).rejects.toThrow(ConflictError);
       }
     });
 
@@ -86,9 +92,7 @@ describe("InvitesService", () => {
       const { campaign } = await createTestCampaign(gm.id);
       await Players.create(db, { userId: player.id, campaignId: campaign.id, role: "Player Character" });
       const slot = await createEmptySlot(campaign.id);
-      await expect(CampaignInvitesMethods.createCampaignInvite(gmSession, slot, player.emailAddress)).rejects.toThrow(
-        ConflictError,
-      );
+      await expect(inviteToSlot(gmSession, slot, player.emailAddress)).rejects.toThrow(ConflictError);
     });
   });
 
@@ -134,11 +138,7 @@ describe("InvitesService", () => {
       const { gmSession, campaign } = await setup();
       for (let i = 0; i < 2; i++) {
         const { user } = await createTestUser();
-        await CampaignInvitesMethods.createCampaignInvite(
-          gmSession,
-          await createEmptySlot(campaign.id),
-          user.emailAddress,
-        );
+        await inviteToSlot(gmSession, await createEmptySlot(campaign.id), user.emailAddress);
       }
 
       const page1 = await CampaignInvitesMethods.getCampaignInvites(gmSession, campaign.id, {}, { limit: 2, page: 1 });
@@ -231,11 +231,7 @@ describe("InvitesService", () => {
     test("links the pending email-only invites of every campaign to the account signing up with that email", async () => {
       const { gmSession, email, invite } = await setupEmailOnly();
       const { campaign: second } = await createTestCampaign(gmSession.userId);
-      const other = await CampaignInvitesMethods.createCampaignInvite(
-        gmSession,
-        await createEmptySlot(second.id),
-        email,
-      );
+      const other = await inviteToSlot(gmSession, await createEmptySlot(second.id), email);
 
       const { user, backfilled } = await signUpAndBackfill(email);
       expect(backfilled.map((i) => i.id).sort()).toEqual([invite.id, other.id].sort());

@@ -17,10 +17,14 @@ import {
 } from "@/drizzle/schema.ts";
 import { getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
-import { AptitudesMethods } from "@/server/services/rulesets/AptitudesService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
-import { PowersMethods } from "@/server/services/rulesets/PowersService.ts";
-import { createSeededTestRulesetWithExtensions } from "@/tests/helpers.ts";
+import AptitudesService from "@/server/services/rulesets/AptitudesService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import PowersService from "@/server/services/rulesets/PowersService.ts";
+import { createSeededTestRulesetWithExtensions, methodsOf } from "@/tests/helpers.ts";
+
+const AptitudesMethods = methodsOf(AptitudesService);
+const FeatsMethods = methodsOf(FeatsService);
+const PowersMethods = methodsOf(PowersService);
 
 /**
  * A seeded fork that uses every extension of its base, so the COW layer sees

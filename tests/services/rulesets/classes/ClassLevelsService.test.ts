@@ -23,9 +23,9 @@ import {
   Requirements,
   Saves,
 } from "@/server/repositories/index.ts";
-import { ClassLevelsMethods } from "@/server/services/rulesets/classes/ClassLevelsService.ts";
-import { ClassesMethods } from "@/server/services/rulesets/ClassesService.ts";
-import { FeatsMethods } from "@/server/services/rulesets/FeatsService.ts";
+import ClassLevelsService from "@/server/services/rulesets/classes/ClassLevelsService.ts";
+import ClassesService from "@/server/services/rulesets/ClassesService.ts";
+import FeatsService from "@/server/services/rulesets/FeatsService.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 import {
@@ -34,8 +34,13 @@ import {
   createTestRuleset,
   createTestUserAndRuleset,
   insertRows,
+  methodsOf,
   NIL_UUID,
 } from "@/tests/helpers.ts";
+
+const ClassLevelsMethods = methodsOf(ClassLevelsService);
+const ClassesMethods = methodsOf(ClassesService);
+const FeatsMethods = methodsOf(FeatsService);
 
 /** A new user's empty ruleset with a class and an aptitude. */
 async function setup() {

@@ -13,7 +13,7 @@ import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
-export const ContributorsMethods = {
+const ContributorsMethods = {
   async getUserContributorInvites(userId: string) {
     return await Contributors.findManyByUserId(db, { userId, status: "Pending" }, { limit: 10 });
   },

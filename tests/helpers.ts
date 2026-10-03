@@ -31,12 +31,34 @@ import {
   Rulesets,
   Users,
 } from "@/server/repositories/index.ts";
-import { CharacterLevelsMethods } from "@/server/services/characters/CharacterLevelsService.ts";
+import type BaseService from "@/server/services/BaseService.ts";
+import type { Methods } from "@/server/services/BaseService.ts";
+import PlayersService from "@/server/services/campaigns/PlayersService.ts";
+import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Player, Session } from "@/shared/relations.ts";
 
 /** An id no row has: for "not found" cases. */
 export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+
+/**
+ * A service's methods, called as the routers call them: through `call`, each resolves to its value or rejects with its
+ * error. Service files export only their class.
+ */
+export function methodsOf<M extends Methods>(Service: { initialize(): BaseService<M> }): M {
+  const service = Service.initialize();
+  return new Proxy(service._methods, {
+    get:
+      (_methods, name) =>
+      async (...args: Parameters<M[keyof M]>) => {
+        const [ok, value, error] = await service.call(name as keyof M, ...args);
+        if (!ok) throw error;
+        return value;
+      },
+  });
+}
+
+const CharacterLevelsMethods = methodsOf(CharacterLevelsService);
 
 /** A short random suffix that keeps names and emails unique between tests. */
 export function uniqueId() {
@@ -196,10 +218,23 @@ export async function createTestCampaign(userId: string, rulesetId?: string) {
   return { campaign, player };
 }
 
+/** Invites `email` into a campaign's player slot, as its Game Master does (`updateCampaignPlayer`). */
+export async function inviteToSlot(gmSession: Session, slot: Player, email: string) {
+  const { invite } = await methodsOf(PlayersService).updateCampaignPlayer(
+    gmSession,
+    slot.campaignId,
+    slot.id,
+    slot.role,
+    email,
+  );
+  if (!invite) throw new Error("The invite wasn't created");
+  return invite;
+}
+
 /**
  * A human character of `userId`'s on the seeded ruleset, written straight to
  * the database: no abilities, levels or activity. Create one through
- * `CharactersMethods.createCharacter` when the test needs those.
+ * the characters service's `createCharacter` when the test needs those.
  */
 export async function createTestCharacter(
   userId: string,

@@ -3,10 +3,13 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterContributors, Users } from "@/server/repositories/index.ts";
-import { CharacterContributorsMethods } from "@/server/services/CharacterContributorsService.ts";
-import { CharactersMethods } from "@/server/services/CharactersService.ts";
+import CharacterContributorsService from "@/server/services/CharacterContributorsService.ts";
+import CharactersService from "@/server/services/CharactersService.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createTestUser, getSeedCtx, uniqueId } from "@/tests/helpers.ts";
+import { createTestUser, getSeedCtx, methodsOf, uniqueId } from "@/tests/helpers.ts";
+
+const CharacterContributorsMethods = methodsOf(CharacterContributorsService);
+const CharactersMethods = methodsOf(CharactersService);
 
 async function createCharacter(session: Session) {
   const ctx = await getSeedCtx();
