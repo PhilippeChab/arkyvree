@@ -20,6 +20,20 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 class ClassesService {
+  async getRulesetKlass(rulesetId: string, klassId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
+
+      const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+      const properties = rulesetData.propertiesByEntity.get(klass.id) ?? [];
+      const { bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId } =
+        rulesetModule.hooks.classes.readClassProperties(properties);
+
+      return { ...klass, bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId };
+    });
+  }
+
   async getRulesetKlasses(
     rulesetId: string,
     where: {
@@ -38,20 +52,6 @@ class ClassesService {
         { rulesetId, ancestorRulesetIds: sourceChain, siblingLoserIds: siblingIds, ...where },
         pagination,
       );
-    });
-  }
-
-  async getRulesetKlass(rulesetId: string, klassId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
-
-      const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      const properties = rulesetData.propertiesByEntity.get(klass.id) ?? [];
-      const { bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId } =
-        rulesetModule.hooks.classes.readClassProperties(properties);
-
-      return { ...klass, bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId };
     });
   }
 

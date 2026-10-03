@@ -9,19 +9,6 @@ import { CampaignsPolicy, RulesetsPolicy } from "@/server/services/policies/inde
 import type { Session } from "@/shared/relations.ts";
 
 class CampaignsService {
-  async getMyCampaigns(
-    session: Session,
-    where: {
-      visibility?: Visibility;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    return await Campaigns.findMany(db, { userId: session.userId, ...where }, pagination);
-  }
-
   async getCampaignById(session: Session, id: string) {
     const rows = await Campaigns.findOneWithPlayerCount(db, { id });
     const campaign = rows[0];
@@ -33,6 +20,19 @@ class CampaignsService {
     const player = await CampaignsPolicy.member(db, session, id);
 
     return { ...campaign, currentUserRole: player.role };
+  }
+
+  async getMyCampaigns(
+    session: Session,
+    where: {
+      visibility?: Visibility;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    return await Campaigns.findMany(db, { userId: session.userId, ...where }, pagination);
   }
 
   async createCampaign(

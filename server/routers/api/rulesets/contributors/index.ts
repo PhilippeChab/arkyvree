@@ -9,6 +9,13 @@ import { ContributorsService } from "@/server/services/rulesets/contributors/ind
 const contributorRoleSchema = z.enum(contributorRole.enumValues);
 
 export default new Hono<SessionContext>()
+  .get("/contributors/invites/me", async (c) => {
+    return c.json(await ContributorsService.getUserContributorInvites(c.var.requestSession.userId), 200);
+  })
+  .get("/contributors/invites/:id", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+    return c.json(await ContributorsService.getContributorInvite(c.var.requestSession, id), 200);
+  })
   .get(
     "/:id/contributors",
     zValidator("param", idParam),
@@ -36,6 +43,14 @@ export default new Hono<SessionContext>()
       );
     },
   )
+  .post("/contributors/invites/:id/accept", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+    return c.json(await ContributorsService.acceptContributorInvite(c.var.requestSession, id), 200);
+  })
+  .post("/contributors/invites/:id/reject", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+    return c.json(await ContributorsService.rejectContributorInvite(c.var.requestSession, id), 200);
+  })
   .post(
     "/:id/contributors",
     denyDemoUser,
@@ -53,6 +68,10 @@ export default new Hono<SessionContext>()
       return c.json(await ContributorsService.inviteContributor(c.var.requestSession, id, email, role), 201);
     },
   )
+  .post("/:id/contributors/leave", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+    return c.json(await ContributorsService.leaveRuleset(c.var.requestSession, id), 200);
+  })
   .put(
     "/:id/contributors/:contributorId",
     zValidator("param", z.object({ id: z.string().uuid(), contributorId: z.string().uuid() })),
@@ -76,23 +95,4 @@ export default new Hono<SessionContext>()
       const { contributorId } = c.req.valid("param");
       return c.json(await ContributorsService.revokeContributor(c.var.requestSession, contributorId), 200);
     },
-  )
-  .post("/:id/contributors/leave", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await ContributorsService.leaveRuleset(c.var.requestSession, id), 200);
-  })
-  .get("/contributors/invites/me", async (c) => {
-    return c.json(await ContributorsService.getUserContributorInvites(c.var.requestSession.userId), 200);
-  })
-  .get("/contributors/invites/:id", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await ContributorsService.getContributorInvite(c.var.requestSession, id), 200);
-  })
-  .post("/contributors/invites/:id/accept", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await ContributorsService.acceptContributorInvite(c.var.requestSession, id), 200);
-  })
-  .post("/contributors/invites/:id/reject", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await ContributorsService.rejectContributorInvite(c.var.requestSession, id), 200);
-  });
+  );

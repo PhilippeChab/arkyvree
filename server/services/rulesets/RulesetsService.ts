@@ -134,6 +134,105 @@ class RulesetsService {
     };
   }
 
+  async updateRuleset(
+    session: Session,
+    id: string,
+    body: { name: string; description: string; private?: boolean; kind?: RulesetKind; updatedAt?: string },
+  ) {
+    const result = await withTransaction(async (tx) => {
+      // First verify the ruleset exists
+      const ruleset = await Rulesets.findOne(tx, { id });
+      if (!ruleset) {
+        throw new NotFoundError("Ruleset not found");
+      }
+
+      (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
+
+      if (!ruleset.private && body.private) {
+        throw new ForbiddenError("Cannot make a public ruleset private");
+      }
+
+      if (body.kind === "extension" && ruleset.kind !== "extension") {
+        this.assertCanBeExtension(ruleset);
+      }
+
+      const { updatedAt, ...rulesetData } = body;
+      const rows = await Rulesets.update(tx, rulesetData, { id, expectedUpdatedAt: updatedAt });
+      if (updatedAt && rows.length === 0) {
+        throw new ConflictError(STALE_ENTITY_MESSAGE);
+      }
+      const updatedRuleset = rows[0];
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: updatedRuleset.id,
+        targetTable: getTableName(rulesetsInRules),
+        type: "updateRuleset",
+      });
+
+      return updatedRuleset;
+    });
+
+    invalidateRuleset(id);
+    return result;
+  }
+
+  async archiveRuleset(session: Session, id: string) {
+    return await withTransaction(async (tx) => {
+      const ruleset = await Rulesets.findOne(tx, { id });
+      if (!ruleset) {
+        throw new NotFoundError("Ruleset not found");
+      }
+
+      (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
+
+      // Archive only flips status='Archived'. Entities and overrides stay
+      // live so any character or campaign still pointing here keeps
+      // resolving its data; the ruleset just becomes read-only at the
+      // editing surface.
+      const rows = await Rulesets.archive(tx, { id });
+      const archivedRuleset = rows[0];
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: archivedRuleset.id,
+        targetTable: getTableName(rulesetsInRules),
+        type: "archiveRuleset",
+      });
+
+      return archivedRuleset;
+    });
+  }
+
+  async unarchiveRuleset(session: Session, id: string) {
+    const result = await withTransaction(async (tx) => {
+      const ruleset = await Rulesets.findOne(tx, { id });
+      if (!ruleset) {
+        throw new NotFoundError("Ruleset not found");
+      }
+
+      new RulesetsPolicy(session, ruleset).canUnarchive();
+
+      const rows = await Rulesets.unarchive(tx, { id });
+      const unarchivedRuleset = rows[0];
+
+      if (!unarchivedRuleset) {
+        throw new InternalError("Failed to unarchive ruleset");
+      }
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: unarchivedRuleset.id,
+        targetTable: getTableName(rulesetsInRules),
+        type: "unarchiveRuleset",
+      });
+
+      return unarchivedRuleset;
+    });
+    invalidateRuleset(id);
+    return result;
+  }
+
   async forkRuleset(session: Session, id: string, body: { name: string; description?: string; private: boolean }) {
     const result = await withTransaction(async (tx) => {
       // 1. Verify source ruleset exists and is published
@@ -210,62 +309,6 @@ class RulesetsService {
     });
 
     invalidateRuleset(result.id);
-    return result;
-  }
-
-  async archiveRuleset(session: Session, id: string) {
-    return await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-
-      (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
-
-      // Archive only flips status='Archived'. Entities and overrides stay
-      // live so any character or campaign still pointing here keeps
-      // resolving its data; the ruleset just becomes read-only at the
-      // editing surface.
-      const rows = await Rulesets.archive(tx, { id });
-      const archivedRuleset = rows[0];
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: archivedRuleset.id,
-        targetTable: getTableName(rulesetsInRules),
-        type: "archiveRuleset",
-      });
-
-      return archivedRuleset;
-    });
-  }
-
-  async unarchiveRuleset(session: Session, id: string) {
-    const result = await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-
-      new RulesetsPolicy(session, ruleset).canUnarchive();
-
-      const rows = await Rulesets.unarchive(tx, { id });
-      const unarchivedRuleset = rows[0];
-
-      if (!unarchivedRuleset) {
-        throw new InternalError("Failed to unarchive ruleset");
-      }
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: unarchivedRuleset.id,
-        targetTable: getTableName(rulesetsInRules),
-        type: "unarchiveRuleset",
-      });
-
-      return unarchivedRuleset;
-    });
-    invalidateRuleset(id);
     return result;
   }
 
@@ -360,49 +403,6 @@ class RulesetsService {
     return await withTransaction(async (tx) => {
       await StarredRulesets.archive(tx, { userId: session.userId, rulesetId });
     });
-  }
-
-  async updateRuleset(
-    session: Session,
-    id: string,
-    body: { name: string; description: string; private?: boolean; kind?: RulesetKind; updatedAt?: string },
-  ) {
-    const result = await withTransaction(async (tx) => {
-      // First verify the ruleset exists
-      const ruleset = await Rulesets.findOne(tx, { id });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-
-      (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
-
-      if (!ruleset.private && body.private) {
-        throw new ForbiddenError("Cannot make a public ruleset private");
-      }
-
-      if (body.kind === "extension" && ruleset.kind !== "extension") {
-        this.assertCanBeExtension(ruleset);
-      }
-
-      const { updatedAt, ...rulesetData } = body;
-      const rows = await Rulesets.update(tx, rulesetData, { id, expectedUpdatedAt: updatedAt });
-      if (updatedAt && rows.length === 0) {
-        throw new ConflictError(STALE_ENTITY_MESSAGE);
-      }
-      const updatedRuleset = rows[0];
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: updatedRuleset.id,
-        targetTable: getTableName(rulesetsInRules),
-        type: "updateRuleset",
-      });
-
-      return updatedRuleset;
-    });
-
-    invalidateRuleset(id);
-    return result;
   }
 }
 

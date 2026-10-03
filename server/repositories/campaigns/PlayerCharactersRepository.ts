@@ -15,57 +15,6 @@ class PlayerCharactersRepository extends BaseRepository<typeof playerCharactersI
     super(playerCharactersInCampaign);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof playerCharactersInCampaign>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof playerCharactersInCampaign>>,
-    where: { playerId: string; characterId: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.playerId, where.playerId),
-          eq(this.table.characterId, where.characterId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
-  }
-
-  // Hard delete — used when intentionally removing a player from a campaign
-  async deleteByPlayerId(db: Db, where: { playerId: string }) {
-    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId));
-  }
-
-  async findOne(
-    db: Db,
-    where:
-      | { playerId: string; characterId: string }
-      | { characterId: string }
-      | { characterId: string; campaignId: string },
-  ) {
-    return await db.query.playerCharactersInCampaign.findFirst({
-      where: this.where([
-        "playerId" in where && eq(this.table.playerId, where.playerId),
-        "characterId" in where && eq(this.table.characterId, where.characterId),
-        "campaignId" in where &&
-          inArray(
-            this.table.playerId,
-            db
-              .select({ id: playersInCampaign.id })
-              .from(playersInCampaign)
-              .where(and(eq(playersInCampaign.campaignId, where.campaignId), isNull(playersInCampaign.deletedAt))),
-          ),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
   /**
    * Returns true if the character is linked to a campaign that is itself live
    * (campaign not archived AND link not soft-removed AND owning player not
@@ -136,6 +85,57 @@ class PlayerCharactersRepository extends BaseRepository<typeof playerCharactersI
         offset,
       });
     });
+  }
+
+  async findOne(
+    db: Db,
+    where:
+      | { playerId: string; characterId: string }
+      | { characterId: string }
+      | { characterId: string; campaignId: string },
+  ) {
+    return await db.query.playerCharactersInCampaign.findFirst({
+      where: this.where([
+        "playerId" in where && eq(this.table.playerId, where.playerId),
+        "characterId" in where && eq(this.table.characterId, where.characterId),
+        "campaignId" in where &&
+          inArray(
+            this.table.playerId,
+            db
+              .select({ id: playersInCampaign.id })
+              .from(playersInCampaign)
+              .where(and(eq(playersInCampaign.campaignId, where.campaignId), isNull(playersInCampaign.deletedAt))),
+          ),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof playerCharactersInCampaign>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async update(
+    db: Db,
+    values: Partial<InferInsertModel<typeof playerCharactersInCampaign>>,
+    where: { playerId: string; characterId: string },
+  ) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(
+        and(
+          eq(this.table.playerId, where.playerId),
+          eq(this.table.characterId, where.characterId),
+          isNull(this.table.deletedAt),
+        ),
+      )
+      .returning();
+  }
+
+  // Hard delete — used when intentionally removing a player from a campaign
+  async deleteByPlayerId(db: Db, where: { playerId: string }) {
+    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId));
   }
 }
 

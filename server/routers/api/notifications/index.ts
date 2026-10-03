@@ -38,13 +38,13 @@ const notifications = new Hono()
   .get("/unread", async (c) => {
     return c.json(await NotificationsService.getUnreadSummary(c.var.requestSession), 200);
   })
-  .post("/:id/read", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await NotificationsService.markRead(c.var.requestSession, id), 200);
-  })
   .post("/read-all", async (c) => {
     await NotificationsService.markAllRead(c.var.requestSession);
     return c.json({ success: true }, 200);
+  })
+  .post("/:id/read", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+    return c.json(await NotificationsService.markRead(c.var.requestSession, id), 200);
   });
 
 export default notifications;

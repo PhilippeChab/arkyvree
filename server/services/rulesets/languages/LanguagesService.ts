@@ -19,6 +19,14 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 class LanguagesService {
+  async getRulesetLanguage(rulesetId: string, languageId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
+      return language;
+    });
+  }
+
   async getRulesetLanguages(
     rulesetId: string,
     where: {
@@ -36,14 +44,6 @@ class LanguagesService {
         { rulesetId, ancestorRulesetIds: sourceChain, ...where },
         pagination,
       );
-    });
-  }
-
-  async getRulesetLanguage(rulesetId: string, languageId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
-      return language;
     });
   }
 

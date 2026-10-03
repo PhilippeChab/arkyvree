@@ -63,6 +63,30 @@ const levelParams = z.object({ characterId: z.string().uuid(), characterLevelId:
 
 const levels = new Hono<SessionContext>()
   .get(
+    "/:characterId/attribute-slots",
+    zValidator("param", characterIdParam),
+    zValidator(
+      "query",
+      z.object({
+        characterLevelId: z.string().uuid().optional(),
+        pendingLevelCount: queryNumber.optional(),
+      }),
+    ),
+    async (c) => {
+      const { characterId } = c.req.valid("param");
+      const { characterLevelId, pendingLevelCount } = c.req.valid("query");
+      return c.json(
+        await CharacterLevelsService.getAttributeSlots(
+          c.var.requestSession,
+          characterId,
+          characterLevelId,
+          pendingLevelCount,
+        ),
+        200,
+      );
+    },
+  )
+  .get(
     "/:characterId/available-classes",
     zValidator("param", characterIdParam),
     zValidator(
@@ -90,64 +114,6 @@ const levels = new Hono<SessionContext>()
           pending.pendingLevelAbilityIds,
           pending.pendingFeatPicks,
           pending.pendingSkillAllocations,
-        ),
-        200,
-      );
-    },
-  )
-  .delete("/:characterId", zValidator("param", characterIdParam), async (c) => {
-    const { characterId } = c.req.valid("param");
-    return c.json(await CharacterLevelsService.removeLevel(c.var.requestSession, characterId), 200);
-  })
-  .get(
-    "/:characterId/attribute-slots",
-    zValidator("param", characterIdParam),
-    zValidator(
-      "query",
-      z.object({
-        characterLevelId: z.string().uuid().optional(),
-        pendingLevelCount: queryNumber.optional(),
-      }),
-    ),
-    async (c) => {
-      const { characterId } = c.req.valid("param");
-      const { characterLevelId, pendingLevelCount } = c.req.valid("query");
-      return c.json(
-        await CharacterLevelsService.getAttributeSlots(
-          c.var.requestSession,
-          characterId,
-          characterLevelId,
-          pendingLevelCount,
-        ),
-        200,
-      );
-    },
-  )
-  .get(
-    "/:characterId/skill-slots",
-    zValidator("param", characterIdParam),
-    zValidator(
-      "query",
-      z.object({
-        ...levelQuery,
-        abilityId: z.string().uuid().optional(),
-        pendingLevelAbilityIds: abilityIdList,
-      }),
-    ),
-    async (c) => {
-      const { characterId } = c.req.valid("param");
-      const { klassId, level, characterLevelId, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } =
-        c.req.valid("query");
-      return c.json(
-        await CharacterLevelsService.getSkillSlots(
-          c.var.requestSession,
-          characterId,
-          klassId,
-          level,
-          characterLevelId,
-          abilityId,
-          pendingLevelKlassLevelIds,
-          pendingLevelAbilityIds,
         ),
         200,
       );
@@ -236,6 +202,51 @@ const levels = new Hono<SessionContext>()
     },
   )
   .get(
+    "/:characterId/available-powers",
+    zValidator("param", characterIdParam),
+    zValidator(
+      "query",
+      z.object({
+        ...levelQuery,
+        aptitudeId: z.string().uuid(),
+        powerLevel: queryNumber.optional(),
+        limit: limitOf(20),
+        page,
+        search: z.string().optional(),
+        excludeSchools: z
+          .string()
+          .optional()
+          .transform((value) => (value ? value.split(",") : undefined)),
+        selectedFeatPicks: featPicks,
+        pendingLevelFeatPicks: featPicks,
+      }),
+    ),
+    async (c) => {
+      const { characterId } = c.req.valid("param");
+      const query = c.req.valid("query");
+      return c.json(
+        await CharacterLevelsService.getAvailablePowers(
+          c.var.requestSession,
+          characterId,
+          query.aptitudeId,
+          query.klassId,
+          query.level,
+          {
+            powerLevel: query.powerLevel,
+            search: query.search,
+            excludeSchools: query.excludeSchools,
+            selectedFeatPicks: query.selectedFeatPicks,
+            pendingLevelFeatPicks: query.pendingLevelFeatPicks,
+          },
+          { limit: query.limit, page: query.page },
+          query.characterLevelId,
+          query.pendingLevelKlassLevelIds,
+        ),
+        200,
+      );
+    },
+  )
+  .get(
     "/:characterId/feat-slots",
     zValidator("param", characterIdParam),
     zValidator("query", z.object(levelQuery)),
@@ -288,45 +299,30 @@ const levels = new Hono<SessionContext>()
     },
   )
   .get(
-    "/:characterId/available-powers",
+    "/:characterId/skill-slots",
     zValidator("param", characterIdParam),
     zValidator(
       "query",
       z.object({
         ...levelQuery,
-        aptitudeId: z.string().uuid(),
-        powerLevel: queryNumber.optional(),
-        limit: limitOf(20),
-        page,
-        search: z.string().optional(),
-        excludeSchools: z
-          .string()
-          .optional()
-          .transform((value) => (value ? value.split(",") : undefined)),
-        selectedFeatPicks: featPicks,
-        pendingLevelFeatPicks: featPicks,
+        abilityId: z.string().uuid().optional(),
+        pendingLevelAbilityIds: abilityIdList,
       }),
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const query = c.req.valid("query");
+      const { klassId, level, characterLevelId, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } =
+        c.req.valid("query");
       return c.json(
-        await CharacterLevelsService.getAvailablePowers(
+        await CharacterLevelsService.getSkillSlots(
           c.var.requestSession,
           characterId,
-          query.aptitudeId,
-          query.klassId,
-          query.level,
-          {
-            powerLevel: query.powerLevel,
-            search: query.search,
-            excludeSchools: query.excludeSchools,
-            selectedFeatPicks: query.selectedFeatPicks,
-            pendingLevelFeatPicks: query.pendingLevelFeatPicks,
-          },
-          { limit: query.limit, page: query.page },
-          query.characterLevelId,
-          query.pendingLevelKlassLevelIds,
+          klassId,
+          level,
+          characterLevelId,
+          abilityId,
+          pendingLevelKlassLevelIds,
+          pendingLevelAbilityIds,
         ),
         200,
       );
@@ -336,66 +332,6 @@ const levels = new Hono<SessionContext>()
     const { characterId, characterLevelId } = c.req.valid("param");
     return c.json(await CharacterLevelsService.getLevel(c.var.requestSession, characterId, characterLevelId), 200);
   })
-  .put(
-    "/:characterId/:characterLevelId",
-    zValidator("param", levelParams),
-    zValidator(
-      "json",
-      z.object({
-        hp: z.number().int().min(1),
-        abilityId: z.string().uuid().nullable(),
-        skills: z.record(z.string().uuid(), z.number().int().min(0)),
-        feats: z.record(z.string().uuid(), z.array(z.string().uuid())),
-        powers: z.record(z.string().uuid(), z.array(z.string().uuid())),
-        force: z.boolean().default(false),
-      }),
-    ),
-    async (c) => {
-      const { characterId, characterLevelId } = c.req.valid("param");
-      const { hp, abilityId, skills, feats, powers, force } = c.req.valid("json");
-      return c.json(
-        await CharacterLevelsService.updateLevel(
-          c.var.requestSession,
-          characterId,
-          characterLevelId,
-          hp,
-          abilityId,
-          skills,
-          feats,
-          powers,
-          force,
-        ),
-        200,
-      );
-    },
-  )
-  .post(
-    "/:characterId/preview",
-    zValidator("param", characterIdParam),
-    zValidator(
-      "json",
-      z.object({
-        levels: z
-          .array(
-            z.object({
-              klassId: z.string().uuid(),
-              level: z.number().int().min(1),
-            }),
-          )
-          .min(1)
-          .max(20),
-        abilityIds: z.array(z.string().uuid().nullable()),
-      }),
-    ),
-    async (c) => {
-      const { characterId } = c.req.valid("param");
-      const { levels, abilityIds } = c.req.valid("json");
-      return c.json(
-        await CharacterLevelsService.getLevelUpPreview(c.var.requestSession, characterId, levels, abilityIds),
-        200,
-      );
-    },
-  )
   .post(
     "/:characterId/finalize",
     zValidator("param", characterIdParam),
@@ -435,6 +371,70 @@ const levels = new Hono<SessionContext>()
         200,
       );
     },
-  );
+  )
+  .post(
+    "/:characterId/preview",
+    zValidator("param", characterIdParam),
+    zValidator(
+      "json",
+      z.object({
+        levels: z
+          .array(
+            z.object({
+              klassId: z.string().uuid(),
+              level: z.number().int().min(1),
+            }),
+          )
+          .min(1)
+          .max(20),
+        abilityIds: z.array(z.string().uuid().nullable()),
+      }),
+    ),
+    async (c) => {
+      const { characterId } = c.req.valid("param");
+      const { levels, abilityIds } = c.req.valid("json");
+      return c.json(
+        await CharacterLevelsService.getLevelUpPreview(c.var.requestSession, characterId, levels, abilityIds),
+        200,
+      );
+    },
+  )
+  .put(
+    "/:characterId/:characterLevelId",
+    zValidator("param", levelParams),
+    zValidator(
+      "json",
+      z.object({
+        hp: z.number().int().min(1),
+        abilityId: z.string().uuid().nullable(),
+        skills: z.record(z.string().uuid(), z.number().int().min(0)),
+        feats: z.record(z.string().uuid(), z.array(z.string().uuid())),
+        powers: z.record(z.string().uuid(), z.array(z.string().uuid())),
+        force: z.boolean().default(false),
+      }),
+    ),
+    async (c) => {
+      const { characterId, characterLevelId } = c.req.valid("param");
+      const { hp, abilityId, skills, feats, powers, force } = c.req.valid("json");
+      return c.json(
+        await CharacterLevelsService.updateLevel(
+          c.var.requestSession,
+          characterId,
+          characterLevelId,
+          hp,
+          abilityId,
+          skills,
+          feats,
+          powers,
+          force,
+        ),
+        200,
+      );
+    },
+  )
+  .delete("/:characterId", zValidator("param", characterIdParam), async (c) => {
+    const { characterId } = c.req.valid("param");
+    return c.json(await CharacterLevelsService.removeLevel(c.var.requestSession, characterId), 200);
+  });
 
 export default levels;

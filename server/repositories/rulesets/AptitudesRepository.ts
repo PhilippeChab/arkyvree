@@ -10,18 +10,14 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
     super(aptitudesInRules, "aptitudes");
   }
 
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; rulesetId: string } | { name: string } | { name: string; rulesetId: string },
-  ) {
-    return await db.query.aptitudesInRules.findFirst({
-      where: this.where([
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "name" in where && eq(this.table.name, where.name),
-        "id" in where && eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-      ]),
-    });
+  async findLeveledAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
+    const rows = await db
+      .selectDistinct({ aptitudeId: powersAptitudesInRules.aptitudeId })
+      .from(powersAptitudesInRules)
+      .where(
+        and(inArray(powersAptitudesInRules.aptitudeId, where.aptitudeIds), isNotNull(powersAptitudesInRules.level)),
+      );
+    return new Set(rows.map((r) => r.aptitudeId));
   }
 
   async findMany(db: Db, where: { ids: string[] } | { rulesetIds: string[] }) {
@@ -69,14 +65,18 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
     });
   }
 
-  async findLeveledAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
-    const rows = await db
-      .selectDistinct({ aptitudeId: powersAptitudesInRules.aptitudeId })
-      .from(powersAptitudesInRules)
-      .where(
-        and(inArray(powersAptitudesInRules.aptitudeId, where.aptitudeIds), isNotNull(powersAptitudesInRules.level)),
-      );
-    return new Set(rows.map((r) => r.aptitudeId));
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string } | { name: string; rulesetId: string },
+  ) {
+    return await db.query.aptitudesInRules.findFirst({
+      where: this.where([
+        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+        "name" in where && eq(this.table.name, where.name),
+        "id" in where && eq(this.table.id, where.id),
+        isNull(this.table.deletedAt),
+      ]),
+    });
   }
 }
 

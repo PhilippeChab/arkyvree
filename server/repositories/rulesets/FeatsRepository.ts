@@ -18,181 +18,6 @@ class FeatsRepository extends RulesetEntityRepository<typeof featsInRules> {
     super(featsInRules, "feats");
   }
 
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
-  ) {
-    return await db.query.featsInRules.findFirst({
-      where: this.where([
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "id" in where && eq(this.table.id, where.id),
-        "name" in where && eq(this.table.name, where.name),
-        isNull(this.table.deletedAt),
-      ]),
-      with: {
-        featsAptitudesInRules: {
-          with: {
-            aptitudesInRule: true,
-          },
-        },
-      },
-    });
-  }
-
-  async findMany(db: Db, where: { ids: string[] }) {
-    return await db.query.featsInRules.findMany({
-      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: [this.orderBy(this.table.name)],
-      with: {
-        featsAptitudesInRules: {
-          with: {
-            aptitudesInRule: true,
-          },
-        },
-      },
-    });
-  }
-
-  async findManyByRulesetId(
-    db: Db,
-    where: RulesetEntityFilters<{ aptitudeId?: string; family?: string }>,
-    pagination: { limit: number; page: number },
-  ) {
-    const { search, orderBy = "name", orderDir = "asc" } = where;
-    const searchColumns = [this.table.name, this.table.description];
-    const searchConditions = this.fuzzySearch(search, searchColumns);
-
-    const aptitudeCondition = where.aptitudeId
-      ? inArray(
-          this.table.id,
-          db
-            .select({ id: featsAptitudesInRules.featId })
-            .from(featsAptitudesInRules)
-            .where(eq(featsAptitudesInRules.aptitudeId, where.aptitudeId)),
-        )
-      : false;
-
-    const familyCondition = where.family
-      ? inArray(
-          this.table.id,
-          db
-            .select({ id: propertiesInCustomization.entityId })
-            .from(propertiesInCustomization)
-            .where(
-              and(
-                eq(propertiesInCustomization.entityType, "feats"),
-                eq(propertiesInCustomization.type, "FEAT_FAMILY"),
-                eq(propertiesInCustomization.value, where.family),
-                isNull(propertiesInCustomization.deletedAt),
-              ),
-            ),
-        )
-      : false;
-
-    const rulesetCondition = this.buildRulesetCondition(db, where);
-
-    return await this.withPagination(pagination, async ({ limit, offset }) => {
-      return await db.query.featsInRules.findMany({
-        where: this.where([
-          rulesetCondition,
-          isNull(this.table.deletedAt),
-          searchConditions,
-          aptitudeCondition,
-          familyCondition,
-        ]),
-        // The id breaks ties, so paging never repeats or skips a row.
-        orderBy: [
-          this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
-          this.orderBy(this.table.id),
-        ],
-        with: {
-          featsAptitudesInRules: {
-            with: {
-              aptitudesInRule: true,
-            },
-          },
-        },
-        limit,
-        offset,
-      });
-    });
-  }
-
-  async findManyGroupedByRulesetId(
-    db: Db,
-    where: {
-      rulesetId: string;
-      ancestorRulesetIds?: string[];
-      childOnly?: boolean;
-      aptitudeId?: string;
-      aptitudeIds?: string[];
-      excludeIds?: string[];
-      search?: string;
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    const { search } = where;
-    const searchCondition = this.search(search, [this.table.name]);
-    const { limit, offset } = this.paginate(pagination);
-
-    const aptitudeCondition = where.aptitudeIds
-      ? inArray(
-          this.table.id,
-          db
-            .select({ id: featsAptitudesInRules.featId })
-            .from(featsAptitudesInRules)
-            .where(inArray(featsAptitudesInRules.aptitudeId, where.aptitudeIds)),
-        )
-      : where.aptitudeId
-        ? inArray(
-            this.table.id,
-            db
-              .select({ id: featsAptitudesInRules.featId })
-              .from(featsAptitudesInRules)
-              .where(eq(featsAptitudesInRules.aptitudeId, where.aptitudeId)),
-          )
-        : false;
-
-    const excludeCondition =
-      where.excludeIds && where.excludeIds.length > 0 ? notInArray(this.table.id, where.excludeIds) : false;
-
-    const rulesetCondition = this.buildRulesetCondition(db, where);
-    const prop = propertiesInCustomization;
-
-    const rows = await db
-      .select({
-        displayName: sql<string>`coalesce(min(${prop.value}), min(${this.table.name}))`.as("display_name"),
-        family: sql<string | null>`min(${prop.value})`.as("family"),
-        variantCount: count().as("variant_count"),
-        representativeId: sql<string>`min(${this.table.id}::text)`.as("representative_id"),
-      })
-      .from(this.table)
-      .leftJoin(
-        prop,
-        and(
-          eq(prop.entityId, this.table.id),
-          eq(prop.entityType, "feats"),
-          eq(prop.type, "FEAT_FAMILY"),
-          isNull(prop.deletedAt),
-        ),
-      )
-      .where(
-        this.where([
-          rulesetCondition,
-          isNull(this.table.deletedAt),
-          searchCondition,
-          aptitudeCondition,
-          excludeCondition,
-        ]),
-      )
-      .groupBy(sql`coalesce(${prop.value}, ${this.table.id}::text)`)
-      .orderBy(sql`coalesce(min(${prop.value}), min(${this.table.name}))`)
-      .limit(limit)
-      .offset(offset);
-
-    return this.paginated(rows, pagination);
-  }
-
   async findAvailableByAptitude(
     db: Db,
     where: {
@@ -320,6 +145,20 @@ class FeatsRepository extends RulesetEntityRepository<typeof featsInRules> {
     return this.paginated(rows, pagination);
   }
 
+  async findMany(db: Db, where: { ids: string[] }) {
+    return await db.query.featsInRules.findMany({
+      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
+      orderBy: [this.orderBy(this.table.name)],
+      with: {
+        featsAptitudesInRules: {
+          with: {
+            aptitudesInRule: true,
+          },
+        },
+      },
+    });
+  }
+
   async findManyByCharacterLevelIds(db: Db, where: { characterLevelIds: string[] }) {
     return await db
       .select({
@@ -335,6 +174,71 @@ class FeatsRepository extends RulesetEntityRepository<typeof featsInRules> {
       .where(
         and(inArray(levelFeatsInCharacter.characterLevelId, where.characterLevelIds), isNull(featsInRules.deletedAt)),
       );
+  }
+
+  async findManyByRulesetId(
+    db: Db,
+    where: RulesetEntityFilters<{ aptitudeId?: string; family?: string }>,
+    pagination: { limit: number; page: number },
+  ) {
+    const { search, orderBy = "name", orderDir = "asc" } = where;
+    const searchColumns = [this.table.name, this.table.description];
+    const searchConditions = this.fuzzySearch(search, searchColumns);
+
+    const aptitudeCondition = where.aptitudeId
+      ? inArray(
+          this.table.id,
+          db
+            .select({ id: featsAptitudesInRules.featId })
+            .from(featsAptitudesInRules)
+            .where(eq(featsAptitudesInRules.aptitudeId, where.aptitudeId)),
+        )
+      : false;
+
+    const familyCondition = where.family
+      ? inArray(
+          this.table.id,
+          db
+            .select({ id: propertiesInCustomization.entityId })
+            .from(propertiesInCustomization)
+            .where(
+              and(
+                eq(propertiesInCustomization.entityType, "feats"),
+                eq(propertiesInCustomization.type, "FEAT_FAMILY"),
+                eq(propertiesInCustomization.value, where.family),
+                isNull(propertiesInCustomization.deletedAt),
+              ),
+            ),
+        )
+      : false;
+
+    const rulesetCondition = this.buildRulesetCondition(db, where);
+
+    return await this.withPagination(pagination, async ({ limit, offset }) => {
+      return await db.query.featsInRules.findMany({
+        where: this.where([
+          rulesetCondition,
+          isNull(this.table.deletedAt),
+          searchConditions,
+          aptitudeCondition,
+          familyCondition,
+        ]),
+        // The id breaks ties, so paging never repeats or skips a row.
+        orderBy: [
+          this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
+          this.orderBy(this.table.id),
+        ],
+        with: {
+          featsAptitudesInRules: {
+            with: {
+              aptitudesInRule: true,
+            },
+          },
+        },
+        limit,
+        offset,
+      });
+    });
   }
 
   /** The feats the character levels' class levels grant, each with its level (see `grantedAt`). */
@@ -357,6 +261,102 @@ class FeatsRepository extends RulesetEntityRepository<typeof featsInRules> {
         ),
       );
     return this.grantedAt(where.levels, granted);
+  }
+
+  async findManyGroupedByRulesetId(
+    db: Db,
+    where: {
+      rulesetId: string;
+      ancestorRulesetIds?: string[];
+      childOnly?: boolean;
+      aptitudeId?: string;
+      aptitudeIds?: string[];
+      excludeIds?: string[];
+      search?: string;
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    const { search } = where;
+    const searchCondition = this.search(search, [this.table.name]);
+    const { limit, offset } = this.paginate(pagination);
+
+    const aptitudeCondition = where.aptitudeIds
+      ? inArray(
+          this.table.id,
+          db
+            .select({ id: featsAptitudesInRules.featId })
+            .from(featsAptitudesInRules)
+            .where(inArray(featsAptitudesInRules.aptitudeId, where.aptitudeIds)),
+        )
+      : where.aptitudeId
+        ? inArray(
+            this.table.id,
+            db
+              .select({ id: featsAptitudesInRules.featId })
+              .from(featsAptitudesInRules)
+              .where(eq(featsAptitudesInRules.aptitudeId, where.aptitudeId)),
+          )
+        : false;
+
+    const excludeCondition =
+      where.excludeIds && where.excludeIds.length > 0 ? notInArray(this.table.id, where.excludeIds) : false;
+
+    const rulesetCondition = this.buildRulesetCondition(db, where);
+    const prop = propertiesInCustomization;
+
+    const rows = await db
+      .select({
+        displayName: sql<string>`coalesce(min(${prop.value}), min(${this.table.name}))`.as("display_name"),
+        family: sql<string | null>`min(${prop.value})`.as("family"),
+        variantCount: count().as("variant_count"),
+        representativeId: sql<string>`min(${this.table.id}::text)`.as("representative_id"),
+      })
+      .from(this.table)
+      .leftJoin(
+        prop,
+        and(
+          eq(prop.entityId, this.table.id),
+          eq(prop.entityType, "feats"),
+          eq(prop.type, "FEAT_FAMILY"),
+          isNull(prop.deletedAt),
+        ),
+      )
+      .where(
+        this.where([
+          rulesetCondition,
+          isNull(this.table.deletedAt),
+          searchCondition,
+          aptitudeCondition,
+          excludeCondition,
+        ]),
+      )
+      .groupBy(sql`coalesce(${prop.value}, ${this.table.id}::text)`)
+      .orderBy(sql`coalesce(min(${prop.value}), min(${this.table.name}))`)
+      .limit(limit)
+      .offset(offset);
+
+    return this.paginated(rows, pagination);
+  }
+
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+  ) {
+    return await db.query.featsInRules.findFirst({
+      where: this.where([
+        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+        "id" in where && eq(this.table.id, where.id),
+        "name" in where && eq(this.table.name, where.name),
+        isNull(this.table.deletedAt),
+      ]),
+      with: {
+        featsAptitudesInRules: {
+          with: {
+            aptitudesInRule: true,
+          },
+        },
+      },
+    });
   }
 }
 

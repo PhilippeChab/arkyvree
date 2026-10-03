@@ -1,6 +1,8 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "react", "import", "unicorn"],
+  // Our own rules (lint/): JS plugins are in alpha, so oxlint's version is pinned.
+  "jsPlugins": ["./lint/memberOrder.mjs"],
   "categories": {
     "correctness": "error"
   },
@@ -40,6 +42,8 @@
 
     // General
     "no-console": "error",
+    // Routers, services and repositories in CRUD order (lint/memberOrder.mjs): `bun run lint --fix` sorts them.
+    "arkyvree/member-order": "error",
     // A file reads bottom-up: a helper sits above the code that uses it. Classes
     // are left out: a repository's instance class follows it.
     "no-use-before-define": [

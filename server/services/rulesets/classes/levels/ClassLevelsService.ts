@@ -103,10 +103,6 @@ class ClassLevelsService {
     };
   }
 
-  async getClassLevels(rulesetId: string, classId: string) {
-    return await this.listClassLevels(rulesetId, classId);
-  }
-
   async getClassLevel(rulesetId: string, classId: string, levelId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -131,6 +127,43 @@ class ClassLevelsService {
       // `name` is attached so clients of getClassLevelById can show the class
       // name without a second fetch.
       return this.buildClassLevelDetail(ruleset, rulesetData, { ...level, name: klass.name });
+    });
+  }
+
+  async getClassLevelFeatPools(rulesetId: string, classId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
+
+      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+      const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
+
+      const levelModifiers: Modifier[] = [];
+      const levelFeats: KlassLevelFeat[] = [];
+      for (const level of levels) {
+        const ms = rulesetData.modifiersBySource.get(level.id);
+        if (ms) levelModifiers.push(...ms);
+        const lfs = rulesetData.klassLevelFeatsByKlassLevel.get(level.id);
+        if (lfs) levelFeats.push(...lfs);
+      }
+
+      // Stackable feats (e.g. "Bonus Feat (Fighter)") share one feat record linked
+      // to multiple klass levels, so we duplicate the modifier per level occurrence.
+      const remappedFeatModifiers: Modifier[] = [];
+      for (const lf of levelFeats) {
+        const mods = rulesetData.modifiersBySource.get(lf.featId);
+        if (!mods) continue;
+        for (const mod of mods) {
+          if (mod.sourceType !== "feats") continue;
+          remappedFeatModifiers.push({ ...mod, sourceId: lf.klassLevelId });
+        }
+      }
+
+      return hooks.classLevels.enrichWithFeatPools(
+        levels,
+        [...levelModifiers, ...remappedFeatModifiers],
+        rulesetData.aptitudes,
+      );
     });
   }
 
@@ -166,6 +199,10 @@ class ClassLevelsService {
 
       return hooks.classLevels.enrichWithSpellsKnown(levels, modifiers);
     });
+  }
+
+  async getClassLevels(rulesetId: string, classId: string) {
+    return await this.listClassLevels(rulesetId, classId);
   }
 
   async getClassSpellList(
@@ -208,43 +245,6 @@ class ClassLevelsService {
         rulesetId,
         { aptitudeId: aptitude.id, level: where.level, search: where.search },
         pagination,
-      );
-    });
-  }
-
-  async getClassLevelFeatPools(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-      const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
-
-      const levelModifiers: Modifier[] = [];
-      const levelFeats: KlassLevelFeat[] = [];
-      for (const level of levels) {
-        const ms = rulesetData.modifiersBySource.get(level.id);
-        if (ms) levelModifiers.push(...ms);
-        const lfs = rulesetData.klassLevelFeatsByKlassLevel.get(level.id);
-        if (lfs) levelFeats.push(...lfs);
-      }
-
-      // Stackable feats (e.g. "Bonus Feat (Fighter)") share one feat record linked
-      // to multiple klass levels, so we duplicate the modifier per level occurrence.
-      const remappedFeatModifiers: Modifier[] = [];
-      for (const lf of levelFeats) {
-        const mods = rulesetData.modifiersBySource.get(lf.featId);
-        if (!mods) continue;
-        for (const mod of mods) {
-          if (mod.sourceType !== "feats") continue;
-          remappedFeatModifiers.push({ ...mod, sourceId: lf.klassLevelId });
-        }
-      }
-
-      return hooks.classLevels.enrichWithFeatPools(
-        levels,
-        [...levelModifiers, ...remappedFeatModifiers],
-        rulesetData.aptitudes,
       );
     });
   }

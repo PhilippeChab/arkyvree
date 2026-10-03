@@ -10,55 +10,6 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign> {
     super(invitesInCampaign);
   }
 
-  async create(db: Db, values: { email: string; userId?: string; playerId: string }) {
-    return await db
-      .insert(this.table)
-      .values({ email: values.email, userId: values.userId, playerId: values.playerId })
-      .returning();
-  }
-
-  async update(db: Db, values: Partial<InferInsertModel<typeof invitesInCampaign>>, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  // Hard delete — used when intentionally removing a player from a campaign
-  async deleteByPlayerId(db: Db, where: { playerId: string }) {
-    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId)).returning();
-  }
-
-  async archiveAllForUser(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async findOne(
-    db: Db,
-    where:
-      | { id: string }
-      | { playerId: string; status: string }
-      | { userId: string; playerIds: string[]; status: string }
-      | { email: string; playerIds: string[]; status: string },
-  ) {
-    return await db.query.invitesInCampaign.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "email" in where && eq(this.table.email, where.email),
-        "playerId" in where && eq(this.table.playerId, where.playerId),
-        "playerIds" in where && inArray(this.table.playerId, where.playerIds),
-        "status" in where && eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
   async findMany(
     db: Db,
     where: { userId: string } | { playerId: string },
@@ -82,25 +33,6 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign> {
         : undefined,
       orderBy: [this.orderBy(this.table.createdAt, "desc")],
       limit: pagination.limit,
-    });
-  }
-
-  // Single invite for a specific user, any status. Caller is responsible for
-  // scoping by userId so a stranger can't probe other people's invite ids.
-  async findOneForUser(db: Db, where: { id: string; userId: string }) {
-    return await db.query.invitesInCampaign.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        eq(this.table.userId, where.userId),
-        isNull(this.table.deletedAt),
-      ]),
-      with: {
-        playersInCampaign: {
-          with: {
-            campaignsInCampaign: true,
-          },
-        },
-      },
     });
   }
 
@@ -145,6 +77,53 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign> {
     return this.paginated(rows, pagination);
   }
 
+  async findOne(
+    db: Db,
+    where:
+      | { id: string }
+      | { playerId: string; status: string }
+      | { userId: string; playerIds: string[]; status: string }
+      | { email: string; playerIds: string[]; status: string },
+  ) {
+    return await db.query.invitesInCampaign.findFirst({
+      where: this.where([
+        "id" in where && eq(this.table.id, where.id),
+        "userId" in where && eq(this.table.userId, where.userId),
+        "email" in where && eq(this.table.email, where.email),
+        "playerId" in where && eq(this.table.playerId, where.playerId),
+        "playerIds" in where && inArray(this.table.playerId, where.playerIds),
+        "status" in where && eq(this.table.status, where.status),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+  }
+
+  // Single invite for a specific user, any status. Caller is responsible for
+  // scoping by userId so a stranger can't probe other people's invite ids.
+  async findOneForUser(db: Db, where: { id: string; userId: string }) {
+    return await db.query.invitesInCampaign.findFirst({
+      where: this.where([
+        eq(this.table.id, where.id),
+        eq(this.table.userId, where.userId),
+        isNull(this.table.deletedAt),
+      ]),
+      with: {
+        playersInCampaign: {
+          with: {
+            campaignsInCampaign: true,
+          },
+        },
+      },
+    });
+  }
+
+  async create(db: Db, values: { email: string; userId?: string; playerId: string }) {
+    return await db
+      .insert(this.table)
+      .values({ email: values.email, userId: values.userId, playerId: values.playerId })
+      .returning();
+  }
+
   async backfillUserId(db: Db, email: string, userId: string) {
     return await db
       .update(this.table)
@@ -158,6 +137,27 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign> {
         ),
       )
       .returning();
+  }
+
+  async update(db: Db, values: Partial<InferInsertModel<typeof invitesInCampaign>>, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async archiveAllForUser(db: Db, where: { userId: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  // Hard delete — used when intentionally removing a player from a campaign
+  async deleteByPlayerId(db: Db, where: { playerId: string }) {
+    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId)).returning();
   }
 }
 

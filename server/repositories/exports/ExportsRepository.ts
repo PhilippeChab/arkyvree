@@ -10,10 +10,6 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
     super(exportsInAccount);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof exportsInAccount>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async findOne(db: Db, where: { id: string; userId?: string }) {
     return await db.query.exportsInAccount.findFirst({
       where: this.where([
@@ -21,6 +17,10 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
         "userId" in where && where.userId ? eq(this.table.userId, where.userId) : false,
       ]),
     });
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof exportsInAccount>) {
+    return await db.insert(this.table).values(values).returning();
   }
 
   async delete(db: Db, where: { id: string } | { expiresBefore: string }) {

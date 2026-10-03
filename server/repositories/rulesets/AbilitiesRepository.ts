@@ -10,28 +10,6 @@ class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules> {
     super(abilitiesInRules, "abilities");
   }
 
-  async create(db: Db, values: InferInsertModel<typeof abilitiesInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async delete(): Promise<never> {
-    throw new Error("Abilities are immutable and cannot be deleted");
-  }
-
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
-  ) {
-    return await db.query.abilitiesInRules.findFirst({
-      where: this.where([
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "id" in where && eq(this.table.id, where.id),
-        "name" in where && eq(this.table.name, where.name),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.abilitiesInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
@@ -54,6 +32,28 @@ class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules> {
         offset,
       });
     });
+  }
+
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+  ) {
+    return await db.query.abilitiesInRules.findFirst({
+      where: this.where([
+        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+        "id" in where && eq(this.table.id, where.id),
+        "name" in where && eq(this.table.name, where.name),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof abilitiesInRules>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async delete(): Promise<never> {
+    throw new Error("Abilities are immutable and cannot be deleted");
   }
 }
 

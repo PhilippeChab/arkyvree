@@ -10,20 +10,6 @@ class MechanicsRepository extends RulesetEntityRepository<typeof mechanicsInRule
     super(mechanicsInRules, "mechanics");
   }
 
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
-  ) {
-    return await db.query.mechanicsInRules.findFirst({
-      where: this.where([
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "id" in where && eq(this.table.id, where.id),
-        "name" in where && eq(this.table.name, where.name),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.mechanicsInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
@@ -45,6 +31,20 @@ class MechanicsRepository extends RulesetEntityRepository<typeof mechanicsInRule
         limit,
         offset,
       });
+    });
+  }
+
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; rulesetId: string } | { name: string; rulesetId: string },
+  ) {
+    return await db.query.mechanicsInRules.findFirst({
+      where: this.where([
+        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+        "id" in where && eq(this.table.id, where.id),
+        "name" in where && eq(this.table.name, where.name),
+        isNull(this.table.deletedAt),
+      ]),
     });
   }
 }

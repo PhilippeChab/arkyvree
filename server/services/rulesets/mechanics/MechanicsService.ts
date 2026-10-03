@@ -18,6 +18,14 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 class MechanicsService {
+  async getRulesetMechanic(rulesetId: string, mechanicId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
+      return mechanic;
+    });
+  }
+
   async getRulesetMechanics(
     rulesetId: string,
     where: {
@@ -35,14 +43,6 @@ class MechanicsService {
         { rulesetId, ancestorRulesetIds: sourceChain, ...where },
         pagination,
       );
-    });
-  }
-
-  async getRulesetMechanic(rulesetId: string, mechanicId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
-      return mechanic;
     });
   }
 

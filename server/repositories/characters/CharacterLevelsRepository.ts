@@ -16,21 +16,16 @@ class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter>
     super(levelsInCharacter);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof levelsInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(db: Db, values: Partial<InferInsertModel<typeof levelsInCharacter>>, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  // Intentional removal — hard delete
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id));
+  async existsByKlassId(db: Db, where: { klassId: string; rulesetId: string }) {
+    const result = await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .innerJoin(klassLevelsInRules, eq(this.table.klassLevelId, klassLevelsInRules.id))
+      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
+      .where(and(this.idMatches(klassLevelsInRules.klassId, where.klassId), isNull(this.table.deletedAt)))
+      .limit(1);
+    return result.length > 0;
   }
 
   async existsByKlassLevelId(db: Db, where: { klassLevelId: string; rulesetId: string }) {
@@ -42,18 +37,6 @@ class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter>
       .where(and(this.idMatches(this.table.klassLevelId, where.klassLevelId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
-  }
-
-  async existsByKlassId(db: Db, where: { klassId: string; rulesetId: string }) {
-    const result = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .innerJoin(klassLevelsInRules, eq(this.table.klassLevelId, klassLevelsInRules.id))
-      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
-      .where(and(this.idMatches(klassLevelsInRules.klassId, where.klassId), isNull(this.table.deletedAt)))
-      .limit(1);
-    return result.length > 0;
   }
 
   // Archived characters count — see `project_archive_preserves_picks` memory.
@@ -82,17 +65,6 @@ class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter>
     return rows.length > 0;
   }
 
-  async findOne(db: Db, where: { id: string } | { characterId: string; klassLevelId: string }) {
-    return await db.query.levelsInCharacter.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "characterId" in where && eq(this.table.characterId, where.characterId),
-        "klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
   async findHighestCharacterLevel(db: Db, where: { characterId: string }) {
     const result = await db
       .select(getTableColumns(this.table))
@@ -103,6 +75,16 @@ class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter>
       .limit(1);
 
     return result[0];
+  }
+
+  async findMany(db: Db, where: { characterId: string } | { characterIds: string[] }) {
+    return await db.query.levelsInCharacter.findMany({
+      where: this.where([
+        "characterId" in where && eq(this.table.characterId, where.characterId),
+        "characterIds" in where && inArray(this.table.characterId, where.characterIds),
+        isNull(this.table.deletedAt),
+      ]),
+    });
   }
 
   async findMaxKlassLevelsByCharacter(db: Db, where: { characterId: string }) {
@@ -119,14 +101,32 @@ class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter>
     return result;
   }
 
-  async findMany(db: Db, where: { characterId: string } | { characterIds: string[] }) {
-    return await db.query.levelsInCharacter.findMany({
+  async findOne(db: Db, where: { id: string } | { characterId: string; klassLevelId: string }) {
+    return await db.query.levelsInCharacter.findFirst({
       where: this.where([
+        "id" in where && eq(this.table.id, where.id),
         "characterId" in where && eq(this.table.characterId, where.characterId),
-        "characterIds" in where && inArray(this.table.characterId, where.characterIds),
+        "klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId),
         isNull(this.table.deletedAt),
       ]),
     });
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof levelsInCharacter>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async update(db: Db, values: Partial<InferInsertModel<typeof levelsInCharacter>>, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  // Intentional removal — hard delete
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 }
 

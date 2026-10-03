@@ -6,6 +6,10 @@ import { entityParams, modifierOperator, ownerParams } from "@/server/routers/ap
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 
 export default new Hono<SessionContext>()
+  .get("/:id/customization/:entityType/:entityId/modifiers", zValidator("param", entityParams), async (c) => {
+    const { id, entityType, entityId } = c.req.valid("param");
+    return c.json(await ModifiersService.getEntityModifiers(id, entityType, entityId), 200);
+  })
   .get(
     "/:id/customization/:entityType/:entityId/modifiers/:modifierId",
     zValidator("param", ownerParams.extend({ modifierId: z.string().uuid() })),
@@ -14,10 +18,6 @@ export default new Hono<SessionContext>()
       return c.json(await ModifiersService.getEntityModifier(id, entityType, entityId, modifierId), 200);
     },
   )
-  .get("/:id/customization/:entityType/:entityId/modifiers", zValidator("param", entityParams), async (c) => {
-    const { id, entityType, entityId } = c.req.valid("param");
-    return c.json(await ModifiersService.getEntityModifiers(id, entityType, entityId), 200);
-  })
   .post(
     "/:id/customization/:entityType/:entityId/modifiers",
     zValidator("param", entityParams),

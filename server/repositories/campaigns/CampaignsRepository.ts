@@ -10,70 +10,20 @@ class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign> {
     super(campaignsInCampaign);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof campaignsInCampaign>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(db: Db, values: Partial<InferInsertModel<typeof campaignsInCampaign>>, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async archive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  /** Hard delete — only callable on archived rows; gated by CampaignsPolicy.canHardDelete. */
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id));
-  }
-
-  async unarchive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
-      .returning();
-  }
-
-  async findOne(db: Db, where: { id: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
-    return await db.query.campaignsInCampaign.findFirst({
-      where: this.where([eq(this.table.id, where.id), this.visibility(visibility)]),
-    });
-  }
-
-  async findOneWithPlayerCount(db: Db, where: { id: string }) {
-    return await db
-      .select({
-        id: campaignsInCampaign.id,
-        name: campaignsInCampaign.name,
-        description: campaignsInCampaign.description,
-        rulesetName: rulesetsInRules.name,
-        deletedAt: campaignsInCampaign.deletedAt,
-        createdAt: campaignsInCampaign.createdAt,
-        updatedAt: campaignsInCampaign.updatedAt,
-        currentPlayers: count(playersInCampaign.userId).as("currentPlayers"),
-      })
+  async count(db: Db, where: { userId: string }) {
+    const [result] = await db
+      .select({ count: count() })
       .from(campaignsInCampaign)
       .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
-      .innerJoin(rulesetsInRules, eq(campaignsInCampaign.rulesetId, rulesetsInRules.id))
-      .where(and(eq(campaignsInCampaign.id, where.id), not(isNull(playersInCampaign.userId))))
-      .groupBy(
-        campaignsInCampaign.id,
-        campaignsInCampaign.name,
-        campaignsInCampaign.description,
-        rulesetsInRules.name,
-        campaignsInCampaign.deletedAt,
-        campaignsInCampaign.createdAt,
-        campaignsInCampaign.updatedAt,
+      .where(
+        and(
+          eq(playersInCampaign.userId, where.userId),
+          isNull(campaignsInCampaign.deletedAt),
+          isNull(playersInCampaign.deletedAt),
+        ),
       );
+
+    return result.count;
   }
 
   async findMany(
@@ -130,20 +80,70 @@ class CampaignsRepository extends BaseRepository<typeof campaignsInCampaign> {
     return this.paginated(rows, pagination);
   }
 
-  async count(db: Db, where: { userId: string }) {
-    const [result] = await db
-      .select({ count: count() })
+  async findOne(db: Db, where: { id: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
+    return await db.query.campaignsInCampaign.findFirst({
+      where: this.where([eq(this.table.id, where.id), this.visibility(visibility)]),
+    });
+  }
+
+  async findOneWithPlayerCount(db: Db, where: { id: string }) {
+    return await db
+      .select({
+        id: campaignsInCampaign.id,
+        name: campaignsInCampaign.name,
+        description: campaignsInCampaign.description,
+        rulesetName: rulesetsInRules.name,
+        deletedAt: campaignsInCampaign.deletedAt,
+        createdAt: campaignsInCampaign.createdAt,
+        updatedAt: campaignsInCampaign.updatedAt,
+        currentPlayers: count(playersInCampaign.userId).as("currentPlayers"),
+      })
       .from(campaignsInCampaign)
       .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
-      .where(
-        and(
-          eq(playersInCampaign.userId, where.userId),
-          isNull(campaignsInCampaign.deletedAt),
-          isNull(playersInCampaign.deletedAt),
-        ),
+      .innerJoin(rulesetsInRules, eq(campaignsInCampaign.rulesetId, rulesetsInRules.id))
+      .where(and(eq(campaignsInCampaign.id, where.id), not(isNull(playersInCampaign.userId))))
+      .groupBy(
+        campaignsInCampaign.id,
+        campaignsInCampaign.name,
+        campaignsInCampaign.description,
+        rulesetsInRules.name,
+        campaignsInCampaign.deletedAt,
+        campaignsInCampaign.createdAt,
+        campaignsInCampaign.updatedAt,
       );
+  }
 
-    return result.count;
+  async create(db: Db, values: InferInsertModel<typeof campaignsInCampaign>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async update(db: Db, values: Partial<InferInsertModel<typeof campaignsInCampaign>>, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async archive(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  /** Hard delete — only callable on archived rows; gated by CampaignsPolicy.canHardDelete. */
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
+  }
+
+  async unarchive(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
+      .returning();
   }
 }
 

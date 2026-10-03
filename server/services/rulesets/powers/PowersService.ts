@@ -41,16 +41,6 @@ interface PowerBody {
 }
 
 class PowersService {
-  async getRulesetPowers(
-    rulesetId: string,
-    where: Parameters<typeof findRulesetPowers>[3],
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
-      findRulesetPowers(db, rulesetData, rulesetId, where, pagination),
-    );
-  }
-
   async getRulesetPower(rulesetId: string, powerId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -62,6 +52,16 @@ class PowersService {
         requirements: rulesetData.requirementsByEntity.get(power.id) ?? [],
       };
     });
+  }
+
+  async getRulesetPowers(
+    rulesetId: string,
+    where: Parameters<typeof findRulesetPowers>[3],
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
+      findRulesetPowers(db, rulesetData, rulesetId, where, pagination),
+    );
   }
 
   async createRulesetPower(session: Session, rulesetId: string, body: PowerBody) {

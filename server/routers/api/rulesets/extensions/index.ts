@@ -6,6 +6,10 @@ import { idParam } from "@/server/routers/api/validation.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 
 export default new Hono<SessionContext>()
+  .get("/:id/extensions", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+    return c.json(await RulesetExtensionsService.getSubscribedExtensions(c.var.requestSession, id), 200);
+  })
   .post(
     "/:id/subscribe",
     zValidator("param", idParam),
@@ -41,8 +45,4 @@ export default new Hono<SessionContext>()
         200,
       );
     },
-  )
-  .get("/:id/extensions", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await RulesetExtensionsService.getSubscribedExtensions(c.var.requestSession, id), 200);
-  });
+  );

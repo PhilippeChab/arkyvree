@@ -10,20 +10,13 @@ class BlobsRepository extends BaseRepository<typeof blobsInStorage> {
     super(blobsInStorage, "blobs");
   }
 
-  async create(db: Db, values: InferInsertModel<typeof blobsInStorage>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(db: Db, values: Partial<InferInsertModel<typeof blobsInStorage>>, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(eq(this.table.id, where.id))
-      .returning();
-  }
-
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
+  async findOne(db: Db, where: { id: string } | { key: string }) {
+    return await db.query.blobsInStorage.findFirst({
+      where: this.where([
+        "id" in where && eq(this.table.id, where.id),
+        "key" in where && eq(this.table.key, where.key),
+      ]),
+    });
   }
 
   /**
@@ -54,13 +47,20 @@ class BlobsRepository extends BaseRepository<typeof blobsInStorage> {
       .limit(pagination.limit);
   }
 
-  async findOne(db: Db, where: { id: string } | { key: string }) {
-    return await db.query.blobsInStorage.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "key" in where && eq(this.table.key, where.key),
-      ]),
-    });
+  async create(db: Db, values: InferInsertModel<typeof blobsInStorage>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async update(db: Db, values: Partial<InferInsertModel<typeof blobsInStorage>>, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(eq(this.table.id, where.id))
+      .returning();
+  }
+
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 }
 

@@ -173,6 +173,17 @@ class AttachmentsService {
     }
   }
 
+  async findOne(session: Session, params: { recordType: string; recordId: string; name: string }) {
+    await this.assertCanRead(session, params.recordType, params.recordId);
+    const row = await Attachments.findOneWithBlob(db, {
+      recordType: params.recordType,
+      recordId: params.recordId,
+      name: params.name,
+    });
+    if (!row) return null;
+    return { id: row.id, url: urlFor(row) };
+  }
+
   async createDirectUpload(
     session: Session,
     params: {
@@ -288,17 +299,6 @@ class AttachmentsService {
 
     await this.purgeOrphan(result.orphan);
     return { attachment: result.attachment, blob: result.blob };
-  }
-
-  async findOne(session: Session, params: { recordType: string; recordId: string; name: string }) {
-    await this.assertCanRead(session, params.recordType, params.recordId);
-    const row = await Attachments.findOneWithBlob(db, {
-      recordType: params.recordType,
-      recordId: params.recordId,
-      name: params.name,
-    });
-    if (!row) return null;
-    return { id: row.id, url: urlFor(row) };
   }
 
   async detach(session: Session, attachmentId: string) {

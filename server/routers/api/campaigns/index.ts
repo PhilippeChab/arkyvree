@@ -43,12 +43,6 @@ export default new Hono()
       );
     },
   )
-  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-
-    await CampaignsService.unarchiveCampaign(c.var.requestSession, id);
-    return c.json({ message: "Campaign unarchived successfully" }, 200);
-  })
   .get("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
@@ -71,6 +65,12 @@ export default new Hono()
       return c.json(await CampaignsService.createCampaign(c.var.requestSession, data), 201);
     },
   )
+  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+
+    await CampaignsService.unarchiveCampaign(c.var.requestSession, id);
+    return c.json({ message: "Campaign unarchived successfully" }, 200);
+  })
   .put(
     "/:id",
     zValidator("param", idParam),

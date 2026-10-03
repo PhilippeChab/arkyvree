@@ -10,19 +10,6 @@ class CharacterLanguagesRepository extends BaseRepository<typeof languagesInChar
     super(languagesInCharacter);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof languagesInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  // Exception to soft-delete: character languages are disposable reference data
-  async delete(db: Db, where: { characterId: string; languageId: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.languageId, where.languageId)),
-      );
-  }
-
   async existsByLanguageId(db: Db, where: { languageId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.languageId })
@@ -66,6 +53,19 @@ class CharacterLanguagesRepository extends BaseRepository<typeof languagesInChar
     return await db.query.languagesInCharacter.findMany({
       where: eq(this.table.characterId, where.characterId),
     });
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof languagesInCharacter>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Exception to soft-delete: character languages are disposable reference data
+  async delete(db: Db, where: { characterId: string; languageId: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.languageId, where.languageId)),
+      );
   }
 }
 

@@ -127,21 +127,34 @@ async function getTemplate(): Promise<string> {
 }
 
 export default new Hono()
-  .get("/robots.txt", (c) => {
-    return c.text(`User-agent: *\nAllow: /\n\nSitemap: ${APP_URL}/sitemap.xml\n`, 200, {
-      "Content-Type": "text/plain",
-      "Cache-Control": "no-cache",
-    });
+  .get("/", async (c) => {
+    try {
+      const html = await getLandingTemplate();
+      return new Response(html, {
+        headers: { "Content-Type": "text/html", "Cache-Control": "no-cache" },
+      });
+    } catch (error) {
+      console.error("[server] Failed to serve landing.html:", error);
+      return c.text("Not Found", 404);
+    }
   })
-  .get("/sitemap.xml", (c) => {
-    // Only list pages Googlebot can actually render. /rulesets and
-    // /rulesets/:id sit behind PrivateRoute (auth) and /sign-in duplicates
-    // the landing page's title/description, so none belong in the sitemap.
-    const staticUrls = ["/", "/sign-up"];
-    const entries = staticUrls.map((path) => `  <url><loc>${APP_URL}${path}</loc></url>`).join("\n");
+  .get("/assets/*", async (c) => {
+    const assetPath = c.req.path.replace(/^\/assets\//, "");
+    const filePath = `./dist/assets/${assetPath}`;
 
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>`;
-    return c.text(xml, 200, { "Content-Type": "application/xml", "Cache-Control": "public, max-age=900" });
+    try {
+      const file = Bun.file(filePath);
+      const content = await file.arrayBuffer();
+      const mimeType = getMimeType(filePath);
+      return new Response(content, {
+        headers: {
+          "Content-Type": mimeType,
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    } catch {
+      return c.text("Asset not found", 404);
+    }
   })
   .get("/llms.txt", async (c) => {
     try {
@@ -168,23 +181,21 @@ export default new Hono()
       return c.text("Public asset not found", 404);
     }
   })
-  .get("/assets/*", async (c) => {
-    const assetPath = c.req.path.replace(/^\/assets\//, "");
-    const filePath = `./dist/assets/${assetPath}`;
+  .get("/robots.txt", (c) => {
+    return c.text(`User-agent: *\nAllow: /\n\nSitemap: ${APP_URL}/sitemap.xml\n`, 200, {
+      "Content-Type": "text/plain",
+      "Cache-Control": "no-cache",
+    });
+  })
+  .get("/sitemap.xml", (c) => {
+    // Only list pages Googlebot can actually render. /rulesets and
+    // /rulesets/:id sit behind PrivateRoute (auth) and /sign-in duplicates
+    // the landing page's title/description, so none belong in the sitemap.
+    const staticUrls = ["/", "/sign-up"];
+    const entries = staticUrls.map((path) => `  <url><loc>${APP_URL}${path}</loc></url>`).join("\n");
 
-    try {
-      const file = Bun.file(filePath);
-      const content = await file.arrayBuffer();
-      const mimeType = getMimeType(filePath);
-      return new Response(content, {
-        headers: {
-          "Content-Type": mimeType,
-          "Cache-Control": "public, max-age=31536000, immutable",
-        },
-      });
-    } catch {
-      return c.text("Asset not found", 404);
-    }
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>`;
+    return c.text(xml, 200, { "Content-Type": "application/xml", "Cache-Control": "public, max-age=900" });
   })
   .get("/:file{.+\\.(js|webmanifest|png|ico|svg|jpg|jpeg|gif|webp|txt|xml|gz|wasm|data|md)$}", async (c) => {
     const filePath = `./dist/${c.req.param("file")}`;
@@ -205,17 +216,6 @@ export default new Hono()
       return c.text("Not found", 404);
     } catch {
       return c.text("Not found", 404);
-    }
-  })
-  .get("/", async (c) => {
-    try {
-      const html = await getLandingTemplate();
-      return new Response(html, {
-        headers: { "Content-Type": "text/html", "Cache-Control": "no-cache" },
-      });
-    } catch (error) {
-      console.error("[server] Failed to serve landing.html:", error);
-      return c.text("Not Found", 404);
     }
   })
   .get("*", async (c) => {

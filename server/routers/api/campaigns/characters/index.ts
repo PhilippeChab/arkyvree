@@ -10,6 +10,33 @@ import { CampaignCharactersService } from "@/server/services/campaigns/character
 
 export default new Hono<SessionContext>()
   .get(
+    "/:id/characters",
+    zValidator("param", idParam),
+    zValidator(
+      "query",
+      z.object({
+        limit,
+        page,
+        search: z.string().optional(),
+        orderBy: z.enum(["createdAt", "updatedAt"]).optional(),
+        orderDir: z.enum(["asc", "desc"]).optional(),
+      }),
+    ),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { limit, page, search, orderBy, orderDir } = c.req.valid("query");
+      return c.json(
+        await CampaignCharactersService.getCampaignCharacters(
+          c.var.requestSession,
+          id,
+          { search, orderBy, orderDir },
+          { limit, page },
+        ),
+        200,
+      );
+    },
+  )
+  .get(
     "/:id/characters/:characterId",
     zValidator("param", z.object({ id: z.string().uuid(), characterId: z.string().uuid() })),
     async (c) => {
@@ -72,6 +99,25 @@ export default new Hono<SessionContext>()
       );
     },
   )
+  .post(
+    "/:id/characters",
+    zValidator("param", idParam),
+    zValidator(
+      "json",
+      z.object({
+        characterId: z.string().uuid(),
+        visibility: z.enum(["Private", "Public", "Partial"]).default("Private"),
+      }),
+    ),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { characterId, visibility } = c.req.valid("json");
+      return c.json(
+        await CampaignCharactersService.linkCharacter(c.var.requestSession, id, characterId, visibility),
+        201,
+      );
+    },
+  )
   // Enqueue async PDF generation of a campaign character (its editors and the Game Master)
   .post(
     "/:id/characters/:characterId/pdf",
@@ -99,52 +145,6 @@ export default new Hono<SessionContext>()
       return c.json(
         await CampaignCharactersService.updateCharacterVisibility(c.var.requestSession, id, characterId, visibility),
         200,
-      );
-    },
-  )
-  .get(
-    "/:id/characters",
-    zValidator("param", idParam),
-    zValidator(
-      "query",
-      z.object({
-        limit,
-        page,
-        search: z.string().optional(),
-        orderBy: z.enum(["createdAt", "updatedAt"]).optional(),
-        orderDir: z.enum(["asc", "desc"]).optional(),
-      }),
-    ),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const { limit, page, search, orderBy, orderDir } = c.req.valid("query");
-      return c.json(
-        await CampaignCharactersService.getCampaignCharacters(
-          c.var.requestSession,
-          id,
-          { search, orderBy, orderDir },
-          { limit, page },
-        ),
-        200,
-      );
-    },
-  )
-  .post(
-    "/:id/characters",
-    zValidator("param", idParam),
-    zValidator(
-      "json",
-      z.object({
-        characterId: z.string().uuid(),
-        visibility: z.enum(["Private", "Public", "Partial"]).default("Private"),
-      }),
-    ),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const { characterId, visibility } = c.req.valid("json");
-      return c.json(
-        await CampaignCharactersService.linkCharacter(c.var.requestSession, id, characterId, visibility),
-        201,
       );
     },
   );

@@ -10,35 +10,6 @@ class CharacterInventoryRepository extends BaseRepository<typeof inventoryInChar
     super(inventoryInCharacter);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof inventoryInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof inventoryInCharacter>>,
-    where: { characterId: string; itemId: string; expectedUpdatedAt?: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.characterId, where.characterId),
-          this.idMatches(this.table.itemId, where.itemId),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
-  }
-
-  // Exception to soft-delete: inventory entries are disposable
-  async delete(db: Db, where: { characterId: string; itemId: string }) {
-    return await db
-      .delete(this.table)
-      .where(and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.itemId, where.itemId)));
-  }
-
   async existsByItemId(db: Db, where: { itemId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.itemId })
@@ -75,12 +46,6 @@ class CharacterInventoryRepository extends BaseRepository<typeof inventoryInChar
     return rows.length > 0;
   }
 
-  async findOne(db: Db, where: { characterId: string; itemId: string }) {
-    return await db.query.inventoryInCharacter.findFirst({
-      where: and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.itemId, where.itemId)),
-    });
-  }
-
   async findMany(db: Db, where: { characterId: string }) {
     return await db.query.inventoryInCharacter.findMany({
       where: eq(this.table.characterId, where.characterId),
@@ -88,6 +53,41 @@ class CharacterInventoryRepository extends BaseRepository<typeof inventoryInChar
         itemsInRule: true,
       },
     });
+  }
+
+  async findOne(db: Db, where: { characterId: string; itemId: string }) {
+    return await db.query.inventoryInCharacter.findFirst({
+      where: and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.itemId, where.itemId)),
+    });
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof inventoryInCharacter>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async update(
+    db: Db,
+    values: Partial<InferInsertModel<typeof inventoryInCharacter>>,
+    where: { characterId: string; itemId: string; expectedUpdatedAt?: string },
+  ) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(
+        this.where([
+          eq(this.table.characterId, where.characterId),
+          this.idMatches(this.table.itemId, where.itemId),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
+      .returning();
+  }
+
+  // Exception to soft-delete: inventory entries are disposable
+  async delete(db: Db, where: { characterId: string; itemId: string }) {
+    return await db
+      .delete(this.table)
+      .where(and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.itemId, where.itemId)));
   }
 }
 

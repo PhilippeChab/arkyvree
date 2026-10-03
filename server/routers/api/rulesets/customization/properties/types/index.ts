@@ -28,28 +28,6 @@ const propertyTypes = new Hono()
     },
   )
   /**
-   * GET /api/rulesets/:id/customization/properties/types/search?query=weapon&entityType=items
-   * Search property types by query
-   */
-  .get(
-    "/:id/customization/properties/types/search",
-    zValidator("param", idParam),
-    zValidator(
-      "query",
-      z.object({
-        query: z.string().min(1),
-        entityType: z
-          .enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"])
-          .optional(),
-      }),
-    ),
-    async (c) => {
-      const { id: rulesetId } = c.req.valid("param");
-      const { query, entityType } = c.req.valid("query");
-      return c.json(await PropertyTypesService.searchPropertyTypes(rulesetId, query, entityType), 200);
-    },
-  )
-  /**
    * GET /api/rulesets/:id/customization/properties/types/completions?query=weapon&entityType=items&limit=10&page=1
    * Get property type completions for autocomplete
    */
@@ -74,6 +52,28 @@ const propertyTypes = new Hono()
         await PropertyTypesService.getCompletions(rulesetId, query, { limit: limitValue, page: pageValue }, entityType),
         200,
       );
+    },
+  )
+  /**
+   * GET /api/rulesets/:id/customization/properties/types/search?query=weapon&entityType=items
+   * Search property types by query
+   */
+  .get(
+    "/:id/customization/properties/types/search",
+    zValidator("param", idParam),
+    zValidator(
+      "query",
+      z.object({
+        query: z.string().min(1),
+        entityType: z
+          .enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"])
+          .optional(),
+      }),
+    ),
+    async (c) => {
+      const { id: rulesetId } = c.req.valid("param");
+      const { query, entityType } = c.req.valid("query");
+      return c.json(await PropertyTypesService.searchPropertyTypes(rulesetId, query, entityType), 200);
     },
   )
   /**

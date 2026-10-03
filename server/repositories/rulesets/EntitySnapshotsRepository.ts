@@ -10,17 +10,6 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     super(entitySnapshotsInRules);
   }
 
-  /** Call inside the copying transaction, before reading its snapshot. */
-  async lockForCopy(db: Db, rulesetId: string, sourceEntityId: string) {
-    // There may be no snapshot row to lock yet. Scope the advisory lock to
-    // this fork/source pair so unrelated copies can proceed independently.
-    await db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`cow:${rulesetId}:${sourceEntityId}`}, 0))`);
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof entitySnapshotsInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async findByRulesetId(db: Db, where: { rulesetId: string }) {
     return await db.query.entitySnapshotsInRules.findMany({
       where: eq(this.table.rulesetId, where.rulesetId),
@@ -34,15 +23,15 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     });
   }
 
-  async findByTypeAndRuleset(db: Db, where: { rulesetId: string; entityType: string }) {
-    return await db.query.entitySnapshotsInRules.findMany({
-      where: and(eq(this.table.rulesetId, where.rulesetId), eq(this.table.entityType, where.entityType)),
-    });
-  }
-
   async findBySourceAndRuleset(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
     return await db.query.entitySnapshotsInRules.findFirst({
       where: and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)),
+    });
+  }
+
+  async findByTypeAndRuleset(db: Db, where: { rulesetId: string; entityType: string }) {
+    return await db.query.entitySnapshotsInRules.findMany({
+      where: and(eq(this.table.rulesetId, where.rulesetId), eq(this.table.entityType, where.entityType)),
     });
   }
 
@@ -53,10 +42,21 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     });
   }
 
+  async create(db: Db, values: InferInsertModel<typeof entitySnapshotsInRules>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
   async deleteBySourceAndRuleset(db: Db, where: { sourceEntityId: string; rulesetId: string }) {
     return await db
       .delete(this.table)
       .where(and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)));
+  }
+
+  /** Call inside the copying transaction, before reading its snapshot. */
+  async lockForCopy(db: Db, rulesetId: string, sourceEntityId: string) {
+    // There may be no snapshot row to lock yet. Scope the advisory lock to
+    // this fork/source pair so unrelated copies can proceed independently.
+    await db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`cow:${rulesetId}:${sourceEntityId}`}, 0))`);
   }
 }
 

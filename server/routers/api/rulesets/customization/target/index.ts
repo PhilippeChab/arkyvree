@@ -7,26 +7,6 @@ import { TargetPathsService } from "@/server/services/rulesets/customization/tar
 
 const targetPaths = new Hono()
   /**
-   * POST /api/rulesets/:id/customization/target/paths/validate
-   * Validate a target path like a language server
-   */
-  .post(
-    "/:id/customization/target/paths/validate",
-    zValidator("param", idParam),
-    zValidator(
-      "json",
-      z.object({
-        path: z.string(),
-        kind: z.enum(["modifier", "requirement"]),
-      }),
-    ),
-    async (c) => {
-      const { id: rulesetId } = c.req.valid("param");
-      const { path, kind } = c.req.valid("json");
-      return c.json(await TargetPathsService.validatePath(rulesetId, path, kind), 200);
-    },
-  )
-  /**
    * POST /api/rulesets/:id/customization/target/paths/completions
    * Get paginated completion suggestions for a partial path
    */
@@ -63,6 +43,26 @@ const targetPaths = new Hono()
         ),
         200,
       );
+    },
+  )
+  /**
+   * POST /api/rulesets/:id/customization/target/paths/validate
+   * Validate a target path like a language server
+   */
+  .post(
+    "/:id/customization/target/paths/validate",
+    zValidator("param", idParam),
+    zValidator(
+      "json",
+      z.object({
+        path: z.string(),
+        kind: z.enum(["modifier", "requirement"]),
+      }),
+    ),
+    async (c) => {
+      const { id: rulesetId } = c.req.valid("param");
+      const { path, kind } = c.req.valid("json");
+      return c.json(await TargetPathsService.validatePath(rulesetId, path, kind), 200);
     },
   );
 

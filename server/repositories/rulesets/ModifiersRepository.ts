@@ -10,6 +10,29 @@ class ModifiersRepository extends BaseRepository<typeof modifiersInCustomization
     super(modifiersInCustomization);
   }
 
+  async findManyBySource(db: Db, where: { sourceIds: string[]; sourceType: string }) {
+    return await db.query.modifiersInCustomization.findMany({
+      where: and(
+        inArray(this.table.sourceId, where.sourceIds),
+        eq(this.table.sourceType, where.sourceType),
+        isNull(this.table.deletedAt),
+      ),
+    });
+  }
+
+  async findManyBySourceIds(db: Db, where: { sourceIds: string[] }) {
+    if (where.sourceIds.length === 0) return [];
+    return await db.query.modifiersInCustomization.findMany({
+      where: and(inArray(this.table.sourceId, where.sourceIds), isNull(this.table.deletedAt)),
+    });
+  }
+
+  async findOne(db: Db, where: { id: string }) {
+    return await db.query.modifiersInCustomization.findFirst({
+      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
+    });
+  }
+
   async create(db: Db, values: InferInsertModel<typeof modifiersInCustomization>) {
     return await db.insert(this.table).values(values).returning();
   }
@@ -49,29 +72,6 @@ class ModifiersRepository extends BaseRepository<typeof modifiersInCustomization
         ]),
       )
       .returning();
-  }
-
-  async findOne(db: Db, where: { id: string }) {
-    return await db.query.modifiersInCustomization.findFirst({
-      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
-    });
-  }
-
-  async findManyBySource(db: Db, where: { sourceIds: string[]; sourceType: string }) {
-    return await db.query.modifiersInCustomization.findMany({
-      where: and(
-        inArray(this.table.sourceId, where.sourceIds),
-        eq(this.table.sourceType, where.sourceType),
-        isNull(this.table.deletedAt),
-      ),
-    });
-  }
-
-  async findManyBySourceIds(db: Db, where: { sourceIds: string[] }) {
-    if (where.sourceIds.length === 0) return [];
-    return await db.query.modifiersInCustomization.findMany({
-      where: and(inArray(this.table.sourceId, where.sourceIds), isNull(this.table.deletedAt)),
-    });
   }
 }
 

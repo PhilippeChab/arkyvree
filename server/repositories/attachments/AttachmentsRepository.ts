@@ -10,19 +10,11 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
     super(attachmentsInStorage, "attachments");
   }
 
-  async create(db: Db, values: InferInsertModel<typeof attachmentsInStorage>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async delete(db: Db, where: { id: string } | { recordType: string; recordIds: string[] }) {
-    if ("id" in where) {
-      return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
-    }
-    if (where.recordIds.length === 0) return [];
-    return await db
-      .delete(this.table)
-      .where(and(eq(this.table.recordType, where.recordType), inArray(this.table.recordId, where.recordIds)))
-      .returning();
+  async findManyByBlobIds(db: Db, where: { blobIds: string[] }) {
+    if (where.blobIds.length === 0) return [];
+    return await db.query.attachmentsInStorage.findMany({
+      where: inArray(this.table.blobId, where.blobIds),
+    });
   }
 
   async findOne(db: Db, where: { id: string } | { recordType: string; recordId: string; name: string }) {
@@ -52,11 +44,19 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
     return rows[0] ?? null;
   }
 
-  async findManyByBlobIds(db: Db, where: { blobIds: string[] }) {
-    if (where.blobIds.length === 0) return [];
-    return await db.query.attachmentsInStorage.findMany({
-      where: inArray(this.table.blobId, where.blobIds),
-    });
+  async create(db: Db, values: InferInsertModel<typeof attachmentsInStorage>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async delete(db: Db, where: { id: string } | { recordType: string; recordIds: string[] }) {
+    if ("id" in where) {
+      return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
+    }
+    if (where.recordIds.length === 0) return [];
+    return await db
+      .delete(this.table)
+      .where(and(eq(this.table.recordType, where.recordType), inArray(this.table.recordId, where.recordIds)))
+      .returning();
   }
 }
 

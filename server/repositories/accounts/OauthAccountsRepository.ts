@@ -9,8 +9,10 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
     super(oauthAccountsInAccount);
   }
 
-  async create(db: Db, values: { userId: string; provider: string; providerAccountId: string }) {
-    return await db.insert(this.table).values(values).returning();
+  async findManyByUser(db: Db, where: { userId: string }) {
+    return await db.query.oauthAccountsInAccount.findMany({
+      where: and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)),
+    });
   }
 
   async findOne(
@@ -29,10 +31,8 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
     });
   }
 
-  async findManyByUser(db: Db, where: { userId: string }) {
-    return await db.query.oauthAccountsInAccount.findMany({
-      where: and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)),
-    });
+  async create(db: Db, values: { userId: string; provider: string; providerAccountId: string }) {
+    return await db.insert(this.table).values(values).returning();
   }
 
   async archive(db: Db, where: { id: string }) {

@@ -42,6 +42,10 @@ const authenticatedRulesets = new Hono()
   .route("/", requirements)
   .route("/", properties)
   .route("/", targetRouter)
+  .post("/:id/archive", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+    return c.json(await RulesetsService.archiveRuleset(c.var.requestSession, id), 200);
+  })
   .post(
     "/:id/fork",
     zValidator("param", idParam),
@@ -59,15 +63,6 @@ const authenticatedRulesets = new Hono()
       return c.json(await RulesetsService.forkRuleset(c.var.requestSession, id, body), 201);
     },
   )
-  .post("/:id/archive", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await RulesetsService.archiveRuleset(c.var.requestSession, id), 200);
-  })
-  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    await RulesetsService.unarchiveRuleset(c.var.requestSession, id);
-    return c.json({ message: "Ruleset unarchived successfully" }, 200);
-  })
   .post(
     "/:id/publish",
     denyDemoUser,
@@ -89,10 +84,10 @@ const authenticatedRulesets = new Hono()
     await RulesetsService.starRuleset(c.var.requestSession, id);
     return c.json({ message: "Ruleset starred" }, 201);
   })
-  .delete("/:id/star", zValidator("param", idParam), async (c) => {
+  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    await RulesetsService.unstarRuleset(c.var.requestSession, id);
-    return c.json({ message: "Ruleset unstarred" }, 200);
+    await RulesetsService.unarchiveRuleset(c.var.requestSession, id);
+    return c.json({ message: "Ruleset unarchived successfully" }, 200);
   })
   .put(
     "/:id",
@@ -113,6 +108,11 @@ const authenticatedRulesets = new Hono()
       return c.json(await RulesetsService.updateRuleset(c.var.requestSession, id, body), 200);
     },
   )
+  .delete("/:id/star", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+    await RulesetsService.unstarRuleset(c.var.requestSession, id);
+    return c.json({ message: "Ruleset unstarred" }, 200);
+  })
   .route("/", extensions)
   .route("/", changes)
   .get(

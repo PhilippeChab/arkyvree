@@ -10,6 +10,21 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
     super(usersInAccount);
   }
 
+  async findOne(
+    db: Db,
+    where: { id: string } | { emailAddress: string } | { username: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    return await db.query.usersInAccount.findFirst({
+      where: this.where([
+        "id" in where && eq(this.table.id, where.id),
+        "emailAddress" in where && eq(this.table.emailAddress, where.emailAddress),
+        "username" in where && eq(this.table.username, where.username),
+        this.visibility(visibility),
+      ]),
+    });
+  }
+
   async create(
     db: Db,
     values: {
@@ -33,14 +48,6 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
       .returning();
   }
 
-  async delete(db: Db, where: { id: string } | { expiredDemosBefore: string }) {
-    const isDemo = and(isNotNull(this.table.expiresAt), like(this.table.emailAddress, "%@demo.invalid"));
-    if ("id" in where) {
-      return await db.delete(this.table).where(and(eq(this.table.id, where.id), isDemo));
-    }
-    return await db.delete(this.table).where(and(isDemo, lt(this.table.expiresAt, where.expiredDemosBefore)));
-  }
-
   async update(db: Db, values: Partial<InferInsertModel<typeof usersInAccount>>, where: { id: string }) {
     return await db
       .update(this.table)
@@ -57,19 +64,12 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
       .returning();
   }
 
-  async findOne(
-    db: Db,
-    where: { id: string } | { emailAddress: string } | { username: string },
-    visibility: Visibility = Visibility.UnarchivedOnly,
-  ) {
-    return await db.query.usersInAccount.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "emailAddress" in where && eq(this.table.emailAddress, where.emailAddress),
-        "username" in where && eq(this.table.username, where.username),
-        this.visibility(visibility),
-      ]),
-    });
+  async delete(db: Db, where: { id: string } | { expiredDemosBefore: string }) {
+    const isDemo = and(isNotNull(this.table.expiresAt), like(this.table.emailAddress, "%@demo.invalid"));
+    if ("id" in where) {
+      return await db.delete(this.table).where(and(eq(this.table.id, where.id), isDemo));
+    }
+    return await db.delete(this.table).where(and(isDemo, lt(this.table.expiresAt, where.expiredDemosBefore)));
   }
 }
 

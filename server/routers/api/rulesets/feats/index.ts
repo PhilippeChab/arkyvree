@@ -8,28 +8,6 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
-    "/:id/feats/grouped",
-    zValidator("param", idParam),
-    zValidator(
-      "query",
-      z.object({
-        limit,
-        page,
-        search: z.string().optional(),
-        childOnly: z.coerce.boolean().optional(),
-        aptitudeId: z.string().uuid().optional(),
-      }),
-    ),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const { limit, page, search, childOnly, aptitudeId } = c.req.valid("query");
-      return c.json(
-        await FeatsService.getRulesetFeatsGrouped(id, { search, childOnly, aptitudeId }, { limit, page }),
-        200,
-      );
-    },
-  )
-  .get(
     "/:id/feats",
     zValidator("param", idParam),
     zValidator(
@@ -54,6 +32,28 @@ export default new Hono<SessionContext>()
           { search, childOnly, aptitudeId, family, orderBy, orderDir },
           { limit, page },
         ),
+        200,
+      );
+    },
+  )
+  .get(
+    "/:id/feats/grouped",
+    zValidator("param", idParam),
+    zValidator(
+      "query",
+      z.object({
+        limit,
+        page,
+        search: z.string().optional(),
+        childOnly: z.coerce.boolean().optional(),
+        aptitudeId: z.string().uuid().optional(),
+      }),
+    ),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { limit, page, search, childOnly, aptitudeId } = c.req.valid("query");
+      return c.json(
+        await FeatsService.getRulesetFeatsGrouped(id, { search, childOnly, aptitudeId }, { limit, page }),
         200,
       );
     },

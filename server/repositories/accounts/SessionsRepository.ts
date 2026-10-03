@@ -10,6 +10,12 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
     super(sessionsInAccount);
   }
 
+  async findOne(db: Db, where: { id: string }) {
+    return await db.query.sessionsInAccount.findFirst({
+      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
+    });
+  }
+
   async create(db: Db, values: { userId: string; expiresAt?: string }) {
     const expiresAt = values.expiresAt ?? new Date(Date.now() + SESSION_TTL_MS).toISOString();
     return await db.insert(this.table).values({ userId: values.userId, expiresAt }).returning();
@@ -21,24 +27,6 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning();
-  }
-
-  async findOne(db: Db, where: { id: string }) {
-    return await db.query.sessionsInAccount.findFirst({
-      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
-    });
-  }
-
-  async delete(db: Db, where: { id: string } | { expiredOrArchivedBefore: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        this.where([
-          "id" in where && eq(this.table.id, where.id),
-          "expiredOrArchivedBefore" in where &&
-            (or(isNotNull(this.table.deletedAt), lt(this.table.expiresAt, where.expiredOrArchivedBefore)) ?? false),
-        ]),
-      );
   }
 
   async archiveAllForUser(db: Db, where: { userId: string; exceptId?: string }) {
@@ -53,6 +41,18 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
         ),
       )
       .returning();
+  }
+
+  async delete(db: Db, where: { id: string } | { expiredOrArchivedBefore: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.where([
+          "id" in where && eq(this.table.id, where.id),
+          "expiredOrArchivedBefore" in where &&
+            (or(isNotNull(this.table.deletedAt), lt(this.table.expiresAt, where.expiredOrArchivedBefore)) ?? false),
+        ]),
+      );
   }
 }
 

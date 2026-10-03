@@ -86,26 +86,6 @@ class ModifiersService {
     return result;
   }
 
-  async getEntityModifiers(rulesetId: string, entityType: string, entityId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const resolvedId = rulesetData.canonicalize(entityId);
-      await CustomizationsPolicy.sourceExists(resolvedId, entityType, rulesetData);
-      // Compose step pre-merges sibling modifiers into the winner's bucket with
-      // sourceId remapped. Filter by sourceType to isolate the requested family.
-      const allMods = rulesetData.modifiersBySource.get(resolvedId) ?? [];
-      const modifiers = allMods.filter((m) => m.sourceType === entityType);
-
-      const { paths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, "modifier");
-      const pathMap = new Map(paths.map((p) => [p.path, p]));
-
-      return modifiers.map((m) => {
-        const pathDef = pathMap.get(m.target);
-        const valueLabel = pathDef?.possibleValues?.find((pv) => pv.value === m.value)?.label ?? null;
-        return { ...m, valueLabel, targetLabels: pickTargetLabels([m.target, m.value], segmentLabels) };
-      });
-    });
-  }
-
   async getEntityModifier(rulesetId: string, entityType: string, entityId: string, modifierId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);
@@ -129,6 +109,26 @@ class ModifiersService {
         requirements: modifierRequirements,
         targetLabels: pickTargetLabels([modifier.target, modifier.value], segmentLabels),
       };
+    });
+  }
+
+  async getEntityModifiers(rulesetId: string, entityType: string, entityId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const resolvedId = rulesetData.canonicalize(entityId);
+      await CustomizationsPolicy.sourceExists(resolvedId, entityType, rulesetData);
+      // Compose step pre-merges sibling modifiers into the winner's bucket with
+      // sourceId remapped. Filter by sourceType to isolate the requested family.
+      const allMods = rulesetData.modifiersBySource.get(resolvedId) ?? [];
+      const modifiers = allMods.filter((m) => m.sourceType === entityType);
+
+      const { paths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, "modifier");
+      const pathMap = new Map(paths.map((p) => [p.path, p]));
+
+      return modifiers.map((m) => {
+        const pathDef = pathMap.get(m.target);
+        const valueLabel = pathDef?.possibleValues?.find((pv) => pv.value === m.value)?.label ?? null;
+        return { ...m, valueLabel, targetLabels: pickTargetLabels([m.target, m.value], segmentLabels) };
+      });
     });
   }
 

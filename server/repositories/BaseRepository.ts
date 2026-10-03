@@ -66,30 +66,6 @@ abstract class BaseRepository<T extends Table> {
     private readonly entityType?: string,
   ) {}
 
-  /** Whether a row matches `where`, on the repositories that look rows up. */
-  async exists<W>(this: { findOne(db: Db, where: W): Promise<unknown> }, db: Db, where: W) {
-    return Boolean(await this.findOne(db, where));
-  }
-
-  /** Call inside a transaction to lock a stored row before changing its children.
-   * IDs are already resolved by the caller. Never memoize a locking read.
-   * `skipLocked`: a row another transaction holds counts as not found instead of being waited for.
-   */
-  async lockById(db: Db, id: string, mode: "update" | "share" = "update", skipLocked = false): Promise<boolean> {
-    const columns = getTableColumns(this.table);
-    if (!columns.id) throw new Error("Row locking requires an id column");
-    const rows = await db
-      .select({ locked: sql<number>`1` })
-      .from(sql`${this.table}`)
-      .where(and(eq(columns.id, id), columns.deletedAt ? isNull(columns.deletedAt) : undefined))
-      .for(mode, skipLocked ? { skipLocked: true } : {});
-    return rows.length > 0;
-  }
-
-  where(statements: (SQL | boolean)[]) {
-    return and(...(statements.filter(Boolean) as SQL[]));
-  }
-
   /**
    * Predicate for composite-key WHERE clauses on an entity-id column. When
    * a cowContext is active, expands to `WHERE col IN (target, ...preCowIds)`
@@ -109,15 +85,6 @@ abstract class BaseRepository<T extends Table> {
     return candidates.size === 1 ? eq(column, target) : inArray(column, [...candidates]);
   }
 
-  async withPagination<R extends InferSelectModel<T>>(
-    query: { limit: number; page: number },
-    callback: (paginate: { limit: number; offset: number }) => Promise<R[]>,
-  ) {
-    const rows = await callback(this.paginate(query));
-
-    return this.paginated(rows, query);
-  }
-
   protected paginate(query: { limit: number; page: number }) {
     return {
       limit: query.limit + 1,
@@ -133,23 +100,6 @@ abstract class BaseRepository<T extends Table> {
       page: query.page,
       nextPage: rows.length > limit ? query.page + 1 : undefined,
     };
-  }
-
-  async findAll<R extends InferSelectModel<T>>(
-    callback: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
-    limit = 100,
-  ): Promise<R[]> {
-    const items: R[] = [];
-    let page = 1;
-
-    while (true) {
-      const result = await callback({ limit, page });
-      items.push(...result.items);
-      if (!result.nextPage) break;
-      page = result.nextPage;
-    }
-
-    return items;
   }
 
   protected search(search: string | undefined, columns: Column[]): SQL | false {
@@ -280,6 +230,43 @@ abstract class BaseRepository<T extends Table> {
     return inherited ? or(childOwned, inherited)! : childOwned!;
   }
 
+  /** Whether a row matches `where`, on the repositories that look rows up. */
+  async exists<W>(this: { findOne(db: Db, where: W): Promise<unknown> }, db: Db, where: W) {
+    return Boolean(await this.findOne(db, where));
+  }
+
+  async findAll<R extends InferSelectModel<T>>(
+    callback: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
+    limit = 100,
+  ): Promise<R[]> {
+    const items: R[] = [];
+    let page = 1;
+
+    while (true) {
+      const result = await callback({ limit, page });
+      items.push(...result.items);
+      if (!result.nextPage) break;
+      page = result.nextPage;
+    }
+
+    return items;
+  }
+
+  /** Call inside a transaction to lock a stored row before changing its children.
+   * IDs are already resolved by the caller. Never memoize a locking read.
+   * `skipLocked`: a row another transaction holds counts as not found instead of being waited for.
+   */
+  async lockById(db: Db, id: string, mode: "update" | "share" = "update", skipLocked = false): Promise<boolean> {
+    const columns = getTableColumns(this.table);
+    if (!columns.id) throw new Error("Row locking requires an id column");
+    const rows = await db
+      .select({ locked: sql<number>`1` })
+      .from(sql`${this.table}`)
+      .where(and(eq(columns.id, id), columns.deletedAt ? isNull(columns.deletedAt) : undefined))
+      .for(mode, skipLocked ? { skipLocked: true } : {});
+    return rows.length > 0;
+  }
+
   visibility(visibility: Visibility): boolean | SQL {
     switch (visibility) {
       case Visibility.All:
@@ -293,6 +280,19 @@ abstract class BaseRepository<T extends Table> {
       default:
         return false;
     }
+  }
+
+  where(statements: (SQL | boolean)[]) {
+    return and(...(statements.filter(Boolean) as SQL[]));
+  }
+
+  async withPagination<R extends InferSelectModel<T>>(
+    query: { limit: number; page: number },
+    callback: (paginate: { limit: number; offset: number }) => Promise<R[]>,
+  ) {
+    const rows = await callback(this.paginate(query));
+
+    return this.paginated(rows, query);
   }
 }
 

@@ -19,6 +19,14 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 class AptitudesService {
+  async getRulesetAptitude(rulesetId: string, aptitudeId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
+      return aptitude;
+    });
+  }
+
   async getRulesetAptitudes(
     rulesetId: string,
     where: {
@@ -42,14 +50,6 @@ class AptitudesService {
         { rulesetId, ancestorRulesetIds: sourceChain, excludeIds, ...where },
         pagination,
       );
-    });
-  }
-
-  async getRulesetAptitude(rulesetId: string, aptitudeId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
-      return aptitude;
     });
   }
 
