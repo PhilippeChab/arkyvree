@@ -25,8 +25,7 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { DetailedCharacterInterface, PreloadedRulesetData } from "@/server/rulesets/types.ts";
 import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import type { KlassLevel, Requirement } from "@/shared/relations.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Character, KlassLevel, Requirement, Ruleset, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
 import {
@@ -36,6 +35,7 @@ import {
   buildProjectedGivenFeats,
   buildProjectedSkillsFromAllocations,
   type FeatPick,
+  getKlassLevel,
   getLevelIdsFromOnward,
   loadFeatCustomizations,
 } from "./helpers.ts";
@@ -105,6 +105,67 @@ async function getExcludeNonStackableFeatIds(
   return excludeFeatIds;
 }
 
+/**
+ * The character a feat pick is made for, and the feats it can't pick again. The projection has the levels planned
+ * before this one, then this class level, the feats picked so far and every feat those class levels grant: granted
+ * feats count for requirements (a weapon proficiency for Weapon Focus) and aren't offered. Editing a level leaves out
+ * it and the levels after it.
+ */
+async function projectFeatPick(
+  characterRecord: Character,
+  ruleset: Ruleset,
+  rulesetData: CachedRulesetData,
+  klassLevelId: string,
+  featPicks: FeatPick[],
+  excludeCharacterLevelId?: string,
+  pendingLevelKlassLevelIds?: string[],
+  pendingLevelAbilityIds?: (string | undefined)[],
+) {
+  const characterId = characterRecord.id;
+  const grantingKlassLevelIds = [...new Set([klassLevelId, ...(pendingLevelKlassLevelIds ?? [])])];
+  const grantedRecords = grantingKlassLevelIds.flatMap(
+    (id) => rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(id) ?? [],
+  );
+  const grantedCustomizations = loadFeatCustomizations(
+    rulesetData,
+    grantedRecords.map((rec) => rec.featsInRule.id),
+  );
+
+  const allCharacterLevels = await CharacterLevels.findMany(db, { characterId });
+  const excludeIds = excludeCharacterLevelId ? getLevelIdsFromOnward(allCharacterLevels, excludeCharacterLevelId) : [];
+  const pendingLevels = pendingLevelKlassLevelIds?.length
+    ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds, pendingLevelAbilityIds)
+    : [];
+
+  const projectedCharacterLevel = buildProjectedCharacterLevel(characterId, klassLevelId);
+  const { projectedFeats, nonStackableFeatIds } = buildProjectedFeatsFromPicks(
+    featPicks,
+    klassLevelId,
+    projectedCharacterLevel.id,
+    rulesetData,
+  );
+  const projectedData: Dnd35ProjectedCharacterData = {
+    ...(excludeIds.length > 0 && { excludeCharacterLevelIds: excludeIds }),
+    characterLevels: [...pendingLevels, projectedCharacterLevel],
+    ...(projectedFeats.length > 0 && { feats: projectedFeats }),
+    givenFeats: buildProjectedGivenFeats(grantedRecords, projectedCharacterLevel.id, grantedCustomizations),
+  };
+
+  const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+  const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+  await detailedCharacter.build(undefined, projectedData);
+
+  const excludeFeatIds = await getExcludeNonStackableFeatIds(
+    db,
+    allCharacterLevels,
+    new Set(excludeIds),
+    grantedRecords,
+    nonStackableFeatIds,
+    detailedCharacter,
+  );
+  return { detailedCharacter, excludeFeatIds };
+}
+
 export async function getAvailablePowers(
   session: Session,
   characterId: string,
@@ -125,10 +186,7 @@ export async function getAvailablePowers(
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-    const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
-    if (!klassLevel) {
-      throw new NotFoundError("Class level not found");
-    }
+    const klassLevel = getKlassLevel(rulesetData, klassId, level);
 
     // Fetch auto-granted powers for the current klass level so they are part of the
     // projected character (for requirement checking) and excluded from selection.
@@ -240,62 +298,17 @@ export async function getAvailableFeats(
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-    const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
-    if (!klassLevel) {
-      throw new NotFoundError("Class level not found");
-    }
+    const klassLevel = getKlassLevel(rulesetData, klassId, level);
 
-    // Fetch auto-granted feats for the current klass level AND all pending batch levels
-    // from the composed cache — same join shape as KlassLevelFeats.findManyWithFeats.
-    const allAutoGrantedKlassLevelIds = [...new Set([klassLevel.id, ...(pendingLevelKlassLevelIds ?? [])])];
-    const allAutoGrantedRecords = allAutoGrantedKlassLevelIds.flatMap(
-      (klid) => rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klid) ?? [],
-    );
-    const allAutoGrantedFeatCustomizations = loadFeatCustomizations(
+    const { detailedCharacter, excludeFeatIds } = await projectFeatPick(
+      characterRecord,
+      ruleset,
       rulesetData,
-      allAutoGrantedRecords.map((rec) => rec.featsInRule.id),
-    );
-
-    const allCharacterLevels = await CharacterLevels.findMany(db, { characterId });
-    const excludeIds = excludeCharacterLevelId
-      ? getLevelIdsFromOnward(allCharacterLevels, excludeCharacterLevelId)
-      : [];
-    const excludeIdSet = new Set(excludeIds);
-
-    const pendingLevels = pendingLevelKlassLevelIds?.length
-      ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds, pendingLevelAbilityIds)
-      : [];
-
-    const allSelectedFeatPicks: FeatPick[] = [
-      ...(where.pendingLevelFeatPicks ?? []),
-      ...(where.selectedFeatPicks ?? []),
-    ];
-
-    const projectedCharacterLevel = buildProjectedCharacterLevel(characterId, klassLevel.id);
-    const { projectedFeats: selectedProjectedFeats, nonStackableFeatIds: selectedNonStackable } =
-      buildProjectedFeatsFromPicks(allSelectedFeatPicks, klassLevel.id, projectedCharacterLevel.id, rulesetData);
-    const projectedData: Dnd35ProjectedCharacterData = {
-      ...(excludeIds.length > 0 && { excludeCharacterLevelIds: excludeIds }),
-      characterLevels: [...pendingLevels, projectedCharacterLevel],
-      ...(selectedProjectedFeats.length > 0 && { feats: selectedProjectedFeats }),
-      givenFeats: buildProjectedGivenFeats(
-        allAutoGrantedRecords,
-        projectedCharacterLevel.id,
-        allAutoGrantedFeatCustomizations,
-      ),
-    };
-
-    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData);
-
-    const excludeFeatIds = await getExcludeNonStackableFeatIds(
-      db,
-      allCharacterLevels,
-      excludeIdSet,
-      allAutoGrantedRecords,
-      selectedNonStackable,
-      detailedCharacter,
+      klassLevel.id,
+      [...(where.pendingLevelFeatPicks ?? []), ...(where.selectedFeatPicks ?? [])],
+      excludeCharacterLevelId,
+      pendingLevelKlassLevelIds,
+      pendingLevelAbilityIds,
     );
 
     const result = await Feats.findAvailableByAptitude(
@@ -341,64 +354,17 @@ export async function getAvailableFeatsGrouped(
   const characterRecord = await getEditableCharacter(db, session, characterId);
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-    const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
-    if (!klassLevel) {
-      throw new NotFoundError("Class level not found");
-    }
+    const klassLevel = getKlassLevel(rulesetData, klassId, level);
 
-    // Fetch auto-granted feats for the current klass level AND all pending batch levels
-    // in a single query. All feats are projected into the character build (for requirement
-    // evaluation, e.g. weapon proficiency needed for Weapon Focus) and excluded from selection.
-    const allAutoGrantedKlassLevelIds = [...new Set([klassLevel.id, ...(pendingLevelKlassLevelIds ?? [])])];
-    const allAutoGrantedRecords = allAutoGrantedKlassLevelIds.flatMap(
-      (klid) => rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klid) ?? [],
-    );
-    const allAutoGrantedFeatCustomizations = loadFeatCustomizations(
+    const { detailedCharacter, excludeFeatIds } = await projectFeatPick(
+      characterRecord,
+      ruleset,
       rulesetData,
-      allAutoGrantedRecords.map((rec) => rec.featsInRule.id),
-    );
-
-    const allSelectedFeatPicks: FeatPick[] = [
-      ...(where.pendingLevelFeatPicks ?? []),
-      ...(where.selectedFeatPicks ?? []),
-    ];
-
-    const pendingLevels = pendingLevelKlassLevelIds?.length
-      ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds, pendingLevelAbilityIds)
-      : [];
-
-    const projectedCharacterLevel = buildProjectedCharacterLevel(characterId, klassLevel.id);
-    const { projectedFeats: selectedProjectedFeats, nonStackableFeatIds: selectedNonStackable } =
-      buildProjectedFeatsFromPicks(allSelectedFeatPicks, klassLevel.id, projectedCharacterLevel.id, rulesetData);
-
-    const allCharacterLevels = await CharacterLevels.findMany(db, { characterId });
-    const excludeIds = excludeCharacterLevelId
-      ? getLevelIdsFromOnward(allCharacterLevels, excludeCharacterLevelId)
-      : [];
-    const excludeIdSet = new Set(excludeIds);
-
-    const projectedData: Dnd35ProjectedCharacterData = {
-      ...(excludeIds.length > 0 && { excludeCharacterLevelIds: excludeIds }),
-      characterLevels: [...pendingLevels, projectedCharacterLevel],
-      ...(selectedProjectedFeats.length > 0 && { feats: selectedProjectedFeats }),
-      givenFeats: buildProjectedGivenFeats(
-        allAutoGrantedRecords,
-        projectedCharacterLevel.id,
-        allAutoGrantedFeatCustomizations,
-      ),
-    };
-
-    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData);
-
-    const excludeFeatIds = await getExcludeNonStackableFeatIds(
-      db,
-      allCharacterLevels,
-      excludeIdSet,
-      allAutoGrantedRecords,
-      selectedNonStackable,
-      detailedCharacter,
+      klassLevel.id,
+      [...(where.pendingLevelFeatPicks ?? []), ...(where.selectedFeatPicks ?? [])],
+      excludeCharacterLevelId,
+      pendingLevelKlassLevelIds,
+      pendingLevelAbilityIds,
     );
 
     const result = await Feats.findAvailableByAptitudeGrouped(
