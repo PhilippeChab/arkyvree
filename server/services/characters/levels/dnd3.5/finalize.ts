@@ -134,13 +134,10 @@ export async function updateLevel(
       });
       const { fetchedFeats, featCustomizations, autoGrantedRecords } = validationResult;
 
-      // The projected level must use a fresh id, not the real edited one. The
-      // loader keys the saved levels' granted feats (`Feats.findGrants`) by
-      // character level id — if the projected id matches a real row, the
-      // edited level's auto-granted feats get loaded from DB *and* re-added
-      // via `givenFeats`. Non-stackable feats dedup; stackable ones
-      // (Bonus Feat (Fighter/Wizard)) don't, so their aptitude-grant modifier
-      // fires twice and the level shows a phantom unspent slot.
+      // A fresh id keeps the projected level apart from the edited row it
+      // replaces. The loader drops that row (`excludeCharacterLevelIds`) and
+      // fetches granted feats for the saved levels only, so the projected
+      // level's come from `givenFeats` alone.
       const projectedLevelId = crypto.randomUUID();
 
       const autoGrantedFeats = buildProjectedAutoGrantedFeats(
