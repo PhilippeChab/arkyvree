@@ -101,8 +101,10 @@ Constructed with `(session, campaign)`. No constructor flags; `canUpdate`/`canDe
 | `canUpdate` | **Game Master only** |
 | `canDelete` | **Game Master only** (archive) |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
+| `canModify` | anyone the other checks allow, on a campaign that isn't archived (archived campaigns are read-only; a Game Master can still revoke an invite) |
+| `CampaignsPolicy.member(db, session, campaignId)` (static) | any member, Player or Game Master, of the campaign archived or not: returns their player row. Reading a campaign, its players, invites and characters starts with it |
 
-**Campaign character visibility** is *not* a CAS-protected surface — only the linking player can change visibility on their own character (`updateCharacterVisibility`'s policy throws `ForbiddenError "You do not own this character in this campaign"` for everyone else, including the GM). This is single-user contention by design.
+**Campaign character visibility** is *not* a CAS-protected surface — only the linking player can change visibility on their own character (`updateCharacterVisibility` throws `ForbiddenError "You do not own this character in this campaign"` for everyone else, including the GM: an identity match on the link's player). This is single-user contention by design.
 
 **Partial visibility filtering**: `getCampaignCharacters` strips `description` and `levels` for characters with `visibility: "Partial"` when the viewer is neither the owner nor a GM.
 

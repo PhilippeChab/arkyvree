@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { campaignsInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
+import { InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Activities, Campaigns, Players, Rulesets } from "@/server/repositories/index.ts";
 import BaseService from "@/server/services/BaseService.ts";
@@ -32,10 +32,7 @@ const CampaignsMethods = {
       throw new NotFoundError("Campaign not found");
     }
 
-    // Archived campaigns also archive their player rows, so default
-    // UnarchivedOnly would miss the membership. Use Visibility.All.
-    const player = await Players.findOne(db, { userId: session.userId, campaignId: id }, Visibility.All);
-    if (!player) throw new ForbiddenError("You are not a member of this campaign");
+    const player = await CampaignsPolicy.member(db, session, id);
 
     return { ...campaign, currentUserRole: player.role };
   },
