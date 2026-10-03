@@ -1,9 +1,9 @@
 import type { Db } from "@/server/database/index.ts";
 import { FeatsAptitudes, Modifiers, PowersAptitudes, Properties, Requirements } from "@/server/repositories/index.ts";
-import type { EntityType } from "@/server/services/rulesets/hashing.ts";
 
 import { copyEntityCustomizations } from "./copy.ts";
 import { fetchSiblingCustomizationsRaw } from "./customizations.ts";
+import type { EntityType } from "./hashing.ts";
 import { mergeSiblingRequirements } from "./requirements.ts";
 
 /**

@@ -31,8 +31,8 @@ import {
   Rulesets,
   Users,
 } from "@/server/repositories/index.ts";
-import PlayersService from "@/server/services/campaigns/PlayersService.ts";
-import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
+import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
+import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Player, Session } from "@/shared/relations.ts";
 
@@ -199,7 +199,13 @@ export async function createTestCampaign(userId: string, rulesetId?: string) {
 
 /** Invites `email` into a campaign's player slot, as its Game Master does (`updateCampaignPlayer`). */
 export async function inviteToSlot(gmSession: Session, slot: Player, email: string) {
-  const { invite } = await PlayersService.updateCampaignPlayer(gmSession, slot.campaignId, slot.id, slot.role, email);
+  const { invite } = await CampaignPlayersService.updateCampaignPlayer(
+    gmSession,
+    slot.campaignId,
+    slot.id,
+    slot.role,
+    email,
+  );
   if (!invite) throw new Error("The invite wasn't created");
   return invite;
 }

@@ -7,7 +7,7 @@ import {
   ownerParams,
   requirementOperator,
 } from "@/server/routers/api/rulesets/customization/validation.ts";
-import { RequirementsService } from "@/server/services/rulesets/index.ts";
+import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 
 export default new Hono<SessionContext>()
   .get("/:id/customization/:entityType/:entityId/requirements", zValidator("param", ownerParams), async (c) => {

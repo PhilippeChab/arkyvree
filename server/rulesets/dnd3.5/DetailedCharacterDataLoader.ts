@@ -34,7 +34,7 @@ import type {
   PreloadedRulesetData,
   RaceWithPMR,
 } from "@/server/rulesets/types.ts";
-import { refreshEntityData, resolveOverrides } from "@/server/services/rulesets/cow.ts";
+import { refreshEntityData, resolveOverrides } from "@/server/services/rulesets/cow/index.ts";
 import type {
   Campaign,
   Character,

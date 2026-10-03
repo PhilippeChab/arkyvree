@@ -4,7 +4,7 @@ import { z } from "zod";
 import { type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import propertyTypesRouter from "@/server/routers/api/rulesets/customization/properties/types/index.ts";
 import { entityParams } from "@/server/routers/api/rulesets/customization/validation.ts";
-import { PropertiesService } from "@/server/services/rulesets/index.ts";
+import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 
 export default new Hono<SessionContext>()
   .get("/:id/customization/:entityType/:entityId/properties", zValidator("param", entityParams), async (c) => {

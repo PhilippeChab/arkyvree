@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import { featsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Requirements } from "@/server/repositories/index.ts";
-import { copyEntityCustomizationsToMany, fetchEntityCustomizations } from "@/server/services/rulesets/cow.ts";
+import { copyEntityCustomizationsToMany, fetchEntityCustomizations } from "@/server/services/rulesets/cow/index.ts";
 import { createSeededTestRuleset, insertRows, makeSession } from "@/tests/helpers.ts";
 
 async function setup() {

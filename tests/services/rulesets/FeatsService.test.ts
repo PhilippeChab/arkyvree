@@ -6,9 +6,9 @@ import { aptitudesInRules, featsAptitudesInRules, klassLevelFeatsInRules } from 
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError } from "@/server/errors/index.ts";
 import { Characters, EntitySnapshots, Klasses, Properties } from "@/server/repositories/index.ts";
-import ClassLevelsService from "@/server/services/rulesets/classes/ClassLevelsService.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
-import PowersService from "@/server/services/rulesets/PowersService.ts";
+import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import {
   addCharacterLevel,
   createTestCharacter,

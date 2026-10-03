@@ -52,3 +52,4 @@ export { mergeSiblingRequirements } from "./requirements.ts";
 
 export type { IdResolveMap } from "./overrideMap.ts";
 export type { CowData } from "./cowData.ts";
+export { type EntityType } from "./hashing.ts";

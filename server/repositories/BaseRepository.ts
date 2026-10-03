@@ -18,8 +18,8 @@ import {
 } from "drizzle-orm";
 
 import { entitySnapshotsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
+import { currentCowContext } from "@/server/database/cowContext.ts";
 import type { Db } from "@/server/database/index.ts";
-import { currentCowContext } from "@/server/services/rulesets/cowContext.ts";
 
 export type Paginated<T> = {
   items: T[];

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { attachmentUploadRateLimit, denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
-import AttachmentsService from "@/server/services/AttachmentsService.ts";
+import { AttachmentsService } from "@/server/services/attachments/index.ts";
 
 const directUploadBody = z.object({
   recordType: z.string().min(1),

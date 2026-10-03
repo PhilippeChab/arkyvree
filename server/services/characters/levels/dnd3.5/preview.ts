@@ -9,17 +9,13 @@ import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
 import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { plannedClassSkills } from "./classes.ts";
 import { computePerLevelAptitudeSlots } from "./distribution.ts";
-import {
-  buildProjectedCharacterLevel,
-  buildProjectedGivenFeats,
-  loadFeatCustomizations,
-  plannedClassSkills,
-} from "./helpers.ts";
+import { buildProjectedCharacterLevel, buildProjectedGivenFeats, loadFeatCustomizations } from "./projection.ts";
 
 export async function getLevelUpPreview(
   session: Session,

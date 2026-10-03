@@ -5,7 +5,7 @@ import { sizeType } from "@/drizzle/schema.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { RacesService } from "@/server/services/rulesets/index.ts";
+import { RacesService } from "@/server/services/rulesets/races/index.ts";
 
 export default new Hono<SessionContext>()
   .get(

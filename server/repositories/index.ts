@@ -1,10 +1,10 @@
 import { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/schema.ts";
+import { currentCowContext } from "@/server/database/cowContext.ts";
 import { db as globalDb } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest } from "@/server/database/requestCache.ts";
-import type { IdResolveMap } from "@/server/services/rulesets/cow.ts";
-import { currentCowContext } from "@/server/services/rulesets/cowContext.ts";
+import type { IdResolveMap } from "@/server/services/rulesets/cow/index.ts";
 
-// Inlined to avoid an initialization-time cycle with cow.ts (which imports
+// Inlined to avoid an initialization-time cycle with cow/ (which imports
 // this file). Remaps FK references on each row through the override map so
 // consumers comparing row.fooId against post-COW ids get a hit even when the
 // row was fetched from an ancestor.

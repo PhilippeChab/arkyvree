@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { MechanicsService } from "@/server/services/rulesets/index.ts";
+import { MechanicsService } from "@/server/services/rulesets/mechanics/index.ts";
 
 export default new Hono<SessionContext>()
   .get(

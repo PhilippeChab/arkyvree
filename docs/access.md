@@ -19,7 +19,7 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 
 ## Rulesets — `RulesetsPolicy`
 
-Constructed with `(session, ruleset, contributorRole?)`. Pass the contributor role from `contributorsInRules` lookup; pass `null` if none. Helper: `getRulesetPolicy(tx, session, ruleset)` resolves the role and constructs the policy in one call.
+Constructed with `(session, ruleset, contributorRole?)`. Pass the contributor role from `contributorsInRules` lookup; pass `null` if none. `RulesetsPolicy.for(tx, session, ruleset)` resolves the role and constructs the policy in one call.
 
 | Method | Allowed actors | Notes |
 |---|---|---|
@@ -78,9 +78,9 @@ Constructed with `(session, character, isActiveContributor?)`. The boolean comes
 | `canManageContributors` | **owner only** |
 | `canReadContributors` | owner, active contributor |
 
-**Editing and archiving aren't policy methods.** `getEditableCharacter(db, session, characterId)` (`server/services/characters/helpers.ts`, over `Characters.findOneEditable`) returns the character iff the session user can edit it (owner OR active contributor), or a 404, and the write services call it as their first guard so the rest of the function can assume edit rights. Archiving looks the character up by its owner (`Characters.findOne(db, { id, userId })`): anyone else gets a 404. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
+**Editing and archiving aren't policy methods.** `getEditableCharacter(db, session, characterId)` (`server/services/characters/editableCharacter.ts`, over `Characters.findOneEditable`) returns the character iff the session user can edit it (owner OR active contributor), or a 404, and the write services call it as their first guard so the rest of the function can assume edit rights. Archiving looks the character up by its owner (`Characters.findOne(db, { id, userId })`): anyone else gets a 404. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
 
-**Character creation against a ruleset** — `CharactersService.createCharacter` calls `RulesetsPolicy.canCreateCharacter` (through `getRulesetPolicy`), and `CampaignsService` calls `canCreateCampaign`, which applies the same rule. A deleted ruleset is a 404 (`Ruleset not found`) before the policy runs; an extension or an archived ruleset is refused (`UnprocessableEntityError "Choose an active playable ruleset"`). Otherwise the ruleset must be one of:
+**Character creation against a ruleset** — `CharactersService.createCharacter` calls `RulesetsPolicy.canCreateCharacter` (through `RulesetsPolicy.for`), and `CampaignsService` calls `canCreateCampaign`, which applies the same rule. A deleted ruleset is a 404 (`Ruleset not found`) before the policy runs; an extension or an archived ruleset is refused (`UnprocessableEntityError "Choose an active playable ruleset"`). Otherwise the ruleset must be one of:
 
 1. Public published (`!ruleset.private && status === "Published"`), OR
 2. Owned by the session user, OR
@@ -134,7 +134,7 @@ The three invite lifecycles share the same shape:
 | Accept / reject | Identity match: `invite.userId === session.userId` (or `contributor.userId === session.userId` for contributor rows). Throws `NotFoundError` rather than `ForbiddenError` to avoid leaking the existence of invites addressed to other users |
 | Leave (self-remove from contributor or self-remove from campaign) | Identity match: must be holding the row being removed. Throws `NotFoundError` otherwise |
 
-`acceptCampaignInvite`, `rejectCampaignInvite`, `acceptContributorInvite` (rulesets and characters), `leaveRuleset`, and `leaveCharacter` all follow this pattern. Campaign self-leave goes through `PlayersService.removeCampaignPlayer` with the `isSelfRemoval = player.userId === session.userId` branch — same shape (identity match skips the GM gate). They're identity matches, not permission gates — see "Identity vs. policy" below.
+`acceptCampaignInvite`, `rejectCampaignInvite`, `acceptContributorInvite` (rulesets and characters), `leaveRuleset`, and `leaveCharacter` all follow this pattern. Campaign self-leave goes through `CampaignPlayersService.removeCampaignPlayer` with the `isSelfRemoval = player.userId === session.userId` branch — same shape (identity match skips the GM gate). They're identity matches, not permission gates — see "Identity vs. policy" below.
 
 ## Customizations — `CustomizationsPolicy`
 
@@ -160,9 +160,9 @@ Anything that *throws* on the basis of ownership is a permission gate and belong
 
 | Policy | Service callers |
 |---|---|
-| `RulesetsPolicy` | `RulesetsService` (including extension subscribe / unsubscribe), the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `getRulesetPolicy` in `server/services/rulesets/helpers.ts`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset |
+| `RulesetsPolicy` | `RulesetsService` (including extension subscribe / unsubscribe), the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `RulesetsPolicy.for`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset |
 | `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `getEditableCharacter` instead and skip the policy class — same effective rule, fewer object instantiations |
-| `CampaignsPolicy` | `CampaignsService`, `PlayersService`, campaigns sub-services |
+| `CampaignsPolicy` | `CampaignsService`, `CampaignPlayersService`, campaigns sub-services |
 | `CustomizationsPolicy` | `ModifiersService`, `PropertiesService`, `RequirementsService` (rulesets/customization). `CharacterModifiersService` uses `getEditableCharacter`, like the other character writes |
 | `AttachmentsService` registry | not a `BasePolicy` — uses `registerAttachable()` config map. Currently registered: `User` (avatar), `Character` (portrait) |
 

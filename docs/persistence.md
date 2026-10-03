@@ -105,7 +105,7 @@ Others name their row the same way, and stay when it's deleted, on purpose:
 
 Both primitives, picked by entry point:
 
-- **GM removes a single player from a campaign** → hard-delete (`PlayersService.removeCampaignPlayer`). Intentional removal, no preservation needed.
+- **GM removes a single player from a campaign** → hard-delete (`CampaignPlayersService.removeCampaignPlayer`). Intentional removal, no preservation needed.
 - **User account deletion** → archive (`AuthenticationService.archiveAllForUser`). The whole `deleteAccount` flow takes a "hide, don't destroy" approach to leave the user row's dependent state intact; membership rows go along.
 
 ### Demo `Users`
@@ -114,7 +114,7 @@ Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo d
 
 ### Ruleset entity / class cascade (`deleteEntityWithCascade`)
 
-`deleteEntityWithCascade` (`server/services/RulesetsService.ts`) is the shared cleanup helper used in two flows: `unsubscribeExtension` and `revertOverride`. It:
+`deleteEntityWithCascade` (`server/services/rulesets/RulesetsService.ts`) is the shared cleanup helper used in two flows: `unsubscribeExtension` and `revertOverride`. It:
 
 - Hard-deletes the entity's junction rows (aptitude links, class-structure rows referencing it).
 - Hard-deletes the entity itself, plus `klass_levels` for klasses (FK CASCADE on `klass_levels.klass_id` would also handle this).

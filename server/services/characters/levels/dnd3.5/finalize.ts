@@ -22,12 +22,13 @@ import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharac
 import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { PreloadedRulesetData } from "@/server/rulesets/types.ts";
-import { getEditableCharacter } from "@/server/services/characters/helpers.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
 import { reconcileAllBondedKinds } from "./bondedReconcile.ts";
+import { plannedClassSkills } from "./classes.ts";
 import {
   computePerLevelAptitudeSlots,
   distributePoolSelections,
@@ -40,8 +41,7 @@ import {
   buildProjectedSelections,
   getLevelIdsFromOnward,
   loadFeatCustomizations,
-  plannedClassSkills,
-} from "./helpers.ts";
+} from "./projection.ts";
 import { validateAndFetchLevelSelections } from "./validation.ts";
 
 /** Inserts skill, feat, and power child records for a character level. */

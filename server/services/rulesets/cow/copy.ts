@@ -11,10 +11,10 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
-import type { EntityCustomizations, EntityType } from "@/server/services/rulesets/hashing.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
 import { fetchEntityCustomizations } from "./customizations.ts";
+import type { EntityCustomizations, EntityType } from "./hashing.ts";
 
 /**
  * Inserts one copy of each row per target in a single batch, target-major, with

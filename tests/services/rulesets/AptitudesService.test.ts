@@ -11,10 +11,10 @@ import {
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
-import AptitudesService from "@/server/services/rulesets/AptitudesService.ts";
-import ClassLevelsService from "@/server/services/rulesets/classes/ClassLevelsService.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
-import PowersService from "@/server/services/rulesets/PowersService.ts";
+import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
+import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import {
   addCharacterLevel,
   createTestCharacter,

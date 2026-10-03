@@ -6,8 +6,8 @@ import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Abilities, Activities, Feats, Items, Powers, Races, Requirements } from "@/server/repositories/index.ts";
-import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
-import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
+import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
+import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { createTestKlassLevel, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", operator: "add" };

@@ -9,10 +9,10 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import DetailedCharacterAnimalCompanion from "@/server/rulesets/dnd3.5/DetailedCharacterAnimalCompanion.ts";
 import DetailedCharacterFamiliar from "@/server/rulesets/dnd3.5/DetailedCharacterFamiliar.ts";
 import DetailedCharacterMount from "@/server/rulesets/dnd3.5/DetailedCharacterMount.ts";
-import PlayerCharactersService from "@/server/services/campaigns/CharactersService.ts";
-import CharacterContributorsService from "@/server/services/CharacterContributorsService.ts";
-import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
-import CharactersService from "@/server/services/CharactersService.ts";
+import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
+import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
+import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import {
   addCharacterContributor,
   addOneLevel,
@@ -288,7 +288,7 @@ describe("CharactersService with bonded creatures", () => {
     const bondedIn = async (visibility: "Public" | "Partial", viewerRole?: "Player Character") => {
       const { masterId } = await createWizardWithFamiliar();
       const { campaign } = await createTestCampaign(SEED_USER_ID);
-      await PlayerCharactersService.linkCharacter(owner, campaign.id, masterId, visibility);
+      await CampaignCharactersService.linkCharacter(owner, campaign.id, masterId, visibility);
       let viewer = owner;
       if (viewerRole) {
         const { user, session } = await createTestUser();
@@ -296,7 +296,7 @@ describe("CharactersService with bonded creatures", () => {
         viewer = session;
       }
       return Object.keys(
-        (await PlayerCharactersService.getCampaignCharacter(viewer, campaign.id, masterId)).bondedByKind ?? {},
+        (await CampaignCharactersService.getCampaignCharacter(viewer, campaign.id, masterId)).bondedByKind ?? {},
       );
     };
     expect(await bondedIn("Public")).toEqual(["familiar"]);

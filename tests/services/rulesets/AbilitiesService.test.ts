@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { abilitiesInRules } from "@/drizzle/schema.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import AbilitiesService from "@/server/services/rulesets/AbilitiesService.ts";
+import { AbilitiesService } from "@/server/services/rulesets/abilities/index.ts";
 import { createTestUserAndRuleset, insertRows, NIL_UUID } from "@/tests/helpers.ts";
 
 describe("AbilitiesService", () => {

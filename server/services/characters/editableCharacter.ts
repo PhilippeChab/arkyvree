@@ -1,0 +1,32 @@
+import { type Db } from "@/server/database/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
+import { Visibility } from "@/server/repositories/BaseRepository.ts";
+import { Characters } from "@/server/repositories/index.ts";
+import type { Session } from "@/shared/relations.ts";
+
+/**
+ * The character the session's user may edit (they own it or contribute to it), or a 404. `Visibility.All` finds an
+ * archived one too, whose sheet stays readable.
+ */
+export async function getEditableCharacter(
+  db: Db,
+  session: Session,
+  characterId: string,
+  visibility: Visibility = Visibility.UnarchivedOnly,
+) {
+  const character = await Characters.findOneEditable(db, { id: characterId, userId: session.userId }, visibility);
+  if (!character) throw new NotFoundError("Character not found");
+  return character;
+}
+
+export async function findEditableCharacterOrBonded(tx: Db, characterId: string, userId: string) {
+  const pc = await Characters.findOneEditable(tx, { id: characterId, userId });
+  if (pc) return pc;
+  const bonded = await Characters.findOne(tx, { id: characterId });
+  if (!bonded || bonded.kind === "pc" || !bonded.parentCharacterId) return null;
+  const master = await Characters.findOneEditable(tx, {
+    id: bonded.parentCharacterId,
+    userId,
+  });
+  return master ? bonded : null;
+}

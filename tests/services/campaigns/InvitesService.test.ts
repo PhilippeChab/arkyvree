@@ -6,7 +6,7 @@ import { playersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, Players, Users } from "@/server/repositories/index.ts";
-import InvitesService from "@/server/services/campaigns/InvitesService.ts";
+import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
 import { createTestCampaign, createTestUser, inviteToSlot, makeSession, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
 
 async function createEmptySlot(campaignId: string) {
@@ -41,7 +41,7 @@ async function signUpAndBackfill(email: string) {
   return { user, backfilled };
 }
 
-describe("InvitesService", () => {
+describe("CampaignInvitesService", () => {
   describe("an invite into a slot (updateCampaignPlayer)", () => {
     test("invites a user into an empty slot", async () => {
       const { invitee, slot, invite } = await setup();
@@ -89,10 +89,10 @@ describe("InvitesService", () => {
   describe("getUserInvites", () => {
     test("lists the invites sent to a user", async () => {
       const { session } = await createTestUser();
-      expect(await InvitesService.getUserInvites(session.userId)).toEqual([]);
+      expect(await CampaignInvitesService.getUserInvites(session.userId)).toEqual([]);
 
       const { invitee, slot } = await setup();
-      expect(await InvitesService.getUserInvites(invitee.user.id)).toMatchObject([
+      expect(await CampaignInvitesService.getUserInvites(invitee.user.id)).toMatchObject([
         { userId: invitee.user.id, playerId: slot.id, status: "Pending" },
       ]);
     });
@@ -101,25 +101,25 @@ describe("InvitesService", () => {
   describe("getCampaignInvite", () => {
     test("returns the invite to its recipient, still after it's answered", async () => {
       const { invitee, campaign, invite } = await setup();
-      const pending = await InvitesService.getCampaignInvite(invitee.session, invite.id);
+      const pending = await CampaignInvitesService.getCampaignInvite(invitee.session, invite.id);
       expect(pending.status).toBe("Pending");
       expect(pending.playersInCampaign?.campaignsInCampaign?.name).toBe(campaign.name);
 
-      await InvitesService.acceptCampaignInvite(invitee.session, invite.id);
-      expect((await InvitesService.getCampaignInvite(invitee.session, invite.id)).status).toBe("Accepted");
+      await CampaignInvitesService.acceptCampaignInvite(invitee.session, invite.id);
+      expect((await CampaignInvitesService.getCampaignInvite(invitee.session, invite.id)).status).toBe("Accepted");
     });
 
     test("shows the campaign as archived through its deletedAt", async () => {
       const { invitee, campaign, invite } = await setup();
       await Campaigns.archive(db, { id: campaign.id });
-      const fetched = await InvitesService.getCampaignInvite(invitee.session, invite.id);
+      const fetched = await CampaignInvitesService.getCampaignInvite(invitee.session, invite.id);
       expect(fetched.playersInCampaign?.campaignsInCampaign?.deletedAt).not.toBeNull();
     });
 
     test("hides the invite from anyone else", async () => {
       const { invite } = await setup();
       const { session: stranger } = await createTestUser();
-      await expect(InvitesService.getCampaignInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
+      await expect(CampaignInvitesService.getCampaignInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -131,10 +131,10 @@ describe("InvitesService", () => {
         await inviteToSlot(gmSession, await createEmptySlot(campaign.id), user.emailAddress);
       }
 
-      const page1 = await InvitesService.getCampaignInvites(gmSession, campaign.id, {}, { limit: 2, page: 1 });
+      const page1 = await CampaignInvitesService.getCampaignInvites(gmSession, campaign.id, {}, { limit: 2, page: 1 });
       expect(page1).toMatchObject({ page: 1, nextPage: 2 });
       expect(page1.items).toHaveLength(2);
-      const page2 = await InvitesService.getCampaignInvites(gmSession, campaign.id, {}, { limit: 2, page: 2 });
+      const page2 = await CampaignInvitesService.getCampaignInvites(gmSession, campaign.id, {}, { limit: 2, page: 2 });
       expect(page2).toMatchObject({ page: 2, nextPage: undefined });
       expect(page2.items).toHaveLength(1);
     });
@@ -143,47 +143,51 @@ describe("InvitesService", () => {
       const { campaign } = await setup();
       const { session: stranger } = await createTestUser();
       await expect(
-        InvitesService.getCampaignInvites(stranger, campaign.id, {}, { limit: 10, page: 1 }),
+        CampaignInvitesService.getCampaignInvites(stranger, campaign.id, {}, { limit: 10, page: 1 }),
       ).rejects.toThrow(ForbiddenError);
-      await expect(InvitesService.getCampaignInvites(stranger, NIL_UUID, {}, { limit: 10, page: 1 })).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(
+        CampaignInvitesService.getCampaignInvites(stranger, NIL_UUID, {}, { limit: 10, page: 1 }),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 
   describe("acceptCampaignInvite", () => {
     test("accepts the invite and gives the slot to the invitee", async () => {
       const { invitee, slot, invite } = await setup();
-      expect(await InvitesService.acceptCampaignInvite(invitee.session, invite.id)).toMatchObject({
+      expect(await CampaignInvitesService.acceptCampaignInvite(invitee.session, invite.id)).toMatchObject({
         status: "Accepted",
       });
       expect((await Players.findOne(db, { id: slot.id }))?.userId).toBe(invitee.user.id);
-      await expect(InvitesService.acceptCampaignInvite(invitee.session, invite.id)).rejects.toThrow(ConflictError);
+      await expect(CampaignInvitesService.acceptCampaignInvite(invitee.session, invite.id)).rejects.toThrow(
+        ConflictError,
+      );
     });
 
     test("throws NotFoundError for a missing invite or someone else's", async () => {
       const { invite } = await setup();
       const { session: stranger } = await createTestUser();
-      await expect(InvitesService.acceptCampaignInvite(stranger, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(InvitesService.acceptCampaignInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
+      await expect(CampaignInvitesService.acceptCampaignInvite(stranger, NIL_UUID)).rejects.toThrow(NotFoundError);
+      await expect(CampaignInvitesService.acceptCampaignInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
     });
   });
 
   describe("rejectCampaignInvite", () => {
     test("rejects the invite and leaves the slot empty", async () => {
       const { invitee, slot, invite } = await setup();
-      expect(await InvitesService.rejectCampaignInvite(invitee.session, invite.id)).toMatchObject({
+      expect(await CampaignInvitesService.rejectCampaignInvite(invitee.session, invite.id)).toMatchObject({
         status: "Rejected",
       });
       expect((await Players.findOne(db, { id: slot.id }))?.userId).toBeNull();
-      await expect(InvitesService.rejectCampaignInvite(invitee.session, invite.id)).rejects.toThrow(ConflictError);
+      await expect(CampaignInvitesService.rejectCampaignInvite(invitee.session, invite.id)).rejects.toThrow(
+        ConflictError,
+      );
     });
 
     test("throws NotFoundError for a missing invite or someone else's", async () => {
       const { invite } = await setup();
       const { session: stranger } = await createTestUser();
-      await expect(InvitesService.rejectCampaignInvite(stranger, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(InvitesService.rejectCampaignInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
+      await expect(CampaignInvitesService.rejectCampaignInvite(stranger, NIL_UUID)).rejects.toThrow(NotFoundError);
+      await expect(CampaignInvitesService.rejectCampaignInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -191,25 +195,25 @@ describe("InvitesService", () => {
     test("revokes a pending invite, also once the campaign is archived", async () => {
       const { gmSession, campaign, invite } = await setup();
       await Campaigns.archive(db, { id: campaign.id });
-      expect(await InvitesService.revokeCampaignInvite(gmSession, invite.id)).toMatchObject({
+      expect(await CampaignInvitesService.revokeCampaignInvite(gmSession, invite.id)).toMatchObject({
         status: "Revoked",
       });
     });
 
     test("refuses an invite that was answered", async () => {
       const { gmSession, invitee, invite } = await setup();
-      await InvitesService.acceptCampaignInvite(invitee.session, invite.id);
-      await expect(InvitesService.revokeCampaignInvite(gmSession, invite.id)).rejects.toThrow(ConflictError);
+      await CampaignInvitesService.acceptCampaignInvite(invitee.session, invite.id);
+      await expect(CampaignInvitesService.revokeCampaignInvite(gmSession, invite.id)).rejects.toThrow(ConflictError);
     });
 
     test("throws NotFoundError for a missing invite or a removed slot", async () => {
       const { gmSession, slot, invite } = await setup();
-      await expect(InvitesService.revokeCampaignInvite(gmSession, NIL_UUID)).rejects.toThrow(NotFoundError);
+      await expect(CampaignInvitesService.revokeCampaignInvite(gmSession, NIL_UUID)).rejects.toThrow(NotFoundError);
       await db
         .update(playersInCampaign)
         .set({ deletedAt: new Date().toISOString() })
         .where(eq(playersInCampaign.id, slot.id));
-      await expect(InvitesService.revokeCampaignInvite(gmSession, invite.id)).rejects.toThrow(NotFoundError);
+      await expect(CampaignInvitesService.revokeCampaignInvite(gmSession, invite.id)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -230,24 +234,28 @@ describe("InvitesService", () => {
       expect(await Invites.backfillUserId(db, invitee.user.emailAddress, other.id)).toEqual([]);
 
       const { gmSession, email, invite } = await setupEmailOnly();
-      await InvitesService.revokeCampaignInvite(gmSession, invite.id);
+      await CampaignInvitesService.revokeCampaignInvite(gmSession, invite.id);
       expect((await signUpAndBackfill(email)).backfilled).toEqual([]);
     });
 
     test("lets the new account list, accept or reject its backfilled invite", async () => {
       const accepted = await setupEmailOnly();
       const { user } = await signUpAndBackfill(accepted.email);
-      expect(await InvitesService.getUserInvites(user.id)).toMatchObject([
+      expect(await CampaignInvitesService.getUserInvites(user.id)).toMatchObject([
         { playerId: accepted.slot.id, status: "Pending" },
       ]);
-      expect(await InvitesService.acceptCampaignInvite(makeSession(user.id), accepted.invite.id)).toMatchObject({
-        status: "Accepted",
-      });
+      expect(await CampaignInvitesService.acceptCampaignInvite(makeSession(user.id), accepted.invite.id)).toMatchObject(
+        {
+          status: "Accepted",
+        },
+      );
       expect((await Players.findOne(db, { id: accepted.slot.id }))?.userId).toBe(user.id);
 
       const rejected = await setupEmailOnly();
       const { user: rejecter } = await signUpAndBackfill(rejected.email);
-      expect(await InvitesService.rejectCampaignInvite(makeSession(rejecter.id), rejected.invite.id)).toMatchObject({
+      expect(
+        await CampaignInvitesService.rejectCampaignInvite(makeSession(rejecter.id), rejected.invite.id),
+      ).toMatchObject({
         status: "Rejected",
       });
       expect((await Players.findOne(db, { id: rejected.slot.id }))?.userId).toBeNull();

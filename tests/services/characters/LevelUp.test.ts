@@ -12,7 +12,7 @@ import {
   CharacterLevels,
   CharacterLevelSkills,
 } from "@/server/repositories/index.ts";
-import CharacterLevelsService from "@/server/services/characters/CharacterLevelsService.ts";
+import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { getSeedCtx, makeSession, NIL_UUID } from "@/tests/helpers.ts";
 import {
   addFighterLevels,

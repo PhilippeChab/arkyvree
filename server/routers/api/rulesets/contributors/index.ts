@@ -4,7 +4,7 @@ import { z } from "zod";
 import { contributorRole } from "@/drizzle/schema.ts";
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirDesc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
-import { ContributorsService } from "@/server/services/rulesets/index.ts";
+import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 
 const contributorRoleSchema = z.enum(contributorRole.enumValues);
 

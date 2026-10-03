@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
-import { ClassesService } from "@/server/services/rulesets/index.ts";
+import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 
 import classLevels from "./levels/index.ts";
 import classSkills from "./skills/index.ts";

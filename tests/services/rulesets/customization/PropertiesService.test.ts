@@ -6,7 +6,7 @@ import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Feats, Items, Properties } from "@/server/repositories/index.ts";
-import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
+import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const acBonus = { type: "AC_BONUS", value: "5", description: "Armor class bonus" };

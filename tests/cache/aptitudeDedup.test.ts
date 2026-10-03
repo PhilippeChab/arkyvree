@@ -17,9 +17,9 @@ import {
 } from "@/drizzle/schema.ts";
 import { getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
-import AptitudesService from "@/server/services/rulesets/AptitudesService.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
-import PowersService from "@/server/services/rulesets/PowersService.ts";
+import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { createSeededTestRulesetWithExtensions } from "@/tests/helpers.ts";
 
 /**

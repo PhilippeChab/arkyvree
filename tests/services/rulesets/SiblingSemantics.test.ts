@@ -6,10 +6,10 @@ import { Abilities, Aptitudes, Feats, FeatsAptitudes, Requirements, Rulesets } f
 import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
-import AptitudesService from "@/server/services/rulesets/AptitudesService.ts";
-import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
-import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
-import RulesetsService from "@/server/services/RulesetsService.ts";
+import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
+import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
+import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 

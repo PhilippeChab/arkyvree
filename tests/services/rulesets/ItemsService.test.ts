@@ -4,7 +4,7 @@ import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
-import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { createTestCharacter, createTestRuleset, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const requirement = {

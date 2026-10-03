@@ -11,7 +11,7 @@ import {
 } from "@/server/cache/rulesetCache.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
 afterEach(() => {

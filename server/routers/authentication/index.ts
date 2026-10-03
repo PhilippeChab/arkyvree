@@ -26,7 +26,7 @@ import {
   VerifyEmailChangeJson,
   VerifyEmailJson,
 } from "@/server/routers/authentication/validation.ts";
-import { AuthenticationService } from "@/server/services/index.ts";
+import { AuthenticationService } from "@/server/services/authentication/index.ts";
 
 export default new Hono()
   .post("/sign-up", authRateLimit, authEmailRateLimit, zValidator("json", SignUpJson), async (c) => {

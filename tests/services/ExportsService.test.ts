@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { NotFoundError } from "@/server/errors/index.ts";
-import ExportsService from "@/server/services/ExportsService.ts";
+import { ExportsService } from "@/server/services/exports/index.ts";
 import { createExport, createTestUser, NIL_UUID } from "@/tests/helpers.ts";
 
 describe("ExportsService.download", () => {

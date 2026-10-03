@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
-import CharactersService from "@/server/services/CharactersService.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
 
 const shared = new Hono()
   // Get shared character data (public, no auth)

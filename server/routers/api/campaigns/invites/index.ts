@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import { CampaignInvitesService } from "@/server/services/campaigns/index.ts";
+import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
 
 export default new Hono<SessionContext>()
   .get(

@@ -20,7 +20,7 @@ import races from "@/server/routers/api/rulesets/races/index.ts";
 import saves from "@/server/routers/api/rulesets/saves/index.ts";
 import skills from "@/server/routers/api/rulesets/skills/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
-import RulesetsService from "@/server/services/RulesetsService.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
 
 const authenticatedRulesets = new Hono()
   .use(sessionMiddleware)

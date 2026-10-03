@@ -25,8 +25,8 @@ import {
   Races,
   Requirements,
 } from "@/server/repositories/index.ts";
-import CharactersService from "@/server/services/CharactersService.ts";
-import { cowEntity } from "@/server/services/rulesets/cow.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
+import { cowEntity } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
   addCharacterLevel,

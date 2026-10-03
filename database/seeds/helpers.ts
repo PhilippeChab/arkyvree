@@ -26,8 +26,8 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { reconcileAllBondedKinds } from "@/server/services/characters/levels/dnd3.5/bondedReconcile.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow.ts";
+import { reconcileAllBondedKinds } from "@/server/services/characters/levels/index.ts";
+import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Alignment, Gender, ItemLocation } from "@/shared/enums.ts";
 
 export const SEED_USER_ID = "00000000-0000-4000-8000-000000000456";

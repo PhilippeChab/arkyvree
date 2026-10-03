@@ -2,11 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { Aptitudes, Characters, Notifications, Players, Rulesets } from "@/server/repositories/index.ts";
-import InvitesService from "@/server/services/campaigns/InvitesService.ts";
-import CharacterContributorsService from "@/server/services/CharacterContributorsService.ts";
-import ContributorsService from "@/server/services/rulesets/ContributorsService.ts";
-import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
-import FeatsService from "@/server/services/rulesets/FeatsService.ts";
+import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
+import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
+import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
+import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { collectingNotified } from "@/server/ws.ts";
 import {
   addRulesetContributor,
@@ -40,10 +40,10 @@ describe("activity notifications", () => {
         await inviteToSlot(gm.session, slot, invitee.user.emailAddress);
         expect(await inbox(invitee)).toEqual([note("createCampaignInvite", gm)]);
       }
-      const [accepted] = await InvitesService.getUserInvites(accepting.user.id);
-      await InvitesService.acceptCampaignInvite(accepting.session, accepted.id);
-      const [rejected] = await InvitesService.getUserInvites(rejecting.user.id);
-      await InvitesService.rejectCampaignInvite(rejecting.session, rejected.id);
+      const [accepted] = await CampaignInvitesService.getUserInvites(accepting.user.id);
+      await CampaignInvitesService.acceptCampaignInvite(accepting.session, accepted.id);
+      const [rejected] = await CampaignInvitesService.getUserInvites(rejecting.user.id);
+      await CampaignInvitesService.rejectCampaignInvite(rejecting.session, rejected.id);
 
       expect(await inbox(gm)).toEqual([
         note("acceptCampaignInvite", accepting),

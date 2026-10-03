@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import { ConflictError } from "@/server/errors/index.ts";
-import RacesService from "@/server/services/rulesets/RacesService.ts";
-import RulesetsService from "@/server/services/RulesetsService.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { RacesService } from "@/server/services/rulesets/races/index.ts";
 import { createTestCharacter, createTestRuleset, createTestUser, createTestUserAndRuleset } from "@/tests/helpers.ts";
 
 const elf = { name: "Elf", description: "Graceful and long-lived", size: "Medium" as const, baseSpeed: 30 };

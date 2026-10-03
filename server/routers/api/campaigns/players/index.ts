@@ -4,7 +4,7 @@ import { z } from "zod";
 import { role as campaignRole } from "@/drizzle/schema.ts";
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirAsc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
-import { CampaignPlayersService } from "@/server/services/campaigns/index.ts";
+import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
 
 export default new Hono<SessionContext>()
   .get(

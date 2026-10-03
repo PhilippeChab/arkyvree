@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Players } from "@/server/repositories/index.ts";
-import RulesetsPolicy from "@/server/services/policies/RulesetsPolicy.ts";
+import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Ruleset } from "@/shared/relations.ts";
 import { createTestRuleset, createTestUser, makeSession } from "@/tests/helpers.ts";

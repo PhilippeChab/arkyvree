@@ -3,10 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
-import { cowEntityForCustomization } from "@/server/services/rulesets/cow.ts";
-import ModifiersService from "@/server/services/rulesets/customization/ModifiersService.ts";
-import PropertiesService from "@/server/services/rulesets/customization/PropertiesService.ts";
-import RequirementsService from "@/server/services/rulesets/customization/RequirementsService.ts";
+import { cowEntityForCustomization } from "@/server/services/rulesets/cow/index.ts";
+import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
+import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
+import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset, makeSession } from "@/tests/helpers.ts";
 
 async function setup() {

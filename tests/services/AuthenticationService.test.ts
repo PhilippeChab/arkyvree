@@ -17,8 +17,8 @@ import {
   Sessions,
   Users,
 } from "@/server/repositories/index.ts";
-import { linkGoogleAccountTo, signInAsGoogleAccount } from "@/server/services/accounts.ts";
-import AuthenticationService from "@/server/services/AuthenticationService.ts";
+import { linkGoogleAccountTo, signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
+import { AuthenticationService } from "@/server/services/authentication/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
   createTestCampaign,

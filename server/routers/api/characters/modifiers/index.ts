@@ -5,7 +5,7 @@ import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { modifierOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { characterIdParam } from "@/server/routers/api/validation.ts";
-import { CharacterModifiersService } from "@/server/services/characters/index.ts";
+import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 
 export default new Hono<SessionContext>()
   .get("/:characterId/modifiers", zValidator("param", characterIdParam), async (c) => {

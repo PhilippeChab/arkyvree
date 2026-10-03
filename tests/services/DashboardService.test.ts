@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { Campaigns, Characters, Rulesets } from "@/server/repositories/index.ts";
-import DashboardService from "@/server/services/DashboardService.ts";
+import { DashboardService } from "@/server/services/dashboard/index.ts";
 import {
   addRulesetContributor,
   createTestCampaign,

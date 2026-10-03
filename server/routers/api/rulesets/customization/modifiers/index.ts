@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import { entityParams, modifierOperator, ownerParams } from "@/server/routers/api/rulesets/customization/validation.ts";
-import { ModifiersService } from "@/server/services/rulesets/index.ts";
+import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 
 export default new Hono<SessionContext>()
   .get(

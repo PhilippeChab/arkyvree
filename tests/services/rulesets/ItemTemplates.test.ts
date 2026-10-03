@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Items, Properties } from "@/server/repositories/index.ts";
-import ItemsService from "@/server/services/rulesets/ItemsService.ts";
+import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { createSeededTestRuleset, createTestUser, invalidateSeededRuleset } from "@/tests/helpers.ts";
 
 async function setup() {

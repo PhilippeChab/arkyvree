@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Campaigns, Invites, Players } from "@/server/repositories/index.ts";
-import PlayersService from "@/server/services/campaigns/PlayersService.ts";
+import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
 import { createTestCampaign, createTestUser, NIL_UUID } from "@/tests/helpers.ts";
 
 const firstPage = { limit: 10, page: 1 };
@@ -15,43 +15,45 @@ async function setup() {
   return { user, session, campaign, gmPlayer };
 }
 
-describe("PlayersService", () => {
+describe("CampaignPlayersService", () => {
   describe("getCampaignPlayers", () => {
     test("lists and pages a campaign's players", async () => {
       const { user, session, campaign } = await setup();
-      expect((await PlayersService.getCampaignPlayers(session, campaign.id, {}, firstPage)).items).toMatchObject([
-        { userId: user.id, role: "Game Master" },
-      ]);
+      expect(
+        (await CampaignPlayersService.getCampaignPlayers(session, campaign.id, {}, firstPage)).items,
+      ).toMatchObject([{ userId: user.id, role: "Game Master" }]);
 
-      await PlayersService.addCampaignPlayer(session, campaign.id, "Player Character");
-      await PlayersService.addCampaignPlayer(session, campaign.id, "Player Character");
-      const page1 = await PlayersService.getCampaignPlayers(session, campaign.id, {}, { limit: 2, page: 1 });
+      await CampaignPlayersService.addCampaignPlayer(session, campaign.id, "Player Character");
+      await CampaignPlayersService.addCampaignPlayer(session, campaign.id, "Player Character");
+      const page1 = await CampaignPlayersService.getCampaignPlayers(session, campaign.id, {}, { limit: 2, page: 1 });
       expect([page1.items.length, page1.nextPage]).toEqual([2, 2]);
-      const page2 = await PlayersService.getCampaignPlayers(session, campaign.id, {}, { limit: 2, page: 2 });
+      const page2 = await CampaignPlayersService.getCampaignPlayers(session, campaign.id, {}, { limit: 2, page: 2 });
       expect([page2.items.length, page2.nextPage]).toEqual([1, undefined]);
     });
 
     test("refuses non-members and throws NotFoundError for a missing campaign", async () => {
       const { campaign } = await setup();
       const { session: stranger } = await createTestUser();
-      await expect(PlayersService.getCampaignPlayers(stranger, campaign.id, {}, firstPage)).rejects.toThrow(
+      await expect(CampaignPlayersService.getCampaignPlayers(stranger, campaign.id, {}, firstPage)).rejects.toThrow(
         ForbiddenError,
       );
-      await expect(PlayersService.getCampaignPlayers(stranger, NIL_UUID, {}, firstPage)).rejects.toThrow(NotFoundError);
+      await expect(CampaignPlayersService.getCampaignPlayers(stranger, NIL_UUID, {}, firstPage)).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 
   describe("addCampaignPlayer", () => {
     test.each(["Game Master", "Player Character"] as const)("adds an empty %s slot", async (role) => {
       const { session, campaign } = await setup();
-      const result = await PlayersService.addCampaignPlayer(session, campaign.id, role);
+      const result = await CampaignPlayersService.addCampaignPlayer(session, campaign.id, role);
       expect(result).toMatchObject({ player: { campaignId: campaign.id, role, userId: null }, invite: null });
     });
 
     test("invites the owner of the email into the new slot", async () => {
       const { session, campaign } = await setup();
       const { user: invitee } = await createTestUser();
-      const result = await PlayersService.addCampaignPlayer(
+      const result = await CampaignPlayersService.addCampaignPlayer(
         session,
         campaign.id,
         "Player Character",
@@ -65,14 +67,14 @@ describe("PlayersService", () => {
     test("is for the Game Master of a live campaign", async () => {
       const { session, campaign } = await setup();
       const { session: stranger } = await createTestUser();
-      await expect(PlayersService.addCampaignPlayer(stranger, campaign.id, "Player Character")).rejects.toThrow(
+      await expect(CampaignPlayersService.addCampaignPlayer(stranger, campaign.id, "Player Character")).rejects.toThrow(
         ForbiddenError,
       );
-      await expect(PlayersService.addCampaignPlayer(session, NIL_UUID, "Player Character")).rejects.toThrow(
+      await expect(CampaignPlayersService.addCampaignPlayer(session, NIL_UUID, "Player Character")).rejects.toThrow(
         NotFoundError,
       );
       await Campaigns.archive(db, { id: campaign.id });
-      await expect(PlayersService.addCampaignPlayer(session, campaign.id, "Player Character")).rejects.toThrow(
+      await expect(CampaignPlayersService.addCampaignPlayer(session, campaign.id, "Player Character")).rejects.toThrow(
         "Cannot modify an archived campaign",
       );
     });
@@ -81,19 +83,19 @@ describe("PlayersService", () => {
   describe("updateCampaignPlayer", () => {
     test("changes a slot's role either way", async () => {
       const { session, campaign } = await setup();
-      const { player } = await PlayersService.addCampaignPlayer(session, campaign.id, "Game Master");
+      const { player } = await CampaignPlayersService.addCampaignPlayer(session, campaign.id, "Game Master");
       expect(
-        (await PlayersService.updateCampaignPlayer(session, campaign.id, player.id, "Player Character")).player,
+        (await CampaignPlayersService.updateCampaignPlayer(session, campaign.id, player.id, "Player Character")).player,
       ).toMatchObject({ id: player.id, role: "Player Character" });
       expect(
-        (await PlayersService.updateCampaignPlayer(session, campaign.id, player.id, "Game Master")).player.role,
+        (await CampaignPlayersService.updateCampaignPlayer(session, campaign.id, player.id, "Game Master")).player.role,
       ).toBe("Game Master");
     });
 
     test("never demotes the last Game Master", async () => {
       const { session, campaign, gmPlayer } = await setup();
       await expect(
-        PlayersService.updateCampaignPlayer(session, campaign.id, gmPlayer.id, "Player Character"),
+        CampaignPlayersService.updateCampaignPlayer(session, campaign.id, gmPlayer.id, "Player Character"),
       ).rejects.toThrow("Cannot demote the last Game Master");
     });
 
@@ -101,9 +103,9 @@ describe("PlayersService", () => {
       const { session, campaign } = await setup();
       const { user: invitee } = await createTestUser();
       const { user: late } = await createTestUser();
-      const { player } = await PlayersService.addCampaignPlayer(session, campaign.id, "Player Character");
+      const { player } = await CampaignPlayersService.addCampaignPlayer(session, campaign.id, "Player Character");
 
-      const { invite } = await PlayersService.updateCampaignPlayer(
+      const { invite } = await CampaignPlayersService.updateCampaignPlayer(
         session,
         campaign.id,
         player.id,
@@ -112,7 +114,13 @@ describe("PlayersService", () => {
       );
       expect(invite).toMatchObject({ userId: invitee.id, playerId: player.id, status: "Pending" });
       await expect(
-        PlayersService.updateCampaignPlayer(session, campaign.id, player.id, "Player Character", late.emailAddress),
+        CampaignPlayersService.updateCampaignPlayer(
+          session,
+          campaign.id,
+          player.id,
+          "Player Character",
+          late.emailAddress,
+        ),
       ).rejects.toThrow(ConflictError);
 
       const [taken] = await Players.create(db, {
@@ -121,32 +129,38 @@ describe("PlayersService", () => {
         role: "Player Character",
       });
       await expect(
-        PlayersService.updateCampaignPlayer(session, campaign.id, taken.id, "Player Character", late.emailAddress),
+        CampaignPlayersService.updateCampaignPlayer(
+          session,
+          campaign.id,
+          taken.id,
+          "Player Character",
+          late.emailAddress,
+        ),
       ).rejects.toThrow("Player already has a user assigned");
     });
 
     test("is for the Game Master, on a slot of that live campaign", async () => {
       const { session, campaign } = await setup();
       const { campaign: other } = await createTestCampaign(session.userId);
-      const { player } = await PlayersService.addCampaignPlayer(session, campaign.id, "Player Character");
+      const { player } = await CampaignPlayersService.addCampaignPlayer(session, campaign.id, "Player Character");
       const { session: stranger } = await createTestUser();
 
       await expect(
-        PlayersService.updateCampaignPlayer(stranger, campaign.id, player.id, "Game Master"),
+        CampaignPlayersService.updateCampaignPlayer(stranger, campaign.id, player.id, "Game Master"),
       ).rejects.toThrow(ForbiddenError);
-      await expect(PlayersService.updateCampaignPlayer(session, NIL_UUID, player.id, "Game Master")).rejects.toThrow(
-        NotFoundError,
-      );
-      await expect(PlayersService.updateCampaignPlayer(session, campaign.id, NIL_UUID, "Game Master")).rejects.toThrow(
-        NotFoundError,
-      );
-      await expect(PlayersService.updateCampaignPlayer(session, other.id, player.id, "Game Master")).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(
+        CampaignPlayersService.updateCampaignPlayer(session, NIL_UUID, player.id, "Game Master"),
+      ).rejects.toThrow(NotFoundError);
+      await expect(
+        CampaignPlayersService.updateCampaignPlayer(session, campaign.id, NIL_UUID, "Game Master"),
+      ).rejects.toThrow(NotFoundError);
+      await expect(
+        CampaignPlayersService.updateCampaignPlayer(session, other.id, player.id, "Game Master"),
+      ).rejects.toThrow(NotFoundError);
       await Campaigns.archive(db, { id: campaign.id });
-      await expect(PlayersService.updateCampaignPlayer(session, campaign.id, player.id, "Game Master")).rejects.toThrow(
-        ForbiddenError,
-      );
+      await expect(
+        CampaignPlayersService.updateCampaignPlayer(session, campaign.id, player.id, "Game Master"),
+      ).rejects.toThrow(ForbiddenError);
     });
   });
 
@@ -154,14 +168,14 @@ describe("PlayersService", () => {
     test("deletes the slot and its invite, keeping their activities and logging the removal", async () => {
       const { session, campaign } = await setup();
       const { user: invitee } = await createTestUser();
-      const { player } = await PlayersService.addCampaignPlayer(
+      const { player } = await CampaignPlayersService.addCampaignPlayer(
         session,
         campaign.id,
         "Player Character",
         invitee.emailAddress,
       );
 
-      expect((await PlayersService.removeCampaignPlayer(session, campaign.id, player.id)).id).toBe(player.id);
+      expect((await CampaignPlayersService.removeCampaignPlayer(session, campaign.id, player.id)).id).toBe(player.id);
       expect(await Players.findOne(db, { id: player.id })).toBeUndefined();
       expect(await Invites.findMany(db, { playerId: player.id })).toEqual([]);
       const { items } = await Activities.findMany(db, { userId: session.userId }, { limit: 100, page: 1 });
@@ -176,9 +190,9 @@ describe("PlayersService", () => {
       const { session, campaign, gmPlayer } = await setup();
       const { user, session: playerSession } = await createTestUser();
       const [seat] = await Players.create(db, { campaignId: campaign.id, userId: user.id, role: "Player Character" });
-      expect((await PlayersService.removeCampaignPlayer(playerSession, campaign.id, seat.id)).id).toBe(seat.id);
+      expect((await CampaignPlayersService.removeCampaignPlayer(playerSession, campaign.id, seat.id)).id).toBe(seat.id);
 
-      await expect(PlayersService.removeCampaignPlayer(session, campaign.id, gmPlayer.id)).rejects.toThrow(
+      await expect(CampaignPlayersService.removeCampaignPlayer(session, campaign.id, gmPlayer.id)).rejects.toThrow(
         "Cannot remove the last Game Master",
       );
     });
@@ -186,17 +200,23 @@ describe("PlayersService", () => {
     test("is for the Game Master, on a slot of that live campaign", async () => {
       const { session, campaign } = await setup();
       const { campaign: other } = await createTestCampaign(session.userId);
-      const { player } = await PlayersService.addCampaignPlayer(session, campaign.id, "Player Character");
+      const { player } = await CampaignPlayersService.addCampaignPlayer(session, campaign.id, "Player Character");
       const { session: stranger } = await createTestUser();
 
-      await expect(PlayersService.removeCampaignPlayer(stranger, campaign.id, player.id)).rejects.toThrow(
+      await expect(CampaignPlayersService.removeCampaignPlayer(stranger, campaign.id, player.id)).rejects.toThrow(
         ForbiddenError,
       );
-      await expect(PlayersService.removeCampaignPlayer(session, NIL_UUID, player.id)).rejects.toThrow(NotFoundError);
-      await expect(PlayersService.removeCampaignPlayer(session, campaign.id, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(PlayersService.removeCampaignPlayer(session, other.id, player.id)).rejects.toThrow(NotFoundError);
+      await expect(CampaignPlayersService.removeCampaignPlayer(session, NIL_UUID, player.id)).rejects.toThrow(
+        NotFoundError,
+      );
+      await expect(CampaignPlayersService.removeCampaignPlayer(session, campaign.id, NIL_UUID)).rejects.toThrow(
+        NotFoundError,
+      );
+      await expect(CampaignPlayersService.removeCampaignPlayer(session, other.id, player.id)).rejects.toThrow(
+        NotFoundError,
+      );
       await Campaigns.archive(db, { id: campaign.id });
-      await expect(PlayersService.removeCampaignPlayer(session, campaign.id, player.id)).rejects.toThrow(
+      await expect(CampaignPlayersService.removeCampaignPlayer(session, campaign.id, player.id)).rejects.toThrow(
         ForbiddenError,
       );
     });

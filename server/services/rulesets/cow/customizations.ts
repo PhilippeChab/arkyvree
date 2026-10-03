@@ -9,7 +9,8 @@ import {
   Properties,
   Requirements,
 } from "@/server/repositories/index.ts";
-import type { EntityCustomizations, KlassRelationships } from "@/server/services/rulesets/hashing.ts";
+
+import type { EntityCustomizations, KlassRelationships } from "./hashing.ts";
 
 // ──────────────────────────────────────────────────────────────
 // Helper functions (extracted from RulesetsService)

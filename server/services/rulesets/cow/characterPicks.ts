@@ -8,7 +8,8 @@ import {
   CharacterLevelSkills,
   Characters,
 } from "@/server/repositories/index.ts";
-import type { EntityType } from "@/server/services/rulesets/hashing.ts";
+
+import type { EntityType } from "./hashing.ts";
 
 /**
  * Returns true if any character on a ruleset that depends on `rulesetId` has

@@ -6,7 +6,7 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
-import { CampaignCharactersService } from "@/server/services/campaigns/index.ts";
+import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
