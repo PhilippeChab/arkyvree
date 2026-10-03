@@ -40,8 +40,9 @@ export function verbGroup(name) {
 }
 
 /**
- * Where a class member goes: [rank, group, lifecycle step, name]. The constructor (-4), statics (-3) and fields (-2) keep their
- * order; private and protected methods (-1), then public ones (0), sort by verb group (lifecycle steps by step), then name.
+ * Where a class member goes: [rank, group, lifecycle step, name]. The constructor (-4), statics (-3) and fields (-2)
+ * keep their order; private and protected methods (-1), then public ones (0), sort by verb group (the lifecycle by
+ * step), then name.
  */
 export function memberRank(member) {
   if (member.kind === "constructor") return [-4, 0, 0, ""];
@@ -151,7 +152,8 @@ function checkClass(context, body) {
         (tail ? "\n\n" + indent + tail : "") +
         "\n}",
     },
-    "Members go in order: the lifecycle (load, preload, initialize, build, apply), reads, creates, updates, deletes, then the other actions, by name in each group.",
+    "Members go in order: the lifecycle (load, preload, initialize, build, apply), reads, creates, updates, " +
+      "deletes, then the other actions, by name in each group.",
   );
 }
 
