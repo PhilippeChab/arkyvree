@@ -4,11 +4,12 @@ import { z } from "zod";
 import { location } from "@/drizzle/schema.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
+import { characterIdParam } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { CharacterInventoryService } from "@/server/services/characters/index.ts";
 
 const inventory = new Hono<SessionContext>()
-  .get("/:characterId", zValidator("param", z.object({ characterId: z.string().uuid() })), async (c) => {
+  .get("/:characterId", zValidator("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
     const result = await CharacterInventoryService.initialize().call("getInventory", c.var.requestSession, characterId);
 
@@ -16,7 +17,7 @@ const inventory = new Hono<SessionContext>()
   })
   .post(
     "/:characterId",
-    zValidator("param", z.object({ characterId: z.string().uuid() })),
+    zValidator("param", characterIdParam),
     zValidator(
       "json",
       z.object({

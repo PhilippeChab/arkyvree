@@ -8,7 +8,7 @@ import { createEntity } from "@/tests/routers/api/rulesets/customization/entitie
 
 const customization = api.api.rulesets[":id"].customization[":entityType"][":entityId"];
 const requirements = customization.requirements;
-const requirement = requirements[":requirement_id"];
+const requirement = requirements[":requirementId"];
 const charisma13 = { level: "1", target: "abilities.charisma.total", value: "13", operator: "greater_than_or_equal" };
 
 async function setup() {
@@ -32,7 +32,7 @@ describe("rulesets customization requirements", () => {
     });
     expect((await expectOk(requirements.$get({ param }))).map((r) => r.id)).toEqual([created.id]);
 
-    const requirementParam = { ...param, requirement_id: created.id };
+    const requirementParam = { ...param, requirementId: created.id };
     const updated = await expectOk(requirement.$put({ param: requirementParam, json: { ...charisma13, value: "15" } }));
     expect(updated.value).toBe("15");
 
@@ -101,7 +101,7 @@ describe("rulesets customization requirements", () => {
     const { id, entityId } = await setup();
     expect((await requirements.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } })).status).toBe(404);
     expect((await requirements.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } })).status).toBe(404);
-    const param = { id, entityType: "feats" as const, entityId, requirement_id: NIL_UUID };
+    const param = { id, entityType: "feats" as const, entityId, requirementId: NIL_UUID };
     expect((await requirement.$put({ param, json: charisma13 })).status).toBe(404);
     expect((await requirement.$delete({ param })).status).toBe(404);
   });

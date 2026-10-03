@@ -3,14 +3,14 @@ import { z } from "zod";
 
 import { role as campaignRole } from "@/drizzle/schema.ts";
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
-import { limit, orderDirAsc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
+import { idParam, limit, orderDirAsc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
     "/:id/players",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "query",
       z.object({
@@ -39,7 +39,7 @@ export default new Hono<SessionContext>()
   .post(
     "/:id/players",
     denyDemoUser,
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "json",
       z.object({

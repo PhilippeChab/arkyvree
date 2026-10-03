@@ -7,7 +7,7 @@ import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 import { createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
 
 const properties = api.api.rulesets[":id"].customization[":entityType"][":entityId"].properties;
-const property = properties[":property_id"];
+const property = properties[":propertyId"];
 
 async function setup() {
   const { id } = await createSeededTestRuleset(SEED_USER_ID);
@@ -24,7 +24,7 @@ describe("rulesets customization properties", () => {
     expect(created).toMatchObject({ value: "magic weapon", type: "special", entityType: "feats", entityId });
     expect((await expectOk(properties.$get({ param }))).map((p) => p.id)).toEqual([created.id]);
 
-    const propertyParam = { ...param, property_id: created.id };
+    const propertyParam = { ...param, propertyId: created.id };
     const updated = await expectOk(
       property.$put({ param: propertyParam, json: { value: "extraordinary ability", type: "special" } }),
     );
@@ -64,7 +64,7 @@ describe("rulesets customization properties", () => {
     const { id, entityId } = await setup();
     expect((await properties.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } })).status).toBe(404);
     expect((await properties.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } })).status).toBe(404);
-    const param = { id, entityType: "feats" as const, entityId, property_id: NIL_UUID };
+    const param = { id, entityType: "feats" as const, entityId, propertyId: NIL_UUID };
     expect((await property.$put({ param, json: { value: "missing", type: "test" } })).status).toBe(404);
     expect((await property.$delete({ param })).status).toBe(404);
   });

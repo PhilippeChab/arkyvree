@@ -4,7 +4,7 @@ import { z } from "zod";
 import { location } from "@/drizzle/schema.ts";
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { ItemsService } from "@/server/services/rulesets/index.ts";
 
@@ -39,7 +39,7 @@ const itemBodySchema = z.object({
 export default new Hono<SessionContext>()
   .get(
     "/:id/items",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "query",
       z.object({
@@ -71,7 +71,7 @@ export default new Hono<SessionContext>()
   )
   .get(
     "/:id/templates",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "query",
       z.object({
@@ -98,19 +98,14 @@ export default new Hono<SessionContext>()
       return respond(c, result, 200);
     },
   )
-  .post(
-    "/:id/items",
-    zValidator("param", z.object({ id: z.string().uuid() })),
-    zValidator("json", itemBodySchema),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const body = c.req.valid("json");
+  .post("/:id/items", zValidator("param", idParam), zValidator("json", itemBodySchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
 
-      const itemsService = ItemsService.initialize();
-      const result = await itemsService.call("createRulesetItem", c.var.requestSession, id, body);
-      return respond(c, result, 200);
-    },
-  )
+    const itemsService = ItemsService.initialize();
+    const result = await itemsService.call("createRulesetItem", c.var.requestSession, id, body);
+    return respond(c, result, 200);
+  })
   .post(
     "/:id/items/:itemId/duplicate",
     zValidator("param", z.object({ id: z.string().uuid(), itemId: z.string().uuid() })),

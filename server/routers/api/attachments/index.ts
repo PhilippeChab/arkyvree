@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { attachmentUploadRateLimit, denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
+import { idParam } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import AttachmentsService from "@/server/services/AttachmentsService.ts";
 
@@ -47,7 +48,7 @@ const attachments = new Hono()
       return respond(c, result, 200);
     },
   )
-  .delete("/:id", denyDemoUser, zValidator("param", z.object({ id: z.string().uuid() })), async (c) => {
+  .delete("/:id", denyDemoUser, zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     const result = await AttachmentsService.initialize().call("detach", c.var.requestSession, id);
     return respond(c, result, 200);

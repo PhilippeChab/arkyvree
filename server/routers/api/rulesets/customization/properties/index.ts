@@ -3,40 +3,22 @@ import { z } from "zod";
 
 import { type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import propertyTypesRouter from "@/server/routers/api/rulesets/customization/properties/types/index.ts";
+import { entityParams } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { PropertiesService } from "@/server/services/rulesets/index.ts";
-import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 
 export default new Hono<SessionContext>()
-  .get(
-    "/:id/customization/:entityType/:entityId/properties",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().uuid(),
-        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
-        entityId: z.string().uuid(),
-      }),
-    ),
-    async (c) => {
-      const { id, entityType, entityId } = c.req.valid("param");
+  .get("/:id/customization/:entityType/:entityId/properties", zValidator("param", entityParams), async (c) => {
+    const { id, entityType, entityId } = c.req.valid("param");
 
-      const propertiesService = PropertiesService.initialize();
-      const result = await propertiesService.call("getEntityProperties", id, entityType, entityId);
-      return respond(c, result, 200);
-    },
-  )
+    const propertiesService = PropertiesService.initialize();
+    const result = await propertiesService.call("getEntityProperties", id, entityType, entityId);
+    return respond(c, result, 200);
+  })
   .route("/", propertyTypesRouter)
   .post(
     "/:id/customization/:entityType/:entityId/properties",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().uuid(),
-        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
-        entityId: z.string().uuid(),
-      }),
-    ),
+    zValidator("param", entityParams),
     zValidator(
       "json",
       z.object({
@@ -62,16 +44,8 @@ export default new Hono<SessionContext>()
     },
   )
   .put(
-    "/:id/customization/:entityType/:entityId/properties/:property_id",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().uuid(),
-        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
-        entityId: z.string().uuid(),
-        property_id: z.string().uuid(),
-      }),
-    ),
+    "/:id/customization/:entityType/:entityId/properties/:propertyId",
+    zValidator("param", entityParams.extend({ propertyId: z.string().uuid() })),
     zValidator(
       "json",
       z.object({
@@ -82,7 +56,7 @@ export default new Hono<SessionContext>()
       }),
     ),
     async (c) => {
-      const { id, entityType, entityId, property_id } = c.req.valid("param");
+      const { id, entityType, entityId, propertyId } = c.req.valid("param");
       const body = c.req.valid("json");
 
       const propertiesService = PropertiesService.initialize();
@@ -92,25 +66,17 @@ export default new Hono<SessionContext>()
         id,
         entityType,
         entityId,
-        property_id,
+        propertyId,
         body,
       );
       return respond(c, result, 200);
     },
   )
   .delete(
-    "/:id/customization/:entityType/:entityId/properties/:property_id",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().uuid(),
-        entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
-        entityId: z.string().uuid(),
-        property_id: z.string().uuid(),
-      }),
-    ),
+    "/:id/customization/:entityType/:entityId/properties/:propertyId",
+    zValidator("param", entityParams.extend({ propertyId: z.string().uuid() })),
     async (c) => {
-      const { id, entityType, entityId, property_id } = c.req.valid("param");
+      const { id, entityType, entityId, propertyId } = c.req.valid("param");
 
       const propertiesService = PropertiesService.initialize();
       const result = await propertiesService.call(
@@ -119,7 +85,7 @@ export default new Hono<SessionContext>()
         id,
         entityType,
         entityId,
-        property_id,
+        propertyId,
       );
       return respond(c, result, 200);
     },

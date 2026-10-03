@@ -139,8 +139,8 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
     const original = originals.find((r) => r.id === target.id)!;
     expect(original.level).toBe(action === "update chain" ? "1" : "1.2.1");
     expect(target.updatedAt).toBe(original.updatedAt);
-    const route = api.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirement_id"];
-    const param = { id: host.id, entityType: "feats" as const, entityId: copies[0], requirement_id: target.id };
+    const route = api.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirementId"];
+    const param = { id: host.id, entityType: "feats" as const, entityId: copies[0], requirementId: target.id };
     const response =
       action === "delete leaf"
         ? await route.$delete({ param })

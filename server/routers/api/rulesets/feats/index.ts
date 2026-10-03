@@ -3,14 +3,14 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { entityOrderBy, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
+import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { respond } from "@/server/routers/respond.ts";
 import { FeatsService } from "@/server/services/rulesets/index.ts";
 
 export default new Hono<SessionContext>()
   .get(
     "/:id/feats/grouped",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "query",
       z.object({
@@ -37,7 +37,7 @@ export default new Hono<SessionContext>()
   )
   .get(
     "/:id/feats",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "query",
       z.object({
@@ -78,7 +78,7 @@ export default new Hono<SessionContext>()
   )
   .post(
     "/:id/feats",
-    zValidator("param", z.object({ id: z.string().uuid() })),
+    zValidator("param", idParam),
     zValidator(
       "json",
       z.object({

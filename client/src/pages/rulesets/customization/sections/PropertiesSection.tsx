@@ -91,8 +91,8 @@ export function PropertiesSection({
     updateFn: async (propertyId: string, data: PropertyFormData) => {
       return tag(
         parseResponse(
-          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$put({
-            param: { ...entityParam, property_id: propertyId },
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":propertyId"].$put({
+            param: { ...entityParam, propertyId },
             json: data,
           }),
         ),
@@ -101,8 +101,8 @@ export function PropertiesSection({
     deleteFn: async (propertyId: string) => {
       return tag(
         parseResponse(
-          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":property_id"].$delete({
-            param: { ...entityParam, property_id: propertyId },
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties[":propertyId"].$delete({
+            param: { ...entityParam, propertyId },
           }),
         ),
       );

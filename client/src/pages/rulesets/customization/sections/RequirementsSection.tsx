@@ -143,8 +143,8 @@ export function RequirementsSection({
     updateFn: async (requirementId: string, data: RequirementFormData) => {
       return tag(
         parseResponse(
-          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirement_id"].$put({
-            param: { ...entityParam, requirement_id: requirementId },
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirementId"].$put({
+            param: { ...entityParam, requirementId },
             json: data,
           }),
         ),
@@ -153,8 +153,8 @@ export function RequirementsSection({
     deleteFn: async (requirementId: string) => {
       return tag(
         parseResponse(
-          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirement_id"].$delete({
-            param: { ...entityParam, requirement_id: requirementId },
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirementId"].$delete({
+            param: { ...entityParam, requirementId },
           }),
         ),
       );
