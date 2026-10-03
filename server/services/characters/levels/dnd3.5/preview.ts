@@ -17,8 +17,8 @@ import { computePerLevelAptitudeSlots } from "./distribution.ts";
 import {
   buildProjectedCharacterLevel,
   buildProjectedGivenFeats,
-  classSkillIds,
   loadFeatCustomizations,
+  plannedClassSkills,
 } from "./helpers.ts";
 
 export async function getLevelUpPreview(
@@ -113,13 +113,12 @@ export async function getLevelUpPreview(
     // ── Extract merged skills data ──
     const skillsBreakdown = levelUpProjector.getSkillBudget();
 
-    // Class skills merged across all planned classes (from composed cache).
     const allSkills = rulesetData.skills;
-    const klassSkillRecords = (klassId: string) => rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [];
-    const allKlassIds = [...new Set(levels.map((l) => l.klassId))];
-    const mergedClassSkillIds = classSkillIds(allKlassIds.flatMap(klassSkillRecords), allSkills);
-
-    const skillsWithClassInfo = levelUpProjector.getCharacterEnrichedSkills(allSkills, mergedClassSkillIds);
+    const classSkills = plannedClassSkills(
+      rulesetData,
+      klassLevelEntries.map(({ klass }) => klass.id),
+    );
+    const skillsWithClassInfo = levelUpProjector.getCharacterEnrichedSkills(allSkills, classSkills.merged);
 
     // ── Ability increases ──
     const existingLevels = await CharacterLevels.findMany(db, { characterId });
@@ -169,12 +168,6 @@ export async function getLevelUpPreview(
       baselineApts,
     );
 
-    // ── Per-level class skill IDs for cross-class cost tracking ──
-    const perLevelClassSkillIds = klassLevelEntries.map(({ klass }) => {
-      const ids = classSkillIds(klassSkillRecords(klass.id), allSkills);
-      return allSkills.filter((s) => ids.has(s.id)).map((s) => s.id);
-    });
-
     // ── Build level details ──
     const levelDetails = klassLevelEntries.map(({ klass, klassLevel }, i) => ({
       klassId: klass.id,
@@ -212,7 +205,7 @@ export async function getLevelUpPreview(
       // Per-level data for HP step, review, and auto-assignment
       levelDetails,
       perLevelSkillPoints,
-      perLevelClassSkillIds,
+      perLevelClassSkillIds: classSkills.perLevel,
       perLevelFeatSlots,
       perLevelPowerSlots,
     };
