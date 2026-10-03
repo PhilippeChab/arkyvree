@@ -622,7 +622,9 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | File | Purpose |
 |---|---|
 | `server/services/rulesets/cow/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `cowEntity`, `cowEntityForCustomization`, `buildOverrideMap` (+ `siblingMap`), `resolveOverrides`. `mergeSiblingData` (`siblingMerge.ts`) runs on the COW write path to bake sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache/compose.ts`). |
-| `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset`, `subscribeExtension`, `unsubscribeExtension` |
+| `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
+| `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getSubscribedExtensions` |
+| `server/services/rulesets/changes/RulesetChangesService.ts` | `getChanges`, `revertOverride` |
 | `server/services/policies/RulesetsPolicy.ts` | Authorization checks for all ruleset operations |
 | `server/services/rulesets/*/` | Entity services (feats, powers, classes, etc.) using the COW pattern |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |

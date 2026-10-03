@@ -149,10 +149,10 @@ From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cac
 
 ### Framework / copy primitives
 
-Used by the copy flows, `RulesetsService` (publish, extensions, reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
+Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`, `RulesetChangesService` (reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
 - **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateRulesetItem` / `bulkCreateVariants` and `ModifiersService.duplicateEntityModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow/index.ts` doesn't export.
-- **Extensions** (`RulesetsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
+- **Extensions** (`RulesetExtensionsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
 - **Override map**: `buildOverrideMap`, called only inside `cow/` (`getOrBuildCowData`, `cowEntity`).
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`getOrBuildCowData`, `cowEntity`) and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `getOrFetchRulesetData`, `invalidateCowData`, `invalidateAllCowData`.
