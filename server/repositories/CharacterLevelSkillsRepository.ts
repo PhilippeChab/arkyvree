@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import {
@@ -16,14 +16,8 @@ class CharacterLevelSkillsRepository extends BaseRepository<typeof levelSkillsIn
     super(levelSkillsInCharacter);
   }
 
-  async create(
-    db: Db,
-    values: InferInsertModel<typeof levelSkillsInCharacter> | InferInsertModel<typeof levelSkillsInCharacter>[],
-  ) {
-    if (Array.isArray(values)) {
-      if (values.length === 0) return [];
-      return await db.insert(this.table).values(values).returning();
-    }
+  async createMany(db: Db, values: InferInsertModel<typeof levelSkillsInCharacter>[]) {
+    if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
   }
 
@@ -38,17 +32,7 @@ class CharacterLevelSkillsRepository extends BaseRepository<typeof levelSkillsIn
       .from(this.table)
       .innerJoin(levelsInCharacter, eq(levelsInCharacter.id, this.table.characterLevelId))
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, levelsInCharacter.characterId))
-      .innerJoin(
-        rulesetsInRules,
-        and(
-          eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
-          or(
-            eq(rulesetsInRules.id, where.rulesetId),
-            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          ),
-        ),
-      )
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
       .where(and(this.idMatches(this.table.skillId, where.skillId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;

@@ -394,7 +394,9 @@ describe("LevelsService", () => {
         klassLevelId: klassLevels[0].id,
         hp: 8,
       });
-      await CharacterLevelSkills.create(db, { characterLevelId: level.id, skillId: skills["Diplomacy"].id, rank: 1 });
+      await CharacterLevelSkills.createMany(db, [
+        { characterLevelId: level.id, skillId: skills["Diplomacy"].id, rank: 1 },
+      ]);
 
       const slots = await CharacterLevelsMethods.getSkillSlots(session, character.id, klass.id, 2);
       expect(slots.totalCharacterLevel).toBe(2);

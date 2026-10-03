@@ -3,7 +3,7 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import { abilitiesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import BaseRepository, { type RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
 
 class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules> {
   constructor() {
@@ -35,32 +35,11 @@ class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules> {
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.abilitiesInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: (abilities, { asc }) => [asc(abilities.name)],
+      orderBy: [this.orderBy(this.table.name)],
     });
   }
 
-  async findManyByRulesetId(
-    db: Db,
-    where:
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        }
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          campaignId: string;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        },
-    pagination: { limit: number; page: number },
-  ) {
+  async findManyByRulesetId(db: Db, where: RulesetEntityFilters, pagination: { limit: number; page: number }) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
     const searchColumns = [this.table.name, this.table.description];
     const searchConditions = this.fuzzySearch(search, searchColumns);

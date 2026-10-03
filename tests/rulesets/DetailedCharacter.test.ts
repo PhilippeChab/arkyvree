@@ -701,11 +701,9 @@ describe("DetailedCharacter", () => {
           rulesetId: extension.id,
         }))!;
         const [level] = await CharacterLevels.findMany(db, { characterId: bjorn.id });
-        await CharacterLevelFeats.create(db, {
-          characterLevelId: level.id,
-          featId: uncannyBlow.id,
-          aptitudeId: stunt.id,
-        });
+        await CharacterLevelFeats.createMany(db, [
+          { characterLevelId: level.id, featId: uncannyBlow.id, aptitudeId: stunt.id },
+        ]);
         const character = { ...bjorn, rulesetId: fork.id };
         await carry(character, [{ item: "Bastard Sword", location, weaponSet: 0 }]);
         return build(character);

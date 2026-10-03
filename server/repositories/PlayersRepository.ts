@@ -114,7 +114,7 @@ class PlayersRepository extends BaseRepository<typeof playersInCampaign> {
               },
             },
             where: (invites, { eq }) => and(eq(invites.status, "Pending"), isNull(invites.deletedAt)),
-            orderBy: (invites, { desc }) => [desc(invites.createdAt)],
+            orderBy: (invites) => [this.orderBy(invites.createdAt, "desc")],
             limit: 1, // latest invite
           },
         },

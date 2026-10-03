@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import { charactersInCharacter, languagesInCharacter, languagesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
@@ -28,17 +28,7 @@ class CharacterLanguagesRepository extends BaseRepository<typeof languagesInChar
       .select({ id: this.table.languageId })
       .from(this.table)
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(
-        rulesetsInRules,
-        and(
-          eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
-          or(
-            eq(rulesetsInRules.id, where.rulesetId),
-            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          ),
-        ),
-      )
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
       .where(and(this.idMatches(this.table.languageId, where.languageId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;

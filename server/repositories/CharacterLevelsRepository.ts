@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, isNull, or, sql } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import {
@@ -38,17 +38,7 @@ class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter>
       .select({ id: this.table.id })
       .from(this.table)
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(
-        rulesetsInRules,
-        and(
-          eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
-          or(
-            eq(rulesetsInRules.id, where.rulesetId),
-            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          ),
-        ),
-      )
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
       .where(and(this.idMatches(this.table.klassLevelId, where.klassLevelId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
@@ -60,17 +50,7 @@ class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter>
       .from(this.table)
       .innerJoin(klassLevelsInRules, eq(this.table.klassLevelId, klassLevelsInRules.id))
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(
-        rulesetsInRules,
-        and(
-          eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
-          or(
-            eq(rulesetsInRules.id, where.rulesetId),
-            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          ),
-        ),
-      )
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
       .where(and(this.idMatches(klassLevelsInRules.klassId, where.klassId), isNull(this.table.deletedAt)))
       .limit(1);
     return result.length > 0;
@@ -119,7 +99,7 @@ class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter>
       .from(this.table)
       .innerJoin(klassLevelsInRules, eq(this.table.klassLevelId, klassLevelsInRules.id))
       .where(and(eq(this.table.characterId, where.characterId), isNull(this.table.deletedAt)))
-      .orderBy(desc(this.table.createdAt), desc(klassLevelsInRules.level))
+      .orderBy(this.orderBy(this.table.createdAt, "desc"), this.orderBy(klassLevelsInRules.level, "desc"))
       .limit(1);
 
     return result[0];

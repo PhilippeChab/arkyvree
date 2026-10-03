@@ -1,39 +1,13 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
 
 import { racesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import type { RulesetEntityFilters } from "@/server/repositories/BaseRepository.ts";
+import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class RacesRepository extends BaseRepository<typeof racesInRules> {
+class RacesRepository extends RulesetEntityRepository<typeof racesInRules> {
   constructor() {
     super(racesInRules, "races");
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof racesInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof racesInRules>>,
-    where: { id: string; expectedUpdatedAt?: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
-  }
-
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
   }
 
   async findOne(
@@ -53,32 +27,13 @@ class RacesRepository extends BaseRepository<typeof racesInRules> {
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.racesInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-      orderBy: (races, { asc }) => [asc(races.name)],
+      orderBy: [this.orderBy(this.table.name)],
     });
   }
 
   async findManyByRulesetId(
     db: Db,
-    where:
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          kind?: string;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        }
-      | {
-          rulesetId: string;
-          ancestorRulesetIds?: string[];
-          childOnly?: boolean;
-          kind?: string;
-          campaignId: string;
-          search?: string;
-          orderBy?: "name" | "createdAt" | "updatedAt";
-          orderDir?: "asc" | "desc";
-        },
+    where: RulesetEntityFilters<{ kind?: string }>,
     pagination: { limit: number; page: number },
   ) {
     const { search, kind, orderBy = "name", orderDir = "asc" } = where;

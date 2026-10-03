@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import {
@@ -17,14 +17,8 @@ class CharacterLevelFeatsRepository extends BaseRepository<typeof levelFeatsInCh
     super(levelFeatsInCharacter);
   }
 
-  async create(
-    db: Db,
-    values: InferInsertModel<typeof levelFeatsInCharacter> | InferInsertModel<typeof levelFeatsInCharacter>[],
-  ) {
-    if (Array.isArray(values)) {
-      if (values.length === 0) return [];
-      return await db.insert(this.table).values(values).returning();
-    }
+  async createMany(db: Db, values: InferInsertModel<typeof levelFeatsInCharacter>[]) {
+    if (values.length === 0) return [];
     return await db.insert(this.table).values(values).returning();
   }
 
@@ -39,17 +33,7 @@ class CharacterLevelFeatsRepository extends BaseRepository<typeof levelFeatsInCh
       .from(this.table)
       .innerJoin(levelsInCharacter, eq(levelsInCharacter.id, this.table.characterLevelId))
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, levelsInCharacter.characterId))
-      .innerJoin(
-        rulesetsInRules,
-        and(
-          eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
-          or(
-            eq(rulesetsInRules.id, where.rulesetId),
-            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          ),
-        ),
-      )
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
       .where(and(this.idMatches(this.table.featId, where.featId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
@@ -61,17 +45,7 @@ class CharacterLevelFeatsRepository extends BaseRepository<typeof levelFeatsInCh
       .from(this.table)
       .innerJoin(levelsInCharacter, eq(levelsInCharacter.id, this.table.characterLevelId))
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, levelsInCharacter.characterId))
-      .innerJoin(
-        rulesetsInRules,
-        and(
-          eq(rulesetsInRules.id, charactersInCharacter.rulesetId),
-          or(
-            eq(rulesetsInRules.id, where.rulesetId),
-            sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-            sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${where.rulesetId}::uuid]`,
-          ),
-        ),
-      )
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
       .where(and(this.idMatches(this.table.aptitudeId, where.aptitudeId), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;

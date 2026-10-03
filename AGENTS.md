@@ -68,6 +68,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Use `this.search(search, [columns])` for text search — returns `SQL | false`, use `|| undefined` when passing to `and()`
 - Use `this.orderBy(column, direction)` for sorting — never hardcode `desc()`/`asc()` directly
 - Search sentinel is `false` (not `undefined`) for consistency with `this.where()` filtering
+- A ruleset entity's repository extends `RulesetEntityRepository` (its `create` / `update` / `delete`) and types its list's `where` as `RulesetEntityFilters<{ …its own filters }>`. A bulk insert is `createMany(db, rows[])`. An in-use check joins the character's ruleset with `this.rulesetOrDescendant(column, rulesetId)`
 
 ## Frontend Architecture
 
