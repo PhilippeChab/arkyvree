@@ -21,7 +21,7 @@ export type FeatEntry = {
 
 type FeatGroupEntry = Record<string, FeatEntry>;
 
-export type DetailedCharacterComprehensiveFeats = {
+type DetailedCharacterComprehensiveFeats = {
   [key: string]: FeatEntry | FeatGroupEntry;
 };
 

@@ -1,5 +1,5 @@
 import { and, eq, inArray, isNull, not, or } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import {
   campaignsInCampaign,
@@ -8,9 +8,9 @@ import {
   playersInCampaign,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class PlayerCharactersRepository extends BaseRepository<typeof playerCharactersInCampaign, PlayerCharacterInstance> {
+class PlayerCharactersRepository extends BaseRepository<typeof playerCharactersInCampaign> {
   constructor() {
     super(playerCharactersInCampaign);
   }
@@ -137,12 +137,6 @@ class PlayerCharactersRepository extends BaseRepository<typeof playerCharactersI
       });
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof playerCharactersInCampaign>) {
-    return new PlayerCharacterInstance(instance);
-  }
 }
-
-class PlayerCharacterInstance extends Instance<InferSelectModel<typeof playerCharactersInCampaign>> {}
 
 export default PlayerCharactersRepository;

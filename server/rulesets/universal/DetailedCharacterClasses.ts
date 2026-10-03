@@ -13,7 +13,7 @@ import {
 } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
-export type DetailedCharacterComprehensiveClasses = {
+type DetailedCharacterComprehensiveClasses = {
   [key: string]: {
     klass: Klass;
     klassSkills: KlassSkill[];
@@ -212,10 +212,6 @@ export default class DetailedCharacterClasses {
 
   getCharacterClasses() {
     return Object.fromEntries(Object.entries(this.detailedCharacterClasses).filter(([, klass]) => klass.level > 0));
-  }
-
-  getClass(klassName: string) {
-    return this.detailedCharacterClasses[klassName];
   }
 
   addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: CharacterLevel): void {

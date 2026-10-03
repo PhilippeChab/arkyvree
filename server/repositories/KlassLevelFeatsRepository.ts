@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { klassLevelFeatsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInRules, KlassLevelFeatInstance> {
+class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInRules> {
   constructor() {
     super(klassLevelFeatsInRules);
   }
@@ -39,12 +39,6 @@ class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInR
       where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof klassLevelFeatsInRules>) {
-    return new KlassLevelFeatInstance(instance);
-  }
 }
-
-class KlassLevelFeatInstance extends Instance<InferSelectModel<typeof klassLevelFeatsInRules>> {}
 
 export default KlassLevelFeatsRepository;

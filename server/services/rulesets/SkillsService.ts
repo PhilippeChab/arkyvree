@@ -168,7 +168,7 @@ export const SkillsMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         }
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
@@ -193,7 +193,7 @@ export const SkillsMethods = {
           type: "updateSkill",
           data: {
             entityName: body.name,
-            changedFields: getChangedFields(skill as Record<string, unknown>, body as Record<string, unknown>),
+            changedFields: getChangedFields(skill, body),
           },
         });
 
@@ -229,7 +229,7 @@ export const SkillsMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         } else {
           await lockEntityForMutation(tx, "skills", targetId);
         }

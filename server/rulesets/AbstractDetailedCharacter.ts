@@ -514,10 +514,6 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     return this.detailedCharacterPowers;
   }
 
-  getDetailedCharacterFeatGroupings() {
-    return this.detailedCharacterFeatGroupings;
-  }
-
   getDetailedCharacterPowerGroupings() {
     return this.detailedCharacterPowerGroupings;
   }

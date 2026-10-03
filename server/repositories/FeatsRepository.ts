@@ -1,5 +1,5 @@
 import { and, asc, count, eq, getTableColumns, inArray, isNull, notInArray, sql } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import {
   featsAptitudesInRules,
@@ -11,9 +11,9 @@ import {
   propertiesInCustomization,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class FeatsRepository extends BaseRepository<typeof featsInRules, FeatInstance> {
+class FeatsRepository extends BaseRepository<typeof featsInRules> {
   constructor() {
     super(featsInRules, "feats");
   }
@@ -405,12 +405,6 @@ class FeatsRepository extends BaseRepository<typeof featsInRules, FeatInstance> 
       );
     return this.grantedAt(where.levels, granted);
   }
-
-  withInstance(instance: InferSelectModel<typeof featsInRules>) {
-    return new FeatInstance(instance);
-  }
 }
-
-class FeatInstance extends Instance<InferSelectModel<typeof featsInRules>> {}
 
 export default FeatsRepository;

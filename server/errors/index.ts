@@ -1,6 +1,6 @@
 import { Sentry } from "@/server/sentry.ts";
 
-export type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
+type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
 
 class BaseError extends Error {
   code!: Code;

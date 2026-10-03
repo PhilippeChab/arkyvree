@@ -1,11 +1,11 @@
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 import { and, desc, eq, getTableColumns, ilike, inArray, isNull, or } from "drizzle-orm";
 
 import { invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class InvitesRepository extends BaseRepository<typeof invitesInCampaign, InviteInstance> {
+class InvitesRepository extends BaseRepository<typeof invitesInCampaign> {
   constructor() {
     super(invitesInCampaign);
   }
@@ -159,12 +159,6 @@ class InvitesRepository extends BaseRepository<typeof invitesInCampaign, InviteI
       )
       .returning();
   }
-
-  withInstance(instance: InferSelectModel<typeof invitesInCampaign>) {
-    return new InviteInstance(instance);
-  }
 }
-
-class InviteInstance extends Instance<InferSelectModel<typeof invitesInCampaign>> {}
 
 export default InvitesRepository;

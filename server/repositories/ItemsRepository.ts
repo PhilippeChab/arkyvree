@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class ItemsRepository extends BaseRepository<typeof itemsInRules, ItemInstance> {
+class ItemsRepository extends BaseRepository<typeof itemsInRules> {
   constructor() {
     super(itemsInRules, "items");
   }
@@ -130,12 +130,6 @@ class ItemsRepository extends BaseRepository<typeof itemsInRules, ItemInstance> 
       where: this.where([eq(this.table.sourceItemId, where.sourceItemId), isNull(this.table.deletedAt)]),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof itemsInRules>) {
-    return new ItemInstance(instance);
-  }
 }
-
-class ItemInstance extends Instance<InferSelectModel<typeof itemsInRules>> {}
 
 export default ItemsRepository;

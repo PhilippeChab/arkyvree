@@ -3,7 +3,7 @@
 type ArmorCategory = "Light" | "Medium" | "Heavy";
 type ShieldCategory = "Light" | "Heavy" | "Tower";
 
-export interface ArmorDefinition {
+interface ArmorDefinition {
   armorType: ArmorCategory;
   acBonus: number;
   maxDex: number;
@@ -11,7 +11,7 @@ export interface ArmorDefinition {
   spellFailure: number;
 }
 
-export interface ShieldDefinition {
+interface ShieldDefinition {
   shieldType: ShieldCategory;
   acBonus: number;
   checkPenalty: number;

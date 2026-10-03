@@ -1,11 +1,11 @@
 import { and, count, eq, gte, isNull, lt, notInArray } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { notificationsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class NotificationsRepository extends BaseRepository<typeof notificationsInAccount, NotificationInstance> {
+class NotificationsRepository extends BaseRepository<typeof notificationsInAccount> {
   constructor() {
     super(notificationsInAccount);
   }
@@ -118,12 +118,6 @@ class NotificationsRepository extends BaseRepository<typeof notificationsInAccou
       )
       .returning();
   }
-
-  withInstance(instance: InferSelectModel<typeof notificationsInAccount>) {
-    return new NotificationInstance(instance);
-  }
 }
-
-class NotificationInstance extends Instance<InferSelectModel<typeof notificationsInAccount>> {}
 
 export default NotificationsRepository;

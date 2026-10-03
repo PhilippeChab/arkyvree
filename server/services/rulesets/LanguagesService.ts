@@ -131,7 +131,7 @@ export const LanguagesMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         }
 
         const { updatedAt: _u, ...languageData } = body;
@@ -148,7 +148,7 @@ export const LanguagesMethods = {
           type: "updateLanguage",
           data: {
             entityName: body.name,
-            changedFields: getChangedFields(language as Record<string, unknown>, body as Record<string, unknown>),
+            changedFields: getChangedFields(language, body),
           },
         });
 
@@ -184,7 +184,7 @@ export const LanguagesMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         } else {
           await lockEntityForMutation(tx, "languages", targetId);
         }

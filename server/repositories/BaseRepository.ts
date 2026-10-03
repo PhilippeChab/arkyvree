@@ -39,7 +39,7 @@ export const visibilityMap = {
   all: Visibility.All,
 } as const;
 
-abstract class BaseRepository<T extends Table, I extends Instance<InferSelectModel<T>>> {
+abstract class BaseRepository<T extends Table> {
   constructor(
     protected readonly table: T,
     private readonly entityType?: string,
@@ -63,8 +63,6 @@ abstract class BaseRepository<T extends Table, I extends Instance<InferSelectMod
       .for(mode);
     return rows.length > 0;
   }
-
-  abstract withInstance(instance: InferSelectModel<T>): I;
 
   where(statements: (SQL | boolean)[]) {
     return and(...(statements.filter(Boolean) as SQL[]));
@@ -262,10 +260,6 @@ abstract class BaseRepository<T extends Table, I extends Instance<InferSelectMod
         return false;
     }
   }
-}
-
-export class Instance<R extends InferSelectModel<Table>> {
-  constructor(protected readonly record: R) {}
 }
 
 export default BaseRepository;

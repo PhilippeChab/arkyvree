@@ -69,7 +69,7 @@ async function replaceCharacterLanguages(
   }
 }
 
-export type BondedEntry = { record: Character; detailed: DetailedCharacterInterface };
+type BondedEntry = { record: Character; detailed: DetailedCharacterInterface };
 
 export async function loadBondedByKind(
   rulesetModule: Awaited<ReturnType<typeof RulesetFactory.fromRulesetId>>,

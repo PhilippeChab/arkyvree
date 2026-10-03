@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { charactersInCharacter, inventoryInCharacter, itemsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class CharacterInventoryRepository extends BaseRepository<typeof inventoryInCharacter, CharacterInventoryInstance> {
+class CharacterInventoryRepository extends BaseRepository<typeof inventoryInCharacter> {
   constructor() {
     super(inventoryInCharacter);
   }
@@ -99,12 +99,6 @@ class CharacterInventoryRepository extends BaseRepository<typeof inventoryInChar
       },
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof inventoryInCharacter>) {
-    return new CharacterInventoryInstance(instance);
-  }
 }
-
-class CharacterInventoryInstance extends Instance<InferSelectModel<typeof inventoryInCharacter>> {}
 
 export default CharacterInventoryRepository;

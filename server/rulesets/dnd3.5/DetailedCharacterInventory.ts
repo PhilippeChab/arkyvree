@@ -24,7 +24,7 @@ type WeaponSetInventory = Record<
   }
 >;
 
-export type DetailedCharacterComprehensiveInventory = Record<string, InventorySlotData> & {
+type DetailedCharacterComprehensiveInventory = Record<string, InventorySlotData> & {
   weaponsets: WeaponSetInventory;
 };
 

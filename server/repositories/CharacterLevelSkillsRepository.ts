@@ -1,5 +1,5 @@
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import {
   charactersInCharacter,
@@ -9,12 +9,9 @@ import {
   skillsInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class CharacterLevelSkillsRepository extends BaseRepository<
-  typeof levelSkillsInCharacter,
-  CharacterLevelSkillInstance
-> {
+class CharacterLevelSkillsRepository extends BaseRepository<typeof levelSkillsInCharacter> {
   constructor() {
     super(levelSkillsInCharacter);
   }
@@ -88,12 +85,6 @@ class CharacterLevelSkillsRepository extends BaseRepository<
       where: and(inArray(this.table.characterLevelId, where.characterLevelIds), isNull(this.table.deletedAt)),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof levelSkillsInCharacter>) {
-    return new CharacterLevelSkillInstance(instance);
-  }
 }
-
-class CharacterLevelSkillInstance extends Instance<InferSelectModel<typeof levelSkillsInCharacter>> {}
 
 export default CharacterLevelSkillsRepository;

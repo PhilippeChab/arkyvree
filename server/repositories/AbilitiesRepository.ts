@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { abilitiesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules, AbilityInstance> {
+class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules> {
   constructor() {
     super(abilitiesInRules, "abilities");
   }
@@ -72,12 +72,6 @@ class AbilitiesRepository extends BaseRepository<typeof abilitiesInRules, Abilit
       });
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof abilitiesInRules>) {
-    return new AbilityInstance(instance);
-  }
 }
-
-class AbilityInstance extends Instance<InferSelectModel<typeof abilitiesInRules>> {}
 
 export default AbilitiesRepository;

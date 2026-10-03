@@ -19,7 +19,7 @@ const NAVIGATABLE_PATHS = [
   { path: "innate", description: "Whether skill is a class skill", type: "boolean" as const },
 ];
 
-export type DetailedCharacterComprehensiveSkills = {
+type DetailedCharacterComprehensiveSkills = {
   [key: string]: {
     name: string;
     description?: string | null;
@@ -138,8 +138,8 @@ export default class DetailedCharacterSkills {
       klass.klassSkills.flatMap((klassSkill) => klassSkill.skillId),
     );
     for (const skillId of allKlassSkillIds) {
-      this.innateSkillIds.add(skillId as string);
-      const name = skillNameById.get(skillId as string);
+      this.innateSkillIds.add(skillId);
+      const name = skillNameById.get(skillId);
       if (name) allKlassSkillNames.add(name);
     }
     // Also mark subtypes of class skills as innate. Subtypes name themselves
@@ -167,17 +167,17 @@ export default class DetailedCharacterSkills {
     for (const klass of Object.values(classes)) {
       const klassSkillIds = new Set(klass.klassSkills.map((ks) => ks.skillId));
       const klassSkillNames = new Set(
-        klass.klassSkills.map((ks) => skillNameById.get(ks.skillId as string)).filter((n): n is string => !!n),
+        klass.klassSkills.map((ks) => skillNameById.get(ks.skillId)).filter((n): n is string => !!n),
       );
 
       for (const level of klass.levels) {
         for (const skill of level.skills) {
-          const isClassSkillById = klassSkillIds.has(skill.id as string);
+          const isClassSkillById = klassSkillIds.has(skill.id);
           const isClassSkillByName = !isClassSkillById && hasClassSkillPrefix(skill.name, klassSkillNames);
           const isClassSkillForKlass = isClassSkillById || isClassSkillByName;
           const ranksGained = isClassSkillForKlass ? skill.rank : skill.rank / 2;
-          const current = this.rankBySkillId.get(skill.id as string) ?? 0;
-          this.rankBySkillId.set(skill.id as string, current + ranksGained);
+          const current = this.rankBySkillId.get(skill.id) ?? 0;
+          this.rankBySkillId.set(skill.id, current + ranksGained);
         }
       }
     }
@@ -233,10 +233,6 @@ export default class DetailedCharacterSkills {
 
   getSkills() {
     return this.detailedCharacterSkills;
-  }
-
-  getSkill(skillName: string) {
-    return this.detailedCharacterSkills[stripSeparators(skillName)];
   }
 
   getSkillBudget() {

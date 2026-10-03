@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { charactersInCharacter, languagesInCharacter, languagesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class CharacterLanguagesRepository extends BaseRepository<typeof languagesInCharacter, CharacterLanguageInstance> {
+class CharacterLanguagesRepository extends BaseRepository<typeof languagesInCharacter> {
   constructor() {
     super(languagesInCharacter);
   }
@@ -77,12 +77,6 @@ class CharacterLanguagesRepository extends BaseRepository<typeof languagesInChar
       where: eq(this.table.characterId, where.characterId),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof languagesInCharacter>) {
-    return new CharacterLanguageInstance(instance);
-  }
 }
-
-class CharacterLanguageInstance extends Instance<InferSelectModel<typeof languagesInCharacter>> {}
 
 export default CharacterLanguagesRepository;

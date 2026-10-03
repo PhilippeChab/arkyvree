@@ -1,5 +1,5 @@
 import { and, desc, eq, getTableColumns, inArray, isNull, or, sql } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import {
   charactersInCharacter,
@@ -9,9 +9,9 @@ import {
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter, CharacterLevelInstance> {
+class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter> {
   constructor() {
     super(levelsInCharacter);
   }
@@ -148,12 +148,6 @@ class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter,
       ]),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof levelsInCharacter>) {
-    return new CharacterLevelInstance(instance);
-  }
 }
-
-class CharacterLevelInstance extends Instance<InferSelectModel<typeof levelsInCharacter>> {}
 
 export default CharacterLevelsRepository;

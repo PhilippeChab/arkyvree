@@ -124,7 +124,7 @@ export const MechanicsMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         }
 
         const { updatedAt: _u, ...mechanicData } = body;
@@ -141,7 +141,7 @@ export const MechanicsMethods = {
           type: "updateMechanic",
           data: {
             entityName: body.name,
-            changedFields: getChangedFields(mechanic as Record<string, unknown>, body as Record<string, unknown>),
+            changedFields: getChangedFields(mechanic, body),
           },
         });
 
@@ -177,7 +177,7 @@ export const MechanicsMethods = {
             sourceChain,
             ruleset.extensionRulesetIds,
           );
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         }
 
         const rows = await Mechanics.delete(tx, { id: targetId });

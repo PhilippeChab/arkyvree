@@ -5,7 +5,7 @@ import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude, type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
-export type PowerEntry = {
+type PowerEntry = {
   power: Power;
   properties: Record<string, string>;
   dc?: PowerDc;
@@ -22,7 +22,7 @@ type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
 // Groupings (school/descriptor) live under the reserved `groups` key
 // (powers.groups.<name>.<spellSlug>.dc.misc) to avoid collisions with spells whose
 // name matches a school name (e.g. the Cleric spell "Divination" vs the Divination school).
-export type DetailedCharacterComprehensivePowers = {
+type DetailedCharacterComprehensivePowers = {
   [key: string]: PowerEntry | PowerGroupEntry | Record<string, { known: boolean }> | PowerGroupsNamespace;
 };
 

@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules, KlassLevelInstance> {
+class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
   constructor() {
     super(klassLevelsInRules);
   }
@@ -47,12 +47,6 @@ class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules, Kl
       orderBy: (levels, { asc }) => [asc(levels.level)],
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof klassLevelsInRules>) {
-    return new KlassLevelInstance(instance);
-  }
 }
-
-class KlassLevelInstance extends Instance<InferSelectModel<typeof klassLevelsInRules>> {}
 
 export default KlassLevelsRepository;

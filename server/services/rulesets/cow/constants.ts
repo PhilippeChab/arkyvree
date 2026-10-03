@@ -1,4 +1,5 @@
 import { featsInRules, powersInRules } from "@/drizzle/schema.ts";
+import type { Db } from "@/server/database/index.ts";
 import {
   Abilities,
   Aptitudes,
@@ -15,6 +16,7 @@ import {
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
+import type { EntityType } from "@/server/services/rulesets/hashing.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 
 // ──────────────────────────────────────────────────────────────
@@ -23,6 +25,7 @@ import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 
 export interface EntityWithId {
   id: string;
+  rulesetId: string;
   [key: string]: unknown;
 }
 
@@ -51,7 +54,17 @@ export const NAME_FALLBACK_TABLES = [
   { entityType: "powers", table: powersInRules },
 ] as const;
 
-export const ENTITY_REPOS = {
+/** What the COW code calls on any ruleset entity's repository. */
+interface EntityRepository {
+  lockById(db: Db, id: string, mode?: "update" | "share"): Promise<boolean>;
+  exists(db: Db, where: { id: string }): Promise<boolean>;
+  findOne(db: Db, where: { id: string } | { name: string; rulesetId: string }): Promise<EntityWithId | undefined>;
+  findMany(db: Db, where: { ids: string[] }): Promise<EntityWithId[]>;
+  create(db: Db, values: Record<string, unknown>): Promise<EntityWithId[]>;
+  delete(db: Db, where: { id: string }): Promise<unknown>;
+}
+
+export const ENTITY_REPOS: Record<EntityType, EntityRepository> = {
   abilities: Abilities,
   saves: Saves,
   skills: Skills,
@@ -63,7 +76,7 @@ export const ENTITY_REPOS = {
   klasses: Klasses,
   aptitudes: Aptitudes,
   mechanics: Mechanics,
-} as const;
+};
 
 export const CUSTOMIZATION_REPOS = {
   property: Properties,

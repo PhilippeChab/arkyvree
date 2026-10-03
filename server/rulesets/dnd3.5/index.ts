@@ -16,10 +16,6 @@ import Dnd35PropertyTypes from "./PropertyTypes.ts";
 import { seedTemplateItems } from "./seedTemplateItems.ts";
 import Dnd35TargetPaths from "./TargetPaths.ts";
 
-// D&D 3.5-specific type aliases
-export type AnyCharacterSheetComponent = typeof Dnd35DetailedCharacterSheet;
-export type Dnd35DetailedCharacterSheetComponent = typeof Dnd35DetailedCharacterSheet;
-
 function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35DetailedCharacterBonded | null {
   switch (kind) {
     case "familiar":

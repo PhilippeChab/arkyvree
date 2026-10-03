@@ -7,7 +7,7 @@ import { Client as PgClient } from "pg";
 
 import { db } from "@/server/database/index.ts";
 
-export type WsEvent =
+type WsEvent =
   | { type: "activities:updated" }
   | { type: "notifications:updated" }
   | { type: "app:version"; version: string };

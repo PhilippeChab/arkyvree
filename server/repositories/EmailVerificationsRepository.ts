@@ -1,14 +1,10 @@
 import { and, eq, isNull, lt } from "drizzle-orm";
-import type { InferSelectModel } from "drizzle-orm";
 
 import { emailVerificationsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class EmailVerificationsRepository extends BaseRepository<
-  typeof emailVerificationsInAccount,
-  EmailVerificationInstance
-> {
+class EmailVerificationsRepository extends BaseRepository<typeof emailVerificationsInAccount> {
   constructor() {
     super(emailVerificationsInAccount);
   }
@@ -54,12 +50,6 @@ class EmailVerificationsRepository extends BaseRepository<
       orderBy: (table, { desc }) => [desc(table.createdAt)],
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof emailVerificationsInAccount>) {
-    return new EmailVerificationInstance(instance);
-  }
 }
-
-class EmailVerificationInstance extends Instance<InferSelectModel<typeof emailVerificationsInAccount>> {}
 
 export default EmailVerificationsRepository;

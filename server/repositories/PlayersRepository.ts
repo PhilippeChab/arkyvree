@@ -1,11 +1,11 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance, Visibility } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 
-class PlayersRepository extends BaseRepository<typeof playersInCampaign, PlayerInstance> {
+class PlayersRepository extends BaseRepository<typeof playersInCampaign> {
   constructor() {
     super(playersInCampaign);
   }
@@ -124,12 +124,6 @@ class PlayersRepository extends BaseRepository<typeof playersInCampaign, PlayerI
       });
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof playersInCampaign>) {
-    return new PlayerInstance(instance);
-  }
 }
-
-class PlayerInstance extends Instance<InferSelectModel<typeof playersInCampaign>> {}
 
 export default PlayersRepository;

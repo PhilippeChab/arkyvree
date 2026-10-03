@@ -22,12 +22,12 @@ import type { TargetPath } from "@/shared/customization/target.ts";
  */
 import { BONDED_KINDS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 
-export type DetailedCharacterBondedSlot = {
+type DetailedCharacterBondedSlot = {
   race: string;
   level: number;
 };
 
-export type DetailedCharacterComprehensiveBonds = {
+type DetailedCharacterComprehensiveBonds = {
   [K in BondedKind]: DetailedCharacterBondedSlot;
 };
 

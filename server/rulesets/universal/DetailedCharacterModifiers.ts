@@ -9,7 +9,7 @@ import {
   isTemplateValue,
 } from "./templateExpression.ts";
 
-export type DetailedCharacterComprehensiveModifiers = {
+type DetailedCharacterComprehensiveModifiers = {
   modifiers: Modifier[];
   skippedModifiers: { warning: string; modifier: Modifier }[];
   unappliedModifiers: Modifier[];

@@ -1,11 +1,11 @@
 import { and, eq, inArray } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { attachmentsInStorage, blobsInStorage } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage, AttachmentInstance> {
+class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> {
   constructor() {
     super(attachmentsInStorage, "attachments");
   }
@@ -58,12 +58,6 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage, 
       where: inArray(this.table.blobId, where.blobIds),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof attachmentsInStorage>) {
-    return new AttachmentInstance(instance);
-  }
 }
-
-class AttachmentInstance extends Instance<InferSelectModel<typeof attachmentsInStorage>> {}
 
 export default AttachmentsRepository;

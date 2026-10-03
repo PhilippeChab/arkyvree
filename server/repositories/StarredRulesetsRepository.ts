@@ -1,11 +1,10 @@
 import { and, count, eq, inArray, isNull } from "drizzle-orm";
-import type { InferSelectModel } from "drizzle-orm";
 
 import { starredRulesetsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInAccount, StarredRulesetInstance> {
+class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInAccount> {
   constructor() {
     super(starredRulesetsInAccount);
   }
@@ -79,12 +78,6 @@ class StarredRulesetsRepository extends BaseRepository<typeof starredRulesetsInA
       where: and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)),
     });
   }
-
-  withInstance(instance: InferSelectModel<typeof starredRulesetsInAccount>) {
-    return new StarredRulesetInstance(instance);
-  }
 }
-
-class StarredRulesetInstance extends Instance<InferSelectModel<typeof starredRulesetsInAccount>> {}
 
 export default StarredRulesetsRepository;

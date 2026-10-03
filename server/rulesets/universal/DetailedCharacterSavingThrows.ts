@@ -12,7 +12,7 @@ const NAVIGATABLE_PATHS = [
   { path: "total", description: "Final saving throw bonus", type: "number" as const, requirementOnly: true },
 ];
 
-export type DetailedCharacterComprehensiveSavingThrows = {
+type DetailedCharacterComprehensiveSavingThrows = {
   [key: string]: {
     name: string;
     base: number;

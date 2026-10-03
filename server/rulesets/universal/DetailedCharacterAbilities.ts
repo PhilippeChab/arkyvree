@@ -10,7 +10,7 @@ const NAVIGATABLE_PATHS = [
   { path: "modifier", description: "Derived from total score", type: "number" as const, requirementOnly: true },
 ];
 
-export type DetailedCharacterComprehensiveAbilities = {
+type DetailedCharacterComprehensiveAbilities = {
   [key: string]: {
     base: number;
     level: number; // Bonus from levels

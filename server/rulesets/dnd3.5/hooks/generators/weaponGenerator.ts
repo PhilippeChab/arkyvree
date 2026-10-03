@@ -2,7 +2,7 @@
 
 type DamageType = "Bludgeoning" | "Piercing" | "Slashing";
 
-export interface WeaponDefinition {
+interface WeaponDefinition {
   proficiency: "Simple" | "Martial" | "Exotic";
   family: string;
   baseDamage: string;

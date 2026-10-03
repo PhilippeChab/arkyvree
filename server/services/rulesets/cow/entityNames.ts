@@ -1,6 +1,6 @@
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { EntitySnapshots } from "@/server/repositories/index.ts";
+import { EntitySnapshots, Feats } from "@/server/repositories/index.ts";
 import { withCowContext } from "@/server/services/rulesets/cowContext.ts";
 import type { EntityType } from "@/server/services/rulesets/hashing.ts";
 
@@ -53,12 +53,12 @@ export async function assertEntityNameAvailable(
   name: string,
 ): Promise<{ tombstoneAncestorId: string | null }> {
   const repo = ENTITY_REPOS[entityType];
-  const own = await repo.findOne(tx, { name, rulesetId } as never);
+  const own = await repo.findOne(tx, { name, rulesetId });
   if (own) throw new ConflictError("Name already exists in this ruleset");
 
   const ancestorIds: string[] = [];
   for (const ancestorId of cow.sourceChain) {
-    const conflict = await repo.findOne(tx, { name, rulesetId: ancestorId } as never);
+    const conflict = await repo.findOne(tx, { name, rulesetId: ancestorId });
     if (conflict) ancestorIds.push(conflict.id);
   }
   const tombstoned = await assertAncestorNamesHidden(tx, rulesetId, cow, entityType, ancestorIds);
@@ -101,6 +101,6 @@ export async function repointTombstoneSnapshot(
  * for it (`repointTombstoneSnapshot`), and takes its mark.
  */
 export async function wasGeneratedFeat(tx: Db, ancestorFeatId: string): Promise<boolean> {
-  const feat = await withCowContext(undefined, () => ENTITY_REPOS.feats.findOne(tx, { id: ancestorFeatId }));
+  const feat = await withCowContext(undefined, () => Feats.findOne(tx, { id: ancestorFeatId }));
   return feat?.generated ?? false;
 }

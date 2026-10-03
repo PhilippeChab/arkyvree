@@ -31,7 +31,7 @@ export type AptitudeLevelData = {
   available: number;
 };
 
-export type DetailedCharacterComprehensiveAptitudes = {
+type DetailedCharacterComprehensiveAptitudes = {
   [key: string]: {
     id: string;
     name: string;
@@ -229,10 +229,6 @@ export default class DetailedCharacterAptitudes {
 
   getAptitudes() {
     return this.detailedCharacterComprehensiveAptitudes;
-  }
-
-  getAptitude(name: string) {
-    return this.detailedCharacterComprehensiveAptitudes[stripSeparators(name)];
   }
 
   isLeveledAptitude(key: string): boolean {

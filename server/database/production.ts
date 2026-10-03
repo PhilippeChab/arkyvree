@@ -43,7 +43,6 @@ pool.on("error", (err) => {
   console.error("[db] Unexpected pool client error:", err.message);
 });
 
-export { pool };
 export const db = drizzle(pool as NodePgClient, { schema: schemaWithRelations });
 
 export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {

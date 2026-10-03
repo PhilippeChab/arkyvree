@@ -193,7 +193,7 @@ export type WeaponSet = {
   twohanded: WeaponSlot | null;
 };
 
-export type DetailedCharacterComprehensiveCombat = {
+type DetailedCharacterComprehensiveCombat = {
   ac: {
     base: number;
     armor: number;
@@ -386,12 +386,6 @@ export default class DetailedCharacterCombat {
 
   setShieldsData(shields: ShieldsData): void {
     this.detailedCharacterCombat.shields = shields;
-  }
-
-  getCombatElement(
-    element: "ac" | "hp" | "initiative" | "bab" | "grapple" | "speed" | "weaponsets",
-  ): DetailedCharacterComprehensiveCombat[typeof element] {
-    return this.detailedCharacterCombat[element];
   }
 
   updateTotals() {

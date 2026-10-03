@@ -373,7 +373,7 @@ export const ItemsMethods = {
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
           const cowResult = await cowEntity(tx, "items", item.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         }
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
@@ -440,7 +440,7 @@ export const ItemsMethods = {
         let targetId = item.id;
         if (isInherited) {
           const cowResult = await cowEntity(tx, "items", item.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         } else {
           await lockEntityForMutation(tx, "items", targetId);
         }

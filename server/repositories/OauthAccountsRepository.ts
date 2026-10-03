@@ -1,11 +1,10 @@
 import { and, eq, isNull } from "drizzle-orm";
-import type { InferSelectModel } from "drizzle-orm";
 
 import { oauthAccountsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccount, OauthAccountInstance> {
+class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccount> {
   constructor() {
     super(oauthAccountsInAccount);
   }
@@ -51,12 +50,6 @@ class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccou
       .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
       .returning();
   }
-
-  withInstance(instance: InferSelectModel<typeof oauthAccountsInAccount>) {
-    return new OauthAccountInstance(instance);
-  }
 }
-
-class OauthAccountInstance extends Instance<InferSelectModel<typeof oauthAccountsInAccount>> {}
 
 export default OauthAccountsRepository;

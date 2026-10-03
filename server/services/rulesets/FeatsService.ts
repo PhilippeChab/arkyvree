@@ -194,7 +194,7 @@ export const FeatsMethods = {
         const expectedUpdatedAt = isOwned ? body.updatedAt : undefined;
         if (isInherited) {
           const cowResult = await cowEntity(tx, "feats", feat.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         }
 
         const rows = await Feats.update(
@@ -236,7 +236,7 @@ export const FeatsMethods = {
           type: "updateFeat",
           data: {
             entityName: body.name,
-            changedFields: getChangedFields(feat as Record<string, unknown>, body as Record<string, unknown>),
+            changedFields: getChangedFields(feat, body),
           },
         });
 
@@ -265,7 +265,7 @@ export const FeatsMethods = {
         let targetId = feat.id;
         if (isInherited) {
           const cowResult = await cowEntity(tx, "feats", feat.id, rulesetId, sourceChain, ruleset.extensionRulesetIds);
-          targetId = cowResult.id as string;
+          targetId = cowResult.id;
         } else {
           await lockEntityForMutation(tx, "feats", targetId);
         }

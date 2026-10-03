@@ -1,12 +1,11 @@
 import { and, eq, isNotNull, isNull, lt, ne, or } from "drizzle-orm";
-import type { InferSelectModel } from "drizzle-orm";
 
 import { sessionsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { SESSION_TTL_MS } from "@/server/middlewares/session.ts";
-import BaseRepository, { Instance } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-class SessionsRepository extends BaseRepository<typeof sessionsInAccount, SessionInstance> {
+class SessionsRepository extends BaseRepository<typeof sessionsInAccount> {
   constructor() {
     super(sessionsInAccount);
   }
@@ -55,12 +54,6 @@ class SessionsRepository extends BaseRepository<typeof sessionsInAccount, Sessio
       )
       .returning();
   }
-
-  withInstance(instance: InferSelectModel<typeof sessionsInAccount>) {
-    return new SessionInstance(instance);
-  }
 }
-
-class SessionInstance extends Instance<InferSelectModel<typeof sessionsInAccount>> {}
 
 export default SessionsRepository;
