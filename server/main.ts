@@ -1,11 +1,9 @@
 import "@/server/instrument-web.ts";
 import "@/server/log.ts";
-import { sql } from "drizzle-orm";
-
 import { warmSystemRulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { db } from "@/server/database/index.ts";
-import { shutdownOtel } from "@/server/otel.ts";
+import { waitForDatabase } from "@/server/database/waitForDatabase.ts";
 import { application } from "@/server/routers/application.ts";
+import { onShutdown } from "@/server/shutdown.ts";
 import { startBroadcastListener, stopBroadcastListener, websocket } from "@/server/ws.ts";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -29,23 +27,7 @@ if (isProduction) {
   }
 }
 
-const warmUp = async (attempts = 4, delayMs = 500) => {
-  for (let i = 1; i <= attempts; i++) {
-    try {
-      await db.execute(sql`SELECT 1`);
-      console.log("[db] Connection pool warmed up");
-      return;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`[db] Warm-up attempt ${i}/${attempts} failed: ${msg}`);
-      if (i < attempts) await new Promise((r) => setTimeout(r, delayMs * i));
-    }
-  }
-  console.error("[db] Unreachable after all retries — exiting");
-  process.exit(1);
-};
-
-await warmUp();
+await waitForDatabase();
 await startBroadcastListener();
 
 // Warm the ruleset cache in the background so the server becomes healthy
@@ -70,19 +52,9 @@ const server = Bun.serve({
   development: process.env.NODE_ENV !== "production",
 });
 
-let shuttingDown = false;
-const shutdown = async () => {
-  if (shuttingDown) return;
-  shuttingDown = true;
-  console.log("[server] Shutting down...");
-  setTimeout(() => process.exit(0), 30_000);
+onShutdown("server", async () => {
   await stopBroadcastListener();
   await server.stop(true);
-  await shutdownOtel();
-  process.exit(0);
-};
-
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
+});
 
 console.log(`[server] Running at http://${hostname}:${port}`);
