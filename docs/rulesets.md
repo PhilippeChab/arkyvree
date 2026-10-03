@@ -435,7 +435,7 @@ server/
 │   │   └── levels/
 │   │       ├── CharacterLevelsService.ts  ← thin dispatcher; forwards to the ruleset impl
 │   │       └── dnd3.5/                    ← 3.5-only level-up flows
-│   │           ├── pickQueries.ts
+│   │           ├── classPicks.ts, featPicks.ts, powerPicks.ts, levelSelections.ts
 │   │           ├── slotQueries.ts
 │   │           ├── preview.ts
 │   │           ├── finalize.ts
@@ -542,7 +542,7 @@ Services that orchestrate 3.5-shaped flows (level-up, spell selection, wizard sc
 
 ```ts
 // Today
-import { getAvailableKlasses } from "./levels/dnd3.5/pickQueries.ts";
+import { getAvailableKlasses } from "./dnd3.5/classPicks.ts";
 // …
 class CharacterLevelsService {
   readonly getAvailableKlasses = getAvailableKlasses;
