@@ -78,7 +78,63 @@ function buildRawCacheKey(rulesetId: string, campaignId?: string): string {
   return campaignId ? `${rulesetId}:${campaignId}` : rulesetId;
 }
 
-// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
+type RawEntities = Pick<
+  RulesetRawData,
+  | "abilities"
+  | "saves"
+  | "skills"
+  | "feats"
+  | "powers"
+  | "aptitudes"
+  | "klasses"
+  | "races"
+  | "languages"
+  | "items"
+  | "mechanics"
+>;
+
+/**
+ * Rounds 3 and 4: the customizations and the klass-level sub-tables. Customizations include everything keyed on
+ * entities (feats, powers, …), ruleset-level properties, and klass-level rows (KLASS_LEVEL_BAB,
+ * KLASS_LEVEL_SKILL_POINTS, class-feature modifiers, etc.). Requirements come last: they need the modifier IDs for
+ * entityType='modifiers' lookups.
+ */
+async function fetchCustomizations(rulesetId: string, entities: RawEntities, klassLevelIds: string[]) {
+  const customizationEntityIds = [
+    ...entities.abilities.map((a) => a.id),
+    ...entities.saves.map((s) => s.id),
+    ...entities.skills.map((s) => s.id),
+    ...entities.feats.map((f) => f.id),
+    ...entities.powers.map((p) => p.id),
+    ...entities.aptitudes.map((a) => a.id),
+    ...entities.klasses.map((k) => k.id),
+    ...entities.races.map((r) => r.id),
+    ...entities.languages.map((l) => l.id),
+    ...entities.items.map((i) => i.id),
+    ...entities.mechanics.map((m) => m.id),
+    ...klassLevelIds,
+  ];
+  const propertyEntityIds = [...customizationEntityIds, rulesetId];
+  const [properties, modifiers, klassLevelFeats, klassLevelPowers, klassLevelSaves] = await Promise.all([
+    propertyEntityIds.length > 0
+      ? Properties.findMany(db, { entityIds: propertyEntityIds })
+      : Promise.resolve<Property[]>([]),
+    customizationEntityIds.length > 0
+      ? Modifiers.findMany(db, { sourceIds: customizationEntityIds })
+      : Promise.resolve<Modifier[]>([]),
+    klassLevelIds.length > 0 ? KlassLevelFeats.findMany(db, { klassLevelIds }) : Promise.resolve<KlassLevelFeat[]>([]),
+    klassLevelIds.length > 0
+      ? KlassLevelPowers.findMany(db, { klassLevelIds })
+      : Promise.resolve<KlassLevelPower[]>([]),
+    klassLevelIds.length > 0 ? KlassLevelSaves.findMany(db, { klassLevelIds }) : Promise.resolve<KlassLevelSave[]>([]),
+  ]);
+
+  const requirementEntityIds = [...customizationEntityIds, ...modifiers.map((m) => m.id)];
+  const requirements =
+    requirementEntityIds.length > 0 ? await Requirements.findMany(db, { entityIds: requirementEntityIds }) : [];
+  return { properties, modifiers, klassLevelFeats, klassLevelPowers, klassLevelSaves, requirements };
+}
+
 async function fetchRulesetRawData(
   rulesetId: string,
   campaignId?: string,
@@ -103,13 +159,11 @@ async function fetchRulesetRawData(
       everyPage((pagination) => Mechanics.findPage(db, filters, pagination)),
       campaignId ? Promise.resolve(null) : Rulesets.findOne(db, { id: rulesetId }),
     ]);
+  const entities = { abilities, saves, skills, feats, powers, aptitudes, klasses, races, languages, items, mechanics };
 
+  // Round 2: klass sub-tables + leveled aptitudes (need klassIds / aptitudeIds). Customizations wait until round 3 —
+  // they need klass-level IDs to pick up properties/modifiers/requirements attached to class-level rows.
   const klassIds = klasses.map((k) => k.id);
-
-  // Round 2: klass sub-tables + leveled aptitudes (need klassIds / aptitudeIds).
-  // Customizations wait until round 3 — they need klass-level IDs to pick up
-  // properties/modifiers/requirements attached to class-level rows (KLASS_LEVEL_BAB,
-  // KLASS_LEVEL_SKILL_POINTS, class-feature modifiers, etc.).
   const [klassLevels, klassSkills, leveledAptitudeIds] = await Promise.all([
     klassIds.length > 0 ? KlassLevels.findMany(db, { klassIds }) : Promise.resolve<KlassLevel[]>([]),
     klassIds.length > 0 ? KlassSkills.findMany(db, { klassIds }) : Promise.resolve<KlassSkill[]>([]),
@@ -117,68 +171,12 @@ async function fetchRulesetRawData(
       ? Aptitudes.findLeveledIds(db, { aptitudeIds: aptitudes.map((a) => a.id) })
       : Promise.resolve(new Set<string>()),
   ]);
-
-  const klassLevelIds = klassLevels.map((kl) => kl.id);
-
-  // Round 3: customizations + klass-level sub-tables. Customizations include
-  // everything keyed on entities (feats, powers, …), ruleset-level properties,
-  // and klass-level rows now that we have klassLevelIds.
-  const customizationEntityIds = [
-    ...abilities.map((a) => a.id),
-    ...saves.map((s) => s.id),
-    ...skills.map((s) => s.id),
-    ...feats.map((f) => f.id),
-    ...powers.map((p) => p.id),
-    ...aptitudes.map((a) => a.id),
-    ...klasses.map((k) => k.id),
-    ...races.map((r) => r.id),
-    ...languages.map((l) => l.id),
-    ...items.map((i) => i.id),
-    ...mechanics.map((m) => m.id),
-    ...klassLevelIds,
-  ];
-  const propertyEntityIds = [...customizationEntityIds, rulesetId];
-  const [properties, modifiers, klassLevelFeats, klassLevelPowers, klassLevelSaves] = await Promise.all([
-    propertyEntityIds.length > 0
-      ? Properties.findMany(db, { entityIds: propertyEntityIds })
-      : Promise.resolve<Property[]>([]),
-    customizationEntityIds.length > 0
-      ? Modifiers.findMany(db, { sourceIds: customizationEntityIds })
-      : Promise.resolve<Modifier[]>([]),
-    klassLevelIds.length > 0 ? KlassLevelFeats.findMany(db, { klassLevelIds }) : Promise.resolve<KlassLevelFeat[]>([]),
-    klassLevelIds.length > 0
-      ? KlassLevelPowers.findMany(db, { klassLevelIds })
-      : Promise.resolve<KlassLevelPower[]>([]),
-    klassLevelIds.length > 0 ? KlassLevelSaves.findMany(db, { klassLevelIds }) : Promise.resolve<KlassLevelSave[]>([]),
-  ]);
-
-  // Round 4: requirements (need modifier IDs for entityType='modifiers' lookups).
-  const requirementEntityIds = [...customizationEntityIds, ...modifiers.map((m) => m.id)];
-  const requirements =
-    requirementEntityIds.length > 0 ? await Requirements.findMany(db, { entityIds: requirementEntityIds }) : [];
-
-  const data: RulesetRawData = {
-    abilities,
-    saves,
-    skills,
-    feats,
-    powers,
-    aptitudes,
-    klasses,
-    races,
-    languages,
-    items,
-    mechanics,
-    klassLevels,
-    klassSkills,
-    klassLevelFeats,
-    klassLevelPowers,
-    klassLevelSaves,
-    leveledAptitudeIds,
-    properties,
-    modifiers,
-    requirements,
-  };
+  const customizations = await fetchCustomizations(
+    rulesetId,
+    entities,
+    klassLevels.map((kl) => kl.id),
+  );
+  const data: RulesetRawData = { ...entities, klassLevels, klassSkills, leveledAptitudeIds, ...customizations };
 
   // Pin system-seeded rulesets (bases + extensions) BEFORE writing so the pin flag
   // is in place for the entry's whole lifetime — no window where eviction pressure
