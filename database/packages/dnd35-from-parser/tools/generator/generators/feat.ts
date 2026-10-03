@@ -197,6 +197,7 @@ function openTemplate(
   lines.push(`export const ${constName}: FeatSeed[] = ${list}.map((${variable}) => ({`);
   lines.push(`  name: \`${escapeTemplate(familyName)}: \${${variable}}\`,`);
   lines.push(`  description: \`${description}\`,`);
+  lines.push(`  generated: true,`);
   lines.push(`  aptitudes: [${aptitudes.map(quote).join(", ")}],`);
 }
 

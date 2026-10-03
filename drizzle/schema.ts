@@ -364,6 +364,7 @@ export const featsInRules = rules.table("feats", {
 	description: text(),
 	stackable: boolean().default(false).notNull(),
 	selectable: boolean().default(true).notNull(),
+	generated: boolean().default(false).notNull(),
 }, (table) => [
 	index("feats_ruleset_id_campaign_id").using("btree", table.rulesetId.asc().nullsLast(), table.campaignId.asc().nullsLast()),
 	uniqueIndex("feats_with_campaign_unique_idx").using("btree", table.rulesetId.asc().nullsLast(), table.campaignId.asc().nullsLast(), table.name.asc().nullsLast()).where(sql`(campaign_id IS NOT NULL)`),

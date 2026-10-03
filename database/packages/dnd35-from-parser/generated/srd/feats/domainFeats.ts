@@ -5,6 +5,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Throwing Axe",
     description: "You gain proficiency with Throwing Axe and Weapon Focus with Throwing Axe as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusthrowingaxe.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -18,6 +19,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Light Hammer",
     description: "You gain proficiency with Light Hammer and Weapon Focus with Light Hammer as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocuslighthammer.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -31,6 +33,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Handaxe",
     description: "You gain proficiency with Handaxe and Weapon Focus with Handaxe as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocushandaxe.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -44,6 +47,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Kukri",
     description: "You gain proficiency with Kukri and Weapon Focus with Kukri as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocuskukri.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -57,6 +61,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Light Pick",
     description: "You gain proficiency with Light Pick and Weapon Focus with Light Pick as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocuslightpick.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -70,6 +75,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Sap",
     description: "You gain proficiency with Sap and Weapon Focus with Sap as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocussap.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -83,6 +89,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Short Sword",
     description: "You gain proficiency with Short Sword and Weapon Focus with Short Sword as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusshortsword.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -96,6 +103,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Battleaxe",
     description: "You gain proficiency with Battleaxe and Weapon Focus with Battleaxe as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusbattleaxe.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -109,6 +117,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Flail",
     description: "You gain proficiency with Flail and Weapon Focus with Flail as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusflail.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -122,6 +131,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Longsword",
     description: "You gain proficiency with Longsword and Weapon Focus with Longsword as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocuslongsword.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -135,6 +145,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Heavy Pick",
     description: "You gain proficiency with Heavy Pick and Weapon Focus with Heavy Pick as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusheavypick.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -148,6 +159,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Rapier",
     description: "You gain proficiency with Rapier and Weapon Focus with Rapier as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusrapier.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -161,6 +173,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Scimitar",
     description: "You gain proficiency with Scimitar and Weapon Focus with Scimitar as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusscimitar.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -174,6 +187,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Trident",
     description: "You gain proficiency with Trident and Weapon Focus with Trident as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocustrident.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -187,6 +201,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Warhammer",
     description: "You gain proficiency with Warhammer and Weapon Focus with Warhammer as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocuswarhammer.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -200,6 +215,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Falchion",
     description: "You gain proficiency with Falchion and Weapon Focus with Falchion as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusfalchion.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -213,6 +229,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Glaive",
     description: "You gain proficiency with Glaive and Weapon Focus with Glaive as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusglaive.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -226,6 +243,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Greataxe",
     description: "You gain proficiency with Greataxe and Weapon Focus with Greataxe as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusgreataxe.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -239,6 +257,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Greatclub",
     description: "You gain proficiency with Greatclub and Weapon Focus with Greatclub as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusgreatclub.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -252,6 +271,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Heavy Flail",
     description: "You gain proficiency with Heavy Flail and Weapon Focus with Heavy Flail as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusheavyflail.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -265,6 +285,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Greatsword",
     description: "You gain proficiency with Greatsword and Weapon Focus with Greatsword as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusgreatsword.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -278,6 +299,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Guisarme",
     description: "You gain proficiency with Guisarme and Weapon Focus with Guisarme as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusguisarme.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -291,6 +313,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Halberd",
     description: "You gain proficiency with Halberd and Weapon Focus with Halberd as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocushalberd.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -304,6 +327,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Lance",
     description: "You gain proficiency with Lance and Weapon Focus with Lance as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocuslance.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -317,6 +341,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Ranseur",
     description: "You gain proficiency with Ranseur and Weapon Focus with Ranseur as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusranseur.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -330,6 +355,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Scythe",
     description: "You gain proficiency with Scythe and Weapon Focus with Scythe as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusscythe.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -343,6 +369,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Shortbow",
     description: "You gain proficiency with Shortbow and Weapon Focus with Shortbow as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocusshortbow.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -356,6 +383,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Composite Shortbow",
     description: "You gain proficiency with Composite Shortbow and Weapon Focus with Composite Shortbow as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocuscompositeshortbow.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -369,6 +397,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Longbow",
     description: "You gain proficiency with Longbow and Weapon Focus with Longbow as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocuslongbow.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -382,6 +411,7 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
   {
     name: "War Domain Weapon: Composite Longbow",
     description: "You gain proficiency with Composite Longbow and Weapon Focus with Composite Longbow as granted by the War domain.",
+    generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [
       { target: "feats.weaponfocuscompositelongbow.possessed", operator: "set", value: "true", valueType: "boolean" },

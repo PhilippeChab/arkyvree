@@ -57,7 +57,14 @@ export function FeatEditor({
       edit={
         canEdit
           ? {
-              fields: <FeatFormFields form={form} rulesetId={rulesetId} knownAptitudes={featAptitudes(feat)} />,
+              fields: (
+                <FeatFormFields
+                  form={form}
+                  rulesetId={rulesetId}
+                  knownAptitudes={featAptitudes(feat)}
+                  generated={feat.generated}
+                />
+              ),
               onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
               canSave: form.formState.isDirty && !locked,
               isSaving: saveMutation.isPending,

@@ -437,6 +437,7 @@ function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
       results.push({
         name: `${pool.namePrefix}: ${item}`,
         description,
+        generated: true,
         aptitudes: [pool.aptitude],
         modifiers,
         properties,

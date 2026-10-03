@@ -22,8 +22,13 @@ type RegisteredFieldProps = UseFormRegisterReturn & {
 };
 
 /** An entity's name. Register it with `nameRules`. */
-export function NameField({ error, label = "Name", ...field }: RegisteredFieldProps & { label?: string }) {
-  return <TextField {...field} label={label} fullWidth error={!!error} helperText={error?.message} />;
+export function NameField({
+  error,
+  label = "Name",
+  helperText,
+  ...field
+}: RegisteredFieldProps & { label?: string; helperText?: string }) {
+  return <TextField {...field} label={label} fullWidth error={!!error} helperText={error?.message ?? helperText} />;
 }
 
 interface DescriptionFieldProps extends RegisteredFieldProps {

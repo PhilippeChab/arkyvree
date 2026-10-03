@@ -827,6 +827,7 @@ export const TACTICAL_FEATS: FeatSeed[] = [
 export const greaterResiliency: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Greater Resiliency: ${w}`,
   description: `Your existing damage reduction increases by 1 point. If your DR normally improves with level, it continues increasing at its previous rate on top of this bonus. You may select this feat only once. It does not alter what types of damage overcome your DR. If you have multiple forms of DR, choose which one to enhance when you take this feat.`,
+  generated: true,
   aptitudes: ["General"],
   properties: [{ type: "FEAT_FAMILY", value: "Greater Resiliency" }],
 }));
@@ -834,6 +835,7 @@ export const greaterResiliency: FeatSeed[] = ALL_WEAPONS.map((w) => ({
 export const powerCritical: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Power Critical: ${w}`,
   description: `With your ${w}, you gain a +4 bonus on rolls to confirm critical threats.`,
+  generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [
     gte("combat.bab", 4),

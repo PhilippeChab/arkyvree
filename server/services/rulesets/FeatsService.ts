@@ -5,7 +5,6 @@ import { invalidateRuleset } from "@/server/cache/rulesetCache.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activityNotifications.ts";
 import BaseService from "@/server/services/BaseService.ts";
 import {
@@ -182,10 +181,8 @@ export const FeatsMethods = {
           throw new NotFoundError("Feat not found in this ruleset");
         }
 
-        if (
-          body.name !== feat.name &&
-          RulesetFactory.fromBaseRules(ruleset.baseRules).hooks.feats.isGeneratedName(feat.name)
-        ) {
+        // A generated feat's name names its option (`Weapon Focus: Longsword`), which checks and generators find it by
+        if (body.name !== feat.name && feat.generated) {
           throw new BadRequestError("Generated feats cannot be renamed");
         }
 

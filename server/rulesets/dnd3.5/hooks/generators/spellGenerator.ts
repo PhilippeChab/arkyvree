@@ -97,6 +97,7 @@ export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceC
   const [spellFocus] = await Feats.create(tx, {
     name: `Spell Focus: ${schoolName}`,
     description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${schoolName}.`,
+    generated: true,
     rulesetId,
   });
 
@@ -121,6 +122,7 @@ export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceC
   const [greaterSpellFocus] = await Feats.create(tx, {
     name: `Greater Spell Focus: ${schoolName}`,
     description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${schoolName}. This bonus stacks with Spell Focus.`,
+    generated: true,
     rulesetId,
   });
 

@@ -899,6 +899,7 @@ export const SPECIAL_FEATS: FeatSeed[] = [
 export const exoticWeaponProficiency: FeatSeed[] = EXOTIC_WEAPONS.map((w) => ({
   name: `Exotic Weapon Proficiency: ${w}`,
   description: `You make attack rolls with the chosen weapon without penalty.`,
+  generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [
     gte("combat.bab", 1),
@@ -909,6 +910,7 @@ export const exoticWeaponProficiency: FeatSeed[] = EXOTIC_WEAPONS.map((w) => ({
 export const greaterSpellFocus: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   name: `Greater Spell Focus: ${s}`,
   description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${s}. This bonus stacks with the bonus granted by Spell Focus.`,
+  generated: true,
   aptitudes: ["General"],
   requirements: [
     eq(feat(`Spell Focus: ${s}`)),
@@ -922,6 +924,7 @@ export const greaterSpellFocus: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
 export const greaterWeaponFocus: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Greater Weapon Focus: ${w}`,
   description: `You gain an additional +1 bonus to attack rolls with the chosen weapon. This bonus stacks with other attack roll bonuses, including the bonus from Weapon Focus.`,
+  generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [
     eq(feat(`Weapon Focus: ${w}`)),
@@ -936,6 +939,7 @@ export const greaterWeaponFocus: FeatSeed[] = ALL_WEAPONS.map((w) => ({
 export const greaterWeaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Greater Weapon Specialization: ${w}`,
   description: `You gain an additional +2 bonus to damage rolls with the chosen weapon. This bonus stacks with other damage roll bonuses, including the bonus from Weapon Specialization.`,
+  generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [
     eq(feat(`Greater Weapon Focus: ${w}`)),
@@ -952,6 +956,7 @@ export const greaterWeaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
 export const improvedCritical: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Improved Critical: ${w}`,
   description: `The threat range of your chosen weapon is doubled. For instance, a longsword normally threatens a critical on 19-20 (two numbers). With this feat applied to longsword, the threat range becomes 17-20 (four numbers).`,
+  generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [
     ...proficiencyRequirements(w),
@@ -966,6 +971,7 @@ export const improvedCritical: FeatSeed[] = ALL_WEAPONS.map((w) => ({
 export const rapidReload: FeatSeed[] = CROSSBOW_WEAPONS.map((w) => ({
   name: `Rapid Reload: ${w}`,
   description: `Reloading your chosen crossbow type becomes a free action (for hand or light crossbows) or a move action (for heavy crossbows). Reloading still provokes an attack of opportunity. If you have this feat for a hand or light crossbow, you can fire it as many times during a full attack as you could with a bow.`,
+  generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   properties: [{ type: "FEAT_FAMILY", value: "Rapid Reload" }],
 }));
@@ -973,6 +979,7 @@ export const rapidReload: FeatSeed[] = CROSSBOW_WEAPONS.map((w) => ({
 export const skillFocus: FeatSeed[] = SKILL_NAMES.map((s) => ({
   name: `Skill Focus: ${s}`,
   description: `You get a +3 bonus on all ${s} checks.`,
+  generated: true,
   aptitudes: ["General"],
   modifiers: [
     { target: `skills.${stripSeparators(s)}.misc`, operator: "add", value: "3", valueType: "number" },
@@ -983,6 +990,7 @@ export const skillFocus: FeatSeed[] = SKILL_NAMES.map((s) => ({
 export const spellFocus: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   name: `Spell Focus: ${s}`,
   description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${s}.`,
+  generated: true,
   aptitudes: ["General"],
   modifiers: [
     { target: `powers.groups.${stripSeparators(s)}.*.dc.misc`, operator: "add", value: "1", valueType: "number" },
@@ -993,6 +1001,7 @@ export const spellFocus: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
 export const weaponFocus: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Weapon Focus: ${w}`,
   description: `You gain a +1 bonus to all attack rolls made with the chosen weapon.`,
+  generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [
     ...proficiencyRequirements(w),
@@ -1007,6 +1016,7 @@ export const weaponFocus: FeatSeed[] = ALL_WEAPONS.map((w) => ({
 export const weaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Weapon Specialization: ${w}`,
   description: `You gain a +2 bonus to all damage rolls made with the chosen weapon.`,
+  generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [
     eq(feat(`Weapon Focus: ${w}`)),

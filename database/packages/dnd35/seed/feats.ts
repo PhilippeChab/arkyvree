@@ -29,6 +29,7 @@ export async function seedFeats(db: Db, ctx: SeedContext, feats: FeatSeed[]) {
           description: f.description,
           stackable: f.stackable ?? false,
           selectable: f.selectable ?? true,
+          generated: f.generated ?? false,
         })),
       )
       .returning({ id: featsInRules.id, name: featsInRules.name }),
