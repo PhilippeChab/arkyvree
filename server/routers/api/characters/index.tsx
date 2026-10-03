@@ -48,7 +48,7 @@ const characters = new Hono()
 
       // Use the service to get character list with session for activity logging
       return c.json(
-        await CharactersService.getMyCharacters(
+        await CharactersService.getCharacters(
           c.var.requestSession,
           {
             visibility,

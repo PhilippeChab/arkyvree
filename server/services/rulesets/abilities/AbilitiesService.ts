@@ -3,7 +3,7 @@ import { Abilities } from "@/server/repositories/index.ts";
 import { findScopedEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 
 class AbilitiesService {
-  async getRulesetAbilities(
+  async getAbilities(
     rulesetId: string,
     where: {
       childOnly?: boolean;
@@ -21,7 +21,7 @@ class AbilitiesService {
     });
   }
 
-  async getRulesetAbility(rulesetId: string, abilityId: string) {
+  async getAbility(rulesetId: string, abilityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const ability = findScopedEntity(rulesetData.abilitiesById, abilityId, rulesetId, sourceChain, "Ability");

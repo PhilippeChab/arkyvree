@@ -30,7 +30,7 @@ class PropertiesService {
     throw new NotFoundError("Property not found for this entity");
   }
 
-  async getEntityProperties(rulesetId: string, entityType: string, entityId: string) {
+  async getProperties(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);
       await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
@@ -39,7 +39,7 @@ class PropertiesService {
     });
   }
 
-  async createEntityProperty(
+  async createProperty(
     session: Session,
     rulesetId: string,
     entityType: string,
@@ -83,7 +83,7 @@ class PropertiesService {
     return result;
   }
 
-  async updateEntityProperty(
+  async updateProperty(
     session: Session,
     rulesetId: string,
     entityType: string,
@@ -171,13 +171,7 @@ class PropertiesService {
     return result;
   }
 
-  async deleteEntityProperty(
-    session: Session,
-    rulesetId: string,
-    entityType: string,
-    entityId: string,
-    propertyId: string,
-  ) {
+  async deleteProperty(session: Session, rulesetId: string, entityType: string, entityId: string, propertyId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();

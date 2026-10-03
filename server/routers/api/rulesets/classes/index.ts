@@ -35,7 +35,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, kind, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await ClassesService.getRulesetKlasses(id, { search, childOnly, kind, orderBy, orderDir }, { limit, page }),
+        await ClassesService.getClasses(id, { search, childOnly, kind, orderBy, orderDir }, { limit, page }),
         200,
       );
     },
@@ -45,7 +45,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
     async (c) => {
       const { id, classId } = c.req.valid("param");
-      return c.json(await ClassesService.getRulesetKlass(id, classId), 200);
+      return c.json(await ClassesService.getClass(id, classId), 200);
     },
   )
   .post(
@@ -65,7 +65,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await ClassesService.createRulesetKlass(c.var.requestSession, id, body), 201);
+      return c.json(await ClassesService.createClass(c.var.requestSession, id, body), 201);
     },
   )
   .put(
@@ -86,7 +86,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classId } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await ClassesService.updateRulesetKlass(c.var.requestSession, id, classId, body), 200);
+      return c.json(await ClassesService.updateClass(c.var.requestSession, id, classId, body), 200);
     },
   )
   .delete(
@@ -94,6 +94,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
     async (c) => {
       const { id, classId } = c.req.valid("param");
-      return c.json(await ClassesService.deleteRulesetKlass(c.var.requestSession, id, classId), 200);
+      return c.json(await ClassesService.deleteClass(c.var.requestSession, id, classId), 200);
     },
   );

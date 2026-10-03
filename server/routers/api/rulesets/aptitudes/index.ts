@@ -26,11 +26,7 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { limit, page, search, childOnly, scope, orderBy, orderDir } = c.req.valid("query");
       return c.json(
-        await AptitudesService.getRulesetAptitudes(
-          id,
-          { search, childOnly, scope, orderBy, orderDir },
-          { limit, page },
-        ),
+        await AptitudesService.getAptitudes(id, { search, childOnly, scope, orderBy, orderDir }, { limit, page }),
         200,
       );
     },
@@ -40,7 +36,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), aptitudeId: z.string().uuid() })),
     async (c) => {
       const { id, aptitudeId } = c.req.valid("param");
-      return c.json(await AptitudesService.getRulesetAptitude(id, aptitudeId), 200);
+      return c.json(await AptitudesService.getAptitude(id, aptitudeId), 200);
     },
   )
   .post(
@@ -56,7 +52,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await AptitudesService.createRulesetAptitude(c.var.requestSession, id, body), 200);
+      return c.json(await AptitudesService.createAptitude(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -73,7 +69,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, aptitudeId } = c.req.valid("param");
       const body = c.req.valid("json");
-      return c.json(await AptitudesService.updateRulesetAptitude(c.var.requestSession, id, aptitudeId, body), 200);
+      return c.json(await AptitudesService.updateAptitude(c.var.requestSession, id, aptitudeId, body), 200);
     },
   )
   .delete(
@@ -81,6 +77,6 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), aptitudeId: z.string().uuid() })),
     async (c) => {
       const { id, aptitudeId } = c.req.valid("param");
-      return c.json(await AptitudesService.deleteRulesetAptitude(c.var.requestSession, id, aptitudeId), 200);
+      return c.json(await AptitudesService.deleteAptitude(c.var.requestSession, id, aptitudeId), 200);
     },
   );

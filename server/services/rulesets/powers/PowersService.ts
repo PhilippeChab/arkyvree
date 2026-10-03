@@ -41,7 +41,7 @@ interface PowerBody {
 }
 
 class PowersService {
-  async getRulesetPower(rulesetId: string, powerId: string) {
+  async getPower(rulesetId: string, powerId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const power = findScopedEntity(rulesetData.powersById, powerId, rulesetId, sourceChain, "Power");
@@ -54,7 +54,7 @@ class PowersService {
     });
   }
 
-  async getRulesetPowers(
+  async getPowers(
     rulesetId: string,
     where: Parameters<typeof findRulesetPowers>[3],
     pagination: { limit: number; page: number },
@@ -64,7 +64,7 @@ class PowersService {
     );
   }
 
-  async createRulesetPower(session: Session, rulesetId: string, body: PowerBody) {
+  async createPower(session: Session, rulesetId: string, body: PowerBody) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -137,7 +137,7 @@ class PowersService {
     return result;
   }
 
-  async updateRulesetPower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
+  async updatePower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -246,7 +246,7 @@ class PowersService {
     return result;
   }
 
-  async deleteRulesetPower(session: Session, rulesetId: string, powerId: string) {
+  async deletePower(session: Session, rulesetId: string, powerId: string) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;

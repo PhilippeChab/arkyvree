@@ -297,7 +297,7 @@ describe("CharactersService with bonded creatures", () => {
         viewer = session;
       }
       return Object.keys(
-        (await CampaignCharactersService.getCampaignCharacter(viewer, campaign.id, masterId)).bondedByKind ?? {},
+        (await CampaignCharactersService.getCharacter(viewer, campaign.id, masterId)).bondedByKind ?? {},
       );
     };
     expect(await bondedIn("Public")).toEqual(["familiar"]);

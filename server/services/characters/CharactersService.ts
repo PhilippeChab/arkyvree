@@ -182,7 +182,7 @@ class CharactersService extends include(Object, Archives) {
     };
   }
 
-  async getMyCharacters(
+  async getCharacters(
     session: Session,
     where: {
       visibility?: Visibility;

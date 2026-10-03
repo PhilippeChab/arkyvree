@@ -40,7 +40,7 @@ import {
 /** A new user's empty ruleset with a class and an aptitude. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const klass = await ClassesService.createRulesetKlass(session, ruleset.id, { name: "Test Class" });
+  const klass = await ClassesService.createClass(session, ruleset.id, { name: "Test Class" });
   const [aptitude] = await Aptitudes.create(db, { name: "Fighter Bonus Feat", rulesetId: ruleset.id });
   return { user, session, ruleset, klass, aptitude, poolTarget: `aptitudes.${stripSeparators(aptitude.name)}.allowed` };
 }
@@ -71,7 +71,7 @@ describe("ClassLevelsService", () => {
   describe("feats and saves", () => {
     test("lists a class's levels in order, with the feats they grant through an aptitude and their base saves", async () => {
       const { session, ruleset, klass, aptitude } = await setup();
-      const feat = await FeatsService.createRulesetFeat(session, ruleset.id, {
+      const feat = await FeatsService.createFeat(session, ruleset.id, {
         name: "Cleave",
         aptitudeIds: [aptitude.id],
       });
@@ -140,7 +140,7 @@ describe("ClassLevelsService", () => {
       requirements: [{ target: "classes.testclass.level", value: "1" }],
     };
     expect(await ClassLevelsService.getClassLevel(ruleset.id, klass.id, level.id)).toMatchObject(detail);
-    expect(await ClassLevelsService.getClassLevelById(ruleset.id, level.id)).toMatchObject({
+    expect(await ClassLevelsService.getClassLevelWithClassName(ruleset.id, level.id)).toMatchObject({
       ...detail,
       name: "Test Class",
     });
@@ -265,7 +265,10 @@ describe("ClassLevelsService", () => {
       ],
       ["read for a missing class", () => ClassLevelsService.getClassLevel(ruleset.id, NIL_UUID, level.id)],
       ["read a missing level", () => ClassLevelsService.getClassLevel(ruleset.id, klass.id, NIL_UUID)],
-      ["read by id through another ruleset", () => ClassLevelsService.getClassLevelById(other.ruleset.id, level.id)],
+      [
+        "read by id through another ruleset",
+        () => ClassLevelsService.getClassLevelWithClassName(other.ruleset.id, level.id),
+      ],
       ["feat pools of a missing ruleset", () => ClassLevelsService.getClassLevelFeatPools(NIL_UUID, klass.id)],
       ["feat pools of a missing class", () => ClassLevelsService.getClassLevelFeatPools(ruleset.id, NIL_UUID)],
       ["spells of a missing ruleset", () => ClassLevelsService.getClassLevelSpells(NIL_UUID, klass.id)],
@@ -341,7 +344,7 @@ describe("ClassLevelsService", () => {
       expect(await ClassLevelsService.getClassLevel(fork.id, klass.id, inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
       });
-      expect(await ClassLevelsService.getClassLevelById(fork.id, inheritedLevel.id)).toMatchObject({
+      expect(await ClassLevelsService.getClassLevelWithClassName(fork.id, inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
         name: klass.name,
       });

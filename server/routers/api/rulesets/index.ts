@@ -147,7 +147,7 @@ const authenticatedRulesets = new Hono()
     async (c) => {
       const query = c.req.valid("query");
       return c.json(
-        await RulesetsService.getAllRulesets(
+        await RulesetsService.getRulesets(
           c.var.requestSession,
           {
             scope: query.scope,
@@ -163,7 +163,7 @@ const authenticatedRulesets = new Hono()
   )
   .get("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    return c.json(await RulesetsService.getRulesetById(c.var.requestSession, id), 200);
+    return c.json(await RulesetsService.getRuleset(c.var.requestSession, id), 200);
   });
 
 export default authenticatedRulesets;

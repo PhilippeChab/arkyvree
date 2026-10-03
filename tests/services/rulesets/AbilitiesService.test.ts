@@ -6,11 +6,11 @@ import { AbilitiesService } from "@/server/services/rulesets/abilities/index.ts"
 import { createTestUserAndRuleset, insertRows, NIL_UUID } from "@/tests/helpers.ts";
 
 describe("AbilitiesService", () => {
-  describe("getRulesetAbilities", () => {
+  describe("getAbilities", () => {
     test("should return empty paginated result when no abilities exist", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      const result = await AbilitiesService.getRulesetAbilities(ruleset.id, {}, { limit: 10, page: 1 });
+      const result = await AbilitiesService.getAbilities(ruleset.id, {}, { limit: 10, page: 1 });
 
       expect(result.items).toEqual([]);
     });
@@ -24,7 +24,7 @@ describe("AbilitiesService", () => {
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
       ]);
 
-      const result = await AbilitiesService.getRulesetAbilities(ruleset.id, {}, { limit: 10, page: 1 });
+      const result = await AbilitiesService.getAbilities(ruleset.id, {}, { limit: 10, page: 1 });
 
       expect(result.items.length).toBe(3);
     });
@@ -37,11 +37,7 @@ describe("AbilitiesService", () => {
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
       ]);
 
-      const result = await AbilitiesService.getRulesetAbilities(
-        ruleset.id,
-        { search: "Strength" },
-        { limit: 10, page: 1 },
-      );
+      const result = await AbilitiesService.getAbilities(ruleset.id, { search: "Strength" }, { limit: 10, page: 1 });
 
       expect(result.items.length).toBe(1);
       expect(result.items[0].name).toBe("Strength");
@@ -56,16 +52,14 @@ describe("AbilitiesService", () => {
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
       ]);
 
-      const result = await AbilitiesService.getRulesetAbilities(ruleset.id, {}, { limit: 2, page: 1 });
+      const result = await AbilitiesService.getAbilities(ruleset.id, {}, { limit: 2, page: 1 });
 
       expect(result.items.length).toBe(2);
       expect(result.nextPage).toBe(2);
     });
 
     test("should throw NotFoundError for non-existent ruleset", async () => {
-      await expect(AbilitiesService.getRulesetAbilities(NIL_UUID, {}, { limit: 10, page: 1 })).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(AbilitiesService.getAbilities(NIL_UUID, {}, { limit: 10, page: 1 })).rejects.toThrow(NotFoundError);
     });
   });
 });

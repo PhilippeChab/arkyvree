@@ -41,9 +41,8 @@ describe("A fork's own description of an inherited", () => {
       const forkCtx = { ...ctx, rulesetId: fork.id };
       const description = `Overridden in the fork ${fork.id}`;
       const name = kind === "feat" ? "Toughness" : "Magic Missile";
-      if (kind === "feat")
-        await FeatsService.updateRulesetFeat(session, fork.id, ctx.featMap[name], { name, description });
-      else await PowersService.updateRulesetPower(session, fork.id, ctx.powerMap[name], { name, description });
+      if (kind === "feat") await FeatsService.updateFeat(session, fork.id, ctx.featMap[name], { name, description });
+      else await PowersService.updatePower(session, fork.id, ctx.powerMap[name], { name, description });
 
       const characterId = await createSeedCharacter(ctx, build, { rulesetId: fork.id });
       const levelIds = await addClassLevels(db, forkCtx, characterId, klass, [1], [hp]);

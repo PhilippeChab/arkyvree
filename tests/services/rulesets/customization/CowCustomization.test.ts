@@ -126,30 +126,30 @@ const dexterityAtLeast = {
 const KINDS: Record<string, Kind> = {
   modifiers: {
     rowsOf: (sourceType, sourceId) => Modifiers.findMany(db, { sourceIds: [sourceId], sourceType }),
-    list: ModifiersService.getEntityModifiers.bind(ModifiersService),
+    list: ModifiersService.getModifiers.bind(ModifiersService),
     create: (s, rulesetId, type, ownerId) =>
-      ModifiersService.createEntityModifier(s, rulesetId, type, ownerId, dexterityBonus),
+      ModifiersService.createModifier(s, rulesetId, type, ownerId, dexterityBonus),
     update: (s, rulesetId, type, ownerId, id) =>
-      ModifiersService.updateEntityModifier(s, rulesetId, type, ownerId, id, dexterityBonus),
-    remove: ModifiersService.deleteEntityModifier.bind(ModifiersService),
+      ModifiersService.updateModifier(s, rulesetId, type, ownerId, id, dexterityBonus),
+    remove: ModifiersService.deleteModifier.bind(ModifiersService),
   },
   properties: {
     rowsOf: (entityType, entityId) => Properties.findMany(db, { entityIds: [entityId], entityType }),
-    list: PropertiesService.getEntityProperties.bind(PropertiesService),
+    list: PropertiesService.getProperties.bind(PropertiesService),
     create: (s, rulesetId, type, ownerId) =>
-      PropertiesService.createEntityProperty(s, rulesetId, type, ownerId, { type: "tag", value: "fork" }),
+      PropertiesService.createProperty(s, rulesetId, type, ownerId, { type: "tag", value: "fork" }),
     update: (s, rulesetId, type, ownerId, id) =>
-      PropertiesService.updateEntityProperty(s, rulesetId, type, ownerId, id, { type: "tag", value: "changed" }),
-    remove: PropertiesService.deleteEntityProperty.bind(PropertiesService),
+      PropertiesService.updateProperty(s, rulesetId, type, ownerId, id, { type: "tag", value: "changed" }),
+    remove: PropertiesService.deleteProperty.bind(PropertiesService),
   },
   requirements: {
     rowsOf: (entityType, entityId) => Requirements.findMany(db, { entityIds: [entityId], entityType }),
-    list: RequirementsService.getEntityRequirements.bind(RequirementsService),
+    list: RequirementsService.getRequirements.bind(RequirementsService),
     create: (s, rulesetId, type, ownerId) =>
-      RequirementsService.createEntityRequirement(s, rulesetId, type, ownerId, dexterityAtLeast),
+      RequirementsService.createRequirement(s, rulesetId, type, ownerId, dexterityAtLeast),
     update: (s, rulesetId, type, ownerId, id) =>
-      RequirementsService.updateEntityRequirement(s, rulesetId, type, ownerId, id, { ...dexterityAtLeast, level: "1" }),
-    remove: RequirementsService.deleteEntityRequirement.bind(RequirementsService),
+      RequirementsService.updateRequirement(s, rulesetId, type, ownerId, id, { ...dexterityAtLeast, level: "1" }),
+    remove: RequirementsService.deleteRequirement.bind(RequirementsService),
   },
 };
 
@@ -214,7 +214,7 @@ describe.each(["modifiers", "properties", "requirements"])("the %s of a feat the
     const { session, fork, feat } = await setup();
     const parentRows = await kind.rowsOf("feats", feat.id);
     // The URL keeps the source's id after an edit copied the feat.
-    await FeatsService.updateRulesetFeat(session, fork.id, feat.id, { name: feat.name, description: "Copied" });
+    await FeatsService.updateFeat(session, fork.id, feat.id, { name: feat.name, description: "Copied" });
     const copyId = (await EntitySnapshots.findOne(db, { sourceEntityId: feat.id, rulesetId: fork.id }))!.forkedEntityId;
     const [copied] = await kind.rowsOf("feats", copyId);
 
@@ -242,7 +242,7 @@ describe("customizing an inherited feat", () => {
       (await RulesetChangesService.getChanges(session, fork.id)).filter((c) => c.entityType === "feats");
     expect(await featChanges()).toEqual([]);
 
-    await ModifiersService.updateEntityModifier(session, fork.id, "feats", feat.id, owners.modifiers, dexterityBonus);
+    await ModifiersService.updateModifier(session, fork.id, "feats", feat.id, owners.modifiers, dexterityBonus);
     expect(await featChanges()).toMatchObject([{ status: "modified", sourceEntityId: feat.id }]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "feats", feat.id);
@@ -258,10 +258,10 @@ describe("customizing an inherited feat", () => {
       ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
     );
     const [feat] = await Feats.create(db, { name: "Owned Feat", rulesetId: ruleset.id });
-    const modifier = await ModifiersService.createEntityModifier(session, ruleset.id, "feats", feat.id, dexterityBonus);
+    const modifier = await ModifiersService.createModifier(session, ruleset.id, "feats", feat.id, dexterityBonus);
 
     expect(
-      await ModifiersService.updateEntityModifier(session, ruleset.id, "feats", feat.id, modifier.id, {
+      await ModifiersService.updateModifier(session, ruleset.id, "feats", feat.id, modifier.id, {
         ...dexterityBonus,
         value: "3",
       }),

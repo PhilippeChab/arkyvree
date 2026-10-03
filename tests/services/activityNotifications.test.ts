@@ -41,9 +41,9 @@ describe("activity notifications", () => {
         expect(await inbox(invitee)).toEqual([note("createCampaignInvite", gm)]);
       }
       const [accepted] = await CampaignInvitesService.getUserInvites(accepting.user.id);
-      await CampaignInvitesService.acceptCampaignInvite(accepting.session, accepted.id);
+      await CampaignInvitesService.acceptInvite(accepting.session, accepted.id);
       const [rejected] = await CampaignInvitesService.getUserInvites(rejecting.user.id);
-      await CampaignInvitesService.rejectCampaignInvite(rejecting.session, rejected.id);
+      await CampaignInvitesService.rejectInvite(rejecting.session, rejected.id);
 
       expect(await inbox(gm)).toEqual([
         note("acceptCampaignInvite", accepting),
@@ -68,8 +68,8 @@ describe("activity notifications", () => {
         create: async (owner: User) => (await createTestRuleset(owner.user.id)).id,
         invite: (owner: User, rulesetId: string, invitee: User) =>
           ContributorsService.inviteContributor(owner.session, rulesetId, invitee.user.emailAddress, "Editor"),
-        accept: ContributorsService.acceptContributorInvite.bind(ContributorsService),
-        reject: ContributorsService.rejectContributorInvite.bind(ContributorsService),
+        accept: ContributorsService.acceptInvite.bind(ContributorsService),
+        reject: ContributorsService.rejectInvite.bind(ContributorsService),
         revoke: ContributorsService.revokeContributor.bind(ContributorsService),
         leave: ContributorsService.leaveRuleset.bind(ContributorsService),
         archive: (id: string) => Rulesets.archive(db, { id }),
@@ -84,8 +84,8 @@ describe("activity notifications", () => {
         create: async (owner: User) => (await createTestCharacter(owner.user.id)).id,
         invite: (owner: User, characterId: string, invitee: User) =>
           CharacterContributorsService.inviteContributor(owner.session, characterId, invitee.user.emailAddress),
-        accept: CharacterContributorsService.acceptContributorInvite.bind(CharacterContributorsService),
-        reject: CharacterContributorsService.rejectContributorInvite.bind(CharacterContributorsService),
+        accept: CharacterContributorsService.acceptInvite.bind(CharacterContributorsService),
+        reject: CharacterContributorsService.rejectInvite.bind(CharacterContributorsService),
         revoke: CharacterContributorsService.revokeContributor.bind(CharacterContributorsService),
         leave: CharacterContributorsService.leaveCharacter.bind(CharacterContributorsService),
         archive: (id: string) => Characters.archive(db, { id }),
@@ -148,16 +148,16 @@ describe("activity notifications", () => {
     const ruleset = await createTestRuleset(owner.user.id);
     for (const contributor of [author, other]) await addRulesetContributor(ruleset.id, contributor.user, owner.user.id);
     const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
-    const feat = await FeatsService.createRulesetFeat(author.session, ruleset.id, {
+    const feat = await FeatsService.createFeat(author.session, ruleset.id, {
       name: "Notified Feat",
       description: "",
       aptitudeIds: [aptitude.id],
     });
-    await PropertiesService.createEntityProperty(author.session, ruleset.id, "feats", feat.id, {
+    await PropertiesService.createProperty(author.session, ruleset.id, "feats", feat.id, {
       type: "NOTE",
       value: "A note",
     });
-    await FeatsService.deleteRulesetFeat(author.session, ruleset.id, feat.id);
+    await FeatsService.deleteFeat(author.session, ruleset.id, feat.id);
 
     const changes = [note("createFeat", author), note("createProperty", author), note("deleteFeat", author)];
     expect(await inbox(owner)).toEqual(changes);
@@ -169,7 +169,7 @@ describe("activity notifications", () => {
     const [owner] = await users(1);
     const ruleset = await createTestRuleset(owner.user.id);
     const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
-    await FeatsService.createRulesetFeat(owner.session, ruleset.id, {
+    await FeatsService.createFeat(owner.session, ruleset.id, {
       name: "Unnoticed Feat",
       description: "",
       aptitudeIds: [aptitude.id],

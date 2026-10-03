@@ -10,23 +10,21 @@ async function setup() {
   const { user, session } = await createTestUser();
   const ruleset = await createSeededTestRuleset(user.id);
   const template = async (name: string) => {
-    const found = (await ItemsService.getRulesetTemplates(ruleset.id)).find((item) => item.name === name);
+    const found = (await ItemsService.getTemplates(ruleset.id)).find((item) => item.name === name);
     if (!found) throw new Error(`Seed template ${name} not found`);
     return found;
   };
   /** A regular item made from a template. */
   const instance = async (name: string) => {
     const { id, type } = await template(name);
-    return ItemsService.createRulesetItem(session, ruleset.id, { name: `My ${name}`, type, sourceItemId: id });
+    return ItemsService.createItem(session, ruleset.id, { name: `My ${name}`, type, sourceItemId: id });
   };
   return { session, ruleset, template, instance };
 }
 
 /** An item's properties as read through the service, by type. */
 async function propertiesOf(rulesetId: string, itemId: string) {
-  return Object.fromEntries(
-    (await ItemsService.getRulesetItem(rulesetId, itemId)).properties.map((p) => [p.type, p.value]),
-  );
+  return Object.fromEntries((await ItemsService.getItem(rulesetId, itemId)).properties.map((p) => [p.type, p.value]));
 }
 
 describe("Item templates", () => {
@@ -78,7 +76,7 @@ describe("Item templates", () => {
       ["Tower Shield", ["feats.towershieldproficiency.possessed"]],
     ])("%s requirements", async (name, expected) => {
       const { ruleset, instance } = await setup();
-      const { requirements } = await ItemsService.getRulesetItem(ruleset.id, (await instance(name)).id);
+      const { requirements } = await ItemsService.getItem(ruleset.id, (await instance(name)).id);
       expect(requirements.map((r) => r.chainingOperator ?? r.target)).toEqual(expected);
     });
 
@@ -107,20 +105,20 @@ describe("Item templates", () => {
   test("list their instances with the template's name", async () => {
     const { ruleset, instance } = await setup();
     const sword = await instance("Longsword");
-    const { items } = await ItemsService.getRulesetItems(ruleset.id, { search: sword.name }, { limit: 10, page: 1 });
+    const { items } = await ItemsService.getItems(ruleset.id, { search: sword.name }, { limit: 10, page: 1 });
     expect(items.find((item) => item.id === sword.id)?.templateName).toBe("Longsword");
   });
 
   test("an item without a template has no properties or requirements of its own", async () => {
     const { session, ruleset } = await setup();
-    const item = await ItemsService.createRulesetItem(session, ruleset.id, { name: "Custom Item", type: "Weapon" });
-    expect(await ItemsService.getRulesetItem(ruleset.id, item.id)).toMatchObject({ properties: [], requirements: [] });
+    const item = await ItemsService.createItem(session, ruleset.id, { name: "Custom Item", type: "Weapon" });
+    expect(await ItemsService.getItem(ruleset.id, item.id)).toMatchObject({ properties: [], requirements: [] });
   });
 
   test("an instance can switch templates", async () => {
     const { session, ruleset, template } = await setup();
     const mace = await template("Heavy Mace");
-    const copy = await ItemsService.duplicateRulesetItem(session, ruleset.id, mace.id, {
+    const copy = await ItemsService.duplicateItem(session, ruleset.id, mace.id, {
       name: "Custom weapon",
       type: "Weapon",
     });
@@ -128,7 +126,7 @@ describe("Item templates", () => {
 
     const sword = await template("Longsword");
     expect(
-      await ItemsService.updateRulesetItem(session, ruleset.id, copy.id, { name: copy.name, sourceItemId: sword.id }),
+      await ItemsService.updateItem(session, ruleset.id, copy.id, { name: copy.name, sourceItemId: sword.id }),
     ).toMatchObject({ isTemplate: false, sourceItemId: sword.id });
     expect(await propertiesOf(ruleset.id, copy.id)).toMatchObject({ WEAPON_TYPE: "Longsword" });
   });
@@ -138,7 +136,7 @@ describe("Item templates", () => {
       const { session, ruleset, template } = await setup();
       const mace = await template("Heavy Mace");
       await expect(
-        ItemsService.createRulesetItem(session, ruleset.id, {
+        ItemsService.createItem(session, ruleset.id, {
           name: "Invalid template",
           type: "Weapon",
           isTemplate: true,
@@ -148,7 +146,7 @@ describe("Item templates", () => {
       expect(await Items.findOne(db, { rulesetId: ruleset.id, name: "Invalid template" })).toBeUndefined();
 
       expect(
-        await ItemsService.createRulesetItem(session, ruleset.id, {
+        await ItemsService.createItem(session, ruleset.id, {
           name: "Custom weapon template",
           type: "Weapon",
           isTemplate: true,
@@ -160,7 +158,7 @@ describe("Item templates", () => {
       const { session, ruleset, template } = await setup();
       const mace = await template("Heavy Mace");
       await expect(
-        ItemsService.updateRulesetItem(session, ruleset.id, mace.id, { name: mace.name, sourceItemId: mace.id }),
+        ItemsService.updateItem(session, ruleset.id, mace.id, { name: mace.name, sourceItemId: mace.id }),
       ).rejects.toThrow("Template items cannot have a source item");
       expect(await EntitySnapshots.findOne(db, { rulesetId: ruleset.id, sourceEntityId: mace.id })).toBeUndefined();
     });
@@ -168,13 +166,13 @@ describe("Item templates", () => {
     test("even when an edit claims it's a regular item", async () => {
       const { session, ruleset, template } = await setup();
       const mace = await template("Heavy Mace");
-      const local = await ItemsService.updateRulesetItem(session, ruleset.id, mace.id, {
+      const local = await ItemsService.updateItem(session, ruleset.id, mace.id, {
         name: mace.name,
         description: "Local template",
       });
       const sword = await template("Longsword");
       await expect(
-        ItemsService.updateRulesetItem(session, ruleset.id, local.id, {
+        ItemsService.updateItem(session, ruleset.id, local.id, {
           name: local.name,
           isTemplate: false,
           sourceItemId: sword.id,
@@ -186,11 +184,11 @@ describe("Item templates", () => {
     test("and an old self-reference is cleared on save", async () => {
       const { session, ruleset, template } = await setup();
       const mace = await template("Heavy Mace");
-      const local = await ItemsService.updateRulesetItem(session, ruleset.id, mace.id, { name: mace.name });
+      const local = await ItemsService.updateItem(session, ruleset.id, mace.id, { name: mace.name });
       await Items.update(db, { sourceItemId: local.id }, { id: local.id });
 
       expect(
-        await ItemsService.updateRulesetItem(session, ruleset.id, local.id, {
+        await ItemsService.updateItem(session, ruleset.id, local.id, {
           name: local.name,
           description: "Updated template",
         }),
@@ -201,7 +199,7 @@ describe("Item templates", () => {
   test("an inherited one is edited into a local copy, leaving the original", async () => {
     const { session, ruleset, template } = await setup();
     const mace = await template("Heavy Mace");
-    const edited = await ItemsService.updateRulesetItem(session, ruleset.id, mace.id, {
+    const edited = await ItemsService.updateItem(session, ruleset.id, mace.id, {
       name: mace.name,
       type: "Weapon",
       weight: 10,
@@ -221,15 +219,15 @@ describe("Item templates", () => {
   test("can't be deleted while an item is made from them", async () => {
     const { session, ruleset, template, instance } = await setup();
     await instance("Chain Mail");
-    await expect(
-      ItemsService.deleteRulesetItem(session, ruleset.id, (await template("Chain Mail")).id),
-    ).rejects.toThrow(ConflictError);
+    await expect(ItemsService.deleteItem(session, ruleset.id, (await template("Chain Mail")).id)).rejects.toThrow(
+      ConflictError,
+    );
 
-    const unused = await ItemsService.createRulesetItem(session, ruleset.id, {
+    const unused = await ItemsService.createItem(session, ruleset.id, {
       name: "Custom Template",
       type: "Armor",
       isTemplate: true,
     });
-    expect((await ItemsService.deleteRulesetItem(session, ruleset.id, unused.id)).id).toBe(unused.id);
+    expect((await ItemsService.deleteItem(session, ruleset.id, unused.id)).id).toBe(unused.id);
   });
 });

@@ -31,7 +31,7 @@ async function joinWithCharacter(campaignId: string, visibility: Visibility) {
 }
 
 const list = (userId: string, campaignId: string, pagination = { limit: 10, page: 1 }) =>
-  CampaignCharactersService.getCampaignCharacters(makeSession(userId), campaignId, {}, pagination);
+  CampaignCharactersService.getCharacters(makeSession(userId), campaignId, {}, pagination);
 
 /** Gives the character the seeded class levels, as `[class, level]` pairs. */
 async function addLevels(characterId: string, levels: [string, number][]) {
@@ -97,7 +97,7 @@ describe("CampaignCharactersService", () => {
     });
   });
 
-  describe("getCampaignCharacters", () => {
+  describe("getCharacters", () => {
     test("summarizes each character's classes at their highest level", async () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
@@ -222,18 +222,14 @@ describe("CampaignCharactersService", () => {
     });
   });
 
-  describe("getCampaignCharacter", () => {
+  describe("getCharacter", () => {
     test("gives the owner the full sheet whatever the visibility, and lets them edit", async () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
       for (const visibility of ["Private", "Public", "Partial"] as const) {
         const character = await createTestCharacter(user.id);
         await link(user.id, campaign.id, character.id, visibility);
-        const result = await CampaignCharactersService.getCampaignCharacter(
-          makeSession(user.id),
-          campaign.id,
-          character.id,
-        );
+        const result = await CampaignCharactersService.getCharacter(makeSession(user.id), campaign.id, character.id);
         expect(result).toMatchObject({ visibility, canEdit: true, isPartial: false });
         expect(result.detailedCharacter).toBeDefined();
       }
@@ -244,7 +240,7 @@ describe("CampaignCharactersService", () => {
       const { campaign } = await createTestCampaign(gm.id);
       const viewer = await joinWithCharacter(campaign.id, "Private");
       const get = (characterId: string) =>
-        CampaignCharactersService.getCampaignCharacter(makeSession(viewer.user.id), campaign.id, characterId);
+        CampaignCharactersService.getCharacter(makeSession(viewer.user.id), campaign.id, characterId);
 
       const publicOne = await joinWithCharacter(campaign.id, "Public");
       expect(await get(publicOne.character.id)).toMatchObject({ visibility: "Public", canEdit: false });
@@ -271,7 +267,7 @@ describe("CampaignCharactersService", () => {
       const contributor = await joinWithCharacter(campaign.id, "Private");
       await addCharacterContributor(character.id, contributor.user, owner.id);
 
-      const result = await CampaignCharactersService.getCampaignCharacter(
+      const result = await CampaignCharactersService.getCharacter(
         makeSession(contributor.user.id),
         campaign.id,
         character.id,
@@ -287,11 +283,11 @@ describe("CampaignCharactersService", () => {
       const { user: stranger } = await createTestUser();
 
       await expect(
-        CampaignCharactersService.getCampaignCharacter(makeSession(stranger.id), campaign.id, linked.id),
+        CampaignCharactersService.getCharacter(makeSession(stranger.id), campaign.id, linked.id),
       ).rejects.toThrow(ForbiddenError);
       const unlinked = await createTestCharacter(user.id);
       await expect(
-        CampaignCharactersService.getCampaignCharacter(makeSession(user.id), campaign.id, unlinked.id),
+        CampaignCharactersService.getCharacter(makeSession(user.id), campaign.id, unlinked.id),
       ).rejects.toThrow(NotFoundError);
     });
   });

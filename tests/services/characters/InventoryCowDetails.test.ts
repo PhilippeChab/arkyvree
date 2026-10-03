@@ -48,7 +48,7 @@ describe("COW inventory item details", () => {
       };
 
       expect((await readInventory())[0].item.name).toBe(item.name);
-      const updated = await ItemsService.updateRulesetItem(session, ruleset.id, item.id, {
+      const updated = await ItemsService.updateItem(session, ruleset.id, item.id, {
         name: "Forked war mace",
         description: "A renamed mace in this fork.",
         type: "Weapon",
@@ -73,7 +73,7 @@ describe("COW inventory item details", () => {
       // Reading a fork does not rewrite the pick or change the parent item.
       const stored = await CharacterInventory.findOne(db, { characterId: character.id, itemId: item.id });
       expect(stored?.itemId).toBe(item.id);
-      const parent = await ItemsService.getRulesetItem(item.rulesetId, item.id);
+      const parent = await ItemsService.getItem(item.rulesetId, item.id);
       expect(parent.name).toBe(item.name);
       expect(parent.description).toBe(item.description);
     });
@@ -81,7 +81,7 @@ describe("COW inventory item details", () => {
 
   test("campaign/shared character equipment uses the override's name and description", async () => {
     const { session, ruleset, item, character } = await setup();
-    const updated = await ItemsService.updateRulesetItem(session, ruleset.id, item.id, {
+    const updated = await ItemsService.updateItem(session, ruleset.id, item.id, {
       name: "Campaign war mace",
       description: "Campaign-specific equipment description.",
       type: "Weapon",

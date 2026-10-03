@@ -34,9 +34,9 @@ async function setup() {
 test("creating a feat with a renamed override's original name keeps the override", async () => {
   const { session, fork, general, baseFeat } = await setup();
   const source = await baseFeat("Alertness");
-  const renamed = await FeatsService.updateRulesetFeat(session, fork.id, source.id, { name: "Alertness (Local)" });
+  const renamed = await FeatsService.updateFeat(session, fork.id, source.id, { name: "Alertness (Local)" });
 
-  const created = await FeatsService.createRulesetFeat(session, fork.id, {
+  const created = await FeatsService.createFeat(session, fork.id, {
     name: "Alertness",
     aptitudeIds: [general.id],
   });
@@ -60,7 +60,7 @@ test("bulk item variants with a renamed override's original name keep the overri
       eq(itemsInRules.type, "Other"),
     ),
   }))!;
-  const renamed = await ItemsService.updateRulesetItem(session, fork.id, source.id, {
+  const renamed = await ItemsService.updateItem(session, fork.id, source.id, {
     name: `${source.name} (Local)`,
     description: source.description,
     type: source.type,
@@ -90,11 +90,11 @@ test("the original name of a renamed extension copy is available", async () => {
     { id: extension.id },
   );
   await RulesetExtensionsService.subscribeExtension(session, fork.id, [extension.id]);
-  const renamed = await FeatsService.updateRulesetFeat(session, fork.id, extensionCopy.id, {
+  const renamed = await FeatsService.updateFeat(session, fork.id, extensionCopy.id, {
     name: "Toughness (Local)",
   });
 
-  const created = await FeatsService.createRulesetFeat(session, fork.id, {
+  const created = await FeatsService.createFeat(session, fork.id, {
     name: "Toughness",
     aptitudeIds: [general.id],
   });
@@ -113,6 +113,6 @@ test("the original name of a renamed extension copy is available", async () => {
 test("a visible inherited feat still blocks its name", async () => {
   const { session, fork, general } = await setup();
   await expect(
-    FeatsService.createRulesetFeat(session, fork.id, { name: "Alertness", aptitudeIds: [general.id] }),
+    FeatsService.createFeat(session, fork.id, { name: "Alertness", aptitudeIds: [general.id] }),
   ).rejects.toThrow("Name already exists in the source chain");
 });

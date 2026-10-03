@@ -78,13 +78,13 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
     let copyId: string | undefined;
     await overlap(read, async () => {
       if (scenario === "cow") {
-        const copy = await PropertiesService.createEntityProperty(session, fork.id, "feats", seed.featMap.Toughness, {
+        const copy = await PropertiesService.createProperty(session, fork.id, "feats", seed.featMap.Toughness, {
           type: "QA",
           value: "1",
         });
         copyId = copy.resolvedEntityId;
       } else {
-        await FeatsService.updateRulesetFeat(session, fork.id, local.id, {
+        await FeatsService.updateFeat(session, fork.id, local.id, {
           name: "After Marker",
           description: "after",
         });

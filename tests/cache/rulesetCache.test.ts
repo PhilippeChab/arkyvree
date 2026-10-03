@@ -416,7 +416,7 @@ describe("rulesetCache", () => {
       // Fork the seed and COW the feat through the service.
       const fork = await createFork(seed.id);
       const forkSession = makeSession(SEED_USER_ID);
-      await FeatsService.updateRulesetFeat(forkSession, fork.id, baseFeat.id, {
+      await FeatsService.updateFeat(forkSession, fork.id, baseFeat.id, {
         name: baseFeat.name,
         description: "COW'd",
       });
@@ -453,7 +453,7 @@ describe("rulesetCache", () => {
       expect(sampleFeat).toBeDefined();
 
       const forkSession = makeSession(SEED_USER_ID);
-      await FeatsService.updateRulesetFeat(forkSession, fork.id, sampleFeat.id, {
+      await FeatsService.updateFeat(forkSession, fork.id, sampleFeat.id, {
         name: sampleFeat.name,
         description: "Edited by fork (COW)",
       });
@@ -480,7 +480,7 @@ describe("rulesetCache", () => {
       const sampleFeat = sampleFeats[0];
 
       const forkSession = makeSession(SEED_USER_ID);
-      await FeatsService.deleteRulesetFeat(forkSession, fork.id, sampleFeat.id);
+      await FeatsService.deleteFeat(forkSession, fork.id, sampleFeat.id);
 
       const forkData = await composeFork(fork);
       const seedData = await getOrFetchRulesetData(seed.id, await getOrBuildCowData(seed));
@@ -527,7 +527,7 @@ describe("rulesetCache", () => {
       // Create a modifier on the inherited feat through the service (COWs the
       // feat + invalidates the fork's cache).
       const forkSession = makeSession(SEED_USER_ID);
-      await ModifiersService.createEntityModifier(forkSession, fork.id, "feats", sampleFeat.id, {
+      await ModifiersService.createModifier(forkSession, fork.id, "feats", sampleFeat.id, {
         target: "abilities.strength.misc",
         value: "2",
         operator: "add",

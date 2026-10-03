@@ -47,7 +47,7 @@ describe("PowersService", () => {
         ruleset,
         aptitudeIds: [wizard, cleric, druid],
       } = await setup();
-      const power = await PowersService.createRulesetPower(session, ruleset.id, {
+      const power = await PowersService.createPower(session, ruleset.id, {
         name: "Fireball",
         aptitudes: [{ id: wizard, level: 3 }, { id: cleric }],
       });
@@ -58,26 +58,26 @@ describe("PowersService", () => {
         ]),
       );
 
-      await PowersService.updateRulesetPower(session, ruleset.id, power.id, {
+      await PowersService.updatePower(session, ruleset.id, power.id, {
         name: "Fireball",
         aptitudes: [{ id: druid, level: 4 }],
       });
       expect(await linkedAptitudes(power.id)).toEqual([{ aptitudeId: druid, level: 4 }]);
 
-      await PowersService.updateRulesetPower(session, ruleset.id, power.id, {
+      await PowersService.updatePower(session, ruleset.id, power.id, {
         name: "Fireball",
         description: "Renamed only",
       });
       expect(await linkedAptitudes(power.id)).toEqual([{ aptitudeId: druid, level: 4 }]);
 
-      await PowersService.updateRulesetPower(session, ruleset.id, power.id, { name: "Fireball", aptitudes: [] });
+      await PowersService.updatePower(session, ruleset.id, power.id, { name: "Fireball", aptitudes: [] });
       expect(await linkedAptitudes(power.id)).toEqual([]);
     });
 
     test("refuses a new power without an aptitude", async () => {
       const { session, ruleset } = await setup();
       await expect(
-        PowersService.createRulesetPower(session, ruleset.id, { name: "Orphan Spell", aptitudes: [] }),
+        PowersService.createPower(session, ruleset.id, { name: "Orphan Spell", aptitudes: [] }),
       ).rejects.toThrow(BadRequestError);
     });
 
@@ -87,17 +87,17 @@ describe("PowersService", () => {
         ruleset,
         aptitudeIds: [wizard, feats],
       } = await setup();
-      await FeatsService.createRulesetFeat(session, ruleset.id, { name: "Power Attack", aptitudeIds: [feats] });
+      await FeatsService.createFeat(session, ruleset.id, { name: "Power Attack", aptitudeIds: [feats] });
       await expect(
-        PowersService.createRulesetPower(session, ruleset.id, { name: "Feat Spell", aptitudes: [{ id: feats }] }),
+        PowersService.createPower(session, ruleset.id, { name: "Feat Spell", aptitudes: [{ id: feats }] }),
       ).rejects.toThrow(ConflictError);
 
-      const power = await PowersService.createRulesetPower(session, ruleset.id, {
+      const power = await PowersService.createPower(session, ruleset.id, {
         name: "Wizard Spell",
         aptitudes: [{ id: wizard }],
       });
       await expect(
-        PowersService.updateRulesetPower(session, ruleset.id, power.id, {
+        PowersService.updatePower(session, ruleset.id, power.id, {
           name: "Wizard Spell",
           aptitudes: [{ id: feats }],
         }),
@@ -111,16 +111,16 @@ describe("PowersService", () => {
         ruleset: parent,
         aptitudeIds: [wizard, cleric],
       } = await setup();
-      const source = await PowersService.createRulesetPower(session, parent.id, {
+      const source = await PowersService.createPower(session, parent.id, {
         name: "Fireball",
         aptitudes: [{ id: wizard, level: 3 }],
       });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
-      expect((await PowersService.getRulesetPower(fork.id, source.id)).powersAptitudesInRules).toMatchObject([
+      expect((await PowersService.getPower(fork.id, source.id)).powersAptitudesInRules).toMatchObject([
         { aptitudeId: wizard, level: 3 },
       ]);
 
-      const copy = await PowersService.updateRulesetPower(session, fork.id, source.id, {
+      const copy = await PowersService.updatePower(session, fork.id, source.id, {
         name: "Fireball",
         aptitudes: [{ id: cleric, level: 2 }],
       });
@@ -136,7 +136,7 @@ describe("PowersService", () => {
       ruleset,
       aptitudeIds: [wizard],
     } = await setup();
-    const power = await PowersService.createRulesetPower(session, ruleset.id, {
+    const power = await PowersService.createPower(session, ruleset.id, {
       name: "Fireball",
       aptitudes: [{ id: wizard }],
       school: "Evocation",
@@ -144,7 +144,7 @@ describe("PowersService", () => {
     });
     await Properties.create(db, { entityId: power.id, entityType: "powers", type: "SIGNATURE_SPELL", value: "true" });
 
-    await PowersService.updateRulesetPower(session, ruleset.id, power.id, { name: "Fireball", school: "Conjuration" });
+    await PowersService.updatePower(session, ruleset.id, power.id, { name: "Fireball", school: "Conjuration" });
 
     const properties = await Properties.findMany(db, { entityIds: [power.id], entityType: "powers" });
     expect(properties.map(({ type, value }) => ({ type, value })).sort((a, b) => a.type.localeCompare(b.type))).toEqual(
@@ -161,14 +161,14 @@ describe("PowersService", () => {
       ruleset,
       aptitudeIds: [wizard],
     } = await setup();
-    const power = await PowersService.createRulesetPower(session, ruleset.id, {
+    const power = await PowersService.createPower(session, ruleset.id, {
       name: "Doomed Spell",
       aptitudes: [{ id: wizard }],
     });
     const { klassLevel } = await createTestKlassLevel(ruleset.id);
     await insertRows(klassLevelPowersInRules, [{ klassLevelId: klassLevel.id, powerId: power.id, aptitudeId: wizard }]);
 
-    await PowersService.deleteRulesetPower(session, ruleset.id, power.id);
+    await PowersService.deletePower(session, ruleset.id, power.id);
 
     expect(await linkedAptitudes(power.id)).toEqual([]);
     expect(
@@ -183,7 +183,7 @@ describe("PowersService", () => {
       ruleset: extension,
       aptitudeIds: [wizard],
     } = await setup();
-    const power = await PowersService.createRulesetPower(session, extension.id, {
+    const power = await PowersService.createPower(session, extension.id, {
       name: "Extension Spell",
       aptitudes: [{ id: wizard }],
     });
@@ -193,6 +193,6 @@ describe("PowersService", () => {
     const { klassLevel } = await createTestKlassLevel(host.id);
     await addCharacterLevel(character.id, klassLevel.id, { powers: [{ powerId: power.id, aptitudeId: wizard }] });
 
-    await expect(PowersService.deleteRulesetPower(session, extension.id, power.id)).rejects.toThrow(ConflictError);
+    await expect(PowersService.deletePower(session, extension.id, power.id)).rejects.toThrow(ConflictError);
   });
 });

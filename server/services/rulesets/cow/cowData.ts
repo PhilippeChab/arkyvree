@@ -171,7 +171,7 @@ export async function withRulesetScope<T>(
 /**
  * Multi-ruleset variant: preload `rulesetData` for every unique id and hand
  * the map to `fn`. Used for list operations that enrich rows from many
- * rulesets at once (getMyCharacters, getCampaignCharacters) where a single
+ * rulesets at once (the characters and campaign characters lists) where a single
  * `cowContext` would have to pick one ruleset, excluding the others.
  *
  * No `cowContext` is activated — the composed `rulesetData.*` Maps already

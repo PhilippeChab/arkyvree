@@ -20,7 +20,7 @@ import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class RequirementsService {
-  async getEntityRequirements(rulesetId: string, entityType: string, entityId: string) {
+  async getRequirements(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const resolvedId = rulesetData.canonicalize(entityId);
       await CustomizationsPolicy.canCustomize(resolvedId, entityType, rulesetData);
@@ -41,7 +41,7 @@ class RequirementsService {
     });
   }
 
-  async createEntityRequirement(
+  async createRequirement(
     session: Session,
     rulesetId: string,
     entityType: string,
@@ -111,7 +111,7 @@ class RequirementsService {
     return result;
   }
 
-  async updateEntityRequirement(
+  async updateRequirement(
     session: Session,
     rulesetId: string,
     entityType: string,
@@ -214,7 +214,7 @@ class RequirementsService {
     return result;
   }
 
-  async deleteEntityRequirement(
+  async deleteRequirement(
     session: Session,
     rulesetId: string,
     entityType: string,

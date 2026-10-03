@@ -104,21 +104,20 @@ test("every customization kind reports a row removed before the owner lock as mi
   const { session, rulesetId, featId, modifier, property, requirement } = await setupRemovedCustomizations();
   const mutations = [
     () =>
-      ModifiersService.updateEntityModifier(session, rulesetId, "feats", featId, modifier.id, {
+      ModifiersService.updateModifier(session, rulesetId, "feats", featId, modifier.id, {
         target: modifier.target,
         value: "2",
         operator: "add",
       }),
-    () => ModifiersService.deleteEntityModifier(session, rulesetId, "feats", featId, modifier.id),
+    () => ModifiersService.deleteModifier(session, rulesetId, "feats", featId, modifier.id),
     () =>
-      PropertiesService.updateEntityProperty(session, rulesetId, "feats", featId, property.id, {
+      PropertiesService.updateProperty(session, rulesetId, "feats", featId, property.id, {
         type: "NOTE",
         value: "Edited",
       }),
-    () => PropertiesService.deleteEntityProperty(session, rulesetId, "feats", featId, property.id),
-    () =>
-      RequirementsService.updateEntityRequirement(session, rulesetId, "feats", featId, requirement.id, { level: "1" }),
-    () => RequirementsService.deleteEntityRequirement(session, rulesetId, "feats", featId, requirement.id),
+    () => PropertiesService.deleteProperty(session, rulesetId, "feats", featId, property.id),
+    () => RequirementsService.updateRequirement(session, rulesetId, "feats", featId, requirement.id, { level: "1" }),
+    () => RequirementsService.deleteRequirement(session, rulesetId, "feats", featId, requirement.id),
   ];
   for (const mutate of mutations) {
     await expect(mutate()).rejects.toThrow("no longer exists");

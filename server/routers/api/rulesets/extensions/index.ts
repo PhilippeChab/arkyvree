@@ -8,7 +8,7 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 export default new Hono<SessionContext>()
   .get("/:id/extensions", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    return c.json(await RulesetExtensionsService.getSubscribedExtensions(c.var.requestSession, id), 200);
+    return c.json(await RulesetExtensionsService.getExtensions(c.var.requestSession, id), 200);
   })
   .post(
     "/:id/subscribe",

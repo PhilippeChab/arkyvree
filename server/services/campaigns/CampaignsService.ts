@@ -9,7 +9,7 @@ import { CampaignsPolicy, RulesetsPolicy } from "@/server/services/policies/inde
 import type { Session } from "@/shared/relations.ts";
 
 class CampaignsService {
-  async getCampaignById(session: Session, id: string) {
+  async getCampaign(session: Session, id: string) {
     const rows = await Campaigns.findOneWithPlayerCount(db, { id });
     const campaign = rows[0];
 
@@ -22,7 +22,7 @@ class CampaignsService {
     return { ...campaign, currentUserRole: player.role };
   }
 
-  async getMyCampaigns(
+  async getCampaigns(
     session: Session,
     where: {
       visibility?: Visibility;

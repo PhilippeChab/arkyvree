@@ -10,11 +10,11 @@ const contributorRoleSchema = z.enum(contributorRole.enumValues);
 
 export default new Hono<SessionContext>()
   .get("/contributors/invites/me", async (c) => {
-    return c.json(await ContributorsService.getUserContributorInvites(c.var.requestSession.userId), 200);
+    return c.json(await ContributorsService.getUserInvites(c.var.requestSession.userId), 200);
   })
   .get("/contributors/invites/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    return c.json(await ContributorsService.getContributorInvite(c.var.requestSession, id), 200);
+    return c.json(await ContributorsService.getInvite(c.var.requestSession, id), 200);
   })
   .get(
     "/:id/contributors",
@@ -45,11 +45,11 @@ export default new Hono<SessionContext>()
   )
   .post("/contributors/invites/:id/accept", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    return c.json(await ContributorsService.acceptContributorInvite(c.var.requestSession, id), 200);
+    return c.json(await ContributorsService.acceptInvite(c.var.requestSession, id), 200);
   })
   .post("/contributors/invites/:id/reject", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    return c.json(await ContributorsService.rejectContributorInvite(c.var.requestSession, id), 200);
+    return c.json(await ContributorsService.rejectInvite(c.var.requestSession, id), 200);
   })
   .post(
     "/:id/contributors",

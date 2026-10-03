@@ -6,7 +6,8 @@
  *   by: reads (`find`, `exists`, `count`), writes (`create`, `update`, …) and `lock`. Its name says what it returns,
  *   never how it filters (`findManyByUser`, `archiveAllForUser`): filters go in its `where`, one method per verb.
  * - A service reads with `get`, creates (`create`, `add`, `duplicate`), updates (`update`, `set`, `mark`), deletes
- *   (`delete`, `remove`, `archive`, `unarchive`, `hardDelete`), or takes one of the actions below.
+ *   (`delete`, `remove`, `archive`, `unarchive`, `hardDelete`), or takes one of the actions below, on its resource
+ *   (`FeatsService.getFeat`): never `ById` (the id is a parameter) or `My` (the session's scope is implied).
  * - A policy checks: `can` (it throws, or returns what it checked) or `is` (a yes or no). `for` builds one.
  *
  * Private and protected methods are the class's own business: any name.
@@ -36,7 +37,11 @@ const VOCABULARIES = [
     what: "A repository method",
     verbs: [...REPOSITORY.read, ...REPOSITORY.write, ...REPOSITORY.lock],
     where: "server/repositories/methodVerbs.json",
-    filters: true,
+    // A filter goes in its `where`: `findManyByUser` is `findMany(db, { userId })`.
+    filters: {
+      words: /(?<=[a-z0-9])(By|For|In|On|From|All)(?=[A-Z0-9]|$)/,
+      why: "a repository has one method per verb, its filters in its `where`, and a variant is named by what it returns",
+    },
   },
   { layer: "server/services/policies/", what: "A policy method", verbs: ["can", "is", "for"] },
   {
@@ -49,14 +54,16 @@ const VOCABULARIES = [
       ...["delete", "remove", "archive", "unarchive", "hardDelete"],
       ...SERVICE_ACTIONS,
     ],
+    // `getCampaignById` is `getCampaign(id)`; `getMyStats` is `getStats(session)`.
+    filters: {
+      words: /(?<=[a-z0-9])(By|My)(?=[A-Z0-9]|$)/,
+      why: "a service method is its verb and its service's resource (`FeatsService.getFeat`): an id is a parameter, and the session's scope is implied",
+    },
   },
 ];
 
 /** A function a field holds: written there, or another one's (`readonly finalizeLevelUp = finalizeLevelUp`). */
 const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "Identifier", "MemberExpression"];
-
-/** A word that names a filter, which goes in the method's `where`: `By` in `findManyByUser`. */
-const FILTER_WORD = /(?<=[a-z0-9])(By|For|In|On|From|All)(?=[A-Z0-9]|$)/;
 
 const isMethod = (member) =>
   (member.type === "MethodDefinition" || member.type === "TSAbstractMethodDefinition"
@@ -84,10 +91,11 @@ const methodNames = {
               node: member.key,
               message: `${vocabulary.what} starts with one of its layer's verbs (${listed}): \`${name}\` doesn't.`,
             });
-          } else if (vocabulary.filters && FILTER_WORD.test(name)) {
+          } else if (vocabulary.filters?.words.test(name)) {
+            const word = vocabulary.filters.words.exec(name)[1];
             context.report({
               node: member.key,
-              message: `\`${name}\` names a filter (\`${FILTER_WORD.exec(name)[1]}\`): a repository has one method per verb, its filters in its \`where\`, and a variant is named by what it returns.`,
+              message: `\`${name}\` names a filter (\`${word}\`): ${vocabulary.filters.why}.`,
             });
           }
         }

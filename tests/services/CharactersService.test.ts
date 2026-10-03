@@ -252,8 +252,8 @@ describe("CharactersService", () => {
       const { session } = await createTestUser();
       const { session: other } = await createTestUser();
       await createCharacter(other, { name: "Someone Else" });
-      const list = async (where: Parameters<typeof CharactersService.getMyCharacters>[1] = {}) =>
-        (await CharactersService.getMyCharacters(session, where, page)).items as {
+      const list = async (where: Parameters<typeof CharactersService.getCharacters>[1] = {}) =>
+        (await CharactersService.getCharacters(session, where, page)).items as {
           id: string;
           name: string;
           race?: unknown;
@@ -285,7 +285,7 @@ describe("CharactersService", () => {
       const [active, archived] = [await createCharacter(session), await createCharacter(session)];
       await CharactersService.archiveCharacter(session, archived.id);
       const list = async (visibility: Visibility) =>
-        ids((await CharactersService.getMyCharacters(session, { visibility }, page)).items as { id: string }[]).sort();
+        ids((await CharactersService.getCharacters(session, { visibility }, page)).items as { id: string }[]).sort();
 
       expect(await list(Visibility.UnarchivedOnly)).toEqual([active.id]);
       expect(await list(Visibility.ArchivedOnly)).toEqual([archived.id]);

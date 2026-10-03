@@ -57,7 +57,7 @@ class CampaignInvitesService {
   // Single invite for the current user, any status. Used by the invite-accept
   // page so a stale link still resolves to "Already accepted" / "no longer
   // pending" copy instead of "Not found".
-  async getCampaignInvite(session: Session, inviteId: string) {
+  async getInvite(session: Session, inviteId: string) {
     const invite = await Invites.findOneWithCampaign(db, {
       id: inviteId,
       userId: session.userId,
@@ -68,7 +68,7 @@ class CampaignInvitesService {
     return invite;
   }
 
-  async getCampaignInvites(
+  async getInvites(
     session: Session,
     campaignId: string,
     where: { search?: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
@@ -88,7 +88,7 @@ class CampaignInvitesService {
     return await Invites.findMany(db, { userId }, { limit: 10 }, { campaign: true });
   }
 
-  async acceptCampaignInvite(session: Session, inviteId: string) {
+  async acceptInvite(session: Session, inviteId: string) {
     return await withTransaction(async (tx) => {
       const invite = await this.getPendingInviteFor(tx, session, inviteId);
       const campaign = await this.getInviteCampaign(tx, invite);
@@ -101,14 +101,14 @@ class CampaignInvitesService {
     });
   }
 
-  async rejectCampaignInvite(session: Session, inviteId: string) {
+  async rejectInvite(session: Session, inviteId: string) {
     return await withTransaction(async (tx) => {
       const invite = await this.getPendingInviteFor(tx, session, inviteId);
       return await this.answerInvite(tx, session, invite, "Rejected");
     });
   }
 
-  async revokeCampaignInvite(session: Session, inviteId: string) {
+  async revokeInvite(session: Session, inviteId: string) {
     return await withTransaction(async (tx) => {
       const invite = await Invites.findOne(tx, { id: inviteId });
       if (!invite) {

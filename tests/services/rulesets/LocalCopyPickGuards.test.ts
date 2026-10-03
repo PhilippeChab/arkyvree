@@ -42,14 +42,14 @@ async function setup() {
 
 test("a race picked before the fork copied it blocks deleting the copy, but not restoring the source", async () => {
   const { session, fork, human, character } = await setup();
-  const local = await RacesService.updateRulesetRace(session, fork.id, human.id, {
+  const local = await RacesService.updateRace(session, fork.id, human.id, {
     name: human.name,
     description: "Local",
     size: human.size,
     baseSpeed: human.baseSpeed,
   });
 
-  await expect(RacesService.deleteRulesetRace(session, fork.id, local.id)).rejects.toThrow("in use by characters");
+  await expect(RacesService.deleteRace(session, fork.id, local.id)).rejects.toThrow("in use by characters");
   expect(
     await withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData.racesById.get(character.raceId)?.id),
   ).toBe(local.id);
@@ -65,15 +65,13 @@ test("a language picked before the fork copied it blocks deleting the copy", asy
   const { session, fork, baseId, character } = await setup();
   const language = (await db.query.languagesInRules.findFirst({ where: eq(languagesInRules.rulesetId, baseId) }))!;
   await CharacterLanguages.create(db, { characterId: character.id, languageId: language.id });
-  const local = await LanguagesService.updateRulesetLanguage(session, fork.id, language.id, {
+  const local = await LanguagesService.updateLanguage(session, fork.id, language.id, {
     name: language.name,
     description: "Local",
     type: language.type,
   });
 
-  await expect(LanguagesService.deleteRulesetLanguage(session, fork.id, local.id)).rejects.toThrow(
-    "in use by characters",
-  );
+  await expect(LanguagesService.deleteLanguage(session, fork.id, local.id)).rejects.toThrow("in use by characters");
 });
 
 test("an item picked before the fork copied it blocks deleting the copy", async () => {
@@ -87,7 +85,7 @@ test("an item picked before the fork copied it blocks deleting the copy", async 
     ),
   }))!;
   await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
-  const local = await ItemsService.updateRulesetItem(session, fork.id, item.id, {
+  const local = await ItemsService.updateItem(session, fork.id, item.id, {
     name: item.name,
     description: "Local",
     type: item.type,
@@ -96,5 +94,5 @@ test("an item picked before the fork copied it blocks deleting the copy", async 
     costGp: Number(item.costGp),
   });
 
-  await expect(ItemsService.deleteRulesetItem(session, fork.id, local.id)).rejects.toThrow("in use by characters");
+  await expect(ItemsService.deleteItem(session, fork.id, local.id)).rejects.toThrow("in use by characters");
 });

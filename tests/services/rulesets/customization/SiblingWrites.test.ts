@@ -86,28 +86,26 @@ for (const entityType of ["feats", "powers"] as const) {
         });
         invalidateAll();
         expect(
-          (await PropertiesService.getEntityProperties(host.id, entityType, winnerId)).some(
-            (p) => p.id === property.id,
-          ),
+          (await PropertiesService.getProperties(host.id, entityType, winnerId)).some((p) => p.id === property.id),
         ).toBe(true);
         const result =
           action === "update"
-            ? await PropertiesService.updateEntityProperty(session, host.id, entityType, winnerId, property.id, {
+            ? await PropertiesService.updateProperty(session, host.id, entityType, winnerId, property.id, {
                 type: property.type,
                 value: "after",
               })
-            : await PropertiesService.deleteEntityProperty(session, host.id, entityType, winnerId, property.id);
+            : await PropertiesService.deleteProperty(session, host.id, entityType, winnerId, property.id);
         expect(result.resolvedEntityId).not.toBe(winnerId);
         expect(await Properties.findOne(db, { id: property.id })).toEqual(property);
         for (const cold of [false, true]) {
           if (cold) invalidateAll();
-          const visible = await PropertiesService.getEntityProperties(host.id, entityType, result.resolvedEntityId);
+          const visible = await PropertiesService.getProperties(host.id, entityType, result.resolvedEntityId);
           expect(visible.filter((p) => p.type === property.type)).toEqual(
             action === "update" ? [expect.objectContaining({ id: result.id, value: "after" })] : [],
           );
         }
         await expect(
-          PropertiesService.updateEntityProperty(session, host.id, entityType, result.resolvedEntityId, property.id, {
+          PropertiesService.updateProperty(session, host.id, entityType, result.resolvedEntityId, property.id, {
             type: property.type,
             value: "stale",
           }),
@@ -117,7 +115,7 @@ for (const entityType of ["feats", "powers"] as const) {
         expect(snapshots[0].sourceEntityId).toBe(winnerId);
         await RulesetChangesService.revertOverride(session, host.id, entityType, winnerId);
         expect(
-          (await PropertiesService.getEntityProperties(host.id, entityType, winnerId)).filter(
+          (await PropertiesService.getProperties(host.id, entityType, winnerId)).filter(
             (p) => p.type === property.type,
           ),
         ).toEqual([expect.objectContaining({ id: property.id, value: "before" })]);
@@ -142,14 +140,14 @@ for (const entityType of ["feats", "powers"] as const) {
         await PowersAptitudes.create(db, { powerId: loser.id, aptitudeId: aptitude.id });
       }
       invalidateAll();
-      const local = await PropertiesService.createEntityProperty(session, host.id, entityType, winnerId, {
+      const local = await PropertiesService.createProperty(session, host.id, entityType, winnerId, {
         type: "LOCAL",
         value: "1",
       });
-      const copied = await RequirementsService.getEntityRequirements(host.id, entityType, local.resolvedEntityId);
+      const copied = await RequirementsService.getRequirements(host.id, entityType, local.resolvedEntityId);
       const copiedRequirement = copied.find((r) => r.target === requirement.target)!;
       expect(copiedRequirement.id).not.toBe(requirement.id);
-      await RequirementsService.deleteEntityRequirement(
+      await RequirementsService.deleteRequirement(
         session,
         host.id,
         entityType,
@@ -157,37 +155,29 @@ for (const entityType of ["feats", "powers"] as const) {
         copiedRequirement.id,
       );
       if (entityType === "feats") {
-        const feat = await FeatsService.getRulesetFeat(host.id, local.resolvedEntityId);
+        const feat = await FeatsService.getFeat(host.id, local.resolvedEntityId);
         expect(feat.featsAptitudesInRules.some((a) => a.aptitudeId === aptitude.id)).toBe(true);
-        await FeatsService.updateRulesetFeat(session, host.id, feat.id, { name: feat.name, aptitudeIds: [] });
+        await FeatsService.updateFeat(session, host.id, feat.id, { name: feat.name, aptitudeIds: [] });
       } else {
-        const power = await PowersService.getRulesetPower(host.id, local.resolvedEntityId);
+        const power = await PowersService.getPower(host.id, local.resolvedEntityId);
         expect(power.powersAptitudesInRules.some((a) => a.aptitudeId === aptitude.id)).toBe(true);
-        await PowersService.updateRulesetPower(session, host.id, power.id, { name: power.name, aptitudes: [] });
+        await PowersService.updatePower(session, host.id, power.id, { name: power.name, aptitudes: [] });
       }
       for (const cold of [false, true]) {
         if (cold) invalidateAll();
-        const requirements = await RequirementsService.getEntityRequirements(
-          host.id,
-          entityType,
-          local.resolvedEntityId,
-        );
+        const requirements = await RequirementsService.getRequirements(host.id, entityType, local.resolvedEntityId);
         expect(requirements.some((r) => r.target === requirement.target)).toBe(false);
         if (entityType === "feats") {
-          expect((await FeatsService.getRulesetFeat(host.id, local.resolvedEntityId)).featsAptitudesInRules).toEqual(
-            [],
-          );
+          expect((await FeatsService.getFeat(host.id, local.resolvedEntityId)).featsAptitudesInRules).toEqual([]);
         } else {
-          expect((await PowersService.getRulesetPower(host.id, local.resolvedEntityId)).powersAptitudesInRules).toEqual(
-            [],
-          );
+          expect((await PowersService.getPower(host.id, local.resolvedEntityId)).powersAptitudesInRules).toEqual([]);
         }
       }
       expect(await Requirements.findOne(db, { id: requirement.id })).toEqual(requirement);
       if (entityType === "feats") {
-        await FeatsService.deleteRulesetFeat(session, host.id, local.resolvedEntityId);
+        await FeatsService.deleteFeat(session, host.id, local.resolvedEntityId);
       } else {
-        await PowersService.deleteRulesetPower(session, host.id, local.resolvedEntityId);
+        await PowersService.deletePower(session, host.id, local.resolvedEntityId);
       }
       invalidateAll();
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
@@ -196,19 +186,19 @@ for (const entityType of ["feats", "powers"] as const) {
         expect(rulesetData.requirementsByEntity.get(local.resolvedEntityId) ?? []).toEqual([]);
       });
       await RulesetChangesService.revertOverride(session, host.id, entityType, winnerId);
-      const restored = await RequirementsService.getEntityRequirements(host.id, entityType, winnerId);
+      const restored = await RequirementsService.getRequirements(host.id, entityType, winnerId);
       expect(restored.filter((r) => r.target === requirement.target)).toEqual([
         expect.objectContaining({ value: requirement.value, operator: requirement.operator }),
       ]);
       if (entityType === "feats") {
         expect(
-          (await FeatsService.getRulesetFeat(host.id, winnerId)).featsAptitudesInRules.some(
+          (await FeatsService.getFeat(host.id, winnerId)).featsAptitudesInRules.some(
             (a) => a.aptitudeId === aptitude.id,
           ),
         ).toBe(true);
       } else {
         expect(
-          (await PowersService.getRulesetPower(host.id, winnerId)).powersAptitudesInRules.some(
+          (await PowersService.getPower(host.id, winnerId)).powersAptitudesInRules.some(
             (a) => a.aptitudeId === aptitude.id,
           ),
         ).toBe(true);
@@ -231,55 +221,41 @@ for (const entityType of ["feats", "powers"] as const) {
         });
         invalidateAll();
         expect(
-          (await ModifiersService.getEntityModifiers(host.id, entityType, winnerId)).some((m) => m.id === modifier.id),
+          (await ModifiersService.getModifiers(host.id, entityType, winnerId)).some((m) => m.id === modifier.id),
         ).toBe(true);
         const result =
           action === "create"
-            ? await RequirementsService.createEntityRequirement(session, host.id, "modifiers", modifier.id, {
+            ? await RequirementsService.createRequirement(session, host.id, "modifiers", modifier.id, {
                 level: "2",
                 chainingOperator: "or",
               })
             : action === "update"
-              ? await RequirementsService.updateEntityRequirement(
-                  session,
-                  host.id,
-                  "modifiers",
-                  modifier.id,
-                  original.id,
-                  { level: "1", chainingOperator: "or" },
-                )
-              : await RequirementsService.deleteEntityRequirement(
-                  session,
-                  host.id,
-                  "modifiers",
-                  modifier.id,
-                  original.id,
-                );
+              ? await RequirementsService.updateRequirement(session, host.id, "modifiers", modifier.id, original.id, {
+                  level: "1",
+                  chainingOperator: "or",
+                })
+              : await RequirementsService.deleteRequirement(session, host.id, "modifiers", modifier.id, original.id);
         expect(result.resolvedEntityId).not.toBe(modifier.id);
         expect(await Modifiers.findOne(db, { id: modifier.id })).toEqual(modifier);
         expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([
           original,
         ]);
-        const copies = await ModifiersService.getEntityModifiers(host.id, entityType, winnerId);
+        const copies = await ModifiersService.getModifiers(host.id, entityType, winnerId);
         expect(copies.filter((m) => m.target === modifier.target)).toEqual([
           expect.objectContaining({ id: result.resolvedEntityId }),
         ]);
-        const requirements = await RequirementsService.getEntityRequirements(
-          host.id,
-          "modifiers",
-          result.resolvedEntityId,
-        );
+        const requirements = await RequirementsService.getRequirements(host.id, "modifiers", result.resolvedEntityId);
         expect(requirements.map((r) => r.chainingOperator).sort()).toEqual(
           action === "create" ? ["and", "or"] : action === "update" ? ["or"] : [],
         );
         await expect(
-          RequirementsService.createEntityRequirement(session, host.id, "modifiers", modifier.id, {
+          RequirementsService.createRequirement(session, host.id, "modifiers", modifier.id, {
             level: "3",
             chainingOperator: "and",
           }),
         ).rejects.toThrow(NotFoundError);
         // A subsequent edit using the returned local ID must continue to work.
-        await RequirementsService.createEntityRequirement(session, host.id, "modifiers", result.resolvedEntityId, {
+        await RequirementsService.createRequirement(session, host.id, "modifiers", result.resolvedEntityId, {
           level: "3",
           chainingOperator: "and",
         });
@@ -303,13 +279,13 @@ for (const entityType of ["feats", "powers"] as const) {
         invalidateAll();
         const result =
           action === "update"
-            ? await ModifiersService.updateEntityModifier(session, host.id, entityType, winnerId, modifier.id, {
+            ? await ModifiersService.updateModifier(session, host.id, entityType, winnerId, modifier.id, {
                 ...modifierValues,
                 value: "5",
               })
-            : await ModifiersService.deleteEntityModifier(session, host.id, entityType, winnerId, modifier.id);
+            : await ModifiersService.deleteModifier(session, host.id, entityType, winnerId, modifier.id);
         invalidateAll();
-        const visible = await ModifiersService.getEntityModifiers(host.id, entityType, result.resolvedEntityId);
+        const visible = await ModifiersService.getModifiers(host.id, entityType, result.resolvedEntityId);
         expect(visible.filter((m) => m.target === modifier.target)).toEqual(
           action === "update" ? [expect.objectContaining({ id: result.id, value: "5" })] : [],
         );
@@ -334,17 +310,17 @@ test("deduplicated sibling property and modifier IDs are not writable", async ()
     [winnerId, loser.id].map((sourceId) => ({ ...modifierValues, sourceId, sourceType: "feats" })),
   );
   invalidateAll();
-  const visible = await PropertiesService.getEntityProperties(host.id, "feats", winnerId);
+  const visible = await PropertiesService.getProperties(host.id, "feats", winnerId);
   expect(visible.some((p) => p.id === ownProperty.id)).toBe(true);
   expect(visible.some((p) => p.id === hiddenProperty.id)).toBe(false);
   await expect(
-    PropertiesService.updateEntityProperty(session, host.id, "feats", winnerId, hiddenProperty.id, {
+    PropertiesService.updateProperty(session, host.id, "feats", winnerId, hiddenProperty.id, {
       type: "SAME",
       value: "2",
     }),
   ).rejects.toThrow(NotFoundError);
   await expect(
-    RequirementsService.createEntityRequirement(session, host.id, "modifiers", hiddenModifier.id, {
+    RequirementsService.createRequirement(session, host.id, "modifiers", hiddenModifier.id, {
       level: "1",
       chainingOperator: "and",
     }),
@@ -383,7 +359,7 @@ test("copying sibling modifiers and their requirements stays batched", async () 
       dedupMisses: 0,
     };
     await timingStorage.run(timing, () =>
-      RequirementsService.createEntityRequirement(session, host.id, "modifiers", modifiers[0].id, {
+      RequirementsService.createRequirement(session, host.id, "modifiers", modifiers[0].id, {
         level: "2",
         chainingOperator: "or",
       }),
@@ -403,20 +379,20 @@ test("installing another extension preserves the local override and exposes unre
   });
   invalidateAll();
   await RulesetExtensionsService.unsubscribeExtension(session, host.id, loserRulesetId);
-  const local = await PropertiesService.createEntityProperty(session, host.id, "feats", winnerId, {
+  const local = await PropertiesService.createProperty(session, host.id, "feats", winnerId, {
     type: "LOCAL",
     value: "1",
   });
   const [unrelated] = await Feats.create(db, { name: "Unrelated extension feat", rulesetId: loserRulesetId });
   await RulesetExtensionsService.subscribeExtension(session, host.id, [loserRulesetId]);
-  const visible = await PropertiesService.getEntityProperties(host.id, "feats", local.resolvedEntityId);
+  const visible = await PropertiesService.getProperties(host.id, "feats", local.resolvedEntityId);
   expect(visible.some((p) => p.id === property.id)).toBe(false);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
     expect(rulesetData.featsById.has(unrelated.id)).toBe(true);
     expect(rulesetData.canonicalize(loser.id)).toBe(local.resolvedEntityId);
   });
   await RulesetChangesService.revertOverride(session, host.id, "feats", winnerId);
-  const restored = await PropertiesService.getEntityProperties(host.id, "feats", winnerId);
+  const restored = await PropertiesService.getProperties(host.id, "feats", winnerId);
   expect(restored.some((p) => p.id === property.id)).toBe(true);
 });
 
@@ -471,7 +447,7 @@ for (const entityType of ["feats", "powers"] as const) {
           expect(sourceRequirements[0].chainingOperator).toBe(order[1] === 1 ? "and" : "or");
           if (kind === "property") {
             const original = await Properties.findOne(db, { id: visible.property.id });
-            const updated = await PropertiesService.updateEntityProperty(
+            const updated = await PropertiesService.updateProperty(
               session,
               fork.id,
               entityType,
@@ -484,7 +460,7 @@ for (const entityType of ["feats", "powers"] as const) {
             expect(updated.id).not.toBe(visible.property.id);
             expect(await Properties.findOne(db, { id: visible.property.id })).toEqual(original);
           } else {
-            const added = await RequirementsService.createEntityRequirement(
+            const added = await RequirementsService.createRequirement(
               session,
               fork.id,
               "modifiers",

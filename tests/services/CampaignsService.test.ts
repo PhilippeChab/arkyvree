@@ -87,10 +87,10 @@ describe("CampaignsService", () => {
     });
   });
 
-  describe("getMyCampaigns", () => {
+  describe("getCampaigns", () => {
     test("lists the user's campaigns with their player count", async () => {
       const { session } = await createTestUser();
-      expect(await CampaignsService.getMyCampaigns(session, {}, firstPage)).toMatchObject({
+      expect(await CampaignsService.getCampaigns(session, {}, firstPage)).toMatchObject({
         items: [],
         page: 1,
         nextPage: undefined,
@@ -99,7 +99,7 @@ describe("CampaignsService", () => {
       const campaign = await createCampaign(session);
       await addPlayer(campaign.id);
       await addPlayer(campaign.id);
-      expect((await CampaignsService.getMyCampaigns(session, {}, firstPage)).items).toMatchObject([
+      expect((await CampaignsService.getCampaigns(session, {}, firstPage)).items).toMatchObject([
         { id: campaign.id, name: campaign.name, currentPlayers: 3 },
       ]);
     });
@@ -110,30 +110,30 @@ describe("CampaignsService", () => {
       const goblins = await createCampaign(session, "Goblin Wars");
       const archived = await createCampaign(session, "Old Campaign");
       await CampaignsService.archiveCampaign(session, archived.id);
-      const ids = async (where: Parameters<typeof CampaignsService.getMyCampaigns>[1], pagination = firstPage) =>
-        (await CampaignsService.getMyCampaigns(session, where, pagination)).items.map((c) => c.id);
+      const ids = async (where: Parameters<typeof CampaignsService.getCampaigns>[1], pagination = firstPage) =>
+        (await CampaignsService.getCampaigns(session, where, pagination)).items.map((c) => c.id);
 
       expect(await ids({ search: "Dragon" })).toEqual([dragons.id]);
       expect((await ids({ visibility: Visibility.UnarchivedOnly })).sort()).toEqual([dragons.id, goblins.id].sort());
       expect(await ids({ visibility: Visibility.ArchivedOnly })).toEqual([archived.id]);
       expect(
-        await CampaignsService.getMyCampaigns(session, { visibility: Visibility.All }, { limit: 2, page: 1 }),
+        await CampaignsService.getCampaigns(session, { visibility: Visibility.All }, { limit: 2, page: 1 }),
       ).toMatchObject({ nextPage: 2 });
       expect(await ids({ visibility: Visibility.All }, { limit: 2, page: 2 })).toHaveLength(1);
     });
   });
 
-  describe("getCampaignById", () => {
+  describe("getCampaign", () => {
     test("returns the campaign with the user's role in it", async () => {
       const { session } = await createTestUser();
       const created = await createCampaign(session);
-      expect(await CampaignsService.getCampaignById(session, created.id)).toMatchObject({
+      expect(await CampaignsService.getCampaign(session, created.id)).toMatchObject({
         id: created.id,
         name: "Test Campaign",
         description: "Test description",
         currentUserRole: "Game Master",
       });
-      await expect(CampaignsService.getCampaignById(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+      await expect(CampaignsService.getCampaign(session, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -171,7 +171,7 @@ describe("CampaignsService", () => {
       expect(await Players.findMany(db, { campaignId: campaign.id })).toHaveLength(2);
 
       expect((await CampaignsService.unarchiveCampaign(gm, campaign.id)).deletedAt).toBeNull();
-      const active = await CampaignsService.getMyCampaigns(gm, { visibility: Visibility.UnarchivedOnly }, firstPage);
+      const active = await CampaignsService.getCampaigns(gm, { visibility: Visibility.UnarchivedOnly }, firstPage);
       expect(active.items.map((c) => c.id)).toEqual([campaign.id]);
     });
 
