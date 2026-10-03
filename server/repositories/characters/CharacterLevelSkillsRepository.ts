@@ -16,16 +16,6 @@ class CharacterLevelSkillsRepository extends BaseRepository<typeof levelSkillsIn
     super(levelSkillsInCharacter);
   }
 
-  async createMany(db: Db, values: InferInsertModel<typeof levelSkillsInCharacter>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  // Exception to soft-delete: old picks are disposable when re-finalizing a level
-  async deleteByCharacterLevelId(db: Db, where: { characterLevelId: string }) {
-    return await db.delete(this.table).where(eq(this.table.characterLevelId, where.characterLevelId));
-  }
-
   async existsBySkillId(db: Db, where: { skillId: string; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.skillId })
@@ -68,6 +58,16 @@ class CharacterLevelSkillsRepository extends BaseRepository<typeof levelSkillsIn
     return await db.query.levelSkillsInCharacter.findMany({
       where: and(inArray(this.table.characterLevelId, where.characterLevelIds), isNull(this.table.deletedAt)),
     });
+  }
+
+  async createMany(db: Db, values: InferInsertModel<typeof levelSkillsInCharacter>[]) {
+    if (values.length === 0) return [];
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Exception to soft-delete: old picks are disposable when re-finalizing a level
+  async deleteByCharacterLevelId(db: Db, where: { characterLevelId: string }) {
+    return await db.delete(this.table).where(eq(this.table.characterLevelId, where.characterLevelId));
   }
 }
 

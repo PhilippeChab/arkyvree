@@ -10,21 +10,6 @@ class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount> {
     super(activitiesInAccount);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof activitiesInAccount>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async delete(db: Db, where: { id: string } | { createdBefore: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        this.where([
-          "id" in where && eq(this.table.id, where.id),
-          "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
-        ]),
-      );
-  }
-
   async findMany(
     db: Db,
     where: {
@@ -64,6 +49,21 @@ class ActivitiesRepository extends BaseRepository<typeof activitiesInAccount> {
         offset,
       });
     });
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof activitiesInAccount>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async delete(db: Db, where: { id: string } | { createdBefore: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.where([
+          "id" in where && eq(this.table.id, where.id),
+          "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
+        ]),
+      );
   }
 }
 

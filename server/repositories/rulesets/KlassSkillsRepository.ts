@@ -10,6 +10,12 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules> {
     super(klassSkillsInRules);
   }
 
+  async findMany(db: Db, where: { klassIds: string[] }) {
+    return await db.query.klassSkillsInRules.findMany({
+      where: and(inArray(this.table.klassId, where.klassIds), isNull(this.table.deletedAt)),
+    });
+  }
+
   async create(db: Db, values: InferInsertModel<typeof klassSkillsInRules>) {
     return await db.insert(this.table).values(values).returning();
   }
@@ -35,12 +41,6 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules> {
   // Exception to soft-delete: disposable configuration data — intentional removal
   async deleteBySkillId(db: Db, where: { skillId: string }) {
     return await db.delete(this.table).where(eq(this.table.skillId, where.skillId)).returning();
-  }
-
-  async findMany(db: Db, where: { klassIds: string[] }) {
-    return await db.query.klassSkillsInRules.findMany({
-      where: and(inArray(this.table.klassId, where.klassIds), isNull(this.table.deletedAt)),
-    });
   }
 }
 

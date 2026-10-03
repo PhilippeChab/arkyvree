@@ -16,89 +16,19 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter> 
     super(charactersInCharacter);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof charactersInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  /** Hard delete — bonded children are reconcile-managed, not user-archived. */
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id));
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof charactersInCharacter>>,
-    where: { id: string; expectedUpdatedAt?: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
+  async count(db: Db, where: { userId: string }) {
+    const [result] = await db
+      .select({ count: count() })
+      .from(charactersInCharacter)
       .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
-  }
+        and(
+          isNull(charactersInCharacter.deletedAt),
+          eq(charactersInCharacter.userId, where.userId),
+          eq(charactersInCharacter.kind, "pc"),
+        ),
+      );
 
-  async archive(db: Db, where: { id: string }) {
-    const archived = await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-    if (archived.length > 0) {
-      await db
-        .update(this.table)
-        .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-        .where(and(eq(this.table.parentCharacterId, where.id), isNull(this.table.deletedAt)));
-    }
-    return archived;
-  }
-
-  async findIdsByUserIds(db: Db, where: { userIds: string[] }) {
-    if (where.userIds.length === 0) return [];
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .where(inArray(this.table.userId, where.userIds));
-    return rows.map((r) => r.id);
-  }
-
-  async archiveAllForUser(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async unarchive(db: Db, where: { id: string }) {
-    const unarchived = await db
-      .update(this.table)
-      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
-      .returning();
-    if (unarchived.length > 0) {
-      await db
-        .update(this.table)
-        .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-        .where(and(eq(this.table.parentCharacterId, where.id), not(isNull(this.table.deletedAt))));
-    }
-    return unarchived;
-  }
-
-  // Archived characters count — see `project_archive_preserves_picks` memory.
-  async existsByRaceId(db: Db, where: { raceId: string; rulesetId: string }) {
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(this.table.rulesetId, where.rulesetId))
-      .where(this.idMatches(this.table.raceId, where.raceId))
-      .limit(1);
-    return rows.length > 0;
+    return result.count;
   }
 
   async existsByRaceFromExtension(
@@ -118,68 +48,24 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter> 
     return rows.length > 0;
   }
 
-  async findOne(
-    db: Db,
-    where:
-      | { id: string }
-      | { id: string; userId: string }
-      | { shareToken: string }
-      | { parentCharacterId: string; kind: "familiar" | "animalcompanion" | "mount" },
-    visibility: Visibility = Visibility.UnarchivedOnly,
-  ) {
-    const isUserFacing = "userId" in where || "shareToken" in where;
-    return await db.query.charactersInCharacter.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "shareToken" in where && eq(this.table.shareToken, where.shareToken),
-        "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
-        "kind" in where && eq(this.table.kind, where.kind),
-        isUserFacing && eq(this.table.kind, "pc"),
-        this.visibility(visibility),
-      ]),
-    });
-  }
-
-  async findManyByIds(db: Db, where: { ids: string[] }) {
-    return await db.query.charactersInCharacter.findMany({
-      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-    });
-  }
-
-  async findOneEditable(
-    db: Db,
-    where: { id: string; userId: string },
-    visibility: Visibility = Visibility.UnarchivedOnly,
-  ) {
+  // Archived characters count — see `project_archive_preserves_picks` memory.
+  async existsByRaceId(db: Db, where: { raceId: string; rulesetId: string }) {
     const rows = await db
-      .select()
-      .from(charactersInCharacter)
-      .where(
-        this.where([
-          eq(charactersInCharacter.id, where.id),
-          eq(charactersInCharacter.kind, "pc"),
-          or(
-            eq(charactersInCharacter.userId, where.userId),
-            exists(
-              db
-                .select({ one: sql`1` })
-                .from(contributorsInCharacter)
-                .where(
-                  and(
-                    eq(contributorsInCharacter.characterId, charactersInCharacter.id),
-                    eq(contributorsInCharacter.userId, where.userId),
-                    eq(contributorsInCharacter.status, "Active"),
-                    isNull(contributorsInCharacter.deletedAt),
-                  ),
-                ),
-            ),
-          )!,
-          this.visibility(visibility),
-        ]),
-      )
+      .select({ id: this.table.id })
+      .from(this.table)
+      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(this.table.rulesetId, where.rulesetId))
+      .where(this.idMatches(this.table.raceId, where.raceId))
       .limit(1);
-    return rows[0];
+    return rows.length > 0;
+  }
+
+  async findIdsByUserIds(db: Db, where: { userIds: string[] }) {
+    if (where.userIds.length === 0) return [];
+    const rows = await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .where(inArray(this.table.userId, where.userIds));
+    return rows.map((r) => r.id);
   }
 
   async findMany(
@@ -263,6 +149,70 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter> 
     });
   }
 
+  async findManyByIds(db: Db, where: { ids: string[] }) {
+    return await db.query.charactersInCharacter.findMany({
+      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
+    });
+  }
+
+  async findOne(
+    db: Db,
+    where:
+      | { id: string }
+      | { id: string; userId: string }
+      | { shareToken: string }
+      | { parentCharacterId: string; kind: "familiar" | "animalcompanion" | "mount" },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    const isUserFacing = "userId" in where || "shareToken" in where;
+    return await db.query.charactersInCharacter.findFirst({
+      where: this.where([
+        "id" in where && eq(this.table.id, where.id),
+        "userId" in where && eq(this.table.userId, where.userId),
+        "shareToken" in where && eq(this.table.shareToken, where.shareToken),
+        "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
+        "kind" in where && eq(this.table.kind, where.kind),
+        isUserFacing && eq(this.table.kind, "pc"),
+        this.visibility(visibility),
+      ]),
+    });
+  }
+
+  async findOneEditable(
+    db: Db,
+    where: { id: string; userId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    const rows = await db
+      .select()
+      .from(charactersInCharacter)
+      .where(
+        this.where([
+          eq(charactersInCharacter.id, where.id),
+          eq(charactersInCharacter.kind, "pc"),
+          or(
+            eq(charactersInCharacter.userId, where.userId),
+            exists(
+              db
+                .select({ one: sql`1` })
+                .from(contributorsInCharacter)
+                .where(
+                  and(
+                    eq(contributorsInCharacter.characterId, charactersInCharacter.id),
+                    eq(contributorsInCharacter.userId, where.userId),
+                    eq(contributorsInCharacter.status, "Active"),
+                    isNull(contributorsInCharacter.deletedAt),
+                  ),
+                ),
+            ),
+          )!,
+          this.visibility(visibility),
+        ]),
+      )
+      .limit(1);
+    return rows[0];
+  }
+
   async findUnlinked(
     db: Db,
     where: { userId: string; rulesetId: string; search?: string },
@@ -319,19 +269,69 @@ class CharactersRepository extends BaseRepository<typeof charactersInCharacter> 
     });
   }
 
-  async count(db: Db, where: { userId: string }) {
-    const [result] = await db
-      .select({ count: count() })
-      .from(charactersInCharacter)
-      .where(
-        and(
-          isNull(charactersInCharacter.deletedAt),
-          eq(charactersInCharacter.userId, where.userId),
-          eq(charactersInCharacter.kind, "pc"),
-        ),
-      );
+  async create(db: Db, values: InferInsertModel<typeof charactersInCharacter>) {
+    return await db.insert(this.table).values(values).returning();
+  }
 
-    return result.count;
+  async update(
+    db: Db,
+    values: Partial<InferInsertModel<typeof charactersInCharacter>>,
+    where: { id: string; expectedUpdatedAt?: string },
+  ) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
+      .returning();
+  }
+
+  async archive(db: Db, where: { id: string }) {
+    const archived = await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+    if (archived.length > 0) {
+      await db
+        .update(this.table)
+        .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+        .where(and(eq(this.table.parentCharacterId, where.id), isNull(this.table.deletedAt)));
+    }
+    return archived;
+  }
+
+  async archiveAllForUser(db: Db, where: { userId: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  /** Hard delete — bonded children are reconcile-managed, not user-archived. */
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
+  }
+
+  async unarchive(db: Db, where: { id: string }) {
+    const unarchived = await db
+      .update(this.table)
+      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
+      .returning();
+    if (unarchived.length > 0) {
+      await db
+        .update(this.table)
+        .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+        .where(and(eq(this.table.parentCharacterId, where.id), not(isNull(this.table.deletedAt))));
+    }
+    return unarchived;
   }
 }
 

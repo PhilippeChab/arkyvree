@@ -18,6 +18,14 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 class SavesService {
+  async getRulesetSave(rulesetId: string, saveId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
+      return save;
+    });
+  }
+
   async getRulesetSaves(
     rulesetId: string,
     where: {
@@ -31,14 +39,6 @@ class SavesService {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       return await Saves.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-    });
-  }
-
-  async getRulesetSave(rulesetId: string, saveId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
-      return save;
     });
   }
 

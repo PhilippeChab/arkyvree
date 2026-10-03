@@ -24,18 +24,14 @@ import {
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
 
 export default new Hono()
-  .post("/sign-up", authRateLimit, authEmailRateLimit, zValidator("json", SignUpJson), async (c) => {
+  .post("/forgot-password", authRateLimit, authEmailRateLimit, zValidator("json", ForgotPasswordJson), async (c) => {
     const body = c.req.valid("json");
-    await AuthenticationService.signUp(body.emailAddress, body.password);
-    return c.json({ message: "Verification email sent" }, 201);
+    await AuthenticationService.forgotPassword(body.emailAddress);
+    return c.json({ success: true }, 200);
   })
-  .post("/verify-email", authRateLimit, zValidator("json", VerifyEmailJson), async (c) => {
+  .post("/google", authRateLimit, zValidator("json", GoogleSignInJson), async (c) => {
     const body = c.req.valid("json");
-    const { session, user } = await AuthenticationService.verifyEmail(
-      body.emailAddress,
-      body.code,
-      getSessionCookie(c),
-    );
+    const { session, user } = await AuthenticationService.signInWithGoogle(body.idToken, getSessionCookie(c));
     setSessionCookie(c, session.id);
     return c.json(user, 200);
   })
@@ -50,11 +46,6 @@ export default new Hono()
       return c.json({ success: true }, 200);
     },
   )
-  .post("/forgot-password", authRateLimit, authEmailRateLimit, zValidator("json", ForgotPasswordJson), async (c) => {
-    const body = c.req.valid("json");
-    await AuthenticationService.forgotPassword(body.emailAddress);
-    return c.json({ success: true }, 200);
-  })
   .post("/reset-password", authRateLimit, zValidator("json", ResetPasswordJson), async (c) => {
     const body = c.req.valid("json");
     await AuthenticationService.resetPassword(body.emailAddress, body.code, body.newPassword);
@@ -66,9 +57,18 @@ export default new Hono()
     setSessionCookie(c, session.id);
     return c.json(user, 200);
   })
-  .post("/google", authRateLimit, zValidator("json", GoogleSignInJson), async (c) => {
+  .post("/sign-up", authRateLimit, authEmailRateLimit, zValidator("json", SignUpJson), async (c) => {
     const body = c.req.valid("json");
-    const { session, user } = await AuthenticationService.signInWithGoogle(body.idToken, getSessionCookie(c));
+    await AuthenticationService.signUp(body.emailAddress, body.password);
+    return c.json({ message: "Verification email sent" }, 201);
+  })
+  .post("/verify-email", authRateLimit, zValidator("json", VerifyEmailJson), async (c) => {
+    const body = c.req.valid("json");
+    const { session, user } = await AuthenticationService.verifyEmail(
+      body.emailAddress,
+      body.code,
+      getSessionCookie(c),
+    );
     setSessionCookie(c, session.id);
     return c.json(user, 200);
   })

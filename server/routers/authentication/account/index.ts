@@ -11,16 +11,23 @@ import {
 import { AccountService } from "@/server/services/authentication/account/index.ts";
 
 export default new Hono<SessionContext>()
-  .put("/profile", denyDemoUser, zValidator("json", UpdateProfileJson), async (c) => {
-    const body = c.req.valid("json");
-    return c.json(await AccountService.updateProfile(c.var.requestSession, body.username, body.emailAddress), 200);
+  .post("/cancel-email-change", denyDemoUser, async (c) => {
+    await AccountService.cancelEmailChange(c.var.requestSession);
+    return c.json({ success: true }, 200);
   })
-  .put("/password", denyDemoUser, zValidator("json", UpdatePasswordJson), async (c) => {
+  .post("/complete-onboarding", async (c) => {
+    await AccountService.completeOnboarding(c.var.requestSession);
+    return c.json({ success: true }, 200);
+  })
+  .post("/delete-account", denyDemoUser, zValidator("json", DeleteAccountJson), async (c) => {
     const body = c.req.valid("json");
-    return c.json(
-      await AccountService.updatePassword(c.var.requestSession, body.currentPassword, body.newPassword),
-      200,
-    );
+    await AccountService.deleteAccount(c.var.requestSession, body.password);
+    deleteSessionCookie(c);
+    return c.json({ success: true }, 200);
+  })
+  .post("/resend-email-change", denyDemoUser, async (c) => {
+    await AccountService.resendEmailChange(c.var.requestSession);
+    return c.json({ success: true }, 200);
   })
   .post("/set-password", denyDemoUser, zValidator("json", SetPasswordJson), async (c) => {
     const body = c.req.valid("json");
@@ -30,21 +37,14 @@ export default new Hono<SessionContext>()
     const body = c.req.valid("json");
     return c.json(await AccountService.verifyEmailChange(c.var.requestSession, body.code), 200);
   })
-  .post("/cancel-email-change", denyDemoUser, async (c) => {
-    await AccountService.cancelEmailChange(c.var.requestSession);
-    return c.json({ success: true }, 200);
-  })
-  .post("/resend-email-change", denyDemoUser, async (c) => {
-    await AccountService.resendEmailChange(c.var.requestSession);
-    return c.json({ success: true }, 200);
-  })
-  .post("/delete-account", denyDemoUser, zValidator("json", DeleteAccountJson), async (c) => {
+  .put("/password", denyDemoUser, zValidator("json", UpdatePasswordJson), async (c) => {
     const body = c.req.valid("json");
-    await AccountService.deleteAccount(c.var.requestSession, body.password);
-    deleteSessionCookie(c);
-    return c.json({ success: true }, 200);
+    return c.json(
+      await AccountService.updatePassword(c.var.requestSession, body.currentPassword, body.newPassword),
+      200,
+    );
   })
-  .post("/complete-onboarding", async (c) => {
-    await AccountService.completeOnboarding(c.var.requestSession);
-    return c.json({ success: true }, 200);
+  .put("/profile", denyDemoUser, zValidator("json", UpdateProfileJson), async (c) => {
+    const body = c.req.valid("json");
+    return c.json(await AccountService.updateProfile(c.var.requestSession, body.username, body.emailAddress), 200);
   });

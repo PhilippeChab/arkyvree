@@ -26,6 +26,43 @@ const characters = new Hono()
   .route("/levels", levels)
   .route("/inventory", inventory)
   .route("/modifiers", modifiers)
+  // List all characters
+  .get(
+    "/",
+    zValidator(
+      "query",
+      z.object({
+        limit,
+        page,
+        visibility: z.enum(["all", "archived", "active"]).default("active"),
+        search: z.string().optional(),
+        orderBy: z.enum(["name", "createdAt", "updatedAt"]).default("createdAt"),
+        orderDir: orderDirDesc,
+        accessRole: z.enum(["owner", "contributor"]).optional(),
+      }),
+    ),
+    async (c) => {
+      const query = c.req.valid("query");
+
+      const visibility = visibilityMap[query.visibility];
+
+      // Use the service to get character list with session for activity logging
+      return c.json(
+        await CharactersService.getMyCharacters(
+          c.var.requestSession,
+          {
+            visibility,
+            search: query.search,
+            orderBy: query.orderBy,
+            orderDir: query.orderDir,
+            accessRole: query.accessRole,
+          },
+          { limit: query.limit, page: query.page },
+        ),
+        200,
+      );
+    },
+  )
   // Get available races for character creation (annotated with eligibility)
   .get(
     "/available-races",
@@ -48,6 +85,50 @@ const characters = new Hono()
       );
     },
   )
+  // Get characters not in a campaign
+  .get(
+    "/unlinked/:campaignId",
+    zValidator("param", z.object({ campaignId: z.string().uuid() })),
+    zValidator(
+      "query",
+      z.object({
+        limit,
+        page,
+        search: z.string().optional(),
+      }),
+    ),
+    async (c) => {
+      const { campaignId } = c.req.valid("param");
+      const query = c.req.valid("query");
+      return c.json(
+        await CharactersService.getUnlinkedCharacters(
+          c.var.requestSession,
+          campaignId,
+          { search: query.search },
+          { limit: query.limit, page: query.page },
+        ),
+        200,
+      );
+    },
+  )
+  // Get character data
+  .get("/:id", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+
+    // Use the service to get character data with session for activity logging
+    const { character, detailedCharacter, bondedByKind } = await CharactersService.getCharacter(
+      c.var.requestSession,
+      id,
+    );
+
+    if (character.kind !== "pc") {
+      const response = buildBondedResponse(character, detailedCharacter as Parameters<typeof buildBondedResponse>[1]);
+      return c.json({ ...response, bonded: {} as Record<string, ReturnType<typeof buildBondedResponse>> }, 200);
+    }
+
+    const response = buildFullCharacterResponse(character, detailedCharacter);
+    return c.json({ ...response, bonded: buildBondedMap(bondedByKind) }, 200);
+  })
   // Create a new character
   .post(
     "/",
@@ -90,69 +171,6 @@ const characters = new Hono()
 
       // Use the service to create character with session for activity logging
       return c.json(await CharactersService.createCharacter(c.var.requestSession, characterData), 201);
-    },
-  )
-  // List all characters
-  .get(
-    "/",
-    zValidator(
-      "query",
-      z.object({
-        limit,
-        page,
-        visibility: z.enum(["all", "archived", "active"]).default("active"),
-        search: z.string().optional(),
-        orderBy: z.enum(["name", "createdAt", "updatedAt"]).default("createdAt"),
-        orderDir: orderDirDesc,
-        accessRole: z.enum(["owner", "contributor"]).optional(),
-      }),
-    ),
-    async (c) => {
-      const query = c.req.valid("query");
-
-      const visibility = visibilityMap[query.visibility];
-
-      // Use the service to get character list with session for activity logging
-      return c.json(
-        await CharactersService.getMyCharacters(
-          c.var.requestSession,
-          {
-            visibility,
-            search: query.search,
-            orderBy: query.orderBy,
-            orderDir: query.orderDir,
-            accessRole: query.accessRole,
-          },
-          { limit: query.limit, page: query.page },
-        ),
-        200,
-      );
-    },
-  )
-  // Get characters not in a campaign
-  .get(
-    "/unlinked/:campaignId",
-    zValidator("param", z.object({ campaignId: z.string().uuid() })),
-    zValidator(
-      "query",
-      z.object({
-        limit,
-        page,
-        search: z.string().optional(),
-      }),
-    ),
-    async (c) => {
-      const { campaignId } = c.req.valid("param");
-      const query = c.req.valid("query");
-      return c.json(
-        await CharactersService.getUnlinkedCharacters(
-          c.var.requestSession,
-          campaignId,
-          { search: query.search },
-          { limit: query.limit, page: query.page },
-        ),
-        200,
-      );
     },
   )
   // Enqueue async PDF generation
@@ -204,18 +222,6 @@ const characters = new Hono()
     },
   )
   .put(
-    "/:id/languages",
-    zValidator("param", idParam),
-    zValidator("json", z.object({ languageIds: z.array(z.string().uuid()) })),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      const { languageIds } = c.req.valid("json");
-
-      await CharactersService.updateLanguages(c.var.requestSession, id, languageIds);
-      return c.json({ success: true }, 200);
-    },
-  )
-  .put(
     "/:id/abilities",
     zValidator("param", idParam),
     zValidator("json", z.record(z.string().uuid(), z.number().int().min(1).max(100))),
@@ -227,24 +233,18 @@ const characters = new Hono()
       return c.json({ success: true }, 200);
     },
   )
-  // Get character data
-  .get("/:id", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
+  .put(
+    "/:id/languages",
+    zValidator("param", idParam),
+    zValidator("json", z.object({ languageIds: z.array(z.string().uuid()) })),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { languageIds } = c.req.valid("json");
 
-    // Use the service to get character data with session for activity logging
-    const { character, detailedCharacter, bondedByKind } = await CharactersService.getCharacter(
-      c.var.requestSession,
-      id,
-    );
-
-    if (character.kind !== "pc") {
-      const response = buildBondedResponse(character, detailedCharacter as Parameters<typeof buildBondedResponse>[1]);
-      return c.json({ ...response, bonded: {} as Record<string, ReturnType<typeof buildBondedResponse>> }, 200);
-    }
-
-    const response = buildFullCharacterResponse(character, detailedCharacter);
-    return c.json({ ...response, bonded: buildBondedMap(bondedByKind) }, 200);
-  })
+      await CharactersService.updateLanguages(c.var.requestSession, id, languageIds);
+      return c.json({ success: true }, 200);
+    },
+  )
   // Archive character
   .delete("/:id", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
@@ -253,19 +253,19 @@ const characters = new Hono()
     return c.json({ message: "Character archived successfully" }, 200);
   })
   .route("/", sharing)
-  // Permanently delete an archived character
-  .delete("/:id/permanent", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-
-    await CharactersService.hardDeleteCharacter(c.var.requestSession, id);
-    return c.json({ message: "Character permanently deleted" }, 200);
-  })
   // Unarchive character
   .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
 
     await CharactersService.unarchiveCharacter(c.var.requestSession, id);
     return c.json({ message: "Character unarchived successfully" }, 200);
+  })
+  // Permanently delete an archived character
+  .delete("/:id/permanent", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+
+    await CharactersService.hardDeleteCharacter(c.var.requestSession, id);
+    return c.json({ message: "Character permanently deleted" }, 200);
   });
 
 export default characters;

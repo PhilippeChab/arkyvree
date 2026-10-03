@@ -11,6 +11,28 @@ import { loadBondedByKind } from "@/server/services/characters/bonded.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterSharingService {
+  async getSharedCharacter(shareToken: string) {
+    const characterRecord = await Characters.findOne(db, { shareToken });
+
+    if (!characterRecord) {
+      throw new NotFoundError("Character not found");
+    }
+
+    const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
+    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+    await detailedCharacter.build();
+
+    const bondedByKind = await loadBondedByKind(rulesetModule, characterRecord.id);
+    const portraitUrl = await urlForSlot("Character", characterRecord.id, "portrait");
+
+    return {
+      character: characterRecord,
+      detailedCharacter,
+      bondedByKind,
+      portraitUrl,
+    };
+  }
+
   async generateShareToken(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
       const characterRecord = await Characters.findOne(tx, {
@@ -36,6 +58,27 @@ class CharacterSharingService {
     });
   }
 
+  async generateSharedPdf(shareToken: string) {
+    const characterRecord = await Characters.findOne(db, { shareToken });
+
+    if (!characterRecord) {
+      throw new NotFoundError("Character not found");
+    }
+
+    const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
+    const { detailedCharacter, CharacterSheetComponent } =
+      await rulesetModule.createDetailedCharacterWithSheet(characterRecord);
+
+    const portraitUrl = await urlForSlot("Character", characterRecord.id, "portrait");
+
+    return {
+      detailedCharacter,
+      CharacterSheetComponent,
+      portraitUrl,
+      kind: characterRecord.kind as CharacterKind,
+    };
+  }
+
   async revokeShareToken(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
       const characterRecord = await Characters.findOne(tx, {
@@ -58,49 +101,6 @@ class CharacterSharingService {
 
       return updated;
     });
-  }
-
-  async getSharedCharacter(shareToken: string) {
-    const characterRecord = await Characters.findOne(db, { shareToken });
-
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
-
-    const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build();
-
-    const bondedByKind = await loadBondedByKind(rulesetModule, characterRecord.id);
-    const portraitUrl = await urlForSlot("Character", characterRecord.id, "portrait");
-
-    return {
-      character: characterRecord,
-      detailedCharacter,
-      bondedByKind,
-      portraitUrl,
-    };
-  }
-
-  async generateSharedPdf(shareToken: string) {
-    const characterRecord = await Characters.findOne(db, { shareToken });
-
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
-
-    const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
-    const { detailedCharacter, CharacterSheetComponent } =
-      await rulesetModule.createDetailedCharacterWithSheet(characterRecord);
-
-    const portraitUrl = await urlForSlot("Character", characterRecord.id, "portrait");
-
-    return {
-      detailedCharacter,
-      CharacterSheetComponent,
-      portraitUrl,
-      kind: characterRecord.kind as CharacterKind,
-    };
   }
 }
 

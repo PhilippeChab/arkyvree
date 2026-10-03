@@ -114,6 +114,30 @@ class ItemsService {
     return result;
   }
 
+  async getRulesetItem(rulesetId: string, itemId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
+
+      // Template inheritance: if item has a sourceItemId, inherit properties and
+      // requirements from the template. Own properties override template ones of
+      // the same type; requirements are additive.
+      const modifiers = rulesetData.modifiersBySource.get(item.id) ?? [];
+      const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
+      const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
+      const templateProperties = item.sourceItemId ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []) : [];
+      const templateRequirements = item.sourceItemId
+        ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
+        : [];
+
+      const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
+      const properties = [...templateProperties.filter((p) => !ownPropertyTypes.has(p.type)), ...ownProperties];
+      const requirements = [...templateRequirements, ...ownRequirements];
+
+      return { ...item, modifiers, properties, requirements };
+    });
+  }
+
   async getRulesetItems(
     rulesetId: string,
     where: {
@@ -143,43 +167,11 @@ class ItemsService {
     });
   }
 
-  async getRulesetItem(rulesetId: string, itemId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
-
-      // Template inheritance: if item has a sourceItemId, inherit properties and
-      // requirements from the template. Own properties override template ones of
-      // the same type; requirements are additive.
-      const modifiers = rulesetData.modifiersBySource.get(item.id) ?? [];
-      const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
-      const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
-      const templateProperties = item.sourceItemId ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []) : [];
-      const templateRequirements = item.sourceItemId
-        ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
-        : [];
-
-      const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
-      const properties = [...templateProperties.filter((p) => !ownPropertyTypes.has(p.type)), ...ownProperties];
-      const requirements = [...templateRequirements, ...ownRequirements];
-
-      return { ...item, modifiers, properties, requirements };
-    });
-  }
-
   async getRulesetTemplates(rulesetId: string, type?: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       return await Items.findTemplates(db, { rulesetId, ancestorRulesetIds: sourceChain, type });
     });
-  }
-
-  async createRulesetItem(session: Session, rulesetId: string, body: ItemBody) {
-    return await this.addRulesetItem(session, rulesetId, body);
-  }
-
-  async duplicateRulesetItem(session: Session, rulesetId: string, sourceItemId: string, body: ItemBody) {
-    return await this.addRulesetItem(session, rulesetId, body, sourceItemId);
   }
 
   async bulkCreateVariants(
@@ -300,6 +292,14 @@ class ItemsService {
     });
     invalidateRuleset(rulesetId);
     return result;
+  }
+
+  async createRulesetItem(session: Session, rulesetId: string, body: ItemBody) {
+    return await this.addRulesetItem(session, rulesetId, body);
+  }
+
+  async duplicateRulesetItem(session: Session, rulesetId: string, sourceItemId: string, body: ItemBody) {
+    return await this.addRulesetItem(session, rulesetId, body, sourceItemId);
   }
 
   async updateRulesetItem(session: Session, rulesetId: string, itemId: string, body: ItemBody) {

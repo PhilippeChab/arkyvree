@@ -9,6 +9,22 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
     super(rulesetExtensionsInRules);
   }
 
+  async findByRulesetId(db: Db, where: { rulesetId: string }) {
+    return await db
+      .select({
+        rulesetId: this.table.rulesetId,
+        extensionId: this.table.extensionId,
+        subscribedAt: this.table.createdAt,
+        updatedAt: this.table.updatedAt,
+        extensionName: rulesetsInRules.name,
+        extensionDescription: rulesetsInRules.description,
+        extensionUpdatedAt: rulesetsInRules.updatedAt,
+      })
+      .from(this.table)
+      .innerJoin(rulesetsInRules, eq(this.table.extensionId, rulesetsInRules.id))
+      .where(and(eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)));
+  }
+
   async upsert(db: Db, values: { rulesetId: string; extensionId: string }) {
     return await db
       .insert(this.table)
@@ -35,22 +51,6 @@ class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtension
         ),
       )
       .returning();
-  }
-
-  async findByRulesetId(db: Db, where: { rulesetId: string }) {
-    return await db
-      .select({
-        rulesetId: this.table.rulesetId,
-        extensionId: this.table.extensionId,
-        subscribedAt: this.table.createdAt,
-        updatedAt: this.table.updatedAt,
-        extensionName: rulesetsInRules.name,
-        extensionDescription: rulesetsInRules.description,
-        extensionUpdatedAt: rulesetsInRules.updatedAt,
-      })
-      .from(this.table)
-      .innerJoin(rulesetsInRules, eq(this.table.extensionId, rulesetsInRules.id))
-      .where(and(eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)));
   }
 }
 

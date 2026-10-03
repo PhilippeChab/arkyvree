@@ -6,8 +6,6 @@ import { capitalize } from "@/shared/utils.ts";
 import { getTargetPathsWithLabels, validatePath } from "./targetPaths.ts";
 
 class TargetPathsService {
-  readonly validatePath = validatePath;
-
   /**
    * Get completion suggestions for a partial path (paginated).
    * Uses cached paths+labels so subsequent calls are instant.
@@ -200,6 +198,8 @@ class TargetPathsService {
 
     return { ...pageOf(filtered, { limit, page }), segmentLabels };
   }
+
+  readonly validatePath = validatePath;
 }
 
 export default new TargetPathsService();

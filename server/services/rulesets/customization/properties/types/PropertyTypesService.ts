@@ -31,69 +31,6 @@ class PropertyTypesService {
   }
 
   /**
-   * Get all available property types (static + custom)
-   */
-  async getPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
-    const staticTypes = await this.getStaticPropertyTypes(rulesetId, entityType);
-    const customTypes = await this.getCustomPropertyTypes(rulesetId, entityType);
-
-    return [...staticTypes, ...customTypes];
-  }
-
-  /**
-   * Get static property types via ruleset-specific provider
-   */
-  async getStaticPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
-    const provider = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createPropertyTypes());
-    const types = provider.getStaticPropertyTypes(entityType);
-
-    return Object.entries(types).map(([value, description]) => ({
-      value,
-      isStatic: true,
-      description,
-    }));
-  }
-
-  /**
-   * Get custom property types composed from the ruleset (chain + COW).
-   * Aggregated by (type, entityType) with usage count = number of rows
-   * that share that pair across the resolved properties.
-   */
-  async getCustomPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      return this.countPropertyTypes(rulesetData, entityType).map((c): PropertyType => ({
-        value: c.type,
-        isStatic: false,
-        entityType: c.entityType,
-        usageCount: c.count,
-      }));
-    });
-  }
-
-  /**
-   * Search property types by query
-   */
-  async searchPropertyTypes(
-    rulesetId: string,
-    query: string,
-    entityType?: PropertyEntityType,
-  ): Promise<PropertyType[]> {
-    const lowercaseQuery = query.toLowerCase();
-
-    const staticTypes = (await this.getStaticPropertyTypes(rulesetId, entityType)).filter(
-      (type) =>
-        type.value.toLowerCase().includes(lowercaseQuery) ||
-        (type.description && type.description.toLowerCase().includes(lowercaseQuery)),
-    );
-
-    const customTypes = (await this.getCustomPropertyTypes(rulesetId, entityType)).filter((type) =>
-      type.value.toLowerCase().includes(lowercaseQuery),
-    );
-
-    return [...staticTypes, ...customTypes];
-  }
-
-  /**
    * Get property type completions for autocomplete. Engine types come from the
    * per-baseRules provider; custom types come from `rulesetData` (composed
    * across the ruleset chain with COW resolution). Pagination is in-memory.
@@ -138,6 +75,46 @@ class PropertyTypesService {
   }
 
   /**
+   * Get custom property types composed from the ruleset (chain + COW).
+   * Aggregated by (type, entityType) with usage count = number of rows
+   * that share that pair across the resolved properties.
+   */
+  async getCustomPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      return this.countPropertyTypes(rulesetData, entityType).map((c): PropertyType => ({
+        value: c.type,
+        isStatic: false,
+        entityType: c.entityType,
+        usageCount: c.count,
+      }));
+    });
+  }
+
+  /**
+   * Get all available property types (static + custom)
+   */
+  async getPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
+    const staticTypes = await this.getStaticPropertyTypes(rulesetId, entityType);
+    const customTypes = await this.getCustomPropertyTypes(rulesetId, entityType);
+
+    return [...staticTypes, ...customTypes];
+  }
+
+  /**
+   * Get static property types via ruleset-specific provider
+   */
+  async getStaticPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
+    const provider = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createPropertyTypes());
+    const types = provider.getStaticPropertyTypes(entityType);
+
+    return Object.entries(types).map(([value, description]) => ({
+      value,
+      isStatic: true,
+      description,
+    }));
+  }
+
+  /**
    * Get value completions for a given property type. Engine values come from
    * the per-baseRules provider; custom values come from `rulesetData`
    * (composed across the ruleset chain). Pagination is in-memory.
@@ -177,6 +154,29 @@ class PropertyTypesService {
 
       return pageOf([...engineCompletions, ...customCompletions], pagination);
     });
+  }
+
+  /**
+   * Search property types by query
+   */
+  async searchPropertyTypes(
+    rulesetId: string,
+    query: string,
+    entityType?: PropertyEntityType,
+  ): Promise<PropertyType[]> {
+    const lowercaseQuery = query.toLowerCase();
+
+    const staticTypes = (await this.getStaticPropertyTypes(rulesetId, entityType)).filter(
+      (type) =>
+        type.value.toLowerCase().includes(lowercaseQuery) ||
+        (type.description && type.description.toLowerCase().includes(lowercaseQuery)),
+    );
+
+    const customTypes = (await this.getCustomPropertyTypes(rulesetId, entityType)).filter((type) =>
+      type.value.toLowerCase().includes(lowercaseQuery),
+    );
+
+    return [...staticTypes, ...customTypes];
   }
 }
 

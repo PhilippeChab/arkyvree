@@ -10,6 +10,34 @@ class RequirementsRepository extends BaseRepository<typeof requirementsInCustomi
     super(requirementsInCustomization);
   }
 
+  async findManyByEntity(db: Db, where: { entityIds: string[]; entityType: string }) {
+    return await db.query.requirementsInCustomization.findMany({
+      where: and(
+        inArray(this.table.entityId, where.entityIds),
+        eq(this.table.entityType, where.entityType),
+        isNull(this.table.deletedAt),
+      ),
+    });
+  }
+
+  async findManyByEntityIds(db: Db, where: { entityIds: string[] }) {
+    if (where.entityIds.length === 0) return [];
+    return await db.query.requirementsInCustomization.findMany({
+      where: and(inArray(this.table.entityId, where.entityIds), isNull(this.table.deletedAt)),
+    });
+  }
+
+  async findOne(db: Db, where: { id: string } | { id: string; entityId: string; entityType: string }) {
+    return await db.query.requirementsInCustomization.findFirst({
+      where: this.where([
+        eq(this.table.id, where.id),
+        "entityId" in where && eq(this.table.entityId, where.entityId),
+        "entityType" in where && eq(this.table.entityType, where.entityType),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+  }
+
   async create(db: Db, values: InferInsertModel<typeof requirementsInCustomization>) {
     return await db.insert(this.table).values(values).returning();
   }
@@ -54,34 +82,6 @@ class RequirementsRepository extends BaseRepository<typeof requirementsInCustomi
         ]),
       )
       .returning();
-  }
-
-  async findOne(db: Db, where: { id: string } | { id: string; entityId: string; entityType: string }) {
-    return await db.query.requirementsInCustomization.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        "entityId" in where && eq(this.table.entityId, where.entityId),
-        "entityType" in where && eq(this.table.entityType, where.entityType),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
-  async findManyByEntity(db: Db, where: { entityIds: string[]; entityType: string }) {
-    return await db.query.requirementsInCustomization.findMany({
-      where: and(
-        inArray(this.table.entityId, where.entityIds),
-        eq(this.table.entityType, where.entityType),
-        isNull(this.table.deletedAt),
-      ),
-    });
-  }
-
-  async findManyByEntityIds(db: Db, where: { entityIds: string[] }) {
-    if (where.entityIds.length === 0) return [];
-    return await db.query.requirementsInCustomization.findMany({
-      where: and(inArray(this.table.entityId, where.entityIds), isNull(this.table.deletedAt)),
-    });
   }
 }
 

@@ -25,6 +25,68 @@ import { generateVerificationCode, timingSafeCompare } from "@/server/services/a
 import type { Session } from "@/shared/relations.ts";
 
 class AccountService {
+  async setPassword(session: Session, newPassword: string) {
+    return await withTransaction(async (tx) => {
+      const user = await Users.findOne(tx, { id: session.userId });
+      if (!user) throw new InternalError("User not found");
+
+      if (user.passwordDigest) {
+        throw new BadRequestError("Password already set. Use change password instead.");
+      }
+
+      const newHash = await hashPassword(newPassword);
+      await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: session.userId,
+        targetTable: getTableName(usersInAccount),
+        type: "setPassword",
+      });
+
+      return { success: true };
+    });
+  }
+
+  async updatePassword(session: Session, currentPassword: string, newPassword: string) {
+    return await withTransaction(async (tx) => {
+      const user = await Users.findOne(tx, { id: session.userId });
+      if (!user) throw new InternalError("User not found");
+
+      if (!user.passwordDigest) {
+        throw new BadRequestError("Set a password first");
+      }
+
+      // Verify current password
+      const { verified } = await verifyPassword(currentPassword, user.passwordDigest);
+      if (!verified) {
+        throw new UnauthorizedError("Current password is incorrect");
+      }
+
+      // Ensure new password is different
+      const { verified: sameAsOld } = await verifyPassword(newPassword, user.passwordDigest);
+      if (sameAsOld) {
+        throw new BadRequestError("New password must be different from current password");
+      }
+
+      // Update password
+      const newHash = await hashPassword(newPassword);
+      const rows = await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
+      const updatedUser = rows[0];
+      if (!updatedUser) throw new InternalError("Failed to update password");
+      await Sessions.archiveAllForUser(tx, { userId: session.userId, exceptId: session.id });
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: session.userId,
+        targetTable: getTableName(usersInAccount),
+        type: "updatePassword",
+      });
+
+      return { success: true };
+    });
+  }
+
   async updateProfile(session: Session, username: string | undefined, emailAddress: string | undefined) {
     const { safeUser, emailChangeCode, newEmailAddress } = await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
@@ -93,6 +155,114 @@ class AccountService {
     return safeUser;
   }
 
+  async deleteAccount(session: Session, password: string | undefined) {
+    const userId = session.userId;
+
+    // Password check first — outside the tx so a bad password doesn't
+    // roll back an otherwise-clean state.
+    const user = await Users.findOne(db, { id: userId });
+    if (!user) throw new InternalError("User not found");
+
+    if (user.passwordDigest) {
+      if (!password) {
+        throw new BadRequestError("Password is required");
+      }
+      const { verified } = await verifyPassword(password, user.passwordDigest);
+      if (!verified) {
+        throw new UnauthorizedError("Incorrect password");
+      }
+    }
+
+    return await withTransaction(async (tx) => {
+      // Drop polymorphic attachment rows for the user + their characters so
+      // the sweep can reclaim S3 objects. archive() leaves rows in place, so
+      // without this the avatar + every portrait leak forever.
+      const characterIds = await Characters.findIdsByUserIds(tx, { userIds: [userId] });
+      await purgeAttachmentsForRecords(tx, "User", [userId]);
+      await purgeAttachmentsForRecords(tx, "Character", characterIds);
+
+      await Rulesets.orphanByUser(tx, { userId });
+      await Characters.archiveAllForUser(tx, { userId });
+      await Players.archiveAllForUser(tx, { userId });
+      await Invites.archiveAllForUser(tx, { userId });
+      await StarredRulesets.archiveAllForUser(tx, { userId });
+      await Sessions.archiveAllForUser(tx, { userId });
+      await EmailVerifications.archiveAllForUser(tx, { userId });
+      await PasswordResets.archiveAllForUser(tx, { userId });
+      await OauthAccounts.archiveAllForUser(tx, { userId });
+
+      await Users.archive(tx, { id: userId });
+
+      await Activities.create(tx, {
+        userId,
+        targetId: userId,
+        targetTable: getTableName(usersInAccount),
+        type: "deleteAccount",
+      });
+
+      return { success: true };
+    });
+  }
+
+  async cancelEmailChange(session: Session) {
+    return await withTransaction(async (tx) => {
+      const user = await Users.findOne(tx, { id: session.userId });
+      if (!user) throw new InternalError("User not found");
+
+      await Users.update(tx, { pendingEmailAddress: null }, { id: user.id });
+      await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
+
+      await Activities.create(tx, {
+        userId: user.id,
+        targetId: user.id,
+        targetTable: getTableName(usersInAccount),
+        type: "cancelEmailChange",
+      });
+    });
+  }
+
+  async completeOnboarding(session: Session) {
+    await withTransaction(async (tx) => {
+      await Users.update(tx, { onboardingCompletedAt: new Date().toISOString() }, { id: session.userId });
+    });
+  }
+
+  async resendEmailChange(session: Session) {
+    const { code, pendingEmailAddress } = await withTransaction(async (tx) => {
+      const user = await Users.findOne(tx, { id: session.userId });
+      if (!user) throw new InternalError("User not found");
+
+      if (!user.pendingEmailAddress) {
+        throw new BadRequestError("No pending email change");
+      }
+
+      const existing = await EmailVerifications.findOne(tx, { userId: user.id });
+      if (existing) {
+        const elapsed = Date.now() - new Date(existing.createdAt).getTime();
+        if (elapsed < 5 * 60 * 1000) {
+          throw new BadRequestError("Please wait before requesting a new code");
+        }
+      }
+
+      await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
+
+      const code = generateVerificationCode();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+      await EmailVerifications.create(tx, { userId: user.id, code, expiresAt });
+
+      return { code, pendingEmailAddress: user.pendingEmailAddress };
+    });
+
+    await emailService.send({
+      to: pendingEmailAddress,
+      subject: "Confirm your new email",
+      template: EmailTemplate.EmailChangeVerification,
+      props: { code },
+    });
+
+    return { success: true };
+  }
+
   async verifyEmailChange(session: Session, code: string) {
     const safeUser = await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
@@ -144,176 +314,6 @@ class AccountService {
     });
 
     return safeUser;
-  }
-
-  async cancelEmailChange(session: Session) {
-    return await withTransaction(async (tx) => {
-      const user = await Users.findOne(tx, { id: session.userId });
-      if (!user) throw new InternalError("User not found");
-
-      await Users.update(tx, { pendingEmailAddress: null }, { id: user.id });
-      await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
-
-      await Activities.create(tx, {
-        userId: user.id,
-        targetId: user.id,
-        targetTable: getTableName(usersInAccount),
-        type: "cancelEmailChange",
-      });
-    });
-  }
-
-  async resendEmailChange(session: Session) {
-    const { code, pendingEmailAddress } = await withTransaction(async (tx) => {
-      const user = await Users.findOne(tx, { id: session.userId });
-      if (!user) throw new InternalError("User not found");
-
-      if (!user.pendingEmailAddress) {
-        throw new BadRequestError("No pending email change");
-      }
-
-      const existing = await EmailVerifications.findOne(tx, { userId: user.id });
-      if (existing) {
-        const elapsed = Date.now() - new Date(existing.createdAt).getTime();
-        if (elapsed < 5 * 60 * 1000) {
-          throw new BadRequestError("Please wait before requesting a new code");
-        }
-      }
-
-      await EmailVerifications.archiveAllForUser(tx, { userId: user.id });
-
-      const code = generateVerificationCode();
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-      await EmailVerifications.create(tx, { userId: user.id, code, expiresAt });
-
-      return { code, pendingEmailAddress: user.pendingEmailAddress };
-    });
-
-    await emailService.send({
-      to: pendingEmailAddress,
-      subject: "Confirm your new email",
-      template: EmailTemplate.EmailChangeVerification,
-      props: { code },
-    });
-
-    return { success: true };
-  }
-
-  async updatePassword(session: Session, currentPassword: string, newPassword: string) {
-    return await withTransaction(async (tx) => {
-      const user = await Users.findOne(tx, { id: session.userId });
-      if (!user) throw new InternalError("User not found");
-
-      if (!user.passwordDigest) {
-        throw new BadRequestError("Set a password first");
-      }
-
-      // Verify current password
-      const { verified } = await verifyPassword(currentPassword, user.passwordDigest);
-      if (!verified) {
-        throw new UnauthorizedError("Current password is incorrect");
-      }
-
-      // Ensure new password is different
-      const { verified: sameAsOld } = await verifyPassword(newPassword, user.passwordDigest);
-      if (sameAsOld) {
-        throw new BadRequestError("New password must be different from current password");
-      }
-
-      // Update password
-      const newHash = await hashPassword(newPassword);
-      const rows = await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
-      const updatedUser = rows[0];
-      if (!updatedUser) throw new InternalError("Failed to update password");
-      await Sessions.archiveAllForUser(tx, { userId: session.userId, exceptId: session.id });
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: session.userId,
-        targetTable: getTableName(usersInAccount),
-        type: "updatePassword",
-      });
-
-      return { success: true };
-    });
-  }
-
-  async setPassword(session: Session, newPassword: string) {
-    return await withTransaction(async (tx) => {
-      const user = await Users.findOne(tx, { id: session.userId });
-      if (!user) throw new InternalError("User not found");
-
-      if (user.passwordDigest) {
-        throw new BadRequestError("Password already set. Use change password instead.");
-      }
-
-      const newHash = await hashPassword(newPassword);
-      await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: session.userId,
-        targetTable: getTableName(usersInAccount),
-        type: "setPassword",
-      });
-
-      return { success: true };
-    });
-  }
-
-  async completeOnboarding(session: Session) {
-    await withTransaction(async (tx) => {
-      await Users.update(tx, { onboardingCompletedAt: new Date().toISOString() }, { id: session.userId });
-    });
-  }
-
-  async deleteAccount(session: Session, password: string | undefined) {
-    const userId = session.userId;
-
-    // Password check first — outside the tx so a bad password doesn't
-    // roll back an otherwise-clean state.
-    const user = await Users.findOne(db, { id: userId });
-    if (!user) throw new InternalError("User not found");
-
-    if (user.passwordDigest) {
-      if (!password) {
-        throw new BadRequestError("Password is required");
-      }
-      const { verified } = await verifyPassword(password, user.passwordDigest);
-      if (!verified) {
-        throw new UnauthorizedError("Incorrect password");
-      }
-    }
-
-    return await withTransaction(async (tx) => {
-      // Drop polymorphic attachment rows for the user + their characters so
-      // the sweep can reclaim S3 objects. archive() leaves rows in place, so
-      // without this the avatar + every portrait leak forever.
-      const characterIds = await Characters.findIdsByUserIds(tx, { userIds: [userId] });
-      await purgeAttachmentsForRecords(tx, "User", [userId]);
-      await purgeAttachmentsForRecords(tx, "Character", characterIds);
-
-      await Rulesets.orphanByUser(tx, { userId });
-      await Characters.archiveAllForUser(tx, { userId });
-      await Players.archiveAllForUser(tx, { userId });
-      await Invites.archiveAllForUser(tx, { userId });
-      await StarredRulesets.archiveAllForUser(tx, { userId });
-      await Sessions.archiveAllForUser(tx, { userId });
-      await EmailVerifications.archiveAllForUser(tx, { userId });
-      await PasswordResets.archiveAllForUser(tx, { userId });
-      await OauthAccounts.archiveAllForUser(tx, { userId });
-
-      await Users.archive(tx, { id: userId });
-
-      await Activities.create(tx, {
-        userId,
-        targetId: userId,
-        targetTable: getTableName(usersInAccount),
-        type: "deleteAccount",
-      });
-
-      return { success: true };
-    });
   }
 }
 

@@ -10,6 +10,44 @@ class PropertiesRepository extends BaseRepository<typeof propertiesInCustomizati
     super(propertiesInCustomization);
   }
 
+  async findManyByEntity(
+    db: Db,
+    where:
+      | { entityIds: string[]; entityType: string }
+      | {
+          entityIds: string[];
+          entityType: string;
+          type: string;
+        },
+  ) {
+    return await db.query.propertiesInCustomization.findMany({
+      where: this.where([
+        "type" in where && eq(this.table.type, where.type),
+        inArray(this.table.entityId, where.entityIds),
+        eq(this.table.entityType, where.entityType),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+  }
+
+  async findManyByEntityIds(db: Db, where: { entityIds: string[] }) {
+    if (where.entityIds.length === 0) return [];
+    return await db.query.propertiesInCustomization.findMany({
+      where: and(inArray(this.table.entityId, where.entityIds), isNull(this.table.deletedAt)),
+    });
+  }
+
+  async findOne(db: Db, where: { id: string } | { id: string; entityId: string; entityType: string }) {
+    return await db.query.propertiesInCustomization.findFirst({
+      where: this.where([
+        eq(this.table.id, where.id),
+        "entityId" in where && eq(this.table.entityId, where.entityId),
+        "entityType" in where && eq(this.table.entityType, where.entityType),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+  }
+
   async create(db: Db, values: InferInsertModel<typeof propertiesInCustomization>) {
     return await db.insert(this.table).values(values).returning();
   }
@@ -59,44 +97,6 @@ class PropertiesRepository extends BaseRepository<typeof propertiesInCustomizati
         ]),
       )
       .returning();
-  }
-
-  async findOne(db: Db, where: { id: string } | { id: string; entityId: string; entityType: string }) {
-    return await db.query.propertiesInCustomization.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        "entityId" in where && eq(this.table.entityId, where.entityId),
-        "entityType" in where && eq(this.table.entityType, where.entityType),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
-  async findManyByEntity(
-    db: Db,
-    where:
-      | { entityIds: string[]; entityType: string }
-      | {
-          entityIds: string[];
-          entityType: string;
-          type: string;
-        },
-  ) {
-    return await db.query.propertiesInCustomization.findMany({
-      where: this.where([
-        "type" in where && eq(this.table.type, where.type),
-        inArray(this.table.entityId, where.entityIds),
-        eq(this.table.entityType, where.entityType),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
-  async findManyByEntityIds(db: Db, where: { entityIds: string[] }) {
-    if (where.entityIds.length === 0) return [];
-    return await db.query.propertiesInCustomization.findMany({
-      where: and(inArray(this.table.entityId, where.entityIds), isNull(this.table.deletedAt)),
-    });
   }
 }
 

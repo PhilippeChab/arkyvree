@@ -21,6 +21,18 @@ import type { Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
 class SkillsService {
+  async getRulesetSkill(rulesetId: string, skillId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
+
+      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+      const properties = rulesetData.propertiesByEntity.get(skill.id) ?? [];
+      const [enriched] = hooks.skills.enrichWithProperties([skill], properties);
+      return enriched;
+    });
+  }
+
   async getRulesetSkills(
     rulesetId: string,
     where: {
@@ -52,18 +64,6 @@ class SkillsService {
         ...result,
         items: hooks.skills.enrichWithProperties(result.items, properties),
       };
-    });
-  }
-
-  async getRulesetSkill(rulesetId: string, skillId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
-
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-      const properties = rulesetData.propertiesByEntity.get(skill.id) ?? [];
-      const [enriched] = hooks.skills.enrichWithProperties([skill], properties);
-      return enriched;
     });
   }
 

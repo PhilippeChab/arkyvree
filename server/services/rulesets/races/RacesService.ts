@@ -20,6 +20,19 @@ import type { SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class RacesService {
+  async getRulesetRace(rulesetId: string, raceId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
+      return {
+        ...race,
+        modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
+        properties: rulesetData.propertiesByEntity.get(race.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
+      };
+    });
+  }
+
   async getRulesetRaces(
     rulesetId: string,
     where: {
@@ -34,19 +47,6 @@ class RacesService {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       return await Races.findManyByRulesetId(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-    });
-  }
-
-  async getRulesetRace(rulesetId: string, raceId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
-      return {
-        ...race,
-        modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
-        properties: rulesetData.propertiesByEntity.get(race.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
-      };
     });
   }
 

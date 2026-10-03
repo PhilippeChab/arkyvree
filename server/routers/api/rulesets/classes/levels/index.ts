@@ -8,6 +8,22 @@ import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/in
 
 export default new Hono<SessionContext>()
   .get(
+    "/:id/class_levels/:classLevelId",
+    zValidator("param", z.object({ id: z.string().uuid(), classLevelId: z.string().uuid() })),
+    async (c) => {
+      const { id, classLevelId } = c.req.valid("param");
+      return c.json(await ClassLevelsService.getClassLevelById(id, classLevelId), 200);
+    },
+  )
+  .get(
+    "/:id/classes/:classId/feat-pools",
+    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
+    async (c) => {
+      const { id, classId } = c.req.valid("param");
+      return c.json(await ClassLevelsService.getClassLevelFeatPools(id, classId), 200);
+    },
+  )
+  .get(
     "/:id/classes/:classId/levels",
     zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
     async (c) => {
@@ -21,38 +37,6 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classId, levelId } = c.req.valid("param");
       return c.json(await ClassLevelsService.getClassLevel(id, classId, levelId), 200);
-    },
-  )
-  .get(
-    "/:id/class_levels/:classLevelId",
-    zValidator("param", z.object({ id: z.string().uuid(), classLevelId: z.string().uuid() })),
-    async (c) => {
-      const { id, classLevelId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevelById(id, classLevelId), 200);
-    },
-  )
-  .get(
-    "/:id/classes/:classId/spells",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
-    async (c) => {
-      const { id, classId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevelSpells(id, classId), 200);
-    },
-  )
-  .get(
-    "/:id/classes/:classId/spells-known",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
-    async (c) => {
-      const { id, classId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevelSpellsKnown(id, classId), 200);
-    },
-  )
-  .get(
-    "/:id/classes/:classId/feat-pools",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
-    async (c) => {
-      const { id, classId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevelFeatPools(id, classId), 200);
     },
   )
   .get(
@@ -71,6 +55,22 @@ export default new Hono<SessionContext>()
       const { id, classId } = c.req.valid("param");
       const { limit, page, level, search } = c.req.valid("query");
       return c.json(await ClassLevelsService.getClassSpellList(id, classId, { level, search }, { limit, page }), 200);
+    },
+  )
+  .get(
+    "/:id/classes/:classId/spells",
+    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
+    async (c) => {
+      const { id, classId } = c.req.valid("param");
+      return c.json(await ClassLevelsService.getClassLevelSpells(id, classId), 200);
+    },
+  )
+  .get(
+    "/:id/classes/:classId/spells-known",
+    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
+    async (c) => {
+      const { id, classId } = c.req.valid("param");
+      return c.json(await ClassLevelsService.getClassLevelSpellsKnown(id, classId), 200);
     },
   )
   .post(

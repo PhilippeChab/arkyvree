@@ -33,98 +33,27 @@ class RulesetsRepository extends BaseRepository<typeof rulesetsInRules> {
     );
   }
 
-  async create(db: Db, values: InferInsertModel<typeof rulesetsInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof rulesetsInRules>>,
-    where: { id: string; expectedUpdatedAt?: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
+  async count(db: Db, where: { userId: string }) {
+    const [result] = await db
+      .select({ count: count() })
+      .from(rulesetsInRules)
       .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
-  }
+        and(
+          isNull(rulesetsInRules.deletedAt),
+          not(eq(rulesetsInRules.status, "Archived")),
+          or(
+            eq(rulesetsInRules.userId, where.userId),
+            and(
+              isNull(rulesetsInRules.userId),
+              isNull(rulesetsInRules.rulesetId),
+              eq(rulesetsInRules.status, "Published"),
+            ),
+            this.userIsActiveContributor(db, where.userId),
+          ),
+        ),
+      );
 
-  async archive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ status: "Archived", updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async unarchive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ status: "Draft", updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt), eq(this.table.status, "Archived")))
-      .returning();
-  }
-
-  async orphanByUser(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ userId: null, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async publish(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ status: "Published", updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async findManyByIds(db: Db, where: { ids: string[] }) {
-    return await db.query.rulesetsInRules.findMany({
-      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
-    });
-  }
-
-  async findSubscribers(db: Db, hostId: string) {
-    return await db.query.rulesetsInRules.findMany({
-      where: and(sql`${this.table.extensionRulesetIds} @> ARRAY[${hostId}]::uuid[]`, isNull(this.table.deletedAt)),
-    });
-  }
-
-  async hasSubscribers(db: Db, hostId: string): Promise<boolean> {
-    const [row] = await db
-      .select({ exists: sql<boolean>`true` })
-      .from(this.table)
-      .where(and(sql`${this.table.extensionRulesetIds} @> ARRAY[${hostId}]::uuid[]`, isNull(this.table.deletedAt)))
-      .limit(1);
-    return !!row;
-  }
-
-  async findOne(db: Db, where: { id: string } | { name: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
-    let condition;
-    if ("name" in where) {
-      condition = eq(this.table.name, where.name);
-    } else {
-      condition = eq(this.table.id, where.id);
-    }
-
-    return await db.query.rulesetsInRules.findFirst({
-      where: this.where([condition, this.visibility(visibility)]),
-    });
-  }
-
-  async findSystemOwned(db: Db) {
-    return await db.query.rulesetsInRules.findMany({
-      where: and(eq(this.table.system, true), isNull(this.table.deletedAt)),
-    });
+    return result.count;
   }
 
   async findMany(
@@ -343,27 +272,98 @@ class RulesetsRepository extends BaseRepository<typeof rulesetsInRules> {
     );
   }
 
-  async count(db: Db, where: { userId: string }) {
-    const [result] = await db
-      .select({ count: count() })
-      .from(rulesetsInRules)
-      .where(
-        and(
-          isNull(rulesetsInRules.deletedAt),
-          not(eq(rulesetsInRules.status, "Archived")),
-          or(
-            eq(rulesetsInRules.userId, where.userId),
-            and(
-              isNull(rulesetsInRules.userId),
-              isNull(rulesetsInRules.rulesetId),
-              eq(rulesetsInRules.status, "Published"),
-            ),
-            this.userIsActiveContributor(db, where.userId),
-          ),
-        ),
-      );
+  async findManyByIds(db: Db, where: { ids: string[] }) {
+    return await db.query.rulesetsInRules.findMany({
+      where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
+    });
+  }
 
-    return result.count;
+  async findOne(db: Db, where: { id: string } | { name: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
+    let condition;
+    if ("name" in where) {
+      condition = eq(this.table.name, where.name);
+    } else {
+      condition = eq(this.table.id, where.id);
+    }
+
+    return await db.query.rulesetsInRules.findFirst({
+      where: this.where([condition, this.visibility(visibility)]),
+    });
+  }
+
+  async findSubscribers(db: Db, hostId: string) {
+    return await db.query.rulesetsInRules.findMany({
+      where: and(sql`${this.table.extensionRulesetIds} @> ARRAY[${hostId}]::uuid[]`, isNull(this.table.deletedAt)),
+    });
+  }
+
+  async findSystemOwned(db: Db) {
+    return await db.query.rulesetsInRules.findMany({
+      where: and(eq(this.table.system, true), isNull(this.table.deletedAt)),
+    });
+  }
+
+  async hasSubscribers(db: Db, hostId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ exists: sql<boolean>`true` })
+      .from(this.table)
+      .where(and(sql`${this.table.extensionRulesetIds} @> ARRAY[${hostId}]::uuid[]`, isNull(this.table.deletedAt)))
+      .limit(1);
+    return !!row;
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof rulesetsInRules>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async update(
+    db: Db,
+    values: Partial<InferInsertModel<typeof rulesetsInRules>>,
+    where: { id: string; expectedUpdatedAt?: string },
+  ) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
+      .returning();
+  }
+
+  async archive(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ status: "Archived", updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async unarchive(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ status: "Draft", updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt), eq(this.table.status, "Archived")))
+      .returning();
+  }
+
+  async orphanByUser(db: Db, where: { userId: string }) {
+    return await db
+      .update(this.table)
+      .set({ userId: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async publish(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ status: "Published", updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
   }
 }
 

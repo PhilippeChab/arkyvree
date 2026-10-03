@@ -54,10 +54,6 @@ class CampaignInvitesService {
     return updatedInvite;
   }
 
-  async getUserInvites(userId: string) {
-    return await Invites.findMany(db, { userId }, { limit: 10 }, { campaign: true });
-  }
-
   // Single invite for the current user, any status. Used by the invite-accept
   // page so a stale link still resolves to "Already accepted" / "no longer
   // pending" copy instead of "Not found".
@@ -86,6 +82,10 @@ class CampaignInvitesService {
     await CampaignsPolicy.member(db, session, campaignId);
 
     return await Invites.findManyForCampaign(db, { campaignId, ...where }, pagination);
+  }
+
+  async getUserInvites(userId: string) {
+    return await Invites.findMany(db, { userId }, { limit: 10 }, { campaign: true });
   }
 
   async acceptCampaignInvite(session: Session, inviteId: string) {

@@ -49,10 +49,6 @@ class CharacterContributorsService {
     return updated;
   }
 
-  async getUserContributorInvites(userId: string) {
-    return await CharacterContributors.findManyByUserId(db, { userId, status: "Pending" }, { limit: 10 });
-  }
-
   // Single invite for the current user, any status. Used by the invite-accept
   // page so a stale link still resolves to "Already accepted" / "no longer
   // pending" copy instead of "Not found".
@@ -94,6 +90,26 @@ class CharacterContributorsService {
       ? { id: ownerUser.id, username: ownerUser.username, emailAddress: ownerUser.emailAddress }
       : null;
     return { ...paginated, owner };
+  }
+
+  async getUserContributorInvites(userId: string) {
+    return await CharacterContributors.findManyByUserId(db, { userId, status: "Pending" }, { limit: 10 });
+  }
+
+  async acceptContributorInvite(session: Session, contributorId: string) {
+    return await withTransaction(async (tx) => {
+      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
+
+      const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
+      if (!character) {
+        throw new NotFoundError("Character not found");
+      }
+      if (character.deletedAt) {
+        throw new ConflictError("This character has been archived and can no longer be edited");
+      }
+
+      return await this.answerInvite(tx, session, contributor, character.name, "Active");
+    });
   }
 
   async inviteContributor(session: Session, characterId: string, email: string) {
@@ -189,19 +205,34 @@ class CharacterContributorsService {
     return contributor;
   }
 
-  async acceptContributorInvite(session: Session, contributorId: string) {
+  async leaveCharacter(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
-
-      const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
-      if (!character) {
+      const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
+      if (!character || character.kind !== "pc") {
         throw new NotFoundError("Character not found");
       }
-      if (character.deletedAt) {
-        throw new ConflictError("This character has been archived and can no longer be edited");
+
+      const contributor = await CharacterContributors.findOne(tx, {
+        characterId,
+        userId: session.userId,
+        status: "Active",
+      });
+      if (!contributor) {
+        throw new NotFoundError("You are not a contributor of this character");
       }
 
-      return await this.answerInvite(tx, session, contributor, character.name, "Active");
+      const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributor.id });
+      const updated = rows[0];
+
+      await createActivityWithNotifications(tx, {
+        userId: session.userId,
+        targetId: updated.id,
+        targetTable: getTableName(contributorsInCharacter),
+        type: "leaveCharacter",
+        data: { characterId, characterName: character.name },
+      });
+
+      return updated;
     });
   }
 
@@ -243,37 +274,6 @@ class CharacterContributorsService {
         targetTable: getTableName(contributorsInCharacter),
         type: "revokeCharacterContributor",
         data: { contributorId, prevStatus, characterId: contributor.characterId, characterName: character.name },
-      });
-
-      return updated;
-    });
-  }
-
-  async leaveCharacter(session: Session, characterId: string) {
-    return await withTransaction(async (tx) => {
-      const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!character || character.kind !== "pc") {
-        throw new NotFoundError("Character not found");
-      }
-
-      const contributor = await CharacterContributors.findOne(tx, {
-        characterId,
-        userId: session.userId,
-        status: "Active",
-      });
-      if (!contributor) {
-        throw new NotFoundError("You are not a contributor of this character");
-      }
-
-      const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributor.id });
-      const updated = rows[0];
-
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updated.id,
-        targetTable: getTableName(contributorsInCharacter),
-        type: "leaveCharacter",
-        data: { characterId, characterName: character.name },
       });
 
       return updated;

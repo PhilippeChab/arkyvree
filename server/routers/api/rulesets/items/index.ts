@@ -64,6 +64,14 @@ export default new Hono<SessionContext>()
     },
   )
   .get(
+    "/:id/items/:itemId",
+    zValidator("param", z.object({ id: z.string().uuid(), itemId: z.string().uuid() })),
+    async (c) => {
+      const { id, itemId } = c.req.valid("param");
+      return c.json(await ItemsService.getRulesetItem(id, itemId), 200);
+    },
+  )
+  .get(
     "/:id/templates",
     zValidator("param", idParam),
     zValidator(
@@ -76,14 +84,6 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const { type } = c.req.valid("query");
       return c.json(await ItemsService.getRulesetTemplates(id, type), 200);
-    },
-  )
-  .get(
-    "/:id/items/:itemId",
-    zValidator("param", z.object({ id: z.string().uuid(), itemId: z.string().uuid() })),
-    async (c) => {
-      const { id, itemId } = c.req.valid("param");
-      return c.json(await ItemsService.getRulesetItem(id, itemId), 200);
     },
   )
   .post("/:id/items", zValidator("param", idParam), zValidator("json", itemBodySchema), async (c) => {

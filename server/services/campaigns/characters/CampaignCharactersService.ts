@@ -22,94 +22,54 @@ import type { Session } from "@/shared/relations.ts";
 type VisibilityType = "Private" | "Public" | "Partial";
 
 class CampaignCharactersService {
-  async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: VisibilityType) {
-    return await withTransaction(async (tx) => {
-      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) {
-        throw new NotFoundError("Campaign not found");
-      }
-      new CampaignsPolicy(session, campaign).canModify();
+  async getCampaignCharacter(session: Session, campaignId: string, characterId: string) {
+    // Verify the requesting user is a campaign member
+    const member = await CampaignsPolicy.member(db, session, campaignId);
 
-      const player = await Players.findOne(tx, {
-        campaignId,
-        userId: session.userId,
-      });
-      if (!player) {
-        throw new NotFoundError("Player not found in this campaign");
-      }
+    const link = await PlayerCharacters.findOne(db, { characterId, campaignId });
+    if (!link) throw new NotFoundError("Character not found in this campaign");
 
-      const character = await Characters.findOne(tx, { id: characterId, userId: session.userId });
-      if (!character) {
-        throw new NotFoundError("Character not found");
-      }
-      if (character.kind !== "pc") {
-        throw new BadRequestError("Only player characters can be linked to a campaign");
-      }
-      // The campaign's exact ruleset: not a fork of it, nor its parent.
-      if (character.rulesetId !== campaign.rulesetId) {
-        throw new BadRequestError("Only characters built on the campaign's ruleset can be linked");
-      }
+    const isOwner = link.playerId === member.id;
+    const isGM = member.role === "Game Master";
 
-      const existingLink = await PlayerCharacters.findOne(tx, { characterId });
+    // Private characters are only visible to the owner and GMs
+    if (!isOwner && !isGM && link.visibility === "Private") {
+      throw new NotFoundError("Character not found in this campaign");
+    }
 
-      if (existingLink) {
-        throw new ConflictError(
-          existingLink.playerId === player.id
-            ? "Character already linked to this campaign"
-            : "Character is already linked to a campaign",
-        );
-      }
+    // Full character build for all visible cases (Public, Partial, owner, GM)
+    const character = await Characters.findOne(db, { id: characterId });
+    if (!character) throw new NotFoundError("Character not found");
 
-      const [linkedCharacter] = await PlayerCharacters.create(tx, {
-        playerId: player.id,
-        characterId,
-        visibility,
-      });
+    const isCharacterOwner = character.userId === session.userId;
+    const contributorRole = isCharacterOwner
+      ? null
+      : await CharacterContributors.findActiveRole(db, { userId: session.userId, characterId });
+    const canEdit = isCharacterOwner || contributorRole !== null;
 
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: characterId,
-        targetTable: getTableName(playerCharactersInCampaign),
-        type: "linkCharacter",
-        data: { campaignId, characterId, visibility },
-      });
+    // Partial visibility hides build details from incidental viewers. The
+    // link-slot owner, GM, and anyone with edit rights (character owner or
+    // active character contributor) always see the full sheet — they're not
+    // incidental viewers.
+    const isPartial = link.visibility === "Partial" && !isOwner && !isGM && !canEdit;
 
-      return linkedCharacter;
-    });
-  }
+    const rulesetModule = await RulesetFactory.fromRulesetId(character.rulesetId);
+    const detailedCharacter = rulesetModule.createDetailedCharacter(character);
+    await detailedCharacter.build();
 
-  async updateCharacterVisibility(
-    session: Session,
-    campaignId: string,
-    characterId: string,
-    visibility: VisibilityType,
-  ) {
-    return await withTransaction(async (tx) => {
-      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) {
-        throw new NotFoundError("Campaign not found");
-      }
-      new CampaignsPolicy(session, campaign).canModify();
+    const bondedByKind = isPartial ? {} : await loadBondedByKind(rulesetModule, character.id);
 
-      const player = await CampaignsPolicy.member(tx, session, campaignId);
-
-      const link = await PlayerCharacters.findOne(tx, { characterId });
-      if (!link || link.playerId !== player.id) {
-        throw new ForbiddenError("You do not own this character in this campaign");
-      }
-
-      const [updated] = await PlayerCharacters.update(tx, { visibility }, { playerId: player.id, characterId });
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: characterId,
-        targetTable: getTableName(playerCharactersInCampaign),
-        type: "updateCharacterVisibility",
-        data: { campaignId, characterId, visibility },
-      });
-
-      return updated;
-    });
+    return {
+      visibility: link.visibility as VisibilityType,
+      isOwner,
+      canEdit,
+      canDownloadPdf: canEdit || isGM,
+      isPartial,
+      canViewPrivateNotes: isGM || canEdit,
+      character,
+      detailedCharacter,
+      bondedByKind,
+    };
   }
 
   async getCampaignCharacters(
@@ -227,54 +187,38 @@ class CampaignCharactersService {
     );
   }
 
-  async getCampaignCharacter(session: Session, campaignId: string, characterId: string) {
-    // Verify the requesting user is a campaign member
-    const member = await CampaignsPolicy.member(db, session, campaignId);
+  async updateCharacterVisibility(
+    session: Session,
+    campaignId: string,
+    characterId: string,
+    visibility: VisibilityType,
+  ) {
+    return await withTransaction(async (tx) => {
+      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
+      if (!campaign) {
+        throw new NotFoundError("Campaign not found");
+      }
+      new CampaignsPolicy(session, campaign).canModify();
 
-    const link = await PlayerCharacters.findOne(db, { characterId, campaignId });
-    if (!link) throw new NotFoundError("Character not found in this campaign");
+      const player = await CampaignsPolicy.member(tx, session, campaignId);
 
-    const isOwner = link.playerId === member.id;
-    const isGM = member.role === "Game Master";
+      const link = await PlayerCharacters.findOne(tx, { characterId });
+      if (!link || link.playerId !== player.id) {
+        throw new ForbiddenError("You do not own this character in this campaign");
+      }
 
-    // Private characters are only visible to the owner and GMs
-    if (!isOwner && !isGM && link.visibility === "Private") {
-      throw new NotFoundError("Character not found in this campaign");
-    }
+      const [updated] = await PlayerCharacters.update(tx, { visibility }, { playerId: player.id, characterId });
 
-    // Full character build for all visible cases (Public, Partial, owner, GM)
-    const character = await Characters.findOne(db, { id: characterId });
-    if (!character) throw new NotFoundError("Character not found");
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: characterId,
+        targetTable: getTableName(playerCharactersInCampaign),
+        type: "updateCharacterVisibility",
+        data: { campaignId, characterId, visibility },
+      });
 
-    const isCharacterOwner = character.userId === session.userId;
-    const contributorRole = isCharacterOwner
-      ? null
-      : await CharacterContributors.findActiveRole(db, { userId: session.userId, characterId });
-    const canEdit = isCharacterOwner || contributorRole !== null;
-
-    // Partial visibility hides build details from incidental viewers. The
-    // link-slot owner, GM, and anyone with edit rights (character owner or
-    // active character contributor) always see the full sheet — they're not
-    // incidental viewers.
-    const isPartial = link.visibility === "Partial" && !isOwner && !isGM && !canEdit;
-
-    const rulesetModule = await RulesetFactory.fromRulesetId(character.rulesetId);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(character);
-    await detailedCharacter.build();
-
-    const bondedByKind = isPartial ? {} : await loadBondedByKind(rulesetModule, character.id);
-
-    return {
-      visibility: link.visibility as VisibilityType,
-      isOwner,
-      canEdit,
-      canDownloadPdf: canEdit || isGM,
-      isPartial,
-      canViewPrivateNotes: isGM || canEdit,
-      character,
-      detailedCharacter,
-      bondedByKind,
-    };
+      return updated;
+    });
   }
 
   async enqueueCampaignCharacterPdf(session: Session, campaignId: string, characterId: string) {
@@ -283,6 +227,62 @@ class CampaignCharactersService {
     if (!character) throw new NotFoundError("Character not found in this campaign");
 
     await enqueueCharacterPdf(session, character, campaignId);
+  }
+
+  async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: VisibilityType) {
+    return await withTransaction(async (tx) => {
+      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
+      if (!campaign) {
+        throw new NotFoundError("Campaign not found");
+      }
+      new CampaignsPolicy(session, campaign).canModify();
+
+      const player = await Players.findOne(tx, {
+        campaignId,
+        userId: session.userId,
+      });
+      if (!player) {
+        throw new NotFoundError("Player not found in this campaign");
+      }
+
+      const character = await Characters.findOne(tx, { id: characterId, userId: session.userId });
+      if (!character) {
+        throw new NotFoundError("Character not found");
+      }
+      if (character.kind !== "pc") {
+        throw new BadRequestError("Only player characters can be linked to a campaign");
+      }
+      // The campaign's exact ruleset: not a fork of it, nor its parent.
+      if (character.rulesetId !== campaign.rulesetId) {
+        throw new BadRequestError("Only characters built on the campaign's ruleset can be linked");
+      }
+
+      const existingLink = await PlayerCharacters.findOne(tx, { characterId });
+
+      if (existingLink) {
+        throw new ConflictError(
+          existingLink.playerId === player.id
+            ? "Character already linked to this campaign"
+            : "Character is already linked to a campaign",
+        );
+      }
+
+      const [linkedCharacter] = await PlayerCharacters.create(tx, {
+        playerId: player.id,
+        characterId,
+        visibility,
+      });
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: characterId,
+        targetTable: getTableName(playerCharactersInCampaign),
+        type: "linkCharacter",
+        data: { campaignId, characterId, visibility },
+      });
+
+      return linkedCharacter;
+    });
   }
 }
 

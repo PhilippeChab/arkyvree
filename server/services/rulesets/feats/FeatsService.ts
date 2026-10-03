@@ -20,6 +20,19 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
+  async getRulesetFeat(rulesetId: string, featId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
+      return {
+        ...feat,
+        modifiers: rulesetData.modifiersBySource.get(feat.id) ?? [],
+        properties: rulesetData.propertiesByEntity.get(feat.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(feat.id) ?? [],
+      };
+    });
+  }
+
   async getRulesetFeats(
     rulesetId: string,
     where: {
@@ -76,19 +89,6 @@ class FeatsService {
         { rulesetId, ancestorRulesetIds: sourceChain, aptitudeIds, excludeIds, ...where },
         pagination,
       );
-    });
-  }
-
-  async getRulesetFeat(rulesetId: string, featId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
-      return {
-        ...feat,
-        modifiers: rulesetData.modifiersBySource.get(feat.id) ?? [],
-        properties: rulesetData.propertiesByEntity.get(feat.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(feat.id) ?? [],
-      };
     });
   }
 

@@ -30,6 +30,15 @@ class NotificationsService {
     return { count, items: items.items };
   }
 
+  async markAllRead(session: Session) {
+    return await withTransaction(async (tx) => {
+      return await Notifications.markAllRead(tx, {
+        recipientId: session.userId,
+        excludeTypes: ACTIONABLE_TYPES,
+      });
+    });
+  }
+
   async markRead(session: Session, notificationId: string) {
     return await withTransaction(async (tx) => {
       const result = await Notifications.markRead(tx, {
@@ -40,15 +49,6 @@ class NotificationsService {
         throw new NotFoundError("Notification not found");
       }
       return result[0];
-    });
-  }
-
-  async markAllRead(session: Session) {
-    return await withTransaction(async (tx) => {
-      return await Notifications.markAllRead(tx, {
-        recipientId: session.userId,
-        excludeTypes: ACTIONABLE_TYPES,
-      });
     });
   }
 }

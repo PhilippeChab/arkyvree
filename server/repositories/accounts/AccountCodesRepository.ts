@@ -8,37 +8,6 @@ import BaseRepository from "@/server/repositories/BaseRepository.ts";
 class AccountCodesRepository extends BaseRepository<
   typeof emailVerificationsInAccount | typeof passwordResetsInAccount
 > {
-  async create(db: Db, values: { userId: string; code: string; expiresAt: string }) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async archive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async delete(db: Db, where: { id: string } | { expiresBefore: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        this.where([
-          "id" in where && eq(this.table.id, where.id),
-          "expiresBefore" in where && lt(this.table.expiresAt, where.expiresBefore),
-        ]),
-      );
-  }
-
-  async archiveAllForUser(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
   /** The user's latest code, or the one `id` names. */
   async findOne(db: Db, where: { userId: string } | { id: string }) {
     const codes = await db
@@ -54,6 +23,37 @@ class AccountCodesRepository extends BaseRepository<
       .orderBy(this.orderBy(this.table.createdAt, "desc"))
       .limit(1);
     return codes.at(0);
+  }
+
+  async create(db: Db, values: { userId: string; code: string; expiresAt: string }) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async archive(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async archiveAllForUser(db: Db, where: { userId: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async delete(db: Db, where: { id: string } | { expiresBefore: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.where([
+          "id" in where && eq(this.table.id, where.id),
+          "expiresBefore" in where && lt(this.table.expiresAt, where.expiresBefore),
+        ]),
+      );
   }
 }
 

@@ -19,20 +19,34 @@ import {
 
 class CharacterLevelsService {
   readonly getAttributeSlots = getAttributeSlots;
-  readonly getSkillSlots = getSkillSlots;
-  readonly getFeatSlots = getFeatSlots;
-  readonly getEditFeatSlots = getEditFeatSlots;
-  readonly getPowerSlots = getPowerSlots;
-  readonly getEditPowerSlots = getEditPowerSlots;
-  readonly getAvailableKlasses = getAvailableKlasses;
-  readonly getAvailablePowers = getAvailablePowers;
+
   readonly getAvailableFeats = getAvailableFeats;
+
   readonly getAvailableFeatsGrouped = getAvailableFeatsGrouped;
+
+  readonly getAvailableKlasses = getAvailableKlasses;
+
+  readonly getAvailablePowers = getAvailablePowers;
+
+  readonly getEditFeatSlots = getEditFeatSlots;
+
+  readonly getEditPowerSlots = getEditPowerSlots;
+
+  readonly getFeatSlots = getFeatSlots;
+
   readonly getLevel = getLevel;
-  readonly removeLevel = removeLevel;
-  readonly updateLevel = updateLevel;
-  readonly finalizeLevelUp = finalizeLevelUp;
+
   readonly getLevelUpPreview = getLevelUpPreview;
+
+  readonly getPowerSlots = getPowerSlots;
+
+  readonly getSkillSlots = getSkillSlots;
+
+  readonly updateLevel = updateLevel;
+
+  readonly removeLevel = removeLevel;
+
+  readonly finalizeLevelUp = finalizeLevelUp;
 }
 
 export default new CharacterLevelsService();

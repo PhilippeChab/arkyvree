@@ -13,53 +13,27 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules> 
     super(contributorsInRules);
   }
 
-  async create(
-    db: Db,
-    values: {
-      rulesetId: string;
-      email: string;
-      role: ContributorRole;
-      invitedBy: string;
-      userId?: string;
-    },
-  ) {
-    return await db
-      .insert(this.table)
-      .values({
-        rulesetId: values.rulesetId,
-        email: values.email,
-        role: values.role,
-        invitedBy: values.invitedBy,
-        userId: values.userId,
-      })
-      .returning();
-  }
-
-  async update(db: Db, values: Partial<InferInsertModel<typeof contributorsInRules>>, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async findOne(
-    db: Db,
-    where:
-      | { id: string }
-      | { rulesetId: string; userId: string; status: ContributorStatus }
-      | { rulesetId: string; email: string; status: ContributorStatus },
-  ) {
-    return await db.query.contributorsInRules.findFirst({
+  async findActiveByRulesetId(db: Db, where: { rulesetId: string }) {
+    return await db.query.contributorsInRules.findMany({
       where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-        "userId" in where && eq(this.table.userId, where.userId),
-        "email" in where && eq(this.table.email, where.email),
-        "status" in where && eq(this.table.status, where.status),
+        eq(this.table.rulesetId, where.rulesetId),
+        eq(this.table.status, "Active"),
         isNull(this.table.deletedAt),
       ]),
     });
+  }
+
+  async findActiveRole(db: Db, where: { userId: string; rulesetId: string }): Promise<ContributorRole | null> {
+    const contributor = await db.query.contributorsInRules.findFirst({
+      where: this.where([
+        eq(this.table.userId, where.userId),
+        eq(this.table.rulesetId, where.rulesetId),
+        eq(this.table.status, "Active"),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+
+    return contributor?.role ?? null;
   }
 
   async findMany(
@@ -109,19 +83,6 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules> 
     return this.paginated(items, pagination);
   }
 
-  async findActiveRole(db: Db, where: { userId: string; rulesetId: string }): Promise<ContributorRole | null> {
-    const contributor = await db.query.contributorsInRules.findFirst({
-      where: this.where([
-        eq(this.table.userId, where.userId),
-        eq(this.table.rulesetId, where.rulesetId),
-        eq(this.table.status, "Active"),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-
-    return contributor?.role ?? null;
-  }
-
   async findManyByUserId(
     db: Db,
     where: { userId: string; status: ContributorStatus },
@@ -143,6 +104,25 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules> 
     });
   }
 
+  async findOne(
+    db: Db,
+    where:
+      | { id: string }
+      | { rulesetId: string; userId: string; status: ContributorStatus }
+      | { rulesetId: string; email: string; status: ContributorStatus },
+  ) {
+    return await db.query.contributorsInRules.findFirst({
+      where: this.where([
+        "id" in where && eq(this.table.id, where.id),
+        "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+        "userId" in where && eq(this.table.userId, where.userId),
+        "email" in where && eq(this.table.email, where.email),
+        "status" in where && eq(this.table.status, where.status),
+        isNull(this.table.deletedAt),
+      ]),
+    });
+  }
+
   // Single invite for a specific user, any status. Caller is responsible for
   // scoping by userId so a stranger can't probe other people's invite ids.
   async findOneForUser(db: Db, where: { id: string; userId: string }) {
@@ -160,6 +140,28 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules> 
     });
   }
 
+  async create(
+    db: Db,
+    values: {
+      rulesetId: string;
+      email: string;
+      role: ContributorRole;
+      invitedBy: string;
+      userId?: string;
+    },
+  ) {
+    return await db
+      .insert(this.table)
+      .values({
+        rulesetId: values.rulesetId,
+        email: values.email,
+        role: values.role,
+        invitedBy: values.invitedBy,
+        userId: values.userId,
+      })
+      .returning();
+  }
+
   async backfillUserId(db: Db, email: string, userId: string) {
     return await db
       .update(this.table)
@@ -175,14 +177,12 @@ class ContributorsRepository extends BaseRepository<typeof contributorsInRules> 
       .returning();
   }
 
-  async findActiveByRulesetId(db: Db, where: { rulesetId: string }) {
-    return await db.query.contributorsInRules.findMany({
-      where: this.where([
-        eq(this.table.rulesetId, where.rulesetId),
-        eq(this.table.status, "Active"),
-        isNull(this.table.deletedAt),
-      ]),
-    });
+  async update(db: Db, values: Partial<InferInsertModel<typeof contributorsInRules>>, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
   }
 }
 

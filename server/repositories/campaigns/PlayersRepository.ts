@@ -10,46 +10,6 @@ class PlayersRepository extends BaseRepository<typeof playersInCampaign> {
     super(playersInCampaign);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof playersInCampaign>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(db: Db, values: Partial<InferInsertModel<typeof playersInCampaign>>, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  // Hard delete — used when intentionally removing a player from a campaign
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id));
-  }
-
-  async archiveAllForUser(db: Db, where: { userId: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async findOne(
-    db: Db,
-    where: { id: string } | { id: string; campaignId: string } | { userId: string; campaignId: string },
-    visibility: Visibility = Visibility.UnarchivedOnly,
-  ) {
-    return await db.query.playersInCampaign.findFirst({
-      where: this.where([
-        "id" in where && eq(this.table.id, where.id),
-        "campaignId" in where && eq(this.table.campaignId, where.campaignId),
-        "userId" in where && eq(this.table.userId, where.userId),
-        this.visibility(visibility),
-      ]),
-    });
-  }
-
   async findMany(
     db: Db,
     where: { campaignId: string } | { userId: string },
@@ -123,6 +83,46 @@ class PlayersRepository extends BaseRepository<typeof playersInCampaign> {
         offset,
       });
     });
+  }
+
+  async findOne(
+    db: Db,
+    where: { id: string } | { id: string; campaignId: string } | { userId: string; campaignId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    return await db.query.playersInCampaign.findFirst({
+      where: this.where([
+        "id" in where && eq(this.table.id, where.id),
+        "campaignId" in where && eq(this.table.campaignId, where.campaignId),
+        "userId" in where && eq(this.table.userId, where.userId),
+        this.visibility(visibility),
+      ]),
+    });
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof playersInCampaign>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async update(db: Db, values: Partial<InferInsertModel<typeof playersInCampaign>>, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  async archiveAllForUser(db: Db, where: { userId: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
+  // Hard delete — used when intentionally removing a player from a campaign
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 }
 
