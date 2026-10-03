@@ -24,24 +24,12 @@ import { Link } from "react-router-dom";
 import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 type ChangesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["changes"]["$get"], 200>;
 
 type Change = ChangesResponse[number];
-
-const ENTITY_TYPE_LABELS: Record<string, string> = {
-  abilities: "Abilities",
-  saves: "Saves",
-  skills: "Skills",
-  feats: "Feats",
-  powers: "Powers",
-  items: "Items",
-  races: "Races",
-  languages: "Languages",
-  klasses: "Classes",
-  aptitudes: "Aptitudes",
-};
 
 const CUSTOMIZABLE_TYPES = new Set(["feats", "powers", "items", "races"]);
 
@@ -61,10 +49,12 @@ interface OverridesDialogProps {
   open: boolean;
   onClose: () => void;
   rulesetId: string;
+  /** The ruleset's base rules, whose words name the entity types */
+  baseRules: string;
   canEdit?: boolean;
 }
 
-export function OverridesDialog({ open, onClose, rulesetId, canEdit = false }: OverridesDialogProps) {
+export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit = false }: OverridesDialogProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -128,7 +118,7 @@ export function OverridesDialog({ open, onClose, rulesetId, canEdit = false }: O
               <Paper key={entityType} variant="outlined" sx={{ overflow: "hidden" }}>
                 <Box sx={{ px: 2, py: 1, bgcolor: "action.hover", display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    {ENTITY_TYPE_LABELS[entityType] ?? entityType}
+                    {entityTypeLabel(entityType, baseRules, true)}
                   </Typography>
                   <Chip label={items.length} size="small" sx={{ height: 20, fontSize: "0.75rem" }} />
                 </Box>

@@ -20,9 +20,6 @@ interface SectionMap {
   ItemsSection: SectionComponent;
   PowersSection: SectionComponent;
   SkillsSection: SectionComponent;
-  labels: {
-    powers: string;
-  };
 }
 
 const rulesetSections: Record<BaseRules, SectionMap> = {
@@ -31,9 +28,6 @@ const rulesetSections: Record<BaseRules, SectionMap> = {
     ItemsSection,
     PowersSection: SpellsSection,
     SkillsSection,
-    labels: {
-      powers: "Spells",
-    },
   },
 };
 

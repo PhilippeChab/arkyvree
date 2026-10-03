@@ -62,6 +62,7 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   ArchiveRulesetDialog,
@@ -221,13 +222,19 @@ export default function RulesetDetailsPage() {
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
   type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => React.ReactNode };
   const tabConfig = useMemo((): TabConfig[] => {
-    const sections = getSections(baseRules ?? DEFAULT_BASE_RULES);
+    const rules = baseRules ?? DEFAULT_BASE_RULES;
+    const sections = getSections(rules);
     return [
       { key: "races", label: "Races", icon: RacesIcon, component: RacesSection },
       { key: "languages", label: "Languages", icon: LanguagesIcon, component: LanguagesSection },
       { key: "skills", label: "Skills", icon: SkillsIcon, component: sections.SkillsSection },
       { key: "feats", label: "Feats", icon: FeatsIcon, component: FeatsSection },
-      { key: "powers", label: sections.labels.powers, icon: PowersIcon, component: sections.PowersSection },
+      {
+        key: "powers",
+        label: entityTypeLabel("powers", rules, true),
+        icon: PowersIcon,
+        component: sections.PowersSection,
+      },
       { key: "items", label: "Items", icon: ItemsIcon, component: sections.ItemsSection },
       {
         key: "aptitudes",
@@ -589,6 +596,7 @@ export default function RulesetDetailsPage() {
               open={overridesDialogOpen}
               onClose={() => setOverridesDialogOpen(false)}
               rulesetId={ruleset.id}
+              baseRules={ruleset.baseRules}
               canEdit={canEditRuleset}
             />
 
