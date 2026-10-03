@@ -13,7 +13,7 @@ Why two apps: the worker is Flycast-only so it never has a public attack surface
 
 ## Waking the worker
 
-graphile-worker runs in the worker app. Jobs are enqueued from the web process via `SELECT graphile_worker.add_job(...)`. Enqueue-only is enough to queue a job, but it won't run while the worker is stopped. After every `add_job`, the web process calls `pingWorker()` (`server/queue.ts`) which does a fire-and-forget `fetch` to `http://arkyvree-worker.flycast:8001/health`. Fly Proxy routes the request, wakes the machine, graphile-worker polls and picks up the pending job.
+graphile-worker runs in the worker app. Jobs are enqueued from the web process with `addJob` (`server/queue.ts`, a `SELECT graphile_worker.add_job(...)`). Enqueue-only is enough to queue a job, but it won't run while the worker is stopped. After every `add_job`, the web process calls `pingWorker()` (`server/queue.ts`) which does a fire-and-forget `fetch` to `http://arkyvree-worker.flycast:8001/health`. Fly Proxy routes the request, wakes the machine, graphile-worker polls and picks up the pending job.
 
 `WORKER_FLYCAST_URL` env var controls the ping target. Unset in local/test → `pingWorker()` no-ops.
 

@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { contributorsInRules } from "@/drizzle/schema.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { emailService } from "@/server/emails";
 import { EmailTemplate } from "@/server/emails/templates.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
@@ -12,6 +12,47 @@ import BaseService from "@/server/services/BaseService.ts";
 import { getRulesetPolicy } from "@/server/services/rulesets/helpers.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
+
+/** The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists. */
+async function getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
+  const contributor = await Contributors.findOne(tx, { id: contributorId });
+  if (!contributor || contributor.userId !== session.userId) {
+    throw new NotFoundError("Contributor invite not found");
+  }
+  if (contributor.status !== "Pending") {
+    throw new ConflictError("Invite is no longer pending");
+  }
+  return contributor;
+}
+
+/** The invitee's answer: the invite's status, its notification read, and the activity its ruleset's managers are told of. */
+async function answerInvite(tx: Db, session: Session, contributorId: string, status: "Active" | "Rejected") {
+  const [updated] = await Contributors.update(tx, { status }, { id: contributorId });
+  await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributorId });
+  await createActivityWithNotifications(tx, {
+    userId: session.userId,
+    targetId: updated.id,
+    targetTable: getTableName(contributorsInRules),
+    type: status === "Active" ? "acceptContributorInvite" : "rejectContributorInvite",
+    data: { contributorId },
+  });
+  return updated;
+}
+
+/** A contributor the session's user may manage, with its ruleset and the policy that allowed it. */
+async function getManagedContributor(tx: Db, session: Session, contributorId: string) {
+  const contributor = await Contributors.findOne(tx, { id: contributorId });
+  if (!contributor) {
+    throw new NotFoundError("Contributor not found");
+  }
+  const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
+  if (!ruleset) {
+    throw new NotFoundError("Ruleset not found");
+  }
+  const policy = await getRulesetPolicy(tx, session, ruleset);
+  policy.canManageContributors();
+  return { contributor, ruleset, policy };
+}
 
 const ContributorsMethods = {
   async getUserContributorInvites(userId: string) {
@@ -162,18 +203,7 @@ const ContributorsMethods = {
 
   async acceptContributorInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await Contributors.findOne(tx, { id: contributorId });
-      if (!contributor) {
-        throw new NotFoundError("Contributor invite not found");
-      }
-
-      if (contributor.userId !== session.userId) {
-        throw new NotFoundError("Contributor invite not found");
-      }
-
-      if (contributor.status !== "Pending") {
-        throw new ConflictError("Invite is no longer pending");
-      }
+      const contributor = await getPendingInviteFor(tx, session, contributorId);
 
       const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
       if (!ruleset) {
@@ -183,69 +213,21 @@ const ContributorsMethods = {
         throw new ConflictError("This ruleset has been archived");
       }
 
-      const rows = await Contributors.update(tx, { status: "Active" }, { id: contributorId });
-      const updated = rows[0];
-
-      await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributorId });
-
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updated.id,
-        targetTable: getTableName(contributorsInRules),
-        type: "acceptContributorInvite",
-        data: { contributorId },
-      });
-
-      return updated;
+      return await answerInvite(tx, session, contributor.id, "Active");
     });
   },
 
   async rejectContributorInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await Contributors.findOne(tx, { id: contributorId });
-      if (!contributor) {
-        throw new NotFoundError("Contributor invite not found");
-      }
+      const contributor = await getPendingInviteFor(tx, session, contributorId);
 
-      if (contributor.userId !== session.userId) {
-        throw new NotFoundError("Contributor invite not found");
-      }
-
-      if (contributor.status !== "Pending") {
-        throw new ConflictError("Invite is no longer pending");
-      }
-
-      const rows = await Contributors.update(tx, { status: "Rejected" }, { id: contributorId });
-      const updated = rows[0];
-
-      await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributorId });
-
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updated.id,
-        targetTable: getTableName(contributorsInRules),
-        type: "rejectContributorInvite",
-        data: { contributorId },
-      });
-
-      return updated;
+      return await answerInvite(tx, session, contributor.id, "Rejected");
     });
   },
 
   async revokeContributor(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await Contributors.findOne(tx, { id: contributorId });
-      if (!contributor) {
-        throw new NotFoundError("Contributor not found");
-      }
-
-      const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-
-      const policy = await getRulesetPolicy(tx, session, ruleset);
-      policy.canManageContributors();
+      const { contributor, policy } = await getManagedContributor(tx, session, contributorId);
 
       if (contributor.role === "Admin") {
         policy.canManageAdminContributors();
@@ -273,18 +255,7 @@ const ContributorsMethods = {
 
   async updateContributorRole(session: Session, contributorId: string, role: ContributorRole) {
     return await withTransaction(async (tx) => {
-      const contributor = await Contributors.findOne(tx, { id: contributorId });
-      if (!contributor) {
-        throw new NotFoundError("Contributor not found");
-      }
-
-      const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-
-      const policy = await getRulesetPolicy(tx, session, ruleset);
-      policy.canManageContributors();
+      const { contributor, ruleset, policy } = await getManagedContributor(tx, session, contributorId);
 
       if (ruleset.status === "Archived") {
         throw new ConflictError("Cannot modify roles on an archived ruleset");

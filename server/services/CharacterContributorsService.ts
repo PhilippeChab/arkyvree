@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { contributorsInCharacter } from "@/drizzle/schema.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { emailService } from "@/server/emails";
 import { EmailTemplate } from "@/server/emails/templates.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
@@ -11,6 +11,38 @@ import { createActivityWithNotifications } from "@/server/services/activityNotif
 import BaseService from "@/server/services/BaseService.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
+
+/** The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists. */
+async function getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
+  const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
+  if (!contributor || contributor.userId !== session.userId) {
+    throw new NotFoundError("Contributor invite not found");
+  }
+  if (contributor.status !== "Pending") {
+    throw new ConflictError("Invite is no longer pending");
+  }
+  return contributor;
+}
+
+/** The invitee's answer: the invite's status, its notification read, and the activity its character's owner is told of. */
+async function answerInvite(
+  tx: Db,
+  session: Session,
+  contributor: { id: string; characterId: string },
+  characterName: string | undefined,
+  status: "Active" | "Rejected",
+) {
+  const [updated] = await CharacterContributors.update(tx, { status }, { id: contributor.id });
+  await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributor.id });
+  await createActivityWithNotifications(tx, {
+    userId: session.userId,
+    targetId: updated.id,
+    targetTable: getTableName(contributorsInCharacter),
+    type: status === "Active" ? "acceptCharacterContributorInvite" : "rejectCharacterContributorInvite",
+    data: { contributorId: contributor.id, characterId: contributor.characterId, characterName },
+  });
+  return updated;
+}
 
 const CharacterContributorsMethods = {
   async getUserContributorInvites(userId: string) {
@@ -155,18 +187,7 @@ const CharacterContributorsMethods = {
 
   async acceptContributorInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
-      if (!contributor) {
-        throw new NotFoundError("Contributor invite not found");
-      }
-
-      if (contributor.userId !== session.userId) {
-        throw new NotFoundError("Contributor invite not found");
-      }
-
-      if (contributor.status !== "Pending") {
-        throw new ConflictError("Invite is no longer pending");
-      }
+      const contributor = await getPendingInviteFor(tx, session, contributorId);
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
       if (!character) {
@@ -176,54 +197,17 @@ const CharacterContributorsMethods = {
         throw new ConflictError("This character has been archived and can no longer be edited");
       }
 
-      const rows = await CharacterContributors.update(tx, { status: "Active" }, { id: contributorId });
-      const updated = rows[0];
-
-      await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributorId });
-
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updated.id,
-        targetTable: getTableName(contributorsInCharacter),
-        type: "acceptCharacterContributorInvite",
-        data: { contributorId, characterId: contributor.characterId, characterName: character.name },
-      });
-
-      return updated;
+      return await answerInvite(tx, session, contributor, character.name, "Active");
     });
   },
 
   async rejectContributorInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
-      if (!contributor) {
-        throw new NotFoundError("Contributor invite not found");
-      }
-
-      if (contributor.userId !== session.userId) {
-        throw new NotFoundError("Contributor invite not found");
-      }
-
-      if (contributor.status !== "Pending") {
-        throw new ConflictError("Invite is no longer pending");
-      }
+      const contributor = await getPendingInviteFor(tx, session, contributorId);
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
 
-      const rows = await CharacterContributors.update(tx, { status: "Rejected" }, { id: contributorId });
-      const updated = rows[0];
-
-      await Notifications.markReadByTarget(tx, { recipientId: session.userId, targetId: contributorId });
-
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updated.id,
-        targetTable: getTableName(contributorsInCharacter),
-        type: "rejectCharacterContributorInvite",
-        data: { contributorId, characterId: contributor.characterId, characterName: character?.name },
-      });
-
-      return updated;
+      return await answerInvite(tx, session, contributor, character?.name, "Rejected");
     });
   },
 

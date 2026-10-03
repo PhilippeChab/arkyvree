@@ -21,6 +21,70 @@ import type { Session } from "@/shared/relations.ts";
 
 import { getTargetPathsWithLabels, resolvePathValueType } from "./targetPaths.ts";
 
+/**
+ * Adds a modifier to an entity, copying the entity first when it's inherited. A duplicate (`sourceModifierId`, one of
+ * the entity's modifiers) takes its source's requirements too.
+ */
+async function addEntityModifier(
+  session: Session,
+  rulesetId: string,
+  entityType: string,
+  entityId: string,
+  body: { target: string; value: string; operator: string },
+  sourceModifierId?: string,
+) {
+  const result = await withTransaction(async (tx) => {
+    return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+      (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
+
+      const effectiveEntityId = rulesetData.canonicalize(entityId);
+      const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
+
+      if (sourceModifierId) {
+        const sourceModifier = rulesetData.modifiersById.get(sourceModifierId);
+        if (
+          !sourceModifier ||
+          sourceModifier.sourceId !== effectiveEntityId ||
+          sourceModifier.sourceType !== entityType
+        ) {
+          throw new NotFoundError("Source modifier not found for this entity");
+        }
+      }
+
+      const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+
+      const inferredValueType = await resolvePathValueType(rulesetId, body.target, "modifier");
+
+      const rows = await Modifiers.create(tx, {
+        sourceId: resolvedEntityId,
+        sourceType: entityType,
+        target: body.target,
+        value: body.value,
+        valueType: inferredValueType,
+        operator: body.operator,
+      });
+      const modifier = rows[0];
+
+      if (sourceModifierId) {
+        const cust = (await fetchEntityCustomizations(tx, [sourceModifierId], "modifiers")).get(sourceModifierId);
+        if (cust) await copyEntityCustomizations(tx, sourceModifierId, modifier.id, "modifiers", cust);
+      }
+
+      await createActivityWithNotifications(tx, {
+        userId: session.userId,
+        targetId: modifier.id,
+        targetTable: getTableName(modifiersInCustomization),
+        type: "createModifier",
+        data: { entityName, entityType, target: body.target, value: body.value, operator: body.operator },
+      });
+
+      return { ...modifier, resolvedEntityId };
+    });
+  });
+  invalidateRulesetEntities(rulesetId);
+  return result;
+}
+
 const ModifiersMethods = {
   async getEntityModifiers(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
@@ -73,46 +137,9 @@ const ModifiersMethods = {
     rulesetId: string,
     entityType: string,
     entityId: string,
-    body: {
-      target: string;
-      value: string;
-      operator: string;
-    },
+    body: { target: string; value: string; operator: string },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
-
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
-
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
-
-        const inferredValueType = await resolvePathValueType(rulesetId, body.target, "modifier");
-
-        const rows = await Modifiers.create(tx, {
-          sourceId: resolvedEntityId,
-          sourceType: entityType,
-          target: body.target,
-          value: body.value,
-          valueType: inferredValueType,
-          operator: body.operator,
-        });
-        const modifier = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: modifier.id,
-          targetTable: getTableName(modifiersInCustomization),
-          type: "createModifier",
-          data: { entityName, entityType, target: body.target, value: body.value, operator: body.operator },
-        });
-
-        return { ...modifier, resolvedEntityId };
-      });
-    });
-    invalidateRulesetEntities(rulesetId);
-    return result;
+    return await addEntityModifier(session, rulesetId, entityType, entityId, body);
   },
 
   async duplicateEntityModifier(
@@ -121,61 +148,9 @@ const ModifiersMethods = {
     entityType: string,
     entityId: string,
     sourceModifierId: string,
-    body: {
-      target: string;
-      value: string;
-      operator: string;
-    },
+    body: { target: string; value: string; operator: string },
   ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await getRulesetPolicy(tx, session, ruleset)).canUpdateEntity();
-
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        const entityName = await CustomizationsPolicy.sourceExists(effectiveEntityId, entityType, rulesetData);
-
-        const sourceModifier = rulesetData.modifiersById.get(sourceModifierId);
-        if (
-          !sourceModifier ||
-          sourceModifier.sourceId !== effectiveEntityId ||
-          sourceModifier.sourceType !== entityType
-        ) {
-          throw new NotFoundError("Source modifier not found for this entity");
-        }
-
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
-
-        const inferredValueType = await resolvePathValueType(rulesetId, body.target, "modifier");
-
-        const rows = await Modifiers.create(tx, {
-          sourceId: resolvedEntityId,
-          sourceType: entityType,
-          target: body.target,
-          value: body.value,
-          valueType: inferredValueType,
-          operator: body.operator,
-        });
-        const modifier = rows[0];
-
-        const custMap = await fetchEntityCustomizations(tx, [sourceModifierId], "modifiers");
-        const cust = custMap.get(sourceModifierId);
-        if (cust) {
-          await copyEntityCustomizations(tx, sourceModifierId, modifier.id, "modifiers", cust);
-        }
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: modifier.id,
-          targetTable: getTableName(modifiersInCustomization),
-          type: "createModifier",
-          data: { entityName, entityType, target: body.target, value: body.value, operator: body.operator },
-        });
-
-        return { ...modifier, resolvedEntityId };
-      });
-    });
-    invalidateRulesetEntities(rulesetId);
-    return result;
+    return await addEntityModifier(session, rulesetId, entityType, entityId, body, sourceModifierId);
   },
 
   async updateEntityModifier(

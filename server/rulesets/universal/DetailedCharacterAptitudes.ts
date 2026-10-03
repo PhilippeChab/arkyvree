@@ -107,7 +107,7 @@ export default class DetailedCharacterAptitudes {
      *  Required — each ruleset must pass its own value (e.g.
      *  `Dnd35LevelsHooks.MAX_SPELL_LEVEL`). No default so a universal file
      *  never carries a ruleset-specific constant. */
-    private readonly maxSpellLevel: number,
+    readonly maxSpellLevel: number,
   ) {}
 
   initialize(

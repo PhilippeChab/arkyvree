@@ -30,6 +30,16 @@ function countPropertyTypes(rulesetData: CachedRulesetData, entityType?: Propert
   return [...counts.values()].sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
 }
 
+/** A page of a list held in memory. */
+function pageOf<T>(items: T[], pagination: { limit: number; page: number }): Paginated<T> {
+  const start = (pagination.page - 1) * pagination.limit;
+  return {
+    items: items.slice(start, start + pagination.limit),
+    page: pagination.page,
+    nextPage: start + pagination.limit < items.length ? pagination.page + 1 : undefined,
+  };
+}
+
 const PropertyTypesMethods = {
   /**
    * Get all available property types (static + custom)
@@ -134,16 +144,7 @@ const PropertyTypesMethods = {
         }),
       );
 
-      const all = [...engineCompletions, ...customCompletions];
-      const start = (pagination.page - 1) * pagination.limit;
-      const items = all.slice(start, start + pagination.limit);
-      const hasMore = start + pagination.limit < all.length;
-
-      return {
-        items,
-        page: pagination.page,
-        nextPage: hasMore ? pagination.page + 1 : undefined,
-      };
+      return pageOf([...engineCompletions, ...customCompletions], pagination);
     });
   },
 
@@ -185,16 +186,7 @@ const PropertyTypesMethods = {
         .sort((a, b) => a.localeCompare(b))
         .map((v): PropertyValueCompletion => ({ label: v, value: v, kind: "custom" }));
 
-      const all = [...engineCompletions, ...customCompletions];
-      const start = (pagination.page - 1) * pagination.limit;
-      const items = all.slice(start, start + pagination.limit);
-      const hasMore = start + pagination.limit < all.length;
-
-      return {
-        items,
-        page: pagination.page,
-        nextPage: hasMore ? pagination.page + 1 : undefined,
-      };
+      return pageOf([...engineCompletions, ...customCompletions], pagination);
     });
   },
 } as const;

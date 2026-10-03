@@ -3,6 +3,7 @@
  *
  * - validateEquipmentSlot — enforces slot occupancy, hand conflicts, weapon size rules
  * - validateItemRequirements — checks character meets item requirements before equipping
+ * - validateCharges / validateEquipping — what adding or updating an inventory entry checks
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache.ts";
@@ -85,4 +86,44 @@ export async function validateItemRequirements(
   if (issues.length > 0) {
     throw new BadRequestError("Character does not meet the requirements to equip this item", { issues });
   }
+}
+
+/** An entry's charges: both set or both null, and no more remaining than total. */
+export function validateCharges(totalCharges: number | null, remainingCharges: number | null) {
+  if ((totalCharges === null) !== (remainingCharges === null)) {
+    throw new BadRequestError("Total charges and remaining charges must both be set or both be null");
+  }
+  if (totalCharges !== null && remainingCharges !== null && remainingCharges > totalCharges) {
+    throw new BadRequestError("Remaining charges cannot exceed total charges");
+  }
+}
+
+/**
+ * Equipping `item` at `location`: a hand slot needs its weapon set, the slot must take it, and the character must meet
+ * the item's requirements unless `force`.
+ */
+export async function validateEquipping(
+  tx: Db,
+  characterRecord: CharacterRecord,
+  item: { id: string; type: string | null; sourceItemId: string | null },
+  location: ItemLocation,
+  weaponSet: number | null,
+  force: boolean,
+  ruleset: Ruleset,
+  rulesetData: CachedRulesetData,
+) {
+  if (isHandLocation(location) && weaponSet === null) {
+    throw new BadRequestError("A weapon set is required when equipping to a hand slot");
+  }
+  await validateEquipmentSlot(
+    tx,
+    characterRecord.id,
+    item,
+    location,
+    weaponSet,
+    characterRecord.raceId,
+    ruleset,
+    rulesetData,
+  );
+  if (!force) await validateItemRequirements(tx, characterRecord, item, ruleset, rulesetData);
 }

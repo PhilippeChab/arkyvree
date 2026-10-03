@@ -1,8 +1,5 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
-import { sql } from "drizzle-orm";
-
-import { blobsInStorage } from "@/drizzle/schema.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
@@ -250,9 +247,7 @@ const AttachmentsMethods = {
       // Lock the blob row so a concurrent sweep can't delete it between
       // here and the Attachments.create below — that would surface as a
       // 23503 FK violation on insert.
-      await tx.execute(sql`
-        SELECT id FROM ${blobsInStorage} WHERE id = ${payload.blobId} FOR UPDATE
-      `);
+      await Blobs.lockById(tx, payload.blobId);
       const blob = await Blobs.findOne(tx, { id: payload.blobId });
       if (!blob) throw new NotFoundError("Blob not found");
       if (blob.attachedAt) throw new ConflictError("Blob is already attached");
