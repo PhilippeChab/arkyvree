@@ -109,7 +109,7 @@ server/
     rulesets/           # Ruleset entity services (feats, powers, classes, etc.)
       customization/    # Modifiers, requirements, properties, target paths
     policies/           # Authorization policies
-  repositories/         # Database access layer (Drizzle ORM)
+  repositories/         # Database access layer (Drizzle ORM), in folders by domain
   rulesets/             # Ruleset engine (DetailedCharacter, hooks, target paths)
     dnd3.5/             # D&D 3.5e-specific implementation
     universal/          # Base classes shared across systems

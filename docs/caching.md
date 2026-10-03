@@ -471,7 +471,7 @@ sequenceDiagram
 
 ## Adding a new write-method prefix
 
-The Proxy detects writes by matching method names against a prefix list (`create`, `update`, `archive`, `unarchive`, `restore`, `delete`, `save`, `upsert`, `insert`, `link`, `unlink`, `orphan`) plus an explicit set of grandfathered full names (`publish`, `markRead`, `markReadByTarget`, `markAllRead`, `backfillUserId`, `claim`). If a repository adds a mutation whose name doesn't match any of those, update `isWriteMethod` in `server/repositories/index.ts`. Otherwise a stale cached read could be returned after the mutation.
+The Proxy detects writes by matching method names against a prefix list (`create`, `update`, `archive`, `unarchive`, `restore`, `delete`, `save`, `upsert`, `insert`, `link`, `unlink`, `orphan`) plus an explicit set of grandfathered full names (`publish`, `markRead`, `markReadByTarget`, `markAllRead`, `backfillUserId`, `claim`). If a repository adds a mutation whose name doesn't match any of those, update `isWriteMethod` in `server/repositories/withRequestCache.ts`. Otherwise a stale cached read could be returned after the mutation.
 
 **Prefer renaming over adding new matchers.** An `update*` name (say, `updateStatus`) is safer than another one-off verb because it can't drift into a future read method that gets misclassified (e.g. a hypothetical `markupSummary()` would have been caught by `prop.startsWith("mark")` as a spurious write — which is why the `mark*` prefix was dropped in favor of exact names).
 
@@ -482,7 +482,7 @@ The Proxy detects writes by matching method names against a prefix list (`create
 - `server/services/rulesets/cow/` — `withRulesetScope` / `withRulesetScopes`, COW data + override map, copy primitives, `resolveOverrides`, invalidation hooks
 - `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `currentCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
-- `server/repositories/index.ts` — Proxy wrapping every repo with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
+- `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
 - `server/repositories/BaseRepository.ts` — `idMatches()` predicate for cowContext-aware composite-key WHERE clauses
 - `server/rulesets/AbstractDetailedCharacter.ts` — `build()` wraps in `withRulesetScope` and hands preloaded ruleset data to the data loader
 - `server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts` — requires `PreloadedRulesetData`; never fetches ruleset-level state itself
