@@ -178,14 +178,15 @@ describe("characters", () => {
       const { id } = await createCharacter();
       const { shareToken } = await expectOk(character.share.$post({ param: { id } }));
       expect(await expectOk(character.share.$delete({ param: { id } }))).toMatchObject({ shareToken: null });
-      await expectStatus(
-        guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: shareToken! } }),
-        404,
-      );
+      const shared = guestApi.api.shared.characters[":shareToken"];
+      await expectStatus(shared.$get({ param: { shareToken: shareToken! } }), 404);
+      await expectStatus(shared.pdf.$get({ param: { shareToken: shareToken! } }), 404);
     });
 
-    test("returns 404 for an unknown token", async () => {
-      await expectStatus(guestApi.api.shared.characters[":shareToken"].$get({ param: { shareToken: NIL_UUID } }), 404);
+    test("returns 404 for an unknown token, the sheet's PDF too", async () => {
+      const shared = guestApi.api.shared.characters[":shareToken"];
+      await expectStatus(shared.$get({ param: { shareToken: NIL_UUID } }), 404);
+      await expectStatus(shared.pdf.$get({ param: { shareToken: NIL_UUID } }), 404);
     });
   });
 

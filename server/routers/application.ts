@@ -11,7 +11,7 @@ import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { isTest } from "@/server/environment.ts";
 import { toJson } from "@/server/errors/index.ts";
-import { requestLogger, type SessionContext } from "@/server/middlewares/index.ts";
+import { requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
 import apiRouter from "@/server/routers/api.tsx";
 import authenticationRouter from "@/server/routers/authentication/index.ts";
 import staticRouter from "@/server/routers/static.ts";
@@ -40,6 +40,8 @@ const canonicalHost = enforceCanonicalHost ? new URL(process.env.APP_URL!).host 
 
 // The session is set only on the routes behind the session middleware.
 const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
+  // First, so whatever any later middleware or route throws reaches onError as an Error.
+  .use("*", wrapNonErrors)
   .use("*", async (c, next) => {
     if (!canonicalHost) return next();
     if (c.req.path === "/health") return next();

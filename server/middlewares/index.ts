@@ -17,3 +17,4 @@ export {
 } from "./session.ts";
 export type { SessionContext } from "./session.ts";
 export { zValidator } from "./zValidator.ts";
+export { default as wrapNonErrors } from "./wrapNonErrors.ts";

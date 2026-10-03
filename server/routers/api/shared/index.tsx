@@ -26,12 +26,12 @@ const shared = new Hono()
   })
   // Generate PDF for shared character (public, no auth)
   .get("/characters/:shareToken/pdf", zValidator("param", z.object({ shareToken: z.string().uuid() })), async (c) => {
+    const { shareToken } = c.req.valid("param");
+    // Outside the try: a token that finds no character is a 404, not a failed render.
+    const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } =
+      await CharactersService.generateSharedPdf(shareToken);
+
     try {
-      const { shareToken } = c.req.valid("param");
-
-      const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } =
-        await CharactersService.generateSharedPdf(shareToken);
-
       const pdfBlob = await pdf(
         <CharacterSheetComponent detailedCharacter={detailedCharacter} portraitUrl={portraitUrl} kind={kind} />,
       ).toBlob();
