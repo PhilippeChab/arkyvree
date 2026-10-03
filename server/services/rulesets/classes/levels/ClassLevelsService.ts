@@ -4,6 +4,7 @@ import { klassLevelsInRules } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
+import { include } from "@/server/mixins.ts";
 import {
   KlassLevelFeats,
   KlassLevels,
@@ -21,12 +22,13 @@ import {
   findScopedEntity,
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
-import { findRulesetPowers } from "@/server/services/rulesets/powers/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { KlassLevel, KlassLevelFeat, Modifier, Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/utils.ts";
 
-class ClassLevelsService {
+import { ListsSpells } from "./concerns/ListsSpells.ts";
+
+class ClassLevelsService extends include(Object, ListsSpells) {
   private async listClassLevels(rulesetId: string, classId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -167,86 +169,8 @@ class ClassLevelsService {
     });
   }
 
-  async getClassLevelSpells(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-      const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
-      const modifiers: Modifier[] = [];
-      for (const level of levels) {
-        const ms = rulesetData.modifiersBySource.get(level.id);
-        if (ms) modifiers.push(...ms);
-      }
-
-      return hooks.classLevels.enrichWithSpellsPerDay(levels, modifiers);
-    });
-  }
-
-  async getClassLevelSpellsKnown(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-      const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
-      const modifiers: Modifier[] = [];
-      for (const level of levels) {
-        const ms = rulesetData.modifiersBySource.get(level.id);
-        if (ms) modifiers.push(...ms);
-      }
-
-      return hooks.classLevels.enrichWithSpellsKnown(levels, modifiers);
-    });
-  }
-
   async getClassLevels(rulesetId: string, classId: string) {
     return await this.listClassLevels(rulesetId, classId);
-  }
-
-  async getClassSpellList(
-    rulesetId: string,
-    classId: string,
-    where: { level?: number; search?: string },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-
-      const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
-      const modifiers: Modifier[] = [];
-      for (const level of levels) {
-        const ms = rulesetData.modifiersBySource.get(level.id);
-        if (ms) modifiers.push(...ms);
-      }
-
-      const spellsRegex = /^aptitudes\.(\w+)\.\d+\.uses$/;
-      const slugs = new Set<string>();
-      for (const mod of modifiers) {
-        const match = spellsRegex.exec(mod.target);
-        if (match) slugs.add(match[1]);
-      }
-
-      if (slugs.size === 0) {
-        return { items: [], page: pagination.page, nextPage: undefined };
-      }
-
-      const candidates = rulesetData.aptitudes.filter((a) => slugs.has(stripSeparators(a.name)));
-      const aptitude = candidates.find((a) => a.rulesetId === klass.rulesetId) ?? candidates[0];
-      if (!aptitude) {
-        return { items: [], page: pagination.page, nextPage: undefined };
-      }
-
-      return await findRulesetPowers(
-        db,
-        rulesetData,
-        rulesetId,
-        { aptitudeId: aptitude.id, level: where.level, search: where.search },
-        pagination,
-      );
-    });
   }
 
   async createClassLevel(

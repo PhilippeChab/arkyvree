@@ -1,15 +1,16 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
-
-import { campaignsInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { include } from "@/server/mixins.ts";
 import { Contributors } from "@/server/repositories/index.ts";
-import type { ContributorRole } from "@/shared/enums.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 
-import BasePolicy from "./BasePolicy.ts";
+import { ContributorRights } from "./concerns/ContributorRights.ts";
+import { CreationRights } from "./concerns/CreationRights.ts";
+import { EntityRights } from "./concerns/EntityRights.ts";
+import { ExtensionRights } from "./concerns/ExtensionRights.ts";
+import RulesetRoles from "./RulesetRoles.ts";
 
-export default class RulesetsPolicy extends BasePolicy<Ruleset> {
+class RulesetsPolicy extends include(RulesetRoles, EntityRights, ContributorRights, ExtensionRights, CreationRights) {
   /** The session's policy on `ruleset`: a contributor's rights come from their active role on it. */
   static async for(db: Db, session: Session, ruleset: Ruleset) {
     let role = null;
@@ -17,29 +18,6 @@ export default class RulesetsPolicy extends BasePolicy<Ruleset> {
       role = await Contributors.findActiveRole(db, { userId: session.userId, rulesetId: ruleset.id });
     }
     return new RulesetsPolicy(session, ruleset, role);
-  }
-
-  private readonly contributorRole: ContributorRole | null;
-
-  constructor(session: Session, entity: Ruleset, contributorRole: ContributorRole | null = null) {
-    super(session, entity);
-    this.contributorRole = contributorRole;
-  }
-
-  private get isOwner() {
-    return this.entity.userId === this.session.userId;
-  }
-
-  private get isAdminContributor() {
-    return this.contributorRole === "Admin";
-  }
-
-  private get isEditorContributor() {
-    return this.contributorRole === "Editor";
-  }
-
-  private get isContributor() {
-    return this.contributorRole !== null;
   }
 
   /**
@@ -52,26 +30,6 @@ export default class RulesetsPolicy extends BasePolicy<Ruleset> {
     }
 
     if (!this.isOwner && !this.isAdminContributor) {
-      throw new ForbiddenError("Cannot edit another user's ruleset");
-    }
-
-    if (this.entity.status === "Archived") {
-      throw new UnprocessableEntityError("Archived rulesets are read-only");
-    }
-
-    return true;
-  }
-
-  /**
-   * Used by entity services for creating/updating entities (feats, skills, etc.).
-   * Owner, Admin, and Editor contributors are allowed.
-   */
-  canUpdateEntity() {
-    if (!this.entity.userId) {
-      throw new ForbiddenError("Cannot edit a base ruleset");
-    }
-
-    if (!this.isOwner && !this.isAdminContributor && !this.isEditorContributor) {
       throw new ForbiddenError("Cannot edit another user's ruleset");
     }
 
@@ -114,107 +72,6 @@ export default class RulesetsPolicy extends BasePolicy<Ruleset> {
     return true;
   }
 
-  canSubscribeExtension() {
-    if (!this.entity.userId) {
-      throw new ForbiddenError("Cannot subscribe to extensions on a base ruleset");
-    }
-
-    if (this.entity.userId !== this.session.userId) {
-      throw new ForbiddenError("Cannot subscribe to extensions on another user's ruleset");
-    }
-
-    if (this.entity.status === "Archived") {
-      throw new UnprocessableEntityError("Cannot subscribe to extensions on an archived ruleset");
-    }
-
-    if (!this.entity.rulesetId) {
-      throw new UnprocessableEntityError("Only forked rulesets can subscribe to extensions");
-    }
-
-    if (this.entity.kind === "extension") {
-      throw new UnprocessableEntityError("Extensions cannot subscribe to other extensions");
-    }
-
-    return true;
-  }
-
-  canUnsubscribeExtension({ inUse = false }: { inUse?: boolean } = {}) {
-    this.canSubscribeExtension();
-
-    // An extension COWs base entities into its own ruleset and those COWs
-    // may have sibling-winner ids characters have already picked. Removing
-    // the extension silently invalidates those picks, so refuse the same
-    // way `canDeleteEntity` does once the ruleset is being played.
-    if (inUse) {
-      throw new ConflictError("Cannot unsubscribe from extensions on a ruleset in use by characters");
-    }
-
-    return true;
-  }
-
-  /**
-   * `inUse` means: deleting this entity would orphan a character pick on the
-   * current ruleset, any descendant fork, or any host ruleset that subscribes
-   * to this one as an extension. Nothing else.
-   *
-   * Don't include class-side references (klass_level_feats, klass_skills, etc.)
-   * — class definitions are author-owned content; if the author deletes a feat
-   * their class grants, the FK cascade wipes the grant and the author can fix
-   * it. Class-granted feats that a character actually picked are recorded on
-   * the character (level_feats_in_character.feat_id), so the character-side
-   * check covers that case.
-   *
-   * The Character* repos' existsBy* methods take { id, rulesetId } and
-   * internally join on rulesets to also count characters whose host ruleset
-   * either descends from this ruleset (ancestor_ruleset_ids array overlap)
-   * or subscribes to it as an extension (extension_ruleset_ids array overlap).
-   * Don't include characters from sibling/parent rulesets — they're unrelated.
-   *
-   * Deletion is allowed on both Draft and Published rulesets — the inUse
-   * check + COW tombstones already protect subscribers and characters.
-   */
-  canDeleteEntity({ inUse = false }: { inUse?: boolean } = {}) {
-    this.canUpdateEntity();
-
-    if (inUse) {
-      throw new ConflictError("Cannot delete entities from a ruleset in use by characters");
-    }
-
-    return true;
-  }
-
-  canManageContributors() {
-    if (!this.entity.userId) {
-      throw new ForbiddenError("Cannot manage contributors on a base ruleset");
-    }
-
-    if (!this.isOwner && !this.isAdminContributor) {
-      throw new ForbiddenError("Only the owner or Admin contributors can manage contributors");
-    }
-
-    return true;
-  }
-
-  canReadContributors() {
-    if (!this.isOwner && !this.isContributor) {
-      throw new ForbiddenError("You are not a contributor of this ruleset");
-    }
-    return true;
-  }
-
-  /**
-   * Owner-only narrowing of canManageContributors: invite/assign/revoke/change
-   * role on an Admin contributor. An Admin contributor can manage other
-   * Editor/Viewer contributors via canManageContributors but cannot touch
-   * Admin-tier rows.
-   */
-  canManageAdminContributors() {
-    if (!this.isOwner) {
-      throw new ForbiddenError("Only the owner can manage Admin contributors");
-    }
-    return true;
-  }
-
   canUnarchive() {
     if (!this.entity.userId) {
       throw new ForbiddenError("Cannot unarchive a base ruleset");
@@ -245,44 +102,6 @@ export default class RulesetsPolicy extends BasePolicy<Ruleset> {
 
     return true;
   }
-
-  /**
-   * Owner, active contributor, member of any campaign that uses this ruleset,
-   * or any session against a public published ruleset. Async because the
-   * campaign-membership branch is a DB lookup.
-   */
-  async canCreateCampaign(tx: Db) {
-    return this.canCreateCharacter(tx);
-  }
-
-  async canCreateCharacter(tx: Db) {
-    if (this.entity.kind === "extension" || this.entity.status === "Archived" || this.entity.deletedAt) {
-      throw new UnprocessableEntityError("Choose an active playable ruleset");
-    }
-
-    const isPublic = !this.entity.private && this.entity.status === "Published";
-    if (isPublic || this.isOwner || this.isContributor) {
-      return true;
-    }
-
-    const [campaignAccess] = await tx
-      .select({ one: sql`1` })
-      .from(playersInCampaign)
-      .innerJoin(campaignsInCampaign, eq(playersInCampaign.campaignId, campaignsInCampaign.id))
-      .where(
-        and(
-          eq(playersInCampaign.userId, this.session.userId),
-          isNull(playersInCampaign.deletedAt),
-          isNull(campaignsInCampaign.deletedAt),
-          eq(campaignsInCampaign.rulesetId, this.entity.id),
-        ),
-      )
-      .limit(1);
-
-    if (!campaignAccess) {
-      throw new ForbiddenError("You do not have access to this ruleset");
-    }
-
-    return true;
-  }
 }
+
+export default RulesetsPolicy;

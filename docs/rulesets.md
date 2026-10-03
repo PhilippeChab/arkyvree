@@ -625,7 +625,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
 | `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getSubscribedExtensions` |
 | `server/services/rulesets/changes/RulesetChangesService.ts` | `getChanges`, `revertOverride` |
-| `server/services/policies/RulesetsPolicy.ts` | Authorization checks for all ruleset operations |
+| `server/services/policies/RulesetsPolicy.ts` | Authorization checks for all ruleset operations: the ruleset's own, plus the concerns in `policies/concerns/` (entities, contributors, extensions, creating campaigns and characters), over the roles in `RulesetRoles.ts` |
 | `server/services/rulesets/*/` | Entity services (feats, powers, classes, etc.) using the COW pattern |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
 | `server/rulesets/types.ts` | Universal types (`ProjectedCharacterData`, `LevelUpProjector`, `RulesetModule`, …) |

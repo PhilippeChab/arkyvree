@@ -3,54 +3,27 @@ import { getTableName } from "drizzle-orm";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import {
-  ConflictError,
-  ForbiddenError,
-  InternalError,
-  NotFoundError,
-  STALE_ENTITY_MESSAGE,
-  UnprocessableEntityError,
-} from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { include } from "@/server/mixins.ts";
 import {
   Activities,
   Contributors,
-  Feats,
   Items,
-  Klasses,
   Properties,
-  Races,
   RulesetExtensions,
   Rulesets,
-  Skills,
   StarredRulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
-import type { Ruleset, Session } from "@/shared/relations.ts";
+import type { Session } from "@/shared/relations.ts";
 
-import { buildSourceChain } from "./cow/index.ts";
+import { Archives } from "./concerns/Archives.ts";
+import { Publishes } from "./concerns/Publishes.ts";
+import { Stars } from "./concerns/Stars.ts";
 
-class RulesetsService {
-  // A ruleset is starrable iff it's a base (forkable) or an extension
-  // (subscribable). Regular forks meant for direct play aren't useful as
-  // bookmarks since you can neither fork nor subscribe to them.
-  private isStarrable(ruleset: Pick<Ruleset, "rulesetId" | "status" | "private" | "kind">): boolean {
-    if (ruleset.private) return false;
-    if (ruleset.status !== "Published") return false;
-    if (!ruleset.rulesetId) return true;
-    return ruleset.kind === "extension";
-  }
-
-  private assertCanBeExtension(ruleset: Pick<Ruleset, "rulesetId" | "extensionRulesetIds">) {
-    if (!ruleset.rulesetId) {
-      throw new UnprocessableEntityError("Only forks can be published as extensions");
-    }
-    if (ruleset.extensionRulesetIds.length > 0) {
-      throw new UnprocessableEntityError("A ruleset that subscribes to extensions cannot itself be an extension");
-    }
-  }
-
+class RulesetsService extends include(Object, Stars, Archives, Publishes) {
   async getAllRulesets(
     session: Session,
     where: {
@@ -177,62 +150,6 @@ class RulesetsService {
     return result;
   }
 
-  async archiveRuleset(session: Session, id: string) {
-    return await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-
-      (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
-
-      // Archive only flips status='Archived'. Entities and overrides stay
-      // live so any character or campaign still pointing here keeps
-      // resolving its data; the ruleset just becomes read-only at the
-      // editing surface.
-      const rows = await Rulesets.archive(tx, { id });
-      const archivedRuleset = rows[0];
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: archivedRuleset.id,
-        targetTable: getTableName(rulesetsInRules),
-        type: "archiveRuleset",
-      });
-
-      return archivedRuleset;
-    });
-  }
-
-  async unarchiveRuleset(session: Session, id: string) {
-    const result = await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-
-      new RulesetsPolicy(session, ruleset).canUnarchive();
-
-      const rows = await Rulesets.unarchive(tx, { id });
-      const unarchivedRuleset = rows[0];
-
-      if (!unarchivedRuleset) {
-        throw new InternalError("Failed to unarchive ruleset");
-      }
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: unarchivedRuleset.id,
-        targetTable: getTableName(rulesetsInRules),
-        type: "unarchiveRuleset",
-      });
-
-      return unarchivedRuleset;
-    });
-    invalidateRuleset(id);
-    return result;
-  }
-
   async forkRuleset(session: Session, id: string, body: { name: string; description?: string; private: boolean }) {
     const result = await withTransaction(async (tx) => {
       // 1. Verify source ruleset exists and is published
@@ -310,99 +227,6 @@ class RulesetsService {
 
     invalidateRuleset(result.id);
     return result;
-  }
-
-  async publishRuleset(session: Session, id: string, body: { kind?: RulesetKind } = {}) {
-    const result = await withTransaction(async (tx) => {
-      // First verify the ruleset exists
-      const ruleset = await Rulesets.findOne(tx, { id });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-
-      new RulesetsPolicy(session, ruleset).canPublish();
-
-      const targetKind = body.kind ?? ruleset.kind;
-      if (targetKind === "extension") {
-        this.assertCanBeExtension(ruleset);
-      }
-
-      // Extensions don't need playable content (races/klasses/skills/feats);
-      // they're add-ons layered onto rulesets that already have the basics.
-      if (targetKind !== "extension") {
-        const sourceChain = buildSourceChain(ruleset);
-        const races = await Races.findManyByRulesetId(
-          tx,
-          { rulesetId: id, ancestorRulesetIds: sourceChain, kind: "pc" },
-          { limit: 1, page: 1 },
-        );
-        const klasses = await Klasses.findManyByRulesetId(
-          tx,
-          { rulesetId: id, ancestorRulesetIds: sourceChain, kind: "pc" },
-          { limit: 1, page: 1 },
-        );
-        const skills = await Skills.findManyByRulesetId(
-          tx,
-          { rulesetId: id, ancestorRulesetIds: sourceChain },
-          { limit: 1, page: 1 },
-        );
-        const feats = await Feats.findManyByRulesetId(
-          tx,
-          { rulesetId: id, ancestorRulesetIds: sourceChain },
-          { limit: 1, page: 1 },
-        );
-
-        const missing: string[] = [];
-        if (races.items.length === 0) missing.push("race");
-        if (klasses.items.length === 0) missing.push("class");
-        if (skills.items.length === 0) missing.push("skill");
-        if (feats.items.length === 0) missing.push("feat");
-
-        if (missing.length > 0) {
-          throw new UnprocessableEntityError(`Ruleset requires at least one of each: ${missing.join(", ")}`);
-        }
-      }
-
-      if (body.kind && body.kind !== ruleset.kind) {
-        await Rulesets.update(tx, { kind: body.kind }, { id });
-      }
-
-      const rows = await Rulesets.publish(tx, { id });
-      const publishedRuleset = rows[0];
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: publishedRuleset.id,
-        targetTable: getTableName(rulesetsInRules),
-        type: "publishRuleset",
-      });
-
-      return publishedRuleset;
-    });
-
-    invalidateRuleset(id);
-    return result;
-  }
-
-  async starRuleset(session: Session, rulesetId: string) {
-    return await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-
-      if (!this.isStarrable(ruleset)) {
-        throw new ForbiddenError("Only base rulesets and extensions can be starred");
-      }
-
-      await StarredRulesets.createOrRestore(tx, { userId: session.userId, rulesetId });
-    });
-  }
-
-  async unstarRuleset(session: Session, rulesetId: string) {
-    return await withTransaction(async (tx) => {
-      await StarredRulesets.archive(tx, { userId: session.userId, rulesetId });
-    });
   }
 }
 
