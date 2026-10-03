@@ -535,6 +535,115 @@ const styles = StyleSheet.create({
 });
 
 // Character sheet component
+/** The header of the sheet's pages after the first: the character's name, and what the page holds. */
+const ContinuationHeader = ({ name, label }: { name: string; label?: string }) => (
+  <View style={styles.header}>
+    <View style={styles.headerLeft}>
+      <Text style={styles.title}>{name || "Unnamed Character"}</Text>
+    </View>
+    {label && (
+      <View style={styles.secondHeaderRight}>
+        <Text style={styles.headerLabel}>{label}</Text>
+      </View>
+    )}
+  </View>
+);
+
+type DiagnosticColumn = { label: string; width: string; centered?: boolean };
+
+const REQUIREMENT_COLUMNS: DiagnosticColumn[] = [
+  { label: "LEVEL", width: "15%" },
+  { label: "TARGET", width: "35%" },
+  { label: "OPERATOR", width: "15%", centered: true },
+  { label: "VALUE", width: "15%", centered: true },
+  { label: "CHAINING OP", width: "20%", centered: true },
+];
+
+const MODIFIER_COLUMNS: DiagnosticColumn[] = [
+  { label: "SOURCE TYPE", width: "20%" },
+  { label: "TARGET", width: "35%" },
+  { label: "OPERATOR", width: "15%", centered: true },
+  { label: "VALUE", width: "15%", centered: true },
+  { label: "TYPE", width: "15%", centered: true },
+];
+
+/** The diagnostics page's counts above a section's tables. */
+const DiagnosticCounts = ({ counts }: { counts: { label: string; color: string }[] }) => (
+  <View style={{ marginBottom: 10, flexDirection: "row", justifyContent: "space-between" }}>
+    {counts.map(({ label, color }) => (
+      <Text key={label} style={{ fontSize: FONT_SIZE.md, color }}>
+        {label}
+      </Text>
+    ))}
+  </View>
+);
+
+/** One of the diagnostics page's tables, when it has rows: the first `max`, and how many more there are. */
+const DiagnosticTable = ({
+  title,
+  columns,
+  rows,
+  max = rows.length,
+  noun,
+}: {
+  title: string;
+  columns: DiagnosticColumn[];
+  rows: (string | null | undefined)[][];
+  max?: number;
+  noun?: string;
+}) => {
+  if (rows.length === 0) return null;
+  const cellStyle = (column: DiagnosticColumn) => ({
+    width: column.width,
+    paddingHorizontal: 4,
+    textAlign: column.centered ? ("center" as const) : undefined,
+  });
+  return (
+    <View style={{ marginBottom: 10 }}>
+      <Text style={{ fontSize: FONT_SIZE.lg, fontWeight: "bold", marginBottom: 5 }}>{title}</Text>
+      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: "#eee",
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+            paddingVertical: 4,
+          }}
+        >
+          {columns.map((column) => (
+            <Text
+              key={column.label}
+              style={{ ...cellStyle(column), fontSize: FONT_SIZE.sm, fontWeight: "bold", color: "#333" }}
+            >
+              {column.label}
+            </Text>
+          ))}
+        </View>
+        {rows.slice(0, max).map((row, index) => (
+          <View
+            key={index}
+            style={{ flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#eee", paddingVertical: 3 }}
+          >
+            {row.map((cell, column) => (
+              <Text key={column} style={{ ...cellStyle(columns[column]), fontSize: FONT_SIZE.base }}>
+                {cell || "—"}
+              </Text>
+            ))}
+          </View>
+        ))}
+        {rows.length > max && (
+          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
+            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
+              ... and {rows.length - max} more {noun}
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+};
+
 const DetailedCharacterSheet = ({
   detailedCharacter,
   kind = "pc",
@@ -839,12 +948,7 @@ const DetailedCharacterSheet = ({
 
       {/* Second Page - Skills */}
       <Page size="A4" style={styles.page}>
-        {/* Header with character name for the second page */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.title}>{identityData.physiology.name || "Unnamed Character"}</Text>
-          </View>
-        </View>
+        <ContinuationHeader name={identityData.physiology.name} />
 
         {/* Skills Section */}
         <View style={styles.section}>
@@ -934,12 +1038,7 @@ const DetailedCharacterSheet = ({
 
       {/* Third Page - Feats & Abilities */}
       <Page size="A4" style={styles.page}>
-        {/* Header with character name for the third page */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.title}>{identityData.physiology.name || "Unnamed Character"}</Text>
-          </View>
-        </View>
+        <ContinuationHeader name={identityData.physiology.name} />
 
         {/* Feats & Abilities Section */}
         <View style={styles.section}>
@@ -1169,11 +1268,7 @@ const DetailedCharacterSheet = ({
 
         return (
           <Page size="A4" style={styles.page}>
-            <View style={styles.header}>
-              <View style={styles.headerLeft}>
-                <Text style={styles.title}>{identityData.physiology.name || "Unnamed Character"}</Text>
-              </View>
-            </View>
+            <ContinuationHeader name={identityData.physiology.name} />
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Spells</Text>
@@ -1304,12 +1399,7 @@ const DetailedCharacterSheet = ({
       {/* Inventory Page */}
       {!isBonded && (
         <Page size="A4" style={styles.page}>
-          {/* Header with character name for the fourth page */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.title}>{identityData.physiology.name}</Text>
-            </View>
-          </View>
+          <ContinuationHeader name={identityData.physiology.name} />
 
           {/* Inventory Section */}
           <View style={styles.section}>
@@ -1435,472 +1525,62 @@ const DetailedCharacterSheet = ({
       {/* Fifth Page - Diagnostics (dev only) */}
       {process.env.NODE_ENV !== "production" && (
         <Page size="A4" style={styles.page}>
-          {/* Header with character name for the fifth page */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.title}>{identityData.physiology.name}</Text>
-            </View>
-            <View style={styles.secondHeaderRight}>
-              <Text style={styles.headerLabel}>System Data</Text>
-            </View>
-          </View>
+          <ContinuationHeader name={identityData.physiology.name} label="System Data" />
 
           {/* Requirements System Status */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Requirements System Status</Text>
-
             {(() => {
-              const requirementsData = requirements.getRequirements();
-              const invalidRequirements = requirementsData.invalidRequirements;
-              const unmetRequirementGroups = requirementsData.unmetRequirementGroups;
-              const fulfilledRequirementGroups = requirementsData.fulfilledRequirementGroups;
+              const { invalidRequirements, unmetRequirementGroups, fulfilledRequirementGroups } =
+                requirements.getRequirements();
+              const requirementRow = (requirement: Requirement) => [
+                requirement.level,
+                requirement.target,
+                requirement.operator,
+                requirement.value,
+                requirement.chainingOperator,
+              ];
 
               return (
                 <View>
-                  {/* Status Summary */}
-                  <View
-                    style={{
-                      marginBottom: 10,
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Text style={{ fontSize: FONT_SIZE.md, color: "#333" }}>
-                      Total Requirement Groups: {fulfilledRequirementGroups.length + unmetRequirementGroups.length}
-                    </Text>
-                    <Text style={{ fontSize: FONT_SIZE.md, color: "#008800" }}>
-                      Fulfilled: {fulfilledRequirementGroups.length}
-                    </Text>
-                    <Text style={{ fontSize: FONT_SIZE.md, color: "#cc0000" }}>
-                      Unmet: {unmetRequirementGroups.length}
-                    </Text>
-                    <Text style={{ fontSize: FONT_SIZE.md, color: "#cc9900" }}>
-                      Invalid: {invalidRequirements.length}
-                    </Text>
-                  </View>
-
-                  {/* Unmet Requirements Table */}
-                  {unmetRequirementGroups.length > 0 && (
-                    <View style={{ marginBottom: 10 }}>
-                      <Text
-                        style={{
-                          fontSize: FONT_SIZE.lg,
-                          fontWeight: "bold",
-                          marginBottom: 5,
-                        }}
-                      >
-                        Unmet Requirements
-                      </Text>
-                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                        {/* Header Row */}
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            backgroundColor: "#eee",
-                            borderBottomWidth: 1,
-                            borderBottomColor: "#ccc",
-                            paddingVertical: 4,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            LEVEL
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "35%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            TARGET
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            OPERATOR
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            VALUE
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "20%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            CHAINING OP
-                          </Text>
-                        </View>
-
-                        {/* Unmet Requirements Data */}
-                        {unmetRequirementGroups.slice(0, 15).flatMap((group, groupIndex) =>
-                          group.map((requirement, reqIndex) => (
-                            <View
-                              key={`${groupIndex}-${reqIndex}`}
-                              style={{
-                                flexDirection: "row",
-                                borderBottomWidth: 0.5,
-                                borderBottomColor: "#eee",
-                                paddingVertical: 3,
-                              }}
-                            >
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "15%",
-                                  paddingHorizontal: 4,
-                                }}
-                              >
-                                {requirement.level}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "35%",
-                                  paddingHorizontal: 4,
-                                }}
-                              >
-                                {requirement.target || "—"}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "15%",
-                                  paddingHorizontal: 4,
-                                  textAlign: "center",
-                                }}
-                              >
-                                {requirement.operator || "—"}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "15%",
-                                  paddingHorizontal: 4,
-                                  textAlign: "center",
-                                }}
-                              >
-                                {requirement.value || "—"}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "20%",
-                                  paddingHorizontal: 4,
-                                  textAlign: "center",
-                                }}
-                              >
-                                {requirement.chainingOperator || "—"}
-                              </Text>
-                            </View>
-                          )),
-                        )}
-
-                        {unmetRequirementGroups.flatMap((group) => group).length > 15 && (
-                          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-                            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-                              ... and {unmetRequirementGroups.flatMap((group) => group).length - 15} more unmet
-                              requirements
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Fulfilled Requirements Table */}
-                  {fulfilledRequirementGroups.length > 0 && (
-                    <View style={{ marginBottom: 10 }}>
-                      <Text
-                        style={{
-                          fontSize: FONT_SIZE.lg,
-                          fontWeight: "bold",
-                          marginBottom: 5,
-                        }}
-                      >
-                        Fulfilled Requirements
-                      </Text>
-                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                        {/* Header Row */}
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            backgroundColor: "#eee",
-                            borderBottomWidth: 1,
-                            borderBottomColor: "#ccc",
-                            paddingVertical: 4,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            LEVEL
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "35%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            TARGET
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            OPERATOR
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            VALUE
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "20%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            CHAINING OP
-                          </Text>
-                        </View>
-
-                        {/* Fulfilled Requirements Data */}
-                        {fulfilledRequirementGroups.slice(0, 15).flatMap((group, groupIndex) =>
-                          group.map((requirement, reqIndex) => (
-                            <View
-                              key={`fulfilled-${groupIndex}-${reqIndex}`}
-                              style={{
-                                flexDirection: "row",
-                                borderBottomWidth: 0.5,
-                                borderBottomColor: "#eee",
-                                paddingVertical: 3,
-                              }}
-                            >
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "15%",
-                                  paddingHorizontal: 4,
-                                }}
-                              >
-                                {requirement.level}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "35%",
-                                  paddingHorizontal: 4,
-                                }}
-                              >
-                                {requirement.target || "—"}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "15%",
-                                  paddingHorizontal: 4,
-                                  textAlign: "center",
-                                }}
-                              >
-                                {requirement.operator || "—"}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "15%",
-                                  paddingHorizontal: 4,
-                                  textAlign: "center",
-                                }}
-                              >
-                                {requirement.value || "—"}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "20%",
-                                  paddingHorizontal: 4,
-                                  textAlign: "center",
-                                }}
-                              >
-                                {requirement.chainingOperator || "—"}
-                              </Text>
-                            </View>
-                          )),
-                        )}
-
-                        {fulfilledRequirementGroups.flatMap((group) => group).length > 15 && (
-                          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-                            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-                              ... and {fulfilledRequirementGroups.flatMap((group) => group).length - 15} more fulfilled
-                              requirements
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Invalid Requirements Table */}
-                  {invalidRequirements.length > 0 && (
-                    <View>
-                      <Text
-                        style={{
-                          fontSize: FONT_SIZE.lg,
-                          fontWeight: "bold",
-                          marginBottom: 5,
-                        }}
-                      >
-                        Invalid Requirements
-                      </Text>
-                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                        {/* Header Row */}
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            backgroundColor: "#eee",
-                            borderBottomWidth: 1,
-                            borderBottomColor: "#ccc",
-                            paddingVertical: 4,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "20%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            LEVEL
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "35%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            TARGET
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "45%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            WARNING MESSAGE
-                          </Text>
-                        </View>
-
-                        {/* Invalid Requirements Data */}
-                        {invalidRequirements.map(
-                          (invalidItem: { warning: string; requirement: Requirement }, index: number) => (
-                            <View
-                              key={index}
-                              style={{
-                                flexDirection: "row",
-                                borderBottomWidth: 0.5,
-                                borderBottomColor: "#eee",
-                                paddingVertical: 3,
-                              }}
-                            >
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "20%",
-                                  paddingHorizontal: 4,
-                                }}
-                              >
-                                {invalidItem.requirement.level}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "35%",
-                                  paddingHorizontal: 4,
-                                }}
-                              >
-                                {invalidItem.requirement.target || "—"}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: FONT_SIZE.base,
-                                  width: "45%",
-                                  paddingHorizontal: 4,
-                                }}
-                              >
-                                {invalidItem.warning}
-                              </Text>
-                            </View>
-                          ),
-                        )}
-                      </View>
-                    </View>
-                  )}
-
+                  <DiagnosticCounts
+                    counts={[
+                      {
+                        label: `Total Requirement Groups: ${fulfilledRequirementGroups.length + unmetRequirementGroups.length}`,
+                        color: "#333",
+                      },
+                      { label: `Fulfilled: ${fulfilledRequirementGroups.length}`, color: "#008800" },
+                      { label: `Unmet: ${unmetRequirementGroups.length}`, color: "#cc0000" },
+                      { label: `Invalid: ${invalidRequirements.length}`, color: "#cc9900" },
+                    ]}
+                  />
+                  <DiagnosticTable
+                    title="Unmet Requirements"
+                    columns={REQUIREMENT_COLUMNS}
+                    rows={unmetRequirementGroups.flat().map(requirementRow)}
+                    max={15}
+                    noun="unmet requirements"
+                  />
+                  <DiagnosticTable
+                    title="Fulfilled Requirements"
+                    columns={REQUIREMENT_COLUMNS}
+                    rows={fulfilledRequirementGroups.flat().map(requirementRow)}
+                    max={15}
+                    noun="fulfilled requirements"
+                  />
+                  <DiagnosticTable
+                    title="Invalid Requirements"
+                    columns={[
+                      { label: "LEVEL", width: "20%" },
+                      { label: "TARGET", width: "35%" },
+                      { label: "WARNING MESSAGE", width: "45%" },
+                    ]}
+                    rows={invalidRequirements.map(({ requirement, warning }) => [
+                      requirement.level,
+                      requirement.target,
+                      warning,
+                    ])}
+                  />
                   {unmetRequirementGroups.length === 0 &&
                     fulfilledRequirementGroups.length === 0 &&
                     invalidRequirements.length === 0 && <Text style={styles.emptyMessage}>No requirements found</Text>}
@@ -1912,608 +1592,62 @@ const DetailedCharacterSheet = ({
           {/* Modifier System Status */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Modifier System Status</Text>
-
             {(() => {
-              const modifiers = detailedCharacter.getDetailedCharacterModifiers();
-              const skippedModifiers = modifiers.getModifiers().skippedModifiers;
-              const appliedModifiers = modifiers.getModifiers().appliedModifiers;
-              const unappliedModifiers = modifiers.getModifiers().unappliedModifiers;
-              const inactiveModifiers = modifiers.getModifiers().inactiveModifiers;
-              const allModifiers = modifiers.getModifiers().modifiers;
+              const { modifiers, appliedModifiers, unappliedModifiers, inactiveModifiers, skippedModifiers } =
+                detailedCharacter.getDetailedCharacterModifiers().getModifiers();
+              const modifierRow = (modifier: Modifier) => [
+                modifier.sourceType,
+                modifier.target,
+                modifier.operator,
+                modifier.value,
+                modifier.valueType,
+              ];
 
               return (
                 <View>
-                  {/* Status Summary */}
-                  <View
-                    style={{
-                      marginBottom: 10,
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Text style={{ fontSize: FONT_SIZE.md, color: "#333" }}>
-                      Total Modifiers: {allModifiers.length}
-                    </Text>
-                    <Text style={{ fontSize: FONT_SIZE.md, color: "#008800" }}>Applied: {appliedModifiers.length}</Text>
-                    <Text style={{ fontSize: FONT_SIZE.md, color: "#cc0000" }}>
-                      Unapplied: {unappliedModifiers.length}
-                    </Text>
-                    <Text style={{ fontSize: FONT_SIZE.md, color: "#666699" }}>
-                      Inactive: {inactiveModifiers.length}
-                    </Text>
-                    <Text style={{ fontSize: FONT_SIZE.md, color: "#cc9900" }}>Skipped: {skippedModifiers.length}</Text>
-                  </View>
-
-                  {/* Applied Modifiers Table */}
-                  {appliedModifiers.length > 0 && (
-                    <View style={{ marginBottom: 10 }}>
-                      <Text
-                        style={{
-                          fontSize: FONT_SIZE.lg,
-                          fontWeight: "bold",
-                          marginBottom: 5,
-                        }}
-                      >
-                        Applied Modifiers
-                      </Text>
-                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                        {/* Header Row */}
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            backgroundColor: "#eee",
-                            borderBottomWidth: 1,
-                            borderBottomColor: "#ccc",
-                            paddingVertical: 4,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "20%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            SOURCE TYPE
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "35%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            TARGET
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            OPERATOR
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            VALUE
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            TYPE
-                          </Text>
-                        </View>
-
-                        {/* Applied Modifiers Data */}
-                        {appliedModifiers.slice(0, 10).map((modifier: Modifier, index: number) => (
-                          <View
-                            key={index}
-                            style={{
-                              flexDirection: "row",
-                              borderBottomWidth: 0.5,
-                              borderBottomColor: "#eee",
-                              paddingVertical: 3,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "20%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {modifier.sourceType}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "35%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {modifier.target}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {modifier.operator}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {modifier.value}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {modifier.valueType}
-                            </Text>
-                          </View>
-                        ))}
-
-                        {appliedModifiers.length > 10 && (
-                          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-                            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-                              ... and {appliedModifiers.length - 10} more applied modifiers
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Unapplied Modifiers Table */}
-                  {unappliedModifiers.length > 0 && (
-                    <View style={{ marginBottom: 10 }}>
-                      <Text
-                        style={{
-                          fontSize: FONT_SIZE.lg,
-                          fontWeight: "bold",
-                          marginBottom: 5,
-                        }}
-                      >
-                        Unapplied Modifiers (Requirements Not Met)
-                      </Text>
-                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                        {/* Header Row */}
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            backgroundColor: "#eee",
-                            borderBottomWidth: 1,
-                            borderBottomColor: "#ccc",
-                            paddingVertical: 4,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "20%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            SOURCE TYPE
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "35%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            TARGET
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            OPERATOR
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            VALUE
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            TYPE
-                          </Text>
-                        </View>
-
-                        {/* Unapplied Modifiers Data */}
-                        {unappliedModifiers.slice(0, 10).map((modifier: Modifier, index: number) => (
-                          <View
-                            key={index}
-                            style={{
-                              flexDirection: "row",
-                              borderBottomWidth: 0.5,
-                              borderBottomColor: "#eee",
-                              paddingVertical: 3,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "20%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {modifier.sourceType}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "35%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {modifier.target}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {modifier.operator}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {modifier.value}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {modifier.valueType}
-                            </Text>
-                          </View>
-                        ))}
-
-                        {unappliedModifiers.length > 10 && (
-                          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-                            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-                              ... and {unappliedModifiers.length - 10} more unapplied modifiers
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Inactive Modifiers Table */}
-                  {inactiveModifiers.length > 0 && (
-                    <View style={{ marginBottom: 10 }}>
-                      <Text
-                        style={{
-                          fontSize: FONT_SIZE.lg,
-                          fontWeight: "bold",
-                          marginBottom: 5,
-                        }}
-                      >
-                        Inactive Modifiers (Target Not Equipped)
-                      </Text>
-                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                        {/* Header Row */}
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            backgroundColor: "#eee",
-                            borderBottomWidth: 1,
-                            borderBottomColor: "#ccc",
-                            paddingVertical: 4,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "20%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            SOURCE TYPE
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "35%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            TARGET
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            OPERATOR
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            VALUE
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "15%",
-                              paddingHorizontal: 4,
-                              textAlign: "center",
-                            }}
-                          >
-                            TYPE
-                          </Text>
-                        </View>
-
-                        {/* Inactive Modifiers Data */}
-                        {inactiveModifiers.slice(0, 10).map((modifier: Modifier, index: number) => (
-                          <View
-                            key={index}
-                            style={{
-                              flexDirection: "row",
-                              borderBottomWidth: 0.5,
-                              borderBottomColor: "#eee",
-                              paddingVertical: 3,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "20%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {modifier.sourceType}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "35%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {modifier.target}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {modifier.operator}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {modifier.value}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "15%",
-                                paddingHorizontal: 4,
-                                textAlign: "center",
-                              }}
-                            >
-                              {modifier.valueType}
-                            </Text>
-                          </View>
-                        ))}
-
-                        {inactiveModifiers.length > 10 && (
-                          <View style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
-                            <Text style={{ fontSize: FONT_SIZE.base, color: "#666", textAlign: "center" }}>
-                              ... and {inactiveModifiers.length - 10} more inactive modifiers
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Skipped Modifiers Table */}
-                  {skippedModifiers.length > 0 && (
-                    <View>
-                      <Text
-                        style={{
-                          fontSize: FONT_SIZE.lg,
-                          fontWeight: "bold",
-                          marginBottom: 5,
-                        }}
-                      >
-                        Skipped Modifiers
-                      </Text>
-                      <View style={{ width: "100%", borderWidth: 1, borderColor: "#ccc" }}>
-                        {/* Header Row */}
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            backgroundColor: "#eee",
-                            borderBottomWidth: 1,
-                            borderBottomColor: "#ccc",
-                            paddingVertical: 4,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "25%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            SOURCE TYPE
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "35%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            TARGET
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: FONT_SIZE.sm,
-                              fontWeight: "bold",
-                              color: "#333",
-                              width: "40%",
-                              paddingHorizontal: 4,
-                            }}
-                          >
-                            WARNING MESSAGE
-                          </Text>
-                        </View>
-
-                        {/* Skipped Modifiers Data */}
-                        {skippedModifiers.map((skippedItem: { warning: string; modifier: Modifier }, index: number) => (
-                          <View
-                            key={index}
-                            style={{
-                              flexDirection: "row",
-                              borderBottomWidth: 0.5,
-                              borderBottomColor: "#eee",
-                              paddingVertical: 3,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "25%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {skippedItem.modifier.sourceType}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "35%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {skippedItem.modifier.target}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: FONT_SIZE.base,
-                                width: "40%",
-                                paddingHorizontal: 4,
-                              }}
-                            >
-                              {skippedItem.warning}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-
+                  <DiagnosticCounts
+                    counts={[
+                      { label: `Total Modifiers: ${modifiers.length}`, color: "#333" },
+                      { label: `Applied: ${appliedModifiers.length}`, color: "#008800" },
+                      { label: `Unapplied: ${unappliedModifiers.length}`, color: "#cc0000" },
+                      { label: `Inactive: ${inactiveModifiers.length}`, color: "#666699" },
+                      { label: `Skipped: ${skippedModifiers.length}`, color: "#cc9900" },
+                    ]}
+                  />
+                  <DiagnosticTable
+                    title="Applied Modifiers"
+                    columns={MODIFIER_COLUMNS}
+                    rows={appliedModifiers.map(modifierRow)}
+                    max={10}
+                    noun="applied modifiers"
+                  />
+                  <DiagnosticTable
+                    title="Unapplied Modifiers"
+                    columns={MODIFIER_COLUMNS}
+                    rows={unappliedModifiers.map(modifierRow)}
+                    max={10}
+                    noun="unapplied modifiers"
+                  />
+                  <DiagnosticTable
+                    title="Inactive Modifiers"
+                    columns={MODIFIER_COLUMNS}
+                    rows={inactiveModifiers.map(modifierRow)}
+                    max={10}
+                    noun="inactive modifiers"
+                  />
+                  <DiagnosticTable
+                    title="Skipped Modifiers"
+                    columns={[
+                      { label: "SOURCE TYPE", width: "25%" },
+                      { label: "TARGET", width: "35%" },
+                      { label: "WARNING MESSAGE", width: "40%" },
+                    ]}
+                    rows={skippedModifiers.map(({ modifier, warning }) => [
+                      modifier.sourceType,
+                      modifier.target,
+                      warning,
+                    ])}
+                  />
                   {skippedModifiers.length === 0 &&
                     appliedModifiers.length === 0 &&
                     unappliedModifiers.length === 0 &&
