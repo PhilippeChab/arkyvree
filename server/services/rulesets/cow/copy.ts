@@ -117,6 +117,7 @@ export async function copyEntityCustomizations(
 }
 
 // Copy relationship data (join tables) for a single entity
+// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export async function copyEntityRelationships(
   tx: Db,
   entityType: EntityType,

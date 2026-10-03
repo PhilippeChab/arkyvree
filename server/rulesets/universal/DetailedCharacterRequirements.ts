@@ -104,6 +104,7 @@ export default class DetailedCharacterRequirements {
     }
   }
 
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   private evaluateRequirement(requirement: Requirement, result: TraversePathResult, holders: Holders): boolean {
     const { operator, value, valueType } = requirement;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

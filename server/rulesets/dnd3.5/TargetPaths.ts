@@ -130,6 +130,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPathsTraverser {
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   private traversePath(
     holder: Holder,
     elements: string[],
@@ -329,6 +330,7 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     return { ...PATH_DESCRIPTIONS };
   }
 
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   async getTargetPathsAndLabels(
     rulesetData: CachedRulesetData,
     kind: "modifier" | "requirement",
@@ -537,6 +539,7 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     return { paths, segmentLabels };
   }
 
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   traversePathInit(target: string, holders: Holders, context?: { sourceId?: string }): TraversePathResult[] {
     try {
       // Handle dot notation: category.item.property

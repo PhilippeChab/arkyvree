@@ -6,6 +6,7 @@ import type Dnd35DetailedCharacterBonded from "@/server/rulesets/dnd3.5/Detailed
 import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
+// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export function buildFullCharacterResponse(
   character: InferSelectModel<typeof charactersInCharacter>,
   detailedCharacter: DetailedCharacterInterface,

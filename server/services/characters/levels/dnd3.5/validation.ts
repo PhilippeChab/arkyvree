@@ -17,6 +17,7 @@ import { loadFeatCustomizations } from "./projection.ts";
  * Shared validation for level selections used by both updateLevel and finalizeLevelUp.
  * Validates entity ownership, ruleset lineage, aptitude links, and non-stackable feat uniqueness.
  */
+// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export async function validateAndFetchLevelSelections(
   tx: Db,
   params: {

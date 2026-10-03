@@ -84,6 +84,7 @@ export async function updateLevel(
   return await withTransaction(async (tx) => {
     const characterRecord = await getEditableCharacter(tx, session, characterId);
 
+    // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
     return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
       const characterLevel = await CharacterLevels.findOne(tx, {
         id: characterLevelId,
@@ -317,6 +318,7 @@ export async function finalizeLevelUp(
   return await withTransaction(async (tx) => {
     const characterRecord = await getEditableCharacter(tx, session, characterId);
 
+    // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
     return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
       const rulesetIds = new Set([characterRecord.rulesetId, ...sourceChain]);

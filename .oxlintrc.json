@@ -67,6 +67,8 @@
     "arkyvree/query-keys": "error",
     "arkyvree/client-apis": "error",
     "arkyvree/test-conventions": "error",
+    // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
+    "arkyvree/function-length": "error",
     // A file reads bottom-up: a helper sits above the code that uses it. Classes
     // are left out: a repository's instance class follows it.
     "no-use-before-define": [

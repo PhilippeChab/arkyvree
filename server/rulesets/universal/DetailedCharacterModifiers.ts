@@ -40,6 +40,7 @@ export default class DetailedCharacterModifiers {
     skippedModifiers: [],
   };
 
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   private applyModifier(modifier: Modifier, result: TraversePathResult, holders: Holders) {
     const { value, valueType, operator } = modifier;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

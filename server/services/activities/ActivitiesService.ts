@@ -99,6 +99,7 @@ class ActivitiesService {
     );
   }
 
+  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   async getActivityUrl(
     session: Session,
     targetTable: string,

@@ -144,6 +144,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       this.updateWeaponsTotal();
     }
 
+    // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
     addWeapon(
       setIndex: number,
       slot: "Main Hand" | "Off Hand" | "Two Handed",

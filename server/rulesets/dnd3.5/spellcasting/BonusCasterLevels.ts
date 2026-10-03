@@ -86,6 +86,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       return this.bonusKlassLevels;
     }
 
+    // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
     fetchBonusCasterLevelData(
       rulesetData: CachedRulesetData,
       klassLevels: KlassLevelWithPMR[],
