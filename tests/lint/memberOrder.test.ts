@@ -9,7 +9,14 @@ const [READ, CREATE, UPDATE, DELETE, ACTION] = [0, 1, 2, 3, 4];
 
 describe("member order", () => {
   test("groups a method by its leading verb", () => {
-    expect(["findOne", "getRulesetFeats", "exists", "countActive"].map(verbGroup)).toEqual([READ, READ, READ, READ]);
+    expect(["findOne", "getRulesetFeats", "exists", "countActive", "isOwner", "validatePath"].map(verbGroup)).toEqual([
+      READ,
+      READ,
+      READ,
+      READ,
+      READ,
+      READ,
+    ]);
     expect(["create", "createMany", "bulkCreateVariants", "duplicateRulesetItem"].map(verbGroup)).toEqual([
       CREATE,
       CREATE,
@@ -50,7 +57,7 @@ describe("member order", () => {
     ]);
   });
 
-  test("puts a class and a router in order with oxlint --fix, keeping comments and middleware runs", () => {
+  test("puts a class and a router in order with oxlint --fix, keeping fields, comments and middleware runs", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
     fs.mkdirSync(path.join(dir, "server/routers"), { recursive: true });
     const config = path.join(dir, ".oxlintrc.json");
@@ -68,12 +75,16 @@ describe("member order", () => {
         "class FeatsService {",
         "  private helper() {}",
         "",
+        "  readonly zz = 1;",
+        "",
+        "  readonly aa = this.zz + 1;",
+        "",
         "  /** Deletes. */",
-        "  async deleteFeat() {}",
+        "  async deleteFeat() {} // about deleting",
         "",
         "  async getFeats() {}",
         "",
-        "  async publish() {}",
+        "  async publish() {} // about publishing",
         "",
         "  async createFeat() {}",
         "}",
@@ -85,7 +96,7 @@ describe("member order", () => {
       router,
       [
         "export default new Hono()",
-        '  .delete("/:id", (c) => c)',
+        '  .delete("/:id", (c) => c) // about deleting',
         "  // The list.",
         '  .get("/", (c) => c)',
         "  .use(middleware)",
@@ -102,14 +113,19 @@ describe("member order", () => {
         "class FeatsService {",
         "  private helper() {}",
         "",
+        // A field keeps its place: its initializer may read an earlier one.
+        "  readonly zz = 1;",
+        "",
+        "  readonly aa = this.zz + 1;",
+        "",
         "  async getFeats() {}",
         "",
         "  async createFeat() {}",
         "",
         "  /** Deletes. */",
-        "  async deleteFeat() {}",
+        "  async deleteFeat() {} // about deleting",
         "",
-        "  async publish() {}",
+        "  async publish() {} // about publishing",
         "}",
         "",
       ].join("\n"),
@@ -120,7 +136,7 @@ describe("member order", () => {
         "export default new Hono()",
         "  // The list.",
         '  .get("/", (c) => c)',
-        '  .delete("/:id", (c) => c)',
+        '  .delete("/:id", (c) => c) // about deleting',
         "  .use(middleware)",
         '  .get("/:id", (c) => c)',
         '  .post("/", (c) => c);',

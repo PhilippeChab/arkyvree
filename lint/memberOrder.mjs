@@ -13,7 +13,7 @@
 
 /** A method's group, by its leading verb: a word followed by a capital or nothing (`get`, `getRuleset`). */
 const VERB_GROUPS = [
-  ["find", "get", "list", "exists", "count", "search", "has"],
+  ["find", "get", "list", "exists", "count", "search", "has", "is", "resolve", "validate", "download"],
   ["create", "add", "insert", "duplicate", "bulkCreate"],
   ["update", "set", "mark", "replace", "upsert", "backfill"],
   ["delete", "remove", "archive", "unarchive", "hardDelete", "purge"],
@@ -25,10 +25,14 @@ export function verbGroup(name) {
   return index === -1 ? ACTIONS : index;
 }
 
-/** Where a class member goes: [rank, name]. Members ranked below 0 keep their order, at the top. */
+/**
+ * Where a class member goes: [rank, name]. Members ranked below 0 keep their order, at the top: the constructor,
+ * statics, private and protected members, and fields, whose initializers run in order (one may read another).
+ */
 export function memberRank(member) {
   if (member.kind === "constructor") return [-3, ""];
   if (member.static) return [-2, ""];
+  if (member.type !== "MethodDefinition" && member.type !== "TSAbstractMethodDefinition") return [-1, ""];
   const isPublic = !member.accessibility || member.accessibility === "public";
   if (!isPublic || member.key?.type === "PrivateIdentifier") return [-1, ""];
   const name = member.key?.name ?? member.key?.value;
@@ -74,6 +78,13 @@ const compareMembers = (a, b) => {
 
 const rangeOf = (node) => node.range ?? [node.start, node.end];
 
+/** The comment that ends the line at `pos` (` // note`), which belongs to what ends there: its length, or 0. */
+function trailingComment(text, pos) {
+  const lineEnd = text.indexOf("\n", pos);
+  const rest = text.slice(pos, lineEnd === -1 ? text.length : lineEnd);
+  return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? rest.trimEnd().length : 0;
+}
+
 /** Reorders `items` (each with `node`, `start`, `end`): one report, one fix rewriting [from, to). */
 function reportOrder(context, items, sorted, render, message) {
   const outOfPlace = items.findIndex((item, i) => item !== sorted[i]);
@@ -87,17 +98,21 @@ function reportOrder(context, items, sorted, render, message) {
 
 function checkClass(context, body) {
   const text = context.sourceCode.text;
-  const members = body.body.map((node, index) => {
-    const [start, end] = rangeOf(node);
-    const previousEnd = index === 0 ? rangeOf(body)[0] + 1 : rangeOf(body.body[index - 1])[1];
+  const [bodyStart, bodyEnd] = rangeOf(body);
+  // A comment ending the line of the `{`, or of a member, stays with it.
+  const headEnd = bodyStart + 1 + trailingComment(text, bodyStart + 1);
+  const members = [];
+  for (const [index, node] of body.body.entries()) {
+    const [start, memberEnd] = rangeOf(node);
+    const end = memberEnd + trailingComment(text, memberEnd);
+    const previousEnd = index === 0 ? headEnd : members[index - 1].end;
     // What sits between the previous member and this one: its comments.
     const comments = text.slice(previousEnd, start).trim();
-    return { node, index, rank: memberRank(node), start, end, comments };
-  });
+    members.push({ node, index, rank: memberRank(node), start, end, comments });
+  }
   const sorted = [...members].sort(compareMembers);
-  const [bodyStart, bodyEnd] = rangeOf(body);
   const indent = " ".repeat(context.sourceCode.getLocFromIndex?.(members[0]?.start ?? 0)?.column ?? 2);
-  const tail = text.slice(members.at(-1)?.end ?? bodyStart + 1, bodyEnd - 1).trim();
+  const tail = text.slice(members.at(-1)?.end ?? headEnd, bodyEnd - 1).trim();
   reportOrder(
     context,
     members,
@@ -105,7 +120,7 @@ function checkClass(context, body) {
     {
       range: [bodyStart, bodyEnd],
       text: (order) =>
-        "{" +
+        text.slice(bodyStart, headEnd) +
         order
           .map(
             (m, i) =>
@@ -142,9 +157,9 @@ function checkChain(context, outermost) {
         node: call.callee.property,
         index,
         route: { method: call.callee.property.name, path: call.arguments[0].value },
-        // From the end of what it's called on: the newline, comments and `.get(…)`.
-        start: rangeOf(call.callee.object)[1],
-        end: rangeOf(call)[1],
+        // From the line after what it's called on, its comments and `.get(…)`, to the comment ending its own line.
+        start: rangeOf(call.callee.object)[1] + trailingComment(text, rangeOf(call.callee.object)[1]),
+        end: rangeOf(call)[1] + trailingComment(text, rangeOf(call)[1]),
       }));
       const sorted = [...items].sort((a, b) => compareRoutes(a.route, b.route) || a.index - b.index);
       reportOrder(
