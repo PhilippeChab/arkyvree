@@ -1,6 +1,8 @@
 /**
  * Shared validation helpers for level-up operations.
  *
+ * - checkAbilityIncrease — a level takes an ability increase exactly when it has one
+ * - checkSelections — submitted selections are the ruleset's, and linked to their pools
  * - validateAndFetchLevelSelections — validates entity ownership, ruleset lineage, aptitude links, and non-stackable uniqueness
  * - annotateRequirements — attaches eligibility and requirement tree info to candidate entities
  */
@@ -13,11 +15,148 @@ import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
 
 import { loadFeatCustomizations } from "./projection.ts";
 
+type FeatRecord = { id: string; name: string; stackable: boolean };
+
+/** The rows of these ids, deduplicated, from the character's ruleset; throws when one isn't in it. */
+function fetchAll<T>(ids: string[], byId: Map<string, T>, what: string): T[] {
+  const uniqueIds = [...new Set(ids)];
+  const fetched = uniqueIds.map((id) => byId.get(id)).filter((row): row is T => row !== undefined);
+  if (fetched.length !== uniqueIds.length) throw new BadRequestError(`One or more ${what} not found`);
+  return fetched;
+}
+
+/** The submitted skills, feats and powers, from the character's ruleset; throws when one, or a pool, isn't in it. */
+function fetchSelections(
+  rulesetData: CachedRulesetData,
+  skills: Record<string, number>,
+  feats: Record<string, string[]>,
+  powers: Record<string, string[]>,
+) {
+  const skillIds = Object.keys(skills).filter((id) => skills[id] > 0);
+  const fetchedSkills = fetchAll(skillIds, rulesetData.skillsById, "skills");
+  const fetchedFeats = fetchAll(Object.values(feats).flat(), rulesetData.featsById, "feats");
+  const fetchedPowers = fetchAll(Object.values(powers).flat(), rulesetData.powersById, "powers");
+  fetchAll([...Object.keys(feats), ...Object.keys(powers)], rulesetData.aptitudesById, "aptitudes");
+  return { fetchedSkills, fetchedFeats, fetchedPowers };
+}
+
+/** Throws when a non-stackable feat is picked more than once in the level (under two pools). */
+function checkRepeatedPicks(featIds: string[], fetchedFeats: FeatRecord[]) {
+  const submittedFeatCounts = new Map<string, number>();
+  for (const id of featIds) submittedFeatCounts.set(id, (submittedFeatCounts.get(id) ?? 0) + 1);
+  for (const feat of fetchedFeats) {
+    if (!feat.stackable && (submittedFeatCounts.get(feat.id) ?? 0) > 1) {
+      throw new BadRequestError(`Non-stackable feat "${feat.name}" cannot be picked more than once`);
+    }
+  }
+}
+
+/**
+ * Throws when a feat or a power isn't linked to the pool it's picked under. Returns each leveled power's spell level
+ * in its pool, by `powerId:aptitudeId`.
+ */
+function linkedPowerLevels(
+  rulesetData: CachedRulesetData,
+  feats: Record<string, string[]>,
+  powers: Record<string, string[]>,
+) {
+  for (const [aptitudeId, ids] of Object.entries(feats)) {
+    for (const featId of ids) {
+      const links = rulesetData.featsById.get(featId)?.featsAptitudesInRules ?? [];
+      if (!links.some((fa) => fa.aptitudeId === aptitudeId)) {
+        throw new BadRequestError("Feat is not linked to the specified aptitude");
+      }
+    }
+  }
+
+  const powerLevelMap = new Map<string, number>();
+  for (const [aptitudeId, ids] of Object.entries(powers)) {
+    for (const powerId of ids) {
+      const power = rulesetData.powersById.get(powerId);
+      const link = power?.powersAptitudesInRules.find((pa) => pa.aptitudeId === aptitudeId);
+      if (!link) {
+        throw new BadRequestError("Power is not linked to the specified aptitude");
+      }
+      if (link.level != null) {
+        powerLevelMap.set(`${powerId}:${aptitudeId}`, link.level);
+      }
+    }
+  }
+  return powerLevelMap;
+}
+
+/**
+ * Throws when a non-stackable feat picked is already on the character: picked or granted at its other levels, or
+ * granted at this one.
+ */
+async function checkNotTaken(
+  tx: Db,
+  fetchedFeats: FeatRecord[],
+  otherLevels: { id: string; klassLevelId: string }[],
+  autoGrantedRecords: { featsInRule: { id: string } }[],
+) {
+  const nonStackableSubmitted = fetchedFeats.filter((f) => !f.stackable);
+  if (nonStackableSubmitted.length === 0) return;
+
+  const otherLevelIds = otherLevels.map((lvl) => lvl.id);
+  // Inside the caller's withRulesetScope, otherLevels[i].klassLevelId and the
+  // returned feat.id are auto-remapped to post-COW by the repo Proxy: the
+  // grants are the copied class level's, and the Set compares post-COW ids.
+  const pickedFeats = otherLevelIds.length > 0 ? await Feats.findPicks(tx, { characterLevelIds: otherLevelIds }) : [];
+  const givenFeats = await Feats.findGrants(tx, { levels: otherLevels });
+  const existingFeatIds = new Set([...pickedFeats, ...givenFeats].map((f) => f.id));
+
+  // Auto-granted feats come from the composed cache (already post-COW).
+  for (const rec of autoGrantedRecords) {
+    existingFeatIds.add(rec.featsInRule.id);
+  }
+
+  for (const feat of nonStackableSubmitted) {
+    if (existingFeatIds.has(feat.id)) {
+      throw new BadRequestError(`Non-stackable feat "${feat.name}" is already on this character`);
+    }
+  }
+}
+
+/** The pool each picked id is picked under. */
+function poolsOf(selections: Record<string, string[]>) {
+  const pools = new Map<string, string>();
+  for (const [aptitudeId, ids] of Object.entries(selections)) {
+    for (const id of ids) {
+      pools.set(id, aptitudeId);
+    }
+  }
+  return pools;
+}
+
+/**
+ * Throws when a level takes an ability increase it doesn't have, or skips the one it has. `label` names the level in
+ * the message ("Level 2: ").
+ */
+export function checkAbilityIncrease(isAbilityIncreaseLevel: boolean, abilityId: string | null, label = "") {
+  if (abilityId && !isAbilityIncreaseLevel) {
+    throw new BadRequestError(`${label}Ability increase is not available at this level`);
+  }
+  if (!abilityId && isAbilityIncreaseLevel) {
+    throw new BadRequestError(`${label}Ability increase is required at this level`);
+  }
+}
+
+/** Throws when a submitted selection isn't the character's ruleset's, or isn't linked to the pool it's picked under. */
+export function checkSelections(
+  rulesetData: CachedRulesetData,
+  skills: Record<string, number>,
+  feats: Record<string, string[]>,
+  powers: Record<string, string[]>,
+) {
+  fetchSelections(rulesetData, skills, feats, powers);
+  linkedPowerLevels(rulesetData, feats, powers);
+}
+
 /**
  * Shared validation for level selections used by both updateLevel and finalizeLevelUp.
  * Validates entity ownership, ruleset lineage, aptitude links, and non-stackable feat uniqueness.
  */
-// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export async function validateAndFetchLevelSelections(
   tx: Db,
   params: {
@@ -34,128 +173,25 @@ export async function validateAndFetchLevelSelections(
 ) {
   const { klass, klassLevel, otherLevels, hp, abilityId, skills, feats, powers, rulesetData } = params;
 
-  // Validate HP is within hit die range
   if (hp < 1 || hp > klass.hd) {
     throw new BadRequestError(`HP must be between 1 and ${klass.hd}`);
   }
 
-  // Validate abilityId belongs to character's ruleset.
   // A cache hit means the entity is in the composed view of the character's ruleset
   // (the cache's arrays are already COW-resolved and sibling-filtered).
   if (abilityId && !rulesetData.abilitiesById.has(abilityId)) {
     throw new BadRequestError("Ability does not belong to the character's ruleset");
   }
 
-  // Validate all referenced entity IDs belong to the character's ruleset
-  const skillIds = Object.keys(skills).filter((id) => skills[id] > 0);
+  // Submitted ids can repeat, e.g. a non-stackable feat picked under two aptitude pools: caught by checkRepeatedPicks.
   const featIds = Object.values(feats).flat();
-  const powerIds = Object.values(powers).flat();
-  const aptitudeIds = [...new Set([...Object.keys(feats), ...Object.keys(powers)])];
-
-  // Dedup lookups (submitted ids can contain duplicates, e.g. a non-stackable feat
-  // accidentally picked under two aptitude pools — caught below).
-  const uniqueSkillIds = [...new Set(skillIds)];
-  const uniqueFeatIds = [...new Set(featIds)];
-  const uniquePowerIds = [...new Set(powerIds)];
-  const fetchedSkills = uniqueSkillIds
-    .map((id) => rulesetData.skillsById.get(id))
-    .filter((s): s is NonNullable<typeof s> => s !== undefined);
-  const fetchedFeats = uniqueFeatIds
-    .map((id) => rulesetData.featsById.get(id))
-    .filter((f): f is NonNullable<typeof f> => f !== undefined);
-  const fetchedPowers = uniquePowerIds
-    .map((id) => rulesetData.powersById.get(id))
-    .filter((p): p is NonNullable<typeof p> => p !== undefined);
-  const fetchedAptitudes = aptitudeIds
-    .map((id) => rulesetData.aptitudesById.get(id))
-    .filter((a): a is NonNullable<typeof a> => a !== undefined);
-
-  if (fetchedSkills.length !== uniqueSkillIds.length) throw new BadRequestError("One or more skills not found");
-  if (fetchedFeats.length !== uniqueFeatIds.length) throw new BadRequestError("One or more feats not found");
-  if (fetchedPowers.length !== uniquePowerIds.length) throw new BadRequestError("One or more powers not found");
-  if (fetchedAptitudes.length !== aptitudeIds.length) throw new BadRequestError("One or more aptitudes not found");
-
-  // A non-stackable feat must not be submitted twice within the same level
-  // (e.g. picked under two aptitude pools).
-  const submittedFeatCounts = new Map<string, number>();
-  for (const id of featIds) submittedFeatCounts.set(id, (submittedFeatCounts.get(id) ?? 0) + 1);
-  for (const feat of fetchedFeats) {
-    if (!feat.stackable && (submittedFeatCounts.get(feat.id) ?? 0) > 1) {
-      throw new BadRequestError(`Non-stackable feat "${feat.name}" cannot be picked more than once`);
-    }
-  }
-
-  // Validate feat→aptitude links exist in the ruleset. `featsAptitudesInRules`
-  // is typed on FeatWithAptitudes — no cast needed.
-  if (featIds.length > 0) {
-    for (const [aptitudeId, ids] of Object.entries(feats)) {
-      for (const featId of ids) {
-        const feat = rulesetData.featsById.get(featId);
-        const links = feat?.featsAptitudesInRules ?? [];
-        if (!links.some((fa) => fa.aptitudeId === aptitudeId)) {
-          throw new BadRequestError("Feat is not linked to the specified aptitude");
-        }
-      }
-    }
-  }
-
-  // Validate power→aptitude links and build powerLevelMap using the cache's
-  // inline `powersAptitudesInRules` join rows (already on PowerWithAptitudes).
-  const powerLevelMap = new Map<string, number>();
-  if (powerIds.length > 0) {
-    for (const [aptitudeId, ids] of Object.entries(powers)) {
-      for (const powerId of ids) {
-        const power = rulesetData.powersById.get(powerId);
-        const link = power?.powersAptitudesInRules.find((pa) => pa.aptitudeId === aptitudeId);
-        if (!link) {
-          throw new BadRequestError("Power is not linked to the specified aptitude");
-        }
-        if (link.level != null) {
-          powerLevelMap.set(`${powerId}:${aptitudeId}`, link.level);
-        }
-      }
-    }
-  }
+  const { fetchedSkills, fetchedFeats, fetchedPowers } = fetchSelections(rulesetData, skills, feats, powers);
+  checkRepeatedPicks(featIds, fetchedFeats);
+  const powerLevelMap = linkedPowerLevels(rulesetData, feats, powers);
 
   // Fetch auto-granted feats for the current klass level (reused by caller for projected data)
   const autoGrantedRecords = rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [];
-
-  // Check non-stackable feats aren't already on the character
-  const nonStackableSubmitted = fetchedFeats.filter((f) => !f.stackable);
-  if (nonStackableSubmitted.length > 0) {
-    const otherLevelIds = otherLevels.map((lvl) => lvl.id);
-    // Inside the caller's withRulesetScope, otherLevels[i].klassLevelId and the
-    // returned feat.id are auto-remapped to post-COW by the repo Proxy: the
-    // grants are the copied class level's, and the Set compares post-COW ids.
-    const pickedFeats = otherLevelIds.length > 0 ? await Feats.findPicks(tx, { characterLevelIds: otherLevelIds }) : [];
-    const givenFeats = await Feats.findGrants(tx, { levels: otherLevels });
-    const existingFeatIds = new Set([...pickedFeats, ...givenFeats].map((f) => f.id));
-
-    // Auto-granted feats come from the composed cache (already post-COW).
-    for (const rec of autoGrantedRecords) {
-      existingFeatIds.add(rec.featsInRule.id);
-    }
-
-    for (const feat of nonStackableSubmitted) {
-      if (existingFeatIds.has(feat.id)) {
-        throw new BadRequestError(`Non-stackable feat "${feat.name}" is already on this character`);
-      }
-    }
-  }
-
-  const featToAptitude = new Map<string, string>();
-  for (const [aptitudeId, ids] of Object.entries(feats)) {
-    for (const id of ids) {
-      featToAptitude.set(id, aptitudeId);
-    }
-  }
-
-  const powerToAptitude = new Map<string, string>();
-  for (const [aptitudeId, ids] of Object.entries(powers)) {
-    for (const id of ids) {
-      powerToAptitude.set(id, aptitudeId);
-    }
-  }
+  await checkNotTaken(tx, fetchedFeats, otherLevels, autoGrantedRecords);
 
   // Include auto-granted feat IDs so their modifiers are loaded in the same batch
   const autoGrantedFeatIds = autoGrantedRecords.map((rec) => rec.featsInRule.id);
@@ -165,8 +201,8 @@ export async function validateAndFetchLevelSelections(
     fetchedSkills,
     fetchedFeats,
     fetchedPowers,
-    featToAptitude,
-    powerToAptitude,
+    featToAptitude: poolsOf(feats),
+    powerToAptitude: poolsOf(powers),
     powerLevelMap,
     featCustomizations,
     autoGrantedRecords,

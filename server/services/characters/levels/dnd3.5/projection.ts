@@ -8,11 +8,15 @@
  * - buildProjectedCharacterLevel — creates a temporary character level for projection
  * - buildPendingCharacterLevels — creates projected levels from pending batch data
  * - buildProjectedSkillsFromAllocations — builds projected skills from skill allocation data
+ * - projectPlannedLevels — projects planned levels with the feats their class levels grant
+ * - baselineAptitudes — the aptitudes of the character as saved, before planned levels
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
-import type { ProjectedCharacterData } from "@/server/rulesets/types.ts";
-import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
+import type { Db } from "@/server/database/index.ts";
+import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
+import type { DetailedCharacterInterface, ProjectedCharacterData, RulesetModule } from "@/server/rulesets/types.ts";
+import type { Character, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 /** Returns IDs of the given level and all subsequent levels (by creation order). */
 export function getLevelIdsFromOnward(
@@ -235,4 +239,45 @@ export function buildProjectedSkillsFromAllocations(
       return { ...skill, klassLevelId, characterLevelId, rank };
     })
     .filter((s): s is NonNullable<typeof s> => s !== null);
+}
+
+/**
+ * The projected data of planned levels: a character level each, and the feats their class levels grant. Also returns
+ * those grants' records, per level.
+ */
+export function projectPlannedLevels(
+  characterId: string,
+  plannedLevels: { klassLevel: { id: string }; abilityId: string | null }[],
+  rulesetData: CachedRulesetData,
+) {
+  const projectedCharacterLevels = plannedLevels.map(({ klassLevel, abilityId }) =>
+    buildProjectedCharacterLevel(characterId, klassLevel.id, abilityId),
+  );
+  const allAutoGrantedFeatRecords = plannedLevels.map(
+    ({ klassLevel }) => rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [],
+  );
+  const autoGrantedFeatCustomizations = loadFeatCustomizations(
+    rulesetData,
+    allAutoGrantedFeatRecords.flat().map((rec) => rec.featsInRule.id),
+  );
+  const projectedData: Dnd35ProjectedCharacterData = {
+    characterLevels: projectedCharacterLevels,
+    givenFeats: allAutoGrantedFeatRecords.flatMap((records, i) =>
+      buildProjectedGivenFeats(records, projectedCharacterLevels[i].id, autoGrantedFeatCustomizations),
+    ),
+  };
+  return { projectedData, allAutoGrantedFeatRecords };
+}
+
+/** The aptitudes of the character as saved, before its planned levels: built from the projected character's data. */
+export async function baselineAptitudes(
+  database: Db,
+  rulesetModule: RulesetModule,
+  characterRecord: Character,
+  projectedCharacter: DetailedCharacterInterface,
+) {
+  const preloaded = await projectedCharacter.preload();
+  const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+  await baselineCharacter.build(database, undefined, preloaded);
+  return baselineCharacter.getDetailedCharacterAptitudes().getAptitudes();
 }

@@ -4,10 +4,12 @@
  * - classSkillIds — the skills a class's skill list makes class skills, subtypes included
  * - plannedClassSkills — the class skills of planned levels, each level's and all together
  * - getKlassLevel — a class's level from the composed ruleset, or a 404
+ * - plannedKlassLevels — the classes and class levels of planned levels, checked
+ * - savedKlassLevel — a saved character level's class level and class, or a 404
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
+import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { isSkillSubtypeOf } from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
 
 /** The skills class skill records make class skills: theirs, and the ruleset's subtypes of them ("Craft (…)" of Craft). */
@@ -43,4 +45,42 @@ export function getKlassLevel(rulesetData: CachedRulesetData, klassId: string, l
   const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
   if (!klassLevel) throw new NotFoundError("Class level not found");
   return klassLevel;
+}
+
+/**
+ * Each planned level's class and class level, from the composed ruleset: a cache hit is proof of lineage. Throws when a
+ * class isn't the ruleset's (nor from `rulesetIds`, when given) or a player character's, or hasn't that level.
+ */
+export function plannedKlassLevels(
+  rulesetData: CachedRulesetData,
+  levels: { klassId: string; level: number; abilityId: string | null }[],
+  rulesetIds?: Set<string>,
+) {
+  return levels.map(({ klassId, level, abilityId }, i) => {
+    const klass = rulesetData.klassesById.get(klassId);
+    if (!klass || (rulesetIds && !rulesetIds.has(klass.rulesetId))) {
+      throw new BadRequestError(`Level ${i + 1}: Class does not belong to the character's ruleset`);
+    }
+    if (klass.kind !== "pc") {
+      throw new BadRequestError(`Level ${i + 1}: Class is not valid for a player character`);
+    }
+    const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
+    if (!klassLevel) {
+      throw new NotFoundError(`Level ${i + 1}: Class level not found`);
+    }
+    return { klass, klassLevel, abilityId };
+  });
+}
+
+/** A saved character level's class level and class, in the composed ruleset, or a 404. */
+export function savedKlassLevel(rulesetData: CachedRulesetData, characterLevel: { klassLevelId: string }) {
+  const klassLevel = rulesetData.klassLevelsById.get(characterLevel.klassLevelId);
+  if (!klassLevel) {
+    throw new NotFoundError("Class level not found");
+  }
+  const klass = rulesetData.klassesById.get(klassLevel.klassId);
+  if (!klass) {
+    throw new NotFoundError("Class not found");
+  }
+  return { klassLevel, klass };
 }
