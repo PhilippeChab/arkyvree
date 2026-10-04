@@ -1,3 +1,4 @@
+import { readEnv } from "@/server/environment.ts";
 import { onCacheHit, onCacheMiss } from "@/server/timing.ts";
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -15,7 +16,7 @@ interface MemoryCacheOptions {
   sweepInterval?: number;
 }
 
-let globalCacheEnabled = process.env.DISABLE_CACHE !== "true";
+let globalCacheEnabled = readEnv("DISABLE_CACHE") !== "true";
 
 export function setCacheEnabled(enabled: boolean): void {
   globalCacheEnabled = enabled;

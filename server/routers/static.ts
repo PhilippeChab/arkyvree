@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 
-const APP_URL = process.env.APP_URL || "http://localhost:8000";
+import { readEnv } from "@/server/environment.ts";
+
+const APP_URL = readEnv("APP_URL") || "http://localhost:8000";
 
 // Helper function to get MIME type based on file extension
 function getMimeType(path: string): string {
@@ -110,10 +112,10 @@ async function getLandingTemplate(): Promise<string> {
 let cachedTemplate: string | null = null;
 
 const APP_CONFIG = JSON.stringify({
-  googleClientId: process.env.GOOGLE_CLIENT_ID || null,
-  sentryDsn: process.env.SENTRY_CLIENT_DSN || null,
-  sentryEnvironment: process.env.NODE_ENV || null,
-  sentryRelease: process.env.FLY_MACHINE_VERSION || null,
+  googleClientId: readEnv("GOOGLE_CLIENT_ID") || null,
+  sentryDsn: readEnv("SENTRY_CLIENT_DSN") || null,
+  sentryEnvironment: readEnv("NODE_ENV") || null,
+  sentryRelease: readEnv("FLY_MACHINE_VERSION") || null,
 });
 
 async function getTemplate(): Promise<string> {

@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/bun";
 
+import { getEnvironmentName, readEnv } from "@/server/environment.ts";
 import { timingStorage } from "@/server/timing.ts";
 
 let initialized = false;
@@ -8,14 +9,14 @@ let initialized = false;
 // DSN points at Better Stack's Sentry-compatible ingest endpoint.
 export function initSentry(component: "web" | "worker") {
   if (initialized) return;
-  const dsn = process.env.SENTRY_DSN;
+  const dsn = readEnv("SENTRY_DSN");
   if (!dsn) return;
 
   Sentry.init({
     dsn,
-    environment: process.env.NODE_ENV || "development",
-    release: process.env.FLY_MACHINE_VERSION,
-    tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE || "0"),
+    environment: getEnvironmentName(),
+    release: readEnv("FLY_MACHINE_VERSION"),
+    tracesSampleRate: Number(readEnv("SENTRY_TRACES_SAMPLE_RATE") || "0"),
     sendDefaultPii: false,
     // Disable Sentry's default unhandled-rejection capture so the handler
     // below can attach request-scope context (whether the rejection

@@ -149,6 +149,27 @@ describe("conventions", () => {
     ]);
   });
 
+  test("the server reads its environment in server/environment.ts only", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/environment.ts": "export const readEnv = (name: string) => process.env[name];\n",
+          "server/services/good.ts":
+            'import { readEnv } from "@/server/environment.ts";\nexport const url = readEnv("APP_URL");\n',
+          "server/services/process.ts": "export const url = process.env.APP_URL;\n",
+          "server/services/bun.ts": "export const url = Bun.env.APP_URL;\n",
+          "shared/indexed.ts": 'export const url = process.env["APP_URL"];\n',
+          "scripts/db/reset.ts": "export const url = process.env.DATABASE_URL;\n",
+        },
+        ["environment"],
+      ),
+    ).toEqual([
+      "environment server/services/bun.ts",
+      "environment server/services/process.ts",
+      "environment shared/indexed.ts",
+    ]);
+  });
+
   test("a Session parameter is named session", async () => {
     expect(
       await lintRepo(

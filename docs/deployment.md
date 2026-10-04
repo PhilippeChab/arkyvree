@@ -79,7 +79,7 @@ Both configs use `primary_region = "iad"` to match US-East Neon.
 
 ### Environment variables
 
-Set via `fly secrets set -a <app>`. Same set on both apps unless noted.
+Set via `fly secrets set -a <app>`. Same set on both apps unless noted. `server/environment.ts` lists every variable the server reads and what it's for; this table lists those set on Fly, its `FLY_SECRETS` (`tests/environment.test.ts` keeps the two in step).
 
 | Name | Where | Purpose |
 |---|---|---|
@@ -120,7 +120,7 @@ WebSocket works through Cloudflare's proxy. The 30s client-side ping heartbeat k
 
 ### Canonical-host enforcement
 
-Fly has no toggle to disable the default `*.fly.dev` hostname, so a Hono middleware in `server/routers/application.ts` 301-redirects any request whose `Host` header doesn't match `new URL(APP_URL).host` to the canonical origin. Search engines consolidate authority at the custom domain instead of splitting it across both URLs. `/health` is exempt so Fly probes still pass, and the middleware only activates when `NODE_ENV` is `production` or `staging`.
+Fly has no toggle to disable the default `*.fly.dev` hostname, so a Hono middleware in `server/routers/application.ts` 301-redirects any request whose `Host` header doesn't match `new URL(APP_URL).host` to the canonical origin. Search engines consolidate authority at the custom domain instead of splitting it across both URLs. `/health` is exempt so Fly probes still pass, and the middleware only activates in production (`NODE_ENV=production`, with `APP_URL` set).
 
 ## CI/CD
 

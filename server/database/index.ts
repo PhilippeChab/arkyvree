@@ -1,9 +1,9 @@
 /**
  * Database connection - conditionally loads test or production implementation
  */
-import { isTest } from "@/server/environment.ts";
+import { isTest, readEnv } from "@/server/environment.ts";
 
-if (!process.env.DATABASE_URL) {
+if (!readEnv("DATABASE_URL")) {
   throw new Error("DATABASE_URL is not set");
 }
 

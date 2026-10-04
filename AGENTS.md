@@ -17,6 +17,7 @@
 - Strict typing enabled
 - PascalCase for components/classes, camelCase for functions, 'use' prefix for hooks
 - Use `@/` path alias for cross-directory imports, never `../` (`arkyvree/no-parent-imports`: `bun run lint --fix` rewrites one)
+- The server reads its environment through `server/environment.ts`, which lists every variable it reads and what for: `readEnv("APP_URL")`, `isProduction()`, `isTest()`, `isDevelopment()` (`NODE_ENV=development` explicitly: it unmasks errors, so it's never assumed; "not production" is `!isProduction()`). Never `process.env` or `Bun.env` elsewhere in the server or `shared/` (`arkyvree/environment`); a default stays with the code that reads the variable
 - Make sure typescript passes before finishing a task - use tsgo
 - Always use Hono's Infer types instead of recreating types in the frontend
 - Do not use any

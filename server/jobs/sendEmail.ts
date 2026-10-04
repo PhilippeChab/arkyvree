@@ -3,6 +3,7 @@ import nodemailer, { type Transporter } from "nodemailer";
 import { Resend } from "resend";
 
 import { type EmailJobPayload, renderEmail } from "@/server/emails/templates.ts";
+import { isProduction, isTest, readEnv } from "@/server/environment.ts";
 
 type SendEmailPayload = {
   to: string[];
@@ -10,21 +11,18 @@ type SendEmailPayload = {
   subject: string;
 } & EmailJobPayload;
 
-const env = process.env.NODE_ENV;
-const isProduction = env === "production";
-
 let resend: Resend | null = null;
 let smtpTransport: Transporter | null = null;
 
-if (isProduction) {
-  const apiKey = process.env.RESEND_API_KEY;
+if (isProduction()) {
+  const apiKey = readEnv("RESEND_API_KEY");
   if (apiKey) resend = new Resend(apiKey);
-} else if (env !== "test") {
-  const smtpHost = process.env.SMTP_HOST;
+} else if (!isTest()) {
+  const smtpHost = readEnv("SMTP_HOST");
   if (smtpHost) {
     smtpTransport = nodemailer.createTransport({
       host: smtpHost,
-      port: Number(process.env.SMTP_PORT) || 1025,
+      port: Number(readEnv("SMTP_PORT")) || 1025,
       secure: false,
     });
   } else {
@@ -37,7 +35,7 @@ export const sendEmailTask: Task = async (payload, helpers) => {
   const { to, from, subject } = email;
 
   if (!smtpTransport && !resend) {
-    if (isProduction) {
+    if (isProduction()) {
       throw new Error("Email service not configured");
     }
     helpers.logger.warn(`Email service not configured — skipping send to ${to.join(", ")}`);

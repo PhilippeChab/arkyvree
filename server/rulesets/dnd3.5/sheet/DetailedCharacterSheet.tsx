@@ -1,5 +1,6 @@
 import { Document } from "@react-pdf/renderer";
 
+import { isProduction } from "@/server/environment.ts";
 import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 
 import DiagnosticsPage from "./DiagnosticsPage.tsx";
@@ -28,7 +29,7 @@ const DetailedCharacterSheet = ({
       <SpellsPage detailedCharacter={detailedCharacter} />
       {!isBonded && <InventoryPage detailedCharacter={detailedCharacter} />}
       {/* Dev only */}
-      {process.env.NODE_ENV !== "production" && <DiagnosticsPage detailedCharacter={detailedCharacter} />}
+      {!isProduction() && <DiagnosticsPage detailedCharacter={detailedCharacter} />}
     </Document>
   );
 };

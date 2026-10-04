@@ -6,6 +6,7 @@ import type { WSContext } from "hono/ws";
 import { Client as PgClient } from "pg";
 
 import { db } from "@/server/database/index.ts";
+import { readEnv } from "@/server/environment.ts";
 
 type WsEvent =
   | { type: "activities:updated" }
@@ -157,7 +158,7 @@ async function connectListener(): Promise<void> {
   // LISTEN/NOTIFY requires a direct connection. Neon's PgBouncer pooler doesn't
   // support session-level features. Prefer DIRECT_DATABASE_URL when set,
   // otherwise strip `-pooler` from DATABASE_URL as a fallback.
-  const rawUrl = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL || "";
+  const rawUrl = readEnv("DIRECT_DATABASE_URL") || readEnv("DATABASE_URL") || "";
   const connectionString = rawUrl.replace("-pooler", "");
   const client = new PgClient({ connectionString });
   client.on("error", (err) => {

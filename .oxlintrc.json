@@ -53,7 +53,8 @@
     "arkyvree/queries-in-repositories": "error",
     "arkyvree/folder-index": "error",
     // AGENTS.md's conventions (lint/conventions.mjs): imports through @/, no helpers.ts, the shared repository
-    // instances, route params / validation / errors, sorting through the repository, shared/'s runtime, `session`.
+    // instances, route params / validation / errors, sorting through the repository, shared/'s runtime, `session`,
+    // the environment read in server/environment.ts.
     "arkyvree/no-parent-imports": "error",
     "arkyvree/no-helpers-modules": "error",
     "arkyvree/repository-instances": "error",
@@ -61,6 +62,7 @@
     "arkyvree/order-through-repository": "error",
     "arkyvree/shared-runtime": "error",
     "arkyvree/session-param": "error",
+    "arkyvree/environment": "error",
     "arkyvree/test-placement": "error",
     "arkyvree/concern-shape": "error",
     // The client's conventions (lint/frontend.mjs) and the tests' (lint/testing.mjs).

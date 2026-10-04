@@ -1,6 +1,7 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
+import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
 import { getStorage } from "@/server/storage/s3.ts";
@@ -90,7 +91,7 @@ class AttachmentsService {
   }
 
   private getSigningSecret(): string {
-    const secret = process.env.SIGNING_SECRET;
+    const secret = readEnv("SIGNING_SECRET");
     if (!secret) throw new InternalError("SIGNING_SECRET is not configured");
     return secret;
   }

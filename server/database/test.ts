@@ -4,8 +4,10 @@
  * Should NEVER be imported in production code.
  */
 
+import { readEnv } from "@/server/environment.ts";
+
 // Safety check
-if (!process.env.DATABASE_URL?.includes("test")) {
+if (!readEnv("DATABASE_URL")?.includes("test")) {
   throw new Error(
     "FATAL: Test database module loaded with non-test DATABASE_URL. " +
       "This is a safety violation. Ensure DATABASE_URL contains 'test'.",
@@ -32,8 +34,8 @@ declare global {
 // Route to the per-worker DB when running under `bun test --parallel`.
 // BUN_TEST_WORKER_ID is 1-based. Falls back to the base URL for direct
 // single-file test runs (no --parallel, no worker ID set).
-const baseUrl = process.env.DATABASE_URL!;
-const workerId = process.env.BUN_TEST_WORKER_ID;
+const baseUrl = readEnv("DATABASE_URL")!;
+const workerId = readEnv("BUN_TEST_WORKER_ID");
 const connectionString = workerId ? baseUrl.replace(/\/([^/?]+)(\?|$)/, `/$1_w${workerId}$2`) : baseUrl;
 const schemaWithRelations = { ...schema, ...relations };
 

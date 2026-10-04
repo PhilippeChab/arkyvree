@@ -1,6 +1,7 @@
+import { readEnv } from "@/server/environment.ts";
 import { UnauthorizedError } from "@/server/errors/index.ts";
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = readEnv("GOOGLE_CLIENT_ID");
 
 interface GoogleTokenPayload {
   sub: string;
