@@ -1,6 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { invalidateRulesetEntities } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -22,6 +23,15 @@ import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ModifiersService {
+  /** A modifier the entity is the source of, or a 404. */
+  private findEntityModifier(rulesetData: CachedRulesetData, entityType: string, entityId: string, modifierId: string) {
+    const modifier = rulesetData.modifiersById.get(modifierId);
+    if (!modifier || modifier.sourceId !== entityId || modifier.sourceType !== entityType) {
+      throw new NotFoundError("Modifier not found for this entity");
+    }
+    return modifier;
+  }
+
   /**
    * Adds a modifier to an entity, copying the entity first when it's inherited. A duplicate (`sourceModifierId`, one of
    * the entity's modifiers) takes its source's requirements too.
@@ -173,10 +183,7 @@ class ModifiersService {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
-        const modifier = rulesetData.modifiersById.get(modifierId);
-        if (!modifier || modifier.sourceId !== effectiveEntityId || modifier.sourceType !== entityType) {
-          throw new NotFoundError("Modifier not found for this entity");
-        }
+        const modifier = this.findEntityModifier(rulesetData, entityType, effectiveEntityId, modifierId);
 
         const customizationPolicy = new CustomizationsPolicy(session, modifier);
         await customizationPolicy.canUpdate();
@@ -233,10 +240,7 @@ class ModifiersService {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
-        const modifier = rulesetData.modifiersById.get(modifierId);
-        if (!modifier || modifier.sourceId !== effectiveEntityId || modifier.sourceType !== entityType) {
-          throw new NotFoundError("Modifier not found for this entity");
-        }
+        const modifier = this.findEntityModifier(rulesetData, entityType, effectiveEntityId, modifierId);
 
         const customizationPolicy = new CustomizationsPolicy(session, modifier);
         await customizationPolicy.canDelete();
