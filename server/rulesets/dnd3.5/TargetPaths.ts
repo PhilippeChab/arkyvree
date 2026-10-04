@@ -226,7 +226,12 @@ function generatePaths(rulesetData: CachedRulesetData, kind: "modifier" | "requi
     ...DetailedCharacterSkills.generateTargetPaths(skills, kind),
     ...DetailedCharacterClasses.generateTargetPaths(klasses, kind),
     ...DetailedCharacterFeats.generateTargetPaths(feats, kind),
-    ...DetailedCharacterFeatGroupings.generateTargetPaths(groupings.featGroupings, kind, groupings.featGroupingLabels),
+    ...DetailedCharacterFeatGroupings.generateTargetPaths(
+      groupings.featGroupings,
+      kind,
+      groupings.featGroupingLabels,
+      new Set(feats.map((feat) => stripSeparators(feat.name))),
+    ),
     ...DetailedCharacterWeapons.generateTargetPaths(groupings.weaponGroupings, kind),
     ...DetailedCharacterArmors.generateTargetPaths(groupings.armorGroupings, kind),
     ...DetailedCharacterShields.generateTargetPaths(groupings.shieldGroupings, kind),

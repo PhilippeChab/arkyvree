@@ -113,7 +113,10 @@ export function proficiencyRequirements(weapon: string): RequirementEntry[] {
   return exotic(weapon);
 }
 
-/** A proficiency feat per simple and martial weapon: what a class's proficiencies grant, not a character's pick. */
+/**
+ * A proficiency feat per simple and martial weapon: what a class's proficiencies grant, not a character's pick. A
+ * martial one is in the Martial Weapon Proficiency family, as an exotic one is in its own.
+ */
 export const weaponProficiencyFeats: FeatSeed[] = [
   ...SIMPLE_WEAPONS.map((w) => ({
     name: `Simple Weapon Proficiency: ${w}`,
@@ -128,6 +131,7 @@ export const weaponProficiencyFeats: FeatSeed[] = [
     aptitudes: ["General"],
     selectable: false,
     generated: true,
+    properties: [{ type: FEAT_FAMILY, value: "Martial Weapon Proficiency" }],
   })),
 ];
 

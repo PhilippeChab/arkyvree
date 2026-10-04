@@ -7,6 +7,7 @@ import { stripSeparators } from "@/shared/text.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "possessed", description: "Whether this feat is possessed", type: "boolean" as const },
+  { path: "count", description: "Times this feat was taken", type: "number" as const, requirementOnly: true },
 ];
 
 type FeatGroup = Record<string, FeatEntry>;
@@ -34,26 +35,37 @@ export default class DetailedCharacterFeatGroupings {
     return { possessed: "Possessed", [FAMILY_COUNT]: "Count" };
   }
 
+  /**
+   * Each family's wildcard paths, and its count's. A family named like a feat shares the feat's key, where `count` is
+   * the feat's (`DetailedCharacterFeats.injectGroupings`): the family's count isn't reachable there.
+   */
   static generateTargetPaths(
     featGroupings: string[],
     kind: "modifier" | "requirement",
-    labels?: Record<string, string>,
+    labels: Record<string, string>,
+    featKeys: ReadonlySet<string>,
   ): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const grouping of featGroupings) {
-      const displayName = labels?.[grouping] || grouping;
+      const displayName = labels[grouping] || grouping;
       for (const subPath of NAVIGATABLE_PATHS) {
+        if (subPath.requirementOnly && kind === "modifier") continue;
         paths.push({
           path: `feats.${grouping}.*.${subPath.path}`,
           category: "feats",
           description: `${kind === "requirement" ? "Any" : "All"} ${displayName} feats — ${subPath.description}`,
           groupDescription: `${kind === "requirement" ? "Any" : "All"} ${displayName} feats`,
           valueType: subPath.type,
-          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
+          operators:
+            kind === "modifier"
+              ? ["set"]
+              : subPath.type === "number"
+                ? [...NUMERIC_REQUIREMENT_OPERATORS]
+                : ["equal", "not_equal"],
         });
       }
-      if (kind === "requirement") {
+      if (kind === "requirement" && !featKeys.has(grouping)) {
         paths.push({
           path: `feats.${grouping}.${FAMILY_COUNT}`,
           category: "feats",
