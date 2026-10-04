@@ -53,13 +53,16 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
 
   protected applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
     this.applyGrantedFeats([...(raceStats.bonusFeats ?? []), ...(raceStats.baseFeats ?? [])], rulesetData);
-    this.applySkillTotals(raceStats.baseSkillTotals ?? {});
+    this.applySkillTotals(raceStats.baseSkillTotals ?? {}, raceStats.baseSkillRanks ?? {});
   }
 
-  /** The stat block's skills, at its totals: an item's or a feat's modifier adds on top, and so does a raised ability. */
-  protected applySkillTotals(totals: Record<string, number>): void {
+  /**
+   * The stat block's skills, at its totals, with the ranks within them: an item's or a feat's modifier adds on top, and
+   * so does a raised ability.
+   */
+  protected applySkillTotals(totals: Record<string, number>, ranks: Record<string, number> = {}): void {
     for (const [skillName, total] of Object.entries(totals)) {
-      this.detailedCharacterSkills.setStatBlockTotal(skillName, total);
+      this.detailedCharacterSkills.setStatBlockTotal(skillName, total, ranks[skillName] ?? 0);
     }
   }
 

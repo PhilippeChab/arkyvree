@@ -72,6 +72,11 @@ export type BondedRaceStatBlock = {
   featPriority?: string[];
   /** SRD-listed skill totals at base HD (the post-mods bonus on the stat block). */
   baseSkillTotals?: Record<string, number>;
+  /**
+   * The ranks within those totals, where the data has them (each familiar's race): a familiar's master's ranks replace
+   * them where they're better. The rest of a total is its ability, size, racial bonuses and feats.
+   */
+  baseSkillRanks?: Record<string, number>;
   /** Order to distribute extra skill total bumps as total HD grows past baseHD. */
   skillPriority?: string[];
 };
@@ -91,6 +96,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseFeats: ["Alertness"],
     featPriority: ["Weapon Finesse", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Hide: 14, Listen: 8, "Move Silently": 6, Spot: 8 },
+    baseSkillRanks: { "Move Silently": 4 },
     skillPriority: ["Listen", "Spot", "Hide", "Move Silently"],
   },
   Cat: {
@@ -105,6 +111,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     bonusFeats: ["Weapon Finesse"],
     featPriority: ["Alertness", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 10, Climb: 6, Hide: 16, Jump: 10, Listen: 3, "Move Silently": 8, Spot: 3 },
+    baseSkillRanks: { Listen: 2, Spot: 2 },
     skillPriority: ["Hide", "Move Silently", "Spot", "Listen", "Climb", "Balance", "Jump"],
   },
   Hawk: {
@@ -116,6 +123,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     bonusFeats: ["Weapon Finesse"],
     featPriority: ["Dodge", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Listen: 4, Spot: 16 },
+    baseSkillRanks: { Spot: 4 },
     skillPriority: ["Spot", "Listen"],
   },
   Lizard: {
@@ -127,6 +135,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     bonusFeats: ["Weapon Finesse"],
     featPriority: ["Alertness", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 10, Climb: 12, Hide: 12, Listen: 3, "Move Silently": 4, Spot: 3 },
+    baseSkillRanks: { Climb: 2, Listen: 2, Spot: 2 },
     skillPriority: ["Climb", "Hide", "Balance", "Move Silently", "Listen", "Spot"],
   },
   Owl: {
@@ -138,6 +147,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     bonusFeats: ["Weapon Finesse"],
     featPriority: ["Dodge", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Listen: 14, "Move Silently": 17, Spot: 6 },
+    baseSkillRanks: { Listen: 2, Spot: 2 },
     skillPriority: ["Move Silently", "Listen", "Spot"],
   },
   Rat: {
@@ -149,6 +159,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     bonusFeats: ["Weapon Finesse"],
     featPriority: ["Alertness", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 10, Climb: 12, Hide: 16, "Move Silently": 10, Swim: 10 },
+    baseSkillRanks: { Climb: 2, "Move Silently": 2 },
     skillPriority: ["Hide", "Climb", "Move Silently", "Swim", "Balance"],
   },
   Raven: {
@@ -160,6 +171,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     bonusFeats: ["Weapon Finesse"],
     featPriority: ["Dodge", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Listen: 5, Spot: 7 },
+    baseSkillRanks: { Listen: 1, Spot: 3 },
     skillPriority: ["Spot", "Listen"],
   },
   Toad: {
@@ -170,6 +182,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseFeats: ["Alertness"],
     featPriority: [...GENERIC_TAIL],
     baseSkillTotals: { Hide: 21, Listen: 4, Spot: 4 },
+    baseSkillRanks: { Hide: 4 },
     skillPriority: ["Hide", "Spot", "Listen"],
   },
   Viper: {
@@ -181,6 +194,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     bonusFeats: ["Weapon Finesse"],
     featPriority: ["Alertness", "Stealthy", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 11, Climb: 11, Hide: 15, Listen: 6, Spot: 6, Swim: 5 },
+    baseSkillRanks: { Listen: 1, Spot: 1 },
     skillPriority: ["Hide", "Climb", "Balance", "Swim", "Listen", "Spot"],
   },
   Weasel: {
@@ -192,6 +206,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     bonusFeats: ["Weapon Finesse"],
     featPriority: ["Stealthy", "Alertness", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 12, Climb: 10, "Escape Artist": 4, Hide: 11, "Move Silently": 8, Spot: 3 },
+    baseSkillRanks: { Hide: 1, "Move Silently": 2, Spot: 2 },
     skillPriority: ["Hide", "Move Silently", "Climb", "Balance", "Escape Artist", "Spot"],
   },
 

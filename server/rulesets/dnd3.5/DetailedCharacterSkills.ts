@@ -297,6 +297,16 @@ export default class DetailedCharacterSkills {
     }
   }
 
+  /** Raises each skill's ranks to these, by skill slug, where they're better: a familiar's to its master's. */
+  applyBetterRanks(ranks: Record<string, number>): void {
+    for (const [slug, rank] of Object.entries(ranks)) {
+      const skill = this.detailedCharacterSkills[slug];
+      if (!skill || rank <= skill.rank) continue;
+      skill.rank = rank;
+      skill.trained = true;
+    }
+  }
+
   /** Enriches ruleset skills with character-specific class/rank data for level-up UI. */
   getEnrichedSkills<T extends { id: string; name: string }>(
     allSkills: T[],
@@ -399,18 +409,18 @@ export default class DetailedCharacterSkills {
   }
 
   /**
-   * A bonded creature's skill as its stat block lists it: no ranks, and the total less what the ability's base modifier
-   * and the size give, as misc. The ability's part stays live: a raised ability (a companion's advancement, an item)
-   * raises the total.
+   * A bonded creature's skill as its stat block lists it: its `ranks` (a familiar's, which its master's may better),
+   * and the total less those, the ability's base modifier and the size, as misc. The ability's part stays live: a
+   * raised ability (a companion's advancement, an item) raises the total.
    */
-  setStatBlockTotal(skillName: string, total: number): void {
+  setStatBlockTotal(skillName: string, total: number, ranks = 0): void {
     const slug = stripSeparators(skillName);
     const skill = this.detailedCharacterSkills[slug];
     if (!skill) return;
     const abilityName = this.abilityNameBySkill.get(slug);
     const ability = abilityName ? this.characterAbilities.getAbilityModifierExcludingMisc(abilityName) : 0;
-    skill.rank = 0;
-    skill.misc = total - ability - skill.size;
+    skill.rank = ranks;
+    skill.misc = total - ability - skill.size - ranks;
     skill.trained = total > 0;
   }
 
