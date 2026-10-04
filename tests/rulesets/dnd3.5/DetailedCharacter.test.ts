@@ -912,6 +912,70 @@ describe("DetailedCharacter", () => {
     });
 
     describe("proficiency", () => {
+      /** Whether `name` is proficient with `item` held at `location`. */
+      const proficientWith = async (name: string, item: string, location: "Main Hand" | "Two Handed") => {
+        const set = weaponSet(await buildCarrying(name, [{ item, location, weaponSet: 0 }]));
+        return (location === "Two Handed" ? set.twohanded : set.mainhand)!.proficient;
+      };
+
+      test("counts a bastard sword or a dwarven waraxe as martial in two hands, and a dwarf's waraxe in one", async () => {
+        // A human fighter, proficient with martial weapons
+        for (const weapon of ["Bastard Sword", "Dwarven Waraxe"]) {
+          expect([
+            await proficientWith("Bjorn Ironhand", weapon, "Main Hand"),
+            await proficientWith("Bjorn Ironhand", weapon, "Two Handed"),
+          ]).toEqual([false, true]);
+        }
+        // A dwarf fighter: his waraxe in one hand too, and his urgrosh. A wizard has no martial weapon to count it as
+        expect(await proficientWith("Kael Stormborn", "Dwarven Waraxe", "Main Hand")).toBe(true);
+        expect(await proficientWith("Kael Stormborn", "Dwarven Urgrosh", "Two Handed")).toBe(true);
+        expect(await proficientWith("Elara Starweaver", "Bastard Sword", "Two Handed")).toBe(false);
+      });
+
+      test("reads the hand holding a weapon in its own modifiers' requirements too", async () => {
+        // A battleaxe whose +1 to hit is only for the main hand
+        const { itemMap, rulesetId } = await getSeedCtx();
+        const sword = await createItem({
+          name: "Main-Hand Axe",
+          type: "Weapon",
+          slot: "Main Hand",
+          sourceItemId: itemMap["Battleaxe"],
+        });
+        const [bonus] = await Modifiers.create(db, {
+          sourceId: sword.id,
+          sourceType: "items",
+          target: "combat.tohit.misc",
+          value: "1",
+          valueType: "number",
+          operator: "add",
+        });
+        await Requirements.create(db, {
+          entityId: bonus.id,
+          entityType: "modifiers",
+          level: "1",
+          target: "combat.slot",
+          operator: "equal",
+          value: "mainhand",
+          valueType: "string",
+        });
+        invalidateSeededRuleset(rulesetId);
+        const misc = async (location: "Main Hand" | "Off Hand") => {
+          const set = weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: sword.id, location, weaponSet: 0 }]));
+          return (location === "Main Hand" ? set.mainhand : set.offhand)!.tohit.misc;
+        };
+        expect([await misc("Main Hand"), await misc("Off Hand")]).toEqual([1, 0]);
+      });
+
+      test("gives an elf the longsword, the rapier and the bows", async () => {
+        // An elf wizard, whose class gives her none of them
+        expect([
+          await proficientWith("Elara Starweaver", "Longsword", "Main Hand"),
+          await proficientWith("Elara Starweaver", "Rapier", "Main Hand"),
+          await proficientWith("Elara Starweaver", "Composite Longbow", "Two Handed"),
+          await proficientWith("Elara Starweaver", "Shortbow", "Two Handed"),
+        ]).toEqual([true, true, true, true]);
+      });
+
       test("costs a weapon the character isn't proficient with 4 to hit", async () => {
         // Weapon Focus: Longsword gives +1.
         expect(weaponSet(await buildSeeded("Bjorn Ironhand")).mainhand).toMatchObject({
@@ -925,27 +989,27 @@ describe("DetailedCharacter", () => {
           proficient: true,
           tohit: { misc: 0 },
         });
-        // A wizard with a longsword: BAB 1, STR 8.
+        // A wizard with a battleaxe, not an elf's weapon: BAB 1, STR 8.
         expect(
           weaponSet(
-            await buildCarrying("Elara Starweaver", [{ item: "Longsword", location: "Main Hand", weaponSet: 0 }]),
+            await buildCarrying("Elara Starweaver", [{ item: "Battleaxe", location: "Main Hand", weaponSet: 0 }]),
           ).mainhand,
         ).toMatchObject({
-          name: "Longsword",
+          name: "Battleaxe",
           proficient: false,
           tohit: { strength: -1, misc: -4, total: [-4] },
         });
       });
 
       test("costs a weapon made from a template when the character isn't proficient with its template", async () => {
-        const longsword: Carried[] = [{ item: "Masterwork Cold Iron Longsword", location: "Main Hand", weaponSet: 0 }];
-        expect(weaponSet(await buildCarrying("Elara Starweaver", longsword)).mainhand).toMatchObject({
-          name: "Masterwork Cold Iron Longsword",
+        const battleaxe: Carried[] = [{ item: "Adamantine Battleaxe", location: "Main Hand", weaponSet: 0 }];
+        expect(weaponSet(await buildCarrying("Elara Starweaver", battleaxe)).mainhand).toMatchObject({
+          name: "Adamantine Battleaxe",
           proficient: false,
           tohit: { misc: -4 },
         });
-        expect(weaponSet(await buildCarrying("Bjorn Ironhand", longsword)).mainhand).toMatchObject({
-          name: "Masterwork Cold Iron Longsword",
+        expect(weaponSet(await buildCarrying("Bjorn Ironhand", battleaxe)).mainhand).toMatchObject({
+          name: "Adamantine Battleaxe",
           proficient: true,
         });
       });
@@ -2470,13 +2534,15 @@ describe("DetailedCharacter", () => {
 
     test("a feat named like its family is that feat, and the family's wildcard reaches the family's feats", async () => {
       const exactly = (value: number) => ({ operator: "equal", value: String(value), valueType: "number" }) as const;
-      // Martial Weapon Proficiency is every martial weapon, a fighter's. A rogue has some, each a feat of the family
+      // Martial Weapon Proficiency is every martial weapon, a fighter's. A rogue has some, each a feat of the family,
+      // and so has an elf, by her race; a sorcerer, none
       expect(await met("Bjorn Ironhand", "feats.martialweaponproficiency.possessed")).toBe(true);
       expect(await met("Bjorn Ironhand", "feats.martialweaponproficiency.count", exactly(1))).toBe(true);
       expect(await met("Bjorn Ironhand", "feats.martialweaponproficiency.*.possessed")).toBe(false);
       expect(await met("Lyra Shadowstep", "feats.martialweaponproficiency.possessed")).toBe(false);
       expect(await met("Lyra Shadowstep", "feats.martialweaponproficiency.*.possessed")).toBe(true);
-      expect(await met("Elara Starweaver", "feats.martialweaponproficiency.*.possessed")).toBe(false);
+      expect(await met("Elara Starweaver", "feats.martialweaponproficiencylongsword.possessed")).toBe(true);
+      expect(await met("Vex Flamecaller", "feats.martialweaponproficiency.*.possessed")).toBe(false);
     });
 
     test("a family no feat of the ruleset is in is unmet, not invalid: another book's ki power", async () => {

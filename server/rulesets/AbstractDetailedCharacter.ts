@@ -164,6 +164,9 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   protected requirementGroups: Requirement[][] = [];
 
+  /** The item each modifier an item is the source of belongs to, by the modifier's id. */
+  private itemModifiers = new Map<string, string>();
+
   /** The gated modifiers applied while their requirements held, whose requirements don't hold on the final sheet. */
   private modifiersPastTheirGates: Modifier[] = [];
 
@@ -193,6 +196,16 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   protected detailedCharacterRequirements!: DetailedCharacterRequirements;
 
   protected targetPaths!: TargetPathsTraverser;
+
+  /**
+   * The item a requirement group is of, whose weapon its own paths (`combat.slot`) read: an item's requirements, or
+   * those of a modifier the item is the source of.
+   */
+  private itemOf = (group: Requirement[]): string | undefined => {
+    const [owner] = group;
+    if (owner?.entityType === "items") return owner.entityId;
+    return owner?.entityType === "modifiers" ? this.itemModifiers.get(owner.entityId) : undefined;
+  };
 
   /** Build the holders map — universal holders + ruleset-specific ones. */
   protected abstract buildHolders(): Holders;
@@ -226,6 +239,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     this.klassLevelFeatCountsByAptitudeId = data.klassLevelFeatCountsByAptitudeId;
     this.klassLevelPowerCountsByAptitudeId = data.klassLevelPowerCountsByAptitudeId;
     this.modifiers = data.modifiers;
+    this.itemModifiers = new Map(data.modifiers.filter((m) => m.sourceType === "items").map((m) => [m.id, m.sourceId]));
     this.requirementGroups = data.requirementGroups;
     this.validRulesetIds = data.validRulesetIds;
   }
@@ -257,6 +271,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       round.evaluateRequirements(
         holders,
         groups.filter((group) => group.some((r) => waitingKeys.has(gateKey(r)))),
+        this.itemOf,
       );
       const blocked = DetailedCharacterModifiers.blockedKeys(round);
       const ready = waiting.filter((m) => !keysOf(m).some((key) => blocked.has(key)));
@@ -266,7 +281,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       waiting = waiting.filter((m) => !ready.includes(m));
     }
 
-    this.detailedCharacterRequirements.evaluateRequirements(holders, groups);
+    this.detailedCharacterRequirements.evaluateRequirements(holders, groups, this.itemOf);
     // A modifier can break a requirement already met, another's or its own: the modifiers it gated stay applied (undoing
     // them could loop, two modifiers breaking each other's), and validation reports them. A ready one a round skipped,
     // or that reached nothing, didn't apply
@@ -479,7 +494,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     const nonEmpty = requirementGroups.filter((group) => group.length > 0);
     if (nonEmpty.length === 0) return [];
 
-    tempRequirements.evaluateRequirements(this.holders, nonEmpty);
+    tempRequirements.evaluateRequirements(this.holders, nonEmpty, this.itemOf);
     const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
     const issues: RequirementIssue[] = [];
 
@@ -602,14 +617,19 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     return { valid: issues.length === 0, issues };
   }
 
-  areRequirementsMet(requirementGroups: Requirement[][]): boolean {
+  /**
+   * Whether the groups are met, each of the item its owner names, or of `context.sourceId` when given: a weapon's
+   * proficiency, its base item's requirements, reads its own hand.
+   */
+  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string }): boolean {
     if (!this.holders) return false;
 
     const tempRequirements = new DetailedCharacterRequirements(this.targetPaths);
     const nonEmpty = requirementGroups.filter((group) => group.length > 0);
     if (nonEmpty.length === 0) return true;
 
-    tempRequirements.evaluateRequirements(this.holders, nonEmpty);
+    const sourceId = context?.sourceId;
+    tempRequirements.evaluateRequirements(this.holders, nonEmpty, sourceId ? () => sourceId : this.itemOf);
     const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
     return unmetRequirementGroups.length === 0 && invalidRequirements.length === 0;
   }
@@ -642,7 +662,8 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
     // Each condition evaluated as the requirements are, templates and every operator included
     const conditions = new DetailedCharacterRequirements(this.targetPaths);
-    const isLeafMet = (req: Requirement) => !!this.holders && conditions.isConditionMet(req, this.holders);
+    const isLeafMet = (req: Requirement) =>
+      !!this.holders && conditions.isConditionMet(req, this.holders, this.itemOf([req]));
 
     const formatNode = (node: TreeNode, indent: string): string => {
       const req = node.requirement;

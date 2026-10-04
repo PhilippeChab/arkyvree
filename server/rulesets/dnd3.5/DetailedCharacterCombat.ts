@@ -18,7 +18,11 @@ import { capitalize } from "@/shared/text.ts";
 
 import { ArmorClass } from "./combat/ArmorClass.ts";
 import { Attacks } from "./combat/Attacks.ts";
-import CombatState, { ARMOR_WORN, type DetailedCharacterComprehensiveCombat } from "./combat/CombatState.ts";
+import CombatState, {
+  ARMOR_WORN,
+  type DetailedCharacterComprehensiveCombat,
+  WEAPON_SLOT_VALUES,
+} from "./combat/CombatState.ts";
 import { HitPoints } from "./combat/HitPoints.ts";
 import { InitiativeAndSpeed } from "./combat/InitiativeAndSpeed.ts";
 
@@ -67,6 +71,14 @@ const NAVIGATABLE_PATHS = [
     description: "Str-to-damage ratio (1x/0.5x/1.5x)",
     type: "number" as const,
     sortOrder: 1,
+  },
+  {
+    path: "slot",
+    description: "The hand holding the weapon, for its own requirements: a bastard sword's proficiency in two hands",
+    type: "string" as const,
+    sortOrder: 1,
+    requirementOnly: true,
+    possibleValues: WEAPON_SLOT_VALUES,
   },
   // Armor class
   { path: "ac.base", description: "Default 10", type: "number" as const, sortOrder: 2 },

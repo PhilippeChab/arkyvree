@@ -148,8 +148,11 @@ const CATEGORY_HOLDERS: Record<string, { holderKey: string; getter: string }> = 
   bonded: { holderKey: "bonded", getter: "getBonds" },
 };
 
-/** The combat sub-paths a weapon's modifier targets on itself: its own slot's to-hit, damage, strength multiplier. */
-const WEAPON_SUB_PATHS = ["tohit", "damage", "strmultiplier"] as const;
+/**
+ * The combat sub-paths a weapon's modifier or requirement reads on itself: its own slot's to-hit, damage, strength
+ * multiplier, and the hand holding it.
+ */
+const WEAPON_SUB_PATHS = ["tohit", "damage", "strmultiplier", "slot"] as const;
 
 /** A path that reaches no value, with why. */
 const failed = (holder: Holder | null, key: string, error: string): TraversePathResult[] => [

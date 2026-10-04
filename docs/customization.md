@@ -192,7 +192,9 @@ How the engine reads a weapon's attack (`combat/Attacks.ts`), the SRD's rules:
 Proficiency requirements (on the item, checked at equip time):
 - **Simple**: OR chain — `feats.simpleweaponproficiency.possessed` OR `feats.simpleweaponproficiency<weapon>.possessed` (a gauntlet's also takes `feats.simpleweaponproficiencyunarmedstrike.possessed`: a strike with it is unarmed)
 - **Martial**: OR chain — `feats.martialweaponproficiency.possessed` OR `feats.martialweaponproficiency<weapon>.possessed`
-- **Exotic**: `feats.exoticweaponproficiency<weapon>.possessed == true`
+- **Exotic**: `feats.exoticweaponproficiency<weapon>.possessed == true`; or, for a weapon that counts as martial, `feats.martialweaponproficiency.possessed` while it's held in two hands (`combat.slot == twohanded`: the bastard sword, the dwarven waraxe) or by its wielder's race (`identity.physiology.race.name`: a dwarf's waraxe and urgrosh, a gnome's hooked hammer). A prerequisite (a feat's, a class's) holds no weapon: only the race counts there
+
+The engine reads a weapon's proficiency of the item itself (`areRequirementsMet(…, { sourceId })`), so `combat.slot`, like the self-targeting `combat.tohit.*`, is the hand holding it. A race's proficiencies are its modifiers: the elf's martial ones (longsword, rapier, longbow and shortbow, composite ones included).
 
 An item's proficiency is its base item's requirements: its template's, or its own when it's a template. An equipped weapon whose proficiency is unmet isn't proficient: −4 to hit, and nothing else (its modifiers still apply). Its own requirements on top of a template, or a plain item's, are its other requirements: unmet, its own modifiers don't apply, and it keeps its proficiency (`DetailedCharacterDataLoader`).
 

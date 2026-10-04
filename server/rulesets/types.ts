@@ -217,7 +217,7 @@ export interface DetailedCharacterInterface {
   ): Promise<void>;
   validate(): ValidationResult;
   formatRequirements(requirements: Requirement[]): string;
-  areRequirementsMet(requirementGroups: Requirement[][]): boolean;
+  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string }): boolean;
   getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[];
   getRuleset(): Ruleset | undefined;
   getPlayer(): Player | undefined;

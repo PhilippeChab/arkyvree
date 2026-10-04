@@ -79,6 +79,9 @@ export const SLOT_MAP: Record<string, keyof WeaponSet> = {
   "Two Handed": "twohanded",
 };
 
+/** A weapon's slot as a path's values: its place in the set, labelled as an item's location names it. */
+export const WEAPON_SLOT_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
+
 /** The armor a character wears, lightest first: none, or the armor's proficiency category. */
 export const ARMOR_WORN = ["none", "light", "medium", "heavy"] as const;
 export type ArmorWorn = (typeof ARMOR_WORN)[number];

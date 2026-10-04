@@ -1,5 +1,5 @@
 import { UNARMED_STRIKE } from "@/server/rulesets/constants.ts";
-import { SLOT_MAP, type WeaponSet } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import { SLOT_MAP, WEAPON_SLOT_VALUES, type WeaponSet } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
 import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
 import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
@@ -7,8 +7,6 @@ import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/tar
 import { WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
-
-const SLOT_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
 
 const NAVIGATABLE_WEAPON_PATHS = [
   // Computed from the abilities when read: for requirements only, the flat bonus in the misc beside it
@@ -32,7 +30,7 @@ const NAVIGATABLE_WEAPON_PATHS = [
     path: "slot",
     description: "Hand position (main/off/two-handed)",
     type: "string" as const,
-    possibleValues: SLOT_VALUES,
+    possibleValues: WEAPON_SLOT_VALUES,
   },
   { path: "damage.strmultiplier", description: "Str-to-damage ratio (1x/0.5x/1.5x)", type: "number" as const },
 ];
