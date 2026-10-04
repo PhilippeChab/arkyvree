@@ -6,11 +6,11 @@ import { useCallback, useMemo } from "react";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import { customizationPath } from "@/client/src/pages/rulesets/customization/customizationPaths.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import type { Level } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { useClassLevels, useOpenEntity, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 import type { ClassSectionProps } from "./types.ts";
 
@@ -49,7 +49,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   } = useClassLevels(rulesetId, classId);
 
   const handleRowClick = (level: Level) => {
-    openEntity(customizationPath("klass_levels", level.id));
+    openEntity(buildCustomizationPath("klass_levels", level.id));
   };
 
   const handleRowMouseEnter = useCallback(

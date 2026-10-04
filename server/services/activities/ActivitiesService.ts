@@ -24,6 +24,7 @@ import {
   Skills,
   Visibility,
 } from "@/server/repositories/index.ts";
+import { buildCustomizationPath, isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 
 const CUSTOMIZATION_ENTITIES = new Set(["feats", "powers", "items", "races"]);
@@ -38,7 +39,7 @@ class ActivitiesService {
       if (!klassLevel) return null;
       const klass = await Klasses.findOne(db, { id: klassLevel.klassId });
       if (!klass) return null;
-      return `/rulesets/${klass.rulesetId}/${entityType}/${entityId}/customization`;
+      return `/rulesets/${klass.rulesetId}/${buildCustomizationPath("klass_levels", entityId)}`;
     }
 
     const repoMap: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
@@ -49,10 +50,10 @@ class ActivitiesService {
     };
 
     const findOne = repoMap[entityType];
-    if (!findOne) return null;
+    if (!findOne || !isCustomizableEntityType(entityType)) return null;
     const entity = await findOne(entityId);
     if (!entity) return null;
-    return `/rulesets/${entity.rulesetId}/${entityType}/${entityId}/customization`;
+    return `/rulesets/${entity.rulesetId}/${buildCustomizationPath(entityType, entityId)}`;
   }
 
   private async resolveRulesSubEntity(targetTable: string, targetId: string): Promise<string | null> {

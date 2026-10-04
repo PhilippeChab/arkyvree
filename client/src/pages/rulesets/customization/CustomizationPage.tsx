@@ -22,10 +22,6 @@ import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import {
-  customizationPath,
-  entityTypeOfSegment,
-} from "@/client/src/pages/rulesets/customization/customizationPaths.ts";
-import {
   ClassLevelEditor,
   type EditorProps,
   FeatEditor,
@@ -44,7 +40,12 @@ import {
 } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { type CustomizationOwnerType, isCustomizableEntityType } from "@/shared/customization/entities.ts";
+import {
+  buildCustomizationPath,
+  type CustomizationOwnerType,
+  isCustomizableEntityType,
+  parseCustomizationSegment,
+} from "@/shared/customization/entities.ts";
 
 type TabSection = "properties" | "modifiers" | "requirements";
 
@@ -97,7 +98,7 @@ const isEditable = (data: CustomizationEntity): data is EditableEntity =>
 function modifierSourcePath(rulesetId: string, sourceType: string, sourceId: string) {
   if (sourceType === "klasses") return `/rulesets/${rulesetId}/classes/${sourceId}/modifiers`;
   const path = isCustomizableEntityType(sourceType)
-    ? customizationPath(sourceType, sourceId)
+    ? buildCustomizationPath(sourceType, sourceId)
     : `${sourceType}/${sourceId}/customization`;
   return `/rulesets/${rulesetId}/${path}`;
 }
@@ -232,11 +233,11 @@ function CustomizationView({
   // since. `copiedFrom` keeps the source on screen while the copy loads and
   // lets the editor carry its unsaved edits over.
   const followCopy = (copyId: string, sourceId: string) => {
-    const sourcePath = `/rulesets/${rulesetId}/${customizationPath(type, sourceId)}`;
+    const sourcePath = `/rulesets/${rulesetId}/${buildCustomizationPath(type, sourceId)}`;
     if (!isStillOpen(sourcePath)) return;
     // Onto the tab shown now, which may have changed while the request ran.
     navigate(
-      `/rulesets/${rulesetId}/${customizationPath(type, copyId)}${window.location.pathname.slice(sourcePath.length)}`,
+      `/rulesets/${rulesetId}/${buildCustomizationPath(type, copyId)}${window.location.pathname.slice(sourcePath.length)}`,
       {
         replace: true,
         state: { ...state, copiedFrom: sourceId },
@@ -312,7 +313,7 @@ function CustomizationView({
         // While locked the entry still says where the copy came from: replace it
         // rather than leave more entries to clean up.
         onChange={(key) =>
-          navigate(`/rulesets/${rulesetId}/${customizationPath(type, entityId)}/${key}`, {
+          navigate(`/rulesets/${rulesetId}/${buildCustomizationPath(type, entityId)}/${key}`, {
             state: location.state,
             replace: locked,
           })
@@ -364,7 +365,7 @@ export default function CustomizationPage() {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const validType = entityTypeOfSegment(entityType);
+  const validType = parseCustomizationSegment(entityType);
 
   const { copiedFrom } = entityPageState(location.state);
 
@@ -401,7 +402,7 @@ export default function CustomizationPage() {
   // Normalize the URL to a tab the entity has, under its type's segment (a link made before reads "klass_levels").
   useEffect(() => {
     if (!validType || !entityId) return;
-    const pagePath = `/rulesets/${rulesetId}/${customizationPath(validType, entityId)}`;
+    const pagePath = `/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}`;
     if (!currentTab || !location.pathname.startsWith(`${pagePath}/`)) {
       navigate(`${pagePath}/${currentTab ?? tabsFor(validType)[0].key}`, { replace: true, state: location.state });
     }
