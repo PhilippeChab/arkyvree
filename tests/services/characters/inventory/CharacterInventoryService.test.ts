@@ -16,7 +16,9 @@ import {
   createSeededTestRuleset,
   createTestRuleset,
   createTestUser,
+  findSeededCharacter,
   getSeedCtx,
+  makeSession,
   NIL_UUID,
   uniqueId,
 } from "@/tests/helpers.ts";
@@ -431,6 +433,21 @@ describe("InventoryService", () => {
       expect(await add(session, character.id, shortbow, { ...equipped("Two Handed", 0), force: true })).toMatchObject({
         location: "Two Handed",
       });
+    });
+
+    test("lets a character proficient with light armor wear elven chain and celestial armor, light armor, not chain mail", async () => {
+      // An elf rogue, proficient with light armor only, out of her studded leather
+      const lyra = await findSeededCharacter("Lyra Shadowstep");
+      const session = makeSession();
+      const { itemMap } = await getSeedCtx();
+      await CharacterInventoryService.removeItem(session, lyra.id, itemMap["Studded Leather"]);
+      await expect(add(session, lyra.id, itemMap["Chain Mail"], equipped("Torso"))).rejects.toThrow(
+        "Character does not meet the requirements to equip this item",
+      );
+      for (const armor of ["Elven Chain", "Celestial Armor"]) {
+        expect(await add(session, lyra.id, itemMap[armor], equipped("Torso"))).toMatchObject({ location: "Torso" });
+        await CharacterInventoryService.removeItem(session, lyra.id, itemMap[armor]);
+      }
     });
 
     test("refuses an item whose requirements the character doesn't meet, unless forced", async () => {

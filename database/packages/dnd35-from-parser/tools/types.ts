@@ -89,6 +89,11 @@ type MagicItemFields = ItemFields & {
   modifiers?: Modifier[];
   /** Properties the item adds to those the generator gives it (a composite bow's Strength rating). */
   properties?: Property[];
+  /**
+   * A specific armor others are made from, as its base armor is: elven chain, whose proficiency is its own (light), not
+   * its base's. Its properties are its base armor's, its own over them.
+   */
+  template?: boolean;
 };
 
 export type WeaponRow = {

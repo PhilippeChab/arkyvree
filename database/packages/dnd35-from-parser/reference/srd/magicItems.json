@@ -29,6 +29,12 @@
     ],
     "Unguent of Timelessness": {
       "modifiers": []
+    },
+    "Elven Chain": {
+      "template": true
+    },
+    "Celestial Armor": {
+      "baseItem": "Elven Chain"
     }
   },
   "raw": [

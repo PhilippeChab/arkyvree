@@ -1166,6 +1166,28 @@ describe("DetailedCharacter", () => {
       expect(bjorn.getDetailedCharacterCombat().getCombat().ac).toMatchObject({ armor: 5, dexterity: 2, total: 17 });
     });
 
+    test("takes a specific armor's own stats: its enhancement, its material's, and its category", async () => {
+      // An elf rogue: DEX 20 (+5)
+      const wearing = async (item: string) => {
+        const lyra = await buildCarrying("Lyra Shadowstep", [{ item, location: "Torso" }]);
+        const [armor] = Object.values(lyra.getDetailedCharacterArmors().getArmors());
+        return { armor, combat: lyra.getDetailedCharacterCombat().getCombat() };
+      };
+      // Elven chain: light chainmail, +4 Dexterity at most
+      const elven = await wearing("Elven Chain");
+      expect(elven.armor).toMatchObject({ ac: { total: 5 }, checkpenalty: -2, spellfailure: 20, maxdex: 4 });
+      expect(elven.combat).toMatchObject({ armorworn: "light", ac: { armor: 5, dexterity: 4 } });
+      // Celestial armor: +3 chainmail made as elven chain is, +8 Dexterity at most
+      const celestial = await wearing("Celestial Armor");
+      expect(celestial.armor).toMatchObject({ checkpenalty: -2, spellfailure: 15, maxdex: 8 });
+      expect(celestial.combat).toMatchObject({ armorworn: "light", ac: { armor: 8, dexterity: 5 } });
+      // Banded mail of luck: +3 banded mail, masterwork as magic armor is (-6 lessened by 1)
+      const banded = await wearing("Banded Mail of Luck");
+      expect([banded.armor.checkpenalty, banded.combat.ac.armor]).toEqual([-5, 9]);
+      // Mithral full plate: medium armor
+      expect((await wearing("Mithral Full Plate of Speed")).combat.armorworn).toBe("medium");
+    });
+
     test("adds a shield, dexterity uncapped", async () => {
       const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Heavy Steel Shield", location: "Off Hand" }]);
       expect(bjorn.getDetailedCharacterShields().getShields()["heavysteelshield"]).toMatchObject({

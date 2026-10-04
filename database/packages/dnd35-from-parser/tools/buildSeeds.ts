@@ -10,6 +10,7 @@ import { join } from "node:path";
 
 import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/scraper/armorStats.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { familyFeatNamed } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
 import {
@@ -40,13 +41,16 @@ import type {
   WizardSchoolReference,
 } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { FAVORED_ENEMY_FAMILY } from "@/database/packages/dnd35/content/creatureTypes.ts";
+import { armorProperties } from "@/database/packages/dnd35/content/items.ts";
 import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
 import type {
   DomainDefinition,
   FeatSeed,
   ItemDef,
+  Modifier,
   ModifierSeed,
   PowerSeed,
+  Property,
   RaceDefinition,
   RequirementEntry,
   WizardSchoolDefinition,
@@ -1185,7 +1189,24 @@ export function seededMagicItems(ref: MagicItemReference) {
   });
 }
 
-export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets {
+/** The specific armor and shields, whose text gives what they change of their base's. */
+const ARMOR_CATEGORIES = new Set<MagicItemCategory>(["specificArmor", "specificShield"]);
+
+/** The properties of `base`, those of `own` over them by type. */
+function withOwnProperties(base: Property[], own: Property[]): Property[] {
+  const ownTypes = new Set(own.map((property) => property.type));
+  return [...base.filter((property) => !ownTypes.has(property.type)), ...own];
+}
+
+/**
+ * The magic item seeds, by kind. A specific armor or shield takes the stats its text gives (`readArmorStats`) and its
+ * enhancement bonus to AC; an item made from a base one weighs what its base does (`baseWeights`, by name) unless it
+ * says otherwise.
+ */
+export function buildMagicItemSeeds(
+  ref: MagicItemReference,
+  baseWeights: Record<string, string> = {},
+): MagicItemSeedSets {
   const magicArmor: ItemDef[] = [];
   const magicShields: ItemDef[] = [];
   const magicWeapons: ItemDef[] = [];
@@ -1206,7 +1227,6 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
 
   for (const { name, det, override: ovr, slot } of seededMagicItems(ref)) {
     const costGp = ovr?.costGp ?? det.costGp;
-    const weight = ovr?.weight ?? det.weight;
     // Find the raw entry for description
     const rawEntry = ref.raw.find((r) => r.name === name);
     const baseItemRaw =
@@ -1216,13 +1236,30 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
     const sourceItem = baseItemRaw ?? undefined;
 
     const description = normalizeDescription(ovr?.description ?? rawEntry?.description ?? "");
+    const stats = ARMOR_CATEGORIES.has(det.category) ? readArmorStats(description) : undefined;
+    const statedWeight = stats?.weight ?? (det.weight !== "0" ? det.weight : undefined);
+    const weight = ovr?.weight ?? statedWeight ?? (sourceItem && baseWeights[sourceItem]) ?? det.weight;
 
     const aura = ovr?.aura ?? det.aura;
     const casterLevel = ovr?.casterLevel ?? det.casterLevel;
-    const properties: { type: string; value: string }[] = [];
+    const properties: Property[] = [];
     if (aura) properties.push({ type: MAGIC_AURA, value: aura });
     if (casterLevel) properties.push({ type: MAGIC_CASTER_LEVEL, value: String(casterLevel) });
+    properties.push(...(stats?.properties ?? []));
     if (ovr?.properties) properties.push(...ovr.properties);
+    // Its enhancement bonus to AC, on the armor's or the shield's part of it
+    const enhancement: Modifier[] = stats?.enhancement
+      ? [
+          {
+            target: det.category === "specificArmor" ? "combat.ac.armor" : "combat.ac.shield",
+            operator: "add",
+            value: String(stats.enhancement),
+            valueType: "number",
+          },
+        ]
+      : [];
+    // An override's modifiers, an empty list too, win over those detected
+    const modifiers = ovr?.modifiers ?? [...(det.modifiers ?? []), ...enhancement];
 
     const bucket = categoryBuckets[det.category];
     if (!bucket) throw new Error(`${name}: the seed has no magic items of the category "${det.category}"`);
@@ -1240,6 +1277,10 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
       }
     }
 
+    // A template is made from nothing: its base armor's properties are its own, under those it changes
+    if (ovr?.template && (det.category !== "specificArmor" || !sourceItem)) {
+      throw new Error(`${name}: only a specific armor made from a base armor can be a template`);
+    }
     bucket.push({
       name: itemName,
       description,
@@ -1247,10 +1288,10 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
       costGp,
       type: det.itemType,
       slot: slot && checkedValue(slot),
-      properties,
-      ...(sourceItem ? { sourceItem } : {}),
-      // An override's modifiers, an empty list too, win over those detected
-      ...((ovr?.modifiers ?? det.modifiers)?.length ? { modifiers: ovr?.modifiers ?? det.modifiers } : {}),
+      ...(ovr?.template && sourceItem
+        ? { isTemplate: true as const, properties: withOwnProperties(armorProperties(sourceItem), properties) }
+        : { properties, ...(sourceItem ? { sourceItem } : {}) }),
+      ...(modifiers.length ? { modifiers } : {}),
     });
   }
 

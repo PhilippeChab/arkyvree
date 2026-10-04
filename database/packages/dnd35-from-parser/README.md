@@ -150,13 +150,16 @@ Scrapes equipment tables into `ItemReference` JSON. Covers weapons, armor, shiel
 
 ### Magic Items
 
-Scrapes magic item pages into `MagicItemReference` JSON. Covers wondrous items, rings, rods, and staffs.
+Scrapes magic item pages into `MagicItemReference` JSON. Covers specific armor, shields and weapons, wondrous items, rings, rods, and staffs.
 
 **Auto-detected:**
 - Item name, description, cost, weight, category
-- Base item template detection (e.g. "+1 Longsword" → sourceItem "Longsword")
+- Base item template detection (e.g. "+1 Longsword" → sourceItem "Longsword"). An item made from a base one weighs what its base does, unless its text gives its weight
+- A specific armor's or shield's stats (`readArmorStats`, `armorStats.ts`): the spell failure, maximum Dexterity bonus and check penalty its text gives, its category ("considered light armor"), its weight, and its enhancement bonus to AC ("this +3 banded mail"). Magic, adamantine or masterwork armor is masterwork, unless its text gives its check penalty
 - Slot assignment (head, neck, hands, etc.)
 - Modifier detection from item descriptions (save bonuses, skill bonuses, ability bonuses)
+
+**Overrides:** `baseItem` (the item it's made from), `template` (a specific armor others are made from, whose proficiency is its own: elven chain, light though it's chainmail), `properties`, `modifiers`, `slot`, `aura`, `casterLevel`, `costGp`, `weight`.
 
 ### Bonus detection
 
