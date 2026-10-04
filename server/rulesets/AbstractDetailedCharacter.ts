@@ -164,7 +164,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   protected requirementGroups: Requirement[][] = [];
 
-  /** The gated modifiers applied while their requirements held, whose requirements a modifier applied after broke. */
+  /** The gated modifiers applied while their requirements held, whose requirements don't hold on the final sheet. */
   private modifiersPastTheirGates: Modifier[] = [];
 
   protected validRulesetIds = new Set<string>();
@@ -267,10 +267,14 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     }
 
     this.detailedCharacterRequirements.evaluateRequirements(holders, groups);
-    // A modifier applied in a later round can break an earlier one's requirement: it stays applied (undoing it could
-    // loop, two modifiers breaking each other's), and validation reports it
+    // A modifier can break a requirement already met, another's or its own: the modifiers it gated stay applied (undoing
+    // them could loop, two modifiers breaking each other's), and validation reports them. A ready one a round skipped,
+    // or that reached nothing, didn't apply
     const blockedAtTheEnd = DetailedCharacterModifiers.blockedKeys(this.detailedCharacterRequirements);
-    this.modifiersPastTheirGates = appliedGated.filter((m) => keysOf(m).some((key) => blockedAtTheEnd.has(key)));
+    const appliedIds = new Set(this.detailedCharacterModifiers.getModifiers().appliedModifiers.map((m) => m.id));
+    this.modifiersPastTheirGates = appliedGated.filter(
+      (m) => appliedIds.has(m.id) && keysOf(m).some((key) => blockedAtTheEnd.has(key)),
+    );
     // The modifiers still waiting are recorded as gated out; the templates apply, or are, by the final evaluation
     this.detailedCharacterModifiers.evaluateModifiers(
       holders,
@@ -571,7 +575,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       const source = this.resolveModifierSourceName(modifier);
       issues.push({
         category: "modifiers",
-        message: `Modifier on ${modifier.target}${source ? ` from ${source.name} (${source.type})` : ""} applied while its requirement held: a modifier applied after it broke it`,
+        message: `Modifier on ${modifier.target}${source ? ` from ${source.name} (${source.type})` : ""} applied while its requirement held, which no longer holds on the final sheet`,
         entityName: source?.name,
         entityType: source?.type,
       });

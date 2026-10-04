@@ -1344,7 +1344,29 @@ describe("DetailedCharacter", () => {
           .issues.filter((issue) => issue.category === "modifiers")
           .map((issue) => issue.message),
       ).toEqual([
-        `Modifier on ${hp.target} from ${race} (races) applied while its requirement held: a modifier applied after it broke it`,
+        `Modifier on ${hp.target} from ${race} (races) applied while its requirement held, which no longer holds on the final sheet`,
+      ]);
+    });
+
+    test("report a modifier that breaks its own requirement, and not one that never applied", async () => {
+      // Strength −4 while Strength is 18 or more: it applies, then its own requirement fails. A computed target
+      // gated the same way is skipped, never applied
+      const strength = { target: "abilities.strength.total", operator: "greater_than_or_equal", value: "18" };
+      const penalty = await raceModifier("Bjorn Ironhand", { target: "abilities.strength.misc", value: "-4" }, [
+        { ...strength, valueType: "number" },
+      ]);
+      await raceModifier("Bjorn Ironhand", { target: "abilities.dexterity.total", value: "1" }, [
+        { ...strength, valueType: "number" },
+      ]);
+      const bjorn = await buildSeeded("Bjorn Ironhand");
+      const race = (await Races.findOne(db, { id: (await seeded("Bjorn Ironhand")).raceId }))!.name;
+      expect(
+        bjorn
+          .validate()
+          .issues.filter((issue) => issue.category === "modifiers" && issue.message.includes("no longer holds"))
+          .map((issue) => issue.message),
+      ).toEqual([
+        `Modifier on ${penalty.target} from ${race} (races) applied while its requirement held, which no longer holds on the final sheet`,
       ]);
     });
 
