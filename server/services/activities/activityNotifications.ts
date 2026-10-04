@@ -275,13 +275,13 @@ async function resolveRecipients(
  * for WebSocket broadcasting.
  */
 export async function createActivityWithNotifications(
-  db: Db,
+  tx: Db,
   values: ActivityValues,
 ): Promise<{ activity: Awaited<ReturnType<typeof Activities.create>>[0]; recipientIds: string[] }> {
-  const [activity] = await Activities.create(db, values);
+  const [activity] = await Activities.create(tx, values);
 
   const recipientIds = await resolveRecipients(
-    db,
+    tx,
     values.userId,
     values.type,
     values.targetId,
@@ -291,11 +291,11 @@ export async function createActivityWithNotifications(
 
   if (recipientIds.length > 0) {
     // Look up actor name once for all notification rows
-    const actor = await Users.findOne(db, { id: values.userId });
+    const actor = await Users.findOne(tx, { id: values.userId });
     const actorName = actor?.username ?? actor?.emailAddress ?? "Unknown";
 
     await Notifications.createMany(
-      db,
+      tx,
       recipientIds.map((recipientId) => ({
         recipientId,
         actorId: values.userId,

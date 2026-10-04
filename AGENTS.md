@@ -47,7 +47,7 @@ Where code goes, by what it needs:
 
 **Key Patterns:**
 
-- Services use `withTransaction()` for **all mutations** (create, update, delete) to ensure atomicity
+- Every write (create, update, delete) and lock goes through a transaction: a repository write or lock outside the repositories takes its handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`, in the services and the jobs alike (`arkyvree/writes-in-transactions`, by `methodVerbs.json`'s write and lock verbs)
 - Repositories accept `db` via dependency injection
 - Schema is defined in `/drizzle/schema.ts`
 - Routes use `zValidator` from `@/server/middlewares/index.ts` so validation failures use the standard API error envelope and preserve Hono response inference (`arkyvree/route-conventions` holds it, camelCase path params, kebab-case fixed segments, and no `try` in `server/routers/api/`).
