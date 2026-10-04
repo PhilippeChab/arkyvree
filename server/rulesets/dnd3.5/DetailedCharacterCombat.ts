@@ -21,13 +21,33 @@ import { HitPoints } from "./combat/HitPoints.ts";
 import { InitiativeAndSpeed } from "./combat/InitiativeAndSpeed.ts";
 
 const NAVIGATABLE_PATHS = [
-  // Self-targeting weapon paths (resolved to the source item's equipped weapon slot)
-  { path: "tohit.strength", description: "Weapon attack strength modifier", type: "number" as const, sortOrder: 0 },
+  // Self-targeting weapon paths (resolved to the source item's equipped weapon slot). A part the sheet computes when
+  // read (from an ability, the size, the other parts) is for requirements only: a modifier can't change it, its flat
+  // bonus belongs in the misc beside it
+  {
+    path: "tohit.strength",
+    description: "Weapon attack strength modifier",
+    type: "number" as const,
+    sortOrder: 0,
+    requirementOnly: true,
+  },
   { path: "tohit.magic", description: "Enhancement bonus", type: "number" as const, sortOrder: 0 },
-  { path: "tohit.size", description: "Size modifier to attack", type: "number" as const, sortOrder: 0 },
+  {
+    path: "tohit.size",
+    description: "Size modifier to attack",
+    type: "number" as const,
+    sortOrder: 0,
+    requirementOnly: true,
+  },
   { path: "tohit.misc", description: "Other bonuses to attack", type: "number" as const, sortOrder: 0 },
   { path: "damage.base", description: "Base damage dice", type: "string" as const, sortOrder: 1 },
-  { path: "damage.strength", description: "Weapon damage strength modifier", type: "number" as const, sortOrder: 1 },
+  {
+    path: "damage.strength",
+    description: "Weapon damage strength modifier",
+    type: "number" as const,
+    sortOrder: 1,
+    requirementOnly: true,
+  },
   { path: "damage.magic", description: "Enhancement bonus", type: "number" as const, sortOrder: 1 },
   { path: "damage.misc", description: "Other bonuses to damage", type: "number" as const, sortOrder: 1 },
   { path: "damage.critical.range", description: "Weapon critical threat range", type: "number" as const, sortOrder: 1 },
@@ -42,10 +62,16 @@ const NAVIGATABLE_PATHS = [
   { path: "ac.base", description: "Default 10", type: "number" as const, sortOrder: 2 },
   { path: "ac.armor", description: "Armor bonus to AC", type: "number" as const, sortOrder: 2 },
   { path: "ac.shield", description: "Shield bonus to AC", type: "number" as const, sortOrder: 2 },
-  { path: "ac.dexterity", description: "Dexterity bonus to AC", type: "number" as const, sortOrder: 2 },
+  {
+    path: "ac.dexterity",
+    description: "Dexterity bonus to AC",
+    type: "number" as const,
+    sortOrder: 2,
+    requirementOnly: true,
+  },
   { path: "ac.natural", description: "Natural armor bonus", type: "number" as const, sortOrder: 2 },
   { path: "ac.deflection", description: "Deflection bonus to AC", type: "number" as const, sortOrder: 2 },
-  { path: "ac.size", description: "Size modifier to AC", type: "number" as const, sortOrder: 2 },
+  { path: "ac.size", description: "Size modifier to AC", type: "number" as const, sortOrder: 2, requirementOnly: true },
   { path: "ac.misc", description: "Other bonuses to AC", type: "number" as const, sortOrder: 2 },
   {
     path: "ac.total",
@@ -54,15 +80,27 @@ const NAVIGATABLE_PATHS = [
     sortOrder: 2,
     requirementOnly: true,
   },
-  { path: "ac.touch", description: "Ignores armor, shield, natural", type: "number" as const, sortOrder: 2 },
-  { path: "ac.flatfooted", description: "Ignores Dex bonus", type: "number" as const, sortOrder: 2 },
+  {
+    path: "ac.touch",
+    description: "Ignores armor, shield, natural",
+    type: "number" as const,
+    sortOrder: 2,
+    requirementOnly: true,
+  },
+  {
+    path: "ac.flatfooted",
+    description: "Ignores Dex bonus",
+    type: "number" as const,
+    sortOrder: 2,
+    requirementOnly: true,
+  },
   // Hit points
   { path: "hp.base", description: "From hit dice rolls", type: "number" as const },
-  { path: "hp.constitution", description: "Con modifier per level", type: "number" as const },
+  { path: "hp.constitution", description: "Con modifier per level", type: "number" as const, requirementOnly: true },
   { path: "hp.misc", description: "Other bonuses to HP", type: "number" as const },
   { path: "hp.total", description: "All HP sources combined", type: "number" as const, requirementOnly: true },
   // Initiative
-  { path: "initiative.dexterity", description: "Dex modifier", type: "number" as const },
+  { path: "initiative.dexterity", description: "Dex modifier", type: "number" as const, requirementOnly: true },
   { path: "initiative.misc", description: "Other bonuses to initiative", type: "number" as const },
   {
     path: "initiative.total",
@@ -72,9 +110,9 @@ const NAVIGATABLE_PATHS = [
   },
   // Attack
   { path: "bab", description: "From class progression", type: "number" as const },
-  { path: "grapple.bab", description: "BAB contribution", type: "number" as const },
-  { path: "grapple.strength", description: "Str modifier", type: "number" as const },
-  { path: "grapple.size", description: "From race size", type: "number" as const },
+  { path: "grapple.bab", description: "BAB contribution", type: "number" as const, requirementOnly: true },
+  { path: "grapple.strength", description: "Str modifier", type: "number" as const, requirementOnly: true },
+  { path: "grapple.size", description: "From race size", type: "number" as const, requirementOnly: true },
   { path: "grapple.misc", description: "Other bonuses to grapple", type: "number" as const },
   {
     path: "grapple.total",
@@ -93,8 +131,6 @@ const NAVIGATABLE_PATHS = [
   { path: "speed.base", description: "From race (ft)", type: "number" as const },
   { path: "speed.misc", description: "Other bonuses to speed (ft)", type: "number" as const },
   { path: "speed.total", description: "Final movement speed (ft)", type: "number" as const, requirementOnly: true },
-  { path: "encumbrance.carriedweight", description: "Total weight of items (lbs)", type: "number" as const },
-  { path: "encumbrance.heavyload", description: "Max carry capacity (lbs)", type: "number" as const },
 ];
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -107,9 +143,6 @@ const SEGMENT_LABELS: Record<string, string> = {
   mainhand: "Main Hand",
   offhand: "Off Hand",
   offhandattacks: "Off-Hand Attacks",
-  encumbrance: "Encumbrance",
-  carriedweight: "Carried Weight",
-  heavyload: "Heavy Load",
 };
 
 class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints, Attacks, InitiativeAndSpeed) {
@@ -138,9 +171,6 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
   initialize(race: RaceWithPMR, klassLevelProperties: Map<string, { bab: number; skills: number }>) {
     this.raceSize = race.size;
 
-    const dexterityModifier = this.characterAbilities.getAbilityModifier("Dexterity");
-    const constitutionModifier = this.characterAbilities.getAbilityModifier("Constitution");
-
     const classes = this.characterClasses.getClasses();
     const levels = Object.values(classes).reduce((acc, klass) => {
       for (const level of klass.levels) {
@@ -149,10 +179,11 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
       return acc;
     }, [] as CharacterLevel[]);
 
-    this.initializeArmorClass(dexterityModifier);
-    this.initializeHitPoints(levels, constitutionModifier);
-    this.initializeInitiative(dexterityModifier);
+    this.initializeArmorClass();
+    this.initializeHitPoints(levels);
+    this.initializeInitiative();
     this.initializeBaseAttackBonus(classes, klassLevelProperties);
+    this.initializeGrapple();
     this.initializeSpeed(race);
 
     this.addWeapon(0, "Main Hand", { name: "Unarmed Strike" }, [
@@ -169,28 +200,14 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
     return this.detailedCharacterCombat;
   }
 
+  /** The encumbrance the sheet shows: the encumbrance's own object, so what changes it (a modifier) is what's read. */
   setEncumbranceSource(encumbrance: DetailedCharacterEncumbrance) {
     this.characterEncumbrance = encumbrance;
+    this.detailedCharacterCombat.encumbrance = encumbrance.getEncumbrance();
   }
 
   setSkills(skills: DetailedCharacterSkills) {
     this.characterSkills = skills;
-  }
-
-  updateTotals() {
-    if (this.characterEncumbrance) {
-      this.characterEncumbrance.updateTotals();
-      const enc = this.characterEncumbrance.getEncumbrance();
-      this.detailedCharacterCombat.encumbrance = enc;
-    }
-    this.recalculateDexterityAc();
-    this.updateArmorClassTotal();
-    this.updateHitPointsTotal();
-    this.updateInitiativeTotal();
-    this.updateGrappleTotal();
-    this.updateSpeedTotal();
-    this.updateWeaponsTotal();
-    this.characterSkills?.updateTotals();
   }
 }
 

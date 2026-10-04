@@ -1,6 +1,6 @@
+import { formatWithArticle } from "@/database/packages/dnd35/content/articles.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
 import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
-import { formatWithArticle } from "@/shared/text.ts";
 
 const SPECIAL_MOUNT_APTITUDE = "Special Mount Bond";
 const SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE = "Special Mount Class Feature";

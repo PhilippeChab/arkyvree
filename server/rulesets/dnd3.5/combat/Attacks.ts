@@ -1,12 +1,7 @@
 import type { Constructor } from "@/server/mixins.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/server/rulesets/constants.ts";
 import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
-import {
-  SLOT_MAP,
-  type WeaponAbilities,
-  type WeaponSet,
-  type WeaponSlot,
-} from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import { SLOT_MAP, type WeaponAbilities, type WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
@@ -51,6 +46,9 @@ const DAMAGE_PROGRESSION = [
  */
 const SLOT_STRENGTH_MULTIPLIERS: Record<string, number> = { "Main Hand": 1, "Off Hand": 0.5, "Two Handed": 1.5 };
 
+/** A natural attack's proficiency: its damage dice are the creature's own, from its stat block, already at its size. */
+const NATURAL_PROFICIENCY = "Natural";
+
 function iterativeAttacks(bab: number): number[] {
   const attacks: number[] = [];
   for (let bonus = bab; bonus > 0; bonus -= CONSTANTS.ATTACK_STEP) {
@@ -59,13 +57,13 @@ function iterativeAttacks(bab: number): number[] {
   return attacks.length > 0 ? attacks : [bab];
 }
 
-function formatDamageTotal(weapon: WeaponSlot): string {
-  const totalBonus = weapon.damage.strength + weapon.damage.magic + weapon.damage.misc;
-  const others = weapon.damage.others.length > 0 ? ` ${weapon.damage.others.join(" ")}` : "";
+function formatDamageTotal(damage: WeaponSlot["damage"]): string {
+  const totalBonus = damage.strength + damage.magic + damage.misc;
+  const others = damage.others.length > 0 ? ` ${damage.others.join(" ")}` : "";
 
-  if (totalBonus < 0) return `${weapon.damage.base} - ${Math.abs(totalBonus)}${others}`;
-  if (totalBonus > 0) return `${weapon.damage.base} + ${totalBonus}${others}`;
-  return `${weapon.damage.base}${others}`;
+  if (totalBonus < 0) return `${damage.base} - ${Math.abs(totalBonus)}${others}`;
+  if (totalBonus > 0) return `${damage.base} + ${totalBonus}${others}`;
+  return `${damage.base}${others}`;
 }
 
 function adjustDamageForSize(baseDamage: string, size: string): string {
@@ -95,84 +93,26 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       this.detailedCharacterCombat.bab = baseAttackBonusFromClasses;
     }
 
-    protected updateGrappleTotal() {
-      const g = this.detailedCharacterCombat.grapple;
-      g.bab = this.detailedCharacterCombat.bab;
-      g.strength = this.characterAbilities.getAbilityModifier("Strength");
-      g.size = SIZE_GRAPPLE_MOD[this.raceSize] ?? 0;
-      g.total = g.bab + g.strength + g.size + g.misc;
-    }
-
-    /**
-     * A weapon's Strength to damage: its slot's share of a bonus and a penalty in full, or a penalty and a bonus up to
-     * its rating (a bow's). A weapon whose WEAPON_STRENGTH_DAMAGE is "None" (a crossbow) adds none.
-     */
-    private updateStrengthDamage(weapon: WeaponSlot, strengthRating: number | null) {
-      const strength = this.characterAbilities.getAbilityModifier("Strength");
-      const multiplier = weapon.damage.strmultiplier;
-      if (multiplier !== null) {
-        // The SRD halves or raises a Strength bonus by the hand, never a penalty
-        weapon.damage.strength = strength < 0 && multiplier > 0 ? strength : Math.floor(strength * multiplier);
-      } else if (strengthRating !== null) {
-        weapon.damage.strength = strength < 0 ? strength : Math.min(strength, strengthRating);
-      }
-    }
-
-    /**
-     * Each hand's attacks when the set holds an equipped weapon in each (not an unarmed strike or a natural attack): the
-     * main hand's own, the off hand's first and the extra ones `offhandattacks` counts, each lower by an attack step, all
-     * with the hand's two-weapon penalty, which a light off-hand weapon lessens.
-     */
-    private updateTwoWeaponAttacks({ mainhand, offhand }: WeaponSet) {
-      if (!mainhand?.itemId || !offhand?.itemId) {
-        if (mainhand) mainhand.twoweapon = null;
-        if (offhand) offhand.twoweapon = null;
-        return;
-      }
-
-      const { twoweapon } = this.detailedCharacterCombat;
-      const lightBonus = offhand.light ? CONSTANTS.LIGHT_OFF_HAND_BONUS : 0;
-      const mainHandAttacks = (attacks: number[]) => attacks.map((attack) => attack + twoweapon.mainhand + lightBonus);
-      const offHandAttacks = (attacks: number[]) =>
-        Array.from(
-          { length: Math.max(1, twoweapon.offhandattacks) },
-          (_, index) => attacks[0] + twoweapon.offhand + lightBonus - index * CONSTANTS.ATTACK_STEP,
-        );
-
-      mainhand.twoweapon = {
-        total: mainHandAttacks(mainhand.tohit.total),
-        thrown: mainhand.thrown ? mainHandAttacks(mainhand.thrown.total) : null,
+    /** The grapple: misc is an input; the base attack bonus's, Strength's and the size's parts and the total are read. */
+    protected initializeGrapple(): void {
+      const combat = this.detailedCharacterCombat;
+      const strength = () => this.characterAbilities.getAbilityModifier("Strength");
+      const size = () => SIZE_GRAPPLE_MOD[this.raceSize] ?? 0;
+      combat.grapple = {
+        get bab() {
+          return combat.bab;
+        },
+        get strength() {
+          return strength();
+        },
+        get size() {
+          return size();
+        },
+        misc: 0,
+        get total() {
+          return this.bab + this.strength + this.size + this.misc;
+        },
       };
-      offhand.twoweapon = {
-        total: offHandAttacks(offhand.tohit.total),
-        thrown: offhand.thrown ? offHandAttacks(offhand.thrown.total) : null,
-      };
-    }
-
-    /** A weapon's to-hit and damage, from the character's abilities as they stand. */
-    private updateWeaponTotal(weapon: WeaponSlot) {
-      const abilities = this.weaponAbilities.get(weapon);
-      if (abilities) {
-        weapon.tohit.strength = this.attackModifier(abilities);
-        this.updateStrengthDamage(weapon, abilities.strengthRating);
-      }
-
-      weapon.tohit.size = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
-      const tohitBonuses = weapon.tohit.strength + weapon.tohit.magic + weapon.tohit.misc + weapon.tohit.size;
-      weapon.tohit.total = iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + tohitBonuses);
-      weapon.thrown = !weapon.ranged && weapon.range > 0 ? this.thrownAttack(weapon) : null;
-
-      weapon.damage.total = formatDamageTotal(weapon);
-    }
-
-    protected updateWeaponsTotal() {
-      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
-        for (const slotKey of WEAPON_SET_SLOTS) {
-          const weapon = weaponSet[slotKey];
-          if (weapon) this.updateWeaponTotal(weapon);
-        }
-        this.updateTwoWeaponAttacks(weaponSet);
-      }
     }
 
     /**
@@ -211,11 +151,46 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       return [...shields].reduce((penalty, shield) => penalty + shield.checkpenalty, 0);
     }
 
+    /**
+     * A weapon's Strength to damage: its slot's share of a bonus and a penalty in full, or a penalty and a bonus up to
+     * its rating (a bow's). A weapon whose WEAPON_STRENGTH_DAMAGE is "None" (a crossbow) adds none.
+     */
+    private strengthDamage(multiplier: number | null, strengthRating: number | null): number {
+      const strength = this.characterAbilities.getAbilityModifier("Strength");
+      // The SRD halves or raises a Strength bonus by the hand, never a penalty
+      if (multiplier !== null) return strength < 0 && multiplier > 0 ? strength : Math.floor(strength * multiplier);
+      if (strengthRating !== null) return strength < 0 ? strength : Math.min(strength, strengthRating);
+      return 0;
+    }
+
     /** A melee weapon's thrown attack: Dexterity to hit, as every ranged attack, with the weapon's own bonuses. */
     private thrownAttack(weapon: WeaponSlot): NonNullable<WeaponSlot["thrown"]> {
       const dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
       const bonuses = dexterity + weapon.tohit.magic + weapon.tohit.misc + weapon.tohit.size;
       return { dexterity, total: iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + bonuses) };
+    }
+
+    /**
+     * A hand's attacks when the weapon's set holds an equipped weapon in each (not an unarmed strike or a natural
+     * attack): the main hand's own, the off hand's first and the extra ones `offhandattacks` counts, each lower by an
+     * attack step, all with the hand's two-weapon penalty, which a light off-hand weapon lessens.
+     */
+    private twoWeaponAttacks(weapon: WeaponSlot, setKey: string): WeaponSlot["twoweapon"] {
+      const { mainhand, offhand } = this.detailedCharacterCombat.weaponsets[setKey] ?? {};
+      if (!mainhand?.itemId || !offhand?.itemId || (weapon !== mainhand && weapon !== offhand)) return null;
+
+      const { twoweapon } = this.detailedCharacterCombat;
+      const lightBonus = offhand.light ? CONSTANTS.LIGHT_OFF_HAND_BONUS : 0;
+      const attacks =
+        weapon === mainhand
+          ? (totals: number[]) => totals.map((attack) => attack + twoweapon.mainhand + lightBonus)
+          : (totals: number[]) =>
+              Array.from(
+                { length: Math.max(1, twoweapon.offhandattacks) },
+                (_, index) => totals[0] + twoweapon.offhand + lightBonus - index * CONSTANTS.ATTACK_STEP,
+              );
+      const thrown = weapon.thrown;
+      return { total: attacks(weapon.tohit.total), thrown: thrown ? attacks(thrown.total) : null };
     }
 
     /** Costs each weapon the character isn't proficient with the non-proficiency penalty: 4 to hit, nothing else. */
@@ -229,8 +204,6 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
         }
       }
-
-      this.updateWeaponsTotal();
     }
 
     /** Lets each finessable weapon that attacks with Strength attack with Dexterity, for a feat with FEAT_WEAPON_FINESSE. */
@@ -245,10 +218,14 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           if (abilities?.attack === "Strength") abilities.finesse = true;
         }
       }
-
-      this.updateWeaponsTotal();
     }
 
+    /**
+     * A weapon in a hand of a set. Its inputs (the magic and misc bonuses, the dice, the hand's Strength share, the
+     * critical) are what modifiers change; what comes from the abilities, the size and the set is computed when read:
+     * the to-hit's ability and size parts and totals, the thrown and two-weapon attacks, the Strength to damage, and the
+     * dice sized for the wielder (a natural attack's are already the creature's own, its stat block's).
+     */
     addWeapon(
       setIndex: number,
       slot: "Main Hand" | "Off Hand" | "Two Handed",
@@ -257,8 +234,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       itemId: string | null = null,
     ): void {
       const property = (type: string) => properties.find((p) => p.type === type);
-      if (!property(WEAPON_PROFICIENCY)) return;
-      const baseDamage = property(WEAPON_BASE_DAMAGE)?.value ?? "unknown";
+      const proficiency = property(WEAPON_PROFICIENCY)?.value;
+      if (!proficiency) return;
       const ranged = properties.some((p) => p.type === WEAPON_RANGED && p.value === "true");
       // Light by the weapon table (Tiny and Small, written for Medium): every weapon is sized for its wielder, its damage too
       const light = (SIZE_ORDER[property(WEAPON_SIZE)?.value ?? ""] ?? Infinity) < SIZE_ORDER.Medium;
@@ -266,12 +243,30 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const strengthDamage = property(WEAPON_STRENGTH_DAMAGE)?.value ?? "Slot";
       const handShare =
         slot === "Two Handed" && light ? SLOT_STRENGTH_MULTIPLIERS["Main Hand"] : SLOT_STRENGTH_MULTIPLIERS[slot];
-      const strMultiplier = strengthDamage === "Slot" ? (handShare ?? null) : null;
       const mighty = property(WEAPON_MIGHTY);
+      const abilities: WeaponAbilities = {
+        // The SRD's attack rolls: Strength on a melee weapon's, Dexterity on a ranged weapon's
+        attack: ranged ? "Dexterity" : "Strength",
+        finesse: false,
+        strengthRating: strengthDamage === "Rating" ? Number(mighty?.value ?? 0) : null,
+        ratingRequired: strengthDamage === "Rating" && mighty !== undefined,
+      };
+      let dice = property(WEAPON_BASE_DAMAGE)?.value ?? "unknown";
+      const sizedDice = proficiency !== NATURAL_PROFICIENCY;
 
       const slotKey = SLOT_MAP[slot];
       const setKey = String(setIndex);
       this.clearSlots(setKey, slot);
+      // What the weapon reads of the character, when read
+      const sheet = {
+        attackModifier: () => this.attackModifier(abilities),
+        size: () => SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0,
+        bab: () => this.detailedCharacterCombat.bab,
+        thrown: (weapon: WeaponSlot) => (!ranged && weapon.range > 0 ? this.thrownAttack(weapon) : null),
+        twoWeapon: (weapon: WeaponSlot) => this.twoWeaponAttacks(weapon, setKey),
+        dice: () => (sizedDice ? adjustDamageForSize(dice, this.raceSize) : dice),
+        strengthDamage: (multiplier: number | null) => this.strengthDamage(multiplier, abilities.strengthRating),
+      };
       const weapon: WeaponSlot = {
         name: item.name,
         itemId,
@@ -282,32 +277,51 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         range: Number(property(WEAPON_RANGE)?.value ?? 0),
         reach: Number(property(WEAPON_REACH)?.value ?? 0),
         slot: slotKey,
-        tohit: { strength: 0, magic: 0, misc: 0, size: 0, total: [] },
-        thrown: null,
-        twoweapon: null,
+        tohit: {
+          get strength() {
+            return sheet.attackModifier();
+          },
+          magic: 0,
+          misc: 0,
+          get size() {
+            return sheet.size();
+          },
+          get total() {
+            const bonuses = this.strength + this.magic + this.misc + this.size;
+            return iterativeAttacks(sheet.bab()).map((base) => base + bonuses);
+          },
+        },
+        get thrown() {
+          return sheet.thrown(this);
+        },
+        get twoweapon() {
+          return sheet.twoWeapon(this);
+        },
         damage: {
-          base: baseDamage,
-          strength: 0,
+          get base() {
+            return sheet.dice();
+          },
+          set base(value: string) {
+            dice = value;
+          },
+          get strength() {
+            return sheet.strengthDamage(this.strmultiplier);
+          },
           magic: 0,
           misc: 0,
           others: [],
-          total: baseDamage,
+          get total() {
+            return formatDamageTotal(this);
+          },
           types: properties.filter((p) => p.type === DAMAGE_TYPE).map((p) => p.value),
-          strmultiplier: strMultiplier,
+          strmultiplier: strengthDamage === "Slot" ? (handShare ?? null) : null,
           critical: {
             range: Number(property(WEAPON_CRITICAL_RANGE)?.value ?? 1),
             multiplier: Number(property(WEAPON_CRITICAL_MULTIPLIER)?.value ?? 1),
           },
         },
       };
-      this.weaponAbilities.set(weapon, {
-        // The SRD's attack rolls: Strength on a melee weapon's, Dexterity on a ranged weapon's
-        attack: ranged ? "Dexterity" : "Strength",
-        finesse: false,
-        strengthRating: strengthDamage === "Rating" ? Number(mighty?.value ?? 0) : null,
-        ratingRequired: strengthDamage === "Rating" && mighty !== undefined,
-      });
-      this.updateWeaponTotal(weapon);
+      this.weaponAbilities.set(weapon, abilities);
       this.detailedCharacterCombat.weaponsets[setKey][slotKey] = weapon;
     }
 
@@ -329,7 +343,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         const slot = slots[idx % slots.length];
         const displayName = attack.count && attack.count > 1 ? `${attack.name} (x${attack.count})` : attack.name;
         const props: WeaponProperty[] = [
-          { type: WEAPON_PROFICIENCY, value: "Natural" },
+          { type: WEAPON_PROFICIENCY, value: NATURAL_PROFICIENCY },
           { type: WEAPON_BASE_DAMAGE, value: attack.damage },
           { type: DAMAGE_TYPE, value: attack.type },
           { type: WEAPON_CRITICAL_RANGE, value: "1" },
@@ -337,18 +351,6 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           { type: WEAPON_FINESSABLE, value: "true" },
         ];
         this.addWeapon(setIndex, slot, { name: displayName }, props);
-      }
-    }
-
-    adjustWeaponDamageForSize() {
-      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
-        for (const slotKey of WEAPON_SET_SLOTS) {
-          const weapon = weaponSet[slotKey];
-          if (!weapon) continue;
-
-          weapon.damage.base = adjustDamageForSize(weapon.damage.base, this.raceSize);
-          weapon.damage.total = formatDamageTotal(weapon);
-        }
       }
     }
   }

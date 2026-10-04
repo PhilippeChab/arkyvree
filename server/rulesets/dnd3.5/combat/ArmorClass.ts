@@ -1,89 +1,98 @@
 import type { Constructor } from "@/server/mixins.ts";
-import { SIZE_AC_ATTACK_MOD } from "@/server/rulesets/constants.ts";
+import { CONSTANTS, SIZE_AC_ATTACK_MOD } from "@/server/rulesets/constants.ts";
 import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type { ArmorsData } from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
 import type { ShieldsData } from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
-import {
-  ARMOR_AC_BONUS,
-  ARMOR_MAX_DEX,
-  ARMOR_PROFICIENCY,
-  SHIELD_AC_BONUS,
-  SHIELD_PROFICIENCY,
-} from "@/shared/dnd3.5/properties/index.ts";
-import { type Property } from "@/shared/relations.ts";
+import { ARMOR_MAX_DEX, ARMOR_PROFICIENCY, SHIELD_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 
 /** A character's armor class: its armor and shields, and the Dexterity bonus they leave it. */
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
-    protected initializeArmorClass(dexterityModifier: number): void {
-      this.detailedCharacterCombat.ac.dexterity = dexterityModifier;
-      this.updateArmorClassTotal();
+    /**
+     * The armor class: its inputs (the base, natural armor, deflection, misc), which modifiers change, and what's
+     * computed when read. The armor's and the shield's AC are the equipped items' and what modifiers add to them (a
+     * modifier's write keeps only its own part, so the items' stays live); Dexterity's bonus, the size's and the totals
+     * follow the abilities, the gear and the load.
+     */
+    protected initializeArmorClass(): void {
+      const equippedAc = (slots: ArmorsData | ShieldsData) => this.equippedAc(slots);
+      const dexterityAc = () => this.dexterityAc();
+      const size = () => SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
+      const combat = this.detailedCharacterCombat;
+      let armorBonus = 0;
+      let shieldBonus = 0;
+      combat.ac = {
+        base: CONSTANTS.DEFAULT_AC_BASE,
+        get armor() {
+          return equippedAc(combat.armors) + armorBonus;
+        },
+        set armor(value: number) {
+          armorBonus = value - equippedAc(combat.armors);
+        },
+        get shield() {
+          return equippedAc(combat.shields) + shieldBonus;
+        },
+        set shield(value: number) {
+          shieldBonus = value - equippedAc(combat.shields);
+        },
+        get dexterity() {
+          return dexterityAc();
+        },
+        natural: 0,
+        deflection: 0,
+        get size() {
+          return size();
+        },
+        misc: 0,
+        get total() {
+          return (
+            this.base +
+            this.armor +
+            this.shield +
+            this.dexterity +
+            this.natural +
+            this.deflection +
+            this.size +
+            this.misc
+          );
+        },
+        get touch() {
+          return this.total - this.armor - this.shield - this.natural;
+        },
+        get flatfooted() {
+          return this.total - Math.max(0, this.dexterity);
+        },
+      };
     }
 
-    protected updateArmorClassTotal() {
-      const ac = this.detailedCharacterCombat.ac;
-      ac.size = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
-      ac.total = ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.size + ac.misc;
-      ac.touch = ac.total - ac.armor - ac.shield - ac.natural;
-      ac.flatfooted = ac.total - Math.max(0, ac.dexterity);
+    /** Dexterity's bonus to AC, capped by the lowest maximum of the armor, the shield and the load. */
+    private dexterityAc(): number {
+      const armorCaps = [...new Set(Object.values(this.detailedCharacterCombat.armors))].map((armor) => armor.maxdex);
+      const cap = Math.min(...armorCaps, this.shieldMaxDex, this.detailedCharacterCombat.encumbrance.maxdex);
+      const dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
+      return cap === Infinity ? dexterity : Math.min(dexterity, cap);
     }
 
-    protected recalculateDexterityAc(): void {
-      const baseDexMod = this.characterAbilities.getAbilityModifier("Dexterity");
-
-      // Find the minimum maxdex across all unique armors
-      const uniqueArmors = new Set(Object.values(this.detailedCharacterCombat.armors));
-      let minMaxDex = Infinity;
-      for (const armor of uniqueArmors) {
-        minMaxDex = Math.min(minMaxDex, armor.maxdex);
-      }
-
-      // Also consider shield dex cap
-      minMaxDex = Math.min(minMaxDex, this.shieldMaxDex);
-
-      // Also consider encumbrance dex cap
-      minMaxDex = Math.min(minMaxDex, this.detailedCharacterCombat.encumbrance.maxdex);
-
-      this.detailedCharacterCombat.ac.dexterity = minMaxDex === Infinity ? baseDexMod : Math.min(baseDexMod, minMaxDex);
+    /** The AC the equipped armors or shields give: each counted once, though an item is under several groupings. */
+    private equippedAc(slots: ArmorsData | ShieldsData): number {
+      return [...new Set(Object.values(slots))].reduce((ac, slot) => ac + slot.ac.total, 0);
     }
 
-    addArmor(properties: Property[]) {
+    /** An armor the character wears: medium and heavy armor slow it down. */
+    addArmor(properties: { type: string; value: string }[]) {
       const armor = properties.find((property) => property.type === ARMOR_PROFICIENCY);
-      if (!armor) {
-        return;
-      }
-
-      if (armor.value === "Medium" || armor.value === "Heavy") {
+      if (armor?.value === "Medium" || armor?.value === "Heavy") {
         this.hasSpeedReducingArmor = true;
       }
-
-      const acBonus = properties.find((property) => property.type === ARMOR_AC_BONUS);
-      if (acBonus) {
-        this.detailedCharacterCombat.ac.armor = Number(acBonus.value);
-      }
-
-      this.recalculateDexterityAc();
-      this.updateArmorClassTotal();
     }
 
-    addShield(properties: Property[]) {
-      const shield = properties.find((property) => property.type === SHIELD_PROFICIENCY);
-      if (!shield) {
-        return;
-      }
-
-      const acBonus = properties.find((property) => property.type === SHIELD_AC_BONUS);
-      if (acBonus) {
-        this.detailedCharacterCombat.ac.shield = Number(acBonus.value);
-      }
-
+    /** A shield the character carries: its maximum Dexterity bonus caps the AC's. */
+    addShield(properties: { type: string; value: string }[]) {
+      if (!properties.some((property) => property.type === SHIELD_PROFICIENCY)) return;
       const dexterityLimitation = properties.find((property) => property.type === ARMOR_MAX_DEX)?.value ?? null;
       if (dexterityLimitation) {
         this.shieldMaxDex = Math.min(this.shieldMaxDex, Number(dexterityLimitation));
       }
-
-      this.recalculateDexterityAc();
-      this.updateArmorClassTotal();
     }
 
     setArmorsData(armors: ArmorsData): void {

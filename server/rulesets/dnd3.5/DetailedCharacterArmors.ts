@@ -33,7 +33,7 @@ const ARMOR_GROUPING_PROPERTIES = [ARMOR_TYPE] as const;
 
 type ArmorSlot = {
   name: string;
-  ac: { bonus: number; misc: number; total: number };
+  ac: { bonus: number; misc: number; readonly total: number };
   checkpenalty: number;
   spellfailure: number;
   maxdex: number;
@@ -76,17 +76,6 @@ export default class DetailedCharacterArmors {
     return this.armors;
   }
 
-  updateTotals(): void {
-    const uniqueArmors = new Set(Object.values(this.armors));
-    let totalArmorAc = 0;
-    for (const armor of uniqueArmors) {
-      armor.ac.total = armor.ac.bonus + armor.ac.misc;
-      totalArmorAc += armor.ac.total;
-    }
-    this.characterCombat.getCombat().ac.armor = totalArmorAc;
-    this.characterCombat.updateTotals();
-  }
-
   registerArmor(item: Item, properties: Property[]): void {
     const armorType = properties.find((p) => p.type === ARMOR_PROFICIENCY);
     if (!armorType) return;
@@ -101,7 +90,14 @@ export default class DetailedCharacterArmors {
 
     const armorSlot: ArmorSlot = {
       name: item.name,
-      ac: { bonus: acBonus, misc: 0, total: acBonus },
+      // Its AC's total is computed when read, from the bonus and what modifiers add
+      ac: {
+        bonus: acBonus,
+        misc: 0,
+        get total() {
+          return this.bonus + this.misc;
+        },
+      },
       checkpenalty: checkPenalty,
       spellfailure: spellFailure,
       maxdex: maxDex,

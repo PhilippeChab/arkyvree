@@ -5,30 +5,31 @@ import { type CharacterLevel } from "@/shared/relations.ts";
 /** A character's hit points: its classes' hit dice and its Constitution. */
 export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithHitPoints extends Base {
-    protected initializeHitPoints(levels: CharacterLevel[], constitutionModifier: number): void {
+    /**
+     * The hit points: the rolls (base) and misc are inputs, which modifiers change; Constitution's part and the total
+     * are computed when read, so they follow the Constitution.
+     */
+    protected initializeHitPoints(levels: CharacterLevel[]): void {
+      const constitution = () => this.constitutionHitPoints();
       this.hitDieRolls = levels.map((level) => level.hp);
-      const baseHitPoints = this.hitDieRolls.reduce((acc, roll) => acc + roll, 0);
-      const constitutionBonus = this.constitutionHitPoints(constitutionModifier);
-
       this.detailedCharacterCombat.hp = {
-        base: baseHitPoints,
-        constitution: constitutionBonus,
+        base: this.hitDieRolls.reduce((acc, roll) => acc + roll, 0),
+        get constitution() {
+          return constitution();
+        },
         misc: 0,
-        total: baseHitPoints + constitutionBonus,
+        get total() {
+          return this.base + this.constitution + this.misc;
+        },
       };
-    }
-
-    protected updateHitPointsTotal() {
-      const hp = this.detailedCharacterCombat.hp;
-      hp.constitution = this.constitutionHitPoints(this.characterAbilities.getAbilityModifier("Constitution"));
-      hp.total = hp.base + hp.constitution + hp.misc;
     }
 
     /**
      * The hit points Constitution adds: its modifier on each level's roll, though a penalty never drops a level below 1
      * hit point (SRD). A bonded creature's hit dice are its average, so its modifier adds once per hit die.
      */
-    private constitutionHitPoints(constitutionModifier: number): number {
+    private constitutionHitPoints(): number {
+      const constitutionModifier = this.characterAbilities.getAbilityModifier("Constitution");
       if (this.hitDiceOverride !== null) return constitutionModifier * this.hitDiceOverride;
       return this.hitDieRolls.reduce((acc, roll) => acc + Math.max(constitutionModifier, 1 - roll), 0);
     }

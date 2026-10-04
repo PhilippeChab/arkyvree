@@ -4,7 +4,7 @@ All available paths for modifiers and requirements. Dynamic segments are shown a
 
 Paths marked "req only" are available as requirement targets but not modifier targets.
 
-A part that comes from an ability (a skill's or a save's `ability`, `combat.ac.dexterity`, `combat.hp.constitution`, `combat.initiative.dexterity`, `combat.grapple.strength`, a weapon's `tohit.strength` and `damage.strength`) is computed again from the abilities once modifiers apply, so it follows a modifier that raises the ability: a flat bonus belongs in the `misc` beside it.
+A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity`, `size`, `touch` and `flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size` and `damage.strength`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
 
 ## abilities
 
@@ -21,8 +21,8 @@ A part that comes from an ability (a skill's or a save's `ability`, `combat.ac.d
 | Path | Type | Description |
 |------|------|-------------|
 | `skills.<name>.rank` | number | Total ranks invested |
-| `skills.<name>.ability` | number | From key ability modifier |
-| `skills.<name>.weight` | number | Armor check penalty (ACP) |
+| `skills.<name>.ability` | number | From key ability modifier (req only) |
+| `skills.<name>.weight` | number | Armor check penalty (ACP) (req only) |
 | `skills.<name>.misc` | number | From feats, items, and spells |
 | `skills.<name>.total` | number | Final skill check bonus (req only) |
 | `skills.<name>.trained` | boolean | Whether at least 1 rank is invested |
@@ -34,7 +34,7 @@ A part that comes from an ability (a skill's or a save's `ability`, `combat.ac.d
 | Path | Type | Description |
 |------|------|-------------|
 | `saves.<name>.base` | number | Base save bonus from class levels |
-| `saves.<name>.ability` | number | From key ability modifier |
+| `saves.<name>.ability` | number | From key ability modifier (req only) |
 | `saves.<name>.misc` | number | From feats, items, and spells |
 | `saves.<name>.total` | number | Final saving throw bonus (req only) |
 | `saves.*.misc` | number | Misc modifier for all saving throws |
@@ -46,24 +46,24 @@ A part that comes from an ability (a skill's or a save's `ability`, `combat.ac.d
 | `combat.ac.base` | number | Default 10 |
 | `combat.ac.armor` | number | Armor bonus to AC |
 | `combat.ac.shield` | number | Shield bonus to AC |
-| `combat.ac.dexterity` | number | Dexterity bonus to AC |
+| `combat.ac.dexterity` | number | Dexterity bonus to AC (req only) |
 | `combat.ac.natural` | number | Natural armor bonus |
 | `combat.ac.deflection` | number | Deflection bonus to AC |
 | `combat.ac.misc` | number | Other bonuses to AC |
 | `combat.ac.total` | number | All AC bonuses combined (req only) |
-| `combat.ac.touch` | number | Ignores armor, shield, natural |
-| `combat.ac.flatfooted` | number | Ignores Dex bonus |
+| `combat.ac.touch` | number | Ignores armor, shield, natural (req only) |
+| `combat.ac.flatfooted` | number | Ignores Dex bonus (req only) |
 | `combat.hp.base` | number | From hit dice rolls |
-| `combat.hp.constitution` | number | Con modifier per level |
+| `combat.hp.constitution` | number | Con modifier per level (req only) |
 | `combat.hp.misc` | number | Other bonuses to HP |
 | `combat.hp.total` | number | All HP sources combined (req only) |
-| `combat.initiative.dexterity` | number | Dex modifier |
+| `combat.initiative.dexterity` | number | Dex modifier (req only) |
 | `combat.initiative.misc` | number | Other bonuses to initiative |
 | `combat.initiative.total` | number | All initiative bonuses combined (req only) |
 | `combat.bab` | number | From class progression |
-| `combat.grapple.bab` | number | BAB contribution |
-| `combat.grapple.strength` | number | Str modifier |
-| `combat.grapple.size` | number | From race size |
+| `combat.grapple.bab` | number | BAB contribution (req only) |
+| `combat.grapple.strength` | number | Str modifier (req only) |
+| `combat.grapple.size` | number | From race size (req only) |
 | `combat.grapple.misc` | number | Other bonuses to grapple |
 | `combat.grapple.total` | number | All grapple bonuses combined (req only) |
 | `combat.twoweapon.mainhand` | number | Penalty on main-hand attacks with two weapons (−6) |
@@ -73,7 +73,7 @@ A part that comes from an ability (a skill's or a save's `ability`, `combat.ac.d
 | `combat.speed.misc` | number | Other bonuses to speed (ft) |
 | `combat.speed.total` | number | Final movement speed (ft) (req only) |
 | `combat.encumbrance.carriedweight` | number | Total weight of items (lbs) |
-| `combat.encumbrance.heavyload` | number | Max carry capacity (lbs) |
+| `combat.encumbrance.heavyload` | number | Max carry capacity (lbs) (req only) |
 
 ## items.weapons
 
@@ -81,11 +81,11 @@ Grouped by weapon type, family, complexity, and item name.
 
 | Path | Type | Description |
 |------|------|-------------|
-| `items.weapons.<group>.tohit.strength` | number | Str/Dex bonus to attack (a finessed one less a shield's check penalty, a composite bow's −2 below its rating) |
+| `items.weapons.<group>.tohit.strength` | number | Str/Dex bonus to attack (a finessed one less a shield's check penalty, a composite bow's −2 below its rating) (req only) |
 | `items.weapons.<group>.tohit.magic` | number | Enhancement bonus to attack |
 | `items.weapons.<group>.tohit.misc` | number | Other bonuses to attack |
 | `items.weapons.<group>.damage.base` | string | Base damage dice |
-| `items.weapons.<group>.damage.strength` | number | Str bonus to damage |
+| `items.weapons.<group>.damage.strength` | number | Str bonus to damage (req only) |
 | `items.weapons.<group>.damage.magic` | number | Enhancement bonus to damage |
 | `items.weapons.<group>.damage.misc` | number | Other bonuses to damage |
 | `items.weapons.<group>.damage.strmultiplier` | number | Str-to-damage ratio (1x/0.5x/1.5x) |

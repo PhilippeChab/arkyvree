@@ -16,8 +16,8 @@ type DetailedCharacterComprehensiveAbilities = {
     base: number;
     level: number; // Bonus from levels
     misc: number;
-    total: number;
-    modifier: number;
+    readonly total: number;
+    readonly modifier: number;
   };
 };
 
@@ -72,12 +72,18 @@ export default class DetailedCharacterAbilities {
       const normalizedName = stripSeparators(name);
       this.abilityIdToName.set(abilityId, normalizedName);
 
+      const computeModifier = (total: number) => this.computeModifier(total);
+      // The total and the modifier are computed from the parts when read, so they follow every change to them
       this.detailedCharacterAbilities[normalizedName] = {
         base: score,
         level: 0,
         misc: 0,
-        total: score,
-        modifier: this.computeModifier(score),
+        get total() {
+          return this.base + this.misc + this.level;
+        },
+        get modifier() {
+          return computeModifier(this.total);
+        },
       };
     }
 
@@ -87,7 +93,6 @@ export default class DetailedCharacterAbilities {
         const normalizedName = this.abilityIdToName.get(level.abilityId);
         if (normalizedName && this.detailedCharacterAbilities[normalizedName]) {
           this.detailedCharacterAbilities[normalizedName].level += 1;
-          this.updateTotal(normalizedName);
         }
       }
     }
@@ -134,18 +139,5 @@ export default class DetailedCharacterAbilities {
     const ability = this.detailedCharacterAbilities[stripSeparators(abilityName)];
     if (!ability) return 0;
     return this.computeModifier(ability.base + ability.level);
-  }
-
-  updateTotal(abilityName: string): void {
-    const normalizedAbility = stripSeparators(abilityName);
-    const ability = this.detailedCharacterAbilities[normalizedAbility];
-    ability.total = ability.base + ability.misc + ability.level;
-    ability.modifier = this.computeModifier(ability.total);
-  }
-
-  updateTotals(): void {
-    for (const ability of Object.keys(this.detailedCharacterAbilities)) {
-      this.updateTotal(ability);
-    }
   }
 }

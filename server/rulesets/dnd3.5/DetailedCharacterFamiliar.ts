@@ -24,7 +24,6 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
     const familiarCombat = this.detailedCharacterCombat.getCombat();
 
     familiarCombat.hp.base = Math.floor(masterCombat.hp.total / 2);
-    familiarCombat.hp.misc = 0;
     familiarCombat.bab = masterCombat.bab;
 
     const raceStats = getBondedRaceStats(this.race?.name);
@@ -33,9 +32,7 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
     const intelligence = this.detailedCharacterAbilities.getAbility("Intelligence");
     if (intelligence) {
       intelligence.base = familiarInt;
-      intelligence.misc = 0;
       intelligence.level = 0;
-      this.detailedCharacterAbilities.updateTotal("Intelligence");
     }
 
     const masterSaves = master.getDetailedCharacterSavingThrows().getSavingThrows();

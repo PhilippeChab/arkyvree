@@ -1,7 +1,7 @@
+import { formatWithArticle } from "@/database/packages/dnd35/content/articles.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
 import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
-import { formatWithArticle } from "@/shared/text.ts";
 
 const ANIMAL_COMPANION_APTITUDE = "Animal Companion Bond";
 const ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE = "Animal Companion Class Feature";
@@ -191,10 +191,10 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
   },
   {
     name: "Owl",
-    description: "A nocturnal raptor whose silent flight surprises prey.",
+    description:
+      "A nocturnal raptor whose silent flight surprises prey. It has a +8 racial bonus on Spot checks in shadowy illumination, applied at the table.",
     size: "Tiny",
     baseSpeed: 10,
-    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "8", valueType: "number" }],
   },
   {
     name: "Pony",

@@ -20,26 +20,26 @@ export type WeaponSlot = {
   reach: number;
   slot: string;
   tohit: {
-    strength: number;
+    readonly strength: number;
     magic: number;
     misc: number;
-    size: number;
-    total: number[];
+    readonly size: number;
+    readonly total: number[];
   };
   /** A melee weapon's attack when thrown, if it has a range increment: with Dexterity, as every ranged attack. */
-  thrown: { dexterity: number; total: number[] } | null;
+  readonly thrown: { dexterity: number; total: number[] } | null;
   /**
    * Its attacks when its set holds an equipped weapon in each hand: its own and its thrown ones (if it has those), with
    * two-weapon fighting's penalties, the off hand's as many as `combat.twoweapon.offhandattacks`.
    */
-  twoweapon: { total: number[]; thrown: number[] | null } | null;
+  readonly twoweapon: { total: number[]; thrown: number[] | null } | null;
   damage: {
     base: string;
-    strength: number;
+    readonly strength: number;
     magic: number;
     misc: number;
     others: string[];
-    total: string;
+    readonly total: string;
     types: string[];
     strmultiplier: number | null;
     critical: {
@@ -79,25 +79,25 @@ export type DetailedCharacterComprehensiveCombat = {
     base: number;
     armor: number;
     shield: number;
-    dexterity: number;
+    readonly dexterity: number;
     natural: number;
     deflection: number;
-    size: number;
+    readonly size: number;
     misc: number;
-    total: number;
-    touch: number;
-    flatfooted: number;
+    readonly total: number;
+    readonly touch: number;
+    readonly flatfooted: number;
   };
   hp: {
     base: number;
-    constitution: number;
+    readonly constitution: number;
     misc: number;
-    total: number;
+    readonly total: number;
   };
   initiative: {
-    dexterity: number;
+    readonly dexterity: number;
     misc: number;
-    total: number;
+    readonly total: number;
   };
   bab: number;
   /** Two-weapon fighting: the penalty on each hand's attacks, and how many attacks the off hand makes. */
@@ -107,16 +107,16 @@ export type DetailedCharacterComprehensiveCombat = {
     offhandattacks: number;
   };
   grapple: {
-    bab: number;
-    strength: number;
-    size: number;
+    readonly bab: number;
+    readonly strength: number;
+    readonly size: number;
     misc: number;
-    total: number;
+    readonly total: number;
   };
   speed: {
     base: number;
     misc: number;
-    total: number;
+    readonly total: number;
   };
   encumbrance: EncumbranceData;
   weaponsets: Record<string, WeaponSet>;
@@ -131,6 +131,11 @@ export default abstract class CombatState {
     protected readonly characterClasses: DetailedCharacterClasses,
   ) {}
 
+  /**
+   * The sheet. Its sections that compute parts when read (armor class, hit points, initiative, grapple, speed) are
+   * placeholders here, which the concerns replace when the character initializes; the encumbrance is the encumbrance's
+   * own object, set with its source.
+   */
   protected readonly detailedCharacterCombat: DetailedCharacterComprehensiveCombat = {
     ac: {
       base: CONSTANTS.DEFAULT_AC_BASE,
@@ -145,35 +150,16 @@ export default abstract class CombatState {
       touch: CONSTANTS.DEFAULT_AC_BASE,
       flatfooted: CONSTANTS.DEFAULT_AC_BASE,
     },
-    hp: {
-      base: 0,
-      constitution: 0,
-      misc: 0,
-      total: 0,
-    },
-    initiative: {
-      dexterity: 0,
-      misc: 0,
-      total: 0,
-    },
+    hp: { base: 0, constitution: 0, misc: 0, total: 0 },
+    initiative: { dexterity: 0, misc: 0, total: 0 },
     bab: 0,
     twoweapon: {
       mainhand: CONSTANTS.TWO_WEAPON_MAIN_HAND_PENALTY,
       offhand: CONSTANTS.TWO_WEAPON_OFF_HAND_PENALTY,
       offhandattacks: 1,
     },
-    grapple: {
-      bab: 0,
-      strength: 0,
-      size: 0,
-      misc: 0,
-      total: 0,
-    },
-    speed: {
-      base: CONSTANTS.DEFAULT_SPEED,
-      misc: 0,
-      total: CONSTANTS.DEFAULT_SPEED,
-    },
+    grapple: { bab: 0, strength: 0, size: 0, misc: 0, total: 0 },
+    speed: { base: CONSTANTS.DEFAULT_SPEED, misc: 0, total: CONSTANTS.DEFAULT_SPEED },
     encumbrance: {
       carriedweight: 0,
       lightload: 0,
@@ -206,6 +192,6 @@ export default abstract class CombatState {
   /** Each level's hit die roll, which its Constitution modifier adds to. */
   protected hitDieRolls: number[] = [];
 
-  /** Each weapon's abilities, which its totals follow once the abilities' modifiers have applied. */
+  /** Each weapon's abilities, which its to-hit and damage read: Weapon Finesse sets its finesse. */
   protected readonly weaponAbilities = new WeakMap<WeaponSlot, WeaponAbilities>();
 }

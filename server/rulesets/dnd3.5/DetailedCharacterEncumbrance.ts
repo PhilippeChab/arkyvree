@@ -23,7 +23,8 @@ type RawInventoryEntry = CharacterInventory & {
 
 const NAVIGATABLE_PATHS = [
   { path: "carriedweight", description: "Total weight of items (lbs)", type: "number" as const },
-  { path: "heavyload", description: "Max carry capacity (lbs)", type: "number" as const },
+  // Computed from the strength when read: for requirements only. The carried weight is an input, which modifiers change
+  { path: "heavyload", description: "Max carry capacity (lbs)", type: "number" as const, requirementOnly: true },
 ];
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -34,12 +35,12 @@ const SEGMENT_LABELS: Record<string, string> = {
 
 export type EncumbranceData = {
   carriedweight: number;
-  lightload: number;
-  mediumload: number;
-  heavyload: number;
-  load: LoadCategory;
-  maxdex: number;
-  checkpenalty: number;
+  readonly lightload: number;
+  readonly mediumload: number;
+  readonly heavyload: number;
+  readonly load: LoadCategory;
+  readonly maxdex: number;
+  readonly checkpenalty: number;
 };
 
 export default class DetailedCharacterEncumbrance {
@@ -50,7 +51,7 @@ export default class DetailedCharacterEncumbrance {
   }
 
   static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
-    return NAVIGATABLE_PATHS.map((path) => ({
+    return NAVIGATABLE_PATHS.filter((path) => kind === "requirement" || !("requirementOnly" in path)).map((path) => ({
       path: `combat.encumbrance.${path.path}`,
       category: "combat",
       description: path.description,
@@ -59,20 +60,40 @@ export default class DetailedCharacterEncumbrance {
     }));
   }
 
-  private readonly encumbrance: EncumbranceData = {
-    carriedweight: 0,
-    lightload: 0,
-    mediumload: 0,
-    heavyload: 0,
-    load: "light",
-    maxdex: Infinity,
-    checkpenalty: 0,
-  };
-
   private raceSize = "Medium";
 
   /** Whether the race walks on four legs (RACE_QUADRUPED), which carries more for its size. */
   private quadruped = false;
+
+  /**
+   * The carried weight is an input, which a modifier can change; the loads, the load category and its penalties are
+   * computed from it and the strength when read.
+   */
+  private readonly encumbrance: EncumbranceData = (() => {
+    const heavyLoad = () => this.getHeavyLoad();
+    const loadCategory = (weight: number, heavy: number) => this.getLoadCategory(weight, heavy);
+    return {
+      carriedweight: 0,
+      get heavyload() {
+        return heavyLoad();
+      },
+      get mediumload() {
+        return Math.floor((this.heavyload * 2) / 3);
+      },
+      get lightload() {
+        return Math.floor(this.heavyload / 3);
+      },
+      get load() {
+        return loadCategory(this.carriedweight, this.heavyload);
+      },
+      get maxdex() {
+        return ENCUMBRANCE_PENALTIES[this.load].maxdex;
+      },
+      get checkpenalty() {
+        return ENCUMBRANCE_PENALTIES[this.load].checkpenalty;
+      },
+    };
+  })();
 
   private getCarryingCapacity(str: number): number {
     if (str <= 0) return 0;
@@ -83,6 +104,14 @@ export default class DetailedCharacterEncumbrance {
     const baseStr = remainder === 0 ? 10 : 20 + remainder;
     const multiplier = Math.pow(4, Math.floor((str - baseStr) / 10));
     return CARRYING_CAPACITY[baseStr] * multiplier;
+  }
+
+  /** The heaviest load the character carries: its strength's, for its size and legs. */
+  private getHeavyLoad(): number {
+    const strTotal = this.characterAbilities.getAbility("Strength")?.total ?? 0;
+    const sizeMultiplier =
+      (this.quadruped ? QUADRUPED_SIZE_CARRY_MULTIPLIERS : SIZE_CARRY_MULTIPLIERS)[this.raceSize] ?? 1;
+    return Math.floor(this.getCarryingCapacity(strTotal) * sizeMultiplier);
   }
 
   private getLoadCategory(weight: number, heavyLoad: number): LoadCategory {
@@ -107,7 +136,6 @@ export default class DetailedCharacterEncumbrance {
     }
 
     this.encumbrance.carriedweight = totalWeight;
-    this.updateTotals();
   }
 
   getEncumberedSpeed(baseSpeed: number): number {
@@ -119,21 +147,5 @@ export default class DetailedCharacterEncumbrance {
 
   getEncumbrance(): EncumbranceData {
     return this.encumbrance;
-  }
-
-  updateTotals(): void {
-    const strTotal = this.characterAbilities.getAbility("Strength")?.total ?? 0;
-    const heavyLoad = this.getCarryingCapacity(strTotal);
-    const sizeMultiplier =
-      (this.quadruped ? QUADRUPED_SIZE_CARRY_MULTIPLIERS : SIZE_CARRY_MULTIPLIERS)[this.raceSize] ?? 1;
-
-    this.encumbrance.heavyload = Math.floor(heavyLoad * sizeMultiplier);
-    this.encumbrance.mediumload = Math.floor((this.encumbrance.heavyload * 2) / 3);
-    this.encumbrance.lightload = Math.floor(this.encumbrance.heavyload / 3);
-    this.encumbrance.load = this.getLoadCategory(this.encumbrance.carriedweight, this.encumbrance.heavyload);
-
-    const penalties = ENCUMBRANCE_PENALTIES[this.encumbrance.load];
-    this.encumbrance.maxdex = penalties.maxdex;
-    this.encumbrance.checkpenalty = penalties.checkpenalty;
   }
 }

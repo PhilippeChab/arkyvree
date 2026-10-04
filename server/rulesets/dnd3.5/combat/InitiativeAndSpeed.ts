@@ -6,43 +6,43 @@ import { RACE_SPEED_IGNORES_ENCUMBRANCE } from "@/shared/dnd3.5/properties/index
 /** A character's initiative, and its speed under its armor and load (which a dwarf's ignores). */
 export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithInitiativeAndSpeed extends Base {
-    protected initializeInitiative(dexterityModifier: number): void {
-      this.detailedCharacterCombat.initiative.dexterity = dexterityModifier;
-      this.detailedCharacterCombat.initiative.total =
-        this.detailedCharacterCombat.initiative.dexterity + this.detailedCharacterCombat.initiative.misc;
+    /** The initiative: misc is an input; Dexterity's part and the total are computed when read. */
+    protected initializeInitiative(): void {
+      const dexterity = () => this.characterAbilities.getAbilityModifier("Dexterity");
+      this.detailedCharacterCombat.initiative = {
+        get dexterity() {
+          return dexterity();
+        },
+        misc: 0,
+        get total() {
+          return this.dexterity + this.misc;
+        },
+      };
     }
 
+    /** The speed: the race's base and misc are inputs; the total, under the load and the armor, is computed when read. */
     protected initializeSpeed(race: RaceWithPMR): void {
-      this.detailedCharacterCombat.speed.base = race.baseSpeed;
+      const overloaded = () => this.detailedCharacterCombat.encumbrance.load === "overloaded";
+      const loadedSpeed = (base: number) => this.loadedSpeed(base);
       this.speedIgnoresEncumbrance = race.properties.some(
         (p) => p.type === RACE_SPEED_IGNORES_ENCUMBRANCE && p.value === "true",
       );
-      this.detailedCharacterCombat.speed.total =
-        this.detailedCharacterCombat.speed.base + this.detailedCharacterCombat.speed.misc;
+      this.detailedCharacterCombat.speed = {
+        base: race.baseSpeed,
+        misc: 0,
+        get total() {
+          // The overloaded 5 ft has nothing to add to; otherwise the misc comes on top of the slowed base
+          return overloaded() ? 5 : loadedSpeed(this.base) + this.misc;
+        },
+      };
     }
 
-    protected updateInitiativeTotal() {
-      const initiative = this.detailedCharacterCombat.initiative;
-      initiative.dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
-      initiative.total = initiative.dexterity + initiative.misc;
-    }
-
-    protected updateSpeedTotal() {
-      const base = this.detailedCharacterCombat.speed.base;
-      const misc = this.detailedCharacterCombat.speed.misc;
-      const load = this.detailedCharacterCombat.encumbrance.load;
-
-      if (load === "overloaded") {
-        this.detailedCharacterCombat.speed.total = 5;
-      } else if (
-        !this.speedIgnoresEncumbrance &&
-        (load === "medium" || load === "heavy" || this.hasSpeedReducingArmor)
-      ) {
-        const reducedBase = this.characterEncumbrance ? this.characterEncumbrance.getEncumberedSpeed(base) : base;
-        this.detailedCharacterCombat.speed.total = reducedBase + misc;
-      } else {
-        this.detailedCharacterCombat.speed.total = base + misc;
-      }
+    /** The base speed under the load and the armor: slowed by a medium or heavy load or by armor, unless the race isn't. */
+    private loadedSpeed(base: number): number {
+      const { load } = this.detailedCharacterCombat.encumbrance;
+      const slowed =
+        !this.speedIgnoresEncumbrance && (load === "medium" || load === "heavy" || this.hasSpeedReducingArmor);
+      return slowed && this.characterEncumbrance ? this.characterEncumbrance.getEncumberedSpeed(base) : base;
     }
   }
   return WithInitiativeAndSpeed;

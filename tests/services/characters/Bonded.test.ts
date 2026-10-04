@@ -4,7 +4,7 @@ import { addClassLevels, addFeats, SEED_USER_ID } from "@/database/seeds/helpers
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { CharacterLevels, Characters, Players } from "@/server/repositories/index.ts";
+import { CharacterLevels, Characters, Modifiers, Players } from "@/server/repositories/index.ts";
 import { CARRYING_CAPACITY } from "@/server/rulesets/constants.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import DetailedCharacterAnimalCompanion from "@/server/rulesets/dnd3.5/DetailedCharacterAnimalCompanion.ts";
@@ -21,6 +21,7 @@ import {
   createTestCampaign,
   createTestUser,
   getSeedCtx,
+  invalidateSeededRuleset,
   makeSession,
   queuedPdfJobs,
 } from "@/tests/helpers.ts";
@@ -330,6 +331,26 @@ describe("A familiar's benefit", () => {
 });
 
 describe("Stat blocks", () => {
+  test("take a familiar's own modifiers on top: its master and stat block set it up before they apply", async () => {
+    // A modifier on the cat race: +3 hit points and +2 Intelligence, which the master's derivation used to reset
+    const { ctx, bonded } = await createWizardWithFamiliar("Cat Familiar");
+    const catRaceId = ctx.raceMap.familiar["Cat"];
+    for (const target of ["combat.hp.misc", "abilities.intelligence.misc"]) {
+      await Modifiers.create(db, {
+        sourceId: catRaceId,
+        sourceType: "races",
+        target,
+        operator: "add",
+        value: target.startsWith("combat") ? "3" : "2",
+        valueType: "number",
+      });
+    }
+    invalidateSeededRuleset(ctx.rulesetId);
+    const cat = await build(new DetailedCharacterFamiliar(bonded));
+    expect(cat.getDetailedCharacterCombat().getCombat().hp.misc).toBe(3);
+    expect(cat.getDetailedCharacterAbilities().getAbilities()["intelligence"].misc).toBe(2);
+  });
+
   test("a four-legged creature carries more for its size than a biped, as its race says", async () => {
     const heavyLoad = (detailed: DetailedCharacter) => {
       const strength = detailed.getDetailedCharacterAbilities().getAbilities()["strength"].total;

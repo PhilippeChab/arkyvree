@@ -21,6 +21,23 @@ type DetailedCharacterComprehensiveModifiers = {
 export default class DetailedCharacterModifiers {
   constructor(private readonly targetPaths: TargetPathsTraverser) {}
 
+  /**
+   * The source keys (`id:type`) an evaluation of requirements leaves unmet or invalid: a modifier is gated out when its
+   * source entity's or its own is among them.
+   */
+  static blockedKeys(characterRequirements: DetailedCharacterRequirements): Set<string> {
+    const blockedKeys = new Set<string>();
+    const reqs = characterRequirements.getRequirements();
+    for (const group of reqs.unmetRequirementGroups) {
+      if (group.length === 0) continue;
+      for (const r of group) blockedKeys.add(`${r.entityId}:${r.entityType}`);
+    }
+    for (const inv of reqs.invalidRequirements) {
+      blockedKeys.add(`${inv.requirement.entityId}:${inv.requirement.entityType}`);
+    }
+    return blockedKeys;
+  }
+
   private static pathsOverlap(target: string, referencedPath: string): boolean {
     const targetParts = target.split(".");
     const refParts = referencedPath.split(".");
@@ -62,10 +79,6 @@ export default class DetailedCharacterModifiers {
       appliedTarget !== modifier.target ? { ...modifier, target: appliedTarget } : modifier,
     );
 
-    if (holder.updateTotals) {
-      holder.updateTotals();
-    }
-
     if (holder.updateAvailables) {
       holder.updateAvailables();
     }
@@ -84,6 +97,11 @@ export default class DetailedCharacterModifiers {
     const { data, object, key } = result;
     // A traversal's object holds its data at its key.
     if (!isTraversable(object)) return this.skip(modifier, `Target ${modifier.target} isn't in an object`);
+    // A part the sheet computes when read (a total, an ability's share) has a getter and no setter
+    const descriptor = Object.getOwnPropertyDescriptor(object, key);
+    if (descriptor?.get && !descriptor.set) {
+      return this.skip(modifier, `Target ${modifier.target} is computed from the sheet: a modifier can't change it`);
+    }
     // The caller made sure the data has the value's type: a number meets a number, a string a string.
     switch (operator) {
       case "add":
@@ -235,19 +253,8 @@ export default class DetailedCharacterModifiers {
   }
 
   evaluateModifiers(holders: Holders, modifiers: Modifier[], characterRequirements: DetailedCharacterRequirements) {
-    // Precompute the set of "source keys" that gate a modifier out. A modifier
-    // is dropped if its source entity OR the modifier itself has an unmet or
-    // invalid requirement. Building this once is O(requirements); the previous
-    // per-modifier .find + .some scan was O(modifiers × requirements).
-    const blockedKeys = new Set<string>();
-    const reqs = characterRequirements.getRequirements();
-    for (const group of reqs.unmetRequirementGroups) {
-      if (group.length === 0) continue;
-      for (const r of group) blockedKeys.add(`${r.entityId}:${r.entityType}`);
-    }
-    for (const inv of reqs.invalidRequirements) {
-      blockedKeys.add(`${inv.requirement.entityId}:${inv.requirement.entityType}`);
-    }
+    // A modifier is dropped if its source entity OR the modifier itself has an unmet or invalid requirement
+    const blockedKeys = DetailedCharacterModifiers.blockedKeys(characterRequirements);
 
     const templateModifiers: Modifier[] = [];
 

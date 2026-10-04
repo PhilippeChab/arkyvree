@@ -11,6 +11,3 @@ export const stripSeparators = (s: string) =>
   String(s)
     .replaceAll(/[^a-z0-9]/gi, "")
     .toLowerCase();
-
-/** A noun after its indefinite article, by its first letter: "a Cat", "an Owl". */
-export const formatWithArticle = (noun: string): string => `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;

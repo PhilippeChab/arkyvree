@@ -78,11 +78,9 @@ export default class DetailedCharacterAnimalCompanion extends DetailedCharacterA
     if (row.strDex !== 0) {
       if (abilities["strength"]) {
         abilities["strength"].misc += row.strDex;
-        this.detailedCharacterAbilities.updateTotal("strength");
       }
       if (abilities["dexterity"]) {
         abilities["dexterity"].misc += row.strDex;
-        this.detailedCharacterAbilities.updateTotal("dexterity");
       }
     }
 
