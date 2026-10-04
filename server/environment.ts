@@ -20,7 +20,7 @@ const VARIABLES = {
   SENTRY_TRACES_SAMPLE_RATE: "the share of requests Sentry traces",
   OTEL_EXPORTER_OTLP_ENDPOINT: "where OpenTelemetry pushes metrics and logs", OTEL_AUTH_TOKEN: "its token",
   // Set by the platform, the scripts or a developer
-  NODE_ENV: "production, test (tests/env.ts, the e2e server) or development, unset included",
+  NODE_ENV: "production, test (tests/env.ts, the e2e server) or development (.env.example)",
   FLY_MACHINE_VERSION: "the release, set by Fly",
   HOST: "the address the server and the worker listen on", PORT: "the server's port", WORKER_PORT: "the worker's",
   DB_POOL_MAX: "the server's database pool", DB_POOL_MIN: "the server's database pool",
@@ -59,8 +59,11 @@ export const isProduction = () => readEnv("NODE_ENV") === "production";
  */
 export const isTest = () => readEnv("NODE_ENV") === "test";
 
-/** A developer's machine: neither production nor the tests, so an unset NODE_ENV too. */
-export const isDevelopment = () => !isProduction() && !isTest();
+/**
+ * A developer's machine: NODE_ENV=development, which .env.example sets. Explicit, never assumed: it shows an error's
+ * details in responses and logs (server/errors), so an unset NODE_ENV keeps them masked.
+ */
+export const isDevelopment = () => readEnv("NODE_ENV") === "development";
 
 /** The deployment's name for monitoring (Sentry, OpenTelemetry): NODE_ENV, or `development` when it's unset. */
 export const getEnvironmentName = () => readEnv("NODE_ENV") || "development";
