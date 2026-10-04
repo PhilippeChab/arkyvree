@@ -3,11 +3,14 @@ import {
   ENCUMBERED_SPEED,
   ENCUMBRANCE_PENALTIES,
   type LoadCategory,
+  QUADRUPED_SIZE_CARRY_MULTIPLIERS,
   SIZE_CARRY_MULTIPLIERS,
 } from "@/server/rulesets/constants.ts";
+import type { RaceWithPMR } from "@/server/rulesets/types.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+import { RACE_QUADRUPED } from "@/shared/dnd3.5/properties/index.ts";
 import type { CharacterInventory, Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 type RawInventoryEntry = CharacterInventory & {
@@ -68,6 +71,9 @@ export default class DetailedCharacterEncumbrance {
 
   private raceSize = "Medium";
 
+  /** Whether the race walks on four legs (RACE_QUADRUPED), which carries more for its size. */
+  private quadruped = false;
+
   private getCarryingCapacity(str: number): number {
     if (str <= 0) return 0;
     if (str < CARRYING_CAPACITY.length) return CARRYING_CAPACITY[str];
@@ -89,8 +95,9 @@ export default class DetailedCharacterEncumbrance {
     return "overloaded";
   }
 
-  initialize(inventory: RawInventoryEntry[], raceSize: string): void {
-    this.raceSize = raceSize;
+  initialize(inventory: RawInventoryEntry[], race: RaceWithPMR): void {
+    this.raceSize = race.size;
+    this.quadruped = race.properties.some((p) => p.type === RACE_QUADRUPED && p.value === "true");
 
     let totalWeight = 0;
     for (const entry of inventory) {
@@ -117,7 +124,8 @@ export default class DetailedCharacterEncumbrance {
   updateTotals(): void {
     const strTotal = this.characterAbilities.getAbility("Strength")?.total ?? 0;
     const heavyLoad = this.getCarryingCapacity(strTotal);
-    const sizeMultiplier = SIZE_CARRY_MULTIPLIERS[this.raceSize] ?? 1;
+    const sizeMultiplier =
+      (this.quadruped ? QUADRUPED_SIZE_CARRY_MULTIPLIERS : SIZE_CARRY_MULTIPLIERS)[this.raceSize] ?? 1;
 
     this.encumbrance.heavyload = Math.floor(heavyLoad * sizeMultiplier);
     this.encumbrance.mediumload = Math.floor((this.encumbrance.heavyload * 2) / 3);

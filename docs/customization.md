@@ -245,6 +245,12 @@ before any COW copy or write; descriptions and customizations remain editable. A
 feature's `Terrain Mastery: …` option, a user's own) can be renamed. Renaming a skill deletes its old generated feat
 and its customizations, then creates the replacement in the same transaction.
 
+### Races
+
+Properties the engine reads off a race (`combat/InitiativeAndSpeed.ts`, `DetailedCharacterEncumbrance.ts`), seeded where the SRD says so:
+- `RACE_SPEED_IGNORES_ENCUMBRANCE` — the race keeps its speed in medium or heavy armor and under a medium or heavy load. The dwarf has it, through the parser's override (`reference/srd/races.json`).
+- `RACE_QUADRUPED` — the race walks on four legs, so it carries more for its size: ×¼ Fine to ×24 Colossal (×1½ Medium, ×3 Large) instead of a biped's ×⅛ to ×16. The four-legged familiars, animal companions and special mounts have it (`content/raceProperties.ts`); birds, bats and snakes don't.
+
 ### Spells / Powers
 
 Properties auto-generated from spell form fields in `hooks/generators/spellGenerator.ts`:

@@ -98,6 +98,7 @@ export type RaceDefinition = {
   baseSpeed: number;
   kind?: string;
   modifiers?: Modifier[];
+  properties?: Property[];
 };
 
 export interface ItemDef {

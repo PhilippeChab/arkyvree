@@ -1,6 +1,7 @@
 import { include } from "@/server/mixins.ts";
 import type DetailedCharacterEncumbrance from "@/server/rulesets/dnd3.5/DetailedCharacterEncumbrance.ts";
 import type DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
+import type { RaceWithPMR } from "@/server/rulesets/types.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import {
@@ -11,7 +12,7 @@ import {
   WEAPON_FINESSABLE,
   WEAPON_PROFICIENCY,
 } from "@/shared/dnd3.5/properties/index.ts";
-import { type CharacterLevel, type Race } from "@/shared/relations.ts";
+import { type CharacterLevel } from "@/shared/relations.ts";
 
 import { ArmorClass } from "./combat/ArmorClass.ts";
 import { Attacks } from "./combat/Attacks.ts";
@@ -134,7 +135,7 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
     return paths;
   }
 
-  initialize(race: Race, klassLevelProperties: Map<string, { bab: number; skills: number }>) {
+  initialize(race: RaceWithPMR, klassLevelProperties: Map<string, { bab: number; skills: number }>) {
     this.raceSize = race.size;
 
     const dexterityModifier = this.characterAbilities.getAbilityModifier("Dexterity");

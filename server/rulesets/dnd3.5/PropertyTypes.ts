@@ -20,6 +20,8 @@ import {
   KLASS_LEVEL_SKILL_POINTS,
   MAGIC_AURA,
   MAGIC_CASTER_LEVEL,
+  RACE_QUADRUPED,
+  RACE_SPEED_IGNORES_ENCUMBRANCE,
   RULESET_SKILL_POINT_ABILITY_ID,
   SHIELD_AC_BONUS,
   SHIELD_PROFICIENCY,
@@ -209,6 +211,12 @@ const KLASS_LEVEL_PROPERTY_TYPES: Record<string, string> = {
   [KLASS_LEVEL_SKILL_POINTS]: "Skill points gained per level",
 };
 
+const RACE_PROPERTY_TYPES: Record<string, string> = {
+  [RACE_SPEED_IGNORES_ENCUMBRANCE]:
+    "Whether the race keeps its speed in medium or heavy armor and under a medium or heavy load (the dwarf)",
+  [RACE_QUADRUPED]: "Whether the race walks on four legs, which carries more: x1 1/2 when Medium, x3 when Large (SRD)",
+};
+
 const KLASS_PROPERTY_TYPES: Record<string, string> = {
   [KLASS_BONUS_SPELL_ABILITY_ID]: "Ability score used for bonus spells per day",
   [KLASS_CASTER_TYPE]: "Whether this class casts arcane or divine spells",
@@ -244,6 +252,7 @@ const ENTITY_PROPERTY_TYPES: Partial<Record<PropertyEntityType, Record<string, s
   klasses: KLASS_PROPERTY_TYPES,
   klass_levels: KLASS_LEVEL_PROPERTY_TYPES,
   powers: POWER_PROPERTY_TYPES,
+  races: RACE_PROPERTY_TYPES,
   rulesets: RULESET_PROPERTY_TYPES,
   skills: SKILL_PROPERTY_TYPES,
 };
@@ -294,6 +303,8 @@ const PROPERTY_VALUES: Record<string, string[]> = {
   [WEAPON_TYPE]: [...WEAPON_TYPE_NAMES],
   [KLASS_CASTER_TYPE]: ["Arcane", "Divine"],
   [FEAT_FAMILY]: [...FEAT_FAMILIES],
+  [RACE_SPEED_IGNORES_ENCUMBRANCE]: ["true", "false"],
+  [RACE_QUADRUPED]: ["true", "false"],
 };
 
 export default class Dnd35PropertyTypes implements PropertyTypesProvider {
@@ -305,6 +316,7 @@ export default class Dnd35PropertyTypes implements PropertyTypesProvider {
         ...KLASS_PROPERTY_TYPES,
         ...KLASS_LEVEL_PROPERTY_TYPES,
         ...POWER_PROPERTY_TYPES,
+        ...RACE_PROPERTY_TYPES,
         ...RULESET_PROPERTY_TYPES,
         ...SKILL_PROPERTY_TYPES,
       };

@@ -192,6 +192,9 @@ export default abstract class CombatState {
 
   protected hasSpeedReducingArmor = false;
 
+  /** Whether the race keeps its speed in medium or heavy armor and load (RACE_SPEED_IGNORES_ENCUMBRANCE: the dwarf). */
+  protected speedIgnoresEncumbrance = false;
+
   protected characterSkills: DetailedCharacterSkills | null = null;
 
   protected characterEncumbrance: DetailedCharacterEncumbrance | null = null;

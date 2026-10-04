@@ -224,6 +224,7 @@ function generateRace(out: Output, ref: RaceReference, book: string) {
     lines.push(`    size: ${quote(r.size)},`);
     lines.push(`    baseSpeed: ${r.baseSpeed},`);
     lines.push(...listField("modifiers", (r.modifiers ?? []).map(stringifyModifier), "    "));
+    lines.push(...listField("properties", (r.properties ?? []).map(stringifyProperty), "    "));
     lines.push(`  },`);
   }
   lines.push(`];`);

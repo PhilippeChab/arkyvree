@@ -1,3 +1,4 @@
+import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
 import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
@@ -127,18 +128,21 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     description: "A burrowing carnivore known for its tenacity. Strong claws and a thick hide.",
     size: "Small",
     baseSpeed: 30,
+    properties: QUADRUPED,
   },
   {
     name: "Camel",
     description: "A pack animal of the deserts. Slow but enduring across long distances.",
     size: "Large",
     baseSpeed: 50,
+    properties: QUADRUPED,
   },
   {
     name: "Dire Rat",
     description: "An oversized, disease-ridden rodent. Surprisingly agile climbers and swimmers.",
     size: "Small",
     baseSpeed: 40,
+    properties: QUADRUPED,
     modifiers: [grantFeat("diseasefilthfever")],
   },
   {
@@ -146,12 +150,14 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     description: "A small, alert canine companion. Excellent at scent tracking.",
     size: "Small",
     baseSpeed: 40,
+    properties: QUADRUPED,
   },
   {
     name: "Riding Dog",
     description: "A larger working dog bred for harness and battle. Can carry a Small rider.",
     size: "Medium",
     baseSpeed: 40,
+    properties: QUADRUPED,
     modifiers: [grantFeat("trip")],
   },
   {
@@ -173,12 +179,14 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     description: "A swift riding horse, agile and fast over open ground.",
     size: "Large",
     baseSpeed: 60,
+    properties: QUADRUPED,
   },
   {
     name: "Horse, Heavy",
     description: "A draft horse bred for endurance and strength. Slower but tougher.",
     size: "Large",
     baseSpeed: 50,
+    properties: QUADRUPED,
   },
   {
     name: "Owl",
@@ -192,6 +200,7 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     description: "A small sturdy equine, suited as a mount for halflings and gnomes.",
     size: "Medium",
     baseSpeed: 40,
+    properties: QUADRUPED,
   },
   {
     name: "Snake, Small Viper",
@@ -212,6 +221,7 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     description: "A pack predator. Devastating trip attack and a powerful sense of smell.",
     size: "Medium",
     baseSpeed: 50,
+    properties: QUADRUPED,
     modifiers: [grantFeat("trip")],
   },
 ];

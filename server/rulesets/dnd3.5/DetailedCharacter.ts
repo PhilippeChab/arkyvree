@@ -322,7 +322,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterSavingThrows.initialize(this.rulesetSaves, this.rulesetAbilities, this.klassLevelSaves);
     this.detailedCharacterCombat.initialize(this.race, this.klassLevelProperties);
     this.detailedCharacterInventory.initialize(this.inventory);
-    this.detailedCharacterEncumbrance.initialize(this.inventory, this.race.size);
+    this.detailedCharacterEncumbrance.initialize(this.inventory, this.race);
     this.detailedCharacterPowers.initialize(this.powers, this.rulesetPowers, this.rulesetAptitudes);
 
     // Seed empty buckets for every school/descriptor in the ruleset so a

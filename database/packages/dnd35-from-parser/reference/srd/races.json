@@ -7,7 +7,8 @@
   },
   "overrides": {
     "Dwarf": {
-      "description": "Dwarves are known for their skill in warfare, their ability to withstand physical and magical punishment, their hard work, and their capacity for drinking ale. Dwarves are slow but steady, and they hate to retreat. They have darkvision, can move normally in heavy armor, and gain racial bonuses to saving throws, hit points, weapon proficiencies with axes and hammers, and crafting."
+      "description": "Dwarves are known for their skill in warfare, their ability to withstand physical and magical punishment, their hard work, and their capacity for drinking ale. Dwarves are slow but steady, and they hate to retreat. They have darkvision, can move normally in heavy armor, and gain racial bonuses to saving throws, hit points, weapon proficiencies with axes and hammers, and crafting.",
+      "properties": [{ "type": "RACE_SPEED_IGNORES_ENCUMBRANCE", "value": "true" }]
     },
     "Elf": {
       "description": "Elves are known for their poetry, song, and magical arts. They are slow to make friends and enemies, but once they do, these relationships last for generations. They are immune to sleep effects and gain racial bonuses to saving throws against enchantment spells, as well as racial bonuses to perception and fine manipulation tasks."

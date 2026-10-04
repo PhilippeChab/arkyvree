@@ -48,6 +48,7 @@ import {
   FEAT_WEAPON_FINESSE,
   ITEM_MASTERWORK,
   ITEM_SPELL_FAILURE,
+  RACE_SPEED_IGNORES_ENCUMBRANCE,
   SHIELD_AC_BONUS,
   SHIELD_PROFICIENCY,
   SHIELD_TYPE,
@@ -1224,6 +1225,22 @@ describe("DetailedCharacter", () => {
         .getCombat();
       expect(combat.speed).toMatchObject({ base: 30, total: speed });
     });
+
+    test("of a dwarf stays 20 feet in medium or heavy armor, by the race's property", async () => {
+      // A dwarf barbarian in scale mail, with fast movement's +10.
+      const speed = async () => (await buildSeeded("Kael Stormborn")).getDetailedCharacterCombat().getCombat().speed;
+      expect(await speed()).toMatchObject({ base: 20, misc: 10, total: 30 });
+
+      const { raceMap, rulesetId } = await getSeedCtx();
+      await Properties.delete(db, {
+        entityIds: [raceMap.pc["Dwarf"]],
+        entityType: "races",
+        types: [RACE_SPEED_IGNORES_ENCUMBRANCE],
+      });
+      invalidateSeededRuleset(rulesetId);
+      // Without the property, the armor slows it as anyone's: 20 feet become 15.
+      expect((await speed()).total).toBe(25);
+    });
   });
 
   describe("modifiers", () => {
@@ -1832,10 +1849,10 @@ describe("DetailedCharacter", () => {
       expect(
         (await buildCarrying("Bjorn Ironhand", barrels(11))).getDetailedCharacterCombat().getCombat(),
       ).toMatchObject({ encumbrance: { load: "overloaded" }, speed: { total: 5 } });
-      // A dwarf's 20 feet become 15, and the barbarian's fast movement still adds.
+      // A dwarf keeps its 20 feet under a medium load, the barbarian's fast movement adding.
       const kael = (await buildCarrying("Kael Stormborn", barrels(3))).getDetailedCharacterCombat().getCombat();
       expect(kael).toMatchObject({ encumbrance: { load: "medium" }, speed: { base: 20 } });
-      expect(kael.speed.total).toBe(15 + kael.speed.misc);
+      expect(kael.speed.total).toBe(20 + kael.speed.misc);
     });
 
     test("caps dexterity in armor class and costs weight-affected skills, swim double, unless the armor costs more", async () => {

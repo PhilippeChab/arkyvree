@@ -569,6 +569,7 @@ export function buildRaceSeeds(ref: RaceReference): RaceDefinition[] {
       size: checkedValue(size),
       baseSpeed: override?.baseSpeed ?? entry.baseSpeed,
       ...(mapping?.modifiers?.length ? { modifiers: mapping.modifiers } : {}),
+      ...(override?.properties?.length ? { properties: override.properties } : {}),
     };
   });
 }

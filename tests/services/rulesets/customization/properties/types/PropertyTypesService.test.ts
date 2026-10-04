@@ -7,6 +7,8 @@ import { PropertyTypesService } from "@/server/services/rulesets/customization/p
 import {
   KLASS_LEVEL_BAB,
   KLASS_LEVEL_SKILL_POINTS,
+  RACE_QUADRUPED,
+  RACE_SPEED_IGNORES_ENCUMBRANCE,
   SPELL_SCHOOL,
   WEAPON_PROFICIENCY,
 } from "@/shared/dnd3.5/properties/index.ts";
@@ -60,7 +62,7 @@ describe("PropertyTypesService", () => {
     expect(await values("powers")).toContain(SPELL_SCHOOL);
     expect(await values("powers")).not.toContain(WEAPON_PROFICIENCY);
     expect((await values("klass_levels")).sort()).toEqual([KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS]);
-    expect(await values("races")).toEqual([]);
+    expect((await values("races")).sort()).toEqual([RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE]);
   });
 
   test("lists the ruleset's custom types by use, most used first, after the engine's", async () => {
