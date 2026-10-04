@@ -39,122 +39,20 @@ export default class DetailedCharacterModifiers {
     skippedModifiers: [],
   };
 
-  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   private applyModifier(modifier: Modifier, result: TraversePathResult, holders: Holders) {
-    const { value, valueType, operator } = modifier;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { holder, data, object, key } = result as { holder: Holder; data: any; object: any; key: string };
+    const { holder, data } = result as { holder: Holder; data: any };
 
     // Resolve the modifier value — template references or literal conversion
-    let typedValue: number | string | boolean;
-
-    if (isTemplateValue(value)) {
-      const resolved = this.resolveTemplateValue(value, holders, modifier);
-      if (resolved === null) return;
-      // NaN passes `typeof === "number"`; ±Infinity too. Both come from
-      // edge cases (zero-arg min/max/floor/ceil/abs, division ambiguities)
-      // and would silently corrupt character state if persisted.
-      if (typeof resolved === "number" && !Number.isFinite(resolved)) {
-        this.detailedCharacterModifiers.skippedModifiers.push({
-          warning: `Template resolved to a non-finite number (${resolved})`,
-          modifier,
-        });
-        return;
-      }
-      typedValue = resolved;
-    } else {
-      // deno-lint-ignore valid-typeof
-      if (typeof data !== valueType) {
-        this.detailedCharacterModifiers.skippedModifiers.push({
-          warning: `Value type mismatch: expected ${valueType}, got ${typeof data}`,
-          modifier,
-        });
-        return;
-      }
-
-      switch (valueType) {
-        case "number":
-          typedValue = Number(value);
-          break;
-        case "string":
-          typedValue = String(value);
-          break;
-        case "boolean":
-          typedValue = Boolean(value);
-          break;
-        default:
-          this.detailedCharacterModifiers.skippedModifiers.push({
-            warning: `Unsupported value type: ${valueType}`,
-            modifier,
-          });
-          return;
-      }
-    }
+    const typedValue = this.resolveModifierValue(modifier, data, holders);
+    if (typedValue === null) return;
 
     if (typeof data !== typeof typedValue) {
-      this.detailedCharacterModifiers.skippedModifiers.push({
-        warning: `Value type mismatch: expected ${typeof data}, got ${typeof typedValue}`,
-        modifier,
-      });
+      this.skip(modifier, `Value type mismatch: expected ${typeof data}, got ${typeof typedValue}`);
       return;
     }
 
-    // Update the value in the parent object
-    switch (operator) {
-      case "add":
-        if (typeof typedValue === "number") {
-          object[key] = data + typedValue;
-        } else if (typeof typedValue === "string") {
-          object[key] = data + typedValue;
-        } else if (Array.isArray(object[key])) {
-          object[key].push(typedValue);
-        } else {
-          this.detailedCharacterModifiers.skippedModifiers.push({
-            warning: `Addition is not supported for ${valueType}`,
-            modifier,
-          });
-          return;
-        }
-        break;
-      case "subtract":
-        if (typeof typedValue === "number") {
-          object[key] = data - typedValue;
-        } else if (Array.isArray(data)) {
-          object[key] = data.filter((item) => item !== typedValue);
-        } else {
-          this.detailedCharacterModifiers.skippedModifiers.push({
-            warning: `Subtraction is not supported for ${valueType}`,
-            modifier,
-          });
-          return;
-        }
-        break;
-      case "multiply":
-        if (typeof typedValue === "number") {
-          object[key] = data * typedValue;
-        } else {
-          this.detailedCharacterModifiers.skippedModifiers.push({
-            warning: `Multiplication is not supported for ${valueType}`,
-            modifier,
-          });
-          return;
-        }
-        break;
-      case "divide":
-        if (typeof typedValue === "number") {
-          object[key] = data / typedValue;
-        } else {
-          this.detailedCharacterModifiers.skippedModifiers.push({
-            warning: `Division is not supported for ${valueType}`,
-            modifier,
-          });
-          return;
-        }
-        break;
-      case "set":
-        object[key] = typedValue;
-        break;
-    }
+    if (!this.applyOperator(modifier, typedValue, result)) return;
 
     // Track successful modifier application — use the resolved path so expanded
     // subtypes (e.g. skills.craftarmorsmithing.misc) show their actual target
@@ -170,6 +68,83 @@ export default class DetailedCharacterModifiers {
 
     if (holder.updateAvailables) {
       holder.updateAvailables();
+    }
+  }
+
+  /**
+   * Applies the modifier's operator to the target's value in its parent object. False when the operator doesn't apply
+   * to the value's type (recorded); an unknown operator changes nothing but counts as applied, as it always has.
+   */
+  private applyOperator(
+    modifier: Modifier,
+    typedValue: number | string | boolean,
+    result: TraversePathResult,
+  ): boolean {
+    const { operator, valueType } = modifier;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, object, key } = result as { data: any; object: any; key: string };
+    switch (operator) {
+      case "add":
+        if (typeof typedValue === "number" || typeof typedValue === "string") object[key] = data + typedValue;
+        else if (Array.isArray(object[key])) object[key].push(typedValue);
+        else return this.skip(modifier, `Addition is not supported for ${valueType}`);
+        return true;
+      case "subtract":
+        if (typeof typedValue === "number") object[key] = data - typedValue;
+        else if (Array.isArray(data)) object[key] = data.filter((item) => item !== typedValue);
+        else return this.skip(modifier, `Subtraction is not supported for ${valueType}`);
+        return true;
+      case "multiply":
+        if (typeof typedValue !== "number")
+          return this.skip(modifier, `Multiplication is not supported for ${valueType}`);
+        object[key] = data * typedValue;
+        return true;
+      case "divide":
+        if (typeof typedValue !== "number") return this.skip(modifier, `Division is not supported for ${valueType}`);
+        object[key] = data / typedValue;
+        return true;
+      case "set":
+        object[key] = typedValue;
+        return true;
+      default:
+        return true;
+    }
+  }
+
+  /**
+   * The modifier's value, typed: a template reference resolved against the holders, or the literal coerced to its value
+   * type (which the target's must match). Null when it can't be (each reason recorded).
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private resolveModifierValue(modifier: Modifier, data: any, holders: Holders): number | string | boolean | null {
+    const { value, valueType } = modifier;
+    if (isTemplateValue(value)) {
+      const resolved = this.resolveTemplateValue(value, holders, modifier);
+      if (resolved === null) return null;
+      // NaN passes `typeof === "number"`; ±Infinity too. Both come from
+      // edge cases (zero-arg min/max/floor/ceil/abs, division ambiguities)
+      // and would silently corrupt character state if persisted.
+      if (typeof resolved === "number" && !Number.isFinite(resolved)) {
+        this.skip(modifier, `Template resolved to a non-finite number (${resolved})`);
+        return null;
+      }
+      return resolved;
+    }
+    // deno-lint-ignore valid-typeof
+    if (typeof data !== valueType) {
+      this.skip(modifier, `Value type mismatch: expected ${valueType}, got ${typeof data}`);
+      return null;
+    }
+    switch (valueType) {
+      case "number":
+        return Number(value);
+      case "string":
+        return String(value);
+      case "boolean":
+        return Boolean(value);
+      default:
+        this.skip(modifier, `Unsupported value type: ${valueType}`);
+        return null;
     }
   }
 
@@ -191,6 +166,12 @@ export default class DetailedCharacterModifiers {
       return false;
     }
     return true;
+  }
+
+  /** Records a modifier the engine skipped, with why: it isn't applied. */
+  private skip(modifier: Modifier, warning: string): false {
+    this.detailedCharacterModifiers.skippedModifiers.push({ warning, modifier });
+    return false;
   }
 
   private warnOnTemplateChaining(templateModifiers: Modifier[]): Set<string> {

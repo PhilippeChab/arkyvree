@@ -79,6 +79,100 @@ export default class DetailedCharacterRequirements {
     return tree;
   }
 
+  /**
+   * The requirement's value, typed: a template reference resolved against the holders, or the literal coerced to its
+   * value type. Null when it can't be (each reason recorded).
+   */
+  private resolveRequirementValue(requirement: Requirement, holders: Holders): number | string | boolean | null {
+    const { value, valueType } = requirement;
+    if (typeof value === "string" && isTemplateValue(value)) {
+      const expression = extractTemplateExpression(value);
+      if (!expression) {
+        this.warn(requirement, `Invalid template expression: ${value}`);
+        return null;
+      }
+      const resolved = evaluateTemplateExpression(expression, holders, this.targetPaths, (warning) =>
+        this.warn(requirement, warning),
+      );
+      if (resolved === null) return null;
+      // NaN / ±Infinity passes `typeof === "number"` and silently makes
+      // every comparison false, marking the requirement unmet with no
+      // diagnostic. Mirror the modifier-side guard.
+      if (typeof resolved === "number" && !Number.isFinite(resolved)) {
+        this.warn(requirement, `Template resolved to a non-finite number (${resolved})`);
+        return null;
+      }
+      return resolved;
+    }
+    switch (valueType) {
+      case "number":
+        return Number(value);
+      case "string":
+        return String(value);
+      case "boolean":
+        return Boolean(value);
+      default:
+        this.warn(requirement, `Unsupported value type: ${valueType}`);
+        return null;
+    }
+  }
+
+  /** Whether the character's `data` meets the requirement's operator against its typed value. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private compareRequirement(requirement: Requirement, data: any, typedValue: number | string | boolean): boolean {
+    const { operator, valueType } = requirement;
+    // An operator that doesn't apply to the value's type: recorded, and unmet (or `fallback`).
+    const invalid = (fallback = false) => {
+      this.warn(requirement, `Invalid value type ${valueType} for operator ${operator}`);
+      return fallback;
+    };
+    switch (operator) {
+      case "equal":
+        return data === typedValue;
+      case "not_equal":
+        return data !== typedValue;
+      case "greater_than":
+        return typeof typedValue === "number" ? data > typedValue : invalid();
+      case "less_than":
+        return typeof typedValue === "number" ? data < typedValue : invalid();
+      case "greater_than_or_equal":
+        return typeof typedValue === "number" ? data >= typedValue : invalid();
+      case "less_than_or_equal":
+        return typeof typedValue === "number" ? data <= typedValue : invalid();
+      case "contains":
+        if (typeof typedValue === "string" || Array.isArray(data)) return data.includes(typedValue);
+        return invalid();
+      case "not_contains":
+        if (typeof typedValue === "string" || Array.isArray(data)) return !data.includes(typedValue);
+        return invalid();
+      case "starts_with":
+        return typeof typedValue === "string" ? data.startsWith(typedValue) : false;
+      case "ends_with":
+        return typeof typedValue === "string" ? data.endsWith(typedValue) : invalid();
+      case "matches_regex":
+      case "not_matches_regex": {
+        if (typeof typedValue !== "string") return invalid();
+        try {
+          const matches = new RegExp(typedValue).test(data);
+          return operator === "matches_regex" ? matches : !matches;
+        } catch {
+          return false;
+        }
+      }
+      case "is_empty":
+        if (typeof typedValue === "string") return data === "";
+        if (Array.isArray(data)) return data.length === 0;
+        return invalid(data == null);
+      case "not_empty":
+        if (typeof typedValue === "string") return data !== "";
+        if (Array.isArray(data)) return data.length > 0;
+        return invalid(data != null);
+      default:
+        this.warn(requirement, `Invalid operator ${operator}`);
+        return false;
+    }
+  }
+
   private evaluateNode(node: Node): boolean {
     // If this is a chaining operator node
     if (node.requirement.chainingOperator) {
@@ -104,217 +198,26 @@ export default class DetailedCharacterRequirements {
     }
   }
 
-  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   private evaluateRequirement(requirement: Requirement, result: TraversePathResult, holders: Holders): boolean {
-    const { operator, value, valueType } = requirement;
+    const { valueType } = requirement;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = result as { holder: Holder; data: any; object: any; key: string };
 
     // deno-lint-ignore valid-typeof
     if (typeof data !== valueType) {
-      this.detailedCharacterRequirements.invalidRequirements.push({
-        warning: `Value type mismatch: expected ${valueType}, got ${typeof data}`,
-        requirement,
-      });
+      this.warn(requirement, `Value type mismatch: expected ${valueType}, got ${typeof data}`);
       return false;
     }
 
     // Resolve the value side — template references first, then literal coercion.
-    let typedValue: number | string | boolean;
-    if (typeof value === "string" && isTemplateValue(value)) {
-      const expression = extractTemplateExpression(value);
-      if (!expression) {
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid template expression: ${value}`,
-          requirement,
-        });
-        return false;
-      }
-      const resolved = evaluateTemplateExpression(expression, holders, this.targetPaths, (warning) => {
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning,
-          requirement,
-        });
-      });
-      if (resolved === null) return false;
-      // NaN / ±Infinity passes `typeof === "number"` and silently makes
-      // every comparison false, marking the requirement unmet with no
-      // diagnostic. Mirror the modifier-side guard.
-      if (typeof resolved === "number" && !Number.isFinite(resolved)) {
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Template resolved to a non-finite number (${resolved})`,
-          requirement,
-        });
-        return false;
-      }
-      typedValue = resolved;
-    } else {
-      switch (valueType) {
-        case "number":
-          typedValue = Number(value);
-          break;
-        case "string":
-          typedValue = String(value);
-          break;
-        case "boolean":
-          typedValue = Boolean(value);
-          break;
-        default:
-          this.detailedCharacterRequirements.invalidRequirements.push({
-            warning: `Unsupported value type: ${valueType}`,
-            requirement,
-          });
-          return false;
-      }
-    }
+    const typedValue = this.resolveRequirementValue(requirement, holders);
+    if (typedValue === null) return false;
 
     if (typeof data !== typeof typedValue) {
-      this.detailedCharacterRequirements.invalidRequirements.push({
-        warning: `Value type mismatch: expected ${typeof data}, got ${typeof typedValue}`,
-        requirement,
-      });
+      this.warn(requirement, `Value type mismatch: expected ${typeof data}, got ${typeof typedValue}`);
       return false;
     }
-
-    // Evaluate the requirement based on the operator
-    switch (operator) {
-      case "equal":
-        return data === typedValue;
-      case "not_equal":
-        return data !== typedValue;
-      case "greater_than":
-        if (typeof typedValue === "number") {
-          return data > typedValue;
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return false;
-      case "less_than":
-        if (typeof typedValue === "number") {
-          return data < typedValue;
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return false;
-      case "greater_than_or_equal":
-        if (typeof typedValue === "number") {
-          return data >= typedValue;
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return false;
-      case "less_than_or_equal":
-        if (typeof typedValue === "number") {
-          return data <= typedValue;
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return false;
-      case "contains":
-        if (typeof typedValue === "string") {
-          return data.includes(typedValue);
-        }
-        if (Array.isArray(data)) {
-          return data.includes(typedValue);
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return false;
-      case "not_contains":
-        if (typeof typedValue === "string") {
-          return !data.includes(typedValue);
-        }
-        if (Array.isArray(data)) {
-          return !data.includes(typedValue);
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return false;
-      case "starts_with":
-        if (typeof typedValue === "string") {
-          return data.startsWith(typedValue);
-        }
-        return false;
-      case "ends_with":
-        if (typeof typedValue === "string") {
-          return data.endsWith(typedValue);
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return false;
-      case "matches_regex":
-        if (typeof typedValue === "string") {
-          try {
-            const regex = new RegExp(typedValue);
-            return regex.test(data);
-          } catch {
-            return false;
-          }
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return false;
-      case "not_matches_regex":
-        if (typeof typedValue === "string") {
-          try {
-            const regex = new RegExp(typedValue);
-            return !regex.test(data);
-          } catch {
-            return false;
-          }
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return false;
-      case "is_empty":
-        if (typeof typedValue === "string") {
-          return data === "";
-        }
-        if (Array.isArray(data)) {
-          return data.length === 0;
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return data == null;
-      case "not_empty":
-        if (typeof typedValue === "string") {
-          return data !== "";
-        }
-        if (Array.isArray(data)) {
-          return data.length > 0;
-        }
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid value type ${valueType} for operator ${operator}`,
-          requirement,
-        });
-        return data != null;
-      default:
-        this.detailedCharacterRequirements.invalidRequirements.push({
-          warning: `Invalid operator ${operator}`,
-          requirement,
-        });
-        return false;
-    }
+    return this.compareRequirement(requirement, data, typedValue);
   }
 
   private evaluateRequirementsGroup(requirements: Requirement[], holders: Holders) {
@@ -372,6 +275,11 @@ export default class DetailedCharacterRequirements {
     if (nodes.length === 0) return true;
 
     return nodes.every((node) => this.evaluateNode(node));
+  }
+
+  /** Records a requirement the engine couldn't evaluate, with why. */
+  private warn(requirement: Requirement, warning: string) {
+    this.detailedCharacterRequirements.invalidRequirements.push({ warning, requirement });
   }
 
   getRequirements() {
