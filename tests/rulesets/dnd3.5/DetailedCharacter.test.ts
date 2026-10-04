@@ -20,7 +20,6 @@ import {
 import { characterAbilitiesInCharacter, charactersInCharacter, inventoryInCharacter } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Aptitudes,
   CharacterLevelFeats,
@@ -72,23 +71,12 @@ import {
   addCharacterLevel,
   createTestRuleset,
   findKlassLevel,
+  findSeededCharacter,
   getSeedCtx,
   invalidateSeededRuleset,
   makeSession,
   NIL_UUID,
 } from "@/tests/helpers.ts";
-
-/** A seeded character of the seed user's, by name. */
-async function seeded(name: string): Promise<Character> {
-  const { items } = await Characters.findPage(
-    db,
-    { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly },
-    { limit: 100, page: 1 },
-  );
-  const character = items.find((c) => c.name === name);
-  if (!character) throw new Error(`Seeded character ${name} not found`);
-  return character;
-}
 
 async function build(character: Character) {
   const detailed = new DetailedCharacter(character);
@@ -96,7 +84,7 @@ async function build(character: Character) {
   return detailed;
 }
 
-const buildSeeded = async (name: string) => build(await seeded(name));
+const buildSeeded = async (name: string) => build(await findSeededCharacter(name));
 
 /** One group holding one requirement on `target`: by default, that it's true. */
 function requiring(
@@ -149,7 +137,7 @@ async function carry(character: Character, carried: Carried[]) {
 
 /** The seeded character, carrying only these items. */
 async function buildCarrying(name: string, carried: Carried[] = []) {
-  const character = await seeded(name);
+  const character = await findSeededCharacter(name);
   await carry(character, carried);
   return build(character);
 }
@@ -200,7 +188,7 @@ const mightyBow = async (rating: number) =>
 
 /** The seeded character, now a halfling. */
 async function asHalfling(name: string) {
-  const character = await seeded(name);
+  const character = await findSeededCharacter(name);
   const halfling = (await Races.findOne(db, { name: "Halfling", rulesetId: character.rulesetId }))!;
   await db.update(charactersInCharacter).set({ raceId: halfling.id }).where(eq(charactersInCharacter.id, character.id));
   return { ...character, raceId: halfling.id };
@@ -1064,7 +1052,7 @@ describe("DetailedCharacter", () => {
     describe("with Uncanny Blow", () => {
       /** Bjorn on a fork using Complete Warrior, with its Uncanny Blow, holding a bastard sword. */
       async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
-        const bjorn = await seeded("Bjorn Ironhand");
+        const bjorn = await findSeededCharacter("Bjorn Ironhand");
         const fork = await forkWith(DND35_COMPLETE_WARRIOR_NAME);
         await db
           .update(charactersInCharacter)
@@ -1269,7 +1257,7 @@ describe("DetailedCharacter", () => {
       modifier: { target: string; value: string; operator?: string },
       requirements: { target: string; operator: string; value: string; valueType: string }[] = [],
     ) {
-      const character = await seeded(name);
+      const character = await findSeededCharacter(name);
       const [created] = await Modifiers.create(db, {
         sourceId: character.raceId,
         sourceType: "races",
@@ -1337,7 +1325,7 @@ describe("DetailedCharacter", () => {
       const bjorn = await buildSeeded("Bjorn Ironhand");
       expect(bjorn.getDetailedCharacterAbilities().getAbilities().strength.total).toBe(14);
       expect(bjorn.getDetailedCharacterCombat().getCombat().hp.misc).toBe(5);
-      const race = (await Races.findOne(db, { id: (await seeded("Bjorn Ironhand")).raceId }))!.name;
+      const race = (await Races.findOne(db, { id: (await findSeededCharacter("Bjorn Ironhand")).raceId }))!.name;
       expect(
         bjorn
           .validate()
@@ -1359,7 +1347,7 @@ describe("DetailedCharacter", () => {
         { ...strength, valueType: "number" },
       ]);
       const bjorn = await buildSeeded("Bjorn Ironhand");
-      const race = (await Races.findOne(db, { id: (await seeded("Bjorn Ironhand")).raceId }))!.name;
+      const race = (await Races.findOne(db, { id: (await findSeededCharacter("Bjorn Ironhand")).raceId }))!.name;
       expect(
         bjorn
           .validate()
@@ -1433,7 +1421,7 @@ describe("DetailedCharacter", () => {
 
     test("go unmet when a score drops below a feat's prerequisite", async () => {
       // Power Attack and Cleave need STR 13.
-      const bjorn = await seeded("Bjorn Ironhand");
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const { abilityMap } = await getSeedCtx();
       await db
         .update(characterAbilitiesInCharacter)
@@ -1495,7 +1483,7 @@ describe("DetailedCharacter", () => {
 
     test("don't count a proficiency two classes grant twice", async () => {
       // A barbarian level grants the fighter's proficiency feats again.
-      const bjorn = await seeded("Bjorn Ironhand");
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const { klassMap } = await getSeedCtx();
       await addCharacterLevel(bjorn.id, (await findKlassLevel(klassMap.pc["Barbarian"], 1))!.id);
       const detailed = await build(bjorn);
@@ -1670,7 +1658,7 @@ describe("DetailedCharacter", () => {
 
       test.each([1, 2])("rise with %i bonus caster level(s) from a prestige class", async (bonus) => {
         const ctx = await getSeedCtx();
-        const theron = await seeded("Theron Lightbringer");
+        const theron = await findSeededCharacter("Theron Lightbringer");
         const { levelIds } = await seedClass(db, ctx, {
           name: "Test Theurge",
           description: "Advances divine casting",
@@ -1986,7 +1974,7 @@ describe("DetailedCharacter", () => {
         const carried = async () =>
           (await buildSeeded(name)).getDetailedCharacterCombat().getCombat().encumbrance.carriedweight;
         const before = await carried();
-        const character = await seeded(name);
+        const character = await findSeededCharacter(name);
         const [modifier] = await Modifiers.create(db, {
           sourceId: character.raceId,
           sourceType: "races",
@@ -2004,7 +1992,7 @@ describe("DetailedCharacter", () => {
 
     test("is what a modifier's requirements read, with the rest of the sheet's totals", async () => {
       // +5 initiative while under a medium load and with a grapple of 1 or more: Bjorn, STR 18, with 4 barrels
-      const bjorn = await seeded("Bjorn Ironhand");
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const [modifier] = await Modifiers.create(db, {
         sourceId: bjorn.raceId,
         sourceType: "races",

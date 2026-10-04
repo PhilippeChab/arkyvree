@@ -3,21 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Characters, Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";
+import { Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { createTestCharacter, createTestUser, silentJobHelpers } from "@/tests/helpers.ts";
-
-/** A seeded character of the seed user's, by name. */
-async function seeded(name: string) {
-  const { items } = await Characters.findPage(
-    db,
-    { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly },
-    { limit: 100, page: 1 },
-  );
-  return items.find((character) => character.name === name)!;
-}
+import { createTestCharacter, createTestUser, findSeededCharacter, silentJobHelpers } from "@/tests/helpers.ts";
 
 /** The notifications of `type` a user got, newest first. */
 async function notificationsOf(userId: string, type: string) {
@@ -30,7 +19,7 @@ describe("generatePdf", () => {
   test.each(["Bjorn Ironhand", "Elara Starweaver"])(
     "stores %s's sheet as an export, and tells the player it's ready",
     async (name) => {
-      const character = await seeded(name);
+      const character = await findSeededCharacter(name);
       await generatePdfTask(
         { userId: SEED_USER_ID, characterId: character.id, characterName: `${name}: Draft/1` },
         silentJobHelpers,

@@ -2,12 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import { isValidElement, type ReactNode } from "react";
 
-import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
-import { db } from "@/server/database/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Characters } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import InfoPage from "@/server/rulesets/dnd3.5/sheet/InfoPage.tsx";
+import { findSeededCharacter } from "@/tests/helpers.ts";
 
 /** The text a page's element tree shows, its components called, each piece in order. */
 function textOf(node: ReactNode): string[] {
@@ -20,12 +17,7 @@ function textOf(node: ReactNode): string[] {
 
 describe("InfoPage", () => {
   test("shows a height and a weight as the player wrote them, free text without a unit added", async () => {
-    const { items } = await Characters.findPage(
-      db,
-      { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly },
-      { limit: 100, page: 1 },
-    );
-    const detailed = new DetailedCharacter(items.find((c) => c.name === "Bjorn Ironhand")!);
+    const detailed = new DetailedCharacter(await findSeededCharacter("Bjorn Ironhand"));
     await detailed.build();
     const { physiology } = detailed.getDetailedCharacterIdentity().getIdentity();
     physiology.height = `5'11"`;
