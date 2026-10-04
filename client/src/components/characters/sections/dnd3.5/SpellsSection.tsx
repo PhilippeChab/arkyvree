@@ -18,35 +18,20 @@ import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
-import { isRecord } from "@/shared/isRecord.ts";
-import { stripSeparators } from "@/shared/text.ts";
+import {
+  type AptitudeSpells,
+  buildSpellGroups,
+  SPELL_SCHOOL,
+  type SpellGroup,
+  type SpellRow,
+} from "@/shared/dnd3.5/spellGroups.ts";
 
 import type { Dnd35PowersSectionProps } from "./types.ts";
-
-const SCHOOL_KEY = "SPELL_SCHOOL";
-
-interface SpellRow {
-  id?: string;
-  name: string;
-  school: string;
-  save: string;
-  dc: number | null;
-  description: string;
-  properties: Record<string, string>;
-  tags?: string[];
-}
-
-interface SpellGroup {
-  aptitudeName: string;
-  level: number;
-  uses: number | null;
-  spells: SpellRow[];
-}
 
 function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: string }) {
   const [open, setOpen] = useState(false);
 
-  const detailProps = Object.entries(spell.properties).filter(([key]) => key !== SCHOOL_KEY);
+  const detailProps = Object.entries(spell.properties).filter(([key]) => key !== SPELL_SCHOOL);
   const spellLink = rulesetId && spell.id ? `/rulesets/${rulesetId}/powers/${spell.id}/customization` : undefined;
 
   return (
@@ -176,13 +161,7 @@ function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?:
   );
 }
 
-function CollapsibleClass({
-  apt,
-  rulesetId,
-}: {
-  apt: { aptitudeName: string; levels: SpellGroup[] };
-  rulesetId?: string;
-}) {
+function CollapsibleClass({ apt, rulesetId }: { apt: AptitudeSpells; rulesetId?: string }) {
   const [open, setOpen] = useState(false);
   const totalSpells = apt.levels.reduce((sum, g) => sum + g.spells.length, 0);
 
@@ -218,129 +197,10 @@ export function SpellsSection({
   spellTags,
   rulesetId,
 }: Dnd35PowersSectionProps) {
-  const groups = useMemo(() => {
-    const aptitudeNameById = new Map<string, string>();
-    if (aptitudes) {
-      for (const apt of Object.values(aptitudes)) {
-        aptitudeNameById.set(apt.id, apt.name);
-      }
-    }
-
-    const getUsesPerDay = (aptitudeName: string, spellLevel: number): number | null => {
-      if (!aptitudes) return null;
-      const key = stripSeparators(aptitudeName);
-      // Leveled aptitudes carry a per-spell-level entry the sheet type doesn't declare.
-      const aptitude: Record<string, unknown> | undefined = aptitudes[key];
-      const levelData = aptitude?.[String(spellLevel)];
-      return isRecord(levelData) && typeof levelData.uses === "number" ? levelData.uses : null;
-    };
-
-    const groupMap = new Map<string, SpellGroup>();
-
-    for (const klass of Object.values(classes)) {
-      for (const level of klass.levels || []) {
-        for (const power of level.powers || []) {
-          const spellLevel = power.powerLevel ?? level.klassLevel?.level ?? 0;
-          const aptitudeName = aptitudeNameById.get(power.aptitudeId) || "Spells";
-          const groupKey = `${power.aptitudeId}:${spellLevel}`;
-
-          const normalizedName = stripSeparators(power.name);
-          const powerData = powers?.[normalizedName];
-
-          const save =
-            power.saveName && power.saveEffect ? `${power.saveName} ${power.saveEffect}` : power.saveEffect || "None";
-
-          const properties = powerData?.properties ?? {};
-          const school = properties[SCHOOL_KEY] || "—";
-          const dc = powerData?.dc?.total ?? null;
-          const description = powerData?.power?.description || power.description || "";
-
-          const allTags = power.id ? spellTags?.[power.id] : undefined;
-          const tags = allTags?.filter((tag: string) => {
-            if (tag.includes("Domain")) return aptitudeName.includes("Cleric") || aptitudeName.includes("Domain");
-            if (tag.includes("Specialist"))
-              return aptitudeName.includes("Wizard") || aptitudeName.includes("Specialist");
-            return true;
-          });
-          const row: SpellRow = {
-            id: power.id,
-            name: power.name,
-            school,
-            save,
-            dc,
-            description,
-            properties,
-            tags: tags?.length ? tags : undefined,
-          };
-
-          const existing = groupMap.get(groupKey);
-          if (existing) {
-            const existingSpell = existing.spells.find((r) => r.name === power.name);
-            if (existingSpell) {
-              if (row.tags) {
-                existingSpell.tags = [...new Set([...(existingSpell.tags || []), ...row.tags])];
-              }
-            } else {
-              existing.spells.push(row);
-            }
-          } else {
-            groupMap.set(groupKey, {
-              aptitudeName,
-              level: spellLevel,
-              uses: getUsesPerDay(aptitudeName, spellLevel),
-              spells: [row],
-            });
-          }
-        }
-      }
-    }
-
-    // Add virtually possessed spells (granted by modifiers)
-    for (const vp of virtualPowers || []) {
-      const aptitudeName = aptitudeNameById.get(vp.aptitudeId) || "Spells";
-      const groupKey = `${vp.aptitudeId}:${vp.level}`;
-      const properties = vp.properties ?? {};
-
-      const row: SpellRow = {
-        id: vp.id,
-        name: vp.name,
-        school: properties[SCHOOL_KEY] || "—",
-        save: vp.saveName && vp.saveEffect ? `${vp.saveName} ${vp.saveEffect}` : vp.saveEffect || "None",
-        dc: vp.dc ?? null,
-        description: vp.description || "",
-        properties,
-      };
-
-      const existing = groupMap.get(groupKey);
-      if (existing) {
-        existing.spells.push(row);
-      } else {
-        groupMap.set(groupKey, {
-          aptitudeName,
-          level: vp.level,
-          uses: getUsesPerDay(aptitudeName, vp.level),
-          spells: [row],
-        });
-      }
-    }
-
-    const byAptitude = new Map<string, { aptitudeName: string; levels: SpellGroup[] }>();
-    for (const group of groupMap.values()) {
-      group.spells.sort((a, b) => a.name.localeCompare(b.name));
-      const existing = byAptitude.get(group.aptitudeName);
-      if (existing) {
-        existing.levels.push(group);
-      } else {
-        byAptitude.set(group.aptitudeName, { aptitudeName: group.aptitudeName, levels: [group] });
-      }
-    }
-
-    const sorted = [...byAptitude.values()].sort((a, b) => a.aptitudeName.localeCompare(b.aptitudeName));
-    for (const apt of sorted) {
-      apt.levels.sort((a, b) => a.level - b.level);
-    }
-    return sorted;
-  }, [classes, powers, virtualPowers, aptitudes, spellTags]);
+  const groups = useMemo(
+    () => buildSpellGroups({ classes, powers, virtualPowers, aptitudes, spellTags }),
+    [classes, powers, virtualPowers, aptitudes, spellTags],
+  );
 
   if (groups.length === 0) return null;
 

@@ -1,3 +1,4 @@
+import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import {
   type CharacterLevel,
@@ -68,10 +69,7 @@ export default class DetailedCharacterClasses {
         category: "classes",
         description: `Number of ${klass.name} levels taken`,
         valueType: "number",
-        operators:
-          kind === "modifier"
-            ? ["add", "subtract", "set"]
-            : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+        operators: kind === "modifier" ? ["add", "subtract", "set"] : [...NUMERIC_REQUIREMENT_OPERATORS],
       });
 
       if (kind === "modifier") {

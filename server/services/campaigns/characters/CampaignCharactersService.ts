@@ -14,7 +14,12 @@ import {
   Players,
 } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { enqueueCharacterPdf, findExportableCharacter, loadBondedByKind } from "@/server/services/characters/index.ts";
+import {
+  enqueueCharacterPdf,
+  findExportableCharacter,
+  getClassLevelsByCharacter,
+  loadBondedByKind,
+} from "@/server/services/characters/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { withRulesetScopes } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -124,27 +129,7 @@ class CampaignCharactersService {
       db,
       characters.map((c) => c.rulesetId),
       async (rulesetDataByRulesetId) => {
-        // Group levels by character and class
-        const levelsByCharacter = new Map<string, Map<string, number>>();
-        for (const level of levels) {
-          const char = characters.find((c) => c.id === level.characterId);
-          if (!char) continue;
-          const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
-          if (!rulesetData) continue;
-          const klassLevel = rulesetData.klassLevelsById.get(level.klassLevelId);
-          if (!klassLevel) continue;
-          const klass = rulesetData.klassesById.get(klassLevel.klassId);
-          const klassName = klass?.name || "Unknown";
-          let bucket = levelsByCharacter.get(level.characterId);
-          if (!bucket) {
-            bucket = new Map();
-            levelsByCharacter.set(level.characterId, bucket);
-          }
-          const currentLevel = bucket.get(klassName) || 0;
-          if (klassLevel.level > currentLevel) {
-            bucket.set(klassName, klassLevel.level);
-          }
-        }
+        const classLevelsByCharacter = getClassLevelsByCharacter(characters, levels, rulesetDataByRulesetId);
 
         // Maintain order from linkedCharacters (which is already sorted by createdAt desc)
         const characterMap = new Map(characters.map((c) => [c.id, c]));
@@ -158,10 +143,7 @@ class CampaignCharactersService {
           const isOwn = meta?.playerId === member.id;
           const isPartial = !isGM && !isOwn && meta?.visibility === "Partial";
 
-          const classLevels = Array.from(levelsByCharacter.get(char.id)?.entries() || []).map(([klass, level]) => ({
-            klass,
-            level,
-          }));
+          const classLevels = classLevelsByCharacter.get(char.id) ?? [];
           const totalLevel = classLevels.reduce((sum, lvl) => sum + lvl.level, 0);
           const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
           const race = rulesetData?.racesById.get(char.raceId);

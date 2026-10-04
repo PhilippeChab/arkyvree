@@ -9,8 +9,9 @@ import {
   WEAPON_FINESSABLE,
   WEAPON_PROFICIENCY,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
-import { type CharacterLevel, type Item, type Property, type Race } from "@/shared/relations.ts";
+import { type CharacterLevel, type Race } from "@/shared/relations.ts";
 
 import { ArmorClass } from "./combat/ArmorClass.ts";
 import { Attacks } from "./combat/Attacks.ts";
@@ -114,10 +115,7 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
         category: "combat",
         description: path.description,
         valueType: path.type,
-        operators:
-          kind === "modifier"
-            ? ["add", "subtract", "multiply", "divide", "set"]
-            : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+        operators: getNumericOperators(kind),
         ...("sortOrder" in path && { sortOrder: path.sortOrder }),
       });
     }
@@ -145,19 +143,14 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
     this.initializeBaseAttackBonus(classes, klassLevelProperties);
     this.initializeSpeed(race);
 
-    this.addWeapon(
-      0,
-      "Main Hand",
-      { name: "Unarmed Strike" } as unknown as Item,
-      [
-        { type: WEAPON_PROFICIENCY, value: "Unarmed" },
-        { type: WEAPON_BASE_DAMAGE, value: "1d3" },
-        { type: DAMAGE_TYPE, value: "Bludgeoning" },
-        { type: WEAPON_CRITICAL_RANGE, value: "1" },
-        { type: WEAPON_CRITICAL_MULTIPLIER, value: "2" },
-        { type: WEAPON_FINESSABLE, value: "true" },
-      ] as unknown as Property[],
-    );
+    this.addWeapon(0, "Main Hand", { name: "Unarmed Strike" }, [
+      { type: WEAPON_PROFICIENCY, value: "Unarmed" },
+      { type: WEAPON_BASE_DAMAGE, value: "1d3" },
+      { type: DAMAGE_TYPE, value: "Bludgeoning" },
+      { type: WEAPON_CRITICAL_RANGE, value: "1" },
+      { type: WEAPON_CRITICAL_MULTIPLIER, value: "2" },
+      { type: WEAPON_FINESSABLE, value: "true" },
+    ]);
   }
 
   getCombat(): DetailedCharacterComprehensiveCombat {

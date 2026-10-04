@@ -1,5 +1,5 @@
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import type { ClassesHooks } from "@/server/rulesets/hooks/ClassesHooks.ts";
+import type { ClassesHooks } from "@/server/rulesets/hooks/index.ts";
 
 export class Dnd35ClassesHooks implements ClassesHooks {
   readClassProperties(properties: { id: string; type: string; value: string }[]) {

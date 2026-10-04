@@ -18,6 +18,7 @@ import {
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind, Holders } from "@/server/rulesets/types.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
+import { getClassLevelsByCharacter } from "@/server/services/characters/classLevels.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/services/rulesets/cow/index.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
@@ -209,35 +210,11 @@ class CharactersService extends include(Object, Archives) {
       db,
       charactersList.map((c) => c.rulesetId),
       async (rulesetDataByRulesetId) => {
-        // Group levels by character and class
-        const levelsByCharacter = new Map<string, Map<string, number>>();
-        for (const level of levels) {
-          const char = charactersList.find((c) => c.id === level.characterId);
-          if (!char) continue;
-          const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
-          if (!rulesetData) continue;
-          // klassLevelsById / klassesById auto-resolve stored pre-COW ids.
-          const klassLevel = rulesetData.klassLevelsById.get(level.klassLevelId);
-          if (!klassLevel) continue;
-          const klass = rulesetData.klassesById.get(klassLevel.klassId);
-          const klassName = klass?.name || "Unknown";
-          let bucket = levelsByCharacter.get(level.characterId);
-          if (!bucket) {
-            bucket = new Map();
-            levelsByCharacter.set(level.characterId, bucket);
-          }
-          const currentLevel = bucket.get(klassName) || 0;
-          if (klassLevel.level > currentLevel) {
-            bucket.set(klassName, klassLevel.level);
-          }
-        }
+        const classLevelsByCharacter = getClassLevelsByCharacter(charactersList, levels, rulesetDataByRulesetId);
 
         // Map to final format
         const enrichedCharacters = charactersList.map((char) => {
-          const classLevels = Array.from(levelsByCharacter.get(char.id)?.entries() || []).map(([klass, level]) => ({
-            klass,
-            level,
-          }));
+          const classLevels = classLevelsByCharacter.get(char.id) ?? [];
           const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
           const race = rulesetData?.racesById.get(char.raceId);
 

@@ -60,7 +60,7 @@ flowchart LR
 
 ### The problem
 
-Ruleset entities can be [Copy-On-Write'd](./rulesets.md) in a fork. A COW creates a new entity with a new id; the `overrideMap` records `preCowId → postCowId`. Characters saved **before** a COW store pre-COW ids in their rows (`character_level_feats.feat_id`, `character_abilities.ability_id`, ...). The composed ruleset cache is keyed by **post-COW ids**.
+Ruleset entities can be [Copy-On-Write'd](./rulesets.md) in a fork. A COW creates a new entity with a new id; the `overrideMap` records `preCowId → postCowId`. Characters saved **before** a COW store pre-COW ids in their rows (`level_feats.feat_id`, `character_abilities.ability_id`, ...). The composed ruleset cache is keyed by **post-COW ids**.
 
 Without intervention, every lookup site had to remember to do `rulesetData.featsById.get(overrideMap.get(storedId) ?? storedId)`. Missing a call produced a silent cache miss. Three layers close the gap automatically.
 
@@ -273,7 +273,7 @@ The flat `properties` / `modifiers` / `requirements` arrays were removed from `C
 
 ### What's not in the ruleset cache (and why)
 
-Character-scoped tables: `characters`, `character_levels`, `character_abilities`, `character_languages`, `inventory`, `character_level_feats/powers/skills`, character-sourced modifiers. These change per character per mutation; cross-request cache hit rate would be ~0%. They're served by the request-scoped dedup layer when the same query fires twice in one request.
+Character-scoped tables (the `character` schema): `characters`, `levels`, `character_abilities`, `languages`, `inventory`, `level_feats` / `level_powers` / `level_skills`, character-sourced modifiers. These change per character per mutation; cross-request cache hit rate would be ~0%. They're served by the request-scoped dedup layer when the same query fires twice in one request.
 
 Paginated / searched / filtered queries (e.g. `Feats.findPage({ search, pagination })`): too many unique keys to make a shared cache useful. These go straight to Postgres.
 

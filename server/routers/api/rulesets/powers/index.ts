@@ -19,6 +19,26 @@ const spellFields = {
   components: z.array(z.string()).optional(),
 };
 
+/** A power's fields, its create's and its update's. */
+const powerFields = {
+  name: z.string().min(1),
+  description: z
+    .string()
+    .optional()
+    .transform((v) => v || null),
+  saveId: z.string().uuid().nullable().optional(),
+  saveEffect: z.string().nullable().optional(),
+  ...spellFields,
+};
+
+/** The aptitudes a power is linked to, each at its spell level. */
+const aptitudeLinks = z.array(
+  z.object({
+    id: z.string().uuid(),
+    level: z.number().int().min(0).max(9).optional(),
+  }),
+);
+
 export default new Hono<SessionContext>()
   .get(
     "/:id/powers",
@@ -58,24 +78,7 @@ export default new Hono<SessionContext>()
     zValidator("param", idParam),
     zValidator(
       "json",
-      z.object({
-        name: z.string().min(1),
-        description: z
-          .string()
-          .optional()
-          .transform((v) => v || null),
-        aptitudes: z
-          .array(
-            z.object({
-              id: z.string().uuid(),
-              level: z.number().int().min(0).max(9).optional(),
-            }),
-          )
-          .min(1, "At least one aptitude must be selected"),
-        saveId: z.string().uuid().nullable().optional(),
-        saveEffect: z.string().nullable().optional(),
-        ...spellFields,
-      }),
+      z.object({ ...powerFields, aptitudes: aptitudeLinks.min(1, "At least one aptitude must be selected") }),
     ),
     async (c) => {
       const { id } = c.req.valid("param");
@@ -88,25 +91,7 @@ export default new Hono<SessionContext>()
     zValidator("param", z.object({ id: z.string().uuid(), powerId: z.string().uuid() })),
     zValidator(
       "json",
-      z.object({
-        name: z.string().min(1),
-        description: z
-          .string()
-          .optional()
-          .transform((v) => v || null),
-        aptitudes: z
-          .array(
-            z.object({
-              id: z.string().uuid(),
-              level: z.number().int().min(0).max(9).optional(),
-            }),
-          )
-          .optional(),
-        saveId: z.string().uuid().nullable().optional(),
-        saveEffect: z.string().nullable().optional(),
-        ...spellFields,
-        updatedAt: z.string().optional(),
-      }),
+      z.object({ ...powerFields, aptitudes: aptitudeLinks.optional(), updatedAt: z.string().optional() }),
     ),
     async (c) => {
       const { id, powerId } = c.req.valid("param");

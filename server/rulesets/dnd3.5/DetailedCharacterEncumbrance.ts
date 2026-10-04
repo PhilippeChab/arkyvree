@@ -6,6 +6,7 @@ import {
   SIZE_CARRY_MULTIPLIERS,
 } from "@/server/rulesets/constants.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
+import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { CharacterInventory, Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
@@ -51,10 +52,7 @@ export default class DetailedCharacterEncumbrance {
       category: "combat",
       description: path.description,
       valueType: path.type,
-      operators:
-        kind === "modifier"
-          ? ["add", "subtract", "multiply", "divide", "set"]
-          : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+      operators: getNumericOperators(kind),
     }));
   }
 

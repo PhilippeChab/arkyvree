@@ -1,6 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { invalidateRulesetEntities } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -20,6 +21,20 @@ import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class RequirementsService {
+  /** A requirement on the entity, its own or a visible sibling's contribution, or a 404. */
+  private findEntityRequirement(
+    rulesetData: CachedRulesetData,
+    entityType: string,
+    entityId: string,
+    requirementId: string,
+  ) {
+    const requirement = rulesetData.requirementsByEntity
+      .get(entityId)
+      ?.find((row) => row.id === requirementId && row.entityType === entityType);
+    if (!requirement) throw new NotFoundError("Requirement not found for this entity");
+    return requirement;
+  }
+
   async getRequirements(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const resolvedId = rulesetData.canonicalize(entityId);
@@ -134,12 +149,7 @@ class RequirementsService {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
-        const requirement = rulesetData.requirementsByEntity
-          .get(effectiveEntityId)
-          ?.find((row) => row.id === requirementId && row.entityType === entityType);
-        if (!requirement) {
-          throw new NotFoundError("Requirement not found for this entity");
-        }
+        const requirement = this.findEntityRequirement(rulesetData, entityType, effectiveEntityId, requirementId);
 
         // Policy check BEFORE COW — canCustomize uses global db, not tx
         const customizationPolicy = new CustomizationsPolicy(session, requirement);
@@ -228,12 +238,7 @@ class RequirementsService {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
 
-        const requirement = rulesetData.requirementsByEntity
-          .get(effectiveEntityId)
-          ?.find((row) => row.id === requirementId && row.entityType === entityType);
-        if (!requirement) {
-          throw new NotFoundError("Requirement not found for this entity");
-        }
+        const requirement = this.findEntityRequirement(rulesetData, entityType, effectiveEntityId, requirementId);
 
         // Policy check BEFORE COW — canCustomize uses global db, not tx
         const customizationPolicy = new CustomizationsPolicy(session, requirement);

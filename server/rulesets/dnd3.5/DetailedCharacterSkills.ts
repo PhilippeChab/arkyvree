@@ -4,6 +4,11 @@ import type { ArmorsData } from "@/server/rulesets/dnd3.5/DetailedCharacterArmor
 import type { ShieldsData } from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
+import {
+  getNumericOperators,
+  MODIFIER_OPERATORS,
+  NUMERIC_REQUIREMENT_OPERATORS,
+} from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -72,10 +77,10 @@ export default class DetailedCharacterSkills {
             kind === "modifier"
               ? subPath.type === "boolean"
                 ? ["set"]
-                : ["add", "subtract", "multiply", "divide", "set"]
+                : [...MODIFIER_OPERATORS]
               : subPath.type === "boolean"
                 ? ["equal", "not_equal"]
-                : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+                : [...NUMERIC_REQUIREMENT_OPERATORS],
         });
       }
     }
@@ -86,10 +91,7 @@ export default class DetailedCharacterSkills {
       description: "Misc bonus applied to every skill",
       groupDescription: kind === "requirement" ? "Any skill" : "All skills",
       valueType: "number",
-      operators:
-        kind === "modifier"
-          ? ["add", "subtract", "multiply", "divide", "set"]
-          : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+      operators: getNumericOperators(kind),
     });
 
     return paths;

@@ -1,3 +1,4 @@
+import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { KlassLevelSave, RulesetAbility, RulesetSave } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -45,10 +46,7 @@ export default class DetailedCharacterSavingThrows {
           category: "saves",
           description: subPath.description,
           valueType: subPath.type,
-          operators:
-            kind === "modifier"
-              ? ["add", "subtract", "multiply", "divide", "set"]
-              : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+          operators: getNumericOperators(kind),
         });
       }
     }
@@ -59,10 +57,7 @@ export default class DetailedCharacterSavingThrows {
       description: "Misc bonus applied to every save",
       groupDescription: kind === "requirement" ? "Any saving throw" : "All saving throws",
       valueType: "number",
-      operators:
-        kind === "modifier"
-          ? ["add", "subtract", "multiply", "divide", "set"]
-          : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+      operators: getNumericOperators(kind),
     });
 
     return paths;

@@ -70,7 +70,7 @@ requirements: [
 
 ## Properties
 
-Properties are key-value pairs attached to entities via `customization.entity_properties`. They store metadata used by the character engine (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for all property types.
+Properties are key-value pairs attached to entities via `customization.properties`. They store metadata used by the character engine (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for all property types.
 
 ## Wildcard Patterns
 

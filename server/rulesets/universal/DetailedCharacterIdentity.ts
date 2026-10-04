@@ -1,3 +1,8 @@
+import {
+  getNumericOperators,
+  MODIFIER_OPERATORS,
+  NUMERIC_REQUIREMENT_OPERATORS,
+} from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type Character, type Language, type Race } from "@/shared/relations.ts";
 
@@ -90,10 +95,10 @@ export default class DetailedCharacterIdentity {
           kind === "modifier"
             ? subPath.type === "string"
               ? ["set"]
-              : ["add", "subtract", "multiply", "divide", "set"]
+              : [...MODIFIER_OPERATORS]
             : subPath.type === "string"
               ? ["equal", "not_equal"]
-              : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+              : [...NUMERIC_REQUIREMENT_OPERATORS],
       });
     }
 
@@ -123,10 +128,7 @@ export default class DetailedCharacterIdentity {
         category: "identity",
         description: subPath.description,
         valueType: subPath.type,
-        operators:
-          kind === "modifier"
-            ? ["add", "subtract", "multiply", "divide", "set"]
-            : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+        operators: getNumericOperators(kind),
       });
     }
 

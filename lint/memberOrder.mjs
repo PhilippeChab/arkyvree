@@ -45,7 +45,7 @@ export function verbGroup(name) {
  * keep their order; private and protected methods (-1), then public ones (0), sort by verb group (the lifecycle by
  * step), then name.
  */
-export function memberRank(member) {
+function memberRank(member) {
   if (member.kind === "constructor") return [-4, 0, 0, ""];
   if (member.static) return [-3, 0, 0, ""];
   if (member.type !== "MethodDefinition" && member.type !== "TSAbstractMethodDefinition") return [-2, 0, 0, ""];

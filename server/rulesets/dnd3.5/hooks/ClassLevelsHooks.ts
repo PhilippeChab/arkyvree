@@ -1,8 +1,8 @@
 import type { Db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import type { ClassLevelsHooks } from "@/server/rulesets/hooks/ClassLevelsHooks.ts";
-import type { PropertyRecord } from "@/server/rulesets/hooks/SkillsHooks.ts";
+import type { ClassLevelsHooks } from "@/server/rulesets/hooks/index.ts";
+import type { PropertyRecord } from "@/server/rulesets/hooks/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {

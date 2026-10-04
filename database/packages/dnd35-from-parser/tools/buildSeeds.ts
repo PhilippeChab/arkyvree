@@ -67,7 +67,7 @@ import { capitalize } from "@/shared/text.ts";
 
 const _existingFeatsCache = new Map<string, Set<string>>();
 
-export function loadExistingFeats(book?: string): Set<string> {
+function loadExistingFeats(book?: string): Set<string> {
   const key = book ?? "__srd__";
   if (_existingFeatsCache.has(key)) return _existingFeatsCache.get(key)!;
 

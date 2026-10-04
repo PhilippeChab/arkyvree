@@ -6,6 +6,12 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { limit, page } from "@/server/routers/api/validation.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 
+/** A class level's saves (each its base bonus) and granted feats, its create's and its update's. */
+const levelSaves = z.array(z.object({ saveId: z.string().uuid(), base: z.number().int().min(0).max(12) })).optional();
+const levelFeats = z
+  .array(z.object({ featId: z.string().uuid(), aptitudeId: z.string().uuid(), free: z.boolean().optional() }))
+  .optional();
+
 export default new Hono<SessionContext>()
   .get(
     "/:id/class-levels/:classLevelId",
@@ -82,23 +88,8 @@ export default new Hono<SessionContext>()
         level: z.number().int().min(1).max(20),
         bab: z.number().int().min(0),
         skills: z.number().int().min(1),
-        saves: z
-          .array(
-            z.object({
-              saveId: z.string().uuid(),
-              base: z.number().int().min(0).max(12),
-            }),
-          )
-          .optional(),
-        feats: z
-          .array(
-            z.object({
-              featId: z.string().uuid(),
-              aptitudeId: z.string().uuid(),
-              free: z.boolean().optional(),
-            }),
-          )
-          .optional(),
+        saves: levelSaves,
+        feats: levelFeats,
       }),
     ),
     async (c) => {
@@ -115,23 +106,8 @@ export default new Hono<SessionContext>()
       z.object({
         bab: z.number().int().min(0).optional(),
         skills: z.number().int().min(1).optional(),
-        saves: z
-          .array(
-            z.object({
-              saveId: z.string().uuid(),
-              base: z.number().int().min(0).max(12),
-            }),
-          )
-          .optional(),
-        feats: z
-          .array(
-            z.object({
-              featId: z.string().uuid(),
-              aptitudeId: z.string().uuid(),
-              free: z.boolean().optional(),
-            }),
-          )
-          .optional(),
+        saves: levelSaves,
+        feats: levelFeats,
       }),
     ),
     async (c) => {
