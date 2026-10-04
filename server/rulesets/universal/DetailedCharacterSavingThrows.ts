@@ -8,7 +8,7 @@ import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "base", description: "Base save bonus from class levels", type: "number" as const },
-  { path: "ability", description: "From key ability modifier", type: "number" as const },
+  { path: "ability", description: "From key ability modifier", type: "number" as const, requirementOnly: true },
   { path: "misc", description: "From feats, items, and spells", type: "number" as const },
   { path: "total", description: "Final saving throw bonus", type: "number" as const, requirementOnly: true },
 ];

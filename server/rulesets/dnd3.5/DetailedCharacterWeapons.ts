@@ -10,11 +10,12 @@ import { stripSeparators } from "@/shared/text.ts";
 const SLOT_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
 
 const NAVIGATABLE_WEAPON_PATHS = [
-  { path: "tohit.strength", description: "Str/Dex bonus to attack", type: "number" as const },
+  // Computed from the abilities once modifiers apply: for requirements only, its flat bonus in the misc beside it
+  { path: "tohit.strength", description: "Str/Dex bonus to attack", type: "number" as const, requirementOnly: true },
   { path: "tohit.magic", description: "Enhancement bonus to attack", type: "number" as const },
   { path: "tohit.misc", description: "Other bonuses to attack", type: "number" as const },
   { path: "damage.base", description: "Base damage dice", type: "string" as const },
-  { path: "damage.strength", description: "Str bonus to damage", type: "number" as const },
+  { path: "damage.strength", description: "Str bonus to damage", type: "number" as const, requirementOnly: true },
   { path: "damage.magic", description: "Enhancement bonus to damage", type: "number" as const },
   { path: "damage.misc", description: "Other bonuses to damage", type: "number" as const },
   { path: "damage.critical.range", description: "Critical threat range", type: "number" as const },
@@ -46,6 +47,7 @@ export default class DetailedCharacterWeapons {
 
     for (const grouping of weaponGroupings) {
       for (const subPath of NAVIGATABLE_WEAPON_PATHS) {
+        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
         const modifierOperators = subPath.type === "string" ? ["set"] : [...MODIFIER_OPERATORS];
 
         const requirementOperators =

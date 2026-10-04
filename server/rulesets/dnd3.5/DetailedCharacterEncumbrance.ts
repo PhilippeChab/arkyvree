@@ -21,9 +21,10 @@ type RawInventoryEntry = CharacterInventory & {
   };
 };
 
+// Computed from the inventory and the strength once modifiers apply: for requirements only
 const NAVIGATABLE_PATHS = [
-  { path: "carriedweight", description: "Total weight of items (lbs)", type: "number" as const },
-  { path: "heavyload", description: "Max carry capacity (lbs)", type: "number" as const },
+  { path: "carriedweight", description: "Total weight of items (lbs)", type: "number" as const, requirementOnly: true },
+  { path: "heavyload", description: "Max carry capacity (lbs)", type: "number" as const, requirementOnly: true },
 ];
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -50,6 +51,7 @@ export default class DetailedCharacterEncumbrance {
   }
 
   static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
+    if (kind === "modifier") return [];
     return NAVIGATABLE_PATHS.map((path) => ({
       path: `combat.encumbrance.${path.path}`,
       category: "combat",

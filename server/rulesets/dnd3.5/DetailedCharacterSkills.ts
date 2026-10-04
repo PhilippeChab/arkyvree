@@ -16,7 +16,7 @@ import { stripSeparators } from "@/shared/text.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "rank", description: "Total ranks invested", type: "number" as const },
-  { path: "ability", description: "From key ability modifier", type: "number" as const },
+  { path: "ability", description: "From key ability modifier", type: "number" as const, requirementOnly: true },
   { path: "weight", description: "Armor check penalty (ACP)", type: "number" as const },
   { path: "size", description: "Size modifier (Hide only)", type: "number" as const },
   { path: "misc", description: "From feats, items, and spells", type: "number" as const },

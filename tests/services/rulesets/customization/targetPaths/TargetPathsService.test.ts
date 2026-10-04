@@ -88,6 +88,48 @@ describe("TargetPathsService", () => {
     }
   });
 
+  test("leaves the parts the engine computes again to requirements: a modifier on one would be overwritten", async () => {
+    // From an ability, the size or the totals, recomputed once modifiers apply (each probed with a +7 modifier)
+    const computed = [
+      "combat.tohit.strength",
+      "combat.tohit.size",
+      "combat.damage.strength",
+      "combat.ac.dexterity",
+      "combat.ac.size",
+      "combat.ac.touch",
+      "combat.ac.flatfooted",
+      "combat.hp.constitution",
+      "combat.initiative.dexterity",
+      "combat.grapple.bab",
+      "combat.grapple.strength",
+      "combat.grapple.size",
+      "combat.encumbrance.carriedweight",
+      "combat.encumbrance.heavyload",
+      "items.weapons.longsword.tohit.strength",
+      "items.weapons.longsword.damage.strength",
+      "skills.climb.ability",
+      "saves.fortitude.ability",
+    ];
+    const pathsOf = async (kind: Kind) => new Set((await seedPaths(kind)).paths.map((p) => p.path));
+    const [modifiable, requirable] = [await pathsOf("modifier"), await pathsOf("requirement")];
+    expect(computed.filter((path) => modifiable.has(path))).toEqual([]);
+    expect(computed.filter((path) => !requirable.has(path))).toEqual([]);
+    // Their flat bonuses stay modifiable
+    expect(
+      ["combat.ac.misc", "items.weapons.longsword.tohit.misc", "skills.climb.misc"].every((p) => modifiable.has(p)),
+    ).toBe(true);
+  });
+
+  test("lists each modifier path once, and the encumbrance's once for requirements too", async () => {
+    const modifierPaths = (await seedPaths("modifier")).paths.map((p) => p.path);
+    expect(modifierPaths.filter((path, i) => modifierPaths.indexOf(path) !== i)).toEqual([]);
+    const encumbrance = (await seedPaths("requirement")).paths.filter((p) => p.path.startsWith("combat.encumbrance."));
+    expect(encumbrance.map((p) => p.path)).toEqual([
+      "combat.encumbrance.carriedweight",
+      "combat.encumbrance.heavyload",
+    ]);
+  });
+
   test("offers aptitude uses and picks only to the entities that grant them", async () => {
     for (const entityType of ["klass_levels", "feats", "races", undefined] as const) {
       expect((await seedPaths("modifier", entityType)).paths.some(isAptitudeGrant)).toBe(true);
@@ -201,7 +243,7 @@ describe("TargetPathsService", () => {
     });
 
     test("describe an item's stat by its kind, whatever the item", async () => {
-      expect((await complete("items.weapons.club.tohit.st", "modifier")).items).toMatchObject([
+      expect((await complete("items.weapons.club.tohit.st", "requirement")).items).toMatchObject([
         { label: "strength", detail: "Str/Dex bonus to attack" },
       ]);
     });
