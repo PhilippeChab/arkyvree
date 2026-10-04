@@ -105,6 +105,9 @@ export default class DetailedCharacterSkills {
 
   private readonly rankBySkillId: Map<string, number> = new Map<string, number>();
 
+  /** Each skill's key ability, by the skill's slug. */
+  private readonly abilityNameBySkill = new Map<string, string>();
+
   private readonly detailedCharacterSkills: DetailedCharacterComprehensiveSkills =
     {} as DetailedCharacterComprehensiveSkills;
 
@@ -223,6 +226,7 @@ export default class DetailedCharacterSkills {
       const checkPenaltyMultiplier = props?.impactedByWeight ? (props.checkPenaltyMultiplier ?? 1) : 0;
       const invested = this.rankBySkillId.get(skill.id) ?? 0;
       const abilityName = abilityNameById.get(skill.primaryAbilityId) ?? "";
+      this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);
       const abilities = this.characterAbilities;
       const armorCheckPenalty = () => this.armorCheckPenalty();
 
@@ -323,6 +327,14 @@ export default class DetailedCharacterSkills {
     return issues;
   }
 
+  /** Ranks a bonded creature's hit dice past its stat block's give a skill. */
+  addRanks(skillName: string, ranks: number): void {
+    const skill = this.detailedCharacterSkills[stripSeparators(skillName)];
+    if (!skill || ranks === 0) return;
+    skill.rank += ranks;
+    skill.trained = true;
+  }
+
   setArmorSources(armors: { getArmors(): ArmorsData }, shields: { getShields(): ShieldsData }) {
     this.characterArmors = armors;
     this.characterShields = shields;
@@ -340,6 +352,22 @@ export default class DetailedCharacterSkills {
     this.skillPointRulesetAbilities = rulesetAbilities;
     this.skillPointAbilityId = skillPointAbilityId;
     this.skillPointKlassLevelProperties = klassLevelProperties;
+  }
+
+  /**
+   * A bonded creature's skill as its stat block lists it: no ranks, and the total less what the ability's base modifier
+   * and the size give, as misc. The ability's part stays live: a raised ability (a companion's advancement, an item)
+   * raises the total.
+   */
+  setStatBlockTotal(skillName: string, total: number): void {
+    const slug = stripSeparators(skillName);
+    const skill = this.detailedCharacterSkills[slug];
+    if (!skill) return;
+    const abilityName = this.abilityNameBySkill.get(slug);
+    const ability = abilityName ? this.characterAbilities.getAbilityModifierExcludingMisc(abilityName) : 0;
+    skill.rank = 0;
+    skill.misc = total - ability - skill.size;
+    skill.trained = total > 0;
   }
 
   updateAvailables() {
