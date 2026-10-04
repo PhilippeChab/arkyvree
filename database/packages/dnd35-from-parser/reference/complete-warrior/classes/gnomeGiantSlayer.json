@@ -21,7 +21,35 @@
         "description": "At 10th level, the gnome giant-slayer learns to absorb the impact of a devastating blow, reducing the damage taken. Once per day, when a weapon attack or physical blow from a giant (not a spell or special ability) would reduce him to 0 or fewer hit points, he may attempt a Reflex saving throw with a DC equal to the damage dealt, adding his class level as a bonus to the save. On a success, he takes only half damage; on a failure, he suffers the full amount. The giant-slayer must be aware of the incoming attack and able to react - if he is denied his Dexterity bonus to AC, this ability cannot be used. Because this saving throw would not normally be allowed, evasion and improved evasion do not apply to it."
       },
       "Fast Movement": {
-        "description": "Upon reaching 6th level, the gnome giant-slayer's base land speed is increased by 10 feet. This speed increase only functions when wearing no armor, light armor, or medium armor, and when not carrying a heavy load. This bonus is applied before any adjustments for armor or encumbrance."
+        "description": "Upon reaching 6th level, the gnome giant-slayer's base land speed is increased by 10 feet. This speed increase only functions when wearing no armor, light armor, or medium armor, and when not carrying a heavy load. This bonus is applied before any adjustments for armor or encumbrance.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "not_equal",
+                "target": "combat.armorworn",
+                "value": "heavy",
+                "valueType": "string"
+              },
+              {
+                "operator": "not_equal",
+                "target": "combat.encumbrance.load",
+                "value": "heavy",
+                "valueType": "string"
+              },
+              {
+                "operator": "not_equal",
+                "target": "combat.encumbrance.load",
+                "value": "overloaded",
+                "valueType": "string"
+              }
+            ],
+            "target": "combat.speed.base",
+            "value": "10",
+            "valueType": "number"
+          }
+        ]
       },
       "Favored Enemy (Giant)": {
         "description": "The gnome giant-slayer receives a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks made against giants, as well as a +2 bonus on weapon damage rolls targeting giants. This stacks with the ranger's favored enemy class feature if the ranger has selected giants as a favored enemy. The bonus grows by an additional +2 at every third class level after 1st."

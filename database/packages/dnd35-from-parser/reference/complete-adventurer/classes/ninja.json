@@ -341,5 +341,71 @@
       }
     ],
     "skillPointsPerLevel": "6 + Int modifier"
+  },
+  "overrides": {
+    "features": {
+      "AC Bonus": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "combat.armorworn",
+                "value": "none",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.shieldheld",
+                "value": "false",
+                "valueType": "boolean"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.encumbrance.load",
+                "value": "light",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "feats.acbonusmonk.possessed",
+                "value": "false",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "combat.ac.misc",
+            "value": "{{ max(0, [abilities.wisdom.modifier]) }}",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "combat.armorworn",
+                "value": "none",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.shieldheld",
+                "value": "false",
+                "valueType": "boolean"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.encumbrance.load",
+                "value": "light",
+                "valueType": "string"
+              }
+            ],
+            "target": "combat.ac.misc",
+            "value": "{{ floor([classes.ninja.level] / 5) }}",
+            "valueType": "number"
+          }
+        ]
+      }
+    }
   }
 }

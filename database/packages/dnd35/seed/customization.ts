@@ -1,6 +1,6 @@
 import type { PgTable } from "drizzle-orm/pg-core";
 
-import type { Modifier, Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier, ModifierSeed, Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import {
   modifiersInCustomization,
   type propertiesInCustomization,
@@ -18,7 +18,11 @@ export function uniqueBy<T>(rows: T[], key: (row: T) => string): T[] {
   return rows.filter((row) => !seen.has(key(row)) && seen.add(key(row)));
 }
 
-export const modifierRows = (sourceId: string, sourceType: string, modifiers: Modifier[] = []): ModifierRow[] =>
+export const modifierRows = (
+  sourceId: string,
+  sourceType: string,
+  modifiers: (Modifier | ModifierSeed)[] = [],
+): ModifierRow[] =>
   modifiers.map(({ target, operator, value, valueType }) => ({
     sourceId,
     sourceType,
@@ -80,6 +84,30 @@ export const spellListSlots = (sourceId: string, sourceType: string, list: strin
 /** Inserts the rows, if there are any. */
 export async function insertAll<T extends PgTable>(db: Db, table: T, rows: T["$inferInsert"][]) {
   if (rows.length > 0) await db.insert(table).values(rows);
+}
+
+/**
+ * Modifiers with their sources: the ones without requirements in one insert, and each one with requirements alone, its
+ * requirements as rows of it.
+ */
+export async function insertModifiers(
+  db: Db,
+  sourceType: string,
+  modifiers: { sourceId: string; modifier: ModifierSeed }[],
+): Promise<void> {
+  const plain = modifiers.filter(({ modifier }) => !modifier.requirements?.length);
+  await insertAll(
+    db,
+    modifiersInCustomization,
+    plain.flatMap(({ sourceId, modifier }) => modifierRows(sourceId, sourceType, [modifier])),
+  );
+  for (const { sourceId, modifier } of modifiers.filter(({ modifier }) => modifier.requirements?.length)) {
+    const [row] = await db
+      .insert(modifiersInCustomization)
+      .values(modifierRows(sourceId, sourceType, [modifier]))
+      .returning({ id: modifiersInCustomization.id });
+    await insertAll(db, requirementsInCustomization, requirementRows(row.id, "modifiers", modifier.requirements));
+  }
 }
 
 /**

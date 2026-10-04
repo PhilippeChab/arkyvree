@@ -9,7 +9,15 @@
     "description": "Through erratic, swaying movements that mimic intoxication, practitioners of this fighting style evade incoming attacks with deceptive agility.",
     "features": {
       "AC Bonus": {
-        "description": "Starting at 4th level, the character receives a +1 bonus to Armor Class. At 9th level, this bonus increases to +2."
+        "description": "Starting at 4th level, the character receives a +1 bonus to Armor Class. At 9th level, this bonus increases to +2.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.ac.misc",
+            "value": "{{ [feats.acbonusdrunkenmaster.count] }}",
+            "valueType": "number"
+          }
+        ]
       },
       "Breath of Flame": {
         "description": "At 10th level, the character can ignite alcohol stored within his body and exhale it as a burst of fire. This is a free action that produces a 20-foot cone dealing 3d12 points of fire damage. Targets may attempt a Reflex save (DC 10 + class level + Constitution modifier) for half damage. Each use of this ability expends one drink's worth of alcohol from the character's system, removing 2 points of the Wisdom and Intelligence penalties and 2 points of the Strength or Constitution bonus (player's choice). A monk who enters this prestige class may continue to advance as a monk."

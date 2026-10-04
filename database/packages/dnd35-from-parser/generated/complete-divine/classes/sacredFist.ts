@@ -1,5 +1,5 @@
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
-import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import { eq, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
 
 export const SACRED_FIST: ClassSeed = {
   name: "Sacred Fist",
@@ -21,15 +21,18 @@ export const SACRED_FIST: ClassSeed = {
   classFeatureAptitude: "Sacred Fist Class Feature",
   classFeatures: [
     [1, "AC Bonus (Sacred Fist)"],
-    [1, "Fast Movement (Sacred Fist)"],
     [1, "Spells per Day/Spells Known (Sacred Fist)"],
     [1, "Unarmed Damage (Sacred Fist)"],
     [1, "Weapon and Armor Proficiency (Sacred Fist)"],
+    [3, "Fast Movement (Sacred Fist)"],
     [4, "Sacred Flames (Sacred Fist)"],
     [6, "Blindsense (Sacred Fist)"],
     [8, "Sacred Flames (Sacred Fist)"],
     [10, "Inner Armor (Sacred Fist)"],
   ],
+  modifiers: [
+    { level: 3, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armorworn", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armorworn", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
+    { level: 6, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armorworn", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armorworn", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
+    { level: 8, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armorworn", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armorworn", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
+  ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

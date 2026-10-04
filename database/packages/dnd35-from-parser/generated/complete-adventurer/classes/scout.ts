@@ -37,7 +37,6 @@ export const SCOUT: ClassSeed = {
     [2, "Battle Fortitude (Scout)"],
     [2, "Uncanny Dodge (Scout)"],
     [3, "Fast Movement (Scout)"],
-    [3, "Fast Movement + (Scout)"],
     [3, "Skirmish (Scout)"],
     [3, "Trackless Step (Scout)"],
     [4, "Bonus Feat (Scout)"],

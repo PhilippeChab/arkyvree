@@ -1,13 +1,12 @@
 import type { BabType, ClassSeed, SaveType } from "@/database/packages/dnd35/content/types.ts";
 import { idOf, type SeedContext } from "@/database/packages/dnd35/seed/context.ts";
-import { insertAll, requirementRows } from "@/database/packages/dnd35/seed/customization.ts";
+import { insertAll, insertModifiers, requirementRows } from "@/database/packages/dnd35/seed/customization.ts";
 import {
   klassesInRules,
   klassLevelFeatsInRules,
   klassLevelSavesInRules,
   klassLevelsInRules,
   klassSkillsInRules,
-  modifiersInCustomization,
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
@@ -158,23 +157,16 @@ export async function seedClass(db: Db, ctx: SeedContext, def: ClassSeed) {
         }))
       : []),
   ];
-  await insertAll(
+  await insertModifiers(
     db,
-    modifiersInCustomization,
+    "klass_levels",
     levels.flatMap(({ id, level }) =>
       [
         ...levelModifiers.filter((m) => m.level === level),
         ...picks
           .filter((pick) => pick.levels.includes(level))
           .map((pick) => ({ target: pick.target, value: "1", valueType: "number", operator: "add" })),
-      ].map(({ target, value, valueType, operator }) => ({
-        sourceId: id,
-        sourceType: "klass_levels",
-        target,
-        value,
-        valueType,
-        operator,
-      })),
+      ].map((modifier) => ({ sourceId: id, modifier })),
     ),
   );
 

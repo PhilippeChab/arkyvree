@@ -9,7 +9,15 @@
     "description": "A dwarven defender serves as a chosen protector of dwarven interests and strongholds.",
     "features": {
       "AC Bonus": {
-        "description": "A dwarven defender gains a dodge bonus to AC beginning at +1, which increases as he advances in level, reaching +4 at 10th level."
+        "description": "A dwarven defender gains a dodge bonus to AC beginning at +1, which increases as he advances in level, reaching +4 at 10th level.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.ac.dodge",
+            "value": "{{ floor(([classes.dwarvendefender.level] + 2) / 3) }}",
+            "valueType": "number"
+          }
+        ]
       },
       "Damage Reduction": {
         "description": "Starting at 6th level, a dwarven defender can absorb part of the impact from each attack. He ignores 3 points of damage from every hit he takes. At 10th level, this increases to 6/-. This reduction can bring damage down to 0 but never below 0; the defender does not gain hit points from absorbed damage."

@@ -2,14 +2,13 @@ import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { idOf, idsByName, type SeedContext } from "@/database/packages/dnd35/seed/context.ts";
 import {
   insertAll,
-  modifierRows,
+  insertModifiers,
   propertyRows,
   requirementRows,
 } from "@/database/packages/dnd35/seed/customization.ts";
 import {
   featsAptitudesInRules,
   featsInRules,
-  modifiersInCustomization,
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
@@ -57,22 +56,9 @@ export async function seedFeats(db: Db, ctx: SeedContext, feats: FeatSeed[]) {
     feats.flatMap((f) => propertyRows(ids[f.name], "feats", f.properties)),
   );
 
-  // Each modifier's effect, a row; its requirements, rows of that row
-  const modifiers = feats.flatMap((f) =>
-    (f.modifiers ?? []).map(({ requirements, ...effect }) => ({ featId: ids[f.name], effect, requirements })),
-  );
-  await insertAll(
+  await insertModifiers(
     db,
-    modifiersInCustomization,
-    modifiers
-      .filter(({ requirements }) => !requirements)
-      .flatMap(({ featId, effect }) => modifierRows(featId, "feats", [effect])),
+    "feats",
+    feats.flatMap((f) => (f.modifiers ?? []).map((modifier) => ({ sourceId: ids[f.name], modifier }))),
   );
-  for (const { featId, effect, requirements } of modifiers.filter(({ requirements }) => requirements)) {
-    const [row] = await db
-      .insert(modifiersInCustomization)
-      .values(modifierRows(featId, "feats", [effect]))
-      .returning({ id: modifiersInCustomization.id });
-    await insertAll(db, requirementsInCustomization, requirementRows(row.id, "modifiers", requirements));
-  }
 }

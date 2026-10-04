@@ -128,8 +128,11 @@ describe("The seeded bonuses the rules read", () => {
       "skills.search.misc +5",
       "skills.spot.misc +5",
     ]);
-    // A value that grows with level gives its first one ("+10 foot… increases to +20 feet")
-    expect(seededModifiers(ADVENTURER_FEATS, "Fast Movement (Scout)")).toEqual(["combat.speed.misc +10"]);
+    // A value that grows with level grows with the feature, which the class grants again at each step ("+10 foot…
+    // increases to +20 feet")
+    expect(seededModifiers(ADVENTURER_FEATS, "Fast Movement (Scout)")).toEqual([
+      "combat.speed.base +{{ [feats.fastmovementscout.count] * 10 }}",
+    ]);
     // A race's traits are each their own sentence
     expect(seededModifiers(ALL_RACES, "Elf")).toEqual(
       expect.arrayContaining(["skills.listen.misc +2", "skills.search.misc +2", "skills.spot.misc +2"]),
@@ -137,7 +140,8 @@ describe("The seeded bonuses the rules read", () => {
   });
 
   test("keep what's worn, held or carried as a standing state", () => {
-    expect(seededModifiers(WARRIOR_FEATS, "Dash")).toEqual(["combat.speed.misc +5"]);
+    // Dash's speed, for as long as the armor worn and the load carried allow it
+    expect(seededModifiers(WARRIOR_FEATS, "Dash")).toEqual(["combat.speed.base +5"]);
     expect(seededModifiers(RODS, "Rod of Splendor")).toEqual(["abilities.charisma.misc +4"]);
   });
 
