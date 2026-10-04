@@ -24,9 +24,10 @@
  * one of them.
  *
  * Per-HD scaling:
- *   - Feat count at total HD N = 1 + floor((N-1)/3). Compose applies
- *     `baseFeats`, then appends `featPriority` items in order until count met;
- *     the appended feats' bonuses come on top of the totals.
+ *   - Feat count at total HD N = 1 + floor((N-1)/3), the stat block's bonus
+ *     feats (`bonusFeats`) aside. Compose applies `bonusFeats` and `baseFeats`,
+ *     then appends `featPriority` items in order until count met; the appended
+ *     feats' bonuses come on top of the totals.
  *   - Skill ranks: an animal's skill point per HD past baseHD (Int 1 or 2:
  *     1 point), each to the next `skillPriority` skill in turn
  *     (`scaleSkillRanks`). No skill passes N + 3 ranks.
@@ -39,6 +40,10 @@ type NaturalAttack = {
   damage: string;
   type: string;
   count?: number;
+  /** A secondary attack (the stat block's lower one): −5 to attack (−2 with Multiattack) and half the Strength bonus. */
+  secondary?: true;
+  /** What the stat block's feats add to its attack: a wolf's Weapon Focus (bite), which the ruleset has no feat for. */
+  misc?: number;
 };
 
 type BondedRaceAbilities = {
@@ -56,8 +61,13 @@ export type BondedRaceStatBlock = {
   /** SRD-listed ability scores — applied as the bonded character's base. */
   abilities: BondedRaceAbilities;
   naturalAttacks: NaturalAttack[];
-  /** Feats the animal has at its base HD, per the SRD MM stat block. */
+  /**
+   * Feats the animal has at its base HD, per the SRD MM stat block: those its hit dice give it, which its advancement
+   * counts (a feat the ruleset doesn't have, a wolf's Weapon Focus (bite), counts too; its bonus is on the attack).
+   */
   baseFeats?: string[];
+  /** The stat block's bonus feats (its "B" ones: Weapon Finesse, Track), which its advancement doesn't count. */
+  bonusFeats?: string[];
   /** Feats appended in order as total HD crosses 4, 7, 10, 13, 16, 19. */
   featPriority?: string[];
   /** SRD-listed skill totals at base HD (the post-mods bonus on the stat block). */
@@ -89,11 +99,12 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     abilities: { strength: 3, dexterity: 15, constitution: 10, intelligence: 2, wisdom: 12, charisma: 7 },
     naturalAttacks: [
       { name: "Claw", damage: "1d2", type: "Slashing", count: 2 },
-      { name: "Bite", damage: "1d3", type: "Slashing and piercing" },
+      { name: "Bite", damage: "1d3", type: "Slashing and piercing", secondary: true },
     ],
-    baseFeats: ["Stealthy", "Weapon Finesse"],
+    baseFeats: ["Stealthy"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Alertness", "Improved Initiative", ...GENERIC_TAIL],
-    baseSkillTotals: { Balance: 10, Climb: 6, Hide: 12, Jump: 10, Listen: 3, "Move Silently": 8, Spot: 3 },
+    baseSkillTotals: { Balance: 10, Climb: 6, Hide: 16, Jump: 10, Listen: 3, "Move Silently": 8, Spot: 3 },
     skillPriority: ["Hide", "Move Silently", "Spot", "Listen", "Climb", "Balance", "Jump"],
   },
   Hawk: {
@@ -101,9 +112,10 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 2,
     abilities: { strength: 6, dexterity: 17, constitution: 10, intelligence: 2, wisdom: 14, charisma: 6 },
     naturalAttacks: [{ name: "Talons", damage: "1d4", type: "Slashing" }],
-    baseFeats: ["Alertness", "Weapon Finesse"],
+    baseFeats: ["Alertness"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Dodge", "Improved Initiative", ...GENERIC_TAIL],
-    baseSkillTotals: { Listen: 6, Spot: 14 },
+    baseSkillTotals: { Listen: 4, Spot: 16 },
     skillPriority: ["Spot", "Listen"],
   },
   Lizard: {
@@ -111,7 +123,8 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 0,
     abilities: { strength: 3, dexterity: 15, constitution: 10, intelligence: 1, wisdom: 12, charisma: 2 },
     naturalAttacks: [{ name: "Bite", damage: "1d4", type: "Bludgeoning and piercing" }],
-    baseFeats: ["Stealthy", "Weapon Finesse"],
+    baseFeats: ["Stealthy"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Alertness", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 10, Climb: 12, Hide: 12, Listen: 3, "Move Silently": 4, Spot: 3 },
     skillPriority: ["Climb", "Hide", "Balance", "Move Silently", "Listen", "Spot"],
@@ -121,7 +134,8 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 2,
     abilities: { strength: 4, dexterity: 17, constitution: 10, intelligence: 2, wisdom: 14, charisma: 4 },
     naturalAttacks: [{ name: "Talons", damage: "1d4", type: "Slashing" }],
-    baseFeats: ["Alertness", "Weapon Finesse"],
+    baseFeats: ["Alertness"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Dodge", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Listen: 14, "Move Silently": 17, Spot: 6 },
     skillPriority: ["Move Silently", "Listen", "Spot"],
@@ -131,7 +145,8 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 0,
     abilities: { strength: 2, dexterity: 15, constitution: 10, intelligence: 2, wisdom: 12, charisma: 2 },
     naturalAttacks: [{ name: "Bite", damage: "1d3", type: "Piercing" }],
-    baseFeats: ["Stealthy", "Weapon Finesse"],
+    baseFeats: ["Stealthy"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Alertness", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 10, Climb: 12, Hide: 16, "Move Silently": 10, Swim: 10 },
     skillPriority: ["Hide", "Climb", "Move Silently", "Swim", "Balance"],
@@ -141,7 +156,8 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 0,
     abilities: { strength: 1, dexterity: 15, constitution: 10, intelligence: 2, wisdom: 14, charisma: 6 },
     naturalAttacks: [{ name: "Claws", damage: "1d2", type: "Slashing" }],
-    baseFeats: ["Alertness", "Weapon Finesse"],
+    baseFeats: ["Alertness"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Dodge", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Listen: 5, Spot: 7 },
     skillPriority: ["Spot", "Listen"],
@@ -151,8 +167,8 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 0,
     abilities: { strength: 1, dexterity: 12, constitution: 11, intelligence: 1, wisdom: 14, charisma: 4 },
     naturalAttacks: [],
-    baseFeats: [],
-    featPriority: ["Alertness", ...GENERIC_TAIL],
+    baseFeats: ["Alertness"],
+    featPriority: [...GENERIC_TAIL],
     baseSkillTotals: { Hide: 21, Listen: 4, Spot: 4 },
     skillPriority: ["Hide", "Spot", "Listen"],
   },
@@ -161,7 +177,8 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 2,
     abilities: { strength: 4, dexterity: 17, constitution: 11, intelligence: 1, wisdom: 12, charisma: 2 },
     naturalAttacks: [{ name: "Bite", damage: "1", type: "Piercing" }],
-    baseFeats: ["Improved Initiative", "Weapon Finesse"],
+    baseFeats: ["Improved Initiative"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Alertness", "Stealthy", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 11, Climb: 11, Hide: 15, Listen: 6, Spot: 6, Swim: 5 },
     skillPriority: ["Hide", "Climb", "Balance", "Swim", "Listen", "Spot"],
@@ -171,7 +188,8 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 0,
     abilities: { strength: 3, dexterity: 15, constitution: 10, intelligence: 2, wisdom: 12, charisma: 5 },
     naturalAttacks: [{ name: "Bite", damage: "1d3", type: "Piercing" }],
-    baseFeats: ["Agile", "Weapon Finesse"],
+    baseFeats: ["Agile"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Stealthy", "Alertness", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 12, Climb: 10, "Escape Artist": 4, Hide: 11, "Move Silently": 8, Spot: 3 },
     skillPriority: ["Hide", "Move Silently", "Climb", "Balance", "Escape Artist", "Spot"],
@@ -184,9 +202,10 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     abilities: { strength: 8, dexterity: 17, constitution: 15, intelligence: 2, wisdom: 12, charisma: 6 },
     naturalAttacks: [
       { name: "Claw", damage: "1d2", type: "Slashing", count: 2 },
-      { name: "Bite", damage: "1d3", type: "Piercing" },
+      { name: "Bite", damage: "1d3", type: "Piercing", secondary: true },
     ],
-    baseFeats: ["Agile", "Track", "Weapon Finesse"],
+    baseFeats: ["Agile"],
+    bonusFeats: ["Track", "Weapon Finesse"],
     featPriority: ["Alertness", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 5, "Escape Artist": 9, Listen: 3, Spot: 3 },
     skillPriority: ["Escape Artist", "Listen", "Spot", "Balance"],
@@ -195,7 +214,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseHD: 3,
     baseNaturalArmor: 1,
     abilities: { strength: 18, dexterity: 16, constitution: 14, intelligence: 2, wisdom: 11, charisma: 4 },
-    naturalAttacks: [{ name: "Bite", damage: "1d4", type: "Bludgeoning" }],
+    naturalAttacks: [{ name: "Bite", damage: "1d4", type: "Bludgeoning", secondary: true }],
     baseFeats: ["Alertness", "Endurance"],
     featPriority: ["Run", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Listen: 5, Spot: 5 },
@@ -206,7 +225,8 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 1,
     abilities: { strength: 10, dexterity: 17, constitution: 12, intelligence: 1, wisdom: 12, charisma: 4 },
     naturalAttacks: [{ name: "Bite", damage: "1d4", type: "Piercing" }],
-    baseFeats: ["Alertness", "Weapon Finesse"],
+    baseFeats: ["Alertness"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Stealthy", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Climb: 11, Hide: 8, Listen: 4, "Move Silently": 4, Spot: 4, Swim: 11 },
     skillPriority: ["Hide", "Move Silently", "Climb", "Swim", "Listen", "Spot"],
@@ -216,7 +236,8 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 1,
     abilities: { strength: 13, dexterity: 17, constitution: 15, intelligence: 2, wisdom: 12, charisma: 6 },
     naturalAttacks: [{ name: "Bite", damage: "1d4", type: "Piercing" }],
-    baseFeats: ["Alertness", "Track"],
+    baseFeats: ["Alertness"],
+    bonusFeats: ["Track"],
     featPriority: ["Combat Reflexes", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Jump: 7, Listen: 5, Spot: 5, Survival: 1 },
     skillPriority: ["Listen", "Spot", "Survival", "Jump"],
@@ -226,7 +247,8 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseNaturalArmor: 4,
     abilities: { strength: 15, dexterity: 15, constitution: 15, intelligence: 2, wisdom: 12, charisma: 6 },
     naturalAttacks: [{ name: "Bite", damage: "1d6", type: "Piercing" }],
-    baseFeats: ["Alertness", "Track"],
+    baseFeats: ["Alertness"],
+    bonusFeats: ["Track"],
     featPriority: ["Combat Reflexes", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Jump: 8, Listen: 5, Spot: 5, Survival: 1, Swim: 3 },
     skillPriority: ["Listen", "Spot", "Survival", "Jump", "Swim"],
@@ -237,9 +259,10 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     abilities: { strength: 10, dexterity: 15, constitution: 12, intelligence: 2, wisdom: 14, charisma: 6 },
     naturalAttacks: [
       { name: "Talons", damage: "1d4", type: "Slashing", count: 2 },
-      { name: "Bite", damage: "1d4", type: "Piercing" },
+      { name: "Bite", damage: "1d4", type: "Piercing", secondary: true },
     ],
-    baseFeats: ["Alertness", "Weapon Finesse"],
+    baseFeats: ["Alertness"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Dodge", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Listen: 4, Spot: 16 },
     skillPriority: ["Spot", "Listen"],
@@ -248,7 +271,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseHD: 3,
     baseNaturalArmor: 3,
     abilities: { strength: 14, dexterity: 13, constitution: 15, intelligence: 2, wisdom: 12, charisma: 6 },
-    naturalAttacks: [{ name: "Hoof", damage: "1d4", type: "Bludgeoning", count: 2 }],
+    naturalAttacks: [{ name: "Hoof", damage: "1d4", type: "Bludgeoning", count: 2, secondary: true }],
     baseFeats: ["Endurance", "Run"],
     featPriority: ["Alertness", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Listen: 4, Spot: 4 },
@@ -258,7 +281,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseHD: 3,
     baseNaturalArmor: 3,
     abilities: { strength: 16, dexterity: 13, constitution: 15, intelligence: 2, wisdom: 12, charisma: 6 },
-    naturalAttacks: [{ name: "Hoof", damage: "1d6", type: "Bludgeoning", count: 2 }],
+    naturalAttacks: [{ name: "Hoof", damage: "1d6", type: "Bludgeoning", count: 2, secondary: true }],
     baseFeats: ["Endurance", "Run"],
     featPriority: ["Alertness", "Power Attack", ...GENERIC_TAIL],
     baseSkillTotals: { Listen: 4, Spot: 4 },
@@ -268,7 +291,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseHD: 2,
     baseNaturalArmor: 2,
     abilities: { strength: 13, dexterity: 13, constitution: 12, intelligence: 2, wisdom: 11, charisma: 4 },
-    naturalAttacks: [{ name: "Hoof", damage: "1d3", type: "Bludgeoning", count: 2 }],
+    naturalAttacks: [{ name: "Hoof", damage: "1d3", type: "Bludgeoning", count: 2, secondary: true }],
     baseFeats: ["Endurance"],
     featPriority: ["Alertness", "Run", ...GENERIC_TAIL],
     baseSkillTotals: { Listen: 5, Spot: 5 },
@@ -277,9 +300,10 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
   "Snake, Small Viper": {
     baseHD: 1,
     baseNaturalArmor: 3,
-    abilities: { strength: 4, dexterity: 17, constitution: 11, intelligence: 1, wisdom: 12, charisma: 2 },
+    abilities: { strength: 6, dexterity: 17, constitution: 11, intelligence: 1, wisdom: 12, charisma: 2 },
     naturalAttacks: [{ name: "Bite", damage: "1d2", type: "Piercing" }],
-    baseFeats: ["Improved Initiative", "Weapon Finesse"],
+    baseFeats: ["Improved Initiative"],
+    bonusFeats: ["Weapon Finesse"],
     featPriority: ["Alertness", "Stealthy", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 11, Climb: 11, Hide: 11, Listen: 7, Spot: 7, Swim: 6 },
     skillPriority: ["Hide", "Climb", "Balance", "Swim", "Listen", "Spot"],
@@ -288,7 +312,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseHD: 2,
     baseNaturalArmor: 3,
     abilities: { strength: 8, dexterity: 17, constitution: 11, intelligence: 1, wisdom: 12, charisma: 2 },
-    naturalAttacks: [{ name: "Bite", damage: "1d4-1", type: "Piercing" }],
+    naturalAttacks: [{ name: "Bite", damage: "1d4", type: "Piercing" }],
     baseFeats: ["Weapon Finesse"],
     featPriority: ["Alertness", "Improved Initiative", ...GENERIC_TAIL],
     baseSkillTotals: { Balance: 11, Climb: 11, Hide: 12, Listen: 5, Spot: 5, Swim: 7 },
@@ -298,8 +322,9 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     baseHD: 2,
     baseNaturalArmor: 2,
     abilities: { strength: 13, dexterity: 15, constitution: 15, intelligence: 2, wisdom: 12, charisma: 6 },
-    naturalAttacks: [{ name: "Bite", damage: "1d6", type: "Piercing" }],
-    baseFeats: ["Track", "Weapon Finesse"],
+    naturalAttacks: [{ name: "Bite", damage: "1d6", type: "Piercing", misc: 1 }],
+    baseFeats: ["Weapon Focus (bite)"],
+    bonusFeats: ["Track"],
     featPriority: ["Alertness", "Improved Initiative", "Combat Reflexes", ...GENERIC_TAIL],
     baseSkillTotals: { Hide: 2, Listen: 3, "Move Silently": 3, Spot: 3, Survival: 1 },
     skillPriority: ["Listen", "Spot", "Move Silently", "Hide", "Survival"],
@@ -312,7 +337,7 @@ const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     abilities: { strength: 18, dexterity: 13, constitution: 17, intelligence: 2, wisdom: 13, charisma: 6 },
     naturalAttacks: [
       { name: "Hoof", damage: "1d6", type: "Bludgeoning", count: 2 },
-      { name: "Bite", damage: "1d4", type: "Bludgeoning and piercing" },
+      { name: "Bite", damage: "1d4", type: "Bludgeoning and piercing", secondary: true },
     ],
     baseFeats: ["Endurance", "Run"],
     featPriority: ["Alertness", "Power Attack", "Improved Bull Rush", ...GENERIC_TAIL],

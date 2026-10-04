@@ -7,9 +7,18 @@ import type DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedChara
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 
+/** A natural attack's kind: a primary one at its full attack bonus, a secondary one lower. */
+export type NaturalAttackKind = "primary" | "secondary";
+
 export type WeaponSlot = {
   name: string;
   itemId: string | null;
+  /**
+   * A natural attack's kind, null for a weapon: a primary one adds its whole Strength bonus to damage (one and a half
+   * for a creature's only attack), a secondary one takes `combat.naturalattacks.secondary` to attack and adds half. Either
+   * attacks once a round, whatever the base attack bonus.
+   */
+  natural: NaturalAttackKind | null;
   proficient: boolean;
   finessable: boolean;
   /** A light weapon (the table's Tiny and Small): no extra Strength in two hands, lighter two-weapon penalties off hand. */
@@ -29,6 +38,8 @@ export type WeaponSlot = {
      * shield's −2, and its own penalty in one hand (a crossbow's)
      */
     readonly gear: number;
+    /** A secondary natural attack's penalty: `combat.naturalattacks.secondary` */
+    readonly secondary: number;
     readonly total: number[];
   };
   /** A melee weapon's attack when thrown, if it has a range increment: with Dexterity, as every ranged attack. */
@@ -116,6 +127,12 @@ export type DetailedCharacterComprehensiveCombat = {
     readonly total: number;
   };
   bab: number;
+  /**
+   * A creature's natural attacks: the penalty on its secondary ones (−5, −2 with Multiattack), the extra attacks its
+   * primary natural weapon makes, each at −5 (an animal companion's Multiattack without three natural attacks), and how
+   * many attacks it makes (two claws are two).
+   */
+  naturalattacks: { secondary: number; extraprimary: number; readonly count: number };
   /** Two-weapon fighting: the penalty on each hand's attacks, and how many attacks the off hand makes. */
   twoweapon: {
     mainhand: number;
@@ -175,6 +192,7 @@ export default abstract class CombatState {
     hp: { base: 0, constitution: 0, misc: 0, total: 0 },
     initiative: { dexterity: 0, misc: 0, total: 0 },
     bab: 0,
+    naturalattacks: { secondary: CONSTANTS.SECONDARY_NATURAL_ATTACK_PENALTY, extraprimary: 0, count: 0 },
     twoweapon: {
       mainhand: CONSTANTS.TWO_WEAPON_MAIN_HAND_PENALTY,
       offhand: CONSTANTS.TWO_WEAPON_OFF_HAND_PENALTY,

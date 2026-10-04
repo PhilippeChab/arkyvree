@@ -52,7 +52,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
   protected abstract applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void>;
 
   protected applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
-    this.applyGrantedFeats(raceStats.baseFeats ?? [], rulesetData);
+    this.applyGrantedFeats([...(raceStats.bonusFeats ?? []), ...(raceStats.baseFeats ?? [])], rulesetData);
     this.applySkillTotals(raceStats.baseSkillTotals ?? {});
   }
 

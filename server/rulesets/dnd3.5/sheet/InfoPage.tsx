@@ -1,7 +1,7 @@
 import { Image, Page, Text, View } from "@react-pdf/renderer";
 
 import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import { buildAttackRows } from "@/shared/dnd3.5/weaponAttacks.ts";
+import { buildAttackRows, describeWeaponSlot } from "@/shared/dnd3.5/weaponAttacks.ts";
 
 import { formatModifier } from "./format.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
@@ -273,10 +273,7 @@ const InfoPage = ({
                     <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Type</Text>
                   </View>
                   {weapons.flatMap(({ slotKey, weapon }) =>
-                    buildAttackRows(
-                      weapon!,
-                      slotKey === "mainhand" ? "Main Hand" : slotKey === "offhand" ? "Off Hand" : "Two Handed",
-                    ).map((row) => (
+                    buildAttackRows(weapon!, describeWeaponSlot(weapon!, slotKey)).map((row) => (
                       <View key={row.key} style={styles.tableRow}>
                         <View style={[styles.tableCell, { width: "27%" }]}>
                           <Text>{weapon!.name}</Text>

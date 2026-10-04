@@ -1,13 +1,23 @@
 import { describe, expect, test } from "bun:test";
 
 import { getBondedRaceStats } from "@/server/rulesets/dnd3.5/bondedRaceData.ts";
-import { scaleSkillRanks } from "@/server/rulesets/dnd3.5/bondedScaling.ts";
+import { scaleFeats, scaleSkillRanks } from "@/server/rulesets/dnd3.5/bondedScaling.ts";
 
 const BONDED_RACES = [
   ...["Bat", "Cat", "Hawk", "Lizard", "Owl", "Rat", "Raven", "Toad", "Viper", "Weasel"],
   ...["Badger", "Camel", "Dire Rat", "Dog", "Riding Dog", "Eagle", "Horse, Light", "Horse, Heavy", "Pony"],
   ...["Snake, Small Viper", "Snake, Medium Viper", "Wolf", "Heavy Warhorse", "Warpony"],
 ];
+
+describe("scaleFeats", () => {
+  test("counts the feats a creature's hit dice give it, not its bonus ones", () => {
+    // A badger's Agile, beside its bonus Track and Weapon Finesse: at 4 hit dice, a second feat
+    const badger = getBondedRaceStats("Badger")!;
+    expect(badger.bonusFeats).toEqual(["Track", "Weapon Finesse"]);
+    expect(scaleFeats(badger, 1)).toEqual(["Agile"]);
+    expect(scaleFeats(badger, 4)).toEqual(["Agile", "Alertness"]);
+  });
+});
 
 describe("scaleSkillRanks", () => {
   test("gives none at the stat block's hit dice", () => {

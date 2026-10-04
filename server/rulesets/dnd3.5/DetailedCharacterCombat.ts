@@ -54,6 +54,13 @@ const NAVIGATABLE_PATHS = [
     sortOrder: 0,
     requirementOnly: true,
   },
+  {
+    path: "tohit.secondary",
+    description: "A secondary natural attack's penalty: combat.naturalattacks.secondary",
+    type: "number" as const,
+    sortOrder: 0,
+    requirementOnly: true,
+  },
   { path: "damage.base", description: "Base damage dice", type: "string" as const, sortOrder: 1 },
   {
     path: "damage.strength",
@@ -175,6 +182,23 @@ const NAVIGATABLE_PATHS = [
   },
   // Attack
   { path: "bab", description: "From class progression", type: "number" as const },
+  {
+    path: "naturalattacks.secondary",
+    description: "Penalty on secondary natural attacks: -5, -2 with Multiattack",
+    type: "number" as const,
+  },
+  {
+    path: "naturalattacks.extraprimary",
+    description:
+      "Extra attacks with the primary natural weapon, each at -5 (a companion's Multiattack, under 3 attacks)",
+    type: "number" as const,
+  },
+  {
+    path: "naturalattacks.count",
+    description: "Natural attacks made in a round (two claws are two)",
+    type: "number" as const,
+    requirementOnly: true,
+  },
   { path: "grapple.bab", description: "BAB contribution", type: "number" as const, requirementOnly: true },
   { path: "grapple.strength", description: "Str modifier", type: "number" as const, requirementOnly: true },
   { path: "grapple.size", description: "From race size", type: "number" as const, requirementOnly: true },
@@ -212,6 +236,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   mainhand: "Main Hand",
   offhand: "Off Hand",
   offhandattacks: "Off-Hand Attacks",
+  naturalattacks: "Natural Attacks",
+  extraprimary: "Extra Primary Attacks",
   armorworn: "Armor Worn",
   shieldheld: "Shield Held",
 };
