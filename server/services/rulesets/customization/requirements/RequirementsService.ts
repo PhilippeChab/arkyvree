@@ -81,7 +81,7 @@ class RequirementsService {
 
         let requirement;
         if (body.target) {
-          const inferredValueType = await resolvePathValueType(rulesetId, body.target, "requirement");
+          const inferredValueType = await resolvePathValueType(rulesetId, body.target, "requirement", body.value);
 
           const rows = await Requirements.create(tx, {
             entityId: resolvedEntityId,
@@ -167,7 +167,9 @@ class RequirementsService {
 
         let updatedRequirement;
         if (body.target) {
-          const inferredValueType = await resolvePathValueType(rulesetId, body.target, "requirement");
+          // An update without a value keeps the stored one, checked against the target's type all the same
+          const value = body.value ?? requirement.value ?? undefined;
+          const inferredValueType = await resolvePathValueType(rulesetId, body.target, "requirement", value);
           const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
           const rows = await Requirements.update(
             tx,

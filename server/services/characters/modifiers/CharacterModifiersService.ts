@@ -35,7 +35,7 @@ class CharacterModifiersService {
     return withTransaction(async (tx) => {
       const character = await getEditableCharacter(tx, session, characterId);
 
-      const valueType = await resolvePathValueType(character.rulesetId, body.target, "modifier");
+      const valueType = await resolvePathValueType(character.rulesetId, body.target, "modifier", body.value);
 
       const rows = await Modifiers.create(tx, {
         sourceId: characterId,
@@ -73,7 +73,7 @@ class CharacterModifiersService {
         throw new NotFoundError("Modifier not found");
       }
 
-      const valueType = await resolvePathValueType(character.rulesetId, body.target, "modifier");
+      const valueType = await resolvePathValueType(character.rulesetId, body.target, "modifier", body.value);
 
       const rows = await Modifiers.update(
         tx,

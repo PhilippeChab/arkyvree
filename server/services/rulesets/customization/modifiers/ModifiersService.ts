@@ -64,7 +64,7 @@ class ModifiersService {
 
         const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
 
-        const inferredValueType = await resolvePathValueType(rulesetId, body.target, "modifier");
+        const inferredValueType = await resolvePathValueType(rulesetId, body.target, "modifier", body.value);
 
         const rows = await Modifiers.create(tx, {
           sourceId: resolvedEntityId,
@@ -198,7 +198,7 @@ class ModifiersService {
           modifierId,
         );
 
-        const inferredValueType = await resolvePathValueType(rulesetId, body.target, "modifier");
+        const inferredValueType = await resolvePathValueType(rulesetId, body.target, "modifier", body.value);
 
         const expectedUpdatedAt = resolvedModifierId === modifierId ? body.updatedAt : undefined;
         const rows = await Modifiers.update(
