@@ -9,6 +9,7 @@ import { secureHeaders } from "hono/secure-headers";
 
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
+import { isProduction, readEnv } from "@/server/environment.ts";
 import { isTest } from "@/server/environment.ts";
 import { toJson } from "@/server/errors/index.ts";
 import { requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
@@ -18,9 +19,9 @@ import staticRouter from "@/server/routers/static.ts";
 import wsRouter from "@/server/routers/ws.ts";
 import { collectNotified, publishWsEvent } from "@/server/ws.ts";
 
-const isDev = process.env.NODE_ENV !== "production";
+const isDev = !isProduction();
 
-const origin = isDev ? ["http://localhost:5173"] : process.env.APP_URL ? [process.env.APP_URL] : [];
+const origin = isDev ? ["http://localhost:5173"] : readEnv("APP_URL") ? [readEnv("APP_URL")!] : [];
 
 const cors = buildCors({
   origin,
@@ -35,8 +36,8 @@ const cors = buildCors({
 // probes hit it with the machine-name Host, not the public hostname. Disabled
 // in dev because Vite's `changeOrigin: true` proxy rewrites the Host to the
 // backend's, which would otherwise trigger an infinite redirect loop.
-const enforceCanonicalHost = process.env.NODE_ENV === "production" && !!process.env.APP_URL;
-const canonicalHost = enforceCanonicalHost ? new URL(process.env.APP_URL!).host : null;
+const enforceCanonicalHost = isProduction() && !!readEnv("APP_URL");
+const canonicalHost = enforceCanonicalHost ? new URL(readEnv("APP_URL")!).host : null;
 
 // The session is set only on the routes behind the session middleware.
 const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()

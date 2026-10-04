@@ -1,3 +1,4 @@
+import { readEnv } from "@/server/environment.ts";
 import { InternalError } from "@/server/errors/index.ts";
 
 export interface StorageBackend {
@@ -11,11 +12,11 @@ export interface StorageBackend {
 
 export function isStorageConfigured(): boolean {
   return Boolean(
-    process.env.S3_BUCKET &&
-    process.env.S3_ENDPOINT &&
-    process.env.S3_ACCESS_KEY_ID &&
-    process.env.S3_SECRET_ACCESS_KEY &&
-    process.env.S3_PUBLIC_URL,
+    readEnv("S3_BUCKET") &&
+    readEnv("S3_ENDPOINT") &&
+    readEnv("S3_ACCESS_KEY_ID") &&
+    readEnv("S3_SECRET_ACCESS_KEY") &&
+    readEnv("S3_PUBLIC_URL"),
   );
 }
 
@@ -53,7 +54,7 @@ class S3StorageBackend implements StorageBackend {
   }
 
   publicUrl(key: string): string {
-    const base = process.env.S3_PUBLIC_URL;
+    const base = readEnv("S3_PUBLIC_URL");
     if (!base) throw new InternalError("S3_PUBLIC_URL is not configured");
     return `${base.replace(/\/$/, "")}/${key}`;
   }

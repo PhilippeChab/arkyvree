@@ -1,3 +1,4 @@
+import { isDevelopment } from "@/server/environment.ts";
 import { Sentry } from "@/server/sentry.ts";
 
 type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
@@ -98,7 +99,7 @@ export type ErrorJson = {
 export function toJson(error: Error): [ErrorJson, Code] {
   const baseError = error instanceof BaseError ? error : BaseError.fromError(error);
 
-  const isDev = process.env.NODE_ENV === "development";
+  const isDev = isDevelopment();
 
   if (baseError.code === 500) {
     console.error(`[api] ${isDev ? error.stack || error.message : error.message}`);

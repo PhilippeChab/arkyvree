@@ -10,11 +10,12 @@ import { Pool } from "pg";
 import * as relations from "@/drizzle/relations.ts";
 import * as schema from "@/drizzle/schema.ts";
 import { clearRequestCache } from "@/server/database/requestCache.ts";
+import { readEnv } from "@/server/environment.ts";
 import { instrumentQueries } from "@/server/timing.ts";
 
 instrumentQueries();
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = readEnv("DATABASE_URL");
 
 if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
@@ -23,12 +24,12 @@ if (!connectionString) {
 const schemaWithRelations = { ...schema, ...relations };
 const pool = new Pool({
   connectionString,
-  max: parseInt(process.env.DB_POOL_MAX || "20", 10),
+  max: parseInt(readEnv("DB_POOL_MAX") || "20", 10),
   // Set DB_POOL_MIN to keep a floor of connections warm (character reads
   // dispatch 4+ parallel queries; a warm pool avoids paying ~200-300ms per
   // new TLS handshake to Neon's pooler). Default is 0 so the app can still
   // scale-to-zero — open connections keep Neon's compute from auto-suspending.
-  min: parseInt(process.env.DB_POOL_MIN || "0", 10),
+  min: parseInt(readEnv("DB_POOL_MIN") || "0", 10),
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
   // TCP-level keepalive so intermediate load balancers / Neon's pooler don't

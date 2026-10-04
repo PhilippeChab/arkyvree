@@ -16,6 +16,8 @@
  * - `shared-runtime`: `shared/` runs in the client too, so it uses neither Bun's APIs (`bun`, the `Bun` global) nor
  *   Node's (`node:fs`, `fs`).
  * - `session-param`: a `Session` parameter is named `session` (`_session` when it's unused).
+ * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
+ *   which lists every variable: never `process.env` or `Bun.env` elsewhere in the server or `shared/`.
  * - `test-placement`: a test named after a module sits at that module's mirror (`tests/services/…` ↔
  *   `server/services/…`); a test of a behavior across modules is free in its area.
  * - `concern-shape`: a concern (`function X<B extends Constructor>(Base: B)`) sits in `X.ts`, its class is named for
@@ -147,6 +149,25 @@ const routeConventions = {
           });
         }
       }),
+    };
+  },
+};
+
+const environment = {
+  meta: { type: "problem" },
+  create(context) {
+    const file = repoPath(context.filename);
+    if (!/^(server|shared)\//.test(file) || file === "server/environment.ts") return {};
+    return {
+      MemberExpression(node) {
+        const { object, property } = node;
+        if (object.type !== "Identifier" || property.type !== "Identifier" || property.name !== "env") return;
+        if (object.name !== "process" && object.name !== "Bun") return;
+        context.report({
+          node,
+          message: `Read the environment through \`@/server/environment.ts\` (\`readEnv\`, \`isProduction\`…), which lists every variable: not \`${object.name}.env\`.`,
+        });
+      },
     };
   },
 };
@@ -371,6 +392,7 @@ export const rules = {
   "no-helpers-modules": noHelpersModules,
   "repository-instances": repositoryInstances,
   "route-conventions": routeConventions,
+  environment,
   "order-through-repository": orderThroughRepository,
   "shared-runtime": sharedRuntime,
   "session-param": sessionParam,

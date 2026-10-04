@@ -1,26 +1,14 @@
+import { warmSystemRulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import "@/server/instrument-web.ts";
 import "@/server/log.ts";
-import { warmSystemRulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { waitForDatabase } from "@/server/database/waitForDatabase.ts";
+import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "@/server/environment.ts";
 import { application } from "@/server/routers/application.ts";
 import { onShutdown } from "@/server/shutdown.ts";
 import { startBroadcastListener, stopBroadcastListener, websocket } from "@/server/ws.ts";
 
-const isProduction = process.env.NODE_ENV === "production";
-
-if (isProduction) {
-  const required = [
-    "APP_URL",
-    "RESEND_API_KEY",
-    "DATABASE_URL",
-    "SIGNING_SECRET",
-    "S3_BUCKET",
-    "S3_ENDPOINT",
-    "S3_ACCESS_KEY_ID",
-    "S3_SECRET_ACCESS_KEY",
-    "S3_PUBLIC_URL",
-  ] as const;
-  const missing = required.filter((key) => !process.env[key]);
+if (isProduction()) {
+  const missing = REQUIRED_IN_PRODUCTION.filter((name) => !readEnv(name));
   if (missing.length > 0) {
     console.error(`[server] Missing required environment variables: ${missing.join(", ")}`);
     process.exit(1);
@@ -41,15 +29,15 @@ warmSystemRulesetCache().then(
   },
 );
 
-const port = Number(process.env.PORT) || 8000;
-const hostname = process.env.HOST || "localhost";
+const port = Number(readEnv("PORT")) || 8000;
+const hostname = readEnv("HOST") || "localhost";
 
 const server = Bun.serve({
   port,
   hostname,
   fetch: application.fetch,
   websocket,
-  development: process.env.NODE_ENV !== "production",
+  development: !isProduction(),
 });
 
 onShutdown("server", async () => {

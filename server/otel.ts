@@ -8,6 +8,8 @@ import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs
 import { MeterProvider, PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
 
+import { getEnvironmentName, readEnv } from "@/server/environment.ts";
+
 let initialized = false;
 let meterProvider: MeterProvider | null = null;
 let loggerProvider: LoggerProvider | null = null;
@@ -22,14 +24,14 @@ let hostMetrics: HostMetrics | null = null;
 // requests counter are recorded — we just skip span creation.
 export function initOtel(component: "web" | "worker") {
   if (initialized) return;
-  const token = process.env.OTEL_AUTH_TOKEN;
-  if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT || !token) return;
+  const token = readEnv("OTEL_AUTH_TOKEN");
+  if (!readEnv("OTEL_EXPORTER_OTLP_ENDPOINT") || !token) return;
 
   const headers = { Authorization: `Bearer ${token}` };
   const resource = resourceFromAttributes({
     [ATTR_SERVICE_NAME]: `arkyvree-${component}`,
-    [ATTR_SERVICE_VERSION]: process.env.FLY_MACHINE_VERSION || "dev",
-    "deployment.environment": process.env.NODE_ENV || "development",
+    [ATTR_SERVICE_VERSION]: readEnv("FLY_MACHINE_VERSION") || "dev",
+    "deployment.environment": getEnvironmentName(),
   });
 
   meterProvider = new MeterProvider({

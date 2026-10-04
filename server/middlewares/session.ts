@@ -3,6 +3,7 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 
 import { db } from "@/server/database/index.ts";
+import { isProduction } from "@/server/environment.ts";
 import { UnauthorizedError } from "@/server/errors/index.ts";
 import { SESSION_TTL_SECONDS } from "@/server/repositories/accounts/sessionTtl.ts";
 import { Sessions, Users } from "@/server/repositories/index.ts";
@@ -43,12 +44,10 @@ export default createMiddleware<SessionContext>(async (c, next) => {
   await next();
 });
 
-const isProduction = process.env.NODE_ENV === "production";
-
 export function setSessionCookie(c: Context, sessionId: string) {
   setCookie(c, SESSION_COOKIE_NAME, sessionId, {
     httpOnly: true,
-    secure: isProduction,
+    secure: isProduction(),
     sameSite: "Strict",
     path: "/",
     maxAge: SESSION_TTL_SECONDS,

@@ -1,9 +1,10 @@
-/** The job runner's setup: its tasks and their schedule, its logger and events, and its database pool. */
 import { EventEmitter } from "node:events";
 
 import { Logger } from "graphile-worker";
 import { Pool } from "pg";
 
+/** The job runner's setup: its tasks and their schedule, its logger and events, and its database pool. */
+import { readEnv } from "@/server/environment.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { runCleanupTask } from "@/server/jobs/runCleanup.ts";
 import { sendEmailTask } from "@/server/jobs/sendEmail.ts";
@@ -78,10 +79,10 @@ export function createWorkerEvents(onFatalError: () => void) {
  * `-pooler`.
  */
 export function createWorkerPool() {
-  const directUrl = (process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL || "").replace("-pooler", "");
+  const directUrl = (readEnv("DIRECT_DATABASE_URL") || readEnv("DATABASE_URL") || "").replace("-pooler", "");
   const pool = new Pool({
     connectionString: directUrl,
-    max: parseInt(process.env.WORKER_DB_POOL_MAX || "5", 10),
+    max: parseInt(readEnv("WORKER_DB_POOL_MAX") || "5", 10),
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
     // TCP keepalive detects dead sockets (e.g. after a Fly suspend/resume cycle

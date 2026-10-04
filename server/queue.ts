@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 
 import type { Db } from "@/server/database/index.ts";
+import { readEnv } from "@/server/environment.ts";
 
 /** Queues a job for the worker (graphile-worker), in `db`'s transaction when it's one. Ping the worker once it commits. */
 export async function addJob(
@@ -20,7 +21,7 @@ export async function addJob(
 }
 
 export const pingWorker = () => {
-  const url = process.env.WORKER_FLYCAST_URL;
+  const url = readEnv("WORKER_FLYCAST_URL");
   if (!url) return;
   fetch(url, { signal: AbortSignal.timeout(500) }).catch(() => {});
 };
