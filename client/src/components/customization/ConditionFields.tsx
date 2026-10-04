@@ -118,18 +118,19 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
             // field is empty or the existing value doesn't suit the new path
             // (not one of its choices, or not a number) — preserves
             // duplicate-from-row and any in-progress user input.
+            const operator = info.operators.includes(values.operator) ? values.operator : (info.operators[0] ?? "");
+            // A set the path restricts takes its own values
+            const choices = operator === "set" && info.setValues ? info.setValues : info.possibleValues;
             if (mode === "create") {
               // The literal, even while the template shows: it's what turning the template off restores.
               const currentValue = templateMode ? literalValue : values.value;
-              if (!currentValue || !fitsPath(currentValue, info.valueType, info.possibleValues)) {
-                const seeded = defaultValueForPath(info.valueType, info.possibleValues);
+              if (!currentValue || !fitsPath(currentValue, info.valueType, choices)) {
+                const seeded = defaultValueForPath(info.valueType, choices);
                 setLiteralValue(seeded);
                 if (!templateMode) writeFormValue(seeded);
               }
             }
-            if (!info.operators.includes(values.operator)) {
-              onChange("operator", info.operators[0] ?? "");
-            }
+            if (operator !== values.operator) onChange("operator", operator);
           } else {
             setPathInfo(null);
           }

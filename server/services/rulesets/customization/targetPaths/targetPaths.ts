@@ -110,11 +110,14 @@ function valueMismatch(pathDef: TargetPath, operator: string | undefined, value:
   }
   if (value === undefined) return null;
   if (isTemplateValue(value)) return pathDef.literalOnly ? `${path} takes a number, not a template` : null;
-  if (parseLiteralValue(value, valueType) === undefined) {
-    return `Invalid ${valueType} value for ${path}: ${JSON.stringify(value)}`;
-  }
-  if (operator === "set" && pathDef.setValues && !pathDef.setValues.some((choice) => choice.value === value)) {
+  const literal = parseLiteralValue(value, valueType);
+  if (literal === undefined) return `Invalid ${valueType} value for ${path}: ${JSON.stringify(value)}`;
+  if (operator === "set" && pathDef.setValues) {
+    if (pathDef.setValues.some((choice) => choice.value === value)) return null;
     return `A set on ${path} takes ${pathDef.setValues.map((choice) => `${choice.value} (${choice.label})`).join(", ")}`;
+  }
+  if (pathDef.minValue !== undefined && typeof literal === "number" && literal < pathDef.minValue) {
+    return `${path} takes ${pathDef.minValue} or more`;
   }
   return null;
 }

@@ -16,6 +16,8 @@ export interface TargetPath {
    * level-up wizard and the class tables count a pool's slots)
    */
   literalOnly?: boolean;
+  /** The least number an operator other than a restricted `set` takes: a pool's slots grow, -1 being all known */
+  minValue?: number;
   sortOrder?: number;
   /** When set, this path is only available for modifiers on these entity types */
   allowedEntityTypes?: string[];

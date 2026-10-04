@@ -98,6 +98,9 @@ describe("rulesets customization modifiers", () => {
       { target: "aptitudes.general.allowed", value: "{{ floor([identity.meta.level] / 2) }}", operator: "add" },
       { target: "aptitudes.wizardspells.1.allowed", value: "2", operator: "set" },
       { target: "aptitudes.wizardspells.1.uses", value: "2", operator: "multiply" },
+      // -1 is all known: an add takes 0 or more
+      { target: "aptitudes.general.allowed", value: "-4", operator: "add" },
+      { target: "aptitudes.wizardspells.1.allowed", value: "-1", operator: "add" },
     ];
     for (const json of refused) await expectStatus(modifiers.$post({ param, json }), 400);
     for (const json of [
