@@ -1,5 +1,3 @@
-import { isOneOf } from "@/shared/isOneOf.ts";
-
 /** The ruleset entities a user customizes: their modifiers, requirements and properties. */
 export const CUSTOMIZABLE_ENTITY_TYPES = ["klass_levels", "klasses", "feats", "items", "powers", "races"] as const;
 
@@ -25,11 +23,9 @@ export function buildCustomizationPath(entityType: CustomizationOwnerType, entit
   return `${URL_SEGMENTS[entityType] ?? entityType}/${entityId}/customization`;
 }
 
-/** The entity type a customization page's URL segment names; its database name still does, for links made before. */
+/** The entity type a customization page's URL segment names: "class-levels" a class level's, never "klass_levels". */
 export function parseCustomizationSegment(segment: unknown): CustomizationOwnerType | undefined {
-  const renamed = Object.entries(URL_SEGMENTS).find(([, urlSegment]) => urlSegment === segment)?.[0];
-  const entityType = renamed ?? segment;
-  return isOneOf(entityType, CUSTOMIZATION_OWNER_TYPES) ? entityType : undefined;
+  return CUSTOMIZATION_OWNER_TYPES.find((entityType) => (URL_SEGMENTS[entityType] ?? entityType) === segment);
 }
 
 /** What property types are defined for: a customizable entity, a ruleset or a skill. */

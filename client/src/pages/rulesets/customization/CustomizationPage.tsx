@@ -399,14 +399,15 @@ export default function CustomizationPage() {
   const tabs = validType ? tabsFor(validType) : [];
   const currentTab = tabs.find((tab) => tab.key === section)?.key;
 
-  // Normalize the URL to a tab the entity has, under its type's segment (a link made before reads "klass_levels").
+  // Normalize the URL to a tab the entity has.
   useEffect(() => {
-    if (!validType || !entityId) return;
-    const pagePath = `/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}`;
-    if (!currentTab || !location.pathname.startsWith(`${pagePath}/`)) {
-      navigate(`${pagePath}/${currentTab ?? tabsFor(validType)[0].key}`, { replace: true, state: location.state });
+    if (validType && entityId && !currentTab) {
+      navigate(`/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}/${tabsFor(validType)[0].key}`, {
+        replace: true,
+        state: location.state,
+      });
     }
-  }, [rulesetId, validType, entityId, currentTab, navigate, location.pathname, location.state]);
+  }, [rulesetId, validType, entityId, currentTab, navigate, location.state]);
 
   // A failed refetch keeps showing the data it has (and any unsaved edits).
   if (

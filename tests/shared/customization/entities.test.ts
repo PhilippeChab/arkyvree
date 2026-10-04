@@ -8,10 +8,10 @@ describe("customization page paths", () => {
     expect(buildCustomizationPath("feats", "id")).toBe("feats/id/customization");
   });
 
-  test("read an entity type back from its segment, or from its database name for links made before", () => {
+  test("read an entity type back from its segment, not from the database's name", () => {
     expect([parseCustomizationSegment("class-levels"), parseCustomizationSegment("klass_levels")]).toEqual([
       "klass_levels",
-      "klass_levels",
+      undefined,
     ]);
     expect(parseCustomizationSegment("modifiers")).toBe("modifiers");
     expect([parseCustomizationSegment("classes"), parseCustomizationSegment(undefined)]).toEqual([
