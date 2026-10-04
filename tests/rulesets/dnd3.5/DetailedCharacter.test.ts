@@ -143,6 +143,21 @@ async function createItem(
   return item;
 }
 
+/** A new wondrous item of the seeded ruleset, worn at `slot`, that raises an ability by `bonus`. */
+async function createAbilityItem(ability: string, bonus: number, slot: ItemLocation) {
+  const item = await createItem({ name: `${ability} +${bonus}`, type: "Wondrous Item", slot });
+  await Modifiers.create(db, {
+    sourceId: item.id,
+    sourceType: "items",
+    target: `abilities.${ability}.misc`,
+    value: String(bonus),
+    valueType: "number",
+    operator: "add",
+  });
+  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+  return item;
+}
+
 /** The seeded character, now a halfling. */
 async function asHalfling(name: string) {
   const character = await seeded(name);
@@ -336,6 +351,36 @@ describe("DetailedCharacter", () => {
       const hp = (await buildSeeded("Kael Stormborn")).getDetailedCharacterCombat().getCombat().hp;
       expect(hp).toMatchObject({ base: 37, constitution: 16, misc: 3, total: 56 });
     });
+
+    test("never drop a level below 1 hit point, however low the constitution", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(
+        "Frail Fighter",
+        { Strength: 10, Dexterity: 10, Constitution: 6, Intelligence: 10, Wisdom: 10, Charisma: 10 },
+        { xp: 1000 },
+      );
+      await addClassLevels(db, ctx, characterId, "Fighter", [1, 2], [1, 4]);
+      const hp = (await build((await Characters.findOne(db, { id: characterId }))!))
+        .getDetailedCharacterCombat()
+        .getCombat().hp;
+      // CON 6 takes 2 off each roll: the 1 rolled still gives 1, the 4 gives 2.
+      expect(hp).toMatchObject({ base: 5, constitution: -2, total: 3 });
+    });
+  });
+
+  describe("initiative", () => {
+    test("adds dexterity, modifiers to it included", async () => {
+      // DEX 14, 18 (+4) with the gloves.
+      const combat = (
+        await buildCarrying("Bjorn Ironhand", [
+          { item: (await createAbilityItem("dexterity", 4, "Hands")).id, location: "Hands" },
+        ])
+      )
+        .getDetailedCharacterCombat()
+        .getCombat();
+      expect(combat.initiative.dexterity).toBe(4);
+      expect(combat.ac.dexterity).toBe(4);
+    });
   });
 
   describe("weapons", () => {
@@ -454,6 +499,38 @@ describe("DetailedCharacter", () => {
       });
     });
 
+    test("add a sling's strength to damage, a thrown weapon's, and aim it with dexterity", async () => {
+      // STR 18 (+4), DEX 14 (+2).
+      const sling = weaponSet(
+        await buildCarrying("Bjorn Ironhand", [{ item: "Sling", location: "Main Hand", weaponSet: 0 }]),
+      ).mainhand;
+      expect(sling).toMatchObject({ name: "Sling", tohit: { strength: 2 }, damage: { strength: 4, total: "1d4 + 4" } });
+    });
+
+    test("take a strength penalty but no bonus to a bow's damage, its rating aside, and none to a crossbow's", async () => {
+      const ranged: Carried[] = [
+        { item: "Longbow", location: "Two Handed", weaponSet: 0 },
+        { item: "Composite Longbow", location: "Two Handed", weaponSet: 1 },
+        { item: "Light Crossbow", location: "Two Handed", weaponSet: 2 },
+      ];
+      const strengthToDamage = (detailed: Detailed) =>
+        ["0", "1", "2"].map((set) => weaponSet(detailed, set).twohanded!.damage.strength);
+      // STR 8 (-1), then STR 18 (+4).
+      expect(strengthToDamage(await buildCarrying("Vex Flamecaller", ranged))).toEqual([-1, -1, 0]);
+      expect(strengthToDamage(await buildCarrying("Bjorn Ironhand", ranged))).toEqual([0, 0, 0]);
+    });
+
+    test("aim and strike with strength as modifiers leave it", async () => {
+      // STR 18, 22 (+6) with the belt.
+      const longsword = weaponSet(
+        await buildCarrying("Bjorn Ironhand", [
+          { item: (await createAbilityItem("strength", 4, "Waist")).id, location: "Waist" },
+          { item: "Longsword", location: "Main Hand", weaponSet: 0 },
+        ]),
+      ).mainhand;
+      expect(longsword).toMatchObject({ tohit: { strength: 6 }, damage: { strength: 6 } });
+    });
+
     test("aim a thrown dagger with strength and a crossbow with dexterity", async () => {
       // STR 8 (-1), DEX 14 (+2), BAB +1.
       const vex = await buildSeeded("Vex Flamecaller");
@@ -471,6 +548,17 @@ describe("DetailedCharacter", () => {
           mainhand: { name: "Shortsword", tohit: { strength: 5 }, damage: { strength: 0 } },
           offhand: { name: "Dagger", tohit: { strength: 5 } },
         });
+      });
+
+      test("aim with strength once modifiers raise it past dexterity", async () => {
+        // An elf rogue: DEX 20 (+5), STR 10, 22 (+6) with the belt.
+        const rapier = weaponSet(
+          await buildCarrying("Lyra Shadowstep", [
+            { item: (await createAbilityItem("strength", 12, "Waist")).id, location: "Waist" },
+            { item: "Rapier", location: "Main Hand", weaponSet: 0 },
+          ]),
+        ).mainhand;
+        expect(rapier).toMatchObject({ name: "Rapier", tohit: { strength: 6 } });
       });
 
       test("keep strength when it's higher", async () => {
@@ -1492,7 +1580,7 @@ describe("DetailedCharacter", () => {
       expect(kael.speed.total).toBe(15 + kael.speed.misc);
     });
 
-    test("caps dexterity in armor class and costs weight-affected skills, unless the armor costs more", async () => {
+    test("caps dexterity in armor class and costs weight-affected skills, swim double, unless the armor costs more", async () => {
       // A heavy load's max dex 1, over DEX 14's +2.
       expect(
         (await buildCarrying("Bjorn Ironhand", [{ item: "Barrel (empty)", quantity: 7, equipped: false }]))
@@ -1506,15 +1594,15 @@ describe("DetailedCharacter", () => {
           .getSkills();
         return [swim?.weight, climb?.weight];
       };
-      // A medium load's -3.
-      expect(await skills([{ item: "Barrel (empty)", quantity: 4, equipped: false }])).toEqual([3, 3]);
+      // A medium load's -3, twice that on Swim.
+      expect(await skills([{ item: "Barrel (empty)", quantity: 4, equipped: false }])).toEqual([6, 3]);
       // Chain mail's -5 wins over the medium load's -3.
       expect(
         await skills([
           { item: "Chain Mail", location: "Torso" },
           { item: "Barrel (empty)", quantity: 3, equipped: false },
         ]),
-      ).toEqual([5, 5]);
+      ).toEqual([10, 5]);
     });
   });
   describe("a class's own customizations", () => {

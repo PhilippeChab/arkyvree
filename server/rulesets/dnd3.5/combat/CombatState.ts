@@ -44,6 +44,14 @@ export type WeaponSet = {
   twohanded: WeaponSlot | null;
 };
 
+/** How a weapon's attack and damage follow the character's abilities, which its totals are recomputed from. */
+export type WeaponAbilities = {
+  /** Dexterity for a projectile weapon, Strength for any other: the better of the two once Weapon Finesse applies. */
+  attack: "Strength" | "Dexterity" | "Finesse";
+  /** A bow's Mighty rating (0 for a plain bow), which caps its Strength bonus to damage; null for any other weapon. */
+  bowMighty: number | null;
+};
+
 /** A weapon slot's label, as an item's location names it, to its place in the weapon set. */
 export const SLOT_MAP: Record<string, keyof WeaponSet> = {
   "Main Hand": "mainhand",
@@ -165,4 +173,10 @@ export default abstract class CombatState {
   protected raceSize = "Medium";
 
   protected hitDiceOverride: number | null = null;
+
+  /** Each level's hit die roll, which its Constitution modifier adds to. */
+  protected hitDieRolls: number[] = [];
+
+  /** Each weapon's abilities, which its totals follow once the abilities' modifiers have applied. */
+  protected readonly weaponAbilities = new WeakMap<WeaponSlot, WeaponAbilities>();
 }

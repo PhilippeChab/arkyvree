@@ -1,7 +1,7 @@
 import type { Constructor } from "@/server/mixins.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/server/rulesets/constants.ts";
 import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
-import { SLOT_MAP, type WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import { SLOT_MAP, type WeaponAbilities, type WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import {
   DAMAGE_TYPE,
   WEAPON_BASE_DAMAGE,
@@ -38,6 +38,12 @@ const DAMAGE_PROGRESSION = [
   "4d6",
   "4d8",
 ];
+
+/** The weapon families that fire projectiles, which attack with Dexterity. */
+const PROJECTILE_FAMILIES = ["Bow", "Crossbow", "Sling"];
+
+/** The share of its Strength modifier a weapon adds to damage in each slot: all of it, half, or one and a half. */
+const SLOT_STRENGTH_MULTIPLIERS: Record<string, number> = { "Main Hand": 1, "Off Hand": 0.5, "Two Handed": 1.5 };
 
 function iterativeAttacks(bab: number): number[] {
   const attacks: number[] = [];
@@ -91,24 +97,49 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       g.total = g.bab + g.strength + g.size + g.misc;
     }
 
+    /**
+     * A weapon's Strength to damage: its slot's share of the modifier (a melee or thrown weapon, a sling), or a bow's
+     * (a penalty, and a bonus up to its Mighty rating). A crossbow adds none.
+     */
+    private updateStrengthDamage(weapon: WeaponSlot, bowMighty: number | null) {
+      const strength = this.characterAbilities.getAbilityModifier("Strength");
+      if (weapon.damage.strmultiplier !== null) {
+        weapon.damage.strength = Math.floor(strength * weapon.damage.strmultiplier);
+      } else if (bowMighty !== null) {
+        weapon.damage.strength = strength < 0 ? strength : Math.min(strength, bowMighty);
+      }
+    }
+
+    /** A weapon's to-hit and damage, from the character's abilities as they stand. */
+    private updateWeaponTotal(weapon: WeaponSlot) {
+      const abilities = this.weaponAbilities.get(weapon);
+      if (abilities) {
+        weapon.tohit.strength = this.attackModifier(abilities.attack);
+        this.updateStrengthDamage(weapon, abilities.bowMighty);
+      }
+
+      weapon.tohit.size = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
+      const tohitBonuses = weapon.tohit.strength + weapon.tohit.magic + weapon.tohit.misc + weapon.tohit.size;
+      weapon.tohit.total = iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + tohitBonuses);
+
+      weapon.damage.total = formatDamageTotal(weapon);
+    }
+
     protected updateWeaponsTotal() {
       for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
         for (const slotKey of WEAPON_SET_SLOTS) {
           const weapon = weaponSet[slotKey];
-          if (!weapon) continue;
-
-          if (weapon.damage.strmultiplier !== null) {
-            const strMod = this.characterAbilities.getAbilityModifier("Strength");
-            weapon.damage.strength = Math.floor(strMod * weapon.damage.strmultiplier);
-          }
-
-          weapon.tohit.size = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
-          const tohitBonuses = weapon.tohit.strength + weapon.tohit.magic + weapon.tohit.misc + weapon.tohit.size;
-          weapon.tohit.total = iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + tohitBonuses);
-
-          weapon.damage.total = formatDamageTotal(weapon);
+          if (weapon) this.updateWeaponTotal(weapon);
         }
       }
+    }
+
+    /** The ability modifier a weapon attacks with. */
+    private attackModifier(attack: WeaponAbilities["attack"]): number {
+      const strength = this.characterAbilities.getAbilityModifier("Strength");
+      if (attack === "Strength") return strength;
+      const dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
+      return attack === "Dexterity" ? dexterity : Math.max(strength, dexterity);
     }
 
     /** The weapon set, created if missing, with the slots the weapon displaces emptied. */
@@ -122,33 +153,6 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         this.detailedCharacterCombat.weaponsets[setKey].offhand = null;
       } else {
         this.detailedCharacterCombat.weaponsets[setKey].twohanded = null;
-      }
-    }
-
-    /**
-     * The strength bonus to a weapon's damage, and the slot's multiplier. Projectile weapons (bows, crossbows, slings)
-     * get no STR to damage unless they have a Mighty rating (composite bows), which caps STR bonus. Negative STR always
-     * applies regardless of Mighty rating. Melee/thrown weapons use STR with slot multiplier (full/half/1.5x).
-     */
-    private strengthDamage(
-      slot: "Main Hand" | "Off Hand" | "Two Handed",
-      isProjectile: boolean,
-      mighty?: WeaponProperty,
-    ) {
-      const strMod = this.characterAbilities.getAbilityModifier("Strength");
-      if (isProjectile) {
-        const damageModifier = mighty ? (strMod < 0 ? strMod : Math.min(strMod, Number(mighty.value))) : 0;
-        return { damageModifier, strMultiplier: null };
-      }
-      switch (slot) {
-        case "Main Hand":
-          return { damageModifier: strMod, strMultiplier: 1 };
-        case "Off Hand":
-          return { damageModifier: Math.floor(strMod * 0.5), strMultiplier: 0.5 };
-        case "Two Handed":
-          return { damageModifier: Math.floor(strMod * 1.5), strMultiplier: 1.5 };
-        default:
-          return { damageModifier: 0, strMultiplier: null };
       }
     }
 
@@ -171,15 +175,12 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const hasFinesse = characterFeats.getFeat("Weapon Finesse")?.possessed ?? false;
       if (!hasFinesse) return;
 
-      const dexMod = this.characterAbilities.getAbilityModifier("Dexterity");
-
       for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
         for (const slotKey of WEAPON_SET_SLOTS) {
           const weapon = weaponSet[slotKey];
-          if (!weapon || !weapon.finessable) continue;
-          if (dexMod > weapon.tohit.strength) {
-            weapon.tohit.strength = dexMod;
-          }
+          if (!weapon?.finessable) continue;
+          const abilities = this.weaponAbilities.get(weapon);
+          if (abilities?.attack === "Strength") abilities.attack = "Finesse";
         }
       }
 
@@ -196,18 +197,15 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const property = (type: string) => properties.find((p) => p.type === type);
       if (!property(WEAPON_PROFICIENCY)) return;
       const baseDamage = property(WEAPON_BASE_DAMAGE)?.value ?? "unknown";
-      const isProjectile = ["Bow", "Crossbow", "Sling"].includes(property(WEAPON_FAMILY)?.value ?? "");
-
-      // Projectile weapons (bows, crossbows, slings) use DEX for attack
-      // Thrown weapons (daggers, javelins, etc.) still use STR
-      const attackModifier = this.characterAbilities.getAbilityModifier(isProjectile ? "Dexterity" : "Strength");
-      const { damageModifier, strMultiplier } = this.strengthDamage(slot, isProjectile, property(WEAPON_MIGHTY));
-      const sizeModifier = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
+      const family = property(WEAPON_FAMILY)?.value ?? "";
+      // A bow's Strength to damage is its own (a crossbow's none); a sling's is a thrown weapon's, the slot's share
+      const isBow = family === "Bow";
+      const strMultiplier = isBow || family === "Crossbow" ? null : (SLOT_STRENGTH_MULTIPLIERS[slot] ?? null);
 
       const slotKey = SLOT_MAP[slot];
       const setKey = String(setIndex);
       this.clearSlots(setKey, slot);
-      this.detailedCharacterCombat.weaponsets[setKey][slotKey] = {
+      const weapon: WeaponSlot = {
         name: item.name,
         itemId,
         proficient: true,
@@ -215,25 +213,14 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         range: Number(property(WEAPON_RANGE)?.value ?? 0),
         reach: Number(property(WEAPON_REACH)?.value ?? 0),
         slot: slotKey,
-        tohit: {
-          strength: attackModifier,
-          magic: 0,
-          misc: 0,
-          size: sizeModifier,
-          total: iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + attackModifier + sizeModifier),
-        },
+        tohit: { strength: 0, magic: 0, misc: 0, size: 0, total: [] },
         damage: {
           base: baseDamage,
-          strength: damageModifier,
+          strength: 0,
           magic: 0,
           misc: 0,
           others: [],
-          total:
-            damageModifier < 0
-              ? `${baseDamage} - ${Math.abs(damageModifier)}`
-              : damageModifier > 0
-                ? `${baseDamage} + ${damageModifier}`
-                : baseDamage,
+          total: baseDamage,
           types: properties.filter((p) => p.type === DAMAGE_TYPE).map((p) => p.value),
           strmultiplier: strMultiplier,
           critical: {
@@ -242,6 +229,13 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           },
         },
       };
+      this.weaponAbilities.set(weapon, {
+        // Projectile weapons attack with Dexterity; thrown weapons (daggers, javelins…) still use Strength
+        attack: PROJECTILE_FAMILIES.includes(family) ? "Dexterity" : "Strength",
+        bowMighty: isBow ? Number(property(WEAPON_MIGHTY)?.value ?? 0) : null,
+      });
+      this.updateWeaponTotal(weapon);
+      this.detailedCharacterCombat.weaponsets[setKey][slotKey] = weapon;
     }
 
     /**

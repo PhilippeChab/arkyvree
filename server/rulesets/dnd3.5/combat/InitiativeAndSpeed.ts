@@ -18,8 +18,9 @@ export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) 
     }
 
     protected updateInitiativeTotal() {
-      this.detailedCharacterCombat.initiative.total =
-        this.detailedCharacterCombat.initiative.dexterity + this.detailedCharacterCombat.initiative.misc;
+      const initiative = this.detailedCharacterCombat.initiative;
+      initiative.dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
+      initiative.total = initiative.dexterity + initiative.misc;
     }
 
     protected updateSpeedTotal() {

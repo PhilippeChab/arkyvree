@@ -13,6 +13,9 @@ import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/tar
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+/** The skill an armor check penalty counts double on (SRD). */
+const DOUBLE_CHECK_PENALTY_SKILL = "swim";
+
 const NAVIGATABLE_PATHS = [
   { path: "rank", description: "Total ranks invested", type: "number" as const },
   { path: "ability", description: "From key ability modifier", type: "number" as const },
@@ -151,7 +154,7 @@ export default class DetailedCharacterSkills {
     for (const skillName of this.weightAffectedSkills) {
       const skill = this.detailedCharacterSkills[skillName];
       if (skill) {
-        skill.weight = weight;
+        skill.weight = skillName === DOUBLE_CHECK_PENALTY_SKILL ? weight * 2 : weight;
       }
     }
   }
