@@ -1,4 +1,4 @@
-import type { LevelsHooks } from "@/server/rulesets/hooks/LevelsHooks.ts";
+import type { LevelsHooks } from "@/server/rulesets/hooks/index.ts";
 
 export class Dnd35LevelsHooks implements LevelsHooks {
   /** Exposed as a static so consumers that only need the constant don't

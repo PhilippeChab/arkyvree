@@ -12,7 +12,7 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { LevelUpProjector, ProjectedCharacterData } from "@/server/rulesets/types.ts";
-import type { Power, Skill } from "@/shared/relations.ts";
+import type { Power, Property, Skill } from "@/shared/relations.ts";
 
 /** A projected skill row with a 3.5 rank allocation. */
 type Dnd35ProjectedSkill = Skill & {
@@ -66,3 +66,6 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
     classSkillIds: Set<string>,
   ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[];
 }
+
+/** What a weapon's stats read of a property: its type and its value (an item's, or a natural attack's). */
+export type WeaponProperty = Pick<Property, "type" | "value">;

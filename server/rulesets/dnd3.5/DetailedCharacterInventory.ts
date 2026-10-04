@@ -116,7 +116,7 @@ export default class DetailedCharacterInventory {
 
     const set0Mainhand = this.characterCombat.getCombat().weaponsets["0"]?.mainhand;
     if (set0Mainhand?.name === "Unarmed Strike" && set0Mainhand.itemId === null) {
-      this.characterWeapons.registerWeapon(0, "Main Hand", { name: "Unarmed Strike" } as unknown as Item);
+      this.characterWeapons.registerWeapon(0, "Main Hand", { name: "Unarmed Strike" });
     }
   }
 

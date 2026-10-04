@@ -14,10 +14,11 @@ import {
   WEAPON_RANGE,
   WEAPON_REACH,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
 import { WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import type DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
-import { type Item, type Property } from "@/shared/relations.ts";
+import { type Item } from "@/shared/relations.ts";
 
 // D&D 3.5 damage die progression for size adjustments.
 // All weapon/unarmed damages are defined for Medium size; shift up for Large, down for Small, etc.
@@ -129,7 +130,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * get no STR to damage unless they have a Mighty rating (composite bows), which caps STR bonus. Negative STR always
      * applies regardless of Mighty rating. Melee/thrown weapons use STR with slot multiplier (full/half/1.5x).
      */
-    private strengthDamage(slot: "Main Hand" | "Off Hand" | "Two Handed", isProjectile: boolean, mighty?: Property) {
+    private strengthDamage(
+      slot: "Main Hand" | "Off Hand" | "Two Handed",
+      isProjectile: boolean,
+      mighty?: WeaponProperty,
+    ) {
       const strMod = this.characterAbilities.getAbilityModifier("Strength");
       if (isProjectile) {
         const damageModifier = mighty ? (strMod < 0 ? strMod : Math.min(strMod, Number(mighty.value))) : 0;
@@ -184,8 +189,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     addWeapon(
       setIndex: number,
       slot: "Main Hand" | "Off Hand" | "Two Handed",
-      item: Item,
-      properties: Property[],
+      item: Pick<Item, "name">,
+      properties: WeaponProperty[],
       itemId: string | null = null,
     ): void {
       const property = (type: string) => properties.find((p) => p.type === type);
@@ -256,15 +261,15 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         const setIndex = Math.floor(idx / slots.length);
         const slot = slots[idx % slots.length];
         const displayName = attack.count && attack.count > 1 ? `${attack.name} (x${attack.count})` : attack.name;
-        const props: Property[] = [
+        const props: WeaponProperty[] = [
           { type: WEAPON_PROFICIENCY, value: "Natural" },
           { type: WEAPON_BASE_DAMAGE, value: attack.damage },
           { type: DAMAGE_TYPE, value: attack.type },
           { type: WEAPON_CRITICAL_RANGE, value: "1" },
           { type: WEAPON_CRITICAL_MULTIPLIER, value: "2" },
           { type: WEAPON_FINESSABLE, value: "true" },
-        ] as unknown as Property[];
-        this.addWeapon(setIndex, slot, { name: displayName } as unknown as Item, props);
+        ];
+        this.addWeapon(setIndex, slot, { name: displayName }, props);
       }
     }
 

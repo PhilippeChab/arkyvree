@@ -1,8 +1,9 @@
 import { SLOT_MAP, type WeaponSet } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
 import { WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
-import type { Item, Property } from "@/shared/relations.ts";
+import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 const SLOT_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
@@ -81,7 +82,7 @@ export default class DetailedCharacterWeapons {
     this.characterCombat.updateTotals();
   }
 
-  registerWeapon(setIndex: number, slot: string, item: Item, properties: Property[] = []): void {
+  registerWeapon(setIndex: number, slot: string, item: Pick<Item, "name">, properties: WeaponProperty[] = []): void {
     const slotKey = SLOT_MAP[slot];
     if (!slotKey) return;
 

@@ -24,7 +24,7 @@ const SLOT_CONFLICT_MESSAGES: Record<SlotConflictReason, (location: ItemLocation
   sameHand: (location) => `"${location}" is already occupied in this weapon set`,
 };
 
-export async function validateEquipmentSlot(
+async function validateEquipmentSlot(
   tx: Db,
   characterId: string,
   item: { id: string; type: string | null },
@@ -61,7 +61,7 @@ export async function validateEquipmentSlot(
   }
 }
 
-export async function validateItemRequirements(
+async function validateItemRequirements(
   tx: Db,
   characterRecord: CharacterRecord,
   item: { id: string; type: string | null; sourceItemId: string | null },

@@ -1,4 +1,4 @@
-import type { ItemsHooks } from "@/server/rulesets/hooks/ItemsHooks.ts";
+import type { ItemsHooks } from "@/server/rulesets/hooks/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
 export class Dnd35ItemsHooks implements ItemsHooks {

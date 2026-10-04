@@ -2,7 +2,7 @@ import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { WEAPON_SIZE } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import type { InventoryHooks } from "@/server/rulesets/hooks/InventoryHooks.ts";
+import type { InventoryHooks } from "@/server/rulesets/hooks/index.ts";
 import { SIZE_ORDER } from "@/server/rulesets/properties/index.ts";
 
 export class Dnd35InventoryHooks implements InventoryHooks {
