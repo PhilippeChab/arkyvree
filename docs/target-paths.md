@@ -4,6 +4,8 @@ All available paths for modifiers and requirements. Dynamic segments are shown a
 
 Paths marked "req only" are available as requirement targets but not modifier targets.
 
+A part that comes from an ability (a skill's or a save's `ability`, `combat.ac.dexterity`, `combat.hp.constitution`, `combat.initiative.dexterity`, `combat.grapple.strength`, a weapon's `tohit.strength` and `damage.strength`) is computed again from the abilities once modifiers apply, so it follows a modifier that raises the ability: a flat bonus belongs in the `misc` beside it.
+
 ## abilities
 
 | Path | Type | Description |
