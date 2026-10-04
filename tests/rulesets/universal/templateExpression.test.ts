@@ -83,8 +83,12 @@ describe("templateExpression", () => {
     expect(evaluateTemplateExpression("-5 + [classes.druid.level]", holders, traverser)).toBe(0);
   });
 
-  test("division by zero returns null", () => {
-    expect(evaluateTemplateExpression("[classes.druid.level] / 0", holders, traverser)).toBeNull();
+  test("division by zero returns null, and says so", () => {
+    const warnings: string[] = [];
+    expect(
+      evaluateTemplateExpression("[classes.druid.level] / 0", holders, traverser, (warning) => warnings.push(warning)),
+    ).toBeNull();
+    expect(warnings).toEqual(['Template "[classes.druid.level] / 0" divides by zero']);
   });
 
   test("unresolvable path returns null", () => {
