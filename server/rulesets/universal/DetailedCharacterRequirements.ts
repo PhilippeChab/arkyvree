@@ -1,6 +1,7 @@
 import type { Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
+import { parseLiteralValue } from "./literalValue.ts";
 import { evaluateTemplateExpression, extractTemplateExpression, isTemplateValue } from "./templateExpression.ts";
 
 type Node = {
@@ -104,17 +105,13 @@ export default class DetailedCharacterRequirements {
       }
       return resolved;
     }
-    switch (valueType) {
-      case "number":
-        return Number(value);
-      case "string":
-        return String(value);
-      case "boolean":
-        return Boolean(value);
-      default:
-        this.warn(requirement, `Unsupported value type: ${valueType}`);
-        return null;
+    // A condition saved without a value (an emptiness check needs none) compares with the empty literal
+    const literal = parseLiteralValue(value ?? "", valueType);
+    if (literal === undefined) {
+      this.warn(requirement, `Invalid ${valueType} value: ${JSON.stringify(value)}`);
+      return null;
     }
+    return literal;
   }
 
   /**
@@ -286,6 +283,14 @@ export default class DetailedCharacterRequirements {
 
   getRequirements() {
     return this.detailedCharacterRequirements;
+  }
+
+  /** Whether a condition (a requirement on a path, not a chain of them) is met: by any of what its path reaches. */
+  isConditionMet(requirement: Requirement, holders: Holders): boolean {
+    if (!requirement.target) return false;
+    return this.targetPaths
+      .traversePathInit(requirement.target, holders)
+      .some((result) => !result.error && this.evaluateRequirement(requirement, result, holders));
   }
 
   evaluateRequirements(holders: Holders, requirements: Requirement[][]) {

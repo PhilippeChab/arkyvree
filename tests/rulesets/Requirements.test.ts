@@ -58,6 +58,8 @@ describe("DetailedCharacterRequirements", () => {
     ["a wildcard with one match among several", {}, [false, true, false], met],
     ["a wildcard without a match", {}, [false, false, false], unmet],
     ["a wildcard that reaches nothing", {}, [], unmet],
+    ["a feat required absent, and absent", { value: "false" }, [false], met],
+    ["a feat required absent, but had", { value: "false" }, [true], unmet],
     [
       "a wildcard over numbers, one above the bar",
       { target: "powers.groups.evocation.*.dc.total", operator: "greater_than", value: "15", valueType: "number" },
@@ -91,6 +93,18 @@ describe("DetailedCharacterRequirements", () => {
       evaluate([requirement()], () => [result(null, "Element not found: x"), result(null, "Element not found: y")])
         .invalid,
     ).toHaveLength(2);
+  });
+
+  test("reports a value that isn't of its type: a boolean is true or false, a number not empty", () => {
+    expect(evaluate([requirement({ value: "yes" })], () => [result(true)])).toEqual({
+      ...unmet,
+      invalid: ['Invalid boolean value: "yes"'],
+    });
+    const count = { target: "feats.toughness.count", operator: "equal", value: "", valueType: "number" } as const;
+    expect(evaluate([requirement(count)], () => [result(0)])).toEqual({
+      ...unmet,
+      invalid: ['Invalid number value: ""'],
+    });
   });
 
   test("combines a wildcard with the rest of its group", () => {

@@ -21,7 +21,7 @@ function modifier(values: Partial<Modifier> = {}): Modifier {
 }
 
 /** Evaluates a modifier on a target holding `value`; returns what the target ends with, and what was recorded. */
-function evaluate(applied: Modifier, value: number) {
+function evaluate(applied: Modifier, value: number | boolean) {
   const target = { misc: value };
   const modifiers = new DetailedCharacterModifiers({
     traversePathInit: () => [
@@ -52,6 +52,28 @@ describe("DetailedCharacterModifiers", () => {
       applied: 0,
       skipped: ['Template "1 / 0" divides by zero'],
     });
+  });
+
+  test("sets a boolean written false to false", () => {
+    expect(evaluate(modifier({ operator: "set", value: "false", valueType: "boolean" }), true)).toEqual({
+      value: false,
+      applied: 1,
+      skipped: [],
+    });
+  });
+
+  test.each([
+    [
+      "a boolean neither true nor false",
+      { operator: "set", value: "yes", valueType: "boolean" },
+      true,
+      ['Invalid boolean value: "yes"'],
+    ],
+    ["a number that doesn't parse", { value: "abc" }, 5, ['Invalid number value: "abc"']],
+    ["an empty number", { value: "" }, 5, ['Invalid number value: ""']],
+    ["a division by zero", { operator: "divide", value: "0" }, 5, ["Divides by zero"]],
+  ] as const)("skips %s, saying so", (_, values, value, skipped) => {
+    expect(evaluate(modifier(values), value)).toEqual({ value, applied: 0, skipped: [...skipped] });
   });
 
   test("skips a template value that isn't a finite number, saying so", () => {

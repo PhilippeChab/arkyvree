@@ -3,6 +3,7 @@ import type { Modifier } from "@/shared/relations.ts";
 
 import type DetailedCharacterRequirements from "./DetailedCharacterRequirements.ts";
 import { isTraversable } from "./isTraversable.ts";
+import { parseLiteralValue } from "./literalValue.ts";
 import {
   evaluateTemplateExpression,
   extractReferencedPaths,
@@ -123,6 +124,7 @@ export default class DetailedCharacterModifiers {
       case "divide":
         if (typeof typedValue !== "number" || typeof data !== "number")
           return this.skip(modifier, `Division is not supported for ${valueType}`);
+        if (typedValue === 0) return this.skip(modifier, "Divides by zero");
         object[key] = data / typedValue;
         return true;
       case "set":
@@ -155,17 +157,12 @@ export default class DetailedCharacterModifiers {
       this.skip(modifier, `Value type mismatch: expected ${valueType}, got ${typeof data}`);
       return null;
     }
-    switch (valueType) {
-      case "number":
-        return Number(value);
-      case "string":
-        return String(value);
-      case "boolean":
-        return Boolean(value);
-      default:
-        this.skip(modifier, `Unsupported value type: ${valueType}`);
-        return null;
+    const literal = parseLiteralValue(value, valueType);
+    if (literal === undefined) {
+      this.skip(modifier, `Invalid ${valueType} value: ${JSON.stringify(value)}`);
+      return null;
     }
+    return literal;
   }
 
   private resolveTemplateValue(
