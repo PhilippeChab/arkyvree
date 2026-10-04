@@ -37,42 +37,42 @@
       {
         "level": 2,
         "operator": "add",
-        "target": "abilities.strength",
+        "target": "abilities.strength.misc",
         "value": "2",
         "valueType": "number"
       },
       {
         "level": 4,
         "operator": "add",
-        "target": "abilities.strength",
+        "target": "abilities.strength.misc",
         "value": "2",
         "valueType": "number"
       },
       {
         "level": 6,
         "operator": "add",
-        "target": "abilities.constitution",
+        "target": "abilities.constitution.misc",
         "value": "2",
         "valueType": "number"
       },
       {
         "level": 8,
         "operator": "add",
-        "target": "abilities.intelligence",
+        "target": "abilities.intelligence.misc",
         "value": "2",
         "valueType": "number"
       },
       {
         "level": 10,
         "operator": "add",
-        "target": "abilities.strength",
+        "target": "abilities.strength.misc",
         "value": "4",
         "valueType": "number"
       },
       {
         "level": 10,
         "operator": "add",
-        "target": "abilities.charisma",
+        "target": "abilities.charisma.misc",
         "value": "2",
         "valueType": "number"
       }

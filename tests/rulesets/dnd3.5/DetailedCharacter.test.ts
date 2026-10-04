@@ -2145,6 +2145,30 @@ describe("DetailedCharacter", () => {
     });
   });
   describe("a class's own customizations", () => {
+    test("give a dragon disciple its ability boosts", async () => {
+      const ctx = await getSeedCtx();
+      const fork = await forkWith(DND35_DMG_NAME);
+      const characterId = await createSeedCharacter(
+        "Dragon Blooded",
+        { ...WIZARD_SCORES, Strength: 12 },
+        { rulesetId: fork.id },
+      );
+      await addClassLevels(db, ctx, characterId, "Sorcerer", [1], [4]);
+      const dragonDisciple = (await Klasses.findOne(db, {
+        name: "Dragon Disciple",
+        rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id,
+      }))!;
+      const strength = async () =>
+        (await build((await Characters.findOne(db, { id: characterId }))!))
+          .getDetailedCharacterAbilities()
+          .getAbilities().strength.total;
+      await addCharacterLevel(characterId, (await findKlassLevel(dragonDisciple.id, 1))!.id);
+      expect(await strength()).toBe(12);
+      // The second level's +2 Strength
+      await addCharacterLevel(characterId, (await findKlassLevel(dragonDisciple.id, 2))!.id);
+      expect(await strength()).toBe(14);
+    });
+
     const dexterityMisc = (detailed: Detailed) =>
       detailed.getDetailedCharacterAbilities().getAbilities().dexterity.misc;
 
