@@ -135,7 +135,7 @@ Grouped by shield type and item name.
 | `feats.<family>.*.count` | number | Times any one feat of the family was taken (req only) |
 | `feats.<family>.count` | number | Times the family's feats were taken, all together (req only) |
 
-A family is the feats sharing a `FEAT_FAMILY` property (*Feat family groupings* in [customization.md](./customization.md)). `feats.<family>.possessed` names no feat.
+A family is the feats sharing a `FEAT_FAMILY` property (*Feat family groupings* in [customization.md](./customization.md)). `feats.<family>.possessed` names no feat, unless a feat has the family's name: Martial Weapon Proficiency (every martial weapon) and its family (the feats for one weapon) share `feats.martialweaponproficiency`, where `possessed` and `count` are the feat's and `*` reaches the family's feats. The family's count isn't listed there.
 
 ### Proficiency feat paths (auto-generated as item requirements)
 

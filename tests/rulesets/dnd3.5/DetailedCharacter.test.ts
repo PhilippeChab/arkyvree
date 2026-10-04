@@ -1405,6 +1405,26 @@ describe("DetailedCharacter", () => {
   });
 
   describe("feats", () => {
+    test("give none by a family's name, which names no feat: the modifier is reported, and the sheet still builds", async () => {
+      const ctx = await getSeedCtx();
+      const dodge = (await Feats.findOne(db, { name: "Dodge", rulesetId: ctx.rulesetId }))!;
+      await Modifiers.create(db, {
+        sourceId: dodge.id,
+        sourceType: "feats",
+        target: "feats.weaponfocus.possessed",
+        value: "true",
+        valueType: "boolean",
+        operator: "set",
+      });
+      invalidateSeededRuleset(ctx.rulesetId);
+      // Bjorn has Dodge
+      const bjorn = await buildSeeded("Bjorn Ironhand");
+      const issues = bjorn.validate().issues.filter((issue) => issue.category === "modifiers");
+      expect(issues.map((issue) => issue.message)).toEqual([
+        "Skipped modifier on feats.weaponfocus.possessed from Dodge (feats): Element not found: possessed",
+      ]);
+    });
+
     test("don't count a proficiency two classes grant twice", async () => {
       // A barbarian level grants the fighter's proficiency feats again.
       const bjorn = await seeded("Bjorn Ironhand");
@@ -2115,6 +2135,17 @@ describe("DetailedCharacter", () => {
       // Each class's alone is less
       const threeOfOne = { operator: "greater_than_or_equal", value: "3", valueType: "number" } as const;
       expect(detailed.areRequirementsMet(requiring("feats.sneakattack.*.count", threeOfOne))).toBe(false);
+    });
+
+    test("a feat named like its family is that feat, and the family's wildcard reaches the family's feats", async () => {
+      const exactly = (value: number) => ({ operator: "equal", value: String(value), valueType: "number" }) as const;
+      // Martial Weapon Proficiency is every martial weapon, a fighter's. A rogue has some, each a feat of the family
+      expect(await met("Bjorn Ironhand", "feats.martialweaponproficiency.possessed")).toBe(true);
+      expect(await met("Bjorn Ironhand", "feats.martialweaponproficiency.count", exactly(1))).toBe(true);
+      expect(await met("Bjorn Ironhand", "feats.martialweaponproficiency.*.possessed")).toBe(false);
+      expect(await met("Lyra Shadowstep", "feats.martialweaponproficiency.possessed")).toBe(false);
+      expect(await met("Lyra Shadowstep", "feats.martialweaponproficiency.*.possessed")).toBe(true);
+      expect(await met("Elara Starweaver", "feats.martialweaponproficiency.*.possessed")).toBe(false);
     });
 
     test("a family's name alone, or a name that only starts a feat's, names no feat", async () => {

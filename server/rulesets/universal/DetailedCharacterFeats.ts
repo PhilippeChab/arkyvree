@@ -26,6 +26,11 @@ type DetailedCharacterComprehensiveFeats = {
   [key: string]: FeatEntry | FeatGroupEntry;
 };
 
+/** A feat's entry, not a family's group: a group's values are its feats. */
+function isFeatEntry(entry: FeatEntry | FeatGroupEntry | undefined): entry is FeatEntry {
+  return typeof entry?.possessed === "boolean";
+}
+
 export default class DetailedCharacterFeats {
   static getSegmentLabels(): Record<string, string> {
     return { possessed: "Possessed", count: "Count" };
@@ -80,18 +85,31 @@ export default class DetailedCharacterFeats {
     }
   }
 
-  getFeat(featName: string) {
-    return this.detailedCharacterFeats[stripSeparators(featName)] as FeatEntry | undefined;
+  /** The feat of that name: none for a family's name, whose group no feat shares. */
+  getFeat(featName: string): FeatEntry | undefined {
+    const entry = this.detailedCharacterFeats[stripSeparators(featName)];
+    return isFeatEntry(entry) ? entry : undefined;
   }
 
   getFeats() {
     return this.detailedCharacterFeats;
   }
 
+  /**
+   * Each family's feats under its name, so `feats.<family>.*` reaches them. A family named like a feat ("Martial
+   * Weapon Proficiency") shares the feat's key: its feats join the feat's entry, beside the feat's own fields, so
+   * `feats.<name>.possessed` is the feat's and `feats.<name>.*` its family's.
+   */
   injectGroupings(groupings: Record<string, Record<string, FeatEntry>>) {
     for (const [key, group] of Object.entries(groupings)) {
-      if (!(key in this.detailedCharacterFeats)) {
+      const feat = this.detailedCharacterFeats[key];
+      if (!feat) {
         this.detailedCharacterFeats[key] = group;
+        continue;
+      }
+      for (const [variant, member] of Object.entries(group)) {
+        // The feat itself, if it's in its own family, and a variant named like one of its fields stay out
+        if (member !== feat && !(variant in feat)) (feat as FeatGroupEntry)[variant] = member;
       }
     }
   }

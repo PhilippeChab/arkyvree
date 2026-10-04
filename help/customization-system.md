@@ -162,6 +162,8 @@ This matches Weapon Focus (Longsword), Weapon Focus (Greatsword), and any custom
 
 For *any two luck feats*, count the family instead: `feats.luck.count >= 2`. A family's count adds up every feat of it the character has, each as many times as it was taken: `feats.sneakattack.count` is the character's sneak attack dice from all their classes.
 
+Martial Weapon Proficiency is both a feat and a family. The feat is every martial weapon, a fighter's: `feats.martialweaponproficiency.possessed`. The family is the feats for one weapon, like a rogue's rapier: `feats.martialweaponproficiency.*.possessed`. Its `count` is the feat's.
+
 Built-in families on the SRD ruleset:
 
 | Family | Matches |

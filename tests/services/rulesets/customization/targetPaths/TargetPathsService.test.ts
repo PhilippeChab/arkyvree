@@ -125,13 +125,26 @@ describe("TargetPathsService", () => {
     expect(inputs.filter((path) => !modifiable.has(path))).toEqual([]);
   });
 
-  test("lists each modifier path once, and the encumbrance's once for requirements too", async () => {
-    const modifierPaths = (await seedPaths("modifier")).paths.map((p) => p.path);
-    expect(modifierPaths.filter((path, i) => modifierPaths.indexOf(path) !== i)).toEqual([]);
-    const encumbrance = (await seedPaths("requirement")).paths.filter((p) => p.path.startsWith("combat.encumbrance."));
-    expect(encumbrance.map((p) => p.path)).toEqual([
-      "combat.encumbrance.carriedweight",
-      "combat.encumbrance.heavyload",
+  test("lists each path once, to modifiers and to requirements", async () => {
+    for (const kind of ["modifier", "requirement"] as const) {
+      const paths = (await seedPaths(kind)).paths.map((p) => p.path);
+      expect(paths.filter((path, i) => paths.indexOf(path) !== i)).toEqual([]);
+    }
+  });
+
+  test("lists a feat named like its family as that feat, beside its family's wildcard", async () => {
+    // Martial Weapon Proficiency, every martial weapon, and the family of the feats for one: the count is the feat's
+    const paths = (await seedPaths("requirement")).paths.filter((p) =>
+      p.path.startsWith("feats.martialweaponproficiency."),
+    );
+    expect(paths.map((p) => [p.path, p.description])).toEqual([
+      ["feats.martialweaponproficiency.possessed", "Whether the character has this feat"],
+      ["feats.martialweaponproficiency.count", "Times taken (stackable feats only)"],
+      [
+        "feats.martialweaponproficiency.*.possessed",
+        "Any Martial Weapon Proficiency feats — Whether this feat is possessed",
+      ],
+      ["feats.martialweaponproficiency.*.count", "Any Martial Weapon Proficiency feats — Times this feat was taken"],
     ]);
   });
 
@@ -269,9 +282,11 @@ describe("TargetPathsService", () => {
       expect(await validate("abilities.strength.total", "requirement")).toMatchObject({ isValid: true });
     });
 
-    test("accepts a family's count when requiring, not when modifying", async () => {
-      expect((await validate("feats.metamagic.count", "requirement")).isValid).toBe(true);
-      expect((await validate("feats.metamagic.count")).isValid).toBe(false);
+    test("accepts a family's counts when requiring, not when modifying", async () => {
+      for (const path of ["feats.metamagic.count", "feats.sneakattack.*.count"]) {
+        expect((await validate(path, "requirement")).isValid).toBe(true);
+        expect((await validate(path)).isValid).toBe(false);
+      }
     });
 
     test("refuses an unknown category, suggesting close ones", async () => {

@@ -32,10 +32,9 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
 
   protected applyGrantedFeats(featNames: string[], rulesetData: CachedRulesetData): void {
     if (featNames.length === 0) return;
-    const feats = this.detailedCharacterFeats.getFeats();
     const featModifiers: Modifier[] = [];
     for (const featName of featNames) {
-      const entry = feats[stripSeparators(featName)];
+      const entry = this.detailedCharacterFeats.getFeat(featName);
       if (entry) entry.possessed = true;
       const featRow = rulesetData.feats.find((f) => f.name === featName);
       if (!featRow) continue;
