@@ -17,7 +17,6 @@ import {
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType } from "hono/client";
 import type { InferResponseType } from "hono/client";
 import { Link } from "react-router-dom";
 
@@ -26,25 +25,26 @@ import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 type ChangesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["changes"]["$get"], 200>;
 
 type Change = ChangesResponse[number];
 
-const CUSTOMIZABLE_TYPES = new Set(["feats", "powers", "items", "races"]);
+/** A change the fork can undo: an entity it modified or deleted, which the restore route takes back. */
+type RestorableChange = Extract<Change, { sourceEntityId: string }>;
 
 function getEntityUrl(rulesetId: string, change: Change): string | undefined {
   if (change.status === "deleted") return undefined;
-  const entityId = change.entityId;
-  const segment = getUrlSegment(change.entityType);
-  return CUSTOMIZABLE_TYPES.has(change.entityType)
-    ? `/rulesets/${rulesetId}/${segment}/${entityId}/customization`
-    : `/rulesets/${rulesetId}/${segment}/${entityId}`;
+  const { entityType, entityId } = change;
+  return isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)
+    ? `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, entityId)}`
+    : `/rulesets/${rulesetId}/${getUrlSegment(entityType)}/${entityId}`;
 }
 
 const restoreApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].restore;
-type RestorableType = InferRequestType<typeof restoreApi.$post>["param"]["entityType"];
 
 interface OverridesDialogProps {
   open: boolean;
@@ -73,12 +73,9 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
   });
 
   const revertMutation = useMutation({
-    mutationFn: async ({ entityType, sourceEntityId }: { entityType: string; sourceEntityId: string }) => {
+    mutationFn: async ({ entityType, sourceEntityId }: Pick<RestorableChange, "entityType" | "sourceEntityId">) => {
       return parseResponse(
-        restoreApi.$post({
-          // The changes list names an entity's type as a string; the route takes its URL segment, and every one listed can be restored.
-          param: { id: rulesetId, entityType: getUrlSegment(entityType) as RestorableType, entityId: sourceEntityId },
-        }),
+        restoreApi.$post({ param: { id: rulesetId, entityType: getUrlSegment(entityType), entityId: sourceEntityId } }),
       );
     },
     onSuccess: () => {
