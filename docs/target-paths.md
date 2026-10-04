@@ -68,6 +68,9 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 | `combat.initiative.misc` | number | Other bonuses to initiative |
 | `combat.initiative.total` | number | All initiative bonuses combined (req only) |
 | `combat.bab` | number | From class progression |
+| `combat.naturalattacks.secondary` | number | Penalty on secondary natural attacks (−5; −2 with Multiattack) |
+| `combat.naturalattacks.extraprimary` | number | Extra attacks with the primary natural weapon, each at −5 (a companion's Multiattack, under 3 attacks) |
+| `combat.naturalattacks.count` | number | Natural attacks made in a round, two claws being two (req only) |
 | `combat.grapple.bab` | number | BAB contribution (req only) |
 | `combat.grapple.strength` | number | Str modifier (req only) |
 | `combat.grapple.size` | number | From race size (req only) |

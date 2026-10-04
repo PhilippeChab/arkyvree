@@ -30,6 +30,7 @@ export const eq = (target: string) => check("equal", "boolean")(target, "true");
 // Numeric
 export const eqNum = check("equal", "number");
 export const gte = check("greater_than_or_equal", "number");
+export const lt = check("less_than", "number");
 
 // String
 export const eqStr = check("equal", "string");

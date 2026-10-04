@@ -1,5 +1,6 @@
 import { formatWithArticle } from "@/database/packages/dnd35/content/articles.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
+import { gte, lt } from "@/database/packages/dnd35/content/requirements.ts";
 import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
@@ -74,6 +75,23 @@ const ANIMAL_COMPANION_CLASS_FEATURE_FEATS: FeatSeed[] = [
       "The animal companion gains Multiattack as a bonus feat if it has three or more natural attacks. If it does not, it instead gains a second attack with its primary natural weapon at a -5 penalty.",
     selectable: false,
     aptitudes: [ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE],
+    // Multiattack: its secondary attacks at -2; without three attacks, a second one with its primary natural weapon
+    modifiers: [
+      {
+        target: "combat.naturalattacks.secondary",
+        operator: "set",
+        value: "-2",
+        valueType: "number",
+        requirements: [gte("combat.naturalattacks.count", 3)],
+      },
+      {
+        target: "combat.naturalattacks.extraprimary",
+        operator: "add",
+        value: "1",
+        valueType: "number",
+        requirements: [gte("combat.naturalattacks.count", 1), lt("combat.naturalattacks.count", 3)],
+      },
+    ],
   },
   {
     name: "Improved Evasion (Animal Companion)",

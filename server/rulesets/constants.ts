@@ -9,6 +9,8 @@ export const CONSTANTS = {
   COMPOSITE_BOW_PENALTY: -2,
   // A tower shield's penalty on attack rolls, for its encumbrance
   TOWER_SHIELD_PENALTY: -2,
+  // A secondary natural attack's penalty to attack, which Multiattack lessens
+  SECONDARY_NATURAL_ATTACK_PENALTY: -5,
   // Two-weapon fighting's penalties on each hand's attacks, 2 less with a light off-hand weapon (PHB Table 8-10)
   TWO_WEAPON_MAIN_HAND_PENALTY: -6,
   TWO_WEAPON_OFF_HAND_PENALTY: -10,

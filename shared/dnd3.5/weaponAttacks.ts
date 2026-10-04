@@ -1,3 +1,5 @@
+import { capitalize } from "@/shared/text.ts";
+
 /** What a sheet's weapon row reads of a weapon: its to-hit, its thrown and two-weapon attacks, and its range. */
 interface WeaponAttacks {
   ranged: boolean;
@@ -5,6 +7,17 @@ interface WeaponAttacks {
   tohit: { total: number[] };
   thrown: { total: number[] } | null;
   twoweapon: { total: number[]; thrown: number[] | null } | null;
+}
+
+/** A weapon slot's label, as an item's location names it. */
+const SLOT_LABELS = { mainhand: "Main Hand", offhand: "Off Hand", twohanded: "Two Handed" } as const;
+
+/** The label a sheet gives a weapon: its slot's, or a natural attack's kind ("Primary", "Secondary"), whatever slot holds it. */
+export function describeWeaponSlot(
+  weapon: { natural: "primary" | "secondary" | null },
+  slot: keyof typeof SLOT_LABELS,
+): string {
+  return weapon.natural ? capitalize(weapon.natural) : SLOT_LABELS[slot];
 }
 
 /** One attack a sheet lists for a weapon: its label (the slot, "thrown" and "two weapons" added), to-hit and range. */

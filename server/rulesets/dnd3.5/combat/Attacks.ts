@@ -1,7 +1,12 @@
 import type { Constructor } from "@/server/mixins.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/server/rulesets/constants.ts";
 import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
-import { SLOT_MAP, type WeaponAbilities, type WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import {
+  type NaturalAttackKind,
+  SLOT_MAP,
+  type WeaponAbilities,
+  type WeaponSlot,
+} from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
@@ -76,6 +81,23 @@ function adjustDamageForSize(baseDamage: string, size: string): string {
 
   const adjusted = Math.max(0, Math.min(DAMAGE_PROGRESSION.length - 1, index + step));
   return DAMAGE_PROGRESSION[adjusted];
+}
+
+/**
+ * What the hand holding a weapon makes of it: whether it's light (Tiny or Small by the weapon table, written for
+ * Medium: every weapon is sized for its wielder, its damage too), its share of the Strength bonus to damage (melee and
+ * thrown weapons, slings), a light weapon's whole one in two hands, and a crossbow's penalty in one hand, which it
+ * takes two to load.
+ */
+function handTraits(
+  slot: "Main Hand" | "Off Hand" | "Two Handed",
+  property: (type: string) => WeaponProperty | undefined,
+): { light: boolean; share: number; penalty: number } {
+  const light = (SIZE_ORDER[property(WEAPON_SIZE)?.value ?? ""] ?? Infinity) < SIZE_ORDER.Medium;
+  const share =
+    slot === "Two Handed" && light ? SLOT_STRENGTH_MULTIPLIERS["Main Hand"] : SLOT_STRENGTH_MULTIPLIERS[slot];
+  const penalty = slot === "Two Handed" ? 0 : Number(property(WEAPON_ONE_HANDED_PENALTY)?.value ?? 0);
+  return { light, share, penalty };
 }
 
 /** A character's attacks: its base attack bonus, grapple, and each weapon's to-hit and damage. */
@@ -172,6 +194,16 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /**
+     * A natural weapon's attacks: one at the base attack bonus, whatever it is, and when it's the creature's primary one
+     * (`repeats`), the extra ones `combat.naturalattacks.extraprimary` counts, each at −5.
+     */
+    private naturalAttacks(repeats: boolean): number[] {
+      const { bab, naturalattacks } = this.detailedCharacterCombat;
+      const extra = repeats ? Math.max(0, naturalattacks.extraprimary) : 0;
+      return [bab, ...Array.from({ length: extra }, () => bab - CONSTANTS.ATTACK_STEP)];
+    }
+
+    /**
      * The armor check penalty of the shields the character carries, which a finessed attack takes: of those it's
      * proficient with, another's costing every attack already (`gearPenalty`).
      */
@@ -259,9 +291,9 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     /**
      * A weapon in a hand of a set. Its inputs (the magic and misc bonuses, the dice, the hand's Strength share, the
      * critical) are what modifiers change; what comes from the abilities, the size, the gear and the set is computed
-     * when read: the to-hit's ability, size and gear parts and totals, the thrown and two-weapon attacks, the Strength
-     * to damage, and the dice sized for the wielder (a natural attack's are already the creature's own, its stat
-     * block's).
+     * when read: the to-hit's ability, size, gear and secondary parts and totals, the thrown and two-weapon attacks, the
+     * Strength to damage, and the dice sized for the wielder (a natural attack's are already the creature's own, its
+     * stat block's). A natural attack (`natural`) attacks once, with the extra ones of the primary that `repeats`.
      */
     addWeapon(
       setIndex: number,
@@ -269,19 +301,15 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       item: Pick<Item, "name">,
       properties: WeaponProperty[],
       itemId: string | null = null,
-    ): void {
+      natural: { kind: NaturalAttackKind; repeats: boolean } | null = null,
+    ): WeaponSlot | null {
       const property = (type: string) => properties.find((p) => p.type === type);
       const proficiency = property(WEAPON_PROFICIENCY)?.value;
-      if (!proficiency) return;
+      if (!proficiency) return null;
       const ranged = properties.some((p) => p.type === WEAPON_RANGED && p.value === "true");
-      // Light by the weapon table (Tiny and Small, written for Medium): every weapon is sized for its wielder, its damage too
-      const light = (SIZE_ORDER[property(WEAPON_SIZE)?.value ?? ""] ?? Infinity) < SIZE_ORDER.Medium;
-      // Strength adds to damage by the slot's share (melee and thrown weapons, slings) unless the weapon says otherwise
+      const { light, share: handShare, penalty: handPenalty } = handTraits(slot, property);
+      // Strength adds to damage by the slot's share unless the weapon says otherwise: a bow's rating, a crossbow's none
       const strengthDamage = property(WEAPON_STRENGTH_DAMAGE)?.value ?? "Slot";
-      const handShare =
-        slot === "Two Handed" && light ? SLOT_STRENGTH_MULTIPLIERS["Main Hand"] : SLOT_STRENGTH_MULTIPLIERS[slot];
-      // A weapon that takes two hands to load (a crossbow) fires in one at its penalty
-      const handPenalty = slot === "Two Handed" ? 0 : Number(property(WEAPON_ONE_HANDED_PENALTY)?.value ?? 0);
       const abilities = this.abilitiesOf(ranged, strengthDamage, property(WEAPON_MIGHTY));
       let dice = property(WEAPON_BASE_DAMAGE)?.value ?? "unknown";
       const sizedDice = proficiency !== NATURAL_PROFICIENCY;
@@ -294,7 +322,9 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         attackModifier: () => this.attackModifier(abilities),
         size: () => SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0,
         gear: () => this.gearPenalty() + handPenalty,
-        bab: () => this.detailedCharacterCombat.bab,
+        secondary: () => (natural?.kind === "secondary" ? this.detailedCharacterCombat.naturalattacks.secondary : 0),
+        attacks: () =>
+          natural ? this.naturalAttacks(natural.repeats) : iterativeAttacks(this.detailedCharacterCombat.bab),
         thrown: (weapon: WeaponSlot) => (!ranged && weapon.range > 0 ? this.thrownAttack(weapon) : null),
         twoWeapon: (weapon: WeaponSlot) => this.twoWeaponAttacks(weapon, setKey),
         dice: () => (sizedDice ? adjustDamageForSize(dice, this.raceSize) : dice),
@@ -303,6 +333,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const weapon: WeaponSlot = {
         name: item.name,
         itemId,
+        natural: natural?.kind ?? null,
         proficient: true,
         finessable: properties.some((p) => p.type === WEAPON_FINESSABLE && p.value === "true"),
         light,
@@ -322,9 +353,12 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           get gear() {
             return sheet.gear();
           },
+          get secondary() {
+            return sheet.secondary();
+          },
           get total() {
-            const bonuses = this.strength + this.magic + this.misc + this.size + this.gear;
-            return iterativeAttacks(sheet.bab()).map((base) => base + bonuses);
+            const bonuses = this.strength + this.magic + this.misc + this.size + this.gear + this.secondary;
+            return sheet.attacks().map((base) => base + bonuses);
           },
         },
         get thrown() {
@@ -359,18 +393,24 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       };
       this.weaponAbilities.set(weapon, abilities);
       this.detailedCharacterCombat.weaponsets[setKey][slotKey] = weapon;
+      return weapon;
     }
 
     /**
-     * Replace the default Unarmed Strike with the bonded creature's natural
-     * attacks. Each attack becomes a weapon entry — primary in Main Hand, then
-     * Off Hand for set 0; additional attacks spill into set 1 and beyond.
-     * "Two Handed" is intentionally excluded: addWeapon wipes mainhand/offhand
-     * when filling that slot, which would clobber prior natural attacks.
+     * Replace the default Unarmed Strike with the bonded creature's natural attacks, by its stat block. Each becomes a
+     * weapon entry, two to a set (its main and off hand only hold them: "Two Handed" would clear both), primary or
+     * secondary as the stat block has it: a primary one adds its whole Strength bonus to damage, one and a half when
+     * it's the creature's only attack, a secondary one half. The first primary is the one an extra attack repeats.
      */
-    setNaturalAttacks(attacks: { name: string; damage: string; type: string; count?: number }[]): void {
-      this.detailedCharacterCombat.weaponsets = {};
+    setNaturalAttacks(
+      attacks: { name: string; damage: string; type: string; count?: number; secondary?: true; misc?: number }[],
+    ): void {
+      const combat = this.detailedCharacterCombat;
+      combat.weaponsets = {};
+      const count = attacks.reduce((sum, attack) => sum + (attack.count ?? 1), 0);
+      combat.naturalattacks = { ...combat.naturalattacks, count };
       if (attacks.length === 0) return;
+      const primary = attacks.find((attack) => !attack.secondary);
 
       const slots: ("Main Hand" | "Off Hand")[] = ["Main Hand", "Off Hand"];
       for (let idx = 0; idx < attacks.length; idx++) {
@@ -386,7 +426,14 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           { type: WEAPON_CRITICAL_MULTIPLIER, value: "2" },
           { type: WEAPON_FINESSABLE, value: "true" },
         ];
-        this.addWeapon(setIndex, slot, { name: displayName }, props);
+        const kind = attack.secondary ? "secondary" : "primary";
+        const weapon = this.addWeapon(setIndex, slot, { name: displayName }, props, null, {
+          kind,
+          repeats: attack === primary,
+        });
+        if (!weapon) continue;
+        weapon.damage.strmultiplier = attack.secondary ? 0.5 : count === 1 ? 1.5 : 1;
+        weapon.tohit.misc += attack.misc ?? 0;
       }
     }
   }

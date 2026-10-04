@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typog
 import { BlankState } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { buildAttackRows } from "@/shared/dnd3.5/weaponAttacks.ts";
+import { buildAttackRows, describeWeaponSlot } from "@/shared/dnd3.5/weaponAttacks.ts";
 
 import type { SheetCombat } from "./dnd3.5/index.ts";
 import { shownWeaponSet } from "./equipment.ts";
@@ -15,12 +15,6 @@ type WeaponSlot = NonNullable<WeaponSet["mainhand"]>;
 interface WeaponsSectionProps {
   combat: SheetCombat;
 }
-
-const SLOT_LABELS: Record<string, string> = {
-  mainhand: "Main Hand",
-  offhand: "Off Hand",
-  twohanded: "Two Handed",
-};
 
 export function WeaponsSection({ combat }: WeaponsSectionProps) {
   const weaponsets = combat?.weaponsets ?? {};
@@ -36,7 +30,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
           for (const slotKey of ["mainhand", "offhand", "twohanded"] as const) {
             const weapon = set?.[slotKey];
             if (weapon) {
-              weapons.push({ weapon, slot: SLOT_LABELS[slotKey] });
+              weapons.push({ weapon, slot: describeWeaponSlot(weapon, slotKey) });
             }
           }
           if (weapons.length === 0) return null;

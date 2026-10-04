@@ -438,7 +438,7 @@ describe("Stat blocks", () => {
           skills[skill]?.total,
         ]),
       ),
-    ).toEqual({ balance: 10, climb: 6, hide: 12, jump: 10, listen: 3, movesilently: 8, spot: 3 });
+    ).toEqual({ balance: 10, climb: 6, hide: 16, jump: 10, listen: 3, movesilently: 8, spot: 3 });
     expect(skills["hide"]?.size).toBe(8);
 
     const { ac, weaponsets } = cat.getDetailedCharacterCombat().getCombat();
@@ -466,12 +466,57 @@ describe("Stat blocks", () => {
         ac: 17,
         saves: { fortitude: 6, reflex: 7, will: 2 },
         abilities: { misc: [1, 1] },
-        attack: { name: "Bite", size: 0, toHit: 6, damage: "1d6 + 2" },
+        // Its only natural attack adds one and a half its Strength bonus (+2), and Weapon Focus (bite) its +1
+        attack: { name: "Bite", size: 0, toHit: 6, damage: "1d6 + 3" },
       },
     ],
   ])("a druid %i's wolf companion", async (druidLevel, expected) => {
     const { bonded } = await createDruidWithCompanion(druidLevel);
     expect(statBlock(await build(new DetailedCharacterAnimalCompanion(bonded)))).toMatchObject(expected);
+  });
+
+  test("a natural attack is primary or secondary, as its stat block has it, and attacks once", async () => {
+    // A cat familiar: two claws, then a bite at -5, which adds half its Strength bonus (a penalty in full)
+    const cat = (await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded)))
+      .getDetailedCharacterCombat()
+      .getCombat();
+    const { mainhand: claws, offhand: bite } = cat.weaponsets["0"];
+    expect(claws).toMatchObject({ name: "Claw (x2)", natural: "primary", tohit: { secondary: 0 } });
+    expect(bite).toMatchObject({
+      name: "Bite",
+      natural: "secondary",
+      tohit: { secondary: -5 },
+      damage: { strmultiplier: 0.5 },
+    });
+    expect(bite!.tohit.total).toEqual([claws!.tohit.total[0] - 5]);
+    // A paladin 5's heavy warhorse: its hooves primary, its bite secondary
+    const horse = (await build(new DetailedCharacterMount((await createPaladinWithMount(5)).bonded)))
+      .getDetailedCharacterCombat()
+      .getCombat().weaponsets["0"];
+    expect([horse.mainhand?.natural, horse.offhand?.natural]).toEqual(["primary", "secondary"]);
+  });
+
+  test("a druid 9's companion has Multiattack: -2 on its secondary attacks, or a second primary attack under three", async () => {
+    const combat = async (companion: string, druidLevel = 9) =>
+      (
+        await build(
+          new DetailedCharacterAnimalCompanion((await createDruidWithCompanion(druidLevel, companion)).bonded),
+        )
+      )
+        .getDetailedCharacterCombat()
+        .getCombat();
+    // A druid 12's badger: two claws and a bite, its bite at -2. Its base attack bonus past +5 gives no other attack
+    const badger = await combat("Badger Animal Companion", 12);
+    expect(badger.naturalattacks).toMatchObject({ count: 3, secondary: -2, extraprimary: 0 });
+    const { mainhand: claws, offhand: bite } = badger.weaponsets["0"];
+    expect(badger.bab).toBeGreaterThan(5);
+    expect(claws!.tohit.total).toHaveLength(1);
+    expect(bite!.tohit.total).toEqual([claws!.tohit.total[0] - 2]);
+    // A wolf's lone bite: a second one at -5
+    const wolf = await combat("Wolf Animal Companion");
+    expect(wolf.naturalattacks).toMatchObject({ count: 1, secondary: -5, extraprimary: 1 });
+    const [first, second] = wolf.weaponsets["0"].mainhand!.tohit.total;
+    expect(second).toBe(first - 5);
   });
 
   test.each([
