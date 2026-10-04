@@ -133,13 +133,13 @@ describe("TargetPathsService", () => {
   });
 
   test("lists a feat named like its family as that feat, beside its family's wildcard", async () => {
-    // Martial Weapon Proficiency, every martial weapon, and the family of the feats for one: the count is the feat's
+    // Martial Weapon Proficiency, every martial weapon, and the family of the feats for one. The feat isn't taken twice:
+    // `count` there is the feat's, so the family's count isn't listed either
     const paths = (await seedPaths("requirement")).paths.filter((p) =>
       p.path.startsWith("feats.martialweaponproficiency."),
     );
     expect(paths.map((p) => [p.path, p.description])).toEqual([
       ["feats.martialweaponproficiency.possessed", "Whether the character has this feat"],
-      ["feats.martialweaponproficiency.count", "Times taken (stackable feats only)"],
       [
         "feats.martialweaponproficiency.*.possessed",
         "Any Martial Weapon Proficiency feats — Whether this feat is possessed",
