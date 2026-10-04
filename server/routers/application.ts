@@ -89,7 +89,7 @@ const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
   .get("/health", async (c) => {
     try {
       await db.execute(sql`SELECT 1`);
-      return c.json({ status: "ok" });
+      return c.json({ status: "ok" }, 200);
     } catch {
       return c.json({ status: "unhealthy" }, 503);
     }

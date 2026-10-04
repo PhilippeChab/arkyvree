@@ -44,7 +44,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
 
   useEffect(() => {
     if (!current && queue.length > 0) {
-      // oxlint-disable-next-line react/set-state-in-effect
+      // oxlint-disable-next-line react/set-state-in-effect -- the queue moves on to its next toast once none is showing
       setCurrent(queue[0]);
       setQueue((prev) => prev.slice(1));
       setOpen(true);

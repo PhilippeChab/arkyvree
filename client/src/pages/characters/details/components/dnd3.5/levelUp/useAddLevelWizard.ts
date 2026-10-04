@@ -124,7 +124,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
 
   // Sync hpValues length with valid (non-null) class plan entries
   useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect
+    // oxlint-disable-next-line react/set-state-in-effect -- the HP list follows the class plan's length
     setHpValues((prev) => {
       if (prev.length === validClassPlan.length) return prev;
       if (prev.length < validClassPlan.length) {

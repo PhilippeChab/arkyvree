@@ -10,6 +10,8 @@
   "rules": {
     // TypeScript
     "typescript/no-explicit-any": "error",
+    // A @ts-expect-error says why; @ts-ignore and @ts-nocheck hide errors without one.
+    "typescript/ban-ts-comment": ["error", { "ts-expect-error": "allow-with-description", "ts-ignore": true, "ts-nocheck": true }],
     "typescript/consistent-type-imports": ["error", { "fixStyle": "inline-type-imports" }],
     "typescript/no-unused-vars": [
       "error",
@@ -63,6 +65,7 @@
     "arkyvree/shared-runtime": "error",
     "arkyvree/session-param": "error",
     "arkyvree/environment": "error",
+    "arkyvree/directive-reasons": "error",
     "arkyvree/writes-in-transactions": "error",
     "arkyvree/test-placement": "error",
     "arkyvree/concern-shape": "error",

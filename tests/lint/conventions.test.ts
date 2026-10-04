@@ -90,6 +90,8 @@ describe("conventions", () => {
           "server/routers/api/on.ts": 'export const r = app.on("GET", "/:item_id", (c) => c);\n',
           "server/routers/api/template.ts": "export const r = app.get(`/:level_id`, (c) => c);\n",
           "server/routers/api/snake.ts": 'export const r = app.get("/:id/class_levels/:levelId", (c) => c);\n',
+          "server/routers/api/status.ts": 'export const r = app.get("/:id", (c) => c.json({ ok: true }, 200));\n',
+          "server/routers/api/nostatus.ts": 'export const r = app.get("/:id", (c) => c.json({ ok: true }));\n',
           "server/routers/api/camel.ts": 'export const r = app.post("/:id/spellsKnown", (c) => c);\n',
           "server/routers/files.ts":
             'export const r = app.get("/robots.txt", (c) => c).get("/assets/*", (c) => c).get("/:id/class-levels", (c) => c);\n',
@@ -100,6 +102,7 @@ describe("conventions", () => {
     ).toEqual([
       "route-conventions server/routers/api/camel.ts",
       "route-conventions server/routers/api/caught.ts",
+      "route-conventions server/routers/api/nostatus.ts",
       "route-conventions server/routers/api/on.ts",
       "route-conventions server/routers/api/params.ts",
       "route-conventions server/routers/api/reexport.ts",
@@ -180,6 +183,21 @@ describe("conventions", () => {
       "writes-in-transactions server/services/db.ts",
       "writes-in-transactions server/services/lock.ts",
     ]);
+  });
+
+  test("a comment that turns a rule off says why", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/why.ts": "// oxlint-disable-next-line no-console -- startup logs go to stdout\nconsole.log(1);\n",
+          "client/src/wrapped.ts":
+            "/* eslint-disable no-console --\n   a block comment's reason may wrap */\nconsole.log(1);\n",
+          "server/bare.ts": "// oxlint-disable-next-line no-console\nconsole.log(1);\n",
+          "tests/empty.ts": "console.log(1); // eslint-disable-line no-console --\n",
+        },
+        ["directive-reasons"],
+      ),
+    ).toEqual(["directive-reasons server/bare.ts", "directive-reasons tests/empty.ts"]);
   });
 
   test("the server reads its environment in server/environment.ts only", async () => {
