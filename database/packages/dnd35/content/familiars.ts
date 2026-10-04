@@ -1,3 +1,4 @@
+import { formatWithArticle } from "@/database/packages/dnd35/content/articles.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
 import type {
   BondContent,
@@ -6,7 +7,6 @@ import type {
   Modifier,
   RaceDefinition,
 } from "@/database/packages/dnd35/content/types.ts";
-import { formatWithArticle } from "@/shared/text.ts";
 
 const FAMILIAR_APTITUDE = "Familiar Bond";
 const FAMILIAR_CLASS_FEATURE_APTITUDE = "Familiar Class Feature";
