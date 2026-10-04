@@ -8,6 +8,7 @@
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
+import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import type { Modifier, Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -54,11 +55,14 @@ function addModifierDeltas(
   perLevelPowerSlots: PowerSlots,
 ) {
   for (const mod of modifiers) {
+    // A pool's slots take a literal: an add, or a spell level's set to -1 (the paths allow nothing else)
+    const value = parseLiteralValue(mod.value, "number");
+    if (typeof value !== "number") continue;
     const featMatch = FEAT_POOL_TARGET.exec(mod.target);
     if (featMatch) {
       const aptId = aptitudeSlugToId.get(featMatch[1]);
       if (aptId && perLevelFeatSlots[aptId]) {
-        deltas.feats[aptId] = (deltas.feats[aptId] ?? 0) + Number(mod.value);
+        deltas.feats[aptId] = (deltas.feats[aptId] ?? 0) + value;
       }
       continue;
     }
@@ -68,10 +72,10 @@ function addModifierDeltas(
       if (aptId && perLevelPowerSlots[aptId]) {
         if (!deltas.powers[aptId]) deltas.powers[aptId] = {};
         const spellLevel = spellMatch[2];
-        if (mod.operator === "set" && Number(mod.value) === -1) {
+        if (mod.operator === "set" && value === -1) {
           deltas.powers[aptId][spellLevel] = 999;
         } else {
-          deltas.powers[aptId][spellLevel] = (deltas.powers[aptId][spellLevel] ?? 0) + Number(mod.value);
+          deltas.powers[aptId][spellLevel] = (deltas.powers[aptId][spellLevel] ?? 0) + value;
         }
       }
     }

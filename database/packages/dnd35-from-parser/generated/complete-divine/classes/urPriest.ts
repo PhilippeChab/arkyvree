@@ -43,7 +43,7 @@ export const UR_PRIEST: ClassSeed = {
   bonusSpellAbility: "Wisdom",
   casterType: "Divine",
   spells: {
-    slug: "ur-priestspells",
+    slug: "urpriestspells",
     perDay: [
       [4, 2],
       [5, 3, 0],

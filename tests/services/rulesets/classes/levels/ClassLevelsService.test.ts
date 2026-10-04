@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { eq } from "drizzle-orm";
 
+import { DND35_COMPLETE_DIVINE_NAME } from "@/database/packages/dnd35/names.ts";
 import {
   featsInRules,
   klassLevelFeatsInRules,
@@ -15,12 +16,14 @@ import {
   Aptitudes,
   EntitySnapshots,
   Feats,
+  Klasses,
   KlassLevelFeats,
   KlassLevels,
   Modifiers,
   Powers,
   Properties,
   Requirements,
+  Rulesets,
   Saves,
 } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -226,6 +229,20 @@ describe("ClassLevelsService", () => {
       { 0: 3, 1: 1 },
       { 0: 4, 1: 2 },
     ]);
+  });
+
+  test("reads a spell list's slots whatever its class's name holds: the Ur-priest's", async () => {
+    const divine = (await Rulesets.findOne(db, { name: DND35_COMPLETE_DIVINE_NAME }))!;
+    const urPriest = (await Klasses.findOne(db, { name: "Ur-priest", rulesetId: divine.id }))!;
+    const perDay = (await ClassLevelsService.getClassLevelSpells(divine.id, urPriest.id)).map((l) => l.spellsPerDay);
+    // Complete Divine's table: 4 and 2 at the 1st level; at the 4th, 6/3/2/1 (its 4th-level 0, bonus spells only,
+    // adds nothing)
+    expect([perDay[0], perDay[3]]).toEqual([
+      { 0: 4, 1: 2 },
+      { 0: 6, 1: 3, 2: 2, 3: 1 },
+    ]);
+    const known = (await ClassLevelsService.getClassLevelSpellsKnown(divine.id, urPriest.id)).map((l) => l.spellsKnown);
+    expect(known[0]).toMatchObject({ 0: "All", 1: "All" });
   });
 
   test("refuses changes from anyone but the owner", async () => {

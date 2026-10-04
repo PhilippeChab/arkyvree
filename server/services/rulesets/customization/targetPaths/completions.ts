@@ -36,6 +36,8 @@ export function getFlatCompletions(
     valueType: p.valueType,
     operators: p.operators,
     possibleValues: p.possibleValues,
+    ...(p.setValues && { setValues: p.setValues }),
+    ...(p.literalOnly && { literalOnly: true }),
   }));
 }
 
@@ -180,6 +182,8 @@ export function getSegmentCompletions(
           valueType: info.examplePath.valueType,
           operators: info.examplePath.operators,
           possibleValues: info.examplePath.possibleValues,
+          ...(info.examplePath.setValues && { setValues: info.examplePath.setValues }),
+          ...(info.examplePath.literalOnly && { literalOnly: true }),
         }),
     });
   }

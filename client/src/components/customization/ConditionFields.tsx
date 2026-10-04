@@ -110,6 +110,8 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
               valueType: info.valueType,
               operators: info.operators,
               possibleValues: info.possibleValues,
+              setValues: info.setValues,
+              literalOnly: info.literalOnly,
             });
             // In edit mode the form already carries a saved value/operator —
             // don't overwrite. In create mode, seed a default only when the
@@ -139,7 +141,14 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
       <OperatorSelect
         kind={kind}
         value={values.operator}
-        onChange={(nextOperator) => onChange("operator", nextOperator)}
+        onChange={(nextOperator) => {
+          onChange("operator", nextOperator);
+          // A set the path restricts starts on its first value
+          const setChoices = nextOperator === "set" ? pathInfo?.setValues : undefined;
+          if (setChoices?.length && !setChoices.some((choice) => choice.value === literalValue)) {
+            handleLiteralChange(setChoices[0].value);
+          }
+        }}
         error={!!errors.operator}
         operators={pathInfo?.operators || []}
       />
@@ -155,7 +164,13 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
       >
         <FormControlLabel
           control={
-            <Switch size="small" checked={templateMode} onChange={(_, checked) => handleToggleTemplate(checked)} />
+            <Switch
+              size="small"
+              checked={templateMode}
+              // A path the level-up counts without a character takes a literal: a template can only be turned off
+              disabled={!!pathInfo?.literalOnly && !templateMode}
+              onChange={(_, checked) => handleToggleTemplate(checked)}
+            />
           }
           label={
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -178,7 +193,9 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
             value={literalValue}
             onChange={handleLiteralChange}
             valueType={pathInfo?.valueType}
-            possibleValues={pathInfo?.possibleValues}
+            possibleValues={
+              values.operator === "set" && pathInfo?.setValues ? pathInfo.setValues : pathInfo?.possibleValues
+            }
             required
             // Crossfade keeps it mounted under the template input: disabled, it can't be focused or block the submit.
             disabled={templateMode}

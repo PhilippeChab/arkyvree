@@ -102,14 +102,33 @@ export async function validatePath(
   return { isValid: false, errors, suggestions, completions };
 }
 
+/** Why a modifier's or requirement's operator and value don't suit the path, or null when they do. */
+function valueMismatch(pathDef: TargetPath, operator: string | undefined, value: string | undefined): string | null {
+  const { path, valueType } = pathDef;
+  if (operator !== undefined && !pathDef.operators.includes(operator)) {
+    return `The operator ${operator} isn't offered on ${path}: ${pathDef.operators.join(", ")}`;
+  }
+  if (value === undefined) return null;
+  if (isTemplateValue(value)) return pathDef.literalOnly ? `${path} takes a number, not a template` : null;
+  if (parseLiteralValue(value, valueType) === undefined) {
+    return `Invalid ${valueType} value for ${path}: ${JSON.stringify(value)}`;
+  }
+  if (operator === "set" && pathDef.setValues && !pathDef.setValues.some((choice) => choice.value === value)) {
+    return `A set on ${path} takes ${pathDef.setValues.map((choice) => `${choice.value} (${choice.label})`).join(", ")}`;
+  }
+  return null;
+}
+
 /**
- * The value type of the path a modifier or requirement targets, its value checked against it: a template the sheet
- * resolves, or a literal of that type (a number, `true` or `false`). A BadRequestError says what's wrong with either.
+ * The value type of the path a modifier or requirement targets, its operator and value checked against it: an operator
+ * the path offers, and a template the sheet resolves or a literal of that type (a number, `true` or `false`), as the
+ * path allows. A BadRequestError says what's wrong.
  */
 export async function resolvePathValueType(
   rulesetId: string,
   target: string,
   kind: "modifier" | "requirement",
+  operator: string | undefined,
   value: string | undefined,
 ): Promise<string> {
   const { paths } = await getTargetPathsWithLabels(rulesetId, kind);
@@ -118,9 +137,7 @@ export async function resolvePathValueType(
     const { errors } = await validatePath(rulesetId, target, kind);
     throw new BadRequestError(`Invalid ${kind} path: ${errors[0]?.message ?? target}`);
   }
-  const { valueType } = pathDef;
-  if (value !== undefined && !isTemplateValue(value) && parseLiteralValue(value, valueType) === undefined) {
-    throw new BadRequestError(`Invalid ${valueType} value for ${target}: ${JSON.stringify(value)}`);
-  }
-  return valueType;
+  const mismatch = valueMismatch(pathDef, operator, value);
+  if (mismatch) throw new BadRequestError(mismatch);
+  return pathDef.valueType;
 }

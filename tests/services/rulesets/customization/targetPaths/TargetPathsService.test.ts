@@ -148,6 +148,29 @@ describe("TargetPathsService", () => {
     ]);
   });
 
+  test("lets a modifier on a pool's slots only grant more, or make a spell level's all known, with a literal", async () => {
+    const pathOf = async (kind: Kind, path: string) => (await seedPaths(kind)).paths.find((p) => p.path === path);
+    const allKnown = [{ value: "-1", label: "All known" }];
+    expect(await pathOf("modifier", "aptitudes.general.allowed")).toMatchObject({
+      operators: ["add"],
+      literalOnly: true,
+    });
+    expect(await pathOf("modifier", "aptitudes.wizardspells.1.allowed")).toMatchObject({
+      operators: ["add", "set"],
+      setValues: allKnown,
+      literalOnly: true,
+    });
+    expect(await pathOf("modifier", "aptitudes.wizardspells.1.uses")).toMatchObject({
+      operators: ["add"],
+      literalOnly: true,
+    });
+    // A pool's own uses per day count on the sheet alone, and requirements only read the slots
+    const ownUses = await pathOf("modifier", "aptitudes.general.uses");
+    expect(ownUses?.operators).toContain("multiply");
+    expect(ownUses?.literalOnly).toBeUndefined();
+    expect((await pathOf("requirement", "aptitudes.general.allowed"))?.operators).toContain("greater_than");
+  });
+
   test("offers aptitude uses and picks only to the entities that grant them", async () => {
     for (const entityType of ["klass_levels", "feats", "races", undefined] as const) {
       expect((await seedPaths("modifier", entityType)).paths.some(isAptitudeGrant)).toBe(true);

@@ -2,7 +2,10 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { PathCompletion, PathValidationResult, TargetPath } from "@/shared/customization/target.ts";
 
 /** What the input reports about a completed path. */
-export type PathInfo = Pick<TargetPath, "path" | "valueType" | "operators" | "possibleValues">;
+export type PathInfo = Pick<
+  TargetPath,
+  "path" | "valueType" | "operators" | "possibleValues" | "setValues" | "literalOnly"
+>;
 import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -112,6 +115,8 @@ export function TargetPathInput({
         valueType: selectedCompletion.valueType,
         operators: selectedCompletion.operators,
         possibleValues: selectedCompletion.possibleValues,
+        setValues: selectedCompletion.setValues,
+        literalOnly: selectedCompletion.literalOnly,
       });
     } else if (!value) {
       if (lastReportedPathRef.current === null) return;
