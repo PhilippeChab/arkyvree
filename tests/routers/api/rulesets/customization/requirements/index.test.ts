@@ -100,6 +100,9 @@ describe("rulesets customization requirements", () => {
     expect(created).toMatchObject({ value: "false", valueType: "boolean" });
     const requirementParam = { ...param, requirementId: created.id };
     await expectStatus(requirement.$put({ param: requirementParam, json: { ...dodge, value: "no" } }), 400);
+    // A new target without a value keeps the stored one, which must suit it: false isn't a number
+    const { value: _value, ...charismaWithoutValue } = charisma13;
+    await expectStatus(requirement.$put({ param: requirementParam, json: charismaWithoutValue }), 400);
   });
 
   test("rejects a requirement without a level", async () => {
