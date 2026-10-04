@@ -385,7 +385,7 @@ export type ClassReference = {
     proficiencies?: string[];
     freeFeats?: [number, string, string][];
     casterType?: "Arcane" | "Divine";
-    modifiers?: { level: number; target: string; value: string; valueType: string; operator: string }[];
+    modifiers?: (ModifierSeed & { level: number })[];
     aptitudePicks?: AptitudePick[];
     bonusFeatLists?: BonusFeatList[];
     /** Manual alignment override (for base classes where the source page has no alignment info) */

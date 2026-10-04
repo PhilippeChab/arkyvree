@@ -17,19 +17,25 @@
             "requirements": [
               {
                 "operator": "equal",
-                "target": "combat.ac.armor",
-                "value": "0",
-                "valueType": "number"
+                "target": "combat.armorworn",
+                "value": "none",
+                "valueType": "string"
               },
               {
                 "operator": "equal",
-                "target": "combat.ac.shield",
-                "value": "0",
-                "valueType": "number"
+                "target": "combat.shieldheld",
+                "value": "false",
+                "valueType": "boolean"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.encumbrance.load",
+                "value": "light",
+                "valueType": "string"
               }
             ],
             "target": "combat.ac.misc",
-            "value": "{{ [abilities.wisdom.modifier] }}",
+            "value": "{{ max(0, [abilities.wisdom.modifier]) }}",
             "valueType": "number"
           }
         ]
@@ -189,72 +195,236 @@
       {
         "level": 3,
         "operator": "add",
-        "target": "combat.speed.misc",
+        "target": "combat.speed.base",
         "value": "10",
-        "valueType": "number"
+        "valueType": "number",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ]
       },
       {
         "level": 6,
         "operator": "add",
-        "target": "combat.speed.misc",
+        "target": "combat.speed.base",
         "value": "10",
-        "valueType": "number"
+        "valueType": "number",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ]
       },
       {
         "level": 9,
         "operator": "add",
-        "target": "combat.speed.misc",
+        "target": "combat.speed.base",
         "value": "10",
-        "valueType": "number"
+        "valueType": "number",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ]
       },
       {
         "level": 12,
         "operator": "add",
-        "target": "combat.speed.misc",
+        "target": "combat.speed.base",
         "value": "10",
-        "valueType": "number"
+        "valueType": "number",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ]
       },
       {
         "level": 15,
         "operator": "add",
-        "target": "combat.speed.misc",
+        "target": "combat.speed.base",
         "value": "10",
-        "valueType": "number"
+        "valueType": "number",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ]
       },
       {
         "level": 18,
         "operator": "add",
-        "target": "combat.speed.misc",
+        "target": "combat.speed.base",
         "value": "10",
-        "valueType": "number"
+        "valueType": "number",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ]
       },
       {
         "level": 5,
         "operator": "add",
         "target": "combat.ac.misc",
         "value": "1",
-        "valueType": "number"
+        "valueType": "number",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.shieldheld",
+            "value": "false",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ]
       },
       {
         "level": 10,
         "operator": "add",
         "target": "combat.ac.misc",
         "value": "1",
-        "valueType": "number"
+        "valueType": "number",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.shieldheld",
+            "value": "false",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ]
       },
       {
         "level": 15,
         "operator": "add",
         "target": "combat.ac.misc",
         "value": "1",
-        "valueType": "number"
+        "valueType": "number",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.shieldheld",
+            "value": "false",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ]
       },
       {
         "level": 20,
         "operator": "add",
         "target": "combat.ac.misc",
         "value": "1",
-        "valueType": "number"
+        "valueType": "number",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.shieldheld",
+            "value": "false",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ]
       },
       {
         "level": 1,

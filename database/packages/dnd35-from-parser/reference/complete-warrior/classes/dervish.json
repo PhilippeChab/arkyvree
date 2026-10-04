@@ -12,7 +12,41 @@
         "description": "At 10th level, once per day the dervish can double the total number of melee attacks she makes during a full attack action, whether or not she is performing a dervish dance. When combined with the dervish dance, she may deliver up to two attacks between each required movement. She also benefits from the Great Cleave feat with slashing weapons while using this ability, regardless of prerequisites, and need not move 5 feet before making any of the bonus attacks it provides. A haste spell can still grant an additional attack while this ability is active, but the spell's bonuses do not stack with those provided by this class feature."
       },
       "AC Bonus": {
-        "description": "A dervish receives a defensive bonus to AC provided she wears no armor or only light armor and does not carry a shield. This bonus applies even to touch attacks and when the dervish is caught flat-footed. The bonus is lost if the dervish becomes immobilized or helpless, dons armor heavier than light, uses a shield, or bears a medium or heavy load."
+        "description": "A dervish receives a defensive bonus to AC provided she wears no armor or only light armor and does not carry a shield. This bonus applies even to touch attacks and when the dervish is caught flat-footed. The bonus is lost if the dervish becomes immobilized or helpless, dons armor heavier than light, uses a shield, or bears a medium or heavy load.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "not_equal",
+                "target": "combat.armorworn",
+                "value": "medium",
+                "valueType": "string"
+              },
+              {
+                "operator": "not_equal",
+                "target": "combat.armorworn",
+                "value": "heavy",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.shieldheld",
+                "value": "false",
+                "valueType": "boolean"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.encumbrance.load",
+                "value": "light",
+                "valueType": "string"
+              }
+            ],
+            "target": "combat.ac.misc",
+            "value": "{{ floor(([classes.dervish.level] - 1) / 4) + 1 }}",
+            "valueType": "number"
+          }
+        ]
       },
       "Dance of Death": {
         "description": "Beginning at 4th level, a dervish gains the benefit of the Cleave feat whenever she is performing a dervish dance, even without meeting the normal prerequisites. The usual requirement to move 5 feet before making the extra attack from this ability does not apply."
@@ -24,7 +58,35 @@
         "description": "Starting at 7th level, a dervish receives an additional +4 bonus to AC whenever she opts to fight defensively or use the total defense action in melee."
       },
       "Fast Movement": {
-        "description": "Starting at 2nd level, a dervish receives an enhancement bonus to her movement speed. Wearing armor heavier than light or carrying a medium or heavy load negates this benefit."
+        "description": "Starting at 2nd level, a dervish receives an enhancement bonus to her movement speed. Wearing armor heavier than light or carrying a medium or heavy load negates this benefit.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "not_equal",
+                "target": "combat.armorworn",
+                "value": "medium",
+                "valueType": "string"
+              },
+              {
+                "operator": "not_equal",
+                "target": "combat.armorworn",
+                "value": "heavy",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.encumbrance.load",
+                "value": "light",
+                "valueType": "string"
+              }
+            ],
+            "target": "combat.speed.base",
+            "value": "{{ [feats.fastmovementdervish.count] * 5 }}",
+            "valueType": "number"
+          }
+        ]
       },
       "Improved Reaction": {
         "description": "At 6th level, a dervish receives a +2 bonus to initiative checks."
@@ -43,6 +105,9 @@
       },
       "Weapon and Armor Proficiency": {
         "description": "This prestige class does not grant proficiency with any weapons or armor."
+      },
+      "Fast Movement +": {
+        "skip": true
       }
     }
   },

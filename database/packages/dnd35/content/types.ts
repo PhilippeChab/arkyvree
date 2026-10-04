@@ -66,7 +66,7 @@ export type ClassSeed = {
   freeFeats?: [number, string, string][];
   /** One more pick in the `target` aptitude at each of these levels. */
   aptitudePicks?: { levels: number[]; target: string }[];
-  modifiers?: (Modifier & { level: number })[];
+  modifiers?: (ModifierSeed & { level: number })[];
 
   bonusSpellAbility?: string;
   casterType?: "Arcane" | "Divine";

@@ -49,7 +49,35 @@
       "description": "You gain damage reduction 3/-. This does not stack with DR from magic items or temporary magical effects, but it stacks with DR from permanent magical effects, class features, or additional selections of this feat."
     },
     "Dash": {
-      "description": "While wearing light or no armor and carrying no more than a light load, your movement speed increases by 5 feet."
+      "description": "While wearing light or no armor and carrying no more than a light load, your movement speed increases by 5 feet.",
+      "modifiers": [
+        {
+          "operator": "add",
+          "requirements": [
+            {
+              "operator": "not_equal",
+              "target": "combat.armorworn",
+              "value": "medium",
+              "valueType": "string"
+            },
+            {
+              "operator": "not_equal",
+              "target": "combat.armorworn",
+              "value": "heavy",
+              "valueType": "string"
+            },
+            {
+              "operator": "equal",
+              "target": "combat.encumbrance.load",
+              "value": "light",
+              "valueType": "string"
+            }
+          ],
+          "target": "combat.speed.base",
+          "value": "5",
+          "valueType": "number"
+        }
+      ]
     },
     "Defensive Strike": {
       "description": "When you are using the total defense action and an opponent's attack against you misses, you gain a +4 bonus on your attack roll against that opponent during your next turn. No bonus is gained against foes who do not attack you or whose attacks hit."

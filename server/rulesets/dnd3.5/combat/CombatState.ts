@@ -74,6 +74,10 @@ export const SLOT_MAP: Record<string, keyof WeaponSet> = {
   "Two Handed": "twohanded",
 };
 
+/** The armor a character wears, lightest first: none, or the armor's proficiency category. */
+export const ARMOR_WORN = ["none", "light", "medium", "heavy"] as const;
+export type ArmorWorn = (typeof ARMOR_WORN)[number];
+
 export type DetailedCharacterComprehensiveCombat = {
   ac: {
     base: number;
@@ -123,6 +127,10 @@ export type DetailedCharacterComprehensiveCombat = {
     readonly total: number;
   };
   encumbrance: EncumbranceData;
+  /** The heaviest armor worn, "none" without: what a class feature's speed or AC bonus may require */
+  armorworn: ArmorWorn;
+  /** Whether a shield is carried */
+  shieldheld: boolean;
   weaponsets: Record<string, WeaponSet>;
   armors: ArmorsData;
   shields: ShieldsData;
@@ -175,14 +183,14 @@ export default abstract class CombatState {
       maxdex: Infinity,
       checkpenalty: 0,
     },
+    armorworn: "none",
+    shieldheld: false,
     weaponsets: {},
     armors: {},
     shields: {},
   };
 
   protected shieldMaxDex = Infinity;
-
-  protected hasSpeedReducingArmor = false;
 
   /** Whether the race keeps its speed in medium or heavy armor and load (RACE_SPEED_IGNORES_ENCUMBRANCE: the dwarf). */
   protected speedIgnoresEncumbrance = false;

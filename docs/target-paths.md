@@ -58,6 +58,8 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 | `combat.ac.total` | number | All AC bonuses combined (req only) |
 | `combat.ac.touch` | number | Ignores armor, shield, natural (req only) |
 | `combat.ac.flatfooted` | number | Ignores the Dexterity and dodge bonuses, unless uncanny dodge (req only) |
+| `combat.armorworn` | string | The heaviest armor worn: none, light, medium or heavy (req only) |
+| `combat.shieldheld` | boolean | Whether a shield is carried (req only) |
 | `combat.hp.base` | number | From hit dice rolls |
 | `combat.hp.constitution` | number | Con modifier per level (req only) |
 | `combat.hp.misc` | number | Other bonuses to HP |
@@ -74,11 +76,12 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 | `combat.twoweapon.mainhand` | number | Penalty on main-hand attacks with two weapons (−6) |
 | `combat.twoweapon.offhand` | number | Penalty on off-hand attacks with two weapons (−10) |
 | `combat.twoweapon.offhandattacks` | number | Attacks the off hand makes with two weapons (1) |
-| `combat.speed.base` | number | From race (ft) |
-| `combat.speed.misc` | number | Other bonuses to speed (ft) |
+| `combat.speed.base` | number | From race, and fast movement: what armor and load slow (ft) |
+| `combat.speed.misc` | number | Other bonuses to speed, after armor and load (ft) |
 | `combat.speed.total` | number | Final movement speed (ft) (req only) |
 | `combat.encumbrance.carriedweight` | number | Total weight of items (lbs) |
 | `combat.encumbrance.heavyload` | number | Max carry capacity (lbs) (req only) |
+| `combat.encumbrance.load` | string | The load carried: light, medium, heavy or overloaded (req only) |
 
 ## items.weapons
 

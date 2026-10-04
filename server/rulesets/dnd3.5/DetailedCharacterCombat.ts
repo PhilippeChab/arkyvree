@@ -14,10 +14,11 @@ import {
   WEAPON_PROFICIENCY,
 } from "@/shared/dnd3.5/properties/index.ts";
 import { type CharacterLevel } from "@/shared/relations.ts";
+import { capitalize } from "@/shared/text.ts";
 
 import { ArmorClass } from "./combat/ArmorClass.ts";
 import { Attacks } from "./combat/Attacks.ts";
-import CombatState, { type DetailedCharacterComprehensiveCombat } from "./combat/CombatState.ts";
+import CombatState, { ARMOR_WORN, type DetailedCharacterComprehensiveCombat } from "./combat/CombatState.ts";
 import { HitPoints } from "./combat/HitPoints.ts";
 import { InitiativeAndSpeed } from "./combat/InitiativeAndSpeed.ts";
 
@@ -122,6 +123,22 @@ const NAVIGATABLE_PATHS = [
     sortOrder: 2,
     requirementOnly: true,
   },
+  // What a class feature's speed or AC bonus may require
+  {
+    path: "armorworn",
+    description: "The heaviest armor worn: none, light, medium or heavy",
+    type: "string" as const,
+    sortOrder: 2,
+    requirementOnly: true,
+    possibleValues: ARMOR_WORN.map((armor) => ({ value: armor, label: capitalize(armor) })),
+  },
+  {
+    path: "shieldheld",
+    description: "Whether a shield is carried",
+    type: "boolean" as const,
+    sortOrder: 2,
+    requirementOnly: true,
+  },
   // Hit points
   { path: "hp.base", description: "From hit dice rolls", type: "number" as const },
   { path: "hp.constitution", description: "Con modifier per level", type: "number" as const, requirementOnly: true },
@@ -156,8 +173,12 @@ const NAVIGATABLE_PATHS = [
     type: "number" as const,
   },
   // Movement
-  { path: "speed.base", description: "From race (ft)", type: "number" as const },
-  { path: "speed.misc", description: "Other bonuses to speed (ft)", type: "number" as const },
+  {
+    path: "speed.base",
+    description: "From race, and fast movement: what armor and load slow (ft)",
+    type: "number" as const,
+  },
+  { path: "speed.misc", description: "Other bonuses to speed, after armor and load (ft)", type: "number" as const },
   { path: "speed.total", description: "Final movement speed (ft)", type: "number" as const, requirementOnly: true },
 ];
 
@@ -171,6 +192,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   mainhand: "Main Hand",
   offhand: "Off Hand",
   offhandattacks: "Off-Hand Attacks",
+  armorworn: "Armor Worn",
+  shieldheld: "Shield Held",
 };
 
 class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints, Attacks, InitiativeAndSpeed) {
@@ -189,12 +212,9 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
         description: path.description,
         valueType: path.type,
         operators:
-          path.type === "boolean"
-            ? kind === "modifier"
-              ? ["set"]
-              : ["equal", "not_equal"]
-            : getNumericOperators(kind),
+          path.type === "number" ? getNumericOperators(kind) : kind === "modifier" ? ["set"] : ["equal", "not_equal"],
         ...("sortOrder" in path && { sortOrder: path.sortOrder }),
+        ...("possibleValues" in path && { possibleValues: path.possibleValues }),
       });
     }
 

@@ -9,6 +9,39 @@
     "features": {
       "Camoflague": {
         "seedName": "Camouflage (Scout)"
+      },
+      "Fast Movement": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "not_equal",
+                "target": "combat.armorworn",
+                "value": "medium",
+                "valueType": "string"
+              },
+              {
+                "operator": "not_equal",
+                "target": "combat.armorworn",
+                "value": "heavy",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.encumbrance.load",
+                "value": "light",
+                "valueType": "string"
+              }
+            ],
+            "target": "combat.speed.base",
+            "value": "{{ [feats.fastmovementscout.count] * 10 }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Fast Movement +": {
+        "skip": true
       }
     }
   },

@@ -25,7 +25,6 @@ export const DERVISH: ClassSeed = {
     [1, "Slashing Blades (Dervish)"],
     [1, "Weapon and Armor Proficiency (Dervish)"],
     [2, "Fast Movement (Dervish)"],
-    [2, "Fast Movement + (Dervish)"],
     [3, "Dervish Dance (Dervish)"],
     [4, "Dance of Death (Dervish)"],
     [5, "Dervish Dance (Dervish)"],

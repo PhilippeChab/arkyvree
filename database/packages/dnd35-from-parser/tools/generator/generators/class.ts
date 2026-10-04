@@ -278,8 +278,10 @@ export function generateClassSeed(ref: ClassReference): string {
   if (overrides.modifiers && overrides.modifiers.length > 0) {
     lines.push(`  modifiers: [`);
     for (const m of overrides.modifiers) {
+      const requirements = (m.requirements ?? []).map((r) => stringifyRequirement(r, uses, 3));
+      const gate = requirements.length > 0 ? `, requirements: [${requirements.join(", ")}]` : "";
       lines.push(
-        `    { level: ${m.level}, target: ${quote(m.target)}, value: ${quote(m.value)}, valueType: ${quote(m.valueType)}, operator: ${quote(m.operator)} },`,
+        `    { level: ${m.level}, target: ${quote(m.target)}, value: ${quote(m.value)}, valueType: ${quote(m.valueType)}, operator: ${quote(m.operator)}${gate} },`,
       );
     }
     lines.push(`  ],`);

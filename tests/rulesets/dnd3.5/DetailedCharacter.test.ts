@@ -1269,9 +1269,11 @@ describe("DetailedCharacter", () => {
       const acBonus = zen
         .getDetailedCharacterModifiers()
         .getModifiers()
-        .appliedModifiers.find((m) => m.value === "{{ [abilities.wisdom.modifier] }}" && m.target === "combat.ac.misc");
+        .appliedModifiers.find(
+          (m) => m.value === "{{ max(0, [abilities.wisdom.modifier]) }}" && m.target === "combat.ac.misc",
+        );
       expect(acBonus).toBeDefined();
-      // Its requirements: no armor, no shield.
+      // Its requirements: no armor, no shield, a light load.
       const gates = zen
         .getDetailedCharacterRequirements()
         .getRequirements()
@@ -1295,9 +1297,9 @@ describe("DetailedCharacter", () => {
     });
 
     test("of a dwarf stays 20 feet in medium or heavy armor, by the race's property", async () => {
-      // A dwarf barbarian in scale mail, with fast movement's +10.
+      // A dwarf barbarian in scale mail: fast movement's +10 on the base, which medium armor allows
       const speed = async () => (await buildSeeded("Kael Stormborn")).getDetailedCharacterCombat().getCombat().speed;
-      expect(await speed()).toMatchObject({ base: 20, misc: 10, total: 30 });
+      expect(await speed()).toMatchObject({ base: 30, misc: 0, total: 30 });
 
       const { raceMap, rulesetId } = await getSeedCtx();
       await Properties.delete(db, {
@@ -1306,8 +1308,68 @@ describe("DetailedCharacter", () => {
         types: [RACE_SPEED_IGNORES_ENCUMBRANCE],
       });
       invalidateSeededRuleset(rulesetId);
-      // Without the property, the armor slows it as anyone's: 20 feet become 15.
-      expect((await speed()).total).toBe(25);
+      // Without the property, the armor slows it as anyone's, fast movement first: 30 feet become 20 (the SRD's
+      // halfling barbarian)
+      expect((await speed()).total).toBe(20);
+    });
+
+    test.each([
+      // A barbarian 3: fast movement in medium armor, before it slows him; none in heavy armor
+      ["Grak Thunderfist", [], 40],
+      ["Grak Thunderfist", ["Breastplate"], 30],
+      ["Grak Thunderfist", ["Full Plate"], 20],
+      // A monk 3: in no armor only
+      ["Zen Whitepetal", [], 40],
+      ["Zen Whitepetal", ["Leather Armor"], 30],
+    ] as const)("of %s wearing %j is %i feet: fast movement by its armor", async (name, armors, speed) => {
+      const carried = armors.map((item) => ({ item, location: "Torso" as const }));
+      expect((await buildCarrying(name, carried)).getDetailedCharacterCombat().getCombat().speed.total).toBe(speed);
+    });
+
+    test("and AC of a prestige class follow its table: a sacred fist's, a dwarven defender's", async () => {
+      const ctx = await getSeedCtx();
+      /** A fighter 1 with `levels` of the class from `book`, unarmored: its speed and AC parts. */
+      const sheetWith = async (book: string, className: string, levels: number) => {
+        const fork = await forkWith(book);
+        const characterId = await createSeedCharacter(`${className} ${levels}`, WIZARD_SCORES, { rulesetId: fork.id });
+        await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+        const klass = (await Klasses.findOne(db, {
+          name: className,
+          rulesetId: (await Rulesets.findOne(db, { name: book }))!.id,
+        }))!;
+        for (let level = 1; level <= levels; level++) {
+          await addCharacterLevel(characterId, (await findKlassLevel(klass.id, level))!.id);
+        }
+        const { speed, ac } = (await build((await Characters.findOne(db, { id: characterId }))!))
+          .getDetailedCharacterCombat()
+          .getCombat();
+        return { speed: speed.total, misc: ac.misc, dodge: ac.dodge };
+      };
+      // Sacred fist 6: +20 feet, +2 AC; dwarven defender 4: +2 dodge
+      expect(await sheetWith(DND35_COMPLETE_DIVINE_NAME, "Sacred Fist", 6)).toEqual({ speed: 50, misc: 2, dodge: 0 });
+      expect(await sheetWith(DND35_DMG_NAME, "Dwarven Defender", 4)).toEqual({ speed: 30, misc: 0, dodge: 2 });
+    });
+
+    test("of a monk loses fast movement under a medium load, and her AC bonus with it", async () => {
+      const zen = await findSeededCharacter("Zen Whitepetal");
+      const sheet = async () => {
+        const { speed, ac, encumbrance } = (await build(zen)).getDetailedCharacterCombat().getCombat();
+        return { load: encumbrance.load, speed: speed.total, misc: ac.misc };
+      };
+      const light = await sheet();
+      expect(light).toMatchObject({ load: "light", speed: 40 });
+      expect(light.misc).toBeGreaterThan(0);
+      // Heavy enough for a medium load: no fast movement (a medium load slows 30 feet to 20), no Wisdom to AC
+      await Modifiers.create(db, {
+        sourceId: zen.raceId,
+        sourceType: "races",
+        target: "combat.encumbrance.carriedweight",
+        operator: "add",
+        value: String(Math.ceil((await build(zen)).getDetailedCharacterCombat().getCombat().encumbrance.lightload + 1)),
+        valueType: "number",
+      });
+      invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+      expect(await sheet()).toEqual({ load: "medium", speed: 20, misc: 0 });
     });
   });
 
@@ -2162,10 +2224,9 @@ describe("DetailedCharacter", () => {
       expect(
         (await buildCarrying("Bjorn Ironhand", barrels(11))).getDetailedCharacterCombat().getCombat(),
       ).toMatchObject({ encumbrance: { load: "overloaded" }, speed: { total: 5 } });
-      // A dwarf keeps its 20 feet under a medium load, the barbarian's fast movement adding.
+      // A dwarf keeps its speed under a medium load, the barbarian's fast movement with it: only a heavy load stops that
       const kael = (await buildCarrying("Kael Stormborn", barrels(3))).getDetailedCharacterCombat().getCombat();
-      expect(kael).toMatchObject({ encumbrance: { load: "medium" }, speed: { base: 20 } });
-      expect(kael.speed.total).toBe(20 + kael.speed.misc);
+      expect(kael).toMatchObject({ encumbrance: { load: "medium" }, speed: { base: 30, total: 30 } });
     });
 
     test("caps dexterity in armor class and costs weight-affected skills, swim double, unless the armor costs more", async () => {

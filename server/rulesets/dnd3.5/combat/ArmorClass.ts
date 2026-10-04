@@ -1,5 +1,6 @@
 import type { Constructor } from "@/server/mixins.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD } from "@/server/rulesets/constants.ts";
+import { ARMOR_WORN } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type { ArmorsData } from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
 import type { ShieldsData } from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
@@ -83,17 +84,18 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
       return [...new Set(Object.values(slots))].reduce((ac, slot) => ac + slot.ac.total, 0);
     }
 
-    /** An armor the character wears: medium and heavy armor slow it down. */
+    /** An armor the character wears: the heaviest one worn (medium and heavy armor slow the character down). */
     addArmor(properties: { type: string; value: string }[]) {
-      const armor = properties.find((property) => property.type === ARMOR_PROFICIENCY);
-      if (armor?.value === "Medium" || armor?.value === "Heavy") {
-        this.hasSpeedReducingArmor = true;
-      }
+      const category = properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value.toLowerCase();
+      const worn = ARMOR_WORN.find((armor) => armor === category);
+      const combat = this.detailedCharacterCombat;
+      if (worn && ARMOR_WORN.indexOf(worn) > ARMOR_WORN.indexOf(combat.armorworn)) combat.armorworn = worn;
     }
 
     /** A shield the character carries: its maximum Dexterity bonus caps the AC's. */
     addShield(properties: { type: string; value: string }[]) {
       if (!properties.some((property) => property.type === SHIELD_PROFICIENCY)) return;
+      this.detailedCharacterCombat.shieldheld = true;
       const dexterityLimitation = properties.find((property) => property.type === ARMOR_MAX_DEX)?.value ?? null;
       if (dexterityLimitation) {
         this.shieldMaxDex = Math.min(this.shieldMaxDex, Number(dexterityLimitation));

@@ -9,13 +9,48 @@
     "description": "Sacred fists belong to self-governing orders that operate within the walls of various temples, combining martial discipline with divine power.",
     "features": {
       "AC Bonus": {
-        "description": "Through rigorous training, the sacred fist develops an instinctive ability to evade attacks, including those he cannot see coming. While unencumbered and wearing light armor or no armor, he receives a +1 dodge bonus to Armor Class. This bonus improves to +2 at 5th level and +3 at 10th level. It remains effective even against touch attacks and when the sacred fist is caught flat-footed. The bonus is lost if the sacred fist becomes immobilized or helpless, wears armor heavier than light, uses a shield, or carries a medium or heavy load."
+        "description": "Through rigorous training, the sacred fist develops an instinctive ability to evade attacks, including those he cannot see coming. While unencumbered and wearing light armor or no armor, he receives a +1 dodge bonus to Armor Class. This bonus improves to +2 at 5th level and +3 at 10th level. It remains effective even against touch attacks and when the sacred fist is caught flat-footed. The bonus is lost if the sacred fist becomes immobilized or helpless, wears armor heavier than light, uses a shield, or carries a medium or heavy load.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "not_equal",
+                "target": "combat.armorworn",
+                "value": "medium",
+                "valueType": "string"
+              },
+              {
+                "operator": "not_equal",
+                "target": "combat.armorworn",
+                "value": "heavy",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.shieldheld",
+                "value": "false",
+                "valueType": "boolean"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.encumbrance.load",
+                "value": "light",
+                "valueType": "string"
+              }
+            ],
+            "target": "combat.ac.misc",
+            "value": "{{ floor([classes.sacredfist.level] / 5) + 1 }}",
+            "valueType": "number"
+          }
+        ]
       },
       "Blindsense": {
         "description": "Upon reaching 6th level, the sacred fist develops a heightened awareness of vibrations, smells, and sounds, gaining blindsense with a range of 10 feet."
       },
       "Fast Movement": {
-        "description": "Beginning at 3rd level, the sacred fist receives an enhancement bonus to his base land speed. This speed increase is negated while wearing medium or heavy armor or carrying a medium or heavy load."
+        "description": "Beginning at 3rd level, the sacred fist receives an enhancement bonus to his base land speed. This speed increase is negated while wearing medium or heavy armor or carrying a medium or heavy load.",
+        "level": 3
       },
       "Inner Armor": {
         "description": "At 10th level, the sacred fist achieves a state of profound inner calm that shields him from harm. Once per day, he can activate this ability to gain a +4 sacred bonus to AC, a +4 sacred bonus on all saving throws, and spell resistance 25. These benefits last for a number of rounds equal to his Wisdom modifier."
@@ -32,7 +67,90 @@
       "Weapon and Armor Proficiency": {
         "description": "This prestige class does not grant proficiency with any weapons, armor, or shields."
       }
-    }
+    },
+    "modifiers": [
+      {
+        "level": 3,
+        "operator": "add",
+        "requirements": [
+          {
+            "operator": "not_equal",
+            "target": "combat.armorworn",
+            "value": "medium",
+            "valueType": "string"
+          },
+          {
+            "operator": "not_equal",
+            "target": "combat.armorworn",
+            "value": "heavy",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ],
+        "target": "combat.speed.base",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "level": 6,
+        "operator": "add",
+        "requirements": [
+          {
+            "operator": "not_equal",
+            "target": "combat.armorworn",
+            "value": "medium",
+            "valueType": "string"
+          },
+          {
+            "operator": "not_equal",
+            "target": "combat.armorworn",
+            "value": "heavy",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ],
+        "target": "combat.speed.base",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "level": 8,
+        "operator": "add",
+        "requirements": [
+          {
+            "operator": "not_equal",
+            "target": "combat.armorworn",
+            "value": "medium",
+            "valueType": "string"
+          },
+          {
+            "operator": "not_equal",
+            "target": "combat.armorworn",
+            "value": "heavy",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ],
+        "target": "combat.speed.base",
+        "value": "10",
+        "valueType": "number"
+      }
+    ]
   },
   "raw": {
     "classFeatures": [
