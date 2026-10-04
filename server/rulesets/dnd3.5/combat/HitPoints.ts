@@ -6,8 +6,9 @@ import { type CharacterLevel } from "@/shared/relations.ts";
 export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithHitPoints extends Base {
     protected initializeHitPoints(levels: CharacterLevel[], constitutionModifier: number): void {
-      const baseHitPoints = levels.reduce((acc, level) => acc + level.hp, 0);
-      const constitutionBonus = constitutionModifier * levels.length;
+      this.hitDieRolls = levels.map((level) => level.hp);
+      const baseHitPoints = this.hitDieRolls.reduce((acc, roll) => acc + roll, 0);
+      const constitutionBonus = this.constitutionHitPoints(constitutionModifier);
 
       this.detailedCharacterCombat.hp = {
         base: baseHitPoints,
@@ -19,11 +20,17 @@ export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
 
     protected updateHitPointsTotal() {
       const hp = this.detailedCharacterCombat.hp;
-      const numberOfLevels =
-        this.hitDiceOverride ??
-        Object.values(this.characterClasses.getClasses()).reduce((acc, klass) => acc + klass.level, 0);
-      hp.constitution = this.characterAbilities.getAbilityModifier("Constitution") * numberOfLevels;
+      hp.constitution = this.constitutionHitPoints(this.characterAbilities.getAbilityModifier("Constitution"));
       hp.total = hp.base + hp.constitution + hp.misc;
+    }
+
+    /**
+     * The hit points Constitution adds: its modifier on each level's roll, though a penalty never drops a level below 1
+     * hit point (SRD). A bonded creature's hit dice are its average, so its modifier adds once per hit die.
+     */
+    private constitutionHitPoints(constitutionModifier: number): number {
+      if (this.hitDiceOverride !== null) return constitutionModifier * this.hitDiceOverride;
+      return this.hitDieRolls.reduce((acc, roll) => acc + Math.max(constitutionModifier, 1 - roll), 0);
     }
 
     setHitDiceOverride(hd: number | null) {

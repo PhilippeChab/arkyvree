@@ -114,7 +114,7 @@ export async function getLevelUpPreview(
 
     // ── Per-level skill points ──
     const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
-    const { perLevel: perLevelSkillPoints } = await levelUpProjector.computeSkillPointsPerLevel(
+    const perLevelSkillPoints = await levelUpProjector.computeSkillPointsPerLevel(
       klassLevelIds,
       existingLevels.length,
       rulesetData,

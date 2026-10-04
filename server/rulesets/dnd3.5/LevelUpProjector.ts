@@ -82,7 +82,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     klassLevelIds: string[],
     existingLevelCount: number,
     rulesetData: CachedRulesetData,
-  ): Promise<{ perLevel: number[]; abilityMod: number }> {
+  ): Promise<number[]> {
     const skillPointsByKlassLevelId = new Map<string, number>();
     for (const klassLevelId of klassLevelIds) {
       const props = rulesetData.propertiesByEntity.get(klassLevelId);
@@ -95,19 +95,11 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
       }
     }
 
-    const abilities = this.character.getDetailedCharacterAbilities();
-    const abilityMod = abilities.getAbilityModifierExcludingMisc("intelligence");
-    const bonusSkillPointsPerLevel = this.character.getDetailedCharacterSkills().getSkillBudget().perlevel;
+    const skills = this.character.getDetailedCharacterSkills();
     const hasExistingLevels = existingLevelCount > 0;
-
-    const perLevel = klassLevelIds.map((klassLevelId, i) => {
-      const sp = skillPointsByKlassLevelId.get(klassLevelId) ?? 0;
-      const isFirstCharacterLevel = !hasExistingLevels && i === 0;
-      const multiplier = isFirstCharacterLevel ? 4 : 1;
-      return Math.max(1, (sp + abilityMod + bonusSkillPointsPerLevel) * multiplier);
-    });
-
-    return { perLevel, abilityMod };
+    return klassLevelIds.map((klassLevelId, i) =>
+      skills.getLevelSkillPoints(skillPointsByKlassLevelId.get(klassLevelId) ?? 0, !hasExistingLevels && i === 0),
+    );
   }
 
   async evaluateClassAvailability(
