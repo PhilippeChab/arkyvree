@@ -147,7 +147,7 @@ export interface LoadedCharacterData {
 }
 
 /**
- * Shared character data from rounds 1-3 of fetchCharacterData.
+ * Shared character data, the loader's `loadSharedData`.
  * Returned by `detailedCharacter.preload()` and accepted by `build()` to avoid
  * duplicate DB queries when building the same character with different projections.
  */

@@ -1,6 +1,5 @@
 import type { Requirement } from "@/shared/relations.ts";
 
-// ──────────────────────────────────────────────────────────────
 // Requirement forest model (used by siblingMerge.ts + the
 // matching read-time compose in rulesetCache/compose.ts)
 //
@@ -16,7 +15,6 @@ import type { Requirement } from "@/shared/relations.ts";
 // the combined forest. Sibling chain trees get fresh top-level integer roots
 // to avoid colliding with target's existing levels; their internal child
 // indices are renumbered recursively.
-// ──────────────────────────────────────────────────────────────
 
 const MAX_REQ_TREE_DEPTH = 5;
 

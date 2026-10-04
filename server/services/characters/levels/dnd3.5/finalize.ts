@@ -134,13 +134,10 @@ export async function updateLevel(
       });
       const { fetchedFeats, featCustomizations, autoGrantedRecords } = validationResult;
 
-      // The projected level must use a fresh id, not the real edited one. The
-      // DB-side given-feat join filters by `levelsInCharacter.id IN
-      // allCharacterLevelIds` — if the projected id matches a real row, the
-      // edited level's auto-granted feats get loaded from DB *and* re-added
-      // via `givenFeats`. Non-stackable feats dedup; stackable ones
-      // (Bonus Feat (Fighter/Wizard)) don't, so their aptitude-grant modifier
-      // fires twice and the level shows a phantom unspent slot.
+      // A fresh id keeps the projected level apart from the edited row it
+      // replaces. The loader drops that row (`excludeCharacterLevelIds`) and
+      // fetches granted feats for the saved levels only, so the projected
+      // level's come from `givenFeats` alone.
       const projectedLevelId = crypto.randomUUID();
 
       const autoGrantedFeats = buildProjectedAutoGrantedFeats(
@@ -196,7 +193,7 @@ export async function updateLevel(
         // `aptitudes.<x>.allowed += N` modifier (Bonus Feat (Fighter)
         // auto-grants Fighter Bonus Feat, Wizard specialization picks grant
         // Prohibited School, War Domain grants War Domain Weapon, etc.).
-        // If withLevel misses any of them the affected pool stays out of
+        // If withLevelData misses any of them the affected pool stays out of
         // ownedPoolNames and real under-pick issues get filtered out.
         const projectedLevelForFilter = buildProjectedCharacterLevel(characterId, klassLevel.id);
         const withLevelData: Dnd35ProjectedCharacterData = {
@@ -460,7 +457,6 @@ export async function finalizeLevelUp(
         baselineApts,
       );
 
-      // Compute per-level skill points
       const { perLevel: perLevelSkillPoints } = await levelUpProjector.computeSkillPointsPerLevel(
         klassLevelIds,
         baseExistingLevels.length,
@@ -529,7 +525,6 @@ export async function finalizeLevelUp(
         }
       }
 
-      // Run distribution
       const distributionData: PerLevelDistributionData = {
         perLevelSkillPoints,
         perLevelClassSkillIds: classSkills.perLevel,

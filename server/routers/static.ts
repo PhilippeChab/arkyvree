@@ -72,10 +72,8 @@ function injectMeta(html: string, path: string): string {
 
   let result = html;
 
-  // Replace <title>
   result = result.replace(`<title>${DEFAULT_TITLE}</title>`, `<title>${meta.title}</title>`);
 
-  // Replace meta description
   result = result.replace(`content="${DEFAULT_DESCRIPTION}"`, `content="${meta.description}"`);
 
   // Replace og:title

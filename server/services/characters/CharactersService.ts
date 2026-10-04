@@ -312,7 +312,6 @@ class CharactersService extends include(Object, Archives) {
           throw new BadRequestError("Race is not valid for a player character");
         }
 
-        // Create the character
         const [newCharacter] = await Characters.create(tx, {
           userId: session.userId,
           rulesetId: characterData.rulesetId,

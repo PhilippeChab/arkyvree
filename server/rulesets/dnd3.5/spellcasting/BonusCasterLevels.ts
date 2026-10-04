@@ -135,7 +135,6 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       // Store bonus klass levels for source resolution in diagnostics
       this.bonusKlassLevels = bonusKlassLevels;
 
-      // Populate bonusKlassLevelClassMap
       for (const kl of bonusKlassLevels) {
         const key = `${kl.klassId}:${kl.level}`;
         const className = pairToClassName.get(key);

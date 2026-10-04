@@ -54,16 +54,13 @@ export function useRulesetSection<
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
-  // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Selected items
   const [selectedItem, setSelectedItem] = useState<TData | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-  // Forms
   const createForm = useForm<TFormData>({ defaultValues: createDefaults });
   const editForm = useForm<TFormData>();
 
@@ -86,7 +83,6 @@ export function useRulesetSection<
     onEditDialogClose?.();
   };
 
-  // Mutations
   const invalidateOnMutation = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, sectionName) });
     for (const queryKey of queryKeysToInvalidate ?? []) {
@@ -137,7 +133,6 @@ export function useRulesetSection<
     },
   });
 
-  // Action handlers
   const handleCreate = () => {
     setCreateDialogOpen(true);
   };
@@ -162,12 +157,10 @@ export function useRulesetSection<
   };
 
   return {
-    // Data
     data,
     isLoading,
     error,
 
-    // Dialog states
     createDialogOpen,
     editDialogOpen,
     deleteDialogOpen,
@@ -176,21 +169,17 @@ export function useRulesetSection<
     closeEditDialog,
     setDeleteDialogOpen,
 
-    // Selected items
     selectedItem,
     itemToDelete,
     setSelectedItem,
 
-    // Forms
     createForm,
     editForm,
 
-    // Mutations
     createMutation,
     updateMutation,
     deleteMutation,
 
-    // Handlers
     handleCreate,
     handleEdit,
     handleDelete,

@@ -26,8 +26,6 @@ export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "locati
   return entry.location;
 }
 
-// ── Inventory dialogs ────────────────────────────────────────────────
-
 type InventoryEntry = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>[number];
 
 /** A slot, or not equipped. */

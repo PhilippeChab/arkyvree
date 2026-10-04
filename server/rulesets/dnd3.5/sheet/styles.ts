@@ -491,5 +491,4 @@ export const styles = StyleSheet.create({
   },
 });
 
-// Character sheet component
 /** The header of the sheet's pages after the first: the character's name, and what the page holds. */

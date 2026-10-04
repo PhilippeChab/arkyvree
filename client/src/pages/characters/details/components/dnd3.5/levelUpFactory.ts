@@ -27,7 +27,6 @@ import { LevelUpReviewStep } from "./LevelUpReviewStep.tsx";
 import { LevelUpSkillsStep } from "./LevelUpSkillsStep.tsx";
 import { LevelUpSpellsStep } from "./LevelUpSpellsStep.tsx";
 
-// ── Step prop interfaces ──────────────────────────────────────────────
 // Each step takes the wizard state it reads as `wizard`; the Add Level and
 // Edit Level wizards both hand themselves over.
 
@@ -212,8 +211,6 @@ interface PowerPickerState {
 export interface LevelUpPowersStepProps {
   wizard: PowerPickerState;
 }
-
-// ── Section map ───────────────────────────────────────────────────────
 
 interface SectionMap {
   LevelUpHpStep: ComponentType<LevelUpHpStepProps>;

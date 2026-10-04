@@ -57,7 +57,6 @@ class AccountService {
         throw new BadRequestError("Set a password first");
       }
 
-      // Verify current password
       const { verified } = await verifyPassword(currentPassword, user.passwordDigest);
       if (!verified) {
         throw new UnauthorizedError("Current password is incorrect");
@@ -69,7 +68,6 @@ class AccountService {
         throw new BadRequestError("New password must be different from current password");
       }
 
-      // Update password
       const newHash = await hashPassword(newPassword);
       const rows = await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
       const updatedUser = rows[0];

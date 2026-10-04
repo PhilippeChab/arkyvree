@@ -301,7 +301,6 @@ export async function cowEntityForCustomization(
     return cowModifierForCustomization(tx, rulesetId, entityId, customizationIds);
   }
 
-  // Standard entity types
   const entityTypeMap: Record<string, EntityType> = {
     feats: "feats",
     powers: "powers",

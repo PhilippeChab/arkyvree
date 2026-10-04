@@ -13,9 +13,7 @@ import {
 
 import type { EntityCustomizations, KlassRelationships } from "./hashing.ts";
 
-// ──────────────────────────────────────────────────────────────
 // Helper functions (extracted from RulesetsService)
-// ──────────────────────────────────────────────────────────────
 
 // Shape-only helper: groups four sets of customization rows into the
 // `Map<entityId, EntityCustomizations>` structure callers expect. Pure JS,
@@ -110,7 +108,6 @@ export async function fetchKlassRelationships(tx: Db, klassIds: string[]): Promi
     const levelFeats = await KlassLevelFeats.findMany(tx, { klassLevelIds: allLevelIds });
     const levelPowers = await KlassLevelPowers.findMany(tx, { klassLevelIds: allLevelIds });
 
-    // Build level-to-klass map
     const levelToKlass = new Map<string, string>();
     for (const { klassId, levels } of allLevels) {
       for (const level of levels) {
@@ -154,7 +151,6 @@ export async function fetchKlassLevelCustomizations(
 
   if (allLevelIds.length === 0) return new Map();
 
-  // Fetch customizations for all levels
   const levelCustomizations = await fetchEntityCustomizations(tx, allLevelIds, "klass_levels", "klass_levels");
 
   // Merge per-klass

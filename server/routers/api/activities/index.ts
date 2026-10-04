@@ -7,7 +7,6 @@ import { ActivitiesService } from "@/server/services/activities/index.ts";
 
 const activities = new Hono()
   .use(sessionMiddleware)
-  // List all activities
   .get(
     "/",
     zValidator(

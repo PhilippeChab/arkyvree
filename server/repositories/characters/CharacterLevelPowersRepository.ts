@@ -76,7 +76,7 @@ class CharacterLevelPowersRepository extends include(
     return rows.length > 0;
   }
 
-  // Archived characters count — see `project_archive_preserves_picks` memory.
+  // Archived characters count: one can be restored, and its picks must still resolve.
   private async existsPowerPickFromExtension(
     db: Db,
     where: { hostRulesetId: string; extensionRulesetId: string; shadowPowerIds: string[] },

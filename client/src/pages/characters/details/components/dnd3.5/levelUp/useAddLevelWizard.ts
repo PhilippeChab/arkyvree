@@ -15,8 +15,6 @@ import { computeMaxPointsForSkill } from "@/shared/dnd3.5/skills.ts";
 import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
 import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
-// ── Step definitions ─────────────────────────────────────────────────
-
 export const addStepContent = ["class-plan", "hp", "attributes", "skills", "feats", "powers", "review"] as const;
 
 export const addStepLabels = [
@@ -29,8 +27,6 @@ export const addStepLabels = [
   "Review Changes",
 ];
 
-// ── Types ────────────────────────────────────────────────────────────
-
 type FinalizeJson = InferRequestType<(typeof rpc.api.characters.levels)[":characterId"]["finalize"]["$post"]>["json"];
 
 interface UseAddLevelWizardParams {
@@ -39,8 +35,6 @@ interface UseAddLevelWizardParams {
   characterId: string;
   baseRules: BaseRules;
 }
-
-// ── Hook ─────────────────────────────────────────────────────────────
 
 export function useAddLevelWizard({ open, onClose, characterId, baseRules }: UseAddLevelWizardParams) {
   const snackbar = useSnackbar();
@@ -65,11 +59,8 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   } = base;
   const levelUpSections = getLevelUpSections(baseRules);
 
-  // Step index mapping
   const featsStep = addStepContent.indexOf("feats");
   const powersStep = addStepContent.indexOf("powers");
-
-  // ── Class plan state ─────────────────────────────────────────────
 
   const slotCounter = useRef(0);
   const [slotKeys, setSlotKeys] = useState<number[]>([]);
@@ -127,8 +118,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     },
     [classPlan],
   );
-
-  // ── HP state ─────────────────────────────────────────────────────
 
   // Only non-null entries matter for downstream steps
   const validClassPlan = useMemo(() => classPlan.filter((k): k is SelectedKlass => k !== null), [classPlan]);
@@ -200,8 +189,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
         .join("|"),
     [adjustedClassPlan],
   );
-
-  // ── Preview query ────────────────────────────────────────────────
 
   const previewQuery = useQuery({
     queryKey: queryKeys.characters.levelUp.preview(characterId, classPlanKey),
@@ -369,8 +356,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     return Math.max(0, slots.length - 1);
   }, [previewQuery.data, selectedAptitude, selectedFeats]);
 
-  // ── Grouped available feats query ────────────────────────────────
-
   // Use the slot-level context: query available feats at the specific level
   // where the next pick will land, not the final planned level.
   const slotLevelDetail = previewQuery.data?.levelDetails[currentFeatSlotLevelIndex];
@@ -429,8 +414,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
-  // ── Available powers query ───────────────────────────────────────
-
   const {
     items: availablePowers,
     isLoading: isLoadingAvailablePowers,
@@ -474,8 +457,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
-
-  // ── Computed: adjusted feat pools ────────────────────────────────
 
   const adjustedFeatPools = useAdjustedFeatPools(featData?.aptitudePools, base);
 
@@ -562,8 +543,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     if (changed) setValue("skillPointAllocations", updated);
   }, [skillData, perLevelClassSkillIds, perLevelSkillPoints, getValues, setValue]);
 
-  // ── Finalize mutation ────────────────────────────────────────────
-
   const resetWizard = useCallback(() => {
     resetPicks();
     slotCounter.current = 0;
@@ -584,8 +563,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     },
     onError: handleSaveError,
   });
-
-  // ── Navigation ───────────────────────────────────────────────────
 
   const isLastStep = activeStep === addStepContent.length - 1;
 
@@ -638,8 +615,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     resetWizard();
     onClose();
   }, [resetWizard, onClose]);
-
-  // ── isNextDisabled logic ─────────────────────────────────────────
 
   // The dialog also disables it while the save runs.
   const isNextDisabled = useMemo(() => {
@@ -711,20 +686,16 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     isFetchingNextPowersPage,
     handlePowersScroll,
 
-    // Navigation
     handleNext,
     handleCancel,
     handleConfirmCancel,
     handleForceSubmit,
     isNextDisabled,
 
-    // Mutation
     finalizeMutation,
 
-    // Sections
     levelUpSections,
 
-    // Preview
     preview: previewQuery.data,
     isLoadingPreview: previewQuery.isLoading,
     levelDetails: previewQuery.data?.levelDetails ?? [],

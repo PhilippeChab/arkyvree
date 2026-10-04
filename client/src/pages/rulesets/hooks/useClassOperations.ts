@@ -17,10 +17,8 @@ export function useClassLevels(rulesetId: string, classId: string) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
-  // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  // Forms
   const createForm = useForm<CreateLevelFormData>({
     defaultValues: {
       level: 1,
@@ -31,13 +29,11 @@ export function useClassLevels(rulesetId: string, classId: string) {
     },
   });
 
-  // Query
   const { data: levels, isLoading } = useQuery({
     ...classLevelsQuery(rulesetId, classId),
     enabled: !!rulesetId && !!classId,
   });
 
-  // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: CreateLevelFormData) => {
       return parseResponse(
@@ -63,7 +59,6 @@ export function useClassLevels(rulesetId: string, classId: string) {
   // Compute highest level for defaults
   const highestLevel = levels?.slice().sort((a, b) => b.level - a.level)[0] ?? null;
 
-  // Handlers
   const handleCreate = () => {
     createForm.reset({
       level: highestLevel ? highestLevel.level + 1 : 1,
@@ -80,24 +75,18 @@ export function useClassLevels(rulesetId: string, classId: string) {
   };
 
   return {
-    // Data
     levels,
     isLoading,
 
-    // Dialog states
     createDialogOpen,
     setCreateDialogOpen,
 
-    // Computed
     highestLevel,
 
-    // Forms
     createForm,
 
-    // Mutations
     createMutation,
 
-    // Handlers
     handleCreate,
     confirmCreate,
   };
@@ -107,13 +96,10 @@ export function useClassSkills(rulesetId: string, classId: string) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
-  // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Selected item state
   const [skillToRemove, setSkillToRemove] = useState<string | null>(null);
 
-  // Fetch class skills data
   const skillsQuery = classSkillsQuery(rulesetId, classId);
   const classSkillsKey = skillsQuery.queryKey;
   const { data: classSkills, isLoading } = useQuery({ ...skillsQuery, enabled: !!rulesetId && !!classId });
@@ -145,7 +131,6 @@ export function useClassSkills(rulesetId: string, classId: string) {
     enabled: !!rulesetId,
   });
 
-  // Add skill mutation
   const addSkillMutation = useMutation({
     mutationFn: async (skillId: string) => {
       return parseResponse(
@@ -164,7 +149,6 @@ export function useClassSkills(rulesetId: string, classId: string) {
       // Snapshot the previous value
       const previousClassSkills = queryClient.getQueryData(classSkillsKey);
 
-      // Find the skill being added
       const skill = availableSkills.find((s) => s.id === skillId);
 
       if (skill) {
@@ -199,7 +183,6 @@ export function useClassSkills(rulesetId: string, classId: string) {
     },
   });
 
-  // Remove skill mutation
   const removeSkillMutation = useMutation({
     mutationFn: async (skillId: string) => {
       return parseResponse(
@@ -244,7 +227,6 @@ export function useClassSkills(rulesetId: string, classId: string) {
     },
   });
 
-  // Handlers
   const handleAddSkill = (skillId: string) => {
     addSkillMutation.mutate(skillId);
   };
@@ -261,25 +243,20 @@ export function useClassSkills(rulesetId: string, classId: string) {
   };
 
   return {
-    // Data
     classSkills,
     availableSkills,
     isLoading,
     isAvailableSkillsLoading,
 
-    // Search & pagination
     setSkillSearch,
     handleSkillsScroll,
 
-    // Dialog states
     deleteDialogOpen,
     setDeleteDialogOpen,
 
-    // Mutations
     addSkillMutation,
     removeSkillMutation,
 
-    // Handlers
     handleAddSkill,
     handleRemoveSkill,
     confirmRemoveSkill,

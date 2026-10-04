@@ -150,7 +150,6 @@ export async function copyEntityRelationships(
       );
     }
   } else if (entityType === "klasses") {
-    // Copy klass_skills
     const klassSkills = await KlassSkills.findMany(tx, { klassIds: [sourceEntityId] });
     if (klassSkills.length > 0) {
       await KlassSkills.createMany(

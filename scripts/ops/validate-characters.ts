@@ -20,10 +20,6 @@ import { db } from "@/server/database/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { RulesetModule } from "@/server/rulesets/types.ts";
 
-// ──────────────────────────────────────────────────────────────
-// Helpers
-// ──────────────────────────────────────────────────────────────
-
 async function query<T extends Record<string, unknown>>(statement: SQL) {
   return (await db.execute<T>(statement)).rows;
 }
@@ -39,10 +35,6 @@ function moduleOf(rulesetId: string): Promise<RulesetModule> {
   return module;
 }
 
-// ──────────────────────────────────────────────────────────────
-// Load characters
-// ──────────────────────────────────────────────────────────────
-
 const characters = await db.select().from(charactersInCharacter).where(isNull(charactersInCharacter.deletedAt));
 
 if (characters.length === 0) {
@@ -55,10 +47,6 @@ const ACTIVE_CHARACTERS = sql`(SELECT id FROM character.characters WHERE deleted
 const ACTIVE_LEVELS = sql`(SELECT id FROM character.levels WHERE character_id IN ${ACTIVE_CHARACTERS} AND deleted_at IS NULL)`;
 
 console.log(`Validating ${characters.length} characters...\n`);
-
-// ──────────────────────────────────────────────────────────────
-// Data counts
-// ──────────────────────────────────────────────────────────────
 
 const [counts] = await query<{
   levels: string;
@@ -84,9 +72,7 @@ console.log(`  abilities: ${counts.abilities}, languages: ${counts.languages}\n`
 
 let totalIssues = 0;
 
-// ══════════════════════════════════════════════════════════════
 // Phase 1: Reference integrity — dangling FKs
-// ══════════════════════════════════════════════════════════════
 
 console.log("═══ Phase 1: Reference Integrity ═══\n");
 
@@ -207,9 +193,7 @@ for (const check of refChecks) {
   }
 }
 
-// ══════════════════════════════════════════════════════════════
 // Phase 2: Junction validity — feat+aptitude, power+aptitude
-// ══════════════════════════════════════════════════════════════
 
 console.log("\n═══ Phase 2: Junction Validity ═══\n");
 
@@ -275,9 +259,7 @@ if (badPowerCombos.length > 0) {
   console.log("✓ power+aptitude combos");
 }
 
-// ══════════════════════════════════════════════════════════════
 // Phase 3: Ability increases — on the levels the ruleset gives one
-// ══════════════════════════════════════════════════════════════
 // Saving a level checks it (finalize.ts), but older rows can carry an
 // increase where none is due, or miss a due one. DetailedCharacter.validate()
 // doesn't flag either, while re-saving such a level throws: the user is stuck.
@@ -314,9 +296,7 @@ for (const char of characters) {
 totalIssues += increaseIssues;
 console.log(increaseIssues > 0 ? `✗ ability increases: ${increaseIssues} level(s)` : "✓ ability increases");
 
-// ══════════════════════════════════════════════════════════════
 // Phase 4: Build integrity — build + validate per character
-// ══════════════════════════════════════════════════════════════
 
 console.log("\n═══ Phase 4: Build Integrity ═══\n");
 
@@ -358,10 +338,6 @@ for (const char of characters) {
     console.error(`✗ ${char.name}: BUILD FAILED — ${err instanceof Error ? err.message : err}`);
   }
 }
-
-// ──────────────────────────────────────────────────────────────
-// Summary
-// ──────────────────────────────────────────────────────────────
 
 console.log(
   totalIssues > 0

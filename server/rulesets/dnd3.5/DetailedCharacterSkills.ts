@@ -124,7 +124,6 @@ export default class DetailedCharacterSkills {
 
   private raceSize = "Medium";
 
-  // ── Private methods ─────────────────────────────────────────────
   private recalculateArmorCheckPenalty() {
     let armorPenalty = 0;
 
@@ -271,7 +270,6 @@ export default class DetailedCharacterSkills {
     return this.skillBudget;
   }
 
-  // ── Getters ─────────────────────────────────────────────────────
   getSkills() {
     return this.detailedCharacterSkills;
   }
@@ -304,7 +302,6 @@ export default class DetailedCharacterSkills {
     this.characterEncumbrance = encumbrance;
   }
 
-  // ── Setters ─────────────────────────────────────────────────────
   setSkillPointDependencies(
     rulesetAbilities: RulesetAbility[],
     skillPointAbilityId: string | null,
@@ -374,7 +371,6 @@ export default class DetailedCharacterSkills {
     }
   }
 
-  // ── Update methods ──────────────────────────────────────────────
   refreshAbilityModifiers() {
     for (const [skillName, skill] of Object.entries(this.detailedCharacterSkills)) {
       const abilityName = this.skillAbilityNames.get(skillName);

@@ -32,10 +32,6 @@ export function assertCowMapsConsistent(overrideMap: OverrideMap, idResolveMap: 
   }
 }
 
-// ──────────────────────────────────────────────────────────────
-// Source chain
-// ──────────────────────────────────────────────────────────────
-
 /**
  * Build the combined source chain for COW lookups:
  * extensions first (their new entities are visible), then ancestors.
@@ -43,10 +39,6 @@ export function assertCowMapsConsistent(overrideMap: OverrideMap, idResolveMap: 
 export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ancestorRulesetIds: string[] }): string[] {
   return [...ruleset.extensionRulesetIds, ...ruleset.ancestorRulesetIds];
 }
-
-// ──────────────────────────────────────────────────────────────
-// COW-specific functions
-// ──────────────────────────────────────────────────────────────
 
 /**
  * Build override + sibling pairing data for a fork. Returns three maps:

@@ -17,7 +17,6 @@ export default abstract class SpellcastingState {
     protected readonly characterModifiers: DetailedCharacterModifiers,
   ) {}
 
-  // Bonus caster level state
   protected bonusKlassLevelClassMap = new Map<string, string>();
 
   protected bonusKlassLevelModifiers: Modifier[] = [];
@@ -27,7 +26,6 @@ export default abstract class SpellcastingState {
   /** Maps bonus klass level ID → granting source name (e.g. "Stormlord Level 1") */
   protected bonusKlassLevelAttribution = new Map<string, string>();
 
-  // Aptitude power data
   protected allAptitudePowers: Array<
     Power & {
       aptitudeId: string;
@@ -40,6 +38,5 @@ export default abstract class SpellcastingState {
 
   protected powerAptitudeLinks: { powerId: string; aptitudeId: string }[] = [];
 
-  // Spell tags
   protected spellTags: Record<string, string[]> = {};
 }

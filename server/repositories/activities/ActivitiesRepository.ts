@@ -41,7 +41,6 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
       isNull(this.table.deletedAt),
     ]);
 
-    // Build order by
     const orderByClause = this.orderBy(this.table[orderBy], orderDir);
 
     return await this.withPagination(pagination, async ({ limit, offset }) => {

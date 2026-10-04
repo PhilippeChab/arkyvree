@@ -83,7 +83,6 @@ export interface DataLoader {
 export default abstract class AbstractDetailedCharacter implements DetailedCharacterInterface {
   constructor(protected readonly character: Character) {}
 
-  // ── Requirement formatting ────────────────────────────────────────
   private static readonly OPERATOR_SYMBOLS: Record<string, string> = {
     equal: "=",
     not_equal: "!=",
@@ -194,7 +193,6 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   /** Build the holders map — universal holders + ruleset-specific ones. */
   protected abstract buildHolders(): Holders;
 
-  // ── Universal concrete methods ────────────────────────────────────
   protected applyLoadedData(data: LoadedCharacterData) {
     this.ruleset = data.ruleset;
     this.player = data.player;
@@ -302,7 +300,6 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     };
   }
 
-  // ── Template build pipeline ───────────────────────────────────────
   async preload(): Promise<PreloadedCharacterData> {
     const dataLoader = this.createDataLoader();
     return await withRulesetScope(db, this.character.rulesetId, async ({ ruleset, rulesetData }) => {
@@ -423,7 +420,6 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     return this.player;
   }
 
-  // ── Universal getters ─────────────────────────────────────────────
   getRuleset() {
     return this.ruleset;
   }

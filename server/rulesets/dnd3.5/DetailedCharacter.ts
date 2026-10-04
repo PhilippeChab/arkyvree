@@ -44,7 +44,6 @@ import TargetPaths from "./TargetPaths.ts";
 import type { Dnd35ProjectedCharacterData } from "./types.ts";
 
 export default class DetailedCharacter extends AbstractDetailedCharacter {
-  // ── Constructor ─────────────────────────────────────────────────
   constructor(character: Character) {
     super(character);
 
@@ -151,7 +150,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   protected klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
 
-  // ── Diagnostics ─────────────────────────────────────────────────
   // Diagnostic helpers (resolveEntityName / resolveModifierSourceName) run
   // per unmet-requirement when formatting validation errors. Build lookup
   // maps once on first use and reuse across subsequent resolve calls.
@@ -260,7 +258,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     return { budget, ranks };
   }
 
-  // ── Protected hooks (abstract implementations) ──────────────────
   protected createDataLoader(): DataLoader {
     return new DetailedCharacterDataLoader(this.character);
   }
@@ -392,7 +389,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterSpellcasting.initSpellcastingHolder(this.holders!, this.modifiers, this.klassCasterTypeMap);
   }
 
-  // ── Public methods ──────────────────────────────────────────────
   async build(
     database?: Db,
     projectedData?: Dnd35ProjectedCharacterData,
@@ -429,7 +425,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     return this.detailedCharacterShields;
   }
 
-  // ── Getters ─────────────────────────────────────────────────────
   getDetailedCharacterSkills() {
     return this.detailedCharacterSkills;
   }

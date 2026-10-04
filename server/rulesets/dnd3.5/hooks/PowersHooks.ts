@@ -58,7 +58,7 @@ export class Dnd35PowersHooks implements PowersHooks {
     const existing = await PowersAptitudes.findOne(tx, { powerId, aptitudeId: specialistApt.id });
     if (existing) return;
 
-    // Find the "Wizard Spells" link to get the level and abilityDcId
+    // The spell's level in the "Wizard Spells" list, which the specialist list takes
     let wizardApt = await Aptitudes.findOne(tx, { name: "Wizard Spells", rulesetId });
     if (!wizardApt) {
       for (const ancestorId of sourceChain) {

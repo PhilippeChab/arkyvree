@@ -1,5 +1,3 @@
-// ── Types ────────────────────────────────────────────────────
-
 type ArmorCategory = "Light" | "Medium" | "Heavy";
 type ShieldCategory = "Light" | "Heavy" | "Tower";
 
@@ -47,8 +45,6 @@ const SHIELD_TYPE_DEFINITIONS: Record<string, ShieldDefinition> = {
   "Heavy Steel Shield": { shieldType: "Heavy", acBonus: 2, checkPenalty: -2, spellFailure: 15 },
   "Tower Shield": { shieldType: "Tower", acBonus: 4, checkPenalty: -10, spellFailure: 50 },
 };
-
-// ── Lookup ───────────────────────────────────────────────────
 
 export function getArmorDefinition(armorTypeName: string): ArmorDefinition | null {
   return ARMOR_TYPE_DEFINITIONS[armorTypeName] ?? null;

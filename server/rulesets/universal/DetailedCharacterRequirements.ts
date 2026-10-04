@@ -371,7 +371,6 @@ export default class DetailedCharacterRequirements {
   private evaluateTree(nodes: Node[]): boolean {
     if (nodes.length === 0) return true;
 
-    // Evaluate each root node
     return nodes.every((node) => this.evaluateNode(node));
   }
 

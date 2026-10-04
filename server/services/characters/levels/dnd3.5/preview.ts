@@ -176,25 +176,21 @@ export async function getLevelUpPreview(
     }));
 
     return {
-      // Skills step
       skills: {
         skillPointsToSpend: Math.max(1, skillsBreakdown.available),
         totalCharacterLevel: existingLevels.length + levels.length,
         skills: skillsWithClassInfo,
       },
-      // Feats step
       feats: {
         featsToSelect,
         autoGrantedFeats,
         aptitudePools: featPools,
       },
-      // Powers step
       powers: {
         powersToSelect,
         autoGrantedPowers,
         aptitudePools: powerPools,
       },
-      // Attributes step
       attributes: {
         abilityIncreaseLevels,
         attributes: abilities.getAbilitiesWithIds(),

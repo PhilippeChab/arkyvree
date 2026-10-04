@@ -20,7 +20,6 @@ type DetailedCharacterComprehensiveModifiers = {
 export default class DetailedCharacterModifiers {
   constructor(private readonly targetPaths: TargetPathsTraverser) {}
 
-  // ── Private statics ──────────────────────────────────────────────
   private static pathsOverlap(target: string, referencedPath: string): boolean {
     const targetParts = target.split(".");
     const refParts = referencedPath.split(".");
@@ -186,7 +185,6 @@ export default class DetailedCharacterModifiers {
     });
   }
 
-  // ── Private methods ──────────────────────────────────────────────
   private filterByRequirements(modifier: Modifier, blockedKeys: Set<string>): boolean {
     if (blockedKeys.has(`${modifier.sourceId}:${modifier.sourceType}`) || blockedKeys.has(`${modifier.id}:modifiers`)) {
       this.detailedCharacterModifiers.unappliedModifiers.push(modifier);
@@ -253,7 +251,6 @@ export default class DetailedCharacterModifiers {
     }
   }
 
-  // ── Public methods ───────────────────────────────────────────────
   evaluateModifiers(holders: Holders, modifiers: Modifier[], characterRequirements: DetailedCharacterRequirements) {
     // Precompute the set of "source keys" that gate a modifier out. A modifier
     // is dropped if its source entity OR the modifier itself has an unmet or
