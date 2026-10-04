@@ -82,7 +82,7 @@ export const EXOTIC_WEAPONS: ItemDef[] = [
   },
   {
     name: "Sai",
-    description: "A sai is a light exotic melee weapon, a monk weapon with a pointed blade and two prongs.",
+    description: "A sai is a light exotic melee weapon that can also be thrown, a monk weapon with a pointed blade and two prongs.",
     weight: "1", costGp: "1", type: "Weapon",
     requirements: exotic("Sai"),
     properties: weaponProperties("Sai"),

@@ -5,7 +5,7 @@ import { simple, weaponProperties } from "@/database/packages/dnd35/content/item
 export const SIMPLE_WEAPONS: ItemDef[] = [
   {
     name: "Club",
-    description: "A club is a one-handed simple melee weapon.",
+    description: "A club is a one-handed simple melee weapon that can also be thrown.",
     weight: "3", costGp: "0", type: "Weapon",
     requirements: simple("Club"),
     properties: weaponProperties("Club"),

@@ -156,7 +156,18 @@ Properties generated from `WEAPON_TYPE_DEFINITIONS` in `weaponGenerator.ts`:
 | `DAMAGE_TYPE`              | Slashing (one property per damage type) |
 | `WEAPON_FINESSABLE`        | false                               |
 | `WEAPON_RANGE`             | _(only if > 0)_                     |
+| `WEAPON_RANGED`            | _(only on a ranged weapon)_         |
+| `WEAPON_STRENGTH_DAMAGE`   | _(only if not by slot)_             |
+| `WEAPON_MIGHTY`            | _(composite bows: 0)_               |
 | `WEAPON_REACH`             | _(only if > 0)_                     |
+
+How the engine reads a weapon's attack (`combat/Attacks.ts`), the SRD's rules:
+- A **ranged weapon** (`WEAPON_RANGED`: bows, crossbows, slings, darts, javelins, bolas, nets, shuriken) attacks with Dexterity. Any other attacks with Strength, or with Dexterity when it's `WEAPON_FINESSABLE` and the character has a feat with `FEAT_WEAPON_FINESSE` (Weapon Finesse), if that's better: a carried shield's armor check penalty applies to that Dexterity.
+- A **composite bow** (a bow with a `WEAPON_MIGHTY`, 0 for the seeded ones) takes −2 to attack when the character's Strength bonus is below its rating. A plain bow, without one, never does.
+- A **melee weapon with a range increment** (`WEAPON_RANGE`: daggers, throwing axes, spears…) can also be thrown: its weapon slot carries a `thrown` attack with Dexterity, which the sheets list as a second row.
+- **Strength to damage** (`WEAPON_STRENGTH_DAMAGE`): `Slot` when absent (the slot's share of a bonus: all of it in the main hand, half in the off hand, one and a half in two hands, all of it for a light weapon in two hands; a penalty in full), `Rating` (bows: a penalty, and a bonus up to `WEAPON_MIGHTY`, 0 without) or `None` (crossbows).
+- A weapon is **light** when its `WEAPON_SIZE` is Tiny or Small. The table's sizes are written for a Medium wielder, and the engine sizes every weapon for its wielder (its damage too), so a halfling's shortsword is light as a human's is.
+- **Two weapons**: when a set holds an equipped weapon in each hand (an unarmed strike or a natural attack doesn't count), each weapon slot carries a `twoweapon` attack, which the sheets list as more rows: the main hand's attacks with `combat.twoweapon.mainhand` (−6), the off hand's first attack and `combat.twoweapon.offhandattacks` − 1 more, each 5 lower, with `combat.twoweapon.offhand` (−10). A light off-hand weapon lessens both penalties by 2. The feats change these fields through modifiers.
 
 Proficiency requirements (on the item, checked at equip time):
 - **Simple**: OR chain — `feats.simpleweaponproficiency.possessed` OR `feats.simpleweaponproficiency<weapon>.possessed` (a gauntlet's also takes `feats.simpleweaponproficiencyunarmedstrike.possessed`: a strike with it is unarmed)
@@ -272,6 +283,8 @@ Feats auto-generated per unique school in `hooks/generators/spellGenerator.gener
 - Skill bonus feats (Acrobatic, Alertness, etc.): +2 to `skills.{skill}.misc`
 - Save bonus feats (Great Fortitude, etc.): +2 to `saves.{save}.misc`
 - Improved Initiative: +4 `combat.initiative.misc`
+- Two-Weapon Fighting: +2 `combat.twoweapon.mainhand`, +6 `combat.twoweapon.offhand`
+- Improved and Greater Two-Weapon Fighting: +1 `combat.twoweapon.offhandattacks` each
 - Toughness: +3 `combat.hp.misc`
 
 ### Template modifiers (dynamic references):
@@ -295,7 +308,7 @@ The character engine computes the **base, permanent character sheet** — no tem
 - Mobility (+4 AC vs AoO only)
 - Point Blank Shot (+1 within 30 ft only)
 - Power Attack / Combat Expertise (variable trade-off, player chooses)
-- Weapon Finesse (handled via `WEAPON_FINESSABLE` property, not a modifier)
+- Weapon Finesse (handled via the feat's `FEAT_WEAPON_FINESSE` and the weapon's `WEAPON_FINESSABLE` properties, not a modifier)
 - Rage (+4 STR/CON while raging — temporary)
 - Smite Evil (+CHA to attack, +level to damage — per-use ability)
 

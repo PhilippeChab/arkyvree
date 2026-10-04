@@ -66,6 +66,9 @@ A part that comes from an ability (a skill's or a save's `ability`, `combat.ac.d
 | `combat.grapple.size` | number | From race size |
 | `combat.grapple.misc` | number | Other bonuses to grapple |
 | `combat.grapple.total` | number | All grapple bonuses combined (req only) |
+| `combat.twoweapon.mainhand` | number | Penalty on main-hand attacks with two weapons (−6) |
+| `combat.twoweapon.offhand` | number | Penalty on off-hand attacks with two weapons (−10) |
+| `combat.twoweapon.offhandattacks` | number | Attacks the off hand makes with two weapons (1) |
 | `combat.speed.base` | number | From race (ft) |
 | `combat.speed.misc` | number | Other bonuses to speed (ft) |
 | `combat.speed.total` | number | Final movement speed (ft) (req only) |
@@ -78,7 +81,7 @@ Grouped by weapon type, family, complexity, and item name.
 
 | Path | Type | Description |
 |------|------|-------------|
-| `items.weapons.<group>.tohit.strength` | number | Str/Dex bonus to attack |
+| `items.weapons.<group>.tohit.strength` | number | Str/Dex bonus to attack (a finessed one less a shield's check penalty, a composite bow's −2 below its rating) |
 | `items.weapons.<group>.tohit.magic` | number | Enhancement bonus to attack |
 | `items.weapons.<group>.tohit.misc` | number | Other bonuses to attack |
 | `items.weapons.<group>.damage.base` | string | Base damage dice |

@@ -65,6 +65,7 @@ const PATH_DESCRIPTIONS: Record<string, string> = {
   "combat.hp": "HP sources and total",
   "combat.initiative": "Initiative bonus components",
   "combat.grapple": "Grapple: BAB + Str + size",
+  "combat.twoweapon": "Two-weapon fighting: each hand's penalty and the off hand's attacks",
   "combat.speed": "Movement speed (ft)",
   "combat.encumbrance": "Carry weight and load capacity",
   // Items

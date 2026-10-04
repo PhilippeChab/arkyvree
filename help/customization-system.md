@@ -22,7 +22,7 @@ Add or override properties manually for:
 
 - **Tagging for grouping.** A homebrew Weapon Focus variant tagged `FEAT_FAMILY = weaponfocus` is matched by the `feats.weaponfocus.*.possessed` wildcard. See [How do wildcard patterns work?](#how-do-wildcard-patterns-work)
 
-Properties don't change numbers. To add a `+1`, use a [modifier](#what-are-modifiers).
+Properties don't add bonuses. Some tell the engine how to read an entity (a ranged weapon attacks with Dexterity, a composite bow has a Strength rating, Weapon Finesse lets a light weapon use Dexterity), but to add a `+1`, use a [modifier](#what-are-modifiers).
 
 ## What are Requirements?
 

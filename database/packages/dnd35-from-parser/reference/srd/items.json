@@ -41,7 +41,7 @@
       "description": "Chain mail is medium armor made of interlocking metal rings."
     },
     "Club": {
-      "description": "A club is a one-handed simple melee weapon."
+      "description": "A club is a one-handed simple melee weapon that can also be thrown."
     },
     "Crossbow, hand": {
       "description": "A hand crossbow is a one-handed exotic ranged weapon."
@@ -116,7 +116,7 @@
       "description": "A light hammer is a light martial melee weapon that can also be thrown."
     },
     "Handaxe": {
-      "description": "A handaxe is a light martial melee weapon that can also be thrown."
+      "description": "A handaxe is a light martial melee weapon."
     },
     "Hide": {
       "description": "Hide armor is medium armor made from the thick hides of animals."
@@ -182,7 +182,7 @@
       "description": "A rapier is a one-handed martial melee weapon favored for its precision."
     },
     "Sai": {
-      "description": "A sai is a light exotic melee weapon, a monk weapon with a pointed blade and two prongs."
+      "description": "A sai is a light exotic melee weapon that can also be thrown, a monk weapon with a pointed blade and two prongs."
     },
     "Sap": {
       "description": "A sap is a light martial melee weapon that deals nonlethal damage."
