@@ -89,6 +89,27 @@ describe("rulesets customization modifiers", () => {
     ).toMatchObject({ value: "true", valueType: "boolean" });
   });
 
+  test("refuses an operator the path doesn't offer, and a pool's slots anything but more or all known", async () => {
+    const { id, entityId } = await setup();
+    const param = { id, entityType: "feats" as const, entityId };
+    const refused = [
+      { target: "feats.dodge.possessed", value: "true", operator: "add" },
+      { target: "aptitudes.general.allowed", value: "1", operator: "subtract" },
+      { target: "aptitudes.general.allowed", value: "{{ floor([identity.meta.level] / 2) }}", operator: "add" },
+      { target: "aptitudes.wizardspells.1.allowed", value: "2", operator: "set" },
+      { target: "aptitudes.wizardspells.1.uses", value: "2", operator: "multiply" },
+      // -1 is all known: an add takes 0 or more
+      { target: "aptitudes.general.allowed", value: "-4", operator: "add" },
+      { target: "aptitudes.wizardspells.1.allowed", value: "-1", operator: "add" },
+    ];
+    for (const json of refused) await expectStatus(modifiers.$post({ param, json }), 400);
+    for (const json of [
+      { target: "aptitudes.general.allowed", value: "1", operator: "add" },
+      { target: "aptitudes.wizardspells.1.allowed", value: "-1", operator: "set" },
+    ])
+      expect(await expectOk(modifiers.$post({ param, json }))).toMatchObject(json);
+  });
+
   test("refuses modifiers as the entity being customized", async () => {
     const { id, entityId } = await setup();
     const body = { target: "abilities.strength.misc", value: "2", operator: "add" };

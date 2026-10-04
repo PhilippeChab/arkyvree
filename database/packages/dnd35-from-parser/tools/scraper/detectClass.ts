@@ -1655,7 +1655,8 @@ export function buildInitialMapping(
 
   // Auto-populate spells from detected data
   if (detected.spellsPerDay) {
-    const slug = raw.name.toLowerCase().replace(/\s+/g, "") + "spells";
+    // The aptitude "<Class> Spells" as a path names it
+    const slug = stripSeparators(raw.name) + "spells";
     mapping.spells = {
       slug,
       ...(!raw.hasCantrips ? { noCantrips: true } : {}),

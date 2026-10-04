@@ -23,6 +23,30 @@ const NAVIGATABLE_PATHS = [
   },
 ];
 
+/**
+ * What a modifier on a pool's slots may do: grant more (`add` 0 or more: -1 is all known), or make a spell level's all
+ * known (`set` -1). The level-up wizard and the class tables count these without a character, the sheet's way: other
+ * operators, and templates, would count differently there than on the sheet. A pool's own uses per day count on the
+ * sheet alone.
+ */
+const SPELL_LEVEL_SLOT_MODIFIERS: Record<
+  string,
+  Pick<TargetPath, "operators" | "setValues" | "literalOnly" | "minValue">
+> = {
+  allowed: {
+    operators: ["add", "set"],
+    setValues: [{ value: "-1", label: "All known" }],
+    literalOnly: true,
+    minValue: 0,
+  },
+  uses: { operators: ["add"], literalOnly: true, minValue: 0 },
+};
+const POOL_SLOT_MODIFIERS: Pick<TargetPath, "operators" | "literalOnly" | "minValue"> = {
+  operators: ["add"],
+  literalOnly: true,
+  minValue: 0,
+};
+
 export const ALLOWED_ALL = -1;
 
 export type AptitudeLevelData = {
@@ -84,6 +108,7 @@ export default class DetailedCharacterAptitudes {
               valueType: subPath.type,
               operators,
               ...("allowedEntityTypes" in subPath && { allowedEntityTypes: subPath.allowedEntityTypes }),
+              ...(kind === "modifier" && SPELL_LEVEL_SLOT_MODIFIERS[subPath.path]),
             });
           }
         }
@@ -97,6 +122,7 @@ export default class DetailedCharacterAptitudes {
             valueType: subPath.type,
             operators,
             ...("allowedEntityTypes" in subPath && { allowedEntityTypes: subPath.allowedEntityTypes }),
+            ...(kind === "modifier" && subPath.path === "allowed" && POOL_SLOT_MODIFIERS),
           });
         }
       }

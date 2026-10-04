@@ -9,6 +9,15 @@ export interface TargetPath {
   valueType: PathValueType;
   operators: string[];
   possibleValues?: { value: string; label: string }[];
+  /** When set, a `set` on this path takes only these values: a spell level's slots set to -1 are all known */
+  setValues?: { value: string; label: string }[];
+  /**
+   * A literal value only, never a template: code that has no character to resolve a template with reads it (the
+   * level-up wizard and the class tables count a pool's slots)
+   */
+  literalOnly?: boolean;
+  /** The least number an operator other than a restricted `set` takes: a pool's slots grow, -1 being all known */
+  minValue?: number;
   sortOrder?: number;
   /** When set, this path is only available for modifiers on these entity types */
   allowedEntityTypes?: string[];
@@ -43,6 +52,10 @@ export interface PathCompletion {
   operators?: string[];
   /** Present on leaf completions — possible values for enum-like targets */
   possibleValues?: { value: string; label: string }[];
+  /** Present on leaf completions whose `set` takes only these values */
+  setValues?: { value: string; label: string }[];
+  /** Present on leaf completions that take a literal value only */
+  literalOnly?: boolean;
 }
 
 export interface PaginatedCompletions {

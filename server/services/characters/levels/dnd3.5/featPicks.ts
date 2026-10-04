@@ -8,6 +8,7 @@ import { CharacterLevels, Feats } from "@/server/repositories/index.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
+import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Character, Ruleset, Session } from "@/shared/relations.ts";
@@ -37,14 +38,15 @@ export function resolveAptitudeModifiers(featIds: string[], rulesetData: CachedR
       const match = mod.target.match(/^aptitudes\.([a-z0-9]+)\.allowed$/);
       if (!match) continue;
       const resolvedAptitudeId = rulesetData.aptitudeIdBySlug.get(match[1]);
-      if (!resolvedAptitudeId) continue;
+      const value = parseLiteralValue(mod.value, "number");
+      if (!resolvedAptitudeId || typeof value !== "number") continue;
 
       let group = result.get(mod.sourceId);
       if (!group) {
         group = [];
         result.set(mod.sourceId, group);
       }
-      group.push({ aptitudeId: resolvedAptitudeId, value: Number(mod.value), operator: mod.operator });
+      group.push({ aptitudeId: resolvedAptitudeId, value, operator: mod.operator });
     }
   }
 

@@ -110,24 +110,27 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
               valueType: info.valueType,
               operators: info.operators,
               possibleValues: info.possibleValues,
+              setValues: info.setValues,
+              literalOnly: info.literalOnly,
             });
             // In edit mode the form already carries a saved value/operator —
             // don't overwrite. In create mode, seed a default only when the
             // field is empty or the existing value doesn't suit the new path
             // (not one of its choices, or not a number) — preserves
             // duplicate-from-row and any in-progress user input.
+            const operator = info.operators.includes(values.operator) ? values.operator : (info.operators[0] ?? "");
+            // A set the path restricts takes its own values
+            const choices = operator === "set" && info.setValues ? info.setValues : info.possibleValues;
             if (mode === "create") {
               // The literal, even while the template shows: it's what turning the template off restores.
               const currentValue = templateMode ? literalValue : values.value;
-              if (!currentValue || !fitsPath(currentValue, info.valueType, info.possibleValues)) {
-                const seeded = defaultValueForPath(info.valueType, info.possibleValues);
+              if (!currentValue || !fitsPath(currentValue, info.valueType, choices)) {
+                const seeded = defaultValueForPath(info.valueType, choices);
                 setLiteralValue(seeded);
                 if (!templateMode) writeFormValue(seeded);
               }
             }
-            if (!info.operators.includes(values.operator)) {
-              onChange("operator", info.operators[0] ?? "");
-            }
+            if (operator !== values.operator) onChange("operator", operator);
           } else {
             setPathInfo(null);
           }
@@ -139,7 +142,14 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
       <OperatorSelect
         kind={kind}
         value={values.operator}
-        onChange={(nextOperator) => onChange("operator", nextOperator)}
+        onChange={(nextOperator) => {
+          onChange("operator", nextOperator);
+          // A set the path restricts starts on its first value
+          const setChoices = nextOperator === "set" ? pathInfo?.setValues : undefined;
+          if (setChoices?.length && !setChoices.some((choice) => choice.value === literalValue)) {
+            handleLiteralChange(setChoices[0].value);
+          }
+        }}
         error={!!errors.operator}
         operators={pathInfo?.operators || []}
       />
@@ -155,7 +165,13 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
       >
         <FormControlLabel
           control={
-            <Switch size="small" checked={templateMode} onChange={(_, checked) => handleToggleTemplate(checked)} />
+            <Switch
+              size="small"
+              checked={templateMode}
+              // A path the level-up counts without a character takes a literal: a template can only be turned off
+              disabled={!!pathInfo?.literalOnly && !templateMode}
+              onChange={(_, checked) => handleToggleTemplate(checked)}
+            />
           }
           label={
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -178,7 +194,9 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
             value={literalValue}
             onChange={handleLiteralChange}
             valueType={pathInfo?.valueType}
-            possibleValues={pathInfo?.possibleValues}
+            possibleValues={
+              values.operator === "set" && pathInfo?.setValues ? pathInfo.setValues : pathInfo?.possibleValues
+            }
             required
             // Crossfade keeps it mounted under the template input: disabled, it can't be focused or block the submit.
             disabled={templateMode}

@@ -2,6 +2,7 @@ import type { Db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import type { ClassLevelsHooks } from "@/server/rulesets/hooks/index.ts";
 import type { PropertyRecord } from "@/server/rulesets/hooks/index.ts";
+import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -45,13 +46,14 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
       if (!match) continue;
       const slug = stripSeparators(match[1]);
       const name = slugToName.get(slug);
-      if (!name) continue;
+      const value = parseLiteralValue(mod.value, "number");
+      if (!name || typeof value !== "number") continue;
       let entry = deltasByLevelId.get(mod.sourceId);
       if (!entry) {
         entry = {};
         deltasByLevelId.set(mod.sourceId, entry);
       }
-      entry[name] = (entry[name] ?? 0) + Number(mod.value);
+      entry[name] = (entry[name] ?? 0) + value;
     }
 
     // Sort levels ascending by level number
@@ -116,14 +118,15 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
     const deltasByLevelId = new Map<string, { spellLevel: number; delta: number; operator: string }[]>();
     for (const mod of modifiers) {
       const match = knownRegex.exec(mod.target);
-      if (!match) continue;
+      const value = parseLiteralValue(mod.value, "number");
+      if (!match || typeof value !== "number") continue;
       const spellLevel = Number(match[1]);
       let entry = deltasByLevelId.get(mod.sourceId);
       if (!entry) {
         entry = [];
         deltasByLevelId.set(mod.sourceId, entry);
       }
-      entry.push({ spellLevel, delta: Number(mod.value), operator: mod.operator });
+      entry.push({ spellLevel, delta: value, operator: mod.operator });
     }
 
     // Sort levels ascending by level number
@@ -162,14 +165,15 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
     const deltasByLevelId = new Map<string, Record<number, number>>();
     for (const mod of modifiers) {
       const match = spellsRegex.exec(mod.target);
-      if (!match) continue;
+      const value = parseLiteralValue(mod.value, "number");
+      if (!match || typeof value !== "number") continue;
       const spellLevel = Number(match[1]);
       let entry = deltasByLevelId.get(mod.sourceId);
       if (!entry) {
         entry = {};
         deltasByLevelId.set(mod.sourceId, entry);
       }
-      entry[spellLevel] = (entry[spellLevel] ?? 0) + Number(mod.value);
+      entry[spellLevel] = (entry[spellLevel] ?? 0) + value;
     }
 
     // Sort levels ascending by level number
