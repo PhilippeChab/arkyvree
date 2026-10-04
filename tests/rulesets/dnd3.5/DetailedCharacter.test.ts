@@ -35,6 +35,7 @@ import {
   Requirements,
   Rulesets,
 } from "@/server/repositories/index.ts";
+import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -64,6 +65,7 @@ import {
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
 } from "@/shared/dnd3.5/properties/index.ts";
+import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
 import {
@@ -1329,7 +1331,7 @@ describe("DetailedCharacter", () => {
       const dcs = async (carried: Carried[]) =>
         Object.values(
           (await buildCarrying("Elara Starweaver", carried)).getDetailedCharacterPowerGroupings().getPowerGroupings(),
-        ).flatMap((group) => Object.values(group).map((dc) => dc.total));
+        ).flatMap((group) => Object.values(group).flatMap((byClass) => Object.values(byClass).map((dc) => dc.total)));
       const before = await dcs([]);
       const headband = { item: (await createAbilityItem("intelligence", 2, "Head")).id, location: "Head" as const };
       expect(await dcs([headband])).toEqual(before.map((dc) => dc + 1));
@@ -1577,26 +1579,27 @@ describe("DetailedCharacter", () => {
         expect(Object.keys(groupings)).toEqual(expect.arrayContaining(["evocation", "abjuration", "conjuration"]));
         expect(Object.keys(groupings["evocation"]).length).toBeGreaterThanOrEqual(2);
 
-        expect(groupings["evocation"]["burninghands"]).toMatchObject({
+        // Each spell's DC is its class's: Elara's are a wizard's
+        const burningHands = groupings["evocation"]["burninghands"]["wizard"];
+        expect(burningHands).toMatchObject({ base: 10, level: 1, ability: 4, misc: 1, total: 16 });
+        expect(groupings["evocation"]["light"]["wizard"]).toMatchObject({
           base: 10,
-          level: 1,
+          level: 0,
           ability: 4,
           misc: 1,
-          total: 16,
+          total: 15,
         });
-        expect(groupings["evocation"]["light"]).toMatchObject({ base: 10, level: 0, ability: 4, misc: 1, total: 15 });
-        // School, descriptor and name groupings hold the same DC.
-        expect(groupings["burninghands"]["burninghands"]).toBe(groupings["evocation"]["burninghands"]);
-        if (groupings["fire"]?.["burninghands"])
-          expect(groupings["fire"]["burninghands"]).toBe(groupings["evocation"]["burninghands"]);
-        expect(elara.getDetailedCharacterPowers().getPower("Burning Hands")?.dc?.total).toBe(16);
+        // The school's and the descriptor's groupings and the spell hold the same DC; the spell's name isn't a grouping
+        expect(groupings["fire"]["burninghands"]["wizard"]).toBe(burningHands);
+        expect(elara.getDetailedCharacterPowers().getPower("Burning Hands")?.dc?.["wizard"]).toBe(burningHands);
+        expect(groupings["burninghands"]).toBeUndefined();
       });
 
       test("use the class's casting ability: charisma for a sorcerer", async () => {
         // CHA 18 (+4), no Spell Focus.
         const dc = (await buildSeeded("Vex Flamecaller")).getDetailedCharacterPowerGroupings().getPowerGroupings()[
           "evocation"
-        ]?.["burninghands"];
+        ]?.["burninghands"]?.["sorcerer"];
         expect(dc).toMatchObject({ base: 10, level: 1, ability: 4, total: 15 });
       });
 
@@ -1758,6 +1761,36 @@ describe("DetailedCharacter", () => {
 
         expect((await buildSeeded("Bjorn Ironhand")).getSpellTags()).toEqual({});
       });
+    });
+
+    test("give a spell known through two classes each class's DC: its level on that list and that class's ability", async () => {
+      // Hold Person is a 3rd-level wizard spell and a 2nd-level bard spell: Intelligence 16 (+3), Charisma 12 (+1)
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter("Two Casters", { ...WIZARD_SCORES, Charisma: 12 }, { xp: 1000 });
+      const wizardLevel = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
+      const bardLevel = await addClassLevels(db, ctx, characterId, "Bard", [1], [6]);
+      await addFeats(db, ctx, wizardLevel, [
+        { levelIndex: 0, featName: "Spell Focus: Enchantment", aptitude: "General" },
+      ]);
+      await addPowers(db, ctx, wizardLevel, [{ levelIndex: 0, powerName: "Hold Person", aptitude: "Wizard Spells" }]);
+      await addPowers(db, ctx, bardLevel, [{ levelIndex: 0, powerName: "Hold Person", aptitude: "Bard Spells" }]);
+      const record = (await Characters.findOne(db, { id: characterId }))!;
+      const detailed = await build(record);
+
+      // Spell Focus: Enchantment adds 1 to both
+      const dcs = detailed.getDetailedCharacterPowers().getPower("Hold Person")?.dc;
+      expect({ wizard: dcs?.["wizard"]?.total, bard: dcs?.["bard"]?.total }).toEqual({
+        wizard: 10 + 3 + 3 + 1,
+        bard: 10 + 2 + 1 + 1,
+      });
+      // The sheet's spell lists show each class's
+      const lists = buildSpellGroups(buildFullCharacterResponse(record, detailed));
+      const holdPerson = (list: string, level: number) =>
+        lists
+          .find((apt) => apt.aptitudeName === list)
+          ?.levels.find((group) => group.level === level)
+          ?.spells.find((spell) => spell.name === "Hold Person")?.dc;
+      expect([holdPerson("Wizard Spells", 3), holdPerson("Bard Spells", 2)]).toEqual([17, 14]);
     });
 
     describe("granted by a feat's modifier", () => {

@@ -139,7 +139,8 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         if (klassLevel) {
           abilityDcName = klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
         }
-        this.powerGroupings.registerPower({ ...power, abilityDcName }, power.properties);
+        const aptitudeSlug = apt ? toSpellPossessionSlug(apt.name) : power.aptitudeId;
+        this.powerGroupings.registerPower({ ...power, abilityDcName, aptitudeSlug }, power.properties);
       }
       this.characterPowers.injectGroupings(this.powerGroupings.getPowerGroupings());
     }

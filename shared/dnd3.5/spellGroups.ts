@@ -1,4 +1,5 @@
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 /**
  * A character's spells, grouped for its sheet: by aptitude (its spell list), then by spell level, with the uses per
  * day the aptitude allows there. The web sheet and the PDF sheet read the same data: the character response's.
@@ -60,7 +61,12 @@ export interface SpellSheet {
   classes: Record<string, { levels?: { klassLevel?: { level: number } | null; powers?: LevelSpell[] }[] }>;
   powers?: Record<
     string,
-    { properties?: Record<string, string>; dc?: { total: number } | null; power?: { description?: string | null } }
+    {
+      properties?: Record<string, string>;
+      // Its DC as each class casts it, by the class's aptitude slug
+      dc?: Record<string, { total: number }> | null;
+      power?: { description?: string | null };
+    }
   >;
   virtualPowers?: GivenSpell[];
   aptitudes?: Record<string, { id: string; name: string }>;
@@ -119,7 +125,7 @@ function groupSpells(sheet: SpellSheet, aptitudeNameById: Map<string, string>) {
           name: power.name,
           school: properties[SPELL_SCHOOL] || "—",
           save: saveOf(power.saveName, power.saveEffect),
-          dc: powerData?.dc?.total ?? null,
+          dc: powerData?.dc?.[toSpellPossessionSlug(group.aptitudeName)]?.total ?? null,
           description: powerData?.power?.description || power.description || "",
           properties,
           tags,
