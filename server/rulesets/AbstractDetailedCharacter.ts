@@ -602,14 +602,15 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     return { valid: issues.length === 0, issues };
   }
 
-  areRequirementsMet(requirementGroups: Requirement[][]): boolean {
+  /** Whether the groups are met, `context.sourceId` the item they're of (a weapon's proficiency reads its hand). */
+  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string }): boolean {
     if (!this.holders) return false;
 
     const tempRequirements = new DetailedCharacterRequirements(this.targetPaths);
     const nonEmpty = requirementGroups.filter((group) => group.length > 0);
     if (nonEmpty.length === 0) return true;
 
-    tempRequirements.evaluateRequirements(this.holders, nonEmpty);
+    tempRequirements.evaluateRequirements(this.holders, nonEmpty, context);
     const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
     return unmetRequirementGroups.length === 0 && invalidRequirements.length === 0;
   }

@@ -11,7 +11,20 @@
       "properties": [{ "type": "RACE_SPEED_IGNORES_ENCUMBRANCE", "value": "true" }]
     },
     "Elf": {
-      "description": "Elves are known for their poetry, song, and magical arts. They are slow to make friends and enemies, but once they do, these relationships last for generations. They are immune to sleep effects and gain racial bonuses to saving throws against enchantment spells, as well as racial bonuses to perception and fine manipulation tasks."
+      "description": "Elves are known for their poetry, song, and magical arts. They are slow to make friends and enemies, but once they do, these relationships last for generations. They are immune to sleep effects and gain racial bonuses to saving throws against enchantment spells, as well as racial bonuses to perception and fine manipulation tasks.",
+      "modifiers": [
+        { "target": "abilities.dexterity.misc", "operator": "add", "value": "2", "valueType": "number" },
+        { "target": "abilities.constitution.misc", "operator": "add", "value": "-2", "valueType": "number" },
+        { "target": "skills.listen.misc", "operator": "add", "value": "2", "valueType": "number" },
+        { "target": "skills.search.misc", "operator": "add", "value": "2", "valueType": "number" },
+        { "target": "skills.spot.misc", "operator": "add", "value": "2", "valueType": "number" },
+        { "target": "feats.martialweaponproficiencylongsword.possessed", "operator": "set", "value": "true", "valueType": "boolean" },
+        { "target": "feats.martialweaponproficiencyrapier.possessed", "operator": "set", "value": "true", "valueType": "boolean" },
+        { "target": "feats.martialweaponproficiencylongbow.possessed", "operator": "set", "value": "true", "valueType": "boolean" },
+        { "target": "feats.martialweaponproficiencycompositelongbow.possessed", "operator": "set", "value": "true", "valueType": "boolean" },
+        { "target": "feats.martialweaponproficiencyshortbow.possessed", "operator": "set", "value": "true", "valueType": "boolean" },
+        { "target": "feats.martialweaponproficiencycompositeshortbow.possessed", "operator": "set", "value": "true", "valueType": "boolean" }
+      ]
     },
     "Gnome": {
       "description": "Gnomes are known for their humor and engineering. Though gnomes generally get along with dwarves, they have much in common with elves, especially their love of nature and dislike of goblins and giants. Gnomes have low-light vision and gain racial bonuses to saving throws against illusions, weapon proficiencies with gnome-sized weapons, and skill checks for listening."

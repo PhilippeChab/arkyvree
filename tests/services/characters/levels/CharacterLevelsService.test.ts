@@ -756,10 +756,12 @@ describe("LevelsService", () => {
         await CharacterLevelsService.getAvailableFeats(...args, { family: "Martial Weapon Proficiency" }, page)
       ).items;
 
-      expect(martial).toHaveLength(30);
+      // The 30 martial weapons, but the six an elf has by her race: the longsword, the rapier, the bows
+      expect(martial).toHaveLength(24);
       expect(martial.every((f) => f.name.startsWith("Martial Weapon Proficiency: ") && f.eligible)).toBe(true);
+      expect(martial.some((f) => f.name === "Martial Weapon Proficiency: Longsword")).toBe(false);
       expect(grouped.filter((r) => r.displayName === "Martial Weapon Proficiency")).toMatchObject([
-        { family: "Martial Weapon Proficiency", variantCount: 30 },
+        { family: "Martial Weapon Proficiency", variantCount: 24 },
       ]);
       // Simple Weapon Proficiency is every simple weapon, a feat of its own
       expect(grouped.find((r) => r.displayName === "Simple Weapon Proficiency")).toMatchObject({ family: null });

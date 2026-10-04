@@ -25,6 +25,12 @@ export const ALL_RACES: RaceDefinition[] = [
       { target: "skills.listen.misc", operator: "add", value: "2", valueType: "number" },
       { target: "skills.search.misc", operator: "add", value: "2", valueType: "number" },
       { target: "skills.spot.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "feats.martialweaponproficiencylongsword.possessed", operator: "set", value: "true", valueType: "boolean" },
+      { target: "feats.martialweaponproficiencyrapier.possessed", operator: "set", value: "true", valueType: "boolean" },
+      { target: "feats.martialweaponproficiencylongbow.possessed", operator: "set", value: "true", valueType: "boolean" },
+      { target: "feats.martialweaponproficiencycompositelongbow.possessed", operator: "set", value: "true", valueType: "boolean" },
+      { target: "feats.martialweaponproficiencyshortbow.possessed", operator: "set", value: "true", valueType: "boolean" },
+      { target: "feats.martialweaponproficiencycompositeshortbow.possessed", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
   {

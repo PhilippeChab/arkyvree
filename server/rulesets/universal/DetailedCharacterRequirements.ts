@@ -219,7 +219,7 @@ export default class DetailedCharacterRequirements {
     return this.compareRequirement(requirement, data, typedValue);
   }
 
-  private evaluateRequirementsGroup(requirements: Requirement[], holders: Holders) {
+  private evaluateRequirementsGroup(requirements: Requirement[], holders: Holders, context?: { sourceId?: string }) {
     const nodes: Node[] = [];
 
     for (const requirement of requirements) {
@@ -230,7 +230,7 @@ export default class DetailedCharacterRequirements {
           children: [],
         });
       } else if (requirement.target) {
-        const results = this.targetPaths.traversePathInit(requirement.target, holders);
+        const results = this.targetPaths.traversePathInit(requirement.target, holders, context);
         const validResults: TraversePathResult[] = [];
 
         for (const result of results) {
@@ -293,9 +293,10 @@ export default class DetailedCharacterRequirements {
       .some((result) => !result.error && this.evaluateRequirement(requirement, result, holders));
   }
 
-  evaluateRequirements(holders: Holders, requirements: Requirement[][]) {
+  /** Evaluates the groups; `context.sourceId` is the item they're of, which a weapon's own path (`combat.slot`) reads. */
+  evaluateRequirements(holders: Holders, requirements: Requirement[][], context?: { sourceId?: string }) {
     for (const group of requirements) {
-      this.evaluateRequirementsGroup(group, holders);
+      this.evaluateRequirementsGroup(group, holders, context);
     }
   }
 }

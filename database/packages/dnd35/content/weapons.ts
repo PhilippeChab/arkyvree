@@ -1,4 +1,4 @@
-import { eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
@@ -103,14 +103,40 @@ export const simple = (weapon: string): RequirementEntry[] => [
 export const martial = (weapon: string): RequirementEntry[] => [
   or(eq(feat("Martial Weapon Proficiency")), eq(feat(`Martial Weapon Proficiency: ${weapon}`))),
 ];
-/** Being proficient with an exotic weapon: with it. */
-export const exotic = (weapon: string): RequirementEntry[] => [eq(feat(`Exotic Weapon Proficiency: ${weapon}`))];
+/** The exotic weapons "a character can use two-handed as a martial weapon". */
+const MARTIAL_IN_TWO_HANDS = new Set(["Bastard Sword", "Dwarven Waraxe"]);
+
+/** The exotic weapons a race treats as martial weapons (its weapon familiarity), by the race. */
+const WEAPON_FAMILIARITY: Record<string, string> = {
+  "Dwarven Waraxe": "Dwarf",
+  "Dwarven Urgrosh": "Dwarf",
+  "Gnome Hooked Hammer": "Gnome",
+};
+
+/**
+ * Being proficient with an exotic weapon: with it, or with martial weapons when it counts as one, by its wielder's race
+ * (a dwarf's waraxe and urgrosh, a gnome's hooked hammer) or, `held`, in two hands (a bastard sword, a dwarven waraxe):
+ * what only a weapon's own proficiency reads, a prerequisite holding no weapon.
+ */
+function exoticProficiency(weapon: string, held: boolean): RequirementEntry[] {
+  const asMartial = [
+    ...(held && MARTIAL_IN_TWO_HANDS.has(weapon) ? [eqStr("combat.slot", "twohanded")] : []),
+    ...(weapon in WEAPON_FAMILIARITY ? [eqStr("identity.physiology.race.name", WEAPON_FAMILIARITY[weapon])] : []),
+  ];
+  const own = eq(feat(`Exotic Weapon Proficiency: ${weapon}`));
+  if (asMartial.length === 0) return [own];
+  const when = asMartial.length === 1 ? asMartial[0] : or(...asMartial);
+  return [or(own, and(eq(feat("Martial Weapon Proficiency")), when))];
+}
+
+/** An exotic weapon's proficiency, which the weapon requires: in two hands too. */
+export const exotic = (weapon: string): RequirementEntry[] => exoticProficiency(weapon, true);
 
 /** Being proficient with `weapon`, by its group. */
 export function proficiencyRequirements(weapon: string): RequirementEntry[] {
   if (SIMPLE_SET.has(weapon)) return simple(weapon);
   if (MARTIAL_SET.has(weapon)) return martial(weapon);
-  return exotic(weapon);
+  return exoticProficiency(weapon, false);
 }
 
 /**
