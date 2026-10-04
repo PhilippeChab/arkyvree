@@ -2,6 +2,7 @@ import type { ValidationIssue } from "@/server/rulesets/AbstractDetailedCharacte
 import { SIZE_HIDE_MOD } from "@/server/rulesets/constants.ts";
 import type { ArmorsData } from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
 import type { ShieldsData } from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
+import type { SkillFlags } from "@/server/rulesets/hooks/index.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import {
@@ -12,9 +13,6 @@ import {
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
-
-/** The skill an armor check penalty counts double on (SRD). */
-const DOUBLE_CHECK_PENALTY_SKILL = "swim";
 
 const NAVIGATABLE_PATHS = [
   { path: "rank", description: "Total ranks invested", type: "number" as const },
@@ -109,7 +107,8 @@ export default class DetailedCharacterSkills {
   private readonly detailedCharacterSkills: DetailedCharacterComprehensiveSkills =
     {} as DetailedCharacterComprehensiveSkills;
 
-  private readonly weightAffectedSkills: Set<string> = new Set<string>();
+  /** The skills armor weighs on, each with how many times over it takes the penalty. */
+  private readonly checkPenaltyMultipliers = new Map<string, number>();
 
   private readonly skillAbilityNames = new Map<string, string>();
 
@@ -159,10 +158,10 @@ export default class DetailedCharacterSkills {
     const effectivePenalty = Math.min(armorPenalty, encumbrancePenalty);
     const weight = Math.abs(effectivePenalty);
 
-    for (const skillName of this.weightAffectedSkills) {
+    for (const [skillName, multiplier] of this.checkPenaltyMultipliers) {
       const skill = this.detailedCharacterSkills[skillName];
       if (skill) {
-        skill.weight = skillName === DOUBLE_CHECK_PENALTY_SKILL ? weight * 2 : weight;
+        skill.weight = weight * multiplier;
       }
     }
   }
@@ -171,7 +170,7 @@ export default class DetailedCharacterSkills {
     rulesetSkills: Skill[],
     rulesetAbilities: RulesetAbility[],
     raceSize: string,
-    skillProperties?: Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }>,
+    skillProperties?: Map<string, SkillFlags>,
   ) {
     this.raceSize = raceSize;
     const classes = this.characterClasses.getClasses();
@@ -234,7 +233,7 @@ export default class DetailedCharacterSkills {
       const usableWithoutTraining = props?.usableWithoutTraining ?? true;
 
       if (impactedByWeight) {
-        this.weightAffectedSkills.add(stripSeparators(skill.name));
+        this.checkPenaltyMultipliers.set(stripSeparators(skill.name), props?.checkPenaltyMultiplier ?? 1);
       }
 
       const innate = this.innateSkillIds.has(skill.id);

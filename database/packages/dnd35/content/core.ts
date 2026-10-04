@@ -25,7 +25,10 @@ export const SAVES = [
   { name: "Will", description: "Represents mental resilience and resistance to mind-affecting spells and effects", ability: "Wisdom" },
 ];
 
-/** The skills, each with its key ability and whether armor weighs on it and it can be used untrained. */
+/**
+ * The skills, each with its key ability, whether armor weighs on it (twice over on Swim: "Double the normal armor check
+ * penalty is applied to Swim checks") and whether it can be used untrained.
+ */
 // oxfmt-ignore
 export const SKILLS = [
   { name: "Appraise", description: "Determine the value of an item.", ability: "Intelligence", impactedByWeight: false, usableWithoutTraining: true },
@@ -70,7 +73,7 @@ export const SKILLS = [
   { name: "Spellcraft", description: "Identify spells and magical effects.", ability: "Intelligence", impactedByWeight: false, usableWithoutTraining: false },
   { name: "Spot", description: "Notice visual clues and details that might otherwise go unnoticed.", ability: "Wisdom", impactedByWeight: false, usableWithoutTraining: true },
   { name: "Survival", description: "Follow tracks, hunt wild game, guide a party through the wilderness, identify natural hazards, and predict weather.", ability: "Wisdom", impactedByWeight: false, usableWithoutTraining: true },
-  { name: "Swim", description: "Navigate through water and avoid drowning.", ability: "Strength", impactedByWeight: true, usableWithoutTraining: true },
+  { name: "Swim", description: "Navigate through water and avoid drowning.", ability: "Strength", impactedByWeight: true, checkPenaltyMultiplier: 2, usableWithoutTraining: true },
   { name: "Tumble", description: "Perform acrobatic maneuvers, including somersaults, handstands, and flips.", ability: "Dexterity", impactedByWeight: true, usableWithoutTraining: false },
   { name: "Use Magic Device", description: "Activate magical items that normally you couldn't activate.", ability: "Charisma", impactedByWeight: false, usableWithoutTraining: false },
   { name: "Use Psionic Device", description: "Activate psionic items that you otherwise could not activate, such as dorjes, power stones, and psicrowns.", ability: "Charisma", impactedByWeight: false, usableWithoutTraining: false },

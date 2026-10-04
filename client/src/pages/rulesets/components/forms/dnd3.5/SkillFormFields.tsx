@@ -1,10 +1,10 @@
-import { FormControlLabel, Switch } from "@mui/material";
+import { FormControlLabel, Switch, TextField } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import type { UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import type { RulesetAbility } from "@/client/src/hooks/index.ts";
-import { nameRules } from "@/client/src/lib/validation.ts";
+import { nameRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 export type SkillFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"];
@@ -17,6 +17,9 @@ interface SkillFormFieldsProps {
 }
 
 export function SkillFormFields({ form, abilities }: SkillFormFieldsProps) {
+  const impactedByWeight = !!form.watch("impactedByWeight");
+  const { errors } = form.formState;
+
   return (
     <>
       <NameField {...form.register("name", nameRules)} error={form.formState.errors.name} />
@@ -30,8 +33,20 @@ export function SkillFormFields({ form, abilities }: SkillFormFieldsProps) {
       />
       <FormControlLabel
         label="Impacted by Weight"
-        control={<Switch {...form.register("impactedByWeight")} checked={!!form.watch("impactedByWeight")} />}
+        control={<Switch {...form.register("impactedByWeight")} checked={impactedByWeight} />}
       />
+      {impactedByWeight && (
+        <TextField
+          {...form.register("checkPenaltyMultiplier", wholeNumberRules(1, "Multiplier is required"))}
+          label="Armor Check Penalty Multiplier"
+          type="number"
+          fullWidth
+          error={!!errors.checkPenaltyMultiplier}
+          helperText={
+            errors.checkPenaltyMultiplier?.message ?? "How many times over the skill takes the penalty: 2 for Swim"
+          }
+        />
+      )}
       <FormControlLabel
         label="Usable Without Training"
         control={<Switch {...form.register("usableWithoutTraining")} checked={!!form.watch("usableWithoutTraining")} />}

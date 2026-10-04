@@ -20,10 +20,9 @@ import {
   KLASS_LEVEL_BAB,
   KLASS_LEVEL_SKILL_POINTS,
   RULESET_SKILL_POINT_ABILITY_ID,
-  SKILL_IMPACTED_BY_WEIGHT,
-  SKILL_USABLE_WITHOUT_TRAINING,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
+import type { SkillFlags } from "@/server/rulesets/hooks/index.ts";
 import type {
   FeatWithPMR,
   InventoryEntry,
@@ -48,6 +47,8 @@ import type {
   Ruleset,
 } from "@/shared/relations.ts";
 
+import { readSkillFlags } from "./skillFlags.ts";
+
 // PMR types re-exported for the two files that reach in for them
 // (`DetailedCharacter.ts`, `DetailedCharacterSpellcasting.ts`).
 // `Dnd35ProjectedCharacterData` is imported directly from `./types.ts`.
@@ -70,7 +71,7 @@ interface SharedCharacterData {
 /** D&D 3.5-specific extension of LoadedCharacterData with spellcasting and skill properties. */
 export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
   skillPointAbilityId: string | null;
-  skillProperties: Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }>;
+  skillProperties: Map<string, SkillFlags>;
   klassLevelProperties: Map<string, { bab: number; skills: number }>;
   klassBonusSpellAbilityMap: Map<string, string>;
   klassCasterTypeMap: Map<string, "Arcane" | "Divine">;
@@ -405,20 +406,7 @@ export default class DetailedCharacterDataLoader {
 
   /** The D&D 3.5 reading of the cache's raw property rows: each skill's flags, and the skill-point ability. */
   private interpretProperties(rulesetData: CachedRulesetData, resolveId: (id: string) => string) {
-    const skillProperties = new Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }>();
-    for (const prop of rulesetData.propertiesByEntityType.get("skills") ?? []) {
-      let entry = skillProperties.get(prop.entityId);
-      if (!entry) {
-        entry = { impactedByWeight: false, usableWithoutTraining: false };
-        skillProperties.set(prop.entityId, entry);
-      }
-      if (prop.type === SKILL_IMPACTED_BY_WEIGHT && prop.value === "true") {
-        entry.impactedByWeight = true;
-      }
-      if (prop.type === SKILL_USABLE_WITHOUT_TRAINING && prop.value === "true") {
-        entry.usableWithoutTraining = true;
-      }
-    }
+    const skillProperties = readSkillFlags(rulesetData.propertiesByEntityType.get("skills") ?? []);
 
     // The skill-point-ability property is attached to whichever ruleset in the
     // source chain declares it (usually the base), so look across every

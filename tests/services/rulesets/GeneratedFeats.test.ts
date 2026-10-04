@@ -58,6 +58,7 @@ const skill = (abilityId: string, name: string, fields: Record<string, unknown> 
   description: "",
   primaryAbilityId: abilityId,
   impactedByWeight: true,
+  checkPenaltyMultiplier: 1,
   usableWithoutTraining: true,
   ...fields,
 });
@@ -246,6 +247,7 @@ describe("an inherited skill's Skill Focus", () => {
       name: "Climb",
       primaryAbilityId: climb.primaryAbilityId,
       impactedByWeight: true,
+      checkPenaltyMultiplier: 1,
       usableWithoutTraining: true,
     };
     return { session, fork, climb, climbBody, feat: await findFeat(climb.rulesetId, "Skill Focus: Climb") };

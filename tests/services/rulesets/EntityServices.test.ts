@@ -136,6 +136,7 @@ const SERVICES: Record<string, Service> = {
         name,
         primaryAbilityId: refs.abilityId,
         impactedByWeight: false,
+        checkPenaltyMultiplier: 1,
         usableWithoutTraining: true,
       }),
     update: (session, rulesetId, id, name, refs, updatedAt) =>
@@ -143,6 +144,7 @@ const SERVICES: Record<string, Service> = {
         name,
         primaryAbilityId: refs.abilityId,
         impactedByWeight: false,
+        checkPenaltyMultiplier: 1,
         usableWithoutTraining: true,
         updatedAt,
       }),

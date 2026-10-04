@@ -71,6 +71,7 @@ class SkillsService {
       description?: string | null;
       primaryAbilityId: string;
       impactedByWeight: boolean;
+      checkPenaltyMultiplier: number;
       usableWithoutTraining: boolean;
     },
   ) {
@@ -94,7 +95,8 @@ class SkillsService {
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
 
-        const { impactedByWeight, usableWithoutTraining, ...skillData } = body;
+        const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, ...skillData } = body;
+        const flags = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
         const rows = await Skills.create(tx, { ...skillData, rulesetId });
         const skill = rows[0];
 
@@ -102,7 +104,7 @@ class SkillsService {
           await repointTombstoneSnapshot(tx, rulesetId, "skills", tombstoneAncestorId, skill.id);
         }
 
-        await hooks.skills.syncProperties(tx, skill.id, { impactedByWeight, usableWithoutTraining });
+        await hooks.skills.syncProperties(tx, skill.id, flags);
         await hooks.skills.generateSkillFeat(tx, rulesetId, sourceChain, body.name);
 
         await createActivityWithNotifications(tx, {
@@ -113,7 +115,7 @@ class SkillsService {
           data: { entityName: skill.name },
         });
 
-        return { ...skill, impactedByWeight, usableWithoutTraining };
+        return { ...skill, ...flags };
       });
     });
     invalidateRuleset(rulesetId);
@@ -129,6 +131,7 @@ class SkillsService {
       description?: string | null;
       primaryAbilityId: string;
       impactedByWeight: boolean;
+      checkPenaltyMultiplier: number;
       usableWithoutTraining: boolean;
       updatedAt?: string;
     },
@@ -149,14 +152,15 @@ class SkillsService {
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-        const { impactedByWeight, usableWithoutTraining, updatedAt: _u, ...skillData } = body;
+        const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, updatedAt: _u, ...skillData } = body;
+        const flags = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
         const rows = await Skills.update(tx, skillData, { id: targetId, expectedUpdatedAt });
         if (expectedUpdatedAt && rows.length === 0) {
           throw new ConflictError(STALE_ENTITY_MESSAGE);
         }
         const updatedSkill = rows[0];
 
-        await hooks.skills.syncProperties(tx, targetId, { impactedByWeight, usableWithoutTraining });
+        await hooks.skills.syncProperties(tx, targetId, flags);
 
         if (skill.name !== body.name) {
           await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);
@@ -174,7 +178,7 @@ class SkillsService {
           },
         });
 
-        return { ...updatedSkill, impactedByWeight, usableWithoutTraining };
+        return { ...updatedSkill, ...flags };
       });
     });
     invalidateRuleset(rulesetId);

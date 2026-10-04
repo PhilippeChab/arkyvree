@@ -31,6 +31,7 @@ async function setup() {
     description: "Climbing skill",
     primaryAbilityId: abilityMap.Strength,
     impactedByWeight: true,
+    checkPenaltyMultiplier: 1,
     usableWithoutTraining: true,
     ...overrides,
   });
@@ -55,6 +56,21 @@ describe("SkillsService", () => {
       { name: "Climb", impactedByWeight: true, usableWithoutTraining: true },
       { name: "Spellcraft", impactedByWeight: false, usableWithoutTraining: false },
     ]);
+  });
+
+  test("keeps how many times over armor weighs on a skill, and drops it once armor doesn't", async () => {
+    const { session, ruleset, body } = await setup();
+    const swim = await SkillsService.createSkill(
+      session,
+      ruleset.id,
+      body({ name: "Swim", checkPenaltyMultiplier: 2 }),
+    );
+    expect(swim).toMatchObject({ impactedByWeight: true, checkPenaltyMultiplier: 2 });
+    const listed = async () => (await SkillsService.getSkills(ruleset.id, {}, { limit: 10, page: 1 })).items[0];
+    expect(await listed()).toMatchObject({ name: "Swim", impactedByWeight: true, checkPenaltyMultiplier: 2 });
+
+    await SkillsService.updateSkill(session, ruleset.id, swim.id, body({ name: "Swim", impactedByWeight: false }));
+    expect(await listed()).toMatchObject({ impactedByWeight: false, checkPenaltyMultiplier: 1 });
   });
 
   test("updates every field, and the cached list shows the change", async () => {

@@ -6,6 +6,7 @@ import AbstractDetailedCharacter, {
 } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
 import { FEAT_FAMILY, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import type { SkillFlags } from "@/server/rulesets/hooks/index.ts";
 import type {
   FeatWithPMR,
   Holders,
@@ -149,7 +150,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
   // ── Dnd3.5-specific data ────────────────────────────────────────
   protected skillPointAbilityId: string | null = null;
 
-  protected skillProperties: Map<string, { impactedByWeight: boolean; usableWithoutTraining: boolean }> = new Map();
+  protected skillProperties: Map<string, SkillFlags> = new Map();
 
   protected klassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
 
