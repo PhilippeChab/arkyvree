@@ -23,8 +23,10 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
 
   protected readonly entityType = "feats";
 
-  /** The feats the character levels' class levels grant, each with its level (see `grantedAt`). */
-  /** What these character levels' class levels grant, each per level, by name, ties broken to a fixed order. */
+  /**
+   * The feats the character levels' class levels grant, each with its level (see `grantedAt`), by name, ties broken to
+   * a fixed order.
+   */
   async findGrants(db: Db, where: { levels: { id: string; klassLevelId: string }[] }) {
     if (where.levels.length === 0) return [];
     const granted = await db
