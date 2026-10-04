@@ -1,3 +1,4 @@
+import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Feat } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -49,7 +50,7 @@ export default class DetailedCharacterFeats {
             kind === "modifier"
               ? ["set"]
               : subPath.type === "number"
-                ? ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"]
+                ? [...NUMERIC_REQUIREMENT_OPERATORS]
                 : ["equal", "not_equal"],
         });
       }

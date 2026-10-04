@@ -1,5 +1,6 @@
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
+import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { Property } from "@/shared/relations.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
@@ -52,10 +53,7 @@ export default class DetailedCharacterPowerGroupings {
           description: `${kind === "requirement" ? "Any" : "All"} ${prefix} — ${subPath.description}`,
           ...(groupLabel && { groupDescription: `${capitalize(grouping)} ${groupLabel} spells` }),
           valueType: subPath.type,
-          operators:
-            kind === "modifier"
-              ? ["add", "subtract", "multiply", "divide", "set"]
-              : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+          operators: getNumericOperators(kind),
         });
       }
     }

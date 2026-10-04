@@ -1,3 +1,4 @@
+import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -67,10 +68,7 @@ export default class DetailedCharacterAptitudes {
     maxSpellLevel: number,
   ): TargetPath[] {
     const paths: TargetPath[] = [];
-    const operators =
-      kind === "modifier"
-        ? ["add", "subtract", "multiply", "divide", "set"]
-        : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"];
+    const operators = getNumericOperators(kind);
 
     for (const aptitude of aptitudes) {
       const normalizedAptitudeName = stripSeparators(aptitude.name);

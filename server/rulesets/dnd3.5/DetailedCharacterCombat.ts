@@ -9,6 +9,7 @@ import {
   WEAPON_FINESSABLE,
   WEAPON_PROFICIENCY,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type CharacterLevel, type Race } from "@/shared/relations.ts";
 
@@ -114,10 +115,7 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
         category: "combat",
         description: path.description,
         valueType: path.type,
-        operators:
-          kind === "modifier"
-            ? ["add", "subtract", "multiply", "divide", "set"]
-            : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+        operators: getNumericOperators(kind),
         ...("sortOrder" in path && { sortOrder: path.sortOrder }),
       });
     }

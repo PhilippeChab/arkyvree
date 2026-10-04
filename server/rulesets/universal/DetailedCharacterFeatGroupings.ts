@@ -1,5 +1,6 @@
 import type DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
 import type { FeatEntry } from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
+import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -59,7 +60,7 @@ export default class DetailedCharacterFeatGroupings {
           description: `${displayName} feats — Times taken, all together`,
           groupDescription: `${displayName} feats`,
           valueType: "number",
-          operators: ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+          operators: [...NUMERIC_REQUIREMENT_OPERATORS],
         });
       }
     }

@@ -1,4 +1,5 @@
 import { CONSTANTS } from "@/server/rulesets/constants.ts";
+import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { type CharacterLevel, type RulesetAbility } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -38,10 +39,7 @@ export default class DetailedCharacterAbilities {
           category: "abilities",
           description: subPath.description,
           valueType: subPath.type,
-          operators:
-            kind === "modifier"
-              ? ["add", "subtract", "multiply", "divide", "set"]
-              : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+          operators: getNumericOperators(kind),
         });
       }
     }
@@ -52,10 +50,7 @@ export default class DetailedCharacterAbilities {
       description: "Misc bonus applied to every ability",
       groupDescription: kind === "requirement" ? "Any ability" : "All abilities",
       valueType: "number",
-      operators:
-        kind === "modifier"
-          ? ["add", "subtract", "multiply", "divide", "set"]
-          : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+      operators: getNumericOperators(kind),
     });
 
     return paths;

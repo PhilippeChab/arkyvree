@@ -1,3 +1,4 @@
+import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 /**
  * Universal "bonded" target paths — express that a character has a familiar /
@@ -47,10 +48,7 @@ export default class DetailedCharacterBonds {
         category: "bonded",
         description: `${b.label} effective level (summed from granting classes)`,
         valueType: "number" as const,
-        operators:
-          kind === "modifier"
-            ? ["add", "subtract", "set"]
-            : ["equal", "not_equal", "greater_than", "less_than", "greater_than_or_equal", "less_than_or_equal"],
+        operators: kind === "modifier" ? ["add", "subtract", "set"] : [...NUMERIC_REQUIREMENT_OPERATORS],
       });
     }
     return paths;
