@@ -370,6 +370,8 @@ export type ClassReference = {
   };
 
   overrides?: {
+    /** Leave the class out of the seed: one the rules can't support (the Shadowmind needs psionics) */
+    skip?: boolean;
     /** Class description override (for sources that lack inline descriptions) */
     description?: string;
     requirements?: RequirementEntry[];

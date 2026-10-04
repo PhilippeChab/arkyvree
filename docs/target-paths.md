@@ -28,6 +28,9 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 | `skills.<name>.trained` | boolean | Whether at least 1 rank is invested |
 | `skills.<name>.innate` | boolean | Whether skill is a class skill |
 | `skills.*.misc` | number | Misc modifier for all skills |
+| `skills.<family>.<field>` | number | Each skill of a family no skill of its own names (`skills.knowledge.rank`: any Knowledge skill for a requirement, all of them for a modifier) |
+| `skills.budget.perlevel` | number | Bonus skill points per level (a human's) |
+| `skills.budget.total`, `.spent`, `.available` | number | The skill points from every level, spent, and left (req only) |
 
 ## saves
 
@@ -77,7 +80,7 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 
 ## items.weapons
 
-Grouped by weapon type, family, complexity, and item name.
+Grouped by weapon type, family, complexity, and item name. `items.weapons.unarmedstrike` is always there: every character strikes unarmed, and a gauntlet's strike is unarmed too.
 
 | Path | Type | Description |
 |------|------|-------------|

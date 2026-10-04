@@ -183,7 +183,8 @@ export function classReferences(book: string): { file: string; ref: ClassReferen
   return readdirSync(dir)
     .filter((file) => file.endsWith(".json"))
     .sort()
-    .map((file) => ({ file, ref: loadReference(join(dir, file), "class") }));
+    .map((file) => ({ file, ref: loadReference(join(dir, file), "class") }))
+    .filter(({ ref }) => !ref.overrides?.skip);
 }
 
 /** The overrides of the reference of `type` stored at `path`, which a re-scrape keeps. */

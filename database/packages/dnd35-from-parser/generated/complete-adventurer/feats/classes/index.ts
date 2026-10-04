@@ -21,7 +21,6 @@ import { OLLAM_FEATS } from "./ollam.ts";
 import { SCOUT_FEATS } from "./scout.ts";
 import { SHADOWBANE_INQUISITOR_FEATS } from "./shadowbaneInquisitor.ts";
 import { SHADOWBANE_STALKER_FEATS } from "./shadowbaneStalker.ts";
-import { SHADOWMIND_FEATS } from "./shadowmind.ts";
 import { SPELLTHIEF_FEATS } from "./spellthief.ts";
 import { SPYMASTER_FEATS } from "./spymaster.ts";
 import { STREETFIGHTER_FEATS } from "./streetfighter.ts";
@@ -52,7 +51,6 @@ const _allClassFeats: FeatSeed[] = [
   ...SCOUT_FEATS,
   ...SHADOWBANE_INQUISITOR_FEATS,
   ...SHADOWBANE_STALKER_FEATS,
-  ...SHADOWMIND_FEATS,
   ...SPELLTHIEF_FEATS,
   ...SPYMASTER_FEATS,
   ...STREETFIGHTER_FEATS,
@@ -89,7 +87,6 @@ export { OLLAM_FEATS };
 export { SCOUT_FEATS };
 export { SHADOWBANE_INQUISITOR_FEATS };
 export { SHADOWBANE_STALKER_FEATS };
-export { SHADOWMIND_FEATS };
 export { SPELLTHIEF_FEATS };
 export { SPYMASTER_FEATS };
 export { STREETFIGHTER_FEATS };

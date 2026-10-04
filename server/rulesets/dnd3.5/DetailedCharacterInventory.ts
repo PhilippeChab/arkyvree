@@ -1,3 +1,4 @@
+import { UNARMED_STRIKE } from "@/server/rulesets/constants.ts";
 import type DetailedCharacterArmors from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
 import type DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
 import type DetailedCharacterShields from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
@@ -115,8 +116,8 @@ export default class DetailedCharacterInventory {
     }
 
     const set0Mainhand = this.characterCombat.getCombat().weaponsets["0"]?.mainhand;
-    if (set0Mainhand?.name === "Unarmed Strike" && set0Mainhand.itemId === null) {
-      this.characterWeapons.registerWeapon(0, "Main Hand", { name: "Unarmed Strike" });
+    if (set0Mainhand?.name === UNARMED_STRIKE && set0Mainhand.itemId === null) {
+      this.characterWeapons.registerWeapon(0, "Main Hand", { name: UNARMED_STRIKE });
     }
   }
 

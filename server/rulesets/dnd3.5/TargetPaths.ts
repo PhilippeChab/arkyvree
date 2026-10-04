@@ -1,4 +1,5 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { UNARMED_STRIKE } from "@/server/rulesets/constants.ts";
 // Import DetailedCharacter components that generate paths
 import DetailedCharacterArmors from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
 import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
@@ -198,8 +199,13 @@ function collectGroupings(rulesetData: CachedRulesetData) {
       ...power,
       properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
     })),
+    // Every character strikes unarmed, without an item: its grouping is always there
     weaponGroupings: [
-      ...new Set([...slugsOf(itemProperties, WEAPON_TYPE), ...slugsOf(itemProperties, WEAPON_PROFICIENCY)]),
+      ...new Set([
+        stripSeparators(UNARMED_STRIKE),
+        ...slugsOf(itemProperties, WEAPON_TYPE),
+        ...slugsOf(itemProperties, WEAPON_PROFICIENCY),
+      ]),
     ],
     armorGroupings: slugsOf(itemProperties, ARMOR_TYPE),
     shieldGroupings: slugsOf(itemProperties, SHIELD_TYPE),
@@ -311,6 +317,9 @@ function segmentLabelsOf(rulesetData: CachedRulesetData): Record<string, string>
   for (const entity of [...abilities, ...saves, ...skills, ...feats, ...items, ...aptitudes, ...klasses, ...powers]) {
     segmentLabels[stripSeparators(entity.name)] = entity.name;
   }
+  Object.assign(segmentLabels, DetailedCharacterSkills.getFamilyLabels(skills), {
+    [stripSeparators(UNARMED_STRIKE)]: UNARMED_STRIKE,
+  });
 
   // Spell possession slug labels (e.g. "wizard" → "Wizard" for "Wizard Spells" aptitude)
   for (const apt of aptitudes) {

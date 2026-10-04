@@ -8,27 +8,10 @@
   "overrides": {
     "requirements": [
       {
-        "chainingOperator": "or",
-        "children": [
-          {
-            "operator": "greater_than_or_equal",
-            "target": "skills.craftleatherworking.rank",
-            "value": "10",
-            "valueType": "number"
-          },
-          {
-            "operator": "greater_than_or_equal",
-            "target": "skills.craftmetalworking.rank",
-            "value": "10",
-            "valueType": "number"
-          },
-          {
-            "operator": "greater_than_or_equal",
-            "target": "skills.craftwoodworking.rank",
-            "value": "10",
-            "valueType": "number"
-          }
-        ]
+        "operator": "greater_than_or_equal",
+        "target": "skills.craft.rank",
+        "value": "10",
+        "valueType": "number"
       },
       {
         "operator": "greater_than_or_equal",

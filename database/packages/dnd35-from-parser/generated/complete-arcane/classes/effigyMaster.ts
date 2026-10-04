@@ -25,7 +25,7 @@ export const EFFIGY_MASTER: ClassSeed = {
     "Spellcraft",
   ],
   requirements: [
-    or(gte("skills.craftleatherworking.rank", 10), gte("skills.craftmetalworking.rank", 10), gte("skills.craftwoodworking.rank", 10)),
+    gte("skills.craft.rank", 10),
     gte("skills.knowledgearcana.rank", 5),
     gte("skills.spellcraft.rank", 5),
     gte("skills.usemagicdevice.rank", 2),

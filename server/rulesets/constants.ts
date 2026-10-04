@@ -150,3 +150,6 @@ export const ENCUMBERED_SPEED: Record<number, number> = {
 };
 
 export type LoadCategory = "light" | "medium" | "heavy" | "overloaded";
+
+/** The weapon every character strikes with when its hand holds none: no item, always on the sheet. */
+export const UNARMED_STRIKE = "Unarmed Strike";
