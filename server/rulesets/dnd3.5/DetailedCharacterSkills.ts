@@ -279,14 +279,39 @@ export default class DetailedCharacterSkills {
     });
   }
 
-  /** The skill points a level gives: its class's, the skill point ability's modifier and any bonus per level. */
+  /** A level's points per level, before the minimum: its class's and the skill point ability's modifier. */
+  getLevelPointsPerLevel(classSkillPoints: number): number {
+    return classSkillPoints + this.getSkillPointAbilityModifier();
+  }
+
+  /** The skill points a level gives: its class's and the skill point ability's modifier, and any bonus per level. */
   getLevelSkillPoints(classSkillPoints: number, isFirstCharacterLevel: boolean): number {
-    const pointsPerLevel = classSkillPoints + this.getSkillPointAbilityModifier() + this.skillBudget.perlevel;
-    return computeLevelSkillPoints(pointsPerLevel, isFirstCharacterLevel);
+    return computeLevelSkillPoints(
+      this.getLevelPointsPerLevel(classSkillPoints),
+      this.skillBudget.perlevel,
+      isFirstCharacterLevel,
+    );
   }
 
   getSkillBudget() {
     return this.skillBudget;
+  }
+
+  /**
+   * Each level's points per level before the minimum, in the order the character took them (the first is its first
+   * level), and the bonus each level adds: what the level-up wizard recomputes the points from when it raises the
+   * skill point ability.
+   */
+  getSkillPointBases(): { pointsPerLevel: number[]; bonusPerLevel: number } {
+    const levels = Object.values(this.characterClasses.getClasses())
+      .flatMap((klass) => klass.levels)
+      .sort((a, b) => (a.characterLevel.createdAt < b.characterLevel.createdAt ? -1 : 1));
+    return {
+      pointsPerLevel: levels.map((level) =>
+        this.getLevelPointsPerLevel(this.skillPointKlassLevelProperties.get(level.klassLevel.id)?.skills ?? 0),
+      ),
+      bonusPerLevel: this.skillBudget.perlevel,
+    };
   }
 
   getSkills() {
@@ -345,23 +370,11 @@ export default class DetailedCharacterSkills {
       0,
     );
 
-    const allLevels = Object.values(classes).flatMap((klass) => klass.levels);
-    const firstCharacterLevelId =
-      allLevels.length > 0
-        ? allLevels.reduce((earliest, level) =>
-            level.characterLevel.createdAt < earliest.characterLevel.createdAt ? level : earliest,
-          ).characterLevel.id
-        : null;
-
-    const total = Object.values(classes).reduce((acc, klass) => {
-      return (
-        acc +
-        klass.levels.reduce((acc, level) => {
-          const skillPoints = this.skillPointKlassLevelProperties.get(level.klassLevel.id)?.skills ?? 0;
-          return acc + this.getLevelSkillPoints(skillPoints, level.characterLevel.id === firstCharacterLevelId);
-        }, 0)
-      );
-    }, 0);
+    const { pointsPerLevel, bonusPerLevel } = this.getSkillPointBases();
+    const total = pointsPerLevel.reduce(
+      (acc, points, index) => acc + computeLevelSkillPoints(points, bonusPerLevel, index === 0),
+      0,
+    );
 
     this.skillBudget.total = total;
     this.skillBudget.spent = spent;

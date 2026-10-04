@@ -360,6 +360,9 @@ describe("previewing a level-up", () => {
     );
     expect(result.perLevelSkillPoints).toEqual([16, 4, 4, 4]);
     expect(result.skills).toMatchObject({ skillPointsToSpend: 28, totalCharacterLevel: 4 });
+    // What the wizard recomputes them from: each level's 2 + 1 (INT 13) before the minimum, and the human's 1 beside.
+    expect(result.perLevelSkillPointBases).toEqual([3, 3, 3, 3]);
+    expect(result.skills).toMatchObject({ pointsPerLevel: [3, 3, 3, 3], bonusPerLevel: 1 });
     expect(result.skills.skills.length).toBeGreaterThan(0);
     // The fourth level of the batch, by its index.
     expect(result.attributes.abilityIncreaseLevels).toEqual([3]);

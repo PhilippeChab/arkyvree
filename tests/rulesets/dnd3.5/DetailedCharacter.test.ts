@@ -418,8 +418,8 @@ describe("DetailedCharacter", () => {
       const budget = (await build((await Characters.findOne(db, { id: characterId }))!))
         .getDetailedCharacterSkills()
         .getSkillBudget();
-      // A human fighter with INT 3: 2 - 4 + 1 = -1 a level, so 1 (4 at the first level) + 1.
-      expect(budget.total).toBe(5);
+      // A human fighter with INT 3: 2 - 4 = -2 a level, at least 1, and the human's 1 beside: 2 (8 at the first level) + 2.
+      expect(budget.total).toBe(10);
     });
   });
 
