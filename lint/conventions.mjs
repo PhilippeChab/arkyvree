@@ -7,7 +7,8 @@
  *   folder (the server, `shared/` and the client; the tests' and seeders' helpers are their own).
  * - `repository-instances`: code uses the repositories' shared instances (`@/server/repositories/index.ts`), which
  *   the request cache wraps; only that file builds one.
- * - `route-conventions`: a route's path params are camelCase (`:modifierId`; `.get`, `.route`, `.on`), its validation
+ * - `route-conventions`: a route's path params are camelCase (`:modifierId`; `.get`, `.route`, `.on`) and its fixed
+ *   segments kebab-case (`/class-levels`; a file's name, `robots.txt`, or `*` too), its validation
  *   is the app's `zValidator` (`@/server/middlewares/index.ts`, which answers in the API's error envelope), and it lets
  *   an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone is fine).
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
@@ -95,6 +96,8 @@ function pathOf(node) {
   return null;
 }
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
+// kebab-case, a file's name (`sitemap.xml`) or a wildcard
+const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
 
 const routeConventions = {
   meta: { type: "problem" },
@@ -118,9 +121,12 @@ const routeConventions = {
         const routePath = pathOf(route);
         if (!routePath?.startsWith("/")) return;
         for (const segment of routePath.split("/")) {
+          if (segment === "") continue;
           const param = segment.startsWith(":") ? segment.slice(1).replace(/[{?].*$/, "") : null;
-          if (param && !CAMEL_CASE.test(param)) {
+          if (param !== null && !CAMEL_CASE.test(param)) {
             context.report({ node: route, message: `A path param is camelCase: \`:${param}\` isn't.` });
+          } else if (param === null && !FIXED_SEGMENT.test(segment)) {
+            context.report({ node: route, message: `A path's fixed segment is kebab-case: \`${segment}\` isn't.` });
           }
         }
       },

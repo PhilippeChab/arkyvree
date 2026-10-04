@@ -28,7 +28,7 @@ describe("rulesets class levels", () => {
 
     expect(await expectOk(level.$get({ param }))).toMatchObject({ id: created.id, level: 1 });
     const byId = await expectOk(
-      api.api.rulesets[":id"].class_levels[":classLevelId"].$get({ param: { id, classLevelId: created.id } }),
+      api.api.rulesets[":id"]["class-levels"][":classLevelId"].$get({ param: { id, classLevelId: created.id } }),
     );
     expect(byId.id).toBe(created.id);
     expect((await expectOk(levels.$get({ param: { id, classId } }))).map((l) => l.id)).toEqual([created.id]);

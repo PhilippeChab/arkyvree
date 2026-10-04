@@ -8,7 +8,7 @@ import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/in
 
 export default new Hono<SessionContext>()
   .get(
-    "/:id/class_levels/:classLevelId",
+    "/:id/class-levels/:classLevelId",
     zValidator("param", z.object({ id: z.string().uuid(), classLevelId: z.string().uuid() })),
     async (c) => {
       const { id, classLevelId } = c.req.valid("param");
