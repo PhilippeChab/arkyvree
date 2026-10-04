@@ -456,9 +456,12 @@ describe("InventoryService", () => {
       // A human fighter, proficient with martial weapons but no exotic one: the sword in two hands only
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const sword = itemMap["Bastard Sword"];
-      await expect(add(session, bjorn.id, sword, equipped("Main Hand", 1))).rejects.toThrow(
-        "This weapon is too large to use in one hand without its proficiency",
-      );
+      // Refused with an issue, which the form shows and can force
+      const refusal = await add(session, bjorn.id, sword, equipped("Main Hand", 1)).catch((error: unknown) => error);
+      expect(refusal).toBeInstanceOf(BadRequestError);
+      expect((refusal as BadRequestError).issues).toMatchObject([
+        { category: "requirements", entityName: "Bastard Sword", entityType: "items" },
+      ]);
       expect(await add(session, bjorn.id, sword, equipped("Two Handed", 1))).toMatchObject({ location: "Two Handed" });
       await CharacterInventoryService.removeItem(session, bjorn.id, sword);
       expect(await add(session, bjorn.id, sword, { ...equipped("Main Hand", 1), force: true })).toMatchObject({

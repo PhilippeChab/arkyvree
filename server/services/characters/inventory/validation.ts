@@ -113,7 +113,12 @@ async function validateWeaponInOneHand(
   const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
   await detailedCharacter.build(tx);
   if (!detailedCharacter.areRequirementsMet([proficiency], { sourceId: null })) {
-    throw new BadRequestError("This weapon is too large to use in one hand without its proficiency");
+    // An issue, as an unmet requirement is: the form shows it, and can equip it anyway (`force`)
+    const message = "This weapon is too large to use in one hand without its proficiency";
+    const entityName = rulesetData.itemsById.get(item.id)?.name;
+    throw new BadRequestError(message, {
+      issues: [{ category: "requirements", message, entityName, entityType: "items" }],
+    });
   }
 }
 
