@@ -15,6 +15,7 @@ import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/inde
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
@@ -53,7 +54,7 @@ export function PropertiesSection({
   onEntityIdChange,
 }: PropertiesSectionProps) {
   const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
-  const entityParam = { id: ruleset.id, entityType, entityId };
+  const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
 
   const {
     data: properties,

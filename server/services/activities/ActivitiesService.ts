@@ -24,7 +24,8 @@ import {
   Skills,
   Visibility,
 } from "@/server/repositories/index.ts";
-import { buildCustomizationPath, isCustomizableEntityType } from "@/shared/customization/entities.ts";
+import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
 
 const CUSTOMIZATION_ENTITIES = new Set(["feats", "powers", "items", "races"]);
@@ -50,7 +51,7 @@ class ActivitiesService {
     };
 
     const findOne = repoMap[entityType];
-    if (!findOne || !isCustomizableEntityType(entityType)) return null;
+    if (!findOne || !isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return null;
     const entity = await findOne(entityId);
     if (!entity) return null;
     return `/rulesets/${entity.rulesetId}/${buildCustomizationPath(entityType, entityId)}`;

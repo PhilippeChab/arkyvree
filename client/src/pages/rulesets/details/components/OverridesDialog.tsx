@@ -26,6 +26,7 @@ import { useSnackbar } from "@/client/src/contexts/ToastContext.tsx";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 type ChangesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["changes"]["$get"], 200>;
 
@@ -36,7 +37,7 @@ const CUSTOMIZABLE_TYPES = new Set(["feats", "powers", "items", "races"]);
 function getEntityUrl(rulesetId: string, change: Change): string | undefined {
   if (change.status === "deleted") return undefined;
   const entityId = change.entityId;
-  const segment = change.entityType === "klasses" ? "classes" : change.entityType;
+  const segment = getUrlSegment(change.entityType);
   return CUSTOMIZABLE_TYPES.has(change.entityType)
     ? `/rulesets/${rulesetId}/${segment}/${entityId}/customization`
     : `/rulesets/${rulesetId}/${segment}/${entityId}`;
@@ -75,8 +76,8 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
     mutationFn: async ({ entityType, sourceEntityId }: { entityType: string; sourceEntityId: string }) => {
       return parseResponse(
         restoreApi.$post({
-          // The changes list types entityType as a string; every entity it lists can be restored.
-          param: { id: rulesetId, entityType: entityType as RestorableType, entityId: sourceEntityId },
+          // The changes list names an entity's type as a string; the route takes its URL segment, and every one listed can be restored.
+          param: { id: rulesetId, entityType: getUrlSegment(entityType) as RestorableType, entityId: sourceEntityId },
         }),
       );
     },

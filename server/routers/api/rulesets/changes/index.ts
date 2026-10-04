@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type SessionContext, zValidator } from "@/server/middlewares/index.ts";
-import { idParam } from "@/server/routers/api/validation.ts";
+import { buildEntityTypeSchema, idParam } from "@/server/routers/api/validation.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 
 export default new Hono<SessionContext>()
@@ -16,7 +16,7 @@ export default new Hono<SessionContext>()
       "param",
       z.object({
         id: z.string().uuid(),
-        entityType: z.enum([
+        entityType: buildEntityTypeSchema([
           "saves",
           "skills",
           "feats",
@@ -27,7 +27,7 @@ export default new Hono<SessionContext>()
           "klasses",
           "aptitudes",
           "mechanics",
-        ]),
+        ] as const),
         entityId: z.string().uuid(),
       }),
     ),

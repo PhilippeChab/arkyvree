@@ -97,6 +97,26 @@ describe("rulesets", () => {
     expect(await expectOk(ruleset.changes.$get({ param: { id } }))).toEqual([]);
   });
 
+  test("restores an overridden class through its URL segment, classes", async () => {
+    const { klassMap } = await getSeedCtx();
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const entityId = klassMap.pc["Fighter"];
+    await expectOk(
+      ruleset.classes[":classId"].$put({
+        param: { id, classId: entityId },
+        json: { name: "Fighter", description: "Edited" },
+      }),
+    );
+    expect(await expectOk(ruleset.changes.$get({ param: { id } }))).toContainEqual(
+      expect.objectContaining({ entityType: "klasses", status: "modified", sourceEntityId: entityId }),
+    );
+
+    await expectOk(
+      ruleset.entities[":entityType"][":entityId"].restore.$post({ param: { id, entityType: "classes", entityId } }),
+    );
+    expect(await expectOk(ruleset.changes.$get({ param: { id } }))).toEqual([]);
+  });
+
   test("requires a session", async () => {
     await expectStatus(guestApi.api.rulesets.$get({ query: {} }), 401);
     await expectStatus(guestApi.api.rulesets[":id"].$get({ param: { id: NIL_UUID } }), 401);

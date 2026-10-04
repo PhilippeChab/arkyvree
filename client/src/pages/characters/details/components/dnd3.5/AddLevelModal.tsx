@@ -69,7 +69,7 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
             limit: "10",
             page: pageParam.toString(),
             search: debouncedKlassSearch || undefined,
-            pendingLevelKlassLevelIds: wizard.allKlassLevelIds || undefined,
+            pendingLevelClassLevelIds: wizard.allKlassLevelIds || undefined,
             pendingLevelAbilityIds: allAbilityIds || undefined,
             pendingFeatPicks: allPendingFeatPicks || undefined,
             pendingSkillAllocations: pendingSkillAllocations || undefined,

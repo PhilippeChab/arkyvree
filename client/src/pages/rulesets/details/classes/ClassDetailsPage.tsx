@@ -37,6 +37,7 @@ import {
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import {
   ClassFeatPoolsSection,
@@ -170,7 +171,7 @@ export default function ClassDetailsPage() {
 
   // Create, update or clear (empty value) the class's single property of a type.
   const setClassProperty = async (type: string, propertyId: string | null | undefined, value: string) => {
-    const param = { id: rulesetId, entityType: "klasses" as const, entityId: classData?.id ?? classId };
+    const param = { id: rulesetId, entityType: getUrlSegment("klasses"), entityId: classData?.id ?? classId };
     const endpoint = rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties;
     if (!propertyId) {
       await endpoint.$post({ param, json: { type, value } });

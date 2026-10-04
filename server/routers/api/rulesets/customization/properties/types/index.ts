@@ -2,8 +2,9 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
-import { idParam, limit, page } from "@/server/routers/api/validation.ts";
+import { buildEntityTypeSchema, idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { PropertyTypesService } from "@/server/services/rulesets/customization/properties/types/index.ts";
+import { PROPERTY_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 
 const propertyTypes = new Hono()
   /**
@@ -16,9 +17,7 @@ const propertyTypes = new Hono()
     zValidator(
       "query",
       z.object({
-        entityType: z
-          .enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"])
-          .optional(),
+        entityType: buildEntityTypeSchema(PROPERTY_ENTITY_TYPES).optional(),
       }),
     ),
     async (c) => {
@@ -38,9 +37,7 @@ const propertyTypes = new Hono()
       "query",
       z.object({
         query: z.string().default(""),
-        entityType: z
-          .enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"])
-          .optional(),
+        entityType: buildEntityTypeSchema(PROPERTY_ENTITY_TYPES).optional(),
         limit,
         page,
       }),
@@ -65,9 +62,7 @@ const propertyTypes = new Hono()
       "query",
       z.object({
         query: z.string().min(1),
-        entityType: z
-          .enum(["feats", "klasses", "klass_levels", "items", "powers", "races", "rulesets", "skills"])
-          .optional(),
+        entityType: buildEntityTypeSchema(PROPERTY_ENTITY_TYPES).optional(),
       }),
     ),
     async (c) => {

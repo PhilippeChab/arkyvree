@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { getEntityTypeOfSegment, getUrlSegments } from "@/shared/urlSegments.ts";
+
 /** Text as it's stored: Unicode-normalized (NFKC) and trimmed. */
 export const sanitizeText = (text: string) => text.normalize("NFKC").trim();
 
@@ -17,6 +19,13 @@ export const limitDefaultingTo = (fallback: number) => z.coerce.number().min(1).
 
 /** Standard limit: 1–100, defaults to 10 */
 export const limit = limitDefaultingTo(10);
+
+/**
+ * An entity type in a URL, named by its segment ("class-levels", "classes"): the route hands its service the type
+ * (`klass_levels`, `klasses`).
+ */
+export const buildEntityTypeSchema = <T extends string>(entityTypes: readonly T[]) =>
+  z.enum(getUrlSegments(entityTypes)).transform((segment) => getEntityTypeOfSegment(segment));
 
 /** A route's `:id` param */
 export const idParam = z.object({ id: z.string().uuid() });

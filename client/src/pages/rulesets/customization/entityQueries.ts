@@ -7,9 +7,9 @@ import { queryOptions } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import type { ClassDetail } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
+import type { CustomizationPageType } from "@/shared/customization/entities.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 const rulesetApi = rpc.api.rulesets[":id"];
 
@@ -29,10 +29,9 @@ export type CustomizationEntity =
   | { type: "items"; entity: Item }
   | { type: "powers"; entity: Power }
   | { type: "klass_levels"; entity: ClassLevel }
-  | { type: "klasses"; entity: ClassDetail }
   | { type: "modifiers"; entity: CustomizedModifier };
 
-async function fetchEntity(id: string, type: CustomizationOwnerType, entityId: string): Promise<CustomizationEntity> {
+async function fetchEntity(id: string, type: CustomizationPageType, entityId: string): Promise<CustomizationEntity> {
   switch (type) {
     case "feats":
       return {
@@ -61,24 +60,19 @@ async function fetchEntity(id: string, type: CustomizationOwnerType, entityId: s
           rulesetApi["class-levels"][":classLevelId"].$get({ param: { id, classLevelId: entityId } }),
         ),
       };
-    case "klasses":
-      return {
-        type,
-        entity: await parseResponse(rulesetApi.classes[":classId"].$get({ param: { id, classId: entityId } })),
-      };
     case "modifiers":
       return {
         type,
         entity: await parseResponse(
           rulesetApi.customization[":entityType"][":entityId"].modifiers[":modifierId"].$get({
-            param: { id, entityType: type, entityId, modifierId: entityId },
+            param: { id, entityType: getUrlSegment(type), entityId, modifierId: entityId },
           }),
         ),
       };
   }
 }
 
-export const customizationEntityQuery = (rulesetId: string, type: CustomizationOwnerType, entityId: string) =>
+export const customizationEntityQuery = (rulesetId: string, type: CustomizationPageType, entityId: string) =>
   queryOptions({
     queryKey: queryKeys.rulesets.entity(rulesetId, type, entityId),
     queryFn: () => fetchEntity(rulesetId, type, entityId),

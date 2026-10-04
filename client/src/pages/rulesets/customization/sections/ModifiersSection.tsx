@@ -18,6 +18,7 @@ import { customizationEntityQuery } from "@/client/src/pages/rulesets/customizat
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
@@ -59,7 +60,7 @@ export function ModifiersSection({
   const navigate = useNavigate();
 
   const { tag, follow: handleResolvedEntityId, followCopies } = useCopyFollow(entityId, onEntityIdChange);
-  const entityParam = { id: ruleset.id, entityType, entityId };
+  const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
 
   const {
     data: modifiers,
