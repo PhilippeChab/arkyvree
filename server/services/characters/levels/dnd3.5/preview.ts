@@ -70,6 +70,40 @@ function autoGrantedPowers(rulesetData: CachedRulesetData, klassLevelIds: string
     .map((rec) => ({ ...rec.powersInRule, free: rec.free }));
 }
 
+/**
+ * The skills step: the points to spend, the skills with their class status over the planned levels, each planned
+ * level's points, and what the wizard recomputes the points from when it raises the skill point ability: each level's
+ * points before the minimum, the planned ones in the batch's order, every level's in the budget's.
+ */
+async function planSkills(
+  levelUpProjector: Dnd35LevelUpProjector,
+  rulesetData: CachedRulesetData,
+  klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
+  existingLevelCount: number,
+  plannedLevelCount: number,
+) {
+  const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
+  const classSkills = getPlannedClassSkills(
+    rulesetData,
+    klassLevelEntries.map(({ klass }) => klass.id),
+  );
+  return {
+    skills: {
+      skillPointsToSpend: Math.max(1, levelUpProjector.getSkillBudget().available),
+      totalCharacterLevel: existingLevelCount + plannedLevelCount,
+      skills: levelUpProjector.getCharacterEnrichedSkills(rulesetData.skills, classSkills.merged),
+      ...levelUpProjector.getSkillPointBases(),
+    },
+    perLevelSkillPoints: await levelUpProjector.computeSkillPointsPerLevel(
+      klassLevelIds,
+      existingLevelCount,
+      rulesetData,
+    ),
+    perLevelSkillPointBases: levelUpProjector.computeSkillPointBasesPerLevel(klassLevelIds, rulesetData),
+    perLevelClassSkillIds: classSkills.perLevel,
+  };
+}
+
 export async function getLevelUpPreview(
   session: Session,
   characterId: string,
@@ -98,26 +132,16 @@ export async function getLevelUpPreview(
       rulesetData,
     );
 
-    // ── Extract merged skills data ──
-    const skillsBreakdown = levelUpProjector.getSkillBudget();
-
-    const allSkills = rulesetData.skills;
-    const classSkills = getPlannedClassSkills(
-      rulesetData,
-      klassLevelEntries.map(({ klass }) => klass.id),
-    );
-    const skillsWithClassInfo = levelUpProjector.getCharacterEnrichedSkills(allSkills, classSkills.merged);
-
     const existingLevels = await CharacterLevels.findMany(db, { characterId });
     const abilities = detailedCharacter.getDetailedCharacterAbilities();
     const autoGrantedFeats = allAutoGrantedFeatRecords.flat().map((rec) => rec.featsInRule);
-
-    // ── Per-level skill points ──
     const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
-    const perLevelSkillPoints = await levelUpProjector.computeSkillPointsPerLevel(
-      klassLevelIds,
-      existingLevels.length,
+    const { skills, perLevelSkillPoints, perLevelSkillPointBases, perLevelClassSkillIds } = await planSkills(
+      levelUpProjector,
       rulesetData,
+      klassLevelEntries,
+      existingLevels.length,
+      levels.length,
     );
 
     // ── Per-level aptitude slots for auto-assignment ──
@@ -145,11 +169,7 @@ export async function getLevelUpPreview(
     }));
 
     return {
-      skills: {
-        skillPointsToSpend: Math.max(1, skillsBreakdown.available),
-        totalCharacterLevel: existingLevels.length + levels.length,
-        skills: skillsWithClassInfo,
-      },
+      skills,
       feats: {
         featsToSelect,
         autoGrantedFeats,
@@ -167,7 +187,8 @@ export async function getLevelUpPreview(
       // Per-level data for HP step, review, and auto-assignment
       levelDetails,
       perLevelSkillPoints,
-      perLevelClassSkillIds: classSkills.perLevel,
+      perLevelSkillPointBases,
+      perLevelClassSkillIds,
       perLevelFeatSlots,
       perLevelPowerSlots,
     };

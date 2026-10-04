@@ -38,6 +38,8 @@ export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
 
 /** 3.5 level-up projector — generic surface + 3.5 skill-points / schools / ranks. */
 export interface Dnd35LevelUpProjector extends LevelUpProjector {
+  /** Each planned level's points per level before the minimum, in the batch's order (class + ability modifier). */
+  computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: CachedRulesetData): number[];
   /** Each klass level's skill points, the skill point ability's modifier included, four times over at the first level. */
   computeSkillPointsPerLevel(
     klassLevelIds: string[],
@@ -58,6 +60,8 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
   /** 3.5 skill-points budget — a 3.5-native concept (skill points per level
    *  × INT mod, doubled at first level), not universal. */
   getSkillBudget(): { total: number; available: number; spent: number; perlevel: number };
+  /** Every level's points per level before the minimum, in the budget's order, and the bonus each adds. */
+  getSkillPointBases(): { pointsPerLevel: number[]; bonusPerLevel: number };
   /** Keyed-by-name 3.5 skill data (rank, innate/class-skill flags). */
   getCharacterSkills(): Record<string, unknown>;
   /** Enriches a skill list with class-skill flags and current rank — 3.5 skill ranks. */

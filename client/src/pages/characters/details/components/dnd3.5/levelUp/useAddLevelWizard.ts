@@ -10,7 +10,7 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
-import { computeMaxPointsForSkill } from "@/shared/dnd3.5/skills.ts";
+import { computeLevelSkillPoints, computeMaxPointsForSkill } from "@/shared/dnd3.5/skills.ts";
 
 import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
 import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
@@ -278,32 +278,33 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     return { modDelta };
   }, [previewQuery.data, abilityIncreases]);
 
+  // Each planned level's points, recomputed from its points before the minimum with the raised modifier
   const perLevelSkillPoints = useMemo(() => {
-    const base = previewQuery.data?.perLevelSkillPoints;
-    if (!base) return undefined;
-    if (!intModAdjustment) return base;
+    const data = previewQuery.data;
+    if (!data) return undefined;
+    if (!intModAdjustment) return data.perLevelSkillPoints;
     const { modDelta } = intModAdjustment;
-    // Adjust each level: ×4 for first character level, ×1 for others
-    const existingLevelCount = (previewQuery.data?.skills.totalCharacterLevel ?? base.length) - base.length;
-    return base.map((sp, i) => {
-      const isFirstCharacterLevel = existingLevelCount === 0 && i === 0;
-      return Math.max(1, sp + modDelta * (isFirstCharacterLevel ? 4 : 1));
-    });
+    const existingLevelCount = data.skills.totalCharacterLevel - data.perLevelSkillPointBases.length;
+    return data.perLevelSkillPointBases.map((points, i) =>
+      computeLevelSkillPoints(points + modDelta, data.skills.bonusPerLevel, existingLevelCount === 0 && i === 0),
+    );
   }, [previewQuery.data, intModAdjustment]);
 
-  // Mirror the per-level adjustment on the total ceiling. Without this, the
-  // skills step's "X / Y" cap stays at the pre-bump value and silently caps
-  // user input below what the bump should actually grant. modDelta × (n + 3)
-  // covers all character levels (existing + batch), with +3 accounting for
-  // level 1's ×4 multiplier (4 - 1 extra).
+  // The total ceiling follows every level's points the same way (existing and planned, the first ×4). Without this,
+  // the skills step's "X / Y" cap stays at the pre-bump value and silently caps input below what the bump grants.
   const skillData = useMemo(() => {
     const base = previewQuery.data?.skills ?? null;
     if (!base) return null;
     if (!intModAdjustment) return base;
     const { modDelta } = intModAdjustment;
-    const totalCharacterLevel = base.totalCharacterLevel;
-    const adjustedTotal = base.skillPointsToSpend + modDelta * (totalCharacterLevel + 3);
-    return { ...base, skillPointsToSpend: Math.max(1, adjustedTotal) };
+    const gained = base.pointsPerLevel.reduce(
+      (acc, points, i) =>
+        acc +
+        computeLevelSkillPoints(points + modDelta, base.bonusPerLevel, i === 0) -
+        computeLevelSkillPoints(points, base.bonusPerLevel, i === 0),
+      0,
+    );
+    return { ...base, skillPointsToSpend: Math.max(1, base.skillPointsToSpend + gained) };
   }, [previewQuery.data, intModAdjustment]);
 
   const isLoadingSkills = previewQuery.isLoading;

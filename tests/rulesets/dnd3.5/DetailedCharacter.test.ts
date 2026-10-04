@@ -406,6 +406,23 @@ describe("DetailedCharacter", () => {
     });
   });
 
+  describe("skill points", () => {
+    test("give a level at least 1, before the first level's four times over", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(
+        "Dim Fighter",
+        { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 3, Wisdom: 10, Charisma: 10 },
+        { xp: 1000 },
+      );
+      await addClassLevels(db, ctx, characterId, "Fighter", [1, 2], [10, 6]);
+      const budget = (await build((await Characters.findOne(db, { id: characterId }))!))
+        .getDetailedCharacterSkills()
+        .getSkillBudget();
+      // A human fighter with INT 3: 2 - 4 = -2 a level, at least 1, and the human's 1 beside: 2 (8 at the first level) + 2.
+      expect(budget.total).toBe(10);
+    });
+  });
+
   describe("initiative", () => {
     test("adds dexterity, modifiers to it included", async () => {
       // DEX 14, 18 (+4) with the gloves.

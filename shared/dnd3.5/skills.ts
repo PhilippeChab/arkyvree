@@ -1,6 +1,18 @@
 // Spending skill points over planned levels: the level-up wizard previews it, the server applies it.
 
 /**
+ * The skill points a level gives: its points per level (its class's and the skill point ability's modifier), at least
+ * 1, and a bonus per level (a human's 1) beside the minimum, both four times over at the character's first level.
+ */
+export function computeLevelSkillPoints(
+  pointsPerLevel: number,
+  bonusPerLevel: number,
+  isFirstCharacterLevel: boolean,
+): number {
+  return (Math.max(1, pointsPerLevel) + bonusPerLevel) * (isFirstCharacterLevel ? 4 : 1);
+}
+
+/**
  * The levels in the order points go to `skillId`: those where it's a class skill first, at a point a rank, then the
  * others, at two points a rank.
  */
