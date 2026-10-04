@@ -168,7 +168,8 @@ const ITEM_PROPERTY_TYPES: Record<string, string> = {
   [WEAPON_CRITICAL_RANGE]: "Critical threat count (1 = 20, 2 = 19-20, 3 = 18-20, etc.)",
   [WEAPON_CRITICAL_MULTIPLIER]: "Critical hit damage multiplier",
   [WEAPON_STRENGTH_DAMAGE]: "Strength to damage: Slot (the hand's share; default), Rating (bows: up to Mighty), None",
-  [WEAPON_MIGHTY]: "Mighty composite bow rating (max STR bonus to damage)",
+  [WEAPON_MIGHTY]:
+    "A composite bow's Strength rating: the most Strength bonus it adds to damage; below it, -2 to attack",
   [WEAPON_RANGE]: "Range increment in feet: a ranged weapon's, or a thrown melee weapon's (0 or absent = none)",
   [WEAPON_RANGED]: "Whether it's a ranged weapon (thrown or projectile, not used in melee): its attacks use Dexterity",
   [WEAPON_REACH]: "Melee reach in feet (0 or absent = 5 ft.)",

@@ -12,6 +12,8 @@ interface WeaponDefinition {
   ranged?: true;
   /** How Strength applies to its damage when not by its slot: a bow's "Rating", a crossbow's "None". */
   strengthDamage?: "Rating" | "None";
+  /** A composite bow's Strength rating (WEAPON_MIGHTY): its damage's Strength cap, below which it takes −2 to attack. */
+  mighty?: number;
   damageTypes: DamageType[];
   size: string;
   range?: number;
@@ -73,9 +75,9 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Ranseur": { proficiency: "Martial", family: "Polearm", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Large", reach: 10 },
   "Scythe": { proficiency: "Martial", family: "Polearm", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 4, damageTypes: ["Piercing", "Slashing"], size: "Large" },
   "Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Large", range: 100 },
-  "Composite Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Large", range: 110 },
+  "Composite Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", mighty: 0, damageTypes: ["Piercing"], size: "Large", range: 110 },
   "Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Medium", range: 60 },
-  "Composite Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Medium", range: 70 },
+  "Composite Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", mighty: 0, damageTypes: ["Piercing"], size: "Medium", range: 70 },
 
   // ── Exotic ──
   "Kama": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", finessable: true },

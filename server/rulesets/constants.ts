@@ -5,6 +5,14 @@ export const CONSTANTS = {
   ABILITY_MODIFIER_DIVISOR: 2,
   ABILITY_MODIFIER_OFFSET: 10,
   NONPROFICIENCY_PENALTY: -4,
+  // A composite bow's penalty to attack when the wielder's Strength bonus is below its rating
+  COMPOSITE_BOW_PENALTY: -2,
+  // Two-weapon fighting's penalties on each hand's attacks, 2 less with a light off-hand weapon (PHB Table 8-10)
+  TWO_WEAPON_MAIN_HAND_PENALTY: -6,
+  TWO_WEAPON_OFF_HAND_PENALTY: -10,
+  LIGHT_OFF_HAND_BONUS: 2,
+  // How much lower each attack after the first is, iterative or off hand
+  ATTACK_STEP: 5,
 } as const;
 
 // D&D 3.5 PHB Table 9-1: Carrying Capacity by Strength score (index = Str score, value = heavy load in lbs)

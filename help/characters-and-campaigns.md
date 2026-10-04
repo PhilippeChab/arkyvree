@@ -81,6 +81,8 @@ For mid-campaign characters joining at higher levels, add several levels to the 
 
 The engine validates the *base, permanent character sheet*. Temporary buffs, conditional bonuses (Dodge's `+1`, Mobility's `+4` vs AoO) and activated abilities (Power Attack, Combat Expertise, Smite Evil, Rage) aren't auto-applied. Apply them at the table.
 
+Each weapon on the sheet lists a row per way to attack with it: its own attack, a thrown one for a melee weapon you can throw (a dagger, a spear), and, when a weapon set holds a weapon in each hand, the same with two-weapon fighting's penalties. The Two-Weapon Fighting feats and a light off-hand weapon lessen them, and Improved and Greater Two-Weapon Fighting add off-hand attacks. Range-increment penalties depend on the distance, so they aren't on the sheet.
+
 ## Can I export my character?
 
 Yes. Every character can be exported as a printable PDF.

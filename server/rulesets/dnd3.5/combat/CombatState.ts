@@ -12,6 +12,8 @@ export type WeaponSlot = {
   itemId: string | null;
   proficient: boolean;
   finessable: boolean;
+  /** A light weapon for its wielder's size: no extra Strength in two hands, and lighter two-weapon penalties off hand. */
+  light: boolean;
   /** A ranged weapon (thrown or projectile, not used in melee), which attacks with Dexterity. */
   ranged: boolean;
   range: number;
@@ -26,6 +28,11 @@ export type WeaponSlot = {
   };
   /** A melee weapon's attack when thrown, if it has a range increment: with Dexterity, as every ranged attack. */
   thrown: { dexterity: number; total: number[] } | null;
+  /**
+   * Its attacks when its set holds an equipped weapon in each hand: its own and its thrown ones (if it has those), with
+   * two-weapon fighting's penalties, the off hand's as many as `combat.twoweapon.offhandattacks`.
+   */
+  twoweapon: { total: number[]; thrown: number[] | null } | null;
   damage: {
     base: string;
     strength: number;
@@ -56,6 +63,8 @@ export type WeaponAbilities = {
   finesse: boolean;
   /** Its Mighty rating (0 without), when Strength adds to its damage up to it (a bow's "Rating"); null otherwise. */
   strengthRating: number | null;
+  /** Whether it takes a penalty to attack below that rating: a composite bow's, which has a WEAPON_MIGHTY, not a plain bow's. */
+  ratingRequired: boolean;
 };
 
 /** A weapon slot's label, as an item's location names it, to its place in the weapon set. */
@@ -91,6 +100,12 @@ export type DetailedCharacterComprehensiveCombat = {
     total: number;
   };
   bab: number;
+  /** Two-weapon fighting: the penalty on each hand's attacks, and how many attacks the off hand makes. */
+  twoweapon: {
+    mainhand: number;
+    offhand: number;
+    offhandattacks: number;
+  };
   grapple: {
     bab: number;
     strength: number;
@@ -142,6 +157,11 @@ export default abstract class CombatState {
       total: 0,
     },
     bab: 0,
+    twoweapon: {
+      mainhand: CONSTANTS.TWO_WEAPON_MAIN_HAND_PENALTY,
+      offhand: CONSTANTS.TWO_WEAPON_OFF_HAND_PENALTY,
+      offhandattacks: 1,
+    },
     grapple: {
       bab: 0,
       strength: 0,

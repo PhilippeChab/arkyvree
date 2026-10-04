@@ -326,6 +326,8 @@ describe("Stat blocks", () => {
     );
     const claws = weaponsets["0"]?.mainhand ?? weaponsets["0"]?.offhand;
     if (claws) expect(claws.tohit.size).toBe(2);
+    // Claws and a bite aren't two weapons: no two-weapon penalties
+    expect(weaponsets["0"]).toMatchObject({ mainhand: { twoweapon: null }, offhand: { twoweapon: null } });
   });
 
   test.each([

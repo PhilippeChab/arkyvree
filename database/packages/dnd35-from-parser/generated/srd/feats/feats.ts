@@ -411,6 +411,9 @@ export const FIGHTER_FEATS: FeatSeed[] = [
         gte("classes.ranger.level", 11),
       ),
     ],
+    modifiers: [
+      { target: "combat.twoweapon.offhandattacks", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Improved Bull Rush",
@@ -517,6 +520,9 @@ export const FIGHTER_FEATS: FeatSeed[] = [
         and(gte("combat.bab", 6), gte("abilities.dexterity.total", 17)),
         gte("classes.ranger.level", 6),
       ),
+    ],
+    modifiers: [
+      { target: "combat.twoweapon.offhandattacks", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -684,6 +690,10 @@ export const FIGHTER_FEATS: FeatSeed[] = [
     aptitudes: ["General", "Fighter Bonus Feat", "Ranger Combat Style (2nd)"],
     requirements: [
       or(gte("abilities.dexterity.total", 15), gte("classes.ranger.level", 2)),
+    ],
+    modifiers: [
+      { target: "combat.twoweapon.mainhand", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.twoweapon.offhand", operator: "add", value: "6", valueType: "number" },
     ],
   },
   {

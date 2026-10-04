@@ -1,7 +1,12 @@
 import type { Constructor } from "@/server/mixins.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/server/rulesets/constants.ts";
 import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
-import { SLOT_MAP, type WeaponAbilities, type WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import {
+  SLOT_MAP,
+  type WeaponAbilities,
+  type WeaponSet,
+  type WeaponSlot,
+} from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import {
   DAMAGE_TYPE,
   WEAPON_BASE_DAMAGE,
@@ -13,10 +18,11 @@ import {
   WEAPON_RANGE,
   WEAPON_RANGED,
   WEAPON_REACH,
+  WEAPON_SIZE,
   WEAPON_STRENGTH_DAMAGE,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
-import { WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
+import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import { type Item } from "@/shared/relations.ts";
 
@@ -39,12 +45,15 @@ const DAMAGE_PROGRESSION = [
   "4d8",
 ];
 
-/** The share of its Strength modifier a weapon adds to damage in each slot: all of it, half, or one and a half. */
+/**
+ * The share of its Strength bonus a weapon adds to damage in each slot: all of it, half, or one and a half (a light
+ * weapon's all of it in two hands).
+ */
 const SLOT_STRENGTH_MULTIPLIERS: Record<string, number> = { "Main Hand": 1, "Off Hand": 0.5, "Two Handed": 1.5 };
 
 function iterativeAttacks(bab: number): number[] {
   const attacks: number[] = [];
-  for (let bonus = bab; bonus > 0; bonus -= 5) {
+  for (let bonus = bab; bonus > 0; bonus -= CONSTANTS.ATTACK_STEP) {
     attacks.push(bonus);
   }
   return attacks.length > 0 ? attacks : [bab];
@@ -95,16 +104,49 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /**
-     * A weapon's Strength to damage: its slot's share of the modifier, or a penalty and a bonus up to its rating (a
-     * bow's). A weapon whose WEAPON_STRENGTH_DAMAGE is "None" (a crossbow) adds none.
+     * A weapon's Strength to damage: its slot's share of a bonus and a penalty in full, or a penalty and a bonus up to
+     * its rating (a bow's). A weapon whose WEAPON_STRENGTH_DAMAGE is "None" (a crossbow) adds none.
      */
     private updateStrengthDamage(weapon: WeaponSlot, strengthRating: number | null) {
       const strength = this.characterAbilities.getAbilityModifier("Strength");
-      if (weapon.damage.strmultiplier !== null) {
-        weapon.damage.strength = Math.floor(strength * weapon.damage.strmultiplier);
+      const multiplier = weapon.damage.strmultiplier;
+      if (multiplier !== null) {
+        // The SRD halves or raises a Strength bonus by the hand, never a penalty
+        weapon.damage.strength = strength < 0 && multiplier > 0 ? strength : Math.floor(strength * multiplier);
       } else if (strengthRating !== null) {
         weapon.damage.strength = strength < 0 ? strength : Math.min(strength, strengthRating);
       }
+    }
+
+    /**
+     * Each hand's attacks when the set holds an equipped weapon in each (not an unarmed strike or a natural attack): the
+     * main hand's own, the off hand's first and the extra ones `offhandattacks` counts, each lower by an attack step, all
+     * with the hand's two-weapon penalty, which a light off-hand weapon lessens.
+     */
+    private updateTwoWeaponAttacks({ mainhand, offhand }: WeaponSet) {
+      if (!mainhand?.itemId || !offhand?.itemId) {
+        if (mainhand) mainhand.twoweapon = null;
+        if (offhand) offhand.twoweapon = null;
+        return;
+      }
+
+      const { twoweapon } = this.detailedCharacterCombat;
+      const lightBonus = offhand.light ? CONSTANTS.LIGHT_OFF_HAND_BONUS : 0;
+      const mainHandAttacks = (attacks: number[]) => attacks.map((attack) => attack + twoweapon.mainhand + lightBonus);
+      const offHandAttacks = (attacks: number[]) =>
+        Array.from(
+          { length: Math.max(1, twoweapon.offhandattacks) },
+          (_, index) => attacks[0] + twoweapon.offhand + lightBonus - index * CONSTANTS.ATTACK_STEP,
+        );
+
+      mainhand.twoweapon = {
+        total: mainHandAttacks(mainhand.tohit.total),
+        thrown: mainhand.thrown ? mainHandAttacks(mainhand.thrown.total) : null,
+      };
+      offhand.twoweapon = {
+        total: offHandAttacks(offhand.tohit.total),
+        thrown: offhand.thrown ? offHandAttacks(offhand.thrown.total) : null,
+      };
     }
 
     /** A weapon's to-hit and damage, from the character's abilities as they stand. */
@@ -129,13 +171,24 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           const weapon = weaponSet[slotKey];
           if (weapon) this.updateWeaponTotal(weapon);
         }
+        this.updateTwoWeaponAttacks(weaponSet);
       }
     }
 
-    /** The ability modifier a weapon attacks with: its ability's, or Dexterity's when finesse makes that better. */
-    private attackModifier({ attack, finesse }: WeaponAbilities): number {
-      const modifier = this.characterAbilities.getAbilityModifier(attack);
-      return finesse ? Math.max(modifier, this.characterAbilities.getAbilityModifier("Dexterity")) : modifier;
+    /**
+     * What abilities give a weapon's attack: its ability's modifier, or Dexterity's less a carried shield's check penalty
+     * when Weapon Finesse makes that better. A composite bow drawn with a Strength bonus below its rating takes −2.
+     */
+    private attackModifier({ attack, finesse, strengthRating, ratingRequired }: WeaponAbilities): number {
+      const abilities = this.characterAbilities;
+      let modifier = abilities.getAbilityModifier(attack);
+      if (finesse) {
+        modifier = Math.max(modifier, abilities.getAbilityModifier("Dexterity") + this.shieldCheckPenalty());
+      }
+      if (ratingRequired && abilities.getAbilityModifier("Strength") < (strengthRating ?? 0)) {
+        modifier += CONSTANTS.COMPOSITE_BOW_PENALTY;
+      }
+      return modifier;
     }
 
     /** The weapon set, created if missing, with the slots the weapon displaces emptied. */
@@ -150,6 +203,12 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       } else {
         this.detailedCharacterCombat.weaponsets[setKey].twohanded = null;
       }
+    }
+
+    /** The armor check penalty of the shields the character carries, which a finessed attack takes. */
+    private shieldCheckPenalty(): number {
+      const shields = new Set(Object.values(this.detailedCharacterCombat.shields));
+      return [...shields].reduce((penalty, shield) => penalty + shield.checkpenalty, 0);
     }
 
     /** A melee weapon's thrown attack: Dexterity to hit, as every ranged attack, with the weapon's own bonuses. */
@@ -201,9 +260,14 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       if (!property(WEAPON_PROFICIENCY)) return;
       const baseDamage = property(WEAPON_BASE_DAMAGE)?.value ?? "unknown";
       const ranged = properties.some((p) => p.type === WEAPON_RANGED && p.value === "true");
+      // Light when smaller than its wielder: a Medium character's light weapons are Small or Tiny
+      const light = (SIZE_ORDER[property(WEAPON_SIZE)?.value ?? ""] ?? Infinity) < (SIZE_ORDER[this.raceSize] ?? 0);
       // Strength adds to damage by the slot's share (melee and thrown weapons, slings) unless the weapon says otherwise
       const strengthDamage = property(WEAPON_STRENGTH_DAMAGE)?.value ?? "Slot";
-      const strMultiplier = strengthDamage === "Slot" ? (SLOT_STRENGTH_MULTIPLIERS[slot] ?? null) : null;
+      const handShare =
+        slot === "Two Handed" && light ? SLOT_STRENGTH_MULTIPLIERS["Main Hand"] : SLOT_STRENGTH_MULTIPLIERS[slot];
+      const strMultiplier = strengthDamage === "Slot" ? (handShare ?? null) : null;
+      const mighty = property(WEAPON_MIGHTY);
 
       const slotKey = SLOT_MAP[slot];
       const setKey = String(setIndex);
@@ -213,12 +277,14 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         itemId,
         proficient: true,
         finessable: properties.some((p) => p.type === WEAPON_FINESSABLE && p.value === "true"),
+        light,
         ranged,
         range: Number(property(WEAPON_RANGE)?.value ?? 0),
         reach: Number(property(WEAPON_REACH)?.value ?? 0),
         slot: slotKey,
         tohit: { strength: 0, magic: 0, misc: 0, size: 0, total: [] },
         thrown: null,
+        twoweapon: null,
         damage: {
           base: baseDamage,
           strength: 0,
@@ -238,7 +304,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         // The SRD's attack rolls: Strength on a melee weapon's, Dexterity on a ranged weapon's
         attack: ranged ? "Dexterity" : "Strength",
         finesse: false,
-        strengthRating: strengthDamage === "Rating" ? Number(property(WEAPON_MIGHTY)?.value ?? 0) : null,
+        strengthRating: strengthDamage === "Rating" ? Number(mighty?.value ?? 0) : null,
+        ratingRequired: strengthDamage === "Rating" && mighty !== undefined,
       });
       this.updateWeaponTotal(weapon);
       this.detailedCharacterCombat.weaponsets[setKey][slotKey] = weapon;

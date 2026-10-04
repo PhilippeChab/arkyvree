@@ -133,6 +133,14 @@
     },
     "Greater Two-Weapon Fighting": {
       "description": "You gain a third attack with your off-hand weapon, though it takes a -10 penalty.",
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "combat.twoweapon.offhandattacks",
+          "value": "1",
+          "valueType": "number"
+        }
+      ],
       "requirements": [
         {
           "operator": "equal",
@@ -279,6 +287,14 @@
     },
     "Improved Two-Weapon Fighting": {
       "description": "Beyond the standard single extra attack with your off-hand weapon, you gain a second off-hand attack at a -5 penalty.",
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "combat.twoweapon.offhandattacks",
+          "value": "1",
+          "valueType": "number"
+        }
+      ],
       "requirements": [
         {
           "operator": "equal",
@@ -521,7 +537,21 @@
       "description": "While wielding a double weapon or two weapons (excluding natural weapons and unarmed strikes), you gain a +1 shield bonus to AC. This shield bonus increases to +2 when you fight defensively or use the total defense action."
     },
     "Two-Weapon Fighting": {
-      "description": "The penalties for fighting with two weapons are reduced. Your primary hand penalty decreases by 2, and your off-hand penalty decreases by 6."
+      "description": "The penalties for fighting with two weapons are reduced. Your primary hand penalty decreases by 2, and your off-hand penalty decreases by 6.",
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "combat.twoweapon.mainhand",
+          "value": "2",
+          "valueType": "number"
+        },
+        {
+          "operator": "add",
+          "target": "combat.twoweapon.offhand",
+          "value": "6",
+          "valueType": "number"
+        }
+      ]
     },
     "Weapon Finesse": {
       "description": "When using a light weapon, rapier, whip, or spiked chain appropriately sized for your size category, you may apply your Dexterity modifier to attack rolls in place of your Strength modifier. If you carry a shield, its armor check penalty applies to your attack rolls.",

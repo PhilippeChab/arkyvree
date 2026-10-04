@@ -89,7 +89,7 @@ export const MARTIAL_WEAPONS: ItemDef[] = [
   },
   {
     name: "Handaxe",
-    description: "A handaxe is a light martial melee weapon that can also be thrown.",
+    description: "A handaxe is a light martial melee weapon.",
     weight: "3", costGp: "6", type: "Weapon",
     requirements: martial("Handaxe"),
     properties: weaponProperties("Handaxe"),
