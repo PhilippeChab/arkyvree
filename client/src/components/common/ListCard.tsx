@@ -1,7 +1,7 @@
 import { Avatar, Box, Stack, Typography } from "@mui/material";
 import type { ComponentProps, ReactNode } from "react";
 
-import { initialOf } from "@/shared/text.ts";
+import { getInitial } from "@/shared/text.ts";
 
 import { StyledCard } from "./StyledCard.tsx";
 
@@ -48,7 +48,7 @@ export function ListCard({
               flexShrink: 0,
             }}
           >
-            {avatar ?? initialOf(title)}
+            {avatar ?? getInitial(title)}
           </Avatar>
           <Typography variant="h6" noWrap sx={{ fontWeight: 600, color: "text.primary", lineHeight: 1.3, flex: 1 }}>
             {title}

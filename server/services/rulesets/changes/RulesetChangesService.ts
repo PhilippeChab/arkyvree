@@ -5,7 +5,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/i
 import { EntitySnapshots, Items, RulesetEntities, Rulesets } from "@/server/repositories/index.ts";
 import { RULESET_ENTITY_TYPES } from "@/server/repositories/rulesets/entityTables.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { entityHasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
+import { hasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
 import type { EntityType } from "@/server/services/rulesets/cow/index.ts";
 import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -116,7 +116,7 @@ class RulesetChangesService {
       // Reverting hard-deletes the COW row, and FK CASCADE then wipes any
       // character picks pointing at it. Mirror the inUse guard each delete
       // service runs (current ruleset + descendants).
-      if (await entityHasCharacterPicks(tx, entityType, snapshot.forkedEntityId, rulesetId)) {
+      if (await hasCharacterPicks(tx, entityType, snapshot.forkedEntityId, rulesetId)) {
         throw new ConflictError("Cannot revert override while characters in this ruleset depend on it");
       }
 

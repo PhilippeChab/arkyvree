@@ -2,7 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 
 import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { everyPage } from "@/server/repositories/concerns/Paginates.ts";
+import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Abilities, Aptitudes, Feats, FeatsAptitudes, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
@@ -102,7 +102,7 @@ for (const [chainingOperator, reverseOrder] of [
         ]);
     }, reverseOrder);
     const abilities = new DetailedCharacterAbilities();
-    const rows = await everyPage((pagination) =>
+    const rows = await fetchEveryPage((pagination) =>
       Abilities.findPage(db, { rulesetId: host.ancestorRulesetIds[0], ancestorRulesetIds: [] }, pagination),
     );
     abilities.initialize(

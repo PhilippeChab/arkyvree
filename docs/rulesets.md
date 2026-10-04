@@ -334,7 +334,7 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
 The principle: only protect what the user *invested* in (their character
 picks). Author-owned data that breaks via cascade is recoverable by the author.
 
-The shared check lives in `cow/characterPicks.ts` as `entityHasCharacterPicks(tx, entityType,
+The shared check lives in `cow/characterPicks.ts` as `hasCharacterPicks(tx, entityType,
 entityId, rulesetId)` and is reused by every entity-delete service and
 `revertOverride`. One helper, one scoping rule, one source of truth.
 
@@ -352,11 +352,11 @@ return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
 const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
 
 // Update: the fork's own entity, or the copy of an inherited one (whose updatedAt isn't the client's)
-const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "saves", save);
+const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "saves", save);
 await Saves.update(tx, data, { id: targetId, expectedUpdatedAt: copied ? undefined : body.updatedAt });
 
 // Delete: the same, and the fork's own entity is locked first
-const targetId = await entityToDelete(tx, ruleset, sourceChain, "saves", save);
+const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "saves", save);
 await Saves.delete(tx, { id: targetId });
 ```
 

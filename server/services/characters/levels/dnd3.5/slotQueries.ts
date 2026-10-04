@@ -18,7 +18,7 @@ import { getEditableCharacter } from "@/server/services/characters/editableChara
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { classSkillIds, getKlassLevel } from "./classes.ts";
+import { getClassSkillIds, getKlassLevel } from "./classes.ts";
 import {
   buildPendingCharacterLevels,
   buildProjectedCharacterLevel,
@@ -91,7 +91,7 @@ export async function getSkillSlots(
 
     // isClassSkill = class skill for ANY of the character's classes (for max rank).
     // isCurrentClassSkill = class skill for the class being leveled (for cost).
-    const currentClassSkillIds = classSkillIds(
+    const currentClassSkillIds = getClassSkillIds(
       rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [],
       rulesetData.skills,
     );

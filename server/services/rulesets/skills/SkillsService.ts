@@ -10,10 +10,10 @@ import { createActivityWithNotifications, getChangedFields } from "@/server/serv
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   assertEntityNameAvailable,
-  entityHasCharacterPicks,
-  entityToDelete,
-  entityToEdit,
+  cowEntityToDelete,
+  cowEntityToEdit,
   findScopedEntity,
+  hasCharacterPicks,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
@@ -145,7 +145,7 @@ class SkillsService {
           throw new BadRequestError('"Budget" is a reserved skill name');
         }
 
-        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "skills", skill);
+        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "skills", skill);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
@@ -186,12 +186,12 @@ class SkillsService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
-        const inUse = await entityHasCharacterPicks(tx, "skills", skillId, rulesetId);
+        const inUse = await hasCharacterPicks(tx, "skills", skillId, rulesetId);
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
         const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
-        const targetId = await entityToDelete(tx, ruleset, sourceChain, "skills", skill);
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "skills", skill);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);

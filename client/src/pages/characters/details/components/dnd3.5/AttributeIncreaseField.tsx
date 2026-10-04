@@ -2,7 +2,7 @@ import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mu
 
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
+import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { capitalize } from "@/shared/text.ts";
 
 import type { BaseRules, LeveledUpAttribute } from "./levelUp/index.ts";
@@ -26,7 +26,7 @@ export function AttributeIncreaseField({ attributes, baseRules, name, value, onC
             key={attribute.abilityId}
             value={attribute.abilityId}
             control={<Radio />}
-            label={`${capitalize(key)}: ${attribute.total} (${formatSigned(abilityModifier(attribute.total))})`}
+            label={`${capitalize(key)}: ${attribute.total} (${formatSigned(computeAbilityModifier(attribute.total))})`}
           />
         ))}
       </RadioGroup>

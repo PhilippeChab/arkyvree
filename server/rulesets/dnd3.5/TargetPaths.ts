@@ -34,7 +34,7 @@ import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharact
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
-import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { Dnd35LevelsHooks } from "./hooks/LevelsHooks.ts";
@@ -308,7 +308,7 @@ function segmentLabelsOf(rulesetData: CachedRulesetData): Record<string, string>
 
   // Spell possession slug labels (e.g. "wizard" → "Wizard" for "Wizard Spells" aptitude)
   for (const apt of aptitudes) {
-    const slug = spellPossessionSlug(apt.name);
+    const slug = toSpellPossessionSlug(apt.name);
     if (!(slug in segmentLabels)) segmentLabels[slug] = apt.name.replace(/ Spells$/, "");
   }
 

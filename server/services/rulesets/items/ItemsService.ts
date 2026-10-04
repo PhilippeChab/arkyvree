@@ -12,11 +12,11 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   assertEntityNameAvailable,
   copyEntityCustomizations,
-  entityHasCharacterPicks,
-  entityToDelete,
-  entityToEdit,
+  cowEntityToDelete,
+  cowEntityToEdit,
   fetchEntityCustomizations,
   findScopedEntity,
+  hasCharacterPicks,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
@@ -172,7 +172,7 @@ class ItemsService extends include(Object, Variants) {
 
         this.validateTemplateSource(item.isTemplate, body.sourceItemId);
 
-        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "items", item);
+        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "items", item);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
@@ -218,7 +218,7 @@ class ItemsService extends include(Object, Variants) {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
-        const inUse = await entityHasCharacterPicks(tx, "items", itemId, rulesetId);
+        const inUse = await hasCharacterPicks(tx, "items", itemId, rulesetId);
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
         const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
@@ -231,7 +231,7 @@ class ItemsService extends include(Object, Variants) {
           }
         }
 
-        const targetId = await entityToDelete(tx, ruleset, sourceChain, "items", item);
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "items", item);
 
         // The database deletes its customizations with it.
         const rows = await Items.delete(tx, { id: targetId });

@@ -15,8 +15,8 @@ import { getEditableCharacter } from "@/server/services/characters/editableChara
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { savedKlassLevel } from "./classes.ts";
-import { powerLevelLookup } from "./distribution.ts";
+import { getSavedKlassLevel } from "./classes.ts";
+import { buildPowerLevelLookup } from "./distribution.ts";
 import { resolveAptitudeModifiers } from "./featPicks.ts";
 
 type AptitudeModifier = { aptitudeId: string; value: number; operator: string };
@@ -51,7 +51,7 @@ function featSelections(levelFeats: { featId: string; aptitudeId: string }[], ru
 /** A level's picked powers by pool, each with its spell level in the pool when it has one. */
 function powerSelections(levelPowers: { powerId: string; aptitudeId: string }[], rulesetData: CachedRulesetData) {
   // All IDs are post-COW on both sides.
-  const powerLevelMap = powerLevelLookup(
+  const powerLevelMap = buildPowerLevelLookup(
     rulesetData,
     levelPowers.map((p) => p.powerId),
   );
@@ -95,7 +95,7 @@ export async function getLevel(session: Session, characterId: string, characterL
       throw new NotFoundError("Character level not found");
     }
 
-    const { klassLevel, klass } = savedKlassLevel(rulesetData, refreshedCharacterLevel);
+    const { klassLevel, klass } = getSavedKlassLevel(rulesetData, refreshedCharacterLevel);
 
     const skills: Record<string, number> = {};
     for (const s of levelSkills) {

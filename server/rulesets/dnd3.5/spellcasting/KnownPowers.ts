@@ -7,7 +7,7 @@ import type {
 } from "@/server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import { ALLOWED_ALL } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
-import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, Power, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -127,7 +127,10 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         // Mark as known in spell map
         const apt = rulesetAptitudes.find((a) => a.id === power.aptitudeId);
         if (apt) {
-          const entry = this.characterPowers.getSpellEntry(stripSeparators(power.name), spellPossessionSlug(apt.name));
+          const entry = this.characterPowers.getSpellEntry(
+            stripSeparators(power.name),
+            toSpellPossessionSlug(apt.name),
+          );
           if (entry) entry.known = true;
         }
 

@@ -15,9 +15,9 @@ import { getEditableCharacter } from "@/server/services/characters/editableChara
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { plannedClassSkills, plannedKlassLevels } from "./classes.ts";
+import { getPlannedClassSkills, getPlannedKlassLevels } from "./classes.ts";
 import { computePerLevelAptitudeSlots } from "./distribution.ts";
-import { baselineAptitudes, projectPlannedLevels } from "./projection.ts";
+import { buildBaselineAptitudes, projectPlannedLevels } from "./projection.ts";
 
 type PowerPools = ReturnType<DetailedCharacterAptitudes["extractPowerPools"]>;
 
@@ -80,7 +80,7 @@ export async function getLevelUpPreview(
 
   return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const klassLevelEntries = plannedKlassLevels(
+    const klassLevelEntries = getPlannedKlassLevels(
       rulesetData,
       levels.map((level, i) => ({ ...level, abilityId: abilityIds[i] ?? null })),
     );
@@ -102,7 +102,7 @@ export async function getLevelUpPreview(
     const skillsBreakdown = levelUpProjector.getSkillBudget();
 
     const allSkills = rulesetData.skills;
-    const classSkills = plannedClassSkills(
+    const classSkills = getPlannedClassSkills(
       rulesetData,
       klassLevelEntries.map(({ klass }) => klass.id),
     );
@@ -122,7 +122,7 @@ export async function getLevelUpPreview(
 
     // ── Per-level aptitude slots for auto-assignment ──
     // Build baseline character (without planned levels) to capture existing spent
-    const baselineApts = await baselineAptitudes(db, rulesetModule, characterRecord, detailedCharacter);
+    const baselineApts = await buildBaselineAptitudes(db, rulesetModule, characterRecord, detailedCharacter);
 
     const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
       rulesetData,

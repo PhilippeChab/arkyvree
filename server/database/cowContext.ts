@@ -5,7 +5,7 @@
  *
  * This file is part of the COW auto-resolution machinery:
  * - `withCowContext` is wrapped by `withRulesetScope` (the public entry).
- * - `currentCowContext` is read by the repo Proxy + `idMatches` (`ResolvesCopies`).
+ * - `getCowContext` is read by the repo Proxy + `idMatches` (`ResolvesCopies`).
  *
  * Services should use `withRulesetScope` / `withRulesetScopes` from
  * `server/services/rulesets/cow/` instead. Importing from this file directly bypasses the
@@ -67,6 +67,6 @@ export function withCowContext<T>(cowData: CowData | null | undefined, fn: () =>
  * code should read values off `rulesetData.cow` (from `withRulesetScope`)
  * instead — it's the same data with stronger typing and non-null contract.
  */
-export function currentCowContext(): CowData | undefined {
+export function getCowContext(): CowData | undefined {
   return storage.getStore();
 }

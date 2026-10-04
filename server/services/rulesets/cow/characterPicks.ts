@@ -26,7 +26,7 @@ import type { EntityType } from "./hashing.ts";
  */
 type CharacterPickTarget = EntityType | "klass_levels";
 
-export async function entityHasCharacterPicks(
+export async function hasCharacterPicks(
   tx: Db,
   entityType: CharacterPickTarget,
   entityId: string,

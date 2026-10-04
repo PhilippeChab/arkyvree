@@ -1,5 +1,5 @@
 import { type IdResolveMap, mergeSiblingRequirements, resolveOverrides } from "@/server/services/rulesets/cow/index.ts";
-import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Aptitude,
   FeatWithAptitudes,
@@ -156,7 +156,7 @@ export interface CachedRulesetData {
   /** `stripSeparators(aptitude.name)` → aptitudeId. Killed off 4+ inline rebuilds
    *  of the same map across services (finalize, distribution, the pick queries, loader). */
   aptitudeIdBySlug: Map<string, string>;
-  /** `spellPossessionSlug(aptitude.name)` → aptitudeId. Used by the "set powers.X.<apt>.known"
+  /** `toSpellPossessionSlug(aptitude.name)` → aptitudeId. Used by the "set powers.X.<apt>.known"
    *  modifier scan in the virtually-possessed-power resolution path. */
   aptitudeIdBySpellSlug: Map<string, string>;
   /** `stripSeparators(feat.name)` → featId (first match wins, matching the original `.find`).
@@ -548,7 +548,7 @@ function slugIndices(aptitudes: Aptitude[], feats: FeatWithAptitudes[], powers: 
   }
   return {
     aptitudeIdBySlug: new Map(aptitudes.map((apt) => [stripSeparators(apt.name), apt.id])),
-    aptitudeIdBySpellSlug: new Map(aptitudes.map((apt) => [spellPossessionSlug(apt.name), apt.id])),
+    aptitudeIdBySpellSlug: new Map(aptitudes.map((apt) => [toSpellPossessionSlug(apt.name), apt.id])),
     featIdBySlug,
     powerIdsBySlug: new Map(
       [...Map.groupBy(powers, (power) => stripSeparators(power.name))].map(([slug, group]) => [

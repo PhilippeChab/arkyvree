@@ -103,7 +103,7 @@ Every downstream read inside `fn` — including nested `detailedCharacter.build(
 
 `withRulesetScopes(tx, rulesetIds, fn)` is the multi-ruleset variant for list endpoints that span characters from several rulesets at once. It pre-loads `rulesetData` for every unique id and hands the map to `fn`, without activating a cowContext (a single context can only represent one ruleset). Inside `fn`, all lookups go through the per-ruleset `rulesetData.*` Maps, which each wrap their own overrideMap and therefore still auto-resolve.
 
-`withCowContext` / `currentCowContext` are infrastructure primitives (`server/database/cowContext.ts`, marked `@internal`) — application code never calls them directly.
+`withCowContext` / `getCowContext` are infrastructure primitives (`server/database/cowContext.ts`, marked `@internal`) — application code never calls them directly.
 
 ### When you DO need to think about COW
 
@@ -133,7 +133,7 @@ From `server/services/rulesets/cow/`:
 | `cowCustomizationForMutation` | Resolve the modifier / property / requirement row an update or delete changes: copies an inherited owner, maps the row to its copy, re-checks a local row after the owner lock. |
 | `lockEntityForMutation` | Lock an already-local owner before deleting its customizations. |
 | `findScopedEntity` | The entity an id names in the composed view (the ruleset's own, or inherited through its source chain), or a 404. |
-| `entityToEdit` / `entityToDelete` | The row a CRUD update or delete writes: the ruleset's own entity, or the copy of an inherited one (`entityToDelete` locks its own). |
+| `cowEntityToEdit` / `cowEntityToDelete` | The row a CRUD update or delete writes: the ruleset's own entity, or the copy of an inherited one (`cowEntityToDelete` locks its own). |
 
 For lineage checks (entity-belongs-to-sourceChain), `findScopedEntity`. For id canonicalization (pre-COW → post-COW) use `rulesetData.canonicalize(id)`. Sibling merging (aptitude links, modifiers, properties, requirements) is pre-baked into `rulesetData` by the compose step, so consumers only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
 
@@ -158,7 +158,7 @@ Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`,
 - **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `getOrFetchRulesetData`, `invalidateCowData`, `invalidateAllCowData`.
 - **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `resolveOverrides`.
 - **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `getOrFetchRulesetRawData`, `isRulesetRawDataPinned`.
-- **AsyncLocalStorage wiring**: `withCowContext`, `currentCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy and `idMatches` (`ResolvesCopies`).
+- **AsyncLocalStorage wiring**: `withCowContext`, `getCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy and `idMatches` (`ResolvesCopies`).
 
 ## Ruleset Cache
 
@@ -480,7 +480,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
 - `server/cache/rulesetCache/` — the raw-tier cache (`rawData.ts`), the compose step with its sibling merging, FK remap and accessor maps, `cowResolvingMap` included (`compose.ts`), the target paths cache (`targetPaths.ts`) and invalidation (`invalidation.ts`)
 - `server/services/rulesets/cow/` — `withRulesetScope` / `withRulesetScopes`, COW data + override map, copy primitives, `resolveOverrides`, invalidation hooks
-- `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `currentCowContext` (infrastructure)
+- `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `getCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
 - `server/repositories/concerns/ResolvesCopies.ts` — `idMatches()` predicate for cowContext-aware composite-key WHERE clauses

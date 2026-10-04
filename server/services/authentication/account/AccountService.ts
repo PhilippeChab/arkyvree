@@ -21,7 +21,7 @@ import {
 } from "@/server/repositories/index.ts";
 import { purgeAttachmentsForRecords } from "@/server/services/attachments/index.ts";
 import { toSafeUser } from "@/server/services/authentication/accounts.ts";
-import { generateVerificationCode, timingSafeCompare } from "@/server/services/authentication/codes.ts";
+import { compareInConstantTime, generateVerificationCode } from "@/server/services/authentication/codes.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class AccountService {
@@ -273,7 +273,7 @@ class AccountService {
       const verification = await EmailVerifications.findOne(tx, { userId: user.id });
       if (!verification) throw new UnauthorizedError("Invalid code");
 
-      if (!timingSafeCompare(verification.code, code)) {
+      if (!compareInConstantTime(verification.code, code)) {
         throw new UnauthorizedError("Invalid code");
       }
 

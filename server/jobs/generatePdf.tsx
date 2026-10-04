@@ -5,8 +5,8 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { Exports, Notifications } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind } from "@/server/rulesets/types.ts";
-import { urlForSlot } from "@/server/services/attachments/index.ts";
-import { characterPdfTargetTable, findExportableCharacter } from "@/server/services/characters/index.ts";
+import { getSlotUrl } from "@/server/services/attachments/index.ts";
+import { findExportableCharacter, getCharacterPdfTargetTable } from "@/server/services/characters/index.ts";
 import { publishWsEvent } from "@/server/ws.ts";
 
 interface GeneratePdfPayload {
@@ -40,7 +40,7 @@ export const generatePdfTask: Task = async (payload, helpers) => {
         actorId: userId,
         type: "pdfFailed",
         targetId: characterId,
-        targetTable: characterPdfTargetTable(campaignId),
+        targetTable: getCharacterPdfTargetTable(campaignId),
         data: { characterName },
       });
       await publishWsEvent(userId, { type: "notifications:updated" }).catch((err) =>
@@ -56,7 +56,7 @@ export const generatePdfTask: Task = async (payload, helpers) => {
       kind,
     );
 
-    const portraitUrl = await urlForSlot("Character", characterRecord.id, "portrait");
+    const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
 
     const pdfBlob = await pdf(
       <CharacterSheetComponent detailedCharacter={detailedCharacter} kind={kind} portraitUrl={portraitUrl} />,
@@ -115,7 +115,7 @@ export const generatePdfTask: Task = async (payload, helpers) => {
           actorId: userId,
           type: "pdfFailed",
           targetId: characterId,
-          targetTable: characterPdfTargetTable(campaignId),
+          targetTable: getCharacterPdfTargetTable(campaignId),
           data: { characterName },
         });
         await publishWsEvent(userId, { type: "notifications:updated" });

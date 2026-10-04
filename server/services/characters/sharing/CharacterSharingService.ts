@@ -6,7 +6,7 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Characters } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind } from "@/server/rulesets/types.ts";
-import { urlForSlot } from "@/server/services/attachments/index.ts";
+import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { loadBondedByKind } from "@/server/services/characters/bonded.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -23,7 +23,7 @@ class CharacterSharingService {
     await detailedCharacter.build();
 
     const bondedByKind = await loadBondedByKind(rulesetModule, characterRecord.id);
-    const portraitUrl = await urlForSlot("Character", characterRecord.id, "portrait");
+    const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
 
     return {
       character: characterRecord,
@@ -69,7 +69,7 @@ class CharacterSharingService {
     const { detailedCharacter, CharacterSheetComponent } =
       await rulesetModule.createDetailedCharacterWithSheet(characterRecord);
 
-    const portraitUrl = await urlForSlot("Character", characterRecord.id, "portrait");
+    const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
 
     return {
       detailedCharacter,

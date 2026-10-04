@@ -96,3 +96,40 @@ export default new GoodService();
     expect(await lint({ "server/rulesets/Engine.ts": "export class Engine {\n  compute() {}\n}\n" })).toEqual([]);
   });
 });
+
+describe("function-names", () => {
+  test("an exported function of the server or shared/ starts with a verb, or is a context, handler, conversion or constructor", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/services/good.ts": [
+            "export function getThings() {}",
+            "export async function buildThings() {}",
+            "export const isReady = () => true;",
+            "export const withScope = async (run: () => Promise<void>) => run();",
+            "export function onShutdown() {}",
+            "export const toSafeUser = function () {};",
+            "export function newOverrideMap() {}",
+            "export function Archives(Base: unknown) {",
+            "  return Base;",
+            "}",
+            "export function zValidator() {}",
+            "export const LIMIT = 10;",
+            "function plannedThings() {}",
+            "export const used = plannedThings;",
+            "",
+          ].join("\n"),
+          "server/services/planned.ts": "export function plannedThings() {}\n",
+          "shared/scaled.ts": "export const scaledFeats = (feats: string[]) => feats;\n",
+          "server/byOrder.ts": "export default function byOrder() {}\n",
+          "client/src/lib/initialOf.ts": "export const initialOf = (name: string) => name[0];\n",
+        },
+        ["function-names"],
+      ),
+    ).toEqual([
+      "function-names server/byOrder.ts",
+      "function-names server/services/planned.ts",
+      "function-names shared/scaled.ts",
+    ]);
+  });
+});

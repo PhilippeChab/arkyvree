@@ -9,7 +9,7 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
+import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { computeMaxPointsForSkill } from "@/shared/dnd3.5/skills.ts";
 
 import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
@@ -242,7 +242,10 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
         const bonus = increaseCounts[attr.abilityId] ?? 0;
         if (bonus === 0) return [key, attr];
         const newTotal = attr.total + bonus;
-        return [key, { ...attr, level: attr.level + bonus, total: newTotal, modifier: abilityModifier(newTotal) }];
+        return [
+          key,
+          { ...attr, level: attr.level + bonus, total: newTotal, modifier: computeAbilityModifier(newTotal) },
+        ];
       }),
     );
 
@@ -269,7 +272,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     if (!intAttr) return null;
     const intIncreases = Object.values(abilityIncreases).filter((id) => id === intAttr.abilityId).length;
     if (intIncreases === 0) return null;
-    const newIntMod = abilityModifier(intAttr.total + intIncreases);
+    const newIntMod = computeAbilityModifier(intAttr.total + intIncreases);
     const modDelta = newIntMod - intAttr.modifier;
     if (modDelta === 0) return null;
     return { modDelta };

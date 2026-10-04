@@ -46,6 +46,8 @@
     "arkyvree/member-order": "error",
     // A public method starts with a verb its layer knows (lint/methodNames.mjs): repositories, services, policies.
     "arkyvree/method-names": "error",
+    // An exported function of the server or shared/ starts with a verb (lint/methodNames.mjs).
+    "arkyvree/function-names": "error",
     // The architecture (lint/architecture.mjs): what each layer imports, where queries are built, folder indexes.
     "arkyvree/layers": "error",
     "arkyvree/queries-in-repositories": "error",

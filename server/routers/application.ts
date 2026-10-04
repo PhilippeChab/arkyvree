@@ -16,7 +16,7 @@ import apiRouter from "@/server/routers/api.tsx";
 import authenticationRouter from "@/server/routers/authentication/index.ts";
 import staticRouter from "@/server/routers/static.ts";
 import wsRouter from "@/server/routers/ws.ts";
-import { collectingNotified, publishWsEvent } from "@/server/ws.ts";
+import { collectNotified, publishWsEvent } from "@/server/ws.ts";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -96,7 +96,7 @@ const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
   .route("/", wsRouter)
   .route("/auth", authenticationRouter)
   .use("/api/*", async (c, next) => {
-    const notified = await collectingNotified(next);
+    const notified = await collectNotified(next);
     if (["POST", "PUT", "DELETE"].includes(c.req.method) && c.res.ok) {
       const publish = (userId: string, type: "activities:updated" | "notifications:updated") =>
         publishWsEvent(userId, { type }).catch((err) => console.error("[ws] Failed to publish event:", err));

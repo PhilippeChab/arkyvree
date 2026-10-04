@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { capitalize, initialOf, stripSeparators } from "@/shared/text.ts";
+import { capitalize, getInitial, stripSeparators } from "@/shared/text.ts";
 
 describe("Text", () => {
   test("is capitalized by its first letter only", () => {
@@ -12,8 +12,8 @@ describe("Text", () => {
   });
 
   test("gives a name's initial for an avatar", () => {
-    expect(initialOf("elara")).toBe("E");
-    expect(initialOf("")).toBe("");
+    expect(getInitial("elara")).toBe("E");
+    expect(getInitial("")).toBe("");
   });
 
   test("is a slug of its letters and digits, lowercased", () => {

@@ -1,4 +1,4 @@
-import { currentCowContext } from "@/server/database/cowContext.ts";
+import { getCowContext } from "@/server/database/cowContext.ts";
 import type { IdResolveMap } from "@/server/database/cowContext.ts";
 import { db as globalDb } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest } from "@/server/database/requestCache.ts";
@@ -75,7 +75,7 @@ function canonicalizeIdFields(obj: Record<string, unknown>, overrideMap: IdResol
 // before the repo method runs, so callers never have to pre-canonicalize
 // when the active cowContext provides an overrideMap.
 function canonicalizeArgs(args: unknown[]): unknown[] {
-  const cow = currentCowContext();
+  const cow = getCowContext();
   if (!cow || cow.idResolveMap.size === 0) return args;
   const map = cow.idResolveMap;
   let outArgs: unknown[] | null = null;
@@ -137,7 +137,7 @@ export function withRequestCache<T extends object>(name: string, repo: T, opts?:
   // post-COW uniformly. Outside cowContext this is a no-op. For `Paginated`
   // wrappers ({items, page, nextPage}) we recurse into `items`.
   const maybeResolveResult = (result: unknown): unknown => {
-    const cow = currentCowContext();
+    const cow = getCowContext();
     if (!cow || cow.idResolveMap.size === 0) return result;
     const map = cow.idResolveMap;
     if (Array.isArray(result)) {
@@ -196,7 +196,7 @@ export function withRequestCache<T extends object>(name: string, repo: T, opts?:
           } catch {
             return applyResolution(value.apply(target, effectiveArgs) as Promise<unknown>);
           }
-          const cow = currentCowContext();
+          const cow = getCowContext();
           if (cow && cow.idResolveMap.size > 0) {
             key = `${key}|cow:${getCowId(cow.idResolveMap)}`;
           }

@@ -9,8 +9,8 @@ import { createActivityWithNotifications, getChangedFields } from "@/server/serv
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   assertEntityNameAvailable,
-  entityToDelete,
-  entityToEdit,
+  cowEntityToDelete,
+  cowEntityToEdit,
   findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
@@ -104,7 +104,7 @@ class SavesService {
 
         const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
 
-        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "saves", save);
+        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "saves", save);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...saveData } = body;
@@ -145,7 +145,7 @@ class SavesService {
         const inUse = await KlassLevelSaves.exists(tx, { saveId: save.id });
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const targetId = await entityToDelete(tx, ruleset, sourceChain, "saves", save);
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "saves", save);
 
         // The database deletes its customizations with it.
         const rows = await Saves.delete(tx, { id: targetId });

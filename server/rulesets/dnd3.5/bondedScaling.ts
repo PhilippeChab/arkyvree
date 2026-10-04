@@ -5,7 +5,7 @@ import type { BondedRaceStatBlock } from "./bondedRaceData.ts";
  * `1 + floor((HD-1)/3)`. Returns baseFeats plus enough items from
  * featPriority (in order) to reach the target count.
  */
-export function scaledFeats(stats: BondedRaceStatBlock, totalHD: number): string[] {
+export function scaleFeats(stats: BondedRaceStatBlock, totalHD: number): string[] {
   const count = 1 + Math.floor((Math.max(1, totalHD) - 1) / 3);
   const base = stats.baseFeats ?? [];
   const priority = stats.featPriority ?? [];
@@ -20,7 +20,7 @@ export function scaledFeats(stats: BondedRaceStatBlock, totalHD: number): string
  * HD + 3 (the standard "max ranks" line, applied here as a soft ceiling on
  * the total bonus).
  */
-export function scaledSkillTotals(stats: BondedRaceStatBlock, totalHD: number): Record<string, number> {
+export function scaleSkillTotals(stats: BondedRaceStatBlock, totalHD: number): Record<string, number> {
   const totals: Record<string, number> = { ...(stats.baseSkillTotals ?? {}) };
   const priority = stats.skillPriority ?? [];
   const cap = totalHD + 3;

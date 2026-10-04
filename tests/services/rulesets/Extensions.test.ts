@@ -10,7 +10,7 @@ import {
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { everyPage } from "@/server/repositories/concerns/Paginates.ts";
+import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
   Aptitudes,
   Characters,
@@ -139,7 +139,9 @@ describe("subscribing to an extension", () => {
       const { extensionRulesetIds, ancestorRulesetIds } = (await Rulesets.findOne(db, { id: draft.id }))!;
       const sourceChain = [...extensionRulesetIds, ...ancestorRulesetIds];
       return (
-        await everyPage((page) => Feats.findPage(db, { rulesetId: draft.id, ancestorRulesetIds: sourceChain }, page))
+        await fetchEveryPage((page) =>
+          Feats.findPage(db, { rulesetId: draft.id, ancestorRulesetIds: sourceChain }, page),
+        )
       ).length;
     };
     const before = await total();

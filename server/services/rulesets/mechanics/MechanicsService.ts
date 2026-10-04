@@ -9,8 +9,8 @@ import { createActivityWithNotifications, getChangedFields } from "@/server/serv
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   assertEntityNameAvailable,
-  entityToDelete,
-  entityToEdit,
+  cowEntityToDelete,
+  cowEntityToEdit,
   findScopedEntity,
   repointTombstoneSnapshot,
   withRulesetScope,
@@ -102,7 +102,7 @@ class MechanicsService {
 
         const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
 
-        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "mechanics", mechanic);
+        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "mechanics", mechanic);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...mechanicData } = body;
@@ -140,7 +140,7 @@ class MechanicsService {
 
         const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
 
-        const targetId = await entityToDelete(tx, ruleset, sourceChain, "mechanics", mechanic);
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "mechanics", mechanic);
 
         const rows = await Mechanics.delete(tx, { id: targetId });
         const deletedMechanic = rows[0];

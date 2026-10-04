@@ -29,17 +29,17 @@ import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
 import { reconcileAllBondedKinds } from "./bondedReconcile.ts";
-import { plannedClassSkills, plannedKlassLevels, savedKlassLevel } from "./classes.ts";
+import { getPlannedClassSkills, getPlannedKlassLevels, getSavedKlassLevel } from "./classes.ts";
 import {
+  buildPowerLevelLookup,
+  buildSkillContexts,
   computePerLevelAptitudeSlots,
-  deferredAptitudeSources,
   distributePoolSelections,
+  getDeferredAptitudeSources,
   type PerLevelDistributionData,
-  powerLevelLookup,
-  skillContexts,
 } from "./distribution.ts";
 import {
-  baselineAptitudes,
+  buildBaselineAptitudes,
   buildProjectedAutoGrantedFeats,
   buildProjectedCharacterLevel,
   buildProjectedGivenFeats,
@@ -205,7 +205,7 @@ export async function updateLevel(
       if (!characterLevel || characterLevel.characterId !== characterId) {
         throw new NotFoundError("Character level not found");
       }
-      const { klassLevel, klass } = savedKlassLevel(rulesetData, characterLevel);
+      const { klassLevel, klass } = getSavedKlassLevel(rulesetData, characterLevel);
 
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const existingLevels = await CharacterLevels.findMany(tx, { characterId });
@@ -353,7 +353,7 @@ async function levelDistributionData(
   rulesetModule: RulesetModule,
   characterRecord: Character,
   rulesetData: CachedRulesetData,
-  klassLevelEntries: ReturnType<typeof plannedKlassLevels>,
+  klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
   baseLevelCount: number,
 ): Promise<PerLevelDistributionData> {
   const { projectedData, allAutoGrantedFeatRecords } = projectPlannedLevels(
@@ -369,7 +369,7 @@ async function levelDistributionData(
   const { featPoolIds, powerPoolIds } = poolIds(fullCharacter.getDetailedCharacterAptitudes(), rulesetData);
 
   // Compute per-level feat/power slots from modifier data directly
-  const baselineApts = await baselineAptitudes(tx, rulesetModule, characterRecord, fullCharacter);
+  const baselineApts = await buildBaselineAptitudes(tx, rulesetModule, characterRecord, fullCharacter);
   const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
   const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
     rulesetData,
@@ -386,7 +386,7 @@ async function levelDistributionData(
     baseLevelCount,
     rulesetData,
   );
-  const classSkills = plannedClassSkills(
+  const classSkills = getPlannedClassSkills(
     rulesetData,
     klassLevelEntries.map(({ klass }) => klass.id),
   );
@@ -397,7 +397,7 @@ async function levelDistributionData(
     perLevelFeatSlots,
     perLevelPowerSlots,
     baseCharacterLevel: baseLevelCount,
-    skillContexts: skillContexts(levelUpProjector, rulesetData.skills, classSkills.merged),
+    skillContexts: buildSkillContexts(levelUpProjector, rulesetData.skills, classSkills.merged),
   };
 }
 
@@ -411,7 +411,7 @@ async function insertPlannedLevels(
   rulesetData: CachedRulesetData,
   characterId: string,
   levels: { hp: number; abilityId: string | null }[],
-  klassLevelEntries: ReturnType<typeof plannedKlassLevels>,
+  klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
   distributedLevels: ReturnType<typeof distributePoolSelections>,
   baseExistingLevels: Awaited<ReturnType<typeof CharacterLevels.findMany>>,
 ) {
@@ -509,7 +509,7 @@ export async function finalizeLevelUp(
 
       // Resolve all klasses/klassLevels upfront — all reads from the composed
       // cache (no DB round trips inside the loop).
-      const klassLevelEntries = plannedKlassLevels(rulesetData, levels, rulesetIds);
+      const klassLevelEntries = getPlannedKlassLevels(rulesetData, levels, rulesetIds);
 
       // Early ruleset-lineage check for submitted entity IDs. Per-level
       // validateAndFetchLevelSelections re-checks these, but it runs *after*
@@ -536,8 +536,8 @@ export async function finalizeLevelUp(
         skills,
         feats,
         powers,
-        powerLevelLookup(rulesetData, Object.values(powers).flat()),
-        deferredAptitudeSources(rulesetData, feats, distributionData.perLevelFeatSlots),
+        buildPowerLevelLookup(rulesetData, Object.values(powers).flat()),
+        getDeferredAptitudeSources(rulesetData, feats, distributionData.perLevelFeatSlots),
       );
 
       // ── Phase 2: Per-level validation and insertion ──

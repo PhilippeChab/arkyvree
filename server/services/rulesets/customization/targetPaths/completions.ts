@@ -8,7 +8,7 @@ type SegmentInfo = { examplePath: TargetPath | null; isGroup: boolean; groupDesc
  * Every leaf path that matches `search`, by its path or a segment's label, ignoring the drill prefix: the path browser's
  * search-first mode, so users can type "wizard known" and find paths across the whole tree without drilling.
  */
-export function flatCompletions(
+export function getFlatCompletions(
   allPaths: TargetPath[],
   segmentLabels: Record<string, string>,
   search: string | undefined,
@@ -43,7 +43,7 @@ export function flatCompletions(
  * The prefix to complete. A leaf path + "." resolves to its parent level, so the client gets its siblings with the leaf
  * visible (avoids empty results and extra round-trips).
  */
-export function completedPrefix(allPaths: TargetPath[], partialPath: string, position: number) {
+export function resolveCompletedPrefix(allPaths: TargetPath[], partialPath: string, position: number) {
   const pathPrefix = partialPath.substring(0, position);
   if (pathPrefix.endsWith(".")) {
     const candidatePath = pathPrefix.slice(0, -1);
@@ -58,7 +58,7 @@ export function completedPrefix(allPaths: TargetPath[], partialPath: string, pos
 }
 
 /** The categories that have paths and start with what's typed of the first segment. */
-export function categoryCompletions(
+export function getCategoryCompletions(
   generator: TargetPathsInterface,
   allPaths: TargetPath[],
   lastSegment: string,
@@ -81,7 +81,7 @@ export function categoryCompletions(
  * How a segment is described: by its path's own description, as "All …" / "Any …" for a wildcard, by an item path's
  * structural description, by its group's template, or else by `fallback`.
  */
-export function segmentDescriber(
+export function buildSegmentDescriber(
   generator: TargetPathsInterface,
   segmentLabels: Record<string, string>,
   kind: "modifier" | "requirement",
@@ -156,10 +156,10 @@ function nextSegments(allPaths: TargetPath[], baseDot: string, segmentPrefix: st
  * The completions of the prefix's last segment, among the segments under the ones before it. A trailing dot leaves an
  * empty last segment: every next segment under the prefix completes it.
  */
-export function segmentCompletions(
+export function getSegmentCompletions(
   allPaths: TargetPath[],
   segments: string[],
-  describe: ReturnType<typeof segmentDescriber>,
+  describe: ReturnType<typeof buildSegmentDescriber>,
 ): PathCompletion[] {
   const baseDot = segments.slice(0, -1).join(".") + ".";
   const completions: PathCompletion[] = [];
@@ -187,7 +187,7 @@ export function segmentCompletions(
 }
 
 /** Groups first, then by sort order, then by label. */
-export function byCompletionOrder(a: PathCompletion, b: PathCompletion) {
+export function compareCompletions(a: PathCompletion, b: PathCompletion) {
   if (a.kind === "group" && b.kind !== "group") return -1;
   if (a.kind !== "group" && b.kind === "group") return 1;
   const orderA = a.sortOrder ?? Infinity;

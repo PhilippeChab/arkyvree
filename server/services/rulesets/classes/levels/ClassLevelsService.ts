@@ -17,9 +17,9 @@ import { createActivityWithNotifications } from "@/server/services/activities/in
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   cowEntityForCustomization,
-  entityHasCharacterPicks,
-  entityToEdit,
+  cowEntityToEdit,
   findScopedEntity,
+  hasCharacterPicks,
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
@@ -195,7 +195,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         klassRulesetId = klass.rulesetId;
 
         // Copy an inherited class: the new level row would otherwise belong to the parent ruleset's class.
-        const { id: targetKlassId } = await entityToEdit(tx, ruleset, sourceChain, "klasses", klass);
+        const { id: targetKlassId } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
         const { feats, saves, bab, skills, ...levelData } = body;
@@ -363,7 +363,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
-        const inUse = await entityHasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
+        const inUse = await hasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
         klassRulesetId = klass.rulesetId;

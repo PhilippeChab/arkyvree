@@ -49,7 +49,7 @@ type SlotConflict<T extends EquippedEntry> =
   | { reason: "fingers" };
 
 /** What keeps `location` (in `weaponSet`, stored from 0, for a hand) from taking an item, if anything does. */
-export function slotConflict<T extends EquippedEntry>(
+export function findSlotConflict<T extends EquippedEntry>(
   location: ItemLocation,
   weaponSet: number | null,
   equipped: readonly T[],

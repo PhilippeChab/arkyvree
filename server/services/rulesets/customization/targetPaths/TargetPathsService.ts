@@ -1,14 +1,14 @@
-import { pageOf } from "@/server/repositories/concerns/Paginates.ts";
+import { paginateItems } from "@/server/repositories/concerns/Paginates.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { PaginatedCompletions, PathCompletion } from "@/shared/customization/target.ts";
 
 import {
-  byCompletionOrder,
-  categoryCompletions,
-  completedPrefix,
-  flatCompletions,
-  segmentCompletions,
-  segmentDescriber,
+  buildSegmentDescriber,
+  compareCompletions,
+  getCategoryCompletions,
+  getFlatCompletions,
+  getSegmentCompletions,
+  resolveCompletedPrefix,
 } from "./completions.ts";
 import { getTargetPathsWithLabels, validatePath } from "./targetPaths.ts";
 
@@ -32,19 +32,19 @@ class TargetPathsService {
   ): Promise<PaginatedCompletions> {
     const { paths: allPaths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, kind, entityType);
     if (flat) {
-      return { ...pageOf(flatCompletions(allPaths, segmentLabels, search), { limit, page }), segmentLabels };
+      return { ...paginateItems(getFlatCompletions(allPaths, segmentLabels, search), { limit, page }), segmentLabels };
     }
 
     const generator = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createTargetPaths());
-    const segments = completedPrefix(allPaths, partialPath, position).split(".");
+    const segments = resolveCompletedPrefix(allPaths, partialPath, position).split(".");
     let completions: PathCompletion[] = [];
     if (segments.length === 1) {
-      completions = categoryCompletions(generator, allPaths, segments[0]);
+      completions = getCategoryCompletions(generator, allPaths, segments[0]);
     } else if (segments[0] !== "") {
       // A prefix starting with a dot (".", ".a") names no path, and completes nothing.
-      completions = segmentCompletions(allPaths, segments, segmentDescriber(generator, segmentLabels, kind));
+      completions = getSegmentCompletions(allPaths, segments, buildSegmentDescriber(generator, segmentLabels, kind));
     }
-    completions.sort(byCompletionOrder);
+    completions.sort(compareCompletions);
 
     const filtered = search
       ? completions.filter((c) => {
@@ -53,7 +53,7 @@ class TargetPathsService {
         })
       : completions;
 
-    return { ...pageOf(filtered, { limit, page }), segmentLabels };
+    return { ...paginateItems(filtered, { limit, page }), segmentLabels };
   }
 }
 

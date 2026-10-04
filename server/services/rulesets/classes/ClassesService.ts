@@ -10,10 +10,10 @@ import { createActivityWithNotifications, getChangedFields } from "@/server/serv
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   assertEntityNameAvailable,
-  entityHasCharacterPicks,
-  entityToDelete,
-  entityToEdit,
+  cowEntityToDelete,
+  cowEntityToEdit,
   findScopedEntity,
+  hasCharacterPicks,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
@@ -121,7 +121,7 @@ class ClassesService {
 
         const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
 
-        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "klasses", klass);
+        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...klassData } = body;
@@ -154,12 +154,12 @@ class ClassesService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
-        const inUse = await entityHasCharacterPicks(tx, "klasses", klassId, rulesetId);
+        const inUse = await hasCharacterPicks(tx, "klasses", klassId, rulesetId);
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
         const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
 
-        const targetId = await entityToDelete(tx, ruleset, sourceChain, "klasses", klass);
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "klasses", klass);
 
         // FK CASCADE wipes klass_levels (and their klass_level_feats /
         // klass_level_powers / klass_level_saves), klass_skills, and any

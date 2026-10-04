@@ -1,4 +1,4 @@
-import { shutdownOtel } from "@/server/otel.ts";
+import { stopOtel } from "@/server/otel.ts";
 
 let shuttingDown = false;
 
@@ -16,7 +16,7 @@ export function onShutdown(label: string, stop: () => Promise<void>) {
     console.log(`[${label}] Shutting down...`);
     setTimeout(() => process.exit(0), 30_000);
     await stop();
-    await shutdownOtel();
+    await stopOtel();
     console.log(`[${label}] Stopped`);
     process.exit(0);
   };
