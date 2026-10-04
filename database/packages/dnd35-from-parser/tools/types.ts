@@ -258,6 +258,8 @@ export type RaceReference = {
     size?: string;
     baseSpeed?: number;
     modifiers?: Modifier[];
+    /** Properties the engine reads off the race (the dwarf's speed in armor). */
+    properties?: Property[];
     skip?: boolean;
   }>;
 

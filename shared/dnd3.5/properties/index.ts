@@ -8,3 +8,4 @@ export * from "./power.ts";
 export * from "./ruleset.ts";
 export * from "./skill.ts";
 export * from "./klass.ts";
+export * from "./race.ts";

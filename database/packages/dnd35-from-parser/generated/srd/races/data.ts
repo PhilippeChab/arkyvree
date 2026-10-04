@@ -10,6 +10,9 @@ export const ALL_RACES: RaceDefinition[] = [
       { target: "abilities.constitution.misc", operator: "add", value: "2", valueType: "number" },
       { target: "abilities.charisma.misc", operator: "add", value: "-2", valueType: "number" },
     ],
+    properties: [
+      { type: "RACE_SPEED_IGNORES_ENCUMBRANCE", value: "true" },
+    ],
   },
   {
     name: "Elf",

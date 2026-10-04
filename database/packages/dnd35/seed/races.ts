@@ -1,10 +1,10 @@
 import type { RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
 import { idsByName, type SeedContext } from "@/database/packages/dnd35/seed/context.ts";
-import { insertAll, modifierRows } from "@/database/packages/dnd35/seed/customization.ts";
-import { modifiersInCustomization, racesInRules } from "@/drizzle/schema.ts";
+import { insertAll, modifierRows, propertyRows } from "@/database/packages/dnd35/seed/customization.ts";
+import { modifiersInCustomization, propertiesInCustomization, racesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 
-/** Seeds races with their modifiers: of their own kind, else of `kind` (the table's default without one). */
+/** Seeds races with their modifiers and properties: of their own kind, else of `kind` (the table's default without one). */
 export async function seedRaces(db: Db, ctx: SeedContext, races: RaceDefinition[], kind?: string) {
   const ids = idsByName(
     await db
@@ -25,5 +25,10 @@ export async function seedRaces(db: Db, ctx: SeedContext, races: RaceDefinition[
     db,
     modifiersInCustomization,
     races.flatMap((race) => modifierRows(ids[race.name], "races", race.modifiers)),
+  );
+  await insertAll(
+    db,
+    propertiesInCustomization,
+    races.flatMap((race) => propertyRows(ids[race.name], "races", race.properties)),
   );
 }

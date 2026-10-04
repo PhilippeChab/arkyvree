@@ -50,7 +50,7 @@ export const CARRYING_CAPACITY: number[] = [
   1400, // 29
 ];
 
-// Multiplier applied to carrying capacity based on creature size
+// Multiplier applied to a biped's carrying capacity based on its size
 export const SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
   Fine: 1 / 8,
   Diminutive: 1 / 4,
@@ -61,6 +61,19 @@ export const SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
   Huge: 4,
   Gargantuan: 8,
   Colossal: 16,
+};
+
+// A quadruped's carrying capacity by size: it carries more than a biped (SRD, "Bigger and Smaller Creatures").
+export const QUADRUPED_SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
+  Fine: 1 / 4,
+  Diminutive: 1 / 2,
+  Tiny: 3 / 4,
+  Small: 1,
+  Medium: 3 / 2,
+  Large: 3,
+  Huge: 6,
+  Gargantuan: 12,
+  Colossal: 24,
 };
 
 // Weapon damage size step (Medium = 0; +1 step = bigger damage die).

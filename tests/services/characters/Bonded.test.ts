@@ -5,6 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { CharacterLevels, Characters, Players } from "@/server/repositories/index.ts";
+import { CARRYING_CAPACITY } from "@/server/rulesets/constants.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import DetailedCharacterAnimalCompanion from "@/server/rulesets/dnd3.5/DetailedCharacterAnimalCompanion.ts";
 import DetailedCharacterFamiliar from "@/server/rulesets/dnd3.5/DetailedCharacterFamiliar.ts";
@@ -306,6 +307,30 @@ describe("CharactersService with bonded creatures", () => {
 });
 
 describe("Stat blocks", () => {
+  test("a four-legged creature carries more for its size than a biped, as its race says", async () => {
+    const heavyLoad = (detailed: DetailedCharacter) => {
+      const strength = detailed.getDetailedCharacterAbilities().getAbilities()["strength"].total;
+      return {
+        capacity: CARRYING_CAPACITY[strength],
+        heavy: detailed.getDetailedCharacterEncumbrance().getEncumbrance().heavyload,
+      };
+    };
+    // Large and Medium quadrupeds: x3 and x1 1/2 (a biped's x2 and x1).
+    const mount = heavyLoad(await build(new DetailedCharacterMount((await createPaladinWithMount(5)).bonded)));
+    expect(mount.heavy).toBe(mount.capacity * 3);
+    const wolf = heavyLoad(
+      await build(new DetailedCharacterAnimalCompanion((await createDruidWithCompanion(1)).bonded)),
+    );
+    expect(wolf.heavy).toBe(Math.floor(wolf.capacity * 1.5));
+    // Tiny: a cat on four legs x3/4, a hawk on two x1/2.
+    const cat = heavyLoad(await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar()).bonded)));
+    expect(cat.heavy).toBe(Math.floor(cat.capacity * 0.75));
+    const hawk = heavyLoad(
+      await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Hawk Familiar")).bonded)),
+    );
+    expect(hawk.heavy).toBe(Math.floor(hawk.capacity * 0.5));
+  });
+
   test("a cat familiar has the SRD cat's skills, and a tiny creature's size bonuses", async () => {
     const cat = await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded));
     const skills = cat.getDetailedCharacterSkills().getSkills();

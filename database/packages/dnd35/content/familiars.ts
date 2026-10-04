@@ -1,3 +1,4 @@
+import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
 import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
 
 const FAMILIAR_APTITUDE = "Familiar Bond";
@@ -94,6 +95,7 @@ const FAMILIAR_RACES: RaceDefinition[] = [
     description: "A small feline. Cat familiars grant their masters a +3 bonus on Move Silently checks.",
     size: "Tiny",
     baseSpeed: 30,
+    properties: QUADRUPED,
     modifiers: [{ target: "skills.movesilently.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
@@ -109,6 +111,7 @@ const FAMILIAR_RACES: RaceDefinition[] = [
     description: "A small scaled reptile. Lizard familiars grant their masters a +3 bonus on Climb checks.",
     size: "Tiny",
     baseSpeed: 20,
+    properties: QUADRUPED,
     modifiers: [{ target: "skills.climb.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
@@ -124,6 +127,7 @@ const FAMILIAR_RACES: RaceDefinition[] = [
     description: "A small adaptive rodent. Rat familiars grant their masters a +2 bonus on Fortitude saves.",
     size: "Tiny",
     baseSpeed: 15,
+    properties: QUADRUPED,
     modifiers: [{ target: "saves.fortitude.misc", operator: "add", value: "2", valueType: "number" }],
   },
   {
@@ -148,12 +152,14 @@ const FAMILIAR_RACES: RaceDefinition[] = [
     description: "A small amphibian. Toad familiars grant their masters +3 hit points (a flat HP bonus, not scaling).",
     size: "Diminutive",
     baseSpeed: 5,
+    properties: QUADRUPED,
   },
   {
     name: "Weasel",
     description: "A small swift carnivore. Weasel familiars grant their masters a +2 bonus on Reflex saves.",
     size: "Tiny",
     baseSpeed: 20,
+    properties: QUADRUPED,
     modifiers: [{ target: "saves.reflex.misc", operator: "add", value: "2", valueType: "number" }],
   },
 ];
