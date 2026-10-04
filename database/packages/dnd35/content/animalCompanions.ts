@@ -1,6 +1,7 @@
 import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
 import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import { formatWithArticle } from "@/shared/text.ts";
 
 const ANIMAL_COMPANION_APTITUDE = "Animal Companion Bond";
 const ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE = "Animal Companion Class Feature";
@@ -102,7 +103,7 @@ const ANIMAL_COMPANION_RACE_NAMES = [
 
 const ANIMAL_COMPANION_RACE_PICK_FEATS: FeatSeed[] = ANIMAL_COMPANION_RACE_NAMES.map((race) => ({
   name: `${race} Animal Companion`,
-  description: `Bond with a ${race} as your animal companion. The companion appears on your sheet with stats derived from your level and the ${race} race profile.`,
+  description: `Bond with ${formatWithArticle(race)} as your animal companion. The companion appears on your sheet with stats derived from your level and the ${race} race profile.`,
   selectable: true,
   aptitudes: [ANIMAL_COMPANION_APTITUDE],
   modifiers: [

@@ -6,6 +6,7 @@ import type {
   Modifier,
   RaceDefinition,
 } from "@/database/packages/dnd35/content/types.ts";
+import { formatWithArticle } from "@/shared/text.ts";
 
 const FAMILIAR_APTITUDE = "Familiar Bond";
 const FAMILIAR_CLASS_FEATURE_APTITUDE = "Familiar Class Feature";
@@ -105,7 +106,7 @@ const MASTER_BENEFITS: Record<(typeof FAMILIAR_RACE_NAMES)[number], { benefit: s
 
 const FAMILIAR_RACE_PICK_FEATS: FeatSeed[] = FAMILIAR_RACE_NAMES.map((race) => ({
   name: `${race} Familiar`,
-  description: `Bond with a ${race} as your familiar: you gain ${MASTER_BENEFITS[race].benefit}. The familiar appears on your sheet with stats derived from your level and the ${race} race profile.`,
+  description: `Bond with ${formatWithArticle(race)} as your familiar: while it's within a mile of you, you gain ${MASTER_BENEFITS[race].benefit}. The familiar appears on your sheet with stats derived from your level and the ${race} race profile.`,
   selectable: true,
   aptitudes: [FAMILIAR_APTITUDE],
   modifiers: [
