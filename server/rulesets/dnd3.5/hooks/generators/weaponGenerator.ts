@@ -16,6 +16,8 @@ interface WeaponDefinition {
   mighty?: number;
   /** Its penalty on attack rolls in one hand (WEAPON_ONE_HANDED_PENALTY): a crossbow's, which takes two hands to load. */
   oneHandedPenalty?: number;
+  /** Too large for one hand without training (WEAPON_ONE_HAND_TRAINING): a bastard sword, a dwarven waraxe. */
+  oneHandTraining?: true;
   damageTypes: DamageType[];
   /** Its effort, as the weapon table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed (bows). */
   size: string;
@@ -87,8 +89,8 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Nunchaku": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", finessable: true },
   "Sai": { proficiency: "Exotic", family: "Monk", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", range: 10, finessable: true },
   "Siangham": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Small", finessable: true },
-  "Bastard Sword": { proficiency: "Exotic", family: "Sword", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Medium" },
-  "Dwarven Waraxe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d10", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Medium" },
+  "Bastard Sword": { proficiency: "Exotic", family: "Sword", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, oneHandTraining: true, damageTypes: ["Slashing"], size: "Medium" },
+  "Dwarven Waraxe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d10", criticalRange: 1, criticalMultiplier: 3, oneHandTraining: true, damageTypes: ["Slashing"], size: "Medium" },
   "Whip": { proficiency: "Exotic", family: "Flail", baseDamage: "1d3", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Medium", reach: 15, finessable: true },
   "Spiked Chain": { proficiency: "Exotic", family: "Flail", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Large", reach: 10, finessable: true },
   "Dire Flail": { proficiency: "Exotic", family: "Flail", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Large" },

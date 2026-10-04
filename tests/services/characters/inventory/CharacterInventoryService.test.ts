@@ -450,6 +450,27 @@ describe("InventoryService", () => {
       }
     });
 
+    test("refuses a bastard sword in one hand without its proficiency, unless forced, and a dwarf's waraxe in one hand", async () => {
+      const session = makeSession();
+      const { itemMap } = await getSeedCtx();
+      // A human fighter, proficient with martial weapons but no exotic one: the sword in two hands only
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      const sword = itemMap["Bastard Sword"];
+      await expect(add(session, bjorn.id, sword, equipped("Main Hand", 1))).rejects.toThrow(
+        "This weapon is too large to use in one hand without its proficiency",
+      );
+      expect(await add(session, bjorn.id, sword, equipped("Two Handed", 1))).toMatchObject({ location: "Two Handed" });
+      await CharacterInventoryService.removeItem(session, bjorn.id, sword);
+      expect(await add(session, bjorn.id, sword, { ...equipped("Main Hand", 1), force: true })).toMatchObject({
+        location: "Main Hand",
+      });
+      // A dwarf fighter treats the waraxe as a martial weapon, in one hand too
+      const kael = await findSeededCharacter("Kael Stormborn");
+      expect(await add(session, kael.id, itemMap["Dwarven Waraxe"], equipped("Main Hand", 1))).toMatchObject({
+        location: "Main Hand",
+      });
+    });
+
     test("refuses an item whose requirements the character doesn't meet, unless forced", async () => {
       const { session, character, newItem } = await setup();
       const armor = await newItem({ type: "Armor" });

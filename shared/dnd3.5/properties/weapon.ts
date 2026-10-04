@@ -8,6 +8,8 @@ export const WEAPON_STRENGTH_DAMAGE = "WEAPON_STRENGTH_DAMAGE";
 export const WEAPON_MIGHTY = "WEAPON_MIGHTY";
 /** The penalty on attack rolls with it in one hand, when it takes two to load: a crossbow's (−2 light, −4 heavy). */
 export const WEAPON_ONE_HANDED_PENALTY = "WEAPON_ONE_HANDED_PENALTY";
+/** Too large to use in one hand without training (a bastard sword): there, only its proficiency lets it be wielded. */
+export const WEAPON_ONE_HAND_TRAINING = "WEAPON_ONE_HAND_TRAINING";
 export const WEAPON_RANGE = "WEAPON_RANGE";
 /** Ranged weapons (thrown or projectile, no melee) attack with Dexterity; a melee one with a range can be thrown. */
 export const WEAPON_RANGED = "WEAPON_RANGED";
