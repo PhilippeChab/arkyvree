@@ -1,6 +1,6 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 
-import { getBondedRaceStats } from "./bondedRaceData.ts";
+import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 
 /**
@@ -12,8 +12,14 @@ import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
  *
  * The race's Int score is ignored — a familiar is smarter than a normal
  * animal of its kind and uses the master-level progression instead.
+ *
+ * Skills: "for each skill in which either the master or the familiar has ranks, use either the normal skill ranks for
+ * an animal of that type or the master's skill ranks, whichever is better", with the familiar's own ability modifiers.
  */
 export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
+  /** The master's skill ranks, by skill slug: the familiar's where they're better than its own. */
+  private masterSkillRanks: Record<string, number> = {};
+
   protected async applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
     const masterLevel = master.getDetailedCharacterIdentity().getIdentity().meta.level;
@@ -43,7 +49,17 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
       }
     }
 
+    this.masterSkillRanks = Object.fromEntries(
+      Object.entries(master.getDetailedCharacterSkills().getSkills()).map(([slug, skill]) => [slug, skill.rank]),
+    );
+
     // Familiar HP = ½ master HP only — no per-HD Con component.
     this.cachedTotalHD = 0;
+  }
+
+  /** The stat block's skills, then its master's ranks where they're better. */
+  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
+    super.applyRaceDefaults(raceStats, rulesetData);
+    this.detailedCharacterSkills.applyBetterRanks(this.masterSkillRanks);
   }
 }

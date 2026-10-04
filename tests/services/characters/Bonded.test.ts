@@ -402,7 +402,8 @@ describe("Stat blocks", () => {
   });
 
   test("a companion's added hit dice give its skills a rank each in turn, and its Dexterity bonus and new feats add on", async () => {
-    // A druid 7's companion has 4 more hit dice and +2 Dexterity. The owl's points go to Move Silently, Listen, Spot
+    // A druid 7's companion has 4 more hit dice and +2 Dexterity. The owl's points go to Move Silently, Listen, Spot,
+    // the last two beside its stat block's 2 ranks
     const owl = (
       await build(
         new DetailedCharacterAnimalCompanion((await createDruidWithCompanion(7, "Owl Animal Companion")).bonded),
@@ -412,8 +413,8 @@ describe("Stat blocks", () => {
       .getSkills();
     expect([owl.movesilently, owl.listen, owl.spot].map(({ rank, total }) => ({ rank, total }))).toEqual([
       { rank: 2, total: 17 + 2 + 1 },
-      { rank: 1, total: 14 + 1 },
-      { rank: 1, total: 6 + 1 },
+      { rank: 2 + 1, total: 14 + 1 },
+      { rank: 2 + 1, total: 6 + 1 },
     ]);
     // A light horse of 7 hit dice gains Alertness, its third feat: +2 Listen beside its 2 ranks
     const horse = (
@@ -473,6 +474,17 @@ describe("Stat blocks", () => {
   ])("a druid %i's wolf companion", async (druidLevel, expected) => {
     const { bonded } = await createDruidWithCompanion(druidLevel);
     expect(statBlock(await build(new DetailedCharacterAnimalCompanion(bonded)))).toMatchObject(expected);
+  });
+
+  test("a familiar uses its master's skill ranks where they're better, with its own ability modifiers", async () => {
+    // A wizard with 4 ranks in Concentration and Spellcraft, and a cat familiar: Constitution 10, Intelligence 6
+    const skills = (await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded)))
+      .getDetailedCharacterSkills()
+      .getSkills();
+    expect(skills["concentration"]).toMatchObject({ rank: 4, total: 4 });
+    expect(skills["spellcraft"]).toMatchObject({ rank: 4, total: 4 - 2, trained: true });
+    // Its own 2 ranks in Listen beat its master's none: its stat block's total
+    expect(skills["listen"]).toMatchObject({ rank: 2, total: 3 });
   });
 
   test("a natural attack is primary or secondary, as its stat block has it, and attacks once", async () => {
