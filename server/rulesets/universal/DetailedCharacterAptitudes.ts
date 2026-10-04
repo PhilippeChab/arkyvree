@@ -25,9 +25,9 @@ const NAVIGATABLE_PATHS = [
 
 /**
  * What a modifier on a pool's slots may do: grant more (`add` 0 or more: -1 is all known), or make a spell level's all
- * known (`set` -1). The
- * level-up wizard and the class tables count these without a character, the sheet's way: other operators, and
- * templates, would count differently there than on the sheet. A pool's own uses per day count on the sheet alone.
+ * known (`set` -1). The level-up wizard and the class tables count these without a character, the sheet's way: other
+ * operators, and templates, would count differently there than on the sheet. A pool's own uses per day count on the
+ * sheet alone.
  */
 const SPELL_LEVEL_SLOT_MODIFIERS: Record<
   string,
