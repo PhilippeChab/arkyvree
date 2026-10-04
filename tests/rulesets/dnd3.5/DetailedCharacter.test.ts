@@ -1326,6 +1326,50 @@ describe("DetailedCharacter", () => {
       expect([await initiative([]), await initiative([belt])]).toEqual([0, 5]);
     });
 
+    test("report a gated modifier whose requirement a modifier applied after it broke, which stays applied", async () => {
+      // +5 hit points while Strength is 18 or more (Bjorn's 18); then, once those hit points are in, Strength −4
+      const hp = await raceModifier("Bjorn Ironhand", { target: "combat.hp.misc", value: "5" }, [
+        { target: "abilities.strength.total", operator: "greater_than_or_equal", value: "18", valueType: "number" },
+      ]);
+      await raceModifier("Bjorn Ironhand", { target: "abilities.strength.misc", value: "-4" }, [
+        { target: "combat.hp.misc", operator: "greater_than_or_equal", value: "5", valueType: "number" },
+      ]);
+      const bjorn = await buildSeeded("Bjorn Ironhand");
+      expect(bjorn.getDetailedCharacterAbilities().getAbilities().strength.total).toBe(14);
+      expect(bjorn.getDetailedCharacterCombat().getCombat().hp.misc).toBe(5);
+      const race = (await Races.findOne(db, { id: (await seeded("Bjorn Ironhand")).raceId }))!.name;
+      expect(
+        bjorn
+          .validate()
+          .issues.filter((issue) => issue.category === "modifiers")
+          .map((issue) => issue.message),
+      ).toEqual([
+        `Modifier on ${hp.target} from ${race} (races) applied while its requirement held, which no longer holds on the final sheet`,
+      ]);
+    });
+
+    test("report a modifier that breaks its own requirement, and not one that never applied", async () => {
+      // Strength −4 while Strength is 18 or more: it applies, then its own requirement fails. A computed target
+      // gated the same way is skipped, never applied
+      const strength = { target: "abilities.strength.total", operator: "greater_than_or_equal", value: "18" };
+      const penalty = await raceModifier("Bjorn Ironhand", { target: "abilities.strength.misc", value: "-4" }, [
+        { ...strength, valueType: "number" },
+      ]);
+      await raceModifier("Bjorn Ironhand", { target: "abilities.dexterity.total", value: "1" }, [
+        { ...strength, valueType: "number" },
+      ]);
+      const bjorn = await buildSeeded("Bjorn Ironhand");
+      const race = (await Races.findOne(db, { id: (await seeded("Bjorn Ironhand")).raceId }))!.name;
+      expect(
+        bjorn
+          .validate()
+          .issues.filter((issue) => issue.category === "modifiers" && issue.message.includes("no longer holds"))
+          .map((issue) => issue.message),
+      ).toEqual([
+        `Modifier on ${penalty.target} from ${race} (races) applied while its requirement held, which no longer holds on the final sheet`,
+      ]);
+    });
+
     test("raise the spell DCs with the casting ability", async () => {
       // An elf wizard, INT 18: a headband's +2 makes her modifier 5, each DC one higher
       const dcs = async (carried: Carried[]) =>
