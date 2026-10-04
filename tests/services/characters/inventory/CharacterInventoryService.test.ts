@@ -395,16 +395,19 @@ describe("InventoryService", () => {
       });
     });
 
+    // A weapon is sized for its wielder: the table's Large (two-handed) needs both hands whatever the character's size.
     test.each([
       ["Medium", "Medium", "Main Hand", "allowed"],
       ["Large", "Medium", "Off Hand", "allowed"],
       ["Medium", "Large", "Two Handed", "allowed"],
-      ["Medium", "Large", "Main Hand", "This weapon requires two hands for a character of this size"],
-      ["Medium", "Large", "Off Hand", "This weapon requires two hands for a character of this size"],
-      ["Medium", "Huge", "Two Handed", "Weapon is too large for this character"],
+      ["Medium", "Large", "Main Hand", "This weapon requires two hands"],
+      ["Medium", "Large", "Off Hand", "This weapon requires two hands"],
+      ["Small", "Medium", "Main Hand", "allowed"],
+      ["Small", "Large", "Two Handed", "allowed"],
+      ["Large", "Large", "Off Hand", "This weapon requires two hands"],
       ["Medium", "unsized", "Main Hand", "allowed"],
     ] as const)(
-      "lets a %s character wield a %s weapon in the %s: %s",
+      "lets a %s character wield a weapon the table makes %s in the %s: %s",
       async (characterSize, weaponSize, slot, outcome) => {
         const { session, character, newItem } = await setup({ size: characterSize });
         const weapon = await newItem(
@@ -417,6 +420,18 @@ describe("InventoryService", () => {
         else await expect(attempt).rejects.toThrow(outcome);
       },
     );
+
+    test("needs both hands for a bow, whatever its size", async () => {
+      const { session, character } = await setup();
+      const shortbow = (await getSeedCtx()).itemMap["Shortbow"];
+      await expect(add(session, character.id, shortbow, equipped("Main Hand", 0))).rejects.toThrow(
+        "This weapon requires two hands",
+      );
+      // Forced past the martial proficiency the character lacks.
+      expect(await add(session, character.id, shortbow, { ...equipped("Two Handed", 0), force: true })).toMatchObject({
+        location: "Two Handed",
+      });
+    });
 
     test("refuses an item whose requirements the character doesn't meet, unless forced", async () => {
       const { session, character, newItem } = await setup();

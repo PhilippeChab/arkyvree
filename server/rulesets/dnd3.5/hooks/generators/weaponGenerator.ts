@@ -15,6 +15,7 @@ interface WeaponDefinition {
   /** A composite bow's Strength rating (WEAPON_MIGHTY): its damage's Strength cap, below which it takes −2 to attack. */
   mighty?: number;
   damageTypes: DamageType[];
+  /** Its effort, as the weapon table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed (bows). */
   size: string;
   range?: number;
   reach?: number;
@@ -76,8 +77,8 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Scythe": { proficiency: "Martial", family: "Polearm", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 4, damageTypes: ["Piercing", "Slashing"], size: "Large" },
   "Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Large", range: 100 },
   "Composite Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", mighty: 0, damageTypes: ["Piercing"], size: "Large", range: 110 },
-  "Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Medium", range: 60 },
-  "Composite Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", mighty: 0, damageTypes: ["Piercing"], size: "Medium", range: 70 },
+  "Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Large", range: 60 },
+  "Composite Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", mighty: 0, damageTypes: ["Piercing"], size: "Large", range: 70 },
 
   // ── Exotic ──
   "Kama": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", finessable: true },

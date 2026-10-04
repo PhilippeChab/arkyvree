@@ -30,7 +30,6 @@ async function validateEquipmentSlot(
   item: { id: string; type: string | null },
   location: ItemLocation,
   weaponSet: number | null,
-  raceId: string,
   ruleset: Ruleset,
   rulesetData: CachedRulesetData,
 ) {
@@ -54,10 +53,10 @@ async function validateEquipmentSlot(
     throw new BadRequestError("Shields can only be equipped in the Off Hand slot");
   }
 
-  // What's held must suit the character's size
+  // A two-handed weapon needs both hands
   if (isHandLocation(location)) {
     const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-    await hooks.inventory.validateWeaponSize(tx, rulesetData, item.id, raceId, location);
+    await hooks.inventory.validateWeaponHands(tx, rulesetData, item.id, location);
   }
 }
 
@@ -115,15 +114,6 @@ export async function validateEquipping(
   if (isHandLocation(location) && weaponSet === null) {
     throw new BadRequestError("A weapon set is required when equipping to a hand slot");
   }
-  await validateEquipmentSlot(
-    tx,
-    characterRecord.id,
-    item,
-    location,
-    weaponSet,
-    characterRecord.raceId,
-    ruleset,
-    rulesetData,
-  );
+  await validateEquipmentSlot(tx, characterRecord.id, item, location, weaponSet, ruleset, rulesetData);
   if (!force) await validateItemRequirements(tx, characterRecord, item, ruleset, rulesetData);
 }
