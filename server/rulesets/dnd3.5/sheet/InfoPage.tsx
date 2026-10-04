@@ -66,9 +66,8 @@ const InfoPage = ({
             </View>
             <View style={styles.headerRow}>
               <Text style={styles.headerLabel}>Height:</Text>
-              <Text style={styles.headerValue}>
-                {identityData.physiology.height ? `${identityData.physiology.height} cm` : "—"}
-              </Text>
+              {/* Free text, as the player wrote it: "180 cm", "5'11"" */}
+              <Text style={styles.headerValue}>{identityData.physiology.height || "—"}</Text>
             </View>
             <View style={styles.headerRow}>
               <Text style={styles.headerLabel}>Deity:</Text>
@@ -90,9 +89,7 @@ const InfoPage = ({
             </View>
             <View style={styles.headerRow}>
               <Text style={styles.headerLabel}>Weight:</Text>
-              <Text style={styles.headerValue}>
-                {identityData.physiology.weight ? `${identityData.physiology.weight} kg` : "—"}
-              </Text>
+              <Text style={styles.headerValue}>{identityData.physiology.weight || "—"}</Text>
             </View>
             <View style={styles.headerRow}>
               <Text style={styles.headerLabel}>Vision:</Text>
