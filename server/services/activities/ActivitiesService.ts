@@ -28,6 +28,9 @@ import type { Session } from "@/shared/relations.ts";
 
 const CUSTOMIZATION_ENTITIES = new Set(["feats", "powers", "items", "races"]);
 
+/** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
+type ActivityUrl = string | null | { noAccess: true; entityType: "ruleset" | "character" };
+
 class ActivitiesService {
   private async resolveCustomizationUrl(entityId: string, entityType: string): Promise<string | null> {
     if (entityType === "klass_levels") {
@@ -78,6 +81,39 @@ class ActivitiesService {
     return `/rulesets/${entity.rulesetId}/${section}/${targetId}`;
   }
 
+  /**
+   * A contributor's link: its invitee goes to the invite while it's pending and has lost access once it's revoked or
+   * rejected (signalled, so the caller can say so instead of 404'ing); anyone else, an active contributor or the
+   * owner, goes to what it contributes to.
+   */
+  private contributorUrl(
+    session: Session,
+    contributor: { userId: string | null; status: string },
+    entityType: "ruleset" | "character",
+    inviteUrl: string,
+    entityUrl: string,
+  ): ActivityUrl {
+    if (contributor.userId === session.userId) {
+      if (contributor.status === "Pending") return inviteUrl;
+      if (contributor.status !== "Active") return { noAccess: true, entityType };
+    }
+    return entityUrl;
+  }
+
+  /** A class's section page (its levels, its skills), or null when the class is gone. */
+  private async klassSectionUrl(klassId: string, section: "levels" | "skills") {
+    const klass = await Klasses.findOne(db, { id: klassId });
+    if (!klass) return null;
+    return `/rulesets/${klass.rulesetId}/classes/${klass.id}/${section}`;
+  }
+
+  /** The page of a player's campaign (`path` under it), or null when the player is gone. */
+  private async playerCampaignUrl(playerId: string, path = "") {
+    const player = await Players.findOne(db, { id: playerId });
+    if (!player) return null;
+    return `/campaigns/${player.campaignId}${path}`;
+  }
+
   async getActivities(
     session: Session,
     where: {
@@ -99,14 +135,9 @@ class ActivitiesService {
     );
   }
 
-  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
-  async getActivityUrl(
-    session: Session,
-    targetTable: string,
-    targetId: string,
-  ): Promise<string | null | { noAccess: true; entityType: "ruleset" | "character" }> {
-    // Top-level records link to their page, archived or not, until they're deleted
+  async getActivityUrl(session: Session, targetTable: string, targetId: string): Promise<ActivityUrl> {
     switch (targetTable) {
+      // Top-level records link to their page, archived or not, until they're deleted
       case "rulesets":
         return (await Rulesets.findOne(db, { id: targetId }, Visibility.All)) ? `/rulesets/${targetId}` : null;
       case "characters":
@@ -119,98 +150,61 @@ class ActivitiesService {
       case "users":
       case "sessions":
         return null;
-    }
 
-    // Rules sub-entities (entity has rulesetId)
-    const rulesUrl = await this.resolveRulesSubEntity(targetTable, targetId);
-    if (rulesUrl) return rulesUrl;
-
-    // Class sub-entities
-    if (targetTable === "klass_levels") {
-      const klassLevel = await KlassLevels.findOne(db, { id: targetId });
-      if (!klassLevel) return null;
-      const klass = await Klasses.findOne(db, { id: klassLevel.klassId });
-      if (!klass) return null;
-      return `/rulesets/${klass.rulesetId}/classes/${klass.id}/levels`;
-    }
-
-    if (targetTable === "klass_skills") {
+      // Class sub-entities
+      case "klass_levels": {
+        const klassLevel = await KlassLevels.findOne(db, { id: targetId });
+        return klassLevel ? await this.klassSectionUrl(klassLevel.klassId, "levels") : null;
+      }
       // targetId is klassId for klassSkills activities
-      const klass = await Klasses.findOne(db, { id: targetId });
-      if (!klass) return null;
-      return `/rulesets/${klass.rulesetId}/classes/${klass.id}/skills`;
-    }
+      case "klass_skills":
+        return await this.klassSectionUrl(targetId, "skills");
 
-    // Campaign sub-entities
-    if (targetTable === "players") {
-      const player = await Players.findOne(db, { id: targetId });
-      if (!player) return null;
-      return `/campaigns/${player.campaignId}`;
-    }
-
-    // targetId is the characterId; a character is linked to one campaign at a time.
-    if (targetTable === "player_characters") {
-      const link = await PlayerCharacters.findOne(db, { characterId: targetId });
-      const player = link && (await Players.findOne(db, { id: link.playerId }));
-      if (!player) return null;
-      return `/campaigns/${player.campaignId}/characters/${targetId}`;
-    }
-
-    if (targetTable === "invites") {
-      const invite = await Invites.findOne(db, { id: targetId });
-      if (!invite) return null;
-      const player = await Players.findOne(db, { id: invite.playerId });
-      if (!player) return null;
-      return `/campaigns/${player.campaignId}`;
-    }
-
-    // Ruleset contributor — invitee with a pending invite goes to the accept
-    // page; an active contributor or the owner lands on the ruleset itself.
-    // A revoked/rejected invitee no longer has access; signal that explicitly
-    // so the caller can surface the right message instead of 404'ing.
-    if (targetTable === "contributors") {
-      const contributor = await Contributors.findOne(db, { id: targetId });
-      if (!contributor) return null;
-      const isInvitee = contributor.userId === session.userId;
-      if (isInvitee) {
-        if (contributor.status === "Pending") return `/ruleset-contributor-invite/${targetId}`;
-        if (contributor.status !== "Active") return { noAccess: true, entityType: "ruleset" };
+      // Campaign sub-entities
+      case "players":
+        return await this.playerCampaignUrl(targetId);
+      // targetId is the characterId; a character is linked to one campaign at a time.
+      case "player_characters": {
+        const link = await PlayerCharacters.findOne(db, { characterId: targetId });
+        return link ? await this.playerCampaignUrl(link.playerId, `/characters/${targetId}`) : null;
       }
-      return `/rulesets/${contributor.rulesetId}`;
-    }
-
-    // Character contributor — same logic as ruleset contributors.
-    if (targetTable === "character_contributors") {
-      const contributor = await CharacterContributors.findOne(db, { id: targetId });
-      if (!contributor) return null;
-      const isInvitee = contributor.userId === session.userId;
-      if (isInvitee) {
-        if (contributor.status === "Pending") return `/character-contributor-invite/${targetId}`;
-        if (contributor.status !== "Active") return { noAccess: true, entityType: "character" };
+      case "invites": {
+        const invite = await Invites.findOne(db, { id: targetId });
+        return invite ? await this.playerCampaignUrl(invite.playerId) : null;
       }
-      return `/characters/${contributor.characterId}`;
-    }
 
-    // Customization entities
-    if (targetTable === "modifiers") {
-      const modifier = await Modifiers.findOne(db, { id: targetId });
-      if (!modifier) return null;
-      return await this.resolveCustomizationUrl(modifier.sourceId, modifier.sourceType);
-    }
+      case "contributors": {
+        const contributor = await Contributors.findOne(db, { id: targetId });
+        if (!contributor) return null;
+        const inviteUrl = `/ruleset-contributor-invite/${targetId}`;
+        return this.contributorUrl(session, contributor, "ruleset", inviteUrl, `/rulesets/${contributor.rulesetId}`);
+      }
+      case "character_contributors": {
+        const contributor = await CharacterContributors.findOne(db, { id: targetId });
+        if (!contributor) return null;
+        const inviteUrl = `/character-contributor-invite/${targetId}`;
+        const characterUrl = `/characters/${contributor.characterId}`;
+        return this.contributorUrl(session, contributor, "character", inviteUrl, characterUrl);
+      }
 
-    if (targetTable === "requirements") {
-      const requirement = await Requirements.findOne(db, { id: targetId });
-      if (!requirement) return null;
-      return await this.resolveCustomizationUrl(requirement.entityId, requirement.entityType);
-    }
+      // Customization entities
+      case "modifiers": {
+        const modifier = await Modifiers.findOne(db, { id: targetId });
+        return modifier ? await this.resolveCustomizationUrl(modifier.sourceId, modifier.sourceType) : null;
+      }
+      case "requirements": {
+        const requirement = await Requirements.findOne(db, { id: targetId });
+        return requirement ? await this.resolveCustomizationUrl(requirement.entityId, requirement.entityType) : null;
+      }
+      case "properties": {
+        const property = await Properties.findOne(db, { id: targetId });
+        return property ? await this.resolveCustomizationUrl(property.entityId, property.entityType) : null;
+      }
 
-    if (targetTable === "properties") {
-      const property = await Properties.findOne(db, { id: targetId });
-      if (!property) return null;
-      return await this.resolveCustomizationUrl(property.entityId, property.entityType);
+      // Rules sub-entities (entity has rulesetId)
+      default:
+        return await this.resolveRulesSubEntity(targetTable, targetId);
     }
-
-    return null;
   }
 }
 

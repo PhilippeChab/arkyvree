@@ -40,6 +40,144 @@ export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ances
   return [...ruleset.extensionRulesetIds, ...ruleset.ancestorRulesetIds];
 }
 
+type SnapshotsByRuleset = Map<string, Awaited<ReturnType<typeof EntitySnapshots.findMany>>>;
+
+/** The true overrides: each source entity to its closest fork's copy, following a copy of a copy to the last. */
+function snapshotOverrides(allRulesetIds: string[], byRuleset: SnapshotsByRuleset) {
+  const map = newOverrideMap();
+  for (const rid of allRulesetIds) {
+    const snaps = byRuleset.get(rid) ?? [];
+    for (const snap of snaps) {
+      if (!map.has(snap.sourceEntityId)) {
+        map.set(snap.sourceEntityId, map.get(snap.forkedEntityId) ?? snap.forkedEntityId);
+      }
+    }
+  }
+  return map;
+}
+
+/**
+ * Pairs snapshot siblings: when multiple snapshots share a sourceEntityId, the
+ * winner's forkedEntityId maps to the sibling-loser forkedEntityIds. The
+ * winner can be either an extension's COW or the child fork's own COW.
+ * Local winners are converted to true overrides after both pairing passes,
+ * so their customizations are not merged again on reads.
+ */
+function pairSnapshotSiblings(
+  allRulesetIds: string[],
+  byRuleset: SnapshotsByRuleset,
+  extensionSet: Set<string>,
+  map: OverrideMap,
+  siblingMap: Map<string, string[]>,
+  idResolveMap: IdResolveMap,
+) {
+  const bySource: SnapshotsByRuleset = new Map();
+  // Match compose's source-chain order when choosing duplicate sibling
+  // contributions. The snapshot query has no ordering guarantee.
+  for (const rid of allRulesetIds) {
+    for (const snap of byRuleset.get(rid) ?? []) {
+      const group = bySource.get(snap.sourceEntityId) ?? [];
+      group.push(snap);
+      bySource.set(snap.sourceEntityId, group);
+    }
+  }
+
+  for (const [sourceId, snaps] of bySource) {
+    if (snaps.length <= 1) continue;
+    const winnerId = map.get(sourceId);
+    if (!winnerId) continue;
+    // Sibling losers are extension shadows that aren't the winner. Works in
+    // both the direct case (winner is one of these snaps) and the chained
+    // case (winner reached via a closer snapshot whose source links into
+    // this group). Append so we don't clobber prior entries for the same
+    // winner (aptitude name-grouping below also writes here).
+    const siblingIds = snaps
+      .filter((s) => s.forkedEntityId !== winnerId && extensionSet.has(s.rulesetId))
+      .map((s) => s.forkedEntityId);
+    if (siblingIds.length === 0) continue;
+    const existing = siblingMap.get(winnerId) ?? [];
+    siblingMap.set(winnerId, [...existing, ...siblingIds]);
+    // Sibling losers are aliased to the winner in idResolveMap so stale
+    // references (a stored pick whose feat id is now a sibling loser)
+    // resolve at the proxy / cowResolvingMap layer. They are intentionally
+    // NOT added to `map` — compose iterates their customizations through
+    // the sibling-merge path.
+    for (const siblingId of siblingIds) {
+      if (!idResolveMap.has(siblingId)) idResolveMap.set(siblingId, winnerId);
+    }
+  }
+}
+
+/**
+ * Name-based sibling fallback for same-name reprints. When two rulesets in
+ * the source chain natively define entities with the same name without
+ * sharing a sourceEntityId (e.g. a spell reprinted in two D&D sourcebooks,
+ * or a user extension that re-introduces a spell from another extension to
+ * attach it to a custom class list), pair them as siblings so compose merges
+ * them and `cowEntity` bakes their data into a child fork's COW. Last-resort
+ * only — rows already paired via entitySnapshotsInRules are excluded so the
+ * snapshot-based pass always wins. Worst-case for an unwanted merge between
+ * unrelated user extensions: the merged entity looks weird; the user can COW
+ * it and edit. Recoverable, not data loss.
+ */
+async function pairNamesakes(
+  db: Db,
+  dedupedChain: string[],
+  siblingMap: Map<string, string[]>,
+  idResolveMap: IdResolveMap,
+) {
+  const rows = await RulesetEntities.findNativeNames(db, {
+    rulesetIds: dedupedChain,
+    entityTypes: [...NAME_FALLBACK_ENTITY_TYPES],
+  });
+
+  const chainIndex = new Map(dedupedChain.map((id, i) => [id, i]));
+
+  const byTypeName = new Map<string, typeof rows>();
+  for (const row of rows) {
+    const key = `${row.entityType}|${row.name}`;
+    const group = byTypeName.get(key);
+    if (group) group.push(row);
+    else byTypeName.set(key, [row]);
+  }
+
+  // Closest-first: extensions come before ancestors in dedupedChain, so an
+  // extension that natively reprints a base entity wins and base aliases to
+  // it. Mirrors the snapshot pass's `map.set(sourceEntityId, forkedEntityId)`
+  // direction — extension overrides base, full stop.
+  for (const [, group] of byTypeName) {
+    if (group.length <= 1) continue;
+    const sorted = group.sort((a, b) => (chainIndex.get(a.rulesetId) ?? 999) - (chainIndex.get(b.rulesetId) ?? 999));
+    const [winner, ...losers] = sorted;
+    for (const loser of losers) {
+      if (!idResolveMap.has(loser.id)) idResolveMap.set(loser.id, winner.id);
+    }
+    const existingSiblings = siblingMap.get(winner.id) ?? [];
+    siblingMap.set(winner.id, [...existingSiblings, ...losers.map((l) => l.id)]);
+  }
+}
+
+/**
+ * A local COW already owns its customizations. Keep sibling IDs resolvable,
+ * but suppress their source rows instead of merging them back into the copy.
+ * Include tombstones so deleting the local entity cannot revive a sibling.
+ */
+function suppressLocalSiblings(
+  localIds: Set<string>,
+  map: OverrideMap,
+  siblingMap: Map<string, string[]>,
+  idResolveMap: IdResolveMap,
+) {
+  for (const [winnerId, siblingIds] of siblingMap) {
+    const resolvedId = idResolveMap.get(winnerId) ?? winnerId;
+    if (!localIds.has(resolvedId)) continue;
+    for (const siblingId of siblingIds) {
+      map.set(siblingId, resolvedId);
+      idResolveMap.set(siblingId, resolvedId);
+    }
+  }
+}
+
 /**
  * Build override + sibling pairing data for a fork. Returns three maps:
  *
@@ -74,7 +212,6 @@ export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ances
  * extensions vs. ancestors of the fork. Required for sibling detection;
  * if omitted, only true overrides are returned.
  */
-// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export async function buildOverrideMap(
   db: Db,
   rulesetId: string,
@@ -85,23 +222,8 @@ export async function buildOverrideMap(
   const allSnapshots = await EntitySnapshots.findMany(db, { rulesetIds: allRulesetIds });
 
   // Group by rulesetId, process closest-first (allRulesetIds is already ordered closest-first)
-  const byRuleset = new Map<string, typeof allSnapshots>();
-  for (const snap of allSnapshots) {
-    if (!byRuleset.has(snap.rulesetId)) {
-      byRuleset.set(snap.rulesetId, []);
-    }
-    byRuleset.get(snap.rulesetId)!.push(snap);
-  }
-
-  const map = newOverrideMap();
-  for (const rid of allRulesetIds) {
-    const snaps = byRuleset.get(rid) ?? [];
-    for (const snap of snaps) {
-      if (!map.has(snap.sourceEntityId)) {
-        map.set(snap.sourceEntityId, map.get(snap.forkedEntityId) ?? snap.forkedEntityId);
-      }
-    }
-  }
+  const byRuleset: SnapshotsByRuleset = Map.groupBy(allSnapshots, (snap) => snap.rulesetId);
+  const map = snapshotOverrides(allRulesetIds, byRuleset);
 
   // idResolveMap starts as a copy of map (true overrides) and gets sibling-loser
   // entries appended below. Kept separate so compose's "skip overridden" check
@@ -109,111 +231,22 @@ export async function buildOverrideMap(
   // need to merge into the winner, not be skipped).
   const idResolveMap = newIdResolveMap(map);
 
-  // Build siblingMap: when multiple snapshots share a sourceEntityId, the
-  // winner's forkedEntityId maps to the sibling-loser forkedEntityIds. The
-  // winner can be either an extension's COW or the child fork's own COW.
-  // Local winners are converted to true overrides after both pairing passes,
-  // so their customizations are not merged again on reads.
   const extensionSet = new Set(extensionRulesetIds ?? []);
   const siblingMap = new Map<string, string[]>();
-
   if (extensionSet.size > 0) {
-    const bySource = new Map<string, typeof allSnapshots>();
-    // Match compose's source-chain order when choosing duplicate sibling
-    // contributions. The snapshot query has no ordering guarantee.
-    for (const rid of allRulesetIds) {
-      for (const snap of byRuleset.get(rid) ?? []) {
-        const group = bySource.get(snap.sourceEntityId) ?? [];
-        group.push(snap);
-        bySource.set(snap.sourceEntityId, group);
-      }
-    }
-
-    for (const [sourceId, snaps] of bySource) {
-      if (snaps.length <= 1) continue;
-      const winnerId = map.get(sourceId);
-      if (!winnerId) continue;
-      // Sibling losers are extension shadows that aren't the winner. Works in
-      // both the direct case (winner is one of these snaps) and the chained
-      // case (winner reached via a closer snapshot whose source links into
-      // this group). Append so we don't clobber prior entries for the same
-      // winner (aptitude name-grouping below also writes here).
-      const siblingIds = snaps
-        .filter((s) => s.forkedEntityId !== winnerId && extensionSet.has(s.rulesetId))
-        .map((s) => s.forkedEntityId);
-      if (siblingIds.length === 0) continue;
-      const existing = siblingMap.get(winnerId) ?? [];
-      siblingMap.set(winnerId, [...existing, ...siblingIds]);
-      // Sibling losers are aliased to the winner in idResolveMap so stale
-      // references (a stored pick whose feat id is now a sibling loser)
-      // resolve at the proxy / cowResolvingMap layer. They are intentionally
-      // NOT added to `map` — compose iterates their customizations through
-      // the sibling-merge path.
-      for (const siblingId of siblingIds) {
-        if (!idResolveMap.has(siblingId)) idResolveMap.set(siblingId, winnerId);
-      }
-    }
+    pairSnapshotSiblings(allRulesetIds, byRuleset, extensionSet, map, siblingMap, idResolveMap);
   }
 
-  // Name-based sibling fallback for same-name reprints. When two rulesets in
-  // the source chain natively define entities with the same name without
-  // sharing a sourceEntityId (e.g. a spell reprinted in two D&D sourcebooks,
-  // or a user extension that re-introduces a spell from another extension to
-  // attach it to a custom class list), pair them as siblings so compose merges
-  // them and `cowEntity` bakes their data into a child fork's COW. Last-resort
-  // only — rows already paired via entitySnapshotsInRules are excluded so the
-  // snapshot-based pass always wins. Worst-case for an unwanted merge between
-  // unrelated user extensions: the merged entity looks weird; the user can COW
-  // it and edit. Recoverable, not data loss.
-  //
   // The `ancestorRulesetIds` parameter is a misnomer — getOrBuildCowData passes
   // the full source chain (extensions + ancestors), while cowEntity passes
-  // ancestors-only. Dedupe so this pass behaves the same from either call site.
+  // ancestors-only. Dedupe so the name pass behaves the same from either call site.
   const dedupedChain = [...new Set([...(extensionRulesetIds ?? []), ...ancestorRulesetIds])];
   if (extensionSet.size > 0 && dedupedChain.length > 1) {
-    const rows = await RulesetEntities.findNativeNames(db, {
-      rulesetIds: dedupedChain,
-      entityTypes: [...NAME_FALLBACK_ENTITY_TYPES],
-    });
-
-    const chainIndex = new Map(dedupedChain.map((id, i) => [id, i]));
-
-    const byTypeName = new Map<string, typeof rows>();
-    for (const row of rows) {
-      const key = `${row.entityType}|${row.name}`;
-      const group = byTypeName.get(key);
-      if (group) group.push(row);
-      else byTypeName.set(key, [row]);
-    }
-
-    // Closest-first: extensions come before ancestors in dedupedChain, so an
-    // extension that natively reprints a base entity wins and base aliases to
-    // it. Mirrors the snapshot pass's `map.set(sourceEntityId, forkedEntityId)`
-    // direction — extension overrides base, full stop.
-    for (const [, group] of byTypeName) {
-      if (group.length <= 1) continue;
-      const sorted = group.sort((a, b) => (chainIndex.get(a.rulesetId) ?? 999) - (chainIndex.get(b.rulesetId) ?? 999));
-      const [winner, ...losers] = sorted;
-      for (const loser of losers) {
-        if (!idResolveMap.has(loser.id)) idResolveMap.set(loser.id, winner.id);
-      }
-      const existingSiblings = siblingMap.get(winner.id) ?? [];
-      siblingMap.set(winner.id, [...existingSiblings, ...losers.map((l) => l.id)]);
-    }
+    await pairNamesakes(db, dedupedChain, siblingMap, idResolveMap);
   }
 
-  // A local COW already owns its customizations. Keep sibling IDs resolvable,
-  // but suppress their source rows instead of merging them back into the copy.
-  // Include tombstones so deleting the local entity cannot revive a sibling.
   const localIds = new Set((byRuleset.get(rulesetId) ?? []).map((s) => s.forkedEntityId));
-  for (const [winnerId, siblingIds] of siblingMap) {
-    const resolvedId = idResolveMap.get(winnerId) ?? winnerId;
-    if (!localIds.has(resolvedId)) continue;
-    for (const siblingId of siblingIds) {
-      map.set(siblingId, resolvedId);
-      idResolveMap.set(siblingId, resolvedId);
-    }
-  }
+  suppressLocalSiblings(localIds, map, siblingMap, idResolveMap);
 
   return { map, siblingMap, idResolveMap };
 }

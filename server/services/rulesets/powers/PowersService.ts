@@ -2,9 +2,10 @@ import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { FeatsAptitudes, Powers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
+import type { ServiceHooks } from "@/server/rulesets/hooks/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -40,7 +41,85 @@ interface PowerBody {
   updatedAt?: string;
 }
 
+/** The spell fields a power's generated properties come from. */
+const SPELL_FIELDS = [
+  "school",
+  "subschool",
+  "descriptors",
+  "castingTime",
+  "rangeType",
+  "target",
+  "areaOfEffect",
+  "duration",
+  "spellResistance",
+  "components",
+] as const satisfies (keyof PowerBody)[];
+
 class PowersService {
+  /** Replaces a power's aptitude links with these. */
+  private async replaceAptitudes(tx: Db, powerId: string, aptitudes: NonNullable<PowerBody["aptitudes"]>) {
+    await PowersAptitudes.delete(tx, { powerId });
+
+    if (aptitudes.length > 0) {
+      await this.checkSpellAptitudes(
+        tx,
+        aptitudes.map((a) => a.id),
+      );
+
+      await PowersAptitudes.createMany(
+        tx,
+        aptitudes.map((aptitude) => ({
+          powerId,
+          aptitudeId: aptitude.id,
+          level: aptitude.level ?? null,
+        })),
+      );
+    }
+  }
+
+  /** Throws when one of the aptitudes is already used for feats: a spell can't be linked to it. */
+  private async checkSpellAptitudes(tx: Db, aptitudeIds: string[]) {
+    const featAptitudes = await FeatsAptitudes.findAptitudeIds(tx, { aptitudeIds });
+    if (featAptitudes.length > 0) {
+      throw new ConflictError("Cannot link spell to aptitude(s) already used for feats");
+    }
+  }
+
+  /**
+   * Regenerates a power's spell properties from the body, and its grouping feats when its grouping (the school)
+   * changes.
+   */
+  private async regenerateSpellProperties(
+    tx: Db,
+    hooks: ServiceHooks,
+    rulesetId: string,
+    sourceChain: string[],
+    powerId: string,
+    body: PowerBody,
+  ) {
+    const existingProps = await Properties.findMany(tx, {
+      entityIds: [powerId],
+      entityType: "powers",
+      type: hooks.powers.primaryGroupingType,
+    });
+    const oldGroupingValue = existingProps.length > 0 ? existingProps[0].value : null;
+
+    await Properties.delete(tx, {
+      entityIds: [powerId],
+      entityType: "powers",
+      types: hooks.powers.generatedPropertyTypes,
+    });
+
+    const newGroupingValue = hooks.powers.extractGroupingValue(body);
+    if (newGroupingValue) {
+      await hooks.powers.generateProperties(tx, powerId, body);
+
+      if (newGroupingValue !== oldGroupingValue) {
+        await hooks.powers.generateGroupingFeats(tx, rulesetId, sourceChain, newGroupingValue);
+      }
+    }
+  }
+
   async getPower(rulesetId: string, powerId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -83,11 +162,10 @@ class PowersService {
           throw new BadRequestError("At least one aptitude must be selected for the power");
         }
 
-        const aptitudeIds = body.aptitudes.map((a) => a.id);
-        const featAptitudes = await FeatsAptitudes.findAptitudeIds(tx, { aptitudeIds });
-        if (featAptitudes.length > 0) {
-          throw new ConflictError("Cannot link spell to aptitude(s) already used for feats");
-        }
+        await this.checkSpellAptitudes(
+          tx,
+          body.aptitudes.map((a) => a.id),
+        );
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
 
@@ -139,7 +217,6 @@ class PowersService {
 
   async updatePower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
     const result = await withTransaction(async (tx) => {
-      // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
@@ -168,60 +245,10 @@ class PowersService {
         const updatedPower = rows[0];
 
         if (body.aptitudes !== undefined) {
-          await PowersAptitudes.delete(tx, { powerId: targetId });
-
-          if (body.aptitudes.length > 0) {
-            const aptitudeIds = body.aptitudes.map((a) => a.id);
-            const featAptitudes = await FeatsAptitudes.findAptitudeIds(tx, { aptitudeIds });
-            if (featAptitudes.length > 0) {
-              throw new ConflictError("Cannot link spell to aptitude(s) already used for feats");
-            }
-
-            await PowersAptitudes.createMany(
-              tx,
-              body.aptitudes.map((aptitude) => ({
-                powerId: targetId,
-                aptitudeId: aptitude.id,
-                level: aptitude.level ?? null,
-              })),
-            );
-          }
+          await this.replaceAptitudes(tx, targetId, body.aptitudes);
         }
-
-        const hasSpellFields =
-          body.school !== undefined ||
-          body.subschool !== undefined ||
-          body.descriptors !== undefined ||
-          body.castingTime !== undefined ||
-          body.rangeType !== undefined ||
-          body.target !== undefined ||
-          body.areaOfEffect !== undefined ||
-          body.duration !== undefined ||
-          body.spellResistance !== undefined ||
-          body.components !== undefined;
-
-        if (hasSpellFields) {
-          const existingProps = await Properties.findMany(tx, {
-            entityIds: [targetId],
-            entityType: "powers",
-            type: hooks.powers.primaryGroupingType,
-          });
-          const oldGroupingValue = existingProps.length > 0 ? existingProps[0].value : null;
-
-          await Properties.delete(tx, {
-            entityIds: [targetId],
-            entityType: "powers",
-            types: hooks.powers.generatedPropertyTypes,
-          });
-
-          const newGroupingValue = hooks.powers.extractGroupingValue(body);
-          if (newGroupingValue) {
-            await hooks.powers.generateProperties(tx, targetId, body);
-
-            if (newGroupingValue !== oldGroupingValue) {
-              await hooks.powers.generateGroupingFeats(tx, rulesetId, sourceChain, newGroupingValue);
-            }
-          }
+        if (SPELL_FIELDS.some((field) => body[field] !== undefined)) {
+          await this.regenerateSpellProperties(tx, hooks, rulesetId, sourceChain, targetId, body);
         }
 
         if (hooks.powers.afterPowerLinked) {

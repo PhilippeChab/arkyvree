@@ -116,8 +116,72 @@ export async function copyEntityCustomizations(
   await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust, customizationIds);
 }
 
+/** Copies a class's levels onto the target class, with their saves, granted feats and powers, and customizations. */
+async function copyKlassLevels(
+  tx: Db,
+  sourceKlassId: string,
+  targetKlassId: string,
+  idMap: Record<string, string>,
+  customizationIds?: Map<string, string>,
+) {
+  const levels = await KlassLevels.findMany(tx, { klassId: sourceKlassId });
+  if (levels.length === 0) return;
+
+  const newLevels = await KlassLevels.createMany(
+    tx,
+    levels.map((l) => ({ ...l, id: undefined, klassId: targetKlassId })),
+  );
+
+  // Build level ID map (old -> new)
+  const levelIdMapLocal: Record<string, string> = {};
+  for (let i = 0; i < levels.length; i++) {
+    levelIdMapLocal[levels[i].id] = newLevels[i].id;
+  }
+
+  const oldLevelIds = levels.map((l) => l.id);
+  const levelSaves = await KlassLevelSaves.findMany(tx, { klassLevelIds: oldLevelIds });
+  const levelFeats = await KlassLevelFeats.findMany(tx, { klassLevelIds: oldLevelIds });
+  const levelPowers = await KlassLevelPowers.findMany(tx, { klassLevelIds: oldLevelIds });
+
+  // Copy level customizations (modifiers, properties, requirements)
+  const levelCusts = await fetchEntityCustomizations(tx, oldLevelIds, "klass_levels", "klass_levels");
+  for (const oldLevelId of oldLevelIds) {
+    const newLevelId = levelIdMapLocal[oldLevelId];
+    const cust = levelCusts.get(oldLevelId);
+    if (cust && newLevelId) {
+      await copyEntityCustomizations(tx, oldLevelId, newLevelId, "klass_levels", cust, customizationIds);
+    }
+  }
+
+  await KlassLevelSaves.createMany(
+    tx,
+    levelSaves.map((ls) => ({
+      klassLevelId: levelIdMapLocal[ls.klassLevelId],
+      saveId: idMap[ls.saveId] ?? ls.saveId,
+      base: ls.base,
+    })),
+  );
+  await KlassLevelFeats.createMany(
+    tx,
+    levelFeats.map((lf) => ({
+      klassLevelId: levelIdMapLocal[lf.klassLevelId],
+      featId: idMap[lf.featId] ?? lf.featId,
+      aptitudeId: idMap[lf.aptitudeId] ?? lf.aptitudeId,
+      free: lf.free,
+    })),
+  );
+  await KlassLevelPowers.createMany(
+    tx,
+    levelPowers.map((lp) => ({
+      klassLevelId: levelIdMapLocal[lp.klassLevelId],
+      powerId: idMap[lp.powerId] ?? lp.powerId,
+      aptitudeId: idMap[lp.aptitudeId] ?? lp.aptitudeId,
+      free: lp.free,
+    })),
+  );
+}
+
 // Copy relationship data (join tables) for a single entity
-// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export async function copyEntityRelationships(
   tx: Db,
   entityType: EntityType,
@@ -161,61 +225,6 @@ export async function copyEntityRelationships(
       );
     }
 
-    // Copy levels and their sub-relationships
-    const levels = await KlassLevels.findMany(tx, { klassId: sourceEntityId });
-    if (levels.length === 0) return;
-
-    const newLevels = await KlassLevels.createMany(
-      tx,
-      levels.map((l) => ({ ...l, id: undefined, klassId: targetEntityId })),
-    );
-
-    // Build level ID map (old -> new)
-    const levelIdMapLocal: Record<string, string> = {};
-    for (let i = 0; i < levels.length; i++) {
-      levelIdMapLocal[levels[i].id] = newLevels[i].id;
-    }
-
-    const oldLevelIds = levels.map((l) => l.id);
-    const levelSaves = await KlassLevelSaves.findMany(tx, { klassLevelIds: oldLevelIds });
-    const levelFeats = await KlassLevelFeats.findMany(tx, { klassLevelIds: oldLevelIds });
-    const levelPowers = await KlassLevelPowers.findMany(tx, { klassLevelIds: oldLevelIds });
-
-    // Copy level customizations (modifiers, properties, requirements)
-    const levelCusts = await fetchEntityCustomizations(tx, oldLevelIds, "klass_levels", "klass_levels");
-    for (const oldLevelId of oldLevelIds) {
-      const newLevelId = levelIdMapLocal[oldLevelId];
-      const cust = levelCusts.get(oldLevelId);
-      if (cust && newLevelId) {
-        await copyEntityCustomizations(tx, oldLevelId, newLevelId, "klass_levels", cust, customizationIds);
-      }
-    }
-
-    await KlassLevelSaves.createMany(
-      tx,
-      levelSaves.map((ls) => ({
-        klassLevelId: levelIdMapLocal[ls.klassLevelId],
-        saveId: idMap[ls.saveId] ?? ls.saveId,
-        base: ls.base,
-      })),
-    );
-    await KlassLevelFeats.createMany(
-      tx,
-      levelFeats.map((lf) => ({
-        klassLevelId: levelIdMapLocal[lf.klassLevelId],
-        featId: idMap[lf.featId] ?? lf.featId,
-        aptitudeId: idMap[lf.aptitudeId] ?? lf.aptitudeId,
-        free: lf.free,
-      })),
-    );
-    await KlassLevelPowers.createMany(
-      tx,
-      levelPowers.map((lp) => ({
-        klassLevelId: levelIdMapLocal[lp.klassLevelId],
-        powerId: idMap[lp.powerId] ?? lp.powerId,
-        aptitudeId: idMap[lp.aptitudeId] ?? lp.aptitudeId,
-        free: lp.free,
-      })),
-    );
+    await copyKlassLevels(tx, sourceEntityId, targetEntityId, idMap, customizationIds);
   }
 }
