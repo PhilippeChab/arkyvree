@@ -1306,6 +1306,23 @@ describe("LevelsService", () => {
       expect(pool(aptitudePools, "Fighter Bonus Feat")).toMatchObject({ allowed: 1 });
     });
 
+    test("lists the level's picks by name", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx);
+      const [level] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+      await addFeats(
+        db,
+        ctx,
+        [level],
+        [
+          { levelIndex: 0, featName: "Power Attack", aptitude: "General" },
+          { levelIndex: 0, featName: "Dodge", aptitude: "General" },
+        ],
+      );
+      const { feats } = await CharacterLevelsService.getLevel(session, characterId, level);
+      expect(feats[ctx.aptMap["General"]].map((feat) => feat.name)).toEqual(["Dodge", "Power Attack"]);
+    });
+
     describe("of a multiclass character", () => {
       /** A dwarf with a barbarian level, then fighter levels, made in that order. */
       async function setupMulticlass(fighterLevels: number) {

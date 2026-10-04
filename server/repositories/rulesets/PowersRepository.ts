@@ -23,7 +23,10 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
 
   protected readonly entityType = "powers";
 
-  /** The powers the character levels' class levels grant, each with its level (see `grantedAt`). */
+  /**
+   * The powers the character levels' class levels grant, each with its level (see `grantedAt`), by name, ties broken to
+   * a fixed order.
+   */
   async findGrants(db: Db, where: { levels: { id: string; klassLevelId: string }[] }) {
     if (where.levels.length === 0) return [];
     const granted = await db
@@ -50,6 +53,12 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
           inArray(klassLevelPowersInRules.klassLevelId, [...new Set(where.levels.map((level) => level.klassLevelId))]),
           isNull(powersInRules.deletedAt),
         ),
+      )
+      .orderBy(
+        this.orderBy(powersInRules.name),
+        this.orderBy(powersInRules.id),
+        this.orderBy(klassLevelPowersInRules.aptitudeId),
+        this.orderBy(klassLevelPowersInRules.klassLevelId),
       );
     return this.grantedAt(where.levels, granted);
   }
@@ -179,6 +188,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
     });
   }
 
+  /** The picks of these character levels, by the picked entity's name, ties broken to a fixed order. */
   async findPicks(db: Db, where: { characterLevelIds: string[] }) {
     return await db
       .select({
@@ -203,6 +213,12 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
       )
       .where(
         and(inArray(levelPowersInCharacter.characterLevelId, where.characterLevelIds), isNull(powersInRules.deletedAt)),
+      )
+      .orderBy(
+        this.orderBy(powersInRules.name),
+        this.orderBy(powersInRules.id),
+        this.orderBy(levelPowersInCharacter.aptitudeId),
+        this.orderBy(levelsInCharacter.id),
       );
   }
 }

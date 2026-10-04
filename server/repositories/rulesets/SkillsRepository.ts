@@ -48,6 +48,7 @@ class SkillsRepository extends RulesetEntityRepository<typeof skillsInRules> {
     });
   }
 
+  /** The picks of these character levels, by the picked entity's name, ties broken to a fixed order. */
   async findPicks(db: Db, where: { characterLevelIds: string[] }) {
     return await db
       .select({
@@ -62,7 +63,8 @@ class SkillsRepository extends RulesetEntityRepository<typeof skillsInRules> {
       .innerJoin(klassLevelsInRules, eq(levelsInCharacter.klassLevelId, klassLevelsInRules.id))
       .where(
         and(inArray(levelSkillsInCharacter.characterLevelId, where.characterLevelIds), isNull(skillsInRules.deletedAt)),
-      );
+      )
+      .orderBy(this.orderBy(skillsInRules.name), this.orderBy(skillsInRules.id), this.orderBy(levelsInCharacter.id));
   }
 }
 

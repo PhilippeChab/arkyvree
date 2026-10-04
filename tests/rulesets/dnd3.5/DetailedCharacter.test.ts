@@ -283,6 +283,22 @@ describe("DetailedCharacter", () => {
         ["sorcerer", 3],
       ]);
     });
+    test("lists a level's skills, then its picked and its granted feats, each by name", async () => {
+      const zen = (await buildSeeded("Zen Whitepetal")).getDetailedCharacterClasses().getCharacterClasses();
+      const [first] = zen["monk"].levels;
+      const names = (rows: { name: string }[]) => rows.map((row) => row.name);
+      expect(names(first.skills)).toEqual(["Balance", "Jump", "Listen", "Spot", "Tumble"]);
+      expect(names(first.feats)).toEqual([
+        "Dodge",
+        "Improved Grapple",
+        "Improved Initiative",
+        "AC Bonus (Monk)",
+        "Bonus Feat 1st (Monk)",
+        "Flurry of Blows (Monk)",
+        "Improved Unarmed Strike",
+        "Weapon and Armor Proficiency (Monk)",
+      ]);
+    });
   });
 
   describe("saving throws", () => {
