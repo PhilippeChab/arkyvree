@@ -65,7 +65,7 @@ function equipmentOf(dc: Dnd35DetailedCharacter) {
 }
 
 /** The feats and powers the character's modifiers make it possess without a pick. */
-function virtualEntitiesOf(dc: Dnd35DetailedCharacter) {
+export function buildVirtualEntities(dc: Dnd35DetailedCharacter) {
   return {
     virtualFeats: dc.getVirtuallyPossessedFeats().map((f) => ({
       id: f.id,
@@ -122,7 +122,7 @@ export function buildFullCharacterResponse(
     equipment: equipmentOf(dc),
     skills: dc.getDetailedCharacterSkills().getSkills(),
     powers: dc.getDetailedCharacterPowers().getFlatPowers(),
-    ...virtualEntitiesOf(dc),
+    ...buildVirtualEntities(dc),
     aptitudes: detailedCharacter.getDetailedCharacterAptitudes().getAptitudes(),
     spellTags: dc.getSpellTags(),
     requirements,
