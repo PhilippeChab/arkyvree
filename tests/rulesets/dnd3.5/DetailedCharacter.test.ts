@@ -911,6 +911,13 @@ describe("DetailedCharacter", () => {
       });
     });
 
+    test("take a specific weapon's enhancement bonus, a masterwork one's on attack rolls only", async () => {
+      const held = async (item: string) =>
+        weaponSet(await buildCarrying("Bjorn Ironhand", [{ item, location: "Main Hand", weaponSet: 0 }])).mainhand!;
+      expect(await held("Holy Avenger")).toMatchObject({ tohit: { magic: 2 }, damage: { magic: 2 } });
+      expect(await held("Masterwork Cold Iron Longsword")).toMatchObject({ tohit: { magic: 1 }, damage: { magic: 0 } });
+    });
+
     describe("proficiency", () => {
       /** Whether `name` is proficient with `item` held at `location`. */
       const proficientWith = async (name: string, item: string, location: "Main Hand" | "Two Handed") => {
