@@ -8,8 +8,10 @@
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
+import { ALLOWED_ALL } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier, Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -32,6 +34,9 @@ interface DistributedLevel {
   powers: Record<string, string[]>;
 }
 
+/** The slots an all-known spell level counts as: every spell of its level. */
+const ALL_KNOWN_SLOTS = 999;
+
 /** A planned level's slot deltas: per feat pool, and per power pool and spell level. */
 interface SlotDeltas {
   feats: Record<string, number>;
@@ -45,7 +50,7 @@ const generalFeats = (charLevel: number) => (charLevel === 0 ? 0 : Math.floor(ch
 
 /**
  * Adds what modifiers targeting a pool's `aptitudes.<slug>.allowed` (a feat pool) or `aptitudes.<slug>.<level>.allowed`
- * (a power pool's spell level) give a level. Setting a spell level's to -1, "all spells known", counts as 999.
+ * (a power pool's spell level) give a level. Setting a spell level's to -1, "all spells known", counts as all of them.
  */
 function addModifierDeltas(
   deltas: SlotDeltas,
@@ -73,7 +78,7 @@ function addModifierDeltas(
         if (!deltas.powers[aptId]) deltas.powers[aptId] = {};
         const spellLevel = spellMatch[2];
         if (mod.operator === "set" && value === -1) {
-          deltas.powers[aptId][spellLevel] = 999;
+          deltas.powers[aptId][spellLevel] = ALL_KNOWN_SLOTS;
         } else {
           deltas.powers[aptId][spellLevel] = (deltas.powers[aptId][spellLevel] ?? 0) + value;
         }
@@ -115,6 +120,17 @@ function levelDeltas(
   return deltas;
 }
 
+/** The spell levels whose spells the character knows all of already, by `aptitudeId:level`. */
+function allKnownLevels(aptitudes: Record<string, { id: string }>): Set<string> {
+  const known = new Set<string>();
+  for (const aptitude of Object.values(aptitudes)) {
+    for (const [level, entry] of Object.entries(aptitude)) {
+      if (/^\d+$/.test(level) && isRecord(entry) && entry.allowed === ALLOWED_ALL) known.add(`${aptitude.id}:${level}`);
+    }
+  }
+  return known;
+}
+
 /**
  * Computes per-level feat and power slot deltas from modifier data directly,
  * without incremental DetailedCharacter builds. Used by both getLevelUpPreview
@@ -145,6 +161,9 @@ export function computePerLevelAptitudeSlots(
   const perLevelPowerSlots: PowerSlots = {};
   for (const aptId of featPoolIds) perLevelFeatSlots[aptId] = [];
   for (const aptId of powerPoolIds) perLevelPowerSlots[aptId] = [];
+  // A spell level all known (the character's already, or a planned level's set -1) takes no slot from a later add:
+  // the sheet's count, and the class tables'
+  const allKnown = allKnownLevels(baselineAptitudes);
 
   for (let i = 0; i < klassLevelIds.length; i++) {
     const deltas = levelDeltas(
@@ -160,10 +179,11 @@ export function computePerLevelAptitudeSlots(
     }
     for (const aptId of powerPoolIds) {
       const slots: Record<string, number> = {};
-      if (deltas.powers[aptId]) {
-        for (const [sl, delta] of Object.entries(deltas.powers[aptId])) {
-          if (delta > 0) slots[sl] = delta;
-        }
+      for (const [sl, delta] of Object.entries(deltas.powers[aptId] ?? {})) {
+        const key = `${aptId}:${sl}`;
+        if (allKnown.has(key)) continue;
+        if (delta >= ALL_KNOWN_SLOTS) allKnown.add(key);
+        if (delta > 0) slots[sl] = Math.min(delta, ALL_KNOWN_SLOTS);
       }
       perLevelPowerSlots[aptId].push(slots);
     }

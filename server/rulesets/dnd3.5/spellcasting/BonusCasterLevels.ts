@@ -3,7 +3,11 @@ import type { Constructor } from "@/server/mixins.ts";
 import type { FeatWithPMR, KlassLevelWithPMR } from "@/server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import type { Holders } from "@/server/rulesets/types.ts";
-import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
+import {
+  ALLOWED_ALL,
+  type AptitudeLevelData,
+  clearAllKnown,
+} from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type { CharacterLevel, Klass, KlassLevel } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -139,7 +143,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
             domainLevel.allowed = ALLOWED_ALL;
             domainLevel.uses = 1;
           } else if (classLevel.allowed === 0 && domainLevel.allowed === ALLOWED_ALL) {
-            domainLevel.allowed = 0;
+            clearAllKnown(domainLevel);
             domainLevel.uses = 0;
           }
         }
