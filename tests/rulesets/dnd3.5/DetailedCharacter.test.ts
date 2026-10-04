@@ -1092,6 +1092,42 @@ describe("DetailedCharacter", () => {
   });
 
   describe("armor class", () => {
+    test("keeps a dodge bonus in touch AC and loses it flat-footed, with the Dexterity bonus", async () => {
+      const bjorn = await seeded("Bjorn Ironhand");
+      const ac = async () => {
+        const { total, touch, flatfooted, dexterity } = (await build(bjorn))
+          .getDetailedCharacterCombat()
+          .getCombat().ac;
+        return { total, touch, flatfooted, dexterity };
+      };
+      const before = await ac();
+      await Modifiers.create(db, {
+        sourceId: bjorn.raceId,
+        sourceType: "races",
+        target: "combat.ac.dodge",
+        operator: "add",
+        value: "2",
+        valueType: "number",
+      });
+      invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+      expect(await ac()).toEqual({
+        ...before,
+        total: before.total + 2,
+        touch: before.touch + 2,
+        flatfooted: before.total - before.dexterity,
+      });
+    });
+
+    test("keeps the Dexterity bonus flat-footed with uncanny dodge: a barbarian 2's, not a barbarian 1's", async () => {
+      const acOf = async (name: string) => (await buildSeeded(name)).getDetailedCharacterCombat().getCombat().ac;
+      // Grak is a barbarian 3; Kael a barbarian 1 and fighter 3
+      const grak = await acOf("Grak Thunderfist");
+      expect(grak).toMatchObject({ uncannydodge: true, flatfooted: grak.total });
+      const kael = await acOf("Kael Stormborn");
+      expect(kael.dexterity).toBeGreaterThan(0);
+      expect(kael).toMatchObject({ uncannydodge: false, flatfooted: kael.total - kael.dexterity });
+    });
+
     test("adds armor, capping dexterity at its limit, and shows its penalties", async () => {
       const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Chain Mail", location: "Torso" }]);
       expect(bjorn.getDetailedCharacterArmors().getArmors()["chainmail"]).toMatchObject({

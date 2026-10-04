@@ -61,8 +61,18 @@ const NAVIGATABLE_PATHS = [
   },
   // Armor class
   { path: "ac.base", description: "Default 10", type: "number" as const, sortOrder: 2 },
-  { path: "ac.armor", description: "Armor bonus to AC", type: "number" as const, sortOrder: 2 },
-  { path: "ac.shield", description: "Shield bonus to AC", type: "number" as const, sortOrder: 2 },
+  {
+    path: "ac.armor",
+    description: "Armor bonus to AC: armor, bracers, an armor's enhancement (not in touch AC)",
+    type: "number" as const,
+    sortOrder: 2,
+  },
+  {
+    path: "ac.shield",
+    description: "Shield bonus to AC: a shield, its enhancement (not in touch AC)",
+    type: "number" as const,
+    sortOrder: 2,
+  },
   {
     path: "ac.dexterity",
     description: "Dexterity bonus to AC",
@@ -70,10 +80,27 @@ const NAVIGATABLE_PATHS = [
     sortOrder: 2,
     requirementOnly: true,
   },
-  { path: "ac.natural", description: "Natural armor bonus", type: "number" as const, sortOrder: 2 },
+  { path: "ac.natural", description: "Natural armor bonus (not in touch AC)", type: "number" as const, sortOrder: 2 },
   { path: "ac.deflection", description: "Deflection bonus to AC", type: "number" as const, sortOrder: 2 },
+  {
+    path: "ac.dodge",
+    description: "Dodge bonus to AC, and any other lost when flat-footed (not in flat-footed AC)",
+    type: "number" as const,
+    sortOrder: 2,
+  },
   { path: "ac.size", description: "Size modifier to AC", type: "number" as const, sortOrder: 2, requirementOnly: true },
-  { path: "ac.misc", description: "Other bonuses to AC", type: "number" as const, sortOrder: 2 },
+  {
+    path: "ac.misc",
+    description: "Other bonuses to AC, kept in touch and flat-footed AC (a monk's Wisdom)",
+    type: "number" as const,
+    sortOrder: 2,
+  },
+  {
+    path: "ac.uncannydodge",
+    description: "Keeps the Dexterity and dodge bonuses when flat-footed (uncanny dodge)",
+    type: "boolean" as const,
+    sortOrder: 2,
+  },
   {
     path: "ac.total",
     description: "All AC bonuses combined",
@@ -90,7 +117,7 @@ const NAVIGATABLE_PATHS = [
   },
   {
     path: "ac.flatfooted",
-    description: "Ignores Dex bonus",
+    description: "Ignores the Dexterity and dodge bonuses, unless uncanny dodge",
     type: "number" as const,
     sortOrder: 2,
     requirementOnly: true,
@@ -161,7 +188,12 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
         category: "combat",
         description: path.description,
         valueType: path.type,
-        operators: getNumericOperators(kind),
+        operators:
+          path.type === "boolean"
+            ? kind === "modifier"
+              ? ["set"]
+              : ["equal", "not_equal"]
+            : getNumericOperators(kind),
         ...("sortOrder" in path && { sortOrder: path.sortOrder }),
       });
     }

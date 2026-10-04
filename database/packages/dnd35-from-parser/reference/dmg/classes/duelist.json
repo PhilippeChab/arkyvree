@@ -30,7 +30,7 @@
                 "valueType": "number"
               }
             ],
-            "target": "combat.ac.misc",
+            "target": "combat.ac.dodge",
             "value": "{{ [abilities.intelligence.modifier] }}",
             "valueType": "number"
           }

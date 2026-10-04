@@ -27,7 +27,7 @@
         "modifiers": [
           {
             "operator": "add",
-            "target": "combat.ac.misc",
+            "target": "combat.ac.dodge",
             "value": "1",
             "valueType": "number"
           }

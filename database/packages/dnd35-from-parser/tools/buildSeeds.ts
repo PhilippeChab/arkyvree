@@ -14,6 +14,7 @@ import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scra
 import { familyFeatNamed } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
 import {
   autoCompanionGrantModifiers,
+  autoUncannyDodgeModifiers,
   checkedValue,
   checkOneOf,
   extractGrantedFeatNames,
@@ -355,6 +356,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
     const modifiers: ModifierSeed[] = [
       ...(feature.modifiers ?? []).map((m) => ({ ...m, target: aptitudeTargetRemap.get(m.target) ?? m.target })),
       ...autoCompanionGrantModifiers(name, feature.description ?? ""),
+      ...autoUncannyDodgeModifiers(name),
       ...(lockedType
         ? [{ target: feat(`Favored Enemy: ${lockedType}`), operator: "set", value: "true", valueType: "boolean" }]
         : []),
