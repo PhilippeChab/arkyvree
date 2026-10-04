@@ -11,6 +11,7 @@ import {
   NUMERIC_REQUIREMENT_OPERATORS,
 } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -278,16 +279,10 @@ export default class DetailedCharacterSkills {
     });
   }
 
-  /**
-   * The skill points a level gives: its class's, the skill point ability's modifier and any bonus per level, four times
-   * over at the character's first level, and at least 1.
-   */
+  /** The skill points a level gives: its class's, the skill point ability's modifier and any bonus per level. */
   getLevelSkillPoints(classSkillPoints: number, isFirstCharacterLevel: boolean): number {
-    const multiplier = isFirstCharacterLevel ? 4 : 1;
-    return Math.max(
-      1,
-      (classSkillPoints + this.getSkillPointAbilityModifier() + this.skillBudget.perlevel) * multiplier,
-    );
+    const pointsPerLevel = classSkillPoints + this.getSkillPointAbilityModifier() + this.skillBudget.perlevel;
+    return computeLevelSkillPoints(pointsPerLevel, isFirstCharacterLevel);
   }
 
   getSkillBudget() {

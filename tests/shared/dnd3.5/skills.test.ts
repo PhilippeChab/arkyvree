@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
+import { computeLevelSkillPoints, computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 const CLIMB = "climb";
 /** Levels by whether Climb is a class skill at them, with the skill points each gives. */
@@ -24,5 +24,16 @@ describe("skill points", () => {
     const { classSkills, points } = levels([true, 3], [false, 8]);
     const most = computeMaxPointsForSkill(CLIMB, 5, classSkills, points);
     expect(distributeSkillPoints(CLIMB, most, classSkills, points)).toEqual({ ranks: 5, perLevel: [3, 4] });
+  });
+});
+
+describe("a level's skill points", () => {
+  test("are at least 1, then four times over at the character's first level", () => {
+    expect([
+      computeLevelSkillPoints(3, false),
+      computeLevelSkillPoints(3, true),
+      computeLevelSkillPoints(-1, false),
+      computeLevelSkillPoints(-1, true),
+    ]).toEqual([3, 12, 1, 4]);
   });
 });

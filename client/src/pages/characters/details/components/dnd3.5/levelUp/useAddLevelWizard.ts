@@ -11,6 +11,7 @@ import { getLevelUpSections } from "@/client/src/pages/characters/details/compon
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { computeMaxPointsForSkill } from "@/shared/dnd3.5/skills.ts";
+import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
 import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
@@ -283,11 +284,11 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     if (!base) return undefined;
     if (!intModAdjustment) return base;
     const { modDelta } = intModAdjustment;
-    // Adjust each level: ×4 for first character level, ×1 for others
+    // Adjust each level's points per level (×4 at the first character level), then take its minimum again
     const existingLevelCount = (previewQuery.data?.skills.totalCharacterLevel ?? base.length) - base.length;
     return base.map((sp, i) => {
       const isFirstCharacterLevel = existingLevelCount === 0 && i === 0;
-      return Math.max(1, sp + modDelta * (isFirstCharacterLevel ? 4 : 1));
+      return computeLevelSkillPoints(sp / (isFirstCharacterLevel ? 4 : 1) + modDelta, isFirstCharacterLevel);
     });
   }, [previewQuery.data, intModAdjustment]);
 
