@@ -121,7 +121,7 @@ function levelDeltas(
 }
 
 /** The spell levels whose spells the character knows all of already, by `aptitudeId:level`. */
-function allKnownLevels(aptitudes: Record<string, { id: string }>): Set<string> {
+function allKnownLevels(aptitudes: Record<string, { id: string } & Record<string, unknown>>): Set<string> {
   const known = new Set<string>();
   for (const aptitude of Object.values(aptitudes)) {
     for (const [level, entry] of Object.entries(aptitude)) {
@@ -152,7 +152,8 @@ export function computePerLevelAptitudeSlots(
   featPoolIds: string[],
   powerPoolIds: string[],
   baseCharacterLevel: number,
-  baselineAptitudes: Record<string, { id: string; allowed: number; spent: number }>,
+  // The character's aptitudes as its sheet has them: a pool's counts, and a power pool's spell levels by number
+  baselineAptitudes: Record<string, { id: string; allowed: number; spent: number } & Record<string, unknown>>,
 ): {
   perLevelFeatSlots: FeatSlots;
   perLevelPowerSlots: PowerSlots;
