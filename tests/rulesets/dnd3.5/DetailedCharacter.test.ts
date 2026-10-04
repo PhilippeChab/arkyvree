@@ -2159,16 +2159,16 @@ describe("DetailedCharacter", () => {
         rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id,
       }))!;
       const strength = async () => {
-        const { level, total } = (await build((await Characters.findOne(db, { id: characterId }))!))
+        const { misc, total } = (await build((await Characters.findOne(db, { id: characterId }))!))
           .getDetailedCharacterAbilities()
           .getAbilities().strength;
-        return { level, total };
+        return { misc, total };
       };
       await addCharacterLevel(characterId, (await findKlassLevel(dragonDisciple.id, 1))!.id);
-      expect(await strength()).toEqual({ level: 0, total: 12 });
-      // The second level's +2 Strength, as level advancement gives one (the skill points count it)
+      expect(await strength()).toEqual({ misc: 0, total: 12 });
+      // The second level's +2 Strength
       await addCharacterLevel(characterId, (await findKlassLevel(dragonDisciple.id, 2))!.id);
-      expect(await strength()).toEqual({ level: 2, total: 14 });
+      expect(await strength()).toEqual({ misc: 2, total: 14 });
     });
 
     const dexterityMisc = (detailed: Detailed) =>

@@ -6,13 +6,6 @@ import { stripSeparators } from "@/shared/text.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "base", description: "Base score before modifiers", type: "number" as const, requirementOnly: true },
-  {
-    path: "level",
-    description: "From level advancement: every fourth level's increase, a class's ability boosts",
-    type: "number" as const,
-    // Only a level advances it: a class level's modifier, not a feat's or an item's
-    allowedEntityTypes: ["klass_levels"],
-  },
   { path: "misc", description: "From feats, items, and spells", type: "number" as const },
   { path: "total", description: "Final score after all bonuses", type: "number" as const, requirementOnly: true },
   { path: "modifier", description: "Derived from total score", type: "number" as const, requirementOnly: true },
@@ -47,8 +40,6 @@ export default class DetailedCharacterAbilities {
           description: subPath.description,
           valueType: subPath.type,
           operators: getNumericOperators(kind),
-          ...(kind === "modifier" &&
-            "allowedEntityTypes" in subPath && { allowedEntityTypes: subPath.allowedEntityTypes }),
         });
       }
     }

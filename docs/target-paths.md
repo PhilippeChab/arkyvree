@@ -11,7 +11,6 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 | Path | Type | Description |
 |------|------|-------------|
 | `abilities.<name>.base` | number | Base score before modifiers (req only) |
-| `abilities.<name>.level` | number | From level advancement: every fourth level's increase, a class's ability boosts (class levels' modifiers only) |
 | `abilities.<name>.misc` | number | From feats, items, and spells |
 | `abilities.<name>.total` | number | Final score after all bonuses (req only) |
 | `abilities.<name>.modifier` | number | Derived from total score (req only) |
