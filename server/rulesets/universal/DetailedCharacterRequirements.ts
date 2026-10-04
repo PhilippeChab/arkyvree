@@ -219,7 +219,7 @@ export default class DetailedCharacterRequirements {
     return this.compareRequirement(requirement, data, typedValue);
   }
 
-  private evaluateRequirementsGroup(requirements: Requirement[], holders: Holders, context?: { sourceId?: string }) {
+  private evaluateRequirementsGroup(requirements: Requirement[], holders: Holders, sourceId: string | undefined) {
     const nodes: Node[] = [];
 
     for (const requirement of requirements) {
@@ -230,7 +230,7 @@ export default class DetailedCharacterRequirements {
           children: [],
         });
       } else if (requirement.target) {
-        const results = this.targetPaths.traversePathInit(requirement.target, holders, context);
+        const results = this.targetPaths.traversePathInit(requirement.target, holders, { sourceId });
         const validResults: TraversePathResult[] = [];
 
         for (const result of results) {
@@ -285,18 +285,25 @@ export default class DetailedCharacterRequirements {
     return this.detailedCharacterRequirements;
   }
 
-  /** Whether a condition (a requirement on a path, not a chain of them) is met: by any of what its path reaches. */
-  isConditionMet(requirement: Requirement, holders: Holders): boolean {
+  /**
+   * Whether a condition (a requirement on a path, not a chain of them) is met: by any of what its path reaches, the item
+   * it's of (`sourceId`) its weapon's own paths.
+   */
+  isConditionMet(requirement: Requirement, holders: Holders, sourceId?: string): boolean {
     if (!requirement.target) return false;
     return this.targetPaths
-      .traversePathInit(requirement.target, holders)
+      .traversePathInit(requirement.target, holders, { sourceId })
       .some((result) => !result.error && this.evaluateRequirement(requirement, result, holders));
   }
 
-  /** Evaluates the groups; `context.sourceId` is the item they're of, which a weapon's own path (`combat.slot`) reads. */
-  evaluateRequirements(holders: Holders, requirements: Requirement[][], context?: { sourceId?: string }) {
+  /** Evaluates the groups, each with the item it's of (`itemOf`), which a weapon's own paths (`combat.slot`) read. */
+  evaluateRequirements(
+    holders: Holders,
+    requirements: Requirement[][],
+    itemOf: (group: Requirement[]) => string | undefined = () => undefined,
+  ) {
     for (const group of requirements) {
-      this.evaluateRequirementsGroup(group, holders, context);
+      this.evaluateRequirementsGroup(group, holders, itemOf(group));
     }
   }
 }

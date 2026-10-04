@@ -932,6 +932,40 @@ describe("DetailedCharacter", () => {
         expect(await proficientWith("Elara Starweaver", "Bastard Sword", "Two Handed")).toBe(false);
       });
 
+      test("reads the hand holding a weapon in its own modifiers' requirements too", async () => {
+        // A battleaxe whose +1 to hit is only for the main hand
+        const { itemMap, rulesetId } = await getSeedCtx();
+        const sword = await createItem({
+          name: "Main-Hand Axe",
+          type: "Weapon",
+          slot: "Main Hand",
+          sourceItemId: itemMap["Battleaxe"],
+        });
+        const [bonus] = await Modifiers.create(db, {
+          sourceId: sword.id,
+          sourceType: "items",
+          target: "combat.tohit.misc",
+          value: "1",
+          valueType: "number",
+          operator: "add",
+        });
+        await Requirements.create(db, {
+          entityId: bonus.id,
+          entityType: "modifiers",
+          level: "1",
+          target: "combat.slot",
+          operator: "equal",
+          value: "mainhand",
+          valueType: "string",
+        });
+        invalidateSeededRuleset(rulesetId);
+        const misc = async (location: "Main Hand" | "Off Hand") => {
+          const set = weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: sword.id, location, weaponSet: 0 }]));
+          return (location === "Main Hand" ? set.mainhand : set.offhand)!.tohit.misc;
+        };
+        expect([await misc("Main Hand"), await misc("Off Hand")]).toEqual([1, 0]);
+      });
+
       test("gives an elf the longsword, the rapier and the bows", async () => {
         // An elf wizard, whose class gives her none of them
         expect([
