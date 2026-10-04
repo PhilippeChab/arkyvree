@@ -41,6 +41,7 @@ class CharacterModifiersService {
         "modifier",
         body.operator,
         body.value,
+        "characters",
       );
 
       const rows = await Modifiers.create(tx, {
@@ -85,6 +86,7 @@ class CharacterModifiersService {
         "modifier",
         body.operator,
         body.value,
+        "characters",
       );
 
       const rows = await Modifiers.update(

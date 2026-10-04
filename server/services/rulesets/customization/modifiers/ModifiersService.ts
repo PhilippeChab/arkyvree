@@ -70,6 +70,7 @@ class ModifiersService {
           "modifier",
           body.operator,
           body.value,
+          entityType,
         );
 
         const rows = await Modifiers.create(tx, {
@@ -210,6 +211,7 @@ class ModifiersService {
           "modifier",
           body.operator,
           body.value,
+          entityType,
         );
 
         const expectedUpdatedAt = resolvedModifierId === modifierId ? body.updatedAt : undefined;

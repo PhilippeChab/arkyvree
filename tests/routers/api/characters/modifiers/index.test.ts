@@ -75,6 +75,16 @@ describe("character modifiers", () => {
     );
   });
 
+  test("refuses a path a character's own modifier can't target: a level's advancement, a pool's slots", async () => {
+    const characterId = await createCharacter();
+    for (const target of ["abilities.strength.level", "aptitudes.general.allowed"]) {
+      await expectStatus(
+        modifiers.$post({ param: { characterId }, json: { target, value: "1", operator: "add" } }),
+        400,
+      );
+    }
+  });
+
   test("refuses a value that isn't of its target's type, and takes a template", async () => {
     const characterId = await createCharacter();
     const created = await expectOk(modifiers.$post({ param: { characterId }, json: strengthBonus }));
