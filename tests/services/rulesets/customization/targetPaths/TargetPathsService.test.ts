@@ -259,6 +259,7 @@ describe("TargetPathsService", () => {
 
     test("offer a leaf's siblings when the path goes a dot past it", async () => {
       expect((await complete("abilities.strength.misc.", "modifier")).items.map((item) => item.insertText)).toEqual([
+        "level",
         "misc",
       ]);
     });
