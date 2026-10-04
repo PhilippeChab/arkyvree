@@ -172,15 +172,6 @@ export default class DetailedCharacterPowers {
     }
   }
 
-  updateTotals(): void {
-    for (const value of Object.values(this.detailedCharacterPowers)) {
-      if ("dc" in value) {
-        const dc = (value as PowerEntry).dc!;
-        dc.total = dc.base + dc.level + dc.ability + dc.misc;
-      }
-    }
-  }
-
   injectGroupings(groupings: Record<string, Record<string, PowerDc>>) {
     if (Object.keys(groupings).length === 0) return;
     const namespace: PowerGroupsNamespace = {};

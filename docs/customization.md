@@ -8,6 +8,20 @@ A class's own modifiers apply once to a character with any level of it, and its 
 
 The complete application operator definitions live in `shared/customization/operators.ts`. API validators consume those lists; `tests/shared/customization/operators.test.ts` verifies they match the migrated database's CHECK constraints. Keep generated `drizzle/schema.ts` free of handwritten helpers. Operator changes require a database migration and a schema refresh as well as updating the application definitions.
 
+## How a sheet is built
+
+A character's sheet holds **inputs** and **computed values**:
+
+- **Inputs** are set from the character's data and changed by modifiers: ability scores and their misc, skill ranks and misc, the class's base attack bonus and base saves, the hit die rolls, the race's speed, an item's AC bonus and penalties, the carried weight, a weapon's magic and misc bonuses and dice.
+- **Computed values** are getters, worked out from the inputs whenever read: totals, an ability's modifier, a skill's or a save's ability bonus, a skill's armor check penalty, Dexterity's bonus to AC, the size modifiers, the loads and their penalties, the speed under the load, a weapon's to-hit, Strength to damage and thrown and two-weapon attacks, a spell's DC. They never go stale: requirements, modifiers and the API read the sheet as it stands. A modifier can't target one (its target path is "req only"); a stored one is skipped, saying why.
+- **The armor's and the shield's AC** (`combat.ac.armor`, `combat.ac.shield`) are both: the equipped items' AC (with what their own modifiers add), plus what modifiers on the path add. A modifier's write keeps only its own part, so the items' stays live.
+
+The build (`AbstractDetailedCharacter.build`) loads the data, sets the inputs (the subsystems' `initialize`, then a bonded creature's master and stat block), and applies the modifiers in rounds:
+
+1. The modifiers no requirement gates apply first.
+2. Then, round after round, the gated ones whose requirements the sheet now meets. So an item's Strength counts toward a feat's prerequisite, and a load requirement reads the load. Each round checks only the requirements gating a modifier still waiting, and a round that applies none ends it.
+3. Template modifiers apply last, reading the final values. The requirements are then evaluated once more on the final sheet: the evaluation the power modifiers and the validation read.
+
 ## Modifier Operators
 
 `add`, `subtract`, `multiply`, `divide`, `set`
@@ -298,7 +312,7 @@ Feats auto-generated per unique school in `hooks/generators/spellGenerator.gener
 
 ### Template modifiers (dynamic references):
 
-Use `{{ target.path }}` syntax to reference another stat as the modifier value. Template modifiers are evaluated **after** all literal modifiers, so they read final resolved values.
+Use `{{ target.path }}` syntax to reference another stat as the modifier value. Template modifiers are evaluated **after** all literal modifiers, so they read final resolved values (see [How a sheet is built](#how-a-sheet-is-built)).
 
 ```ts
 // Divine Grace: add CHA modifier to all saves

@@ -363,17 +363,9 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterPowers.injectGroupings(this.detailedCharacterPowerGroupings.getPowerGroupings());
 
     this.detailedCharacterSkills.updateSkillPointTotals();
-    this.detailedCharacterEncumbrance.updateTotals();
-    this.detailedCharacterSkills.updateTotals();
   }
 
   protected async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {
-    this.detailedCharacterSkills.refreshAbilityModifiers();
-
-    this.detailedCharacterCombat.applyWeaponFinesse(this.hasWeaponFinesse(rulesetData));
-    this.detailedCharacterCombat.adjustWeaponDamageForSize();
-    this.detailedCharacterCombat.updateTotals();
-
     this.detailedCharacterSpellcasting.fetchBonusCasterLevelData(
       rulesetData,
       this.klassLevels,
@@ -404,8 +396,10 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterCombat.applyProficiencyPenalties(unproficientItemIds);
   }
 
-  protected preRequirementProcessing(): void {
+  protected async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {
     this.detailedCharacterSpellcasting.initSpellcastingHolder(this.holders!, this.modifiers, this.klassCasterTypeMap);
+    // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read
+    this.detailedCharacterCombat.applyWeaponFinesse(this.hasWeaponFinesse(rulesetData));
   }
 
   async build(

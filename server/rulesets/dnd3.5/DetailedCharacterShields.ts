@@ -30,7 +30,7 @@ const SHIELD_GROUPING_PROPERTIES = [SHIELD_TYPE] as const;
 
 type ShieldSlot = {
   name: string;
-  ac: { bonus: number; misc: number; total: number };
+  ac: { bonus: number; misc: number; readonly total: number };
   checkpenalty: number;
   spellfailure: number;
 };
@@ -72,17 +72,6 @@ export default class DetailedCharacterShields {
     return this.shields;
   }
 
-  updateTotals(): void {
-    const uniqueShields = new Set(Object.values(this.shields));
-    let totalShieldAc = 0;
-    for (const shield of uniqueShields) {
-      shield.ac.total = shield.ac.bonus + shield.ac.misc;
-      totalShieldAc += shield.ac.total;
-    }
-    this.characterCombat.getCombat().ac.shield = totalShieldAc;
-    this.characterCombat.updateTotals();
-  }
-
   registerShield(item: Item, properties: Property[]): void {
     const shieldType = properties.find((p) => p.type === SHIELD_PROFICIENCY);
     if (!shieldType) return;
@@ -96,7 +85,14 @@ export default class DetailedCharacterShields {
 
     const shieldSlot: ShieldSlot = {
       name: item.name,
-      ac: { bonus: acBonus, misc: 0, total: acBonus },
+      // Its AC's total is computed when read, from the bonus and what modifiers add
+      ac: {
+        bonus: acBonus,
+        misc: 0,
+        get total() {
+          return this.bonus + this.misc;
+        },
+      },
       checkpenalty: checkPenalty,
       spellfailure: spellFailure,
     };

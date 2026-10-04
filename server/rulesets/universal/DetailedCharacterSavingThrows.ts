@@ -8,7 +8,7 @@ import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "base", description: "Base save bonus from class levels", type: "number" as const },
-  { path: "ability", description: "From key ability modifier", type: "number" as const },
+  { path: "ability", description: "From key ability modifier", type: "number" as const, requirementOnly: true },
   { path: "misc", description: "From feats, items, and spells", type: "number" as const },
   { path: "total", description: "Final saving throw bonus", type: "number" as const, requirementOnly: true },
 ];
@@ -17,9 +17,9 @@ type DetailedCharacterComprehensiveSavingThrows = {
   [key: string]: {
     name: string;
     base: number;
-    ability: number;
+    readonly ability: number;
     misc: number;
-    total: number;
+    readonly total: number;
   };
 };
 
@@ -66,8 +66,6 @@ export default class DetailedCharacterSavingThrows {
   private readonly detailedCharacterSavingThrows: DetailedCharacterComprehensiveSavingThrows =
     {} as DetailedCharacterComprehensiveSavingThrows;
 
-  private readonly saveAbilityNames = new Map<string, string>();
-
   initialize(saves: RulesetSave[], rulesetAbilities: RulesetAbility[], klassLevelSaves: KlassLevelSave[]) {
     const abilityNames = new Map(rulesetAbilities.map((a) => [a.id, a.name]));
     const saveBaseValues = new Map<string, number>();
@@ -86,15 +84,19 @@ export default class DetailedCharacterSavingThrows {
       const normalizedName = stripSeparators(save.name);
       const abilityName = abilityNames.get(save.abilityId) ?? "Unknown";
       const base = saveBaseValues.get(save.id) ?? 0;
-      const abilityMod = this.characterAbilities.getAbilityModifier(abilityName);
+      const abilities = this.characterAbilities;
 
-      this.saveAbilityNames.set(normalizedName, abilityName);
+      // The ability's modifier and the total are computed when read, so they follow the abilities and the parts
       this.detailedCharacterSavingThrows[normalizedName] = {
         name: save.name,
         base,
-        ability: abilityMod,
+        get ability() {
+          return abilities.getAbilityModifier(abilityName);
+        },
         misc: 0,
-        total: base + abilityMod,
+        get total() {
+          return this.base + this.ability + this.misc;
+        },
       };
     }
   }
@@ -105,26 +107,5 @@ export default class DetailedCharacterSavingThrows {
 
   getSavingThrows(): DetailedCharacterComprehensiveSavingThrows {
     return this.detailedCharacterSavingThrows;
-  }
-
-  updateTotal(savingThrowName: string) {
-    const savingThrow = this.detailedCharacterSavingThrows[savingThrowName];
-    savingThrow.total = savingThrow.base + savingThrow.ability + savingThrow.misc;
-  }
-
-  updateTotals() {
-    for (const savingThrowName of Object.keys(this.detailedCharacterSavingThrows)) {
-      this.updateTotal(savingThrowName);
-    }
-  }
-
-  refreshAbilityModifiers() {
-    for (const [saveName, save] of Object.entries(this.detailedCharacterSavingThrows)) {
-      const abilityName = this.saveAbilityNames.get(saveName);
-      if (abilityName) {
-        save.ability = this.characterAbilities.getAbilityModifier(abilityName);
-      }
-    }
-    this.updateTotals();
   }
 }

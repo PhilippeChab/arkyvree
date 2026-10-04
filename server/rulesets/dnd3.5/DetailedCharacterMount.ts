@@ -42,13 +42,10 @@ export default class DetailedCharacterMount extends DetailedCharacterAdvancingBo
     const abilities = this.detailedCharacterAbilities.getAbilities();
     if (row && row.str !== 0 && abilities["strength"]) {
       abilities["strength"].misc += row.str;
-      this.detailedCharacterAbilities.updateTotal("strength");
     }
     if (row && abilities["intelligence"]) {
       abilities["intelligence"].base = row.int;
-      abilities["intelligence"].misc = 0;
       abilities["intelligence"].level = 0;
-      this.detailedCharacterAbilities.updateTotal("intelligence");
     }
 
     this.applyHitDice(totalHD, (raceStats?.baseNaturalArmor ?? 0) + (row?.natural ?? 0));

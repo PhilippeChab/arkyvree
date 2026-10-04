@@ -1261,6 +1261,80 @@ describe("DetailedCharacter", () => {
   });
 
   describe("modifiers", () => {
+    /** A modifier of the character's race, gated by `requirements` when given: it applies to the seeded character. */
+    async function raceModifier(
+      name: string,
+      modifier: { target: string; value: string; operator?: string },
+      requirements: { target: string; operator: string; value: string; valueType: string }[] = [],
+    ) {
+      const character = await seeded(name);
+      const [created] = await Modifiers.create(db, {
+        sourceId: character.raceId,
+        sourceType: "races",
+        operator: "add",
+        valueType: "number",
+        ...modifier,
+      });
+      for (const [index, requirement] of requirements.entries()) {
+        await Requirements.create(db, {
+          entityId: created.id,
+          entityType: "modifiers",
+          level: String(index + 1),
+          ...requirement,
+        });
+      }
+      invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+      return created;
+    }
+
+    test("skip a part the sheet computes, and say why: it would be overwritten, or read stale", async () => {
+      const modifier = await raceModifier("Bjorn Ironhand", { target: "skills.climb.total", value: "5" });
+      const bjorn = await buildSeeded("Bjorn Ironhand");
+      expect(bjorn.getDetailedCharacterModifiers().getModifiers().skippedModifiers).toContainEqual({
+        modifier: expect.objectContaining({ id: modifier.id }),
+        warning: "Target skills.climb.total is computed from the sheet: a modifier can't change it",
+      });
+    });
+
+    test("keep a bonus to the armor's AC beside the armor's own, whichever applies first", async () => {
+      // Chain mail (+5), its item +1 (a magic armor), and bracers' +2 on the armor bonus
+      const { itemMap, rulesetId } = await getSeedCtx();
+      await Modifiers.create(db, {
+        sourceId: itemMap["Chain Mail"],
+        sourceType: "items",
+        target: "items.armors.chainmail.ac.misc",
+        operator: "add",
+        value: "1",
+        valueType: "number",
+      });
+      invalidateSeededRuleset(rulesetId);
+      await raceModifier("Bjorn Ironhand", { target: "combat.ac.armor", value: "2" });
+      const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Chain Mail", location: "Torso" }]);
+      expect(bjorn.getDetailedCharacterCombat().getCombat().ac.armor).toBe(8);
+    });
+
+    test("gated by a requirement, read the sheet the other modifiers have changed", async () => {
+      // +5 initiative while Strength is 20 or more: Bjorn's 18, 20 with the belt
+      await raceModifier("Bjorn Ironhand", { target: "combat.initiative.misc", value: "5" }, [
+        { target: "abilities.strength.total", operator: "greater_than_or_equal", value: "20", valueType: "number" },
+      ]);
+      const initiative = async (carried: Carried[]) =>
+        (await buildCarrying("Bjorn Ironhand", carried)).getDetailedCharacterCombat().getCombat().initiative.misc;
+      const belt = { item: (await createAbilityItem("strength", 2, "Waist")).id, location: "Waist" as const };
+      expect([await initiative([]), await initiative([belt])]).toEqual([0, 5]);
+    });
+
+    test("raise the spell DCs with the casting ability", async () => {
+      // An elf wizard, INT 18: a headband's +2 makes her modifier 5, each DC one higher
+      const dcs = async (carried: Carried[]) =>
+        Object.values(
+          (await buildCarrying("Elara Starweaver", carried)).getDetailedCharacterPowerGroupings().getPowerGroupings(),
+        ).flatMap((group) => Object.values(group).map((dc) => dc.total));
+      const before = await dcs([]);
+      const headband = { item: (await createAbilityItem("intelligence", 2, "Head")).id, location: "Head" as const };
+      expect(await dcs([headband])).toEqual(before.map((dc) => dc + 1));
+    });
+
     test("apply a feat's bonus", async () => {
       const toughness = (await buildSeeded("Kael Stormborn"))
         .getDetailedCharacterModifiers()
@@ -1786,6 +1860,60 @@ describe("DetailedCharacter", () => {
   });
 
   describe("encumbrance", () => {
+    test("keeps a modifier to the carried weight, whoever carries it", async () => {
+      // A race's +100 lbs: the sheet's encumbrance is the encumbrance's own, which the modifier changes
+      const { rulesetId } = await getSeedCtx();
+      for (const name of ["Lyra Shadowstep", "Bjorn Ironhand"]) {
+        const carried = async () =>
+          (await buildSeeded(name)).getDetailedCharacterCombat().getCombat().encumbrance.carriedweight;
+        const before = await carried();
+        const character = await seeded(name);
+        const [modifier] = await Modifiers.create(db, {
+          sourceId: character.raceId,
+          sourceType: "races",
+          target: "combat.encumbrance.carriedweight",
+          operator: "add",
+          value: "100",
+          valueType: "number",
+        });
+        invalidateSeededRuleset(rulesetId);
+        expect(await carried()).toBe(before + 100);
+        await Modifiers.delete(db, { id: modifier.id });
+        invalidateSeededRuleset(rulesetId);
+      }
+    });
+
+    test("is what a modifier's requirements read, with the rest of the sheet's totals", async () => {
+      // +5 initiative while under a medium load and with a grapple of 1 or more: Bjorn, STR 18, with 4 barrels
+      const bjorn = await seeded("Bjorn Ironhand");
+      const [modifier] = await Modifiers.create(db, {
+        sourceId: bjorn.raceId,
+        sourceType: "races",
+        target: "combat.initiative.misc",
+        operator: "add",
+        value: "5",
+        valueType: "number",
+      });
+      const gate = (level: string, target: string, operator: string, value: string, valueType: string) => ({
+        entityId: modifier.id,
+        entityType: "modifiers",
+        level,
+        target,
+        operator,
+        value,
+        valueType,
+      });
+      await Requirements.create(db, gate("1", "combat.encumbrance.load", "equal", "medium", "string"));
+      await Requirements.create(db, gate("2", "combat.grapple.total", "greater_than_or_equal", "1", "number"));
+      invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+
+      const initiative = async (barrels: number) => {
+        await carry(bjorn, barrels ? [{ item: "Barrel (empty)", quantity: barrels, equipped: false }] : []);
+        return (await build(bjorn)).getDetailedCharacterCombat().getCombat().initiative.misc;
+      };
+      expect([await initiative(4), await initiative(0)]).toEqual([5, 0]);
+    });
+
     test("weighs the inventory against the character's strength", async () => {
       // STR 18: loads of 100, 200 and 300 lbs; the seeded inventory weighs 95.
       const bjorn = await buildSeeded("Bjorn Ironhand");

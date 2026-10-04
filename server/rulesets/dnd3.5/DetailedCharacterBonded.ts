@@ -69,20 +69,20 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
         entry.trained = srdTotal > 0;
       }
     }
-    this.detailedCharacterSkills.updateTotals();
   }
 
   protected override getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
     return { budget: [], ranks: [] };
   }
 
-  protected override async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {
-    await super.postModifierProcessing(rulesetData);
-
+  /**
+   * The creature's master and stat block set its inputs (hit dice, base saves, natural armor and attacks, the stat
+   * block's feats and skill totals) before requirements read the sheet and modifiers change it: an item's or a feat's
+   * modifier adds on top. Then the character's own setup, Weapon Finesse on the natural attacks included.
+   */
+  protected override async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {
     if (this.character.parentCharacterId) {
       await this.applyMasterDerivation(this.character.parentCharacterId, rulesetData);
-      this.detailedCharacterSkills.refreshAbilityModifiers();
-      this.detailedCharacterSavingThrows.refreshAbilityModifiers();
     }
 
     const raceStats = getBondedRaceStats(this.race?.name);
@@ -96,8 +96,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     if (this.cachedTotalHD !== null) {
       this.detailedCharacterCombat.setHitDiceOverride(this.cachedTotalHD);
     }
-    this.detailedCharacterCombat.applyWeaponFinesse(this.hasWeaponFinesse(rulesetData));
-    this.detailedCharacterCombat.updateTotals();
+    await super.preRequirementProcessing(rulesetData);
   }
 
   override validate(): ValidationResult {

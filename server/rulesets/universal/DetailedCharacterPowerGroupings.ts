@@ -8,9 +8,9 @@ import { capitalize, stripSeparators } from "@/shared/text.ts";
 export type PowerDc = {
   base: number;
   level: number;
-  ability: number;
+  readonly ability: number;
   misc: number;
-  total: number;
+  readonly total: number;
 };
 
 const NAVIGATABLE_POWER_DC_PATHS = [
@@ -67,33 +67,26 @@ export default class DetailedCharacterPowerGroupings {
     return this.powerGroupings;
   }
 
-  updateTotals(): void {
-    // Collect unique DC references to avoid recalculating shared objects
-    const seen = new Set<PowerDc>();
-    for (const group of Object.values(this.powerGroupings)) {
-      for (const dc of Object.values(group)) {
-        if (seen.has(dc)) continue;
-        seen.add(dc);
-        // Re-read ability modifier in case abilities were modified
-        dc.total = dc.base + dc.level + dc.ability + dc.misc;
-      }
-    }
-  }
-
   registerPower(
     power: { name: string; powerLevel: number | null; abilityDcName: string | null },
     properties: Property[],
   ): PowerDc | null {
     if (power.powerLevel == null || power.abilityDcName == null) return null;
 
-    const abilityMod = this.detailedCharacterAbilities.getAbilityModifier(power.abilityDcName);
+    const abilities = this.detailedCharacterAbilities;
+    const abilityName = power.abilityDcName;
 
+    // The casting ability's modifier and the total are computed when read, so a raised ability raises the DC
     const dc: PowerDc = {
       base: 10,
       level: power.powerLevel,
-      ability: abilityMod,
+      get ability() {
+        return abilities.getAbilityModifier(abilityName);
+      },
       misc: 0,
-      total: 10 + power.powerLevel + abilityMod,
+      get total() {
+        return this.base + this.level + this.ability + this.misc;
+      },
     };
 
     const normalizedPowerName = stripSeparators(power.name);

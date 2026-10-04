@@ -17,8 +17,8 @@ import { stripSeparators } from "@/shared/text.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "rank", description: "Total ranks invested", type: "number" as const },
-  { path: "ability", description: "From key ability modifier", type: "number" as const },
-  { path: "weight", description: "Armor check penalty (ACP)", type: "number" as const },
+  { path: "ability", description: "From key ability modifier", type: "number" as const, requirementOnly: true },
+  { path: "weight", description: "Armor check penalty (ACP)", type: "number" as const, requirementOnly: true },
   { path: "size", description: "Size modifier (Hide only)", type: "number" as const },
   { path: "misc", description: "From feats, items, and spells", type: "number" as const },
   { path: "total", description: "Final skill check bonus", type: "number" as const, requirementOnly: true },
@@ -33,11 +33,11 @@ type DetailedCharacterComprehensiveSkills = {
     innate: boolean;
     trained: boolean;
     rank: number; // Rank from levels
-    ability: number; // Bonus from ability modifier
-    weight: number; // Weight from items
+    readonly ability: number; // Bonus from ability modifier
+    readonly weight: number; // Armor check penalty, from armor, shield and load
     size: number; // Size modifier (Hide only)
     misc: number; // Misc from items
-    total: number; // Total from everything
+    readonly total: number; // Total from everything
   };
 };
 
@@ -108,11 +108,6 @@ export default class DetailedCharacterSkills {
   private readonly detailedCharacterSkills: DetailedCharacterComprehensiveSkills =
     {} as DetailedCharacterComprehensiveSkills;
 
-  /** The skills armor weighs on, each with how many times over it takes the penalty. */
-  private readonly checkPenaltyMultipliers = new Map<string, number>();
-
-  private readonly skillAbilityNames = new Map<string, string>();
-
   private characterArmors: { getArmors(): ArmorsData } | null = null;
 
   private characterShields: { getShields(): ShieldsData } | null = null;
@@ -137,7 +132,8 @@ export default class DetailedCharacterSkills {
     return abilityName ? this.characterAbilities.getAbilityModifierExcludingMisc(abilityName) : 0;
   }
 
-  private recalculateArmorCheckPenalty() {
+  /** The armor check penalty a skill armor weighs on takes: the worse of the armor and shield's and the load's. */
+  private armorCheckPenalty(): number {
     let armorPenalty = 0;
 
     if (this.characterArmors) {
@@ -156,15 +152,7 @@ export default class DetailedCharacterSkills {
 
     // D&D 3.5: use the worse (more negative) of armor+shield penalty vs encumbrance penalty
     const encumbrancePenalty = this.characterEncumbrance ? this.characterEncumbrance.getEncumbrance().checkpenalty : 0;
-    const effectivePenalty = Math.min(armorPenalty, encumbrancePenalty);
-    const weight = Math.abs(effectivePenalty);
-
-    for (const [skillName, multiplier] of this.checkPenaltyMultipliers) {
-      const skill = this.detailedCharacterSkills[skillName];
-      if (skill) {
-        skill.weight = weight * multiplier;
-      }
-    }
+    return Math.abs(Math.min(armorPenalty, encumbrancePenalty));
   }
 
   initialize(
@@ -230,35 +218,33 @@ export default class DetailedCharacterSkills {
 
     for (const skill of rulesetSkills) {
       const props = skillProperties?.get(skill.id);
-      const impactedByWeight = props?.impactedByWeight ?? false;
       const usableWithoutTraining = props?.usableWithoutTraining ?? true;
-
-      if (impactedByWeight) {
-        this.checkPenaltyMultipliers.set(stripSeparators(skill.name), props?.checkPenaltyMultiplier ?? 1);
-      }
-
-      const innate = this.innateSkillIds.has(skill.id);
+      // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
+      const checkPenaltyMultiplier = props?.impactedByWeight ? (props.checkPenaltyMultiplier ?? 1) : 0;
       const invested = this.rankBySkillId.get(skill.id) ?? 0;
-      const rank = invested;
       const abilityName = abilityNameById.get(skill.primaryAbilityId) ?? "";
-      const ability = abilityName ? this.characterAbilities.getAbilityModifier(abilityName) : 0;
-      const weight = 0;
-      const misc = 0;
-      const size = skill.name === "Hide" ? (SIZE_HIDE_MOD[this.raceSize] ?? 0) : 0;
-      const total = rank + ability + size + misc - weight;
+      const abilities = this.characterAbilities;
+      const armorCheckPenalty = () => this.armorCheckPenalty();
 
-      this.skillAbilityNames.set(stripSeparators(skill.name), abilityName);
+      // The ability's modifier, the armor check penalty and the total are computed when read: they follow the
+      // abilities, the armor and the load, and the parts
       this.detailedCharacterSkills[stripSeparators(skill.name)] = {
         name: skill.name,
         description: skill.description ?? undefined,
         trained: usableWithoutTraining ? true : invested !== 0,
-        innate,
-        rank,
-        ability,
-        weight,
-        size,
-        misc,
-        total,
+        innate: this.innateSkillIds.has(skill.id),
+        rank: invested,
+        get ability() {
+          return abilityName ? abilities.getAbilityModifier(abilityName) : 0;
+        },
+        get weight() {
+          return checkPenaltyMultiplier === 0 ? 0 : armorCheckPenalty() * checkPenaltyMultiplier;
+        },
+        size: skill.name === "Hide" ? (SIZE_HIDE_MOD[this.raceSize] ?? 0) : 0,
+        misc: 0,
+        get total() {
+          return this.rank + this.ability + this.size + this.misc - this.weight;
+        },
       };
     }
   }
@@ -379,27 +365,5 @@ export default class DetailedCharacterSkills {
     this.skillBudget.total = total;
     this.skillBudget.spent = spent;
     this.skillBudget.available = total - spent;
-  }
-
-  updateTotal(skillName: string) {
-    const skill = this.detailedCharacterSkills[skillName];
-    skill.total = skill.rank + skill.ability + skill.size + skill.misc - skill.weight;
-  }
-
-  updateTotals() {
-    this.recalculateArmorCheckPenalty();
-    for (const skillName of Object.keys(this.detailedCharacterSkills)) {
-      this.updateTotal(skillName);
-    }
-  }
-
-  refreshAbilityModifiers() {
-    for (const [skillName, skill] of Object.entries(this.detailedCharacterSkills)) {
-      const abilityName = this.skillAbilityNames.get(skillName);
-      if (abilityName) {
-        skill.ability = this.characterAbilities.getAbilityModifier(abilityName);
-      }
-    }
-    this.updateTotals();
   }
 }

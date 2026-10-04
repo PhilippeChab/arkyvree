@@ -19,7 +19,6 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
     combat.ac.natural = naturalArmor;
     combat.bab = Math.floor((totalHD * 3) / 4);
     combat.hp.base = Math.ceil(totalHD * HD_PER_LEVEL_AVG);
-    combat.hp.misc = 0;
 
     const saves = this.detailedCharacterSavingThrows.getSavingThrows();
     if (saves["fortitude"]) saves["fortitude"].base = 2 + Math.floor(totalHD / 2);

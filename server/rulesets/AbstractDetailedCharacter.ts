@@ -22,11 +22,12 @@ import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedC
 import type DetailedCharacterFeatGroupings from "@/server/rulesets/universal/DetailedCharacterFeatGroupings.ts";
 import type DetailedCharacterFeats from "@/server/rulesets/universal/DetailedCharacterFeats.ts";
 import type DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
-import type DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
+import DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
 import type DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
 import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import type DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
+import { isTemplateValue } from "@/server/rulesets/universal/templateExpression.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type {
   Aptitude,
@@ -226,6 +227,49 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     this.validRulesetIds = data.validRulesetIds;
   }
 
+  /**
+   * Applies the modifiers in rounds, so a modifier's requirements read the sheet the other modifiers have already
+   * changed (an item's Strength counts toward a feat's prerequisite): first those no requirement gates, then, round
+   * after round, the gated ones whose requirements the sheet now meets, until a round applies none. Each round checks
+   * only the requirements gating a modifier still waiting. A template modifier, which reads the sheet, applies last.
+   * The requirements are evaluated once more on the final sheet: the evaluation the templates, the power modifiers and
+   * the validation read.
+   */
+  private applyModifiersInRounds(modifiers: Modifier[]): void {
+    const holders = this.holders!;
+    const groups = this.requirementGroups.filter((group) => group.length > 0);
+    const gateKey = (r: Requirement) => `${r.entityId}:${r.entityType}`;
+    const keysOf = (m: Modifier) => [`${m.sourceId}:${m.sourceType}`, `${m.id}:modifiers`];
+    const gateKeys = new Set(groups.flatMap((group) => group.map(gateKey)));
+    const literal = modifiers.filter((m) => !isTemplateValue(m.value));
+
+    for (const modifier of literal.filter((m) => !keysOf(m).some((key) => gateKeys.has(key)))) {
+      this.detailedCharacterModifiers.evaluateModifier(modifier, holders);
+    }
+    let waiting = literal.filter((m) => keysOf(m).some((key) => gateKeys.has(key)));
+    while (waiting.length > 0) {
+      const waitingKeys = new Set(waiting.flatMap(keysOf));
+      const round = new DetailedCharacterRequirements(this.targetPaths);
+      round.evaluateRequirements(
+        holders,
+        groups.filter((group) => group.some((r) => waitingKeys.has(gateKey(r)))),
+      );
+      const blocked = DetailedCharacterModifiers.blockedKeys(round);
+      const ready = waiting.filter((m) => !keysOf(m).some((key) => blocked.has(key)));
+      if (ready.length === 0) break;
+      for (const modifier of ready) this.detailedCharacterModifiers.evaluateModifier(modifier, holders);
+      waiting = waiting.filter((m) => !ready.includes(m));
+    }
+
+    this.detailedCharacterRequirements.evaluateRequirements(holders, groups);
+    // The modifiers still waiting are recorded as gated out; the templates apply, or are, by the final evaluation
+    this.detailedCharacterModifiers.evaluateModifiers(
+      holders,
+      [...waiting, ...modifiers.filter((m) => isTemplateValue(m.value))],
+      this.detailedCharacterRequirements,
+    );
+  }
+
   /** Create the data loader for this ruleset. */
   protected abstract createDataLoader(): DataLoader;
 
@@ -283,7 +327,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   }
 
   /** Ruleset-specific setup before requirement evaluation (e.g. spellcasting holder). */
-  protected abstract preRequirementProcessing(): void;
+  protected abstract preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void>;
 
   /** An unmet requirement group's issue: on the entity of `owner`, one of its requirements, or naming its targets. */
   private unmetRequirementIssue(group: Requirement[], owner: Requirement): RequirementIssue {
@@ -336,34 +380,21 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       // 4. Build holders (subclass — includes ruleset-specific holders)
       this.holders = this.buildHolders();
 
-      // 5. Pre-requirement processing (subclass — e.g. spellcasting holder init)
-      this.preRequirementProcessing();
+      // 5. Pre-requirement processing (subclass — e.g. the spellcasting holder, a bonded creature's stat block)
+      await this.preRequirementProcessing(rulesetData);
 
-      // 6. Evaluate requirements (universal)
-      this.detailedCharacterRequirements.evaluateRequirements(
-        this.holders,
-        this.requirementGroups.filter((group) => group.length > 0),
-      );
-
-      // 7. Post-requirement processing (subclass — e.g. proficiency penalties)
+      // 6. Post-requirement processing (subclass — e.g. proficiency penalties, which check requirements of their own)
       this.postRequirementProcessing();
 
-      // 8. Evaluate non-power modifiers (universal)
+      // 7. Non-power modifiers, and the requirements that gate them (universal)
       const powerModifiers = this.modifiers.filter((m) => m.target.startsWith("powers."));
       const otherModifiers = this.modifiers.filter((m) => !m.target.startsWith("powers."));
-      this.detailedCharacterModifiers.evaluateModifiers(
-        this.holders,
-        otherModifiers,
-        this.detailedCharacterRequirements,
-      );
+      this.applyModifiersInRounds(otherModifiers);
 
-      // 9. Refresh universal ability-dependent sub-systems
-      this.detailedCharacterSavingThrows.refreshAbilityModifiers();
-
-      // 10. Ruleset-specific post-modifier processing (subclass)
+      // 8. Ruleset-specific post-modifier processing (subclass)
       await this.postModifierProcessing(rulesetData);
 
-      // 11. Evaluate power modifiers (universal)
+      // 9. Evaluate power modifiers (universal)
       this.detailedCharacterModifiers.evaluateModifiers(
         this.holders,
         powerModifiers,
