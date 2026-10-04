@@ -87,3 +87,9 @@ export function createRulesetModule(): RulesetModule {
     },
   };
 }
+
+export type { default as Dnd35DetailedCharacter } from "./DetailedCharacter.ts";
+export { isSkillSubtypeOf } from "./DetailedCharacterSkills.ts";
+export { getBondedRaceStats } from "./bondedRaceData.ts";
+export { buildBondedMap, buildBondedResponse, buildFullCharacterResponse } from "./buildCharacterResponse.ts";
+export type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "./types.ts";

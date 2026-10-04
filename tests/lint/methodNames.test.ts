@@ -123,12 +123,16 @@ describe("function-names", () => {
           "shared/scaled.ts": "export const scaledFeats = (feats: string[]) => feats;\n",
           "server/byOrder.ts": "export default function byOrder() {}\n",
           "client/src/lib/initialOf.ts": "export const initialOf = (name: string) => name[0];\n",
+          "server/sheet/page.tsx": "export function pageTitle() {}\nexport function Page() {}\n",
+          "server/listed.ts": "function scaled() {}\nconst build = () => 1;\nexport { scaled, build as buildIt };\n",
         },
         ["function-names"],
       ),
     ).toEqual([
       "function-names server/byOrder.ts",
+      "function-names server/listed.ts",
       "function-names server/services/planned.ts",
+      "function-names server/sheet/page.tsx",
       "function-names shared/scaled.ts",
     ]);
   });

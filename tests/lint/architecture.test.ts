@@ -60,6 +60,26 @@ describe("architecture rules", () => {
       }),
     ).toEqual(["folder-index server/routers/bad.ts"]);
   });
+
+  test("every server folder with an index is entered through it, but the routers'; the seeders and tools reach in", async () => {
+    expect(
+      await lint({
+        "server/repositories/index.ts": 'export { Visibility } from "./BaseRepository.ts";\n',
+        "server/repositories/BaseRepository.ts": "export enum Visibility { All }\n",
+        "server/services/direct.ts":
+          'import { Visibility } from "@/server/repositories/BaseRepository.ts";\nexport const d = Visibility;\n',
+        "server/services/indexed.ts":
+          'import { Visibility } from "@/server/repositories/index.ts";\nexport const i = Visibility;\n',
+        "server/routers/api/index.ts": "export default 1;\n",
+        "server/routers/api/validation.ts": "export const idParam = 1;\n",
+        "server/routers/authentication/validation.ts":
+          'import { idParam } from "@/server/routers/api/validation.ts";\nexport const v = idParam;\n',
+        "database/seeds/seed.ts":
+          'import { Visibility } from "@/server/repositories/BaseRepository.ts";\nexport const s = Visibility;\n',
+      }),
+    ).toEqual(["folder-index server/services/direct.ts"]);
+  });
+
   test("the middlewares sit above the repositories, and the server reads content packages, not the seeders", async () => {
     expect(
       await lint({

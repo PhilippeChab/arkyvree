@@ -7,7 +7,7 @@
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
-import type { Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/types.ts";
+import type { Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import type { Modifier, Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";

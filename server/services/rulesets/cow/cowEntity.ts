@@ -1,5 +1,4 @@
-import { withCowContext } from "@/server/database/cowContext.ts";
-import type { Db } from "@/server/database/index.ts";
+import { type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Klasses, KlassLevels, Modifiers, Rulesets } from "@/server/repositories/index.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";

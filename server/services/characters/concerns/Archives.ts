@@ -4,8 +4,7 @@ import { charactersInCharacter } from "@/drizzle/schema.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Activities, Characters } from "@/server/repositories/index.ts";
+import { Activities, Characters, Visibility } from "@/server/repositories/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 

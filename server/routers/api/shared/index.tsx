@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
-import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
+import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/index.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 

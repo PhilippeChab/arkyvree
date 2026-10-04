@@ -3,7 +3,6 @@ import { getTableName } from "drizzle-orm";
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
   Campaigns,
@@ -12,6 +11,7 @@ import {
   Characters,
   PlayerCharacters,
   Players,
+  Visibility,
 } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import {

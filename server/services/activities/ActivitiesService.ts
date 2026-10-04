@@ -1,5 +1,4 @@
 import { db } from "@/server/database/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
   Aptitudes,
@@ -23,6 +22,7 @@ import {
   Rulesets,
   Saves,
   Skills,
+  Visibility,
 } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 

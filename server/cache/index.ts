@@ -3,3 +3,6 @@
  * invalidation + framework accessors); services read it through `withRulesetScope` in `services/rulesets/cow/`.
  */
 export type { CachedCowData, CachedRulesetData } from "./rulesetCache/index.ts";
+
+export { default as DependentCache } from "./DependentCache.ts";
+export { setCacheEnabled } from "./MemoryCache.ts";

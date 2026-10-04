@@ -4,7 +4,6 @@ import { charactersInCharacter } from "@/drizzle/schema.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
   Campaigns,
@@ -14,6 +13,8 @@ import {
   Characters,
   Languages,
   Races,
+  Visibility,
+  visibilityMap,
 } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind, Holders } from "@/server/rulesets/types.ts";
@@ -186,7 +187,7 @@ class CharactersService extends include(Object, Archives) {
   async getCharacters(
     session: Session,
     where: {
-      visibility?: Visibility;
+      visibility?: keyof typeof visibilityMap;
       search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
@@ -194,8 +195,12 @@ class CharactersService extends include(Object, Archives) {
     },
     pagination: { limit: number; page: number },
   ) {
-    // Fetch basic character data with pagination
-    const result = await Characters.findPage(db, { userId: session.userId, ...where }, pagination);
+    const { visibility, ...filters } = where;
+    const result = await Characters.findPage(
+      db,
+      { userId: session.userId, ...filters, ...(visibility && { visibility: visibilityMap[visibility] }) },
+      pagination,
+    );
 
     const charactersList = result.items;
     const characterIds = charactersList.map((char) => char.id);

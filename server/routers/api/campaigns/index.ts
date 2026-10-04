@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { denyDemoUser, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
-import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
 
@@ -31,12 +30,10 @@ export default new Hono()
     async (c) => {
       const query = c.req.valid("query");
 
-      const visibility = visibilityMap[query.visibility];
-
       return c.json(
         await CampaignsService.getCampaigns(
           c.var.requestSession,
-          { visibility, search: query.search, orderBy: query.orderBy, orderDir: query.orderDir },
+          { visibility: query.visibility, search: query.search, orderBy: query.orderBy, orderDir: query.orderDir },
           { limit: query.limit, page: query.page },
         ),
         200,

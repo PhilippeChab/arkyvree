@@ -1,11 +1,10 @@
 import DependentCache from "@/server/cache/DependentCache.ts";
-import { withCowContext } from "@/server/database/cowContext.ts";
-import { db } from "@/server/database/index.ts";
-import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
+import { db, withCowContext } from "@/server/database/index.ts";
 import {
   Abilities,
   Aptitudes,
   Feats,
+  fetchEveryPage,
   Items,
   Klasses,
   KlassLevelFeats,

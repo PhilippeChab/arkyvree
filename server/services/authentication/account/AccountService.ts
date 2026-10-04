@@ -2,8 +2,7 @@ import { getTableName, type InferInsertModel } from "drizzle-orm";
 
 import { usersInAccount } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { emailService } from "@/server/emails/EmailService.ts";
-import { EmailTemplate } from "@/server/emails/templates.ts";
+import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { BadRequestError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
 import { hashPassword, verifyPassword } from "@/server/password.ts";
 import {

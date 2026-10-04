@@ -3,7 +3,6 @@ import { getTableName, type InferSelectModel } from "drizzle-orm";
 import { sessionsInAccount, type usersInAccount } from "@/drizzle/schema.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError } from "@/server/errors/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
   CharacterContributors,
@@ -13,6 +12,7 @@ import {
   OauthAccounts,
   Sessions,
   Users,
+  Visibility,
 } from "@/server/repositories/index.ts";
 
 /** The user as a response carries it: whether a password is set, never its digest. */

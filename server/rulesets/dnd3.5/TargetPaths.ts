@@ -38,7 +38,7 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { Dnd35LevelsHooks } from "./hooks/LevelsHooks.ts";
+import { Dnd35LevelsHooks } from "./hooks/index.ts";
 
 // D&D 3.5 specific constants
 const DND35_CATEGORIES = [

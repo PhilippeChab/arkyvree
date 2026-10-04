@@ -1,6 +1,5 @@
 import { db } from "@/server/database/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Characters } from "@/server/repositories/index.ts";
+import { Characters, Visibility } from "@/server/repositories/index.ts";
 import type { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
 import { BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";

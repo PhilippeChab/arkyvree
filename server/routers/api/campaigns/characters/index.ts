@@ -1,10 +1,9 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { denyDemoUser, exportRateLimit, zValidator } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
+import { denyDemoUser, exportRateLimit, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
-import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
+import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/index.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 

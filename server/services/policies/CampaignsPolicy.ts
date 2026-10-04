@@ -1,7 +1,6 @@
 import { type Db, db } from "@/server/database/index.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Players } from "@/server/repositories/index.ts";
+import { Players, Visibility } from "@/server/repositories/index.ts";
 import type { Campaign, Player, Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";

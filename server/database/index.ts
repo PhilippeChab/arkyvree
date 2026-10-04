@@ -13,3 +13,8 @@ const dbModule = isTest() ? await import("./test.ts") : await import("./producti
 export const db = dbModule.db;
 export const withTransaction = dbModule.withTransaction;
 export type { Db } from "./production.ts";
+
+export { getCowContext, withCowContext } from "./cowContext.ts";
+export type { CowData, IdResolveMap, OverrideMap } from "./cowContext.ts";
+export { clearRequestCache, memoizeRequest, runWithRequestCache } from "./requestCache.ts";
+export { waitForDatabase } from "./waitForDatabase.ts";
