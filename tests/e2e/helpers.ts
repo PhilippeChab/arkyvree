@@ -145,7 +145,7 @@ export async function openFighterLevel1(page: Page) {
     .filter({ has: page.locator("td").first().getByText("1", { exact: true }) })
     .first()
     .click();
-  await expect(page).toHaveURL(/\/rulesets\/[a-f0-9-]+\/klass_levels\/[a-f0-9-]+\/customization/);
+  await expect(page).toHaveURL(/\/rulesets\/[a-f0-9-]+\/class-levels\/[a-f0-9-]+\/customization/);
   // The title is styled as a heading but renders as a paragraph.
   await expect(page.getByText(/Customize\s+Fighter\s+Level 1/)).toBeVisible();
 }
