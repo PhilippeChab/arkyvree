@@ -92,7 +92,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       `/rulesets/${r}/feats/${featMap["Toughness"]}/customization`,
     );
     expect(await resolve("modifiers", levelModifier.id)).toBe(
-      `/rulesets/${r}/klass_levels/${clericLevel.id}/customization`,
+      `/rulesets/${r}/class-levels/${clericLevel.id}/customization`,
     );
     expect(await resolve("requirements", requirement.id)).toBe(
       `/rulesets/${r}/feats/${featMap["Weapon Focus: Longsword"]}/customization`,

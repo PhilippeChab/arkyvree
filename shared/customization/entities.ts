@@ -1,3 +1,5 @@
+import { isOneOf } from "@/shared/isOneOf.ts";
+
 /** The ruleset entities a user customizes: their modifiers, requirements and properties. */
 export const CUSTOMIZABLE_ENTITY_TYPES = ["klass_levels", "klasses", "feats", "items", "powers", "races"] as const;
 
@@ -14,6 +16,21 @@ export function isCustomizableEntityType(entityType: string): entityType is Cust
 export const CUSTOMIZATION_OWNER_TYPES = [...CUSTOMIZABLE_ENTITY_TYPES, "modifiers"] as const;
 
 export type CustomizationOwnerType = (typeof CUSTOMIZATION_OWNER_TYPES)[number];
+
+/** The URL segment of an entity type the database names otherwise: a class level's page reads "class-levels". */
+const URL_SEGMENTS: Partial<Record<CustomizationOwnerType, string>> = { klass_levels: "class-levels" };
+
+/** An entity's customization page under its ruleset: "class-levels/:id/customization", "feats/:id/customization". */
+export function buildCustomizationPath(entityType: CustomizationOwnerType, entityId: string): string {
+  return `${URL_SEGMENTS[entityType] ?? entityType}/${entityId}/customization`;
+}
+
+/** The entity type a customization page's URL segment names; its database name still does, for links made before. */
+export function parseCustomizationSegment(segment: unknown): CustomizationOwnerType | undefined {
+  const renamed = Object.entries(URL_SEGMENTS).find(([, urlSegment]) => urlSegment === segment)?.[0];
+  const entityType = renamed ?? segment;
+  return isOneOf(entityType, CUSTOMIZATION_OWNER_TYPES) ? entityType : undefined;
+}
 
 /** What property types are defined for: a customizable entity, a ruleset or a skill. */
 export type PropertyEntityType = CustomizableEntityType | "rulesets" | "skills";

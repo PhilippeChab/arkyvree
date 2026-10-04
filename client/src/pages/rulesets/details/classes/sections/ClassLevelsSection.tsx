@@ -10,6 +10,7 @@ import { customizationEntityQuery } from "@/client/src/pages/rulesets/customizat
 import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import type { Level } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { useClassLevels, useOpenEntity, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 import type { ClassSectionProps } from "./types.ts";
 
@@ -48,7 +49,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   } = useClassLevels(rulesetId, classId);
 
   const handleRowClick = (level: Level) => {
-    openEntity(`klass_levels/${level.id}/customization`);
+    openEntity(buildCustomizationPath("klass_levels", level.id));
   };
 
   const handleRowMouseEnter = useCallback(
