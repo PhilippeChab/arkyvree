@@ -8,9 +8,9 @@ import { KlassSkills } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
-  entityHasCharacterPicks,
-  entityToEdit,
+  cowEntityToEdit,
   findScopedEntity,
+  hasCharacterPicks,
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -43,7 +43,7 @@ class ClassSkillsService {
         }
 
         // Copy an inherited class: the new klass_skills row would otherwise point at the parent ruleset's class.
-        const { id: targetKlassId } = await entityToEdit(tx, ruleset, sourceChain, "klasses", klass);
+        const { id: targetKlassId } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
 
         const rows = await KlassSkills.create(tx, {
           klassId: targetKlassId,
@@ -73,7 +73,7 @@ class ClassSkillsService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
-        const inUse = await entityHasCharacterPicks(tx, "klasses", classId, rulesetId);
+        const inUse = await hasCharacterPicks(tx, "klasses", classId, rulesetId);
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
@@ -87,7 +87,7 @@ class ClassSkillsService {
         const skill = rulesetData.skillsById.get(skillId);
 
         // Copy an inherited class: the delete would otherwise remove the parent ruleset's klass_skills row.
-        const { id: targetKlassId } = await entityToEdit(tx, ruleset, sourceChain, "klasses", klass);
+        const { id: targetKlassId } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
 
         const rows = await KlassSkills.delete(tx, { klassId: targetKlassId, skillId: klassSkill.skillId });
         const removedKlassSkill = rows[0];

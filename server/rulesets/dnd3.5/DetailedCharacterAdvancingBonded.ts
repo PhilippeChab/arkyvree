@@ -1,7 +1,7 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 
 import type { BondedRaceStatBlock } from "./bondedRaceData.ts";
-import { scaledFeats, scaledSkillTotals } from "./bondedScaling.ts";
+import { scaleFeats, scaleSkillTotals } from "./bondedScaling.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 
 const HD_PER_LEVEL_AVG = 4.5;
@@ -29,7 +29,7 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
 
   protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: CachedRulesetData): void {
     const totalHD = this.cachedTotalHD ?? raceStats.baseHD;
-    this.applyGrantedFeats(scaledFeats(raceStats, totalHD), rulesetData);
-    this.applySkillTotals(scaledSkillTotals(raceStats, totalHD));
+    this.applyGrantedFeats(scaleFeats(raceStats, totalHD), rulesetData);
+    this.applySkillTotals(scaleSkillTotals(raceStats, totalHD));
   }
 }

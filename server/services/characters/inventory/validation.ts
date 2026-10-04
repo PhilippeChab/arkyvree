@@ -12,7 +12,7 @@ import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterInventory } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
-import { isHandLocation, MAX_FINGER_ITEMS, slotConflict, type SlotConflictReason } from "@/shared/equipment.ts";
+import { findSlotConflict, isHandLocation, MAX_FINGER_ITEMS, type SlotConflictReason } from "@/shared/equipment.ts";
 import type { Character as CharacterRecord, Ruleset } from "@/shared/relations.ts";
 
 /** Why an item can't be equipped at a location, by the slot conflict's reason. */
@@ -41,7 +41,7 @@ export async function validateEquipmentSlot(
   const inventory = await CharacterInventory.findMany(tx, { characterId });
   const equippedItems = inventory.filter((entry) => entry.equipped && entry.itemId !== item.id);
 
-  const conflict = slotConflict(location, weaponSet, equippedItems);
+  const conflict = findSlotConflict(location, weaponSet, equippedItems);
   if (conflict) throw new BadRequestError(SLOT_CONFLICT_MESSAGES[conflict.reason](location));
 
   if (item.type === "Weapon" && !isHandLocation(location)) {

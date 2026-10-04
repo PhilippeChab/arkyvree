@@ -48,7 +48,7 @@ import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { initialOf } from "@/shared/text.ts";
+import { getInitial } from "@/shared/text.ts";
 
 type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
@@ -156,7 +156,7 @@ function CharacterCard({
                 flexShrink: 0,
               }}
             >
-              {initialOf(character.name)}
+              {getInitial(character.name)}
             </Avatar>
             <Typography
               variant="h6"

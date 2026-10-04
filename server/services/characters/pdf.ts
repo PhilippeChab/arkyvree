@@ -31,7 +31,7 @@ export async function findExportableCharacter(userId: string, characterId: strin
  * character page, or for an export requested from a campaign the campaign
  * character page (a Game Master can't open the character page itself).
  */
-export function characterPdfTargetTable(campaignId?: string) {
+export function getCharacterPdfTargetTable(campaignId?: string) {
   return getTableName(campaignId ? playerCharactersInCampaign : charactersInCharacter);
 }
 
@@ -56,7 +56,7 @@ export async function enqueueCharacterPdf(
     await Activities.create(tx, {
       userId: session.userId,
       targetId: characterRecord.id,
-      targetTable: characterPdfTargetTable(campaignId),
+      targetTable: getCharacterPdfTargetTable(campaignId),
       type: "generatePdf",
     });
   });

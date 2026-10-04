@@ -11,7 +11,7 @@ import { Activities, EmailVerifications, PasswordResets, Sessions, Users } from 
 import type { Session } from "@/shared/relations.ts";
 
 import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";
-import { generateVerificationCode, timingSafeCompare } from "./codes.ts";
+import { compareInConstantTime, generateVerificationCode } from "./codes.ts";
 import { verifyGoogleIdToken } from "./google.ts";
 
 const DUMMY_HASH = await hashPassword("dummy-password-for-timing-normalization");
@@ -100,7 +100,7 @@ class AuthenticationService {
       const reset = await PasswordResets.findOne(tx, { userId: user.id });
       if (!reset) throw new UnauthorizedError("Invalid email or code");
 
-      if (!timingSafeCompare(reset.code, code)) {
+      if (!compareInConstantTime(reset.code, code)) {
         throw new UnauthorizedError("Invalid email or code");
       }
 
@@ -257,7 +257,7 @@ class AuthenticationService {
       const verification = await EmailVerifications.findOne(tx, { userId: user.id });
       if (!verification) throw new UnauthorizedError("Invalid email or code");
 
-      if (!timingSafeCompare(verification.code, code)) {
+      if (!compareInConstantTime(verification.code, code)) {
         throw new UnauthorizedError("Invalid email or code");
       }
 

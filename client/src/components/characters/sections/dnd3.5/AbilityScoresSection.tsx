@@ -9,7 +9,7 @@ import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useUserPreferencesStore } from "@/client/src/stores/userPreferencesStore.ts";
-import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
+import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 import type { Dnd35AbilityScoresSectionProps } from "./types.ts";
@@ -44,7 +44,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
             const level = data.level || 0;
             const misc = data.misc || 0;
             const total = base + level + misc;
-            const modifier = abilityModifier(total);
+            const modifier = computeAbilityModifier(total);
             updated[name] = { ...data, base, total, modifier };
             break;
           }
@@ -86,7 +86,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center" }}>
           {sortedEntries.map(([ability, abilityData]) => {
             const total = abilityData.total || abilityData.base || 10;
-            const modifier = abilityModifier(total);
+            const modifier = computeAbilityModifier(total);
             return (
               <Box key={ability} sx={{ minWidth: { xs: 120, sm: 140 } }}>
                 <AbilityScoreBox

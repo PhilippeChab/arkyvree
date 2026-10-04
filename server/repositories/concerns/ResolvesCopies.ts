@@ -1,6 +1,6 @@
 import { type Column, eq, inArray, notInArray, type SQL, type Table } from "drizzle-orm";
 
-import { currentCowContext } from "@/server/database/cowContext.ts";
+import { getCowContext } from "@/server/database/cowContext.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
@@ -34,7 +34,7 @@ export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Bas
      * (e.g. itemId, abilityId, languageId, featId, powerId, skillId).
      */
     protected idMatches(column: Column, id: string): SQL {
-      const cow = currentCowContext();
+      const cow = getCowContext();
       if (!cow || cow.idResolveMap.size === 0) return eq(column, id);
       const target = cow.idResolveMap.get(id) ?? id;
       const candidates = new Set<string>([target]);

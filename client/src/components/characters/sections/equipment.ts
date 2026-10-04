@@ -3,7 +3,7 @@ import type { InferResponseType } from "hono/client";
 import type { CharacterDetail, RulesetItem } from "@/client/src/lib/queries.ts";
 import type { RPC } from "@/client/src/services/rpc.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
-import { HAND_LOCATIONS, isHandLocation, slotConflict, type SlotConflictReason } from "@/shared/equipment.ts";
+import { findSlotConflict, HAND_LOCATIONS, isHandLocation, type SlotConflictReason } from "@/shared/equipment.ts";
 
 /** A sheet's equipment row: the inventory entry with its item's fields. */
 export type EquipmentRow = CharacterDetail["equipment"][number];
@@ -129,7 +129,7 @@ export function getSlotConflictWarning(
   if (!location || location === "none") return null;
 
   const equipped = inventoryItems.filter((e) => e.equipped && e.location && e.itemId !== excludeItemId);
-  const conflict = slotConflict(location, weaponSet - 1, equipped);
+  const conflict = findSlotConflict(location, weaponSet - 1, equipped);
   if (!conflict) return null;
   if (conflict.reason === "fingers") return "Both finger slots are occupied";
   return SLOT_CONFLICT_WARNINGS[conflict.reason](location, conflict.entry, weaponSet);

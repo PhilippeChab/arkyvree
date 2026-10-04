@@ -1,7 +1,7 @@
 import type { PowerDc } from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
-import { spellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude, type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -58,7 +58,7 @@ export default class DetailedCharacterPowers {
     const aptitudeIdToSlug = new Map<string, string>();
     for (const apt of aptitudes) {
       if (apt.name.includes("Domain") || apt.name.includes("Specialist")) continue;
-      aptitudeIdToSlug.set(apt.id, spellPossessionSlug(apt.name));
+      aptitudeIdToSlug.set(apt.id, toSpellPossessionSlug(apt.name));
     }
 
     const seen = new Set<string>();
@@ -100,7 +100,7 @@ export default class DetailedCharacterPowers {
     const aptitudeIdToSlug = new Map<string, string>();
     for (const apt of rulesetAptitudes) {
       if (apt.name.includes("Domain") || apt.name.includes("Specialist")) continue;
-      aptitudeIdToSlug.set(apt.id, spellPossessionSlug(apt.name));
+      aptitudeIdToSlug.set(apt.id, toSpellPossessionSlug(apt.name));
     }
 
     for (const power of rulesetPowers) {

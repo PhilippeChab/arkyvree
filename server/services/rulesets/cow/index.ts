@@ -5,9 +5,9 @@
  *   Consumer surface (any service or route):
  *     `withRulesetScope` / `withRulesetScopes` for single / multi-ruleset
  *     reads. `findScopedEntity` finds an entity in the composed view, and
- *     `entityToEdit` / `entityToDelete` the row a CRUD mutation writes (copying
+ *     `cowEntityToEdit` / `cowEntityToDelete` the row a CRUD mutation writes (copying
  *     it when inherited). `cowEntity` / `cowEntityForCustomization` and the
- *     `lockEntityForMutation` / `entityHasCharacterPicks` helpers for the rest.
+ *     `lockEntityForMutation` / `hasCharacterPicks` helpers for the rest.
  *     `cowCustomizationForMutation` resolves the row a customization update or delete changes.
  *
  *   Copy primitives: `fetchEntityCustomizations` /
@@ -27,8 +27,8 @@ export {
   cowCustomizationForMutation,
   cowEntity,
   cowEntityForCustomization,
-  entityToDelete,
-  entityToEdit,
+  cowEntityToDelete,
+  cowEntityToEdit,
   findScopedEntity,
 } from "./cowEntity.ts";
 export { withRulesetScope, withRulesetScopes } from "./cowData.ts";
@@ -38,7 +38,7 @@ export {
   repointTombstoneSnapshot,
   wasGeneratedFeat,
 } from "./entityNames.ts";
-export { entityHasCharacterPicks } from "./characterPicks.ts";
+export { hasCharacterPicks } from "./characterPicks.ts";
 export { ENTITY_REPOS, NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
 export { fetchEntityCustomizations } from "./customizations.ts";
 export { copyEntityCustomizations, copyEntityCustomizationsToMany } from "./copy.ts";

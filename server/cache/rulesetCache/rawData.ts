@@ -1,7 +1,7 @@
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { withCowContext } from "@/server/database/cowContext.ts";
 import { db } from "@/server/database/index.ts";
-import { everyPage } from "@/server/repositories/concerns/Paginates.ts";
+import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
   Abilities,
   Aptitudes,
@@ -146,17 +146,17 @@ async function fetchRulesetRawData(
   // Round 1: fetch entities + ruleset metadata (for pin decision) in parallel.
   const [abilities, saves, skills, feats, powers, aptitudes, klasses, races, languages, items, mechanics, ruleset] =
     await Promise.all([
-      everyPage((pagination) => Abilities.findPage(db, filters, pagination)),
-      everyPage((pagination) => Saves.findPage(db, filters, pagination)),
-      everyPage((pagination) => Skills.findPage(db, filters, pagination)),
-      everyPage((pagination) => Feats.findPage(db, filters, pagination)),
-      everyPage((pagination) => Powers.findPage(db, filters, pagination)),
-      everyPage((pagination) => Aptitudes.findPage(db, filters, pagination)),
-      everyPage((pagination) => Klasses.findPage(db, filters, pagination)),
-      everyPage((pagination) => Races.findPage(db, filters, pagination)),
-      everyPage((pagination) => Languages.findPage(db, filters, pagination)),
-      everyPage((pagination) => Items.findPage(db, filters, pagination)),
-      everyPage((pagination) => Mechanics.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Abilities.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Saves.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Skills.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Feats.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Powers.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Aptitudes.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Klasses.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Races.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Languages.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Items.findPage(db, filters, pagination)),
+      fetchEveryPage((pagination) => Mechanics.findPage(db, filters, pagination)),
       campaignId ? Promise.resolve(null) : Rulesets.findOne(db, { id: rulesetId }),
     ]);
   const entities = { abilities, saves, skills, feats, powers, aptitudes, klasses, races, languages, items, mechanics };

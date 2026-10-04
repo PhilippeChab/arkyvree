@@ -12,6 +12,11 @@
  *
  * Private and protected methods are the class's own business: any name.
  *
+ * `function-names`: an exported function of the server or `shared/` starts with a verb too (`FUNCTION_VERBS`), or is
+ * one of the shapes the code writes: a context it runs a callback in (`withTransaction`), a handler it registers
+ * (`onShutdown`), a conversion (`toSafeUser`) or a constructor (`newOverrideMap`). A PascalCase one (a concern, a
+ * class's factory) is a type's name; a module's own functions name themselves.
+ *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 import fs from "node:fs";
@@ -62,6 +67,60 @@ const VOCABULARIES = [
   },
 ];
 
+// oxfmt-ignore
+const FUNCTION_VERBS = [
+  // reading and computing
+  "get", "find", "fetch", "load", "read", "list", "count", "build", "compute", "derive", "resolve", "extract",
+  "collect", "pick", "parse", "format", "render", "generate", "project", "describe", "paginate", "scale", "compare",
+  "evaluate", "annotate", "distribute", "merge", "group", "sort", "filter", "map", "split", "strip", "capitalize",
+  "sanitize", "redact", "hash", "sign", "normalize",
+  // writing
+  "create", "add", "insert", "copy", "cow", "seed", "set", "update", "apply", "mark", "link", "repoint", "refresh",
+  "reconcile", "finalize", "publish", "save", "write", "delete", "remove", "purge", "sweep", "clear", "invalidate",
+  "lock", "warm", "memoize", "include",
+  // checking: a yes or no (`is`, `has`, `was`, `can`, `should`), or a throw
+  "is", "has", "was", "can", "should", "check", "assert", "validate", "verify", "ensure",
+  // running
+  "run", "start", "stop", "init", "open", "close", "send", "request", "ping", "wait", "enqueue", "schedule",
+  "instrument", "note", "notify", "limit", "register", "emit",
+  // the shapes: a context (`withTransaction`), a handler (`onShutdown`), a conversion (`toSafeUser`), a constructor
+  "with", "on", "to", "new",
+];
+
+/** Names a library gave them, kept: Hono's validator, which `zValidator` wraps. */
+const FUNCTION_EXCEPTIONS = new Set(["zValidator"]);
+
+/** The functions a module exports: declared, or an arrow or function expression a const holds. */
+function exportedFunctions(node) {
+  const declaration = node.declaration;
+  if (declaration?.type === "FunctionDeclaration" && declaration.id) return [declaration.id];
+  if (declaration?.type !== "VariableDeclaration") return [];
+  return declaration.declarations
+    .filter(
+      (d) => d.id.type === "Identifier" && ["ArrowFunctionExpression", "FunctionExpression"].includes(d.init?.type),
+    )
+    .map((d) => d.id);
+}
+
+const functionNames = {
+  meta: { type: "suggestion" },
+  create(context) {
+    const file = repoPath(context.filename);
+    if (!/^(server|shared)\//.test(file) || !file.endsWith(".ts")) return {};
+    const check = (node) => {
+      for (const id of exportedFunctions(node)) {
+        if (/^[A-Z]/.test(id.name) || FUNCTION_EXCEPTIONS.has(id.name)) continue;
+        if (FUNCTION_VERBS.some((verb) => startsWithVerb(id.name, verb))) continue;
+        context.report({
+          node: id,
+          message: `An exported function starts with a verb (lint/methodNames.mjs's FUNCTION_VERBS): \`${id.name}\` doesn't.`,
+        });
+      }
+    };
+    return { ExportNamedDeclaration: check, ExportDefaultDeclaration: check };
+  },
+};
+
 /** A function a field holds: written there, or another one's (`readonly finalizeLevelUp = finalizeLevelUp`). */
 const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "Identifier", "MemberExpression"];
 
@@ -104,4 +163,4 @@ const methodNames = {
   },
 };
 
-export const rules = { "method-names": methodNames };
+export const rules = { "method-names": methodNames, "function-names": functionNames };

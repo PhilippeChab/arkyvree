@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
+import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
@@ -64,7 +64,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
           >
             {abilityEntries.map(([name, data]) => {
               const total = data.total ?? 10;
-              const modifier = abilityModifier(total);
+              const modifier = computeAbilityModifier(total);
               return <AbilityScoreBox key={name} ability={name} score={total} modifier={modifier} compact />;
             })}
           </Box>

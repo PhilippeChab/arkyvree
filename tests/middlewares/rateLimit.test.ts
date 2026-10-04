@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { Hono, type MiddlewareHandler } from "hono";
 
 import { toJson } from "@/server/errors/index.ts";
-import { rateLimit } from "@/server/middlewares/rateLimit.ts";
+import { limitRate } from "@/server/middlewares/rateLimit.ts";
 import { expectStatus } from "@/tests/api.ts";
 
 /** An app behind `limiter`, answering errors as the application does. */
@@ -24,14 +24,14 @@ const withEmail = (emailAddress: unknown) => ({
   body: JSON.stringify({ emailAddress }),
 });
 
-describe("rateLimit", () => {
+describe("limitRate", () => {
   test("is off in the tests, whose requests share an IP", async () => {
-    const app = behind(rateLimit({ windowMs: 60_000, limit: 1 }));
+    const app = behind(limitRate({ windowMs: 60_000, limit: 1 }));
     for (let i = 0; i < 3; i++) expect((await app.request("/", from("10.0.0.1"))).status).toBe(200);
   });
 
   describe("per IP", () => {
-    const limited = () => behind(rateLimit({ windowMs: 60_000, limit: 2 }, true));
+    const limited = () => behind(limitRate({ windowMs: 60_000, limit: 2 }, true));
 
     test("refuses a client past its limit, with a 429, and counts each client apart", async () => {
       const app = limited();
@@ -60,7 +60,7 @@ describe("rateLimit", () => {
   });
 
   describe("per email address", () => {
-    const limited = () => behind(rateLimit({ windowMs: 60_000, limit: 1, per: "email" }, true));
+    const limited = () => behind(limitRate({ windowMs: 60_000, limit: 1, per: "email" }, true));
 
     test("refuses an address past its limit, whatever its case, and counts each address apart", async () => {
       const app = limited();

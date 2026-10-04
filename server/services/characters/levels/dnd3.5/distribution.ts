@@ -2,7 +2,7 @@
  * Level-up distribution pipeline.
  *
  * - computePerLevelAptitudeSlots — calculates feat/power slot deltas per level from modifier data
- * - powerLevelLookup, deferredAptitudeSources, skillContexts — what the distribution reads of the ruleset and character
+ * - buildPowerLevelLookup, getDeferredAptitudeSources, buildSkillContexts — what the distribution reads of the ruleset and character
  * - distributePoolSelections — distributes pooled user selections (skills, feats, powers) into per-level payloads
  */
 
@@ -180,7 +180,7 @@ export function computePerLevelAptitudeSlots(
  * The spell level of each of these powers in each pool it's linked to, by `powerId:aptitudeId`: a spell can be at
  * different levels in different pools (Wizard 1, Bard 0).
  */
-export function powerLevelLookup(rulesetData: CachedRulesetData, powerIds: string[]) {
+export function buildPowerLevelLookup(rulesetData: CachedRulesetData, powerIds: string[]) {
   const lookup = new Map<string, number | null>();
   for (const powerId of powerIds) {
     const power = rulesetData.powersById.get(powerId);
@@ -196,7 +196,7 @@ export function powerLevelLookup(rulesetData: CachedRulesetData, powerIds: strin
  * The feat each pool with no slots of its own comes from: a pool a feat's modifier creates (`aptitudes.<slug>….allowed`)
  * goes with the first-pass feat that targets it.
  */
-export function deferredAptitudeSources(
+export function getDeferredAptitudeSources(
   rulesetData: CachedRulesetData,
   feats: Record<string, string[]>,
   perLevelFeatSlots: FeatSlots,
@@ -226,7 +226,11 @@ export function deferredAptitudeSources(
 }
 
 /** Each skill's current rank, and whether it's a class skill: innate to the character, or a planned class's. */
-export function skillContexts(levelUpProjector: Dnd35LevelUpProjector, skills: Skill[], classSkillIds: Set<string>) {
+export function buildSkillContexts(
+  levelUpProjector: Dnd35LevelUpProjector,
+  skills: Skill[],
+  classSkillIds: Set<string>,
+) {
   const characterSkills = levelUpProjector.getCharacterSkills();
   const contexts = new Map<string, { isClassSkill: boolean; currentRank: number }>();
   for (const skill of skills) {

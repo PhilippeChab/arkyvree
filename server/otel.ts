@@ -59,6 +59,6 @@ export function initOtel(component: "web" | "worker") {
 }
 
 // Drains in-flight metric/log batches before process exit.
-export async function shutdownOtel(): Promise<void> {
+export async function stopOtel(): Promise<void> {
   await Promise.allSettled([meterProvider?.shutdown(), loggerProvider?.shutdown()]);
 }

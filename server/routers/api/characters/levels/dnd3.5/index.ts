@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { characterIdParam, limitOf, page } from "@/server/routers/api/validation.ts";
+import { characterIdParam, limitDefaultingTo, page } from "@/server/routers/api/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
 const isUuid = (v: string) => z.string().uuid().safeParse(v).success;
@@ -92,7 +92,7 @@ const levels = new Hono<SessionContext>()
     zValidator(
       "query",
       z.object({
-        limit: limitOf(10),
+        limit: limitDefaultingTo(10),
         page,
         search: z.string().optional(),
         pendingLevelKlassLevelIds: idList,
@@ -127,7 +127,7 @@ const levels = new Hono<SessionContext>()
       z.object({
         ...levelQuery,
         aptitudeId: z.string().uuid(),
-        limit: limitOf(20),
+        limit: limitDefaultingTo(20),
         page,
         search: z.string().optional(),
         family: z.string().optional(),
@@ -169,7 +169,7 @@ const levels = new Hono<SessionContext>()
       z.object({
         ...levelQuery,
         aptitudeId: z.string().uuid(),
-        limit: limitOf(20),
+        limit: limitDefaultingTo(20),
         page,
         search: z.string().optional(),
         selectedFeatPicks: featPicks,
@@ -210,7 +210,7 @@ const levels = new Hono<SessionContext>()
         ...levelQuery,
         aptitudeId: z.string().uuid(),
         powerLevel: queryNumber.optional(),
-        limit: limitOf(20),
+        limit: limitDefaultingTo(20),
         page,
         search: z.string().optional(),
         excludeSchools: z

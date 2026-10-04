@@ -34,7 +34,7 @@ const emailKey: KeyGenerator = async (c) => {
  * At most `limit` requests per `windowMs` from each client IP, or `per` email address; past it,
  * `TooManyRequestsError`. Off in the tests, whose requests share an IP.
  */
-export function rateLimit(
+export function limitRate(
   { windowMs, limit, per = "ip" }: { windowMs: number; limit: number; per?: "ip" | "email" },
   enabled = !isTest(),
 ) {
@@ -52,18 +52,18 @@ export function rateLimit(
 
 const MINUTE = 60 * 1000;
 
-export const authRateLimit = rateLimit({ windowMs: 15 * MINUTE, limit: 15 });
+export const authRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 15 });
 
-export const authEmailRateLimit = rateLimit({ windowMs: 15 * MINUTE, limit: 10, per: "email" });
+export const authEmailRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 10, per: "email" });
 
-export const authSessionRateLimit = rateLimit({ windowMs: 15 * MINUTE, limit: 60 });
+export const authSessionRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 60 });
 
-export const publicApiRateLimit = rateLimit({ windowMs: MINUTE, limit: 30 });
+export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
 
 // Each direct-upload commits a blob row + S3 object that the sweep won't
 // reclaim until UNATTACHED_BLOB_TTL_MS (shared/attachments.ts) after
 // creation. Cap per-IP creation rate so a single scripted client can't
 // bloat storage at will.
-export const attachmentUploadRateLimit = rateLimit({ windowMs: MINUTE, limit: 20 });
+export const attachmentUploadRateLimit = limitRate({ windowMs: MINUTE, limit: 20 });
 
-export const exportRateLimit = rateLimit({ windowMs: MINUTE, limit: 5 });
+export const exportRateLimit = limitRate({ windowMs: MINUTE, limit: 5 });

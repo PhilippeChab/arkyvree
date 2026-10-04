@@ -4,17 +4,17 @@ import { getStorage } from "@/server/storage/s3.ts";
 
 // 5-minute cooldown so a credentials rotation that breaks getStorage()
 // re-warns instead of staying silent forever after the first miss.
-const URL_FOR_WARN_COOLDOWN_MS = 5 * 60 * 1000;
-let urlForLastWarnedAt = 0;
-export function urlFor(blob: { key: string }): string | null {
+const PUBLIC_URL_WARN_COOLDOWN_MS = 5 * 60 * 1000;
+let publicUrlLastWarnedAt = 0;
+export function getPublicUrl(blob: { key: string }): string | null {
   try {
     return getStorage().publicUrl(blob.key);
   } catch (err) {
     const now = Date.now();
-    if (now - urlForLastWarnedAt > URL_FOR_WARN_COOLDOWN_MS) {
-      urlForLastWarnedAt = now;
+    if (now - publicUrlLastWarnedAt > PUBLIC_URL_WARN_COOLDOWN_MS) {
+      publicUrlLastWarnedAt = now;
       console.warn(
-        `[attachments] urlFor() returning null — storage not configured: ${err instanceof Error ? err.message : err}`,
+        `[attachments] getPublicUrl() returning null — storage not configured: ${err instanceof Error ? err.message : err}`,
       );
     }
     return null;
@@ -29,7 +29,7 @@ export async function purgeAttachmentsForRecords(tx: Db, recordType: string, rec
   await Attachments.delete(tx, { recordType, recordIds });
 }
 
-export async function urlForSlot(recordType: string, recordId: string, name: string): Promise<string | null> {
+export async function getSlotUrl(recordType: string, recordId: string, name: string): Promise<string | null> {
   const row = await Attachments.findOneWithBlob(db, { recordType, recordId, name });
-  return row ? urlFor(row) : null;
+  return row ? getPublicUrl(row) : null;
 }

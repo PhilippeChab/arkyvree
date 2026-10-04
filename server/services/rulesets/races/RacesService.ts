@@ -9,10 +9,10 @@ import { createActivityWithNotifications, getChangedFields } from "@/server/serv
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   assertEntityNameAvailable,
-  entityHasCharacterPicks,
-  entityToDelete,
-  entityToEdit,
+  cowEntityToDelete,
+  cowEntityToEdit,
   findScopedEntity,
+  hasCharacterPicks,
   repointTombstoneSnapshot,
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
@@ -119,7 +119,7 @@ class RacesService {
 
         const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
 
-        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "races", race);
+        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "races", race);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...raceData } = body;
@@ -152,12 +152,12 @@ class RacesService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
-        const inUse = await entityHasCharacterPicks(tx, "races", raceId, rulesetId);
+        const inUse = await hasCharacterPicks(tx, "races", raceId, rulesetId);
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
         const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
 
-        const targetId = await entityToDelete(tx, ruleset, sourceChain, "races", race);
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "races", race);
 
         // The database deletes its customizations with it.
         const rows = await Races.delete(tx, { id: targetId });

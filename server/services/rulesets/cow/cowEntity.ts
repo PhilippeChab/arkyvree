@@ -156,7 +156,7 @@ export function findScopedEntity<T extends { rulesetId: string }>(
  * The row an edit of `entity` (from `findScopedEntity`) writes: the ruleset's own entity, or the copy of an inherited
  * one, made on its first edit. A copy takes no stale-edit check: the client's `updatedAt` is the source's.
  */
-export async function entityToEdit(
+export async function cowEntityToEdit(
   tx: Db,
   ruleset: { id: string; extensionRulesetIds: string[] },
   sourceChain: string[],
@@ -169,17 +169,17 @@ export async function entityToEdit(
 }
 
 /**
- * The row a delete of `entity` removes: as `entityToEdit`, and the ruleset's own entity is locked first, so its
+ * The row a delete of `entity` removes: as `cowEntityToEdit`, and the ruleset's own entity is locked first, so its
  * customizations' writes wait for the delete.
  */
-export async function entityToDelete(
+export async function cowEntityToDelete(
   tx: Db,
   ruleset: { id: string; extensionRulesetIds: string[] },
   sourceChain: string[],
   entityType: EntityType,
   entity: { id: string; rulesetId: string },
 ): Promise<string> {
-  const target = await entityToEdit(tx, ruleset, sourceChain, entityType, entity);
+  const target = await cowEntityToEdit(tx, ruleset, sourceChain, entityType, entity);
   if (!target.copied) await lockEntityForMutation(tx, entityType, target.id);
   return target.id;
 }

@@ -7,7 +7,7 @@ import { getStorage } from "@/server/storage/s3.ts";
 import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { urlFor } from "./records.ts";
+import { getPublicUrl } from "./records.ts";
 
 type OwnershipChecker = (session: Session, recordId: string) => Promise<boolean>;
 type UploadPolicy = { maxBytes: number; contentTypes: string[] };
@@ -181,7 +181,7 @@ class AttachmentsService {
       name: params.name,
     });
     if (!row) return null;
-    return { id: row.id, url: urlFor(row) };
+    return { id: row.id, url: getPublicUrl(row) };
   }
 
   async createDirectUpload(

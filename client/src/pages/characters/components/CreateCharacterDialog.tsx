@@ -39,7 +39,7 @@ import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { nameRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { abilityModifier } from "@/shared/dnd3.5/abilities.ts";
+import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 type CreateCharacterFormData = InferRequestType<typeof rpc.api.characters.$post>["json"];
@@ -141,7 +141,7 @@ function StandardArrayScores({
             onDecrease={() => canDecrease && handleChange(ability.id, sortedAsc[idx - 1])}
             canIncrease={canIncrease}
             canDecrease={canDecrease}
-            bottomInfo={`Mod: ${formatSigned(abilityModifier(score))}`}
+            bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(score))}`}
           />
         );
       })}
@@ -305,7 +305,7 @@ function AbilityScoresSection({
             onDecrease={() => setValue(`abilities.${ability.id}`, Math.max(1, displayValue - 1))}
             canIncrease={!rolling && displayValue < 100}
             canDecrease={!rolling && displayValue > 1}
-            bottomInfo={`Mod: ${formatSigned(abilityModifier(displayValue))}`}
+            bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(displayValue))}`}
             isSettled={isSettled}
           />
         );

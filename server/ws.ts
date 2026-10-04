@@ -104,7 +104,7 @@ export async function stopBroadcastListener(): Promise<void> {
 const notifiedThisRequest = new AsyncLocalStorage<Set<string>>();
 
 /** Runs a request, collecting the users its notifications go to (`noteNotified`), to push to once it's answered. */
-export async function collectingNotified(run: () => Promise<void>) {
+export async function collectNotified(run: () => Promise<void>) {
   const notified = new Set<string>();
   await notifiedThisRequest.run(notified, run);
   return notified;

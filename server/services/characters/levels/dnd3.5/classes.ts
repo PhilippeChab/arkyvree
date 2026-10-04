@@ -1,11 +1,11 @@
 /**
  * A level-up's classes:
  *
- * - classSkillIds — the skills a class's skill list makes class skills, subtypes included
- * - plannedClassSkills — the class skills of planned levels, each level's and all together
+ * - getClassSkillIds — the skills a class's skill list makes class skills, subtypes included
+ * - getPlannedClassSkills — the class skills of planned levels, each level's and all together
  * - getKlassLevel — a class's level from the composed ruleset, or a 404
- * - plannedKlassLevels — the classes and class levels of planned levels, checked
- * - savedKlassLevel — a saved character level's class level and class, or a 404
+ * - getPlannedKlassLevels — the classes and class levels of planned levels, checked
+ * - getSavedKlassLevel — a saved character level's class level and class, or a 404
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
@@ -13,7 +13,7 @@ import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { isSkillSubtypeOf } from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
 
 /** The skills class skill records make class skills: theirs, and the ruleset's subtypes of them ("Craft (…)" of Craft). */
-export function classSkillIds(
+export function getClassSkillIds(
   records: { skillId: string; skillsInRule: { name: string } }[],
   skills: { id: string; name: string }[],
 ): Set<string> {
@@ -29,14 +29,14 @@ export function classSkillIds(
  * The class skills of planned levels, from their classes (`klassIds`, one per level): each level's, in the ruleset's
  * skill order (what a rank costs at that level), and every planned class's together (the rank cap).
  */
-export function plannedClassSkills(rulesetData: CachedRulesetData, klassIds: string[]) {
+export function getPlannedClassSkills(rulesetData: CachedRulesetData, klassIds: string[]) {
   const skills = rulesetData.skills;
   const recordsOf = (klassId: string) => rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [];
   const perLevel = klassIds.map((klassId) => {
-    const ids = classSkillIds(recordsOf(klassId), skills);
+    const ids = getClassSkillIds(recordsOf(klassId), skills);
     return skills.filter((skill) => ids.has(skill.id)).map((skill) => skill.id);
   });
-  const merged = classSkillIds([...new Set(klassIds)].flatMap(recordsOf), skills);
+  const merged = getClassSkillIds([...new Set(klassIds)].flatMap(recordsOf), skills);
   return { perLevel, merged };
 }
 
@@ -51,7 +51,7 @@ export function getKlassLevel(rulesetData: CachedRulesetData, klassId: string, l
  * Each planned level's class and class level, from the composed ruleset: a cache hit is proof of lineage. Throws when a
  * class isn't the ruleset's (nor from `rulesetIds`, when given) or a player character's, or hasn't that level.
  */
-export function plannedKlassLevels(
+export function getPlannedKlassLevels(
   rulesetData: CachedRulesetData,
   levels: { klassId: string; level: number; abilityId: string | null }[],
   rulesetIds?: Set<string>,
@@ -73,7 +73,7 @@ export function plannedKlassLevels(
 }
 
 /** A saved character level's class level and class, in the composed ruleset, or a 404. */
-export function savedKlassLevel(rulesetData: CachedRulesetData, characterLevel: { klassLevelId: string }) {
+export function getSavedKlassLevel(rulesetData: CachedRulesetData, characterLevel: { klassLevelId: string }) {
   const klassLevel = rulesetData.klassLevelsById.get(characterLevel.klassLevelId);
   if (!klassLevel) {
     throw new NotFoundError("Class level not found");

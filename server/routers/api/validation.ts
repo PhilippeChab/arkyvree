@@ -13,10 +13,10 @@ export const sanitizedEmail = z.string().email().transform(sanitizeEmail);
 export const page = z.coerce.number().min(1).default(1);
 
 /** A page size: 1–100, defaulting to `fallback` */
-export const limitOf = (fallback: number) => z.coerce.number().min(1).max(100).default(fallback);
+export const limitDefaultingTo = (fallback: number) => z.coerce.number().min(1).max(100).default(fallback);
 
 /** Standard limit: 1–100, defaults to 10 */
-export const limit = limitOf(10);
+export const limit = limitDefaultingTo(10);
 
 /** A route's `:id` param */
 export const idParam = z.object({ id: z.string().uuid() });

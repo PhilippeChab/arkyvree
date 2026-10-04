@@ -4,7 +4,7 @@ import { ConflictError } from "@/server/errors/index.ts";
 import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
 import { SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { PropertyRecord, SkillsHooks } from "@/server/rulesets/hooks/SkillsHooks.ts";
-import { cowEntityForCustomization, entityHasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
+import { cowEntityForCustomization, hasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 export class Dnd35SkillsHooks implements SkillsHooks {
@@ -39,7 +39,7 @@ export class Dnd35SkillsHooks implements SkillsHooks {
   async deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void> {
     const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
     if (!feat) return;
-    if (await entityHasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
+    if (await hasCharacterPicks(tx, "feats", feat.id, rulesetId)) {
       throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
     }
 

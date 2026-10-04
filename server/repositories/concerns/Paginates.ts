@@ -10,7 +10,7 @@ export type Paginated<T> = {
 };
 
 /** A page of a list held in memory, shaped like the repositories' pages. */
-export function pageOf<T>(items: T[], pagination: { limit: number; page: number }): Paginated<T> {
+export function paginateItems<T>(items: T[], pagination: { limit: number; page: number }): Paginated<T> {
   const start = (pagination.page - 1) * pagination.limit;
   return {
     items: items.slice(start, start + pagination.limit),
@@ -19,8 +19,8 @@ export function pageOf<T>(items: T[], pagination: { limit: number; page: number 
   };
 }
 
-/** Every page of a paginated query, together: `everyPage((pagination) => Feats.findPage(db, filters, pagination))`. */
-export async function everyPage<R>(
+/** Every page of a paginated query, together: `fetchEveryPage((pagination) => Feats.findPage(db, filters, pagination))`. */
+export async function fetchEveryPage<R>(
   fetchPage: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
   limit = 100,
 ): Promise<R[]> {

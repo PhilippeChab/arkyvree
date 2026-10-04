@@ -1,6 +1,6 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { pageOf, type Paginated } from "@/server/repositories/concerns/Paginates.ts";
+import { type Paginated, paginateItems } from "@/server/repositories/concerns/Paginates.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
@@ -70,7 +70,7 @@ class PropertyTypesService {
         }),
       );
 
-      return pageOf([...engineCompletions, ...customCompletions], pagination);
+      return paginateItems([...engineCompletions, ...customCompletions], pagination);
     });
   }
 
@@ -175,7 +175,7 @@ class PropertyTypesService {
         .sort((a, b) => a.localeCompare(b))
         .map((v): PropertyValueCompletion => ({ label: v, value: v, kind: "custom" }));
 
-      return pageOf([...engineCompletions, ...customCompletions], pagination);
+      return paginateItems([...engineCompletions, ...customCompletions], pagination);
     });
   }
 }

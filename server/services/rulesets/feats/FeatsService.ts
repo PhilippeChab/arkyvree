@@ -9,10 +9,10 @@ import { createActivityWithNotifications, getChangedFields } from "@/server/serv
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   assertEntityNameAvailable,
-  entityHasCharacterPicks,
-  entityToDelete,
-  entityToEdit,
+  cowEntityToDelete,
+  cowEntityToEdit,
   findScopedEntity,
+  hasCharacterPicks,
   repointTombstoneSnapshot,
   wasGeneratedFeat,
   withRulesetScope,
@@ -178,7 +178,7 @@ class FeatsService {
           throw new BadRequestError("Generated feats cannot be renamed");
         }
 
-        const { id: targetId, copied } = await entityToEdit(tx, ruleset, sourceChain, "feats", feat);
+        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "feats", feat);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const rows = await Feats.update(
@@ -236,12 +236,12 @@ class FeatsService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
-        const inUse = await entityHasCharacterPicks(tx, "feats", featId, rulesetId);
+        const inUse = await hasCharacterPicks(tx, "feats", featId, rulesetId);
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
         const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
 
-        const targetId = await entityToDelete(tx, ruleset, sourceChain, "feats", feat);
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "feats", feat);
 
         // FK CASCADE on feats_aptitudes.feat_id and klass_level_feats.feat_id
         // wipes those join rows when the feat row is deleted.

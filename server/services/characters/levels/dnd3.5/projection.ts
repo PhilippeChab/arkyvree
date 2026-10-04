@@ -9,7 +9,7 @@
  * - buildPendingCharacterLevels — creates projected levels from pending batch data
  * - buildProjectedSkillsFromAllocations — builds projected skills from skill allocation data
  * - projectPlannedLevels — projects planned levels with the feats their class levels grant
- * - baselineAptitudes — the aptitudes of the character as saved, before planned levels
+ * - buildBaselineAptitudes — the aptitudes of the character as saved, before planned levels
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
@@ -270,7 +270,7 @@ export function projectPlannedLevels(
 }
 
 /** The aptitudes of the character as saved, before its planned levels: built from the projected character's data. */
-export async function baselineAptitudes(
+export async function buildBaselineAptitudes(
   database: Db,
   rulesetModule: RulesetModule,
   characterRecord: Character,
