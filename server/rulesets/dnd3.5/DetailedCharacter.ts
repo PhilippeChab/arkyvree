@@ -5,7 +5,12 @@ import AbstractDetailedCharacter, {
   type ValidationIssue,
 } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
-import { FEAT_FAMILY, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import {
+  FEAT_FAMILY,
+  FEAT_WEAPON_FINESSE,
+  SPELL_DESCRIPTOR,
+  SPELL_SCHOOL,
+} from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { SkillFlags } from "@/server/rulesets/hooks/index.ts";
 import type {
   FeatWithPMR,
@@ -266,6 +271,17 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     return { budget, ranks };
   }
 
+  /** Whether the character has a feat with FEAT_WEAPON_FINESSE (Weapon Finesse): picked, granted or given by a modifier. */
+  protected hasWeaponFinesse(rulesetData: CachedRulesetData): boolean {
+    return rulesetData.feats.some(
+      (feat) =>
+        (rulesetData.propertiesByEntity.get(feat.id) ?? []).some(
+          (property) => property.type === FEAT_WEAPON_FINESSE && property.value === "true",
+        ) &&
+        (this.detailedCharacterFeats.getFeat(feat.name)?.possessed ?? false),
+    );
+  }
+
   protected createDataLoader(): DataLoader {
     return new DetailedCharacterDataLoader(this.character);
   }
@@ -359,7 +375,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
   protected async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {
     this.detailedCharacterSkills.refreshAbilityModifiers();
 
-    this.detailedCharacterCombat.applyWeaponFinesse(this.detailedCharacterFeats);
+    this.detailedCharacterCombat.applyWeaponFinesse(this.hasWeaponFinesse(rulesetData));
     this.detailedCharacterCombat.adjustWeaponDamageForSize();
     this.detailedCharacterCombat.updateTotals();
 

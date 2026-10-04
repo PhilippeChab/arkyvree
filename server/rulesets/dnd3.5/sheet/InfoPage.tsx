@@ -1,6 +1,7 @@
 import { Image, Page, Text, View } from "@react-pdf/renderer";
 
 import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import { buildAttackRows } from "@/shared/dnd3.5/weaponAttacks.ts";
 
 import { formatModifier } from "./format.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
@@ -262,32 +263,33 @@ const InfoPage = ({
                     <Text style={[styles.tableCell, { width: "11%", fontWeight: "bold" }]}>Range</Text>
                     <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Type</Text>
                   </View>
-                  {weapons.map(({ slotKey, weapon }) => (
-                    <View key={slotKey} style={styles.tableRow}>
-                      <View style={[styles.tableCell, { width: "27%" }]}>
-                        <Text>{weapon!.name}</Text>
-                        <Text style={{ fontSize: FONT_SIZE.sm, color: "#666" }}>
-                          {slotKey === "mainhand" ? "Main Hand" : slotKey === "offhand" ? "Off Hand" : "Two Handed"}
+                  {weapons.flatMap(({ slotKey, weapon }) =>
+                    buildAttackRows(
+                      weapon!,
+                      slotKey === "mainhand" ? "Main Hand" : slotKey === "offhand" ? "Off Hand" : "Two Handed",
+                    ).map((row) => (
+                      <View key={row.key} style={styles.tableRow}>
+                        <View style={[styles.tableCell, { width: "27%" }]}>
+                          <Text>{weapon!.name}</Text>
+                          <Text style={{ fontSize: FONT_SIZE.sm, color: "#666" }}>{row.label}</Text>
+                          {weapon!.proficient === false && (
+                            <Text style={{ fontSize: FONT_SIZE.xs, color: "#cc0000", fontWeight: "bold" }}>
+                              Not Proficient (-4)
+                            </Text>
+                          )}
+                        </View>
+                        <Text style={[styles.tableCell, { width: "18%" }]}>
+                          {row.attack.map(formatModifier).join("/")}
                         </Text>
-                        {weapon!.proficient === false && (
-                          <Text style={{ fontSize: FONT_SIZE.xs, color: "#cc0000", fontWeight: "bold" }}>
-                            Not Proficient (-4)
-                          </Text>
-                        )}
+                        <Text style={[styles.tableCell, { width: "18%" }]}>{weapon!.damage.total}</Text>
+                        <Text style={[styles.tableCell, { width: "13%" }]}>
+                          {21 - weapon!.damage.critical.range}/x{weapon!.damage.critical.multiplier}
+                        </Text>
+                        <Text style={[styles.tableCell, { width: "11%" }]}>{row.range}</Text>
+                        <Text style={[styles.tableCell, { width: "13%" }]}>{weapon!.damage.types.join(", ")}</Text>
                       </View>
-                      <Text style={[styles.tableCell, { width: "18%" }]}>
-                        {weapon!.tohit.total.map(formatModifier).join("/")}
-                      </Text>
-                      <Text style={[styles.tableCell, { width: "18%" }]}>{weapon!.damage.total}</Text>
-                      <Text style={[styles.tableCell, { width: "13%" }]}>
-                        {21 - weapon!.damage.critical.range}/x{weapon!.damage.critical.multiplier}
-                      </Text>
-                      <Text style={[styles.tableCell, { width: "11%" }]}>
-                        {weapon!.range ? `${weapon!.range} ft.` : "Melee"}
-                      </Text>
-                      <Text style={[styles.tableCell, { width: "13%" }]}>{weapon!.damage.types.join(", ")}</Text>
-                    </View>
-                  ))}
+                    )),
+                  )}
                 </View>
               );
             })}

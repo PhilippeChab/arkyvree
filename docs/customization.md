@@ -156,7 +156,14 @@ Properties generated from `WEAPON_TYPE_DEFINITIONS` in `weaponGenerator.ts`:
 | `DAMAGE_TYPE`              | Slashing (one property per damage type) |
 | `WEAPON_FINESSABLE`        | false                               |
 | `WEAPON_RANGE`             | _(only if > 0)_                     |
+| `WEAPON_RANGED`            | _(only on a ranged weapon)_         |
+| `WEAPON_STRENGTH_DAMAGE`   | _(only if not by slot)_             |
 | `WEAPON_REACH`             | _(only if > 0)_                     |
+
+How the engine reads a weapon's attack (`combat/Attacks.ts`), the SRD's rules:
+- A **ranged weapon** (`WEAPON_RANGED`: bows, crossbows, slings, darts, javelins, bolas, nets, shuriken) attacks with Dexterity. Any other attacks with Strength, or with Dexterity when it's `WEAPON_FINESSABLE` and the character has a feat with `FEAT_WEAPON_FINESSE` (Weapon Finesse), if that's better.
+- A **melee weapon with a range increment** (`WEAPON_RANGE`: daggers, throwing axes, spears…) can also be thrown: its weapon slot carries a `thrown` attack with Dexterity, which the sheets list as a second row.
+- **Strength to damage** (`WEAPON_STRENGTH_DAMAGE`): `Slot` when absent (the slot's share: all of it in the main hand, half in the off hand, one and a half in two hands), `Rating` (bows: a penalty, and a bonus up to `WEAPON_MIGHTY`, 0 without) or `None` (crossbows).
 
 Proficiency requirements (on the item, checked at equip time):
 - **Simple**: OR chain — `feats.simpleweaponproficiency.possessed` OR `feats.simpleweaponproficiency<weapon>.possessed` (a gauntlet's also takes `feats.simpleweaponproficiencyunarmedstrike.possessed`: a strike with it is unarmed)
@@ -295,7 +302,7 @@ The character engine computes the **base, permanent character sheet** — no tem
 - Mobility (+4 AC vs AoO only)
 - Point Blank Shot (+1 within 30 ft only)
 - Power Attack / Combat Expertise (variable trade-off, player chooses)
-- Weapon Finesse (handled via `WEAPON_FINESSABLE` property, not a modifier)
+- Weapon Finesse (handled via the feat's `FEAT_WEAPON_FINESSE` and the weapon's `WEAPON_FINESSABLE` properties, not a modifier)
 - Rage (+4 STR/CON while raging — temporary)
 - Smite Evil (+CHA to attack, +level to damage — per-use ability)
 

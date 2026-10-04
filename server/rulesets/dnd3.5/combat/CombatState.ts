@@ -12,6 +12,8 @@ export type WeaponSlot = {
   itemId: string | null;
   proficient: boolean;
   finessable: boolean;
+  /** A ranged weapon (thrown or projectile, not used in melee), which attacks with Dexterity. */
+  ranged: boolean;
   range: number;
   reach: number;
   slot: string;
@@ -22,6 +24,8 @@ export type WeaponSlot = {
     size: number;
     total: number[];
   };
+  /** A melee weapon's attack when thrown, if it has a range increment: with Dexterity, as every ranged attack. */
+  thrown: { dexterity: number; total: number[] } | null;
   damage: {
     base: string;
     strength: number;
@@ -46,10 +50,12 @@ export type WeaponSet = {
 
 /** How a weapon's attack and damage follow the character's abilities, which its totals are recomputed from. */
 export type WeaponAbilities = {
-  /** Dexterity for a projectile weapon, Strength for any other: the better of the two once Weapon Finesse applies. */
-  attack: "Strength" | "Dexterity" | "Finesse";
-  /** A bow's Mighty rating (0 for a plain bow), which caps its Strength bonus to damage; null for any other weapon. */
-  bowMighty: number | null;
+  /** The ability it attacks with: Dexterity for a ranged weapon, Strength for a melee one (SRD). */
+  attack: "Strength" | "Dexterity";
+  /** Whether a Weapon Finesse feat lets it attack with Dexterity instead, when that's better. */
+  finesse: boolean;
+  /** Its Mighty rating (0 without), when Strength adds to its damage up to it (a bow's "Rating"); null otherwise. */
+  strengthRating: number | null;
 };
 
 /** A weapon slot's label, as an item's location names it, to its place in the weapon set. */

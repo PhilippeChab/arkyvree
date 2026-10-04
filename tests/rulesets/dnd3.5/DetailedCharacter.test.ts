@@ -36,6 +36,7 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import { FEAT_WEAPON_FINESSE } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
@@ -531,13 +532,83 @@ describe("DetailedCharacter", () => {
       expect(longsword).toMatchObject({ tohit: { strength: 6 }, damage: { strength: 6 } });
     });
 
-    test("aim a thrown dagger with strength and a crossbow with dexterity", async () => {
+    test("aim a dagger with strength in melee and with dexterity thrown, and a crossbow with dexterity", async () => {
       // STR 8 (-1), DEX 14 (+2), BAB +1.
       const vex = await buildSeeded("Vex Flamecaller");
-      expect(weaponSet(vex).mainhand).toMatchObject({ name: "Dagger", tohit: { strength: -1, total: [0] } });
+      expect(weaponSet(vex).mainhand).toMatchObject({
+        name: "Dagger",
+        ranged: false,
+        tohit: { strength: -1, total: [0] },
+        thrown: { dexterity: 2, total: [3] },
+      });
       expect(weaponSet(vex, "1").twohanded).toMatchObject({
         name: "Light Crossbow",
+        ranged: true,
         tohit: { strength: 2, total: [3] },
+        thrown: null,
+      });
+    });
+
+    test("aim a javelin and a dart with dexterity, ranged weapons though thrown, their damage taking strength", async () => {
+      // STR 8 (-1), DEX 14 (+2).
+      const vex = await buildCarrying("Vex Flamecaller", [
+        { item: "Javelin", location: "Main Hand", weaponSet: 0 },
+        { item: "Dart", location: "Main Hand", weaponSet: 1 },
+      ]);
+      for (const set of ["0", "1"]) {
+        expect(weaponSet(vex, set).mainhand).toMatchObject({
+          ranged: true,
+          tohit: { strength: 2 },
+          damage: { strength: -1 },
+          thrown: null,
+        });
+      }
+    });
+
+    test("throw a sai but not a handaxe: of the two, the SRD gives a range increment to the sai only", async () => {
+      // STR 18 (+4), DEX 14 (+2), BAB +5.
+      const bjorn = await buildCarrying("Bjorn Ironhand", [
+        { item: "Sai", location: "Main Hand", weaponSet: 0 },
+        { item: "Handaxe", location: "Main Hand", weaponSet: 1 },
+      ]);
+      expect(weaponSet(bjorn).mainhand).toMatchObject({ name: "Sai", range: 10, thrown: { dexterity: 2 } });
+      expect(weaponSet(bjorn, "1").mainhand).toMatchObject({ name: "Handaxe", range: 0, thrown: null });
+    });
+
+    test("read whether a weapon is ranged and how strength adds to its damage off its properties, not its family", async () => {
+      const weapon = (name: string, family: string, properties: Record<string, string> = {}) =>
+        createItem(
+          { name, type: "Weapon", slot: "Main Hand" },
+          {
+            WEAPON_PROFICIENCY: "Simple",
+            WEAPON_FAMILY: family,
+            WEAPON_BASE_DAMAGE: "1d6",
+            WEAPON_CRITICAL_RANGE: "1",
+            WEAPON_CRITICAL_MULTIPLIER: "2",
+            WEAPON_TYPE: name,
+            ...properties,
+          },
+        );
+      const caster = await weapon("Spell Caster", "Sword", {
+        WEAPON_RANGED: "true",
+        WEAPON_RANGE: "30",
+        WEAPON_STRENGTH_DAMAGE: "None",
+      });
+      const stick = await weapon("Bow-shaped Stick", "Bow");
+      // STR 18 (+4), DEX 14 (+2).
+      const bjorn = await buildCarrying("Bjorn Ironhand", [
+        { item: caster.id, location: "Main Hand", weaponSet: 0 },
+        { item: stick.id, location: "Main Hand", weaponSet: 1 },
+      ]);
+      expect(weaponSet(bjorn).mainhand).toMatchObject({
+        ranged: true,
+        tohit: { strength: 2 },
+        damage: { strength: 0 },
+      });
+      expect(weaponSet(bjorn, "1").mainhand).toMatchObject({
+        ranged: false,
+        tohit: { strength: 4 },
+        damage: { strength: 4 },
       });
     });
 
@@ -559,6 +630,18 @@ describe("DetailedCharacter", () => {
           ]),
         ).mainhand;
         expect(rapier).toMatchObject({ name: "Rapier", tohit: { strength: 6 } });
+      });
+
+      test("come from a feat's property, not its name", async () => {
+        const { featMap, rulesetId } = await getSeedCtx();
+        await Properties.delete(db, {
+          entityIds: [featMap["Weapon Finesse"]],
+          entityType: "feats",
+          types: [FEAT_WEAPON_FINESSE],
+        });
+        invalidateSeededRuleset(rulesetId);
+        // An elf rogue with Weapon Finesse, which no longer says it finesses: STR 10 (+0), DEX 20.
+        expect(weaponSet(await buildSeeded("Lyra Shadowstep")).mainhand).toMatchObject({ tohit: { strength: 0 } });
       });
 
       test("keep strength when it's higher", async () => {

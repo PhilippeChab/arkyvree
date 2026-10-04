@@ -8,6 +8,10 @@ interface WeaponDefinition {
   baseDamage: string;
   criticalRange: number;
   criticalMultiplier: number;
+  /** A ranged weapon (thrown or projectile, not used in melee), which attacks with Dexterity (WEAPON_RANGED). */
+  ranged?: true;
+  /** How Strength applies to its damage when not by its slot: a bow's "Rating", a crossbow's "None". */
+  strengthDamage?: "Rating" | "None";
   damageTypes: DamageType[];
   size: string;
   range?: number;
@@ -35,14 +39,14 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Longspear": { proficiency: "Simple", family: "Spear", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Large", reach: 10 },
   "Quarterstaff": { proficiency: "Simple", family: "Staff", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Large" },
   "Spear": { proficiency: "Simple", family: "Spear", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Large", range: 20 },
-  "Heavy Crossbow": { proficiency: "Simple", family: "Crossbow", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Medium", range: 120 },
-  "Light Crossbow": { proficiency: "Simple", family: "Crossbow", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Small", range: 80 },
-  "Dart": { proficiency: "Simple", family: "Thrown", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Tiny", range: 20 },
-  "Javelin": { proficiency: "Simple", family: "Spear", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Medium", range: 30 },
-  "Sling": { proficiency: "Simple", family: "Sling", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", range: 50 },
+  "Heavy Crossbow": { proficiency: "Simple", family: "Crossbow", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", damageTypes: ["Piercing"], size: "Medium", range: 120 },
+  "Light Crossbow": { proficiency: "Simple", family: "Crossbow", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", damageTypes: ["Piercing"], size: "Small", range: 80 },
+  "Dart": { proficiency: "Simple", family: "Thrown", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Piercing"], size: "Tiny", range: 20 },
+  "Javelin": { proficiency: "Simple", family: "Spear", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Piercing"], size: "Medium", range: 30 },
+  "Sling": { proficiency: "Simple", family: "Sling", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Bludgeoning"], size: "Small", range: 50 },
 
   // ── Martial ──
-  "Handaxe": { proficiency: "Martial", family: "Axe", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Small", range: 10, finessable: true },
+  "Handaxe": { proficiency: "Martial", family: "Axe", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Small", finessable: true },
   "Light Hammer": { proficiency: "Martial", family: "Hammer", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", range: 20, finessable: true },
   "Kukri": { proficiency: "Martial", family: "Dagger", baseDamage: "1d4", criticalRange: 3, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", finessable: true },
   "Light Pick": { proficiency: "Martial", family: "Pick", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 4, damageTypes: ["Piercing"], size: "Small", finessable: true },
@@ -68,15 +72,15 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Heavy Flail": { proficiency: "Martial", family: "Flail", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Large" },
   "Ranseur": { proficiency: "Martial", family: "Polearm", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Large", reach: 10 },
   "Scythe": { proficiency: "Martial", family: "Polearm", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 4, damageTypes: ["Piercing", "Slashing"], size: "Large" },
-  "Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Large", range: 100 },
-  "Composite Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Large", range: 110 },
-  "Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Medium", range: 60 },
-  "Composite Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Medium", range: 70 },
+  "Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Large", range: 100 },
+  "Composite Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Large", range: 110 },
+  "Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Medium", range: 60 },
+  "Composite Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Medium", range: 70 },
 
   // ── Exotic ──
   "Kama": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", finessable: true },
   "Nunchaku": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", finessable: true },
-  "Sai": { proficiency: "Exotic", family: "Monk", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", finessable: true },
+  "Sai": { proficiency: "Exotic", family: "Monk", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", range: 10, finessable: true },
   "Siangham": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Small", finessable: true },
   "Bastard Sword": { proficiency: "Exotic", family: "Sword", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Medium" },
   "Dwarven Waraxe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d10", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Medium" },
@@ -87,12 +91,12 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Orc Double Axe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Large" },
   "Two-Bladed Sword": { proficiency: "Exotic", family: "Sword", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Large" },
   "Dwarven Urgrosh": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing", "Piercing"], size: "Large" },
-  "Hand Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d4", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Tiny", range: 30 },
-  "Repeating Heavy Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Medium", range: 120 },
-  "Repeating Light Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Small", range: 80 },
-  "Bolas": { proficiency: "Exotic", family: "Thrown", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Medium", range: 10 },
-  "Net": { proficiency: "Exotic", family: "Thrown", baseDamage: "0", criticalRange: 1, criticalMultiplier: 0, damageTypes: [], size: "Medium", range: 10 },
-  "Shuriken": { proficiency: "Exotic", family: "Monk", baseDamage: "1d2", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Tiny", range: 10 },
+  "Hand Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d4", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", damageTypes: ["Piercing"], size: "Tiny", range: 30 },
+  "Repeating Heavy Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", damageTypes: ["Piercing"], size: "Medium", range: 120 },
+  "Repeating Light Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", damageTypes: ["Piercing"], size: "Small", range: 80 },
+  "Bolas": { proficiency: "Exotic", family: "Thrown", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Bludgeoning"], size: "Medium", range: 10 },
+  "Net": { proficiency: "Exotic", family: "Thrown", baseDamage: "0", criticalRange: 1, criticalMultiplier: 0, ranged: true, damageTypes: [], size: "Medium", range: 10 },
+  "Shuriken": { proficiency: "Exotic", family: "Monk", baseDamage: "1d2", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Piercing"], size: "Tiny", range: 10 },
 };
 
 export function getWeaponDefinition(weaponTypeName: string): WeaponDefinition | null {

@@ -693,6 +693,9 @@ export const FIGHTER_FEATS: FeatSeed[] = [
     requirements: [
       gte("combat.bab", 1),
     ],
+    properties: [
+      { type: "FEAT_WEAPON_FINESSE", value: "true" },
+    ],
   },
   {
     name: "Whirlwind Attack",

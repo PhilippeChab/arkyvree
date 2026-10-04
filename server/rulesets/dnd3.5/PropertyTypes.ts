@@ -6,6 +6,7 @@ import {
   ARMOR_TYPE,
   DAMAGE_TYPE,
   FEAT_FAMILY,
+  FEAT_WEAPON_FINESSE,
   ITEM_HAS_CHARGES,
   ITEM_MADE_OF,
   ITEM_MASTERWORK,
@@ -45,8 +46,10 @@ import {
   WEAPON_MIGHTY,
   WEAPON_PROFICIENCY,
   WEAPON_RANGE,
+  WEAPON_RANGED,
   WEAPON_REACH,
   WEAPON_SIZE,
+  WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
   WIZARD_PROHIBITED_SCHOOL,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
@@ -164,8 +167,10 @@ const ITEM_PROPERTY_TYPES: Record<string, string> = {
   [WEAPON_BASE_DAMAGE]: "Base damage dice for weapons",
   [WEAPON_CRITICAL_RANGE]: "Critical threat count (1 = 20, 2 = 19-20, 3 = 18-20, etc.)",
   [WEAPON_CRITICAL_MULTIPLIER]: "Critical hit damage multiplier",
+  [WEAPON_STRENGTH_DAMAGE]: "Strength to damage: Slot (the hand's share; default), Rating (bows: up to Mighty), None",
   [WEAPON_MIGHTY]: "Mighty composite bow rating (max STR bonus to damage)",
-  [WEAPON_RANGE]: "Range increment in feet (0 or absent = melee)",
+  [WEAPON_RANGE]: "Range increment in feet: a ranged weapon's, or a thrown melee weapon's (0 or absent = none)",
+  [WEAPON_RANGED]: "Whether it's a ranged weapon (thrown or projectile, not used in melee): its attacks use Dexterity",
   [WEAPON_REACH]: "Melee reach in feet (0 or absent = 5 ft.)",
   [WEAPON_SIZE]: "Weapon size category (Small, Medium, Large)",
   [ARMOR_PROFICIENCY]: "Armor proficiency classification (Light, Medium, Heavy)",
@@ -181,7 +186,8 @@ const ITEM_PROPERTY_TYPES: Record<string, string> = {
   [ITEM_MADE_OF]: "Material composition",
   [ITEM_HAS_CHARGES]: "Default number of charges for this item",
   [ITEM_MASTERWORK]: "Whether this item is masterwork quality (reduces armor check penalty by 1)",
-  [WEAPON_FINESSABLE]: "Whether this weapon can use Dexterity for attack rolls (Weapon Finesse)",
+  [WEAPON_FINESSABLE]:
+    "Whether a feat with FEAT_WEAPON_FINESSE (Weapon Finesse) lets this weapon attack with Dexterity",
   [WEAPON_TYPE]: "Base weapon type for feat/modifier targeting (e.g. Longsword, Shortsword)",
   [MAGIC_AURA]: "Magic aura strength and school (e.g. Moderate transmutation)",
   [MAGIC_CASTER_LEVEL]: "Caster level required to create this magic item",
@@ -209,6 +215,8 @@ const KLASS_PROPERTY_TYPES: Record<string, string> = {
 
 const FEAT_PROPERTY_TYPES: Record<string, string> = {
   [FEAT_FAMILY]: "Feat family grouping (Weapon Focus, Spell Focus, etc.)",
+  [FEAT_WEAPON_FINESSE]:
+    "Whether the feat lets its owner attack with Dexterity with a finessable weapon (Weapon Finesse)",
   [WIZARD_PROHIBITED_SCHOOL]: "School of magic prohibited by wizard specialization",
 };
 
@@ -279,6 +287,9 @@ const PROPERTY_VALUES: Record<string, string[]> = {
   [SKILL_USABLE_WITHOUT_TRAINING]: ["true", "false"],
   [ITEM_MASTERWORK]: ["true", "false"],
   [WEAPON_FINESSABLE]: ["true", "false"],
+  [WEAPON_RANGED]: ["true", "false"],
+  [WEAPON_STRENGTH_DAMAGE]: ["Slot", "Rating", "None"],
+  [FEAT_WEAPON_FINESSE]: ["true", "false"],
   [WEAPON_TYPE]: [...WEAPON_TYPE_NAMES],
   [KLASS_CASTER_TYPE]: ["Arcane", "Divine"],
   [FEAT_FAMILY]: [...FEAT_FAMILIES],

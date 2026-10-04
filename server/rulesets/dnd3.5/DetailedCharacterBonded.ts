@@ -96,7 +96,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     if (this.cachedTotalHD !== null) {
       this.detailedCharacterCombat.setHitDiceOverride(this.cachedTotalHD);
     }
-    this.detailedCharacterCombat.applyWeaponFinesse(this.detailedCharacterFeats);
+    this.detailedCharacterCombat.applyWeaponFinesse(this.hasWeaponFinesse(rulesetData));
     this.detailedCharacterCombat.updateTotals();
   }
 

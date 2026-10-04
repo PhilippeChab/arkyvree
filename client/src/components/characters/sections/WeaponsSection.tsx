@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typog
 import { BlankState } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { buildAttackRows } from "@/shared/dnd3.5/weaponAttacks.ts";
 
 import type { SheetCombat } from "./dnd3.5/index.ts";
 import { shownWeaponSet } from "./equipment.ts";
@@ -75,38 +76,43 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {weapons.map(({ weapon, slot }) => (
-                    <TableRow key={slot}>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {weapon.name}
-                        <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-                          ({slot})
-                        </Typography>
-                        {weapon.proficient === false && (
-                          <Typography variant="caption" sx={{ display: "block", color: "error.main", fontWeight: 600 }}>
-                            Not Proficient (-4)
+                  {weapons.flatMap(({ weapon, slot }) =>
+                    buildAttackRows(weapon, slot).map((row) => (
+                      <TableRow key={row.key}>
+                        <TableCell sx={{ fontWeight: 500 }}>
+                          {weapon.name}
+                          <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                            ({row.label})
                           </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell align="center">
-                        {weapon.tohit?.total?.length ? weapon.tohit.total.map(formatSigned).join("/") : "+0"}
-                      </TableCell>
-                      <TableCell align="center">{weapon.damage?.total || "—"}</TableCell>
-                      <TableCell align="center">
-                        {weapon.damage?.critical
-                          ? `${
-                              (weapon.damage.critical.range ?? 1) > 1
-                                ? `${21 - (weapon.damage.critical.range ?? 1)}-20`
-                                : "20"
-                            }/x${weapon.damage.critical.multiplier || 2}`
-                          : "20/x2"}
-                      </TableCell>
-                      <TableCell align="center">{weapon.range ? `${weapon.range} ft.` : "Melee"}</TableCell>
-                      <TableCell align="center">
-                        {weapon.damage?.types ? weapon.damage.types.join(", ") : "—"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                          {weapon.proficient === false && (
+                            <Typography
+                              variant="caption"
+                              sx={{ display: "block", color: "error.main", fontWeight: 600 }}
+                            >
+                              Not Proficient (-4)
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell align="center">
+                          {row.attack.length ? row.attack.map(formatSigned).join("/") : "+0"}
+                        </TableCell>
+                        <TableCell align="center">{weapon.damage?.total || "—"}</TableCell>
+                        <TableCell align="center">
+                          {weapon.damage?.critical
+                            ? `${
+                                (weapon.damage.critical.range ?? 1) > 1
+                                  ? `${21 - (weapon.damage.critical.range ?? 1)}-20`
+                                  : "20"
+                              }/x${weapon.damage.critical.multiplier || 2}`
+                            : "20/x2"}
+                        </TableCell>
+                        <TableCell align="center">{row.range}</TableCell>
+                        <TableCell align="center">
+                          {weapon.damage?.types ? weapon.damage.types.join(", ") : "—"}
+                        </TableCell>
+                      </TableRow>
+                    )),
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>

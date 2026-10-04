@@ -524,7 +524,8 @@
       "description": "The penalties for fighting with two weapons are reduced. Your primary hand penalty decreases by 2, and your off-hand penalty decreases by 6."
     },
     "Weapon Finesse": {
-      "description": "When using a light weapon, rapier, whip, or spiked chain appropriately sized for your size category, you may apply your Dexterity modifier to attack rolls in place of your Strength modifier. If you carry a shield, its armor check penalty applies to your attack rolls."
+      "description": "When using a light weapon, rapier, whip, or spiked chain appropriately sized for your size category, you may apply your Dexterity modifier to attack rolls in place of your Strength modifier. If you carry a shield, its armor check penalty applies to your attack rolls.",
+      "properties": [{ "type": "FEAT_WEAPON_FINESSE", "value": "true" }]
     },
     "Weapon Focus": {
       "description": "You gain a +1 bonus to all attack rolls made with the chosen weapon."
