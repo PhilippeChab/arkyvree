@@ -45,6 +45,7 @@ import {
 import type { Db } from "@/server/database/index.ts";
 import {
   RULESET_SKILL_POINT_ABILITY_ID,
+  SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
@@ -91,11 +92,14 @@ async function seedSkills(db: Db, ctx: SeedContext) {
   await insertAll(
     db,
     propertiesInCustomization,
-    SKILLS.flatMap(({ name, impactedByWeight, usableWithoutTraining }) =>
+    SKILLS.flatMap(({ name, impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining }) =>
       [
-        ...(impactedByWeight ? [SKILL_IMPACTED_BY_WEIGHT] : []),
-        ...(usableWithoutTraining ? [SKILL_USABLE_WITHOUT_TRAINING] : []),
-      ].map((type) => ({ entityId: ctx.skillMap[name], entityType: "skills", type, value: "true" })),
+        ...(impactedByWeight ? [{ type: SKILL_IMPACTED_BY_WEIGHT, value: "true" }] : []),
+        ...(checkPenaltyMultiplier
+          ? [{ type: SKILL_CHECK_PENALTY_MULTIPLIER, value: String(checkPenaltyMultiplier) }]
+          : []),
+        ...(usableWithoutTraining ? [{ type: SKILL_USABLE_WITHOUT_TRAINING, value: "true" }] : []),
+      ].map((property) => ({ entityId: ctx.skillMap[name], entityType: "skills", ...property })),
     ),
   );
 }

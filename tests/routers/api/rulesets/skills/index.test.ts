@@ -17,6 +17,7 @@ describe("rulesets skills", () => {
       description: "A test skill",
       primaryAbilityId: abilityMap["Intelligence"],
       impactedByWeight: false,
+      checkPenaltyMultiplier: 1,
       usableWithoutTraining: true,
     };
     const created = await expectOk(skills.$post({ param: { id }, json }));
@@ -46,6 +47,7 @@ describe("rulesets skills", () => {
       name: "Skill",
       primaryAbilityId: abilityMap["Wisdom"],
       impactedByWeight: false,
+      checkPenaltyMultiplier: 1,
       usableWithoutTraining: true,
     };
     for (const json of [
@@ -65,6 +67,7 @@ describe("rulesets skills", () => {
       name: "Missing",
       primaryAbilityId: abilityMap["Wisdom"],
       impactedByWeight: false,
+      checkPenaltyMultiplier: 1,
       usableWithoutTraining: true,
     };
     await expectStatus(skill.$put({ param, json }), 404);

@@ -34,7 +34,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Skill, SkillFormData>({
     rulesetId: ruleset.id,
     sectionName: "skills",
-    createDefaults: { impactedByWeight: false, usableWithoutTraining: false },
+    createDefaults: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: false },
     label: "Skill",
     createFn: async (data) => {
       return parseResponse(

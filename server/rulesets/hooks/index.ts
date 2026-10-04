@@ -8,7 +8,7 @@ import type { SkillsHooks } from "./SkillsHooks.ts";
 
 export type { ClassesHooks, ItemsHooks, PowersHooks, SkillsHooks, ClassLevelsHooks, LevelsHooks, InventoryHooks };
 export type { PowerBody } from "./PowersHooks.ts";
-export type { PropertyRecord } from "./SkillsHooks.ts";
+export type { PropertyRecord, SkillFlags } from "./SkillsHooks.ts";
 
 export interface ServiceHooks {
   classes: ClassesHooks;

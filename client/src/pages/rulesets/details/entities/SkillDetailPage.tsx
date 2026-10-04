@@ -27,6 +27,7 @@ export default function SkillDetailPage() {
           description: skill.description ?? "",
           primaryAbilityId: skill.primaryAbilityId,
           impactedByWeight: skill.impactedByWeight,
+          checkPenaltyMultiplier: skill.checkPenaltyMultiplier,
           usableWithoutTraining: skill.usableWithoutTraining,
         }),
         update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
@@ -39,7 +40,17 @@ export default function SkillDetailPage() {
           <>
             {primaryAbilityName && <Chip label={primaryAbilityName} color="secondary" sx={{ fontWeight: 600 }} />}
             {!skill.usableWithoutTraining && <Chip label="Trained Only" color="warning" />}
-            {skill.impactedByWeight && <Chip label="Weight Penalty" color="info" variant="outlined" />}
+            {skill.impactedByWeight && (
+              <Chip
+                label={
+                  skill.checkPenaltyMultiplier > 1
+                    ? `Weight Penalty ×${skill.checkPenaltyMultiplier}`
+                    : "Weight Penalty"
+                }
+                color="info"
+                variant="outlined"
+              />
+            )}
           </>
         );
       }}

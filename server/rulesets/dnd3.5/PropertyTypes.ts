@@ -20,6 +20,7 @@ import {
   SHIELD_AC_BONUS,
   SHIELD_PROFICIENCY,
   SHIELD_TYPE,
+  SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
   SPELL_AREA_OF_EFFECT,
@@ -192,6 +193,7 @@ const RULESET_PROPERTY_TYPES: Record<string, string> = {
 
 const SKILL_PROPERTY_TYPES: Record<string, string> = {
   [SKILL_IMPACTED_BY_WEIGHT]: "Whether the skill is impacted by armor check penalty",
+  [SKILL_CHECK_PENALTY_MULTIPLIER]: "How many times over the skill takes the armor check penalty (2 for Swim)",
   [SKILL_USABLE_WITHOUT_TRAINING]: "Whether the skill can be used without training",
 };
 
