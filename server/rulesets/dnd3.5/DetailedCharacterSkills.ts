@@ -129,6 +129,14 @@ export default class DetailedCharacterSkills {
 
   private raceSize = "Medium";
 
+  /** The modifier of the ruleset's skill point ability, its misc bonuses aside: 0 when the ruleset names none. */
+  private getSkillPointAbilityModifier(): number {
+    const abilityName = this.skillPointAbilityId
+      ? (this.skillPointRulesetAbilities.find((a) => a.id === this.skillPointAbilityId)?.name ?? null)
+      : null;
+    return abilityName ? this.characterAbilities.getAbilityModifierExcludingMisc(abilityName) : 0;
+  }
+
   private recalculateArmorCheckPenalty() {
     let armorPenalty = 0;
 
@@ -271,6 +279,18 @@ export default class DetailedCharacterSkills {
     });
   }
 
+  /**
+   * The skill points a level gives: its class's, the skill point ability's modifier and any bonus per level, four times
+   * over at the character's first level, and at least 1.
+   */
+  getLevelSkillPoints(classSkillPoints: number, isFirstCharacterLevel: boolean): number {
+    const multiplier = isFirstCharacterLevel ? 4 : 1;
+    return Math.max(
+      1,
+      (classSkillPoints + this.getSkillPointAbilityModifier() + this.skillBudget.perlevel) * multiplier,
+    );
+  }
+
   getSkillBudget() {
     return this.skillBudget;
   }
@@ -322,14 +342,6 @@ export default class DetailedCharacterSkills {
   }
 
   updateSkillPointTotals() {
-    const skillPointAbilityName = this.skillPointAbilityId
-      ? (this.skillPointRulesetAbilities.find((a) => a.id === this.skillPointAbilityId)?.name ?? null)
-      : null;
-
-    const abilityMod = skillPointAbilityName
-      ? this.characterAbilities.getAbilityModifierExcludingMisc(skillPointAbilityName)
-      : 0;
-
     const classes = this.characterClasses.getClasses();
 
     // Compute spent from actual skill ranks
@@ -351,10 +363,8 @@ export default class DetailedCharacterSkills {
       return (
         acc +
         klass.levels.reduce((acc, level) => {
-          const isFirstCharacterLevel = level.characterLevel.id === firstCharacterLevelId;
-          const multiplier = isFirstCharacterLevel ? 4 : 1;
           const skillPoints = this.skillPointKlassLevelProperties.get(level.klassLevel.id)?.skills ?? 0;
-          return acc + Math.max(1, (skillPoints + abilityMod + this.skillBudget.perlevel) * multiplier);
+          return acc + this.getLevelSkillPoints(skillPoints, level.characterLevel.id === firstCharacterLevelId);
         }, 0)
       );
     }, 0);

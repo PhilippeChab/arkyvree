@@ -384,7 +384,7 @@ async function levelDistributionData(
     baselineApts,
   );
 
-  const { perLevel: perLevelSkillPoints } = await levelUpProjector.computeSkillPointsPerLevel(
+  const perLevelSkillPoints = await levelUpProjector.computeSkillPointsPerLevel(
     klassLevelIds,
     baseLevelCount,
     rulesetData,

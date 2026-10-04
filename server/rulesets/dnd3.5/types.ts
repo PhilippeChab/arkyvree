@@ -38,12 +38,12 @@ export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
 
 /** 3.5 level-up projector — generic surface + 3.5 skill-points / schools / ranks. */
 export interface Dnd35LevelUpProjector extends LevelUpProjector {
-  /** Per-klass-level skill points including INT mod, first-level x4 included. */
+  /** Each klass level's skill points, the skill point ability's modifier included, four times over at the first level. */
   computeSkillPointsPerLevel(
     klassLevelIds: string[],
     existingLevelCount: number,
     rulesetData: CachedRulesetData,
-  ): Promise<{ perLevel: number[]; abilityMod: number }>;
+  ): Promise<number[]>;
   /** Wizard specialist-school exclusions + client-supplied prohibited schools.
    *  Must be called inside a cowContext so stored pre-COW feat ids on the
    *  repo reads inside come back post-COW. */
