@@ -110,6 +110,15 @@ describe("rulesets customization modifiers", () => {
       expect(await expectOk(modifiers.$post({ param, json }))).toMatchObject(json);
   });
 
+  test("takes a modifier on a path from the entities it lists only: a level advances an ability", async () => {
+    const { id, entityId } = await setup();
+    const advancement = { target: "abilities.strength.level", value: "2", operator: "add" };
+    await expectStatus(modifiers.$post({ param: { id, entityType: "feats", entityId }, json: advancement }), 400);
+    const klassLevelId = await createEntity(id, "klass_levels");
+    const param = { id, entityType: getUrlSegment("klass_levels"), entityId: klassLevelId };
+    expect(await expectOk(modifiers.$post({ param, json: advancement }))).toMatchObject(advancement);
+  });
+
   test("refuses modifiers as the entity being customized", async () => {
     const { id, entityId } = await setup();
     const body = { target: "abilities.strength.misc", value: "2", operator: "add" };

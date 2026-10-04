@@ -125,7 +125,8 @@ function valueMismatch(pathDef: TargetPath, operator: string | undefined, value:
 /**
  * The value type of the path a modifier or requirement targets, its operator and value checked against it: an operator
  * the path offers, and a template the sheet resolves or a literal of that type (a number, `true` or `false`), as the
- * path allows. A BadRequestError says what's wrong.
+ * path allows. A modifier's `sourceType` must be one the path takes modifiers from (a level's advancement, a pool's
+ * slots). A BadRequestError says what's wrong.
  */
 export async function resolvePathValueType(
   rulesetId: string,
@@ -133,12 +134,17 @@ export async function resolvePathValueType(
   kind: "modifier" | "requirement",
   operator: string | undefined,
   value: string | undefined,
+  sourceType?: string,
 ): Promise<string> {
   const { paths } = await getTargetPathsWithLabels(rulesetId, kind);
   const pathDef = paths.find((p) => p.path === target);
   if (!pathDef) {
     const { errors } = await validatePath(rulesetId, target, kind);
     throw new BadRequestError(`Invalid ${kind} path: ${errors[0]?.message ?? target}`);
+  }
+  const allowed = kind === "modifier" ? pathDef.allowedEntityTypes : undefined;
+  if (allowed && sourceType && !allowed.includes(sourceType)) {
+    throw new BadRequestError(`${target} takes modifiers from ${allowed.join(", ")} only`);
   }
   const mismatch = valueMismatch(pathDef, operator, value);
   if (mismatch) throw new BadRequestError(mismatch);

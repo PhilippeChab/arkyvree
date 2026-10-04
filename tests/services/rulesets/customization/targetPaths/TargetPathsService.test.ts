@@ -169,6 +169,7 @@ describe("TargetPathsService", () => {
     expect(ownUses?.operators).toContain("multiply");
     expect(ownUses?.literalOnly).toBeUndefined();
     expect((await pathOf("requirement", "aptitudes.general.allowed"))?.operators).toContain("greater_than");
+  });
 
   test("offers an ability's level advancement to class levels' modifiers only", async () => {
     const offers = async (entityType: EntityType) =>

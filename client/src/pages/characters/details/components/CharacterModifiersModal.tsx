@@ -294,7 +294,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         isLoading={createMutation.isPending}
         maxWidth="md"
       >
-        <ModifierForm form={createForm} rulesetId={rulesetId} mode="create" />
+        <ModifierForm form={createForm} rulesetId={rulesetId} entityType="characters" mode="create" />
       </CreateDialog>
       <EditDialog
         open={editOpen}
@@ -308,7 +308,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         isLoading={updateMutation.isPending}
         maxWidth="md"
       >
-        <ModifierForm form={editForm} rulesetId={rulesetId} mode="edit" />
+        <ModifierForm form={editForm} rulesetId={rulesetId} entityType="characters" mode="edit" />
       </EditDialog>
       <DeleteDialog
         open={deleteOpen}
