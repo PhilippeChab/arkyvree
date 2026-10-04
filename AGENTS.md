@@ -48,7 +48,7 @@ Where code goes, by what it needs:
 
 **Key Patterns:**
 
-- Every write (create, update, delete) and lock goes through a transaction: a repository write or lock outside the repositories takes its handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`, in the services and the jobs alike (`arkyvree/writes-in-transactions`, by `methodVerbs.json`'s write and lock verbs)
+- Every write (create, update, delete) and lock goes through a transaction: a repository write or lock outside the repositories takes its handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`, in the services and the jobs alike (`arkyvree/writes-in-transactions`, by `methodVerbs.json`'s write and lock verbs). A transaction's queries run one at a time, on its one connection: await them in turn, never in a `Promise.all` (the rule reports one over `tx`, or over a handle a function is given, which may be a transaction; node-postgres queues them today and pg@9 throws)
 - Repositories accept `db` via dependency injection
 - Schema is defined in `/drizzle/schema.ts`
 - Routes use `zValidator` from `@/server/middlewares/index.ts` so validation failures use the standard API error envelope and preserve Hono response inference (`arkyvree/route-conventions` holds it, camelCase path params, kebab-case fixed segments, a status on every `c.json`, and no `try` in `server/routers/api/`).

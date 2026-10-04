@@ -185,6 +185,45 @@ describe("conventions", () => {
     ]);
   });
 
+  test("a transaction's queries run one at a time, never in a Promise.all", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/services/serial.ts": [
+            'import { Feats, Skills } from "@/server/repositories/index.ts";',
+            "export const f = async (tx: Db) => {",
+            "  await Feats.findOne(tx, { id });",
+            "  await Skills.findOne(tx, { id });",
+            "};",
+            "",
+          ].join("\n"),
+          "server/services/pool.ts": [
+            'import { Feats, Skills } from "@/server/repositories/index.ts";',
+            "export const f = () => Promise.all([Feats.findOne(db, { id }), Skills.findOne(db, { id })]);",
+            "",
+          ].join("\n"),
+          "server/services/concurrent.ts": [
+            'import { Feats } from "@/server/repositories/index.ts";',
+            "export const f = (ids: string[]) =>",
+            "  withTransaction((tx) => Promise.all(ids.map((id) => Feats.update(tx, {}, { id }))));",
+            "",
+          ].join("\n"),
+          "server/services/helper.ts": "export const f = (tx: Db) => Promise.allSettled([purge(tx), open(tx)]);\n",
+          "server/services/handle.ts": [
+            'import { Feats, Skills } from "@/server/repositories/index.ts";',
+            "export const f = (db: Db) => Promise.all([Feats.findOne(db, { id }), Skills.findOne(db, { id })]);",
+            "",
+          ].join("\n"),
+        },
+        ["writes-in-transactions"],
+      ),
+    ).toEqual([
+      "writes-in-transactions server/services/concurrent.ts",
+      "writes-in-transactions server/services/handle.ts",
+      "writes-in-transactions server/services/helper.ts",
+    ]);
+  });
+
   test("a comment that turns a rule off says why", async () => {
     expect(
       await lintRepo(

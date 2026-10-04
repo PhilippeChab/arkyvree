@@ -49,13 +49,11 @@ export async function hasCharacterPicks(
       return CharacterLevels.exists(tx, { klassId: entityId, rulesetId });
     case "klass_levels":
       return CharacterLevels.exists(tx, { klassLevelId: entityId, rulesetId });
-    case "aptitudes": {
-      const [byFeat, byPower] = await Promise.all([
-        CharacterLevelFeats.exists(tx, { aptitudeId: entityId, rulesetId }),
-        CharacterLevelPowers.exists(tx, { aptitudeId: entityId, rulesetId }),
-      ]);
-      return byFeat || byPower;
-    }
+    case "aptitudes":
+      return (
+        (await CharacterLevelFeats.exists(tx, { aptitudeId: entityId, rulesetId })) ||
+        (await CharacterLevelPowers.exists(tx, { aptitudeId: entityId, rulesetId }))
+      );
     case "saves":
     case "mechanics":
     case "abilities":

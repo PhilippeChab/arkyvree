@@ -70,11 +70,9 @@ async function insertLevelChildren(
     ids.map((powerId) => ({ characterLevelId, powerId, aptitudeId })),
   );
 
-  await Promise.all([
-    CharacterLevelSkills.createMany(tx, skillRows),
-    CharacterLevelFeats.createMany(tx, featRows),
-    CharacterLevelPowers.createMany(tx, powerRows),
-  ]);
+  await CharacterLevelSkills.createMany(tx, skillRows);
+  await CharacterLevelFeats.createMany(tx, featRows);
+  await CharacterLevelPowers.createMany(tx, powerRows);
 }
 
 type LevelSelections = Awaited<ReturnType<typeof validateAndFetchLevelSelections>>;
