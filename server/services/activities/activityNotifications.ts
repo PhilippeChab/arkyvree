@@ -142,10 +142,9 @@ async function resolveRulesetId(db: Db, targetTable: string, targetId: string): 
  * Get all active contributor userIds + ruleset owner for a given rulesetId.
  */
 async function getRulesetStakeholders(db: Db, rulesetId: string): Promise<string[]> {
-  const [contributors, ruleset] = await Promise.all([
-    Contributors.findMany(db, { rulesetId, status: "Active" }),
-    Rulesets.findOne(db, { id: rulesetId }),
-  ]);
+  // `db` is the caller's transaction, whose queries run one at a time.
+  const contributors = await Contributors.findMany(db, { rulesetId, status: "Active" });
+  const ruleset = await Rulesets.findOne(db, { id: rulesetId });
 
   const userIds = new Set<string>();
   if (ruleset?.userId) userIds.add(ruleset.userId);

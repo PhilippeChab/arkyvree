@@ -54,11 +54,9 @@ export async function openSession(
     data,
   });
 
-  await Promise.all([
-    Invites.backfillUserId(tx, user.emailAddress, user.id),
-    Contributors.backfillUserId(tx, user.emailAddress, user.id),
-    CharacterContributors.backfillUserId(tx, user.emailAddress, user.id),
-  ]);
+  await Invites.backfillUserId(tx, user.emailAddress, user.id);
+  await Contributors.backfillUserId(tx, user.emailAddress, user.id);
+  await CharacterContributors.backfillUserId(tx, user.emailAddress, user.id);
 
   return session;
 }

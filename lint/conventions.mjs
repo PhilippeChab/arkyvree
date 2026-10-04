@@ -19,7 +19,8 @@
  * - `session-param`: a `Session` parameter is named `session` (`_session` when it's unused).
  * - `writes-in-transactions`: a repository write or lock (`methodVerbs.json`'s verbs) outside the repositories takes a
  *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
- *   rest of its request, and a lock holds until its transaction ends.
+ *   rest of its request, and a lock holds until its transaction ends. A transaction's queries run one at a time, on its
+ *   one connection: never in a `Promise.all` (`tx`, or a handle the function is given, which may be a transaction).
  * - `directive-reasons`: a comment that turns a lint rule off says why, after `--`
  *   (`// oxlint-disable-next-line rule -- why`), so the exception explains itself where it's made.
  * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
@@ -175,6 +176,34 @@ const METHOD_VERBS = JSON.parse(
 );
 const WRITE_VERBS = [...METHOD_VERBS.write, ...METHOD_VERBS.lock];
 
+/** A parameter's binding: `session: Session`, a constructor's `private session: Session`, or one with a default. */
+function parameter(param) {
+  let binding = param.type === "TSParameterProperty" ? param.parameter : param;
+  if (binding.type === "AssignmentPattern") binding = binding.left;
+  return binding.type === "Identifier" ? binding : null;
+}
+
+/** The calls in `node`'s subtree, itself included. */
+function* callsIn(node) {
+  if (node.type === "CallExpression") yield node;
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "parent") continue;
+    for (const child of Array.isArray(value) ? value : [value]) {
+      if (typeof child?.type === "string") yield* callsIn(child);
+    }
+  }
+}
+
+/** Whether `name` is a parameter of a function `node` sits in: a handle it's given, which may be a transaction. */
+function isParameterOf(node, name) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.params?.some((param) => parameter(param)?.name === name)) return true;
+  }
+  return false;
+}
+
+const CONCURRENT = new Set(["all", "allSettled", "any", "race"]);
+
 const writesInTransactions = {
   meta: { type: "problem" },
   create(context) {
@@ -192,6 +221,23 @@ const writesInTransactions = {
       CallExpression(node) {
         const callee = node.callee;
         if (callee.type !== "MemberExpression" || callee.object.type !== "Identifier") return;
+        if (callee.object.name === "Promise" && CONCURRENT.has(callee.property.name) && node.arguments[0]) {
+          const onTransaction = [...callsIn(node.arguments[0])].some((call) => {
+            const handle = call.arguments[0];
+            if (handle?.type !== "Identifier") return false;
+            if (handle.name === "tx") return true;
+            const isRepository = call.callee.type === "MemberExpression" && repositories.has(call.callee.object.name);
+            return isRepository && isParameterOf(call, handle.name);
+          });
+          if (onTransaction) {
+            context.report({
+              node,
+              message:
+                "A transaction runs one query at a time, on its one connection: await these in turn, not in `Promise.all` (pg queues them, and pg@9 throws).",
+            });
+          }
+          return;
+        }
         if (!repositories.has(callee.object.name) || callee.property.type !== "Identifier") return;
         const method = callee.property.name;
         if (!WRITE_VERBS.some((verb) => startsWithVerb(method, verb))) return;
@@ -302,13 +348,6 @@ const sharedRuntime = {
     };
   },
 };
-
-/** A parameter's binding: `session: Session`, a constructor's `private session: Session`, or one with a default. */
-function parameter(param) {
-  let binding = param.type === "TSParameterProperty" ? param.parameter : param;
-  if (binding.type === "AssignmentPattern") binding = binding.left;
-  return binding.type === "Identifier" ? binding : null;
-}
 
 /** Whether a type is `Session`, or a union with it (`Session | null`). */
 function isSessionType(type) {
