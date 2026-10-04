@@ -6,33 +6,22 @@ import { SIZE_ORDER } from "@/server/rulesets/properties/index.ts";
 import { WEAPON_SIZE } from "@/shared/dnd3.5/properties/index.ts";
 
 export class Dnd35InventoryHooks implements InventoryHooks {
-  async validateWeaponSize(
-    _tx: Db,
-    rulesetData: CachedRulesetData,
-    itemId: string,
-    raceId: string,
-    location: string,
-  ): Promise<void> {
+  /**
+   * A weapon's WEAPON_SIZE is its effort as the weapon table gives it for a Medium wielder: Tiny and Small are light,
+   * Medium one-handed, Large two-handed (a bow too: it needs both hands, whatever its size). Every weapon is sized for
+   * its wielder, as its damage is, so a halfling's longsword is one-handed as a human's is, and its greatsword
+   * two-handed.
+   */
+  async validateWeaponHands(_tx: Db, rulesetData: CachedRulesetData, itemId: string, location: string): Promise<void> {
     const item = rulesetData.itemsById.get(itemId);
     const ownProps = rulesetData.propertiesByEntity.get(itemId) ?? [];
     const templateProps = item?.sourceItemId ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []) : [];
-    const weaponSizeProp =
-      ownProps.find((p) => p.type === WEAPON_SIZE) ?? templateProps.find((p) => p.type === WEAPON_SIZE);
-    if (!weaponSizeProp) return;
-
-    const race = rulesetData.racesById.get(raceId);
-    if (!race) return;
-
-    const weaponSizeIndex = SIZE_ORDER[weaponSizeProp.value];
-    const characterSizeIndex = SIZE_ORDER[race.size];
-    if (weaponSizeIndex === undefined || characterSizeIndex === undefined) return;
-
-    const sizeDiff = weaponSizeIndex - characterSizeIndex;
-    if (sizeDiff >= 2) {
-      throw new BadRequestError("Weapon is too large for this character");
-    }
-    if (sizeDiff === 1 && location !== "Two Handed") {
-      throw new BadRequestError("This weapon requires two hands for a character of this size");
+    const weaponSize = (
+      ownProps.find((p) => p.type === WEAPON_SIZE) ?? templateProps.find((p) => p.type === WEAPON_SIZE)
+    )?.value;
+    const sizeIndex = weaponSize === undefined ? undefined : SIZE_ORDER[weaponSize];
+    if (sizeIndex !== undefined && sizeIndex > SIZE_ORDER.Medium && location !== "Two Handed") {
+      throw new BadRequestError("This weapon requires two hands");
     }
   }
 }

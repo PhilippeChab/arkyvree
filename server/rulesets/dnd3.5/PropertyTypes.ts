@@ -175,7 +175,8 @@ const ITEM_PROPERTY_TYPES: Record<string, string> = {
   [WEAPON_RANGE]: "Range increment in feet: a ranged weapon's, or a thrown melee weapon's (0 or absent = none)",
   [WEAPON_RANGED]: "Whether it's a ranged weapon (thrown or projectile, not used in melee): its attacks use Dexterity",
   [WEAPON_REACH]: "Melee reach in feet (0 or absent = 5 ft.)",
-  [WEAPON_SIZE]: "Weapon size category (Small, Medium, Large)",
+  [WEAPON_SIZE]:
+    "The weapon's effort, as the table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed",
   [ARMOR_PROFICIENCY]: "Armor proficiency classification (Light, Medium, Heavy)",
   [ARMOR_TYPE]: "Base armor type for feat/modifier targeting (e.g. Leather Armor, Full Plate)",
   [ARMOR_MAX_DEX]: "Maximum dexterity bonus allowed",
