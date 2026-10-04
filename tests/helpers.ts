@@ -12,6 +12,7 @@ import {
 } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
+import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Attachments,
   Blobs,
@@ -66,6 +67,18 @@ let seedContext: Promise<SeedContext> | undefined;
 export function getSeedCtx() {
   seedContext ??= getSeedContext(db);
   return seedContext;
+}
+
+/** A seeded character of the seed user's, by name. */
+export async function findSeededCharacter(name: string) {
+  const { items } = await Characters.findPage(
+    db,
+    { userId: SEED_USER_ID, visibility: Visibility.UnarchivedOnly },
+    { limit: 100, page: 1 },
+  );
+  const character = items.find((c) => c.name === name);
+  if (!character) throw new Error(`Seeded character ${name} not found`);
+  return character;
 }
 
 /** Inserts rows straight into `table` and returns them: test data set up in bulk, which the app writes one at a time. */
