@@ -135,11 +135,27 @@ export async function seedCore(db: Db) {
   await seedFeats(db, ctx, ALL_FEATS);
   for (const klass of ALL_CLASSES) await seedClass(db, ctx, klass);
 
-  const templates = await seedItems(db, ctx.rulesetId, TEMPLATE_ITEMS, { isTemplate: true });
+  // The templates first, a magic one among them (elven chain): the other items are made from them
+  const items = [
+    ...GOODS,
+    ...MAGIC_ARMOR,
+    ...MAGIC_SHIELDS,
+    ...MAGIC_WEAPONS,
+    ...WONDROUS_ITEMS,
+    ...RINGS,
+    ...RODS,
+    ...STAFFS,
+  ];
+  const templates = await seedItems(
+    db,
+    ctx.rulesetId,
+    [...TEMPLATE_ITEMS, ...items.filter((item) => item.isTemplate)],
+    { isTemplate: true },
+  );
   await seedItems(
     db,
     ctx.rulesetId,
-    [...GOODS, ...MAGIC_ARMOR, ...MAGIC_SHIELDS, ...MAGIC_WEAPONS, ...WONDROUS_ITEMS, ...RINGS, ...RODS, ...STAFFS],
+    items.filter((item) => !item.isTemplate),
     { templateMap: templates },
   );
 

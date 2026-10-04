@@ -7,6 +7,7 @@ import { ALL_FEATS as SCOUNDREL_FEATS } from "@/database/packages/dnd35-from-par
 import { ALL_FEATS as WARRIOR_FEATS } from "@/database/packages/dnd35-from-parser/generated/complete-warrior/feats/index.ts";
 import { RODS, WONDROUS_ITEMS } from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
 import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
+import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/scraper/armorStats.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
 import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
 
@@ -111,6 +112,60 @@ const seededModifiers = (seeds: { name: string; modifiers?: { target: string; va
   if (!seed) throw new Error(`${name} isn't seeded`);
   return (seed.modifiers ?? []).map(({ target, value }) => `${target} +${value}`).sort();
 };
+
+describe("A specific armor's text", () => {
+  test("gives the stats it changes, its category and weight", () => {
+    expect(
+      readArmorStats(
+        "The armor has an arcane spell failure chance of 20%, a maximum Dexterity bonus of +4, and an armor check penalty of -2. It is considered light armor and weighs 20 pounds.",
+      ),
+    ).toEqual({
+      properties: [
+        { type: "ITEM_SPELL_FAILURE", value: "20" },
+        { type: "ARMOR_MAX_DEX", value: "4" },
+        { type: "ARMOR_CHECK_PENALTY", value: "-2" },
+        { type: "ARMOR_PROFICIENCY", value: "Light" },
+      ],
+      weight: "20",
+    });
+    expect(
+      readArmorStats("It has a 5% arcane spell failure chance and no armor check penalty. It weighs 2½ pounds."),
+    ).toEqual({
+      properties: [
+        { type: "ITEM_SPELL_FAILURE", value: "5" },
+        { type: "ARMOR_CHECK_PENALTY", value: "0" },
+      ],
+      weight: "2.5",
+    });
+  });
+
+  test("gives its enhancement bonus, magic armor being masterwork unless its check penalty is given", () => {
+    expect(readArmorStats("Ten 100-gp gems adorn this +3 banded mail.")).toEqual({
+      properties: [{ type: "ITEM_MASTERWORK", value: "true" }],
+      enhancement: 3,
+    });
+    // A bonus to something else first, and a spine's enhancement after the shield's
+    expect(
+      readArmorStats("This finely crafted +2 breastplate grants a +2 competence bonus on Charisma checks."),
+    ).toMatchObject({ enhancement: 2 });
+    expect(
+      readArmorStats("This +1 heavy steel shield is covered in spines. A fired spine has a +2 enhancement bonus."),
+    ).toMatchObject({ enhancement: 1 });
+    expect(readArmorStats("This round heavy wooden shield has a +3 enhancement bonus.")).toMatchObject({
+      enhancement: 3,
+    });
+    expect(readArmorStats("This +2 hide armor is made from rhinoceros hide. It has a -1 armor check penalty.")).toEqual(
+      { properties: [{ type: "ARMOR_CHECK_PENALTY", value: "-1" }], enhancement: 2 },
+    );
+    // Adamantine armor is masterwork, magic or not; darkwood says it has no enhancement bonus
+    expect(readArmorStats("This nonmagical breastplate is made of adamantine.")).toEqual({
+      properties: [{ type: "ITEM_MASTERWORK", value: "true" }],
+    });
+    expect(readArmorStats("It has no enhancement bonus, but its construction material makes it lighter.")).toEqual({
+      properties: [],
+    });
+  });
+});
 
 describe("The seeded bonuses the rules read", () => {
   test("give a feat, a class feature or a race its permanent skill bonuses", () => {

@@ -5,21 +5,21 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Adamantine Battleaxe",
     description: "This nonmagical axe is made out of adamantine. As a masterwork weapon, it has a +1 enhancement bonus on attack rolls.",
-    weight: "0", costGp: "3010", type: "Weapon", slot: "Main Hand",
+    weight: "6", costGp: "3010", type: "Weapon", slot: "Main Hand",
     sourceItem: "Battleaxe",
     properties: [],
   },
   {
     name: "Adamantine Dagger",
     description: "This nonmagical dagger is made out of adamantine. As a masterwork weapon, it has a +1 enhancement bonus on attack rolls.",
-    weight: "0", costGp: "3002", type: "Weapon", slot: "Main Hand",
+    weight: "1", costGp: "3002", type: "Weapon", slot: "Main Hand",
     sourceItem: "Dagger",
     properties: [],
   },
   {
     name: "Assassin's Dagger",
     description: "This wicked-looking, curved +2 dagger provides a +1 bonus to the DC of a Fortitude save forced by the death attack of an assassin.",
-    weight: "0", costGp: "18302", type: "Weapon", slot: "Main Hand",
+    weight: "1", costGp: "18302", type: "Weapon", slot: "Main Hand",
     sourceItem: "Dagger",
     properties: [
       { type: "MAGIC_AURA", value: "Moderate necromancy" },
@@ -29,7 +29,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Dagger of Venom",
     description: "This black +1 dagger has a serrated edge. It allows the wielder to use a poison effect (as the spell, save DC 14) upon a creature struck by the blade once per day. The wielder can decide to use the power after he has struck. Doing so is a free action, but the poison effect must be invoked in the same round that the dagger strikes.",
-    weight: "0", costGp: "8302", type: "Weapon", slot: "Main Hand",
+    weight: "1", costGp: "8302", type: "Weapon", slot: "Main Hand",
     sourceItem: "Dagger",
     properties: [
       { type: "MAGIC_AURA", value: "Faint necromancy" },
@@ -39,7 +39,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Dwarven Thrower",
     description: "This weapon commonly functions as a +2 warhammer. In the hands of a dwarf, the warhammer gains an additional +1 enhancement bonus (for a total enhancement bonus of +3) and gains the returning special ability. It can be hurled with a 30-foot range increment. When hurled, it deals an extra 2d8 points of damage against giants or an extra 1d8 points of damage against any other target.",
-    weight: "0", costGp: "60312", type: "Weapon", slot: "Main Hand",
+    weight: "5", costGp: "60312", type: "Weapon", slot: "Main Hand",
     sourceItem: "Warhammer",
     properties: [
       { type: "MAGIC_AURA", value: "Moderate evocation" },
@@ -49,7 +49,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Flame Tongue",
     description: "This is a +1 flaming burst longsword. Once per day, the sword can blast forth a fiery ray at any target within 30 feet as a ranged touch attack. The ray deals 4d6 points of fire damage on a successful hit.",
-    weight: "0", costGp: "20715", type: "Weapon", slot: "Main Hand",
+    weight: "4", costGp: "20715", type: "Weapon", slot: "Main Hand",
     sourceItem: "Longsword",
     properties: [
       { type: "MAGIC_AURA", value: "Moderate evocation" },
@@ -59,7 +59,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Frost Brand",
     description: "This +3 frost greatsword sheds light as a torch when the temperature drops below 0°F. At such times it cannot be concealed when drawn, nor can its light be shut off. Its wielder is protected from fire; the sword absorbs the first 10 points of fire damage each round that the wielder would otherwise take. A frost brand extinguishes all nonmagical fires in its area. As a standard action, it can also dispel lasting fire spells, but not instantaneous effects, though you must succeed on a dispel check (1d20 +14) against each spell to dispel it. The DC to dispel such spells is 11 + the caster level of the fire spell.",
-    weight: "0", costGp: "54475", type: "Weapon", slot: "Main Hand",
+    weight: "8", costGp: "54475", type: "Weapon", slot: "Main Hand",
     sourceItem: "Greatsword",
     properties: [
       { type: "MAGIC_AURA", value: "Strong evocation" },
@@ -78,7 +78,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Holy Avenger",
     description: "This +2 cold iron longsword becomes a +5 holy cold iron longsword in the hands of a paladin. It provides spell resistance of 5 + the paladin's level to the wielder and anyone adjacent to her. It also enables the wielder to use greater dispel magic (once per round as a standard action) at the class level of the paladin. (Only the area dispel is possible, not the targeted dispel or counterspell versions of greater dispel magic.)",
-    weight: "0", costGp: "120630", type: "Weapon", slot: "Main Hand",
+    weight: "4", costGp: "120630", type: "Weapon", slot: "Main Hand",
     sourceItem: "Longsword",
     properties: [
       { type: "MAGIC_AURA", value: "Strong abjuration" },
@@ -88,7 +88,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Javelin of Lightning",
     description: "This javelin becomes a 5d6 lightning bolt when thrown (Reflex DC 14 half). It is consumed in the attack.",
-    weight: "0", costGp: "1500", type: "Weapon", slot: "Main Hand",
+    weight: "2", costGp: "1500", type: "Weapon", slot: "Main Hand",
     sourceItem: "Javelin",
     properties: [
       { type: "MAGIC_AURA", value: "Faint evocation" },
@@ -98,7 +98,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Life-Drinker",
     description: "This +1 greataxe is favored by undead and constructs, who do not suffer its drawback. A life-drinker bestows two negative levels on its target whenever it deals damage, just as if its target had been struck by an undead creature. One day after being struck, subjects must make a DC 16 Fortitude save for each negative level or lose a character level. Each time a life-drinker deals damage to a foe, it also bestows one negative level on the wielder. Any negative level gained by the wielder in this fashion lasts for 1 hour.",
-    weight: "0", costGp: "40320", type: "Weapon", slot: "Main Hand",
+    weight: "12", costGp: "40320", type: "Weapon", slot: "Main Hand",
     sourceItem: "Greataxe",
     properties: [
       { type: "MAGIC_AURA", value: "Strong necromancy" },
@@ -108,7 +108,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Luck Blade, 0 Wishes",
     description: "This +2 short sword gives its possessor a +1 luck bonus on all saving throws. Its possessor also gains the power of good fortune, usable once per day. This extraordinary ability allows its possessor to reroll one roll that she just made. She must take the result of the reroll, even if it's worse than the original roll. In addition, a luck blade may contain up to three wishes (when randomly rolled, a luck blade holds 1d4-1 wishes, minimum 0). When the last wish is used, the sword remains a +2 short sword, still grants the +1 luck bonus, and still grants its reroll power.",
-    weight: "0", costGp: "22060", type: "Weapon", slot: "Main Hand",
+    weight: "2", costGp: "22060", type: "Weapon", slot: "Main Hand",
     sourceItem: "Shortsword",
     properties: [
       { type: "MAGIC_AURA", value: "Strong evocation" },
@@ -121,7 +121,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Luck Blade, 1 Wish",
     description: "This +2 short sword gives its possessor a +1 luck bonus on all saving throws. Its possessor also gains the power of good fortune, usable once per day. This extraordinary ability allows its possessor to reroll one roll that she just made. She must take the result of the reroll, even if it's worse than the original roll. In addition, a luck blade may contain up to three wishes (when randomly rolled, a luck blade holds 1d4-1 wishes, minimum 0). When the last wish is used, the sword remains a +2 short sword, still grants the +1 luck bonus, and still grants its reroll power.",
-    weight: "0", costGp: "62360", type: "Weapon", slot: "Main Hand",
+    weight: "2", costGp: "62360", type: "Weapon", slot: "Main Hand",
     sourceItem: "Shortsword",
     properties: [
       { type: "MAGIC_AURA", value: "Strong evocation" },
@@ -134,7 +134,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Luck Blade, 2 Wishes",
     description: "This +2 short sword gives its possessor a +1 luck bonus on all saving throws. Its possessor also gains the power of good fortune, usable once per day. This extraordinary ability allows its possessor to reroll one roll that she just made. She must take the result of the reroll, even if it's worse than the original roll. In addition, a luck blade may contain up to three wishes (when randomly rolled, a luck blade holds 1d4-1 wishes, minimum 0). When the last wish is used, the sword remains a +2 short sword, still grants the +1 luck bonus, and still grants its reroll power.",
-    weight: "0", costGp: "102660", type: "Weapon", slot: "Main Hand",
+    weight: "2", costGp: "102660", type: "Weapon", slot: "Main Hand",
     sourceItem: "Shortsword",
     properties: [
       { type: "MAGIC_AURA", value: "Strong evocation" },
@@ -147,7 +147,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Luck Blade, 3 Wishes",
     description: "This +2 short sword gives its possessor a +1 luck bonus on all saving throws. Its possessor also gains the power of good fortune, usable once per day. This extraordinary ability allows its possessor to reroll one roll that she just made. She must take the result of the reroll, even if it's worse than the original roll. In addition, a luck blade may contain up to three wishes (when randomly rolled, a luck blade holds 1d4-1 wishes, minimum 0). When the last wish is used, the sword remains a +2 short sword, still grants the +1 luck bonus, and still grants its reroll power.",
-    weight: "0", costGp: "142960", type: "Weapon", slot: "Main Hand",
+    weight: "2", costGp: "142960", type: "Weapon", slot: "Main Hand",
     sourceItem: "Shortsword",
     properties: [
       { type: "MAGIC_AURA", value: "Strong evocation" },
@@ -160,7 +160,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Mace of Smiting",
     description: "This +3 adamantine heavy mace has a +5 enhancement bonus against constructs, and any critical hit dealt to a construct completely destroys it (no saving throw). A critical hit dealt to an outsider deals ×4 damage rather than ×2.",
-    weight: "0", costGp: "75312", type: "Weapon", slot: "Main Hand",
+    weight: "8", costGp: "75312", type: "Weapon", slot: "Main Hand",
     sourceItem: "Heavy Mace",
     properties: [
       { type: "MAGIC_AURA", value: "Moderate transmutation" },
@@ -170,7 +170,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Mace of Terror",
     description: "On command, this +2 heavy mace causes the wielder's clothes and appearance to transform into an illusion of darkest horror such that living creatures in a 30-foot cone become panicked as if by a fear spell (Will DC 16 partial). They take a -2 morale penalty on saving throws, and they flee from the wielder. The wielder may use this ability up to three times per day.",
-    weight: "0", costGp: "38552", type: "Weapon", slot: "Main Hand",
+    weight: "8", costGp: "38552", type: "Weapon", slot: "Main Hand",
     sourceItem: "Heavy Mace",
     properties: [
       { type: "MAGIC_AURA", value: "Strong necromancy" },
@@ -180,14 +180,14 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Masterwork Cold Iron Longsword",
     description: "This nonmagical longsword is crafted out of cold iron. As a masterwork weapon, it has a +1 enhancement bonus on attack rolls.",
-    weight: "0", costGp: "330", type: "Weapon", slot: "Main Hand",
+    weight: "4", costGp: "330", type: "Weapon", slot: "Main Hand",
     sourceItem: "Longsword",
     properties: [],
   },
   {
     name: "Nine Lives Stealer",
     description: "This longsword always performs as a +2 longsword, but it also has the power to draw the life force from an opponent. It can do this nine times before the ability is lost. At that point, the sword becomes a simple +2 longsword (with a hint of evil about it). A critical hit must be dealt for the sword's death-dealing ability to function, and this weapon has no effect on creatures not subject to critical hits. The victim is entitled to a DC 20 Fortitude save to avoid death. If the save is successful, the sword's death-dealing ability does not function, no use of the ability is expended, and normal critical damage is determined. This sword is evil, and any good character attempting to wield it gains two negative levels. These negative levels remain as long as the sword is in hand and disappear when the sword is no longer wielded. These negative levels never result in actual level loss, but they cannot be overcome in any way (including restoration spells) while the sword is wielded.",
-    weight: "0", costGp: "23057", type: "Weapon", slot: "Main Hand",
+    weight: "4", costGp: "23057", type: "Weapon", slot: "Main Hand",
     sourceItem: "Longsword",
     properties: [
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
@@ -196,7 +196,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Oathbow",
     description: "Of elven make, this white +2 composite longbow (+2 Str bonus) whispers \"Swift defeat to my enemies\" in Elven when nocked and pulled. Once per day, if the firer swears aloud to slay her target (a free action), the bow's whisper becomes the low shout \"Swift death to those who have wronged me.\" Against such a sworn enemy, the bow has a +5 enhancement bonus, and arrows launched from it deal an additional 2d6 points of damage (and ×4 on a critical hit instead of the normal ×3). However, the bow is treated as only a masterwork weapon against all foes other than the sworn enemy, and the wielder takes a -1 penalty on attack rolls with any weapon other than the oathbow. These bonuses and penalties last for seven days or until the sworn enemy is slain or destroyed by the wielder of the oathbow, whichever comes first. The oathbow may only have one sworn enemy at a time. Once the wielder swears to slay a target, he cannot make a new oath until he has slain that target or seven days have passed. Even if the wielder slays the sworn enemy on the same day that he makes the oath, he cannot activate the oathbow's special power again until 24 hours have passed from the time he made the oath.",
-    weight: "0", costGp: "25600", type: "Weapon", slot: "Main Hand",
+    weight: "3", costGp: "25600", type: "Weapon", slot: "Main Hand",
     sourceItem: "Composite Longbow",
     properties: [
       { type: "MAGIC_AURA", value: "Strong evocation" },
@@ -207,7 +207,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Rapier of Puncturing",
     description: "Three times per day, this +2 wounding rapier allows the wielder to make a touch attack with the weapon that deals 1d6 points of Constitution damage by draining blood. Creatures immune to critical hits are immune to the Constitution damage dealt by this weapon.",
-    weight: "0", costGp: "50320", type: "Weapon", slot: "Main Hand",
+    weight: "2", costGp: "50320", type: "Weapon", slot: "Main Hand",
     sourceItem: "Rapier",
     properties: [
       { type: "MAGIC_AURA", value: "Strong necromancy" },
@@ -246,7 +246,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Silver Dagger, Masterwork",
     description: "This masterwork alchemical silver dagger is nonmagical. As a masterwork weapon, it has a +1 enhancement bonus on attack rolls.",
-    weight: "0", costGp: "322", type: "Weapon", slot: "Main Hand",
+    weight: "1", costGp: "322", type: "Weapon", slot: "Main Hand",
     sourceItem: "Dagger",
     properties: [],
   },
@@ -271,7 +271,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Sun Blade",
     description: "This sword is the size of a bastard sword. However, a sun blade is wielded as if it were a short sword with respect to weight and ease of use. (In other words, the weapon appears to all viewers to be a bastard sword, and deals bastard sword damage, but the wielder feels and reacts as if the weapon were a short sword.) Any individual able to use either a bastard sword or a short sword with proficiency is proficient in the use of a sun blade. Likewise, Weapon Focus and Weapon Specialization in short sword and bastard sword apply equally, but the benefits of those feats do not stack. In normal combat, the glowing golden blade of the weapon is equal to a +2 bastard sword. Against evil creatures, its enhancement bonus is +4. Against Negative Energy Plane creatures or undead creatures, the sword deals double damage (and ×3 on a critical hit instead of the usual ×2). The blade also has a special sunlight power. Once per day, the wielder can swing the blade vigorously above her head while speaking a command word. The sunblade then sheds a bright yellow radiance that is like full daylight. The radiance begins shining in a 10-foot radius around the sword wielder and extends outward at 5 feet per round for 10 rounds thereafter, to create a globe of light with a 60-foot radius. When the wielder stops swinging, the radiance fades to a dim glow that persists for another minute before disappearing entirely. All sun blades are of good alignment, and any evil creature attempting to wield one gains one negative level. The negative level remains as long as the sword is in hand and disappears when the sword is no longer wielded. This negative level never results in actual level loss, but it cannot be overcome in any way (including restoration spells) while the sword is wielded.",
-    weight: "0", costGp: "50335", type: "Weapon", slot: "Main Hand",
+    weight: "2", costGp: "50335", type: "Weapon", slot: "Main Hand",
     sourceItem: "Shortsword",
     properties: [
       { type: "MAGIC_AURA", value: "Moderate evocation" },
@@ -281,7 +281,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Sword of Life Stealing",
     description: "This black iron +2 longsword bestows a negative level when it deals a critical hit. The sword wielder gains 1d6 temporary hit points each time a negative level is bestowed on another. These temporary hit points last for 24 hours. One day after being struck, subjects must make a DC 16 Fortitude save for each negative level or lose a character level.",
-    weight: "0", costGp: "25715", type: "Weapon", slot: "Main Hand",
+    weight: "4", costGp: "25715", type: "Weapon", slot: "Main Hand",
     sourceItem: "Longsword",
     properties: [
       { type: "MAGIC_AURA", value: "Strong necromancy" },
@@ -291,7 +291,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Sword of Subtlety",
     description: "A +1 short sword with a thin, dull gray blade, this weapon provides a +4 bonus on its wielder's attack and damage rolls when he is making a sneak attack with it.",
-    weight: "0", costGp: "22310", type: "Weapon", slot: "Main Hand",
+    weight: "2", costGp: "22310", type: "Weapon", slot: "Main Hand",
     sourceItem: "Shortsword",
     properties: [
       { type: "MAGIC_AURA", value: "Moderate illusion" },
@@ -301,7 +301,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Sword of the Planes",
     description: "This longsword has an enhancement bonus of +1 on the Material Plane, but on any Elemental Plane its enhancement bonus increases to +2. (The +2 enhancement bonus also applies on the Material Plane when the weapon is used against elementals.) It operates as a +3 longsword on the Astral Plane or the Ethereal Plane or when used against opponents native to either of those planes. On any other plane, or against any outsider, it functions as a +4 longsword.",
-    weight: "0", costGp: "22315", type: "Weapon", slot: "Main Hand",
+    weight: "4", costGp: "22315", type: "Weapon", slot: "Main Hand",
     sourceItem: "Longsword",
     properties: [
       { type: "MAGIC_AURA", value: "Strong evocation" },
@@ -311,7 +311,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Sylvan Scimitar",
     description: "This +3 scimitar, when used outdoors in a temperate climate, grants its wielder the use of the Cleave feat and deals an extra 1d6 points of damage.",
-    weight: "0", costGp: "47315", type: "Weapon", slot: "Main Hand",
+    weight: "4", costGp: "47315", type: "Weapon", slot: "Main Hand",
     sourceItem: "Scimitar",
     properties: [
       { type: "MAGIC_AURA", value: "Moderate evocation" },
@@ -321,7 +321,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Trident of Fish Command",
     description: "The magical properties of this +1 trident with a 6-foot-long haft enable its wielder to charm up to 14 HD of aquatic animals (Will DC 16 negates, animals get a +5 bonus if currently under attack by the wielder or his allies), no two of which can be more than 30 feet apart. The wielder can use this effect up to three times per day. The wielder can communicate with the animals as if using a speak with animals spell. Animals making their saving throw are free of control, but they will not approach within 10 feet of the trident. The trident can be used up to three times per day.",
-    weight: "0", costGp: "18650", type: "Weapon", slot: "Main Hand",
+    weight: "4", costGp: "18650", type: "Weapon", slot: "Main Hand",
     sourceItem: "Trident",
     properties: [
       { type: "MAGIC_AURA", value: "Moderate enchantment" },
@@ -331,7 +331,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
   {
     name: "Trident of Warning",
     description: "A weapon of this type enables its wielder to determine the location, depth, kind, and number of aquatic predators within 680 feet. A trident of warning must be grasped and pointed in order for the character using it to gain such information, and it requires 1 round to scan a hemisphere with a radius of 680 feet. The weapon is otherwise a +2 trident.",
-    weight: "0", costGp: "10115", type: "Weapon", slot: "Main Hand",
+    weight: "4", costGp: "10115", type: "Weapon", slot: "Main Hand",
     sourceItem: "Trident",
     properties: [
       { type: "MAGIC_AURA", value: "Moderate divination" },

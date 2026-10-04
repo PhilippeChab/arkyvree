@@ -65,6 +65,7 @@ import type {
 } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import type { DomainDefinition, FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
+import { ARMOR_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 
 // ---------------------------------------------------------------------------
 // CLI: bun database/packages/dnd35-from-parser/tools/generator/index.ts [<json-path> [--book <book>] | [book [name]] [--type <type>]]
@@ -301,14 +302,15 @@ function generateWeaponFile(
   ]);
 }
 
-function getArmorProf(generatorName: string): string {
-  const def = getArmorDefinition(generatorName);
-  if (def) {
-    if (def.armorType === "Light") return "LIGHT_ARMOR_PROF";
-    if (def.armorType === "Medium") return "MEDIUM_ARMOR_PROF";
-    if (def.armorType === "Heavy") return "HEAVY_ARMOR_PROF";
-  }
+/** The proficiency an armor of a category takes, by the builder's name. */
+function armorProficiencyOf(category: string | undefined): string {
+  if (category === "Medium") return "MEDIUM_ARMOR_PROF";
+  if (category === "Heavy") return "HEAVY_ARMOR_PROF";
   return "LIGHT_ARMOR_PROF";
+}
+
+function getArmorProf(generatorName: string): string {
+  return armorProficiencyOf(getArmorDefinition(generatorName)?.armorType);
 }
 
 function generateArmorFile(
@@ -404,8 +406,13 @@ function generateMagicItemFile(
   constName: string,
   items: ReturnType<typeof buildMagicItemSeeds>[keyof ReturnType<typeof buildMagicItemSeeds>],
 ) {
-  writeItemFile(out, path, constName, [], items, (item) => [
+  // A template's requirements are the proficiency with it, by its category
+  const proficiency = (item: (typeof items)[number]) =>
+    armorProficiencyOf(item.properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value);
+  const uses = items.filter((item) => item.isTemplate).map(proficiency);
+  writeItemFile(out, path, constName, uses, items, (item) => [
     `weight: ${quote(item.weight)}, costGp: ${quote(item.costGp)}, type: ${quote(item.type)},${item.slot ? ` slot: ${quote(item.slot)},` : ""}`,
+    ...(item.isTemplate ? [`isTemplate: true,`, `requirements: ${proficiency(item)},`] : []),
     ...(item.sourceItem ? [`sourceItem: ${quote(item.sourceItem)},`] : []),
     ...(item.properties.length > 0
       ? [`properties: [`, ...item.properties.map((p) => `  ${stringifyProperty(p)},`), `],`]
@@ -438,8 +445,23 @@ function generateItemIndexWithMagic(out: Output, outDir: string) {
   writeGenerated(out, outPath, lines.join("\n"));
 }
 
-function generateMagicItem(out: Output, ref: MagicItemReference, book: string) {
-  const seeds = buildMagicItemSeeds(ref);
+/** The weight of each weapon, armor and shield the book's item reference seeds, by name: what an item made from one weighs. */
+function baseItemWeights(referenceDir: string): Record<string, string> {
+  const path = join(referenceDir, "items.json");
+  if (!existsSync(path)) return {};
+  const seeds = buildItemSeeds(loadReference(path, "item"));
+  const bases = [
+    ...seeds.simpleWeapons,
+    ...seeds.martialWeapons,
+    ...seeds.exoticWeapons,
+    ...seeds.armor,
+    ...seeds.shields,
+  ];
+  return Object.fromEntries(bases.map((item) => [item.name, item.weight]));
+}
+
+function generateMagicItem(out: Output, ref: MagicItemReference, book: string, referenceDir: string) {
+  const seeds = buildMagicItemSeeds(ref, baseItemWeights(referenceDir));
   const outDir = join(out.dir, book, "items");
 
   const files: [
@@ -1046,7 +1068,7 @@ function generateRef(out: Output, jsonPath: string, bookOverride?: string) {
       generateItem(out, loadReference(jsonPath, "item"), book);
       break;
     case "magicItem":
-      generateMagicItem(out, loadReference(jsonPath, "magicItem"), book);
+      generateMagicItem(out, loadReference(jsonPath, "magicItem"), book, dirname(jsonPath));
       break;
     default:
       throw new Error(

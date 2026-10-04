@@ -111,6 +111,8 @@ export interface ItemDef {
   properties: Property[];
   /** The template item this one is made from, by name. */
   sourceItem?: string;
+  /** A template among magic items, which others are made from (elven chain): seeded with the mundane templates. */
+  isTemplate?: true;
   requirements?: RequirementEntry[];
   modifiers?: Modifier[];
 }
