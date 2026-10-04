@@ -16,17 +16,20 @@
  * apply on top via the `misc` channel.
  *
  * `baseSkillTotals` stores the SRD-listed total bonus for each skill (the
- * final number you see in the stat block — e.g. Cat Hide +12 → 12). Compose
- * sets `skill.misc = total - skill.ability` so the on-sheet total matches
- * SRD regardless of the engine's canonical ability-association for the skill
- * (handles cases like Cat using Dex instead of Str for Climb).
+ * final number you see in the stat block — e.g. Cat Hide +12 → 12): its ranks,
+ * ability, size, racial bonus and feats together. The sheet shows it as misc
+ * beside the ability's base modifier and the size
+ * (`DetailedCharacterSkills.setStatBlockTotal`), so a raised ability raises the
+ * total. A race's modifiers add on top: a racial bonus the total counts isn't
+ * one of them.
  *
  * Per-HD scaling:
  *   - Feat count at total HD N = 1 + floor((N-1)/3). Compose applies
- *     `baseFeats`, then appends `featPriority` items in order until count met.
- *   - Skill total bumps: pool = max(0, N - baseHD); compose cycles
- *     `skillPriority` in order, +1 to total each pass, until pool empty.
- *     Each skill capped at N + 3 per RAW.
+ *     `baseFeats`, then appends `featPriority` items in order until count met;
+ *     the appended feats' bonuses come on top of the totals.
+ *   - Skill ranks: an animal's skill point per HD past baseHD (Int 1 or 2:
+ *     1 point), each to the next `skillPriority` skill in turn
+ *     (`scaleSkillRanks`). No skill passes N + 3 ranks.
  *
  * Source: SRD Monster Manual entries (cross-checked via d20srd.org).
  */

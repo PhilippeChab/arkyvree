@@ -10,11 +10,13 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import DetailedCharacterAnimalCompanion from "@/server/rulesets/dnd3.5/DetailedCharacterAnimalCompanion.ts";
 import DetailedCharacterFamiliar from "@/server/rulesets/dnd3.5/DetailedCharacterFamiliar.ts";
 import DetailedCharacterMount from "@/server/rulesets/dnd3.5/DetailedCharacterMount.ts";
+import { getBondedRaceStats } from "@/server/rulesets/dnd3.5/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
+import { stripSeparators } from "@/shared/text.ts";
 import {
   addCharacterContributor,
   addOneLevel,
@@ -373,6 +375,57 @@ describe("Stat blocks", () => {
       await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Hawk Familiar")).bonded)),
     );
     expect(hawk.heavy).toBe(Math.floor(hawk.capacity * 0.5));
+  });
+
+  test.each([
+    "Badger",
+    "Camel",
+    "Dire Rat",
+    "Dog",
+    "Riding Dog",
+    "Eagle",
+    "Hawk",
+    "Horse, Light",
+    "Horse, Heavy",
+    "Owl",
+    "Pony",
+    "Snake, Small Viper",
+    "Snake, Medium Viper",
+    "Wolf",
+  ])("a druid 1's %s companion has its stat block's skills, racial bonuses included", async (race) => {
+    const { bonded } = await createDruidWithCompanion(1, `${race} Animal Companion`);
+    const skills = (await build(new DetailedCharacterAnimalCompanion(bonded))).getDetailedCharacterSkills().getSkills();
+    const totals = getBondedRaceStats(race)!.baseSkillTotals!;
+    expect(
+      Object.fromEntries(Object.keys(totals).map((skill) => [skill, skills[stripSeparators(skill)]?.total])),
+    ).toEqual(totals);
+  });
+
+  test("a companion's added hit dice give its skills a rank each in turn, and its Dexterity bonus and new feats add on", async () => {
+    // A druid 7's companion has 4 more hit dice and +2 Dexterity. The owl's points go to Move Silently, Listen, Spot
+    const owl = (
+      await build(
+        new DetailedCharacterAnimalCompanion((await createDruidWithCompanion(7, "Owl Animal Companion")).bonded),
+      )
+    )
+      .getDetailedCharacterSkills()
+      .getSkills();
+    expect([owl.movesilently, owl.listen, owl.spot].map(({ rank, total }) => ({ rank, total }))).toEqual([
+      { rank: 2, total: 17 + 2 + 1 },
+      { rank: 1, total: 14 + 1 },
+      { rank: 1, total: 6 + 1 },
+    ]);
+    // A light horse of 7 hit dice gains Alertness, its third feat: +2 Listen beside its 2 ranks
+    const horse = (
+      await build(
+        new DetailedCharacterAnimalCompanion(
+          (await createDruidWithCompanion(7, "Horse, Light Animal Companion")).bonded,
+        ),
+      )
+    )
+      .getDetailedCharacterSkills()
+      .getSkills();
+    expect(horse.listen).toMatchObject({ rank: 2, total: 4 + 2 + 2 });
   });
 
   test("a cat familiar has the SRD cat's skills, and a tiny creature's size bonuses", async () => {

@@ -166,14 +166,13 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     description: "A keen-eyed bird of prey. Swift and powerful in flight.",
     size: "Small",
     baseSpeed: 10,
-    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "8", valueType: "number" }],
   },
   {
     name: "Hawk",
-    description: "A small bird of prey with sharp talons and unmatched eyesight in daylight.",
+    description:
+      "A small bird of prey with sharp talons and unmatched eyesight in daylight. Its Spot counts a +8 racial bonus that applies only in daylight.",
     size: "Tiny",
     baseSpeed: 10,
-    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "8", valueType: "number" }],
   },
   {
     name: "Horse, Light",

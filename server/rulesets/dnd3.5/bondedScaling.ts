@@ -14,37 +14,19 @@ export function scaleFeats(stats: BondedRaceStatBlock, totalHD: number): string[
 }
 
 /**
- * Per-skill total bonuses at the given total HD. Starts from baseSkillTotals
- * (SRD stat-block numbers), then bumps each `skillPriority` skill by +1 per
- * pass as the bonded gains HD beyond its baseHD. Each skill is capped at
- * HD + 3 (the standard "max ranks" line, applied here as a soft ceiling on
- * the total bonus).
+ * The ranks a creature's hit dice past its stat block's give its skills: an animal's skill point per added hit die (2 +
+ * its Intelligence modifier, at least 1, and an animal's Intelligence of 1 or 2 makes it 1), each to the next skill of
+ * its `skillPriority` in turn. A legal stat block has at most its hit dice + 3 ranks in a skill, and a skill gains at
+ * most a rank per added hit die, so none passes the maximum.
  */
-export function scaleSkillTotals(stats: BondedRaceStatBlock, totalHD: number): Record<string, number> {
-  const totals: Record<string, number> = { ...(stats.baseSkillTotals ?? {}) };
+export function scaleSkillRanks(stats: BondedRaceStatBlock, totalHD: number): Record<string, number> {
+  const ranks: Record<string, number> = {};
   const priority = stats.skillPriority ?? [];
-  const cap = totalHD + 3;
-
-  for (const skill of Object.keys(totals)) {
-    if (totals[skill] > cap) totals[skill] = cap;
+  if (priority.length === 0) return ranks;
+  const points = Math.max(0, totalHD - stats.baseHD);
+  for (let point = 0; point < points; point++) {
+    const skill = priority[point % priority.length];
+    ranks[skill] = (ranks[skill] ?? 0) + 1;
   }
-
-  let pool = Math.max(0, totalHD - stats.baseHD);
-  if (priority.length === 0 || pool === 0) return totals;
-
-  let i = 0;
-  let stallGuard = 0;
-  while (pool > 0 && stallGuard < priority.length) {
-    const skill = priority[i % priority.length];
-    const current = totals[skill] ?? 0;
-    if (current < cap) {
-      totals[skill] = current + 1;
-      pool--;
-      stallGuard = 0;
-    } else {
-      stallGuard++;
-    }
-    i++;
-  }
-  return totals;
+  return ranks;
 }

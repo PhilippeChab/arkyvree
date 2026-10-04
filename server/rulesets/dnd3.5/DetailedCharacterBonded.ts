@@ -4,7 +4,6 @@ import { Characters, Visibility } from "@/server/repositories/index.ts";
 import type { ValidationIssue, ValidationResult } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
 
 import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
 
@@ -57,16 +56,10 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     this.applySkillTotals(raceStats.baseSkillTotals ?? {});
   }
 
+  /** The stat block's skills, at its totals: an item's or a feat's modifier adds on top, and so does a raised ability. */
   protected applySkillTotals(totals: Record<string, number>): void {
-    if (Object.keys(totals).length === 0) return;
-    const skills = this.detailedCharacterSkills.getSkills();
-    for (const [skillName, srdTotal] of Object.entries(totals)) {
-      const entry = skills[stripSeparators(skillName)];
-      if (entry) {
-        entry.rank = 0;
-        entry.misc = srdTotal - entry.ability - entry.size;
-        entry.trained = srdTotal > 0;
-      }
+    for (const [skillName, total] of Object.entries(totals)) {
+      this.detailedCharacterSkills.setStatBlockTotal(skillName, total);
     }
   }
 
