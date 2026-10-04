@@ -28,6 +28,7 @@ import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharact
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
 import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Character,
   CharacterLevel,
@@ -348,6 +349,8 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       if (abilityName) aptitudeIdToAbilityName.set(power.aptitudeId, abilityName);
     }
 
+    // Each class casts a spell with its DC: keyed by the class's aptitude, as the spell's known flags are
+    const aptitudeSlugById = new Map(this.rulesetAptitudes.map((apt) => [apt.id, toSpellPossessionSlug(apt.name)]));
     for (const power of this.powers) {
       let abilityDcName: string | null = null;
       if (power.virtual) {
@@ -358,7 +361,8 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
           abilityDcName = this.klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
         }
       }
-      this.detailedCharacterPowerGroupings.registerPower({ ...power, abilityDcName }, power.properties);
+      const aptitudeSlug = aptitudeSlugById.get(power.aptitudeId) ?? power.aptitudeId;
+      this.detailedCharacterPowerGroupings.registerPower({ ...power, abilityDcName, aptitudeSlug }, power.properties);
     }
     this.detailedCharacterPowers.injectGroupings(this.detailedCharacterPowerGroupings.getPowerGroupings());
 
@@ -486,8 +490,9 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       if (!fullPower) continue;
       const level = virtual.powerLevel;
       if (level == null) continue;
-      const registeredDc = this.detailedCharacterPowers.getPower(virtual.name)?.dc;
-      const dc = registeredDc ? registeredDc.total : null;
+      const aptitude = this.rulesetAptitudes.find((apt) => apt.id === virtual.aptitudeId);
+      const aptitudeSlug = aptitude ? toSpellPossessionSlug(aptitude.name) : virtual.aptitudeId;
+      const dc = this.detailedCharacterPowers.getPower(virtual.name)?.dc?.[aptitudeSlug]?.total ?? null;
       const saveName = fullPower.saveId ? (saveIdToName.get(fullPower.saveId) ?? null) : null;
       results.push({
         power: fullPower,

@@ -166,7 +166,7 @@ Domain and specialist aptitudes are excluded from known paths (those spells are 
 
 ### powers (DC groupings)
 
-Grouped by spell school, spell descriptor, and individual power name. Same DC object is shared across all groupings for a given power — modifying via school or name affects the same DC.
+Grouped by spell school and spell descriptor, and reached by each spell's name. A spell has a DC for each class that casts it: its level on that class's list and that class's casting ability (a wizard/bard's Hold Person: 3rd level and Intelligence as a wizard's, 2nd and Charisma as a bard's). A DC object is shared by its spell's groupings and its entry, so modifying it via school or name affects the same DC.
 
 DC formula: `base (10) + spell level + ability modifier + misc`
 
@@ -175,7 +175,7 @@ DC formula: `base (10) + spell level + ability modifier + misc`
 | `powers.groups.<group>.*.dc.misc` | number | DC misc modifier |
 | `powers.groups.<group>.*.dc.total` | number | DC total (read-only, recomputed) |
 
-`<group>` is a spell school (e.g., `evocation`) or descriptor (e.g., `fire`). Individual spells use `powers.<spell>.dc.misc` and `powers.<spell>.dc.total`, for example `powers.fireball.dc.misc`, without the `groups` namespace or wildcard. Only powers with a spell level and ability DC get DC entries.
+`<group>` is a spell school (e.g., `evocation`) or descriptor (e.g., `fire`); its `*` reaches each spell, and each class's DC of it. Individual spells use `powers.<spell>.dc.*.misc` and `powers.<spell>.dc.*.total`, each class's DC of the spell (`powers.fireball.dc.*.misc`; `powers.fireball.dc.wizard.misc` is the wizard's alone), without the `groups` namespace. Only powers with a spell level and ability DC get DC entries.
 
 ## identity
 

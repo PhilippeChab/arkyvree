@@ -1,4 +1,4 @@
-import type { PowerDc } from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
+import type { PowerDc, PowerDcsByClass } from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
@@ -8,10 +8,12 @@ import { stripSeparators } from "@/shared/text.ts";
 type PowerEntry = {
   power: Power;
   properties: Record<string, string>;
-  dc?: PowerDc;
+  /** Its DC as each of the character's classes casts it, by the class's aptitude slug. */
+  dc?: PowerDcsByClass;
 };
 
-type PowerGroupEntry = Record<string, { dc: PowerDc }>;
+// A grouping's spells, each with its DC as each class casts it
+type PowerGroupEntry = Record<string, Record<string, { dc: PowerDc }>>;
 type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
 
 // Spell known entries ({ [aptSlug]: { known } }) are bolted onto PowerEntry objects
@@ -165,20 +167,23 @@ export default class DetailedCharacterPowers {
         }
       }
 
-      this.detailedCharacterPowers[stripSeparators(power.name)] = {
-        power,
-        properties: propertiesMap,
-      };
+      // A spell already listed keeps what's on its entry: its known flags and its DCs by class
+      const slug = stripSeparators(power.name);
+      this.detailedCharacterPowers[slug] = { ...this.detailedCharacterPowers[slug], power, properties: propertiesMap };
     }
   }
 
-  injectGroupings(groupings: Record<string, Record<string, PowerDc>>) {
+  /**
+   * The groupings under `groups`: `powers.groups.<grouping>.*.dc.misc` reaches each spell of it, and each class's DC of
+   * the spell through it (a spell is a group of its classes).
+   */
+  injectGroupings(groupings: Record<string, Record<string, PowerDcsByClass>>) {
     if (Object.keys(groupings).length === 0) return;
     const namespace: PowerGroupsNamespace = {};
     for (const [key, group] of Object.entries(groupings)) {
       const wrapped: PowerGroupEntry = {};
-      for (const [powerKey, dc] of Object.entries(group)) {
-        wrapped[powerKey] = { dc };
+      for (const [powerKey, dcs] of Object.entries(group)) {
+        wrapped[powerKey] = Object.fromEntries(Object.entries(dcs).map(([klass, dc]) => [klass, { dc }]));
       }
       namespace[key] = wrapped;
     }

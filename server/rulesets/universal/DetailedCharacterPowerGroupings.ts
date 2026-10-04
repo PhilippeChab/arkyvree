@@ -18,8 +18,9 @@ const NAVIGATABLE_POWER_DC_PATHS = [
   { path: "dc.total", description: "Final DC for this spell", type: "number" as const, requirementOnly: true },
 ];
 
-// Grouping key (normalized) → Record of power key → shared PowerDc reference
-type PowerGroup = Record<string, PowerDc>;
+// A spell's DC is its casting class's: grouping key (normalized) → spell → class (its aptitude's slug) → shared PowerDc
+export type PowerDcsByClass = Record<string, PowerDc>;
+type PowerGroup = Record<string, PowerDcsByClass>;
 type PowerGroupingsData = Record<string, PowerGroup>;
 
 export default class DetailedCharacterPowerGroupings {
@@ -33,6 +34,10 @@ export default class DetailedCharacterPowerGroupings {
     return deriveSegmentLabels(NAVIGATABLE_POWER_DC_PATHS, { dc: "DC", groups: "Groups" });
   }
 
+  /**
+   * The DC paths of these groupings (a school or descriptor: `powers.groups.<grouping>.*.dc.misc`, each of its spells)
+   * or of these spells (`wildcard` false: `powers.<spell>.dc.*.misc`, each class's DC of it).
+   */
   static generateTargetPaths(
     powerGroupings: string[],
     kind: "modifier" | "requirement",
@@ -40,15 +45,14 @@ export default class DetailedCharacterPowerGroupings {
     groupLabel?: string,
   ): TargetPath[] {
     const paths: TargetPath[] = [];
-    const wildcardSegment = wildcard ? ".*" : "";
-    const namespace = wildcard ? "groups." : "";
 
     for (const grouping of powerGroupings) {
       for (const subPath of NAVIGATABLE_POWER_DC_PATHS) {
         if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
         const prefix = groupLabel ? `${capitalize(grouping)} ${groupLabel}` : capitalize(grouping);
+        const leaf = subPath.path.slice("dc.".length);
         paths.push({
-          path: `powers.${namespace}${grouping}${wildcardSegment}.${subPath.path}`,
+          path: wildcard ? `powers.groups.${grouping}.*.dc.${leaf}` : `powers.${grouping}.dc.*.${leaf}`,
           category: "powers",
           description: `${kind === "requirement" ? "Any" : "All"} ${prefix} — ${subPath.description}`,
           ...(groupLabel && { groupDescription: `${capitalize(grouping)} ${groupLabel} spells` }),
@@ -67,8 +71,12 @@ export default class DetailedCharacterPowerGroupings {
     return this.powerGroupings;
   }
 
+  /**
+   * A spell's DC as one class casts it (`aptitudeSlug`): its level on that class's list and that class's casting ability.
+   * The spell's other classes keep theirs. Its school and descriptor groupings and its entry hold it.
+   */
   registerPower(
-    power: { name: string; powerLevel: number | null; abilityDcName: string | null },
+    power: { name: string; powerLevel: number | null; abilityDcName: string | null; aptitudeSlug: string },
     properties: Property[],
   ): PowerDc | null {
     if (power.powerLevel == null || power.abilityDcName == null) return null;
@@ -90,29 +98,16 @@ export default class DetailedCharacterPowerGroupings {
     };
 
     const normalizedPowerName = stripSeparators(power.name);
-    const groupingValues: string[] = [];
-
     for (const prop of properties) {
-      if (this.groupingProperties.includes(prop.type)) {
-        groupingValues.push(stripSeparators(prop.value));
-      }
-    }
-
-    groupingValues.push(normalizedPowerName);
-
-    for (const grouping of groupingValues) {
+      if (!this.groupingProperties.includes(prop.type)) continue;
+      const grouping = stripSeparators(prop.value);
       if (!grouping) continue;
-      if (!this.powerGroupings[grouping]) {
-        this.powerGroupings[grouping] = {};
-      }
-      this.powerGroupings[grouping][normalizedPowerName] = dc;
+      const group = (this.powerGroupings[grouping] ??= {});
+      (group[normalizedPowerName] ??= {})[power.aptitudeSlug] = dc;
     }
 
-    // Attach dc to the power entry in DetailedCharacterPowers
     const powerEntry = this.detailedCharacterPowers.getPower(power.name);
-    if (powerEntry) {
-      powerEntry.dc = dc;
-    }
+    if (powerEntry) (powerEntry.dc ??= {})[power.aptitudeSlug] = dc;
 
     return dc;
   }
