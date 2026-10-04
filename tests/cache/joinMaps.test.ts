@@ -14,6 +14,7 @@ import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } f
 import { type CachedRulesetData, getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
+import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { getSeedCtx } from "@/tests/helpers.ts";
 
 describe("cache join-maps — parity with repository queries", () => {
@@ -133,7 +134,7 @@ describe("cache join-maps — parity with repository queries", () => {
     }
 
     // And: looking up a known D&D 3.5 triple returns the expected powers.
-    const evocation = rulesetData.entityIdsByPropertyLookup.get("powers:SPELL_SCHOOL:Evocation") ?? [];
+    const evocation = rulesetData.entityIdsByPropertyLookup.get(`powers:${SPELL_SCHOOL}:Evocation`) ?? [];
     expect(evocation.length).toBeGreaterThan(0);
     for (const id of evocation) {
       expect(rulesetData.powersById.has(id)).toBe(true);

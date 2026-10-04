@@ -9,7 +9,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/i
 import { Items, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
-import { WEAPON_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
+import { WEAPON_PROFICIENCY, WEAPON_SIZE } from "@/shared/dnd3.5/properties/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
@@ -409,7 +409,7 @@ describe("InventoryService", () => {
         const { session, character, newItem } = await setup({ size: characterSize });
         const weapon = await newItem(
           {},
-          weaponSize === "unsized" ? {} : { WEAPON_PROFICIENCY: "Martial", WEAPON_SIZE: weaponSize },
+          weaponSize === "unsized" ? {} : { [WEAPON_PROFICIENCY]: "Martial", [WEAPON_SIZE]: weaponSize },
         );
 
         const attempt = add(session, character.id, weapon.id, equipped(slot, 0));

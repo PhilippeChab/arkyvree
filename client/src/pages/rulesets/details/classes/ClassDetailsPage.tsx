@@ -76,8 +76,6 @@ const SECTION_COMPONENTS = {
   requirements: ClassRequirementsSection,
 } as const;
 
-// Class settings stored as customization properties of the class.
-
 const toClassForm = (klass: Pick<ClassDetail, "name" | "description" | "hd">): ClassFormData => ({
   name: klass.name,
   description: klass.description ?? "",

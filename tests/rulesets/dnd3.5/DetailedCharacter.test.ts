@@ -55,6 +55,7 @@ import {
   WEAPON_CRITICAL_MULTIPLIER,
   WEAPON_CRITICAL_RANGE,
   WEAPON_FAMILY,
+  WEAPON_MIGHTY,
   WEAPON_PROFICIENCY,
   WEAPON_RANGE,
   WEAPON_RANGED,
@@ -191,7 +192,7 @@ const mightyBow = async (rating: number) =>
       slot: "Two Handed",
       sourceItemId: (await getSeedCtx()).itemMap["Composite Longbow"],
     },
-    { WEAPON_MIGHTY: String(rating) },
+    { [WEAPON_MIGHTY]: String(rating) },
   );
 
 /** The seeded character, now a halfling. */
@@ -905,7 +906,7 @@ describe("DetailedCharacter", () => {
         const blade = await requiringWithBonus(
           await createItem(
             { name: "Base Blade", type: "Weapon", slot: "Main Hand", isTemplate: true },
-            { WEAPON_PROFICIENCY: "Martial", WEAPON_BASE_DAMAGE: "1d8", WEAPON_TYPE: "Longsword" },
+            { [WEAPON_PROFICIENCY]: "Martial", [WEAPON_BASE_DAMAGE]: "1d8", [WEAPON_TYPE]: "Longsword" },
           ),
           "feats.martialweaponproficiency.possessed",
         );
@@ -920,7 +921,7 @@ describe("DetailedCharacter", () => {
         const blade = await requiringWithBonus(
           await createItem(
             { name: "Lost Blade", type: "Weapon", slot: "Main Hand", isTemplate: true },
-            { WEAPON_PROFICIENCY: "Martial", WEAPON_BASE_DAMAGE: "1d8", WEAPON_TYPE: "Longsword" },
+            { [WEAPON_PROFICIENCY]: "Martial", [WEAPON_BASE_DAMAGE]: "1d8", [WEAPON_TYPE]: "Longsword" },
           ),
           "feats.nosuchproficiency.possessed",
         );
@@ -934,7 +935,7 @@ describe("DetailedCharacter", () => {
         const blade = await requiringWithBonus(
           await createItem(
             { name: "Plain Blade", type: "Weapon", slot: "Main Hand" },
-            { WEAPON_PROFICIENCY: "Martial", WEAPON_BASE_DAMAGE: "1d8", WEAPON_TYPE: "Longsword" },
+            { [WEAPON_PROFICIENCY]: "Martial", [WEAPON_BASE_DAMAGE]: "1d8", [WEAPON_TYPE]: "Longsword" },
           ),
           "feats.martialweaponproficiency.possessed",
         );

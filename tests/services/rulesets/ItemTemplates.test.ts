@@ -145,7 +145,7 @@ describe("Item templates", () => {
     expect(
       await ItemsService.updateItem(session, ruleset.id, copy.id, { name: copy.name, sourceItemId: sword.id }),
     ).toMatchObject({ isTemplate: false, sourceItemId: sword.id });
-    expect(await propertiesOf(ruleset.id, copy.id)).toMatchObject({ WEAPON_TYPE: "Longsword" });
+    expect(await propertiesOf(ruleset.id, copy.id)).toMatchObject({ [WEAPON_TYPE]: "Longsword" });
   });
 
   describe("have no template of their own", () => {
