@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, or } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, isNull, or } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import {
@@ -120,10 +120,19 @@ class CharacterLevelPowersRepository extends include(
     return await this.existsAptitudePickFromExtension(db, where);
   }
 
+  /** The picks of these character levels, by the picked entity's name, ties broken to a fixed order. */
   async findMany(db: Db, where: { characterLevelIds: string[] }) {
-    return await db.query.levelPowersInCharacter.findMany({
-      where: and(inArray(this.table.characterLevelId, where.characterLevelIds), isNull(this.table.deletedAt)),
-    });
+    return await db
+      .select(getTableColumns(this.table))
+      .from(this.table)
+      .leftJoin(powersInRules, eq(powersInRules.id, this.table.powerId))
+      .where(and(inArray(this.table.characterLevelId, where.characterLevelIds), isNull(this.table.deletedAt)))
+      .orderBy(
+        this.orderBy(powersInRules.name),
+        this.orderBy(this.table.powerId),
+        this.orderBy(this.table.aptitudeId),
+        this.orderBy(this.table.characterLevelId),
+      );
   }
 
   async createMany(db: Db, values: InferInsertModel<typeof levelPowersInCharacter>[]) {
