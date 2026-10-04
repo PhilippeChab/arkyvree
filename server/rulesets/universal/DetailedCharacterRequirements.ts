@@ -1,4 +1,4 @@
-import type { Holder, Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
+import type { Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
 import { evaluateTemplateExpression, extractTemplateExpression, isTemplateValue } from "./templateExpression.ts";
@@ -117,9 +117,11 @@ export default class DetailedCharacterRequirements {
     }
   }
 
-  /** Whether the character's `data` meets the requirement's operator against its typed value. */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private compareRequirement(requirement: Requirement, data: any, typedValue: number | string | boolean): boolean {
+  /**
+   * Whether the character's `data` meets the requirement's operator against its typed value. The caller made sure the
+   * data has the value's type: a number meets a number, a string a string.
+   */
+  private compareRequirement(requirement: Requirement, data: unknown, typedValue: number | string | boolean): boolean {
     const { operator, valueType } = requirement;
     // An operator that doesn't apply to the value's type: recorded, and unmet (or `fallback`).
     const invalid = (fallback = false) => {
@@ -132,26 +134,28 @@ export default class DetailedCharacterRequirements {
       case "not_equal":
         return data !== typedValue;
       case "greater_than":
-        return typeof typedValue === "number" ? data > typedValue : invalid();
+        return typeof typedValue === "number" && typeof data === "number" ? data > typedValue : invalid();
       case "less_than":
-        return typeof typedValue === "number" ? data < typedValue : invalid();
+        return typeof typedValue === "number" && typeof data === "number" ? data < typedValue : invalid();
       case "greater_than_or_equal":
-        return typeof typedValue === "number" ? data >= typedValue : invalid();
+        return typeof typedValue === "number" && typeof data === "number" ? data >= typedValue : invalid();
       case "less_than_or_equal":
-        return typeof typedValue === "number" ? data <= typedValue : invalid();
+        return typeof typedValue === "number" && typeof data === "number" ? data <= typedValue : invalid();
       case "contains":
-        if (typeof typedValue === "string" || Array.isArray(data)) return data.includes(typedValue);
+        if (typeof typedValue === "string" && typeof data === "string") return data.includes(typedValue);
+        if (Array.isArray(data)) return data.includes(typedValue);
         return invalid();
       case "not_contains":
-        if (typeof typedValue === "string" || Array.isArray(data)) return !data.includes(typedValue);
+        if (typeof typedValue === "string" && typeof data === "string") return !data.includes(typedValue);
+        if (Array.isArray(data)) return !data.includes(typedValue);
         return invalid();
       case "starts_with":
-        return typeof typedValue === "string" ? data.startsWith(typedValue) : false;
+        return typeof typedValue === "string" && typeof data === "string" ? data.startsWith(typedValue) : false;
       case "ends_with":
-        return typeof typedValue === "string" ? data.endsWith(typedValue) : invalid();
+        return typeof typedValue === "string" && typeof data === "string" ? data.endsWith(typedValue) : invalid();
       case "matches_regex":
       case "not_matches_regex": {
-        if (typeof typedValue !== "string") return invalid();
+        if (typeof typedValue !== "string" || typeof data !== "string") return invalid();
         try {
           const matches = new RegExp(typedValue).test(data);
           return operator === "matches_regex" ? matches : !matches;
@@ -200,10 +204,8 @@ export default class DetailedCharacterRequirements {
 
   private evaluateRequirement(requirement: Requirement, result: TraversePathResult, holders: Holders): boolean {
     const { valueType } = requirement;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = result as { holder: Holder; data: any; object: any; key: string };
+    const { data } = result;
 
-    // deno-lint-ignore valid-typeof
     if (typeof data !== valueType) {
       this.warn(requirement, `Value type mismatch: expected ${valueType}, got ${typeof data}`);
       return false;
