@@ -198,14 +198,6 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   protected targetPaths!: TargetPathsTraverser;
 
   /**
-   * Applies the modifiers in rounds, so a modifier's requirements read the sheet the other modifiers have already
-   * changed (an item's Strength counts toward a feat's prerequisite): first those no requirement gates, then, round
-   * after round, the gated ones whose requirements the sheet now meets, until a round applies none. Each round checks
-   * only the requirements gating a modifier still waiting. A template modifier, which reads the sheet, applies last.
-   * The requirements are evaluated once more on the final sheet: the evaluation the templates, the power modifiers and
-   * the validation read.
-   */
-  /**
    * The item a requirement group is of, whose weapon its own paths (`combat.slot`) read: an item's requirements, or
    * those of a modifier the item is the source of.
    */
@@ -252,6 +244,14 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     this.validRulesetIds = data.validRulesetIds;
   }
 
+  /**
+   * Applies the modifiers in rounds, so a modifier's requirements read the sheet the other modifiers have already
+   * changed (an item's Strength counts toward a feat's prerequisite): first those no requirement gates, then, round
+   * after round, the gated ones whose requirements the sheet now meets, until a round applies none. Each round checks
+   * only the requirements gating a modifier still waiting. A template modifier, which reads the sheet, applies last.
+   * The requirements are evaluated once more on the final sheet: the evaluation the templates, the power modifiers and
+   * the validation read.
+   */
   private applyModifiersInRounds(modifiers: Modifier[]): void {
     const holders = this.holders!;
     const groups = this.requirementGroups.filter((group) => group.length > 0);
