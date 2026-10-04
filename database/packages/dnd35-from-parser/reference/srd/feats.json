@@ -396,7 +396,9 @@
       ]
     },
     "Martial Weapon Proficiency": {
-      "description": "You make attack rolls with the chosen weapon without penalty."
+      "description": "You make attack rolls with every martial weapon without penalty, as barbarians, fighters, paladins and rangers do. A character who takes the feat chooses one weapon each time: Martial Weapon Proficiency: Longsword, Rapier and so on.",
+      "stackable": false,
+      "selectable": false
     },
     "Maximize Spell": {
       "description": "All variable numeric effects of the modified spell are set to their maximum values. A maximized spell deals maximum damage, heals the greatest possible number of hit points, affects the maximum number of targets, and so forth. For instance, a maximized fireball deals 6 points of damage per caster level (maximum 60 at 10th caster level). Saving throws, opposed rolls (such as for dispel magic), and spells without random variables are unaffected. A maximized spell occupies a spell slot three levels higher than the spell's actual level. A spell that is both empowered and maximized gains both effects separately: the maximum result plus half the normally rolled result. For example, an empowered, maximized fireball from a 15th-level wizard deals 60 plus half of 10d6."

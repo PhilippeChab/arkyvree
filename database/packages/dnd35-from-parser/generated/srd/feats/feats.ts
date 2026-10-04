@@ -223,8 +223,8 @@ export const GENERAL_FEATS: FeatSeed[] = [
   },
   {
     name: "Martial Weapon Proficiency",
-    description: "You make attack rolls with the chosen weapon without penalty.",
-    stackable: true,
+    description: "You make attack rolls with every martial weapon without penalty, as barbarians, fighters, paladins and rangers do. A character who takes the feat chooses one weapon each time: Martial Weapon Proficiency: Longsword, Rapier and so on.",
+    selectable: false,
     aptitudes: ["General"],
   },
   {

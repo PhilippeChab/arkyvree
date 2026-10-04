@@ -747,6 +747,24 @@ describe("LevelsService", () => {
       expect(grouped.length).toBeLessThan((await query()).items.length);
     });
 
+    test("offer Martial Weapon Proficiency one weapon at a time: every martial weapon is a class's, no pick", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "wizard");
+      const args = [session, characterId, ctx.aptMap["General"], ctx.klassMap.pc["Wizard"], 1] as const;
+      const grouped = (await CharacterLevelsService.getAvailableFeatsGrouped(...args, {}, page)).items;
+      const martial = (
+        await CharacterLevelsService.getAvailableFeats(...args, { family: "Martial Weapon Proficiency" }, page)
+      ).items;
+
+      expect(martial).toHaveLength(30);
+      expect(martial.every((f) => f.name.startsWith("Martial Weapon Proficiency: ") && f.eligible)).toBe(true);
+      expect(grouped.filter((r) => r.displayName === "Martial Weapon Proficiency")).toMatchObject([
+        { family: "Martial Weapon Proficiency", variantCount: 30 },
+      ]);
+      // Simple Weapon Proficiency is every simple weapon, a feat of its own
+      expect(grouped.find((r) => r.displayName === "Simple Weapon Proficiency")).toMatchObject({ family: null });
+    });
+
     test("leave out a feat that a pending level grants", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
