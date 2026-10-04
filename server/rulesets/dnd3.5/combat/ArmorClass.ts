@@ -92,10 +92,12 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
       if (worn && ARMOR_WORN.indexOf(worn) > ARMOR_WORN.indexOf(combat.armorworn)) combat.armorworn = worn;
     }
 
-    /** A shield the character carries: its maximum Dexterity bonus caps the AC's. */
+    /** A shield the character carries: its maximum Dexterity bonus caps the AC's, a tower shield's bulk the attacks. */
     addShield(properties: { type: string; value: string }[]) {
-      if (!properties.some((property) => property.type === SHIELD_PROFICIENCY)) return;
+      const category = properties.find((property) => property.type === SHIELD_PROFICIENCY)?.value;
+      if (!category) return;
       this.detailedCharacterCombat.shieldheld = true;
+      if (category === "Tower") this.towerShield = true;
       const dexterityLimitation = properties.find((property) => property.type === ARMOR_MAX_DEX)?.value ?? null;
       if (dexterityLimitation) {
         this.shieldMaxDex = Math.min(this.shieldMaxDex, Number(dexterityLimitation));

@@ -175,14 +175,17 @@ Properties generated from `WEAPON_TYPE_DEFINITIONS` in `weaponGenerator.ts`:
 | `WEAPON_RANGED`            | _(only on a ranged weapon)_         |
 | `WEAPON_STRENGTH_DAMAGE`   | _(only if not by slot)_             |
 | `WEAPON_MIGHTY`            | _(composite bows: 0)_               |
+| `WEAPON_ONE_HANDED_PENALTY` | _(crossbows: −2 light, −4 heavy)_  |
 | `WEAPON_REACH`             | _(only if > 0)_                     |
 
 How the engine reads a weapon's attack (`combat/Attacks.ts`), the SRD's rules:
-- A **ranged weapon** (`WEAPON_RANGED`: bows, crossbows, slings, darts, javelins, bolas, nets, shuriken) attacks with Dexterity. Any other attacks with Strength, or with Dexterity when it's `WEAPON_FINESSABLE` and the character has a feat with `FEAT_WEAPON_FINESSE` (Weapon Finesse), if that's better: a carried shield's armor check penalty applies to that Dexterity.
+- A **ranged weapon** (`WEAPON_RANGED`: bows, crossbows, slings, darts, javelins, bolas, nets, shuriken) attacks with Dexterity. Any other attacks with Strength, or with Dexterity when it's `WEAPON_FINESSABLE` and the character has a feat with `FEAT_WEAPON_FINESSE` (Weapon Finesse), if that's better: a carried shield's armor check penalty applies to that Dexterity (a shield the character is proficient with: another's costs every attack already).
 - A **composite bow** (a bow with a `WEAPON_MIGHTY`, 0 for the seeded ones) takes −2 to attack when the character's Strength bonus is below its rating. A plain bow, without one, never does.
 - A **melee weapon with a range increment** (`WEAPON_RANGE`: daggers, throwing axes, spears…) can also be thrown: its weapon slot carries a `thrown` attack with Dexterity, which the sheets list as a second row.
 - **Strength to damage** (`WEAPON_STRENGTH_DAMAGE`): `Slot` when absent (the slot's share of a bonus: all of it in the main hand, half in the off hand, one and a half in two hands, all of it for a light weapon in two hands; a penalty in full), `Rating` (bows: a penalty, and a bonus up to `WEAPON_MIGHTY`, 0 without) or `None` (crossbows).
 - A weapon is **light** when its `WEAPON_SIZE` is Tiny or Small. The table's sizes are written for a Medium wielder, and the engine sizes every weapon for its wielder (its damage too), so a halfling's shortsword is light as a human's is.
+- A **crossbow** takes two hands to load: held in one (main or off hand), it fires at its `WEAPON_ONE_HANDED_PENALTY`, −2 for a light crossbow and −4 for a heavy one, a repeating one as the crossbow of its size. A hand crossbow, made for one hand, has none.
+- **The gear** (`tohit.gear`, on every attack): the armor check penalty of each armor and shield worn without proficiency, and −2 with a tower shield, for its bulk.
 - A weapon whose `WEAPON_SIZE` is Large is **two-handed**: the inventory refuses it in one hand (`InventoryHooks.validateWeaponHands`), whatever the wielder's size. The bows are Large: "you need at least two hands to use a bow, regardless of its size".
 - **Two weapons**: when a set holds an equipped weapon in each hand (an unarmed strike or a natural attack doesn't count), each weapon slot carries a `twoweapon` attack, which the sheets list as more rows: the main hand's attacks with `combat.twoweapon.mainhand` (−6), the off hand's first attack and `combat.twoweapon.offhandattacks` − 1 more, each 5 lower, with `combat.twoweapon.offhand` (−10). A light off-hand weapon lessens both penalties by 2. The feats change these fields through modifiers.
 
@@ -210,6 +213,8 @@ Proficiency requirements:
 - **Light**: `feats.armorproficiencylight.possessed == true`
 - **Medium**: `feats.armorproficiencymedium.possessed == true`
 - **Heavy**: `feats.armorproficiencyheavy.possessed == true`
+
+Armor or a shield is equipped only when its proficiency is met, unless forced. Worn without it (forced, or the proficiency lost since), its armor check penalty applies to every attack (`tohit.gear`).
 
 ### Shields (type = "Shield")
 

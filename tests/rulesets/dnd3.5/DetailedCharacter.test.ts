@@ -741,15 +741,41 @@ describe("DetailedCharacter", () => {
       });
 
       test("take a carried shield's armor check penalty, keeping strength once that's better", async () => {
-        // An elf rogue: STR 10 (+0), DEX 20 (+5); a heavy steel shield costs 2, a tower shield 10.
+        // An elf rogue: STR 10 (+0), DEX 20 (+5), proficient with shields through a charm; a heavy steel shield costs 2,
+        // a tower shield 10.
+        const charm = await createItem({ name: "Shield Charm", type: "Wondrous Item", slot: "Neck" });
+        for (const feat of ["shieldproficiency", "towershieldproficiency"]) {
+          await Modifiers.create(db, {
+            sourceId: charm.id,
+            sourceType: "items",
+            target: `feats.${feat}.possessed`,
+            value: "true",
+            valueType: "boolean",
+            operator: "set",
+          });
+        }
+        invalidateSeededRuleset((await getSeedCtx()).rulesetId);
         const finessed = async (shield: string) =>
           weaponSet(
             await buildCarrying("Lyra Shadowstep", [
+              { item: charm.id, location: "Neck" },
               { item: "Rapier", location: "Main Hand", weaponSet: 0 },
               { item: shield, location: "Off Hand", weaponSet: 0 },
             ]),
-          ).mainhand!.tohit.strength;
-        expect([await finessed("Heavy Steel Shield"), await finessed("Tower Shield")]).toEqual([3, 0]);
+          ).mainhand!.tohit;
+        expect(await finessed("Heavy Steel Shield")).toMatchObject({ strength: 3, gear: 0 });
+        expect(await finessed("Tower Shield")).toMatchObject({ strength: 0, gear: -2 });
+      });
+
+      test("take a shield's penalty once without proficiency: every attack takes it already", async () => {
+        // The rogue, proficient with no shield: her whole DEX 20 (+5), and the heavy steel shield's 2 on every attack.
+        const { mainhand } = weaponSet(
+          await buildCarrying("Lyra Shadowstep", [
+            { item: "Rapier", location: "Main Hand", weaponSet: 0 },
+            { item: "Heavy Steel Shield", location: "Off Hand", weaponSet: 0 },
+          ]),
+        );
+        expect(mainhand!.tohit).toMatchObject({ strength: 5, gear: -2 });
       });
     });
 
@@ -834,6 +860,54 @@ describe("DetailedCharacter", () => {
           offhand: { name: "Dagger", twoweapon: null },
         });
         expect(weaponSet(lyra, "1").mainhand).toMatchObject({ name: "Shortsword", twoweapon: null });
+      });
+    });
+
+    describe("the gear", () => {
+      test("costs every attack the check penalty of armor and shields worn without proficiency", async () => {
+        const dagger: Carried = { item: "Dagger", location: "Main Hand", weaponSet: 0 };
+        const plateAndShield: Carried[] = [
+          { item: "Full Plate", location: "Torso" },
+          { item: "Heavy Steel Shield", location: "Off Hand", weaponSet: 0 },
+        ];
+        const attacks = async (name: string, carried: Carried[]) => {
+          const { tohit, thrown } = weaponSet(await buildCarrying(name, [dagger, ...carried])).mainhand!;
+          return { gear: tohit.gear, total: tohit.total, thrown: thrown!.total };
+        };
+        // A wizard, proficient with neither: full plate costs 6, a heavy steel shield 2, her thrown dagger as well
+        const bare = await attacks("Elara Starweaver", []);
+        expect(await attacks("Elara Starweaver", plateAndShield)).toEqual({
+          gear: -8,
+          total: bare.total.map((attack) => attack - 8),
+          thrown: bare.thrown.map((attack) => attack - 8),
+        });
+        // A fighter, proficient with both: nothing
+        expect((await attacks("Bjorn Ironhand", plateAndShield)).gear).toBe(0);
+      });
+
+      test("costs every attack 2 with a tower shield, and its check penalty without proficiency", async () => {
+        const gear = async (name: string) =>
+          weaponSet(
+            await buildCarrying(name, [
+              { item: "Dagger", location: "Main Hand", weaponSet: 0 },
+              { item: "Tower Shield", location: "Off Hand", weaponSet: 1 },
+            ]),
+          ).mainhand!.tohit.gear;
+        // A fighter, proficient with it; a wizard, who isn't, takes its 10 as well
+        expect([await gear("Bjorn Ironhand"), await gear("Elara Starweaver")]).toEqual([-2, -12]);
+      });
+
+      test("costs a crossbow in one hand 2 when light, 4 when heavy, and a hand crossbow nothing", async () => {
+        const SLOTS = { "Main Hand": "mainhand", "Off Hand": "offhand", "Two Handed": "twohanded" } as const;
+        const gear = async (item: string, location: keyof typeof SLOTS) =>
+          weaponSet(await buildCarrying("Bjorn Ironhand", [{ item, location, weaponSet: 0 }]))[SLOTS[location]]!.tohit
+            .gear;
+        expect([
+          await gear("Light Crossbow", "Main Hand"),
+          await gear("Heavy Crossbow", "Off Hand"),
+          await gear("Heavy Crossbow", "Two Handed"),
+          await gear("Hand Crossbow", "Main Hand"),
+        ]).toEqual([-2, -4, 0, 0]);
       });
     });
 
