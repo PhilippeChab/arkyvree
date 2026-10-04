@@ -117,6 +117,7 @@ describe("DetailedCharacterRequirements", () => {
       // Older values wrote the path without brackets.
       ["a bare path", "{{ classes.fighter.level }}", 5, 5, met],
       ["a path that doesn't resolve", "{{ [classes.bard.level] }}", 5, 5, unmet],
+      ["a value that divides by zero", "{{ [classes.fighter.level] / 0 }}", 5, 5, unmet],
     ] as const)("judges %s", (_, value, druid, fighter, expected) => {
       const resolve = (target: string) => {
         if (target === "classes.druid.level") return [result(druid)];
@@ -136,6 +137,18 @@ describe("DetailedCharacterRequirements", () => {
           resolve,
         ),
       ).toMatchObject(expected);
+    });
+
+    test("says a value that divides by zero is invalid", () => {
+      const level = requirement({
+        target: "classes.druid.level",
+        operator: "greater_than_or_equal",
+        value: "{{ [classes.fighter.level] / 0 }}",
+        valueType: "number",
+      });
+      expect(evaluate([level], () => [result(5)]).invalid).toEqual([
+        'Template "[classes.fighter.level] / 0" divides by zero',
+      ]);
     });
   });
 });

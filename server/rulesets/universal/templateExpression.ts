@@ -268,7 +268,11 @@ export function evaluateTemplateExpression(
           case "*":
             return l * r;
           case "/":
-            return r === 0 ? null : l / r;
+            if (r === 0) {
+              onWarning?.(`Template "${expression}" divides by zero`);
+              return null;
+            }
+            return l / r;
         }
         return null;
       }
