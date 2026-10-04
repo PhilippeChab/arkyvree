@@ -2,6 +2,7 @@ import type { Holder, Holders, TargetPathsTraverser, TraversePathResult } from "
 import type { Modifier } from "@/shared/relations.ts";
 
 import type DetailedCharacterRequirements from "./DetailedCharacterRequirements.ts";
+import { isTraversable } from "./isTraversable.ts";
 import {
   evaluateTemplateExpression,
   extractReferencedPaths,
@@ -39,9 +40,8 @@ export default class DetailedCharacterModifiers {
     skippedModifiers: [],
   };
 
-  private applyModifier(modifier: Modifier, result: TraversePathResult, holders: Holders) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { holder, data } = result as { holder: Holder; data: any };
+  private applyModifier(modifier: Modifier, result: TraversePathResult, holder: Holder, holders: Holders) {
+    const { data } = result;
 
     // Resolve the modifier value — template references or literal conversion
     const typedValue = this.resolveModifierValue(modifier, data, holders);
@@ -81,26 +81,30 @@ export default class DetailedCharacterModifiers {
     result: TraversePathResult,
   ): boolean {
     const { operator, valueType } = modifier;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, object, key } = result as { data: any; object: any; key: string };
+    const { data, object, key } = result;
+    // A traversal's object holds its data at its key.
+    if (!isTraversable(object)) return this.skip(modifier, `Target ${modifier.target} isn't in an object`);
+    // The caller made sure the data has the value's type: a number meets a number, a string a string.
     switch (operator) {
       case "add":
-        if (typeof typedValue === "number" || typeof typedValue === "string") object[key] = data + typedValue;
+        if (typeof typedValue === "number" && typeof data === "number") object[key] = data + typedValue;
+        else if (typeof typedValue === "string" && typeof data === "string") object[key] = data + typedValue;
         else if (Array.isArray(object[key])) object[key].push(typedValue);
         else return this.skip(modifier, `Addition is not supported for ${valueType}`);
         return true;
       case "subtract":
-        if (typeof typedValue === "number") object[key] = data - typedValue;
+        if (typeof typedValue === "number" && typeof data === "number") object[key] = data - typedValue;
         else if (Array.isArray(data)) object[key] = data.filter((item) => item !== typedValue);
         else return this.skip(modifier, `Subtraction is not supported for ${valueType}`);
         return true;
       case "multiply":
-        if (typeof typedValue !== "number")
+        if (typeof typedValue !== "number" || typeof data !== "number")
           return this.skip(modifier, `Multiplication is not supported for ${valueType}`);
         object[key] = data * typedValue;
         return true;
       case "divide":
-        if (typeof typedValue !== "number") return this.skip(modifier, `Division is not supported for ${valueType}`);
+        if (typeof typedValue !== "number" || typeof data !== "number")
+          return this.skip(modifier, `Division is not supported for ${valueType}`);
         object[key] = data / typedValue;
         return true;
       case "set":
@@ -115,8 +119,7 @@ export default class DetailedCharacterModifiers {
    * The modifier's value, typed: a template reference resolved against the holders, or the literal coerced to its value
    * type (which the target's must match). Null when it can't be (each reason recorded).
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private resolveModifierValue(modifier: Modifier, data: any, holders: Holders): number | string | boolean | null {
+  private resolveModifierValue(modifier: Modifier, data: unknown, holders: Holders): number | string | boolean | null {
     const { value, valueType } = modifier;
     if (isTemplateValue(value)) {
       const resolved = this.resolveTemplateValue(value, holders, modifier);
@@ -130,7 +133,6 @@ export default class DetailedCharacterModifiers {
       }
       return resolved;
     }
-    // deno-lint-ignore valid-typeof
     if (typeof data !== valueType) {
       this.skip(modifier, `Value type mismatch: expected ${valueType}, got ${typeof data}`);
       return null;
@@ -227,7 +229,7 @@ export default class DetailedCharacterModifiers {
           modifier,
         });
       } else if (result.holder) {
-        this.applyModifier(modifier, result, holders);
+        this.applyModifier(modifier, result, result.holder, holders);
       }
     }
   }

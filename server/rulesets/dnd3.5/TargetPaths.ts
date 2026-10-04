@@ -32,6 +32,7 @@ import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedChara
 import DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
 import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
+import { isTraversable } from "@/server/rulesets/universal/isTraversable.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
@@ -158,8 +159,7 @@ const slugsOf = (properties: { type: string; value: string }[], type: string) =>
 ];
 
 /** The entries of `value` that are objects and whose slug starts with `slug` (but isn't it): a skill's subtypes. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const subtypesOf = (value: any, slug: string) =>
+const subtypesOf = (value: Record<string, unknown>, slug: string) =>
   Object.entries(value).filter(
     ([key, entry]) =>
       entry !== null &&
@@ -393,8 +393,7 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
   private traversePath(
     holder: Holder,
     elements: string[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    currentValue: any,
+    currentValue: unknown,
     lastKey: string,
     maxDepth: number = 0,
     pathParts: string[] = [],
@@ -412,6 +411,9 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     // "light" isn't "lightningreflexes"), checked by its family's group if it has one (`feats.weaponfocus.*`)
     const reachesSubtypes = rest.length > 0 && pathParts[0] === "skills";
     if (!formattedKey) return failed(holder, formattedKey, `Element not found: ${next}`);
+    // A path that steps past a value (`abilities.strength.total.x`) fails whole, wildcard branches and all:
+    // traversePathInit answers the throw with the path's one error.
+    if (!isTraversable(currentValue)) throw new Error(`Element not found: ${next}`);
     if (!(formattedKey in currentValue)) {
       // A skill not found may name only its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…):
       // expand to all of them like an implicit wildcard
@@ -484,12 +486,14 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     holder: Holder,
     next: string,
     rest: string[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    currentValue: any,
+    currentValue: unknown,
     lastKey: string,
     maxDepth: number,
     pathParts: string[],
   ): TraversePathResult[] {
+    // A wildcard past nothing fails the path whole (as above); past a value, it matches nothing.
+    if (currentValue === null || currentValue === undefined) throw new Error(`Element not found: ${next}`);
+    if (!isTraversable(currentValue)) return [];
     const prefix = next === "*" ? "" : stripSeparators(next.slice(0, -1));
     const results: TraversePathResult[] = [];
     for (const [key, value] of Object.entries(currentValue)) {
