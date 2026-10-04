@@ -42,10 +42,11 @@ import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rules
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
   buildCustomizationPath,
-  type CustomizationOwnerType,
-  isCustomizableEntityType,
+  CUSTOMIZATION_PAGE_TYPES,
+  type CustomizationPageType,
   parseCustomizationSegment,
 } from "@/shared/customization/entities.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 
 type TabSection = "properties" | "modifiers" | "requirements";
 
@@ -84,7 +85,7 @@ const TABS: SectionTab<TabSection>[] = [
 ];
 
 // A modifier can only carry requirements.
-const tabsFor = (type: CustomizationOwnerType) =>
+const tabsFor = (type: CustomizationPageType) =>
   type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
 
 // Entities with an editor on this page, which can also be deleted from it.
@@ -93,20 +94,19 @@ type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPE
 const isEditable = (data: CustomizationEntity): data is EditableEntity =>
   EDITABLE_TYPES.some((type) => type === data.type);
 
-/** What surrounds the editor: the header and where Back goes. */
 /** Where a modifier's page goes back to: its class's Modifiers tab, or its entity's customization page. */
 function modifierSourcePath(rulesetId: string, sourceType: string, sourceId: string) {
   if (sourceType === "klasses") return `/rulesets/${rulesetId}/classes/${sourceId}/modifiers`;
-  const path = isCustomizableEntityType(sourceType)
+  const path = isOneOf(sourceType, CUSTOMIZATION_PAGE_TYPES)
     ? buildCustomizationPath(sourceType, sourceId)
     : `${sourceType}/${sourceId}/customization`;
   return `/rulesets/${rulesetId}/${path}`;
 }
 
+/** What surrounds the editor: the header and where Back goes. */
 function describe(
   data: CustomizationEntity,
   rulesetId: string,
-  entityId: string,
 ): {
   title: string;
   pageTitle: string;
@@ -135,12 +135,6 @@ function describe(
         title: `${data.entity.name} Level ${data.entity.level}`,
         pageTitle: `${data.entity.name} Level ${data.entity.level}`,
         backPath: `/rulesets/${rulesetId}/classes/${data.entity.klassId}/levels`,
-      };
-    case "klasses":
-      return {
-        title: data.entity.name,
-        pageTitle: data.entity.name,
-        backPath: `/rulesets/${rulesetId}/classes/${entityId}`,
       };
     default:
       return { title: data.entity.name, pageTitle: data.entity.name };
@@ -219,7 +213,7 @@ function CustomizationView({
 
   const type = data.type;
   const label = entityTypeLabel(type, ruleset.baseRules);
-  const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId, entityId);
+  const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId);
   const state = entityPageState(location.state);
   const listPath = state.from ?? `/rulesets/${rulesetId}/${type}`;
   usePageTitle(pageTitle);
@@ -399,14 +393,15 @@ export default function CustomizationPage() {
   const tabs = validType ? tabsFor(validType) : [];
   const currentTab = tabs.find((tab) => tab.key === section)?.key;
 
-  // Normalize the URL to a tab the entity has, under its type's segment (a link made before reads "klass_levels").
+  // Normalize the URL to a tab the entity has.
   useEffect(() => {
-    if (!validType || !entityId) return;
-    const pagePath = `/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}`;
-    if (!currentTab || !location.pathname.startsWith(`${pagePath}/`)) {
-      navigate(`${pagePath}/${currentTab ?? tabsFor(validType)[0].key}`, { replace: true, state: location.state });
+    if (validType && entityId && !currentTab) {
+      navigate(`/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}/${tabsFor(validType)[0].key}`, {
+        replace: true,
+        state: location.state,
+      });
     }
-  }, [rulesetId, validType, entityId, currentTab, navigate, location.pathname, location.state]);
+  }, [rulesetId, validType, entityId, currentTab, navigate, location.state]);
 
   // A failed refetch keeps showing the data it has (and any unsaved edits).
   if (

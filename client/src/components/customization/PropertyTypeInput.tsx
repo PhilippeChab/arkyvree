@@ -1,6 +1,7 @@
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
 
@@ -35,7 +36,12 @@ export function PropertyTypeInput({
         parseResponse(
           rpc.api.rulesets[":id"].customization.properties.types.completions.$get({
             param: { id: rulesetId },
-            query: { query: search, limit: "10", page: page.toString(), entityType: entityType || undefined },
+            query: {
+              query: search,
+              limit: "10",
+              page: page.toString(),
+              entityType: entityType ? getUrlSegment(entityType) : undefined,
+            },
           }),
         )
       }

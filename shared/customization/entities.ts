@@ -1,4 +1,4 @@
-import { isOneOf } from "@/shared/isOneOf.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /** The ruleset entities a user customizes: their modifiers, requirements and properties. */
 export const CUSTOMIZABLE_ENTITY_TYPES = ["klass_levels", "klasses", "feats", "items", "powers", "races"] as const;
@@ -17,20 +17,24 @@ export const CUSTOMIZATION_OWNER_TYPES = [...CUSTOMIZABLE_ENTITY_TYPES, "modifie
 
 export type CustomizationOwnerType = (typeof CUSTOMIZATION_OWNER_TYPES)[number];
 
-/** The URL segment of an entity type the database names otherwise: a class level's page reads "class-levels". */
-const URL_SEGMENTS: Partial<Record<CustomizationOwnerType, string>> = { klass_levels: "class-levels" };
+/** The customization owners with a page of their own: a class's customizations are tabs of its class page. */
+export type CustomizationPageType = Exclude<CustomizationOwnerType, "klasses">;
+
+export const CUSTOMIZATION_PAGE_TYPES = CUSTOMIZATION_OWNER_TYPES.filter(
+  (entityType): entityType is CustomizationPageType => entityType !== "klasses",
+);
 
 /** An entity's customization page under its ruleset: "class-levels/:id/customization", "feats/:id/customization". */
-export function buildCustomizationPath(entityType: CustomizationOwnerType, entityId: string): string {
-  return `${URL_SEGMENTS[entityType] ?? entityType}/${entityId}/customization`;
+export function buildCustomizationPath(entityType: CustomizationPageType, entityId: string): string {
+  return `${getUrlSegment(entityType)}/${entityId}/customization`;
 }
 
-/** The entity type a customization page's URL segment names; its database name still does, for links made before. */
-export function parseCustomizationSegment(segment: unknown): CustomizationOwnerType | undefined {
-  const renamed = Object.entries(URL_SEGMENTS).find(([, urlSegment]) => urlSegment === segment)?.[0];
-  const entityType = renamed ?? segment;
-  return isOneOf(entityType, CUSTOMIZATION_OWNER_TYPES) ? entityType : undefined;
+/** The entity type a customization page's URL segment names: "class-levels" a class level's, never "klass_levels". */
+export function parseCustomizationSegment(segment: unknown): CustomizationPageType | undefined {
+  return CUSTOMIZATION_PAGE_TYPES.find((entityType) => getUrlSegment(entityType) === segment);
 }
 
 /** What property types are defined for: a customizable entity, a ruleset or a skill. */
-export type PropertyEntityType = CustomizableEntityType | "rulesets" | "skills";
+export const PROPERTY_ENTITY_TYPES = [...CUSTOMIZABLE_ENTITY_TYPES, "rulesets", "skills"] as const;
+
+export type PropertyEntityType = (typeof PROPERTY_ENTITY_TYPES)[number];

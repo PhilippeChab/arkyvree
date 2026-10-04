@@ -93,7 +93,7 @@ export function useLevelWizard({
   const param = { characterId };
   // The edited level's class and level, which the slot and picker endpoints take.
   const levelQuery = selectedClass && {
-    klassId: selectedClass.id,
+    classId: selectedClass.id,
     level: selectedClass.nextLevel.toString(),
     characterLevelId: editingLevelId,
   };

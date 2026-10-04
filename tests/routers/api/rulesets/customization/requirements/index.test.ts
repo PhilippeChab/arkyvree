@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 import { createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
@@ -61,7 +62,9 @@ describe("rulesets customization requirements", () => {
   test.each([...CUSTOMIZABLE_ENTITY_TYPES])("adds a requirement to %s", async (entityType) => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const entityId = await createEntity(id, entityType);
-    const created = await expectOk(requirements.$post({ param: { id, entityType, entityId }, json: charisma13 }));
+    const created = await expectOk(
+      requirements.$post({ param: { id, entityType: getUrlSegment(entityType), entityId }, json: charisma13 }),
+    );
     expect(created).toMatchObject({ entityType, entityId });
   });
 

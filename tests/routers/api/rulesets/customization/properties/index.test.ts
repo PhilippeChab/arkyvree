@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 import { createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
@@ -38,7 +39,10 @@ describe("rulesets customization properties", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const entityId = await createEntity(id, entityType);
     const created = await expectOk(
-      properties.$post({ param: { id, entityType, entityId }, json: { value: "masterwork", type: "quality" } }),
+      properties.$post({
+        param: { id, entityType: getUrlSegment(entityType), entityId },
+        json: { value: "masterwork", type: "quality" },
+      }),
     );
     expect(created).toMatchObject({ entityType, entityId });
   });

@@ -49,7 +49,7 @@ describe("rulesets class levels", () => {
     const first = await expectOk(levels.$post({ param: { id, classId }, json: { level: 1, bab: 1, skills: 4 } }));
     const fifth = await expectOk(levels.$post({ param: { id, classId }, json: { level: 5, bab: 5, skills: 4 } }));
 
-    const param = (entityId: string) => ({ id, entityType: "klass_levels" as const, entityId });
+    const param = (entityId: string) => ({ id, entityType: "class-levels" as const, entityId });
     expect(await expectOk(requirements.$get({ param: param(first.id) }))).toEqual([]);
     expect(await expectOk(requirements.$get({ param: param(fifth.id) }))).toMatchObject([
       { level: "1", valueType: "number", operator: "greater_than", value: "4" },

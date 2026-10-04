@@ -24,10 +24,10 @@ import {
   Skills,
   Visibility,
 } from "@/server/repositories/index.ts";
-import { buildCustomizationPath, isCustomizableEntityType } from "@/shared/customization/entities.ts";
+import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
-
-const CUSTOMIZATION_ENTITIES = new Set(["feats", "powers", "items", "races"]);
+import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
 type ActivityUrl = string | null | { noAccess: true; entityType: "ruleset" | "character" };
@@ -50,36 +50,33 @@ class ActivitiesService {
     };
 
     const findOne = repoMap[entityType];
-    if (!findOne || !isCustomizableEntityType(entityType)) return null;
+    if (!findOne || !isOneOf(entityType, CUSTOMIZATION_PAGE_TYPES)) return null;
     const entity = await findOne(entityId);
     if (!entity) return null;
     return `/rulesets/${entity.rulesetId}/${buildCustomizationPath(entityType, entityId)}`;
   }
 
   private async resolveRulesSubEntity(targetTable: string, targetId: string): Promise<string | null> {
-    const sectionMap: Record<string, [string, (id: string) => Promise<{ rulesetId: string } | undefined>]> = {
-      feats: ["feats", (id) => Feats.findOne(db, { id })],
-      powers: ["powers", (id) => Powers.findOne(db, { id })],
-      skills: ["skills", (id) => Skills.findOne(db, { id })],
-      races: ["races", (id) => Races.findOne(db, { id })],
-      klasses: ["classes", (id) => Klasses.findOne(db, { id })],
-      items: ["items", (id) => Items.findOne(db, { id })],
-      saves: ["saves", (id) => Saves.findOne(db, { id })],
-      languages: ["languages", (id) => Languages.findOne(db, { id })],
-      aptitudes: ["aptitudes", (id) => Aptitudes.findOne(db, { id })],
+    const finders: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
+      feats: (id) => Feats.findOne(db, { id }),
+      powers: (id) => Powers.findOne(db, { id }),
+      skills: (id) => Skills.findOne(db, { id }),
+      races: (id) => Races.findOne(db, { id }),
+      klasses: (id) => Klasses.findOne(db, { id }),
+      items: (id) => Items.findOne(db, { id }),
+      saves: (id) => Saves.findOne(db, { id }),
+      languages: (id) => Languages.findOne(db, { id }),
+      aptitudes: (id) => Aptitudes.findOne(db, { id }),
     };
 
-    const entry = sectionMap[targetTable];
-    if (!entry) return null;
-
-    const [section, findOne] = entry;
+    const findOne = finders[targetTable];
+    if (!findOne) return null;
     const entity = await findOne(targetId);
     if (!entity) return null;
 
-    if (CUSTOMIZATION_ENTITIES.has(targetTable)) {
-      return `/rulesets/${entity.rulesetId}/${section}/${targetId}/customization`;
-    }
-    return `/rulesets/${entity.rulesetId}/${section}/${targetId}`;
+    return isOneOf(targetTable, CUSTOMIZATION_PAGE_TYPES)
+      ? `/rulesets/${entity.rulesetId}/${buildCustomizationPath(targetTable, targetId)}`
+      : `/rulesets/${entity.rulesetId}/${getUrlSegment(targetTable)}/${targetId}`;
   }
 
   /**

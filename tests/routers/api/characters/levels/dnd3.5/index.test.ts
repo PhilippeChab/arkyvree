@@ -88,7 +88,7 @@ describe("character levels", () => {
               param: { characterId },
               query: {
                 aptitudeId: general,
-                klassId: ctx.klassMap.pc["Fighter"],
+                classId: ctx.klassMap.pc["Fighter"],
                 level: "1",
                 search: "Cleave",
                 selectedFeatPicks,
@@ -104,7 +104,7 @@ describe("character levels", () => {
 
     test("reports the slots a class level grants", async () => {
       const { characterId, ctx } = await createCharacter();
-      const query = { klassId: ctx.klassMap.pc["Fighter"], level: "1" };
+      const query = { classId: ctx.klassMap.pc["Fighter"], level: "1" };
 
       const skills = await expectOk(levels["skill-slots"].$get({ param: { characterId }, query }));
       expect(skills).toMatchObject({ skillPointsToSpend: 16, totalCharacterLevel: 1 });
@@ -128,7 +128,7 @@ describe("character levels", () => {
       const { characterId, ctx } = await createCharacter();
       const query = {
         aptitudeId: ctx.aptMap["General"],
-        klassId: ctx.klassMap.pc["Fighter"],
+        classId: ctx.klassMap.pc["Fighter"],
         level: "1",
         search: "Weapon Focus",
       };
@@ -168,7 +168,7 @@ describe("character levels", () => {
       const detectMagic = async (klassLevel: string) => {
         const query = {
           aptitudeId: ctx.aptMap["Wizard Spells"],
-          klassId: ctx.klassMap.pc["Wizard"],
+          classId: ctx.klassMap.pc["Wizard"],
           level: klassLevel,
           powerLevel: "0",
           search: "Detect Magic",
@@ -203,7 +203,7 @@ describe("character levels", () => {
       expect(fork.extensionRulesetIds.length).toBeGreaterThan(0);
       const { characterId } = await createCharacter(fork.id);
       const listNames = async (aptitudeId: string, klassId: string, powerLevel?: string) => {
-        const query = { aptitudeId, klassId, level: "1", powerLevel, limit: "100" };
+        const query = { aptitudeId, classId: klassId, level: "1", powerLevel, limit: "100" };
         return (await expectOk(levels["available-powers"].$get({ param: { characterId }, query }))).items.map(
           (p) => p.name,
         );
@@ -324,7 +324,10 @@ describe("character levels", () => {
 
       const general = async (characterLevelId?: string) => {
         const slots = await expectOk(
-          levels["feat-slots"].$get({ param: { characterId }, query: { klassId, level: "1", characterLevelId } }),
+          levels["feat-slots"].$get({
+            param: { characterId },
+            query: { classId: klassId, level: "1", characterLevelId },
+          }),
         );
         return Object.values(slots.aptitudePools).find((p) => p.name === "General")!;
       };
@@ -363,7 +366,7 @@ describe("character levels", () => {
         const slots = await expectOk(
           levels["feat-slots"].$get({
             param: { characterId },
-            query: { klassId: rangerId, level: String(levelNumber), characterLevelId },
+            query: { classId: rangerId, level: String(levelNumber), characterLevelId },
           }),
         );
         return Object.values(slots.aptitudePools).find((p) => p.name === "Ranger Combat Style (2nd)")?.available ?? 0;
@@ -419,7 +422,7 @@ describe("character levels", () => {
         const slots = await expectOk(
           levels["feat-slots"].$get({
             param: { characterId },
-            query: { klassId, level: String(levelNumber), characterLevelId },
+            query: { classId: klassId, level: String(levelNumber), characterLevelId },
           }),
         );
         const pool = (name: string) => Object.values(slots.aptitudePools).find((p) => p.name === name);
@@ -487,7 +490,7 @@ describe("character levels", () => {
   test("requires a session", async () => {
     const { characterId, ctx } = await createCharacter();
     const guest = guestApi.api.characters.levels[":characterId"];
-    const query = { klassId: ctx.klassMap.pc["Fighter"], level: "1" };
+    const query = { classId: ctx.klassMap.pc["Fighter"], level: "1" };
     const responses = await Promise.all([
       guest["available-classes"].$get({ param: { characterId }, query: {} }),
       guest["attribute-slots"].$get({ param: { characterId }, query: {} }),
@@ -496,7 +499,12 @@ describe("character levels", () => {
       guest["power-slots"].$get({ param: { characterId }, query }),
       guest.finalize.$post({
         param: { characterId },
-        json: { levels: [{ ...query, level: 1, hp: 8, abilityId: null }], skills: {}, feats: {}, powers: {} },
+        json: {
+          levels: [{ klassId: query.classId, level: 1, hp: 8, abilityId: null }],
+          skills: {},
+          feats: {},
+          powers: {},
+        },
       }),
       guest[":characterLevelId"].$get({ param: { characterId, characterLevelId: NIL_UUID } }),
       guest[":characterLevelId"].$put({
@@ -512,7 +520,7 @@ describe("character levels", () => {
     const { characterId, ctx } = await createCharacter();
     const klassId = ctx.klassMap.pc["Fighter"];
     const missing = { characterId: NIL_UUID };
-    const query = { klassId, level: "1" };
+    const query = { classId: klassId, level: "1" };
     const noPicks = { skills: {}, feats: {}, powers: {} };
 
     await expectStatus(levels["available-classes"].$get({ param: missing, query: {} }), 404);

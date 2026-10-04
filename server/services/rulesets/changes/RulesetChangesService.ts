@@ -6,12 +6,16 @@ import {
   Items,
   RULESET_ENTITY_TYPES,
   RulesetEntities,
+  type RulesetEntityType,
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { type EntityType, hasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
 import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
+
+import { RESTORABLE_ENTITY_TYPES, type RestorableEntityType } from "./restorableEntityTypes.ts";
 
 class RulesetChangesService {
   async getChanges(session: Session, rulesetId: string) {
@@ -36,9 +40,9 @@ class RulesetChangesService {
     }
 
     type ChangeRow =
-      | { entityType: string; status: "modified"; sourceEntityId: string; entityId: string; name: string }
-      | { entityType: string; status: "deleted"; sourceEntityId: string; name: string }
-      | { entityType: string; status: "added"; entityId: string; name: string };
+      | { entityType: RestorableEntityType; status: "modified"; sourceEntityId: string; entityId: string; name: string }
+      | { entityType: RestorableEntityType; status: "deleted"; sourceEntityId: string; name: string }
+      | { entityType: RulesetEntityType; status: "added"; entityId: string; name: string };
 
     const changes: ChangeRow[] = [];
 
@@ -65,7 +69,8 @@ class RulesetChangesService {
         });
       }
 
-      if (typeSnapshots.length === 0) continue;
+      // Abilities have no snapshots: no route edits them.
+      if (typeSnapshots.length === 0 || !isOneOf(entityType, RESTORABLE_ENTITY_TYPES)) continue;
 
       // Tombstones (COW hard-deleted) need the source entity's name as a fallback.
       const sourceIds = typeSnapshots.map((s) => s.sourceEntityId);
@@ -76,7 +81,7 @@ class RulesetChangesService {
         const forked = localById.get(snap.forkedEntityId);
         if (forked) {
           changes.push({
-            entityType: snap.entityType,
+            entityType,
             status: "modified",
             sourceEntityId: snap.sourceEntityId,
             entityId: snap.forkedEntityId,
@@ -87,7 +92,7 @@ class RulesetChangesService {
         const source = sourceById.get(snap.sourceEntityId);
         if (!source) continue;
         changes.push({
-          entityType: snap.entityType,
+          entityType,
           status: "deleted",
           sourceEntityId: snap.sourceEntityId,
           name: source.name,

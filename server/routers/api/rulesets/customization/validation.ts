@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { buildEntityTypeSchema } from "@/server/routers/api/validation.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES, CUSTOMIZATION_OWNER_TYPES } from "@/shared/customization/entities.ts";
 import { CHAINING_OPERATORS, MODIFIER_OPERATORS, REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 
@@ -17,9 +18,9 @@ export const chainingOperator = z.string().refine((value) => chainingOperators.h
 /** A customization route's entity: the ruleset (`id`), and the entity by its type and id. */
 export const entityParams = z.object({
   id: z.string().uuid(),
-  entityType: z.enum(CUSTOMIZABLE_ENTITY_TYPES),
+  entityType: buildEntityTypeSchema(CUSTOMIZABLE_ENTITY_TYPES),
   entityId: z.string().uuid(),
 });
 
 /** As `entityParams`, for the customizations a modifier can own too (its requirements). */
-export const ownerParams = entityParams.extend({ entityType: z.enum(CUSTOMIZATION_OWNER_TYPES) });
+export const ownerParams = entityParams.extend({ entityType: buildEntityTypeSchema(CUSTOMIZATION_OWNER_TYPES) });

@@ -53,10 +53,10 @@ const skillAllocations = z
 
 /** The class level a level-up step is for, and the levels planned before it. */
 const levelQuery = {
-  klassId: z.string().uuid(),
+  classId: z.string().uuid(),
   level: queryNumber,
   characterLevelId: z.string().uuid().optional(),
-  pendingLevelKlassLevelIds: idList,
+  pendingLevelClassLevelIds: idList,
 };
 
 const levelParams = z.object({ characterId: z.string().uuid(), characterLevelId: z.string().uuid() });
@@ -95,7 +95,7 @@ const levels = new Hono<SessionContext>()
         limit: limitDefaultingTo(10),
         page,
         search: z.string().optional(),
-        pendingLevelKlassLevelIds: idList,
+        pendingLevelClassLevelIds: idList,
         pendingLevelAbilityIds: abilityIdList,
         pendingFeatPicks: featPicks,
         pendingSkillAllocations: skillAllocations,
@@ -110,7 +110,7 @@ const levels = new Hono<SessionContext>()
           characterId,
           { search },
           { limit, page },
-          pending.pendingLevelKlassLevelIds,
+          pending.pendingLevelClassLevelIds,
           pending.pendingLevelAbilityIds,
           pending.pendingFeatPicks,
           pending.pendingSkillAllocations,
@@ -144,7 +144,7 @@ const levels = new Hono<SessionContext>()
           c.var.requestSession,
           characterId,
           query.aptitudeId,
-          query.klassId,
+          query.classId,
           query.level,
           {
             search: query.search,
@@ -154,7 +154,7 @@ const levels = new Hono<SessionContext>()
           },
           { limit: query.limit, page: query.page },
           query.characterLevelId,
-          query.pendingLevelKlassLevelIds,
+          query.pendingLevelClassLevelIds,
           query.pendingLevelAbilityIds,
         ),
         200,
@@ -185,7 +185,7 @@ const levels = new Hono<SessionContext>()
           c.var.requestSession,
           characterId,
           query.aptitudeId,
-          query.klassId,
+          query.classId,
           query.level,
           {
             search: query.search,
@@ -194,7 +194,7 @@ const levels = new Hono<SessionContext>()
           },
           { limit: query.limit, page: query.page },
           query.characterLevelId,
-          query.pendingLevelKlassLevelIds,
+          query.pendingLevelClassLevelIds,
           query.pendingLevelAbilityIds,
         ),
         200,
@@ -229,7 +229,7 @@ const levels = new Hono<SessionContext>()
           c.var.requestSession,
           characterId,
           query.aptitudeId,
-          query.klassId,
+          query.classId,
           query.level,
           {
             powerLevel: query.powerLevel,
@@ -240,7 +240,7 @@ const levels = new Hono<SessionContext>()
           },
           { limit: query.limit, page: query.page },
           query.characterLevelId,
-          query.pendingLevelKlassLevelIds,
+          query.pendingLevelClassLevelIds,
         ),
         200,
       );
@@ -252,21 +252,21 @@ const levels = new Hono<SessionContext>()
     zValidator("query", z.object(levelQuery)),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { klassId, level, characterLevelId, pendingLevelKlassLevelIds } = c.req.valid("query");
+      const { classId, level, characterLevelId, pendingLevelClassLevelIds } = c.req.valid("query");
       const result = characterLevelId
         ? await CharacterLevelsService.getEditFeatSlots(
             c.var.requestSession,
             characterId,
-            klassId,
+            classId,
             level,
             characterLevelId,
           )
         : await CharacterLevelsService.getFeatSlots(
             c.var.requestSession,
             characterId,
-            klassId,
+            classId,
             level,
-            pendingLevelKlassLevelIds,
+            pendingLevelClassLevelIds,
           );
 
       return c.json(result, 200);
@@ -278,21 +278,21 @@ const levels = new Hono<SessionContext>()
     zValidator("query", z.object(levelQuery)),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { klassId, level, characterLevelId, pendingLevelKlassLevelIds } = c.req.valid("query");
+      const { classId, level, characterLevelId, pendingLevelClassLevelIds } = c.req.valid("query");
       const result = characterLevelId
         ? await CharacterLevelsService.getEditPowerSlots(
             c.var.requestSession,
             characterId,
-            klassId,
+            classId,
             level,
             characterLevelId,
           )
         : await CharacterLevelsService.getPowerSlots(
             c.var.requestSession,
             characterId,
-            klassId,
+            classId,
             level,
-            pendingLevelKlassLevelIds,
+            pendingLevelClassLevelIds,
           );
 
       return c.json(result, 200);
@@ -311,17 +311,17 @@ const levels = new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { klassId, level, characterLevelId, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } =
+      const { classId, level, characterLevelId, abilityId, pendingLevelClassLevelIds, pendingLevelAbilityIds } =
         c.req.valid("query");
       return c.json(
         await CharacterLevelsService.getSkillSlots(
           c.var.requestSession,
           characterId,
-          klassId,
+          classId,
           level,
           characterLevelId,
           abilityId,
-          pendingLevelKlassLevelIds,
+          pendingLevelClassLevelIds,
           pendingLevelAbilityIds,
         ),
         200,
