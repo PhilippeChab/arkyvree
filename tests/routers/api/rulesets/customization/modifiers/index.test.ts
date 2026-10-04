@@ -110,13 +110,14 @@ describe("rulesets customization modifiers", () => {
       expect(await expectOk(modifiers.$post({ param, json }))).toMatchObject(json);
   });
 
-  test("takes a modifier on a path from the entities it lists only: a level advances an ability", async () => {
-    const { id, entityId } = await setup();
-    const advancement = { target: "abilities.strength.level", value: "2", operator: "add" };
-    await expectStatus(modifiers.$post({ param: { id, entityType: "feats", entityId }, json: advancement }), 400);
-    const klassLevelId = await createEntity(id, "klass_levels");
-    const param = { id, entityType: getUrlSegment("klass_levels"), entityId: klassLevelId };
-    expect(await expectOk(modifiers.$post({ param, json: advancement }))).toMatchObject(advancement);
+  test("takes a modifier on a path from the entities it lists only: a pool's slots from feats, levels and races", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const bonusFeat = { target: "aptitudes.general.allowed", value: "1", operator: "add" };
+    const itemId = await createEntity(id, "items");
+    await expectStatus(modifiers.$post({ param: { id, entityType: "items", entityId: itemId }, json: bonusFeat }), 400);
+    const featId = await createEntity(id, "feats");
+    const param = { id, entityType: "feats" as const, entityId: featId };
+    expect(await expectOk(modifiers.$post({ param, json: bonusFeat }))).toMatchObject(bonusFeat);
   });
 
   test("refuses modifiers as the entity being customized", async () => {
