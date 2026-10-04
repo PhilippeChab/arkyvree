@@ -164,6 +164,9 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   protected requirementGroups: Requirement[][] = [];
 
+  /** The gated modifiers applied while their requirements held, whose requirements a modifier applied after broke. */
+  private modifiersPastTheirGates: Modifier[] = [];
+
   protected validRulesetIds = new Set<string>();
 
   // ── Universal sub-systems (initialized by subclass constructor) ──
@@ -247,6 +250,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       this.detailedCharacterModifiers.evaluateModifier(modifier, holders);
     }
     let waiting = literal.filter((m) => keysOf(m).some((key) => gateKeys.has(key)));
+    const appliedGated: Modifier[] = [];
     while (waiting.length > 0) {
       const waitingKeys = new Set(waiting.flatMap(keysOf));
       const round = new DetailedCharacterRequirements(this.targetPaths);
@@ -258,10 +262,15 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       const ready = waiting.filter((m) => !keysOf(m).some((key) => blocked.has(key)));
       if (ready.length === 0) break;
       for (const modifier of ready) this.detailedCharacterModifiers.evaluateModifier(modifier, holders);
+      appliedGated.push(...ready);
       waiting = waiting.filter((m) => !ready.includes(m));
     }
 
     this.detailedCharacterRequirements.evaluateRequirements(holders, groups);
+    // A modifier applied in a later round can break an earlier one's requirement: it stays applied (undoing it could
+    // loop, two modifiers breaking each other's), and validation reports it
+    const blockedAtTheEnd = DetailedCharacterModifiers.blockedKeys(this.detailedCharacterRequirements);
+    this.modifiersPastTheirGates = appliedGated.filter((m) => keysOf(m).some((key) => blockedAtTheEnd.has(key)));
     // The modifiers still waiting are recorded as gated out; the templates apply, or are, by the final evaluation
     this.detailedCharacterModifiers.evaluateModifiers(
       holders,
@@ -554,6 +563,15 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
         message: source
           ? `Skipped modifier on ${modifier.target} from ${source.name} (${source.type}): ${warning}`
           : `Skipped modifier: ${warning}`,
+        entityName: source?.name,
+        entityType: source?.type,
+      });
+    }
+    for (const modifier of this.modifiersPastTheirGates) {
+      const source = this.resolveModifierSourceName(modifier);
+      issues.push({
+        category: "modifiers",
+        message: `Modifier on ${modifier.target}${source ? ` from ${source.name} (${source.type})` : ""} applied while its requirement held: a modifier applied after it broke it`,
         entityName: source?.name,
         entityType: source?.type,
       });
