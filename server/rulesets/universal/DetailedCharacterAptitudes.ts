@@ -56,6 +56,36 @@ export type AptitudeLevelData = {
   available: number;
 };
 
+/** The spell levels whose spells are all known: a state of the level, not a count it holds (`newSpellLevel`). */
+const ALL_KNOWN = new WeakSet<AptitudeLevelData>();
+
+/**
+ * A spell level's entry. Its known slots are a count, or all known (ALLOWED_ALL), which a `set -1` makes them and an
+ * add, before or after, leaves: the class tables' and the level-up wizard's count. Code that takes all known back clears
+ * it (`clearAllKnown`).
+ */
+function newSpellLevel(): AptitudeLevelData {
+  let count = 0;
+  return {
+    uses: 0,
+    get allowed() {
+      return ALL_KNOWN.has(this) ? ALLOWED_ALL : count;
+    },
+    set allowed(value: number) {
+      if (value === ALLOWED_ALL) ALL_KNOWN.add(this);
+      else if (!ALL_KNOWN.has(this)) count = value;
+    },
+    spent: 0,
+    available: 0,
+  };
+}
+
+/** Takes a spell level's all known back: its known slots a count again, none. */
+export function clearAllKnown(level: AptitudeLevelData): void {
+  ALL_KNOWN.delete(level);
+  level.allowed = 0;
+}
+
 type DetailedCharacterComprehensiveAptitudes = {
   [key: string]: {
     id: string;
@@ -154,12 +184,7 @@ export default class DetailedCharacterAptitudes {
         this.leveledAptitudeKeys.add(key);
         const aptitudeObj = this.detailedCharacterComprehensiveAptitudes[key] as Record<string, unknown>;
         for (let level = 0; level <= this.maxSpellLevel; level++) {
-          aptitudeObj[String(level)] = {
-            uses: 0,
-            allowed: 0,
-            spent: 0,
-            available: 0,
-          } satisfies AptitudeLevelData;
+          aptitudeObj[String(level)] = newSpellLevel();
         }
       }
     }

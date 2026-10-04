@@ -1567,6 +1567,14 @@ describe("DetailedCharacter", () => {
       return created;
     }
 
+    test("leave a spell level all known after an add, a later round's included", async () => {
+      // A cleric's 1st-level spells are all known (her first level's set -1); a gated add applies in a later round
+      await raceModifier("Theron Lightbringer", { target: "aptitudes.clericspells.1.allowed", value: "1" }, [
+        { target: "identity.meta.level", operator: "greater_than_or_equal", value: "1", valueType: "number" },
+      ]);
+      expect(spellLevel(await buildSeeded("Theron Lightbringer"), "clericspells", 1).allowed).toBe(ALLOWED_ALL);
+    });
+
     test("skip a part the sheet computes, and say why: it would be overwritten, or read stale", async () => {
       const modifier = await raceModifier("Bjorn Ironhand", { target: "skills.climb.total", value: "5" });
       const bjorn = await buildSeeded("Bjorn Ironhand");
