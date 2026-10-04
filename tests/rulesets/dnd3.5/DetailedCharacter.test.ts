@@ -36,9 +36,32 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import { FEAT_WEAPON_FINESSE } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
+import {
+  ARMOR_AC_BONUS,
+  ARMOR_CHECK_PENALTY,
+  ARMOR_MAX_DEX,
+  ARMOR_PROFICIENCY,
+  ARMOR_TYPE,
+  DAMAGE_TYPE,
+  FEAT_WEAPON_FINESSE,
+  ITEM_MASTERWORK,
+  ITEM_SPELL_FAILURE,
+  SHIELD_AC_BONUS,
+  SHIELD_PROFICIENCY,
+  SHIELD_TYPE,
+  WEAPON_BASE_DAMAGE,
+  WEAPON_CRITICAL_MULTIPLIER,
+  WEAPON_CRITICAL_RANGE,
+  WEAPON_FAMILY,
+  WEAPON_PROFICIENCY,
+  WEAPON_RANGE,
+  WEAPON_RANGED,
+  WEAPON_SIZE,
+  WEAPON_STRENGTH_DAMAGE,
+  WEAPON_TYPE,
+} from "@/shared/dnd3.5/properties/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
 import {
@@ -428,14 +451,14 @@ describe("DetailedCharacter", () => {
       const variant = await createItem(
         { name: "Longsword +1", type: "Weapon", slot: "Main Hand" },
         {
-          WEAPON_PROFICIENCY: "Martial",
-          WEAPON_FAMILY: "Sword",
-          WEAPON_BASE_DAMAGE: "1d8",
-          WEAPON_CRITICAL_RANGE: "2",
-          WEAPON_CRITICAL_MULTIPLIER: "2",
-          DAMAGE_TYPE: "Slashing",
-          WEAPON_SIZE: "Medium",
-          WEAPON_TYPE: "Longsword",
+          [WEAPON_PROFICIENCY]: "Martial",
+          [WEAPON_FAMILY]: "Sword",
+          [WEAPON_BASE_DAMAGE]: "1d8",
+          [WEAPON_CRITICAL_RANGE]: "2",
+          [WEAPON_CRITICAL_MULTIPLIER]: "2",
+          [DAMAGE_TYPE]: "Slashing",
+          [WEAPON_SIZE]: "Medium",
+          [WEAPON_TYPE]: "Longsword",
         },
       );
       const weapons = (
@@ -451,14 +474,14 @@ describe("DetailedCharacter", () => {
       const blade = await createItem(
         { name: "Keen Blade", type: "Weapon", slot: "Main Hand" },
         {
-          WEAPON_PROFICIENCY: "Martial",
-          WEAPON_FAMILY: "Sword",
-          WEAPON_BASE_DAMAGE: "1d8",
-          WEAPON_CRITICAL_RANGE: "2",
-          WEAPON_CRITICAL_MULTIPLIER: "2",
-          DAMAGE_TYPE: "Slashing",
-          WEAPON_SIZE: "Medium",
-          WEAPON_TYPE: "Longsword",
+          [WEAPON_PROFICIENCY]: "Martial",
+          [WEAPON_FAMILY]: "Sword",
+          [WEAPON_BASE_DAMAGE]: "1d8",
+          [WEAPON_CRITICAL_RANGE]: "2",
+          [WEAPON_CRITICAL_MULTIPLIER]: "2",
+          [DAMAGE_TYPE]: "Slashing",
+          [WEAPON_SIZE]: "Medium",
+          [WEAPON_TYPE]: "Longsword",
         },
       );
       for (const target of ["combat.tohit.misc", "combat.damage.misc"]) {
@@ -635,19 +658,19 @@ describe("DetailedCharacter", () => {
         createItem(
           { name, type: "Weapon", slot: "Main Hand" },
           {
-            WEAPON_PROFICIENCY: "Simple",
-            WEAPON_FAMILY: family,
-            WEAPON_BASE_DAMAGE: "1d6",
-            WEAPON_CRITICAL_RANGE: "1",
-            WEAPON_CRITICAL_MULTIPLIER: "2",
-            WEAPON_TYPE: name,
+            [WEAPON_PROFICIENCY]: "Simple",
+            [WEAPON_FAMILY]: family,
+            [WEAPON_BASE_DAMAGE]: "1d6",
+            [WEAPON_CRITICAL_RANGE]: "1",
+            [WEAPON_CRITICAL_MULTIPLIER]: "2",
+            [WEAPON_TYPE]: name,
             ...properties,
           },
         );
       const caster = await weapon("Spell Caster", "Sword", {
-        WEAPON_RANGED: "true",
-        WEAPON_RANGE: "30",
-        WEAPON_STRENGTH_DAMAGE: "None",
+        [WEAPON_RANGED]: "true",
+        [WEAPON_RANGE]: "30",
+        [WEAPON_STRENGTH_DAMAGE]: "None",
       });
       const stick = await weapon("Bow-shaped Stick", "Bow");
       // STR 18 (+4), DEX 14 (+2).
@@ -1125,24 +1148,24 @@ describe("DetailedCharacter", () => {
       const armor = await createItem(
         { name: "Chain Mail (Masterwork)", type: "Armor", slot: "Torso" },
         {
-          ARMOR_PROFICIENCY: "Heavy",
-          ARMOR_TYPE: "Chain Mail",
-          ARMOR_AC_BONUS: "5",
-          ARMOR_CHECK_PENALTY: "-5",
-          ITEM_SPELL_FAILURE: "30",
-          ARMOR_MAX_DEX: "2",
-          ITEM_MASTERWORK: "true",
+          [ARMOR_PROFICIENCY]: "Heavy",
+          [ARMOR_TYPE]: "Chain Mail",
+          [ARMOR_AC_BONUS]: "5",
+          [ARMOR_CHECK_PENALTY]: "-5",
+          [ITEM_SPELL_FAILURE]: "30",
+          [ARMOR_MAX_DEX]: "2",
+          [ITEM_MASTERWORK]: "true",
         },
       );
       const shield = await createItem(
         { name: "Heavy Steel Shield (Masterwork)", type: "Shield", slot: "Off Hand" },
         {
-          SHIELD_PROFICIENCY: "Heavy",
-          SHIELD_TYPE: "Heavy Steel Shield",
-          SHIELD_AC_BONUS: "2",
-          ARMOR_CHECK_PENALTY: "-2",
-          ITEM_SPELL_FAILURE: "15",
-          ITEM_MASTERWORK: "true",
+          [SHIELD_PROFICIENCY]: "Heavy",
+          [SHIELD_TYPE]: "Heavy Steel Shield",
+          [SHIELD_AC_BONUS]: "2",
+          [ARMOR_CHECK_PENALTY]: "-2",
+          [ITEM_SPELL_FAILURE]: "15",
+          [ITEM_MASTERWORK]: "true",
         },
       );
       const bjorn = await buildCarrying("Bjorn Ironhand", [

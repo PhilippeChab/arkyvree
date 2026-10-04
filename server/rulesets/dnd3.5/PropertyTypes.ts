@@ -1,3 +1,6 @@
+import type { PropertyTypesProvider } from "@/server/rulesets/types.ts";
+import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,
@@ -52,10 +55,7 @@ import {
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
   WIZARD_PROHIBITED_SCHOOL,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
-import type { PropertyTypesProvider } from "@/server/rulesets/types.ts";
-import type { PropertyEntityType } from "@/shared/customization/entities.ts";
-import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
+} from "@/shared/dnd3.5/properties/index.ts";
 import {
   SPELL_COMPONENTS,
   SPELL_DESCRIPTORS,

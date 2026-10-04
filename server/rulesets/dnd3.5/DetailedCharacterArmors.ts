@@ -1,4 +1,6 @@
 import type DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
+import { getNumericOperators } from "@/shared/customization/operators.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,
@@ -7,9 +9,7 @@ import {
   ARMOR_TYPE,
   ITEM_MASTERWORK,
   ITEM_SPELL_FAILURE,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+} from "@/shared/dnd3.5/properties/index.ts";
 import type { Item, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

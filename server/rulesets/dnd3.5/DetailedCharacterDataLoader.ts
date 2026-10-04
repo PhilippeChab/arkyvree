@@ -14,13 +14,6 @@ import {
   Requirements,
   Skills,
 } from "@/server/repositories/index.ts";
-import {
-  KLASS_BONUS_SPELL_ABILITY_ID,
-  KLASS_CASTER_TYPE,
-  KLASS_LEVEL_BAB,
-  KLASS_LEVEL_SKILL_POINTS,
-  RULESET_SKILL_POINT_ABILITY_ID,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import type { SkillFlags } from "@/server/rulesets/hooks/index.ts";
 import type {
@@ -34,6 +27,13 @@ import type {
   RaceWithPMR,
 } from "@/server/rulesets/types.ts";
 import { refreshEntityData, resolveOverrides } from "@/server/services/rulesets/cow/index.ts";
+import {
+  KLASS_BONUS_SPELL_ABILITY_ID,
+  KLASS_CASTER_TYPE,
+  KLASS_LEVEL_BAB,
+  KLASS_LEVEL_SKILL_POINTS,
+  RULESET_SKILL_POINT_ABILITY_ID,
+} from "@/shared/dnd3.5/properties/index.ts";
 import type {
   Campaign,
   Character,

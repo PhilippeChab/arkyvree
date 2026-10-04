@@ -1,5 +1,6 @@
 import { eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 // The weapons by proficiency, which the weapon feats and the proficiency requirements name.
 
@@ -140,5 +141,5 @@ export const spellWeaponFocusFeats: FeatSeed[] = ["Ranged Spell", "Touch Spell"]
   generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [gte("combat.bab", 1)],
-  properties: [{ type: "FEAT_FAMILY", value: "Weapon Focus" }],
+  properties: [{ type: FEAT_FAMILY, value: "Weapon Focus" }],
 }));

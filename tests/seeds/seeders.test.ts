@@ -31,12 +31,13 @@ import {
 } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import {
+  FEAT_FAMILY,
   KLASS_BONUS_SPELL_ABILITY_ID,
   KLASS_CASTER_TYPE,
   KLASS_LEVEL_BAB,
   KLASS_LEVEL_SKILL_POINTS,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
-import { SPELL_SCHOOL } from "@/server/rulesets/dnd3.5/properties/power.ts";
+} from "@/shared/dnd3.5/properties/index.ts";
+import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { customizationsOf, freshExtensionContext, freshSeedContext, namesOf } from "@/tests/seeds/freshSeed.ts";
 
 const feats = (...names: string[]) => names.map((name) => ({ name, description: "", aptitudes: [] }));
@@ -142,7 +143,7 @@ describe("Seeding", () => {
               requirements: [r.or(r.eq(r.feat("Mobility")), r.gte("combat.bab", 6))],
             },
           ],
-          properties: [{ type: "FEAT_FAMILY", value: "Dodge" }],
+          properties: [{ type: FEAT_FAMILY, value: "Dodge" }],
         },
         { name: "Test Toughness", description: "", aptitudes: [], stackable: true, selectable: false },
       ]);
@@ -660,7 +661,7 @@ describe("Seeding", () => {
           modifiers: [
             { target: "combat.ac.misc", operator: "add", value: "1", valueType: "number", requirements: [dodge] },
           ],
-          properties: [{ type: "FEAT_FAMILY", value: "Test" }],
+          properties: [{ type: FEAT_FAMILY, value: "Test" }],
         },
         { name: "Test Single", description: "", aptitudes: ["General"], requirements: [r.gte("combat.bab", 1)] },
         { name: "Test Open", description: "", aptitudes: ["General"] },

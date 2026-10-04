@@ -26,7 +26,7 @@ import {
   WEAPON_SIZE,
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
+} from "@/shared/dnd3.5/properties/index.ts";
 
 // Builders the generated items are written with: their proficiency requirements and their weapon, armor or shield properties.
 

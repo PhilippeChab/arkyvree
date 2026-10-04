@@ -18,13 +18,8 @@ import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
-import {
-  type AptitudeSpells,
-  buildSpellGroups,
-  SPELL_SCHOOL,
-  type SpellGroup,
-  type SpellRow,
-} from "@/shared/dnd3.5/spellGroups.ts";
+import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
 
 import type { Dnd35PowersSectionProps } from "./types.ts";
 

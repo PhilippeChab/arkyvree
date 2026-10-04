@@ -1,6 +1,8 @@
 import { include } from "@/server/mixins.ts";
 import type DetailedCharacterEncumbrance from "@/server/rulesets/dnd3.5/DetailedCharacterEncumbrance.ts";
 import type DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
+import { getNumericOperators } from "@/shared/customization/operators.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import {
   DAMAGE_TYPE,
   WEAPON_BASE_DAMAGE,
@@ -8,9 +10,7 @@ import {
   WEAPON_CRITICAL_RANGE,
   WEAPON_FINESSABLE,
   WEAPON_PROFICIENCY,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+} from "@/shared/dnd3.5/properties/index.ts";
 import { type CharacterLevel, type Race } from "@/shared/relations.ts";
 
 import { ArmorClass } from "./combat/ArmorClass.ts";

@@ -7,6 +7,9 @@ import {
   type WeaponSet,
   type WeaponSlot,
 } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
+import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
+import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import {
   DAMAGE_TYPE,
   WEAPON_BASE_DAMAGE,
@@ -20,10 +23,7 @@ import {
   WEAPON_REACH,
   WEAPON_SIZE,
   WEAPON_STRENGTH_DAMAGE,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
-import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
-import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
-import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
+} from "@/shared/dnd3.5/properties/index.ts";
 import { type Item } from "@/shared/relations.ts";
 
 // D&D 3.5 damage die progression for size adjustments.

@@ -23,9 +23,9 @@ import {
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
-import { KLASS_BONUS_SPELL_ABILITY_ID } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+import { KLASS_BONUS_SPELL_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 import {
   addCharacterLevel,
   createTestCharacter,

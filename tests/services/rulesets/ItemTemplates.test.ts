@@ -4,6 +4,23 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Items, Properties } from "@/server/repositories/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
+import {
+  ARMOR_AC_BONUS,
+  ARMOR_CHECK_PENALTY,
+  ARMOR_MAX_DEX,
+  ARMOR_PROFICIENCY,
+  ARMOR_TYPE,
+  ITEM_MADE_OF,
+  ITEM_SPELL_FAILURE,
+  SHIELD_AC_BONUS,
+  SHIELD_PROFICIENCY,
+  SHIELD_TYPE,
+  WEAPON_BASE_DAMAGE,
+  WEAPON_FAMILY,
+  WEAPON_PROFICIENCY,
+  WEAPON_SIZE,
+  WEAPON_TYPE,
+} from "@/shared/dnd3.5/properties/index.ts";
 import { createSeededTestRuleset, createTestUser, invalidateSeededRuleset } from "@/tests/helpers.ts";
 
 async function setup() {
@@ -33,32 +50,32 @@ describe("Item templates", () => {
       [
         "Longsword",
         {
-          WEAPON_PROFICIENCY: "Martial",
-          WEAPON_FAMILY: "Sword",
-          WEAPON_BASE_DAMAGE: "1d8",
-          WEAPON_SIZE: "Medium",
-          WEAPON_TYPE: "Longsword",
+          [WEAPON_PROFICIENCY]: "Martial",
+          [WEAPON_FAMILY]: "Sword",
+          [WEAPON_BASE_DAMAGE]: "1d8",
+          [WEAPON_SIZE]: "Medium",
+          [WEAPON_TYPE]: "Longsword",
         },
       ],
       [
         "Chain Mail",
         {
-          ARMOR_PROFICIENCY: "Medium",
-          ARMOR_TYPE: "Chain Mail",
-          ARMOR_AC_BONUS: "5",
-          ARMOR_MAX_DEX: "2",
-          ARMOR_CHECK_PENALTY: "-5",
-          ITEM_SPELL_FAILURE: "30",
+          [ARMOR_PROFICIENCY]: "Medium",
+          [ARMOR_TYPE]: "Chain Mail",
+          [ARMOR_AC_BONUS]: "5",
+          [ARMOR_MAX_DEX]: "2",
+          [ARMOR_CHECK_PENALTY]: "-5",
+          [ITEM_SPELL_FAILURE]: "30",
         },
       ],
       [
         "Heavy Steel Shield",
         {
-          SHIELD_PROFICIENCY: "Heavy",
-          SHIELD_TYPE: "Heavy Steel Shield",
-          SHIELD_AC_BONUS: "2",
-          ARMOR_CHECK_PENALTY: "-2",
-          ITEM_SPELL_FAILURE: "15",
+          [SHIELD_PROFICIENCY]: "Heavy",
+          [SHIELD_TYPE]: "Heavy Steel Shield",
+          [SHIELD_AC_BONUS]: "2",
+          [ARMOR_CHECK_PENALTY]: "-2",
+          [ITEM_SPELL_FAILURE]: "15",
         },
       ],
     ])("%s properties", async (name, expected) => {
@@ -86,18 +103,18 @@ describe("Item templates", () => {
       await Properties.create(db, {
         entityId: sword.id,
         entityType: "items",
-        type: "ITEM_MADE_OF",
+        type: ITEM_MADE_OF,
         value: "Adamantine",
       });
       const damage = (
         await Properties.findMany(db, { entityIds: [(await template("Longsword")).id], entityType: "items" })
-      ).find((p) => p.type === "WEAPON_BASE_DAMAGE");
+      ).find((p) => p.type === WEAPON_BASE_DAMAGE);
       await Properties.update(db, { value: "2d6" }, { id: damage!.id });
       invalidateSeededRuleset(ruleset.rulesetId!);
 
       expect(await propertiesOf(ruleset.id, sword.id)).toMatchObject({
-        WEAPON_BASE_DAMAGE: "2d6",
-        ITEM_MADE_OF: "Adamantine",
+        [WEAPON_BASE_DAMAGE]: "2d6",
+        [ITEM_MADE_OF]: "Adamantine",
       });
     });
   });

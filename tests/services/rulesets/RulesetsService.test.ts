@@ -37,12 +37,12 @@ import {
   Skills,
   StarredRulesets,
 } from "@/server/repositories/index.ts";
-import { RULESET_SKILL_POINT_ABILITY_ID } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { cowEntity } from "@/server/services/rulesets/cow/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
   addCharacterLevel,

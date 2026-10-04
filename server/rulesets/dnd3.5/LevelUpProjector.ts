@@ -1,7 +1,7 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
-import { KLASS_LEVEL_SKILL_POINTS, WIZARD_PROHIBITED_SCHOOL } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import { KLASS_LEVEL_SKILL_POINTS, WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import type { CharacterLevel, KlassLevel, Requirement } from "@/shared/relations.ts";
 
 import type DetailedCharacter from "./DetailedCharacter.ts";

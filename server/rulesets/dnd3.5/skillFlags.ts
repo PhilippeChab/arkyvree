@@ -1,10 +1,9 @@
 import type { SkillFlags } from "@/server/rulesets/hooks/index.ts";
-
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
-} from "./properties/index.ts";
+} from "@/shared/dnd3.5/properties/index.ts";
 
 /** A skill's flags when it has none of their properties: armor doesn't weigh on it, and it needs training. */
 export const NO_SKILL_FLAGS: SkillFlags = {

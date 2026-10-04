@@ -3,40 +3,54 @@ import { Page, Text, View } from "@react-pdf/renderer";
 import { buildVirtualEntities } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
-import { buildSpellGroups, SPELL_SCHOOL } from "@/shared/dnd3.5/spellGroups.ts";
+import {
+  SPELL_AREA_OF_EFFECT,
+  SPELL_CASTING_TIME,
+  SPELL_COMPONENT,
+  SPELL_DESCRIPTOR,
+  SPELL_DURATION,
+  SPELL_DURATION_TYPE,
+  SPELL_MATERIAL,
+  SPELL_RANGE_TYPE,
+  SPELL_RESISTANCE,
+  SPELL_SCHOOL,
+  SPELL_SUBSCHOOL,
+  SPELL_TARGET,
+} from "@/shared/dnd3.5/properties/index.ts";
+import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 const SPELL_PROPERTY_ORDER = [
-  "SPELL_SUBSCHOOL",
-  "SPELL_DESCRIPTOR",
-  "SPELL_COMPONENT",
-  "SPELL_MATERIAL",
-  "SPELL_CASTING_TIME",
-  "SPELL_RANGE_TYPE",
-  "SPELL_TARGET",
-  "SPELL_AREA_OF_EFFECT",
-  "SPELL_DURATION_TYPE",
-  "SPELL_DURATION",
-  "SPELL_RESISTANCE",
+  SPELL_SUBSCHOOL,
+  SPELL_DESCRIPTOR,
+  SPELL_COMPONENT,
+  SPELL_MATERIAL,
+  SPELL_CASTING_TIME,
+  SPELL_RANGE_TYPE,
+  SPELL_TARGET,
+  SPELL_AREA_OF_EFFECT,
+  SPELL_DURATION_TYPE,
+  SPELL_DURATION,
+  SPELL_RESISTANCE,
 ];
 const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 
 // Short labels so each spell's property row fits on a single line. A legend is rendered
 // once at the top of the spells section.
 const SPELL_PROPERTY_ABBR: Record<string, { short: string; full: string }> = {
-  SPELL_SUBSCHOOL: { short: "SS", full: "Subschool" },
-  SPELL_DESCRIPTOR: { short: "Desc", full: "Descriptor" },
-  SPELL_COMPONENT: { short: "Comp", full: "Components" },
-  SPELL_MATERIAL: { short: "Mat", full: "Material" },
-  SPELL_CASTING_TIME: { short: "CT", full: "Casting Time" },
-  SPELL_RANGE_TYPE: { short: "R", full: "Range" },
-  SPELL_TARGET: { short: "T", full: "Target" },
-  SPELL_AREA_OF_EFFECT: { short: "Area", full: "Area of Effect" },
-  SPELL_DURATION_TYPE: { short: "DT", full: "Duration Type" },
-  SPELL_DURATION: { short: "Dur", full: "Duration" },
-  SPELL_RESISTANCE: { short: "SR", full: "Spell Resistance" },
+  [SPELL_SUBSCHOOL]: { short: "SS", full: "Subschool" },
+  [SPELL_DESCRIPTOR]: { short: "Desc", full: "Descriptor" },
+  [SPELL_COMPONENT]: { short: "Comp", full: "Components" },
+  [SPELL_MATERIAL]: { short: "Mat", full: "Material" },
+  [SPELL_CASTING_TIME]: { short: "CT", full: "Casting Time" },
+  [SPELL_RANGE_TYPE]: { short: "R", full: "Range" },
+  [SPELL_TARGET]: { short: "T", full: "Target" },
+  [SPELL_AREA_OF_EFFECT]: { short: "Area", full: "Area of Effect" },
+  [SPELL_DURATION_TYPE]: { short: "DT", full: "Duration Type" },
+  [SPELL_DURATION]: { short: "Dur", full: "Duration" },
+  [SPELL_RESISTANCE]: { short: "SR", full: "Spell Resistance" },
 };
 
 // Define styles (reusing the same styles from the original)

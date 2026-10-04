@@ -37,6 +37,7 @@ import {
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
+import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import {
@@ -76,8 +77,6 @@ const SECTION_COMPONENTS = {
 } as const;
 
 // Class settings stored as customization properties of the class.
-const BONUS_SPELL_ABILITY_TYPE = "KLASS_BONUS_SPELL_ABILITY_ID";
-const CASTER_TYPE_PROPERTY_TYPE = "KLASS_CASTER_TYPE";
 
 const toClassForm = (klass: Pick<ClassDetail, "name" | "description" | "hd">): ClassFormData => ({
   name: klass.name,
@@ -189,14 +188,14 @@ export default function ClassDetailsPage() {
 
   const bonusSpellMutation = useMutation({
     mutationFn: (abilityId: string) =>
-      setClassProperty(BONUS_SPELL_ABILITY_TYPE, classData?.bonusSpellPropertyId, abilityId),
+      setClassProperty(KLASS_BONUS_SPELL_ABILITY_ID, classData?.bonusSpellPropertyId, abilityId),
     onSuccess: onClassPropertySaved("Bonus spell ability updated"),
     onError: (err) => snackbar.error(err, "Failed to update bonus spell ability"),
   });
 
   const casterTypeMutation = useMutation({
     mutationFn: (casterType: string) =>
-      setClassProperty(CASTER_TYPE_PROPERTY_TYPE, classData?.casterTypePropertyId, casterType),
+      setClassProperty(KLASS_CASTER_TYPE, classData?.casterTypePropertyId, casterType),
     onSuccess: onClassPropertySaved("Caster type updated"),
     onError: (err) => snackbar.error(err, "Failed to update caster type"),
   });

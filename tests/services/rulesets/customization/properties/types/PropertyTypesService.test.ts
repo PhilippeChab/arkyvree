@@ -3,13 +3,13 @@ import { describe, expect, test } from "bun:test";
 import { itemsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Properties } from "@/server/repositories/index.ts";
+import { PropertyTypesService } from "@/server/services/rulesets/customization/properties/types/index.ts";
 import {
   KLASS_LEVEL_BAB,
   KLASS_LEVEL_SKILL_POINTS,
   SPELL_SCHOOL,
   WEAPON_PROFICIENCY,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
-import { PropertyTypesService } from "@/server/services/rulesets/customization/properties/types/index.ts";
+} from "@/shared/dnd3.5/properties/index.ts";
 import { createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
 
 const firstPage = { limit: 50, page: 1 };

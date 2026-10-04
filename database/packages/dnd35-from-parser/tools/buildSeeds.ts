@@ -57,6 +57,21 @@ import {
   SIMPLE_WEAPONS,
 } from "@/database/packages/dnd35/content/weapons.ts";
 import { CLASS_FEATURE_FAMILIES } from "@/shared/dnd3.5/feats.ts";
+import {
+  FEAT_FAMILY,
+  MAGIC_AURA,
+  MAGIC_CASTER_LEVEL,
+  SPELL_AREA_OF_EFFECT,
+  SPELL_CASTING_TIME,
+  SPELL_COMPONENT,
+  SPELL_DESCRIPTOR,
+  SPELL_DURATION,
+  SPELL_RANGE_TYPE,
+  SPELL_RESISTANCE,
+  SPELL_SCHOOL,
+  SPELL_SUBSCHOOL,
+  SPELL_TARGET,
+} from "@/shared/dnd3.5/properties/index.ts";
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 import { capitalize } from "@/shared/text.ts";
 
@@ -363,7 +378,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
       aptitudes,
       ...(modifiers.length > 0 ? { modifiers } : {}),
       ...(poolLevel != null && poolLevel > 1 ? { requirements: levelRequirement(poolLevel) } : {}),
-      ...(family ? { properties: [{ type: "FEAT_FAMILY", value: family }] } : {}),
+      ...(family ? { properties: [{ type: FEAT_FAMILY, value: family }] } : {}),
     });
   }
 
@@ -426,7 +441,7 @@ function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {
       }));
 
       const properties = pool.grants.map((family) => ({
-        type: "FEAT_FAMILY",
+        type: FEAT_FAMILY,
         value: family,
       }));
 
@@ -898,29 +913,29 @@ export function buildSpellSeeds(ref: SpellReference, _book?: string): { spells: 
 
     // Build properties
     const properties: { type: string; value: string }[] = [];
-    properties.push({ type: "SPELL_SCHOOL", value: entry.school });
-    if (entry.subschool) properties.push({ type: "SPELL_SUBSCHOOL", value: normalizeSubschool(entry.subschool) });
+    properties.push({ type: SPELL_SCHOOL, value: entry.school });
+    if (entry.subschool) properties.push({ type: SPELL_SUBSCHOOL, value: normalizeSubschool(entry.subschool) });
     for (const desc of entry.descriptors) {
-      properties.push({ type: "SPELL_DESCRIPTOR", value: normalizeDescriptor(desc) });
+      properties.push({ type: SPELL_DESCRIPTOR, value: normalizeDescriptor(desc) });
     }
     properties.push({
-      type: "SPELL_CASTING_TIME",
+      type: SPELL_CASTING_TIME,
       value: normalizeSpellText(entry.castingTime || "1 standard action"),
     });
     const rangeValue = simplifyRange(normalizeSpellText(entry.range));
-    if (rangeValue) properties.push({ type: "SPELL_RANGE_TYPE", value: rangeValue });
+    if (rangeValue) properties.push({ type: SPELL_RANGE_TYPE, value: rangeValue });
     const targetValue = entry.target ? normalizeSpellText(entry.target) : undefined;
-    if (targetValue) properties.push({ type: "SPELL_TARGET", value: targetValue });
-    if (entry.area) properties.push({ type: "SPELL_AREA_OF_EFFECT", value: normalizeSpellText(entry.area) });
+    if (targetValue) properties.push({ type: SPELL_TARGET, value: targetValue });
+    if (entry.area) properties.push({ type: SPELL_AREA_OF_EFFECT, value: normalizeSpellText(entry.area) });
     const effectValue = entry.effect ? normalizeSpellText(entry.effect) : undefined;
-    if (effectValue && effectValue !== targetValue) properties.push({ type: "SPELL_TARGET", value: effectValue });
-    properties.push({ type: "SPELL_DURATION", value: normalizeSpellText(entry.duration) });
+    if (effectValue && effectValue !== targetValue) properties.push({ type: SPELL_TARGET, value: effectValue });
+    properties.push({ type: SPELL_DURATION, value: normalizeSpellText(entry.duration) });
     properties.push({
-      type: "SPELL_RESISTANCE",
+      type: SPELL_RESISTANCE,
       value: normalizeSpellResistance(normalizeSpellText(entry.spellResistance || "No")),
     });
     for (const compName of expandComponents(entry.components)) {
-      properties.push({ type: "SPELL_COMPONENT", value: compName });
+      properties.push({ type: SPELL_COMPONENT, value: compName });
     }
 
     const savingThrow = normalizeSpellText(entry.savingThrow || "None");
@@ -1202,8 +1217,8 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
     const aura = ovr?.aura ?? det.aura;
     const casterLevel = ovr?.casterLevel ?? det.casterLevel;
     const properties: { type: string; value: string }[] = [];
-    if (aura) properties.push({ type: "MAGIC_AURA", value: aura });
-    if (casterLevel) properties.push({ type: "MAGIC_CASTER_LEVEL", value: String(casterLevel) });
+    if (aura) properties.push({ type: MAGIC_AURA, value: aura });
+    if (casterLevel) properties.push({ type: MAGIC_CASTER_LEVEL, value: String(casterLevel) });
     if (ovr?.properties) properties.push(...ovr.properties);
 
     const bucket = categoryBuckets[det.category];

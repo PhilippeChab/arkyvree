@@ -9,6 +9,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/i
 import { Items, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
+import { WEAPON_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
@@ -154,7 +155,7 @@ describe("InventoryService", () => {
     await Properties.create(db, {
       entityId: item.id,
       entityType: "items",
-      type: "WEAPON_PROFICIENCY",
+      type: WEAPON_PROFICIENCY,
       value: "Martial",
     });
     await Modifiers.create(db, {
@@ -187,7 +188,7 @@ describe("InventoryService", () => {
         equipped: false,
         item: {
           name: item.name,
-          properties: [{ type: "WEAPON_PROFICIENCY" }],
+          properties: [{ type: WEAPON_PROFICIENCY }],
           modifiers: [{ target: "combat.bab" }],
           requirements: [{ target: "abilities.strength.misc" }],
         },

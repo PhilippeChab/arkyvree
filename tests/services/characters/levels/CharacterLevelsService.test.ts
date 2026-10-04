@@ -36,13 +36,13 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { FEAT_FAMILY, KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import {
   addCharacterLevel,
   addOneLevel,
@@ -888,7 +888,7 @@ describe("LevelsService", () => {
         { target: "feats.weaponfocuslongsword.possessed", value: "true", operator: "set" },
       ]);
       expect(
-        (await Properties.findMany(db, { entityIds: [longsword], entityType: "feats", type: "FEAT_FAMILY" }))
+        (await Properties.findMany(db, { entityIds: [longsword], entityType: "feats", type: FEAT_FAMILY }))
           .map((p) => p.value)
           .sort(),
       ).toEqual(["Martial Weapon Proficiency", "Weapon Focus"]);

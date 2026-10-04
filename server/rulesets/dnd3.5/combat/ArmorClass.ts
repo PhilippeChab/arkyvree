@@ -9,7 +9,7 @@ import {
   ARMOR_PROFICIENCY,
   SHIELD_AC_BONUS,
   SHIELD_PROFICIENCY,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
+} from "@/shared/dnd3.5/properties/index.ts";
 import { type Property } from "@/shared/relations.ts";
 
 /** A character's armor class: its armor and shields, and the Dexterity bonus they leave it. */

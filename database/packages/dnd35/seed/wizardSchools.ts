@@ -5,6 +5,7 @@ import type { SeedContext } from "@/database/packages/dnd35/seed/context.ts";
 import { insertAll, insertGatedSpellSlots, spellListSlots } from "@/database/packages/dnd35/seed/customization.ts";
 import { powersAptitudesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
+import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**
@@ -42,7 +43,7 @@ export async function seedWizardSchools(
       and(
         eq(propertiesInCustomization.entityId, powersAptitudesInRules.powerId),
         eq(propertiesInCustomization.entityType, "powers"),
-        eq(propertiesInCustomization.type, "SPELL_SCHOOL"),
+        eq(propertiesInCustomization.type, SPELL_SCHOOL),
       ),
     )
     .where(eq(powersAptitudesInRules.aptitudeId, wizardSpells));

@@ -72,6 +72,8 @@ requirements: [
 
 Properties are key-value pairs attached to entities via `customization.properties`. They store metadata used by the character engine (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for all property types.
 
+A ruleset's property names are constants in `shared/` (`shared/dnd3.5/properties/`), which the engine, the seeds, the parser, the client and the tests import instead of writing the name. Their descriptions and values are in the ruleset's `PropertyTypes.ts` (`server/rulesets/dnd3.5/PropertyTypes.ts`).
+
 ## Wildcard Patterns
 
 ### Feat family groupings (`feats.<family>.*.possessed`)

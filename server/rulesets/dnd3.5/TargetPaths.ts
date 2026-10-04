@@ -6,15 +6,6 @@ import DetailedCharacterEncumbrance from "@/server/rulesets/dnd3.5/DetailedChara
 import DetailedCharacterShields from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
 import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
 import DetailedCharacterWeapons from "@/server/rulesets/dnd3.5/DetailedCharacterWeapons.ts";
-import {
-  ARMOR_TYPE,
-  FEAT_FAMILY,
-  SHIELD_TYPE,
-  SPELL_DESCRIPTOR,
-  SPELL_SCHOOL,
-  WEAPON_PROFICIENCY,
-  WEAPON_TYPE,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type {
   Holder,
   Holders,
@@ -35,6 +26,15 @@ import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedC
 import { isTraversable } from "@/server/rulesets/universal/isTraversable.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
+import {
+  ARMOR_TYPE,
+  FEAT_FAMILY,
+  SHIELD_TYPE,
+  SPELL_DESCRIPTOR,
+  SPELL_SCHOOL,
+  WEAPON_PROFICIENCY,
+  WEAPON_TYPE,
+} from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

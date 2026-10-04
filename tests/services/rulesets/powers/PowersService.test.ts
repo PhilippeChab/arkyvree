@@ -8,6 +8,7 @@ import { BadRequestError, ConflictError } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import {
   addCharacterLevel,
   createTestCharacter,
@@ -150,7 +151,7 @@ describe("PowersService", () => {
     expect(properties.map(({ type, value }) => ({ type, value })).sort((a, b) => a.type.localeCompare(b.type))).toEqual(
       [
         { type: "SIGNATURE_SPELL", value: "true" },
-        { type: "SPELL_SCHOOL", value: "Conjuration" },
+        { type: SPELL_SCHOOL, value: "Conjuration" },
       ],
     );
   });

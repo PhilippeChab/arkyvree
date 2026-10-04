@@ -26,6 +26,7 @@ import {
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import {
@@ -161,11 +162,7 @@ describe("ClassLevelsService", () => {
       await ClassLevelsService.updateClassLevel(session, ruleset.id, klass.id, level.id, { bab: 3 }),
     ).toMatchObject({ bab: 3, skills: 4 });
     const properties = await Properties.findMany(db, { entityIds: [level.id], entityType: "klass_levels" });
-    expect(properties.map((p) => p.type).sort()).toEqual([
-      "CLASS_FEATURE",
-      "KLASS_LEVEL_BAB",
-      "KLASS_LEVEL_SKILL_POINTS",
-    ]);
+    expect(properties.map((p) => p.type).sort()).toEqual(["CLASS_FEATURE", KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS]);
   });
 
   describe("feat pools", () => {
