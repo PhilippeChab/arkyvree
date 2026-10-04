@@ -128,6 +128,16 @@ export function autoCompanionGrantModifiers(featName: string, description: strin
   return modifiers;
 }
 
+/**
+ * Uncanny dodge, a class feature of many classes (Barbarian, Rogue, Assassin…): the character keeps its Dexterity
+ * bonus to AC, and its dodge bonuses, when flat-footed. Improved uncanny dodge is flanking, no part of AC.
+ */
+export function autoUncannyDodgeModifiers(featName: string): ModifierSeed[] {
+  return /^Uncanny Dodge\b/.test(featName)
+    ? [{ target: "combat.ac.uncannydodge", operator: "set", value: "true", valueType: "boolean" }]
+    : [];
+}
+
 // ---------------------------------------------------------------------------
 // toCamelCase — used by scraper, generator
 // ---------------------------------------------------------------------------

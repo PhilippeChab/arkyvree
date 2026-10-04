@@ -16,6 +16,18 @@ function iterativeAttacks(bab: number): string {
   return attacks.length > 0 ? attacks.join("/") : formatSigned(bab);
 }
 
+// The parts of the AC the breakdown lists, by their label
+const AC_PARTS = [
+  ["Armor", "armor"],
+  ["Shield", "shield"],
+  ["Dex", "dexterity"],
+  ["Natural", "natural"],
+  ["Deflection", "deflection"],
+  ["Dodge", "dodge"],
+  ["Size", "size"],
+  ["Misc", "misc"],
+] as const;
+
 export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSectionProps) {
   const bab = combat?.bab ?? 0;
 
@@ -45,24 +57,11 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
 
             {/* AC Breakdown */}
             <Box sx={{ ml: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Armor: {formatSigned(combat?.ac?.armor)}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Shield: {formatSigned(combat?.ac?.shield)}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Dex: {formatSigned(combat?.ac?.dexterity)}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Natural: {formatSigned(combat?.ac?.natural)}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Deflection: {formatSigned(combat?.ac?.deflection)}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Misc: {formatSigned(combat?.ac?.misc)}
-              </Typography>
+              {AC_PARTS.map(([label, part]) => (
+                <Typography key={part} variant="caption" sx={{ color: "text.secondary" }}>
+                  {label}: {formatSigned(combat?.ac?.[part])}
+                </Typography>
+              ))}
             </Box>
           </Stack>
         </Box>

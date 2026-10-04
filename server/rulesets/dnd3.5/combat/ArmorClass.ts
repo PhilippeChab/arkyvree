@@ -9,7 +9,7 @@ import { ARMOR_MAX_DEX, ARMOR_PROFICIENCY, SHIELD_PROFICIENCY } from "@/shared/d
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
     /**
-     * The armor class: its inputs (the base, natural armor, deflection, misc), which modifiers change, and what's
+     * The armor class: its inputs (the base, natural armor, deflection, dodge, misc, uncanny dodge), which modifiers change, and what's
      * computed when read. The armor's and the shield's AC are the equipped items' and what modifiers add to them (a
      * modifier's write keeps only its own part, so the items' stays live); Dexterity's bonus, the size's and the totals
      * follow the abilities, the gear and the load.
@@ -40,10 +40,12 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
         },
         natural: 0,
         deflection: 0,
+        dodge: 0,
         get size() {
           return size();
         },
         misc: 0,
+        uncannydodge: false,
         get total() {
           return (
             this.base +
@@ -52,6 +54,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
             this.dexterity +
             this.natural +
             this.deflection +
+            this.dodge +
             this.size +
             this.misc
           );
@@ -59,8 +62,10 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
         get touch() {
           return this.total - this.armor - this.shield - this.natural;
         },
+        // A flat-footed character loses its Dexterity bonus (a penalty stays) and its dodge bonuses, unless uncanny
+        // dodge keeps them
         get flatfooted() {
-          return this.total - Math.max(0, this.dexterity);
+          return this.uncannydodge ? this.total : this.total - Math.max(0, this.dexterity) - this.dodge;
         },
       };
     }

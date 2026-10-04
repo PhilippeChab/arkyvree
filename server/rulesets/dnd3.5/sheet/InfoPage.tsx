@@ -6,6 +6,18 @@ import { buildAttackRows } from "@/shared/dnd3.5/weaponAttacks.ts";
 import { formatModifier } from "./format.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
 
+// The parts of the AC the breakdown lists, by their short label
+const AC_PARTS = [
+  ["Arm", "armor"],
+  ["Shld", "shield"],
+  ["Dex", "dexterity"],
+  ["Nat", "natural"],
+  ["Defl", "deflection"],
+  ["Dodge", "dodge"],
+  ["Size", "size"],
+  ["Misc", "misc"],
+] as const;
+
 const InfoPage = ({
   detailedCharacter,
   portraitUrl,
@@ -204,7 +216,7 @@ const InfoPage = ({
               </View>
               <View style={{ marginBottom: 4 }}>
                 <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", textAlign: "center" }}>
-                  {`Arm ${formatModifier(combatData.ac.armor ?? 0)}  Shld ${formatModifier(combatData.ac.shield ?? 0)}  Dex ${formatModifier(combatData.ac.dexterity ?? 0)}  Nat ${formatModifier(combatData.ac.natural ?? 0)}  Defl ${formatModifier(combatData.ac.deflection ?? 0)}  Misc ${formatModifier(combatData.ac.misc ?? 0)}`}
+                  {AC_PARTS.map(([label, part]) => `${label} ${formatModifier(combatData.ac[part] ?? 0)}`).join("  ")}
                 </Text>
               </View>
               <View style={[styles.row, { flexWrap: "wrap", justifyContent: "space-between" }]}>

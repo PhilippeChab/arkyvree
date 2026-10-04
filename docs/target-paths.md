@@ -47,15 +47,17 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 | Path | Type | Description |
 |------|------|-------------|
 | `combat.ac.base` | number | Default 10 |
-| `combat.ac.armor` | number | Armor bonus to AC |
-| `combat.ac.shield` | number | Shield bonus to AC |
+| `combat.ac.armor` | number | Armor bonus to AC: armor, bracers, an armor's enhancement (not in touch AC) |
+| `combat.ac.shield` | number | Shield bonus to AC: a shield, its enhancement (not in touch AC) |
 | `combat.ac.dexterity` | number | Dexterity bonus to AC (req only) |
-| `combat.ac.natural` | number | Natural armor bonus |
+| `combat.ac.natural` | number | Natural armor bonus (not in touch AC) |
 | `combat.ac.deflection` | number | Deflection bonus to AC |
-| `combat.ac.misc` | number | Other bonuses to AC |
+| `combat.ac.dodge` | number | Dodge bonus to AC, and any other lost when flat-footed (not in flat-footed AC) |
+| `combat.ac.misc` | number | Other bonuses to AC, kept in touch and flat-footed AC (a monk's Wisdom) |
+| `combat.ac.uncannydodge` | boolean | Keeps the Dexterity and dodge bonuses when flat-footed (uncanny dodge) |
 | `combat.ac.total` | number | All AC bonuses combined (req only) |
 | `combat.ac.touch` | number | Ignores armor, shield, natural (req only) |
-| `combat.ac.flatfooted` | number | Ignores Dex bonus (req only) |
+| `combat.ac.flatfooted` | number | Ignores the Dexterity and dodge bonuses, unless uncanny dodge (req only) |
 | `combat.hp.base` | number | From hit dice rolls |
 | `combat.hp.constitution` | number | Con modifier per level (req only) |
 | `combat.hp.misc` | number | Other bonuses to HP |

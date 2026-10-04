@@ -1092,6 +1092,67 @@ describe("DetailedCharacter", () => {
   });
 
   describe("armor class", () => {
+    test("keeps a dodge bonus in touch AC and loses it flat-footed, with the Dexterity bonus", async () => {
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      const ac = async () => {
+        const { total, touch, flatfooted, dexterity } = (await build(bjorn))
+          .getDetailedCharacterCombat()
+          .getCombat().ac;
+        return { total, touch, flatfooted, dexterity };
+      };
+      const before = await ac();
+      await Modifiers.create(db, {
+        sourceId: bjorn.raceId,
+        sourceType: "races",
+        target: "combat.ac.dodge",
+        operator: "add",
+        value: "2",
+        valueType: "number",
+      });
+      invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+      expect(await ac()).toEqual({
+        ...before,
+        total: before.total + 2,
+        touch: before.touch + 2,
+        flatfooted: before.total - before.dexterity,
+      });
+    });
+
+    test("gives a duelist its Intelligence bonus as a dodge bonus, up to its duelist level, and never a penalty", async () => {
+      const ctx = await getSeedCtx();
+      const fork = await forkWith(DND35_DMG_NAME);
+      const duelist = (await Klasses.findOne(db, {
+        name: "Duelist",
+        rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id,
+      }))!;
+      const dodgeAt = async (intelligence: number, duelistLevels: number) => {
+        const characterId = await createSeedCharacter(
+          `Duelist ${intelligence} ${duelistLevels}`,
+          { ...WIZARD_SCORES, Intelligence: intelligence },
+          { rulesetId: fork.id },
+        );
+        await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+        for (let level = 1; level <= duelistLevels; level++) {
+          await addCharacterLevel(characterId, (await findKlassLevel(duelist.id, level))!.id);
+        }
+        return (await build((await Characters.findOne(db, { id: characterId }))!))
+          .getDetailedCharacterCombat()
+          .getCombat().ac.dodge;
+      };
+      // Intelligence 16 (+3): +1 at the first duelist level, +2 at the second; Intelligence 8 (−1): nothing
+      expect([await dodgeAt(16, 1), await dodgeAt(16, 2), await dodgeAt(8, 2)]).toEqual([1, 2, 0]);
+    });
+
+    test("keeps the Dexterity bonus flat-footed with uncanny dodge: a barbarian 2's, not a barbarian 1's", async () => {
+      const acOf = async (name: string) => (await buildSeeded(name)).getDetailedCharacterCombat().getCombat().ac;
+      // Grak is a barbarian 3; Kael a barbarian 1 and fighter 3
+      const grak = await acOf("Grak Thunderfist");
+      expect(grak).toMatchObject({ uncannydodge: true, flatfooted: grak.total });
+      const kael = await acOf("Kael Stormborn");
+      expect(kael.dexterity).toBeGreaterThan(0);
+      expect(kael).toMatchObject({ uncannydodge: false, flatfooted: kael.total - kael.dexterity });
+    });
+
     test("adds armor, capping dexterity at its limit, and shows its penalties", async () => {
       const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Chain Mail", location: "Torso" }]);
       expect(bjorn.getDetailedCharacterArmors().getArmors()["chainmail"]).toMatchObject({

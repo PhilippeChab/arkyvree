@@ -82,8 +82,12 @@ export type DetailedCharacterComprehensiveCombat = {
     readonly dexterity: number;
     natural: number;
     deflection: number;
+    /** Dodge bonuses, and any other a flat-footed character loses with its Dexterity bonus */
+    dodge: number;
     readonly size: number;
     misc: number;
+    /** Keeps the Dexterity and dodge bonuses when flat-footed: uncanny dodge */
+    uncannydodge: boolean;
     readonly total: number;
     readonly touch: number;
     readonly flatfooted: number;
@@ -144,8 +148,10 @@ export default abstract class CombatState {
       dexterity: 0,
       natural: 0,
       deflection: 0,
+      dodge: 0,
       size: 0,
       misc: 0,
+      uncannydodge: false,
       total: CONSTANTS.DEFAULT_AC_BASE,
       touch: CONSTANTS.DEFAULT_AC_BASE,
       flatfooted: CONSTANTS.DEFAULT_AC_BASE,

@@ -30,8 +30,8 @@
                 "valueType": "number"
               }
             ],
-            "target": "combat.ac.misc",
-            "value": "{{ [abilities.intelligence.modifier] }}",
+            "target": "combat.ac.dodge",
+            "value": "{{ max(0, min([abilities.intelligence.modifier], [classes.duelist.level])) }}",
             "valueType": "number"
           }
         ]
