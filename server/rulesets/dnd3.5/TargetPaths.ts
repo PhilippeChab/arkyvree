@@ -27,6 +27,7 @@ import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedC
 import { isTraversable } from "@/server/rulesets/universal/isTraversable.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
+import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import {
   ARMOR_TYPE,
   FEAT_FAMILY,
@@ -181,7 +182,10 @@ function collectGroupings(rulesetData: CachedRulesetData) {
   const powerProperties = propertiesByEntityType.get("powers") ?? [];
   const featProperties = propertiesByEntityType.get("feats") ?? [];
 
-  const featGroupingLabels: Record<string, string> = {};
+  // Every family the rules know, a feat of the ruleset in it or not: an extension's checks of another book's
+  const featGroupingLabels: Record<string, string> = Object.fromEntries(
+    FEAT_FAMILIES.map((family) => [stripSeparators(family), family]),
+  );
   for (const prop of featProperties) {
     if (prop.type === FEAT_FAMILY) featGroupingLabels[stripSeparators(prop.value)] = prop.value;
   }
@@ -218,7 +222,7 @@ function collectGroupings(rulesetData: CachedRulesetData) {
           .map((p) => stripSeparators(p.name)),
       ),
     ],
-    featGroupings: slugsOf(featProperties, FEAT_FAMILY),
+    featGroupings: Object.keys(featGroupingLabels),
     featGroupingLabels,
     leveledAptitudeIds,
   };
@@ -334,6 +338,9 @@ function segmentLabelsOf(rulesetData: CachedRulesetData): Record<string, string>
     const normalized = stripSeparators(prop.value);
     if (normalized && !/^\d+$/.test(normalized)) segmentLabels[normalized] = prop.value;
   }
+
+  // Every family the rules know, listed whether or not a feat of the ruleset is in it
+  for (const family of FEAT_FAMILIES) segmentLabels[stripSeparators(family)] ??= family;
 
   // Feat property values (e.g. "weaponfocus" → "Weapon Focus")
   // For feat families, also add wildcard label (e.g. "weaponfocus*" → "Weapon Focus (Any)")

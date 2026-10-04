@@ -95,7 +95,7 @@ export default class DetailedCharacterSkills {
       ...skills.map((skill) => ({ slug: stripSeparators(skill.name), prefix: "" })),
       ...Object.entries(DetailedCharacterSkills.getFamilyLabels(skills)).map(([slug, family]) => ({
         slug,
-        prefix: `${kind === "requirement" ? "Any" : "All"} ${family} skills — `,
+        prefix: kind === "requirement" ? `Any ${family} skill — ` : `All ${family} skills — `,
       })),
     ];
 

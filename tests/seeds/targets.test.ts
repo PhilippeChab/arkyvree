@@ -15,21 +15,18 @@ const AWAITING = [
 test.each(["modifier", "requirement"] as const)(
   "Every seeded %s targets a path the editor offers, with an operator it offers there",
   async (kind) => {
-    const offered = new Map<string, string[]>();
-    const seeded: { target: string | null; operator: string | null }[] = [];
+    // Each ruleset's rows against its own paths: an extension's compose the core rules', not the other way round
+    const misfits: string[] = [];
     for (const name of Object.values(RULESET_NAMES)) {
       const rows = await seededRows(name);
-      for (const path of (await getTargetPathsWithLabels(rows.rulesetId, kind)).paths) {
-        offered.set(path.path, path.operators);
+      const offered = new Map(
+        (await getTargetPathsWithLabels(rows.rulesetId, kind)).paths.map((path) => [path.path, path.operators]),
+      );
+      for (const { target, operator } of kind === "modifier" ? rows.modifiers : rows.requirements) {
+        if (!target || AWAITING.some((pattern) => pattern.test(target))) continue;
+        if (!(operator && offered.get(target)?.includes(operator))) misfits.push(`${name}: ${target} ${operator}`);
       }
-      seeded.push(...(kind === "modifier" ? rows.modifiers : rows.requirements));
     }
-    const misfits = seeded.filter(
-      ({ target, operator }) =>
-        target &&
-        !AWAITING.some((pattern) => pattern.test(target)) &&
-        !(operator && offered.get(target)?.includes(operator)),
-    );
-    expect([...new Set(misfits.map(({ target, operator }) => `${target} ${operator}`))]).toEqual([]);
+    expect([...new Set(misfits)]).toEqual([]);
   },
 );

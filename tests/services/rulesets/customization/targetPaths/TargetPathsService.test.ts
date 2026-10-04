@@ -183,7 +183,7 @@ describe("TargetPathsService", () => {
       expect(modifiers.has(path)).toBe(true);
     expect(modifiers.has("skills.budget.available")).toBe(false);
     expect(requirements.get("skills.budget.available")?.description).toBe("Skill points left to spend");
-    expect(requirements.get("skills.knowledge.rank")?.description).toBe("Any Knowledge skills — Total ranks invested");
+    expect(requirements.get("skills.knowledge.rank")?.description).toBe("Any Knowledge skill — Total ranks invested");
     expect(modifiers.get("skills.knowledge.misc")?.description).toBe(
       "All Knowledge skills — From feats, items, and spells",
     );
