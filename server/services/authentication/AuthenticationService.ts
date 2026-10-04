@@ -2,12 +2,17 @@ import { getTableName } from "drizzle-orm";
 
 import { sessionsInAccount, usersInAccount } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { emailService } from "@/server/emails/EmailService.ts";
-import { EmailTemplate } from "@/server/emails/templates.ts";
+import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { BadRequestError, ConflictError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
 import { hashPassword, verifyPassword } from "@/server/password.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Activities, EmailVerifications, PasswordResets, Sessions, Users } from "@/server/repositories/index.ts";
+import {
+  Activities,
+  EmailVerifications,
+  PasswordResets,
+  Sessions,
+  Users,
+  Visibility,
+} from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";

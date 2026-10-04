@@ -58,7 +58,10 @@ const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
 
 /** The trees whose folders are entered through their `index.ts`. */
-const INDEXED_TREES = ["server/services/", "client/src/components/"];
+// The trees whose folders are entered through their index.ts: the server's, but its routers (a route folder's index.ts
+// is its routes, not its folder's entry), and the client's components.
+const INDEXED_TREES = ["server/", "client/src/components/"];
+const UNINDEXED_TREES = ["server/routers/"];
 
 const layers = {
   meta: { type: "problem" },
@@ -157,12 +160,14 @@ const folderIndex = {
   create(context) {
     const root = rootOf(context.filename);
     const file = repoPath(context.filename);
-    if (file.startsWith("tests/")) return {};
+    // The server and the client hold to it. A test may reach a folder's own modules, and the seeders and the parser's
+    // tools reach the engine's pure modules without loading the database an index would.
+    if (!/^(server|client)\//.test(file)) return {};
     return onImports((node, spec) => {
       const target = targetOf(file, spec);
       if (!target) return;
       const tree = INDEXED_TREES.find((t) => target.startsWith(t));
-      if (!tree) return;
+      if (!tree || UNINDEXED_TREES.some((t) => target.startsWith(t))) return;
       // The nearest folder that has an index, from the target's own (a directory import) up: the one it's entered
       // through.
       const isDirectory = !/\.[a-z]+$/.test(target);

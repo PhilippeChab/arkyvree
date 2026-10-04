@@ -1,4 +1,4 @@
-import { runWithRequestCache } from "@/server/database/requestCache.ts";
+import { runWithRequestCache } from "@/server/database/index.ts";
 
 import MemoryCache, { isCacheEnabled } from "./MemoryCache.ts";
 

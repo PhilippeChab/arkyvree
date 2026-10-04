@@ -1,4 +1,4 @@
-import type { RulesetEntityType } from "@/server/repositories/rulesets/entityTables.ts";
+import type { RulesetEntityType } from "@/server/repositories/index.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 interface EntityCustomizations {

@@ -1,10 +1,12 @@
-import { getTableName } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { getTableName, type InferInsertModel } from "drizzle-orm";
 
-import { contributorsInCharacter, contributorsInRules, invitesInCampaign } from "@/drizzle/schema.ts";
-import type { activitiesInAccount } from "@/drizzle/schema.ts";
+import {
+  type activitiesInAccount,
+  contributorsInCharacter,
+  contributorsInRules,
+  invitesInCampaign,
+} from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
   Aptitudes,
@@ -24,12 +26,13 @@ import {
   Properties,
   Races,
   Requirements,
+  RULESET_ENTITY_TYPES,
   Rulesets,
   Saves,
   Skills,
   Users,
+  Visibility,
 } from "@/server/repositories/index.ts";
-import { RULESET_ENTITY_TYPES } from "@/server/repositories/rulesets/entityTables.ts";
 import { noteNotified } from "@/server/ws.ts";
 import type { ChangedField } from "@/shared/activity.ts";
 

@@ -2,8 +2,8 @@ import { run } from "graphile-worker";
 
 import "@/server/instrument-worker.ts";
 import "@/server/log.ts";
-import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
-import { waitForDatabase } from "@/server/database/waitForDatabase.ts";
+import { setCacheEnabled } from "@/server/cache/index.ts";
+import { waitForDatabase } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 import { createWorkerEvents, createWorkerPool, crontab, taskList, workerLogger } from "@/server/jobs/runner.ts";
 import { isShuttingDown, onShutdown } from "@/server/shutdown.ts";

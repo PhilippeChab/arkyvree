@@ -2,13 +2,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { denyDemoUser, exportRateLimit, sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
-import { visibilityMap } from "@/server/repositories/BaseRepository.ts";
 import { characterIdParam, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
-import {
-  buildBondedMap,
-  buildBondedResponse,
-  buildFullCharacterResponse,
-} from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
+import { buildBondedMap, buildBondedResponse, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 
 import contributors from "./contributors/index.ts";
@@ -43,14 +38,12 @@ const characters = new Hono()
     async (c) => {
       const query = c.req.valid("query");
 
-      const visibility = visibilityMap[query.visibility];
-
       // Use the service to get character list with session for activity logging
       return c.json(
         await CharactersService.getCharacters(
           c.var.requestSession,
           {
-            visibility,
+            visibility: query.visibility,
             search: query.search,
             orderBy: query.orderBy,
             orderDir: query.orderDir,

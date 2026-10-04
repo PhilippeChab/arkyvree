@@ -14,7 +14,7 @@
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
+import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
 import type { DetailedCharacterInterface, ProjectedCharacterData, RulesetModule } from "@/server/rulesets/types.ts";
 import type { Character, Modifier, Property, Requirement } from "@/shared/relations.ts";
 

@@ -1,6 +1,6 @@
 import { type Column, eq, inArray, notInArray, type SQL, type Table } from "drizzle-orm";
 
-import { getCowContext } from "@/server/database/cowContext.ts";
+import { getCowContext } from "@/server/database/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 

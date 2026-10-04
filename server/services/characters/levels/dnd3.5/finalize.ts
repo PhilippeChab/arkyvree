@@ -19,8 +19,11 @@ import {
   CharacterLevels,
   CharacterLevelSkills,
 } from "@/server/repositories/index.ts";
-import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
-import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
+import type {
+  Dnd35DetailedCharacter,
+  Dnd35LevelUpProjector,
+  Dnd35ProjectedCharacterData,
+} from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { PreloadedRulesetData, RulesetModule } from "@/server/rulesets/types.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";

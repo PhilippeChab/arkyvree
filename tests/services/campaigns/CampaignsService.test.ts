@@ -114,12 +114,12 @@ describe("CampaignsService", () => {
         (await CampaignsService.getCampaigns(session, where, pagination)).items.map((c) => c.id);
 
       expect(await ids({ search: "Dragon" })).toEqual([dragons.id]);
-      expect((await ids({ visibility: Visibility.UnarchivedOnly })).sort()).toEqual([dragons.id, goblins.id].sort());
-      expect(await ids({ visibility: Visibility.ArchivedOnly })).toEqual([archived.id]);
-      expect(
-        await CampaignsService.getCampaigns(session, { visibility: Visibility.All }, { limit: 2, page: 1 }),
-      ).toMatchObject({ nextPage: 2 });
-      expect(await ids({ visibility: Visibility.All }, { limit: 2, page: 2 })).toHaveLength(1);
+      expect((await ids({ visibility: "active" })).sort()).toEqual([dragons.id, goblins.id].sort());
+      expect(await ids({ visibility: "archived" })).toEqual([archived.id]);
+      expect(await CampaignsService.getCampaigns(session, { visibility: "all" }, { limit: 2, page: 1 })).toMatchObject({
+        nextPage: 2,
+      });
+      expect(await ids({ visibility: "all" }, { limit: 2, page: 2 })).toHaveLength(1);
     });
   });
 
@@ -171,7 +171,7 @@ describe("CampaignsService", () => {
       expect(await Players.findMany(db, { campaignId: campaign.id })).toHaveLength(2);
 
       expect((await CampaignsService.unarchiveCampaign(gm, campaign.id)).deletedAt).toBeNull();
-      const active = await CampaignsService.getCampaigns(gm, { visibility: Visibility.UnarchivedOnly }, firstPage);
+      const active = await CampaignsService.getCampaigns(gm, { visibility: "active" }, firstPage);
       expect(active.items.map((c) => c.id)).toEqual([campaign.id]);
     });
 

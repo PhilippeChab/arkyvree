@@ -2,11 +2,17 @@ import { getTableName } from "drizzle-orm";
 
 import { invitesInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
-import { emailService } from "@/server/emails/index.ts";
-import { EmailTemplate } from "@/server/emails/templates.ts";
+import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Activities, Campaigns, Invites, PlayerCharacters, Players, Users } from "@/server/repositories/index.ts";
+import {
+  Activities,
+  Campaigns,
+  Invites,
+  PlayerCharacters,
+  Players,
+  Users,
+  Visibility,
+} from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";

@@ -50,5 +50,5 @@ export { getOrBuildCowData, invalidateAllCowData, invalidateCowData } from "./co
 // Merging a fork's requirements with its sources' (rulesetCache/compose.ts).
 export { mergeSiblingRequirements } from "./requirements.ts";
 
-export type { CowData, IdResolveMap } from "@/server/database/cowContext.ts";
+export type { CowData, IdResolveMap } from "@/server/database/index.ts";
 export { type EntityType } from "./hashing.ts";

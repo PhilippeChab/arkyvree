@@ -1,4 +1,4 @@
-import { paginateItems } from "@/server/repositories/concerns/Paginates.ts";
+import { paginateItems } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { PaginatedCompletions, PathCompletion } from "@/shared/customization/target.ts";
 

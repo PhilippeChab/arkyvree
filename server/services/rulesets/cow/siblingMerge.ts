@@ -1,5 +1,4 @@
-import { withCowContext } from "@/server/database/cowContext.ts";
-import type { Db } from "@/server/database/index.ts";
+import { type Db, withCowContext } from "@/server/database/index.ts";
 import { FeatsAptitudes, Modifiers, PowersAptitudes, Properties, Requirements } from "@/server/repositories/index.ts";
 
 import { copyEntityCustomizations } from "./copy.ts";

@@ -1,7 +1,6 @@
 import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Characters } from "@/server/repositories/index.ts";
+import { Characters, Visibility } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /**

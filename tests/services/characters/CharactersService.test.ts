@@ -284,12 +284,12 @@ describe("CharactersService", () => {
       const { session } = await createTestUser();
       const [active, archived] = [await createCharacter(session), await createCharacter(session)];
       await CharactersService.archiveCharacter(session, archived.id);
-      const list = async (visibility: Visibility) =>
+      const list = async (visibility: "active" | "archived" | "all") =>
         ids((await CharactersService.getCharacters(session, { visibility }, page)).items as { id: string }[]).sort();
 
-      expect(await list(Visibility.UnarchivedOnly)).toEqual([active.id]);
-      expect(await list(Visibility.ArchivedOnly)).toEqual([archived.id]);
-      expect(await list(Visibility.All)).toEqual([active.id, archived.id].sort());
+      expect(await list("active")).toEqual([active.id]);
+      expect(await list("archived")).toEqual([archived.id]);
+      expect(await list("all")).toEqual([active.id, archived.id].sort());
     });
 
     test("lists those not in a campaign yet, a page at a time", async () => {

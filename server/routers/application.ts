@@ -7,10 +7,8 @@ import { HTTPException } from "hono/http-exception";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
-import { db } from "@/server/database/index.ts";
-import { runWithRequestCache } from "@/server/database/requestCache.ts";
-import { isProduction, readEnv } from "@/server/environment.ts";
-import { isTest } from "@/server/environment.ts";
+import { db, runWithRequestCache } from "@/server/database/index.ts";
+import { isProduction, isTest, readEnv } from "@/server/environment.ts";
 import { toJson } from "@/server/errors/index.ts";
 import { requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
 import apiRouter from "@/server/routers/api.tsx";

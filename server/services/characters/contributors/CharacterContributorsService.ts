@@ -2,11 +2,9 @@ import { getTableName } from "drizzle-orm";
 
 import { contributorsInCharacter } from "@/drizzle/schema.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
-import { emailService } from "@/server/emails/index.ts";
-import { EmailTemplate } from "@/server/emails/templates.ts";
+import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { CharacterContributors, Characters, Notifications, Users } from "@/server/repositories/index.ts";
+import { CharacterContributors, Characters, Notifications, Users, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";

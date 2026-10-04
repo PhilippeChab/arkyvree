@@ -1,7 +1,7 @@
 import { warmSystemRulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import "@/server/instrument-web.ts";
 import "@/server/log.ts";
-import { waitForDatabase } from "@/server/database/waitForDatabase.ts";
+import { waitForDatabase } from "@/server/database/index.ts";
 import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "@/server/environment.ts";
 import { application } from "@/server/routers/application.ts";
 import { onShutdown } from "@/server/shutdown.ts";

@@ -1,5 +1,4 @@
-import type { IdResolveMap, OverrideMap } from "@/server/database/cowContext.ts";
-import type { Db } from "@/server/database/index.ts";
+import type { Db, IdResolveMap, OverrideMap } from "@/server/database/index.ts";
 import { EntitySnapshots, RulesetEntities } from "@/server/repositories/index.ts";
 
 import { NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";

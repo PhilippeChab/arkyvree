@@ -19,3 +19,5 @@ export function createServiceHooks(): ServiceHooks {
     inventory: new Dnd35InventoryHooks(),
   };
 }
+
+export { Dnd35LevelsHooks } from "./LevelsHooks.ts";

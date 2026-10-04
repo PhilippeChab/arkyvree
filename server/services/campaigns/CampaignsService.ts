@@ -3,8 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { campaignsInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
-import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Activities, Campaigns, Players, Rulesets } from "@/server/repositories/index.ts";
+import { Activities, Campaigns, Players, Rulesets, Visibility, visibilityMap } from "@/server/repositories/index.ts";
 import { CampaignsPolicy, RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -25,14 +24,19 @@ class CampaignsService {
   async getCampaigns(
     session: Session,
     where: {
-      visibility?: Visibility;
+      visibility?: keyof typeof visibilityMap;
       search?: string;
       orderBy?: "name" | "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
     },
     pagination: { limit: number; page: number },
   ) {
-    return await Campaigns.findPage(db, { userId: session.userId, ...where }, pagination);
+    const { visibility, ...filters } = where;
+    return await Campaigns.findPage(
+      db,
+      { userId: session.userId, ...filters, ...(visibility && { visibility: visibilityMap[visibility] }) },
+      pagination,
+    );
   }
 
   async createCampaign(

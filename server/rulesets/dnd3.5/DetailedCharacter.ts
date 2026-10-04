@@ -6,8 +6,15 @@ import AbstractDetailedCharacter, {
 } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
 import { FEAT_FAMILY, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import type { Holders, PreloadedCharacterData, PreloadedRulesetData } from "@/server/rulesets/types.ts";
-import type { FeatWithPMR, InventoryEntry, KlassLevelWithPMR, PowerWithPMR } from "@/server/rulesets/types.ts";
+import type {
+  FeatWithPMR,
+  Holders,
+  InventoryEntry,
+  KlassLevelWithPMR,
+  PowerWithPMR,
+  PreloadedCharacterData,
+  PreloadedRulesetData,
+} from "@/server/rulesets/types.ts";
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import DetailedCharacterBonds from "@/server/rulesets/universal/DetailedCharacterBonds.ts";
@@ -39,7 +46,7 @@ import DetailedCharacterInventory from "./DetailedCharacterInventory.ts";
 import DetailedCharacterShields from "./DetailedCharacterShields.ts";
 import DetailedCharacterSpellcasting from "./DetailedCharacterSpellcasting.ts";
 import DetailedCharacterWeapons from "./DetailedCharacterWeapons.ts";
-import { Dnd35LevelsHooks } from "./hooks/LevelsHooks.ts";
+import { Dnd35LevelsHooks } from "./hooks/index.ts";
 import TargetPaths from "./TargetPaths.ts";
 import type { Dnd35ProjectedCharacterData } from "./types.ts";
 

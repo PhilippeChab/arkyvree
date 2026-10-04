@@ -2,8 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
-import { withCowContext } from "@/server/database/cowContext.ts";
-import { type Db, db, withTransaction } from "@/server/database/index.ts";
+import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -15,14 +14,13 @@ import {
   CharacterLevelSkills,
   Characters,
   EntitySnapshots,
+  RULESET_ENTITY_TYPES,
   RulesetEntities,
   RulesetExtensions,
   Rulesets,
 } from "@/server/repositories/index.ts";
-import { RULESET_ENTITY_TYPES } from "@/server/repositories/rulesets/entityTables.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { ENTITY_REPOS, NAME_FALLBACK_ENTITY_TYPES } from "@/server/services/rulesets/cow/index.ts";
-import type { EntityType } from "@/server/services/rulesets/cow/index.ts";
+import { ENTITY_REPOS, type EntityType, NAME_FALLBACK_ENTITY_TYPES } from "@/server/services/rulesets/cow/index.ts";
 import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import type { Session } from "@/shared/relations.ts";
 

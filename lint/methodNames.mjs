@@ -12,7 +12,8 @@
  *
  * Private and protected methods are the class's own business: any name.
  *
- * `function-names`: an exported function of the server or `shared/` starts with a verb too (`FUNCTION_VERBS`), or is
+ * `function-names`: an exported function of the server or `shared/` (declared, held by a const, or listed in an
+ * `export { f }`) starts with a verb too (`FUNCTION_VERBS`), or is
  * one of the shapes the code writes: a context it runs a callback in (`withTransaction`), a handler it registers
  * (`onShutdown`), a conversion (`toSafeUser`) or a constructor (`newOverrideMap`). A PascalCase one (a concern, a
  * class's factory) is a type's name; a module's own functions name themselves.
@@ -106,18 +107,40 @@ const functionNames = {
   meta: { type: "suggestion" },
   create(context) {
     const file = repoPath(context.filename);
-    if (!/^(server|shared)\//.test(file) || !file.endsWith(".ts")) return {};
-    const check = (node) => {
-      for (const id of exportedFunctions(node)) {
-        if (/^[A-Z]/.test(id.name) || FUNCTION_EXCEPTIONS.has(id.name)) continue;
-        if (FUNCTION_VERBS.some((verb) => startsWithVerb(id.name, verb))) continue;
-        context.report({
-          node: id,
-          message: `An exported function starts with a verb (lint/methodNames.mjs's FUNCTION_VERBS): \`${id.name}\` doesn't.`,
-        });
-      }
+    if (!/^(server|shared)\//.test(file) || !/\.tsx?$/.test(file)) return {};
+    const report = (id) => {
+      if (/^[A-Z]/.test(id.name) || FUNCTION_EXCEPTIONS.has(id.name)) return;
+      if (FUNCTION_VERBS.some((verb) => startsWithVerb(id.name, verb))) return;
+      context.report({
+        node: id,
+        message: `An exported function starts with a verb (lint/methodNames.mjs's FUNCTION_VERBS): \`${id.name}\` doesn't.`,
+      });
     };
-    return { ExportNamedDeclaration: check, ExportDefaultDeclaration: check };
+    // The module's own functions, which a later `export { f }` exports by name.
+    const locals = new Set();
+    const listed = [];
+    return {
+      Program(program) {
+        for (const statement of program.body) {
+          for (const id of exportedFunctions({ declaration: statement })) locals.add(id.name);
+        }
+      },
+      ExportNamedDeclaration(node) {
+        for (const id of exportedFunctions(node)) report(id);
+        if (node.source) return;
+        for (const specifier of node.specifiers ?? []) {
+          if (specifier.local?.type === "Identifier" && specifier.exported?.type === "Identifier") {
+            listed.push(specifier);
+          }
+        }
+      },
+      ExportDefaultDeclaration(node) {
+        for (const id of exportedFunctions(node)) report(id);
+      },
+      "Program:exit"() {
+        for (const specifier of listed) if (locals.has(specifier.local.name)) report(specifier.exported);
+      },
+    };
   },
 };
 
