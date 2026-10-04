@@ -260,8 +260,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       if (!property(WEAPON_PROFICIENCY)) return;
       const baseDamage = property(WEAPON_BASE_DAMAGE)?.value ?? "unknown";
       const ranged = properties.some((p) => p.type === WEAPON_RANGED && p.value === "true");
-      // Light when smaller than its wielder: a Medium character's light weapons are Small or Tiny
-      const light = (SIZE_ORDER[property(WEAPON_SIZE)?.value ?? ""] ?? Infinity) < (SIZE_ORDER[this.raceSize] ?? 0);
+      // Light by the weapon table (Tiny and Small, written for Medium): every weapon is sized for its wielder, its damage too
+      const light = (SIZE_ORDER[property(WEAPON_SIZE)?.value ?? ""] ?? Infinity) < SIZE_ORDER.Medium;
       // Strength adds to damage by the slot's share (melee and thrown weapons, slings) unless the weapon says otherwise
       const strengthDamage = property(WEAPON_STRENGTH_DAMAGE)?.value ?? "Slot";
       const handShare =

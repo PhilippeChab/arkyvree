@@ -12,7 +12,7 @@ export type WeaponSlot = {
   itemId: string | null;
   proficient: boolean;
   finessable: boolean;
-  /** A light weapon for its wielder's size: no extra Strength in two hands, and lighter two-weapon penalties off hand. */
+  /** A light weapon (the table's Tiny and Small): no extra Strength in two hands, lighter two-weapon penalties off hand. */
   light: boolean;
   /** A ranged weapon (thrown or projectile, not used in melee), which attacks with Dexterity. */
   ranged: boolean;

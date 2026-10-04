@@ -1204,6 +1204,7 @@ export function buildMagicItemSeeds(ref: MagicItemReference): MagicItemSeedSets 
     const properties: { type: string; value: string }[] = [];
     if (aura) properties.push({ type: "MAGIC_AURA", value: aura });
     if (casterLevel) properties.push({ type: "MAGIC_CASTER_LEVEL", value: String(casterLevel) });
+    if (ovr?.properties) properties.push(...ovr.properties);
 
     const bucket = categoryBuckets[det.category];
     if (!bucket) throw new Error(`${name}: the seed has no magic items of the category "${det.category}"`);

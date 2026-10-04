@@ -201,6 +201,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Strong evocation" },
       { type: "MAGIC_CASTER_LEVEL", value: "15" },
+      { type: "WEAPON_MIGHTY", value: "2" },
     ],
   },
   {

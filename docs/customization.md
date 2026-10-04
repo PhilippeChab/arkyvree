@@ -166,7 +166,7 @@ How the engine reads a weapon's attack (`combat/Attacks.ts`), the SRD's rules:
 - A **composite bow** (a bow with a `WEAPON_MIGHTY`, 0 for the seeded ones) takes −2 to attack when the character's Strength bonus is below its rating. A plain bow, without one, never does.
 - A **melee weapon with a range increment** (`WEAPON_RANGE`: daggers, throwing axes, spears…) can also be thrown: its weapon slot carries a `thrown` attack with Dexterity, which the sheets list as a second row.
 - **Strength to damage** (`WEAPON_STRENGTH_DAMAGE`): `Slot` when absent (the slot's share of a bonus: all of it in the main hand, half in the off hand, one and a half in two hands, all of it for a light weapon in two hands; a penalty in full), `Rating` (bows: a penalty, and a bonus up to `WEAPON_MIGHTY`, 0 without) or `None` (crossbows).
-- A weapon is **light** when its `WEAPON_SIZE` is smaller than its wielder (a Medium character's Tiny and Small weapons).
+- A weapon is **light** when its `WEAPON_SIZE` is Tiny or Small. The table's sizes are written for a Medium wielder, and the engine sizes every weapon for its wielder (its damage too), so a halfling's shortsword is light as a human's is.
 - **Two weapons**: when a set holds an equipped weapon in each hand (an unarmed strike or a natural attack doesn't count), each weapon slot carries a `twoweapon` attack, which the sheets list as more rows: the main hand's attacks with `combat.twoweapon.mainhand` (−6), the off hand's first attack and `combat.twoweapon.offhandattacks` − 1 more, each 5 lower, with `combat.twoweapon.offhand` (−10). A light off-hand weapon lessens both penalties by 2. The feats change these fields through modifiers.
 
 Proficiency requirements (on the item, checked at equip time):

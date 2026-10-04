@@ -501,6 +501,12 @@ describe("DetailedCharacter", () => {
       ).twohanded;
       // STR 18 (+4), DEX 14 (+2).
       expect(bow).toMatchObject({ damage: { strength: 2, total: "1d8 + 2" }, tohit: { strength: 2 } });
+
+      // The seeded oathbow is a +2 composite longbow: its own rating wins over its template's +0.
+      const oathbow = weaponSet(
+        await buildCarrying("Bjorn Ironhand", [{ item: "Oathbow", location: "Two Handed", weaponSet: 0 }]),
+      ).twohanded;
+      expect(oathbow).toMatchObject({ name: "Oathbow", damage: { strength: 2 } });
     });
 
     test("take 2 off a composite bow's attack when the strength bonus falls short of its rating, a plain bow's never", async () => {
@@ -563,6 +569,11 @@ describe("DetailedCharacter", () => {
       ]);
       expect(weaponSet(bjorn).twohanded).toMatchObject({ light: true, damage: { strength: 4 } });
       expect(weaponSet(bjorn, "1").twohanded).toMatchObject({ light: false, damage: { strength: 6 } });
+
+      // As a halfling, STR 16 (+3): a shortsword, sized for its wielder, is still light.
+      const halfling = await asHalfling("Bjorn Ironhand");
+      await carry(halfling, [{ item: "Shortsword", location: "Two Handed", weaponSet: 0 }]);
+      expect(weaponSet(await build(halfling)).twohanded).toMatchObject({ light: true, damage: { strength: 3 } });
     });
 
     test("aim and strike with strength as modifiers leave it", async () => {
@@ -767,6 +778,18 @@ describe("DetailedCharacter", () => {
           [4, -1],
           [4, -1],
         ]);
+      });
+
+      test("weigh a halfling's off-hand weapon as a human's: sized for its wielder, a kukri is light", async () => {
+        const halfling = await asHalfling("Bjorn Ironhand");
+        await carry(halfling, [
+          { item: "Shortsword", location: "Main Hand", weaponSet: 0 },
+          { item: "Kukri", location: "Off Hand", weaponSet: 0 },
+        ]);
+        const { mainhand, offhand } = weaponSet(await build(halfling));
+        // Without the feats, a light off-hand weapon: -4 / -8.
+        expect(mainhand!.twoweapon!.total).toEqual(mainhand!.tohit.total.map((attack) => attack - 4));
+        expect(offhand!.twoweapon!.total).toEqual([offhand!.tohit.total[0] - 8]);
       });
 
       test("leave a weapon alone without one in the other hand, an unarmed strike not counting", async () => {
