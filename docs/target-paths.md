@@ -4,7 +4,7 @@ All available paths for modifiers and requirements. Dynamic segments are shown a
 
 Paths marked "req only" are available as requirement targets but not modifier targets.
 
-A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity`, `size`, `touch` and `flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size` and `damage.strength`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
+A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity`, `size`, `touch` and `flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size`, `tohit.gear` and `damage.strength`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
 
 ## abilities
 
@@ -92,6 +92,7 @@ Grouped by weapon type, family, complexity, and item name. `items.weapons.unarme
 | `items.weapons.<group>.tohit.strength` | number | Str/Dex bonus to attack (a finessed one less a shield's check penalty, a composite bow's −2 below its rating) (req only) |
 | `items.weapons.<group>.tohit.magic` | number | Enhancement bonus to attack |
 | `items.weapons.<group>.tohit.misc` | number | Other bonuses to attack |
+| `items.weapons.<group>.tohit.gear` | number | Penalties from the gear: the check penalty of armor or a shield worn without proficiency, a tower shield's −2, a crossbow's in one hand (req only) |
 | `items.weapons.<group>.damage.base` | string | Base damage dice |
 | `items.weapons.<group>.damage.strength` | number | Str bonus to damage (req only) |
 | `items.weapons.<group>.damage.magic` | number | Enhancement bonus to damage |

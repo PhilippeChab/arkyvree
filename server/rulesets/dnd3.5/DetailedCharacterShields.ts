@@ -30,6 +30,9 @@ const SHIELD_GROUPING_PROPERTIES = [SHIELD_TYPE] as const;
 
 type ShieldSlot = {
   name: string;
+  itemId: string;
+  /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
+  proficient: boolean;
   ac: { bonus: number; misc: number; readonly total: number };
   checkpenalty: number;
   spellfailure: number;
@@ -85,6 +88,8 @@ export default class DetailedCharacterShields {
 
     const shieldSlot: ShieldSlot = {
       name: item.name,
+      itemId: item.id,
+      proficient: true,
       // Its AC's total is computed when read, from the bonus and what modifiers add
       ac: {
         bonus: acBonus,

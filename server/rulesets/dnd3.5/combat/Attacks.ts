@@ -12,6 +12,7 @@ import {
   WEAPON_CRITICAL_RANGE,
   WEAPON_FINESSABLE,
   WEAPON_MIGHTY,
+  WEAPON_ONE_HANDED_PENALTY,
   WEAPON_PROFICIENCY,
   WEAPON_RANGE,
   WEAPON_RANGED,
@@ -116,6 +117,20 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /**
+     * How a weapon's attack and damage follow the abilities: the SRD's attack rolls, Strength on a melee weapon's and
+     * Dexterity on a ranged weapon's, and a bow's Strength rating (its WEAPON_MIGHTY) when Strength adds to its damage
+     * by it.
+     */
+    private abilitiesOf(ranged: boolean, strengthDamage: string, mighty: WeaponProperty | undefined): WeaponAbilities {
+      return {
+        attack: ranged ? "Dexterity" : "Strength",
+        finesse: false,
+        strengthRating: strengthDamage === "Rating" ? Number(mighty?.value ?? 0) : null,
+        ratingRequired: strengthDamage === "Rating" && mighty !== undefined,
+      };
+    }
+
+    /**
      * What abilities give a weapon's attack: its ability's modifier, or Dexterity's less a carried shield's check penalty
      * when Weapon Finesse makes that better. A composite bow drawn with a Strength bonus below its rating takes −2.
      */
@@ -145,10 +160,24 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       }
     }
 
-    /** The armor check penalty of the shields the character carries, which a finessed attack takes. */
+    /**
+     * What the gear costs every attack: the armor check penalty of each armor and shield worn without proficiency,
+     * and a tower shield's bulk.
+     */
+    private gearPenalty(): number {
+      const { armors, shields } = this.detailedCharacterCombat;
+      const gear = new Set([...Object.values(armors), ...Object.values(shields)]);
+      const unproficient = [...gear].reduce((penalty, item) => penalty + (item.proficient ? 0 : item.checkpenalty), 0);
+      return unproficient + (this.towerShield ? CONSTANTS.TOWER_SHIELD_PENALTY : 0);
+    }
+
+    /**
+     * The armor check penalty of the shields the character carries, which a finessed attack takes: of those it's
+     * proficient with, another's costing every attack already (`gearPenalty`).
+     */
     private shieldCheckPenalty(): number {
       const shields = new Set(Object.values(this.detailedCharacterCombat.shields));
-      return [...shields].reduce((penalty, shield) => penalty + shield.checkpenalty, 0);
+      return [...shields].reduce((penalty, shield) => penalty + (shield.proficient ? shield.checkpenalty : 0), 0);
     }
 
     /**
@@ -166,7 +195,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     /** A melee weapon's thrown attack: Dexterity to hit, as every ranged attack, with the weapon's own bonuses. */
     private thrownAttack(weapon: WeaponSlot): NonNullable<WeaponSlot["thrown"]> {
       const dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
-      const bonuses = dexterity + weapon.tohit.magic + weapon.tohit.misc + weapon.tohit.size;
+      const bonuses = dexterity + weapon.tohit.magic + weapon.tohit.misc + weapon.tohit.size + weapon.tohit.gear;
       return { dexterity, total: iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + bonuses) };
     }
 
@@ -193,9 +222,13 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       return { total: attacks(weapon.tohit.total), thrown: thrown ? attacks(thrown.total) : null };
     }
 
-    /** Costs each weapon the character isn't proficient with the non-proficiency penalty: 4 to hit, nothing else. */
+    /**
+     * Costs each weapon the character isn't proficient with the non-proficiency penalty, 4 to hit and nothing else, and
+     * marks the armor and shields it isn't proficient with, whose check penalty every attack takes.
+     */
     applyProficiencyPenalties(unproficientItemIds: Set<string>) {
-      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
+      const { weaponsets, armors, shields } = this.detailedCharacterCombat;
+      for (const weaponSet of Object.values(weaponsets)) {
         for (const slotKey of WEAPON_SET_SLOTS) {
           const weapon = weaponSet[slotKey];
           if (!weapon?.itemId || !unproficientItemIds.has(weapon.itemId)) continue;
@@ -203,6 +236,9 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           weapon.proficient = false;
           weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
         }
+      }
+      for (const gear of [...Object.values(armors), ...Object.values(shields)]) {
+        if (unproficientItemIds.has(gear.itemId)) gear.proficient = false;
       }
     }
 
@@ -222,9 +258,10 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
 
     /**
      * A weapon in a hand of a set. Its inputs (the magic and misc bonuses, the dice, the hand's Strength share, the
-     * critical) are what modifiers change; what comes from the abilities, the size and the set is computed when read:
-     * the to-hit's ability and size parts and totals, the thrown and two-weapon attacks, the Strength to damage, and the
-     * dice sized for the wielder (a natural attack's are already the creature's own, its stat block's).
+     * critical) are what modifiers change; what comes from the abilities, the size, the gear and the set is computed
+     * when read: the to-hit's ability, size and gear parts and totals, the thrown and two-weapon attacks, the Strength
+     * to damage, and the dice sized for the wielder (a natural attack's are already the creature's own, its stat
+     * block's).
      */
     addWeapon(
       setIndex: number,
@@ -243,14 +280,9 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const strengthDamage = property(WEAPON_STRENGTH_DAMAGE)?.value ?? "Slot";
       const handShare =
         slot === "Two Handed" && light ? SLOT_STRENGTH_MULTIPLIERS["Main Hand"] : SLOT_STRENGTH_MULTIPLIERS[slot];
-      const mighty = property(WEAPON_MIGHTY);
-      const abilities: WeaponAbilities = {
-        // The SRD's attack rolls: Strength on a melee weapon's, Dexterity on a ranged weapon's
-        attack: ranged ? "Dexterity" : "Strength",
-        finesse: false,
-        strengthRating: strengthDamage === "Rating" ? Number(mighty?.value ?? 0) : null,
-        ratingRequired: strengthDamage === "Rating" && mighty !== undefined,
-      };
+      // A weapon that takes two hands to load (a crossbow) fires in one at its penalty
+      const handPenalty = slot === "Two Handed" ? 0 : Number(property(WEAPON_ONE_HANDED_PENALTY)?.value ?? 0);
+      const abilities = this.abilitiesOf(ranged, strengthDamage, property(WEAPON_MIGHTY));
       let dice = property(WEAPON_BASE_DAMAGE)?.value ?? "unknown";
       const sizedDice = proficiency !== NATURAL_PROFICIENCY;
 
@@ -261,6 +293,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const sheet = {
         attackModifier: () => this.attackModifier(abilities),
         size: () => SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0,
+        gear: () => this.gearPenalty() + handPenalty,
         bab: () => this.detailedCharacterCombat.bab,
         thrown: (weapon: WeaponSlot) => (!ranged && weapon.range > 0 ? this.thrownAttack(weapon) : null),
         twoWeapon: (weapon: WeaponSlot) => this.twoWeaponAttacks(weapon, setKey),
@@ -286,8 +319,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           get size() {
             return sheet.size();
           },
+          get gear() {
+            return sheet.gear();
+          },
           get total() {
-            const bonuses = this.strength + this.magic + this.misc + this.size;
+            const bonuses = this.strength + this.magic + this.misc + this.size + this.gear;
             return iterativeAttacks(sheet.bab()).map((base) => base + bonuses);
           },
         },

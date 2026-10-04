@@ -49,6 +49,7 @@ import {
   WEAPON_FAMILY,
   WEAPON_FINESSABLE,
   WEAPON_MIGHTY,
+  WEAPON_ONE_HANDED_PENALTY,
   WEAPON_PROFICIENCY,
   WEAPON_RANGE,
   WEAPON_RANGED,
@@ -172,6 +173,8 @@ const ITEM_PROPERTY_TYPES: Record<string, string> = {
   [WEAPON_STRENGTH_DAMAGE]: "Strength to damage: Slot (the hand's share; default), Rating (bows: up to Mighty), None",
   [WEAPON_MIGHTY]:
     "A composite bow's Strength rating: the most Strength bonus it adds to damage; below it, -2 to attack",
+  [WEAPON_ONE_HANDED_PENALTY]:
+    "Penalty to attack in one hand, when it takes two to load: a crossbow's (-2 light, -4 heavy; absent = none)",
   [WEAPON_RANGE]: "Range increment in feet: a ranged weapon's, or a thrown melee weapon's (0 or absent = none)",
   [WEAPON_RANGED]: "Whether it's a ranged weapon (thrown or projectile, not used in melee): its attacks use Dexterity",
   [WEAPON_REACH]: "Melee reach in feet (0 or absent = 5 ft.)",

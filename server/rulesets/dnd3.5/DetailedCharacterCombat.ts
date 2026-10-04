@@ -42,6 +42,14 @@ const NAVIGATABLE_PATHS = [
     requirementOnly: true,
   },
   { path: "tohit.misc", description: "Other bonuses to attack", type: "number" as const, sortOrder: 0 },
+  {
+    path: "tohit.gear",
+    description:
+      "Penalties from the gear: armor or a shield without proficiency, a tower shield, a crossbow in one hand",
+    type: "number" as const,
+    sortOrder: 0,
+    requirementOnly: true,
+  },
   { path: "damage.base", description: "Base damage dice", type: "string" as const, sortOrder: 1 },
   {
     path: "damage.strength",

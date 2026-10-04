@@ -24,6 +24,11 @@ export type WeaponSlot = {
     magic: number;
     misc: number;
     readonly size: number;
+    /**
+     * What the gear costs its attacks: the check penalty of the armor and shields worn without proficiency, a tower
+     * shield's −2, and its own penalty in one hand (a crossbow's)
+     */
+    readonly gear: number;
     readonly total: number[];
   };
   /** A melee weapon's attack when thrown, if it has a range increment: with Dexterity, as every ranged attack. */
@@ -191,6 +196,9 @@ export default abstract class CombatState {
   };
 
   protected shieldMaxDex = Infinity;
+
+  /** Whether a tower shield is carried: −2 on attack rolls, for its encumbrance. */
+  protected towerShield = false;
 
   /** Whether the race keeps its speed in medium or heavy armor and load (RACE_SPEED_IGNORES_ENCUMBRANCE: the dwarf). */
   protected speedIgnoresEncumbrance = false;

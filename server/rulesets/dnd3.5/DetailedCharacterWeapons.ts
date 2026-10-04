@@ -15,6 +15,13 @@ const NAVIGATABLE_WEAPON_PATHS = [
   { path: "tohit.strength", description: "Str/Dex bonus to attack", type: "number" as const, requirementOnly: true },
   { path: "tohit.magic", description: "Enhancement bonus to attack", type: "number" as const },
   { path: "tohit.misc", description: "Other bonuses to attack", type: "number" as const },
+  {
+    path: "tohit.gear",
+    description:
+      "Penalties from the gear: armor or a shield without proficiency, a tower shield, a crossbow in one hand",
+    type: "number" as const,
+    requirementOnly: true,
+  },
   { path: "damage.base", description: "Base damage dice", type: "string" as const },
   { path: "damage.strength", description: "Str bonus to damage", type: "number" as const, requirementOnly: true },
   { path: "damage.magic", description: "Enhancement bonus to damage", type: "number" as const },
