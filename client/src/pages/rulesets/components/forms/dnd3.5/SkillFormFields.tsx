@@ -33,7 +33,17 @@ export function SkillFormFields({ form, abilities }: SkillFormFieldsProps) {
       />
       <FormControlLabel
         label="Impacted by Weight"
-        control={<Switch {...form.register("impactedByWeight")} checked={impactedByWeight} />}
+        control={
+          <Switch
+            {...form.register("impactedByWeight", {
+              // The multiplier field hides with the weight, and a hidden field isn't validated: drop its value.
+              onChange: (event) => {
+                if (!event.target.checked) form.setValue("checkPenaltyMultiplier", 1);
+              },
+            })}
+            checked={impactedByWeight}
+          />
+        }
       />
       {impactedByWeight && (
         <TextField

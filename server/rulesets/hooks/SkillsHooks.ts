@@ -19,7 +19,8 @@ export interface SkillsHooks {
     properties: { entityId: string; type: string; value: string }[],
   ): (T & SkillFlags)[];
 
-  syncProperties(tx: Db, skillId: string, flags: SkillFlags): Promise<void>;
+  /** Stores the skill's flags as its properties, and answers them as stored. */
+  syncProperties(tx: Db, skillId: string, flags: SkillFlags): Promise<SkillFlags>;
   generateSkillFeat(tx: Db, rulesetId: string, sourceChain: string[], skillName: string): Promise<void>;
   deleteSkillFeat(tx: Db, rulesetId: string, rulesetData: CachedRulesetData, skillName: string): Promise<void>;
 }

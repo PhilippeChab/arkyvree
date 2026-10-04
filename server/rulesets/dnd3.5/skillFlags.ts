@@ -13,6 +13,11 @@ export const NO_SKILL_FLAGS: SkillFlags = {
   usableWithoutTraining: false,
 };
 
+/** The flags as a skill keeps them: a multiplier only counts on a skill armor weighs on, so any other takes 1. */
+export function normalizeSkillFlags(flags: SkillFlags): SkillFlags {
+  return { ...flags, checkPenaltyMultiplier: flags.impactedByWeight ? flags.checkPenaltyMultiplier : 1 };
+}
+
 /** Each skill's flags, read off the rows of its properties, by skill id. */
 export function readSkillFlags(
   properties: { entityId: string; type: string; value: string }[],
@@ -24,12 +29,15 @@ export function readSkillFlags(
       flags = { ...NO_SKILL_FLAGS };
       flagsBySkillId.set(property.entityId, flags);
     }
-    if (property.type === SKILL_IMPACTED_BY_WEIGHT && property.value === "true") flags.impactedByWeight = true;
+    if (property.type === SKILL_IMPACTED_BY_WEIGHT && property.value === "true") {
+      flags.impactedByWeight = true;
+    }
     if (property.type === SKILL_CHECK_PENALTY_MULTIPLIER && Number(property.value) > 0) {
       flags.checkPenaltyMultiplier = Number(property.value);
     }
-    if (property.type === SKILL_USABLE_WITHOUT_TRAINING && property.value === "true")
+    if (property.type === SKILL_USABLE_WITHOUT_TRAINING && property.value === "true") {
       flags.usableWithoutTraining = true;
+    }
   }
   return flagsBySkillId;
 }

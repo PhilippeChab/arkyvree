@@ -104,7 +104,7 @@ class SkillsService {
           await repointTombstoneSnapshot(tx, rulesetId, "skills", tombstoneAncestorId, skill.id);
         }
 
-        await hooks.skills.syncProperties(tx, skill.id, flags);
+        const storedFlags = await hooks.skills.syncProperties(tx, skill.id, flags);
         await hooks.skills.generateSkillFeat(tx, rulesetId, sourceChain, body.name);
 
         await createActivityWithNotifications(tx, {
@@ -115,7 +115,7 @@ class SkillsService {
           data: { entityName: skill.name },
         });
 
-        return { ...skill, ...flags };
+        return { ...skill, ...storedFlags };
       });
     });
     invalidateRuleset(rulesetId);
@@ -160,7 +160,7 @@ class SkillsService {
         }
         const updatedSkill = rows[0];
 
-        await hooks.skills.syncProperties(tx, targetId, flags);
+        const storedFlags = await hooks.skills.syncProperties(tx, targetId, flags);
 
         if (skill.name !== body.name) {
           await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);
@@ -178,7 +178,7 @@ class SkillsService {
           },
         });
 
-        return { ...updatedSkill, ...flags };
+        return { ...updatedSkill, ...storedFlags };
       });
     });
     invalidateRuleset(rulesetId);

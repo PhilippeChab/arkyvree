@@ -69,7 +69,10 @@ describe("SkillsService", () => {
     const listed = async () => (await SkillsService.getSkills(ruleset.id, {}, { limit: 10, page: 1 })).items[0];
     expect(await listed()).toMatchObject({ name: "Swim", impactedByWeight: true, checkPenaltyMultiplier: 2 });
 
-    await SkillsService.updateSkill(session, ruleset.id, swim.id, body({ name: "Swim", impactedByWeight: false }));
+    // The save answers the flags as stored: a multiplier counts only while armor weighs on the skill.
+    const unweighed = body({ name: "Swim", impactedByWeight: false, checkPenaltyMultiplier: 3 });
+    const updated = await SkillsService.updateSkill(session, ruleset.id, swim.id, unweighed);
+    expect(updated).toMatchObject({ impactedByWeight: false, checkPenaltyMultiplier: 1 });
     expect(await listed()).toMatchObject({ impactedByWeight: false, checkPenaltyMultiplier: 1 });
   });
 

@@ -7,14 +7,14 @@ import {
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
 } from "@/server/rulesets/dnd3.5/properties/index.ts";
-import { NO_SKILL_FLAGS, readSkillFlags } from "@/server/rulesets/dnd3.5/skillFlags.ts";
+import { NO_SKILL_FLAGS, normalizeSkillFlags, readSkillFlags } from "@/server/rulesets/dnd3.5/skillFlags.ts";
 import type { PropertyRecord, SkillFlags, SkillsHooks } from "@/server/rulesets/hooks/index.ts";
 import { cowEntityForCustomization, hasCharacterPicks } from "@/server/services/rulesets/cow/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 export class Dnd35SkillsHooks implements SkillsHooks {
   buildProperties(skillId: string, flags: SkillFlags): PropertyRecord[] {
-    const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining } = flags;
+    const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining } = normalizeSkillFlags(flags);
     const property = (type: string, value: string): PropertyRecord => ({
       entityId: skillId,
       entityType: "skills",
@@ -23,8 +23,8 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     });
     return [
       ...(impactedByWeight ? [property(SKILL_IMPACTED_BY_WEIGHT, "true")] : []),
-      // A skill armor weighs on takes the penalty once unless it says otherwise.
-      ...(impactedByWeight && checkPenaltyMultiplier !== 1
+      // A skill takes the penalty once unless it says otherwise.
+      ...(checkPenaltyMultiplier !== 1
         ? [property(SKILL_CHECK_PENALTY_MULTIPLIER, String(checkPenaltyMultiplier))]
         : []),
       ...(usableWithoutTraining ? [property(SKILL_USABLE_WITHOUT_TRAINING, "true")] : []),
@@ -88,7 +88,7 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     ]);
   }
 
-  async syncProperties(tx: Db, skillId: string, flags: SkillFlags): Promise<void> {
+  async syncProperties(tx: Db, skillId: string, flags: SkillFlags): Promise<SkillFlags> {
     await Properties.delete(tx, {
       entityIds: [skillId],
       entityType: "skills",
@@ -99,5 +99,6 @@ export class Dnd35SkillsHooks implements SkillsHooks {
     if (records.length > 0) {
       await Properties.createMany(tx, records);
     }
+    return normalizeSkillFlags(flags);
   }
 }
