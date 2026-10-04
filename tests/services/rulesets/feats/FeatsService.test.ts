@@ -9,6 +9,7 @@ import { Characters, EntitySnapshots, Klasses, Properties } from "@/server/repos
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import {
   addCharacterLevel,
   createTestCharacter,
@@ -111,7 +112,7 @@ describe("FeatsService", () => {
     } = await setup();
     for (const name of ["Focus: Axe", "Focus: Sword"]) {
       const feat = await FeatsService.createFeat(session, ruleset.id, { name, aptitudeIds: [combat] });
-      await Properties.create(db, { entityId: feat.id, entityType: "feats", type: "FEAT_FAMILY", value: "Focus" });
+      await Properties.create(db, { entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "Focus" });
     }
     await FeatsService.createFeat(session, ruleset.id, { name: "Cleave", aptitudeIds: [combat] });
     await FeatsService.createFeat(session, ruleset.id, { name: "Alertness", aptitudeIds: [general] });

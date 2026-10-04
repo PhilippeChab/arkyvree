@@ -1,7 +1,7 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
-import { KLASS_LEVEL_SKILL_POINTS, WIZARD_PROHIBITED_SCHOOL } from "@/server/rulesets/dnd3.5/properties/index.ts";
+import { KLASS_LEVEL_SKILL_POINTS, SPELL_SCHOOL, WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import type { CharacterLevel, KlassLevel, Requirement } from "@/shared/relations.ts";
 
 import type DetailedCharacter from "./DetailedCharacter.ts";
@@ -68,7 +68,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     // of O(P) where P is all composed powers.
     const excludedPowerIds = new Set<string>();
     for (const school of prohibitedSchools) {
-      const ids = rulesetData.entityIdsByPropertyLookup.get(`powers:SPELL_SCHOOL:${school}`) ?? [];
+      const ids = rulesetData.entityIdsByPropertyLookup.get(`powers:${SPELL_SCHOOL}:${school}`) ?? [];
       for (const id of ids) excludedPowerIds.add(id);
     }
     return [...excludedPowerIds];

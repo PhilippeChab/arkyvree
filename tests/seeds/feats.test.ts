@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 
 import * as RULESET_NAMES from "@/database/packages/dnd35/names.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
+import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
 
@@ -14,7 +15,7 @@ async function seededRulesets() {
 
 /** The families the rulesets' feats are in (their FEAT_FAMILY). */
 const familiesOf = (rulesets: Awaited<ReturnType<typeof seededRulesets>>) =>
-  new Set(rulesets.flatMap((rows) => rows.properties.filter((p) => p.type === "FEAT_FAMILY").map((p) => p.value)));
+  new Set(rulesets.flatMap((rows) => rows.properties.filter((p) => p.type === FEAT_FAMILY).map((p) => p.value)));
 
 test("The seeded families of feats are the built-in ones the customization offers", async () => {
   expect([...familiesOf(await seededRulesets())].sort()).toEqual([...FEAT_FAMILIES].sort());

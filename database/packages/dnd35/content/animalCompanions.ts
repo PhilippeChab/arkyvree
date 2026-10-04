@@ -1,4 +1,5 @@
 import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
+import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 const ANIMAL_COMPANION_APTITUDE = "Animal Companion Bond";
 const ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE = "Animal Companion Class Feature";
@@ -56,7 +57,7 @@ const ANIMAL_COMPANION_CLASS_FEATURE_FEATS: FeatSeed[] = [
     selectable: false,
     aptitudes: [ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE],
     // Like every class's Evasion (`CLASS_FEAT_FAMILIES`, dnd35-from-parser/tools/buildSeeds.ts)
-    properties: [{ type: "FEAT_FAMILY", value: "Evasion" }],
+    properties: [{ type: FEAT_FAMILY, value: "Evasion" }],
   },
   {
     name: "Devotion (Animal Companion)",

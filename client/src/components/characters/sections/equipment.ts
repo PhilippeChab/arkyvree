@@ -2,6 +2,7 @@ import type { InferResponseType } from "hono/client";
 
 import type { CharacterDetail, RulesetItem } from "@/client/src/lib/queries.ts";
 import type { RPC } from "@/client/src/services/rpc.ts";
+import { ITEM_HAS_CHARGES } from "@/shared/dnd3.5/properties/index.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { findSlotConflict, HAND_LOCATIONS, isHandLocation, type SlotConflictReason } from "@/shared/equipment.ts";
 
@@ -72,7 +73,7 @@ type ItemProperties = { type: string; value: string }[];
 export function placementProfile(item: ItemColumns, properties: ItemProperties) {
   const isWeapon = item.type === "Weapon";
   const isShield = item.type === "Shield";
-  const chargesProperty = properties.find((p) => p.type === "ITEM_HAS_CHARGES");
+  const chargesProperty = properties.find((p) => p.type === ITEM_HAS_CHARGES);
   const locationOptions: readonly ItemLocation[] = isWeapon
     ? HAND_LOCATIONS
     : isShield

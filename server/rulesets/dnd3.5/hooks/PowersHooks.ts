@@ -1,7 +1,7 @@
 import type { Db } from "@/server/database/index.ts";
 import { Aptitudes, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
-import { SPELL_SCHOOL } from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { PowerBody, PowersHooks } from "@/server/rulesets/hooks/index.ts";
+import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 
 import {
   generateSpellFocusFeats,

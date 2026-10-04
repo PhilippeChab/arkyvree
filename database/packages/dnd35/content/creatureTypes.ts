@@ -1,5 +1,6 @@
 import { eq, feat } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 export const CREATURE_TYPES = [
   "Aberration",
@@ -63,7 +64,7 @@ const favoredEnemy: FeatSeed[] = CREATURE_TYPES.map((t) => ({
   description: `Designate ${t} as a favored enemy. +2 on Bluff, Listen, Sense Motive, Spot, and Survival checks made against ${t}, and +2 on weapon damage rolls targeting them.`,
   generated: true,
   aptitudes: [FAVORED_ENEMY_APTITUDE],
-  properties: [{ type: "FEAT_FAMILY", value: FAVORED_ENEMY_FAMILY }],
+  properties: [{ type: FEAT_FAMILY, value: FAVORED_ENEMY_FAMILY }],
 }));
 
 const favoredEnemySpecializationVariants: FeatSeed[] = CREATURE_TYPES.map((t) => ({
@@ -73,7 +74,7 @@ const favoredEnemySpecializationVariants: FeatSeed[] = CREATURE_TYPES.map((t) =>
   generated: true,
   aptitudes: [FAVORED_ENEMY_SPECIALIZATION_APTITUDE],
   requirements: [eq(feat(`Favored Enemy: ${t}`))],
-  properties: [{ type: "FEAT_FAMILY", value: FAVORED_ENEMY_FAMILY }],
+  properties: [{ type: FEAT_FAMILY, value: FAVORED_ENEMY_FAMILY }],
 }));
 
 const FAVORED_ENEMY_SPECIALIZATION_UMBRELLA = "Favored Enemy Specialization (Ranger)";

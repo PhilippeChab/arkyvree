@@ -16,6 +16,7 @@ import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/
 import { cowEntity, invalidateCowData } from "@/server/services/rulesets/cow/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 import { createTestRuleset, getSeedCtx, insertRows, makeSession, uniqueId } from "@/tests/helpers.ts";
 
 describe("rulesetCache", () => {
@@ -212,7 +213,7 @@ describe("rulesetCache", () => {
 
     // Verify the ruleset-level skill point ability property points at Intelligence.
     const skillPointAbilityProp = (rulesetData.propertiesByEntity.get(ruleset.id) ?? []).find(
-      (p) => p.type === "RULESET_SKILL_POINT_ABILITY_ID",
+      (p) => p.type === RULESET_SKILL_POINT_ABILITY_ID,
     );
     expect(skillPointAbilityProp?.value).toBe(c.abilityMap["Intelligence"]);
   });

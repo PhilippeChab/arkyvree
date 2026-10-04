@@ -48,7 +48,7 @@ import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
+} from "@/shared/dnd3.5/properties/index.ts";
 
 /** The class level each spell level opens at, for the core classes: domains and extensions gate their slots by the cleric's. */
 export const CORE_SPELL_LEVELS = buildClassSpellLevels(ALL_CLASSES);

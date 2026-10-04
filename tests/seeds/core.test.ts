@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains/data.ts";
 import { CREATURE_TYPES } from "@/database/packages/dnd35/content/creatureTypes.ts";
+import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { describeRequirement, seededRows } from "@/tests/seeds/seededRows.ts";
 
@@ -149,7 +150,7 @@ describe("The seeded core rules", () => {
   test("put each class's own feat of a class feature, and a spell's Weapon Focus, in its family, and only those", async () => {
     const rows = await seededRows();
     const familyOf = (name: string) =>
-      rows.properties.filter((p) => p.entityId === rows.feat(name).id && p.type === "FEAT_FAMILY").map((p) => p.value);
+      rows.properties.filter((p) => p.entityId === rows.feat(name).id && p.type === FEAT_FAMILY).map((p) => p.value);
     expect(
       [
         "Sneak Attack (Rogue)",
@@ -184,7 +185,7 @@ describe("The seeded core rules", () => {
       for (const name of variants) {
         const feat = rows.feat(name);
         const family = rows.properties
-          .filter((p) => p.entityId === feat.id && p.type === "FEAT_FAMILY")
+          .filter((p) => p.entityId === feat.id && p.type === FEAT_FAMILY)
           .map((p) => p.value);
         expect({
           name,

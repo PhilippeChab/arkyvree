@@ -5,6 +5,7 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Items, Klasses, KlassLevels, Modifiers, Powers, Races } from "@/server/repositories/index.ts";
 import { CustomizationsPolicy } from "@/server/services/policies/index.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
+import { WEAPON_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 import type { Modifier, Property } from "@/shared/relations.ts";
 import { createTestUserAndRuleset, makeSession, NIL_UUID } from "@/tests/helpers.ts";
 
@@ -25,7 +26,7 @@ const propertyOn = (entityId: string, entityType: string): Property => ({
   id: "property-id",
   entityId,
   entityType,
-  type: "WEAPON_PROFICIENCY",
+  type: WEAPON_PROFICIENCY,
   value: "Longsword",
   description: null,
   createdAt: now,

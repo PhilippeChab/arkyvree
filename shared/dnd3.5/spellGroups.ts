@@ -1,3 +1,4 @@
+import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 /**
  * A character's spells, grouped for its sheet: by aptitude (its spell list), then by spell level, with the uses per
  * day the aptitude allows there. The web sheet and the PDF sheet read the same data: the character response's.
@@ -6,7 +7,6 @@ import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** The property a spell's school is in, which the sheets show as its own column. */
-export const SPELL_SCHOOL = "SPELL_SCHOOL";
 
 export interface SpellRow {
   id: string;

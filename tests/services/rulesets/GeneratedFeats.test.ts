@@ -24,6 +24,7 @@ import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { timingStorage } from "@/server/timing.ts";
+import { WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import {
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
@@ -510,7 +511,7 @@ describe("generated feats", () => {
     const { session, fork } = await seededFork();
     const weapon = await ItemsService.createItem(session, fork.id, { name: "Unique Weapon", type: "Weapon" });
     await PropertiesService.createProperty(session, fork.id, "items", weapon.id, {
-      type: "WEAPON_TYPE",
+      type: WEAPON_TYPE,
       value: "Unique Weapon",
     });
     const [feat] = await Feats.create(db, {

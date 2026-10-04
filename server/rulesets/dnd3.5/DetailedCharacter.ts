@@ -5,12 +5,6 @@ import AbstractDetailedCharacter, {
   type ValidationIssue,
 } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
-import {
-  FEAT_FAMILY,
-  FEAT_WEAPON_FINESSE,
-  SPELL_DESCRIPTOR,
-  SPELL_SCHOOL,
-} from "@/server/rulesets/dnd3.5/properties/index.ts";
 import type { SkillFlags } from "@/server/rulesets/hooks/index.ts";
 import type {
   FeatWithPMR,
@@ -33,6 +27,7 @@ import DetailedCharacterPowerGroupings from "@/server/rulesets/universal/Detaile
 import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
+import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import type {
   Character,
   CharacterLevel,

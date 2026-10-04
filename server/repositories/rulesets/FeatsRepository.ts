@@ -15,6 +15,7 @@ import { GrantsPerLevel } from "@/server/repositories/concerns/GrantsPerLevel.ts
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
+import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRules>, ResolvesCopies, GrantsPerLevel) {
   constructor() {
@@ -103,7 +104,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
         and(
           eq(prop.entityId, this.table.id),
           eq(prop.entityType, "feats"),
-          eq(prop.type, "FEAT_FAMILY"),
+          eq(prop.type, FEAT_FAMILY),
           isNull(prop.deletedAt),
         ),
       )
@@ -195,7 +196,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
         and(
           eq(prop.entityId, featsInRules.id),
           eq(prop.entityType, "feats"),
-          eq(prop.type, "FEAT_FAMILY"),
+          eq(prop.type, FEAT_FAMILY),
           isNull(prop.deletedAt),
           sql`${featsInRules.name} LIKE ${prop.value} || '%'`,
         ),
@@ -246,7 +247,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
             .where(
               and(
                 eq(propertiesInCustomization.entityType, "feats"),
-                eq(propertiesInCustomization.type, "FEAT_FAMILY"),
+                eq(propertiesInCustomization.type, FEAT_FAMILY),
                 eq(propertiesInCustomization.value, family),
                 isNull(propertiesInCustomization.deletedAt),
               ),
@@ -312,7 +313,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
             .where(
               and(
                 eq(propertiesInCustomization.entityType, "feats"),
-                eq(propertiesInCustomization.type, "FEAT_FAMILY"),
+                eq(propertiesInCustomization.type, FEAT_FAMILY),
                 eq(propertiesInCustomization.value, where.family),
                 isNull(propertiesInCustomization.deletedAt),
               ),

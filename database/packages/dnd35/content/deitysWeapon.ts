@@ -1,5 +1,6 @@
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { ALL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 // Complete Divine's Deity's Weapon Focus and Specialization, one per weapon: the favored soul picks her deity's
@@ -18,7 +19,7 @@ const DEITYS_WEAPON_FOCUS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
       valueType: "boolean",
     },
   ],
-  properties: [{ type: "FEAT_FAMILY", value: "Weapon Focus" }],
+  properties: [{ type: FEAT_FAMILY, value: "Weapon Focus" }],
 }));
 
 const DEITYS_WEAPON_SPECIALIZATION: FeatSeed[] = ALL_WEAPONS.map((w) => ({
@@ -34,7 +35,7 @@ const DEITYS_WEAPON_SPECIALIZATION: FeatSeed[] = ALL_WEAPONS.map((w) => ({
       valueType: "boolean",
     },
   ],
-  properties: [{ type: "FEAT_FAMILY", value: "Weapon Specialization" }],
+  properties: [{ type: FEAT_FAMILY, value: "Weapon Specialization" }],
 }));
 
 export const DEITYS_WEAPON_FEATS = [...DEITYS_WEAPON_FOCUS, ...DEITYS_WEAPON_SPECIALIZATION];
