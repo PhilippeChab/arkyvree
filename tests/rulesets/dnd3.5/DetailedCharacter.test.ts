@@ -1118,6 +1118,31 @@ describe("DetailedCharacter", () => {
       });
     });
 
+    test("gives a duelist its Intelligence bonus as a dodge bonus, up to its duelist level, and never a penalty", async () => {
+      const ctx = await getSeedCtx();
+      const fork = await forkWith(DND35_DMG_NAME);
+      const duelist = (await Klasses.findOne(db, {
+        name: "Duelist",
+        rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id,
+      }))!;
+      const dodgeAt = async (intelligence: number, duelistLevels: number) => {
+        const characterId = await createSeedCharacter(
+          `Duelist ${intelligence} ${duelistLevels}`,
+          { ...WIZARD_SCORES, Intelligence: intelligence },
+          { rulesetId: fork.id },
+        );
+        await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+        for (let level = 1; level <= duelistLevels; level++) {
+          await addCharacterLevel(characterId, (await findKlassLevel(duelist.id, level))!.id);
+        }
+        return (await build((await Characters.findOne(db, { id: characterId }))!))
+          .getDetailedCharacterCombat()
+          .getCombat().ac.dodge;
+      };
+      // Intelligence 16 (+3): +1 at the first duelist level, +2 at the second; Intelligence 8 (−1): nothing
+      expect([await dodgeAt(16, 1), await dodgeAt(16, 2), await dodgeAt(8, 2)]).toEqual([1, 2, 0]);
+    });
+
     test("keeps the Dexterity bonus flat-footed with uncanny dodge: a barbarian 2's, not a barbarian 1's", async () => {
       const acOf = async (name: string) => (await buildSeeded(name)).getDetailedCharacterCombat().getCombat().ac;
       // Grak is a barbarian 3; Kael a barbarian 1 and fighter 3
