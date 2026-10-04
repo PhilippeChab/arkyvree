@@ -618,50 +618,9 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       }
     }
 
-    const isLeafMet = (req: Requirement): boolean => {
-      if (!req.target || !this.holders) return false;
-      const results = this.targetPaths.traversePathInit(req.target, this.holders);
-      return results.some((result) => {
-        if (result.error) return false;
-        const { data } = result as { data: unknown };
-        let typedValue: number | string | boolean;
-        switch (req.valueType) {
-          case "number":
-            typedValue = Number(req.value);
-            break;
-          case "boolean":
-            typedValue = req.value === "true";
-            break;
-          default:
-            typedValue = String(req.value);
-            break;
-        }
-        switch (req.operator) {
-          case "equal":
-            return data === typedValue;
-          case "not_equal":
-            return data !== typedValue;
-          case "greater_than":
-            return typeof data === "number" && data > (typedValue as number);
-          case "less_than":
-            return typeof data === "number" && data < (typedValue as number);
-          case "greater_than_or_equal":
-            return typeof data === "number" && data >= (typedValue as number);
-          case "less_than_or_equal":
-            return typeof data === "number" && data <= (typedValue as number);
-          case "contains":
-            return typeof data === "string"
-              ? data.includes(typedValue as string)
-              : Array.isArray(data) && data.includes(typedValue);
-          case "not_contains":
-            return typeof data === "string"
-              ? !data.includes(typedValue as string)
-              : Array.isArray(data) && !data.includes(typedValue);
-          default:
-            return false;
-        }
-      });
-    };
+    // Each condition evaluated as the requirements are, templates and every operator included
+    const conditions = new DetailedCharacterRequirements(this.targetPaths);
+    const isLeafMet = (req: Requirement) => !!this.holders && conditions.isConditionMet(req, this.holders);
 
     const formatNode = (node: TreeNode, indent: string): string => {
       const req = node.requirement;

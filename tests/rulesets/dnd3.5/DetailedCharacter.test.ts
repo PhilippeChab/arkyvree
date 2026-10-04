@@ -1402,6 +1402,28 @@ describe("DetailedCharacter", () => {
         (await build(bjorn)).getDetailedCharacterRequirements().getRequirements().unmetRequirementGroups.length,
       ).toBeGreaterThan(0);
     });
+
+    test("mark in their tree the conditions unmet, judged as the requirements are", async () => {
+      const condition = (level: string, target: string, check: Parameters<typeof requiring>[1]) => ({
+        ...requiring(target, check)[0][0],
+        level,
+      });
+      // A value computed from another path, a string operator, and a boolean written false: Bjorn has Dodge
+      const tree = (await buildSeeded("Bjorn Ironhand")).formatRequirements([
+        condition("1", "classes.fighter.level", {
+          operator: "greater_than_or_equal",
+          value: "{{ [classes.fighter.level] }}",
+          valueType: "number",
+        }),
+        condition("2", "identity.physiology.name", { operator: "starts_with", value: "Bjorn", valueType: "string" }),
+        condition("3", "feats.dodge.possessed", { operator: "equal", value: "false", valueType: "boolean" }),
+      ]);
+      expect(tree.split("\n")).toEqual([
+        "classes.fighter.level >= {{ [classes.fighter.level] }}",
+        "identity.physiology.name starts with Bjorn",
+        "feats.dodge.possessed = false  [UNMET]",
+      ]);
+    });
   });
 
   describe("feats", () => {
