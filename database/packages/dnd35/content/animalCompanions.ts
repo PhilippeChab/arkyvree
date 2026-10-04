@@ -191,10 +191,10 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
   },
   {
     name: "Owl",
-    description: "A nocturnal raptor whose silent flight surprises prey.",
+    description:
+      "A nocturnal raptor whose silent flight surprises prey. It has a +8 racial bonus on Spot checks in shadowy illumination, applied at the table.",
     size: "Tiny",
     baseSpeed: 10,
-    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "8", valueType: "number" }],
   },
   {
     name: "Pony",
