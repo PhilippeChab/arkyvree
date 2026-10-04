@@ -90,6 +90,18 @@ describe("rulesets customization requirements", () => {
     await expectStatus(response, 401);
   });
 
+  test("rejects a value that isn't of its target's type", async () => {
+    const { id, entityId } = await setup();
+    const param = { id, entityType: "feats" as const, entityId };
+    await expectStatus(requirements.$post({ param, json: { ...charisma13, value: "high" } }), 400);
+    const dodge = { level: "1", target: "feats.dodge.possessed", operator: "equal" };
+    await expectStatus(requirements.$post({ param, json: { ...dodge, value: "yes" } }), 400);
+    const created = await expectOk(requirements.$post({ param, json: { ...dodge, value: "false" } }));
+    expect(created).toMatchObject({ value: "false", valueType: "boolean" });
+    const requirementParam = { ...param, requirementId: created.id };
+    await expectStatus(requirement.$put({ param: requirementParam, json: { ...dodge, value: "no" } }), 400);
+  });
+
   test("rejects a requirement without a level", async () => {
     const { id, entityId } = await setup();
     const { level: _level, ...withoutLevel } = charisma13;

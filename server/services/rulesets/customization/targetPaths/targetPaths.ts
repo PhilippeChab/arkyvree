@@ -3,6 +3,8 @@ import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
+import { isTemplateValue } from "@/server/rulesets/universal/templateExpression.ts";
 import { buildSourceChain, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { PathCompletion, PathError, PathValidationResult, TargetPath } from "@/shared/customization/target.ts";
 
@@ -100,15 +102,25 @@ export async function validatePath(
   return { isValid: false, errors, suggestions, completions };
 }
 
-/** The value type of the path a modifier or requirement targets, or a BadRequestError saying what's wrong with it. */
+/**
+ * The value type of the path a modifier or requirement targets, its value checked against it: a template the sheet
+ * resolves, or a literal of that type (a number, `true` or `false`). A BadRequestError says what's wrong with either.
+ */
 export async function resolvePathValueType(
   rulesetId: string,
   target: string,
   kind: "modifier" | "requirement",
+  value: string | undefined,
 ): Promise<string> {
   const { paths } = await getTargetPathsWithLabels(rulesetId, kind);
   const pathDef = paths.find((p) => p.path === target);
-  if (pathDef) return pathDef.valueType;
-  const { errors } = await validatePath(rulesetId, target, kind);
-  throw new BadRequestError(`Invalid ${kind} path: ${errors[0]?.message ?? target}`);
+  if (!pathDef) {
+    const { errors } = await validatePath(rulesetId, target, kind);
+    throw new BadRequestError(`Invalid ${kind} path: ${errors[0]?.message ?? target}`);
+  }
+  const { valueType } = pathDef;
+  if (value !== undefined && !isTemplateValue(value) && parseLiteralValue(value, valueType) === undefined) {
+    throw new BadRequestError(`Invalid ${valueType} value for ${target}: ${JSON.stringify(value)}`);
+  }
+  return valueType;
 }

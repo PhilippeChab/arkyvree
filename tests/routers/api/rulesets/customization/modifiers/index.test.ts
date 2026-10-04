@@ -74,6 +74,21 @@ describe("rulesets customization modifiers", () => {
     expect(created).toMatchObject({ sourceType: entityType, sourceId: entityId });
   });
 
+  test("refuses a value that isn't of its target's type, on create, duplicate and update", async () => {
+    const { id, entityId } = await setup();
+    const param = { id, entityType: "feats" as const, entityId };
+    const bonus = { target: "abilities.strength.misc", value: "2", operator: "add" };
+    await expectStatus(modifiers.$post({ param, json: { ...bonus, value: "+two" } }), 400);
+    const created = await expectOk(modifiers.$post({ param, json: bonus }));
+    const modifierParam = { ...param, modifierId: created.id };
+    await expectStatus(modifier.duplicate.$post({ param: modifierParam, json: { ...bonus, value: "1/2" } }), 400);
+    const possessed = { target: "feats.dodge.possessed", value: "True", operator: "set" };
+    await expectStatus(modifier.$put({ param: modifierParam, json: possessed }), 400);
+    expect(
+      await expectOk(modifier.$put({ param: modifierParam, json: { ...possessed, value: "true" } })),
+    ).toMatchObject({ value: "true", valueType: "boolean" });
+  });
+
   test("refuses modifiers as the entity being customized", async () => {
     const { id, entityId } = await setup();
     const body = { target: "abilities.strength.misc", value: "2", operator: "add" };
