@@ -1,5 +1,12 @@
 import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
-import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
+import type {
+  BondContent,
+  ClassSeed,
+  FeatSeed,
+  Modifier,
+  RaceDefinition,
+} from "@/database/packages/dnd35/content/types.ts";
+import { formatWithArticle } from "@/shared/text.ts";
 
 const FAMILIAR_APTITUDE = "Familiar Bond";
 const FAMILIAR_CLASS_FEATURE_APTITUDE = "Familiar Class Feature";
@@ -7,6 +14,13 @@ const FAMILIAR_CLASS_FEATURE_APTITUDE = "Familiar Class Feature";
 const FAMILIAR_APTITUDES = [FAMILIAR_APTITUDE, FAMILIAR_CLASS_FEATURE_APTITUDE];
 
 const FAMILIAR_CLASS_FEATURE_FEATS: FeatSeed[] = [
+  {
+    name: "Alertness (Familiar)",
+    description:
+      "While the familiar is within arm's reach, its master gains the Alertness feat. A situational benefit: apply it at the table.",
+    selectable: false,
+    aptitudes: [FAMILIAR_CLASS_FEATURE_APTITUDE],
+  },
   {
     name: "Improved Evasion (Familiar)",
     description:
@@ -66,9 +80,33 @@ const FAMILIAR_CLASS_FEATURE_FEATS: FeatSeed[] = [
 
 const FAMILIAR_RACE_NAMES = ["Bat", "Cat", "Hawk", "Lizard", "Owl", "Rat", "Raven", "Viper", "Toad", "Weasel"] as const;
 
+const bonus = (target: string, value: number): Modifier => ({
+  target,
+  operator: "add",
+  value: String(value),
+  valueType: "number",
+});
+
+/**
+ * What each familiar gives its master (the SRD's familiar table), on the master's pick of it: the master's sheet, not
+ * the familiar's. A situational one (a hawk's in bright light, an owl's in shadows) is only described.
+ */
+const MASTER_BENEFITS: Record<(typeof FAMILIAR_RACE_NAMES)[number], { benefit: string; modifiers: Modifier[] }> = {
+  Bat: { benefit: "a +3 bonus on Listen checks", modifiers: [bonus("skills.listen.misc", 3)] },
+  Cat: { benefit: "a +3 bonus on Move Silently checks", modifiers: [bonus("skills.movesilently.misc", 3)] },
+  Hawk: { benefit: "a +3 bonus on Spot checks in bright light, applied at the table", modifiers: [] },
+  Lizard: { benefit: "a +3 bonus on Climb checks", modifiers: [bonus("skills.climb.misc", 3)] },
+  Owl: { benefit: "a +3 bonus on Spot checks in shadows, applied at the table", modifiers: [] },
+  Rat: { benefit: "a +2 bonus on Fortitude saves", modifiers: [bonus("saves.fortitude.misc", 2)] },
+  Raven: { benefit: "a +3 bonus on Appraise checks", modifiers: [bonus("skills.appraise.misc", 3)] },
+  Viper: { benefit: "a +3 bonus on Bluff checks", modifiers: [bonus("skills.bluff.misc", 3)] },
+  Toad: { benefit: "+3 hit points", modifiers: [bonus("combat.hp.misc", 3)] },
+  Weasel: { benefit: "a +2 bonus on Reflex saves", modifiers: [bonus("saves.reflex.misc", 2)] },
+};
+
 const FAMILIAR_RACE_PICK_FEATS: FeatSeed[] = FAMILIAR_RACE_NAMES.map((race) => ({
   name: `${race} Familiar`,
-  description: `Bond with a ${race} as your familiar. The familiar appears on your sheet with stats derived from your level and the ${race} race profile.`,
+  description: `Bond with ${formatWithArticle(race)} as your familiar: while it's within a mile of you, you gain ${MASTER_BENEFITS[race].benefit}. The familiar appears on your sheet with stats derived from your level and the ${race} race profile.`,
   selectable: true,
   aptitudes: [FAMILIAR_APTITUDE],
   modifiers: [
@@ -78,6 +116,7 @@ const FAMILIAR_RACE_PICK_FEATS: FeatSeed[] = FAMILIAR_RACE_NAMES.map((race) => (
       value: race,
       valueType: "string",
     },
+    ...MASTER_BENEFITS[race].modifiers,
   ],
 }));
 
@@ -88,7 +127,6 @@ const FAMILIAR_RACES: RaceDefinition[] = [
       "A small, nocturnal flying mammal. Bat familiars grant their masters a +3 bonus on Listen checks (the +3 to Hide in 3.5 SRD applies to the bat itself).",
     size: "Diminutive",
     baseSpeed: 5,
-    modifiers: [{ target: "skills.listen.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Cat",
@@ -96,7 +134,6 @@ const FAMILIAR_RACES: RaceDefinition[] = [
     size: "Tiny",
     baseSpeed: 30,
     properties: QUADRUPED,
-    modifiers: [{ target: "skills.movesilently.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Hawk",
@@ -104,7 +141,6 @@ const FAMILIAR_RACES: RaceDefinition[] = [
       "A keen-eyed bird of prey. Hawk familiars grant their masters a +3 bonus on Spot checks in bright light.",
     size: "Tiny",
     baseSpeed: 10,
-    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Lizard",
@@ -112,7 +148,6 @@ const FAMILIAR_RACES: RaceDefinition[] = [
     size: "Tiny",
     baseSpeed: 20,
     properties: QUADRUPED,
-    modifiers: [{ target: "skills.climb.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Owl",
@@ -120,7 +155,6 @@ const FAMILIAR_RACES: RaceDefinition[] = [
       "A silent nocturnal hunter. Owl familiars grant their masters a +3 bonus on Spot checks in shadowy areas.",
     size: "Tiny",
     baseSpeed: 10,
-    modifiers: [{ target: "skills.spot.misc", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Rat",
@@ -128,7 +162,6 @@ const FAMILIAR_RACES: RaceDefinition[] = [
     size: "Tiny",
     baseSpeed: 15,
     properties: QUADRUPED,
-    modifiers: [{ target: "saves.fortitude.misc", operator: "add", value: "2", valueType: "number" }],
   },
   {
     name: "Raven",
@@ -142,10 +175,7 @@ const FAMILIAR_RACES: RaceDefinition[] = [
       "A venomous tiny serpent (the 3.5 SRD's 'Tiny Viper' familiar option). Viper familiars grant their masters a +3 bonus on Bluff checks.",
     size: "Tiny",
     baseSpeed: 15,
-    modifiers: [
-      { target: "skills.bluff.misc", operator: "add", value: "3", valueType: "number" },
-      { target: "feats.poison.possessed", operator: "set", value: "true", valueType: "boolean" },
-    ],
+    modifiers: [{ target: "feats.poison.possessed", operator: "set", value: "true", valueType: "boolean" }],
   },
   {
     name: "Toad",
@@ -160,7 +190,6 @@ const FAMILIAR_RACES: RaceDefinition[] = [
     size: "Tiny",
     baseSpeed: 20,
     properties: QUADRUPED,
-    modifiers: [{ target: "saves.reflex.misc", operator: "add", value: "2", valueType: "number" }],
   },
 ];
 
@@ -177,7 +206,7 @@ const FAMILIAR_CLASS: ClassSeed = {
   classSkills: ["Balance", "Climb", "Hide", "Listen", "Move Silently", "Spot", "Swim"],
   classFeatureAptitude: FAMILIAR_CLASS_FEATURE_APTITUDE,
   classFeatures: [
-    [1, "Alertness"],
+    [1, "Alertness (Familiar)"],
     [1, "Improved Evasion (Familiar)"],
     [1, "Share Spells (Familiar)"],
     [1, "Empathic Link (Familiar)"],

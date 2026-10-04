@@ -306,6 +306,29 @@ describe("CharactersService with bonded creatures", () => {
   });
 });
 
+describe("A familiar's benefit", () => {
+  test("goes to its master, by the SRD's familiar table, and not to the familiar", async () => {
+    const masterOf = async (masterId: string) => {
+      const master = new DetailedCharacter((await Characters.findOne(db, { id: masterId }))!);
+      await master.build();
+      return master;
+    };
+    // A cat's master: +3 Move Silently; a weasel's: +2 Reflex
+    const cat = await createWizardWithFamiliar("Cat Familiar");
+    const catMaster = await masterOf(cat.masterId);
+    expect(catMaster.getDetailedCharacterSkills().getSkills()["movesilently"].misc).toBe(3);
+    const weasel = await createWizardWithFamiliar("Weasel Familiar");
+    const weaselMaster = await masterOf(weasel.masterId);
+    expect(weaselMaster.getDetailedCharacterSavingThrows().getSavingThrows()["reflex"].misc).toBe(2);
+
+    // The familiar keeps its SRD stat block: neither its master's bonus nor the Alertness its master gains
+    const familiar = await build(new DetailedCharacterFamiliar(cat.bonded));
+    const feats = familiar.getDetailedCharacterFeats().getFeats() as Record<string, { possessed?: boolean }>;
+    expect([feats["alertness"]?.possessed, feats["alertnessfamiliar"]?.possessed]).toEqual([false, true]);
+    expect(familiar.getDetailedCharacterSkills().getSkills()["movesilently"].total).toBe(8);
+  });
+});
+
 describe("Stat blocks", () => {
   test("a four-legged creature carries more for its size than a biped, as its race says", async () => {
     const heavyLoad = (detailed: DetailedCharacter) => {
