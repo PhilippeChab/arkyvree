@@ -10,6 +10,7 @@ import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/r
 import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/scraper/armorStats.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
 import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
+import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/scraper/weaponStats.ts";
 
 /** The skill bonuses a text gives, each as "slug +value", or "?name" for a name that isn't a skill. */
 const bonuses = (text: string) =>
@@ -164,6 +165,37 @@ describe("A specific armor's text", () => {
     expect(readArmorStats("It has no enhancement bonus, but its construction material makes it lighter.")).toEqual({
       properties: [],
     });
+  });
+});
+
+describe("A specific weapon's text", () => {
+  test("gives its enhancement bonus as it first states it, a later conditional one left to its text", () => {
+    const plusTwo = { attack: 2, damage: 2 };
+    expect(
+      readWeaponEnhancement("This +2 short sword gives its possessor a +1 luck bonus on all saving throws."),
+    ).toEqual(plusTwo);
+    expect(
+      readWeaponEnhancement(
+        "This +2 cold iron longsword becomes a +5 holy cold iron longsword in the hands of a paladin.",
+      ),
+    ).toEqual(plusTwo);
+    expect(readWeaponEnhancement("This +1/+1 two-bladed sword has blades of alchemical silver.")).toEqual({
+      attack: 1,
+      damage: 1,
+    });
+    expect(
+      readWeaponEnhancement(
+        "This longsword has an enhancement bonus of +1 on the Material Plane. It operates as a +3 longsword on the Astral Plane.",
+      ),
+    ).toEqual({ attack: 1, damage: 1 });
+  });
+
+  test("gives a masterwork weapon's +1 on attack rolls only, and nothing for a weapon without a bonus", () => {
+    expect(readWeaponEnhancement("As a masterwork weapon, it has a +1 enhancement bonus on attack rolls.")).toEqual({
+      attack: 1,
+      damage: 0,
+    });
+    expect(readWeaponEnhancement("This javelin becomes a 5d6 lightning bolt when thrown.")).toBeUndefined();
   });
 });
 

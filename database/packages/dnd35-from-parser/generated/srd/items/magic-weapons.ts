@@ -8,6 +8,9 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     weight: "6", costGp: "3010", type: "Weapon", slot: "Main Hand",
     sourceItem: "Battleaxe",
     properties: [],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Adamantine Dagger",
@@ -15,6 +18,9 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     weight: "1", costGp: "3002", type: "Weapon", slot: "Main Hand",
     sourceItem: "Dagger",
     properties: [],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Assassin's Dagger",
@@ -24,6 +30,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Moderate necromancy" },
       { type: "MAGIC_CASTER_LEVEL", value: "9" },
+    ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -35,6 +45,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Faint necromancy" },
       { type: "MAGIC_CASTER_LEVEL", value: "5" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Dwarven Thrower",
@@ -44,6 +58,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Moderate evocation" },
       { type: "MAGIC_CASTER_LEVEL", value: "10" },
+    ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -55,6 +73,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Moderate evocation" },
       { type: "MAGIC_CASTER_LEVEL", value: "12" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Frost Brand",
@@ -64,6 +86,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Strong evocation" },
       { type: "MAGIC_CASTER_LEVEL", value: "14" },
+    ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "3", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "3", valueType: "number" },
     ],
   },
   {
@@ -83,6 +109,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Strong abjuration" },
       { type: "MAGIC_CASTER_LEVEL", value: "18" },
+    ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -104,6 +134,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Strong necromancy" },
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Luck Blade, 0 Wishes",
@@ -116,6 +150,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     ],
     modifiers: [
       { target: "saves.*.misc", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -129,6 +165,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     ],
     modifiers: [
       { target: "saves.*.misc", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -142,6 +180,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     ],
     modifiers: [
       { target: "saves.*.misc", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -155,6 +195,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     ],
     modifiers: [
       { target: "saves.*.misc", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -166,6 +208,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Moderate transmutation" },
       { type: "MAGIC_CASTER_LEVEL", value: "11" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "3", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "3", valueType: "number" },
+    ],
   },
   {
     name: "Mace of Terror",
@@ -176,6 +222,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Strong necromancy" },
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+    ],
   },
   {
     name: "Masterwork Cold Iron Longsword",
@@ -183,6 +233,9 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     weight: "4", costGp: "330", type: "Weapon", slot: "Main Hand",
     sourceItem: "Longsword",
     properties: [],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Nine Lives Stealer",
@@ -191,6 +244,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     sourceItem: "Longsword",
     properties: [
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
+    ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -203,6 +260,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "15" },
       { type: "WEAPON_MIGHTY", value: "2" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+    ],
   },
   {
     name: "Rapier of Puncturing",
@@ -212,6 +273,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Strong necromancy" },
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
+    ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -232,6 +297,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Strong evocation" },
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Shifter's Sorrow",
@@ -242,6 +311,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Strong transmutation" },
       { type: "MAGIC_CASTER_LEVEL", value: "15" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Silver Dagger, Masterwork",
@@ -249,6 +322,9 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     weight: "1", costGp: "322", type: "Weapon", slot: "Main Hand",
     sourceItem: "Dagger",
     properties: [],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Slaying Arrow",
@@ -277,6 +353,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Moderate evocation" },
       { type: "MAGIC_CASTER_LEVEL", value: "10" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+    ],
   },
   {
     name: "Sword of Life Stealing",
@@ -286,6 +366,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Strong necromancy" },
       { type: "MAGIC_CASTER_LEVEL", value: "17" },
+    ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -297,6 +381,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Moderate illusion" },
       { type: "MAGIC_CASTER_LEVEL", value: "7" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Sword of the Planes",
@@ -306,6 +394,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Strong evocation" },
       { type: "MAGIC_CASTER_LEVEL", value: "15" },
+    ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -317,6 +409,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Moderate evocation" },
       { type: "MAGIC_CASTER_LEVEL", value: "11" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "3", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "3", valueType: "number" },
+    ],
   },
   {
     name: "Trident of Fish Command",
@@ -327,6 +423,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_AURA", value: "Moderate enchantment" },
       { type: "MAGIC_CASTER_LEVEL", value: "7" },
     ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+    ],
   },
   {
     name: "Trident of Warning",
@@ -336,6 +436,10 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     properties: [
       { type: "MAGIC_AURA", value: "Moderate divination" },
       { type: "MAGIC_CASTER_LEVEL", value: "7" },
+    ],
+    modifiers: [
+      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
 ];

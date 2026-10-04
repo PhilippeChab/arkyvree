@@ -13,6 +13,7 @@ import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/saniti
 import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/scraper/armorStats.ts";
 import { detectBaseItem } from "@/database/packages/dnd35-from-parser/tools/scraper/detectMagicItem.ts";
 import { familyFeatNamed } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
+import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/scraper/weaponStats.ts";
 import {
   autoCompanionGrantModifiers,
   autoUncannyDodgeModifiers,
@@ -1198,9 +1199,19 @@ function withOwnProperties(base: Property[], own: Property[]): Property[] {
   return [...base.filter((property) => !ownTypes.has(property.type)), ...own];
 }
 
+/** A weapon's enhancement bonus, as modifiers of the weapon holding it: its attack's and its damage's. */
+function weaponEnhancementModifiers(description: string): Modifier[] {
+  const enhancement = readWeaponEnhancement(description);
+  if (!enhancement) return [];
+  const bonus = (target: string, value: number): Modifier[] =>
+    value ? [{ target, operator: "add", value: String(value), valueType: "number" }] : [];
+  return [...bonus("combat.tohit.magic", enhancement.attack), ...bonus("combat.damage.magic", enhancement.damage)];
+}
+
 /**
  * The magic item seeds, by kind. A specific armor or shield takes the stats its text gives (`readArmorStats`) and its
- * enhancement bonus to AC; an item made from a base one weighs what its base does (`baseWeights`, by name) unless it
+ * enhancement bonus to AC, a specific weapon made from a base one its enhancement bonus to attack and damage
+ * (`readWeaponEnhancement`); an item made from a base one weighs what its base does (`baseWeights`, by name) unless it
  * says otherwise.
  */
 export function buildMagicItemSeeds(
@@ -1247,7 +1258,8 @@ export function buildMagicItemSeeds(
     if (casterLevel) properties.push({ type: MAGIC_CASTER_LEVEL, value: String(casterLevel) });
     properties.push(...(stats?.properties ?? []));
     if (ovr?.properties) properties.push(...ovr.properties);
-    // Its enhancement bonus to AC, on the armor's or the shield's part of it
+    // Its enhancement bonus: an armor's or a shield's to its part of the AC, a weapon's to its own attack and damage
+    // (not ammunition's, made from no weapon, which no hand holds)
     const enhancement: Modifier[] = stats?.enhancement
       ? [
           {
@@ -1257,7 +1269,9 @@ export function buildMagicItemSeeds(
             valueType: "number",
           },
         ]
-      : [];
+      : det.category === "specificWeapon" && sourceItem
+        ? weaponEnhancementModifiers(description)
+        : [];
     // An override's modifiers, an empty list too, win over those detected
     const modifiers = ovr?.modifiers ?? [...(det.modifiers ?? []), ...enhancement];
 
