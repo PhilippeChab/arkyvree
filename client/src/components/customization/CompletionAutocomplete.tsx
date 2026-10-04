@@ -57,7 +57,7 @@ export function CompletionAutocomplete<T extends Completion>({
   const debouncedInputValue = useDebouncedValue(inputValue);
 
   useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect
+    // oxlint-disable-next-line react/set-state-in-effect -- the input follows its controlled value
     setInputValue(value);
   }, [value]);
 

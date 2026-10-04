@@ -8,7 +8,8 @@
  * - `repository-instances`: code uses the repositories' shared instances (`@/server/repositories/index.ts`), which
  *   the request cache wraps; only that file builds one.
  * - `route-conventions`: a route's path params are camelCase (`:modifierId`; `.get`, `.route`, `.on`) and its fixed
- *   segments kebab-case (`/class-levels`; a file's name, `robots.txt`, or `*` too), its validation
+ *   segments kebab-case (`/class-levels`; a file's name, `robots.txt`, or `*` too), it answers with its status
+ *   (`c.json(body, status)`), its validation
  *   is the app's `zValidator` (`@/server/middlewares/index.ts`, which answers in the API's error envelope), and it lets
  *   an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone is fine).
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
@@ -19,6 +20,8 @@
  * - `writes-in-transactions`: a repository write or lock (`methodVerbs.json`'s verbs) outside the repositories takes a
  *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
  *   rest of its request, and a lock holds until its transaction ends.
+ * - `directive-reasons`: a comment that turns a lint rule off says why, after `--`
+ *   (`// oxlint-disable-next-line rule -- why`), so the exception explains itself where it's made.
  * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
  *   which lists every variable: never `process.env` or `Bun.env` elsewhere in the server or `shared/`.
  * - `test-placement`: a test named after a module sits at that module's mirror (`tests/services/…` ↔
@@ -118,6 +121,16 @@ const routeConventions = {
         if (!inRouters) return;
         const callee = node.callee;
         if (callee.type !== "MemberExpression") return;
+        // c.json(body) → c.json(body, 200): a route says its status, which its types list.
+        if (
+          callee.object.type === "Identifier" &&
+          callee.object.name === "c" &&
+          callee.property.name === "json" &&
+          node.arguments.length < 2
+        ) {
+          context.report({ node, message: "A route answers with its status: `c.json(body, status)`." });
+          return;
+        }
         // .get("/:id", …), .route("/:id", sub), .on("GET", "/:id", …)
         const route = ROUTE_METHODS.has(callee.property.name)
           ? node.arguments[0]
@@ -188,6 +201,30 @@ const writesInTransactions = {
           node: handle ?? node,
           message: `\`${callee.object.name}.${method}\` writes: give it a transaction's handle, \`tx\` (\`withTransaction(async (tx) => …)\`), not the shared \`db\`.`,
         });
+      },
+    };
+  },
+};
+
+// An `eslint-disable` / `oxlint-disable` comment's text: its rules, then its reason after `--`.
+const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
+
+const directiveReasons = {
+  meta: { type: "suggestion" },
+  create(context) {
+    return {
+      Program(program) {
+        const text = context.sourceCode.text;
+        for (const comment of context.sourceCode.getAllComments()) {
+          if (!DIRECTIVE.test(comment.value)) continue;
+          // A block comment's reason may wrap to its next line.
+          if (/--\s*\S/.test(comment.value)) continue;
+          const line = text.slice(0, comment.start).split("\n").length;
+          context.report({
+            node: program,
+            message: `Line ${line}: a comment that turns a rule off says why, after \`--\` (\`// oxlint-disable-next-line rule -- why\`).`,
+          });
+        }
       },
     };
   },
@@ -433,6 +470,7 @@ export const rules = {
   "repository-instances": repositoryInstances,
   "route-conventions": routeConventions,
   environment,
+  "directive-reasons": directiveReasons,
   "writes-in-transactions": writesInTransactions,
   "order-through-repository": orderThroughRepository,
   "shared-runtime": sharedRuntime,

@@ -240,7 +240,7 @@ export function PublishRulesetDialog({
   const [kind, setKind] = useState<PublishKind>(initialKind);
 
   useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect
+    // oxlint-disable-next-line react/set-state-in-effect -- opening the dialog resets its kind to the caller's
     if (open) setKind(initialKind);
   }, [open, initialKind]);
 

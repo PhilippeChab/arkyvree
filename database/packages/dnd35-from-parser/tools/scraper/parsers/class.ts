@@ -171,8 +171,7 @@ function parseProgression($: cheerio.CheerioAPI): {
 
     // Build column map including colspan expansion
     const firstRowHeaders: string[] = [];
-    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-    const headerRow = mainHeaderRow as cheerio.Cheerio<import("domhandler").AnyNode>;
+    const headerRow = mainHeaderRow as cheerio.Cheerio<AnyNode>;
     headerRow.children("th").each((_, th) => {
       const text = $(th).text().trim().toLowerCase();
       const colspan = parseInt($(th).attr("colspan") ?? "1", 10);

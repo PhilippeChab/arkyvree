@@ -40,7 +40,7 @@ export function SubscribeExtensionDialog({
 
   useEffect(() => {
     if (!open) {
-      // oxlint-disable-next-line react/set-state-in-effect
+      // oxlint-disable-next-line react/set-state-in-effect -- closing the dialog clears its selection and search
       setSelected([]);
       setSearch("");
     }

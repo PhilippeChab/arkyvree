@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { isText } from "domhandler";
+import { type Element, isText } from "domhandler";
 
 import { pageTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
@@ -105,8 +105,7 @@ function parseStatFields($: cheerio.CheerioAPI): Map<string, string> {
 
     while (node) {
       if (node.type === "tag") {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-        const tag = (node as import("domhandler").Element).tagName?.toLowerCase();
+        const tag = (node as Element).tagName?.toLowerCase();
 
         // Stop at structural boundaries — these start the description or a new section
         if (tag === "div" || tag === "table" || tag === "h2" || tag === "h3") break;

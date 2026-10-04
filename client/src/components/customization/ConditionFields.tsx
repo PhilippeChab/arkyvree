@@ -58,7 +58,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, values, err
       return;
     }
     if (isTemplateValue(value)) {
-      // oxlint-disable-next-line react/set-state-in-effect
+      // oxlint-disable-next-line react/set-state-in-effect -- a template value switches the field to template mode
       setTemplateMode(true);
       setTemplateExpression(extractTemplateExpression(value) ?? "");
       setLiteralValue("");
