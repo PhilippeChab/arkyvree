@@ -106,7 +106,7 @@ class AttachmentsService {
     if (!orphan) return;
     try {
       await getStorage().deleteObject(orphan.key);
-      await Blobs.delete(db, { id: orphan.id });
+      await withTransaction((tx) => Blobs.delete(tx, { id: orphan.id }));
     } catch (err) {
       console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
     }

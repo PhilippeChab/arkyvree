@@ -16,6 +16,9 @@
  * - `shared-runtime`: `shared/` runs in the client too, so it uses neither Bun's APIs (`bun`, the `Bun` global) nor
  *   Node's (`node:fs`, `fs`).
  * - `session-param`: a `Session` parameter is named `session` (`_session` when it's unused).
+ * - `writes-in-transactions`: a repository write or lock (`methodVerbs.json`'s verbs) outside the repositories takes a
+ *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
+ *   rest of its request, and a lock holds until its transaction ends.
  * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
  *   which lists every variable: never `process.env` or `Bun.env` elsewhere in the server or `shared/`.
  * - `test-placement`: a test named after a module sits at that module's mirror (`tests/services/…` ↔
@@ -31,6 +34,7 @@ import { isBuiltin } from "node:module";
 import path from "node:path";
 
 import { onImports, targetOf } from "./imports.mjs";
+import { startsWithVerb } from "./memberOrder.mjs";
 import { repoPath, rootOf } from "./paths.mjs";
 
 const noParentImports = {
@@ -149,6 +153,42 @@ const routeConventions = {
           });
         }
       }),
+    };
+  },
+};
+
+const METHOD_VERBS = JSON.parse(
+  fs.readFileSync(new URL("../server/repositories/methodVerbs.json", import.meta.url), "utf8"),
+);
+const WRITE_VERBS = [...METHOD_VERBS.write, ...METHOD_VERBS.lock];
+
+const writesInTransactions = {
+  meta: { type: "problem" },
+  create(context) {
+    const file = repoPath(context.filename);
+    if (!file.startsWith("server/") || /^server\/(repositories|database)\//.test(file)) return {};
+    // The repositories' shared instances this file imports.
+    const repositories = new Set();
+    return {
+      ImportDeclaration(node) {
+        if (!String(node.source.value).startsWith("@/server/repositories/")) return;
+        for (const specifier of node.specifiers) {
+          if (specifier.type === "ImportSpecifier") repositories.add(specifier.local.name);
+        }
+      },
+      CallExpression(node) {
+        const callee = node.callee;
+        if (callee.type !== "MemberExpression" || callee.object.type !== "Identifier") return;
+        if (!repositories.has(callee.object.name) || callee.property.type !== "Identifier") return;
+        const method = callee.property.name;
+        if (!WRITE_VERBS.some((verb) => startsWithVerb(method, verb))) return;
+        const handle = node.arguments[0];
+        if (handle?.type === "Identifier" && handle.name === "tx") return;
+        context.report({
+          node: handle ?? node,
+          message: `\`${callee.object.name}.${method}\` writes: give it a transaction's handle, \`tx\` (\`withTransaction(async (tx) => …)\`), not the shared \`db\`.`,
+        });
+      },
     };
   },
 };
@@ -393,6 +433,7 @@ export const rules = {
   "repository-instances": repositoryInstances,
   "route-conventions": routeConventions,
   environment,
+  "writes-in-transactions": writesInTransactions,
   "order-through-repository": orderThroughRepository,
   "shared-runtime": sharedRuntime,
   "session-param": sessionParam,

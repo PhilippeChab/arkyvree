@@ -1,6 +1,6 @@
 import type { Task } from "graphile-worker";
 
-import { db } from "@/server/database/index.ts";
+import { withTransaction } from "@/server/database/index.ts";
 import {
   Activities,
   EmailVerifications,
@@ -27,34 +27,34 @@ export const runCleanupTask: Task = async (_, helpers) => {
   const tasks = [
     {
       name: "email_verifications",
-      run: () => EmailVerifications.delete(db, { expiresBefore: now }),
+      run: () => withTransaction((tx) => EmailVerifications.delete(tx, { expiresBefore: now })),
     },
     {
       name: "password_resets",
-      run: () => PasswordResets.delete(db, { expiresBefore: now }),
+      run: () => withTransaction((tx) => PasswordResets.delete(tx, { expiresBefore: now })),
     },
     {
       name: "sessions",
-      run: () => Sessions.delete(db, { expiredOrArchivedBefore: now }),
+      run: () => withTransaction((tx) => Sessions.delete(tx, { expiredOrArchivedBefore: now })),
     },
     {
       name: "exports",
-      run: () => Exports.delete(db, { expiresBefore: now }),
+      run: () => withTransaction((tx) => Exports.delete(tx, { expiresBefore: now })),
     },
     {
       // Demo users have a 1h TTL on users.expires_at. Hard-delete past-expiry
       // rows so CASCADE wipes their characters/forks/sessions/activities/etc.,
       // and the database their attachments and customizations.
       name: "demo_users",
-      run: () => Users.delete(db, { expiredDemosBefore: now }),
+      run: () => withTransaction((tx) => Users.delete(tx, { expiredDemosBefore: now })),
     },
     {
       name: "notifications",
-      run: () => Notifications.delete(db, { createdBefore: cutoff }),
+      run: () => withTransaction((tx) => Notifications.delete(tx, { createdBefore: cutoff })),
     },
     {
       name: "activities",
-      run: () => Activities.delete(db, { createdBefore: cutoff }),
+      run: () => withTransaction((tx) => Activities.delete(tx, { createdBefore: cutoff })),
     },
   ];
 

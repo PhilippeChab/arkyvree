@@ -149,6 +149,39 @@ describe("conventions", () => {
     ]);
   });
 
+  test("a repository write or lock outside the repositories takes a transaction's handle", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/services/good.ts": [
+            'import { Feats, Skills } from "@/server/repositories/index.ts";',
+            "export const f = (tx: Db, db: Db) => [",
+            "  Feats.create(tx, {}),",
+            "  Feats.lock(tx, { id }),",
+            "  Feats.findOne(db, { id }),",
+            "  Skills.countPerRuleset(db, {}),",
+            "  Other.create(db, {}),",
+            "];",
+            "",
+          ].join("\n"),
+          "server/services/db.ts":
+            'import { Feats } from "@/server/repositories/index.ts";\nexport const f = () => Feats.delete(db, { id });\n',
+          "server/jobs/many.ts":
+            'import { Notifications } from "@/server/repositories/index.ts";\nexport const f = () =>\n  Notifications.createMany(\n    db,\n    [],\n  );\n',
+          "server/services/lock.ts":
+            'import { Feats } from "@/server/repositories/index.ts";\nexport const f = (database: Db) => Feats.lock(database, { id });\n',
+          "server/repositories/inside.ts":
+            'import { Feats } from "@/server/repositories/index.ts";\nexport const f = () => Feats.delete(db, { id });\n',
+        },
+        ["writes-in-transactions"],
+      ),
+    ).toEqual([
+      "writes-in-transactions server/jobs/many.ts",
+      "writes-in-transactions server/services/db.ts",
+      "writes-in-transactions server/services/lock.ts",
+    ]);
+  });
+
   test("the server reads its environment in server/environment.ts only", async () => {
     expect(
       await lintRepo(

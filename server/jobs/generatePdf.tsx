@@ -1,7 +1,7 @@
 import { pdf } from "@react-pdf/renderer";
 import type { Task } from "graphile-worker";
 
-import { db, withTransaction } from "@/server/database/index.ts";
+import { withTransaction } from "@/server/database/index.ts";
 import { Exports, Notifications } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind } from "@/server/rulesets/types.ts";
@@ -35,14 +35,16 @@ export const generatePdfTask: Task = async (payload, helpers) => {
 
     if (!characterRecord) {
       helpers.logger.warn(`Character ${characterId} not found or not exportable for user ${userId}`);
-      await Notifications.create(db, {
-        recipientId: userId,
-        actorId: userId,
-        type: "pdfFailed",
-        targetId: characterId,
-        targetTable: getCharacterPdfTargetTable(campaignId),
-        data: { characterName },
-      });
+      await withTransaction((tx) =>
+        Notifications.create(tx, {
+          recipientId: userId,
+          actorId: userId,
+          type: "pdfFailed",
+          targetId: characterId,
+          targetTable: getCharacterPdfTargetTable(campaignId),
+          data: { characterName },
+        }),
+      );
       await publishWsEvent(userId, { type: "notifications:updated" }).catch((err) =>
         helpers.logger.warn(`Failed to publish PDF failure notification: ${err}`),
       );
@@ -110,14 +112,16 @@ export const generatePdfTask: Task = async (payload, helpers) => {
 
     if (helpers.job.attempts >= helpers.job.max_attempts) {
       try {
-        await Notifications.create(db, {
-          recipientId: userId,
-          actorId: userId,
-          type: "pdfFailed",
-          targetId: characterId,
-          targetTable: getCharacterPdfTargetTable(campaignId),
-          data: { characterName },
-        });
+        await withTransaction((tx) =>
+          Notifications.create(tx, {
+            recipientId: userId,
+            actorId: userId,
+            type: "pdfFailed",
+            targetId: characterId,
+            targetTable: getCharacterPdfTargetTable(campaignId),
+            data: { characterName },
+          }),
+        );
         await publishWsEvent(userId, { type: "notifications:updated" });
       } catch {
         // Best-effort failure notification
