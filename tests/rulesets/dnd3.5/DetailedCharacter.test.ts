@@ -1093,7 +1093,7 @@ describe("DetailedCharacter", () => {
 
   describe("armor class", () => {
     test("keeps a dodge bonus in touch AC and loses it flat-footed, with the Dexterity bonus", async () => {
-      const bjorn = await seeded("Bjorn Ironhand");
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const ac = async () => {
         const { total, touch, flatfooted, dexterity } = (await build(bjorn))
           .getDetailedCharacterCombat()
