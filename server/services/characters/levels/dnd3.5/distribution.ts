@@ -2,17 +2,24 @@
  * Level-up distribution pipeline.
  *
  * - computePerLevelAptitudeSlots — calculates feat/power slot deltas per level from modifier data
+ * - powerLevelLookup, deferredAptitudeSources, skillContexts — what the distribution reads of the ruleset and character
  * - distributePoolSelections — distributes pooled user selections (skills, feats, powers) into per-level payloads
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/types.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
+import type { Modifier, Skill } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
+
+type FeatSlots = Record<string, number[]>;
+type PowerSlots = Record<string, Record<string, number>[]>;
 
 export interface PerLevelDistributionData {
   perLevelSkillPoints: number[];
   perLevelClassSkillIds: string[][];
-  perLevelFeatSlots: Record<string, number[]>;
-  perLevelPowerSlots: Record<string, Record<string, number>[]>;
+  perLevelFeatSlots: FeatSlots;
+  perLevelPowerSlots: PowerSlots;
   baseCharacterLevel: number;
   /** Map of skillId → { isClassSkill, currentRank } for existing character skills */
   skillContexts: Map<string, { isClassSkill: boolean; currentRank: number }>;
@@ -22,6 +29,86 @@ interface DistributedLevel {
   skills: Record<string, number>;
   feats: Record<string, string[]>;
   powers: Record<string, string[]>;
+}
+
+/** A planned level's slot deltas: per feat pool, and per power pool and spell level. */
+interface SlotDeltas {
+  feats: Record<string, number>;
+  powers: Record<string, Record<string, number>>;
+}
+
+const FEAT_POOL_TARGET = /^aptitudes\.(\w+)\.allowed$/;
+const SPELL_POOL_TARGET = /^aptitudes\.(\w+)\.(\d+)\.allowed$/;
+
+const generalFeats = (charLevel: number) => (charLevel === 0 ? 0 : Math.floor(charLevel / 3) + 1);
+
+/**
+ * Adds what modifiers targeting a pool's `aptitudes.<slug>.allowed` (a feat pool) or `aptitudes.<slug>.<level>.allowed`
+ * (a power pool's spell level) give a level. Setting a spell level's to -1, "all spells known", counts as 999.
+ */
+function addModifierDeltas(
+  deltas: SlotDeltas,
+  modifiers: Modifier[],
+  aptitudeSlugToId: Map<string, string>,
+  perLevelFeatSlots: FeatSlots,
+  perLevelPowerSlots: PowerSlots,
+) {
+  for (const mod of modifiers) {
+    const featMatch = FEAT_POOL_TARGET.exec(mod.target);
+    if (featMatch) {
+      const aptId = aptitudeSlugToId.get(featMatch[1]);
+      if (aptId && perLevelFeatSlots[aptId]) {
+        deltas.feats[aptId] = (deltas.feats[aptId] ?? 0) + Number(mod.value);
+      }
+      continue;
+    }
+    const spellMatch = SPELL_POOL_TARGET.exec(mod.target);
+    if (spellMatch) {
+      const aptId = aptitudeSlugToId.get(spellMatch[1]);
+      if (aptId && perLevelPowerSlots[aptId]) {
+        if (!deltas.powers[aptId]) deltas.powers[aptId] = {};
+        const spellLevel = spellMatch[2];
+        if (mod.operator === "set" && Number(mod.value) === -1) {
+          deltas.powers[aptId][spellLevel] = 999;
+        } else {
+          deltas.powers[aptId][spellLevel] = (deltas.powers[aptId][spellLevel] ?? 0) + Number(mod.value);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * A planned level's slot deltas: its klass level's modifiers, the modifiers of the feats granted there, and the
+ * general feat every third character level.
+ */
+function levelDeltas(
+  rulesetData: CachedRulesetData,
+  klassLevelId: string,
+  autoFeatRecords: { featsInRule: { id: string } }[],
+  charLevel: number,
+  perLevelFeatSlots: FeatSlots,
+  perLevelPowerSlots: PowerSlots,
+): SlotDeltas {
+  const deltas: SlotDeltas = { feats: {}, powers: {} };
+  const aptitudeSlugToId = rulesetData.aptitudeIdBySlug;
+  const modifiersBySourceId = rulesetData.modifiersBySource;
+  const add = (modifiers: Modifier[]) =>
+    addModifierDeltas(deltas, modifiers, aptitudeSlugToId, perLevelFeatSlots, perLevelPowerSlots);
+
+  add(modifiersBySourceId.get(klassLevelId) ?? []);
+  for (const rec of autoFeatRecords) {
+    add(modifiersBySourceId.get(rec.featsInRule.id) ?? []);
+  }
+
+  const generalAptId = aptitudeSlugToId.get("general");
+  if (generalAptId && perLevelFeatSlots[generalAptId]) {
+    const generalDelta = generalFeats(charLevel) - generalFeats(charLevel - 1);
+    if (generalDelta > 0) {
+      deltas.feats[generalAptId] = (deltas.feats[generalAptId] ?? 0) + generalDelta;
+    }
+  }
+  return deltas;
 }
 
 /**
@@ -38,7 +125,6 @@ interface DistributedLevel {
  * Baseline unspent slots (e.g., Human racial bonus) are captured by the
  * full character build and added to the first level's delta.
  */
-// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
 export function computePerLevelAptitudeSlots(
   rulesetData: CachedRulesetData,
   klassLevelIds: string[],
@@ -48,107 +134,30 @@ export function computePerLevelAptitudeSlots(
   baseCharacterLevel: number,
   baselineAptitudes: Record<string, { id: string; allowed: number; spent: number }>,
 ): {
-  perLevelFeatSlots: Record<string, number[]>;
-  perLevelPowerSlots: Record<string, Record<string, number>[]>;
+  perLevelFeatSlots: FeatSlots;
+  perLevelPowerSlots: PowerSlots;
 } {
-  const perLevelFeatSlots: Record<string, number[]> = {};
-  const perLevelPowerSlots: Record<string, Record<string, number>[]> = {};
+  const perLevelFeatSlots: FeatSlots = {};
+  const perLevelPowerSlots: PowerSlots = {};
   for (const aptId of featPoolIds) perLevelFeatSlots[aptId] = [];
   for (const aptId of powerPoolIds) perLevelPowerSlots[aptId] = [];
 
-  // Slug→ID and per-source modifier maps are pre-built on the composed cache.
-  const aptitudeSlugToId = rulesetData.aptitudeIdBySlug;
-  const modifiersBySourceId = rulesetData.modifiersBySource;
-
-  // Regex for modifier targets
-  const featPoolRegex = /^aptitudes\.(\w+)\.allowed$/;
-  const spellPoolRegex = /^aptitudes\.(\w+)\.(\d+)\.allowed$/;
-
-  const generalAptId = aptitudeSlugToId.get("general");
-  const generalFormula = (charLevel: number) => (charLevel === 0 ? 0 : Math.floor(charLevel / 3) + 1);
-
   for (let i = 0; i < klassLevelIds.length; i++) {
-    const klassLevelId = klassLevelIds[i];
-    const charLevel = baseCharacterLevel + i + 1;
-
-    // Accumulate feat slot deltas for this level
-    const featDeltas: Record<string, number> = {};
-    const powerDeltas: Record<string, Record<string, number>> = {};
-
-    // 1. Klass level modifiers
-    const klassLevelMods = modifiersBySourceId.get(klassLevelId) ?? [];
-    for (const mod of klassLevelMods) {
-      const featMatch = featPoolRegex.exec(mod.target);
-      if (featMatch) {
-        const aptId = aptitudeSlugToId.get(featMatch[1]);
-        if (aptId && perLevelFeatSlots[aptId]) {
-          featDeltas[aptId] = (featDeltas[aptId] ?? 0) + Number(mod.value);
-        }
-        continue;
-      }
-      const spellMatch = spellPoolRegex.exec(mod.target);
-      if (spellMatch) {
-        const aptId = aptitudeSlugToId.get(spellMatch[1]);
-        if (aptId && perLevelPowerSlots[aptId]) {
-          if (!powerDeltas[aptId]) powerDeltas[aptId] = {};
-          const spellLevel = spellMatch[2];
-          if (mod.operator === "set" && Number(mod.value) === -1) {
-            // "All" spells known — use a large number
-            powerDeltas[aptId][spellLevel] = 999;
-          } else {
-            powerDeltas[aptId][spellLevel] = (powerDeltas[aptId][spellLevel] ?? 0) + Number(mod.value);
-          }
-        }
-      }
-    }
-
-    // 2. Auto-granted feat modifiers (feats granted at this klass level)
-    const autoFeatRecords = allAutoGrantedFeatRecords[i] ?? [];
-    for (const rec of autoFeatRecords) {
-      const featMods = modifiersBySourceId.get(rec.featsInRule.id) ?? [];
-      for (const mod of featMods) {
-        const featMatch = featPoolRegex.exec(mod.target);
-        if (featMatch) {
-          const aptId = aptitudeSlugToId.get(featMatch[1]);
-          if (aptId && perLevelFeatSlots[aptId]) {
-            featDeltas[aptId] = (featDeltas[aptId] ?? 0) + Number(mod.value);
-          }
-          continue;
-        }
-        const spellMatch = spellPoolRegex.exec(mod.target);
-        if (spellMatch) {
-          const aptId = aptitudeSlugToId.get(spellMatch[1]);
-          if (aptId && perLevelPowerSlots[aptId]) {
-            if (!powerDeltas[aptId]) powerDeltas[aptId] = {};
-            const spellLevel = spellMatch[2];
-            if (mod.operator === "set" && Number(mod.value) === -1) {
-              powerDeltas[aptId][spellLevel] = 999;
-            } else {
-              powerDeltas[aptId][spellLevel] = (powerDeltas[aptId][spellLevel] ?? 0) + Number(mod.value);
-            }
-          }
-        }
-      }
-    }
-
-    // 3. General feat formula delta
-    if (generalAptId && perLevelFeatSlots[generalAptId]) {
-      const prevGeneral = generalFormula(charLevel - 1);
-      const currGeneral = generalFormula(charLevel);
-      const generalDelta = currGeneral - prevGeneral;
-      if (generalDelta > 0) {
-        featDeltas[generalAptId] = (featDeltas[generalAptId] ?? 0) + generalDelta;
-      }
-    }
-
-    // Push deltas to slot arrays
+    const deltas = levelDeltas(
+      rulesetData,
+      klassLevelIds[i],
+      allAutoGrantedFeatRecords[i] ?? [],
+      baseCharacterLevel + i + 1,
+      perLevelFeatSlots,
+      perLevelPowerSlots,
+    );
     for (const aptId of featPoolIds) {
-      perLevelFeatSlots[aptId].push(Math.max(0, featDeltas[aptId] ?? 0));
+      perLevelFeatSlots[aptId].push(Math.max(0, deltas.feats[aptId] ?? 0));
     }
     for (const aptId of powerPoolIds) {
       const slots: Record<string, number> = {};
-      if (powerDeltas[aptId]) {
-        for (const [sl, delta] of Object.entries(powerDeltas[aptId])) {
+      if (deltas.powers[aptId]) {
+        for (const [sl, delta] of Object.entries(deltas.powers[aptId])) {
           if (delta > 0) slots[sl] = delta;
         }
       }
@@ -168,28 +177,129 @@ export function computePerLevelAptitudeSlots(
 }
 
 /**
- * Distributes pool-level selections into per-level payloads using the
- * per-level slot/point data computed by computePerLevelAptitudeSlots.
+ * The spell level of each of these powers in each pool it's linked to, by `powerId:aptitudeId`: a spell can be at
+ * different levels in different pools (Wizard 1, Bard 0).
  */
-// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
-export function distributePoolSelections(
-  data: PerLevelDistributionData,
-  skills: Record<string, number>,
-  feats: Record<string, string[]>,
-  powers: Record<string, string[]>,
-  /** Map of powerId:aptitudeId → powerLevel for leveled aptitude distribution */
-  powerLevelLookup: Map<string, number | null>,
-  /** Map of aptitudeId → source featId that created it via modifier */
-  deferredAptitudeSources: Map<string, string>,
-): DistributedLevel[] {
-  const levelCount = data.perLevelSkillPoints.length;
-  const result: DistributedLevel[] = Array.from({ length: levelCount }, () => ({
-    skills: {},
-    feats: {},
-    powers: {},
-  }));
+export function powerLevelLookup(rulesetData: CachedRulesetData, powerIds: string[]) {
+  const lookup = new Map<string, number | null>();
+  for (const powerId of powerIds) {
+    const power = rulesetData.powersById.get(powerId);
+    if (!power) continue;
+    for (const pa of power.powersAptitudesInRules) {
+      lookup.set(`${pa.powerId}:${pa.aptitudeId}`, pa.level);
+    }
+  }
+  return lookup;
+}
 
-  // ── Distribute skills ──
+/**
+ * The feat each pool with no slots of its own comes from: a pool a feat's modifier creates (`aptitudes.<slug>….allowed`)
+ * goes with the first-pass feat that targets it.
+ */
+export function deferredAptitudeSources(
+  rulesetData: CachedRulesetData,
+  feats: Record<string, string[]>,
+  perLevelFeatSlots: FeatSlots,
+) {
+  const hasSlots = (aptId: string) => (perLevelFeatSlots[aptId] ?? []).some((s) => s > 0);
+  const deferredAptitudeIds = Object.keys(feats).filter((aptId) => !hasSlots(aptId));
+  const sources = new Map<string, string>();
+  if (deferredAptitudeIds.length === 0) return sources;
+
+  const deferredAptIdSet = new Set(deferredAptitudeIds);
+  const firstPassFeatIds = Object.entries(feats)
+    .filter(([aptId]) => hasSlots(aptId))
+    .flatMap(([, ids]) => ids);
+  for (const featId of firstPassFeatIds) {
+    const mods = rulesetData.modifiersBySource.get(featId);
+    if (!mods) continue;
+    for (const mod of mods) {
+      const match = mod.target.match(/^aptitudes\.(\w+)\..*allowed/);
+      if (!match) continue;
+      const aptId = rulesetData.aptitudeIdBySlug.get(match[1]);
+      if (aptId && deferredAptIdSet.has(aptId)) {
+        sources.set(aptId, mod.sourceId);
+      }
+    }
+  }
+  return sources;
+}
+
+/** Each skill's current rank, and whether it's a class skill: innate to the character, or a planned class's. */
+export function skillContexts(levelUpProjector: Dnd35LevelUpProjector, skills: Skill[], classSkillIds: Set<string>) {
+  const characterSkills = levelUpProjector.getCharacterSkills();
+  const contexts = new Map<string, { isClassSkill: boolean; currentRank: number }>();
+  for (const skill of skills) {
+    const skillData = characterSkills[stripSeparators(skill.name)] as { innate?: boolean; rank?: number } | undefined;
+    contexts.set(skill.id, {
+      isClassSkill: skillData?.innate ?? classSkillIds.has(skill.id),
+      currentRank: skillData?.rank || 0,
+    });
+  }
+  return contexts;
+}
+
+/** Hands `ids` out in order to the levels' slots, as many to a level as `slotsAt` gives it. */
+function fillSlots(
+  levelCount: number,
+  ids: string[],
+  slotsAt: (level: number) => number,
+  place: (level: number, id: string) => void,
+) {
+  let pickIndex = 0;
+  for (let i = 0; i < levelCount && pickIndex < ids.length; i++) {
+    const slots = slotsAt(i);
+    for (let s = 0; s < slots && pickIndex < ids.length; s++) {
+      place(i, ids[pickIndex]);
+      pickIndex++;
+    }
+  }
+}
+
+/**
+ * Caps a skill's points at what each level can take: the ranks its max rank leaves (a cross-class rank costs two
+ * points) and the points it has left. What goes over moves on to the next level.
+ */
+function capAtMaxRanks(
+  data: PerLevelDistributionData,
+  skillId: string,
+  perLevel: number[],
+  remainingPointsPerLevel: number[],
+) {
+  const ctx = data.skillContexts.get(skillId);
+  if (!ctx) return;
+
+  let isClassSoFar = ctx.isClassSkill;
+  let cumulativeRank = ctx.currentRank;
+  let overflow = 0;
+  for (let i = 0; i < perLevel.length; i++) {
+    perLevel[i] += overflow;
+    overflow = 0;
+
+    if (data.perLevelClassSkillIds[i].includes(skillId)) {
+      isClassSoFar = true;
+    }
+    if (perLevel[i] === 0) continue;
+
+    const charLevelAtI = data.baseCharacterLevel + i + 1;
+    const maxRank = isClassSoFar ? charLevelAtI + 3 : (charLevelAtI + 3) / 2;
+    const isClassForLevel = data.perLevelClassSkillIds[i].includes(skillId);
+    const headroom = maxRank - cumulativeRank;
+    const maxPointsByRank = Math.max(0, Math.floor(isClassForLevel ? headroom : headroom * 2));
+    const maxPointsByBudget = remainingPointsPerLevel[i];
+    const maxPoints = Math.min(maxPointsByRank, maxPointsByBudget);
+
+    if (perLevel[i] > maxPoints) {
+      overflow = perLevel[i] - maxPoints;
+      perLevel[i] = maxPoints;
+    }
+    const actualRank = isClassForLevel ? perLevel[i] : perLevel[i] * 0.5;
+    cumulativeRank += actualRank;
+  }
+}
+
+/** Spreads each skill's points over the levels, within each level's points and max ranks. */
+function distributeSkills(data: PerLevelDistributionData, skills: Record<string, number>, result: DistributedLevel[]) {
   const remainingPointsPerLevel = [...data.perLevelSkillPoints];
 
   for (const [skillId, totalPoints] of Object.entries(skills)) {
@@ -201,50 +311,27 @@ export function distributePoolSelections(
       data.perLevelClassSkillIds,
       remainingPointsPerLevel,
     );
+    capAtMaxRanks(data, skillId, perLevel, remainingPointsPerLevel);
 
-    // Enforce intermediate max ranks: walk levels and push overflow forward
-    const ctx = data.skillContexts.get(skillId);
-    if (ctx) {
-      let isClassSoFar = ctx.isClassSkill;
-      let cumulativeRank = ctx.currentRank;
-      let overflow = 0;
-
-      for (let i = 0; i < levelCount; i++) {
-        perLevel[i] += overflow;
-        overflow = 0;
-
-        if (data.perLevelClassSkillIds[i].includes(skillId)) {
-          isClassSoFar = true;
-        }
-        if (perLevel[i] === 0) continue;
-
-        const charLevelAtI = data.baseCharacterLevel + i + 1;
-        const maxRank = isClassSoFar ? charLevelAtI + 3 : (charLevelAtI + 3) / 2;
-        const isClassForLevel = data.perLevelClassSkillIds[i].includes(skillId);
-        const headroom = maxRank - cumulativeRank;
-        const maxPointsByRank = Math.max(0, Math.floor(isClassForLevel ? headroom : headroom * 2));
-        const maxPointsByBudget = remainingPointsPerLevel[i];
-        const maxPoints = Math.min(maxPointsByRank, maxPointsByBudget);
-
-        if (perLevel[i] > maxPoints) {
-          overflow = perLevel[i] - maxPoints;
-          perLevel[i] = maxPoints;
-        }
-        const actualRank = isClassForLevel ? perLevel[i] : perLevel[i] * 0.5;
-        cumulativeRank += actualRank;
-      }
-    }
-
-    for (let i = 0; i < levelCount; i++) {
+    for (let i = 0; i < result.length; i++) {
       if (perLevel[i] > 0) {
         result[i].skills[skillId] = (result[i].skills[skillId] ?? 0) + perLevel[i];
         remainingPointsPerLevel[i] -= perLevel[i];
       }
     }
   }
+}
 
-  // ── Distribute feats ──
-  // First pass: aptitudes with known per-level slots
+/**
+ * Puts each pool's feats into the levels' slots. A pool with no slots, one a feat's modifier created, goes on the
+ * level its source feat went to (the first when that's unknown).
+ */
+function distributeFeats(
+  data: PerLevelDistributionData,
+  feats: Record<string, string[]>,
+  deferredAptitudeSources: Map<string, string>,
+  result: DistributedLevel[],
+) {
   const deferredFeatEntries: [string, string[]][] = [];
   const assignedFeatLevels = new Map<string, number>();
 
@@ -255,21 +342,17 @@ export function distributePoolSelections(
       continue;
     }
 
-    let pickIndex = 0;
-    for (let i = 0; i < levelCount && pickIndex < featIds.length; i++) {
-      const slots = slotsPerLevel[i] ?? 0;
-      if (slots > 0) {
-        if (!result[i].feats[aptitudeId]) result[i].feats[aptitudeId] = [];
-        for (let s = 0; s < slots && pickIndex < featIds.length; s++) {
-          result[i].feats[aptitudeId].push(featIds[pickIndex]);
-          assignedFeatLevels.set(featIds[pickIndex], i);
-          pickIndex++;
-        }
-      }
-    }
+    fillSlots(
+      result.length,
+      featIds,
+      (i) => slotsPerLevel[i] ?? 0,
+      (i, featId) => {
+        (result[i].feats[aptitudeId] ??= []).push(featId);
+        assignedFeatLevels.set(featId, i);
+      },
+    );
   }
 
-  // Second pass: modifier-created aptitudes — place on the same level as the source feat
   for (const [aptitudeId, featIds] of deferredFeatEntries) {
     let targetLevel = 0;
     const sourceFeatId = deferredAptitudeSources.get(aptitudeId);
@@ -283,12 +366,22 @@ export function distributePoolSelections(
       result[targetLevel].feats[aptitudeId].push(featId);
     }
   }
+}
 
-  // ── Distribute powers ──
+/**
+ * Puts each pool's powers into the levels' slots: in order for an unleveled pool, by spell level for a leveled one
+ * (a power's level per pool from `powerLevelLookup`).
+ */
+function distributePowers(
+  data: PerLevelDistributionData,
+  powers: Record<string, string[]>,
+  powerLevelLookup: Map<string, number | null>,
+  result: DistributedLevel[],
+) {
   for (const [aptitudeId, powerIds] of Object.entries(powers)) {
     const slotsPerLevel = data.perLevelPowerSlots[aptitudeId] ?? [];
+    const place = (i: number, powerId: string) => (result[i].powers[aptitudeId] ??= []).push(powerId);
 
-    // Group powers by powerLevel for leveled aptitudes
     const powersByLevel = new Map<string, string[]>();
     let hasLevels = false;
     for (const powerId of powerIds) {
@@ -300,37 +393,37 @@ export function distributePoolSelections(
     }
 
     if (!hasLevels) {
-      // Non-leveled aptitude — simple sequential assignment
-      let pickIndex = 0;
-      for (let i = 0; i < levelCount && pickIndex < powerIds.length; i++) {
-        const levelSlots = slotsPerLevel[i] ?? {};
-        const totalSlots = Object.values(levelSlots).reduce((sum, n) => sum + n, 0);
-        if (totalSlots > 0) {
-          if (!result[i].powers[aptitudeId]) result[i].powers[aptitudeId] = [];
-          for (let s = 0; s < totalSlots && pickIndex < powerIds.length; s++) {
-            result[i].powers[aptitudeId].push(powerIds[pickIndex]);
-            pickIndex++;
-          }
-        }
-      }
+      const totalSlotsAt = (i: number) => Object.values(slotsPerLevel[i] ?? {}).reduce((sum, n) => sum + n, 0);
+      fillSlots(result.length, powerIds, totalSlotsAt, place);
     } else {
-      // Leveled aptitude — assign by spell level
       for (const [plKey, levelPowerIds] of powersByLevel) {
-        let pickIndex = 0;
-        for (let i = 0; i < levelCount && pickIndex < levelPowerIds.length; i++) {
-          const levelSlots = slotsPerLevel[i] ?? {};
-          const slots = levelSlots[plKey] ?? 0;
-          if (slots > 0) {
-            if (!result[i].powers[aptitudeId]) result[i].powers[aptitudeId] = [];
-            for (let s = 0; s < slots && pickIndex < levelPowerIds.length; s++) {
-              result[i].powers[aptitudeId].push(levelPowerIds[pickIndex]);
-              pickIndex++;
-            }
-          }
-        }
+        fillSlots(result.length, levelPowerIds, (i) => (slotsPerLevel[i] ?? {})[plKey] ?? 0, place);
       }
     }
   }
+}
 
+/**
+ * Distributes pool-level selections into per-level payloads using the
+ * per-level slot/point data computed by computePerLevelAptitudeSlots.
+ */
+export function distributePoolSelections(
+  data: PerLevelDistributionData,
+  skills: Record<string, number>,
+  feats: Record<string, string[]>,
+  powers: Record<string, string[]>,
+  /** Map of powerId:aptitudeId → powerLevel for leveled aptitude distribution */
+  powerLevelLookup: Map<string, number | null>,
+  /** Map of aptitudeId → source featId that created it via modifier */
+  deferredAptitudeSources: Map<string, string>,
+): DistributedLevel[] {
+  const result: DistributedLevel[] = Array.from({ length: data.perLevelSkillPoints.length }, () => ({
+    skills: {},
+    feats: {},
+    powers: {},
+  }));
+  distributeSkills(data, skills, result);
+  distributeFeats(data, feats, deferredAptitudeSources, result);
+  distributePowers(data, powers, powerLevelLookup, result);
   return result;
 }
