@@ -17,7 +17,7 @@ export type Feat = InferResponseType<(typeof rulesetApi)["feats"][":featId"]["$g
 export type Race = InferResponseType<(typeof rulesetApi)["races"][":raceId"]["$get"], 200>;
 export type Item = InferResponseType<(typeof rulesetApi)["items"][":itemId"]["$get"], 200>;
 export type Power = InferResponseType<(typeof rulesetApi)["powers"][":powerId"]["$get"], 200>;
-export type ClassLevel = InferResponseType<(typeof rulesetApi)["class_levels"][":classLevelId"]["$get"], 200>;
+export type ClassLevel = InferResponseType<(typeof rulesetApi)["class-levels"][":classLevelId"]["$get"], 200>;
 type CustomizedModifier = InferResponseType<
   (typeof rulesetApi)["customization"][":entityType"][":entityId"]["modifiers"][":modifierId"]["$get"],
   200
@@ -58,7 +58,7 @@ async function fetchEntity(id: string, type: CustomizationOwnerType, entityId: s
       return {
         type,
         entity: await parseResponse(
-          rulesetApi.class_levels[":classLevelId"].$get({ param: { id, classLevelId: entityId } }),
+          rulesetApi["class-levels"][":classLevelId"].$get({ param: { id, classLevelId: entityId } }),
         ),
       };
     case "klasses":
