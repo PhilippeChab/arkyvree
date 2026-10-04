@@ -95,6 +95,7 @@ Anything that *throws* on the basis of ownership is a permission check and shoul
 - Search sentinel is `false` (not `undefined`) for consistency with `this.where()` filtering
 - A query across every ruleset entity's table is a `RulesetEntities` method (`repositories/rulesets/RulesetEntitiesRepository.ts`; `entityTables.ts` maps each type to its table and lists `RULESET_ENTITY_TYPES`). A read that must see stored ids, unresolved by copy-on-write (sibling losers), calls its repository inside `withCowContext(undefined, …)` instead of querying the table itself
 - A ruleset entity's repository extends `RulesetEntityRepository` (its `create` / `update` / `delete`, and the concerns every entity's list and edit use: `Paginates`, `Searches`, `ScopesToRuleset`, `GuardsStaleEdits`) and types its list's `where` as `RulesetEntityFilters<{ …its own filters }>`. A bulk insert is `createMany(db, rows[])`. An in-use check joins the character's ruleset with `this.rulesetOrDescendant(column, rulesetId)`
+- A level's picks' repositories (`CharacterLevelSkills` / `Feats` / `Powers`) extend `LevelPicksRepository` (`repositories/characters/`): its in-use checks by column (`existsPick`, `existsPickFromExtension`), `createMany` and `delete`; each keeps its `exists` dispatch and its `findMany`, by the picked entity's name
 
 ## Frontend Architecture
 
