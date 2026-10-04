@@ -110,6 +110,43 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       }
     }
 
+    /** The weapon set, created if missing, with the slots the weapon displaces emptied. */
+    private clearSlots(setKey: string, slot: "Main Hand" | "Off Hand" | "Two Handed") {
+      if (!this.detailedCharacterCombat.weaponsets[setKey]) {
+        this.detailedCharacterCombat.weaponsets[setKey] = { mainhand: null, offhand: null, twohanded: null };
+      }
+      // Two-handed weapons displace main-hand and off-hand (e.g. unarmed strike default)
+      if (slot === "Two Handed") {
+        this.detailedCharacterCombat.weaponsets[setKey].mainhand = null;
+        this.detailedCharacterCombat.weaponsets[setKey].offhand = null;
+      } else {
+        this.detailedCharacterCombat.weaponsets[setKey].twohanded = null;
+      }
+    }
+
+    /**
+     * The strength bonus to a weapon's damage, and the slot's multiplier. Projectile weapons (bows, crossbows, slings)
+     * get no STR to damage unless they have a Mighty rating (composite bows), which caps STR bonus. Negative STR always
+     * applies regardless of Mighty rating. Melee/thrown weapons use STR with slot multiplier (full/half/1.5x).
+     */
+    private strengthDamage(slot: "Main Hand" | "Off Hand" | "Two Handed", isProjectile: boolean, mighty?: Property) {
+      const strMod = this.characterAbilities.getAbilityModifier("Strength");
+      if (isProjectile) {
+        const damageModifier = mighty ? (strMod < 0 ? strMod : Math.min(strMod, Number(mighty.value))) : 0;
+        return { damageModifier, strMultiplier: null };
+      }
+      switch (slot) {
+        case "Main Hand":
+          return { damageModifier: strMod, strMultiplier: 1 };
+        case "Off Hand":
+          return { damageModifier: Math.floor(strMod * 0.5), strMultiplier: 0.5 };
+        case "Two Handed":
+          return { damageModifier: Math.floor(strMod * 1.5), strMultiplier: 1.5 };
+        default:
+          return { damageModifier: 0, strMultiplier: null };
+      }
+    }
+
     /** Costs each weapon the character isn't proficient with the non-proficiency penalty: 4 to hit, nothing else. */
     applyProficiencyPenalties(unproficientItemIds: Set<string>) {
       for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
@@ -144,7 +181,6 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       this.updateWeaponsTotal();
     }
 
-    // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
     addWeapon(
       setIndex: number,
       slot: "Main Hand" | "Off Hand" | "Two Handed",
@@ -152,111 +188,52 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       properties: Property[],
       itemId: string | null = null,
     ): void {
-      const weaponType = properties.find((property) => property.type === WEAPON_PROFICIENCY);
-      if (!weaponType) {
-        return;
-      }
-
-      const weaponBaseDamage = properties.find((property) => property.type === WEAPON_BASE_DAMAGE);
-      const weaponCriticalRange = properties.find((property) => property.type === WEAPON_CRITICAL_RANGE);
-      const weaponCriticalMultiplier = properties.find((property) => property.type === WEAPON_CRITICAL_MULTIPLIER);
-      const weaponRange = properties.find((property) => property.type === WEAPON_RANGE);
-      const weaponReach = properties.find((property) => property.type === WEAPON_REACH);
-      const damageTypes = properties.filter((property) => property.type === DAMAGE_TYPE);
-
-      const weaponFamily = properties.find((property) => property.type === WEAPON_FAMILY);
-      const weaponMighty = properties.find((property) => property.type === WEAPON_MIGHTY);
-      const finessable = properties.some((p) => p.type === WEAPON_FINESSABLE && p.value === "true");
-      const isProjectile = ["Bow", "Crossbow", "Sling"].includes(weaponFamily?.value ?? "");
+      const property = (type: string) => properties.find((p) => p.type === type);
+      if (!property(WEAPON_PROFICIENCY)) return;
+      const baseDamage = property(WEAPON_BASE_DAMAGE)?.value ?? "unknown";
+      const isProjectile = ["Bow", "Crossbow", "Sling"].includes(property(WEAPON_FAMILY)?.value ?? "");
 
       // Projectile weapons (bows, crossbows, slings) use DEX for attack
       // Thrown weapons (daggers, javelins, etc.) still use STR
-      const attackModifier = isProjectile
-        ? this.characterAbilities.getAbilityModifier("Dexterity")
-        : this.characterAbilities.getAbilityModifier("Strength");
-
-      // Projectile weapons (bows, crossbows, slings) get no STR to damage
-      // unless they have a Mighty rating (composite bows), which caps STR bonus
-      // Negative STR always applies regardless of Mighty rating
-      // Melee/thrown weapons use STR with slot multiplier (full/half/1.5x)
-      let damageModifier = 0;
-      let strMultiplier: number | null = null;
-      if (!isProjectile) {
-        const strMod = this.characterAbilities.getAbilityModifier("Strength");
-        switch (slot) {
-          case "Main Hand":
-            strMultiplier = 1;
-            damageModifier = strMod;
-            break;
-          case "Off Hand":
-            strMultiplier = 0.5;
-            damageModifier = Math.floor(strMod * strMultiplier);
-            break;
-          case "Two Handed":
-            strMultiplier = 1.5;
-            damageModifier = Math.floor(strMod * strMultiplier);
-            break;
-        }
-      } else if (weaponMighty) {
-        const strMod = this.characterAbilities.getAbilityModifier("Strength");
-        const mightyRating = Number(weaponMighty.value);
-        damageModifier = strMod < 0 ? strMod : Math.min(strMod, mightyRating);
-      }
+      const attackModifier = this.characterAbilities.getAbilityModifier(isProjectile ? "Dexterity" : "Strength");
+      const { damageModifier, strMultiplier } = this.strengthDamage(slot, isProjectile, property(WEAPON_MIGHTY));
+      const sizeModifier = SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
 
       const slotKey = SLOT_MAP[slot];
       const setKey = String(setIndex);
-
-      // Create set entry if missing
-      if (!this.detailedCharacterCombat.weaponsets[setKey]) {
-        this.detailedCharacterCombat.weaponsets[setKey] = {
-          mainhand: null,
-          offhand: null,
-          twohanded: null,
-        };
-      }
-
-      // Two-handed weapons displace main-hand and off-hand (e.g. unarmed strike default)
-      if (slot === "Two Handed") {
-        this.detailedCharacterCombat.weaponsets[setKey].mainhand = null;
-        this.detailedCharacterCombat.weaponsets[setKey].offhand = null;
-      } else {
-        this.detailedCharacterCombat.weaponsets[setKey].twohanded = null;
-      }
-
+      this.clearSlots(setKey, slot);
       this.detailedCharacterCombat.weaponsets[setKey][slotKey] = {
         name: item.name,
         itemId,
         proficient: true,
-        finessable,
-        range: Number(weaponRange?.value ?? 0),
-        reach: Number(weaponReach?.value ?? 0),
+        finessable: properties.some((p) => p.type === WEAPON_FINESSABLE && p.value === "true"),
+        range: Number(property(WEAPON_RANGE)?.value ?? 0),
+        reach: Number(property(WEAPON_REACH)?.value ?? 0),
         slot: slotKey,
         tohit: {
           strength: attackModifier,
           magic: 0,
           misc: 0,
-          size: SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0,
-          total: iterativeAttacks(this.detailedCharacterCombat.bab).map(
-            (base) => base + attackModifier + (SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0),
-          ),
+          size: sizeModifier,
+          total: iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + attackModifier + sizeModifier),
         },
         damage: {
-          base: weaponBaseDamage?.value ?? "unknown",
+          base: baseDamage,
           strength: damageModifier,
           magic: 0,
           misc: 0,
           others: [],
           total:
             damageModifier < 0
-              ? `${weaponBaseDamage?.value ?? "unknown"} - ${Math.abs(damageModifier)}`
+              ? `${baseDamage} - ${Math.abs(damageModifier)}`
               : damageModifier > 0
-                ? `${weaponBaseDamage?.value ?? "unknown"} + ${damageModifier}`
-                : (weaponBaseDamage?.value ?? "unknown"),
-          types: damageTypes.map((property) => property.value),
+                ? `${baseDamage} + ${damageModifier}`
+                : baseDamage,
+          types: properties.filter((p) => p.type === DAMAGE_TYPE).map((p) => p.value),
           strmultiplier: strMultiplier,
           critical: {
-            range: Number(weaponCriticalRange?.value ?? 1),
-            multiplier: Number(weaponCriticalMultiplier?.value ?? 1),
+            range: Number(property(WEAPON_CRITICAL_RANGE)?.value ?? 1),
+            multiplier: Number(property(WEAPON_CRITICAL_MULTIPLIER)?.value ?? 1),
           },
         },
       };

@@ -4,93 +4,50 @@ import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import type Dnd35DetailedCharacterBonded from "@/server/rulesets/dnd3.5/DetailedCharacterBonded.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
-import type { Modifier } from "@/shared/relations.ts";
+import type { Modifier, Requirement } from "@/shared/relations.ts";
 
-// oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
-export function buildFullCharacterResponse(
-  character: InferSelectModel<typeof charactersInCharacter>,
-  detailedCharacter: DetailedCharacterInterface,
-) {
-  // Cast once — the response builder is the centralized dnd3.5 presentation layer
-  const dc = detailedCharacter as Dnd35DetailedCharacter;
-
-  const ruleset = detailedCharacter.getRuleset();
-  const identity = detailedCharacter.getDetailedCharacterIdentity();
-  const abilities = detailedCharacter.getDetailedCharacterAbilities();
-  const combat = dc.getDetailedCharacterCombat();
-  const savingThrows = dc.getDetailedCharacterSavingThrows();
-  const classes = dc.getDetailedCharacterClasses();
-  const inventory = dc.getDetailedCharacterInventory();
-  const skills = dc.getDetailedCharacterSkills();
-  const powers = dc.getDetailedCharacterPowers();
-  const aptitudes = detailedCharacter.getDetailedCharacterAptitudes();
-  const requirements = dc.getDetailedCharacterRequirements();
-  const modifiers = dc.getDetailedCharacterModifiers();
-  const validation = detailedCharacter.validate();
-
-  const requirementsData = requirements.getRequirements();
-  const modifiersData = modifiers.getModifiers();
-
-  const resolveGroupSource = (group: { entityId: string; entityType: string }[]) => {
-    const first = group[0];
-    if (!first) return undefined;
-    return dc.resolveEntityName(first.entityId, first.entityType);
-  };
-
-  const enrichedRequirements = {
+/** The requirements, each group and each invalid one with the name of the entity it belongs to. */
+function enrichedRequirementsOf(dc: Dnd35DetailedCharacter) {
+  const requirementsData = dc.getDetailedCharacterRequirements().getRequirements();
+  const withSource = (group: Requirement[]) => ({
+    sourceName: group[0] ? dc.resolveEntityName(group[0].entityId, group[0].entityType) : undefined,
+    sourceType: group[0]?.entityType,
+    requirements: group,
+  });
+  return {
     ...requirementsData,
-    fulfilledRequirementGroups: requirementsData.fulfilledRequirementGroups.map((group) => ({
-      sourceName: resolveGroupSource(group),
-      sourceType: group[0]?.entityType,
-      requirements: group,
-    })),
-    unmetRequirementGroups: requirementsData.unmetRequirementGroups.map((group) => ({
-      sourceName: resolveGroupSource(group),
-      sourceType: group[0]?.entityType,
-      requirements: group,
-    })),
+    fulfilledRequirementGroups: requirementsData.fulfilledRequirementGroups.map(withSource),
+    unmetRequirementGroups: requirementsData.unmetRequirementGroups.map(withSource),
     invalidRequirements: requirementsData.invalidRequirements.map(({ warning, requirement }) => ({
       warning,
       requirement,
       sourceName: dc.resolveEntityName(requirement.entityId, requirement.entityType),
     })),
   };
+}
 
-  const enrichModifiers = (mods: Modifier[]) =>
+/** The modifiers, applied, unapplied and inactive, each with the name of its source. */
+function enrichedModifiersOf(dc: Dnd35DetailedCharacter) {
+  const modifiersData = dc.getDetailedCharacterModifiers().getModifiers();
+  const withSource = (mods: Modifier[]) =>
     mods.map((mod) => ({
       ...mod,
       sourceName: dc.resolveModifierSourceName(mod)?.name,
     }));
-
-  const enrichedModifiers = {
-    ...modifiersData,
-    appliedModifiers: enrichModifiers(modifiersData.appliedModifiers),
-    unappliedModifiers: enrichModifiers(modifiersData.unappliedModifiers),
-    inactiveModifiers: enrichModifiers(modifiersData.inactiveModifiers),
-  };
-
   return {
-    id: character.id,
-    userId: character.userId,
-    kind: character.kind,
-    parentCharacterId: character.parentCharacterId,
-    name: character.name,
-    raceId: character.raceId,
-    rulesetId: character.rulesetId,
-    rulesetName: ruleset?.name ?? null,
-    baseRules: ruleset?.baseRules ?? null,
-    isCustomRuleset: !!ruleset?.rulesetId,
-    deletedAt: character.deletedAt,
-    updatedAt: character.updatedAt,
-    shareToken: character.shareToken ?? null,
-    identity: identity.getIdentity(),
-    skillBudget: dc.getDetailedCharacterSkills().getSkillBudget(),
-    abilities: abilities.getAbilitiesWithIds(),
-    combat: combat.getCombat(),
-    savingThrows: savingThrows.getSavingThrows(),
-    classes: classes.getCharacterClasses(),
-    inventory: inventory.getInventory(),
-    equipment: inventory.getFlatInventory().map((entry) => ({
+    ...modifiersData,
+    appliedModifiers: withSource(modifiersData.appliedModifiers),
+    unappliedModifiers: withSource(modifiersData.unappliedModifiers),
+    inactiveModifiers: withSource(modifiersData.inactiveModifiers),
+  };
+}
+
+/** The inventory as a flat list of entries, each with its item's fields. */
+function equipmentOf(dc: Dnd35DetailedCharacter) {
+  return dc
+    .getDetailedCharacterInventory()
+    .getFlatInventory()
+    .map((entry) => ({
       itemId: entry.itemId,
       name: entry.item.name,
       type: entry.item.type,
@@ -104,9 +61,12 @@ export function buildFullCharacterResponse(
       totalCharges: entry.totalCharges,
       remainingCharges: entry.remainingCharges,
       updatedAt: entry.updatedAt,
-    })),
-    skills: skills.getSkills(),
-    powers: powers.getFlatPowers(),
+    }));
+}
+
+/** The feats and powers the character's modifiers make it possess without a pick. */
+function virtualEntitiesOf(dc: Dnd35DetailedCharacter) {
+  return {
     virtualFeats: dc.getVirtuallyPossessedFeats().map((f) => ({
       id: f.id,
       name: f.name,
@@ -124,10 +84,49 @@ export function buildFullCharacterResponse(
       dc: entry.dc,
       properties: Object.fromEntries(entry.properties.map((p) => [p.type, p.value])),
     })),
-    aptitudes: aptitudes.getAptitudes(),
+  };
+}
+
+export function buildFullCharacterResponse(
+  character: InferSelectModel<typeof charactersInCharacter>,
+  detailedCharacter: DetailedCharacterInterface,
+) {
+  // Cast once — the response builder is the centralized dnd3.5 presentation layer
+  const dc = detailedCharacter as Dnd35DetailedCharacter;
+  const ruleset = detailedCharacter.getRuleset();
+  const validation = detailedCharacter.validate();
+  const requirements = enrichedRequirementsOf(dc);
+  const modifiers = enrichedModifiersOf(dc);
+
+  return {
+    id: character.id,
+    userId: character.userId,
+    kind: character.kind,
+    parentCharacterId: character.parentCharacterId,
+    name: character.name,
+    raceId: character.raceId,
+    rulesetId: character.rulesetId,
+    rulesetName: ruleset?.name ?? null,
+    baseRules: ruleset?.baseRules ?? null,
+    isCustomRuleset: !!ruleset?.rulesetId,
+    deletedAt: character.deletedAt,
+    updatedAt: character.updatedAt,
+    shareToken: character.shareToken ?? null,
+    identity: detailedCharacter.getDetailedCharacterIdentity().getIdentity(),
+    skillBudget: dc.getDetailedCharacterSkills().getSkillBudget(),
+    abilities: detailedCharacter.getDetailedCharacterAbilities().getAbilitiesWithIds(),
+    combat: dc.getDetailedCharacterCombat().getCombat(),
+    savingThrows: dc.getDetailedCharacterSavingThrows().getSavingThrows(),
+    classes: dc.getDetailedCharacterClasses().getCharacterClasses(),
+    inventory: dc.getDetailedCharacterInventory().getInventory(),
+    equipment: equipmentOf(dc),
+    skills: dc.getDetailedCharacterSkills().getSkills(),
+    powers: dc.getDetailedCharacterPowers().getFlatPowers(),
+    ...virtualEntitiesOf(dc),
+    aptitudes: detailedCharacter.getDetailedCharacterAptitudes().getAptitudes(),
     spellTags: dc.getSpellTags(),
-    requirements: enrichedRequirements,
-    modifiers: enrichedModifiers,
+    requirements,
+    modifiers,
     validation,
   };
 }
