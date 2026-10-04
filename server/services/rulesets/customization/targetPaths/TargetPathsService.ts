@@ -1,8 +1,15 @@
 import { pageOf } from "@/server/repositories/concerns/Paginates.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import type { PaginatedCompletions, PathCompletion, TargetPath } from "@/shared/customization/target.ts";
-import { capitalize } from "@/shared/text.ts";
+import type { PaginatedCompletions, PathCompletion } from "@/shared/customization/target.ts";
 
+import {
+  byCompletionOrder,
+  categoryCompletions,
+  completedPrefix,
+  flatCompletions,
+  segmentCompletions,
+  segmentDescriber,
+} from "./completions.ts";
 import { getTargetPathsWithLabels, validatePath } from "./targetPaths.ts";
 
 class TargetPathsService {
@@ -12,7 +19,6 @@ class TargetPathsService {
    * Get completion suggestions for a partial path (paginated).
    * Uses cached paths+labels so subsequent calls are instant.
    */
-  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   async getCompletions(
     rulesetId: string,
     partialPath: string,
@@ -25,172 +31,20 @@ class TargetPathsService {
     flat: boolean = false,
   ): Promise<PaginatedCompletions> {
     const { paths: allPaths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, kind, entityType);
-
-    // Flat search: ignore drill prefix entirely and return any leaf path that
-    // matches `search`. Used by the path browser's search-first mode so users
-    // can type "wizard known" and find paths across the whole tree without
-    // drilling. Falls through to the normal completions logic when not active.
     if (flat) {
-      const q = (search ?? "").toLowerCase().trim();
-      const matches = q
-        ? allPaths.filter((p) => {
-            if (p.path.toLowerCase().includes(q)) return true;
-            return p.path.split(".").some((seg) => {
-              const label = segmentLabels[seg] ?? seg;
-              return label.toLowerCase().includes(q);
-            });
-          })
-        : allPaths;
-
-      matches.sort((a, b) => a.path.localeCompare(b.path));
-
-      const flatCompletions: PathCompletion[] = matches.map((p) => ({
-        label: p.path.split(".").pop() ?? p.path,
-        detail: p.description ?? p.path,
-        documentation: p.description ?? p.path,
-        insertText: p.path,
-        kind: "property",
-        path: p.path,
-        valueType: p.valueType,
-        operators: p.operators,
-        possibleValues: p.possibleValues,
-      }));
-      return { ...pageOf(flatCompletions, { limit, page }), segmentLabels };
+      return { ...pageOf(flatCompletions(allPaths, segmentLabels, search), { limit, page }), segmentLabels };
     }
 
     const generator = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createTargetPaths());
-    const categoriesWithPaths = new Set(allPaths.map((p) => p.category));
-    const validCategories = generator.getCategories().filter((c) => categoriesWithPaths.has(c));
-    const categoryDescriptions = generator.getCategoryDescriptions();
-    const pathDescriptions = generator.getPathDescriptions();
-    const groupTemplates = generator.getGroupDescriptionTemplates();
-
-    const resolveDescription = (fullPrefix: string, segment: string, fallback?: string): string => {
-      if (pathDescriptions[fullPrefix]) return pathDescriptions[fullPrefix];
-      const prefixParts = fullPrefix.split(".");
-
-      if (segment === "*") {
-        if (prefixParts.length === 2) {
-          const label = (segmentLabels[prefixParts[0]] || capitalize(prefixParts[0])).toLowerCase();
-          return kind === "requirement" ? `Any ${label}` : `All ${label}`;
-        }
-        return kind === "requirement" ? "Any in this group" : "All in this group";
-      }
-
-      if (prefixParts.length >= 4 && prefixParts[0] === "items") {
-        const structuralKey = [prefixParts[0], prefixParts[1], ...prefixParts.slice(3)].join(".");
-        if (pathDescriptions[structuralKey]) return pathDescriptions[structuralKey];
-      }
-
-      if (prefixParts.length === 2) {
-        const template = groupTemplates[prefixParts[0]];
-        if (template) return template.replace("{name}", segmentLabels[segment] || capitalize(segment));
-      }
-
-      if (prefixParts.length === 3 && prefixParts[0] === "items") {
-        const template = groupTemplates[`${prefixParts[0]}.${prefixParts[1]}`];
-        if (template) return template.replace("{name}", segmentLabels[segment] || capitalize(segment));
-      }
-
-      return fallback || `${segmentLabels[segment] || capitalize(segment)} properties`;
-    };
-
-    const completions: PathCompletion[] = [];
-
-    let pathPrefix = partialPath.substring(0, position);
-
-    // If the prefix is a leaf path + ".", auto-resolve to parent level so the client
-    // gets siblings with the leaf visible (avoids empty results and extra round-trips)
-    if (pathPrefix.endsWith(".")) {
-      const candidatePath = pathPrefix.slice(0, -1);
-      if (allPaths.some((p) => p.path === candidatePath)) {
-        const candidateSegments = candidatePath.split(".");
-        if (candidateSegments.length > 1) {
-          pathPrefix = candidateSegments.slice(0, -1).join(".") + ".";
-        }
-      }
-    }
-
-    const segments = pathPrefix.split(".");
-    const lastSegment = segments[segments.length - 1];
-
+    const segments = completedPrefix(allPaths, partialPath, position).split(".");
+    let completions: PathCompletion[] = [];
     if (segments.length === 1) {
-      for (const category of validCategories) {
-        if (category.startsWith(lastSegment.toLowerCase()) || lastSegment === "") {
-          completions.push({
-            label: category,
-            detail: categoryDescriptions[category] || `${capitalize(category)} category`,
-            documentation: categoryDescriptions[category] || `Target ${category} properties`,
-            insertText: category,
-            kind: "category",
-          });
-        }
-      }
+      completions = categoryCompletions(generator, allPaths, segments[0]);
     } else if (segments[0] !== "") {
-      // A trailing dot leaves an empty last segment: every next segment under the prefix completes it. A prefix
-      // starting with a dot (".", ".a") names no path, and completes nothing.
-      const baseDot = segments.slice(0, -1).join(".") + ".";
-      const currentSegmentPrefix = lastSegment.toLowerCase();
-
-      const segmentInfo = new Map<
-        string,
-        { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined }
-      >();
-
-      for (const p of allPaths) {
-        if (!p.path.startsWith(baseDot)) continue;
-        const pathAfterBase = p.path.substring(baseDot.length);
-        const nextSegment = pathAfterBase.split(".")[0];
-        if (!nextSegment || !nextSegment.toLowerCase().startsWith(currentSegmentPrefix)) continue;
-
-        let info = segmentInfo.get(nextSegment);
-        if (!info) {
-          info = { examplePath: null, isGroup: false, groupDesc: undefined };
-          segmentInfo.set(nextSegment, info);
-        }
-
-        const fullPrefix = baseDot + nextSegment;
-        if (!info.examplePath && (p.path.startsWith(fullPrefix + ".") || p.path === fullPrefix)) {
-          info.examplePath = p;
-        }
-        if (!info.isGroup && p.path.startsWith(fullPrefix + ".*")) {
-          info.isGroup = true;
-        }
-        if (!info.groupDesc && p.groupDescription && p.path.startsWith(fullPrefix + ".")) {
-          info.groupDesc = p.groupDescription;
-        }
-      }
-
-      for (const [segment, info] of segmentInfo) {
-        const fullPrefix = baseDot + segment;
-        const description = info.groupDesc || resolveDescription(fullPrefix, segment, info.examplePath?.description);
-        const isLeaf = !info.isGroup && info.examplePath?.path === fullPrefix;
-        completions.push({
-          label: segment,
-          detail: description,
-          documentation: description,
-          insertText: segment,
-          kind: info.isGroup ? "group" : "property",
-          ...(info.examplePath?.sortOrder !== undefined && { sortOrder: info.examplePath.sortOrder }),
-          ...(isLeaf &&
-            info.examplePath && {
-              path: info.examplePath.path,
-              valueType: info.examplePath.valueType,
-              operators: info.examplePath.operators,
-              possibleValues: info.examplePath.possibleValues,
-            }),
-        });
-      }
+      // A prefix starting with a dot (".", ".a") names no path, and completes nothing.
+      completions = segmentCompletions(allPaths, segments, segmentDescriber(generator, segmentLabels, kind));
     }
-
-    completions.sort((a, b) => {
-      if (a.kind === "group" && b.kind !== "group") return -1;
-      if (a.kind !== "group" && b.kind === "group") return 1;
-      const orderA = a.sortOrder ?? Infinity;
-      const orderB = b.sortOrder ?? Infinity;
-      if (orderA !== orderB) return orderA - orderB;
-      return a.label.localeCompare(b.label);
-    });
+    completions.sort(byCompletionOrder);
 
     const filtered = search
       ? completions.filter((c) => {

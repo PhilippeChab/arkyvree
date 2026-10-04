@@ -16,6 +16,22 @@ import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import type { Session } from "@/shared/relations.ts";
 
+/** The listings a user can ask for. */
+type RulesetScope =
+  | "base"
+  | "forked"
+  | "community"
+  | "createdByMe"
+  | "createdByMePrivate"
+  | "archived"
+  | "published"
+  | "starred"
+  | "campaignAccessible"
+  | "myDrafts"
+  | "extensions"
+  | "systems"
+  | "contributedTo";
+
 class RulesetsRepository extends include(
   BaseRepository<typeof rulesetsInRules>,
   Paginates,
@@ -24,6 +40,129 @@ class RulesetsRepository extends include(
 ) {
   constructor() {
     super(rulesetsInRules);
+  }
+
+  /** A page of the rulesets the user starred, among those `condition` keeps. */
+  private async findStarredPage(
+    db: Db,
+    session: Session,
+    condition: SQL | undefined,
+    order: SQL,
+    pagination: { limit: number; page: number },
+  ) {
+    return await this.withPagination(
+      pagination,
+      async (paginate) =>
+        await db
+          .select({
+            id: rulesetsInRules.id,
+            createdAt: rulesetsInRules.createdAt,
+            updatedAt: rulesetsInRules.updatedAt,
+            deletedAt: rulesetsInRules.deletedAt,
+            name: rulesetsInRules.name,
+            rulesetId: rulesetsInRules.rulesetId,
+            description: rulesetsInRules.description,
+            userId: rulesetsInRules.userId,
+            system: rulesetsInRules.system,
+            private: rulesetsInRules.private,
+            status: rulesetsInRules.status,
+            kind: rulesetsInRules.kind,
+            baseRules: rulesetsInRules.baseRules,
+            ancestorRulesetIds: rulesetsInRules.ancestorRulesetIds,
+            extensionRulesetIds: rulesetsInRules.extensionRulesetIds,
+          })
+          .from(rulesetsInRules)
+          .innerJoin(
+            starredRulesetsInAccount,
+            and(
+              eq(starredRulesetsInAccount.rulesetId, rulesetsInRules.id),
+              eq(starredRulesetsInAccount.userId, session.userId),
+              isNull(starredRulesetsInAccount.deletedAt),
+            ),
+          )
+          .where(condition)
+          .orderBy(order)
+          .limit(paginate.limit)
+          .offset(paginate.offset),
+    );
+  }
+
+  /** What a listing scope keeps (the starred scope, its join aside). */
+  private scopeConditions(db: Db, session: Session, scope: RulesetScope | undefined): (SQL | undefined)[] {
+    const notDeleted = isNull(rulesetsInRules.deletedAt);
+    const notArchived = not(eq(rulesetsInRules.status, "Archived"));
+
+    switch (scope) {
+      case "starred":
+        return [notDeleted, notArchived];
+      case "base":
+        return [isNull(rulesetsInRules.userId), isNull(rulesetsInRules.rulesetId), notDeleted, notArchived];
+      case "forked":
+        return [
+          eq(rulesetsInRules.userId, session.userId),
+          isNotNull(rulesetsInRules.rulesetId),
+          notDeleted,
+          notArchived,
+        ];
+      case "createdByMe":
+        return [this.userOwnsOrContributes(db, session.userId), notDeleted, notArchived];
+      case "contributedTo":
+        return [this.userIsActiveContributor(db, session.userId), notDeleted, notArchived];
+      case "createdByMePrivate":
+        return [eq(rulesetsInRules.userId, session.userId), eq(rulesetsInRules.private, true), notDeleted, notArchived];
+      case "published":
+        return [
+          notDeleted,
+          notArchived,
+          or(
+            and(eq(rulesetsInRules.private, false), eq(rulesetsInRules.status, "Published")),
+            eq(rulesetsInRules.userId, session.userId),
+            this.userIsActiveContributor(db, session.userId),
+          ),
+          eq(rulesetsInRules.kind, "ruleset"),
+        ];
+      case "campaignAccessible":
+        return [notDeleted, notArchived, this.userPlaysInCampaign(db, session.userId)];
+      case "myDrafts":
+        return [eq(rulesetsInRules.status, "Draft"), notDeleted, this.userOwnsOrContributes(db, session.userId)];
+      case "extensions":
+        return [
+          eq(rulesetsInRules.kind, "extension"),
+          eq(rulesetsInRules.status, "Published"),
+          notDeleted,
+          notArchived,
+          or(isNull(rulesetsInRules.userId), eq(rulesetsInRules.private, false)),
+        ];
+      case "systems":
+        return [
+          notDeleted,
+          notArchived,
+          isNull(rulesetsInRules.userId),
+          or(isNull(rulesetsInRules.rulesetId), eq(rulesetsInRules.status, "Published")),
+        ];
+      case "community":
+        return [
+          notDeleted,
+          notArchived,
+          isNotNull(rulesetsInRules.userId),
+          eq(rulesetsInRules.status, "Published"),
+          eq(rulesetsInRules.private, false),
+          eq(rulesetsInRules.kind, "ruleset"),
+        ];
+      case "archived":
+        return [eq(rulesetsInRules.userId, session.userId), notDeleted, eq(rulesetsInRules.status, "Archived")];
+      default:
+        return [
+          notDeleted,
+          notArchived,
+          or(
+            eq(rulesetsInRules.userId, session.userId),
+            and(isNull(rulesetsInRules.userId), isNull(rulesetsInRules.rulesetId)),
+            this.userPlaysInCampaign(db, session.userId),
+            this.userIsActiveContributor(db, session.userId),
+          ),
+        ];
+    }
   }
 
   private userIsActiveContributor(db: Db, userId: string) {
@@ -37,6 +176,29 @@ class RulesetsRepository extends include(
             eq(contributorsInRules.rulesetId, rulesetsInRules.id),
             eq(contributorsInRules.status, "Active"),
             isNull(contributorsInRules.deletedAt),
+          ),
+        ),
+    );
+  }
+
+  /** Whether the user owns the ruleset or actively contributes to it. */
+  private userOwnsOrContributes(db: Db, userId: string) {
+    return or(eq(rulesetsInRules.userId, userId), this.userIsActiveContributor(db, userId));
+  }
+
+  /** Whether the user plays in a campaign of the ruleset. */
+  private userPlaysInCampaign(db: Db, userId: string) {
+    return exists(
+      db
+        .select()
+        .from(playersInCampaign)
+        .innerJoin(campaignsInCampaign, eq(playersInCampaign.campaignId, campaignsInCampaign.id))
+        .where(
+          and(
+            eq(playersInCampaign.userId, userId),
+            isNull(playersInCampaign.deletedAt),
+            isNull(campaignsInCampaign.deletedAt),
+            eq(campaignsInCampaign.rulesetId, rulesetsInRules.id),
           ),
         ),
     );
@@ -108,25 +270,11 @@ class RulesetsRepository extends include(
     });
   }
 
-  // oxlint-disable-next-line arkyvree/function-length -- a long function to split into steps
   async findPage(
     db: Db,
     session: Session,
     where: {
-      scope?:
-        | "base"
-        | "forked"
-        | "community"
-        | "createdByMe"
-        | "createdByMePrivate"
-        | "archived"
-        | "published"
-        | "starred"
-        | "campaignAccessible"
-        | "myDrafts"
-        | "extensions"
-        | "systems"
-        | "contributedTo";
+      scope?: RulesetScope;
       search?: string;
       orderBy?: "createdAt" | "updatedAt";
       orderDir?: "asc" | "desc";
@@ -135,187 +283,26 @@ class RulesetsRepository extends include(
   ) {
     const { scope, search, orderBy = "createdAt", orderDir = "desc" } = where || {};
 
-    const conditions: (SQL | undefined)[] = [];
-
-    // Filtering
-    const notDeleted = isNull(rulesetsInRules.deletedAt);
-    const notArchived = not(eq(rulesetsInRules.status, "Archived"));
-
-    if (scope === "starred") {
-      conditions.push(notDeleted, notArchived);
-
-      const searchCondition = this.search(search, [this.table.name]);
-      if (searchCondition) {
-        conditions.push(searchCondition);
-      }
-
-      const orderField = orderBy === "updatedAt" ? this.table.updatedAt : this.table.createdAt;
-      const order = this.orderBy(orderField, orderDir);
-
-      return await this.withPagination(
-        pagination,
-        async (paginate) =>
-          await db
-            .select({
-              id: rulesetsInRules.id,
-              createdAt: rulesetsInRules.createdAt,
-              updatedAt: rulesetsInRules.updatedAt,
-              deletedAt: rulesetsInRules.deletedAt,
-              name: rulesetsInRules.name,
-              rulesetId: rulesetsInRules.rulesetId,
-              description: rulesetsInRules.description,
-              userId: rulesetsInRules.userId,
-              system: rulesetsInRules.system,
-              private: rulesetsInRules.private,
-              status: rulesetsInRules.status,
-              kind: rulesetsInRules.kind,
-              baseRules: rulesetsInRules.baseRules,
-              ancestorRulesetIds: rulesetsInRules.ancestorRulesetIds,
-              extensionRulesetIds: rulesetsInRules.extensionRulesetIds,
-            })
-            .from(rulesetsInRules)
-            .innerJoin(
-              starredRulesetsInAccount,
-              and(
-                eq(starredRulesetsInAccount.rulesetId, rulesetsInRules.id),
-                eq(starredRulesetsInAccount.userId, session.userId),
-                isNull(starredRulesetsInAccount.deletedAt),
-              ),
-            )
-            .where(conditions.length > 1 ? and(...conditions) : conditions[0])
-            .orderBy(order)
-            .limit(paginate.limit)
-            .offset(paginate.offset),
-      );
-    }
-
-    if (scope === "base") {
-      conditions.push(isNull(rulesetsInRules.userId), isNull(rulesetsInRules.rulesetId), notDeleted, notArchived);
-    } else if (scope === "forked") {
-      conditions.push(
-        eq(rulesetsInRules.userId, session.userId),
-        isNotNull(rulesetsInRules.rulesetId),
-        notDeleted,
-        notArchived,
-      );
-    } else if (scope === "createdByMe") {
-      conditions.push(
-        or(eq(rulesetsInRules.userId, session.userId), this.userIsActiveContributor(db, session.userId)),
-        notDeleted,
-        notArchived,
-      );
-    } else if (scope === "contributedTo") {
-      conditions.push(this.userIsActiveContributor(db, session.userId), notDeleted, notArchived);
-    } else if (scope === "createdByMePrivate") {
-      conditions.push(
-        eq(rulesetsInRules.userId, session.userId),
-        eq(rulesetsInRules.private, true),
-        notDeleted,
-        notArchived,
-      );
-    } else if (scope === "published") {
-      conditions.push(
-        notDeleted,
-        notArchived,
-        or(
-          and(eq(rulesetsInRules.private, false), eq(rulesetsInRules.status, "Published")),
-          eq(rulesetsInRules.userId, session.userId),
-          this.userIsActiveContributor(db, session.userId),
-        ),
-        eq(rulesetsInRules.kind, "ruleset"),
-      );
-    } else if (scope === "campaignAccessible") {
-      conditions.push(
-        notDeleted,
-        notArchived,
-        exists(
-          db
-            .select()
-            .from(playersInCampaign)
-            .innerJoin(campaignsInCampaign, eq(playersInCampaign.campaignId, campaignsInCampaign.id))
-            .where(
-              and(
-                eq(playersInCampaign.userId, session.userId),
-                isNull(playersInCampaign.deletedAt),
-                isNull(campaignsInCampaign.deletedAt),
-                eq(campaignsInCampaign.rulesetId, rulesetsInRules.id),
-              ),
-            ),
-        ),
-      );
-    } else if (scope === "myDrafts") {
-      conditions.push(
-        eq(rulesetsInRules.status, "Draft"),
-        notDeleted,
-        or(eq(rulesetsInRules.userId, session.userId), this.userIsActiveContributor(db, session.userId)),
-      );
-    } else if (scope === "extensions") {
-      conditions.push(
-        eq(rulesetsInRules.kind, "extension"),
-        eq(rulesetsInRules.status, "Published"),
-        notDeleted,
-        notArchived,
-        or(isNull(rulesetsInRules.userId), eq(rulesetsInRules.private, false)),
-      );
-    } else if (scope === "systems") {
-      conditions.push(
-        notDeleted,
-        notArchived,
-        isNull(rulesetsInRules.userId),
-        or(isNull(rulesetsInRules.rulesetId), eq(rulesetsInRules.status, "Published")),
-      );
-    } else if (scope === "community") {
-      conditions.push(
-        notDeleted,
-        notArchived,
-        isNotNull(rulesetsInRules.userId),
-        eq(rulesetsInRules.status, "Published"),
-        eq(rulesetsInRules.private, false),
-        eq(rulesetsInRules.kind, "ruleset"),
-      );
-    } else if (scope === "archived") {
-      conditions.push(eq(rulesetsInRules.userId, session.userId), notDeleted, eq(rulesetsInRules.status, "Archived"));
-    } else {
-      conditions.push(
-        notDeleted,
-        notArchived,
-        or(
-          eq(rulesetsInRules.userId, session.userId),
-          and(isNull(rulesetsInRules.userId), isNull(rulesetsInRules.rulesetId)),
-          exists(
-            db
-              .select()
-              .from(playersInCampaign)
-              .innerJoin(campaignsInCampaign, eq(playersInCampaign.campaignId, campaignsInCampaign.id))
-              .where(
-                and(
-                  eq(playersInCampaign.userId, session.userId),
-                  isNull(playersInCampaign.deletedAt),
-                  isNull(campaignsInCampaign.deletedAt),
-                  eq(campaignsInCampaign.rulesetId, rulesetsInRules.id),
-                ),
-              ),
-          ),
-          this.userIsActiveContributor(db, session.userId),
-        ),
-      );
-    }
-
+    const conditions = this.scopeConditions(db, session, scope);
     const searchCondition = this.search(search, [this.table.name]);
     if (searchCondition) {
       conditions.push(searchCondition);
     }
+    const condition = conditions.length > 1 ? and(...conditions) : conditions[0];
 
     const orderField = orderBy === "updatedAt" ? this.table.updatedAt : this.table.createdAt;
     const order = this.orderBy(orderField, orderDir);
 
+    if (scope === "starred") {
+      return await this.findStarredPage(db, session, condition, order, pagination);
+    }
     return await this.withPagination(
       pagination,
       async (paginate) =>
         await db
           .select()
           .from(rulesetsInRules)
-          .where(conditions.length > 1 ? and(...conditions) : conditions[0])
+          .where(condition)
           .orderBy(order)
           .limit(paginate.limit)
           .offset(paginate.offset),
