@@ -111,4 +111,15 @@ export default class DetailedCharacterFeatGroupings {
       this.featGroupings[normalizedFamily][variant] = featState;
     }
   }
+
+  /**
+   * An empty group for each of these families that no feat of the ruleset is in: a check of one (an extension's
+   * prestige class needing another book's ki power) is unmet, rather than naming nothing.
+   */
+  seedEmptyFamilies(families: readonly string[]): void {
+    for (const family of families) {
+      const key = stripSeparators(family);
+      if (key && !this.featGroupings[key]) this.featGroupings[key] = familyGroup();
+    }
+  }
 }

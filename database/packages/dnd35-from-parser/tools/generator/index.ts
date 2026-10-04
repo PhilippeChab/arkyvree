@@ -861,16 +861,17 @@ function regenerateFeatIndex(out: Output, book: string) {
 
 function generateClass(out: Output, ref: ClassReference, book: string) {
   const slug = toCamelCase(ref.raw.name);
-
-  // Generate class seed .ts
-  const classCode = generateClassSeed(ref);
   const classPath = join(out.dir, book, "classes", `${slug}.ts`);
-  writeGenerated(out, classPath, classCode);
-
-  // Generate class feature seeds .ts
-  const featCode = generateClassFeatSeeds(ref);
   const featPath = join(out.dir, book, "feats", "classes", `${slug}.ts`);
-  writeGenerated(out, featPath, featCode);
+
+  if (ref.overrides?.skip) {
+    // A class left out of the seed: its files go, and the indexes below leave it out
+    rmSync(classPath, { force: true });
+    rmSync(featPath, { force: true });
+  } else {
+    writeGenerated(out, classPath, generateClassSeed(ref));
+    writeGenerated(out, featPath, generateClassFeatSeeds(ref));
+  }
 
   regenerateFavoredEnemyFeats(out, book);
 

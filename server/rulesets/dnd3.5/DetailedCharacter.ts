@@ -27,6 +27,7 @@ import DetailedCharacterPowerGroupings from "@/server/rulesets/universal/Detaile
 import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
+import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
@@ -313,6 +314,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       const feat = rulesetFeatsById.get(prop.entityId);
       if (feat) this.detailedCharacterFeatGroupings.registerFeat(feat, [prop]);
     }
+    this.detailedCharacterFeatGroupings.seedEmptyFamilies(FEAT_FAMILIES);
     this.detailedCharacterFeats.injectGroupings(this.detailedCharacterFeatGroupings.getFeatGroupings());
     this.detailedCharacterSkills.initialize(
       this.rulesetSkills,

@@ -6,6 +6,7 @@
     "type": "class"
   },
   "overrides": {
+    "skip": true,
     "classSkills": [
       "Bluff",
       "Concentration",

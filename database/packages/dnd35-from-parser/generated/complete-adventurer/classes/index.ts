@@ -21,7 +21,6 @@ import { OLLAM } from "./ollam.ts";
 import { SCOUT } from "./scout.ts";
 import { SHADOWBANE_INQUISITOR } from "./shadowbaneInquisitor.ts";
 import { SHADOWBANE_STALKER } from "./shadowbaneStalker.ts";
-import { SHADOWMIND } from "./shadowmind.ts";
 import { SPELLTHIEF } from "./spellthief.ts";
 import { SPYMASTER } from "./spymaster.ts";
 import { STREETFIGHTER } from "./streetfighter.ts";
@@ -52,7 +51,6 @@ export const ALL_CLASSES: ClassSeed[] = [
   SCOUT,
   SHADOWBANE_INQUISITOR,
   SHADOWBANE_STALKER,
-  SHADOWMIND,
   SPELLTHIEF,
   SPYMASTER,
   STREETFIGHTER,
@@ -88,7 +86,6 @@ export const ALL_PRESTIGE_CLASSES: ClassSeed[] = [
   OLLAM,
   SHADOWBANE_INQUISITOR,
   SHADOWBANE_STALKER,
-  SHADOWMIND,
   SPYMASTER,
   STREETFIGHTER,
   TEMPEST,

@@ -1,3 +1,4 @@
+import { UNARMED_STRIKE } from "@/server/rulesets/constants.ts";
 import { SLOT_MAP, type WeaponSet } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
 import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
@@ -109,10 +110,11 @@ export default class DetailedCharacterWeapons {
 
     // RAW: a strike with a gauntlet is otherwise considered an unarmed attack.
     if (weaponType?.value === "Gauntlet") {
-      if (!this.weapons["unarmedstrike"]) {
-        this.weapons["unarmedstrike"] = {};
+      const unarmed = stripSeparators(UNARMED_STRIKE);
+      if (!this.weapons[unarmed]) {
+        this.weapons[unarmed] = {};
       }
-      this.weapons["unarmedstrike"][weaponKey] = weaponRef;
+      this.weapons[unarmed][weaponKey] = weaponRef;
     }
   }
 }

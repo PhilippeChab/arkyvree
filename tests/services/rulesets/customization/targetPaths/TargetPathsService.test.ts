@@ -171,6 +171,24 @@ describe("TargetPathsService", () => {
     expect((await pathOf("requirement", "aptitudes.general.allowed"))?.operators).toContain("greater_than");
   });
 
+  test("lists what the engine reads without an entity of its own: the unarmed strike, the skill points, a skill family", async () => {
+    const offered = async (kind: Kind) => new Map((await seedPaths(kind)).paths.map((p) => [p.path, p]));
+    const [modifiers, requirements] = [await offered("modifier"), await offered("requirement")];
+    for (const path of [
+      "items.weapons.unarmedstrike.damage.base",
+      "items.weapons.unarmedstrike.tohit.misc",
+      "skills.budget.perlevel",
+      "skills.knowledge.misc",
+    ])
+      expect(modifiers.has(path)).toBe(true);
+    expect(modifiers.has("skills.budget.available")).toBe(false);
+    expect(requirements.get("skills.budget.available")?.description).toBe("Skill points left to spend");
+    expect(requirements.get("skills.knowledge.rank")?.description).toBe("Any Knowledge skill — Total ranks invested");
+    expect(modifiers.get("skills.knowledge.misc")?.description).toBe(
+      "All Knowledge skills — From feats, items, and spells",
+    );
+  });
+
   test("offers aptitude uses and picks only to the entities that grant them", async () => {
     for (const entityType of ["klass_levels", "feats", "races", undefined] as const) {
       expect((await seedPaths("modifier", entityType)).paths.some(isAptitudeGrant)).toBe(true);

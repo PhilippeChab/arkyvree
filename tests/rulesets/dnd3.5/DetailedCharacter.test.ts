@@ -2273,6 +2273,18 @@ describe("DetailedCharacter", () => {
       expect(await met("Elara Starweaver", "feats.martialweaponproficiency.*.possessed")).toBe(false);
     });
 
+    test("a family no feat of the ruleset is in is unmet, not invalid: another book's ki power", async () => {
+      // Bjorn's rules are the core's: Ki Power and Skirmish feats are Complete Adventurer's
+      const bjorn = await buildSeeded("Bjorn Ironhand");
+      const atLeastTwo = { operator: "greater_than_or_equal", value: "2", valueType: "number" } as const;
+      for (const groups of [requiring("feats.kipower.*.possessed"), requiring("feats.skirmish.count", atLeastTwo)]) {
+        expect(bjorn.areRequirementsMet(groups)).toBe(false);
+        expect(bjorn.getUnmetRequirementIssues(groups).filter((issue) => issue.message.startsWith("Invalid"))).toEqual(
+          [],
+        );
+      }
+    });
+
     test("a family's name alone, or a name that only starts a feat's, names no feat", async () => {
       expect(await met("Bjorn Ironhand", "feats.weaponfocus.possessed")).toBe(false);
       // Power Attack

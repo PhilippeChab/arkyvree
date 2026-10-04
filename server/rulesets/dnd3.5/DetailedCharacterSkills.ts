@@ -26,6 +26,13 @@ const NAVIGATABLE_PATHS = [
   { path: "innate", description: "Whether skill is a class skill", type: "boolean" as const },
 ];
 
+const BUDGET_PATHS = [
+  { path: "perlevel", description: "Bonus skill points per level (a human's)", requirementOnly: false },
+  { path: "total", description: "Skill points from every level", requirementOnly: true },
+  { path: "spent", description: "Skill points spent", requirementOnly: true },
+  { path: "available", description: "Skill points left to spend", requirementOnly: true },
+];
+
 type DetailedCharacterComprehensiveSkills = {
   [key: string]: {
     name: string;
@@ -59,21 +66,46 @@ export default class DetailedCharacterSkills {
   ) {}
 
   static getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(NAVIGATABLE_PATHS);
+    return {
+      ...deriveSegmentLabels(NAVIGATABLE_PATHS),
+      ...deriveSegmentLabels(BUDGET_PATHS),
+      budget: "Skill Points",
+      perlevel: "Per Level",
+    };
   }
 
+  /** The skill families no skill of their own names, by their slug: "knowledge" for the Knowledge skills. */
+  static getFamilyLabels(skills: Pick<Skill, "name">[]): Record<string, string> {
+    const names = new Set(skills.map((skill) => skill.name));
+    const labels: Record<string, string> = {};
+    for (const skill of skills) {
+      const family = skill.name.match(/^(.+?) \(/)?.[1];
+      if (family && !names.has(family)) labels[stripSeparators(family)] = family;
+    }
+    return labels;
+  }
+
+  /**
+   * Each skill's paths, and a family's that no skill of its own names: `skills.knowledge.rank` reaches every Knowledge
+   * skill, as the engine reads it (any of them for a requirement, all for a modifier).
+   */
   static generateTargetPaths(skills: Skill[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
+    const entries = [
+      ...skills.map((skill) => ({ slug: stripSeparators(skill.name), prefix: "" })),
+      ...Object.entries(DetailedCharacterSkills.getFamilyLabels(skills)).map(([slug, family]) => ({
+        slug,
+        prefix: kind === "requirement" ? `Any ${family} skill — ` : `All ${family} skills — `,
+      })),
+    ];
 
-    for (const skill of skills) {
-      const normalizedSkillName = stripSeparators(skill.name);
-
+    for (const { slug, prefix } of entries) {
       for (const subPath of NAVIGATABLE_PATHS) {
         if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
         paths.push({
-          path: `skills.${normalizedSkillName}.${subPath.path}`,
+          path: `skills.${slug}.${subPath.path}`,
           category: "skills",
-          description: subPath.description,
+          description: `${prefix}${subPath.description}`,
           valueType: subPath.type,
           operators:
             kind === "modifier"
@@ -85,6 +117,18 @@ export default class DetailedCharacterSkills {
                 : [...NUMERIC_REQUIREMENT_OPERATORS],
         });
       }
+    }
+
+    // The skill point budget: a level's bonus points (a human's) are an input, the rest is counted
+    for (const { path, description, requirementOnly } of BUDGET_PATHS) {
+      if (requirementOnly && kind === "modifier") continue;
+      paths.push({
+        path: `skills.budget.${path}`,
+        category: "skills",
+        description,
+        valueType: "number",
+        operators: getNumericOperators(kind),
+      });
     }
 
     paths.push({

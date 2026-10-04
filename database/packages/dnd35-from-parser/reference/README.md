@@ -21,6 +21,7 @@ raw                                 # Verbatim scrape from the HTML page
 └── bonusSpellAbility?              #   Detected from feature text
 
 overrides                           # MANUAL — the only hand-edited part
+├── skip                            #   Leave the class out of the seed (generation removes its files)
 ├── description                     #   Override class description
 ├── requirements[]                  #   Override detected.requirements
 ├── classSkills[]                   #   Override raw.classSkills

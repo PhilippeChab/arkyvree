@@ -88,6 +88,7 @@ Scrapes class pages into `ClassReference` JSON with full progression tables.
 - `aptitudePicks` — Links "choose an ability" features to aptitude pool slugs
 - `features` — Per-feature corrections (name, level, aptitude, modifiers…); a `null` field removes the detected one
 - Any other detected value to correct (`bab`, `saves`, `requirements`, `classSkills`, `spells`…)
+- `skip` — Leave the class out of the seed: one the rules can't support (the Shadowmind needs psionics). Generation removes its files
 
 ### Feats
 

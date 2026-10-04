@@ -31,7 +31,6 @@ export const ALL_APTITUDES: string[] = [
   "Scout Class Feature",
   "Shadowbane Inquisitor Class Feature",
   "Shadowbane Stalker Class Feature",
-  "Shadowmind Class Feature",
   "Spellthief Class Feature",
   "Spellthief Spells",
   "Spymaster Class Feature",

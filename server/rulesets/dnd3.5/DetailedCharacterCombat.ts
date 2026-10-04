@@ -1,4 +1,5 @@
 import { include } from "@/server/mixins.ts";
+import { UNARMED_STRIKE } from "@/server/rulesets/constants.ts";
 import type DetailedCharacterEncumbrance from "@/server/rulesets/dnd3.5/DetailedCharacterEncumbrance.ts";
 import type DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
 import type { RaceWithPMR } from "@/server/rulesets/types.ts";
@@ -186,7 +187,7 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints
     this.initializeGrapple();
     this.initializeSpeed(race);
 
-    this.addWeapon(0, "Main Hand", { name: "Unarmed Strike" }, [
+    this.addWeapon(0, "Main Hand", { name: UNARMED_STRIKE }, [
       { type: WEAPON_PROFICIENCY, value: "Unarmed" },
       { type: WEAPON_BASE_DAMAGE, value: "1d3" },
       { type: DAMAGE_TYPE, value: "Bludgeoning" },
