@@ -6,7 +6,7 @@ import type { itemsInRules } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { Items, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
+import { CharacterInventory, Items, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { WEAPON_PROFICIENCY, WEAPON_SIZE } from "@/shared/dnd3.5/properties/index.ts";
@@ -58,7 +58,13 @@ const add = (
     force,
   );
 
-const update = (
+/** The character's entry of the item, by the item: a test carries each item once. An id it doesn't carry is its own. */
+async function entryOf(characterId: string, itemId: string) {
+  const entries = await CharacterInventory.findMany(db, { characterId });
+  return entries.find((entry) => entry.itemId === itemId)?.id ?? itemId;
+}
+
+const update = async (
   session: Session,
   characterId: string,
   itemId: string,
@@ -75,7 +81,7 @@ const update = (
   CharacterInventoryService.updateItem(
     session,
     characterId,
-    itemId,
+    await entryOf(characterId, itemId),
     quantity,
     equipped,
     location,
@@ -85,6 +91,10 @@ const update = (
     force,
     updatedAt,
   );
+
+/** Removes the character's entry of the item. */
+const remove = async (session: Session, characterId: string, itemId: string) =>
+  CharacterInventoryService.removeItem(session, characterId, await entryOf(characterId, itemId));
 
 const equipped = (location: ItemLocation, weaponSet: number | null = null): Placement => ({
   equipped: true,
@@ -181,7 +191,7 @@ describe("InventoryService", () => {
     const removed = await newItem();
     await add(session, character.id, item.id, { quantity: 3 });
     await add(session, character.id, removed.id);
-    expect(await CharacterInventoryService.removeItem(session, character.id, removed.id)).toEqual({ success: true });
+    expect(await remove(session, character.id, removed.id)).toEqual({ success: true });
 
     const expected = [
       {
@@ -246,15 +256,11 @@ describe("InventoryService", () => {
       await expect(update(session, character.id, item.id, { charges: [10, 20] })).rejects.toThrow(BadRequestError);
     });
 
-    test("refuses an item carried already, a missing item and changes to one not carried", async () => {
-      const { session, character, item } = await setup();
-      await add(session, character.id, item.id);
-      await expect(add(session, character.id, item.id)).rejects.toThrow(BadRequestError);
+    test("refuses a missing item and changes to an entry the character doesn't have", async () => {
+      const { session, character } = await setup();
       await expect(add(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
       await expect(update(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(CharacterInventoryService.removeItem(session, character.id, NIL_UUID)).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(remove(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
 
     test("refuses a missing character, another user's, and changes to an archived one", async () => {
@@ -265,7 +271,7 @@ describe("InventoryService", () => {
         () => CharacterInventoryService.getInventory(s, characterId),
         () => add(s, characterId, item.id),
         () => update(s, characterId, item.id),
-        () => CharacterInventoryService.removeItem(s, characterId, item.id),
+        () => remove(s, characterId, item.id),
       ];
       // One at a time: the test's transaction has a single connection.
       for (const call of [...calls(session, NIL_UUID), ...calls(other, character.id)])
@@ -440,14 +446,43 @@ describe("InventoryService", () => {
       const lyra = await findSeededCharacter("Lyra Shadowstep");
       const session = makeSession();
       const { itemMap } = await getSeedCtx();
-      await CharacterInventoryService.removeItem(session, lyra.id, itemMap["Studded Leather"]);
+      await remove(session, lyra.id, itemMap["Studded Leather"]);
       await expect(add(session, lyra.id, itemMap["Chain Mail"], equipped("Torso"))).rejects.toThrow(
         "Character does not meet the requirements to equip this item",
       );
       for (const armor of ["Elven Chain", "Celestial Armor"]) {
         expect(await add(session, lyra.id, itemMap[armor], equipped("Torso"))).toMatchObject({ location: "Torso" });
-        await CharacterInventoryService.removeItem(session, lyra.id, itemMap[armor]);
+        await remove(session, lyra.id, itemMap[armor]);
       }
+    });
+
+    test("holds the same weapon twice, a dagger in each hand, as two entries; not twice in one hand", async () => {
+      const { session, character } = await setup();
+      const dagger = (await getSeedCtx()).itemMap["Dagger"];
+      const first = await add(session, character.id, dagger, equipped("Main Hand", 0));
+      const second = await add(session, character.id, dagger, equipped("Off Hand", 0));
+      expect(second.id).not.toBe(first.id);
+      // The other dagger takes the main hand: the second can't go there, but moving the first within its hand is fine
+      await expect(
+        CharacterInventoryService.updateItem(session, character.id, second.id, 1, true, "Main Hand", null, null, 0),
+      ).rejects.toThrow('"Main Hand" is already occupied in this weapon set');
+      expect(
+        await CharacterInventoryService.updateItem(
+          session,
+          character.id,
+          first.id,
+          2,
+          true,
+          "Main Hand",
+          null,
+          null,
+          0,
+        ),
+      ).toMatchObject({ id: first.id, quantity: 2 });
+      expect(await CharacterInventoryService.removeItem(session, character.id, first.id)).toEqual({ success: true });
+      expect((await CharacterInventoryService.getInventory(session, character.id)).map((entry) => entry.id)).toEqual([
+        second.id,
+      ]);
     });
 
     test("refuses a bastard sword in one hand without its proficiency, unless forced, and a dwarf's waraxe in one hand", async () => {
@@ -463,7 +498,7 @@ describe("InventoryService", () => {
         { category: "requirements", entityName: "Bastard Sword", entityType: "items" },
       ]);
       expect(await add(session, bjorn.id, sword, equipped("Two Handed", 1))).toMatchObject({ location: "Two Handed" });
-      await CharacterInventoryService.removeItem(session, bjorn.id, sword);
+      await remove(session, bjorn.id, sword);
       expect(await add(session, bjorn.id, sword, { ...equipped("Main Hand", 1), force: true })).toMatchObject({
         location: "Main Hand",
       });

@@ -1200,6 +1200,7 @@ export const inventoryInCharacter = character.table("inventory", {
 	createdAt: timestamp("created_at", { mode: 'string', withTimezone: true }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string', withTimezone: true }).defaultNow().notNull(),
 	deletedAt: timestamp("deleted_at", { mode: 'string', withTimezone: true }),
+	id: uuid().default(sql`public.gen_random_uuid()`).primaryKey().notNull(),
 	characterId: uuid("character_id").notNull(),
 	itemId: uuid("item_id").notNull(),
 	quantity: integer().notNull(),
@@ -1221,7 +1222,6 @@ export const inventoryInCharacter = character.table("inventory", {
 			foreignColumns: [itemsInRules.id],
 			name: "inventory_item_id_fkey"
 		}).onDelete("restrict"),
-	primaryKey({ columns: [table.characterId, table.itemId], name: "inventory_pkey"}),
 	check("inventory_quantity_check", sql`quantity > 0`),
 	check("inventory_check", sql`(total_charges IS NULL) OR ((total_charges >= 0) AND (remaining_charges IS NOT NULL))`),
 	check("inventory_check1", sql`(remaining_charges IS NULL) OR ((remaining_charges >= 0) AND (total_charges IS NOT NULL))`),

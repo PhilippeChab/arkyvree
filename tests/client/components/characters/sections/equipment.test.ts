@@ -3,9 +3,9 @@ import { describe, expect, test } from "bun:test";
 import { getSlotConflictWarning, placementPayload } from "@/client/src/components/characters/sections/equipment.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
-/** An equipped item named `name` at `location`, in `weaponSet` (stored from 0) for a hand. */
-const placed = (name: string, location: ItemLocation, weaponSet: number | null = null) => ({
-  itemId: name,
+/** An equipped item named `name` at `location`, in `weaponSet` (stored from 0) for a hand: its entry's id `id`. */
+const placed = (name: string, location: ItemLocation, weaponSet: number | null = null, id = name) => ({
+  id,
   equipped: true,
   location,
   weaponSet,
@@ -31,7 +31,15 @@ describe("The inventory dialog's slot warning", () => {
     expect(getSlotConflictWarning("Main Hand", 1, inventory)).toBe("Main Hand is occupied by Longsword (Set 1)");
   });
 
-  test("is none for a free slot, nothing equipped, or the item being edited", () => {
+  test("counts the item's own other entry: a second dagger in the hand the first holds", () => {
+    const daggers = [placed("Dagger", "Main Hand", 0, "first dagger")];
+    expect(getSlotConflictWarning("Main Hand", 1, daggers, "second dagger")).toBe(
+      "Main Hand is occupied by Dagger (Set 1)",
+    );
+    expect(getSlotConflictWarning("Off Hand", 1, daggers, "second dagger")).toBeNull();
+  });
+
+  test("is none for a free slot, nothing equipped, or the entry being edited", () => {
     expect(getSlotConflictWarning("Neck", 1, inventory)).toBeNull();
     expect(getSlotConflictWarning("Off Hand", 1, inventory)).toBeNull();
     expect(getSlotConflictWarning("none", 1, inventory)).toBeNull();

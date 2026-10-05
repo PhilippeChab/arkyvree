@@ -892,6 +892,18 @@ describe("DetailedCharacter", () => {
         expect(mainhand).toMatchObject({ name: "Sling", light: false });
       });
 
+      test("hold the same weapon in each hand, its enhancement once on each", async () => {
+        // An elf rogue with an Assassin's Dagger (+2) in each hand: two entries of one item
+        const { mainhand, offhand } = weaponSet(
+          await buildCarrying("Lyra Shadowstep", [
+            { item: "Assassin's Dagger", location: "Main Hand", weaponSet: 0 },
+            { item: "Assassin's Dagger", location: "Off Hand", weaponSet: 0 },
+          ]),
+        );
+        expect([mainhand?.tohit.magic, offhand?.tohit.magic]).toEqual([2, 2]);
+        expect([mainhand?.twoweapon, offhand?.twoweapon].every(Boolean)).toBe(true);
+      });
+
       test("leave a weapon alone without one in the other hand, an unarmed strike not counting", async () => {
         const lyra = await buildCarrying("Lyra Shadowstep", [
           { item: "Dagger", location: "Off Hand", weaponSet: 0 },

@@ -48,6 +48,7 @@ function equipmentOf(dc: Dnd35DetailedCharacter) {
     .getDetailedCharacterInventory()
     .getFlatInventory()
     .map((entry) => ({
+      id: entry.id,
       itemId: entry.itemId,
       name: entry.item.name,
       type: entry.item.type,

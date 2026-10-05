@@ -79,4 +79,21 @@ test.describe("Character inventory", () => {
     await save(edit, /^Update$/);
     await expect(row().getByText("Two Handed (Set 1)")).toBeVisible();
   });
+
+  test("the same weapon goes in each hand, as two entries", async ({ page }) => {
+    // A dagger in the main hand, then a second one in the off hand: the inventory lists both
+    for (const hand of ["Main Hand", "Off Hand"]) {
+      const dialog = await pickItem(page, "Dagger", /^Dagger\s/);
+      await selectOption(page, "Hand Slot", hand);
+      const added = apiResponse(page, "POST", /\/api\/characters\/inventory/);
+      await save(dialog, /^Create$/);
+      await added;
+    }
+    const daggers = page
+      .locator("div", { hasText: /^Equipment & Inventory/ })
+      .first()
+      .locator("table tbody tr", { hasText: /^Dagger/ });
+    await expect(daggers.filter({ hasText: "Main Hand (Set 1)" })).toHaveCount(1);
+    await expect(daggers.filter({ hasText: "Off Hand (Set 1)" })).toHaveCount(1);
+  });
 });

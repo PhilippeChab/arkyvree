@@ -27,18 +27,16 @@ const SLOT_CONFLICT_MESSAGES: Record<SlotConflictReason, (location: ItemLocation
 async function validateEquipmentSlot(
   tx: Db,
   characterId: string,
-  item: { id: string; type: string | null },
+  entry: { id: string | null; item: { id: string; type: string | null } },
   location: ItemLocation,
   weaponSet: number | null,
   ruleset: Ruleset,
   rulesetData: CachedRulesetData,
 ) {
-  // Caller runs us inside a withRulesetScope — CharacterInventory.findMany
-  // auto-resolves row.itemId to post-COW via the repo Proxy, and `item.id`
-  // is auto-canonicalized at the Items.findOne call site, so equality
-  // self-exclusion works directly.
+  // The other entries: the item's own other ones count (a dagger in the other hand), the one being edited doesn't
   const inventory = await CharacterInventory.findMany(tx, { characterId });
-  const equippedItems = inventory.filter((entry) => entry.equipped && entry.itemId !== item.id);
+  const equippedItems = inventory.filter((other) => other.equipped && other.id !== entry.id);
+  const { item } = entry;
 
   const conflict = findSlotConflict(location, weaponSet, equippedItems);
   if (conflict) throw new BadRequestError(SLOT_CONFLICT_MESSAGES[conflict.reason](location));
@@ -133,13 +131,13 @@ export function validateCharges(totalCharges: number | null, remainingCharges: n
 }
 
 /**
- * Equipping `item` at `location`: a hand slot needs its weapon set, the slot must take it, and the character must meet
- * the item's requirements unless `force`.
+ * Equipping an entry's item at `location` (the entry's `id`, null for a new one): a hand slot needs its weapon set, the
+ * slot must take it, and the character must meet the item's requirements unless `force`.
  */
 export async function validateEquipping(
   tx: Db,
   characterRecord: CharacterRecord,
-  item: { id: string; type: string | null; sourceItemId: string | null },
+  entry: { id: string | null; item: { id: string; type: string | null; sourceItemId: string | null } },
   location: ItemLocation,
   weaponSet: number | null,
   force: boolean,
@@ -149,7 +147,8 @@ export async function validateEquipping(
   if (isHandLocation(location) && weaponSet === null) {
     throw new BadRequestError("A weapon set is required when equipping to a hand slot");
   }
-  await validateEquipmentSlot(tx, characterRecord.id, item, location, weaponSet, ruleset, rulesetData);
+  const { item } = entry;
+  await validateEquipmentSlot(tx, characterRecord.id, entry, location, weaponSet, ruleset, rulesetData);
   if (force) return;
   await validateItemRequirements(tx, characterRecord, item, ruleset, rulesetData);
   await validateWeaponInOneHand(tx, characterRecord, item, location, ruleset, rulesetData);

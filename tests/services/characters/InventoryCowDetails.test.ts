@@ -71,7 +71,7 @@ describe("COW inventory item details", () => {
       expect(entry.item.properties.length).toBeGreaterThan(0);
 
       // Reading a fork does not rewrite the pick or change the parent item.
-      const stored = await CharacterInventory.findOne(db, { characterId: character.id, itemId: item.id });
+      const [stored] = await CharacterInventory.findMany(db, { characterId: character.id });
       expect(stored?.itemId).toBe(item.id);
       const parent = await ItemsService.getItem(item.rulesetId, item.id);
       expect(parent.name).toBe(item.name);

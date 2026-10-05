@@ -512,6 +512,13 @@
       "when": 1790986632508,
       "tag": "0072_generated_feats",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1791158921050,
+      "tag": "0073_inventory-entries",
+      "breakpoints": true
     }
   ]
 }
