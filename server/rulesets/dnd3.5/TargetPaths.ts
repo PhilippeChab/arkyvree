@@ -41,7 +41,7 @@ import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { Dnd35LevelsHooks } from "./hooks/index.ts";
-import { collectFeatListIds } from "./spellcasting/spellLists.ts";
+import { collectClassListIds, collectFeatListIds } from "./spellcasting/spellLists.ts";
 
 // D&D 3.5 specific constants
 const DND35_CATEGORIES = [
@@ -196,8 +196,8 @@ function collectGroupings(rulesetData: CachedRulesetData) {
     if (prop.type === FEAT_FAMILY) featGroupingLabels[stripSeparators(prop.value)] = prop.value;
   }
 
-  // Detect leveled aptitudes from powers with non-null level on the junction table
-  const leveledAptitudeIds = new Set<string>();
+  // The leveled aptitudes: those with spells at a level, and those a class gives slots in before they have any
+  const leveledAptitudeIds = collectClassListIds(rulesetData);
   for (const power of powers) {
     for (const pa of power.powersAptitudesInRules) {
       if (pa.level != null) leveledAptitudeIds.add(pa.aptitudeId);

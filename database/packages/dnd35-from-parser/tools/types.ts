@@ -88,6 +88,11 @@ type ClassSpells = {
   inheritsFrom?: InheritedSpellList;
   /** The lists its slots go to instead of its own, each while its requirements are met */
   lists?: ClassSpellList[];
+  /**
+   * The pool a domain is picked from (a divine crusader's), whose spells are her list: a feat per domain her book and
+   * the core rules have, joining its list to hers (`aptitudes.<domain>domainspells.joinsclasslist`)
+   */
+  domainPool?: string;
 };
 
 /** A class feature's fields a mapping derives and an override sets. */

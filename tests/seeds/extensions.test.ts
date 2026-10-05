@@ -198,4 +198,43 @@ describe("The seeded extensions", () => {
       ]),
     ).toEqual({ "Cause Fear": 1, Contagion: 3, "Bless Weapon": undefined });
   });
+  test("give the divine crusader a pick of the core rules' and Complete Divine's domains, each joining its list to hers", async () => {
+    const core = await seededRows();
+    const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+    // The cleric's domains of both, each with the list its feat joins
+    const clericDomain = core.aptitude("Cleric Domain").id;
+    const domains = [core, divine].flatMap((rows) =>
+      rows.feats
+        .filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === clericDomain))
+        .map((feat) => [
+          `${feat.name} (Divine Crusader)`,
+          rows.modifiersOf(feat.id).find((modifier) => modifier.target.endsWith(".joinsclasslist"))?.target,
+        ]),
+    );
+    expect(domains.length).toBeGreaterThan(20);
+
+    const pool = divine.aptitude("Divine Crusader Domain").id;
+    const choices = divine.feats.filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === pool));
+    expect(
+      Object.fromEntries(
+        choices.map((feat) => [
+          feat.name,
+          divine.modifiersOf(feat.id).map((modifier) => `${modifier.target} ${modifier.value}`),
+        ]),
+      ),
+    ).toEqual(Object.fromEntries(domains.map(([name, join]) => [name, [`${join} true`]])));
+    expect(choices.every((feat) => feat.selectable && divine.requirementsOf(feat.id).length === 0)).toBe(true);
+    // Picked at her first level
+    expect(
+      divine.modifiersOf(divine.klassLevel("Divine Crusader", 1).id).map((m) => `${m.target} ${m.operator} ${m.value}`),
+    ).toContain("aptitudes.divinecrusaderdomain.allowed add 1");
+  });
+
+  test("join the Luck domain's list to the temple raider's at his tenth level", async () => {
+    const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+    const luck = divine.feat("Luck Domain (Temple Raider of Olidammara)");
+    expect(divine.modifiersOf(luck.id).map((m) => `${m.target} ${m.operator} ${m.value}`)).toEqual([
+      "aptitudes.luckdomainspells.joinsclasslist set true",
+    ]);
+  });
 });

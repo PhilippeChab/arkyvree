@@ -1,4 +1,5 @@
-import { JOIN_TARGET, SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { collectClassLists, JOIN_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
@@ -8,7 +9,6 @@ import type DetailedCharacterPowerGroupings from "@/server/rulesets/universal/De
 import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import type { SpellTagLists } from "@/shared/dnd3.5/spellGroups.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
 
 /** What a character's spellcasting holds: its bonus caster levels, its aptitudes' powers, its spell tags. */
 export default abstract class SpellcastingState {
@@ -46,6 +46,9 @@ export default abstract class SpellcastingState {
 
   /** Where each spell tag shows, by its name. */
   protected spellTagLists: Record<string, SpellTagLists> = {};
+
+  /** Each class's spell lists, by its id (`loadClassLists`). */
+  protected classListsByKlassId = new Map<string, Set<string>>();
 
   /**
    * A class's list that knows every spell of a spell level (`allowed` all known), if one does: where the spells of a
@@ -101,14 +104,17 @@ export default abstract class SpellcastingState {
   }
 
   /**
-   * A class's spell lists: those its levels give slots in, a pious templar's paladin and blackguard lists (the slots of
-   * the one she didn't pick gated out), else "<Class> Spells".
+   * A class's spell lists: those its levels give slots in, the levels the character hasn't taken included (a paladin's
+   * before his fourth); a pious templar's paladin and blackguard lists, the slots of the one she didn't pick gated out.
+   * None for a class without slots.
    */
   protected spellListsOf(className: string): string[] {
-    const { levels } = this.classes.getCharacterClasses()[className];
-    const lists = new Set(
-      levels.flatMap(({ klassLevel }) => klassLevel.modifiers.flatMap((m) => SLOT_TARGET.exec(m.target)?.[1] ?? [])),
-    );
-    return lists.size > 0 ? [...lists] : [stripSeparators(className + " Spells")];
+    const klassId = this.classes.getCharacterClasses()[className]?.klass.id;
+    return [...((klassId && this.classListsByKlassId.get(klassId)) || [])];
+  }
+
+  /** Reads each class's spell lists off the ruleset, its levels' slots (`collectClassLists`): `spellListsOf`'s. */
+  loadClassLists(rulesetData: Pick<CachedRulesetData, "klassLevels" | "modifiersBySource">) {
+    this.classListsByKlassId = collectClassLists(rulesetData);
   }
 }

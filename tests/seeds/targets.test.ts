@@ -4,10 +4,6 @@ import * as RULESET_NAMES from "@/database/packages/dnd35/names.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
 
-// What the seed targets that no path offers yet: the slots of the prestige casters whose spell lists have no spells,
-// the divine crusader's and the temple raider's (#232)
-const AWAITING = [/^aptitudes\.(divinecrusader|templeraiderofolidammara)spells\.\d+\.(uses|allowed)$/];
-
 // A target the editor doesn't offer is one an author can't write or save again, and one the engine may not read: a
 // Dragon Disciple's boosts on `abilities.strength`, an Ur-priest's slots on `aptitudes.ur-priestspells`
 test.each(["modifier", "requirement"] as const)(
@@ -21,7 +17,7 @@ test.each(["modifier", "requirement"] as const)(
         (await getTargetPathsWithLabels(rows.rulesetId, kind)).paths.map((path) => [path.path, path.operators]),
       );
       for (const { target, operator } of kind === "modifier" ? rows.modifiers : rows.requirements) {
-        if (!target || AWAITING.some((pattern) => pattern.test(target))) continue;
+        if (!target) continue;
         if (!(operator && offered.get(target)?.includes(operator))) misfits.push(`${name}: ${target} ${operator}`);
       }
     }

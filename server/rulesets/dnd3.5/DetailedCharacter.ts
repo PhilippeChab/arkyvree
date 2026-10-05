@@ -424,6 +424,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
   }
 
   protected async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {
+    this.detailedCharacterSpellcasting.loadClassLists(rulesetData);
     this.detailedCharacterSpellcasting.initSpellcastingHolder(this.holders!, this.modifiers, this.klassCasterTypeMap);
     // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read
     this.detailedCharacterCombat.applyWeaponFinesse(this.hasFeatWith(rulesetData, FEAT_WEAPON_FINESSE));
