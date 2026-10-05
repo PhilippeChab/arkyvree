@@ -22,14 +22,15 @@ import { namesOf } from "@/tests/seeds/freshSeed.ts";
 
 type Character = typeof charactersInCharacter.$inferSelect;
 
-const inventoryLine = (item: {
+function inventoryLine(item: {
   name: string;
   quantity: number;
   equipped?: boolean;
   location?: string | null;
   weaponSet?: number | null;
-}) =>
-  `${item.name} x${item.quantity}${item.equipped ? ", equipped" : ""} in ${item.location ?? "—"} set ${item.weaponSet ?? "—"}`;
+}) {
+  return `${item.name} x${item.quantity}${item.equipped ? ", equipped" : ""} in ${item.location ?? "—"} set ${item.weaponSet ?? "—"}`;
+}
 
 /**
  * What a character's seed says it has, on the ruleset characters are seeded on, as `written` reads it back: a level

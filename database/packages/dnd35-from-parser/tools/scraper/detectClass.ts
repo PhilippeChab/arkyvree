@@ -1164,12 +1164,14 @@ function detectLockedFavoredEnemies(
 // Weapon and Armor Proficiency detection
 // ---------------------------------------------------------------------------
 
-const PROF = (slug: string) => ({
-  operator: "set" as const,
-  target: `feats.${slug}.possessed`,
-  value: "true",
-  valueType: "boolean" as const,
-});
+function PROF(slug: string) {
+  return {
+    operator: "set" as const,
+    target: `feats.${slug}.possessed`,
+    value: "true",
+    valueType: "boolean" as const,
+  };
+}
 
 export function buildDetected(raw: ClassReference["raw"]): ClassReference["detected"] {
   const levels = raw.progression.length;

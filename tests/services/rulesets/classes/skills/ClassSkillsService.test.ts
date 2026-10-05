@@ -28,8 +28,9 @@ async function setup() {
   return { user, session, ruleset, fighter, rogue, climb, swim };
 }
 
-const skillIdsOf = async (rulesetId: string, klassId: string) =>
-  (await ClassSkillsService.getClassSkills(rulesetId, klassId)).map((ks) => ks.skillId).sort();
+async function skillIdsOf(rulesetId: string, klassId: string) {
+  return (await ClassSkillsService.getClassSkills(rulesetId, klassId)).map((ks) => ks.skillId).sort();
+}
 
 // Adding, listing and removing a class skill, and refusing one the class has, are covered in the class skills router test.
 describe("ClassSkillsService", () => {

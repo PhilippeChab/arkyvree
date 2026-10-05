@@ -18,8 +18,9 @@ import {
 
 type Visibility = "Private" | "Public" | "Partial";
 
-const link = (userId: string, campaignId: string, characterId: string, visibility: Visibility = "Public") =>
-  CampaignCharactersService.linkCharacter(makeSession(userId), campaignId, characterId, visibility);
+function link(userId: string, campaignId: string, characterId: string, visibility: Visibility = "Public") {
+  return CampaignCharactersService.linkCharacter(makeSession(userId), campaignId, characterId, visibility);
+}
 
 /** A new user playing in the campaign, with a character of theirs linked with `visibility`. */
 async function joinWithCharacter(campaignId: string, visibility: Visibility) {
@@ -30,8 +31,9 @@ async function joinWithCharacter(campaignId: string, visibility: Visibility) {
   return { user, character };
 }
 
-const list = (userId: string, campaignId: string, pagination = { limit: 10, page: 1 }) =>
-  CampaignCharactersService.getCharacters(makeSession(userId), campaignId, {}, pagination);
+function list(userId: string, campaignId: string, pagination = { limit: 10, page: 1 }) {
+  return CampaignCharactersService.getCharacters(makeSession(userId), campaignId, {}, pagination);
+}
 
 /** Gives the character the seeded class levels, as `[class, level]` pairs. */
 async function addLevels(characterId: string, levels: [string, number][]) {

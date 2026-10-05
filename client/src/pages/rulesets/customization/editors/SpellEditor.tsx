@@ -17,18 +17,21 @@ import type { EditorProps } from "./types.ts";
 import { useEditorSave } from "./useEditorSave.ts";
 
 // The spell's aptitudes with their levels, in the form's (name) order.
-const linkedAptitudes = (power: Power) =>
-  power.powersAptitudesInRules
+function linkedAptitudes(power: Power) {
+  return power.powersAptitudesInRules
     .flatMap((pa) => (pa.aptitudesInRule ? [{ ...pa.aptitudesInRule, level: pa.level }] : []))
     .sort(byName);
+}
 
-const toSpellForm = (power: Power): SpellFormData => ({
-  name: power.name,
-  description: power.description ?? "",
-  saveId: power.saveId ?? null,
-  saveEffect: power.saveEffect ?? null,
-  aptitudes: linkedAptitudes(power).map((a) => spellAptitude(a.id, a.level)),
-});
+function toSpellForm(power: Power): SpellFormData {
+  return {
+    name: power.name,
+    description: power.description ?? "",
+    saveId: power.saveId ?? null,
+    saveEffect: power.saveEffect ?? null,
+    aptitudes: linkedAptitudes(power).map((a) => spellAptitude(a.id, a.level)),
+  };
+}
 
 export function SpellEditor({
   rulesetId,

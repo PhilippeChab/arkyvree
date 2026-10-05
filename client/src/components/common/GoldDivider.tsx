@@ -6,8 +6,9 @@ interface GoldDividerProps {
   sx?: SxProps<Theme>;
 }
 
-const gradientLine = (theme: Theme) =>
-  `linear-gradient(90deg, transparent, ${theme.palette.secondary.main}, transparent)`;
+function gradientLine(theme: Theme) {
+  return `linear-gradient(90deg, transparent, ${theme.palette.secondary.main}, transparent)`;
+}
 
 export function GoldDivider({ label, sx }: GoldDividerProps) {
   if (!label) {

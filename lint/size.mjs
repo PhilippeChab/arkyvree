@@ -11,9 +11,12 @@ export const MAX_OWN_LINES = 80;
 
 const FUNCTIONS = ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"];
 
-const isConcern = (fn) =>
-  fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
-  fn.typeParameters.params[0].constraint.typeName.name === "Constructor";
+function isConcern(fn) {
+  return (
+    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
+    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
+  );
+}
 
 /** A function's name, for the message: its own, its variable's, its method's or its property's. */
 function nameOf(fn) {

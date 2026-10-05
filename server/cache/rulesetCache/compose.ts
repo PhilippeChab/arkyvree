@@ -459,7 +459,9 @@ function resolveAptitudeLinks(
   }
 }
 
-const buildById = <T extends { id: string }>(list: T[]): Map<string, T> => new Map(list.map((item) => [item.id, item]));
+function buildById<T extends { id: string }>(list: T[]): Map<string, T> {
+  return new Map(list.map((item) => [item.id, item]));
+}
 
 /**
  * The class indices: levels by class (sorted by level) and by class and level, each class's highest level, and the

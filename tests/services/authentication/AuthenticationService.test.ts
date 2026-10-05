@@ -61,7 +61,9 @@ async function signUpAndVerify(account = credentials()) {
   const signedIn = await AuthenticationService.signIn(account.emailAddress, account.password);
   return { ...signedIn, account };
 }
-const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
+function ago(ms: number) {
+  return new Date(Date.now() - ms).toISOString();
+}
 
 /** A user without a password, as Google sign-up makes them. */
 async function createPasswordlessUser() {
@@ -73,7 +75,9 @@ async function createPasswordlessUser() {
   return { user, session: makeSession(user.id) };
 }
 
-const googleAccount = (email = `google-${uniqueId()}@example.com`) => ({ sub: `google-${uniqueId()}`, email });
+function googleAccount(email = `google-${uniqueId()}@example.com`) {
+  return { sub: `google-${uniqueId()}`, email };
+}
 
 describe("AuthenticationService", () => {
   describe("signing up", () => {

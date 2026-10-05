@@ -47,22 +47,26 @@ async function bareRuleset({ general = true } = {}) {
   return { session, ruleset, strength, spells, general: generalAptitude };
 }
 
-const spell = (aptitudeId: string, name: string, school?: string, fields: Record<string, unknown> = {}) => ({
-  name,
-  description: "",
-  aptitudes: [{ id: aptitudeId }],
-  school,
-  ...fields,
-});
-const skill = (abilityId: string, name: string, fields: Record<string, unknown> = {}) => ({
-  name,
-  description: "",
-  primaryAbilityId: abilityId,
-  impactedByWeight: true,
-  checkPenaltyMultiplier: 1,
-  usableWithoutTraining: true,
-  ...fields,
-});
+function spell(aptitudeId: string, name: string, school?: string, fields: Record<string, unknown> = {}) {
+  return {
+    name,
+    description: "",
+    aptitudes: [{ id: aptitudeId }],
+    school,
+    ...fields,
+  };
+}
+function skill(abilityId: string, name: string, fields: Record<string, unknown> = {}) {
+  return {
+    name,
+    description: "",
+    primaryAbilityId: abilityId,
+    impactedByWeight: true,
+    checkPenaltyMultiplier: 1,
+    usableWithoutTraining: true,
+    ...fields,
+  };
+}
 
 /** The names of the ruleset's feats, or of those matching `search`. */
 async function featNames(rulesetId: string, search?: string) {
@@ -73,16 +77,19 @@ async function featNames(rulesetId: string, search?: string) {
     .sort();
 }
 
-const findFeat = async (rulesetId: string, name: string) => (await Feats.findOne(db, { rulesetId, name }))!;
+async function findFeat(rulesetId: string, name: string) {
+  return (await Feats.findOne(db, { rulesetId, name }))!;
+}
 
 /** A spell's generated properties, read through the service. */
-const spellFields = async (rulesetId: string, powerId: string) =>
-  (await PowersService.getPower(rulesetId, powerId)).properties.map((p) => `${p.type}: ${p.value}`).sort();
+async function spellFields(rulesetId: string, powerId: string) {
+  return (await PowersService.getPower(rulesetId, powerId)).properties.map((p) => `${p.type}: ${p.value}`).sort();
+}
 
-const forkWithExtensions = async () => {
+async function forkWithExtensions() {
   const session = makeSession();
   return { session, fork: await createSeededTestRulesetWithExtensions(session.userId) };
-};
+}
 
 /** The seed user's fork of the seeded ruleset, and its inherited Climb. */
 async function seededForkWithClimb() {
@@ -99,10 +106,10 @@ async function seededForkWithClimb() {
   return { session, fork, climb, climbBody, feat: await findFeat(climb.rulesetId, "Skill Focus: Climb") };
 }
 
-const seededFork = async () => {
+async function seededFork() {
   const session = makeSession();
   return { session, fork: await createSeededTestRuleset(session.userId) };
-};
+}
 
 describe("Spell Focus", () => {
   test.each([

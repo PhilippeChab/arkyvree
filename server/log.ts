@@ -14,9 +14,11 @@ const ANSI = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g");
 // line as an OTel log record so they land in Better Stack's logs table when
 // OTEL_EXPORTER_OTLP_ENDPOINT is set (no-op otherwise).
 
-const fmt = (args: unknown[]) => args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
+function fmt(args: unknown[]) {
+  return args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
+}
 
-const out = (fd: 1 | 2, severity: SeverityNumber, args: unknown[]) => {
+function out(fd: 1 | 2, severity: SeverityNumber, args: unknown[]) {
   const body = fmt(args);
   try {
     writeSync(fd, body + "\n");
@@ -31,7 +33,7 @@ const out = (fd: 1 | 2, severity: SeverityNumber, args: unknown[]) => {
   } catch {
     // OTel not initialized or transient export error — ignore
   }
-};
+}
 
 console.log = (...a: unknown[]) => out(1, SeverityNumber.INFO, a);
 console.info = (...a: unknown[]) => out(1, SeverityNumber.INFO, a);

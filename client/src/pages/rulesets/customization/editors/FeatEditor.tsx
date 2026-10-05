@@ -11,13 +11,17 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { EditorProps } from "./types.ts";
 import { useEditorSave } from "./useEditorSave.ts";
 
-const featAptitudes = (feat: Feat) => feat.featsAptitudesInRules.flatMap((fa) => fa.aptitudesInRule ?? []).sort(byName);
+function featAptitudes(feat: Feat) {
+  return feat.featsAptitudesInRules.flatMap((fa) => fa.aptitudesInRule ?? []).sort(byName);
+}
 
-const toFeatForm = (feat: Feat): FeatFormData => ({
-  name: feat.name,
-  description: feat.description ?? "",
-  aptitudeIds: featAptitudes(feat).map((a) => a.id),
-});
+function toFeatForm(feat: Feat): FeatFormData {
+  return {
+    name: feat.name,
+    description: feat.description ?? "",
+    aptitudeIds: featAptitudes(feat).map((a) => a.id),
+  };
+}
 
 export function FeatEditor({
   rulesetId,

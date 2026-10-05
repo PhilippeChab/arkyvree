@@ -85,8 +85,9 @@ const OWNERS = `
                and klf.deleted_at is null and kl.deleted_at is null and k.deleted_at is null and f.deleted_at is null`;
 
 /** Rows read as their business keys alone: a link compared by what it joins. */
-const keyed = <T>(rows: T[], key: (row: T) => string): IdentifiedRow[] =>
-  rows.map((row) => ({ bk: key(row), id: "", row: {} }));
+function keyed<T>(rows: T[], key: (row: T) => string): IdentifiedRow[] {
+  return rows.map((row) => ({ bk: key(row), id: "", row: {} }));
+}
 
 /** A content table's rows in the ruleset, its references as `<ruleset>: <name>`. */
 async function pullContent(query: Query, table: ContentTable, rulesetId: string): Promise<IdentifiedRow[]> {

@@ -280,7 +280,9 @@ export function checkedValue<T>(checked: Checked<T>): T {
 }
 
 /** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
-export const normalizeWs = (text: string) => text.replace(/\s+/g, " ").trim();
+export function normalizeWs(text: string) {
+  return text.replace(/\s+/g, " ").trim();
+}
 
 // ---------------------------------------------------------------------------
 // Per-entity modifiers — used by detectDomain, detectRace

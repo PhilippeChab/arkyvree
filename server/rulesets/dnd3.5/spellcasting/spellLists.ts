@@ -7,8 +7,9 @@ export const SLOT_TARGET = /^aptitudes\.([^.]+)\.\d+\.(?:uses|allowed)$/;
 export const JOIN_TARGET = /^aptitudes\.([^.]+)\.joinsclasslist$/;
 
 /** The spell list a modifier gives slots in or joins to its class's list, if it does either. */
-export const listOpenedBy = (target: string): string | undefined =>
-  SLOT_TARGET.exec(target)?.[1] ?? JOIN_TARGET.exec(target)?.[1];
+export function listOpenedBy(target: string): string | undefined {
+  return SLOT_TARGET.exec(target)?.[1] ?? JOIN_TARGET.exec(target)?.[1];
+}
 
 /**
  * Each class's spell lists, by its id: those its levels give slots in, a level no character has taken yet included (a

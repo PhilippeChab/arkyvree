@@ -289,16 +289,27 @@ export function picking(plan: LevelPlan, aptitude: string, feats: string[]): Lev
 }
 
 /** A wizard whose first level, `plan`, picks this familiar. */
-export const createWizardWithFamiliar = (familiar = "Cat Familiar", plan = WIZARD_1) =>
-  createMaster("familiar", "wizard", "Wizard", 1, picking(plan, "Familiar Bond", [familiar]));
+export function createWizardWithFamiliar(familiar = "Cat Familiar", plan = WIZARD_1) {
+  return createMaster("familiar", "wizard", "Wizard", 1, picking(plan, "Familiar Bond", [familiar]));
+}
 
 /** A druid with this animal companion. */
-export const createDruidWithCompanion = (levels = 1, companion = "Wolf Animal Companion") =>
-  createMaster("animalcompanion", "druid", "Druid", levels, picking(DRUID_1, "Animal Companion Bond", [companion]));
+export function createDruidWithCompanion(levels = 1, companion = "Wolf Animal Companion") {
+  return createMaster(
+    "animalcompanion",
+    "druid",
+    "Druid",
+    levels,
+    picking(DRUID_1, "Animal Companion Bond", [companion]),
+  );
+}
 
 /** A paladin with this special mount, picked at the fifth level, which unlocks it. */
-export const createPaladinWithMount = (levels = 5, mount = "Heavy Warhorse Special Mount") =>
-  createMaster("mount", "paladin", "Paladin", levels, PALADIN_1, { 5: { feats: { "Special Mount Bond": [mount] } } });
+export function createPaladinWithMount(levels = 5, mount = "Heavy Warhorse Special Mount") {
+  return createMaster("mount", "paladin", "Paladin", levels, PALADIN_1, {
+    5: { feats: { "Special Mount Bond": [mount] } },
+  });
+}
 
 /** Finalizes the first `count` fighter levels. */
 export async function addFighterLevels(session: Session, ctx: SeedContext, characterId: string, count: number) {

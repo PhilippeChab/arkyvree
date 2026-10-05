@@ -147,13 +147,17 @@ const functionNames = {
   },
 };
 
-const isMethod = (member) =>
-  (member.type === "MethodDefinition" || member.type === "TSAbstractMethodDefinition"
-    ? member.kind === "method"
-    : member.type === "PropertyDefinition" && FUNCTION_VALUES.includes(member.value?.type)) && !member.computed;
+function isMethod(member) {
+  return (
+    (member.type === "MethodDefinition" || member.type === "TSAbstractMethodDefinition"
+      ? member.kind === "method"
+      : member.type === "PropertyDefinition" && FUNCTION_VALUES.includes(member.value?.type)) && !member.computed
+  );
+}
 
-const isPublic = (member) =>
-  (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
+function isPublic(member) {
+  return (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
+}
 
 const methodNames = {
   meta: { type: "suggestion" },

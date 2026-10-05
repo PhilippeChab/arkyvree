@@ -56,7 +56,9 @@ const SLOT_CONFLICT_WARNINGS: Record<
 };
 
 /** A weapon set as the user sees it: stored from 0, shown from 1 ("Set 1"), as on the sheet and the PDF. */
-export const shownWeaponSet = (stored: number) => stored + 1;
+export function shownWeaponSet(stored: number) {
+  return stored + 1;
+}
 
 /** Where an entry is worn ("Main Hand (Set 1)"), or a dash when it's carried. */
 export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">): string {

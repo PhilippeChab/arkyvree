@@ -100,9 +100,13 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 /** An activity's payload: the fields its type records, or none. */
-const payload = (data: unknown): Record<string, unknown> => (isRecord(data) ? data : {});
+function payload(data: unknown): Record<string, unknown> {
+  return isRecord(data) ? data : {};
+}
 
-const isChangedField = (value: unknown): value is ChangedField => isRecord(value) && typeof value.field === "string";
+function isChangedField(value: unknown): value is ChangedField {
+  return isRecord(value) && typeof value.field === "string";
+}
 
 function formatChange(change: ChangedField): string {
   const label = FIELD_LABELS[change.field] ?? change.field;

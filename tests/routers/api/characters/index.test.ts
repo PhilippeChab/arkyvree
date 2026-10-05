@@ -27,8 +27,9 @@ async function createCharacter(name = `Test Character ${uniqueId()}`) {
   );
 }
 
-const languageNames = async (id: string) =>
-  (await expectOk(character.$get({ param: { id } }))).identity.physiology.languages.map((l) => l.name).sort();
+async function languageNames(id: string) {
+  return (await expectOk(character.$get({ param: { id } }))).identity.physiology.languages.map((l) => l.name).sort();
+}
 
 describe("characters", () => {
   test("creates, reads, lists and updates a character", async () => {

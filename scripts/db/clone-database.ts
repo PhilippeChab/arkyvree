@@ -21,7 +21,9 @@ export function databaseOf(url: string) {
 }
 
 /** The URL of the database named `name` on `url`'s server. */
-export const withDatabase = (url: string, name: string) => `${databaseOf(url).server}/${name}${new URL(url).search}`;
+export function withDatabase(url: string, name: string) {
+  return `${databaseOf(url).server}/${name}${new URL(url).search}`;
+}
 
 /** Refuses `url` unless its database is on a local server: a script that drops databases or tables runs only there. */
 export function assertLocalDatabase(url: string, action: string) {

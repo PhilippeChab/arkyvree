@@ -14,4 +14,6 @@ export function rootOf(file) {
 }
 
 /** The file's path from the repo's root, with forward slashes: `server/services/…`. */
-export const repoPath = (file) => path.relative(rootOf(file), file).split(path.sep).join("/");
+export function repoPath(file) {
+  return path.relative(rootOf(file), file).split(path.sep).join("/");
+}

@@ -23,10 +23,13 @@ import {
   NIL_UUID,
 } from "@/tests/helpers.ts";
 
-const resolve = (targetTable: string, targetId: string, session: Session = makeSession()) =>
-  ActivitiesService.getActivityUrl(session, targetTable, targetId);
+function resolve(targetTable: string, targetId: string, session: Session = makeSession()) {
+  return ActivitiesService.getActivityUrl(session, targetTable, targetId);
+}
 
-const resolveAll = (targets: string[][]) => Promise.all(targets.map(([table, id]) => resolve(table, id)));
+function resolveAll(targets: string[][]) {
+  return Promise.all(targets.map(([table, id]) => resolve(table, id)));
+}
 
 describe("ActivitiesService.getActivityUrl", () => {
   test("links rulesets, characters and campaigns to their page, archived or not, and users and sessions nowhere", async () => {

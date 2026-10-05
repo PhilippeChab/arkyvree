@@ -23,32 +23,41 @@ import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requ
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 
 /** A committed reference of `type` as stored. */
-const stored = <T extends ReferenceType>(file: string, type: T) =>
-  structuredClone(readStoredReference(join(REFERENCE_DIR, file), type));
+function stored<T extends ReferenceType>(file: string, type: T) {
+  return structuredClone(readStoredReference(join(REFERENCE_DIR, file), type));
+}
 
-const anyOf = (family: string, options: string[]) => or(...options.map((o) => eq(feat(`${family}: ${o}`))));
+function anyOf(family: string, options: string[]) {
+  return or(...options.map((o) => eq(feat(`${family}: ${o}`))));
+}
 
-const race = (name: string, abilityAdjustments: { ability: string; value: number }[], ...features: string[]) => ({
-  name,
-  description: "",
-  size: "Medium",
-  baseSpeed: 30,
-  abilityAdjustments,
-  features: features.map((feature) => ({ name: feature, description: "" })),
-});
+function race(name: string, abilityAdjustments: { ability: string; value: number }[], ...features: string[]) {
+  return {
+    name,
+    description: "",
+    size: "Medium",
+    baseSpeed: 30,
+    abilityAdjustments,
+    features: features.map((feature) => ({ name: feature, description: "" })),
+  };
+}
 
-const add = (target: string, value: number) => ({
-  target,
-  operator: "add",
-  value: String(value),
-  valueType: "number",
-});
+function add(target: string, value: number) {
+  return {
+    target,
+    operator: "add",
+    value: String(value),
+    valueType: "number",
+  };
+}
 
-const classRequirementsOf = (book: string, slug: string) =>
-  loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class").detected.requirements;
+function classRequirementsOf(book: string, slug: string) {
+  return loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class").detected.requirements;
+}
 
-const featDetectedOf = (name: string, prerequisiteText: string) =>
-  buildFeatDetected([{ name, featType: "general", prerequisiteText, benefit: "", special: "" }])[name];
+function featDetectedOf(name: string, prerequisiteText: string) {
+  return buildFeatDetected([{ name, featType: "general", prerequisiteText, benefit: "", special: "" }])[name];
+}
 
 describe("A book's class references", () => {
   test("are its classes folder's reference files, sorted (the same on every filesystem), each loaded", () => {

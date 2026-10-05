@@ -21,52 +21,60 @@ export type ClassSection =
   | "modifiers"
   | "requirements";
 
-const classParam = (rulesetId: string, classId: string) => ({ param: { id: rulesetId, classId } });
+function classParam(rulesetId: string, classId: string) {
+  return { param: { id: rulesetId, classId } };
+}
 
 /** The class itself, shared by the class page and the classes table's row hover. */
-export const classDetailQuery = (rulesetId: string, classId: string) =>
-  queryOptions({
+export function classDetailQuery(rulesetId: string, classId: string) {
+  return queryOptions({
     queryKey: queryKeys.rulesets.classDetail(rulesetId, classId),
     queryFn: () => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get(classParam(rulesetId, classId))),
   });
+}
 
-export const classLevelsQuery = (rulesetId: string, classId: string) =>
-  queryOptions({
+export function classLevelsQuery(rulesetId: string, classId: string) {
+  return queryOptions({
     queryKey: queryKeys.rulesets.classLevels(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$get(classParam(rulesetId, classId))),
   });
+}
 
-export const classSkillsQuery = (rulesetId: string, classId: string) =>
-  queryOptions({
+export function classSkillsQuery(rulesetId: string, classId: string) {
+  return queryOptions({
     queryKey: queryKeys.rulesets.classSkills(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].skills.$get(classParam(rulesetId, classId))),
   });
+}
 
-export const classFeatPoolsQuery = (rulesetId: string, classId: string) =>
-  queryOptions({
+export function classFeatPoolsQuery(rulesetId: string, classId: string) {
+  return queryOptions({
     queryKey: queryKeys.rulesets.classFeatPools(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["feat-pools"].$get(classParam(rulesetId, classId))),
   });
+}
 
-export const classSpellsKnownQuery = (rulesetId: string, classId: string) =>
-  queryOptions({
+export function classSpellsKnownQuery(rulesetId: string, classId: string) {
+  return queryOptions({
     queryKey: queryKeys.rulesets.classSpellsKnown(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spells-known"].$get(classParam(rulesetId, classId))),
   });
+}
 
-export const classSpellsQuery = (rulesetId: string, classId: string) =>
-  queryOptions({
+export function classSpellsQuery(rulesetId: string, classId: string) {
+  return queryOptions({
     queryKey: queryKeys.rulesets.classSpells(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].spells.$get(classParam(rulesetId, classId))),
   });
+}
 
-export const classSpellListQuery = (rulesetId: string, classId: string, level: number, search: string) =>
-  infiniteQueryOptions({
+export function classSpellListQuery(rulesetId: string, classId: string, level: number, search: string) {
+  return infiniteQueryOptions({
     queryKey: queryKeys.rulesets.classSpellList(rulesetId, classId, level, search),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -78,6 +86,7 @@ export const classSpellListQuery = (rulesetId: string, classId: string, level: n
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
+}
 
 /** Warm a tab as it opens (the spell list starts at level 0 with no search). */
 export function prefetchClassSection(

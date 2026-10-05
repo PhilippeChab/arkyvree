@@ -44,21 +44,23 @@ const signedOut = {
 } as const;
 
 /** The fields the store keeps (and persists) from a user response, whatever else it carries. */
-const toAuthUser = ({
+function toAuthUser({
   id,
   emailAddress,
   username,
   pendingEmailAddress,
   onboardingCompletedAt,
   expiresAt,
-}: AuthUser): AuthUser => ({
-  id,
-  emailAddress,
-  username,
-  pendingEmailAddress,
-  onboardingCompletedAt,
-  expiresAt,
-});
+}: AuthUser): AuthUser {
+  return {
+    id,
+    emailAddress,
+    username,
+    pendingEmailAddress,
+    onboardingCompletedAt,
+    expiresAt,
+  };
+}
 
 export const useAuthStore = create<AuthState>()(
   persist(

@@ -25,16 +25,24 @@ interface ClassLevelForm {
 
 type LevelFeatRow = ClassLevel["feats"][number];
 
-const asLevelFeat = (feat: LevelFeatRow): LevelFeat => ({ featId: feat.id, aptitudeId: feat.aptitudeId });
-const featLabel = (feat: LevelFeatRow) => levelFeatLabel(feat.name, feat.aptitudeName);
+function asLevelFeat(feat: LevelFeatRow): LevelFeat {
+  return { featId: feat.id, aptitudeId: feat.aptitudeId };
+}
+function featLabel(feat: LevelFeatRow) {
+  return levelFeatLabel(feat.name, feat.aptitudeName);
+}
 
 // Feats in the form's (label) order, like ClassLevelFields keeps them.
-const sortedFeats = (level: ClassLevel) => [...level.feats].sort((a, b) => featLabel(a).localeCompare(featLabel(b)));
+function sortedFeats(level: ClassLevel) {
+  return [...level.feats].sort((a, b) => featLabel(a).localeCompare(featLabel(b)));
+}
 
-const toClassLevelForm = (level: ClassLevel): ClassLevelForm => ({
-  saves: level.saves.map(({ saveId, base }) => ({ saveId, base })),
-  feats: sortedFeats(level).map(asLevelFeat),
-});
+function toClassLevelForm(level: ClassLevel): ClassLevelForm {
+  return {
+    saves: level.saves.map(({ saveId, base }) => ({ saveId, base })),
+    feats: sortedFeats(level).map(asLevelFeat),
+  };
+}
 
 export function ClassLevelEditor({
   rulesetId,

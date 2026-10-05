@@ -31,18 +31,24 @@ const MESSAGE =
 
 const LOOPS = new Set(["ForStatement", "ForOfStatement", "ForInStatement", "WhileStatement"]);
 
-const rangeOf = (node) => node.range ?? [node.start, node.end];
+function rangeOf(node) {
+  return node.range ?? [node.start, node.end];
+}
 
 /** A top-level statement's declaration: an export's, or itself. */
-const declarationOf = (statement) =>
-  statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
+function declarationOf(statement) {
+  return statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
     ? statement.declaration
     : statement;
+}
 
-const holdsFunction = (node) =>
-  node?.type === "FunctionDeclaration" ||
-  node?.type === "TSDeclareFunction" ||
-  (node?.type === "VariableDeclaration" && node.declarations.some((d) => FUNCTION_VALUES.has(d.init?.type)));
+function holdsFunction(node) {
+  return (
+    node?.type === "FunctionDeclaration" ||
+    node?.type === "TSDeclareFunction" ||
+    (node?.type === "VariableDeclaration" && node.declarations.some((d) => FUNCTION_VALUES.has(d.init?.type)))
+  );
+}
 
 /** The function a call starts from: `describe` in `describe.each(cases)(…)`. */
 function calleeOf(expression) {
@@ -128,8 +134,9 @@ function endOf(text, statement) {
   return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? end + rest.trimEnd().length : end;
 }
 
-const holdsOrClass = (item) =>
-  holdsFunction(declarationOf(item.statement)) || declarationOf(item.statement)?.type === "ClassDeclaration";
+function holdsOrClass(item) {
+  return holdsFunction(declarationOf(item.statement)) || declarationOf(item.statement)?.type === "ClassDeclaration";
+}
 
 /** Whether a statement awaits at the top level: a step of a script's run (`const rows = await query(…)`). */
 function awaits(node) {

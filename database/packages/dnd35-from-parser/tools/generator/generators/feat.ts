@@ -287,7 +287,9 @@ function featRequirement({ uses }: FeatFile, featName: string, perItem: boolean,
 }
 
 /** A weapon family's modifier target, made the item's: a weapon.X path becomes items.weapons.<weapon>.X. */
-const weaponTarget = (target: string) => target.replace(/^weapon\./, "items.weapons.${stripSeparators(w)}.");
+function weaponTarget(target: string) {
+  return target.replace(/^weapon\./, "items.weapons.${stripSeparators(w)}.");
+}
 
 /**
  * A template's `requirements`, for its item (`variable`): a family it requires (`families`) is that family's feat for

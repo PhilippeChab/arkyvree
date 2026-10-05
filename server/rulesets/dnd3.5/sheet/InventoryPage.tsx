@@ -6,7 +6,7 @@ import { capitalize } from "@/shared/text.ts";
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-const InventoryPage = ({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) => {
+function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.getDetailedCharacterIdentity();
   const combat = detailedCharacter.getDetailedCharacterCombat();
   const inventory = detailedCharacter.getDetailedCharacterInventory();
@@ -119,6 +119,6 @@ const InventoryPage = ({ detailedCharacter }: { detailedCharacter: DetailedChara
       </View>
     </Page>
   );
-};
+}
 
 export default InventoryPage;

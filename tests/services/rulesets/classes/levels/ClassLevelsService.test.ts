@@ -68,8 +68,9 @@ async function createSave(rulesetId: string, name: string) {
   return save;
 }
 
-const modifier = (sourceId: string, target: string, value: string) =>
-  ({ sourceId, sourceType: "klass_levels", target, value, valueType: "number", operator: "add" }) as const;
+function modifier(sourceId: string, target: string, value: string) {
+  return { sourceId, sourceType: "klass_levels", target, value, valueType: "number", operator: "add" } as const;
+}
 
 /** A fork of `setup()`'s ruleset, whose class has a first level. */
 async function setupFork() {

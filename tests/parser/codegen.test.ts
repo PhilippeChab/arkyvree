@@ -29,16 +29,21 @@ import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/share
 import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { Modifier, RequirementCondition, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 
-const check = (operator: string, valueType: string, value: string): RequirementCondition => ({
-  target: "abilities.strength.score",
-  operator,
-  value,
-  valueType,
-});
-const code = (req: RequirementEntry) => stringifyRequirement(req, new Set());
+function check(operator: string, valueType: string, value: string): RequirementCondition {
+  return {
+    target: "abilities.strength.score",
+    operator,
+    value,
+    valueType,
+  };
+}
+function code(req: RequirementEntry) {
+  return stringifyRequirement(req, new Set());
+}
 
-const classRef = (book: string, slug: string) =>
-  loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class");
+function classRef(book: string, slug: string) {
+  return loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class");
+}
 
 describe("A generated requirement check", () => {
   test("is written with the builder that makes it", () => {

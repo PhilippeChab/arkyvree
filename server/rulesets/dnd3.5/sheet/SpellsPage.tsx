@@ -55,7 +55,7 @@ const SPELL_PROPERTY_ABBR: Record<string, { short: string; full: string }> = {
 
 // Define styles (reusing the same styles from the original)
 
-const SpellsPage = ({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) => {
+function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.getDetailedCharacterIdentity();
   const classes = detailedCharacter.getDetailedCharacterClasses();
   const powers = detailedCharacter.getDetailedCharacterPowers();
@@ -201,6 +201,6 @@ const SpellsPage = ({ detailedCharacter }: { detailedCharacter: DetailedCharacte
       </View>
     </Page>
   );
-};
+}
 
 export default SpellsPage;

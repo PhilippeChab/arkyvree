@@ -11,12 +11,14 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { EditorProps } from "./types.ts";
 import { useEditorSave } from "./useEditorSave.ts";
 
-const toRaceForm = (race: Race): RaceFormData => ({
-  name: race.name,
-  description: race.description ?? "",
-  size: race.size,
-  baseSpeed: race.baseSpeed,
-});
+function toRaceForm(race: Race): RaceFormData {
+  return {
+    name: race.name,
+    description: race.description ?? "",
+    size: race.size,
+    baseSpeed: race.baseSpeed,
+  };
+}
 
 export function RaceEditor({
   rulesetId,

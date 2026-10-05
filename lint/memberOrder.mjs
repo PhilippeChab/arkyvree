@@ -30,7 +30,9 @@ const ACTIONS = VERB_GROUPS.length;
 const ROUTE_METHODS = ["get", "post", "put", "patch", "delete"];
 
 /** Whether `name` starts with the word `verb`: `find` starts `findOne`, not `finder`. */
-export const startsWithVerb = (name, verb) => new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
+export function startsWithVerb(name, verb) {
+  return new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
+}
 
 /** A lifecycle method's step (`load` before `build`), or 0 for any other method. */
 export function lifecycleStep(name) {
@@ -83,7 +85,7 @@ export function compareRoutes(a, b) {
   return 0;
 }
 
-const compareMembers = (a, b) => {
+function compareMembers(a, b) {
   const [rankA, groupA, stepA, nameA] = a.rank;
   const [rankB, groupB, stepB, nameB] = b.rank;
   if (rankA !== rankB) return rankA - rankB;
@@ -94,9 +96,11 @@ const compareMembers = (a, b) => {
   if (nameA !== nameB) return nameA < nameB ? -1 : 1;
   // A getter and its setter, or an overload's signatures and body, stay in their order.
   return a.index - b.index;
-};
+}
 
-const rangeOf = (node) => node.range ?? [node.start, node.end];
+function rangeOf(node) {
+  return node.range ?? [node.start, node.end];
+}
 
 /** The comment that ends the line at `pos` (` // note`), which belongs to what ends there: its length, or 0. */
 function trailingComment(text, pos) {
@@ -158,11 +162,14 @@ function checkClass(context, body) {
   );
 }
 
-const isRoute = (call) =>
-  call.callee.type === "MemberExpression" &&
-  ROUTE_METHODS.includes(call.callee.property.name) &&
-  call.arguments[0]?.type === "Literal" &&
-  typeof call.arguments[0].value === "string";
+function isRoute(call) {
+  return (
+    call.callee.type === "MemberExpression" &&
+    ROUTE_METHODS.includes(call.callee.property.name) &&
+    call.arguments[0]?.type === "Literal" &&
+    typeof call.arguments[0].value === "string"
+  );
+}
 
 function checkChain(context, outermost) {
   const text = context.sourceCode.text;

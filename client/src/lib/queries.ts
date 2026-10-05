@@ -46,14 +46,15 @@ export interface RulesetListFilters {
 
 const LIST_PAGE_SIZE = 10;
 
-export const dashboardStatsQuery = () =>
-  queryOptions({
+export function dashboardStatsQuery() {
+  return queryOptions({
     queryKey: queryKeys.dashboard.stats,
     queryFn: () => parseResponse(rpc.api.dashboard.stats.$get()),
   });
+}
 
-export const campaignListQuery = (filters: CampaignListFilters) =>
-  infiniteQueryOptions({
+export function campaignListQuery(filters: CampaignListFilters) {
+  return infiniteQueryOptions({
     queryKey: queryKeys.campaigns.list({ ...filters }),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -71,9 +72,10 @@ export const campaignListQuery = (filters: CampaignListFilters) =>
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
+}
 
-export const characterListQuery = (filters: CharacterListFilters) =>
-  infiniteQueryOptions({
+export function characterListQuery(filters: CharacterListFilters) {
+  return infiniteQueryOptions({
     queryKey: queryKeys.characters.list({ ...filters }),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -93,9 +95,10 @@ export const characterListQuery = (filters: CharacterListFilters) =>
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
+}
 
-export const rulesetListQuery = (filters: RulesetListFilters) =>
-  infiniteQueryOptions({
+export function rulesetListQuery(filters: RulesetListFilters) {
+  return infiniteQueryOptions({
     queryKey: queryKeys.rulesets.list({ ...filters }),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -113,10 +116,11 @@ export const rulesetListQuery = (filters: RulesetListFilters) =>
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
+}
 
 /** A ruleset picker's options: the rulesets in one scope, filtered by what's typed. */
-export const rulesetPickerQuery = (scope: RulesetListParams["scope"], search: string) =>
-  infiniteQueryOptions({
+export function rulesetPickerQuery(scope: RulesetListParams["scope"], search: string) {
+  return infiniteQueryOptions({
     queryKey: queryKeys.rulesets.list({ scope, search }),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -132,21 +136,25 @@ export const rulesetPickerQuery = (scope: RulesetListParams["scope"], search: st
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
+}
 
-export const rulesetDetailQuery = (id: string) =>
-  queryOptions({
+export function rulesetDetailQuery(id: string) {
+  return queryOptions({
     queryKey: queryKeys.rulesets.detail(id),
     queryFn: () => parseResponse(rpc.api.rulesets[":id"].$get({ param: { id } })),
   });
+}
 
-export const campaignDetailQuery = (id: string) =>
-  queryOptions({
+export function campaignDetailQuery(id: string) {
+  return queryOptions({
     queryKey: queryKeys.campaigns.detail(id),
     queryFn: () => parseResponse(rpc.api.campaigns[":id"].$get({ param: { id } })),
   });
+}
 
-export const characterDetailQuery = (id: string) =>
-  queryOptions({
+export function characterDetailQuery(id: string) {
+  return queryOptions({
     queryKey: queryKeys.characters.detail(id),
     queryFn: () => parseResponse(rpc.api.characters[":id"].$get({ param: { id } })),
   });
+}

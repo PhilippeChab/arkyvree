@@ -3,8 +3,9 @@ import { describe, expect, setDefaultTimeout, test } from "bun:test";
 import { lintRepo } from "./lintRepo.ts";
 
 /** A repo of `files` (path → source), linted by the architecture rules: each finding as `rule path`. */
-const lint = (files: Record<string, string>, from = ".") =>
-  lintRepo(files, ["layers", "queries-in-repositories", "folder-index"], from);
+function lint(files: Record<string, string>, from = ".") {
+  return lintRepo(files, ["layers", "queries-in-repositories", "folder-index"], from);
+}
 
 // Each test runs oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);

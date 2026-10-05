@@ -16,9 +16,11 @@ const host = document.location.origin;
 // We need to do this in order for tsserver to be usuable
 const _rpc = hc<Application>("");
 
-const _rpcWithTypes = (...args: Parameters<typeof hc>): RPC => hc<Application>(...args);
+function _rpcWithTypes(...args: Parameters<typeof hc>): RPC {
+  return hc<Application>(...args);
+}
 
-const defaultFetch = async (input: URL | RequestInfo, init?: RequestInit) => {
+async function defaultFetch(input: URL | RequestInfo, init?: RequestInit) {
   const response = await fetch(input, {
     ...init,
     credentials: "include",
@@ -39,7 +41,7 @@ const defaultFetch = async (input: URL | RequestInfo, init?: RequestInit) => {
   }
 
   return response;
-};
+}
 
 export const rpc = _rpcWithTypes(`${host}/`, { fetch: defaultFetch });
 

@@ -44,19 +44,21 @@ interface CharacterIdentitySectionProps {
   character: CharacterData;
 }
 
-const toIdentityForm = ({ identity }: CharacterIdentitySectionProps["character"]): CharacterIdentityFormData => ({
-  race: identity?.physiology?.race?.name || "",
-  alignment: oneOf(identity?.beliefs?.alignment, ALIGNMENT_OPTIONS) ?? "",
-  experience: identity?.meta?.xp || 0,
-  age: String(identity?.physiology?.age || ""),
-  gender: oneOf(identity?.physiology?.gender, GENDER_OPTIONS) ?? "",
-  height: String(identity?.physiology?.height || ""),
-  weight: String(identity?.physiology?.weight || ""),
-  deity: identity?.beliefs?.deity || "",
-  description: identity?.physiology?.description || "",
-  notes: identity?.background?.notes || "",
-  languageIds: (identity?.physiology?.languages ?? []).map((l) => l.id),
-});
+function toIdentityForm({ identity }: CharacterIdentitySectionProps["character"]): CharacterIdentityFormData {
+  return {
+    race: identity?.physiology?.race?.name || "",
+    alignment: oneOf(identity?.beliefs?.alignment, ALIGNMENT_OPTIONS) ?? "",
+    experience: identity?.meta?.xp || 0,
+    age: String(identity?.physiology?.age || ""),
+    gender: oneOf(identity?.physiology?.gender, GENDER_OPTIONS) ?? "",
+    height: String(identity?.physiology?.height || ""),
+    weight: String(identity?.physiology?.weight || ""),
+    deity: identity?.beliefs?.deity || "",
+    description: identity?.physiology?.description || "",
+    notes: identity?.background?.notes || "",
+    languageIds: (identity?.physiology?.languages ?? []).map((l) => l.id),
+  };
+}
 
 export function CharacterIdentitySection({
   characterName,

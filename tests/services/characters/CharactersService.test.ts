@@ -79,7 +79,9 @@ async function fighterLevel() {
   return (await findKlassLevel(klassMap.pc["Fighter"], 1))!;
 }
 
-const ids = (rows: { id: string }[]) => rows.map((r) => r.id);
+function ids(rows: { id: string }[]) {
+  return rows.map((r) => r.id);
+}
 
 describe("CharactersService", () => {
   describe("creating a character", () => {

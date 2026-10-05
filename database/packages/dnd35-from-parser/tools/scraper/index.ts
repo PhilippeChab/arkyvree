@@ -340,7 +340,9 @@ async function scrapeSingleSpell(url: string) {
 }
 
 /** A page of the domain index: the copy keeps page N as `index.html?page=N`, its `?` escaped. */
-const domainIndexPageUrl = (page: number) => (page === 1 ? DOMAIN_INDEX_URL : `${DOMAIN_INDEX_URL}%3Fpage=${page}`);
+function domainIndexPageUrl(page: number) {
+  return page === 1 ? DOMAIN_INDEX_URL : `${DOMAIN_INDEX_URL}%3Fpage=${page}`;
+}
 
 /** Every domain version of the index, with its page. */
 async function fetchDomainPages() {

@@ -79,4 +79,6 @@ export const MAGIC_SCHOOLS = SPELL_SCHOOLS.filter((s) => s !== "Universal");
  * The slug of a spell list's possession paths, from its aptitude's name without the " Spells" suffix ("Wizard Spells"
  * → "wizard", "Knowledge Domain Spells" → "knowledgedomain").
  */
-export const toSpellPossessionSlug = (aptitudeName: string) => stripSeparators(aptitudeName.replace(/ Spells$/, ""));
+export function toSpellPossessionSlug(aptitudeName: string) {
+  return stripSeparators(aptitudeName.replace(/ Spells$/, ""));
+}

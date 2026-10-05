@@ -14,9 +14,12 @@ import {
 import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
 import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
 
-const page = (...headings: string[]) =>
-  `<html><body>${headings.map((h) => `<h2>${h}</h2>`).join("")}<h4>Benefit</h4><p>You gain a bonus.</p></body></html>`;
-const headingOf = (html: string, frame?: RegExp) => contentHeading(cheerio.load(html), frame)?.text();
+function page(...headings: string[]) {
+  return `<html><body>${headings.map((h) => `<h2>${h}</h2>`).join("")}<h4>Benefit</h4><p>You gain a bonus.</p></body></html>`;
+}
+function headingOf(html: string, frame?: RegExp) {
+  return contentHeading(cheerio.load(html), frame)?.text();
+}
 
 describe("A page's content heading", () => {
   test("is its first short heading outside the site's frame", () => {

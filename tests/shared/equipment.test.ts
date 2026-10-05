@@ -3,7 +3,9 @@ import { describe, expect, test } from "bun:test";
 import { findSlotConflict, HAND_LOCATIONS, isHandLocation, MAX_FINGER_ITEMS } from "@/shared/equipment.ts";
 
 /** An equipped entry at `location`, in `weaponSet` (stored from 0) for a hand. */
-const at = (location: string, weaponSet: number | null = null) => ({ location, weaponSet });
+function at(location: string, weaponSet: number | null = null) {
+  return { location, weaponSet };
+}
 
 describe("A location", () => {
   test("is a hand when a weapon set applies to it", () => {

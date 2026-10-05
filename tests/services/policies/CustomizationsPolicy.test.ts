@@ -10,29 +10,33 @@ import type { Modifier, Property } from "@/shared/relations.ts";
 import { createTestUserAndRuleset, makeSession, NIL_UUID } from "@/tests/helpers.ts";
 
 const now = new Date().toISOString();
-const modifierOn = (sourceId: string, sourceType: string): Modifier => ({
-  id: "modifier-id",
-  sourceId,
-  sourceType,
-  target: "combat.bab",
-  value: "1",
-  valueType: "number",
-  operator: "add",
-  createdAt: now,
-  updatedAt: now,
-  deletedAt: null,
-});
-const propertyOn = (entityId: string, entityType: string): Property => ({
-  id: "property-id",
-  entityId,
-  entityType,
-  type: WEAPON_PROFICIENCY,
-  value: "Longsword",
-  description: null,
-  createdAt: now,
-  updatedAt: now,
-  deletedAt: null,
-});
+function modifierOn(sourceId: string, sourceType: string): Modifier {
+  return {
+    id: "modifier-id",
+    sourceId,
+    sourceType,
+    target: "combat.bab",
+    value: "1",
+    valueType: "number",
+    operator: "add",
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+  };
+}
+function propertyOn(entityId: string, entityType: string): Property {
+  return {
+    id: "property-id",
+    entityId,
+    entityType,
+    type: WEAPON_PROFICIENCY,
+    value: "Longsword",
+    description: null,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+  };
+}
 
 describe("CustomizationsPolicy", () => {
   test("canCustomize names the customized entity of each type", async () => {

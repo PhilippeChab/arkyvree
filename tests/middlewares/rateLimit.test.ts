@@ -17,16 +17,24 @@ function behind(limiter: MiddlewareHandler) {
     });
 }
 
-const from = (ip: string, init: RequestInit = {}) => ({ ...init, headers: { ...init.headers, "x-forwarded-for": ip } });
-const withEmail = (emailAddress: unknown) => ({
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ emailAddress }),
-});
+function from(ip: string, init: RequestInit = {}) {
+  return { ...init, headers: { ...init.headers, "x-forwarded-for": ip } };
+}
+function withEmail(emailAddress: unknown) {
+  return {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ emailAddress }),
+  };
+}
 
-const limitedPerIp = () => behind(limitRate({ windowMs: 60_000, limit: 2 }, true));
+function limitedPerIp() {
+  return behind(limitRate({ windowMs: 60_000, limit: 2 }, true));
+}
 
-const limitedPerEmail = () => behind(limitRate({ windowMs: 60_000, limit: 1, per: "email" }, true));
+function limitedPerEmail() {
+  return behind(limitRate({ windowMs: 60_000, limit: 1, per: "email" }, true));
+}
 
 describe("limitRate", () => {
   test("is off in the tests, whose requests share an IP", async () => {

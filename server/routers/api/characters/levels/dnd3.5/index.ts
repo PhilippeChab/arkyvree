@@ -11,7 +11,9 @@ const queryNumber = z.string().pipe(z.coerce.number());
 
 const levelParams = z.object({ characterId: z.string().uuid(), characterLevelId: z.string().uuid() });
 
-const isUuid = (v: string) => z.string().uuid().safeParse(v).success;
+function isUuid(v: string) {
+  return z.string().uuid().safeParse(v).success;
+}
 
 /** Comma-separated ids: what isn't one is dropped. */
 const idList = z

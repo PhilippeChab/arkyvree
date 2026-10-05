@@ -9,10 +9,12 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 export type CampaignSection = "characters" | "players";
 
-const nextPage = (lastPage: { nextPage?: number }) => lastPage.nextPage;
+function nextPage(lastPage: { nextPage?: number }) {
+  return lastPage.nextPage;
+}
 
-export const campaignCharactersQuery = (campaignId: string, search: string) =>
-  infiniteQueryOptions({
+export function campaignCharactersQuery(campaignId: string, search: string) {
+  return infiniteQueryOptions({
     queryKey: [...queryKeys.campaigns.section(campaignId, "characters"), search],
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -24,9 +26,10 @@ export const campaignCharactersQuery = (campaignId: string, search: string) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const campaignPlayersQuery = (campaignId: string, search: string) =>
-  infiniteQueryOptions({
+export function campaignPlayersQuery(campaignId: string, search: string) {
+  return infiniteQueryOptions({
     queryKey: [...queryKeys.campaigns.section(campaignId, "players"), search],
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -38,6 +41,7 @@ export const campaignPlayersQuery = (campaignId: string, search: string) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
 /** Warm the first page of both tabs: the campaign page mounts them together. */
 export function prefetchCampaignSections(queryClient: QueryClient, campaignId: string) {

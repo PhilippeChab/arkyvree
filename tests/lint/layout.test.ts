@@ -25,7 +25,9 @@ async function fixed(files: Record<string, string>) {
   return out;
 }
 
-const lines = (...rows: string[]) => rows.join("\n") + "\n";
+function lines(...rows: string[]) {
+  return rows.join("\n") + "\n";
+}
 
 // Each test runs oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);

@@ -6,7 +6,7 @@
  * until the next one has loaded. Match the full path, ruleset included: an
  * inherited entity keeps its id in every fork.
  */
-export const isStillOpen = (path: string) => {
+export function isStillOpen(path: string) {
   const current = window.location.pathname;
   return current === path || current.startsWith(`${path}/`);
-};
+}

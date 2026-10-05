@@ -46,7 +46,9 @@ const SINGLE_OCCUPANCY_LOCATIONS = [
 export const MAX_FINGER_ITEMS = 2;
 
 /** Whether `location` is a hand, which a weapon set applies to. */
-export const isHandLocation = (location: unknown): location is HandLocation => isOneOf(location, HAND_LOCATIONS);
+export function isHandLocation(location: unknown): location is HandLocation {
+  return isOneOf(location, HAND_LOCATIONS);
+}
 
 /** What keeps `location` (in `weaponSet`, stored from 0, for a hand) from taking an item, if anything does. */
 export function findSlotConflict<T extends EquippedEntry>(

@@ -19,8 +19,9 @@ async function getRuleset() {
   return ruleset;
 }
 
-const createFork = (seedId: string) =>
-  createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
+function createFork(seedId: string) {
+  return createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
+}
 
 async function composeFork(fork: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] }) {
   const cowData = await getOrBuildCowData(fork);

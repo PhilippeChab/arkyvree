@@ -55,11 +55,16 @@ async function finalizeOk(characterId: string, klassId: string, levelNumber: num
 }
 
 // A human fighter (INT 12): 16 skill points, 2 General feats and a bonus feat at the first level; 4 points and a bonus feat at the second.
-const fighter1 = (ctx: SeedContext) => picks(ctx, FIGHTER_LEVELS[0]);
-const fighter2 = (ctx: SeedContext) => picks(ctx, FIGHTER_LEVELS[1]);
+function fighter1(ctx: SeedContext) {
+  return picks(ctx, FIGHTER_LEVELS[0]);
+}
+function fighter2(ctx: SeedContext) {
+  return picks(ctx, FIGHTER_LEVELS[1]);
+}
 
-const featIds = (feats: Record<string, { id: string }[]>, aptitudeId: string) =>
-  (feats[aptitudeId] ?? []).map((f) => f.id);
+function featIds(feats: Record<string, { id: string }[]>, aptitudeId: string) {
+  return (feats[aptitudeId] ?? []).map((f) => f.id);
+}
 
 describe("character levels", () => {
   describe("level up", () => {

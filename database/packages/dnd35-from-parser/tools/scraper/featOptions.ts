@@ -59,4 +59,6 @@ export function familyFeatNamed(name: string): string | undefined {
 }
 
 /** The weapon a prerequisite names ("orc double axe"), if any. */
-export const weaponNamed = (text: string) => nameOf(text, ALL_WEAPONS);
+export function weaponNamed(text: string) {
+  return nameOf(text, ALL_WEAPONS);
+}

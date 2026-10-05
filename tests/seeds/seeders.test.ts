@@ -43,42 +43,52 @@ import { customizationsOf, freshExtensionContext, freshSeedContext, namesOf } fr
 /** The class level each spell level opens at, the first at the first: 1, 3, 5… */
 const SPELL_LEVELS = Object.fromEntries(Array.from({ length: 10 }, (_, level) => [level, Math.max(1, 2 * level - 1)]));
 
-const feats = (...names: string[]) => names.map((name) => ({ name, description: "", aptitudes: [] }));
-const spell = (name: string, level: number, fields: Partial<SpellSeed> = {}): SpellSeed => ({
-  name,
-  description: "",
-  level,
-  aptitudes: [],
-  properties: [],
-  ...fields,
-});
-const race = (name: string, fields: Partial<RaceDefinition> = {}): RaceDefinition => ({
-  name,
-  description: "",
-  size: "Medium",
-  baseSpeed: 30,
-  ...fields,
-});
-const item = (name: string, fields: Partial<ItemDef> = {}): ItemDef => ({
-  name,
-  description: "",
-  weight: "1",
-  costGp: "1",
-  type: "Gear",
-  properties: [],
-  ...fields,
-});
-const klass = (name: string, fields: Partial<ClassSeed> = {}): ClassSeed => ({
-  name,
-  description: "",
-  hd: 8,
-  levels: 1,
-  skillPoints: 2,
-  bab: "poor",
-  saves: { fortitude: "poor", reflex: "poor", will: "poor" },
-  classSkills: [],
-  ...fields,
-});
+function feats(...names: string[]) {
+  return names.map((name) => ({ name, description: "", aptitudes: [] }));
+}
+function spell(name: string, level: number, fields: Partial<SpellSeed> = {}): SpellSeed {
+  return {
+    name,
+    description: "",
+    level,
+    aptitudes: [],
+    properties: [],
+    ...fields,
+  };
+}
+function race(name: string, fields: Partial<RaceDefinition> = {}): RaceDefinition {
+  return {
+    name,
+    description: "",
+    size: "Medium",
+    baseSpeed: 30,
+    ...fields,
+  };
+}
+function item(name: string, fields: Partial<ItemDef> = {}): ItemDef {
+  return {
+    name,
+    description: "",
+    weight: "1",
+    costGp: "1",
+    type: "Gear",
+    properties: [],
+    ...fields,
+  };
+}
+function klass(name: string, fields: Partial<ClassSeed> = {}): ClassSeed {
+  return {
+    name,
+    description: "",
+    hd: 8,
+    levels: 1,
+    skillPoints: 2,
+    bab: "poor",
+    saves: { fortitude: "poor", reflex: "poor", will: "poor" },
+    classSkills: [],
+    ...fields,
+  };
+}
 
 /** The spell lists a power is in, "aptitude level" each. */
 async function spellListsOf(ctx: SeedContext, powerId: string) {
@@ -96,14 +106,15 @@ async function aptitudesOfFeat(ctx: SeedContext, featId: string) {
 }
 
 /** A spell list's slot at each spell level, as `customizationsOf` reads it, gated from the second on by `classTarget`. */
-const gatedSlots = (list: string, classTarget: string) =>
-  Array.from({ length: 9 }, (_, i) => {
+function gatedSlots(list: string, classTarget: string) {
+  return Array.from({ length: 9 }, (_, i) => {
     const gate = i === 0 ? "" : `\n  if 1 ${classTarget} greater_than_or_equal ${2 * i + 1}`;
     return [
       `aptitudes.${list}.${i + 1}.allowed set -1 number${gate}`,
       `aptitudes.${list}.${i + 1}.uses add 1 number${gate}`,
     ];
   }).flat();
+}
 
 /** Each level's properties (base attack, skill points), saves, modifiers, requirements and granted feats. */
 async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
@@ -138,10 +149,9 @@ async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
 }
 
 /** A level's properties: its base attack and skill points. */
-const levelProperties = (bab: number, skillPoints: number) => [
-  `${KLASS_LEVEL_BAB} ${bab}`,
-  `${KLASS_LEVEL_SKILL_POINTS} ${skillPoints}`,
-];
+function levelProperties(bab: number, skillPoints: number) {
+  return [`${KLASS_LEVEL_BAB} ${bab}`, `${KLASS_LEVEL_SKILL_POINTS} ${skillPoints}`];
+}
 
 describe("Seeding", () => {
   test("numbers an entity's requirements by their place in the tree", () => {

@@ -18,12 +18,12 @@ export function uniqueBy<T>(rows: T[], key: (row: T) => string): T[] {
   return rows.filter((row) => !seen.has(key(row)) && seen.add(key(row)));
 }
 
-export const modifierRows = (
+export function modifierRows(
   sourceId: string,
   sourceType: string,
   modifiers: (Modifier | ModifierSeed)[] = [],
-): ModifierRow[] =>
-  modifiers.map(({ target, operator, value, valueType }) => ({
+): ModifierRow[] {
+  return modifiers.map(({ target, operator, value, valueType }) => ({
     sourceId,
     sourceType,
     target,
@@ -31,9 +31,11 @@ export const modifierRows = (
     value,
     valueType,
   }));
+}
 
-export const propertyRows = (entityId: string, entityType: string, properties: Property[] = []): PropertyRow[] =>
-  properties.map(({ type, value }) => ({ entityId, entityType, type, value }));
+export function propertyRows(entityId: string, entityType: string, properties: Property[] = []): PropertyRow[] {
+  return properties.map(({ type, value }) => ({ entityId, entityType, type, value }));
+}
 
 /** An entity's requirements as rows: each numbered by its place in the tree ("1", "2", "2.1"…). */
 export function requirementRows(
@@ -61,8 +63,8 @@ export function requirementRows(
  * The slots a spell list gives: one more spell a day at each spell level from the first to the ninth, and any
  * spell of the list to prepare there (`allowed` set to -1).
  */
-export const spellListSlots = (sourceId: string, sourceType: string, list: string): ModifierRow[] =>
-  Array.from({ length: 9 }, (_, i) => [
+export function spellListSlots(sourceId: string, sourceType: string, list: string): ModifierRow[] {
+  return Array.from({ length: 9 }, (_, i) => [
     {
       sourceId,
       sourceType,
@@ -80,16 +82,19 @@ export const spellListSlots = (sourceId: string, sourceType: string, list: strin
       operator: "set",
     },
   ]).flat();
+}
 
 /** A spell list's spells joining the list of the class whose level gave the source: a cleric's domain, the cleric's. */
-export const joinsClassList = (sourceId: string, sourceType: string, list: string): ModifierRow => ({
-  sourceId,
-  sourceType,
-  target: `aptitudes.${list}.joinsclasslist`,
-  value: "true",
-  valueType: "boolean",
-  operator: "set",
-});
+export function joinsClassList(sourceId: string, sourceType: string, list: string): ModifierRow {
+  return {
+    sourceId,
+    sourceType,
+    target: `aptitudes.${list}.joinsclasslist`,
+    value: "true",
+    valueType: "boolean",
+    operator: "set",
+  };
+}
 
 /** Inserts the rows, if there are any. */
 export async function insertAll<T extends PgTable>(db: Db, table: T, rows: T["$inferInsert"][]) {

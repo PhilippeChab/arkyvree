@@ -23,11 +23,11 @@ const WARNING_DEFAULTS: Record<WarningKey, WarningPreference> = {
   abilityDecrease: { enabled: true, suppressedThisSession: false },
 };
 
-const updateWarning =
-  (key: WarningKey, patch: Partial<WarningPreference>) =>
-  (state: UserPreferencesState): Pick<UserPreferencesState, "warnings"> => ({
+function updateWarning(key: WarningKey, patch: Partial<WarningPreference>) {
+  return (state: UserPreferencesState): Pick<UserPreferencesState, "warnings"> => ({
     warnings: { ...state.warnings, [key]: { ...state.warnings[key], ...patch } },
   });
+}
 
 export const useUserPreferencesStore = create<UserPreferencesState>()(
   persist(

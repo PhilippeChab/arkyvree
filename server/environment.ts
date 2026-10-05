@@ -48,22 +48,32 @@ export const REQUIRED_IN_PRODUCTION = [
 ] as const satisfies EnvironmentVariable[];
 
 /** A variable's value, undefined when it's unset. */
-export const readEnv = (name: EnvironmentVariable): string | undefined => process.env[name];
+export function readEnv(name: EnvironmentVariable): string | undefined {
+  return process.env[name];
+}
 
-export const isProduction = () => readEnv("NODE_ENV") === "production";
+export function isProduction() {
+  return readEnv("NODE_ENV") === "production";
+}
 
 /**
  * Whether the tests are running: `bun test` (tests/env.ts sets NODE_ENV) or the e2e server (playwright.config.ts).
  * They skip CSRF checks, rate limits and emails, and hash passwords cheaply, so it reads NODE_ENV alone, never the
  * database's name.
  */
-export const isTest = () => readEnv("NODE_ENV") === "test";
+export function isTest() {
+  return readEnv("NODE_ENV") === "test";
+}
 
 /**
  * A developer's machine: NODE_ENV=development, which .env.example sets. Explicit, never assumed: it shows an error's
  * details in responses and logs (server/errors), so an unset NODE_ENV keeps them masked.
  */
-export const isDevelopment = () => readEnv("NODE_ENV") === "development";
+export function isDevelopment() {
+  return readEnv("NODE_ENV") === "development";
+}
 
 /** The deployment's name for monitoring (Sentry, OpenTelemetry): NODE_ENV, or `development` when it's unset. */
-export const getEnvironmentName = () => readEnv("NODE_ENV") || "development";
+export function getEnvironmentName() {
+  return readEnv("NODE_ENV") || "development";
+}

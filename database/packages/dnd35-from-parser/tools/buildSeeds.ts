@@ -294,7 +294,9 @@ function detectClassFeatFamily(name: string): string | undefined {
 }
 
 /** A table cell's number: "+10 ft." is 10, "−2" (a typographic minus) is -2, a dash none. */
-const cellNumber = (cell: string) => Number(cell.replace("\u2212", "-").match(/[+-]?\d+/)?.[0] ?? 0);
+function cellNumber(cell: string) {
+  return Number(cell.replace("\u2212", "-").match(/[+-]?\d+/)?.[0] ?? 0);
+}
 
 // ---------------------------------------------------------------------------
 // Domain feat pool → FeatSeed[] (e.g. War Domain Weapon feats)

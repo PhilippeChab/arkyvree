@@ -324,4 +324,57 @@ describe("conventions", () => {
       "concern-shape server/a/Scoped.ts",
     ]);
   });
+  test("a file's own function is a declaration, and --fix declares a const's arrow", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/a.ts": "export function f() {}\nconst g = () => 1;\nexport const h = async (a: number) => a;\n",
+          // A function type types it, or a `let` holds it to reassign: an arrow it stays
+          "server/b.ts": 'import type { Task } from "@/t.ts";\nexport const run: Task = async () => {};\n',
+          "shared/c.ts": "let k = () => 1;\nk = () => 2;\nexport { k };\n",
+        },
+        ["function-declarations"],
+      ),
+    ).toEqual(["function-declarations server/a.ts", "function-declarations server/a.ts"]);
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
+    const file = path.join(dir, "a.tsx");
+    fs.writeFileSync(
+      file,
+      [
+        "/** Its verb. */",
+        'export const verbOf = (method: string) => /^[a-z]+/.exec(method)?.[0] ?? "";',
+        "const make = async <T,>(t: T): Promise<T> => {",
+        "  return t;",
+        "};",
+        "const Row = ({ label }: { label: string }) => <div>{label}</div>;",
+        "",
+      ].join("\n"),
+    );
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({
+        jsPlugins: [path.resolve("lint/plugin.mjs")],
+        rules: { "arkyvree/function-declarations": "error" },
+      }),
+    );
+    await runOxlint(["-c", config, "--fix", dir]);
+    expect(fs.readFileSync(file, "utf8")).toBe(
+      [
+        "/** Its verb. */",
+        "export function verbOf(method: string) {",
+        '  return /^[a-z]+/.exec(method)?.[0] ?? "";',
+        "}",
+        "async function make<T>(t: T): Promise<T> {",
+        "  return t;",
+        "}",
+        "function Row({ label }: { label: string }) {",
+        "  return <div>{label}</div>;",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    fs.rmSync(dir, { recursive: true });
+  });
 });

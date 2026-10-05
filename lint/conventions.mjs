@@ -27,6 +27,9 @@
  *   which lists every variable: never `process.env` or `Bun.env` elsewhere in the server or `shared/`.
  * - `test-placement`: a test named after a module sits at that module's mirror (`tests/services/…` ↔
  *   `server/services/…`); a test of a behavior across modules is free in its area.
+ * - `function-declarations`: a file's own function is a `function` declaration (`function verbOf(method) {…}`), never
+ *   a const holding an arrow: an arrow is for a callback, or a function a function type types (`const run: Task = …`,
+ *   whose parameters the type gives). `oxlint --fix` declares one.
  * - `concern-shape`: a concern (`function X<B extends Constructor>(Base: B)`) sits in `X.ts`, its class is named for
  *   what it adds (a verb's `-ing`, `Archives` → `Archiving`, or `With` a noun, `ArmorClass` → `WithArmorClass`), and
  *   it adds methods, never state.
@@ -220,6 +223,9 @@ const TEST_MIRRORS = [
   ["tests/lint/", "lint/"],
   ["tests/scripts/", "scripts/"],
 ];
+
+// What a tool writes keeps the tool's code: the parser's output, drizzle's schema and relations
+const TOOL_WRITTEN = /(^|\/)generated\/|^drizzle\/(schema|relations)\.ts$/;
 
 /** A route's path, written as a string or a template literal (its fixed parts). */
 function pathOf(node) {
@@ -463,9 +469,12 @@ function gerunds(verb) {
 }
 
 /** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
-const isConcern = (fn) =>
-  fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
-  fn.typeParameters.params[0].constraint.typeName.name === "Constructor";
+function isConcern(fn) {
+  return (
+    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
+    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
+  );
+}
 
 const concernShape = {
   meta: { type: "suggestion" },
@@ -503,6 +512,89 @@ const concernShape = {
   },
 };
 
+/** Whether a function's body reads `this`, which a declaration would rebind. */
+function readsThis(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(readsThis);
+  if (node.type === "ThisExpression") return true;
+  if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") return false;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsThis(child),
+  );
+}
+
+/** A const's arrow or function expression written as the function declaration it is. */
+function declarationText(text, statement, declarator) {
+  const fn = declarator.init;
+  const name = declarator.id.name;
+  const [start] = statement.range ?? [statement.start, statement.end];
+  const [, end] = statement.range ?? [statement.start, statement.end];
+  const exported = statement.type === "ExportNamedDeclaration" ? "export " : "";
+  const [fnStart, fnEnd] = fn.range ?? [fn.start, fn.end];
+  if (fn.type === "FunctionExpression") {
+    const rest = text.slice(fnStart, fnEnd).replace(/^(async\s+)?function\s*(\*?)\s*(?:[A-Za-z_$][\w$]*)?\s*/, "");
+    return {
+      range: [start, end],
+      text: `${exported}${fn.async ? "async " : ""}function${fn.generator ? "*" : ""} ${name}${rest}`,
+    };
+  }
+  let headStart = fnStart;
+  if (fn.async) headStart = text.indexOf("async", fnStart) + "async".length;
+  let typeParameters = "";
+  if (fn.typeParameters) {
+    const [tpStart, tpEnd] = fn.typeParameters.range ?? [fn.typeParameters.start, fn.typeParameters.end];
+    typeParameters = text.slice(tpStart, tpEnd).replace(/,\s*>$/, ">");
+    headStart = tpEnd;
+  }
+  const [bodyStart, bodyEnd] = fn.body.range ?? [fn.body.start, fn.body.end];
+  const arrow = text.lastIndexOf("=>", bodyStart);
+  let head = text.slice(headStart, arrow).trim();
+  if (!head.startsWith("(")) head = `(${head})`;
+  const body =
+    fn.body.type === "BlockStatement"
+      ? text.slice(bodyStart, bodyEnd)
+      : `{\n  return ${text.slice(arrow + 2, fnEnd).trim()};\n}`;
+  return {
+    range: [start, end],
+    text: `${exported}${fn.async ? "async " : ""}function ${name}${typeParameters}${head} ${body}`,
+  };
+}
+
+const functionDeclarations = {
+  meta: { type: "suggestion", fixable: "code" },
+  create(context) {
+    if (TOOL_WRITTEN.test(repoPath(context.filename))) return {};
+    const text = context.sourceCode.text;
+    return {
+      Program(program) {
+        for (const statement of program.body) {
+          const declaration = statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;
+          if (declaration?.type !== "VariableDeclaration" || declaration.kind !== "const") continue;
+          if (declaration.declarations.length !== 1) continue;
+          const [declarator] = declaration.declarations;
+          const fn = declarator.init;
+          if (fn?.type !== "ArrowFunctionExpression" && fn?.type !== "FunctionExpression") continue;
+          // A function type types it (`const run: Task = …`): its parameters take their types from it
+          if (declarator.id.type !== "Identifier" || declarator.id.typeAnnotation) continue;
+          const fixable = !(fn.type === "ArrowFunctionExpression" && readsThis(fn.body));
+          context.report({
+            node: declarator.id,
+            message:
+              "A file's own function is a `function` declaration, not a const holding an arrow: an arrow is for a " +
+              "callback, or a function a function type types (`const run: Task = …`). `oxlint --fix` declares it.",
+            ...(fixable && {
+              fix: (fixer) => {
+                const { range, text: replacement } = declarationText(text, statement, declarator);
+                return fixer.replaceTextRange(range, replacement);
+              },
+            }),
+          });
+        }
+      },
+    };
+  },
+};
+
 export const rules = {
   "no-parent-imports": noParentImports,
   "no-helpers-modules": noHelpersModules,
@@ -516,4 +608,5 @@ export const rules = {
   "session-param": sessionParam,
   "test-placement": testPlacement,
   "concern-shape": concernShape,
+  "function-declarations": functionDeclarations,
 };

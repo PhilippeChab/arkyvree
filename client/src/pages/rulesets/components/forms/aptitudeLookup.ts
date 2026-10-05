@@ -3,7 +3,9 @@ import { useState } from "react";
 import type { Aptitude } from "@/client/src/components/customization/index.ts";
 
 /** Order aptitudes by name, so a form's list doesn't depend on picking order. */
-export const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+export function byName(a: { name: string }, b: { name: string }) {
+  return a.name.localeCompare(b.name);
+}
 
 /**
  * Aptitude records for the ids a form keeps: the ones known when it mounted,

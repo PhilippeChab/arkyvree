@@ -58,8 +58,9 @@ export function formatPropertyValues(
 }
 
 /** An UPPER_SNAKE_CASE property type as a label ("SPELL_SCHOOL" → "Spell School"). */
-export const formatPropertyType = (type: string) =>
-  type
+export function formatPropertyType(type: string) {
+  return type
     .split("_")
     .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
     .join(" ");
+}

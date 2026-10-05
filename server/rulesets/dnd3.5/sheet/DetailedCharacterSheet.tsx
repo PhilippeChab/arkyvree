@@ -10,7 +10,7 @@ import InventoryPage from "./InventoryPage.tsx";
 import SkillsPage from "./SkillsPage.tsx";
 import SpellsPage from "./SpellsPage.tsx";
 
-const DetailedCharacterSheet = ({
+function DetailedCharacterSheet({
   detailedCharacter,
   kind = "pc",
   portraitUrl,
@@ -18,7 +18,7 @@ const DetailedCharacterSheet = ({
   detailedCharacter: DetailedCharacter;
   kind?: "pc" | "familiar" | "animalcompanion" | "mount";
   portraitUrl?: string | null;
-}) => {
+}) {
   const isBonded = kind !== "pc";
 
   return (
@@ -32,6 +32,6 @@ const DetailedCharacterSheet = ({
       {!isProduction() && <DiagnosticsPage detailedCharacter={detailedCharacter} />}
     </Document>
   );
-};
+}
 
 export default DetailedCharacterSheet;

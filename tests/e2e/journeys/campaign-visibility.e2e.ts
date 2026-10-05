@@ -54,7 +54,9 @@ async function setUpCampaign(
 }
 
 /** Whether the campaign character's sheet shows its build, or only its identity. */
-const buildShown = (page: Page) => page.getByText("Classes & Levels", { exact: true });
+function buildShown(page: Page) {
+  return page.getByText("Classes & Levels", { exact: true });
+}
 
 test.describe("A campaign character", () => {
   test.setTimeout(90_000);

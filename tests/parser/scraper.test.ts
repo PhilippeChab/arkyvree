@@ -34,7 +34,9 @@ import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/share
 // The fixtures are the scraper's pages (each names its URL), trimmed to a few of their entries: each parses to the
 // committed reference's entries.
 
-const fixture = (name: string) => readFileSync(join(import.meta.dirname, "fixtures", `${name}.html`), "utf8");
+function fixture(name: string) {
+  return readFileSync(join(import.meta.dirname, "fixtures", `${name}.html`), "utf8");
+}
 /** The URL a fixture's page was fetched from, which its second line names. */
 function urlOf(name: string) {
   const url = fixture(name).match(/^<!-- (\S+), trimmed/m)?.[1];
@@ -42,9 +44,13 @@ function urlOf(name: string) {
   return url;
 }
 /** A reference as the scraper stored it, before its overrides. */
-const stored = <T extends ReferenceType>(file: string, type: T) => readStoredReference(join(REFERENCE_DIR, file), type);
+function stored<T extends ReferenceType>(file: string, type: T) {
+  return readStoredReference(join(REFERENCE_DIR, file), type);
+}
 /** What the scraper stores of a parse. */
-const scraped = <T>(parsed: T) => sanitizeJsonValues(parsed);
+function scraped<T>(parsed: T) {
+  return sanitizeJsonValues(parsed);
+}
 /** The reference's entries with these names, in order: each the next with its name (a table can list one twice). */
 function named<T extends { name: string }>(entries: T[], names: string[]) {
   let from = 0;

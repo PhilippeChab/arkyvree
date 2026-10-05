@@ -24,8 +24,9 @@ function classReference(
   return stored;
 }
 
-const derived = (stored: StoredReference<"class">) =>
-  resolveReference("class", { _meta: stored._meta, raw: stored.raw });
+function derived(stored: StoredReference<"class">) {
+  return resolveReference("class", { _meta: stored._meta, raw: stored.raw });
+}
 
 describe("A redundant class override", () => {
   test("is none of a committed class's, which the generator needs", () => {

@@ -18,13 +18,13 @@ const AC_PARTS = [
   ["Misc", "misc"],
 ] as const;
 
-const InfoPage = ({
+function InfoPage({
   detailedCharacter,
   portraitUrl,
 }: {
   detailedCharacter: DetailedCharacter;
   portraitUrl?: string | null;
-}) => {
+}) {
   const ruleset = detailedCharacter.getRuleset();
   const identity = detailedCharacter.getDetailedCharacterIdentity();
   const abilities = detailedCharacter.getDetailedCharacterAbilities();
@@ -303,6 +303,6 @@ const InfoPage = ({
       </View>
     </Page>
   );
-};
+}
 
 export default InfoPage;

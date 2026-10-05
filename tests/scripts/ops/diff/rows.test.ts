@@ -11,7 +11,9 @@ import {
 
 const UUID = "0b9c6a1e-3f5d-4c2a-9e8b-7d6f5a4b3c2d";
 
-const row = (bk: string, fields: Record<string, unknown>, id = `${bk}-id`) => ({ bk, id, row: fields });
+function row(bk: string, fields: Record<string, unknown>, id = `${bk}-id`) {
+  return { bk, id, row: fields };
+}
 
 describe("A compared row", () => {
   test("keeps its content, without bookkeeping columns nor any id another seed would draw anew", () => {

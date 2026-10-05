@@ -19,7 +19,9 @@ import {
  */
 
 /** The page of a campaign, ruleset or character, on whichever section it opens. */
-const entityPage = (kind: string, id: string) => new RegExp(`/${kind}/${id}(/[a-z-]+)?$`);
+function entityPage(kind: string, id: string) {
+  return new RegExp(`/${kind}/${id}(/[a-z-]+)?$`);
+}
 
 /** A campaign `gm` runs, with an invite for `email`: its name, its id, the invite's link, and its page. */
 async function campaignInvite(gm: Page, email: string) {
