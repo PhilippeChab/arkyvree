@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
@@ -100,7 +99,7 @@ class ModifiersService {
       });
     });
     // Modifiers decide target paths too: the slots and joins of a list decide its spell levels and known paths
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -243,7 +242,7 @@ class ModifiersService {
         return { ...updatedModifier, resolvedEntityId };
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -292,7 +291,7 @@ class ModifiersService {
         return { ...deletedModifier, resolvedEntityId };
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 }

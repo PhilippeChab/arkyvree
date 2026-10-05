@@ -3,7 +3,7 @@ import { afterEach, expect, test } from "bun:test";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { itemsInRules, languagesInRules, racesInRules } from "@/drizzle/schema.ts";
-import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, CharacterLanguages, Characters } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
@@ -13,7 +13,7 @@ import { LanguagesService } from "@/server/services/rulesets/languages/index.ts"
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
-afterEach(invalidateAll);
+afterEach(() => RulesetCache.invalidateAll());
 
 // A character that picked an inherited entity stores the source id. Deleting
 // the fork's later local copy leaves a tombstone that hides the source, which

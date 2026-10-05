@@ -2,7 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
-import { invalidateAll, invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
 import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
@@ -12,7 +12,7 @@ import { createSeededTestRuleset } from "@/tests/helpers.ts";
 import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/levelFixtures.ts";
 
 afterEach(() => {
-  invalidateAll();
+  RulesetCache.invalidateAll();
   setCacheEnabled(true);
 });
 
@@ -28,13 +28,13 @@ test("worker familiar HP matches web after customizing an inherited master feat"
   const copy = await cowEntity(db, "feats", source.id, fork.id, fork.ancestorRulesetIds, []);
   const [modifier] = await Modifiers.findMany(db, { sourceIds: [copy.id], sourceType: "feats" });
   await Modifiers.update(db, { value: "7" }, { id: modifier.id });
-  invalidateRuleset(fork.id);
+  RulesetCache.invalidate(fork.id);
   const familiar = (await Characters.findOne(db, { id: familiarId }))!;
   const module = await RulesetFactory.fromRulesetId(fork.id);
   setCacheEnabled(true);
   const web = await module.createDetailedCharacterWithSheet(familiar, "familiar");
   const webResponse = await buildFullCharacterResponse(familiar, web.detailedCharacter);
-  invalidateAll();
+  RulesetCache.invalidateAll();
   setCacheEnabled(false);
   const worker = await module.createDetailedCharacterWithSheet(familiar, "familiar");
   const workerResponse = await buildFullCharacterResponse(familiar, worker.detailedCharacter);

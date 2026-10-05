@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { skillsInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Skills } from "@/server/repositories/index.ts";
@@ -118,7 +118,7 @@ class SkillsService {
         return { ...skill, ...storedFlags };
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -181,7 +181,7 @@ class SkillsService {
         return { ...updatedSkill, ...storedFlags };
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -216,7 +216,7 @@ class SkillsService {
         return deletedSkill;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 }

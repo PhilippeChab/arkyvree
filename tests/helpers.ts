@@ -10,7 +10,7 @@ import {
   rulesetExtensionsInRules,
   type rulesetsInRules,
 } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
@@ -182,16 +182,16 @@ const writtenSeededRulesets = new Set<string>();
 /**
  * Drops a seeded ruleset's cached rules after the test wrote rows straight into it, so what it reads next
  * sees them. The cache outlives the test's rollback, so the setup drops them again once the test ends.
- * A fork goes away with the rollback: after writing into one, `invalidateRuleset` is enough.
+ * A fork goes away with the rollback: after writing into one, `RulesetCache.invalidate` is enough.
  */
 export function invalidateSeededRuleset(rulesetId: string) {
   writtenSeededRulesets.add(rulesetId);
-  invalidateRuleset(rulesetId);
+  RulesetCache.invalidate(rulesetId);
 }
 
 /** Drops the rules of the seeded rulesets the test wrote to, now that the rollback undid its rows. */
 export function forgetSeededRulesetWrites() {
-  for (const rulesetId of writtenSeededRulesets) invalidateRuleset(rulesetId);
+  for (const rulesetId of writtenSeededRulesets) RulesetCache.invalidate(rulesetId);
   writtenSeededRulesets.clear();
 }
 
@@ -203,7 +203,7 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
     .from(rulesetExtensionsInRules)
     .where(eq(rulesetExtensionsInRules.rulesetId, fork.rulesetId!));
   const [ruleset] = await Rulesets.update(db, { extensionRulesetIds: links.map((link) => link.id) }, { id: fork.id });
-  invalidateRuleset(fork.id);
+  RulesetCache.invalidate(fork.id);
   return ruleset;
 }
 

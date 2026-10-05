@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Abilities, EntitySnapshots, Klasses, KlassLevels, KlassSkills, Skills } from "@/server/repositories/index.ts";
@@ -94,8 +95,11 @@ describe("ClassSkillsService", () => {
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
     expect(await skillIdsOf(fork.id, fighter.id)).toEqual([climb.id]);
 
+    // The fork's changes are its copy's: the parent's cached rows, which every fork of it reads, stay
+    const parentRows = await RulesetCache.getRawData(parent.id);
     const added = await ClassSkillsService.addClassSkill(session, fork.id, fighter.id, swim.id);
     const removed = await ClassSkillsService.removeClassSkill(session, fork.id, fighter.id, climb.id);
+    expect(await RulesetCache.getRawData(parent.id)).toBe(parentRows);
     const snapshot = await EntitySnapshots.findOne(db, {
       sourceEntityId: fighter.id,
       rulesetId: fork.id,

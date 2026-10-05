@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";
@@ -185,14 +185,12 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       feats?: Array<{ featId: string; aptitudeId: string; free?: boolean }>;
     },
   ) {
-    let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        klassRulesetId = klass.rulesetId;
 
         // Copy an inherited class: the new level row would otherwise belong to the parent ruleset's class.
         const { id: targetKlassId } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
@@ -253,8 +251,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         return { ...klassLevel, bab, skills };
       });
     });
-    invalidateRuleset(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) invalidateRuleset(klassRulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -270,14 +267,12 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       feats?: Array<{ featId: string; aptitudeId: string; free?: boolean }>;
     },
   ) {
-    let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        klassRulesetId = klass.rulesetId;
 
         const level = rulesetData.klassLevelsById.get(levelId);
         if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
@@ -352,13 +347,11 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         return hooks.classLevels.enrichWithProperties([{ ...level, id: resolvedLevelId }], finalProps)[0];
       });
     });
-    invalidateRuleset(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) invalidateRuleset(klassRulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
   async deleteClassLevel(session: Session, rulesetId: string, classId: string, levelId: string) {
-    let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -366,7 +359,6 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         const inUse = await hasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        klassRulesetId = klass.rulesetId;
 
         const level = rulesetData.klassLevelsById.get(levelId);
         if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
@@ -394,8 +386,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         return deletedLevel;
       });
     });
-    invalidateRuleset(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) invalidateRuleset(klassRulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 }
