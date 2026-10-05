@@ -4,7 +4,7 @@ All available paths for modifiers and requirements. Dynamic segments are shown a
 
 Paths marked "req only" are available as requirement targets but not modifier targets.
 
-A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity`, `size`, `touch` and `flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size`, `tohit.gear` and `damage.strength`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
+A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity`, `size`, `touch` and `flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size`, `tohit.gear`, `tohit.throwing`, `tohit.secondary` and `damage.strength`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
 
 ## abilities
 
@@ -68,6 +68,7 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 | `combat.initiative.misc` | number | Other bonuses to initiative |
 | `combat.initiative.total` | number | All initiative bonuses combined (req only) |
 | `combat.bab` | number | From class progression |
+| `combat.throwing.misc` | number | Other bonuses to attack with thrown weapons and slings, a melee weapon's thrown attack included (a halfling's +1) |
 | `combat.naturalattacks.secondary` | number | Penalty on secondary natural attacks (−5; −2 with Multiattack) |
 | `combat.naturalattacks.extraprimary` | number | Extra attacks with the primary natural weapon, each at −5 (a companion's Multiattack, under 3 attacks) |
 | `combat.naturalattacks.count` | number | Natural attacks made in a round, two claws being two (req only) |
@@ -96,6 +97,8 @@ Grouped by weapon type, family, complexity, and item name. `items.weapons.unarme
 | `items.weapons.<group>.tohit.magic` | number | Enhancement bonus to attack |
 | `items.weapons.<group>.tohit.misc` | number | Other bonuses to attack |
 | `items.weapons.<group>.tohit.gear` | number | Penalties from the gear: the check penalty of armor or a shield worn without proficiency, a tower shield's −2, a crossbow's in one hand (req only) |
+| `items.weapons.<group>.tohit.throwing` | number | A thrown weapon's or a sling's bonus: `combat.throwing.misc` (req only) |
+| `items.weapons.<group>.tohit.secondary` | number | A secondary natural attack's penalty: `combat.naturalattacks.secondary` (req only) |
 | `items.weapons.<group>.damage.base` | string | Base damage dice |
 | `items.weapons.<group>.damage.strength` | number | Str bonus to damage (req only) |
 | `items.weapons.<group>.damage.magic` | number | Enhancement bonus to damage |

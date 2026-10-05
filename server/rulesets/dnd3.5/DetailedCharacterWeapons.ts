@@ -20,6 +20,18 @@ const NAVIGATABLE_WEAPON_PATHS = [
     type: "number" as const,
     requirementOnly: true,
   },
+  {
+    path: "tohit.throwing",
+    description: "A thrown weapon's or a sling's bonus: combat.throwing.misc",
+    type: "number" as const,
+    requirementOnly: true,
+  },
+  {
+    path: "tohit.secondary",
+    description: "A secondary natural attack's penalty: combat.naturalattacks.secondary",
+    type: "number" as const,
+    requirementOnly: true,
+  },
   { path: "damage.base", description: "Base damage dice", type: "string" as const },
   { path: "damage.strength", description: "Str bonus to damage", type: "number" as const, requirementOnly: true },
   { path: "damage.magic", description: "Enhancement bonus to damage", type: "number" as const },

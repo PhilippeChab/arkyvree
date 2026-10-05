@@ -40,6 +40,8 @@ export type WeaponSlot = {
     readonly gear: number;
     /** A secondary natural attack's penalty: `combat.naturalattacks.secondary` */
     readonly secondary: number;
+    /** A thrown weapon's or a sling's bonus: `combat.throwing.misc` (a halfling's +1) */
+    readonly throwing: number;
     readonly total: number[];
   };
   /** A melee weapon's attack when thrown, if it has a range increment: with Dexterity, as every ranged attack. */
@@ -140,6 +142,8 @@ export type DetailedCharacterComprehensiveCombat = {
    * many attacks it makes (two claws are two).
    */
   naturalattacks: { secondary: number; extraprimary: number; readonly count: number };
+  /** Other bonuses to attack with thrown weapons and slings, a melee weapon's thrown attack included: a halfling's +1. */
+  throwing: { misc: number };
   /** Two-weapon fighting: the penalty on each hand's attacks, and how many attacks the off hand makes. */
   twoweapon: {
     mainhand: number;
@@ -200,6 +204,7 @@ export default abstract class CombatState {
     initiative: { dexterity: 0, misc: 0, total: 0 },
     bab: 0,
     naturalattacks: { secondary: CONSTANTS.SECONDARY_NATURAL_ATTACK_PENALTY, extraprimary: 0, count: 0 },
+    throwing: { misc: 0 },
     twoweapon: {
       mainhand: CONSTANTS.TWO_WEAPON_MAIN_HAND_PENALTY,
       offhand: CONSTANTS.TWO_WEAPON_OFF_HAND_PENALTY,

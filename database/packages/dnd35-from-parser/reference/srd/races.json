@@ -93,6 +93,12 @@
           "target": "saves.will.misc",
           "value": "1",
           "valueType": "number"
+        },
+        {
+          "operator": "add",
+          "target": "combat.throwing.misc",
+          "value": "1",
+          "valueType": "number"
         }
       ],
       "size": "Small"

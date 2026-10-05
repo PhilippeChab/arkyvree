@@ -87,6 +87,9 @@ async function build(character: Character) {
 
 const buildSeeded = async (name: string) => build(await findSeededCharacter(name));
 
+/** A requirement's check that a number is `value`. */
+const exactly = (value: number) => ({ operator: "equal", value: String(value), valueType: "number" }) as const;
+
 /** One group holding one requirement on `target`: by default, that it's true. */
 function requiring(
   target: string,
@@ -970,6 +973,26 @@ describe("DetailedCharacter", () => {
         weaponSet(await buildCarrying("Bjorn Ironhand", [{ item, location: "Main Hand", weaponSet: 0 }])).mainhand!;
       expect(await held("Holy Avenger")).toMatchObject({ tohit: { magic: 2 }, damage: { magic: 2 } });
       expect(await held("Masterwork Cold Iron Longsword")).toMatchObject({ tohit: { magic: 1 }, damage: { magic: 0 } });
+    });
+
+    test("give a halfling +1 with a sling and a thrown weapon, a dagger's thrown attack too, not a bow", async () => {
+      const halfling = await asHalfling("Bjorn Ironhand");
+      await carry(halfling, [
+        { item: "Sling", location: "Main Hand", weaponSet: 0 },
+        { item: "Dagger", location: "Main Hand", weaponSet: 1 },
+        { item: "Shortbow", location: "Two Handed", weaponSet: 2 },
+      ]);
+      const detailed = await build(halfling);
+      const { bab, throwing } = detailed.getDetailedCharacterCombat().getCombat();
+      expect(throwing.misc).toBe(1);
+      expect(weaponSet(detailed).mainhand!.tohit.throwing).toBe(1);
+      expect(weaponSet(detailed, "2").twohanded!.tohit.throwing).toBe(0);
+      // A requirement reads it under the weapon's grouping too
+      expect(detailed.areRequirementsMet(requiring("items.weapons.Sling.tohit.throwing", exactly(1)))).toBe(true);
+      // The dagger's melee attack doesn't take it; its thrown one does
+      const { tohit, thrown } = weaponSet(detailed, "1").mainhand!;
+      expect(tohit.throwing).toBe(0);
+      expect(thrown!.total[0]).toBe(bab + thrown!.dexterity + tohit.magic + tohit.misc + tohit.size + tohit.gear + 1);
     });
 
     describe("proficiency", () => {
@@ -2574,7 +2597,6 @@ describe("DetailedCharacter", () => {
     });
 
     test("a family's count is how many times the character has its feats, every class's sneak attack dice together", async () => {
-      const exactly = (value: number) => ({ operator: "equal", value: String(value), valueType: "number" }) as const;
       expect(await met("Elara Starweaver", "feats.spellfocus.count", exactly(1))).toBe(true);
       expect(await met("Bjorn Ironhand", "feats.spellfocus.count", exactly(0))).toBe(true);
       // A rogue 3 has her Sneak Attack (Rogue) twice: +2d6
@@ -2602,7 +2624,6 @@ describe("DetailedCharacter", () => {
     });
 
     test("a feat named like its family is that feat, and the family's wildcard reaches the family's feats", async () => {
-      const exactly = (value: number) => ({ operator: "equal", value: String(value), valueType: "number" }) as const;
       // Martial Weapon Proficiency is every martial weapon, a fighter's. A rogue has some, each a feat of the family,
       // and so has an elf, by her race; a sorcerer, none
       expect(await met("Bjorn Ironhand", "feats.martialweaponproficiency.possessed")).toBe(true);

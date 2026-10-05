@@ -55,6 +55,13 @@ const NAVIGATABLE_PATHS = [
     requirementOnly: true,
   },
   {
+    path: "tohit.throwing",
+    description: "A thrown weapon's or a sling's bonus: combat.throwing.misc",
+    type: "number" as const,
+    sortOrder: 0,
+    requirementOnly: true,
+  },
+  {
     path: "tohit.secondary",
     description: "A secondary natural attack's penalty: combat.naturalattacks.secondary",
     type: "number" as const,
@@ -182,6 +189,11 @@ const NAVIGATABLE_PATHS = [
   },
   // Attack
   { path: "bab", description: "From class progression", type: "number" as const },
+  {
+    path: "throwing.misc",
+    description: "Other bonuses to attack with thrown weapons and slings (a halfling's +1)",
+    type: "number" as const,
+  },
   {
     path: "naturalattacks.secondary",
     description: "Penalty on secondary natural attacks: -5, -2 with Multiattack",
