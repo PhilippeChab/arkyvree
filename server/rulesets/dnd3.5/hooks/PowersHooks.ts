@@ -1,5 +1,4 @@
 import type { Db } from "@/server/database/index.ts";
-import { Aptitudes, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
 import type { PowerBody, PowersHooks } from "@/server/rulesets/hooks/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 
@@ -29,53 +28,6 @@ export class Dnd35PowersHooks implements PowersHooks {
       spellResistance: body.spellResistance,
       components: body.components,
     };
-  }
-
-  async afterPowerLinked(tx: Db, powerId: string, rulesetId: string, sourceChain: string[]): Promise<void> {
-    // Get the power's school from properties
-    const schoolProps = await Properties.findMany(tx, {
-      entityIds: [powerId],
-      entityType: "powers",
-      type: SPELL_SCHOOL,
-    });
-    if (schoolProps.length === 0) return;
-
-    const school = schoolProps[0].value;
-    if (school === "Universal") return;
-
-    // Find the specialist aptitude in this ruleset or ancestors
-    const specialistAptName = `${school} Specialist Spells`;
-    let specialistApt = await Aptitudes.findOne(tx, { name: specialistAptName, rulesetId });
-    if (!specialistApt) {
-      for (const ancestorId of sourceChain) {
-        specialistApt = await Aptitudes.findOne(tx, { name: specialistAptName, rulesetId: ancestorId });
-        if (specialistApt) break;
-      }
-    }
-    if (!specialistApt) return;
-
-    // Check if already linked
-    const existing = await PowersAptitudes.findOne(tx, { powerId, aptitudeId: specialistApt.id });
-    if (existing) return;
-
-    // The spell's level in the "Wizard Spells" list, which the specialist list takes
-    let wizardApt = await Aptitudes.findOne(tx, { name: "Wizard Spells", rulesetId });
-    if (!wizardApt) {
-      for (const ancestorId of sourceChain) {
-        wizardApt = await Aptitudes.findOne(tx, { name: "Wizard Spells", rulesetId: ancestorId });
-        if (wizardApt) break;
-      }
-    }
-    if (!wizardApt) return;
-
-    const wizardLink = await PowersAptitudes.findOne(tx, { powerId, aptitudeId: wizardApt.id });
-    if (!wizardLink) return;
-
-    await PowersAptitudes.create(tx, {
-      powerId,
-      aptitudeId: specialistApt.id,
-      level: wizardLink.level,
-    });
   }
 
   extractGroupingValue(body: PowerBody): string | null {
