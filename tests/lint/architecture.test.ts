@@ -36,7 +36,7 @@ describe("architecture rules", () => {
         "server/services/r.ts": "export const r = (tx) => tx.query.users.findMany();\n",
         "server/services/u.ts": 'import { unionAll } from "drizzle-orm/pg-core";\nexport const u = unionAll;\n',
         "server/repositories/Users.ts": "export const ok = (db) => db.select().from(t);\n",
-        "server/ws.ts": "export const notify = (db) => db.execute(sql);\n",
+        "server/websockets/events.ts": "export const notify = (db) => db.execute(sql);\n",
       }),
     ).toEqual([
       "queries-in-repositories server/services/r.ts",

@@ -7,7 +7,7 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { CharacterKind } from "@/server/rulesets/types.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { findExportableCharacter, getCharacterPdfTargetTable } from "@/server/services/characters/index.ts";
-import { publishWsEvent } from "@/server/ws.ts";
+import { publishWsEvent } from "@/server/websockets/index.ts";
 
 interface GeneratePdfPayload {
   userId: string;

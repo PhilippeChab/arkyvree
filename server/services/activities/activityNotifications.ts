@@ -33,7 +33,7 @@ import {
   Users,
   Visibility,
 } from "@/server/repositories/index.ts";
-import { noteNotified } from "@/server/ws.ts";
+import { noteNotified } from "@/server/websockets/index.ts";
 import type { ChangedField } from "@/shared/activity.ts";
 
 // Ruleset entities' tables, named like their types (abilities raise no activity)

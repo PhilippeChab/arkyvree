@@ -182,7 +182,7 @@ fly image show -a arkyvree-worker    # look for GH_SHA label
 ### Common issues
 
 - **Worker woke but job isn't processed** — graphile-worker's LISTEN client wedged post-suspend. We use `stop` on the worker to prevent this; if it happens, `fly machine restart <id>` clears it. If it happens frequently, verify the worker is on `stop` not `suspend`.
-- **WS updates not delivered to client** — check `[ws] Broadcast listener started` appears in web logs. If only `[ws] Heartbeat failed` appears without a reconnect log, the LISTEN client wedged. See `server/ws.ts` heartbeat + scheduleReconnect path.
+- **WS updates not delivered to client** — check `[ws] Broadcast listener started` appears in web logs. If only `[ws] Heartbeat failed` appears without a reconnect log, the LISTEN client wedged. See `server/websockets/BroadcastListener.ts` heartbeat + scheduleReconnect path.
 - **Deploy fails with "no access token available"** — `FLY_API_TOKEN` isn't reachable from the deploy job. Check it's at repo-level, not environment-level.
 - **Cloudflare 525 SSL handshake failed** — Cloudflare can't complete TLS to the origin; the app itself is usually fine. Get the IP from `fly ips list -a arkyvree`, then compare two SNIs against it:
   ```sh

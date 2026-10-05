@@ -4,7 +4,7 @@ import { getCookie } from "hono/cookie";
 import { db } from "@/server/database/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/index.ts";
 import { Sessions, Users } from "@/server/repositories/index.ts";
-import { addConnection, BUILD_ID, removeConnection, upgradeWebSocket } from "@/server/ws.ts";
+import { BUILD_ID, Connections, upgradeWebSocket } from "@/server/websockets/index.ts";
 
 export default new Hono().get(
   "/ws",
@@ -32,7 +32,7 @@ export default new Hono().get(
         }
 
         userId = user.id;
-        addConnection(userId, ws);
+        Connections.add(userId, ws);
         ws.send(JSON.stringify({ type: "app:version", version: BUILD_ID }));
       },
       onMessage(event, ws) {
@@ -42,7 +42,7 @@ export default new Hono().get(
       },
       onClose(_event, ws) {
         if (userId) {
-          removeConnection(userId, ws);
+          Connections.remove(userId, ws);
         }
       },
     };

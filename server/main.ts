@@ -5,7 +5,7 @@ import { waitForDatabase } from "@/server/database/index.ts";
 import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "@/server/environment.ts";
 import { application } from "@/server/routers/application.ts";
 import { onShutdown } from "@/server/shutdown.ts";
-import { startBroadcastListener, stopBroadcastListener, websocket } from "@/server/ws.ts";
+import { BroadcastListener, websocket } from "@/server/websockets/index.ts";
 
 if (isProduction()) {
   const missing = REQUIRED_IN_PRODUCTION.filter((name) => !readEnv(name));
@@ -16,7 +16,7 @@ if (isProduction()) {
 }
 
 await waitForDatabase();
-await startBroadcastListener();
+await BroadcastListener.start();
 
 // Warm the ruleset cache in the background so the server becomes healthy
 // immediately. Cold reads still populate and pin on miss — this just frontloads
@@ -41,7 +41,7 @@ const server = Bun.serve({
 });
 
 onShutdown("server", async () => {
-  await stopBroadcastListener();
+  await BroadcastListener.stop();
   await server.stop(true);
 });
 
