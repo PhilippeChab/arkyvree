@@ -198,7 +198,7 @@ Weapon items, armor items, and shield items auto-generate proficiency requiremen
 | `powers.<name>.properties.<type>` | string | Power property value |
 | `powers.<spell>.<aptitude>.known` | boolean | Whether spell is known via this aptitude |
 
-A list a feat gives slots in or joins to its class's list (a cleric's domain, a specialist wizard's school) has no known paths: its spells come with the feat.
+A list a feat brings (one a feat gives slots in or joins to its class's list, and no class gives slots in: a cleric's domain, a specialist wizard's school) has no known paths: its spells come with the feat.
 
 ### powers (DC groupings)
 
@@ -263,4 +263,4 @@ Note: D&D 3.5 skill budget data (total, available, spent, perlevel) lives on `sk
 
 A modifier on a pool's slots grants more, with a number: `add` on `aptitudes.<name>.allowed` (a feat pool) and on a spell level's `uses` and `allowed`, or `set` -1 on a spell level's `allowed`, all of that level known. The level-up wizard and the class tables count these without a character, the sheet's way; another operator or a template would count differently there, so the editor doesn't offer them and the API refuses them (`TargetPath.setValues`, `literalOnly`). A pool's own `uses` (Turn Undead's) counts on the sheet alone and takes any modifier.
 
-A feat or a class level sets `joinsclasslist` (`set` true): a cleric's domain feat sets its domain list's. The list's spells are then known on the list of the class whose level gave the feat (or the class level's own class), at the spell levels that class knows its whole list at, and the slots the feat gives in the list follow that class's spell levels: bonus caster levels open them. A list a feat gives slots in without joining, a specialist wizard's school, keeps its slots alone.
+A feat or a class level sets `joinsclasslist` (`set` true): a cleric's domain feat sets its domain list's. The list's spells are then known on the list of the class whose level gave the feat (or the class level's own class), at the spell levels that class knows its whole list at. A specialist wizard's school doesn't join: his school's spells stay learned. The slots a feat gives in a list it brings, a domain's or a school's, follow the spell levels the feat's class casts, bonus caster levels counted: a level it casts gets the slots the feat gives there, though the feat's modifiers open it at a class level.

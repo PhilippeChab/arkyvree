@@ -388,8 +388,11 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.characterLevels,
       this.rulesetKlasses,
     );
-    this.detailedCharacterSpellcasting.applyBonusCasterLevelModifiers(this.holders!, this.feats, (modifier) =>
-      this.areRequirementsMet([rulesetData.requirementsByEntity.get(modifier.id) ?? []]),
+    this.detailedCharacterSpellcasting.applyBonusCasterLevelModifiers(
+      this.holders!,
+      this.feats,
+      this.featListIds,
+      (modifier) => this.areRequirementsMet([rulesetData.requirementsByEntity.get(modifier.id) ?? []]),
     );
     this.detailedCharacterSpellcasting.applyBonusSpellsFromAbilities(this.klassBonusSpellAbilityMap);
     this.detailedCharacterSpellcasting.computeSpellcasting(this.holders!, this.klassCasterTypeMap);
@@ -400,7 +403,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.rulesetAptitudes,
       this.klassBonusSpellAbilityMap,
     );
-    this.detailedCharacterSpellcasting.buildSpellTags(this.feats);
+    this.detailedCharacterSpellcasting.buildSpellTags(this.feats, this.featListIds);
   }
 
   protected postRequirementProcessing(): void {

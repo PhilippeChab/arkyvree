@@ -7,7 +7,7 @@ import type {
 } from "@/server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import { JOIN_TARGET, listOpenedBy } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
-import { ALLOWED_ALL } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
+import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, Power, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -92,8 +92,9 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
 
     /**
      * The aptitude powers the character doesn't have yet, each given at the first level of its class and free: on the
-     * list a class level gives slots in, and on the list of each class a list joins (a cleric's domain spells on the
-     * cleric's).
+     * list a class level gives slots in, and on the list of each class a list joins that knows the power's level (a
+     * cleric's domain spells on the cleric's). A joining list's power no such list knows stays on its own list, where it
+     * knows the level itself (a domain a fighter picks through a prestige class, its slots its own).
      */
     private newKnownPowers(powers: PowerWithPMR[], aptitudeIdToClassName: Map<string, string>): PowerWithPMR[] {
       const classes = this.classes.getClasses();
@@ -128,9 +129,21 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         if (className) give(power, className, power.aptitudeId);
 
         const list = aptitudeKeyById.get(power.aptitudeId);
-        for (const joiningClassName of (list !== undefined && joining.get(list)) || []) {
+        const joiningClassNames = [...((list !== undefined && joining.get(list)) || [])];
+        let joined = false;
+        for (const joiningClassName of joiningClassNames) {
           const classList = this.classListKnowing(joiningClassName, power.powerLevel);
-          if (classList) give(power, joiningClassName, aptitudes[classList].id);
+          if (!classList) continue;
+          give(power, joiningClassName, aptitudes[classList].id);
+          joined = true;
+        }
+        const ownLevel = (aptitudes[list ?? ""] as Record<string, unknown> | undefined)?.[String(power.powerLevel)];
+        if (
+          !joined &&
+          joiningClassNames.length > 0 &&
+          (ownLevel as AptitudeLevelData | undefined)?.allowed === ALLOWED_ALL
+        ) {
+          give(power, joiningClassNames[0], power.aptitudeId);
         }
       }
       return newPowers;
@@ -167,11 +180,11 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     /**
-     * Tags the spells of each list one of the character's feats gives slots in or joins to its class's list with the
-     * feat's name: a cleric's domain spells "Fire Domain", a specialist wizard's school spells "Evocation Specialist".
-     * A tag shows on that list and on the lists of the class whose level gave the feat.
+     * Tags the spells of each list one of the character's feats brings (`featListIds`: it gives slots in it or joins it
+     * to its class's list) with the feat's name: a cleric's domain spells "Fire Domain", a specialist wizard's school
+     * spells "Evocation Specialist". A tag shows on that list and on the lists of the class whose level gave the feat.
      */
-    buildSpellTags(feats: FeatWithPMR[]) {
+    buildSpellTags(feats: FeatWithPMR[], featListIds: Set<string>) {
       const aptitudes = this.aptitudes.getAptitudes();
       const classNameByKlassLevelId = this.classNameByKlassLevelId();
       const tagsByAptitudeId = new Map<string, string[]>();
@@ -183,9 +196,14 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         const lists = new Set(feat.modifiers.flatMap((modifier) => listOpenedBy(modifier.target) ?? []));
         for (const list of lists) {
           const aptitude = aptitudes[list];
-          if (!aptitude) continue;
+          if (!aptitude || !featListIds.has(aptitude.id)) continue;
           const joinsClassList = feat.modifiers.some((modifier) => JOIN_TARGET.exec(modifier.target)?.[1] === list);
-          this.spellTagLists[feat.name] = { aptitudeIds: [aptitude.id, ...classListIds], joinsClassList };
+          // A feat opening several lists shows its tag on each of them
+          const tagged = this.spellTagLists[feat.name] ?? { aptitudeIds: classListIds, joinsClassList: false };
+          this.spellTagLists[feat.name] = {
+            aptitudeIds: [...new Set([aptitude.id, ...tagged.aptitudeIds])],
+            joinsClassList: tagged.joinsClassList || joinsClassList,
+          };
           tagsByAptitudeId.set(aptitude.id, [...(tagsByAptitudeId.get(aptitude.id) ?? []), feat.name]);
         }
       }

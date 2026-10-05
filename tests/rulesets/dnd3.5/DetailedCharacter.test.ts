@@ -2275,21 +2275,152 @@ describe("DetailedCharacter", () => {
         expect(storm).toEqual(expect.arrayContaining(["Ice Storm", "Call Lightning Storm"]));
       });
 
+      test("join the list of each class that brings them, a class level's as well as a feat's", async () => {
+        // A homebrew class whose first level joins the fire domain to its list, taken by a fire cleric
+        const ctx = await getSeedCtx();
+        const [sunPriestSpells] = await insertRows(aptitudesInRules, [
+          { name: "Test Sun Priest Spells", rulesetId: ctx.rulesetId },
+        ]);
+        await insertRows(powersAptitudesInRules, [
+          { powerId: ctx.powerMap["Bless"], aptitudeId: sunPriestSpells.id, level: 1 },
+        ]);
+        const { levelIds } = await seedClass(db, ctx, {
+          name: "Test Sun Priest",
+          description: "Draws on a domain",
+          hd: 6,
+          levels: 2,
+          skillPoints: 2,
+          bab: "medium",
+          saves: { fortitude: "good", reflex: "poor", will: "good" },
+          classSkills: ["Concentration"],
+          spells: { slug: "testsunpriestspells", perDay: [[1], [1]], knowAll: true, noCantrips: true },
+          modifiers: [
+            {
+              level: 1,
+              target: "aptitudes.firedomainspells.joinsclasslist",
+              operator: "set",
+              value: "true",
+              valueType: "boolean",
+            },
+          ],
+        });
+        invalidateSeededRuleset(ctx.rulesetId);
+
+        const characterId = await createSeedCharacter("Sun Priest", { ...WIZARD_SCORES, Wisdom: 16 });
+        const cleric = (await Klasses.findOne(db, { name: "Cleric", rulesetId: ctx.rulesetId }))!;
+        await addCharacterLevel(characterId, (await findKlassLevel(cleric.id, 1))!.id, {
+          feats: [{ featId: ctx.featMap["Fire Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }],
+        });
+        await addCharacterLevel(characterId, levelIds[1]);
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        const aptitudes = detailed.getDetailedCharacterAptitudes().getAptitudes();
+        const onList = (list: string) =>
+          allPowers(detailed)
+            .filter((power) => power.aptitudeId === aptitudes[list].id)
+            .map((power) => power.name);
+        // The fire domain's first-level spell on both lists, its second on neither: both classes cast the first level only
+        for (const list of ["clericspells", "testsunpriestspells"]) {
+          expect(onList(list)).toContain("Burning Hands");
+          expect(onList(list)).not.toContain("Produce Flame");
+        }
+      });
+
+      test("keep a domain's spells on its own list for a class with no list knowing their level", async () => {
+        // A fighter picking the sun domain, as a prestige class granting a domain pick would: its first-level slot is its own
+        const ctx = await getSeedCtx();
+        const characterId = await createSeedCharacter("Sun Fighter", { ...WIZARD_SCORES, Wisdom: 16 });
+        const fighter = (await Klasses.findOne(db, { name: "Fighter", rulesetId: ctx.rulesetId }))!;
+        await addCharacterLevel(characterId, (await findKlassLevel(fighter.id, 1))!.id, {
+          feats: [{ featId: ctx.featMap["Sun Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }],
+        });
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        const sunDomainSpells = detailed.getDetailedCharacterAptitudes().getAptitudes()["sundomainspells"].id;
+        expect(spellLevel(detailed, "sundomainspells", 1)).toMatchObject({ allowed: ALLOWED_ALL, uses: 1 });
+        expect(
+          allPowers(detailed)
+            .filter((power) => power.aptitudeId === sunDomainSpells)
+            .map((power) => power.name),
+        ).toEqual(["Endure Elements"]);
+      });
+
+      test("keep a feat's extra slot in a class's own list the class's: no tag, its spells still learned", async () => {
+        const ctx = await getSeedCtx();
+        const fork = await forkWith();
+        const [reserve] = await insertRows(featsInRules, [{ name: "Test Arcane Reserve", rulesetId: fork.id }]);
+        await insertRows(featsAptitudesInRules, [{ featId: reserve.id, aptitudeId: ctx.aptMap["General"] }]);
+        await insertRows(modifiersInCustomization, [
+          {
+            sourceId: reserve.id,
+            sourceType: "feats",
+            target: "aptitudes.wizardspells.1.uses",
+            value: "1",
+            valueType: "number",
+            operator: "add",
+          },
+        ]);
+        invalidateRuleset(fork.id);
+
+        const characterId = await createSeedCharacter("Reserve Wizard", WIZARD_SCORES, { rulesetId: fork.id });
+        const wizard = (await Klasses.findOne(db, { name: "Wizard", rulesetId: ctx.rulesetId }))!;
+        await addCharacterLevel(characterId, (await findKlassLevel(wizard.id, 1))!.id, {
+          feats: [{ featId: reserve.id, aptitudeId: ctx.aptMap["General"] }],
+        });
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        // A wizard 1 with Intelligence 16: one first-level spell, one for Intelligence, one from the feat
+        expect(spellUses(detailed, "wizardspells", [1])).toEqual([3]);
+        expect(Object.values(detailed.getSpellTags()).flat()).not.toContain("Test Arcane Reserve");
+        expect(detailed.getDetailedCharacterPowers().getSpellEntry("magicmissile", "wizard")).toBeDefined();
+      });
+
+      test("open a specialist's school slot at the spell levels bonus caster levels reach", async () => {
+        // An evocation specialist wizard 5 / loremaster 3 casts as a wizard 8: fourth-level spells, a school slot there too
+        const ctx = await getSeedCtx();
+        const fork = await forkWith(DND35_DMG_NAME);
+        const characterId = await createSeedCharacter("Lore Specialist", WIZARD_SCORES, {
+          xp: 36000,
+          rulesetId: fork.id,
+        });
+        const wizardLevels = await addClassLevels(db, ctx, characterId, "Wizard", [1, 2, 3, 4, 5], [4, 4, 4, 4, 4]);
+        await addFeats(db, ctx, wizardLevels, [
+          { levelIndex: 0, featName: "Evocation Specialist", aptitude: "Wizard Specialization" },
+        ]);
+        const dmg = (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!;
+        const loremaster = (await Klasses.findOne(db, { name: "Loremaster", rulesetId: dmg.id }))!;
+        const advance = {
+          featId: ctx.featMap["Advance Wizard Spellcasting"],
+          aptitudeId: ctx.aptMap["Bonus Arcane Caster Level"],
+        };
+        for (let level = 1; level <= 3; level++) {
+          await addCharacterLevel(characterId, (await findKlassLevel(loremaster.id, level))!.id, { feats: [advance] });
+        }
+
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        expect(spellLevel(detailed, "wizardspells", 4).uses).toBeGreaterThan(0);
+        expect([3, 4, 5].map((level) => spellLevel(detailed, "evocationspecialistspells", level))).toMatchObject([
+          { allowed: ALLOWED_ALL, uses: 1 },
+          { allowed: ALLOWED_ALL, uses: 1 },
+          { allowed: 0, uses: 0 },
+        ]);
+      });
+
       test("join the cleric's list by their feat's flag, whatever their lists are named", async () => {
         // A homebrew domain whose list isn't named "… Domain Spells" and joins the cleric's, and one named so that doesn't
         const ctx = await getSeedCtx();
         const fork = await forkWith();
-        const [prayers, moon] = await insertRows(aptitudesInRules, [
+        const [prayers, moon, litany] = await insertRows(aptitudesInRules, [
           { name: "Sun Prayers", rulesetId: fork.id },
           { name: "Moon Domain Spells", rulesetId: fork.id },
+          { name: "Sun Litany", rulesetId: fork.id },
         ]);
-        const [dawn, dusk] = await insertRows(powersInRules, [
+        const [dawn, dusk, noon] = await insertRows(powersInRules, [
           { name: "Dawn Hymn", rulesetId: fork.id },
           { name: "Dusk Hymn", rulesetId: fork.id },
+          { name: "Noon Hymn", rulesetId: fork.id },
         ]);
         await insertRows(powersAptitudesInRules, [
           { powerId: dawn.id, aptitudeId: prayers.id, level: 1 },
           { powerId: dusk.id, aptitudeId: moon.id, level: 1 },
+          { powerId: noon.id, aptitudeId: litany.id, level: 1 },
         ]);
         const [sun, moonDomain] = await insertRows(featsInRules, [
           { name: "Prayers of the Sun", rulesetId: fork.id },
@@ -2320,6 +2451,7 @@ describe("DetailedCharacter", () => {
         ];
         await insertRows(modifiersInCustomization, [
           ...slot(sun.id, "sunprayers"),
+          ...slot(sun.id, "sunlitany"),
           {
             sourceId: sun.id,
             sourceType: "feats",
@@ -2353,11 +2485,15 @@ describe("DetailedCharacter", () => {
         expect(detailed.getSpellTags()).toMatchObject({
           [dawn.id]: ["Prayers of the Sun"],
           [dusk.id]: ["Moon Domain"],
+          [noon.id]: ["Prayers of the Sun"],
         });
-        expect(detailed.getSpellTagLists()).toEqual({
-          "Prayers of the Sun": { aptitudeIds: [prayers.id, clericSpells], joinsClassList: true },
-          "Moon Domain": { aptitudeIds: [moon.id, clericSpells], joinsClassList: false },
-        });
+        // A feat opening two lists shows its tag on both
+        const tagLists = detailed.getSpellTagLists();
+        expect(tagLists["Prayers of the Sun"].aptitudeIds.toSorted()).toEqual(
+          [prayers.id, litany.id, clericSpells].sort(),
+        );
+        expect(tagLists["Prayers of the Sun"].joinsClassList).toBe(true);
+        expect(tagLists["Moon Domain"]).toEqual({ aptitudeIds: [moon.id, clericSpells], joinsClassList: false });
         const powers = detailed.getDetailedCharacterPowers();
         expect(powers.getSpellEntry("dawnhymn", "sunprayers")).toBeUndefined();
         expect(powers.getSpellEntry("duskhymn", "moondomain")).toBeUndefined();

@@ -2,13 +2,23 @@ import { describe, expect, test } from "bun:test";
 
 import { getTableName } from "drizzle-orm";
 
-import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
+import { modifiersInCustomization, powersAptitudesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Abilities, Activities, Feats, Items, Powers, Races, Requirements } from "@/server/repositories/index.ts";
+import {
+  Abilities,
+  Activities,
+  Aptitudes,
+  Feats,
+  Items,
+  Powers,
+  Races,
+  Requirements,
+} from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { createTestKlassLevel, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import { createTestKlassLevel, createTestUserAndRuleset, insertRows, NIL_UUID } from "@/tests/helpers.ts";
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", operator: "add" };
 
@@ -73,6 +83,25 @@ describe("ModifiersService", () => {
       await ModifiersService.deleteModifier(session, rulesetId, entityType, entityId, created.id);
       expect(await ModifiersService.getModifiers(rulesetId, entityType, entityId)).toEqual([]);
     }
+  });
+
+  test("refreshes the target paths a list's slots decide: a feat's list has no known paths", async () => {
+    // A spell list with a spell; a feat giving it slots makes it the feat's, its spells no longer learned
+    const { session, rulesetId, feat } = await setup();
+    const [list] = await Aptitudes.create(db, { name: "Test Light Spells", rulesetId });
+    const [spell] = await Powers.create(db, { name: "Test Glow", rulesetId });
+    await insertRows(powersAptitudesInRules, [{ powerId: spell.id, aptitudeId: list.id, level: 1 }]);
+    const knownPath = async () =>
+      (await getTargetPathsWithLabels(rulesetId, "requirement")).paths.some(
+        (path) => path.path === "powers.testglow.testlight.known",
+      );
+    expect(await knownPath()).toBe(true);
+
+    const slot = { target: "aptitudes.testlightspells.1.uses", value: "1", operator: "add" };
+    const created = await ModifiersService.createModifier(session, rulesetId, "feats", feat.id, slot);
+    expect(await knownPath()).toBe(false);
+    await ModifiersService.deleteModifier(session, rulesetId, "feats", feat.id, created.id);
+    expect(await knownPath()).toBe(true);
   });
 
   test("keeps several modifiers on one target", async () => {

@@ -177,6 +177,24 @@ describe("TargetPathsService", () => {
     expect((await pathOf("requirement", "aptitudes.general.allowed"))?.operators).toContain("greater_than");
   });
 
+  test("lets a feat or a class level join a spell list to its class's, and gives a feat's list no known path", async () => {
+    const pathOf = async (kind: Kind, path: string) => (await seedPaths(kind)).paths.find((p) => p.path === path);
+    expect(await pathOf("modifier", "aptitudes.firedomainspells.joinsclasslist")).toMatchObject({
+      valueType: "boolean",
+      operators: ["set"],
+      allowedEntityTypes: ["feats", "klass_levels"],
+    });
+    expect((await pathOf("requirement", "aptitudes.firedomainspells.joinsclasslist"))?.operators).toEqual([
+      "equal",
+      "not_equal",
+    ]);
+    // A feat pool isn't a spell list
+    expect(await pathOf("modifier", "aptitudes.general.joinsclasslist")).toBeUndefined();
+    // Burning Hands, a wizard spell and a fire domain one, is known on the wizard's list only
+    expect(await pathOf("requirement", "powers.burninghands.wizard.known")).toBeDefined();
+    expect(await pathOf("requirement", "powers.burninghands.firedomain.known")).toBeUndefined();
+  });
+
   test("lists what the engine reads without an entity of its own: the unarmed strike, the skill points, a skill family", async () => {
     const offered = async (kind: Kind) => new Map((await seedPaths(kind)).paths.map((p) => [p.path, p]));
     const [modifiers, requirements] = [await offered("modifier"), await offered("requirement")];
