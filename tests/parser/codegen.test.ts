@@ -310,6 +310,10 @@ describe("A generated class", () => {
     expect(classModifiers(monk).find(({ target }) => target === "combat.speed.base")?.requirements).toEqual(
       monk.overrides?.columns?.["Unarmored Speed Bonus"]?.requirements,
     );
+    // A blank cell keeps the value above it, and a typographic minus is a minus
+    monk.raw.progression[5].columns!["AC Bonus"] = "";
+    monk.raw.progression[6].columns!["AC Bonus"] = "\u22121";
+    expect(modifiers("AC Bonus").slice(0, 4)).toEqual(["5 add 1", "7 add -2", "8 add 2", "10 add 1"]);
     // A column its table doesn't have
     monk.overrides!.columns = { "Ki Points": { target: "combat.ac.misc", operator: "add" } };
     expect(() => classModifiers(monk)).toThrow('Monk: its table has no "Ki Points" column');
