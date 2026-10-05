@@ -197,12 +197,13 @@ function reorder(text, statements, items) {
   const lead = firstBody === 0 ? "" : "\n\n";
   return {
     range: [start, endOf(text, statements.at(-1))],
-    // The first keeps the file's head (a blank line after the imports); one that opened the file gets its own
+    // The first keeps the file's head (a blank line after the imports)
     text: sorted
       .map((item, i) => {
         const text = chunk(item);
         if (i === 0) return lead + text.replace(/^\s*\n/, "");
-        return /^\s*\n/.test(text) ? text : `\n\n${text}`;
+        // A statement keeps its spacing beside the neighbor it had, and gets a blank line beside a new one
+        return sorted[i - 1].index === item.index - 1 ? text : `\n\n${text.replace(/^\s*\n/, "")}`;
       })
       .join(""),
   };

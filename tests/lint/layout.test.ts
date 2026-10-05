@@ -122,7 +122,7 @@ describe("file layout", () => {
       ),
     );
     expect(out["scripts/b.ts"]).toBe(
-      lines("#!/usr/bin/env bun", "type T = number;", "function f() {", "  return 1;", "}", "", "go(f());"),
+      lines("#!/usr/bin/env bun", "type T = number;", "", "function f() {", "  return 1;", "}", "", "go(f());"),
     );
   });
 

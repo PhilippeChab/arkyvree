@@ -86,6 +86,7 @@ const queryClient = new QueryClient({
     onError: (error) => handleGlobalError(error),
   }),
 });
+
 useAuthStore.subscribe((state) => {
   const userId = state.user?.id ?? null;
   if (userId !== lastUserId) {
