@@ -20,22 +20,23 @@ class RequirementsRepository extends include(
   async findMany(db: Db, where: { entityIds: string[]; entityType: string } | { entityIds: string[] }) {
     if (!("entityType" in where) && where.entityIds.length === 0) return [];
     return await db.query.requirementsInCustomization.findMany({
-      where: this.where([
-        inArray(this.table.entityId, where.entityIds),
-        "entityType" in where && eq(this.table.entityType, where.entityType),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [inArray(this.table.entityId, where.entityIds)],
+        ["entityType" in where && eq(this.table.entityType, where.entityType), isNull(this.table.deletedAt)],
+      ),
     });
   }
 
   async findOne(db: Db, where: { id: string } | { id: string; entityId: string; entityType: string }) {
     return await db.query.requirementsInCustomization.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        "entityId" in where && eq(this.table.entityId, where.entityId),
-        "entityType" in where && eq(this.table.entityType, where.entityType),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [eq(this.table.id, where.id)],
+        [
+          "entityId" in where && eq(this.table.entityId, where.entityId),
+          "entityType" in where && eq(this.table.entityType, where.entityType),
+          isNull(this.table.deletedAt),
+        ],
+      ),
     });
   }
 

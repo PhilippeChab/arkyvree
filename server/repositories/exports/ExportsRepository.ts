@@ -1,4 +1,4 @@
-import { eq, lt } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 
 import { exportsInAccount } from "@/drizzle/schema.ts";
@@ -10,12 +10,10 @@ class ExportsRepository extends BaseRepository<typeof exportsInAccount> {
     super(exportsInAccount);
   }
 
-  async findOne(db: Db, where: { id: string; userId?: string }) {
+  /** An export, its owner's: none reads another's. */
+  async findOne(db: Db, where: { id: string; userId: string }) {
     return await db.query.exportsInAccount.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        "userId" in where && where.userId ? eq(this.table.userId, where.userId) : false,
-      ]),
+      where: and(eq(this.table.id, where.id), eq(this.table.userId, where.userId)),
     });
   }
 

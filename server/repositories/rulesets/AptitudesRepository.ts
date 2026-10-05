@@ -23,10 +23,14 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
   }
 
   async findMany(db: Db, where: { ids: string[] } | { rulesetIds: string[] }) {
-    const condition =
-      "ids" in where ? inArray(this.table.id, where.ids) : inArray(this.table.rulesetId, where.rulesetIds);
     return await db.query.aptitudesInRules.findMany({
-      where: and(condition, isNull(this.table.deletedAt)),
+      where: this.branchWhere(
+        [
+          "ids" in where && inArray(this.table.id, where.ids),
+          "rulesetIds" in where && inArray(this.table.rulesetId, where.rulesetIds),
+        ],
+        [isNull(this.table.deletedAt)],
+      ),
       orderBy: [this.orderBy(this.table.name)],
     });
   }

@@ -20,11 +20,10 @@ class ModifiersRepository extends include(
   async findMany(db: Db, where: { sourceIds: string[]; sourceType: string } | { sourceIds: string[] }) {
     if (!("sourceType" in where) && where.sourceIds.length === 0) return [];
     return await db.query.modifiersInCustomization.findMany({
-      where: this.where([
-        inArray(this.table.sourceId, where.sourceIds),
-        "sourceType" in where && eq(this.table.sourceType, where.sourceType),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [inArray(this.table.sourceId, where.sourceIds)],
+        ["sourceType" in where && eq(this.table.sourceType, where.sourceType), isNull(this.table.deletedAt)],
+      ),
     });
   }
 

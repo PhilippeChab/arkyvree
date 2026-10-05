@@ -10,6 +10,20 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
     super(attachmentsInStorage);
   }
 
+  /** An attachment, by its id. */
+  private async deleteOne(db: Db, id: string) {
+    return await db.delete(this.table).where(eq(this.table.id, id)).returning();
+  }
+
+  /** Every attachment of these records. */
+  private async deleteRecords(db: Db, recordType: string, recordIds: string[]) {
+    if (recordIds.length === 0) return [];
+    return await db
+      .delete(this.table)
+      .where(and(eq(this.table.recordType, recordType), inArray(this.table.recordId, recordIds)))
+      .returning();
+  }
+
   async findMany(db: Db, where: { blobIds: string[] }) {
     if (where.blobIds.length === 0) return [];
     return await db.query.attachmentsInStorage.findMany({
@@ -50,14 +64,8 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
   }
 
   async delete(db: Db, where: { id: string } | { recordType: string; recordIds: string[] }) {
-    if ("id" in where) {
-      return await db.delete(this.table).where(eq(this.table.id, where.id)).returning();
-    }
-    if (where.recordIds.length === 0) return [];
-    return await db
-      .delete(this.table)
-      .where(and(eq(this.table.recordType, where.recordType), inArray(this.table.recordId, where.recordIds)))
-      .returning();
+    if ("id" in where) return await this.deleteOne(db, where.id);
+    return await this.deleteRecords(db, where.recordType, where.recordIds);
   }
 }
 

@@ -10,6 +10,21 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
     super(usersInAccount);
   }
 
+  /** A demo account: one that expires, at the demo's address. */
+  private isDemo() {
+    return and(isNotNull(this.table.expiresAt), like(this.table.emailAddress, "%@demo.invalid"));
+  }
+
+  /** A demo account, by its id: a real one isn't deleted here. */
+  private async deleteDemo(db: Db, id: string) {
+    return await db.delete(this.table).where(and(eq(this.table.id, id), this.isDemo()));
+  }
+
+  /** The demo accounts that expired before then. */
+  private async deleteExpiredDemos(db: Db, before: string) {
+    return await db.delete(this.table).where(and(this.isDemo(), lt(this.table.expiresAt, before)));
+  }
+
   async findOne(
     db: Db,
     where: { id: string } | { emailAddress: string } | { username: string },
@@ -67,11 +82,8 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
   }
 
   async delete(db: Db, where: { id: string } | { expiredDemosBefore: string }) {
-    const isDemo = and(isNotNull(this.table.expiresAt), like(this.table.emailAddress, "%@demo.invalid"));
-    if ("id" in where) {
-      return await db.delete(this.table).where(and(eq(this.table.id, where.id), isDemo));
-    }
-    return await db.delete(this.table).where(and(isDemo, lt(this.table.expiresAt, where.expiredDemosBefore)));
+    if ("id" in where) return await this.deleteDemo(db, where.id);
+    return await this.deleteExpiredDemos(db, where.expiredDemosBefore);
   }
 }
 
