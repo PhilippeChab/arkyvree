@@ -1,5 +1,5 @@
 import type { PowerDc, PowerDcsByClass } from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
-import { formatPropertyType, sortByOptions } from "@/shared/customization/properties.ts";
+import { formatPropertyType, formatPropertyValues } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude, type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
@@ -163,15 +163,7 @@ export default class DetailedCharacterPowers {
 
   addPowerEntries(powers: (Power & { properties: Property[] })[]) {
     for (const power of powers) {
-      // A type's values joined, in its options' order (a spell's components as V, S, M)
-      const valuesByType: Record<string, string[]> = {};
-      for (const prop of power.properties) (valuesByType[prop.type] ??= []).push(prop.value);
-      const propertiesMap = Object.fromEntries(
-        Object.entries(valuesByType).map(([type, values]) => [
-          type,
-          sortByOptions(values, this.propertyValues(type)).join(", "),
-        ]),
-      );
+      const propertiesMap = formatPropertyValues(power.properties, this.propertyValues);
 
       // A spell already listed keeps what's on its entry: its known flags and its DCs by class
       const slug = stripSeparators(power.name);
