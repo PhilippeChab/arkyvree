@@ -2,8 +2,8 @@
  * Validates all reference files for unresolved issues that would produce incomplete seed data, and for
  * overrides that change nothing.
  *
- * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks and items without a definition
- * (except those listed in `overrides.reviewed`), entries of `overrides.reviewed` that cover none of them (or repeat
+ * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks, items without a definition and the
+ * columns of a class's table no modifier reads (`overrides.columns`), except those listed in `overrides.reviewed`; entries of `overrides.reviewed` that cover none of them (or repeat
  * one), classes the generator refuses, class overrides that hold what's derived without them (and leave its
  * generated files the same) or that the generator ignores, and values the seed refuses (a race's size, a magic
  * item's slot), and references of a type the tools don't read: these can't be marked reviewed, correct them with an
@@ -61,6 +61,7 @@ export type Issue = {
     | "prereq"
     | "aptitude pick"
     | "unresolved item"
+    | "unread column"
     | "stale review"
     | "unknown type"
     | "redundant override"
@@ -113,6 +114,14 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
           const data = loadReference(ref.path, "class");
           const review = reviewOf(data.overrides?.reviewed);
           unreviewed(review, detectedIssues(data.detected), { label: "class", entityName: data.raw.name });
+          // What only a column of its table gives (a monk's AC bonus) reaches the class through a modifier reading it
+          const read = new Set(Object.keys(data.overrides?.columns ?? {}));
+          const unread = new Set(data.raw.progression.flatMap((row) => Object.keys(row.columns ?? {})));
+          unreviewed(
+            review,
+            [...unread].filter((column) => !read.has(column)).map((text) => ({ kind: "unread column" as const, text })),
+            { label: "class", entityName: data.raw.name },
+          );
           const { refusal, redundant, ignored } = checkClassOverrides(readStoredReference(ref.path, "class"));
           const classIssues: Found[] = [
             ...(refusal ? [{ kind: "generator refuses the class" as const, text: refusal }] : []),

@@ -2,6 +2,7 @@ import {
   buildClassFeatSeeds,
   buildPoolParentNameMap,
   classAptitudePicks,
+  classModifiers,
   classSpells,
   existingFeatGranted,
   insertOrdinalInName,
@@ -275,9 +276,10 @@ export function generateClassSeed(ref: ClassReference): string {
     lines.push(`  },`);
   }
 
-  if (overrides.modifiers && overrides.modifiers.length > 0) {
+  const modifiers = classModifiers(ref);
+  if (modifiers.length > 0) {
     lines.push(`  modifiers: [`);
-    for (const m of overrides.modifiers) {
+    for (const m of modifiers) {
       const requirements = (m.requirements ?? []).map((r) => stringifyRequirement(r, uses, 3));
       const gate = requirements.length > 0 ? `, requirements: [${requirements.join(", ")}]` : "";
       lines.push(
@@ -331,7 +333,7 @@ export function generateClassSeed(ref: ClassReference): string {
   if (!("aptitudePicks" in overrides) && detected.unresolvedAptitudePicks?.length) {
     for (const a of detected.unresolvedAptitudePicks) todos.push(`Unresolved aptitude pick: "${a}"`);
   }
-  if (!("modifiers" in overrides)) {
+  if (!("modifiers" in overrides) && !("columns" in overrides)) {
     todos.push("No modifiers defined — review if this class needs any");
   }
   if (todos.length > 0) {

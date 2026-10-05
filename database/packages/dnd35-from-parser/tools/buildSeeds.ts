@@ -282,6 +282,35 @@ function detectClassFeatFamily(name: string): string | undefined {
   return undefined;
 }
 
+/** A table cell's number: "+10 ft." is 10, a dash none. */
+const cellNumber = (cell: string) => Number(cell.match(/[+-]?\d+/)?.[0] ?? 0);
+
+/**
+ * A class's level modifiers: its overrides', then those its table's columns give (`overrides.columns`), at each level a
+ * column's value changes: a number's rise, or its text.
+ */
+export function classModifiers(ref: ClassReference): (ModifierSeed & { level: number })[] {
+  const fromColumns = Object.entries(ref.overrides?.columns ?? {}).flatMap(
+    ([column, { target, operator, requirements }]) => {
+      if (!ref.raw.progression.some((row) => row.columns?.[column] !== undefined)) {
+        throw new Error(`${ref.raw.name}: its table has no "${column}" column`);
+      }
+      let previous = operator === "add" ? "+0" : "";
+      return ref.raw.progression.flatMap((row) => {
+        const cell = row.columns?.[column] ?? previous;
+        const rise = cellNumber(cell) - cellNumber(previous);
+        const changed = operator === "add" ? rise !== 0 : cell !== previous;
+        previous = cell;
+        if (!changed) return [];
+        const value = operator === "add" ? String(rise) : cell;
+        const valueType = operator === "add" ? "number" : "string";
+        return [{ level: row.level, target, value, valueType, operator, ...(requirements && { requirements }) }];
+      });
+    },
+  );
+  return [...(ref.overrides?.modifiers ?? []), ...fromColumns];
+}
+
 /** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
 export function classSpells(ref: ClassReference) {
   const { spells } = ref.mapping;

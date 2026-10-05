@@ -69,6 +69,12 @@ export type InheritedSpellList = {
   additions?: Record<string, string[]>;
 };
 
+/**
+ * A class table column its levels' modifiers read (`progression[].columns`): at each level its value changes, `add`
+ * the rise of its number (the table gives the total so far, "+10 ft.") or `set` its text ("1d8").
+ */
+export type ColumnModifier = { target: string; operator: "add" | "set"; requirements?: RequirementEntry[] };
+
 /** A class's own spell list: its slots per day, its spells known, and the list it inherits. */
 type ClassSpells = {
   slug: string;
@@ -320,6 +326,8 @@ export type ClassReference = {
       willSave: number;
       special: string[];
       spellsPerDay?: string;
+      /** The table's other columns, by header ("AC Bonus": "+1") */
+      columns?: Record<string, string>;
     }[];
     classFeatures: {
       name: string;
@@ -403,6 +411,8 @@ export type ClassReference = {
     freeFeats?: [number, string, string][];
     casterType?: "Arcane" | "Divine";
     modifiers?: (ModifierSeed & { level: number })[];
+    /** The table columns its levels' modifiers read, by header */
+    columns?: Record<string, ColumnModifier>;
     aptitudePicks?: AptitudePick[];
     bonusFeatLists?: BonusFeatList[];
     /** Manual alignment override (for base classes where the source page has no alignment info) */

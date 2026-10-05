@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "dmg",
-    "scrapedAt": "2026-03-18T13:53:47.581Z",
+    "scrapedAt": "2026-10-05T01:14:11.468Z",
     "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/dwarven-defender/",
     "type": "class"
   },
@@ -40,7 +40,10 @@
       "Weapon and Armor Proficiency": {
         "description": "A dwarven defender has proficiency with all simple weapons, all martial weapons, every category of armor, and shields."
       }
-    }
+    },
+    "reviewed": [
+      "AC Bonus"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -110,6 +113,9 @@
     "progression": [
       {
         "bab": 1,
+        "columns": {
+          "AC Bonus": "+1"
+        },
         "fortSave": 2,
         "level": 1,
         "refSave": 0,
@@ -120,6 +126,9 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "AC Bonus": "+1"
+        },
         "fortSave": 3,
         "level": 2,
         "refSave": 0,
@@ -130,6 +139,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "AC Bonus": "+1"
+        },
         "fortSave": 3,
         "level": 3,
         "refSave": 1,
@@ -140,6 +152,9 @@
       },
       {
         "bab": 4,
+        "columns": {
+          "AC Bonus": "+2"
+        },
         "fortSave": 4,
         "level": 4,
         "refSave": 1,
@@ -150,6 +165,9 @@
       },
       {
         "bab": 5,
+        "columns": {
+          "AC Bonus": "+2"
+        },
         "fortSave": 4,
         "level": 5,
         "refSave": 1,
@@ -160,6 +178,9 @@
       },
       {
         "bab": 6,
+        "columns": {
+          "AC Bonus": "+2"
+        },
         "fortSave": 5,
         "level": 6,
         "refSave": 2,
@@ -171,6 +192,9 @@
       },
       {
         "bab": 7,
+        "columns": {
+          "AC Bonus": "+3"
+        },
         "fortSave": 5,
         "level": 7,
         "refSave": 2,
@@ -181,6 +205,9 @@
       },
       {
         "bab": 8,
+        "columns": {
+          "AC Bonus": "+3"
+        },
         "fortSave": 6,
         "level": 8,
         "refSave": 2,
@@ -192,6 +219,9 @@
       },
       {
         "bab": 9,
+        "columns": {
+          "AC Bonus": "+3"
+        },
         "fortSave": 6,
         "level": 9,
         "refSave": 3,
@@ -202,6 +232,9 @@
       },
       {
         "bab": 10,
+        "columns": {
+          "AC Bonus": "+4"
+        },
         "fortSave": 7,
         "level": 10,
         "refSave": 3,

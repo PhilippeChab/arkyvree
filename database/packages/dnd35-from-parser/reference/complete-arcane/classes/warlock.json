@@ -1,11 +1,15 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T22:10:47.297Z",
+    "scrapedAt": "2026-10-05T01:13:19.854Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/warlock/",
     "type": "class"
   },
-  "overrides": {},
+  "overrides": {
+    "reviewed": [
+      "Invocations Known"
+    ]
+  },
   "raw": {
     "classFeatures": [
       {
@@ -149,6 +153,9 @@
     "progression": [
       {
         "bab": 0,
+        "columns": {
+          "Invocations Known": "1"
+        },
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
@@ -160,6 +167,9 @@
       },
       {
         "bab": 1,
+        "columns": {
+          "Invocations Known": "2"
+        },
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
@@ -170,6 +180,9 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "Invocations Known": "2"
+        },
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
@@ -181,6 +194,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "Invocations Known": "3"
+        },
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
@@ -191,6 +207,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "Invocations Known": "3"
+        },
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
@@ -201,6 +220,9 @@
       },
       {
         "bab": 4,
+        "columns": {
+          "Invocations Known": "4"
+        },
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
@@ -211,6 +233,9 @@
       },
       {
         "bab": 5,
+        "columns": {
+          "Invocations Known": "4"
+        },
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
@@ -222,6 +247,9 @@
       },
       {
         "bab": 6,
+        "columns": {
+          "Invocations Known": "5"
+        },
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
@@ -232,6 +260,9 @@
       },
       {
         "bab": 6,
+        "columns": {
+          "Invocations Known": "5"
+        },
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
@@ -242,6 +273,9 @@
       },
       {
         "bab": 7,
+        "columns": {
+          "Invocations Known": "6"
+        },
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
@@ -252,6 +286,9 @@
       },
       {
         "bab": 8,
+        "columns": {
+          "Invocations Known": "7"
+        },
         "fortSave": 3,
         "level": 11,
         "refSave": 3,
@@ -264,6 +301,9 @@
       },
       {
         "bab": 9,
+        "columns": {
+          "Invocations Known": "7"
+        },
         "fortSave": 4,
         "level": 12,
         "refSave": 4,
@@ -274,6 +314,9 @@
       },
       {
         "bab": 9,
+        "columns": {
+          "Invocations Known": "8"
+        },
         "fortSave": 4,
         "level": 13,
         "refSave": 4,
@@ -284,6 +327,9 @@
       },
       {
         "bab": 10,
+        "columns": {
+          "Invocations Known": "8"
+        },
         "fortSave": 4,
         "level": 14,
         "refSave": 4,
@@ -294,6 +340,9 @@
       },
       {
         "bab": 11,
+        "columns": {
+          "Invocations Known": "9"
+        },
         "fortSave": 5,
         "level": 15,
         "refSave": 5,
@@ -304,6 +353,9 @@
       },
       {
         "bab": 12,
+        "columns": {
+          "Invocations Known": "10"
+        },
         "fortSave": 5,
         "level": 16,
         "refSave": 5,
@@ -314,6 +366,9 @@
       },
       {
         "bab": 12,
+        "columns": {
+          "Invocations Known": "10"
+        },
         "fortSave": 5,
         "level": 17,
         "refSave": 5,
@@ -324,6 +379,9 @@
       },
       {
         "bab": 13,
+        "columns": {
+          "Invocations Known": "11"
+        },
         "fortSave": 6,
         "level": 18,
         "refSave": 6,
@@ -334,6 +392,9 @@
       },
       {
         "bab": 14,
+        "columns": {
+          "Invocations Known": "11"
+        },
         "fortSave": 6,
         "level": 19,
         "refSave": 6,
@@ -344,6 +405,9 @@
       },
       {
         "bab": 15,
+        "columns": {
+          "Invocations Known": "12"
+        },
         "fortSave": 6,
         "level": 20,
         "refSave": 6,

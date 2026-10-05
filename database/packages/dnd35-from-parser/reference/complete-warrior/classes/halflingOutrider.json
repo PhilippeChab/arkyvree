@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-warrior",
-    "scrapedAt": "2026-03-23T01:56:40.597Z",
+    "scrapedAt": "2026-10-05T01:13:52.377Z",
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/halfling-outrider/",
     "type": "class"
   },
@@ -44,7 +44,10 @@
       "Weapon and Armor Proficiency": {
         "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
-    }
+    },
+    "reviewed": [
+      "AC"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -144,6 +147,9 @@
     "progression": [
       {
         "bab": 1,
+        "columns": {
+          "AC": "+1"
+        },
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
@@ -156,6 +162,9 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "AC": "+1"
+        },
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
@@ -166,6 +175,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "AC": "+2"
+        },
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
@@ -176,6 +188,9 @@
       },
       {
         "bab": 4,
+        "columns": {
+          "AC": "+2"
+        },
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
@@ -186,6 +201,9 @@
       },
       {
         "bab": 5,
+        "columns": {
+          "AC": "+3"
+        },
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
@@ -196,6 +214,9 @@
       },
       {
         "bab": 6,
+        "columns": {
+          "AC": "+3"
+        },
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
@@ -204,6 +225,9 @@
       },
       {
         "bab": 7,
+        "columns": {
+          "AC": "+4"
+        },
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
@@ -214,6 +238,9 @@
       },
       {
         "bab": 8,
+        "columns": {
+          "AC": "+4"
+        },
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
@@ -224,6 +251,9 @@
       },
       {
         "bab": 9,
+        "columns": {
+          "AC": "+5"
+        },
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
@@ -232,6 +262,9 @@
       },
       {
         "bab": 10,
+        "columns": {
+          "AC": "+5"
+        },
         "fortSave": 3,
         "level": 10,
         "refSave": 7,

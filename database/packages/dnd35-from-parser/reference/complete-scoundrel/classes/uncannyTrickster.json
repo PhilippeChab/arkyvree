@@ -1,9 +1,14 @@
 {
   "_meta": {
     "book": "complete-scoundrel",
-    "scrapedAt": "2026-03-23T00:50:01.517Z",
+    "scrapedAt": "2026-10-05T01:13:45.898Z",
     "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/uncanny-trickster/",
     "type": "class"
+  },
+  "overrides": {
+    "reviewed": [
+      "Class Features"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -63,6 +68,9 @@
     "progression": [
       {
         "bab": 0,
+        "columns": {
+          "Class Features": "-"
+        },
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
@@ -74,6 +82,9 @@
       },
       {
         "bab": 1,
+        "columns": {
+          "Class Features": "+1 level of existing class features"
+        },
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
@@ -85,6 +96,9 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "Class Features": "+1 level of existing class features"
+        },
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
