@@ -12,10 +12,15 @@ function getActiveIdMap(): IdResolveMap | undefined {
   return map && map.size > 0 ? map : undefined;
 }
 
-/** Rows with every stale id they hold mapped, but their own: a row stays the row it is. */
-function mapRows(rows: Record<string, unknown>[], map: IdResolveMap): Record<string, unknown>[] {
+/**
+ * A read's elements with their stale ids mapped: a row's references (not its own id: a row stays the row it is), or an
+ * id itself, when the read returns ids (`findIds`). Anything else passes through.
+ */
+function mapRows(rows: unknown[], map: IdResolveMap): unknown[] {
   return rows.map((row) => {
-    const mapped = { ...row };
+    if (typeof row === "string") return map.get(row) ?? row;
+    if (!row || typeof row !== "object" || Array.isArray(row)) return row;
+    const mapped = { ...row } as Record<string, unknown>;
     for (const [key, value] of Object.entries(mapped)) {
       if (key !== "id" && typeof value === "string" && map.has(value)) mapped[key] = map.get(value);
     }
