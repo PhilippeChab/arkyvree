@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
@@ -148,7 +148,7 @@ class FeatsService {
         return feat;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -225,7 +225,7 @@ class FeatsService {
         return updatedFeat;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -257,7 +257,7 @@ class FeatsService {
         return deletedFeat;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 }

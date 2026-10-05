@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -156,7 +156,7 @@ export function Variants<B extends Constructor>(Base: B) {
           return created;
         });
       });
-      invalidateRuleset(rulesetId);
+      RulesetCache.invalidate(rulesetId);
       return result;
     }
   }

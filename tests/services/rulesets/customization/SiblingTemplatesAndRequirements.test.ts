@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
@@ -12,7 +12,7 @@ import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { api, expectStatus } from "@/tests/api.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
-afterEach(invalidateAll);
+afterEach(() => RulesetCache.invalidateAll());
 
 async function setup(
   entityType: "items" | "feats",
@@ -158,7 +158,7 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
         r.id !== target.id ? r : action === "update chain" ? { ...r, chainingOperator: "and" } : { ...r, value: "17" },
       );
     for (const cold of [false, true]) {
-      if (cold) invalidateAll();
+      if (cold) RulesetCache.invalidateAll();
       const after = await RequirementsService.getRequirements(host.id, "feats", copies[0]);
       expect(shape(after)).toEqual(shape(expected));
       expect(after.some((r) => originals.some((source) => source.id === r.id))).toBe(false);
@@ -183,7 +183,7 @@ test("hidden and unrelated template properties cannot be overridden", async () =
     type: "OTHER",
     value: "2",
   });
-  invalidateAll();
+  RulesetCache.invalidateAll();
   const before = await ItemsService.getItem(host.id, item.id);
   expect(before.properties).toHaveLength(1);
   expect(before.properties[0].id).not.toBe(hidden.id);

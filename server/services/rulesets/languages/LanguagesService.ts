@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { languagesInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Languages } from "@/server/repositories/index.ts";
@@ -85,7 +85,7 @@ class LanguagesService {
         return language;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -132,7 +132,7 @@ class LanguagesService {
         return updatedLanguage;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -163,7 +163,7 @@ class LanguagesService {
         return deletedLanguage;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 }

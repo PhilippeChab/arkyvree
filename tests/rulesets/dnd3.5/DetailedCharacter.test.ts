@@ -30,7 +30,7 @@ import {
   powersInRules,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Aptitudes,
@@ -237,7 +237,7 @@ async function forkWith(...extensionNames: string[]) {
     ancestorRulesetIds: [rulesetId],
     extensionRulesetIds: extensions,
   });
-  invalidateRuleset(fork.id);
+  RulesetCache.invalidate(fork.id);
   return fork;
 }
 
@@ -2011,7 +2011,7 @@ describe("DetailedCharacter", () => {
         name: "Archmage",
         description: "Ours",
       });
-      invalidateRuleset(fork.id);
+      RulesetCache.invalidate(fork.id);
       expect(await Klasses.findOne(db, { name: "Archmage", rulesetId: fork.id })).toBeDefined();
       expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
     });
@@ -2342,7 +2342,7 @@ describe("DetailedCharacter", () => {
           ...gate(sixthUses.id, 11, false),
           ...gate(sixthAllowed.id, 11, false),
         ]);
-        invalidateRuleset(fork.id);
+        RulesetCache.invalidate(fork.id);
 
         const characterId = await createSeedCharacter(
           "Order Cleric",
@@ -2653,7 +2653,7 @@ describe("DetailedCharacter", () => {
             operator: "add",
           },
         ]);
-        invalidateRuleset(fork.id);
+        RulesetCache.invalidate(fork.id);
 
         const characterId = await createSeedCharacter("Reserve Wizard", WIZARD_SCORES, { rulesetId: fork.id });
         const wizard = (await Klasses.findOne(db, { name: "Wizard", rulesetId: ctx.rulesetId }))!;
@@ -2757,7 +2757,7 @@ describe("DetailedCharacter", () => {
           },
           ...slot(moonDomain.id, "moondomainspells"),
         ]);
-        invalidateRuleset(fork.id);
+        RulesetCache.invalidate(fork.id);
 
         const characterId = await createSeedCharacter("Sun Cleric", WIZARD_SCORES, { rulesetId: fork.id });
         const clericClass = (await Klasses.findOne(db, { name: "Cleric", rulesetId: ctx.rulesetId }))!;

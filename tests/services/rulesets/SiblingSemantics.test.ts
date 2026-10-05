@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Abilities, Aptitudes, Feats, FeatsAptitudes, Requirements, Rulesets } from "@/server/repositories/index.ts";
@@ -15,7 +15,7 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import type { Requirement } from "@/shared/relations.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
-afterEach(invalidateAll);
+afterEach(() => RulesetCache.invalidateAll());
 
 async function setup(
   configure: (extensionId: string, baseId: string, index: number) => Promise<void>,
@@ -62,7 +62,7 @@ test("editing a shared aptitude preserves references from both extensions", asyn
     name: "Audit Local Pool",
   });
   const warm = await read();
-  invalidateAll();
+  RulesetCache.invalidateAll();
   const cold = await read();
   expect({ warm, cold }).toEqual({
     warm: { resolved: [local.id, local.id], links: [local.id, local.id] },
@@ -126,7 +126,7 @@ for (const [chainingOperator, reverseOrder] of [
     const before = evaluate([await read()]);
     await PropertiesService.createProperty(session, host.id, "feats", copies[0], { type: "AUDIT", value: "1" });
     const after = evaluate([await read()]);
-    invalidateAll();
+    RulesetCache.invalidateAll();
     const cold = evaluate([await read()]);
     expect({ before, after, cold }).toEqual({ before: expected, after: expected, cold: expected });
     expect(

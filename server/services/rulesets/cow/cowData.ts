@@ -1,5 +1,5 @@
 import { DependentCache } from "@/server/cache/index.ts";
-import { type CachedRulesetData, getOrFetchRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import {
   type CowData,
   db,
@@ -166,7 +166,7 @@ export async function withRulesetScope<T>(
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
   if (!ruleset) throw new NotFoundError("Ruleset not found");
   const cowData = await getOrBuildCowData(ruleset);
-  const rulesetData = await getOrFetchRulesetData(rulesetId, cowData);
+  const rulesetData = await RulesetCache.getData(rulesetId, cowData);
   return await withCowContext(cowData, () => fn({ ruleset, rulesetData }));
 }
 
@@ -196,7 +196,7 @@ export async function withRulesetScopes<T>(
     const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
     if (!ruleset) continue;
     const cowData = await getOrBuildCowData(ruleset);
-    const rulesetData = await getOrFetchRulesetData(rulesetId, cowData);
+    const rulesetData = await RulesetCache.getData(rulesetId, cowData);
     map.set(rulesetId, rulesetData);
   }
   return fn(map);

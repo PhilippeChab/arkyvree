@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { invalidateRulesetEntities } from "@/server/cache/rulesetCache/index.ts";
+import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Requirements } from "@/server/repositories/index.ts";
@@ -128,7 +127,7 @@ class RequirementsService {
         return { ...requirement, resolvedEntityId };
       });
     });
-    invalidateRulesetEntities(rulesetId);
+    RulesetCache.invalidateEntities(rulesetId);
     return result;
   }
 
@@ -234,7 +233,7 @@ class RequirementsService {
         return { ...updatedRequirement, resolvedEntityId };
       });
     });
-    invalidateRulesetEntities(rulesetId);
+    RulesetCache.invalidateEntities(rulesetId);
     return result;
   }
 
@@ -289,7 +288,7 @@ class RequirementsService {
         return { ...deletedRequirement, resolvedEntityId };
       });
     });
-    invalidateRulesetEntities(rulesetId);
+    RulesetCache.invalidateEntities(rulesetId);
     return result;
   }
 }

@@ -1,4 +1,9 @@
-import { type IdResolveMap, mergeSiblingRequirements, resolveOverrides } from "@/server/services/rulesets/cow/index.ts";
+import {
+  type CowData,
+  type IdResolveMap,
+  mergeSiblingRequirements,
+  resolveOverrides,
+} from "@/server/services/rulesets/cow/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Aptitude,
@@ -23,8 +28,10 @@ import type {
 } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { type CachedCowData } from "./cowData.ts";
-import { getOrFetchRulesetRawData, type RulesetRawData } from "./rawData.ts";
+import { type RulesetRawData } from "./rawData.ts";
+
+/** A ruleset's copy-on-write state, which its view composes by. */
+export type CachedCowData = CowData;
 
 export interface CachedRulesetData {
   abilities: RulesetAbility[];
@@ -617,19 +624,10 @@ function composeChain(chain: Chain, cowData: CachedCowData) {
 }
 
 /**
- * Get composed ruleset entity data for a fork. Combines the fork's own entities
- * with each ancestor in the source chain, applying COW exclusions, sibling filtering,
- * and FK override resolution. Ancestor data is pulled from the pinned tier-1 cache.
+ * A ruleset's view: its own rows and its source chain's (`chain`, the ruleset's first), composed by copy-on-write. The
+ * copies' and siblings' exclusions apply, references resolve to the winners, and every id-keyed map takes a stored id.
  */
-export async function getOrFetchRulesetData(
-  rulesetId: string,
-  cowData: CachedCowData,
-  campaignId?: string,
-): Promise<CachedRulesetData> {
-  const chain = await Promise.all([
-    getOrFetchRulesetRawData(rulesetId, campaignId),
-    ...cowData.sourceChain.map((id) => getOrFetchRulesetRawData(id)),
-  ]);
+export function buildRulesetData(chain: RulesetRawData[], cowData: CachedCowData): CachedRulesetData {
   const { properties, modifiers, requirements, ...rows } = composeChain(chain, cowData);
   const idResolveMap = cowData.idResolveMap;
   const featsById = buildById(rows.feats);

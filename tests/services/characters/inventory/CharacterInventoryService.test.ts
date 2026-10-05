@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import type { InferInsertModel } from "drizzle-orm";
 
 import type { itemsInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterInventory, Items, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
@@ -121,7 +121,7 @@ async function createItem(
       db,
       entries.map(([type, value]) => ({ entityId: item.id, entityType: "items", type, value })),
     );
-  invalidateRuleset(rulesetId);
+  RulesetCache.invalidate(rulesetId);
   return item;
 }
 
@@ -150,7 +150,7 @@ async function setup(race?: { size: SizeType }) {
   const raceId =
     race &&
     (await Races.create(db, { name: `Test Race ${uniqueId()}`, rulesetId: ruleset.id, baseSpeed: 30, ...race }))[0].id;
-  invalidateRuleset(ruleset.id);
+  RulesetCache.invalidate(ruleset.id);
   const character = await createCharacter(
     session,
     raceId ? { rulesetId: ruleset.id, raceId } : { rulesetId: ruleset.id },
@@ -187,7 +187,7 @@ describe("InventoryService", () => {
       valueType: "number",
       operator: "greater_than_or_equal",
     });
-    invalidateRuleset(character.rulesetId);
+    RulesetCache.invalidate(character.rulesetId);
     const removed = await newItem();
     await add(session, character.id, item.id, { quantity: 3 });
     await add(session, character.id, removed.id);
@@ -521,7 +521,7 @@ describe("InventoryService", () => {
         valueType: "number",
         operator: "greater_than_or_equal",
       });
-      invalidateRuleset(character.rulesetId);
+      RulesetCache.invalidate(character.rulesetId);
 
       await expect(add(session, character.id, armor.id, equipped("Torso"))).rejects.toThrow(BadRequestError);
       expect(await add(session, character.id, armor.id, { ...equipped("Torso"), force: true })).toMatchObject({

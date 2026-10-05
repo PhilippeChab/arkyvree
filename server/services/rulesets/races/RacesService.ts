@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { racesInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Races } from "@/server/repositories/index.ts";
@@ -95,7 +95,7 @@ class RacesService {
         return race;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -143,7 +143,7 @@ class RacesService {
         return updatedRace;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -173,7 +173,7 @@ class RacesService {
         return deletedRace;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 }

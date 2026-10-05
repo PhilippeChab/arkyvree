@@ -48,7 +48,7 @@ flowchart LR
     Svc -->|Repo.findOne/findMany db| Proxy[Repository Proxy]
     Proxy -->|key = method + args| Store
     Proxy -->|cache miss| PG[(Postgres / Neon)]
-    Svc -->|getOrFetchRulesetData| Compose[compose step]
+    Svc -->|RulesetCache.getData| Compose[compose step]
     Compose -->|per ruleset in source chain| Raw[Tier-1 Raw Cache<br/>MemoryCache RulesetRawData]
     Raw -->|pinned if system-owned| Raw
     Raw -->|cold miss| PG
@@ -66,7 +66,7 @@ Without intervention, every lookup site had to remember to do `rulesetData.feats
 
 ### Layer 1 — cache id Maps auto-resolve on get/has
 
-Every `*ById` / `*BySource` / `*ByEntity` Map returned by `getOrFetchRulesetData` is wrapped in a Proxy (`cowResolvingMap`). `.get(key)` and `.has(key)` run the key through `cowData.overrideMap` first, then hit the underlying Map. `.size`, `.values()`, `.entries()`, iteration — all behave normally (no alias dup).
+Every `*ById` / `*BySource` / `*ByEntity` Map returned by `RulesetCache.getData` is wrapped in a Proxy (`cowResolvingMap`). `.get(key)` and `.has(key)` run the key through `cowData.overrideMap` first, then hit the underlying Map. `.size`, `.values()`, `.entries()`, iteration — all behave normally (no alias dup).
 
 ```ts
 // storedFeatId may be pre-COW or post-COW; both land on the post-COW entity.
@@ -137,14 +137,14 @@ From `server/services/rulesets/cow/`:
 
 For lineage checks (entity-belongs-to-sourceChain), `findScopedEntity`. For id canonicalization (pre-COW → post-COW) use `rulesetData.canonicalize(id)`. Sibling merging (aptitude links, modifiers, properties, requirements) is pre-baked into `rulesetData` by the compose step, so consumers only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
 
-From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cache/index.ts`):
+From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cache/index.ts`): `RulesetCache`, the class that holds the cache (`RulesetCache.ts`), and the types of what it holds.
 
 | Symbol | Purpose |
 |---|---|
-| `invalidateRuleset` | Clear the cache entries for a single ruleset. Call after every mutation. |
-| `invalidateRulesetEntities` | Same, but keep target-paths cache (used by customization mutations that don't change the entity set). |
-| `invalidateAll` | Nuclear option — every ruleset. Used by tests and broad recomputations. |
-| `warmSystemRulesetCache` | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`. |
+| `RulesetCache.invalidate` | Clear the cache entries for a single ruleset. Call after every mutation. |
+| `RulesetCache.invalidateEntities` | Same, but keep target-paths cache (used by customization mutations that don't change the entity set). |
+| `RulesetCache.invalidateAll` | Nuclear option — every ruleset. Used by tests and broad recomputations. |
+| `RulesetCache.warm` | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`. |
 | `CachedCowData`, `CachedRulesetData` (types) | Parameter / return types for scope callbacks and framework extension points. |
 
 ### Framework / copy primitives
@@ -155,9 +155,9 @@ Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`,
 - **Extensions** (`RulesetExtensionsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
 - **Override map**: `buildOverrideMap`, called only inside `cow/` (`getOrBuildCowData`, `cowEntity`).
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`getOrBuildCowData`, `cowEntity`) and target-path cache keys.
-- **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `getOrFetchRulesetData`, `invalidateCowData`, `invalidateAllCowData`.
+- **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `RulesetCache.getData`, `invalidateCowData`, `invalidateAllCowData`.
 - **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `resolveOverrides`.
-- **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `getOrFetchRulesetRawData`, `isRulesetRawDataPinned`.
+- **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `RulesetCache.getRawData`, `RulesetCache.isRawDataPinned`.
 - **AsyncLocalStorage wiring**: `withCowContext`, `getCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy and `idMatches` (`ResolvesCopies`).
 
 ## Ruleset Cache
@@ -190,7 +190,7 @@ An earlier design cached the fully-composed `CachedRulesetData` per fork. That d
 
 ```mermaid
 flowchart TD
-    Start([getOrFetchRulesetData fork, cowData]) --> Fetch{Fetch raw entries<br/>in parallel}
+    Start([RulesetCache.getData fork, cowData]) --> Fetch{Fetch raw entries<br/>in parallel}
     Fetch -->|Tier-1 hit<br/>if pinned base| ForkRaw[Fork raw]
     Fetch -->|Tier-1 hit<br/>if pinned ancestor| BaseRaw[Base raw]
     Fetch -->|Tier-1 hit<br/>if pinned ancestor| ExtRaw[Extension raw]
@@ -217,27 +217,27 @@ Safety: if everything in the cache is pinned and you try to insert a non-pinned 
 
 ### Warm-up
 
-`warmSystemRulesetCache()` runs at boot (`server/main.ts`). It pulls every `system: true` ruleset and triggers `getOrFetchRulesetRawData` for each so the first user of the day doesn't pay the cold cost. Typically ~7 rulesets × a few hundred ms each = ~1 second of added boot time.
+`RulesetCache.warm()` runs at boot (`server/main.ts`). It pulls every `system: true` ruleset and triggers `RulesetCache.getRawData` for each so the first user of the day doesn't pay the cold cost. Typically ~7 rulesets × a few hundred ms each = ~1 second of added boot time.
 
 ### Invalidation
 
 ```mermaid
 flowchart LR
-    Mut[Mutation on ruleset X] -->|invalidateRuleset x| IR[Clear affected cow-data caches]
+    Mut[Mutation on ruleset X] -->|RulesetCache.invalidate x| IR[Clear affected cow-data caches]
     IR --> CR[Clear raw-tier entry for X]
     CR --> TP[Clear affected target-path caches]
     Note[Forks that inherit from X<br/>re-compose on next read] -.->|tracked source-chain<br/>dependencies| CR
 ```
 
-`invalidateRuleset(id)` clears that ruleset's raw entries (including campaign variants), plus COW and target-path entries whose source chain contains it. Unrelated cached entries and in-flight reads remain reusable. `DependentCache` records source-chain IDs alongside each bounded cache entry and pending read; invalidation requires no database lookup and scans at most 200 cached entries per tier plus active reads.
+`RulesetCache.invalidate(id)` clears that ruleset's raw entries (including campaign variants), plus COW and target-path entries whose source chain contains it. Unrelated cached entries and in-flight reads remain reusable. `DependentCache` records source-chain IDs alongside each bounded cache entry and pending read; invalidation requires no database lookup and scans at most 200 cached entries per tier plus active reads.
 
 Three granularities:
 
 | Call | Clears | Use when |
 |---|---|---|
 | `invalidateTargetPaths(id)` | Dependent target paths + segment labels | Entity property edited (spell school, weapon type) but entity list unchanged |
-| `invalidateRulesetEntities(id)` | Raw entities for this ruleset + dependent COW data; not target paths | Entity data (description, stats) edited |
-| `invalidateRuleset(id)` | Raw entities for this ruleset + dependent COW data and target paths | Entities added/removed/renamed, or a modifier written: a list's slots and joins decide which lists have spell levels and known-spell paths (target paths change) |
+| `RulesetCache.invalidateEntities(id)` | Raw entities for this ruleset + dependent COW data; not target paths | Entity data (description, stats) edited |
+| `RulesetCache.invalidate(id)` | Raw entities for this ruleset + dependent COW data and target paths | Entities added/removed/renamed, or a modifier written: a list's slots and joins decide which lists have spell levels and known-spell paths (target paths change) |
 | `invalidateAll()` | Every ruleset's everything | Test teardown, rare |
 
 In tests, the cache reads through the test's transaction and outlives its rollback: rows a test writes straight into a seeded ruleset stay cached once a read rebuilds that ruleset. Tests write into forks instead, or call `invalidateSeededRuleset` (`tests/helpers.ts`), which `tests/setup.ts` repeats after the rollback.
@@ -425,7 +425,7 @@ sequenceDiagram
     Repo->>DB: SELECT ...
     DB-->>Repo: ruleset
 
-    Svc->>RS: getOrFetchRulesetData(rulesetId, cowData)
+    Svc->>RS: RulesetCache.getData(rulesetId, cowData)
     RS->>RS: tier-1 hit (pinned)
     RS->>RS: compose
     RS-->>Svc: CachedRulesetData
@@ -478,7 +478,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 ## References
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
-- `server/cache/rulesetCache/` — the raw-tier cache (`rawData.ts`), the compose step with its sibling merging, FK remap and accessor maps, `cowResolvingMap` included (`compose.ts`), the target paths cache (`targetPaths.ts`) and invalidation (`invalidation.ts`)
+- `server/cache/rulesetCache/` — `RulesetCache` (`RulesetCache.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up), the raw rows' fetch (`rawData.ts`), and the compose step with its sibling merging, FK remap and accessor maps, `cowResolvingMap` included (`compose.ts`)
 - `server/services/rulesets/cow/` — `withRulesetScope` / `withRulesetScopes`, COW data + override map, copy primitives, `resolveOverrides`, invalidation hooks
 - `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `getCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup

@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassSkillsInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";
@@ -25,7 +25,6 @@ class ClassSkillsService {
   }
 
   async addClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {
-    let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -33,7 +32,6 @@ class ClassSkillsService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        klassRulesetId = klass.rulesetId;
 
         const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
@@ -62,13 +60,11 @@ class ClassSkillsService {
         return klassSkill;
       });
     });
-    invalidateRuleset(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) invalidateRuleset(klassRulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
   async removeClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {
-    let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -77,7 +73,6 @@ class ClassSkillsService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        klassRulesetId = klass.rulesetId;
 
         const klassSkill = rulesetData.klassSkillsByKlassId.get(klass.id)?.find((ks) => ks.skillId === skillId);
         if (!klassSkill) {
@@ -103,8 +98,7 @@ class ClassSkillsService {
         return removedKlassSkill;
       });
     });
-    invalidateRuleset(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) invalidateRuleset(klassRulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 }

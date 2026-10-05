@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
@@ -260,7 +260,7 @@ class RulesetExtensionsService {
       return { subscribed: true };
     });
 
-    invalidateRuleset(id);
+    RulesetCache.invalidate(id);
     return result;
   }
 
@@ -326,7 +326,7 @@ class RulesetExtensionsService {
       return { unsubscribed: true };
     });
 
-    invalidateRuleset(id);
+    RulesetCache.invalidate(id);
     return result;
   }
 }

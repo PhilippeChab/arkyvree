@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Rulesets } from "@/server/repositories/index.ts";
 import { computePerLevelAptitudeSlots } from "@/server/services/characters/levels/dnd3.5/distribution.ts";
+import { getOrBuildCowData } from "@/server/services/rulesets/cow/index.ts";
 import { findKlassLevel, getSeedCtx, invalidateSeededRuleset } from "@/tests/helpers.ts";
 
 /** The seeded cleric's first two levels, the second adding a 1st-level spell her first made all known. */
@@ -21,7 +22,7 @@ async function clericWithLaterAdd() {
   });
   invalidateSeededRuleset(ctx.rulesetId);
   const ruleset = (await Rulesets.findOne(db, { id: ctx.rulesetId }))!;
-  const rulesetData = await getOrFetchRulesetData(ruleset.id, await getOrBuildCowData(ruleset));
+  const rulesetData = await RulesetCache.getData(ruleset.id, await getOrBuildCowData(ruleset));
   return { rulesetData, levels, clericSpells: rulesetData.aptitudeIdBySlug.get("clericspells")! };
 }
 

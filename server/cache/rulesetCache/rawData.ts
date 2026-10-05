@@ -1,5 +1,4 @@
-import DependentCache from "@/server/cache/DependentCache.ts";
-import { db, withCowContext } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import {
   Abilities,
   Aptitudes,
@@ -71,8 +70,6 @@ export interface RulesetRawData {
   requirements: Requirement[];
 }
 
-export const rulesetRawDataCache = new DependentCache<RulesetRawData>();
-
 type RawEntities = Pick<
   RulesetRawData,
   | "abilities"
@@ -87,10 +84,6 @@ type RawEntities = Pick<
   | "items"
   | "mechanics"
 >;
-
-function buildRawCacheKey(rulesetId: string, campaignId?: string): string {
-  return campaignId ? `${rulesetId}:${campaignId}` : rulesetId;
-}
 
 /**
  * Rounds 3 and 4: the customizations and the klass-level sub-tables. Customizations include everything keyed on
@@ -134,7 +127,11 @@ async function fetchCustomizations(rulesetId: string, entities: RawEntities, kla
   return { properties, modifiers, klassLevelFeats, klassLevelPowers, klassLevelSaves, requirements };
 }
 
-async function fetchRulesetRawData(
+/**
+ * A ruleset's own rows (a campaign's, with one), none of its ancestors', and whether to pin them: a system ruleset's,
+ * which every fork reads. For the cache (`RulesetCache.getRawData`), which reads them once.
+ */
+export async function fetchRulesetRawData(
   rulesetId: string,
   campaignId?: string,
 ): Promise<{ data: RulesetRawData; pinned: boolean }> {
@@ -184,21 +181,4 @@ async function fetchRulesetRawData(
   // into the pinned set. Only the non-campaign entry is eligible (system rulesets
   // are not campaign-scoped).
   return { data, pinned: !!ruleset?.system };
-}
-
-/**
- * Fetch entities owned by a single ruleset (no ancestor merging).
- * Pins the entry when the ruleset is system-seeded so bases and extensions
- * stay resident for all forks.
- */
-export async function getOrFetchRulesetRawData(rulesetId: string, campaignId?: string): Promise<RulesetRawData> {
-  const cacheKey = buildRawCacheKey(rulesetId, campaignId);
-  return rulesetRawDataCache.getOrFetch(cacheKey, [rulesetId], () =>
-    withCowContext(undefined, () => fetchRulesetRawData(rulesetId, campaignId)),
-  );
-}
-
-/** Test/observability helper: whether a ruleset's raw cache entry is pinned. */
-export function isRulesetRawDataPinned(rulesetId: string, campaignId?: string): boolean {
-  return rulesetRawDataCache.isPinned(buildRawCacheKey(rulesetId, campaignId));
 }
