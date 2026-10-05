@@ -246,7 +246,9 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     /** A melee weapon's thrown attack: Dexterity to hit, as every ranged attack, with the weapon's own bonuses. */
     private thrownAttack(weapon: WeaponSlot): NonNullable<WeaponSlot["thrown"]> {
       const dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
-      const bonuses = dexterity + weapon.tohit.magic + weapon.tohit.misc + weapon.tohit.size + weapon.tohit.gear;
+      const { tohit } = weapon;
+      const throwing = this.detailedCharacterCombat.throwing.misc;
+      const bonuses = dexterity + tohit.magic + tohit.misc + tohit.size + tohit.gear + throwing;
       return { dexterity, total: iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + bonuses) };
     }
 
@@ -391,6 +393,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         size: () => SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0,
         gear: () => this.gearPenalty() + handPenalty,
         secondary: () => (natural?.kind === "secondary" ? this.detailedCharacterCombat.naturalattacks.secondary : 0),
+        // A thrown weapon or a sling: a ranged weapon Strength adds to by the hand, not a bow or a crossbow
+        throwing: () => (ranged && strengthDamage === "Slot" ? this.detailedCharacterCombat.throwing.misc : 0),
         attacks: () =>
           natural ? this.naturalAttacks(natural.repeats) : iterativeAttacks(this.detailedCharacterCombat.bab),
         thrown: (weapon: WeaponSlot) => (!ranged && weapon.range > 0 ? this.thrownAttack(weapon) : null),
@@ -424,8 +428,12 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           get secondary() {
             return sheet.secondary();
           },
+          get throwing() {
+            return sheet.throwing();
+          },
           get total() {
-            const bonuses = this.strength + this.magic + this.misc + this.size + this.gear + this.secondary;
+            const bonuses =
+              this.strength + this.magic + this.misc + this.size + this.gear + this.secondary + this.throwing;
             return sheet.attacks().map((base) => base + bonuses);
           },
         },

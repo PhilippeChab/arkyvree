@@ -83,6 +83,7 @@ export const ALL_RACES: RaceDefinition[] = [
       { target: "saves.fortitude.misc", operator: "add", value: "1", valueType: "number" },
       { target: "saves.reflex.misc", operator: "add", value: "1", valueType: "number" },
       { target: "saves.will.misc", operator: "add", value: "1", valueType: "number" },
+      { target: "combat.throwing.misc", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {

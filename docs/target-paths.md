@@ -68,6 +68,7 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 | `combat.initiative.misc` | number | Other bonuses to initiative |
 | `combat.initiative.total` | number | All initiative bonuses combined (req only) |
 | `combat.bab` | number | From class progression |
+| `combat.throwing.misc` | number | Other bonuses to attack with thrown weapons and slings, a melee weapon's thrown attack included (a halfling's +1) |
 | `combat.naturalattacks.secondary` | number | Penalty on secondary natural attacks (−5; −2 with Multiattack) |
 | `combat.naturalattacks.extraprimary` | number | Extra attacks with the primary natural weapon, each at −5 (a companion's Multiattack, under 3 attacks) |
 | `combat.naturalattacks.count` | number | Natural attacks made in a round, two claws being two (req only) |

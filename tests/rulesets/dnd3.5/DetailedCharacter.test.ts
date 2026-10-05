@@ -972,6 +972,24 @@ describe("DetailedCharacter", () => {
       expect(await held("Masterwork Cold Iron Longsword")).toMatchObject({ tohit: { magic: 1 }, damage: { magic: 0 } });
     });
 
+    test("give a halfling +1 with a sling and a thrown weapon, a dagger's thrown attack too, not a bow", async () => {
+      const halfling = await asHalfling("Bjorn Ironhand");
+      await carry(halfling, [
+        { item: "Sling", location: "Main Hand", weaponSet: 0 },
+        { item: "Dagger", location: "Main Hand", weaponSet: 1 },
+        { item: "Shortbow", location: "Two Handed", weaponSet: 2 },
+      ]);
+      const detailed = await build(halfling);
+      const { bab, throwing } = detailed.getDetailedCharacterCombat().getCombat();
+      expect(throwing.misc).toBe(1);
+      expect(weaponSet(detailed).mainhand!.tohit.throwing).toBe(1);
+      expect(weaponSet(detailed, "2").twohanded!.tohit.throwing).toBe(0);
+      // The dagger's melee attack doesn't take it; its thrown one does
+      const { tohit, thrown } = weaponSet(detailed, "1").mainhand!;
+      expect(tohit.throwing).toBe(0);
+      expect(thrown!.total[0]).toBe(bab + thrown!.dexterity + tohit.magic + tohit.misc + tohit.size + tohit.gear + 1);
+    });
+
     describe("proficiency", () => {
       /** Whether `name` is proficient with `item` held at `location`. */
       const proficientWith = async (name: string, item: string, location: "Main Hand" | "Two Handed") => {
