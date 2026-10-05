@@ -55,7 +55,6 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type {
   ClassReference,
-  DomainReference,
   FeatReference,
   InheritedSpellList,
   ItemReference,
@@ -960,10 +959,10 @@ function generateFeat(out: Output, ref: FeatReference, book: string) {
   if (!out.quiet) console.log(`\nDone! Review the generated file and copy to database/packages/dnd35/ when ready.`);
 }
 
-function generateDomain(out: Output, _ref: DomainReference, book: string) {
-  // The master domain reference's domains (all domains from srd.dndtools.org) this book has
-  const { seeds, poolFeats, skipped } = bookDomainSeeds(book);
-  if (!out.quiet) console.log(`Built ${seeds.length} domain seeds (${skipped} skipped — missing spells)`);
+/** A book's domains file and its domains' feat pools: those of its domains reference, none for a book without one. */
+function generateDomain(out: Output, book: string) {
+  const { seeds, poolFeats } = bookDomainSeeds(book);
+  if (!out.quiet) console.log(`Built ${seeds.length} domain seeds`);
 
   const outDir = join(out.dir, book, "domains");
   const dataPath = join(outDir, "data.ts");
@@ -1075,8 +1074,6 @@ function generateSpell(out: Output, ref: SpellReference, book: string) {
 function generateRef(out: Output, jsonPath: string, bookOverride?: string) {
   const meta = JSON.parse(readFileSync(jsonPath, "utf-8"))._meta;
   if (!meta) throw new Error(`Invalid reference file: missing _meta in ${jsonPath}`);
-  if (meta.type === "domain" && !bookOverride)
-    throw new Error(`The domains reference is generated for a book: pass --book <book>`);
   const book = bookOverride ?? meta.book;
 
   switch (meta.type) {
@@ -1093,7 +1090,7 @@ function generateRef(out: Output, jsonPath: string, bookOverride?: string) {
       generateWizardSchool(out, loadReference(jsonPath, "wizardSchool"), book);
       break;
     case "domain":
-      generateDomain(out, loadReference(jsonPath, "domain"), book);
+      generateDomain(out, book);
       break;
     case "race":
       generateRace(out, loadReference(jsonPath, "race"), book);
@@ -1138,12 +1135,17 @@ export function generateAll(
       );
     }
   };
-  // The domains reference lists every domain: each book with spells gets the domains they complete.
+  // Each book with spells gets its domains file, an empty one when it has no domains reference, and its index
   for (const ref of refs.filter((r) => r.type !== "domain")) generate(ref.path);
   if (typeFilter === "domain" || (!typeFilter && !nameFilter)) {
     for (const book of referenceBooks()) {
       if (!existsSync(join(REFERENCE_DIR, book, "spells.json")) || (bookFilter && book !== bookFilter)) continue;
-      generate(join(REFERENCE_DIR, "domains.json"), book);
+      try {
+        generateDomain(out, book);
+        if (book !== "srd") regenerateBookIndex(out, book);
+      } catch (error) {
+        failures.push(`${book}/domains.json: ${error instanceof Error ? error.message : error}`);
+      }
     }
   }
   return failures;
@@ -1195,13 +1197,6 @@ export function generateAtomically(dir: string, generate: (copy: string) => stri
 }
 
 function main() {
-  // A book's aptitudes name its domains, and most generation rewrites them: check the domains reference up front
-  const domainsPath = join(REFERENCE_DIR, "domains.json");
-  if (!existsSync(domainsPath)) {
-    console.error(`Master domain reference not found: ${domainsPath}`);
-    console.error(`Run: bun run parser:scrape -- domain`);
-    process.exit(1);
-  }
   const args = process.argv.slice(2);
   const generate = (dir: string) => {
     if (!args[0]?.endsWith(".json")) return generateAll(parseCliArgs(), dir);

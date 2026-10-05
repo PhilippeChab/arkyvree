@@ -20,7 +20,14 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { configureHttp, fetchAllPages, fetchHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
-import { parseDomainsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
+import {
+  domainBookCode,
+  domainName,
+  type DomainPageSpell,
+  parseDomainIndexHtml,
+  parseDomainPageHtml,
+  parseSpellDomainLevelsHtml,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
 import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
 import {
   parseArmorHtml,
@@ -305,36 +312,76 @@ async function scrapeSingleSpell(url: string) {
 // Domain scraping
 // ---------------------------------------------------------------------------
 
-const DOMAIN_SOURCE_URL = "https://srd.dndtools.org/srd/magic/spells/classSpellLists/domains.html";
+/** dndtools' domains as its copy at dnd.arkalseif.info keeps them: a page per book's version (`parsers/domain.ts`). */
+const DOMAIN_SITE = "https://dnd.arkalseif.info/spells";
+const DOMAIN_INDEX_URL = `${DOMAIN_SITE}/domains/index.html`;
 
-async function scrapeAllDomains() {
-  console.log(`Scraping all domains from ${DOMAIN_SOURCE_URL}...`);
+/** A page of the domain index: the copy keeps page N as `index.html?page=N`, its `?` escaped. */
+const domainIndexPageUrl = (page: number) => (page === 1 ? DOMAIN_INDEX_URL : `${DOMAIN_INDEX_URL}%3Fpage=${page}`);
 
-  const response = await fetch(DOMAIN_SOURCE_URL);
-  if (!response.ok) {
-    console.error(`Failed to fetch domain source: ${response.status}`);
-    process.exit(1);
+/** Every domain version of the index, with its page. */
+async function fetchDomainPages() {
+  const first = parseDomainIndexHtml(await fetchHtml(domainIndexPageUrl(1)));
+  const entries = [...first.entries];
+  for (let page = 2; entries.length < first.total; page++) {
+    const { entries: more } = parseDomainIndexHtml(await fetchHtml(domainIndexPageUrl(page)));
+    if (more.length === 0) break;
+    entries.push(...more);
   }
-  const html = await response.text();
-  const result = parseDomainsHtml(html, DOMAIN_SOURCE_URL, "all-domains", "all");
-
-  console.log(`Parsed ${result.raw.length} domains`);
-  for (const d of result.raw) {
-    console.log(`  ${d.name}: ${d.spells.length} spells`);
+  const pages = [];
+  for (const entry of entries) {
+    pages.push({
+      ...entry,
+      ...parseDomainPageHtml(await fetchHtml(`${DOMAIN_SITE}/domains/${entry.slug}/index.html`)),
+    });
   }
+  return pages;
+}
 
-  const outPath = join(REFERENCE_DIR, "domains.json");
+/**
+ * A book's domains as it prints them: each version whose page names the book, with its granted power and its 3.5
+ * spells at their level there. Its spells are those its page lists and those of the domain's other versions (a page
+ * of the copy can miss some), each kept at the level its own page gives this version.
+ */
+async function scrapeBookDomains(book: string) {
+  const bookSlug = getBookSlug(book);
+  const pages = await fetchDomainPages();
+  // A version whose page names no book (Glory (CD)'s) is the book's when its label ends with the book's code, the
+  // code ("CD") the versions that name the book end with
+  const codes = new Set(pages.filter((page) => page.bookSlug === bookSlug).map((page) => domainBookCode(page.label)));
+  codes.delete(undefined);
+  const versions = pages.filter(
+    (page) => page.bookSlug === bookSlug || (!page.bookSlug && codes.has(domainBookCode(page.label))),
+  );
+  const bookless = pages.filter((page) => !page.bookSlug && !versions.includes(page)).length;
+  console.log(`${versions.length} of ${pages.length} domain versions are ${book}'s; ${bookless} others name no book`);
+
+  const raw = [];
+  for (const version of versions) {
+    const name = domainName(version.label);
+    const candidates = new Map<string, DomainPageSpell>();
+    for (const page of pages.filter((p) => domainName(p.label) === name)) {
+      for (const spell of page.spells) if (spell.edition.includes("3.5")) candidates.set(spell.path, spell);
+    }
+    const spells = [];
+    for (const spell of candidates.values()) {
+      const levels = parseSpellDomainLevelsHtml(await fetchHtml(`${DOMAIN_SITE}/${spell.path}/index.html`));
+      const level = levels.get(version.slug);
+      if (level !== undefined) spells.push({ name: spell.name, level });
+    }
+    spells.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
+    raw.push({ name, ...(version.page ? { page: version.page } : {}), description: version.description, spells });
+    console.log(`  ${version.label}: ${spells.length} spells`);
+  }
+  if (raw.length === 0) {
+    console.log(`No domain of ${book}: no reference written`);
+    return;
+  }
 
   saveReference(
-    outPath,
-    {
-      type: "domain",
-      sourceUrl: DOMAIN_SOURCE_URL,
-      book: "all-domains",
-      filter: "all",
-      scrapedAt: new Date().toISOString(),
-    },
-    result.raw,
+    join(REFERENCE_DIR, book, "domains.json"),
+    { type: "domain", sourceUrl: DOMAIN_INDEX_URL, book, scrapedAt: new Date().toISOString() },
+    raw,
   );
 }
 
@@ -549,7 +596,7 @@ function printUsage() {
   console.error("    class              Scrape class(es)");
   console.error("    feat               Scrape feat(s)");
   console.error("    spell              Scrape spell(s)");
-  console.error("    domain             Scrape domains");
+  console.error("    domain             Scrape a book's domains (dndtools' copy at dnd.arkalseif.info)");
   console.error("    race               Scrape race(s)");
   console.error("    item               Scrape items (d20srd.org)");
   console.error("    magicItem          Scrape magic items (d20srd.org)");
@@ -557,7 +604,6 @@ function printUsage() {
   console.error("  Options:");
   console.error("    --book <slug>      Source book slug (default: srd)");
   console.error("    --url <url>        Scrape a single entity by URL");
-  console.error("    --filter <mode>    Domain filter: core|non-core|all (default: core)");
   console.error("    --no-cache         Disable disk cache");
   console.error("    --delay <ms>       Delay between requests (default: 200)");
   console.error("");
@@ -565,7 +611,7 @@ function printUsage() {
   console.error("    bun scraper/index.ts class --book srd");
   console.error("    bun scraper/index.ts class --url https://dndtools.net/classes/.../barbarian/ --book srd");
   console.error("    bun scraper/index.ts feat --book srd");
-  console.error("    bun scraper/index.ts domain");
+  console.error("    bun scraper/index.ts domain --book complete-divine");
   console.error("    bun scraper/index.ts spell --book srd");
   console.error("    bun scraper/index.ts race --book srd");
 }
@@ -614,7 +660,7 @@ async function main() {
       await scrapeAllSpells(book);
     }
   } else if (type === "domain") {
-    await scrapeAllDomains();
+    await scrapeBookDomains(book);
   } else if (type === "race") {
     if (url) {
       await scrapeSingleRace(url);

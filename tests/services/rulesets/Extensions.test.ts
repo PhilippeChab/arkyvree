@@ -133,7 +133,7 @@ describe("subscribing to an extension", () => {
     expect(await RulesetsService.publishRuleset(session, draft.id)).toMatchObject({ status: "Published" });
   });
 
-  test("adds the extension's feats to the fork's: Complete Warrior brings 577 of its own", async () => {
+  test("adds the extension's feats to the fork's: Complete Warrior brings 581 of its own", async () => {
     const { session, extension, draft } = await setupFork();
     const total = async () => {
       const { extensionRulesetIds, ancestorRulesetIds } = (await Rulesets.findOne(db, { id: draft.id }))!;
@@ -146,8 +146,8 @@ describe("subscribing to an extension", () => {
     };
     const before = await total();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
-    // 599 feats, 21 of which override a base feat.
-    expect(await total()).toBe(before + 577);
+    // 602 feats, 21 of which override a base feat.
+    expect(await total()).toBe(before + 581);
   });
 
   test("takes several extensions, system or published by users, on a draft or a published fork", async () => {

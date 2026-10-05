@@ -33,13 +33,7 @@ async function run(script: string, args: string[]): Promise<boolean> {
  * Constructs dndtools.net URLs from book + type + name, regardless of
  * what the stored sourceUrl says (it may point to the old dead site).
  */
-function buildScrapeArgs(ref: {
-  path: string;
-  type: string;
-  url?: string;
-  book: string;
-  filter?: string;
-}): string[] | null {
+function buildScrapeArgs(ref: { path: string; type: string; url?: string; book: string }): string[] | null {
   const name = basename(ref.path, ".json");
 
   // wizardSchool has no parser — skip
@@ -74,10 +68,9 @@ function buildScrapeArgs(ref: {
       // Spells listing: /spells/{book-slug}/ — auto-discovery works
       break;
     }
-    case "domain": {
-      // Domains use master reference at reference/domains.json — no book needed
-      return ["domain"];
-    }
+    case "domain":
+      // Domains: the book's versions on the dndtools copy's domain pages — no URL needed
+      break;
     case "item":
     case "magicItem":
       // Items use hardcoded d20srd.org URLs in the scraper — no URL needed
@@ -86,10 +79,6 @@ function buildScrapeArgs(ref: {
       break;
     default:
       return null;
-  }
-
-  if (ref.filter) {
-    args.push("--filter", ref.filter);
   }
 
   return args;
@@ -108,9 +97,6 @@ async function main() {
   if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
   if (nameFilter) refs = refs.filter((r) => basename(r.path, ".json").toLowerCase() === nameFilter);
 
-  // Domain refs are handled separately — they use a master reference
-  const regularRefs = refs.filter((r) => r.type !== "domain");
-
   console.log(
     `Found ${refs.length} reference files.${bookFilter || typeFilter || nameFilter ? ` (filtered: book=${bookFilter ?? "*"}, type=${typeFilter ?? "*"}, name=${nameFilter ?? "*"})` : ""}\n`,
   );
@@ -118,9 +104,9 @@ async function main() {
   // What failed: the sync then exits with an error, so a script running it stops
   const failed: string[] = [];
 
-  // Phase 1: Re-scrape all regular refs (keeps their overrides)
+  // Phase 1: Re-scrape all refs (keeps their overrides)
   console.log("=== Scraping ===");
-  for (const ref of regularRefs) {
+  for (const ref of refs) {
     const name = basename(ref.path, ".json");
     process.stdout.write(`  ${name}... `);
 
@@ -132,14 +118,6 @@ async function main() {
 
     if (await run(SCRAPER, args)) console.log("ok");
     else failed.push(name);
-  }
-
-  // Phase 1b: Re-scrape the domains reference, which every book shares: only when the generator then regenerates
-  // every book's domains (no book or name filter; see generateAll)
-  if (!bookFilter && !nameFilter && (!typeFilter || typeFilter === "domain")) {
-    process.stdout.write("  domains (master)... ");
-    if (await run(SCRAPER, ["domain"])) console.log("ok");
-    else failed.push("domains");
   }
 
   // Phase 2: Regenerate everything in scope, domains included

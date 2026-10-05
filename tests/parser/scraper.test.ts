@@ -5,7 +5,13 @@ import { join } from "node:path";
 import { readStoredReference, type ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class.ts";
-import { parseDomainsHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
+import {
+  domainBookCode,
+  domainName,
+  parseDomainIndexHtml,
+  parseDomainPageHtml,
+  parseSpellDomainLevelsHtml,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
 import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
 import {
   parseArmorHtml,
@@ -108,26 +114,48 @@ describe("The scraper reads from a page the reference's entries:", () => {
     expect({ ..._meta, scrapedAt: klass._meta.scrapedAt }).toEqual(klass._meta);
   });
 
-  test("the domains with spells, core or not", () => {
-    const domains = stored("domains.json", "domain").raw;
-    const parse = (filter: "core" | "non-core" | "all") =>
-      scraped(parseDomainsHtml(fixture("domains"), "", "all-domains", filter).raw);
-    // Sand's granted power has a table of its own before its spell list's
-    expect(parse("all")).toEqual(
-      named(domains, [
-        "Air",
-        "Artifice",
-        "Celestial",
-        "Glory (BoED)",
-        "Healing",
-        "Sand",
-        "Strength",
-        "War",
-        "The Abyss",
+  test("the domains: the index's versions, a version's book, page, granted power and spells, a spell's level in each", () => {
+    expect(parseDomainIndexHtml(fixture("domain-index"))).toEqual({
+      entries: [
+        { slug: "air", label: "Air" },
+        { slug: "celerity-cd", label: "Celerity (CD)" },
+        { slug: "celerity", label: "Celerity (SpC)" },
+      ],
+      total: 299,
+    });
+
+    const weather = named(stored("complete-divine/domains.json", "domain").raw, ["Weather"])[0];
+    expect(parseDomainPageHtml(fixture("domain-weather"))).toEqual({
+      label: "Weather (CD)",
+      bookSlug: "complete-divine--56",
+      page: weather.page,
+      description: weather.description,
+      spells: [
+        { path: "complete-divine--56/binding-winds--692", name: "Binding Winds", edition: "Supplementals (3.5)" },
+        { path: "players-handbook-v35--6/call-lightning--2592", name: "Call Lightning", edition: "Core (3.5)" },
+      ],
+    });
+    // A version whose page names no book, nor its granted power: its label's code places it
+    expect(parseDomainPageHtml(fixture("domain-glory-cd"))).toEqual({
+      label: "Glory (CD)",
+      description: "",
+      spells: [
+        { path: "complete-divine--56/crown-of-glory--697", name: "Crown of Glory", edition: "Supplementals (3.5)" },
+      ],
+    });
+    expect([domainName("Glory (CD)"), domainBookCode("Glory (CD)"), domainBookCode("Air")]).toEqual([
+      "Glory",
+      "CD",
+      undefined,
+    ]);
+
+    // The domain versions only, not the classes
+    expect(parseSpellDomainLevelsHtml(fixture("domain-spell-levels"))).toEqual(
+      new Map([
+        ["treachery", 1],
+        ["liberation-cd", 1],
       ]),
     );
-    expect(parse("core")).toEqual(named(domains, ["Air", "Healing", "Strength", "War"]));
-    expect(parse("non-core")).toEqual(named(domains, ["Artifice", "Celestial", "Glory (BoED)", "Sand", "The Abyss"]));
   });
 
   test("the weapons, armor and goods", () => {

@@ -1,218 +1,89 @@
 import * as cheerio from "cheerio";
-import type { AnyNode } from "domhandler";
 
-import { sectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
-// ---------------------------------------------------------------------------
-// Spell name normalization (srd.dndtools.org → dndtools.net conventions)
-// ---------------------------------------------------------------------------
+// The domains of dndtools' database as its copy at dnd.arkalseif.info keeps them: each book's version of a domain its
+// own page ("Celerity (CD)": its book and page, its granted power, its spells), and each spell's page the level it has
+// in each version. dndtools.net itself has since merged a domain's versions, without their books or spell levels.
 
-const NAMED_SPELL_PREFIXES: Record<string, string> = {
-  "Grasping Hand": "Bigby's Grasping Hand",
-  "Clenched Fist": "Bigby's Clenched Fist",
-  "Crushing Hand": "Bigby's Crushing Hand",
-  "Interposing Hand": "Bigby's Interposing Hand",
-  "Forceful Hand": "Bigby's Forceful Hand",
-  "Instant Summons": "Drawmij's Instant Summons",
-  "Secret Chest": "Leomund's Secret Chest",
-  "Tiny Hut": "Leomund's Tiny Hut",
-  "Secure Shelter": "Leomund's Secure Shelter",
-  Trap: "Leomund's Trap",
-  "Acid Arrow": "Melf's Acid Arrow",
-  "Mage's Disjunction": "Mordenkainen's Disjunction",
-  "Faithful Hound": "Mordenkainen's Faithful Hound",
-  "Magnificent Mansion": "Mordenkainen's Magnificent Mansion",
-  "Private Sanctum": "Mordenkainen's Private Sanctum",
-  "Magic Aura": "Nystul's Magic Aura",
-  "Irresistible Dance": "Otto's Irresistible Dance",
-  "Telepathic Bond": "Rary's Telepathic Bond",
-  "Hideous Laughter": "Tasha's Hideous Laughter",
-  Transformation: "Tenser's Transformation",
-  "Floating Disk": "Tenser's Floating Disk",
+/** A domain version of the domain index: its page's slug ("celerity-cd") and its label ("Celerity (CD)"). */
+export type DomainIndexEntry = { slug: string; label: string };
+
+/** A spell a domain's page lists: its page (`<book>/<spell>`), its name and its edition ("Core (3.5)"). */
+export type DomainPageSpell = { path: string; name: string; edition: string };
+
+/** A domain version's page: its book (the rulebook's slug, "complete-divine--56") and page, its granted power, its spells. */
+export type DomainPage = {
+  label: string;
+  bookSlug?: string;
+  page?: number;
+  description: string;
+  spells: DomainPageSpell[];
 };
 
-function normalizeDomainSpellName(name: string): string {
-  // Normalize Unicode quotes to ASCII
-  let normalized = name.replace(/[\u2018\u2019]/g, "'").replace(/[\u2013\u2014]/g, "-");
+/** A domain's name without its version's book ("Celerity (CD)" → "Celerity"). */
+export const domainName = (label: string) => label.replace(/\s*\([^()]*\)$/, "").trim();
 
-  // Strip trailing daggers (e.g. "Animal Trance†")
-  normalized = normalized.replace(/[†*]+$/, "").trim();
+/** The book's code a domain version's label ends with ("Celerity (CD)" → "CD"), if any. */
+export const domainBookCode = (label: string) => label.match(/\(([^()]+)\)$/)?.[1];
 
-  // Named spell prefixes (e.g. "Grasping Hand" → "Bigby's Grasping Hand")
-  if (NAMED_SPELL_PREFIXES[normalized]) return NAMED_SPELL_PREFIXES[normalized];
-
-  // "Greater/Lesser/Mass X" → "X, Greater/Lesser/Mass"
-  const prefixMatch = normalized.match(/^(Greater|Lesser|Mass)\s+(.+)$/i);
-  if (prefixMatch) {
-    const [, prefix, rest] = prefixMatch;
-    return `${rest}, ${prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase()}`;
-  }
-
-  // "Power Word, X" → "Power Word X" (remove comma)
-  normalized = normalized.replace(/^Power Word,\s*/i, "Power Word ");
-
-  return normalized;
+/** The domain versions a page of the domain index lists, and how many entries the index holds in all. */
+export function parseDomainIndexHtml(html: string): { entries: DomainIndexEntry[]; total: number } {
+  const $ = cheerio.load(html);
+  const entries: DomainIndexEntry[] = [];
+  $("table.common td a").each((_, el) => {
+    const slug = $(el)
+      .attr("href")
+      ?.match(/^([^/]+)\/index\.html$/)?.[1];
+    if (slug) entries.push({ slug, label: normalizeWs($(el).text()) });
+  });
+  const total = Number(
+    $("body")
+      .text()
+      .match(/\(total (\d+) items\)/)?.[1] ?? entries.length,
+  );
+  return { entries, total };
 }
 
-// ---------------------------------------------------------------------------
-// Domain HTML Parser — srd.dndtools.org's page of every domain
-//
-//   <a id="air-domain"></a>
-//   <h5>AIR DOMAIN</h5>
-//   <p>Granted Power: ...</p>
-//   <h6>Air Domain Spells</h6>
-//   <table> a row a spell level: "1 Obscuring Mist: ..." in one cell, or (a planar domain) the level, then its spells
-// ---------------------------------------------------------------------------
-
-const CORE_DOMAINS = new Set([
-  "Air",
-  "Animal",
-  "Chaos",
-  "Death",
-  "Destruction",
-  "Earth",
-  "Evil",
-  "Fire",
-  "Good",
-  "Healing",
-  "Knowledge",
-  "Law",
-  "Luck",
-  "Magic",
-  "Plant",
-  "Protection",
-  "Strength",
-  "Sun",
-  "Travel",
-  "Trickery",
-  "War",
-  "Water",
-]);
-
-export type DomainRaw = {
-  name: string;
-  description: string;
-  spells: { name: string; slug?: string; level: number }[];
-};
-
-export function parseDomainsHtml(
-  html: string,
-  sourceUrl: string,
-  book: string,
-  filter: "core" | "non-core" | "all" = "core",
-): {
-  _meta: { type: "domain"; sourceUrl: string; book: string; filter: "core" | "non-core" | "all"; scrapedAt: string };
-  raw: DomainRaw[];
-} {
+/** A domain version's page: its heading, the rulebook it links to, its granted power and its spells' table. */
+export function parseDomainPageHtml(html: string): DomainPage {
   const $ = cheerio.load(html);
-  const domains: DomainRaw[] = [];
+  const heading = $("#content h2").first();
+  const source = heading.next("p");
+  const rulebook = source.find('a[href*="/rulebooks/"]').attr("href");
+  const page = source.text().match(/p\.\s*(\d+)/)?.[1];
 
-  const h5s = $("h5").toArray();
+  const grantedHeading = $("#content h4").filter((_, el) => /^granted power/i.test($(el).text().trim()));
+  const description = normalizeWs(grantedHeading.next(".nice-textile").text());
 
-  for (const h5El of h5s) {
-    const h5 = $(h5El);
-    const titleText = h5.text().trim();
-
-    // Match "AIR DOMAIN" or standalone planar names like "THE ABYSS", "ARBOREA"
-    const nameMatch = titleText.match(/^(.+?)\s+DOMAIN(?:\s*(\(.+\)))?$/i);
-    // Skip headers that aren't domains (e.g. "PLANAR DOMAINS")
-    if (!nameMatch && titleText.match(/DOMAINS$/i)) continue;
-
-    const rawName = nameMatch ? nameMatch[1] : titleText;
-    const suffix = nameMatch?.[2] ?? "";
-    const baseName = rawName
-      .split(/\s+/)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(" ");
-    const name = suffix ? `${baseName} ${suffix}` : baseName;
-
-    // Up to the next domain: its heading, or the anchor before it
-    const siblings: cheerio.Cheerio<AnyNode>[] = [];
-    for (const el of sectionElements(h5, ["h5"])) {
-      if (el.is("a[id]") && el.attr("id")?.endsWith("-domain")) break;
-      siblings.push(el);
-    }
-
-    const grantedParts: string[] = [];
-    let seenSpellHeader = false;
-    for (const sib of siblings) {
-      if (sib.is("h6")) {
-        seenSpellHeader = true;
-        continue;
-      }
-      if (seenSpellHeader) continue;
-      if (sib.is("p")) {
-        let text = sib.text().trim();
-        text = text.replace(/^Granted Powers?:\s*/i, "");
-        if (text) grantedParts.push(text);
-      }
-    }
-    const description = normalizeWs(grantedParts.join(" "));
-
-    const spells: { name: string; slug?: string; level: number }[] = [];
-    const spellSeen = new Set<string>();
-    /** Adds a spell once per level and name, with its slug when its link has one (`#slug`). */
-    const addSpell = (level: number, spellName: string, href: string | undefined) => {
-      const key = `${level}:${spellName}`;
-      if (spellSeen.has(key)) return;
-      spellSeen.add(key);
-      const slug = href?.match(/#(.+)$/)?.[1];
-      spells.push({ name: normalizeDomainSpellName(spellName), ...(slug ? { slug } : {}), level });
-    };
-    // The spell list's table follows its heading: a granted power can have a table of its own before it (Sand's).
-    // Without one after the heading, the section's first table.
-    const isTable = (el: cheerio.Cheerio<AnyNode>) => el.is("table");
-    const spellsHeading = siblings.findIndex((s) => s.is("h6"));
-    const table = siblings.slice(Math.max(spellsHeading, 0)).find(isTable) ?? siblings.find(isTable);
-    if (table) {
-      table.find("tr").each((_, tr) => {
-        const tds = $(tr).find("td");
-        if (tds.length === 0) return;
-
-        const firstTd = tds.first();
-        const firstText = firstTd.text().trim();
-
-        // Format 1: standard — "1 Spell Name: description" in one cell
-        const singleCellMatch = firstText.match(/^(\d+)\s+(.+?)[*:]*$/);
-        if (singleCellMatch) {
-          const level = parseInt(singleCellMatch[1], 10);
-          const spellName = singleCellMatch[2].trim().replace(/\s+[MFX]+(\s+[MFX]+)*$/, "");
-
-          if (level >= 1 && level <= 9 && spellName)
-            addSpell(level, spellName, firstTd.find("a[href]").first().attr("href"));
-          return;
-        }
-
-        // Format 2: planar — level in first <td>, spell links in second <td>
-        const levelMatch = firstText.match(/^(\d+)$/);
-        if (levelMatch && tds.length >= 2) {
-          const level = parseInt(levelMatch[1], 10);
-          if (level < 1 || level > 9) return;
-          const secondTd = tds.eq(1);
-          secondTd.find("a").each((_, a) => {
-            const spellName = $(a).text().trim();
-            if (spellName) addSpell(level, spellName, $(a).attr("href"));
-          });
-        }
-      });
-    }
-
-    const isCore = CORE_DOMAINS.has(name);
-    const include = filter === "all" ? true : filter === "core" ? isCore : !isCore;
-    if (spells.length > 0 && include) {
-      domains.push({ name, description, spells });
-    }
-  }
+  const spells: DomainPageSpell[] = [];
+  $("#content table tr").each((_, row) => {
+    const cells = $(row).find("td");
+    const link = cells.first().find("a").first();
+    const path = link.attr("href")?.match(/^\.\.\/\.\.\/([^/]+\/[^/]+)\/index\.html$/)?.[1];
+    if (path) spells.push({ path, name: normalizeWs(link.text()), edition: normalizeWs(cells.last().text()) });
+  });
 
   return {
-    _meta: {
-      type: "domain",
-      sourceUrl,
-      book,
-      filter,
-      scrapedAt: new Date().toISOString(),
-    },
-    raw: domains,
+    label: normalizeWs(heading.text()),
+    ...(rulebook ? { bookSlug: rulebook.match(/([^/]+)\/index\.html$/)?.[1] } : {}),
+    ...(page ? { page: Number(page) } : {}),
+    description,
+    spells,
   };
+}
+
+/** The domain versions a spell's page gives it a level in: each version's page slug, with the level. */
+export function parseSpellDomainLevelsHtml(html: string): Map<string, number> {
+  const $ = cheerio.load(html);
+  const levels = new Map<string, number>();
+  $('#content a[href*="/domains/"]').each((_, el) => {
+    const slug = $(el)
+      .attr("href")
+      ?.match(/\/domains\/([^/]+)\/index\.html$/)?.[1];
+    const next = el.nextSibling;
+    const level = next?.type === "text" ? next.data.match(/^\s*(\d+)/)?.[1] : undefined;
+    if (slug && level !== undefined) levels.set(slug, Number(level));
+  });
+  return levels;
 }

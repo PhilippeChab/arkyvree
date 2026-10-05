@@ -531,40 +531,68 @@ function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number])
   };
 }
 
-/**
- * A book's domains (of the master domain reference): those whose spells the book, with the core rules, all has, and
- * for an extension, not all the core rules'. Their spells are named as the spell references name them. Also their
- * feat pools' feats, and how many domains were skipped.
- */
-export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[]; skipped: number } {
-  const masterRef = loadReference(join(REFERENCE_DIR, "domains.json"), "domain");
+/** The spells a book's domains can name, by their lowercase name: the core rules' and the book's. */
+export function domainSpellNames(book: string): Map<string, string> {
   const spellNames = (b: string) => {
     const path = join(REFERENCE_DIR, b, "spells.json");
     return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
   };
-  // Spell names by their lowercase: the core rules', and the book's
-  const core = spellNames("srd");
-  const available = new Map(
-    [...core, ...(book === "srd" ? [] : spellNames(book))].map((name) => [name.toLowerCase(), name]),
+  return new Map(
+    [...spellNames("srd"), ...(book === "srd" ? [] : spellNames(book))].map((name) => [name.toLowerCase(), name]),
   );
-  const inCore = new Set(core.map((name) => name.toLowerCase()));
+}
 
-  // Each domain's seed with its scraped entry, which its mapping (its feat pool) is keyed by
-  const all = masterRef.raw.map((entry) => ({ entry, seed: domainSeed(masterRef, entry) }));
-  const kept = all.filter(
-    ({ seed }) =>
-      seed.spells.every((s) => available.has(s.name.toLowerCase())) &&
-      (book === "srd" || !seed.spells.every((s) => inCore.has(s.name.toLowerCase()))),
-  );
-  for (const { seed } of kept) {
-    for (const s of seed.spells) s.name = available.get(s.name.toLowerCase()) ?? s.name;
+/**
+ * A domains reference's domains, as their mapping and overrides make them, their spells named as the spell references
+ * name them. `parser:validate` reports a spell neither the core rules nor the book has.
+ */
+function domainSeeds(ref: DomainReference): DomainDefinition[] {
+  const spellNames = domainSpellNames(ref._meta.book);
+  const seeds = ref.raw.map((entry) => domainSeed(ref, entry));
+  for (const seed of seeds) {
+    for (const spell of seed.spells) spell.name = spellNames.get(spell.name.toLowerCase()) ?? spell.name;
   }
-  const keptEntries = new Set(kept.map(({ entry }) => entry));
-  return {
-    seeds: kept.map(({ seed }) => seed),
-    poolFeats: buildDomainFeatPoolSeeds({ ...masterRef, raw: masterRef.raw.filter((entry) => keptEntries.has(entry)) }),
-    skipped: all.length - kept.length,
-  };
+  return seeds;
+}
+
+/** A book's domains as it prints them (`reference/<book>/domains.json`; none for a book without), and their feat pools' feats. */
+export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[] } {
+  const path = join(REFERENCE_DIR, book, "domains.json");
+  if (!existsSync(path)) return { seeds: [], poolFeats: [] };
+  const ref = loadReference(path, "domain");
+  return { seeds: domainSeeds(ref), poolFeats: buildDomainFeatPoolSeeds(ref) };
+}
+
+/**
+ * What a domains reference's lists lack, as generated: a spell neither the core rules nor the book has (the seed
+ * leaves it out), a spell level from 1st to 9th without a spell, and a spell of the book whose level line puts it on
+ * one of them at a level the list doesn't. An override of the domain's spells corrects them.
+ */
+export function domainSpellIssues(ref: DomainReference): { domain: string; text: string }[] {
+  const spellNames = domainSpellNames(ref._meta.book);
+  const spellsPath = join(REFERENCE_DIR, ref._meta.book, "spells.json");
+  const bookSpells = existsSync(spellsPath) ? loadReference(spellsPath, "spell").raw : [];
+  const issues: { domain: string; text: string }[] = [];
+  for (const { name: domain, spells } of domainSeeds(ref)) {
+    const has = (name: string, level: number) =>
+      spells.some((spell) => spell.level === level && spell.name.toLowerCase() === name.toLowerCase());
+    for (const spell of spells) {
+      if (!spellNames.has(spell.name.toLowerCase())) {
+        issues.push({ domain, text: `${spell.name} (level ${spell.level}) is no spell of the core rules or the book` });
+      }
+    }
+    for (let level = 1; level <= 9; level++) {
+      if (!spells.some((spell) => spell.level === level)) issues.push({ domain, text: `no spell at level ${level}` });
+    }
+    for (const spell of bookSpells) {
+      for (const { className, level } of spell.levelEntries) {
+        if (className === domain && !has(spell.name, level)) {
+          issues.push({ domain, text: `the book's ${spell.name} is ${domain} ${level}, not on its list` });
+        }
+      }
+    }
+  }
+  return issues;
 }
 
 /**

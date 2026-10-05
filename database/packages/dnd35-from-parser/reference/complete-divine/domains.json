@@ -1,0 +1,1017 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-10-05T17:05:38.778Z",
+    "sourceUrl": "https://dnd.arkalseif.info/spells/domains/index.html",
+    "type": "domain"
+  },
+  "overrides": {
+    "Celerity": {
+      "description": "You move faster on foot than others of your race, gaining a +10 foot enhancement to your base land speed. This bonus does not apply while you wear medium or heavy armor or carry a medium or heavy load."
+    },
+    "Cold": {
+      "description": "You have the ability to turn or destroy fire creatures in the same manner that a good cleric turns undead. Additionally, you can rebuke or command cold creatures just as an evil cleric rebukes undead. The total number of times you may use these abilities each day equals 3 + your Charisma modifier. This granted power is supernatural in nature."
+    },
+    "Community": {
+      "description": "Once per day, you can use calm emotions as a spell-like ability. You also receive a +2 bonus on Diplomacy checks."
+    },
+    "Competition": {
+      "description": "You thrive on challenges and direct confrontation. As an extraordinary ability, you receive a +1 bonus to every opposed check you attempt."
+    },
+    "Creation": {
+      "description": "Your Conjuration (creation) spells are cast at +1 caster level."
+    },
+    "Domination": {
+      "description": "You receive Spell Focus (Enchantment) as a bonus feat."
+    },
+    "Dream": {
+      "description": "Your extensive exploration of the realm of dreams and nightmares has rendered you completely immune to all fear effects."
+    },
+    "Force": {
+      "description": "Through mastery over fundamental forces of motion and energy, once per day you may reroll any single damage roll - whether from a weapon attack, a spell, or a special ability - and keep whichever result is higher. This granted power is a supernatural ability."
+    },
+    "Glory": {
+      "description": "When you turn undead, you receive a +2 bonus to your turning check and deal an additional +1d6 turning damage.",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Disrupt Undead"
+        },
+        {
+          "level": 2,
+          "name": "Bless Weapon"
+        },
+        {
+          "level": 3,
+          "name": "Searing Light"
+        },
+        {
+          "level": 4,
+          "name": "Holy Smite"
+        },
+        {
+          "level": 5,
+          "name": "Holy Sword"
+        },
+        {
+          "level": 6,
+          "name": "Bolt of Glory"
+        },
+        {
+          "level": 7,
+          "name": "Sunbeam"
+        },
+        {
+          "level": 8,
+          "name": "Crown of Glory"
+        },
+        {
+          "level": 9,
+          "name": "Gate"
+        }
+      ]
+    },
+    "Inquisition": {
+      "description": "You receive a +4 bonus to all dispel checks you make."
+    },
+    "Liberation": {
+      "description": "When you fail a saving throw against a charm, compulsion, or fear effect, you may attempt the save again 1 round later at the same DC. You receive only this one additional chance to succeed. This granted power is a supernatural ability.",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Omen of Peril"
+        },
+        {
+          "level": 2,
+          "name": "Undetectable Alignment"
+        },
+        {
+          "level": 3,
+          "name": "Rage"
+        },
+        {
+          "level": 4,
+          "name": "Freedom of Movement"
+        },
+        {
+          "level": 5,
+          "name": "Break Enchantment"
+        },
+        {
+          "level": 6,
+          "name": "Dispel Magic, Greater"
+        },
+        {
+          "level": 7,
+          "name": "Refuge"
+        },
+        {
+          "level": 8,
+          "name": "Mind Blank"
+        },
+        {
+          "level": 9,
+          "name": "Unbinding"
+        }
+      ]
+    },
+    "Madness": {
+      "description": "Your fractured mind grants you flashes of brilliance. You take a -1 penalty on all Wisdom-based skill checks and Will saving throws. However, once per day you may tap into the clarity that comes from true madness, adding half your character level to a single Wisdom-based skill check or Will save. You must decide to use this ability before making the roll."
+    },
+    "Mind": {
+      "description": "You receive a +2 bonus to Bluff, Diplomacy, and Sense Motive checks."
+    },
+    "Mysticism": {
+      "description": "Once per day as a free action, you may channel divine power to gain a luck bonus on all saving throws equal to your Charisma modifier (with a minimum bonus of +1). This supernatural ability persists for 1 round per cleric level. A good cleric's 7th- and 8th-level domain spells are holy word and holy aura; an evil cleric's are blasphemy and unholy aura."
+    },
+    "Oracle": {
+      "description": "Whenever you cast a divination spell, your effective caster level is increased by +2."
+    },
+    "Pact": {
+      "description": "Appraise, Intimidate, and Sense Motive are added to your cleric class skill list."
+    },
+    "Pestilence": {
+      "description": "You are completely immune to the effects of any disease. Despite this immunity, you can still serve as a carrier for infectious diseases.",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Doom"
+        },
+        {
+          "level": 2,
+          "name": "Summon Swarm"
+        },
+        {
+          "level": 3,
+          "name": "Contagion"
+        },
+        {
+          "level": 4,
+          "name": "Poison"
+        },
+        {
+          "level": 5,
+          "name": "Plague of Rats"
+        },
+        {
+          "level": 6,
+          "name": "Curse of Lycanthropy"
+        },
+        {
+          "level": 7,
+          "name": "Scourge"
+        },
+        {
+          "level": 8,
+          "name": "Create Greater Undead"
+        },
+        {
+          "level": 9,
+          "name": "Otyugh Swarm"
+        }
+      ]
+    },
+    "Purification": {
+      "description": "Whenever you cast an abjuration spell, your effective caster level is increased by +1."
+    },
+    "Summoner": {
+      "description": "Your caster level is 2 higher for all Conjuration (summoning) and Conjuration (calling) spells."
+    },
+    "Weather": {
+      "description": "Harsh weather conditions affect you less than normal. Neither rain nor snow imposes penalties on your Spot or Search checks. You traverse snow-covered ground and icy surfaces at your full movement speed. Both natural and magical wind effects treat you as though you were one size category larger than your actual size."
+    }
+  },
+  "raw": [
+    {
+      "description": "Your land speed is faster than the normal for your race by +10 feet. This benefit is lost if you are wearing medium or heavy armor or carrying a medium or heavy load.",
+      "name": "Celerity",
+      "page": 137,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Expeditious Retreat"
+        },
+        {
+          "level": 2,
+          "name": "Cat's Grace"
+        },
+        {
+          "level": 3,
+          "name": "Blur"
+        },
+        {
+          "level": 4,
+          "name": "Haste"
+        },
+        {
+          "level": 5,
+          "name": "Tree Stride"
+        },
+        {
+          "level": 6,
+          "name": "Wind Walk"
+        },
+        {
+          "level": 7,
+          "name": "Cat's Grace, Mass"
+        },
+        {
+          "level": 8,
+          "name": "Blink, Improved"
+        },
+        {
+          "level": 9,
+          "name": "Time Stop"
+        }
+      ]
+    },
+    {
+      "description": "You can turn or destroy fire creatures as a good cleric turns undead. You can also rebuke or command cold creatures as an evil cleric rebukes undead. Use these abilities a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability.",
+      "name": "Cold",
+      "page": 137,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Chill Touch"
+        },
+        {
+          "level": 2,
+          "name": "Chill Metal"
+        },
+        {
+          "level": 3,
+          "name": "Sleet Storm"
+        },
+        {
+          "level": 4,
+          "name": "Ice Storm"
+        },
+        {
+          "level": 5,
+          "name": "Wall of Ice"
+        },
+        {
+          "level": 6,
+          "name": "Cone of Cold"
+        },
+        {
+          "level": 7,
+          "name": "Control Weather"
+        },
+        {
+          "level": 8,
+          "name": "Polar Ray"
+        },
+        {
+          "level": 9,
+          "name": "Obedient Avalanche"
+        }
+      ]
+    },
+    {
+      "description": "Use calm emotions as a spell-like ability once per day. Gain a +2 bonus on Diplomacy checks.",
+      "name": "Community",
+      "page": 137,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Bless"
+        },
+        {
+          "level": 2,
+          "name": "Status"
+        },
+        {
+          "level": 3,
+          "name": "Prayer"
+        },
+        {
+          "level": 4,
+          "name": "Tongues"
+        },
+        {
+          "level": 5,
+          "name": "Rary's Telepathic Bond"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast"
+        },
+        {
+          "level": 7,
+          "name": "Refuge"
+        },
+        {
+          "level": 8,
+          "name": "Mordenkainen's Magnificent Mansion"
+        },
+        {
+          "level": 9,
+          "name": "Heal, Mass"
+        }
+      ]
+    },
+    {
+      "description": "You relish the chance to prove yourself against your foes. As an extraordinary ability, you gain a +1 bonus on all opposed checks you make.",
+      "name": "Competition",
+      "page": 138,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Remove Fear"
+        },
+        {
+          "level": 2,
+          "name": "Zeal"
+        },
+        {
+          "level": 3,
+          "name": "Prayer"
+        },
+        {
+          "level": 4,
+          "name": "Divine Power"
+        },
+        {
+          "level": 5,
+          "name": "Righteous Might"
+        },
+        {
+          "level": 6,
+          "name": "Zealot Pact"
+        },
+        {
+          "level": 7,
+          "name": "Regenerate"
+        },
+        {
+          "level": 8,
+          "name": "Moment of Prescience"
+        },
+        {
+          "level": 9,
+          "name": "Visage of the Deity, Greater"
+        }
+      ]
+    },
+    {
+      "description": "You cast Conjuration (creation) spells at +1 caster level.",
+      "name": "Creation",
+      "page": 138,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Create Water"
+        },
+        {
+          "level": 2,
+          "name": "Minor Image"
+        },
+        {
+          "level": 3,
+          "name": "Create Food and Water"
+        },
+        {
+          "level": 4,
+          "name": "Minor Creation"
+        },
+        {
+          "level": 5,
+          "name": "Major Creation"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast"
+        },
+        {
+          "level": 7,
+          "name": "Permanent Image"
+        },
+        {
+          "level": 8,
+          "name": "True Creation"
+        },
+        {
+          "level": 9,
+          "name": "Pavilion of Grandeur"
+        }
+      ]
+    },
+    {
+      "description": "You gain the Spell Focus (Enchantment) feat.",
+      "name": "Domination",
+      "page": 138,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Command"
+        },
+        {
+          "level": 2,
+          "name": "Enthrall"
+        },
+        {
+          "level": 3,
+          "name": "Suggestion"
+        },
+        {
+          "level": 4,
+          "name": "Dominate Person"
+        },
+        {
+          "level": 5,
+          "name": "Command, Greater"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest"
+        },
+        {
+          "level": 7,
+          "name": "Suggestion, Mass"
+        },
+        {
+          "level": 8,
+          "name": "True Domination"
+        },
+        {
+          "level": 9,
+          "name": "Monstrous Thrall"
+        }
+      ]
+    },
+    {
+      "description": "Because you have long delved into dreams and nightmares, you are immune to fear effects.",
+      "name": "Dream",
+      "page": 138,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Sleep"
+        },
+        {
+          "level": 2,
+          "name": "Augury"
+        },
+        {
+          "level": 3,
+          "name": "Deep Slumber"
+        },
+        {
+          "level": 4,
+          "name": "Phantasmal Killer"
+        },
+        {
+          "level": 5,
+          "name": "Nightmare"
+        },
+        {
+          "level": 6,
+          "name": "Dream Sight"
+        },
+        {
+          "level": 7,
+          "name": "Scrying, Greater"
+        },
+        {
+          "level": 8,
+          "name": "Power Word Stun"
+        },
+        {
+          "level": 9,
+          "name": "Weird"
+        }
+      ]
+    },
+    {
+      "description": "By manipulating cosmic forces of inertia and force, once per day the cleric can reroll any damage roll (for a weapon, a spell, or an ability) and take the better of the two rolls. This granted power is considered a supernatural ability.",
+      "name": "Force",
+      "page": 138,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Mage Armor"
+        },
+        {
+          "level": 2,
+          "name": "Magic Missile"
+        },
+        {
+          "level": 3,
+          "name": "Blast of Force"
+        },
+        {
+          "level": 4,
+          "name": "Otiluke's Resilient Sphere"
+        },
+        {
+          "level": 5,
+          "name": "Wall of Force"
+        },
+        {
+          "level": 6,
+          "name": "Repulsion"
+        },
+        {
+          "level": 7,
+          "name": "Forcecage"
+        },
+        {
+          "level": 8,
+          "name": "Otiluke's Telekinetic Sphere"
+        },
+        {
+          "level": 9,
+          "name": "Bigby's Crushing Hand"
+        }
+      ]
+    },
+    {
+      "description": "",
+      "name": "Glory",
+      "spells": [
+        {
+          "level": 8,
+          "name": "Crown of Glory"
+        }
+      ]
+    },
+    {
+      "description": "Gain a +4 bonus on all dispel checks.",
+      "name": "Inquisition",
+      "page": 139,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Detect Chaos"
+        },
+        {
+          "level": 2,
+          "name": "Zone of Truth"
+        },
+        {
+          "level": 3,
+          "name": "Detect Thoughts"
+        },
+        {
+          "level": 4,
+          "name": "Discern Lies"
+        },
+        {
+          "level": 5,
+          "name": "True Seeing"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest"
+        },
+        {
+          "level": 7,
+          "name": "Dictum"
+        },
+        {
+          "level": 8,
+          "name": "Shield of Law"
+        },
+        {
+          "level": 9,
+          "name": "Imprisonment"
+        }
+      ]
+    },
+    {
+      "description": "If you are affected by a charm, compulsion, or fear effect and fail your saving throw, you can attempt it again 1 round later at the same DC. You get only this one extra chance to succeed on your saving throw. This granted power is considered a supernatural ability.",
+      "name": "Liberation",
+      "page": 139,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Omen of Peril"
+        },
+        {
+          "level": 1,
+          "name": "Undetectable Alignment"
+        },
+        {
+          "level": 3,
+          "name": "Rage"
+        },
+        {
+          "level": 4,
+          "name": "Freedom of Movement"
+        },
+        {
+          "level": 5,
+          "name": "Break Enchantment"
+        },
+        {
+          "level": 6,
+          "name": "Dispel Magic, Greater"
+        },
+        {
+          "level": 7,
+          "name": "Refuge"
+        },
+        {
+          "level": 8,
+          "name": "Mind Blank"
+        },
+        {
+          "level": 9,
+          "name": "Unbinding"
+        }
+      ]
+    },
+    {
+      "description": "Your insanity gives you insight. You subtract 1 from all Wisdom-based skill checks and all Will saves. However, once per day, you can see and act with the clarity of true madness: Add one-half your level to a single Wisdom-based skill check or Will save. You must choose to use this benefit before the check or save is rolled.",
+      "name": "Madness",
+      "page": 139,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Confusion, Lesser"
+        },
+        {
+          "level": 2,
+          "name": "Touch of Madness"
+        },
+        {
+          "level": 3,
+          "name": "Rage"
+        },
+        {
+          "level": 4,
+          "name": "Confusion"
+        },
+        {
+          "level": 5,
+          "name": "Bolts of Bedevilment"
+        },
+        {
+          "level": 6,
+          "name": "Phantasmal Killer"
+        },
+        {
+          "level": 7,
+          "name": "Insanity"
+        },
+        {
+          "level": 8,
+          "name": "Maddening Scream"
+        },
+        {
+          "level": 9,
+          "name": "Weird"
+        }
+      ]
+    },
+    {
+      "description": "Gain a +2 bonus on Bluff, Diplomacy, and Sense Motive checks.",
+      "name": "Mind",
+      "page": 140,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Comprehend Languages"
+        },
+        {
+          "level": 2,
+          "name": "Detect Thoughts"
+        },
+        {
+          "level": 3,
+          "name": "Telepathic Bond, Lesser"
+        },
+        {
+          "level": 4,
+          "name": "Discern Lies"
+        },
+        {
+          "level": 5,
+          "name": "Rary's Telepathic Bond"
+        },
+        {
+          "level": 6,
+          "name": "Probe Thoughts"
+        },
+        {
+          "level": 7,
+          "name": "Brain Spider"
+        },
+        {
+          "level": 8,
+          "name": "Mind Blank"
+        },
+        {
+          "level": 9,
+          "name": "Weird"
+        }
+      ]
+    },
+    {
+      "description": "Once per day, you may use a free action to channel your deity's power to grant yourself a luck bonus on your saving throws equal to your Charisma modifier (minimum +1). This is a supernatural ability and its effects last for 1 round per cleric level. Special Good-aligned clerics cast Holy Word as their 7th-level domain spell and Holy Aura as their 8th level domain spell. Evil-aligned clerics cast Blasphemy as their 7th-level domain spell and Unholy Aura as their 8th level domain spell.",
+      "name": "Mysticism",
+      "page": 140,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Divine Favor"
+        },
+        {
+          "level": 2,
+          "name": "Spiritual Weapon"
+        },
+        {
+          "level": 3,
+          "name": "Visage of the Deity, Lesser"
+        },
+        {
+          "level": 4,
+          "name": "Weapon of the Deity"
+        },
+        {
+          "level": 5,
+          "name": "Righteous Might"
+        },
+        {
+          "level": 6,
+          "name": "Visage of the Deity"
+        },
+        {
+          "level": 7,
+          "name": "Blasphemy"
+        },
+        {
+          "level": 7,
+          "name": "Holy Word"
+        },
+        {
+          "level": 8,
+          "name": "Holy Aura"
+        },
+        {
+          "level": 8,
+          "name": "Unholy Aura"
+        },
+        {
+          "level": 9,
+          "name": "Visage of the Deity, Greater"
+        }
+      ]
+    },
+    {
+      "description": "You cast divination spells at +2 caster levels.",
+      "name": "Oracle",
+      "page": 140,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Identify"
+        },
+        {
+          "level": 2,
+          "name": "Augury"
+        },
+        {
+          "level": 3,
+          "name": "Divination"
+        },
+        {
+          "level": 4,
+          "name": "Scrying"
+        },
+        {
+          "level": 5,
+          "name": "Commune"
+        },
+        {
+          "level": 6,
+          "name": "Legend Lore"
+        },
+        {
+          "level": 7,
+          "name": "Scrying, Greater"
+        },
+        {
+          "level": 8,
+          "name": "Discern Location"
+        },
+        {
+          "level": 9,
+          "name": "Foresight"
+        }
+      ]
+    },
+    {
+      "description": "Add Appraise, Intimidate, and Sense Motive to your list of cleric class skills.",
+      "name": "Pact",
+      "page": 140,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Command"
+        },
+        {
+          "level": 2,
+          "name": "Shield Other"
+        },
+        {
+          "level": 3,
+          "name": "Speak With Dead"
+        },
+        {
+          "level": 4,
+          "name": "Divination"
+        },
+        {
+          "level": 5,
+          "name": "Stalwart Pact"
+        },
+        {
+          "level": 6,
+          "name": "Zealot Pact"
+        },
+        {
+          "level": 7,
+          "name": "Renewal Pact"
+        },
+        {
+          "level": 8,
+          "name": "Death Pact"
+        },
+        {
+          "level": 9,
+          "name": "Gate"
+        }
+      ]
+    },
+    {
+      "description": "Immunity to the effects of all diseases, though clerics with this power can still carry infectious diseases. Special When casting Create Greater Undead as a Pestilence Domain spell, only mummies may be created.",
+      "name": "Pestilence",
+      "page": 141,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Doom"
+        },
+        {
+          "level": 2,
+          "name": "Summon Swarm"
+        },
+        {
+          "level": 3,
+          "name": "Contagion"
+        },
+        {
+          "level": 4,
+          "name": "Poison"
+        },
+        {
+          "level": 5,
+          "name": "Plague of Rats"
+        },
+        {
+          "level": 6,
+          "name": "Curse of Lycanthropy"
+        },
+        {
+          "level": 7,
+          "name": "Scourge"
+        },
+        {
+          "level": 8,
+          "name": "Create Greater Undead"
+        }
+      ]
+    },
+    {
+      "description": "You cast abjuration spells at +1 caster level.",
+      "name": "Purification",
+      "page": 141,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Nimbus of Light"
+        },
+        {
+          "level": 2,
+          "name": "Deific Vengeance"
+        },
+        {
+          "level": 3,
+          "name": "Recitation"
+        },
+        {
+          "level": 4,
+          "name": "Castigate"
+        },
+        {
+          "level": 5,
+          "name": "Dance of the Unicorn"
+        },
+        {
+          "level": 6,
+          "name": "Fires of Purity"
+        },
+        {
+          "level": 7,
+          "name": "Righteous Wrath of the Faithful"
+        },
+        {
+          "level": 8,
+          "name": "Sunburst"
+        },
+        {
+          "level": 9,
+          "name": "Visage of the Deity, Greater"
+        }
+      ]
+    },
+    {
+      "description": "Add +2 to your caster level for all Conjuration (summoning) or Conjuration (calling) spells.",
+      "name": "Summoner",
+      "page": 141,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Summon Monster I"
+        },
+        {
+          "level": 2,
+          "name": "Summon Monster II"
+        },
+        {
+          "level": 3,
+          "name": "Summon Monster III"
+        },
+        {
+          "level": 4,
+          "name": "Planar Ally, Lesser"
+        },
+        {
+          "level": 5,
+          "name": "Summon Monster V"
+        },
+        {
+          "level": 6,
+          "name": "Planar Ally"
+        },
+        {
+          "level": 7,
+          "name": "Summon Monster VII"
+        },
+        {
+          "level": 8,
+          "name": "Planar Ally, Greater"
+        },
+        {
+          "level": 9,
+          "name": "Gate"
+        }
+      ]
+    },
+    {
+      "description": "Inclement weather has less of an effect on you. Rain and snow don't penalize your Spot and Search checks. You can move through snow-covered and icy terrain at your normal movement. Wind effects, whether natural or magical, affect you as if you were one size category larger.",
+      "name": "Weather",
+      "page": 141,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Obscuring Mist"
+        },
+        {
+          "level": 2,
+          "name": "Gust of Wind"
+        },
+        {
+          "level": 3,
+          "name": "Call Lightning"
+        },
+        {
+          "level": 4,
+          "name": "Ice Storm"
+        },
+        {
+          "level": 5,
+          "name": "Binding Winds"
+        },
+        {
+          "level": 6,
+          "name": "Cloudwalkers"
+        },
+        {
+          "level": 7,
+          "name": "Control Weather"
+        },
+        {
+          "level": 8,
+          "name": "Whirlwind"
+        },
+        {
+          "level": 9,
+          "name": "Whirlwind, Greater"
+        }
+      ]
+    }
+  ]
+}
