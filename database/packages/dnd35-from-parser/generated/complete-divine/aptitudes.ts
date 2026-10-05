@@ -50,8 +50,6 @@ export const ALL_APTITUDES: string[] = [
   "Spirit Shaman Class Feature",
   "Spirit Shaman Spells",
   "Stormlord Class Feature",
-  "Temple Raider of Olidammara Class Feature",
-  "Temple Raider of Olidammara Spells",
   "Ur-priest Class Feature",
   "Ur-priest Spells",
   "Void Disciple Class Feature",

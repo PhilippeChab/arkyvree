@@ -28,7 +28,6 @@ import { SHINING_BLADE_OF_HEIRONEOUS } from "./shiningBladeOfHeironeous.ts";
 import { SHUGENJA } from "./shugenja.ts";
 import { SPIRIT_SHAMAN } from "./spiritShaman.ts";
 import { STORMLORD } from "./stormlord.ts";
-import { TEMPLE_RAIDER_OF_OLIDAMMARA } from "./templeRaiderOfOlidammara.ts";
 import { UR_PRIEST } from "./urPriest.ts";
 import { VOID_DISCIPLE } from "./voidDisciple.ts";
 import { WARPRIEST } from "./warpriest.ts";
@@ -61,7 +60,6 @@ export const ALL_CLASSES: ClassSeed[] = [
   SHUGENJA,
   SPIRIT_SHAMAN,
   STORMLORD,
-  TEMPLE_RAIDER_OF_OLIDAMMARA,
   UR_PRIEST,
   VOID_DISCIPLE,
   WARPRIEST,
@@ -98,7 +96,6 @@ export const ALL_PRESTIGE_CLASSES: ClassSeed[] = [
   SEEKER_OF_THE_MISTY_ISLE,
   SHINING_BLADE_OF_HEIRONEOUS,
   STORMLORD,
-  TEMPLE_RAIDER_OF_OLIDAMMARA,
   UR_PRIEST,
   VOID_DISCIPLE,
   WARPRIEST,

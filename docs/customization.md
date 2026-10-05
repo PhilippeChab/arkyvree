@@ -365,7 +365,7 @@ A class's spell lists are those its levels give slots in (`aptitudes.<list>.<spe
 
 A list a feat brings, one a feat gives slots in and no class does (a cleric's domain, a specialist wizard's school), follows the class whose level gave the feat: its slots follow the spell levels that class casts, bonus caster levels included, it has no known paths, and its spells carry the feat's name as a tag, shown on that list and on the class's lists. A domain's spells also join the cleric's list, because its feat sets `aptitudes.<list>.joinsclasslist`: they're known there. A school's don't: a specialist learns them. The engine reads this data, never a list's name.
 
-A domain can be a class's whole list: the divine crusader picks one at her first level, from a pool of a feat per domain of the core rules and Complete Divine (`spells.domainPool` in the class's reference, without the cleric's granted power), each setting the domain list's `joinsclasslist`; her slots, her Charisma's bonus spells and her caster level are her own list's. A class level can join a list too: the temple raider's tenth level joins the Luck domain's to his list.
+A domain can be a class's whole list: the divine crusader picks one at her first level, from a pool of a feat per domain of the core rules and Complete Divine (`spells.domainPool` in the class's reference, without the cleric's granted power), each setting the domain list's `joinsclasslist`; her slots, her Charisma's bonus spells and her caster level are her own list's. A class level can join a list too, by its modifiers or a class feature's: the feature's list joins its class's from the level that grants it.
 
 ### Seeded classes (for class-level requirements):
 

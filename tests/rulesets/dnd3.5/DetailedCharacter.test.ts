@@ -2511,41 +2511,63 @@ describe("DetailedCharacter", () => {
         expect(tagLists["Fire Domain (Divine Crusader)"].aptitudeIds).toContain(aptitudes["divinecrusaderspells"].id);
       });
 
-      test("join the Luck domain's spells to a temple raider's list at his tenth level", async () => {
-        const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
-        const raider = divine.klasses.find((klass) => klass.name === "Temple Raider of Olidammara")!;
-        const sheetAt = async (levels: number) => {
-          const characterId = await divineCharacter(
-            `Temple Raider ${levels}`,
-            WIZARD_SCORES,
-            [
-              ["combat.bab", "5", "number"],
-              ["skills.disabledevice.rank", "4", "number"],
-              ["skills.knowledgereligion.rank", "1", "number"],
-              ["skills.openlock.rank", "4", "number"],
-              ["skills.search.rank", "8", "number"],
-            ],
-            "Chaotic Neutral",
-          );
-          for (let level = 1; level <= levels; level++) {
-            await addCharacterLevel(characterId, (await findKlassLevel(raider.id, level))!.id);
-          }
+      test("join the Luck domain's spells to a class's list at the level a class feature of it brings them", async () => {
+        // A homebrew class whose second level's feature joins the Luck domain's list to its own
+        const ctx = await getSeedCtx();
+        const [feature, raiderSpells] = await insertRows(aptitudesInRules, [
+          { name: "Test Raider Class Feature", rulesetId: ctx.rulesetId },
+          { name: "Test Raider Spells", rulesetId: ctx.rulesetId },
+        ]);
+        await insertRows(powersAptitudesInRules, [
+          { powerId: ctx.powerMap["Bless"], aptitudeId: raiderSpells.id, level: 1 },
+        ]);
+        const [luck] = await insertRows(featsInRules, [{ name: "Test Raider Luck", rulesetId: ctx.rulesetId }]);
+        await insertRows(modifiersInCustomization, [
+          {
+            sourceId: luck.id,
+            sourceType: "feats",
+            target: "aptitudes.luckdomainspells.joinsclasslist",
+            operator: "set",
+            value: "true",
+            valueType: "boolean",
+          },
+        ]);
+        const { levelIds } = await seedClass(
+          db,
+          {
+            ...ctx,
+            featMap: { ...ctx.featMap, "Test Raider Luck": luck.id },
+            aptMap: { ...ctx.aptMap, "Test Raider Class Feature": feature.id },
+          },
+          {
+            name: "Test Raider",
+            description: "Steals a domain's luck",
+            hd: 6,
+            levels: 2,
+            skillPoints: 4,
+            bab: "medium",
+            saves: { fortitude: "poor", reflex: "good", will: "good" },
+            classSkills: ["Search"],
+            classFeatureAptitude: "Test Raider Class Feature",
+            classFeatures: [[2, "Test Raider Luck"]],
+            spells: { slug: "testraiderspells", perDay: [[1], [1]], knowAll: true, noCantrips: true },
+          },
+        );
+        invalidateSeededRuleset(ctx.rulesetId);
+
+        const knownAt = async (levels: number) => {
+          const characterId = await createSeedCharacter(`Test Raider ${levels}`, WIZARD_SCORES);
+          for (let level = 1; level <= levels; level++) await addCharacterLevel(characterId, levelIds[level]);
           const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
-          const list = detailed.getDetailedCharacterAptitudes().getAptitudes()["templeraiderofolidammaraspells"].id;
-          return {
-            uses: spellUses(detailed, "templeraiderofolidammaraspells", [1, 2, 3, 4]),
-            known: allPowers(detailed)
-              .filter((power) => power.aptitudeId === list)
-              .map((power) => power.name)
-              .sort(),
-          };
+          const list = detailed.getDetailedCharacterAptitudes().getAptitudes()["testraiderspells"].id;
+          return allPowers(detailed)
+            .filter((power) => power.aptitudeId === list)
+            .map((power) => power.name)
+            .sort();
         };
-        // His own list has no spells yet (#245): his slots, and the Luck domain's spells from his tenth level
-        expect(await sheetAt(9)).toEqual({ uses: [2, 2, 1, 1], known: [] });
-        expect(await sheetAt(10)).toEqual({
-          uses: [2, 2, 2, 1],
-          known: ["Aid", "Entropic Shield", "Freedom of Movement", "Protection from Energy"],
-        });
+        // The Luck domain's first-level spell from its second level; its second-level one never: the class casts none
+        expect(await knownAt(1)).toEqual(["Bless"]);
+        expect(await knownAt(2)).toEqual(["Bless", "Entropic Shield"]);
       });
 
       test("join the list of each class that brings them, a class level's as well as a feat's", async () => {
