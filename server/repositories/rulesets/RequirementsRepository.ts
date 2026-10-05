@@ -10,8 +10,8 @@ import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdit
 
 class RequirementsRepository extends include(
   BaseRepository<typeof requirementsInCustomization>,
-  GuardsStaleEdits,
   ChecksExistence,
+  GuardsStaleEdits,
 ) {
   constructor() {
     super(requirementsInCustomization);

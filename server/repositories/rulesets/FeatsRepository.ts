@@ -16,7 +16,7 @@ import { type RulesetEntityFilters } from "@/server/repositories/concerns/Scopes
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
-class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRules>, ResolvesCopies, GrantsPerLevel) {
+class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRules>, GrantsPerLevel, ResolvesCopies) {
   constructor() {
     super(featsInRules);
   }

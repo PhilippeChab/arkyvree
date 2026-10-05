@@ -377,4 +377,31 @@ describe("conventions", () => {
     );
     fs.rmSync(dir, { recursive: true });
   });
+
+  test("a class includes its concerns by name, after its base, and --fix sorts them", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/a.ts": "class A extends include(Base, Paginates, Searches) {}\n",
+          "server/b.ts": "class B extends include(Base, Searches, Paginates, ChecksExistence) {}\n",
+          "server/c.ts": "class C extends include(Base, Archives) {}\n",
+        },
+        ["include-order"],
+      ),
+    ).toEqual(["include-order server/b.ts"]);
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
+    const file = path.join(dir, "b.ts");
+    fs.writeFileSync(file, "class B extends include(\n  Base,\n  Searches,\n  Paginates,\n  ChecksExistence,\n) {}\n");
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/include-order": "error" } }),
+    );
+    await runOxlint(["-c", config, "--fix", dir]);
+    expect(fs.readFileSync(file, "utf8")).toBe(
+      "class B extends include(\n  Base,\n  ChecksExistence,\n  Paginates,\n  Searches,\n) {}\n",
+    );
+    fs.rmSync(dir, { recursive: true });
+  });
 });

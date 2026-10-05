@@ -36,11 +36,11 @@ type RulesetEntityTable =
 /** What every ruleset entity's repository includes: its list (pages, search, the ruleset's scope), edits and `exists`. */
 const RulesetEntityBase = include(
   BaseRepository,
-  Paginates,
-  Searches,
-  ScopesToRuleset,
-  GuardsStaleEdits,
   ChecksExistence,
+  GuardsStaleEdits,
+  Paginates,
+  ScopesToRuleset,
+  Searches,
 );
 
 /** A ruleset entity's repository: the writes every entity's service makes the same way. Each reads its own table. */

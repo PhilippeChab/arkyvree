@@ -30,6 +30,8 @@
  * - `function-declarations`: a file's own function is a `function` declaration (`function verbOf(method) {…}`), never
  *   a const holding an arrow: an arrow is for a callback, or a function a function type types (`const run: Task = …`,
  *   whose parameters the type gives). `oxlint --fix` declares one.
+ * - `include-order`: a class includes its concerns by name, after its base (`include(BaseRepository<…>, Paginates,
+ *   Searches)`): a concern builds on the base alone, so their order is the reader's. `oxlint --fix` sorts them.
  * - `concern-shape`: a concern (`function X<B extends Constructor>(Base: B)`) sits in `X.ts`, its class is named for
  *   what it adds (a verb's `-ing`, `Archives` → `Archiving`, or `With` a noun, `ArmorClass` → `WithArmorClass`), and
  *   it adds methods, never state.
@@ -226,6 +228,27 @@ const TEST_MIRRORS = [
 
 // What a tool writes keeps the tool's code: the parser's output, drizzle's schema and relations
 const TOOL_WRITTEN = /(^|\/)generated\/|^drizzle\/(schema|relations)\.ts$/;
+
+const includeOrder = {
+  meta: { type: "suggestion", fixable: "code" },
+  create(context) {
+    return {
+      CallExpression(call) {
+        if (call.callee.type !== "Identifier" || call.callee.name !== "include") return;
+        const concerns = call.arguments.slice(1);
+        if (concerns.length < 2 || concerns.some((c) => c.type !== "Identifier")) return;
+        const names = concerns.map((c) => c.name);
+        const sorted = [...names].sort((a, b) => a.localeCompare(b));
+        if (names.every((name, i) => name === sorted[i])) return;
+        context.report({
+          node: concerns[names.findIndex((name, i) => name !== sorted[i])],
+          message: `A class includes its concerns by name, after its base: \`${sorted.join(", ")}\`.`,
+          fix: (fixer) => concerns.map((c, i) => fixer.replaceText(c, sorted[i])),
+        });
+      },
+    };
+  },
+};
 
 /** A route's path, written as a string or a template literal (its fixed parts). */
 function pathOf(node) {
@@ -608,5 +631,6 @@ export const rules = {
   "session-param": sessionParam,
   "test-placement": testPlacement,
   "concern-shape": concernShape,
+  "include-order": includeOrder,
   "function-declarations": functionDeclarations,
 };

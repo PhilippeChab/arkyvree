@@ -10,7 +10,7 @@ import { EntityRights } from "./concerns/EntityRights.ts";
 import { ExtensionRights } from "./concerns/ExtensionRights.ts";
 import RulesetRoles from "./RulesetRoles.ts";
 
-class RulesetsPolicy extends include(RulesetRoles, EntityRights, ContributorRights, ExtensionRights, CreationRights) {
+class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRights, EntityRights, ExtensionRights) {
   /** The session's policy on `ruleset`: a contributor's rights come from their active role on it. */
   static async for(db: Db, session: Session, ruleset: Ruleset) {
     let role = null;
