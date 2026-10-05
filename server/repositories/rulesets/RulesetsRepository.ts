@@ -258,15 +258,11 @@ class RulesetsRepository extends include(
   }
 
   async findOne(db: Db, where: { id: string } | { name: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
-    let condition;
-    if ("name" in where) {
-      condition = eq(this.table.name, where.name);
-    } else {
-      condition = eq(this.table.id, where.id);
-    }
-
     return await db.query.rulesetsInRules.findFirst({
-      where: this.where([condition, this.visibility(visibility)]),
+      where: this.branchWhere(
+        ["id" in where && eq(this.table.id, where.id), "name" in where && eq(this.table.name, where.name)],
+        [this.visibility(visibility)],
+      ),
     });
   }
 

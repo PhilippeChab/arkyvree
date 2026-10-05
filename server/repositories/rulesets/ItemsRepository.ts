@@ -53,6 +53,11 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     });
   }
 
+  /** Every copy of an item: what a template's change reaches. */
+  private async updateCopies(db: Db, values: Partial<InferInsertModel<typeof itemsInRules>>, sourceItemId: string) {
+    return await db.update(this.table).set(values).where(eq(this.table.sourceItemId, sourceItemId)).returning();
+  }
+
   /** Items by id, by name in some rulesets, the copies of an item (`sourceItemId`), or a ruleset's templates. */
   async findMany(
     db: Db,
@@ -113,7 +118,7 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     where: { id: string; expectedUpdatedAt?: string } | { sourceItemId: string },
   ) {
     if ("id" in where) return await super.update(db, values, where);
-    return await db.update(this.table).set(values).where(eq(this.table.sourceItemId, where.sourceItemId)).returning();
+    return await this.updateCopies(db, values, where.sourceItemId);
   }
 }
 

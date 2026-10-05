@@ -10,6 +10,12 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     super(entitySnapshotsInRules);
   }
 
+  /** A copy's advisory lock, for its ruleset and source entity: there may be no snapshot row to lock yet. */
+  private async lockCopy(db: Db, rulesetId: string, sourceEntityId: string) {
+    await db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`cow:${rulesetId}:${sourceEntityId}`}, 0))`);
+    return true;
+  }
+
   async findMany(
     db: Db,
     where:
@@ -61,10 +67,7 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
     skipLocked = false,
   ): Promise<boolean> {
     if ("id" in where) return await super.lock(db, where, mode, skipLocked);
-    await db.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`cow:${where.rulesetId}:${where.sourceEntityId}`}, 0))`,
-    );
-    return true;
+    return await this.lockCopy(db, where.rulesetId, where.sourceEntityId);
   }
 }
 

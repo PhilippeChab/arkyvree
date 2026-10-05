@@ -26,11 +26,10 @@ class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
 
   async findOne(db: Db, where: { id: string } | { id: string; klassId: string }) {
     return await db.query.klassLevelsInRules.findFirst({
-      where: this.where([
-        "klassId" in where && eq(this.table.klassId, where.klassId),
-        eq(this.table.id, where.id),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.branchWhere(
+        [eq(this.table.id, where.id)],
+        ["klassId" in where && eq(this.table.klassId, where.klassId), isNull(this.table.deletedAt)],
+      ),
     });
   }
 
