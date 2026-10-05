@@ -12,8 +12,8 @@ import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts
 class CharacterInventoryRepository extends include(
   BaseRepository<typeof inventoryInCharacter>,
   ChecksRulesetUse,
-  ResolvesCopies,
   GuardsStaleEdits,
+  ResolvesCopies,
 ) {
   constructor() {
     super(inventoryInCharacter);

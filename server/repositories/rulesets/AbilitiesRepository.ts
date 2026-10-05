@@ -13,10 +13,10 @@ import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
 class AbilitiesRepository extends include(
   BaseRepository<typeof abilitiesInRules>,
-  Paginates,
-  Searches,
-  ScopesToRuleset,
   ChecksExistence,
+  Paginates,
+  ScopesToRuleset,
+  Searches,
 ) {
   constructor() {
     super(abilitiesInRules);

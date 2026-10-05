@@ -23,7 +23,7 @@ import { Archives } from "./concerns/Archives.ts";
 import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 
-class RulesetsService extends include(Object, Stars, Archives, Publishes) {
+class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   async getRuleset(session: Session, id: string) {
     const ruleset = await Rulesets.findOne(db, { id });
     if (!ruleset) {

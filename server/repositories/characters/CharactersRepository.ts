@@ -19,11 +19,11 @@ import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
 class CharactersRepository extends include(
   BaseRepository<typeof charactersInCharacter>,
-  Paginates,
-  Searches,
   ChecksRulesetUse,
-  ResolvesCopies,
   GuardsStaleEdits,
+  Paginates,
+  ResolvesCopies,
+  Searches,
 ) {
   constructor() {
     super(charactersInCharacter);

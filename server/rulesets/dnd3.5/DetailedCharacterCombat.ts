@@ -190,7 +190,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   extraattacks: "Extra Attacks",
 };
 
-class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints, Attacks, InitiativeAndSpeed) {
+class DetailedCharacterCombat extends include(CombatState, ArmorClass, Attacks, HitPoints, InitiativeAndSpeed) {
   static getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_PATHS, SEGMENT_LABELS);
   }
