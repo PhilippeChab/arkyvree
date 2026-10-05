@@ -17,6 +17,18 @@ describe("scaleFeats", () => {
     expect(scaleFeats(badger, 1)).toEqual(["Agile"]);
     expect(scaleFeats(badger, 4)).toEqual(["Agile", "Alertness"]);
   });
+
+  test("gives a feat at the first hit die and one more every third", () => {
+    // A wolf's Weapon Focus (bite), then its priority's Alertness, Improved Initiative, Combat Reflexes
+    const wolf = getBondedRaceStats("Wolf")!;
+    expect([2, 3, 6, 9].map((totalHD) => scaleFeats(wolf, totalHD).length)).toEqual([1, 2, 3, 4]);
+  });
+
+  // The rule a stat block's own feats follow too: as many as its hit dice give, no more and none from its priority
+  test.each(BONDED_RACES)("gives the %s its stat block's feats at its own hit dice", (race) => {
+    const stats = getBondedRaceStats(race)!;
+    expect(scaleFeats(stats, stats.baseHD)).toEqual(stats.baseFeats ?? []);
+  });
 });
 
 describe("scaleSkillRanks", () => {

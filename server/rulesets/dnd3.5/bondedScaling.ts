@@ -1,12 +1,13 @@
 import type { BondedRaceStatBlock } from "./bondedRaceData.ts";
+import { Dnd35LevelsHooks } from "./hooks/index.ts";
 
 /**
- * Feat list at the given total HD, per the MM monster-advancement formula
- * `1 + floor((HD-1)/3)`. Returns baseFeats plus enough items from
- * featPriority (in order) to reach the target count.
+ * A creature's feats at its total hit dice: as many as the Monster Manual gives, one at the first hit die and one more
+ * every third (`Dnd35LevelsHooks.countGeneralFeats`, a character's general feats' rule). Its stat block's base feats,
+ * then enough of its `featPriority`, in order, to reach that count.
  */
 export function scaleFeats(stats: BondedRaceStatBlock, totalHD: number): string[] {
-  const count = 1 + Math.floor((Math.max(1, totalHD) - 1) / 3);
+  const count = Dnd35LevelsHooks.countGeneralFeats(Math.max(1, totalHD));
   const base = stats.baseFeats ?? [];
   const priority = stats.featPriority ?? [];
   const extras = priority.slice(0, Math.max(0, count - base.length));
