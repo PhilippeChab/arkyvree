@@ -9,6 +9,9 @@ import {
 import { mapArgIds, mapResultIds } from "./copyOnWriteIds.ts";
 import methodVerbs from "./methodVerbs.json";
 
+/** A call to a repository method, with the arguments it runs with. */
+type Call = (args: unknown[]) => unknown;
+
 const READS = new Set(methodVerbs.read);
 const WRITES = new Set(methodVerbs.write);
 
@@ -43,8 +46,6 @@ function getReadKey(repository: string, method: string, args: unknown[]): string
   const map = getCowContext()?.idResolveMap;
   return map && map.size > 0 ? `${key}|cow:${getStateId(map)}` : key;
 }
-
-type Call = (args: unknown[]) => unknown;
 
 /**
  * A read through the request cache: the same read in the same request shares one query. A transaction's reads never
