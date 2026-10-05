@@ -15,6 +15,9 @@ const SKILL_BONUS = new RegExp(
   "g",
 );
 
+/** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
+export type SkillBonus = { value: string; name: string; slug: string | undefined; index: number };
+
 /** A list's names: split on commas and "and", but not inside parentheses ("Knowledge (architecture and engineering)"). */
 function splitSkillList(list: string): string[] {
   const names: string[] = [];
@@ -34,9 +37,6 @@ function splitSkillList(list: string): string[] {
   names.push(list.slice(start));
   return names.map((name) => name.trim().replace(/\s+checks?$/i, "")).filter(Boolean);
 }
-
-/** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
-export type SkillBonus = { value: string; name: string; slug: string | undefined; index: number };
 
 /**
  * The skill bonuses `text` gives, one per skill named, except those `conditional` says apply only sometimes. A size

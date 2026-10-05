@@ -9,6 +9,16 @@ import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
+interface AuthPageProps {
+  children: ReactNode;
+  title: string;
+  subtitle?: ReactNode;
+  /** The last request's failure, shown above the form. */
+  error?: string | null;
+  /** A confirmation shown above the form ("A new code has been sent"). */
+  notice?: string | null;
+}
+
 // ── Branding panels (rendered once by the layout route) ──
 
 function DesktopBranding() {
@@ -314,16 +324,6 @@ export function AuthLayoutRoute() {
 }
 
 // ── Page wrapper: each auth page wraps its content with this ──
-
-interface AuthPageProps {
-  children: ReactNode;
-  title: string;
-  subtitle?: ReactNode;
-  /** The last request's failure, shown above the form. */
-  error?: string | null;
-  /** A confirmation shown above the form ("A new code has been sent"). */
-  notice?: string | null;
-}
 
 export function AuthPage({ children, title, subtitle, error, notice }: AuthPageProps) {
   return (

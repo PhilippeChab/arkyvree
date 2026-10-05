@@ -25,6 +25,10 @@ type ContainedColor =
   | string
   | undefined;
 
+interface CustomThemeProviderProps {
+  children: React.ReactNode;
+}
+
 function containedGradient(color: ContainedColor, darkMode: boolean) {
   switch (color) {
     case "error":
@@ -397,10 +401,6 @@ const createAppTheme = (darkMode: boolean): Theme => {
     }),
   );
 };
-
-interface CustomThemeProviderProps {
-  children: React.ReactNode;
-}
 
 export function CustomThemeProvider({ children }: CustomThemeProviderProps) {
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {

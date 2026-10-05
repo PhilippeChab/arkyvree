@@ -36,6 +36,15 @@ type Change = ChangesResponse[number];
 /** A change the fork can undo: an entity it modified or deleted, which the restore route takes back. */
 type RestorableChange = Extract<Change, { sourceEntityId: string }>;
 
+interface OverridesDialogProps {
+  open: boolean;
+  onClose: () => void;
+  rulesetId: string;
+  /** The ruleset's base rules, whose words name the entity types */
+  baseRules: string;
+  canEdit?: boolean;
+}
+
 function getEntityUrl(rulesetId: string, change: Change): string | undefined {
   if (change.status === "deleted") return undefined;
   const { entityType, entityId } = change;
@@ -45,15 +54,6 @@ function getEntityUrl(rulesetId: string, change: Change): string | undefined {
 }
 
 const restoreApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].restore;
-
-interface OverridesDialogProps {
-  open: boolean;
-  onClose: () => void;
-  rulesetId: string;
-  /** The ruleset's base rules, whose words name the entity types */
-  baseRules: string;
-  canEdit?: boolean;
-}
 
 export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit = false }: OverridesDialogProps) {
   const queryClient = useQueryClient();

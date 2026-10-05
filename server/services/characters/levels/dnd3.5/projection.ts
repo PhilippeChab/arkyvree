@@ -18,6 +18,8 @@ import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index
 import type { DetailedCharacterInterface, ProjectedCharacterData, RulesetModule } from "@/server/rulesets/types.ts";
 import type { Character, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
+export type FeatPick = { featId: string; aptitudeId: string };
+
 /** Returns IDs of the given level and all subsequent levels (by creation order). */
 export function getLevelIdsFromOnward(
   characterLevels: { id: string; createdAt: string }[],
@@ -50,8 +52,6 @@ export function loadFeatCustomizations(rulesetData: CachedRulesetData, featIds: 
     requirements: requirementsMap,
   };
 }
-
-export type FeatPick = { featId: string; aptitudeId: string };
 
 export function buildProjectedFeatsFromPicks(
   selectedFeatPicks: FeatPick[],

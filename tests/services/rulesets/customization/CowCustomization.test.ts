@@ -26,6 +26,18 @@ import { createTestRuleset, createTestUser, insertRows } from "@/tests/helpers.t
 
 const requirement = { valueType: "number", operator: "greater_than_or_equal" } as const;
 
+type Row = { id: string };
+
+type Written = Row & { resolvedEntityId: string };
+
+type Kind = {
+  rowsOf: (ownerType: string, ownerId: string) => Promise<Row[]>;
+  list: (rulesetId: string, ownerType: string, ownerId: string) => Promise<Row[]>;
+  create: (session: Session, rulesetId: string, ownerType: string, ownerId: string) => Promise<Written>;
+  update: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
+  remove: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
+};
+
 /**
  * A published ruleset whose feat has a modifier (with a requirement of its
  * own), a property and a requirement, whose class has a modifier, a property
@@ -104,16 +116,6 @@ async function setup() {
     owners: { feats: feat.id, klasses: klass.id, klass_levels: level.id, modifiers: modifier.id },
   };
 }
-
-type Row = { id: string };
-type Written = Row & { resolvedEntityId: string };
-type Kind = {
-  rowsOf: (ownerType: string, ownerId: string) => Promise<Row[]>;
-  list: (rulesetId: string, ownerType: string, ownerId: string) => Promise<Row[]>;
-  create: (session: Session, rulesetId: string, ownerType: string, ownerId: string) => Promise<Written>;
-  update: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
-  remove: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
-};
 
 const dexterityBonus = { target: "abilities.dexterity.misc", value: "5", operator: "add" };
 const dexterityAtLeast = {

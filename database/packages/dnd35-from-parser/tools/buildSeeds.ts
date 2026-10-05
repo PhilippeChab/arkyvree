@@ -89,6 +89,29 @@ import { capitalize } from "@/shared/text.ts";
 
 const _existingFeatsCache = new Map<string, Set<string>>();
 
+type PerLevelExpansion = { newTarget: string; levels: number[]; ordinal: string };
+
+export type SpellSeedWithLevel = PowerSeed & { level: number };
+
+export type ItemSeedSets = {
+  simpleWeapons: ItemDef[];
+  martialWeapons: ItemDef[];
+  exoticWeapons: ItemDef[];
+  armor: ItemDef[];
+  shields: ItemDef[];
+  goods: ItemDef[];
+};
+
+export type MagicItemSeedSets = {
+  magicArmor: ItemDef[];
+  magicShields: ItemDef[];
+  magicWeapons: ItemDef[];
+  wondrousItems: ItemDef[];
+  rings: ItemDef[];
+  rods: ItemDef[];
+  staffs: ItemDef[];
+};
+
 function loadExistingFeats(book?: string): Set<string> {
   const key = book ?? "__srd__";
   if (_existingFeatsCache.has(key)) return _existingFeatsCache.get(key)!;
@@ -191,8 +214,6 @@ function expandPerLevelAptitudePicks(
 
   return result;
 }
-
-type PerLevelExpansion = { newTarget: string; levels: number[]; ordinal: string };
 
 /**
  * Build maps for aptitude target remapping after per-level expansion.
@@ -924,8 +945,6 @@ function normalizeSpellText(text: string): string {
   return normalizeWs(sanitizeText(text)).replace(/(\d+)\s*\/\s*/g, "$1/"); // "1 round/ level" → "1 round/level"
 }
 
-export type SpellSeedWithLevel = PowerSeed & { level: number };
-
 export function buildSpellSeeds(ref: SpellReference, book?: string): { spells: SpellSeedWithLevel[] } {
   // The lists other books' classes draw on others' lists for (`inheritsFrom`), which an extension's spell can be on:
   // the book seeds its own copy of each that takes one, which a ruleset merges with that book's when it takes both, as
@@ -1203,15 +1222,6 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
 // Item reference → ItemDef[]
 // ---------------------------------------------------------------------------
 
-export type ItemSeedSets = {
-  simpleWeapons: ItemDef[];
-  martialWeapons: ItemDef[];
-  exoticWeapons: ItemDef[];
-  armor: ItemDef[];
-  shields: ItemDef[];
-  goods: ItemDef[];
-};
-
 export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
   const simpleWeapons: ItemDef[] = [];
   const martialWeapons: ItemDef[] = [];
@@ -1302,16 +1312,6 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
 // ---------------------------------------------------------------------------
 // Magic item reference → ItemDef[] (grouped by category)
 // ---------------------------------------------------------------------------
-
-export type MagicItemSeedSets = {
-  magicArmor: ItemDef[];
-  magicShields: ItemDef[];
-  magicWeapons: ItemDef[];
-  wondrousItems: ItemDef[];
-  rings: ItemDef[];
-  rods: ItemDef[];
-  staffs: ItemDef[];
-};
 
 /** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
 const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };

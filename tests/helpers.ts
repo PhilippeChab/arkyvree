@@ -40,6 +40,14 @@ import type { Player, Session } from "@/shared/relations.ts";
 /** An id no row has: for "not found" cases. */
 export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
+type LevelPicks = {
+  feats?: { featId: string; aptitudeId: string }[];
+  powers?: { powerId: string; aptitudeId: string }[];
+  skills?: { skillId: string; rank: number }[];
+};
+
+type Contributor = { id: string; emailAddress: string };
+
 /** A short random suffix that keeps names and emails unique between tests. */
 export function uniqueId() {
   return Math.random().toString(36).slice(2, 11);
@@ -261,12 +269,6 @@ export async function findKlassLevel(klassId: string, level: number) {
   });
 }
 
-type LevelPicks = {
-  feats?: { featId: string; aptitudeId: string }[];
-  powers?: { powerId: string; aptitudeId: string }[];
-  skills?: { skillId: string; rank: number }[];
-};
-
 /** Gives a character a level in a class level, with these picks, straight in the database: no level-up rule applies. */
 export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: LevelPicks = {}) {
   const [level] = await CharacterLevels.create(db, { characterId, klassLevelId, hp: 1 });
@@ -285,8 +287,6 @@ export async function addCharacterLevel(characterId: string, klassLevelId: strin
   );
   return level;
 }
-
-type Contributor = { id: string; emailAddress: string };
 
 /** Makes `user` an active contributor of a ruleset, as if they accepted an invite from `invitedBy`. */
 export async function addRulesetContributor(

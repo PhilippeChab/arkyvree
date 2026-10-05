@@ -3,6 +3,14 @@ import { Sentry } from "@/server/sentry.ts";
 
 type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
 
+/** Body of every API error response. */
+export type ErrorJson = {
+  error: string;
+  cause: string;
+  message: string;
+  issues?: { category: string; message: string; entityName?: string; entityType?: string; requirementTree?: string }[];
+};
+
 class BaseError extends Error {
   static fromError(error: Error) {
     return new InternalError(error.message, { cause: error.cause });
@@ -87,14 +95,6 @@ export class InternalError extends BaseError {
     this.code = 500;
   }
 }
-
-/** Body of every API error response. */
-export type ErrorJson = {
-  error: string;
-  cause: string;
-  message: string;
-  issues?: { category: string; message: string; entityName?: string; entityType?: string; requirementTree?: string }[];
-};
 
 export function toJson(error: Error): [ErrorJson, Code] {
   const baseError = error instanceof BaseError ? error : BaseError.fromError(error);

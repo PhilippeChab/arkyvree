@@ -16,6 +16,8 @@ const EMPTY_PICKS: LevelUpFormData = {
   skillPointAllocations: {},
 };
 
+type LevelWizardBase = ReturnType<typeof useLevelWizardBase>;
+
 /** Feat or spell picks as the aptitude → ids map the save endpoints take. */
 export const pickIds = (picks: Record<string, { id: string }[]>) =>
   Object.fromEntries(Object.entries(picks).map(([aptitudeId, items]) => [aptitudeId, items.map((item) => item.id)]));
@@ -136,8 +138,6 @@ export function useLevelWizardBase(characterId: string) {
     handleSaveError,
   };
 }
-
-type LevelWizardBase = ReturnType<typeof useLevelWizardBase>;
 
 /**
  * The feat pools grown by the picked feats' "add" aptitude modifiers. When a

@@ -13,6 +13,12 @@ interface UseAttachmentParams {
   enabled?: boolean;
 }
 
+interface UseAttachmentsParams {
+  recordType: string;
+  name: string;
+  recordIds: string[];
+}
+
 async function fetchSlot(recordType: string, recordId: string, name: string): Promise<AttachmentResponse> {
   return parseResponse(
     rpc.api.attachments.$get({
@@ -28,12 +34,6 @@ export function useAttachment(params: UseAttachmentParams) {
     queryFn: recordId ? () => fetchSlot(params.recordType, recordId, params.name) : skipToken,
     enabled: params.enabled ?? true,
   });
-}
-
-interface UseAttachmentsParams {
-  recordType: string;
-  name: string;
-  recordIds: string[];
 }
 
 // Per-id queries (not a single batch) so paginated callers reuse cached

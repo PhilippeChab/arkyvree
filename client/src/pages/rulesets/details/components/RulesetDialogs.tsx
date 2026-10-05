@@ -26,6 +26,48 @@ export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":i
 
 export type ForkRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["fork"]["$post"]>["json"];
 
+interface EditRulesetDialogProps {
+  open: boolean;
+  onClose: () => void;
+  form: UseFormReturn<EditRulesetFormData>;
+  onSubmit: (data: EditRulesetFormData) => void;
+  isLoading: boolean;
+  isPublic: boolean;
+  canBeExtension: boolean;
+}
+
+interface ForkRulesetDialogProps {
+  open: boolean;
+  onClose: () => void;
+  form: UseFormReturn<ForkRulesetFormData>;
+  onSubmit: (data: ForkRulesetFormData) => void;
+  isLoading: boolean;
+}
+
+interface ArchiveRulesetDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+}
+
+interface PublishRulesetDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: (kind: PublishKind) => void;
+  isLoading: boolean;
+  canBeExtension: boolean;
+  initialKind?: PublishKind;
+}
+
+interface UnsubscribeExtensionDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+  extensionName: string;
+}
+
 /** Public / Private choice; the selected option can't be toggled off. */
 function PrivacyToggle({
   value,
@@ -107,16 +149,6 @@ function RulesetKindToggle({
   );
 }
 
-interface EditRulesetDialogProps {
-  open: boolean;
-  onClose: () => void;
-  form: UseFormReturn<EditRulesetFormData>;
-  onSubmit: (data: EditRulesetFormData) => void;
-  isLoading: boolean;
-  isPublic: boolean;
-  canBeExtension: boolean;
-}
-
 export function EditRulesetDialog({
   open,
   onClose,
@@ -161,14 +193,6 @@ export function EditRulesetDialog({
   );
 }
 
-interface ForkRulesetDialogProps {
-  open: boolean;
-  onClose: () => void;
-  form: UseFormReturn<ForkRulesetFormData>;
-  onSubmit: (data: ForkRulesetFormData) => void;
-  isLoading: boolean;
-}
-
 export function ForkRulesetDialog({ open, onClose, form, onSubmit, isLoading }: ForkRulesetDialogProps) {
   return (
     <CreateDialog
@@ -197,13 +221,6 @@ export function ForkRulesetDialog({ open, onClose, form, onSubmit, isLoading }: 
   );
 }
 
-interface ArchiveRulesetDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
-}
-
 export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: ArchiveRulesetDialogProps) {
   return (
     <ConfirmDialog
@@ -218,15 +235,6 @@ export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: Ar
       confirmIcon={<ArchiveIcon />}
     />
   );
-}
-
-interface PublishRulesetDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: (kind: PublishKind) => void;
-  isLoading: boolean;
-  canBeExtension: boolean;
-  initialKind?: PublishKind;
 }
 
 export function PublishRulesetDialog({
@@ -263,14 +271,6 @@ export function PublishRulesetDialog({
       )}
     </ConfirmDialog>
   );
-}
-
-interface UnsubscribeExtensionDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
-  extensionName: string;
 }
 
 export function UnsubscribeExtensionDialog({

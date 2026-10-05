@@ -10,6 +10,10 @@ type LevelJson = InferRequestType<
 export type LevelSave = NonNullable<LevelJson["saves"]>[number];
 export type LevelFeat = Pick<NonNullable<LevelJson["feats"]>[number], "featId" | "aptitudeId">;
 
+export type CreateLevelFormData = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
+>["json"];
+
 /**
  * Every ruleset save with its base at this level, 0 when unset: the shape the
  * level endpoints take. Until the ruleset's saves have loaded, the level's own
@@ -27,7 +31,3 @@ export const levelFeatLabel = (featName: string, aptitudeName: string | null | u
 
 /** Identifies a granted feat: the same feat can be granted for several aptitudes. */
 export const featKey = (feat: LevelFeat) => `${feat.featId}-${feat.aptitudeId}`;
-
-export type CreateLevelFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
->["json"];

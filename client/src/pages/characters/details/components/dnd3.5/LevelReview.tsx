@@ -5,6 +5,12 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 
 import type { LevelReviewState } from "./levelUpFactory.ts";
 
+interface LevelReviewProps {
+  wizard: LevelReviewState;
+  /** The wizard's own groups (classes, HP, attributes), listed first. */
+  children: ReactNode;
+}
+
 /** A titled group of a level review ("Class Advancement", "New Feats"). */
 export function ReviewGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -25,12 +31,6 @@ function ReviewItem({ name, note }: { name: string; note?: string }) {
       {note}
     </Typography>
   );
-}
-
-interface LevelReviewProps {
-  wizard: LevelReviewState;
-  /** The wizard's own groups (classes, HP, attributes), listed first. */
-  children: ReactNode;
 }
 
 /** The last step of the Add Level and Edit Level wizards: the wizard's groups, then the skills, feats and spells picked. */

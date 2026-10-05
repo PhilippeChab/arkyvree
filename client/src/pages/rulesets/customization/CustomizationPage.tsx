@@ -50,6 +50,20 @@ import { isOneOf } from "@/shared/isOneOf.ts";
 
 type TabSection = "properties" | "modifiers" | "requirements";
 
+type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
+
+interface CustomizationViewProps {
+  rulesetId: string;
+  entityId: string;
+  section: TabSection;
+  tabs: SectionTab<TabSection>[];
+  ruleset: RulesetDetail;
+  data: CustomizationEntity;
+  canEdit: boolean;
+  /** Still showing the entity a copy was made from, while the copy loads. */
+  locked: boolean;
+}
+
 const tabLabel = (label: string, help: string) => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
     {label}
@@ -90,7 +104,6 @@ const tabsFor = (type: CustomizationPageType) =>
 
 // Entities with an editor on this page, which can also be deleted from it.
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
-type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
 const isEditable = (data: CustomizationEntity): data is EditableEntity =>
   EDITABLE_TYPES.some((type) => type === data.type);
 
@@ -181,18 +194,6 @@ async function deleteEntity(data: EditableEntity, id: string, entityId: string) 
     default:
       return data satisfies never;
   }
-}
-
-interface CustomizationViewProps {
-  rulesetId: string;
-  entityId: string;
-  section: TabSection;
-  tabs: SectionTab<TabSection>[];
-  ruleset: RulesetDetail;
-  data: CustomizationEntity;
-  canEdit: boolean;
-  /** Still showing the entity a copy was made from, while the copy loads. */
-  locked: boolean;
 }
 
 function CustomizationView({

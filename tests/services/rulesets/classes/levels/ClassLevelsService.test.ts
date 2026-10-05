@@ -41,6 +41,8 @@ import {
   NIL_UUID,
 } from "@/tests/helpers.ts";
 
+type LevelBody = Omit<Parameters<typeof ClassLevelsService.createClassLevel>[3], "level">;
+
 /** A new user's empty ruleset with a class and an aptitude. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
@@ -48,8 +50,6 @@ async function setup() {
   const [aptitude] = await Aptitudes.create(db, { name: "Fighter Bonus Feat", rulesetId: ruleset.id });
   return { user, session, ruleset, klass, aptitude, poolTarget: `aptitudes.${stripSeparators(aptitude.name)}.allowed` };
 }
-
-type LevelBody = Omit<Parameters<typeof ClassLevelsService.createClassLevel>[3], "level">;
 
 function createLevel(
   session: Session,

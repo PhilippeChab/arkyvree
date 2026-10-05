@@ -30,6 +30,8 @@ interface UseLevelWizardParams {
   onReset?: () => void;
 }
 
+export type LevelWizard = ReturnType<typeof useLevelWizard>;
+
 export function useLevelWizard({
   open,
   onClose,
@@ -354,5 +356,3 @@ export function useLevelWizard({
     levelUpSections,
   };
 }
-
-export type LevelWizard = ReturnType<typeof useLevelWizard>;

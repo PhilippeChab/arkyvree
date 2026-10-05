@@ -23,9 +23,6 @@ const SINGLE_OCCUPANCY_LOCATIONS = [
 /** How many rings a character can wear. */
 export const MAX_FINGER_ITEMS = 2;
 
-/** Whether `location` is a hand, which a weapon set applies to. */
-export const isHandLocation = (location: unknown): location is HandLocation => isOneOf(location, HAND_LOCATIONS);
-
 /** An equipped inventory entry, as the slot rules read it. */
 interface EquippedEntry {
   location: string | null;
@@ -47,6 +44,9 @@ export type SlotConflictReason = "occupied" | "fingers" | "hands" | "twoHanded" 
 type SlotConflict<T extends EquippedEntry> =
   | { reason: Exclude<SlotConflictReason, "fingers">; entry: T }
   | { reason: "fingers" };
+
+/** Whether `location` is a hand, which a weapon set applies to. */
+export const isHandLocation = (location: unknown): location is HandLocation => isOneOf(location, HAND_LOCATIONS);
 
 /** What keeps `location` (in `weaponSet`, stored from 0, for a hand) from taking an item, if anything does. */
 export function findSlotConflict<T extends EquippedEntry>(

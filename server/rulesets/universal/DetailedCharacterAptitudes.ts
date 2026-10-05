@@ -71,6 +71,22 @@ export type AptitudeLevelData = {
 /** The spell levels whose spells are all known: a state of the level, not a count it holds (`newSpellLevel`). */
 const ALL_KNOWN = new WeakSet<AptitudeLevelData>();
 
+type DetailedCharacterComprehensiveAptitudes = {
+  [key: string]: {
+    id: string;
+    name: string;
+    description: string;
+    uses: number;
+    allowed: number;
+    spent: number;
+    available: number;
+    /** A spell list's: whether its spells join the list of the class whose level gave it. */
+    joinsclasslist?: boolean;
+  };
+};
+
+type AptitudesById = Map<string, DetailedCharacterComprehensiveAptitudes[string]>;
+
 /**
  * A spell level's entry. Its known slots are a count, or all known (ALLOWED_ALL), which a `set -1` makes them and an
  * add, before or after, leaves: the class tables' and the level-up wizard's count. Code that takes all known back clears
@@ -97,22 +113,6 @@ export function clearAllKnown(level: AptitudeLevelData): void {
   ALL_KNOWN.delete(level);
   level.allowed = 0;
 }
-
-type DetailedCharacterComprehensiveAptitudes = {
-  [key: string]: {
-    id: string;
-    name: string;
-    description: string;
-    uses: number;
-    allowed: number;
-    spent: number;
-    available: number;
-    /** A spell list's: whether its spells join the list of the class whose level gave it. */
-    joinsclasslist?: boolean;
-  };
-};
-
-type AptitudesById = Map<string, DetailedCharacterComprehensiveAptitudes[string]>;
 
 export default class DetailedCharacterAptitudes {
   constructor(

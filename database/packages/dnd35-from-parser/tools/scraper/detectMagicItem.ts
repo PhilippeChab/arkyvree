@@ -117,6 +117,8 @@ const ALIASES: Partial<Record<MagicItemCategory, Record<string, string>>> = {
   },
 };
 
+type Modifier = { target: string; operator: string; value: string; valueType: string };
+
 export function detectBaseItem(name: string, description: string, category: MagicItemCategory): string | undefined {
   let candidates: string[];
   if (category === "specificWeapon") candidates = BASE_WEAPONS;
@@ -228,8 +230,6 @@ function parseMetadataWeight(metadataText: string): string {
 // ---------------------------------------------------------------------------
 // Modifier detection
 // ---------------------------------------------------------------------------
-
-type Modifier = { target: string; operator: string; value: string; valueType: string };
 
 const ABILITY_MAP: Record<string, string> = {
   strength: "abilities.strength.misc",
