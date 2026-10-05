@@ -45,6 +45,7 @@ import {
   ARMOR_PROFICIENCY,
   ARMOR_TYPE,
   DAMAGE_TYPE,
+  FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
   FEAT_WEAPON_FINESSE,
   ITEM_MASTERWORK,
   ITEM_SPELL_FAILURE,
@@ -848,6 +849,47 @@ describe("DetailedCharacter", () => {
         // Without the feats, a light off-hand weapon: -4 / -8.
         expect(mainhand!.twoweapon!.total).toEqual(mainhand!.tohit.total.map((attack) => attack - 4));
         expect(offhand!.twoweapon!.total).toEqual([offhand!.tohit.total[0] - 8]);
+      });
+
+      test("fight with a double weapon in two hands as two weapons, its other end a light off-hand one", async () => {
+        // A quarterstaff (1d6/1d6): +8/+3 alone, 1½ Strength. As two weapons, with the feats and a light other end:
+        // -2 / -2, the other end twice (Improved Two-Weapon Fighting), with its whole Strength bonus and half of it
+        const { twohanded: staff } = weaponSet(
+          await buildRanger([{ item: "Quarterstaff", location: "Two Handed", weaponSet: 0 }]),
+        );
+        expect(staff!.tohit.total).toEqual([8, 3]);
+        expect(staff!.damage.total).toBe("1d6 + 3");
+        expect(staff!.twoweapon).toEqual({ total: [6, 1], thrown: null, damage: "1d6 + 2" });
+        expect(staff!.offend).toEqual({ total: [6, 1], damage: "1d6 + 1" });
+      });
+
+      test("count a one-handed off-hand weapon as light with a feat with FEAT_OVERSIZED_TWO_WEAPON_FIGHTING", async () => {
+        // The ranger's Two-Weapon Fighting made to say it's Oversized Two-Weapon Fighting: a battleaxe off hand, -2 / -2
+        const { featMap, rulesetId } = await getSeedCtx();
+        await Properties.create(db, {
+          entityId: featMap["Two-Weapon Fighting"],
+          entityType: "feats",
+          type: FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
+          value: "true",
+        });
+        invalidateSeededRuleset(rulesetId);
+        const set = weaponSet(
+          await buildRanger([
+            { item: "Longsword", location: "Main Hand", weaponSet: 0 },
+            { item: "Battleaxe", location: "Off Hand", weaponSet: 0 },
+          ]),
+        );
+        expect([set.mainhand!.twoweapon!.total, set.offhand!.twoweapon!.total]).toEqual([
+          [6, 1],
+          [6, 1],
+        ]);
+      });
+
+      test("count a sling as a one-handed weapon, not a light one", async () => {
+        const { mainhand } = weaponSet(
+          await buildCarrying("Bjorn Ironhand", [{ item: "Sling", location: "Main Hand", weaponSet: 0 }]),
+        );
+        expect(mainhand).toMatchObject({ name: "Sling", light: false });
       });
 
       test("leave a weapon alone without one in the other hand, an unarmed strike not counting", async () => {

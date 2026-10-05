@@ -20,6 +20,9 @@
     ],
     "Cougar's Vision": {
       "modifiers": []
+    },
+    "Oversized Two-Weapon Fighting": {
+      "properties": [{ "type": "FEAT_OVERSIZED_TWO_WEAPON_FIGHTING", "value": "true" }]
     }
   },
   "raw": [

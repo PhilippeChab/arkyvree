@@ -15,6 +15,7 @@ import {
   WEAPON_BASE_DAMAGE,
   WEAPON_CRITICAL_MULTIPLIER,
   WEAPON_CRITICAL_RANGE,
+  WEAPON_DOUBLE_DAMAGE,
   WEAPON_FINESSABLE,
   WEAPON_MIGHTY,
   WEAPON_ONE_HANDED_PENALTY,
@@ -204,6 +205,24 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /**
+     * A double weapon's other end, when it's held in two hands: its attacks as a light off-hand weapon's (two-weapon
+     * fighting's off-hand penalty lessened by 2, its first and the extra ones `offhandattacks` counts, each 5 lower), and
+     * its damage: its own dice, sized for its wielder, with half the Strength bonus and the weapon's magic and misc.
+     */
+    private offEndAttack(weapon: WeaponSlot, setKey: string): WeaponSlot["offend"] {
+      const otherDice = this.doubleWeapons.get(weapon);
+      if (!otherDice || this.detailedCharacterCombat.weaponsets[setKey]?.twohanded !== weapon) return null;
+      const { twoweapon } = this.detailedCharacterCombat;
+      const first = weapon.tohit.total[0] + twoweapon.offhand + CONSTANTS.LIGHT_OFF_HAND_BONUS;
+      const total = Array.from(
+        { length: Math.max(1, twoweapon.offhandattacks) },
+        (_, index) => first - index * CONSTANTS.ATTACK_STEP,
+      );
+      const base = adjustDamageForSize(otherDice, this.raceSize);
+      return { total, damage: formatDamageTotal({ ...weapon.damage, base, strength: this.strengthDamage(0.5, null) }) };
+    }
+
+    /**
      * The armor check penalty of the shields the character carries, which a finessed attack takes: of those it's
      * proficient with, another's costing every attack already (`gearPenalty`).
      */
@@ -237,11 +256,18 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * attack step, all with the hand's two-weapon penalty, which a light off-hand weapon lessens.
      */
     private twoWeaponAttacks(weapon: WeaponSlot, setKey: string): WeaponSlot["twoweapon"] {
-      const { mainhand, offhand } = this.detailedCharacterCombat.weaponsets[setKey] ?? {};
+      const { mainhand, offhand, twohanded } = this.detailedCharacterCombat.weaponsets[setKey] ?? {};
+      const { twoweapon } = this.detailedCharacterCombat;
+      // A double weapon in two hands fights as two weapons, its other end a light off-hand one (`offEndAttack`)
+      if (weapon === twohanded && this.doubleWeapons.has(weapon)) {
+        const penalty = twoweapon.mainhand + CONSTANTS.LIGHT_OFF_HAND_BONUS;
+        const damage = formatDamageTotal({ ...weapon.damage, strength: this.strengthDamage(1, null) });
+        return { total: weapon.tohit.total.map((attack) => attack + penalty), thrown: null, damage };
+      }
       if (!mainhand?.itemId || !offhand?.itemId || (weapon !== mainhand && weapon !== offhand)) return null;
 
-      const { twoweapon } = this.detailedCharacterCombat;
-      const lightBonus = offhand.light ? CONSTANTS.LIGHT_OFF_HAND_BONUS : 0;
+      // A light off-hand weapon lessens both penalties, and so does a one-handed one with Oversized Two-Weapon Fighting
+      const lightBonus = offhand.light || this.oversizedOffHand ? CONSTANTS.LIGHT_OFF_HAND_BONUS : 0;
       const attacks =
         weapon === mainhand
           ? (totals: number[]) => totals.map((attack) => attack + twoweapon.mainhand + lightBonus)
@@ -252,6 +278,48 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
               );
       const thrown = weapon.thrown;
       return { total: attacks(weapon.tohit.total), thrown: thrown ? attacks(thrown.total) : null };
+    }
+
+    /**
+     * A weapon's damage: its dice (an input, which a modifier's `set` replaces; `dice` reads them sized for the wielder),
+     * the Strength its hand or its kind adds (`strmultiplier`, an input), its magic and misc bonuses, and its critical.
+     */
+    private weaponDamage(
+      properties: WeaponProperty[],
+      dice: { read: () => string; write: (value: string) => void },
+      strmultiplier: number | null,
+      strengthRating: number | null,
+    ): WeaponSlot["damage"] {
+      const property = (type: string) => properties.find((p) => p.type === type);
+      const strengthDamage = (multiplier: number | null) => this.strengthDamage(multiplier, strengthRating);
+      return {
+        get base() {
+          return dice.read();
+        },
+        set base(value: string) {
+          dice.write(value);
+        },
+        get strength() {
+          return strengthDamage(this.strmultiplier);
+        },
+        magic: 0,
+        misc: 0,
+        others: [],
+        get total() {
+          return formatDamageTotal(this);
+        },
+        types: properties.filter((p) => p.type === DAMAGE_TYPE).map((p) => p.value),
+        strmultiplier,
+        critical: {
+          range: Number(property(WEAPON_CRITICAL_RANGE)?.value ?? 1),
+          multiplier: Number(property(WEAPON_CRITICAL_MULTIPLIER)?.value ?? 1),
+        },
+      };
+    }
+
+    /** Lets a one-handed off-hand weapon count as light, for a feat with FEAT_OVERSIZED_TWO_WEAPON_FIGHTING. */
+    applyOversizedTwoWeaponFighting(hasOversized: boolean): void {
+      this.oversizedOffHand = hasOversized;
     }
 
     /**
@@ -327,8 +395,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           natural ? this.naturalAttacks(natural.repeats) : iterativeAttacks(this.detailedCharacterCombat.bab),
         thrown: (weapon: WeaponSlot) => (!ranged && weapon.range > 0 ? this.thrownAttack(weapon) : null),
         twoWeapon: (weapon: WeaponSlot) => this.twoWeaponAttacks(weapon, setKey),
+        offEnd: (weapon: WeaponSlot) => this.offEndAttack(weapon, setKey),
         dice: () => (sizedDice ? adjustDamageForSize(dice, this.raceSize) : dice),
-        strengthDamage: (multiplier: number | null) => this.strengthDamage(multiplier, abilities.strengthRating),
       };
       const weapon: WeaponSlot = {
         name: item.name,
@@ -367,31 +435,24 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         get twoweapon() {
           return sheet.twoWeapon(this);
         },
-        damage: {
-          get base() {
-            return sheet.dice();
-          },
-          set base(value: string) {
-            dice = value;
-          },
-          get strength() {
-            return sheet.strengthDamage(this.strmultiplier);
-          },
-          magic: 0,
-          misc: 0,
-          others: [],
-          get total() {
-            return formatDamageTotal(this);
-          },
-          types: properties.filter((p) => p.type === DAMAGE_TYPE).map((p) => p.value),
-          strmultiplier: strengthDamage === "Slot" ? (handShare ?? null) : null,
-          critical: {
-            range: Number(property(WEAPON_CRITICAL_RANGE)?.value ?? 1),
-            multiplier: Number(property(WEAPON_CRITICAL_MULTIPLIER)?.value ?? 1),
-          },
+        get offend() {
+          return sheet.offEnd(this);
         },
+        damage: this.weaponDamage(
+          properties,
+          {
+            read: sheet.dice,
+            write: (value) => {
+              dice = value;
+            },
+          },
+          strengthDamage === "Slot" ? (handShare ?? null) : null,
+          abilities.strengthRating,
+        ),
       };
       this.weaponAbilities.set(weapon, abilities);
+      const otherDice = property(WEAPON_DOUBLE_DAMAGE)?.value;
+      if (otherDice) this.doubleWeapons.set(weapon, otherDice);
       this.detailedCharacterCombat.weaponsets[setKey][slotKey] = weapon;
       return weapon;
     }

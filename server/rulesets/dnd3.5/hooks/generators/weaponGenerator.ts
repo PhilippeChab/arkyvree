@@ -18,6 +18,8 @@ interface WeaponDefinition {
   oneHandedPenalty?: number;
   /** Too large for one hand without training (WEAPON_ONE_HAND_TRAINING): a bastard sword, a dwarven waraxe. */
   oneHandTraining?: true;
+  /** A double weapon's other end's damage dice (WEAPON_DOUBLE_DAMAGE): in two hands, it fights as two weapons. */
+  doubleDamage?: string;
   damageTypes: DamageType[];
   /** Its effort, as the weapon table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed (bows). */
   size: string;
@@ -44,13 +46,13 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Morningstar": { proficiency: "Simple", family: "Mace", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning", "Piercing"], size: "Medium" },
   "Shortspear": { proficiency: "Simple", family: "Spear", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Medium", range: 20 },
   "Longspear": { proficiency: "Simple", family: "Spear", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Large", reach: 10 },
-  "Quarterstaff": { proficiency: "Simple", family: "Staff", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Large" },
+  "Quarterstaff": { proficiency: "Simple", family: "Staff", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, doubleDamage: "1d6", damageTypes: ["Bludgeoning"], size: "Large" },
   "Spear": { proficiency: "Simple", family: "Spear", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Large", range: 20 },
   "Heavy Crossbow": { proficiency: "Simple", family: "Crossbow", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", oneHandedPenalty: -4, damageTypes: ["Piercing"], size: "Medium", range: 120 },
   "Light Crossbow": { proficiency: "Simple", family: "Crossbow", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", oneHandedPenalty: -2, damageTypes: ["Piercing"], size: "Small", range: 80 },
   "Dart": { proficiency: "Simple", family: "Thrown", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Piercing"], size: "Tiny", range: 20 },
   "Javelin": { proficiency: "Simple", family: "Spear", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Piercing"], size: "Medium", range: 30 },
-  "Sling": { proficiency: "Simple", family: "Sling", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Bludgeoning"], size: "Small", range: 50 },
+  "Sling": { proficiency: "Simple", family: "Sling", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Bludgeoning"], size: "Medium", range: 50 },
 
   // ── Martial ──
   "Handaxe": { proficiency: "Martial", family: "Axe", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Small", finessable: true },
@@ -93,11 +95,11 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Dwarven Waraxe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d10", criticalRange: 1, criticalMultiplier: 3, oneHandTraining: true, damageTypes: ["Slashing"], size: "Medium" },
   "Whip": { proficiency: "Exotic", family: "Flail", baseDamage: "1d3", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Medium", reach: 15, finessable: true },
   "Spiked Chain": { proficiency: "Exotic", family: "Flail", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Large", reach: 10, finessable: true },
-  "Dire Flail": { proficiency: "Exotic", family: "Flail", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Large" },
-  "Gnome Hooked Hammer": { proficiency: "Exotic", family: "Hammer", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Bludgeoning", "Piercing"], size: "Medium" },
-  "Orc Double Axe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Large" },
-  "Two-Bladed Sword": { proficiency: "Exotic", family: "Sword", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Large" },
-  "Dwarven Urgrosh": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing", "Piercing"], size: "Large" },
+  "Dire Flail": { proficiency: "Exotic", family: "Flail", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 2, doubleDamage: "1d8", damageTypes: ["Bludgeoning"], size: "Large" },
+  "Gnome Hooked Hammer": { proficiency: "Exotic", family: "Hammer", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d6", damageTypes: ["Bludgeoning", "Piercing"], size: "Large" },
+  "Orc Double Axe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d8", damageTypes: ["Slashing"], size: "Large" },
+  "Two-Bladed Sword": { proficiency: "Exotic", family: "Sword", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, doubleDamage: "1d8", damageTypes: ["Slashing"], size: "Large" },
+  "Dwarven Urgrosh": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d6", damageTypes: ["Slashing", "Piercing"], size: "Large" },
   "Hand Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d4", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", damageTypes: ["Piercing"], size: "Tiny", range: 30 },
   "Repeating Heavy Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", oneHandedPenalty: -4, damageTypes: ["Piercing"], size: "Medium", range: 120 },
   "Repeating Light Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", oneHandedPenalty: -2, damageTypes: ["Piercing"], size: "Small", range: 80 },

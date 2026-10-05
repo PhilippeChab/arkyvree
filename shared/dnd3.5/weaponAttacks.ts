@@ -6,7 +6,8 @@ interface WeaponAttacks {
   range: number;
   tohit: { total: number[] };
   thrown: { total: number[] } | null;
-  twoweapon: { total: number[]; thrown: number[] | null } | null;
+  twoweapon: { total: number[]; thrown: number[] | null; damage?: string } | null;
+  offend: { total: number[]; damage: string } | null;
 }
 
 /** A weapon slot's label, as an item's location names it. */
@@ -20,17 +21,21 @@ export function describeWeaponSlot(
   return weapon.natural ? capitalize(weapon.natural) : SLOT_LABELS[slot];
 }
 
-/** One attack a sheet lists for a weapon: its label (the slot, "thrown" and "two weapons" added), to-hit and range. */
+/**
+ * One attack a sheet lists for a weapon: its label (the slot, "thrown" and "two weapons" added), to-hit and range, and
+ * its damage when it isn't the weapon's (a double weapon's other end).
+ */
 export interface AttackRow {
   key: string;
   label: string;
   attack: number[];
   range: string;
+  damage?: string;
 }
 
 /**
  * A weapon's attacks, a row each: its own (melee or ranged), then a melee weapon's thrown one if it has a range, then
- * the same with two weapons if its set holds one in each hand.
+ * the same with two weapons if its set holds one in each hand (or it's a double weapon), and a double weapon's other end.
  */
 export function buildAttackRows(weapon: WeaponAttacks, slot: string): AttackRow[] {
   const ownRange = weapon.ranged ? `${weapon.range} ft.` : "Melee";
@@ -43,8 +48,10 @@ export function buildAttackRows(weapon: WeaponAttacks, slot: string): AttackRow[
   const rows = [row([], weapon.tohit.total, ownRange)];
   if (weapon.thrown) rows.push(row(["thrown"], weapon.thrown.total, thrownRange));
   if (weapon.twoweapon) {
-    rows.push(row(["two weapons"], weapon.twoweapon.total, ownRange));
+    const { damage } = weapon.twoweapon;
+    rows.push({ ...row(["two weapons"], weapon.twoweapon.total, ownRange), ...(damage && { damage }) });
     if (weapon.twoweapon.thrown) rows.push(row(["thrown", "two weapons"], weapon.twoweapon.thrown, thrownRange));
   }
+  if (weapon.offend) rows.push({ ...row(["other end"], weapon.offend.total, ownRange), damage: weapon.offend.damage });
   return rows;
 }

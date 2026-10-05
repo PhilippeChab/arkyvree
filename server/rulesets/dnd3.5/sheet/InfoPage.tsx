@@ -287,7 +287,7 @@ const InfoPage = ({
                         <Text style={[styles.tableCell, { width: "18%" }]}>
                           {row.attack.map(formatModifier).join("/")}
                         </Text>
-                        <Text style={[styles.tableCell, { width: "18%" }]}>{weapon!.damage.total}</Text>
+                        <Text style={[styles.tableCell, { width: "18%" }]}>{row.damage ?? weapon!.damage.total}</Text>
                         <Text style={[styles.tableCell, { width: "13%" }]}>
                           {21 - weapon!.damage.critical.range}/x{weapon!.damage.critical.multiplier}
                         </Text>

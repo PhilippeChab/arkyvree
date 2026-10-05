@@ -45,10 +45,17 @@ export type WeaponSlot = {
   /** A melee weapon's attack when thrown, if it has a range increment: with Dexterity, as every ranged attack. */
   readonly thrown: { dexterity: number; total: number[] } | null;
   /**
-   * Its attacks when its set holds an equipped weapon in each hand: its own and its thrown ones (if it has those), with
-   * two-weapon fighting's penalties, the off hand's as many as `combat.twoweapon.offhandattacks`.
+   * Its attacks when its set holds an equipped weapon in each hand, or when it's a double weapon held in two hands: its
+   * own and its thrown ones (if it has those), with two-weapon fighting's penalties, the off hand's as many as
+   * `combat.twoweapon.offhandattacks`; a double weapon's main end's damage too, with its whole Strength bonus, not one
+   * and a half.
    */
-  readonly twoweapon: { total: number[]; thrown: number[] | null } | null;
+  readonly twoweapon: { total: number[]; thrown: number[] | null; damage?: string } | null;
+  /**
+   * A double weapon's other end, held in two hands: its attacks as a light off-hand weapon's, and its damage, its dice
+   * with half the Strength bonus.
+   */
+  readonly offend: { total: number[]; damage: string } | null;
   damage: {
     base: string;
     readonly strength: number;
@@ -221,6 +228,9 @@ export default abstract class CombatState {
   /** Whether a tower shield is carried: −2 on attack rolls, for its encumbrance. */
   protected towerShield = false;
 
+  /** Whether a one-handed off-hand weapon counts as light in two-weapon fighting: Oversized Two-Weapon Fighting. */
+  protected oversizedOffHand = false;
+
   /** Whether the race keeps its speed in medium or heavy armor and load (RACE_SPEED_IGNORES_ENCUMBRANCE: the dwarf). */
   protected speedIgnoresEncumbrance = false;
 
@@ -237,4 +247,7 @@ export default abstract class CombatState {
 
   /** Each weapon's abilities, which its to-hit and damage read: Weapon Finesse sets its finesse. */
   protected readonly weaponAbilities = new WeakMap<WeaponSlot, WeaponAbilities>();
+
+  /** Each double weapon's other end's damage dice (its WEAPON_DOUBLE_DAMAGE). */
+  protected readonly doubleWeapons = new WeakMap<WeaponSlot, string>();
 }

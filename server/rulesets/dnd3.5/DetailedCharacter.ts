@@ -28,7 +28,13 @@ import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharact
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
-import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import {
+  FEAT_FAMILY,
+  FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
+  FEAT_WEAPON_FINESSE,
+  SPELL_DESCRIPTOR,
+  SPELL_SCHOOL,
+} from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Character,
@@ -268,12 +274,15 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     return { budget, ranks };
   }
 
-  /** Whether the character has a feat with FEAT_WEAPON_FINESSE (Weapon Finesse): picked, granted or given by a modifier. */
-  protected hasWeaponFinesse(rulesetData: CachedRulesetData): boolean {
+  /**
+   * Whether the character has a feat with this property true (FEAT_WEAPON_FINESSE: Weapon Finesse): picked, granted or
+   * given by a modifier.
+   */
+  protected hasFeatWith(rulesetData: CachedRulesetData, propertyType: string): boolean {
     return rulesetData.feats.some(
       (feat) =>
         (rulesetData.propertiesByEntity.get(feat.id) ?? []).some(
-          (property) => property.type === FEAT_WEAPON_FINESSE && property.value === "true",
+          (property) => property.type === propertyType && property.value === "true",
         ) &&
         (this.detailedCharacterFeats.getFeat(feat.name)?.possessed ?? false),
     );
@@ -406,7 +415,10 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
   protected async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {
     this.detailedCharacterSpellcasting.initSpellcastingHolder(this.holders!, this.modifiers, this.klassCasterTypeMap);
     // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read
-    this.detailedCharacterCombat.applyWeaponFinesse(this.hasWeaponFinesse(rulesetData));
+    this.detailedCharacterCombat.applyWeaponFinesse(this.hasFeatWith(rulesetData, FEAT_WEAPON_FINESSE));
+    this.detailedCharacterCombat.applyOversizedTwoWeaponFighting(
+      this.hasFeatWith(rulesetData, FEAT_OVERSIZED_TWO_WEAPON_FIGHTING),
+    );
   }
 
   async build(

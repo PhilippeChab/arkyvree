@@ -10,6 +10,8 @@ export const WEAPON_MIGHTY = "WEAPON_MIGHTY";
 export const WEAPON_ONE_HANDED_PENALTY = "WEAPON_ONE_HANDED_PENALTY";
 /** Too large to use in one hand without training (a bastard sword): there, only its proficiency lets it be wielded. */
 export const WEAPON_ONE_HAND_TRAINING = "WEAPON_ONE_HAND_TRAINING";
+/** A double weapon's other end's damage dice (a quarterstaff's 1d6): in two hands, it fights as two weapons. */
+export const WEAPON_DOUBLE_DAMAGE = "WEAPON_DOUBLE_DAMAGE";
 export const WEAPON_RANGE = "WEAPON_RANGE";
 /** Ranged weapons (thrown or projectile, no melee) attack with Dexterity; a melee one with a range can be thrown. */
 export const WEAPON_RANGED = "WEAPON_RANGED";
