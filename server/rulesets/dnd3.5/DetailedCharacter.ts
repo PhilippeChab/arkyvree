@@ -81,7 +81,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.detailedCharacterClasses,
     );
     this.targetPaths = new TargetPaths();
-    this.detailedCharacterModifiers = new DetailedCharacterModifiers(this.targetPaths);
+    this.detailedCharacterModifiers = new DetailedCharacterModifiers(this.targetPaths, this.sourcesOf);
     this.detailedCharacterRequirements = new DetailedCharacterRequirements(this.targetPaths);
 
     // Identity (universal)
@@ -403,13 +403,11 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   protected postRequirementProcessing(): void {
     // A weapon's proficiency is its base item's requirements (`DetailedCharacterDataLoader`), apart from its others,
-    // read of the item itself: a bastard sword's in two hands
-    const unproficientItemIds = new Set(
-      this.inventory
-        .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.item.id }))
-        .map((inv) => inv.item.id),
-    );
-    this.detailedCharacterCombat.applyProficiencyPenalties(unproficientItemIds);
+    // read of the entry holding it: a bastard sword's in the hands it's in, each of an item's entries alone
+    const unproficient = this.inventory
+      .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.id }))
+      .map((inv) => ({ id: inv.id, itemId: inv.item.id }));
+    this.detailedCharacterCombat.applyProficiencyPenalties(unproficient);
   }
 
   protected async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {

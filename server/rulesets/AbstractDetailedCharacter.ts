@@ -207,6 +207,22 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     return owner?.entityType === "modifiers" ? this.itemModifiers.get(owner.entityId) : undefined;
   };
 
+  /**
+   * The sources a modifier applies from: its own, or, for an item's modifier on the item itself (a weapon's own paths)
+   * behind gates, each entry holding the item whose gates are met there. An item held in two places is a weapon in
+   * each: a bonus gated on the main hand reaches the main-hand dagger, not the off-hand one.
+   */
+  protected readonly sourcesOf = (modifier: Modifier): string[] => {
+    if (modifier.sourceType !== "items" || !this.targetPaths.readsSource(modifier.target)) return [modifier.sourceId];
+    const gates = this.requirementGroups.filter(([owner]) =>
+      owner?.entityType === "modifiers" ? owner.entityId === modifier.id : owner?.entityId === modifier.sourceId,
+    );
+    if (gates.length === 0) return [modifier.sourceId];
+    return this.inventory
+      .filter((entry) => entry.item.id === modifier.sourceId && this.areRequirementsMet(gates, { sourceId: entry.id }))
+      .map((entry) => entry.id);
+  };
+
   /** Build the holders map — universal holders + ruleset-specific ones. */
   protected abstract buildHolders(): Holders;
 

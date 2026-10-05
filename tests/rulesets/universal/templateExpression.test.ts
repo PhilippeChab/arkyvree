@@ -16,6 +16,7 @@ const tree: Record<string, number | string> = {
 };
 
 const traverser: TargetPathsTraverser = {
+  readsSource: () => false,
   traversePathInit(path: string): TraversePathResult[] {
     if (!(path in tree)) {
       return [

@@ -325,22 +325,25 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /**
-     * Costs each weapon the character isn't proficient with the non-proficiency penalty, 4 to hit and nothing else, and
-     * marks the armor and shields it isn't proficient with, whose check penalty every attack takes.
+     * Costs each weapon the character isn't proficient with the non-proficiency penalty, 4 to hit and nothing else, by
+     * the entry holding it (a bastard sword can be proficient in two hands, not in one), and marks the armor and shields
+     * it isn't proficient with, whose check penalty every attack takes.
      */
-    applyProficiencyPenalties(unproficientItemIds: Set<string>) {
+    applyProficiencyPenalties(unproficient: { id: string; itemId: string }[]) {
       const { weaponsets, armors, shields } = this.detailedCharacterCombat;
+      const entryIds = new Set(unproficient.map((entry) => entry.id));
+      const itemIds = new Set(unproficient.map((entry) => entry.itemId));
       for (const weaponSet of Object.values(weaponsets)) {
         for (const slotKey of WEAPON_SET_SLOTS) {
           const weapon = weaponSet[slotKey];
-          if (!weapon?.itemId || !unproficientItemIds.has(weapon.itemId)) continue;
+          if (!weapon?.entryId || !entryIds.has(weapon.entryId)) continue;
 
           weapon.proficient = false;
           weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
         }
       }
       for (const gear of [...Object.values(armors), ...Object.values(shields)]) {
-        if (unproficientItemIds.has(gear.itemId)) gear.proficient = false;
+        if (itemIds.has(gear.itemId)) gear.proficient = false;
       }
     }
 
@@ -370,7 +373,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       slot: "Main Hand" | "Off Hand" | "Two Handed",
       item: Pick<Item, "name">,
       properties: WeaponProperty[],
-      itemId: string | null = null,
+      held: { itemId: string; entryId: string } | null = null,
       natural: { kind: NaturalAttackKind; repeats: boolean } | null = null,
     ): WeaponSlot | null {
       const property = (type: string) => properties.find((p) => p.type === type);
@@ -404,7 +407,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       };
       const weapon: WeaponSlot = {
         name: item.name,
-        itemId,
+        itemId: held?.itemId ?? null,
+        entryId: held?.entryId ?? null,
         natural: natural?.kind ?? null,
         proficient: true,
         finessable: properties.some((p) => p.type === WEAPON_FINESSABLE && p.value === "true"),
