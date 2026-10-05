@@ -7,7 +7,7 @@
  */
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
-import type { Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
+import { Dnd35LevelsHooks, type Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
 import { ALLOWED_ALL } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
@@ -45,8 +45,6 @@ interface SlotDeltas {
 
 const FEAT_POOL_TARGET = /^aptitudes\.(\w+)\.allowed$/;
 const SPELL_POOL_TARGET = /^aptitudes\.(\w+)\.(\d+)\.allowed$/;
-
-const generalFeats = (charLevel: number) => (charLevel === 0 ? 0 : Math.floor(charLevel / 3) + 1);
 
 /**
  * Adds what modifiers targeting a pool's `aptitudes.<slug>.allowed` (a feat pool) or `aptitudes.<slug>.<level>.allowed`
@@ -112,7 +110,8 @@ function levelDeltas(
 
   const generalAptId = aptitudeSlugToId.get("general");
   if (generalAptId && perLevelFeatSlots[generalAptId]) {
-    const generalDelta = generalFeats(charLevel) - generalFeats(charLevel - 1);
+    const generalDelta =
+      Dnd35LevelsHooks.countGeneralFeats(charLevel) - Dnd35LevelsHooks.countGeneralFeats(charLevel - 1);
     if (generalDelta > 0) {
       deltas.feats[generalAptId] = (deltas.feats[generalAptId] ?? 0) + generalDelta;
     }
