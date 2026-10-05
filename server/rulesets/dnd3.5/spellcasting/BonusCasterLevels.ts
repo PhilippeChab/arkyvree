@@ -143,12 +143,18 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
 
     /**
      * Keeps the slots a feat gives in a list it brings (a cleric's domain, a specialist wizard's school) at the spell
-     * levels its class casts, bonus caster levels counted: a level the class casts gets the slots the feat gives there,
-     * one it doesn't cast none. The feat's modifiers open their levels by the class's own level alone.
+     * levels its class casts, bonus caster levels counted: a level the class casts gets the slots the feat gives there
+     * whose requirements hold but the class's level (`isGateMet` with that target met), one it doesn't cast none. The
+     * feat's modifiers open their levels by the class's own level alone.
      */
-    protected syncFeatListSlots(feats: FeatWithPMR[], featListIds: Set<string>) {
+    protected syncFeatListSlots(
+      feats: FeatWithPMR[],
+      featListIds: Set<string>,
+      isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
+    ) {
       const aptitudes = this.aptitudes.getAptitudes();
       for (const [list, { className, modifiers }] of this.featListSlots(feats, featListIds)) {
+        const classLevel = `classes.${stripSeparators(className)}.level`;
         const listLevels = aptitudes[list] as Record<string, unknown> | undefined;
         const classLists = this.spellListsOf(className).flatMap((key) => {
           const classList = aptitudes[key] as Record<string, unknown> | undefined;
@@ -167,7 +173,10 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
           const casts = classLevels.some((classLevel) => classLevel.allowed !== 0 || classLevel.uses > 0);
           if (casts && listLevel.allowed === 0) {
             const given = this.slotsGiven(
-              modifiers.filter((modifier) => modifier.target.startsWith(`aptitudes.${list}.${level}.`)),
+              modifiers.filter(
+                (modifier) =>
+                  modifier.target.startsWith(`aptitudes.${list}.${level}.`) && isGateMet(modifier, [classLevel]),
+              ),
             );
             listLevel.uses += given.uses;
             listLevel.allowed = given.allowed;
@@ -182,13 +191,13 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     /**
      * Applies the spell progression (`aptitudes.*`) of the class levels bonus caster levels reach, each modifier while
      * its own requirements hold (`isGateMet`): a pious templar's slots go to the list she picked only. Then the lists a
-     * feat brings (`featListIds`) follow their class's spell levels.
+     * feat brings (`featListIds`) follow their class's spell levels. `isGateMet` takes the targets to count as met.
      */
     applyBonusCasterLevelModifiers(
       holders: Holders,
       feats: FeatWithPMR[],
       featListIds: Set<string>,
-      isGateMet: (modifier: Modifier) => boolean,
+      isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
     ) {
       const aptitudeModifiers = this.bonusKlassLevelModifiers.filter(
         (m) => m.target.startsWith("aptitudes.") && isGateMet(m),
@@ -198,7 +207,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         this.characterModifiers.evaluateModifier(modifier, holders);
       }
 
-      this.syncFeatListSlots(feats, featListIds);
+      this.syncFeatListSlots(feats, featListIds, isGateMet);
     }
 
     getBonusKlassLevelAttribution() {

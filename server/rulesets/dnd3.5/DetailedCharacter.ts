@@ -392,7 +392,15 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.holders!,
       this.feats,
       this.featListIds,
-      (modifier) => this.areRequirementsMet([rulesetData.requirementsByEntity.get(modifier.id) ?? []]),
+      // A target counted as met reads as one any value meets: a class's level gate, which its spell levels replace
+      (modifier, metTargets = []) =>
+        this.areRequirementsMet([
+          (rulesetData.requirementsByEntity.get(modifier.id) ?? []).map((requirement) =>
+            requirement.target && metTargets.includes(requirement.target)
+              ? { ...requirement, operator: "greater_than_or_equal", value: "0", valueType: "number" }
+              : requirement,
+          ),
+        ]),
     );
     this.detailedCharacterSpellcasting.applyBonusSpellsFromAbilities(this.klassBonusSpellAbilityMap);
     this.detailedCharacterSpellcasting.computeSpellcasting(this.holders!, this.klassCasterTypeMap);

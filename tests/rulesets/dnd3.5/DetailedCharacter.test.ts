@@ -28,6 +28,7 @@ import {
   modifiersInCustomization,
   powersAptitudesInRules,
   powersInRules,
+  requirementsInCustomization,
 } from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -2273,6 +2274,104 @@ describe("DetailedCharacter", () => {
           .filter((p) => tags[p.id]?.includes("Storm Domain"))
           .map((p) => p.name);
         expect(storm).toEqual(expect.arrayContaining(["Ice Storm", "Call Lightning Storm"]));
+      });
+
+      test("open with bonus caster levels only the slots whose other requirements hold", async () => {
+        // Cleric 7 / stormlord 5, chaotic neutral, casts as a cleric 12: a homebrew domain's sixth level opens; its fifth,
+        // for a lawful neutral cleric only, doesn't
+        const ctx = await getSeedCtx();
+        const extension = (await Rulesets.findOne(db, { name: DND35_COMPLETE_DIVINE_NAME }))!;
+        const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
+        const [order] = await insertRows(aptitudesInRules, [{ name: "Order Prayers", rulesetId: fork.id }]);
+        const [fifth, sixth] = await insertRows(powersInRules, [
+          { name: "Fifth Order Hymn", rulesetId: fork.id },
+          { name: "Sixth Order Hymn", rulesetId: fork.id },
+        ]);
+        await insertRows(powersAptitudesInRules, [
+          { powerId: fifth.id, aptitudeId: order.id, level: 5 },
+          { powerId: sixth.id, aptitudeId: order.id, level: 6 },
+        ]);
+        const [orderDomain] = await insertRows(featsInRules, [{ name: "Order Domain", rulesetId: fork.id }]);
+        const modifier = (target: string, value: string, operator: string, valueType = "number") => ({
+          sourceId: orderDomain.id,
+          sourceType: "feats",
+          target,
+          value,
+          valueType,
+          operator,
+        });
+        const [fifthUses, fifthAllowed, sixthUses, sixthAllowed] = await insertRows(modifiersInCustomization, [
+          modifier("aptitudes.orderprayers.5.uses", "1", "add"),
+          modifier("aptitudes.orderprayers.5.allowed", "-1", "set"),
+          modifier("aptitudes.orderprayers.6.uses", "1", "add"),
+          modifier("aptitudes.orderprayers.6.allowed", "-1", "set"),
+          modifier("aptitudes.orderprayers.joinsclasslist", "true", "set", "boolean"),
+        ]);
+        const gate = (entityId: string, clericLevel: number, lawful: boolean) => [
+          {
+            entityId,
+            entityType: "modifiers",
+            level: "1",
+            target: "classes.cleric.level",
+            operator: "greater_than_or_equal",
+            value: String(clericLevel),
+            valueType: "number",
+          },
+          ...(lawful
+            ? [
+                {
+                  entityId,
+                  entityType: "modifiers",
+                  level: "2",
+                  target: "identity.beliefs.alignment",
+                  operator: "equal",
+                  value: "Lawful Neutral",
+                  valueType: "string",
+                },
+              ]
+            : []),
+        ];
+        await insertRows(requirementsInCustomization, [
+          ...gate(fifthUses.id, 9, true),
+          ...gate(fifthAllowed.id, 9, true),
+          ...gate(sixthUses.id, 11, false),
+          ...gate(sixthAllowed.id, 11, false),
+        ]);
+        invalidateRuleset(fork.id);
+
+        const characterId = await createSeedCharacter(
+          "Order Cleric",
+          { Strength: 14, Dexterity: 10, Constitution: 14, Intelligence: 12, Wisdom: 18, Charisma: 10 },
+          { xp: 66000, alignment: "Chaotic Neutral", rulesetId: fork.id },
+        );
+        const clericLevels = await addClassLevels(
+          db,
+          ctx,
+          characterId,
+          "Cleric",
+          [1, 2, 3, 4, 5, 6, 7],
+          [8, 6, 7, 6, 8, 6, 7],
+        );
+        await CharacterLevelFeats.createMany(db, [
+          { characterLevelId: clericLevels[0], featId: orderDomain.id, aptitudeId: ctx.aptMap["Cleric Domain"] },
+        ]);
+        const stormlord = (await Klasses.findOne(db, { name: "Stormlord", rulesetId: extension.id }))!;
+        const advance =
+          (await Feats.findOne(db, { name: "Advance Cleric Spellcasting", rulesetId: extension.id }))?.id ??
+          ctx.featMap["Advance Cleric Spellcasting"];
+        const bonusLevel =
+          (await Aptitudes.findOne(db, { name: "Bonus Divine Caster Level", rulesetId: extension.id }))?.id ??
+          ctx.aptMap["Bonus Divine Caster Level"];
+        for (let level = 1; level <= 5; level++) {
+          const klassLevel = (await findKlassLevel(stormlord.id, level))!;
+          await addCharacterLevel(characterId, klassLevel.id, { feats: [{ featId: advance, aptitudeId: bonusLevel }] });
+        }
+
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        expect([5, 6].map((level) => spellLevel(detailed, "orderprayers", level))).toMatchObject([
+          { allowed: 0, uses: 0 },
+          { allowed: ALLOWED_ALL, uses: 1 },
+        ]);
       });
 
       test("join the list of each class that brings them, a class level's as well as a feat's", async () => {
