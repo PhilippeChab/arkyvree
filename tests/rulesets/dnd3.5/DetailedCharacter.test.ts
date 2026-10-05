@@ -2374,6 +2374,175 @@ describe("DetailedCharacter", () => {
         ]);
       });
 
+      /** A character of a fork with Complete Divine, with these modifiers of its own (`[target, value, valueType]`). */
+      async function divineCharacter(
+        name: string,
+        abilities: Record<string, number>,
+        granted: [string, string, string][],
+        alignment?: "Neutral Good" | "Chaotic Neutral",
+      ) {
+        const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
+        const characterId = await createSeedCharacter(name, abilities, { rulesetId: fork.id, alignment });
+        for (const [target, value, valueType] of granted) {
+          const operator = valueType === "boolean" ? "set" : "add";
+          await Modifiers.create(db, {
+            sourceId: characterId,
+            sourceType: "characters",
+            target,
+            value,
+            valueType,
+            operator,
+          });
+        }
+        return characterId;
+      }
+      // The divine crusader's prerequisites
+      const CRUSADER_PREREQUISITES: [string, string, string][] = [
+        ["combat.bab", "7", "number"],
+        ["skills.knowledgereligion.rank", "2", "number"],
+        ["feats.weaponfocuslongsword.possessed", "true", "boolean"],
+      ];
+
+      test("make a divine crusader's list the spells of the domain she picks, cast with her own slots", async () => {
+        // Charisma 16: a bonus spell at each of the first three levels
+        const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+        const crusader = divine.klasses.find((klass) => klass.name === "Divine Crusader")!;
+        const fire = {
+          featId: divine.feat("Fire Domain (Divine Crusader)").id,
+          aptitudeId: divine.aptitude("Divine Crusader Domain").id,
+        };
+        const sheetAt = async (levels: number) => {
+          const scores = { ...WIZARD_SCORES, Charisma: 16 };
+          const characterId = await divineCharacter(`Crusader ${levels}`, scores, CRUSADER_PREREQUISITES);
+          for (let level = 1; level <= levels; level++) {
+            const klassLevel = (await findKlassLevel(crusader.id, level))!;
+            await addCharacterLevel(characterId, klassLevel.id, level === 1 ? { feats: [fire] } : {});
+          }
+          const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+          const list = detailed.getDetailedCharacterAptitudes().getAptitudes()["divinecrusaderspells"].id;
+          return {
+            uses: spellUses(detailed, "divinecrusaderspells", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
+            known: allPowers(detailed)
+              .filter((power) => power.aptitudeId === list)
+              .map((power) => power.name)
+              .sort(),
+            divine: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].find((n) =>
+              detailed.areRequirementsMet(requiring("spellcasting.divine", exactly(n))),
+            ),
+          };
+        };
+        expect(await sheetAt(1)).toEqual({ uses: [1, 0, 0, 0, 0, 0, 0, 0, 0], known: ["Burning Hands"], divine: 1 });
+        expect(await sheetAt(4)).toEqual({
+          uses: [3, 3, 2, 0, 0, 0, 0, 0, 0],
+          known: ["Burning Hands", "Produce Flame", "Resist Energy", "Wall of Fire"],
+          divine: 4,
+        });
+        expect(await sheetAt(10)).toEqual({
+          uses: [4, 4, 4, 3, 3, 3, 2, 2, 1],
+          known: [
+            "Burning Hands",
+            "Elemental Swarm",
+            "Fire Seeds",
+            "Fire Shield",
+            "Fire Storm",
+            "Incendiary Cloud",
+            "Produce Flame",
+            "Resist Energy",
+            "Wall of Fire",
+          ],
+          divine: 9,
+        });
+      });
+
+      test("give a cleric and a divine crusader who pick the same domain its spells on each list, as far as each casts", async () => {
+        // Cleric 3 / divine crusader 4, both of fire: the cleric casts to the second level, the crusader to the fourth
+        const ctx = await getSeedCtx();
+        const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+        const characterId = await divineCharacter(
+          "Fire Crusader",
+          { ...WIZARD_SCORES, Wisdom: 14 },
+          CRUSADER_PREREQUISITES,
+        );
+        const cleric = (await Klasses.findOne(db, { name: "Cleric", rulesetId: ctx.rulesetId }))!;
+        for (let level = 1; level <= 3; level++) {
+          const picks = { feats: [{ featId: ctx.featMap["Fire Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }] };
+          await addCharacterLevel(characterId, (await findKlassLevel(cleric.id, level))!.id, level === 1 ? picks : {});
+        }
+        const crusader = divine.klasses.find((klass) => klass.name === "Divine Crusader")!;
+        const fire = {
+          featId: divine.feat("Fire Domain (Divine Crusader)").id,
+          aptitudeId: divine.aptitude("Divine Crusader Domain").id,
+        };
+        for (let level = 1; level <= 4; level++) {
+          await addCharacterLevel(
+            characterId,
+            (await findKlassLevel(crusader.id, level))!.id,
+            level === 1 ? { feats: [fire] } : {},
+          );
+        }
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        const aptitudes = detailed.getDetailedCharacterAptitudes().getAptitudes();
+        const onList = (list: string) =>
+          allPowers(detailed)
+            .filter((power) => power.aptitudeId === aptitudes[list].id)
+            .map((power) => power.name);
+        // Produce Flame and Wall of Fire are neither cleric spells nor first-level ones: the domain's on each list
+        expect(onList("clericspells")).toEqual(expect.arrayContaining(["Burning Hands", "Produce Flame"]));
+        expect(onList("clericspells")).not.toContain("Wall of Fire");
+        expect(onList("divinecrusaderspells").sort()).toEqual([
+          "Burning Hands",
+          "Produce Flame",
+          "Resist Energy",
+          "Wall of Fire",
+        ]);
+        // The domain's slots are the cleric's, up to the level he casts; each feat's tag shows on its class's list
+        expect([1, 2, 3].map((level) => spellLevel(detailed, "firedomainspells", level))).toMatchObject([
+          { allowed: ALLOWED_ALL, uses: 1 },
+          { allowed: ALLOWED_ALL, uses: 1 },
+          { allowed: 0, uses: 0 },
+        ]);
+        const tagLists = detailed.getSpellTagLists();
+        expect(tagLists["Fire Domain"].aptitudeIds).toContain(aptitudes["clericspells"].id);
+        expect(tagLists["Fire Domain (Divine Crusader)"].aptitudeIds).toContain(aptitudes["divinecrusaderspells"].id);
+      });
+
+      test("join the Luck domain's spells to a temple raider's list at his tenth level", async () => {
+        const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+        const raider = divine.klasses.find((klass) => klass.name === "Temple Raider of Olidammara")!;
+        const sheetAt = async (levels: number) => {
+          const characterId = await divineCharacter(
+            `Temple Raider ${levels}`,
+            WIZARD_SCORES,
+            [
+              ["combat.bab", "5", "number"],
+              ["skills.disabledevice.rank", "4", "number"],
+              ["skills.knowledgereligion.rank", "1", "number"],
+              ["skills.openlock.rank", "4", "number"],
+              ["skills.search.rank", "8", "number"],
+            ],
+            "Chaotic Neutral",
+          );
+          for (let level = 1; level <= levels; level++) {
+            await addCharacterLevel(characterId, (await findKlassLevel(raider.id, level))!.id);
+          }
+          const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+          const list = detailed.getDetailedCharacterAptitudes().getAptitudes()["templeraiderofolidammaraspells"].id;
+          return {
+            uses: spellUses(detailed, "templeraiderofolidammaraspells", [1, 2, 3, 4]),
+            known: allPowers(detailed)
+              .filter((power) => power.aptitudeId === list)
+              .map((power) => power.name)
+              .sort(),
+          };
+        };
+        // His own list has no spells yet (#245): his slots, and the Luck domain's spells from his tenth level
+        expect(await sheetAt(9)).toEqual({ uses: [2, 2, 1, 1], known: [] });
+        expect(await sheetAt(10)).toEqual({
+          uses: [2, 2, 2, 1],
+          known: ["Aid", "Entropic Shield", "Freedom of Movement", "Protection from Energy"],
+        });
+      });
+
       test("join the list of each class that brings them, a class level's as well as a feat's", async () => {
         // A homebrew class whose first level joins the fire domain to its list, taken by a fire cleric
         const ctx = await getSeedCtx();

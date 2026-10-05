@@ -567,6 +567,33 @@ export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; pool
   };
 }
 
+/**
+ * The feats a class's domain pool offers (`spells.domainPool`, a divine crusader's): one per domain her book and the
+ * core rules have, each joining that domain's list to hers. The domain gives her its spells, not its granted power.
+ */
+export function classDomainPickFeats(ref: ClassReference): FeatSeed[] {
+  const pool = classSpells(ref)?.domainPool;
+  if (!pool) return [];
+  const book = ref._meta.book;
+  const domains = [...bookDomainSeeds("srd").seeds, ...(book === "srd" ? [] : bookDomainSeeds(book).seeds)];
+  return domains
+    .map(({ name }) => ({
+      name: `${name} Domain (${ref.raw.name})`,
+      description: `The ${name} domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.`,
+      selectable: true,
+      aptitudes: [pool],
+      modifiers: [
+        {
+          target: `aptitudes.${stripSeparators(name)}domainspells.joinsclasslist`,
+          operator: "set",
+          value: "true",
+          valueType: "boolean",
+        },
+      ],
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 // ---------------------------------------------------------------------------
 // Wizard school reference → WizardSchoolDefinition[]
 // ---------------------------------------------------------------------------
@@ -1020,7 +1047,7 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
   // Collect all feats: standalone feats + class feature feats from reference JSONs
   const allFeats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] = [...feats];
   for (const { ref } of classReferences(book)) {
-    allFeats.push(...buildClassFeatSeeds(ref));
+    allFeats.push(...buildClassFeatSeeds(ref), ...classDomainPickFeats(ref));
     if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
     for (const list of classSpellLists(ref)) names.add(list);
 

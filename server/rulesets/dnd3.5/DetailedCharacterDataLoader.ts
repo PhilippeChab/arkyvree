@@ -48,7 +48,7 @@ import type {
 } from "@/shared/relations.ts";
 
 import { readSkillFlags } from "./skillFlags.ts";
-import { collectFeatListIds } from "./spellcasting/spellLists.ts";
+import { collectClassListIds, collectFeatListIds } from "./spellcasting/spellLists.ts";
 
 // PMR types re-exported for the two files that reach in for them
 // (`DetailedCharacter.ts`, `DetailedCharacterSpellcasting.ts`).
@@ -590,7 +590,8 @@ export default class DetailedCharacterDataLoader {
       rulesetPowerProperties: rulesetData.propertiesByEntityType.get("powers") ?? [],
       rulesetAptitudes: rulesetData.aptitudes,
       rulesetKlasses: rulesetData.klasses,
-      leveledAptitudeIds: rulesetData.leveledAptitudeIds,
+      // A list with spells at a level, or one a class gives slots in before it has any
+      leveledAptitudeIds: new Set([...rulesetData.leveledAptitudeIds, ...collectClassListIds(rulesetData)]),
       featListIds: collectFeatListIds(rulesetData),
     };
   }

@@ -6,6 +6,14 @@
     "type": "class"
   },
   "overrides": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1
+        ],
+        "target": "aptitudes.divinecrusaderdomain.allowed"
+      }
+    ],
     "description": "A divine crusader is a holy warrior wholly devoted to a single deity, channeling that god's power through unwavering faith and martial prowess.",
     "features": {
       "Aura": {
@@ -26,6 +34,9 @@
       "Weapon and Armor Proficiency": {
         "description": "This class does not grant proficiency with any weapons or armor."
       }
+    },
+    "spells": {
+      "domainPool": "Divine Crusader Domain"
     }
   },
   "raw": {

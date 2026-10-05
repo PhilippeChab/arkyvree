@@ -12,7 +12,15 @@
         "description": "Starting at 6th level, a temple raider cannot be flanked. He responds to foes on all sides just as effectively as to a single opponent. No enemy can use flanking to deliver a sneak attack against the temple raider unless that enemy has at least four more rogue levels than the temple raider has levels in this class. When a character possesses uncanny dodge from another class as well, all levels from classes granting uncanny dodge are combined to calculate the minimum rogue level needed to flank him. As an example, flanking a character with 7 rogue levels and 6 temple raider levels would require a rogue of at least 17th level."
       },
       "Luck Domain": {
-        "description": "Upon reaching 10th level, Olidammara's fortune begins to favor the temple raider, bestowing access to the Luck domain. The character may employ the domain's granted power and adds its spells to his temple raider spell list (though not to any other spell lists he possesses). Should he already have the Luck domain, he instead gains one extra daily use of its granted power."
+        "description": "Upon reaching 10th level, Olidammara's fortune begins to favor the temple raider, bestowing access to the Luck domain. The character may employ the domain's granted power and adds its spells to his temple raider spell list (though not to any other spell lists he possesses). Should he already have the Luck domain, he instead gains one extra daily use of its granted power.",
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "aptitudes.luckdomainspells.joinsclasslist",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ]
       },
       "Skill Mastery": {
         "description": "At 9th level, the temple raider achieves such proficiency with particular skills that he can perform them dependably even under pressure. He chooses a number of skills equal to 3 + his Intelligence modifier. Whenever he makes a check using one of these chosen skills, he can take 10 even when stress or distractions would ordinarily make that impossible."

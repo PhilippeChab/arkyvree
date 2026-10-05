@@ -2,6 +2,7 @@ import {
   buildClassFeatSeeds,
   buildPoolParentNameMap,
   classAptitudePicks,
+  classDomainPickFeats,
   classModifiers,
   classSpells,
   existingFeatGranted,
@@ -50,11 +51,13 @@ function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string, uses: Set<s
   return `  { ${parts.join(", ")} },`;
 }
 
-/** A class's feats file: its own feats (`buildClassFeatSeeds`). */
+/** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`classDomainPickFeats`). */
 export function generateFeatSeeds(ref: ClassReference): string {
   const aptitude = ref.mapping.classFeatureAptitude;
   const uses = new Set<string>();
-  const feats = buildClassFeatSeeds(ref).map((feat) => stringifyFeat(feat, aptitude, uses));
+  const feats = [...buildClassFeatSeeds(ref), ...classDomainPickFeats(ref)].map((feat) =>
+    stringifyFeat(feat, aptitude, uses),
+  );
   return [
     `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
     ...requirementImports(uses),

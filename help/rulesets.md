@@ -72,6 +72,7 @@ Examples on the SRD ruleset:
 
 - **Fighter Bonus Feat** — picks at Fighter levels 1, 2, 4, 6, 8, 10, …
 - **Cleric Domain** — two picks at Cleric level 1.
+- **Divine Crusader Domain** — one pick at Divine Crusader level 1 (Complete Divine): her spell list is that domain's spells.
 - **Wizard Spells** — spells added to the spellbook at every level.
 - **Sorcerer Spells Known** — the spontaneous spell list.
 - **General** — the standard "any feat" pool, available at character levels 1, 3, 6, 9, …

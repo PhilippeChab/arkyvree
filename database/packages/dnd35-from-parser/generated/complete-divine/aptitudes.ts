@@ -15,6 +15,7 @@ export const ALL_APTITUDES: string[] = [
   "Deity's Weapon Focus",
   "Deity's Weapon Specialization",
   "Divine Crusader Class Feature",
+  "Divine Crusader Domain",
   "Divine Crusader Spells",
   "Divine Oracle Class Feature",
   "Dweomerkeeper Class Feature",

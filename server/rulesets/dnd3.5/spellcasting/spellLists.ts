@@ -11,19 +11,34 @@ export const listOpenedBy = (target: string): string | undefined =>
   SLOT_TARGET.exec(target)?.[1] ?? JOIN_TARGET.exec(target)?.[1];
 
 /**
- * The spell lists the ruleset's class levels give slots in: each a class's own, with spells on it or none yet. A divine
- * crusader's has none: her domain's join it.
+ * Each class's spell lists, by its id: those its levels give slots in, a level no character has taken yet included (a
+ * paladin's before his fourth), each with spells on it or none yet (a divine crusader's: her domain's join it).
  */
-export function collectClassListIds({
+export function collectClassLists({
   klassLevels,
   modifiersBySource,
-  aptitudeIdBySlug,
-}: Pick<CachedRulesetData, "klassLevels" | "modifiersBySource" | "aptitudeIdBySlug">): Set<string> {
-  const ids = new Set<string>();
+}: Pick<CachedRulesetData, "klassLevels" | "modifiersBySource">): Map<string, Set<string>> {
+  const listsByKlassId = new Map<string, Set<string>>();
   for (const klassLevel of klassLevels) {
     for (const modifier of modifiersBySource.get(klassLevel.id) ?? []) {
       const list = SLOT_TARGET.exec(modifier.target)?.[1];
-      const id = list === undefined ? undefined : aptitudeIdBySlug.get(list);
+      if (list === undefined) continue;
+      const lists = listsByKlassId.get(klassLevel.klassId) ?? new Set<string>();
+      lists.add(list);
+      listsByKlassId.set(klassLevel.klassId, lists);
+    }
+  }
+  return listsByKlassId;
+}
+
+/** The spell lists the ruleset's class levels give slots in, by aptitude id: each a class's own (`collectClassLists`). */
+export function collectClassListIds(
+  rulesetData: Pick<CachedRulesetData, "klassLevels" | "modifiersBySource" | "aptitudeIdBySlug">,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const lists of collectClassLists(rulesetData).values()) {
+    for (const list of lists) {
+      const id = rulesetData.aptitudeIdBySlug.get(list);
       if (id) ids.add(id);
     }
   }

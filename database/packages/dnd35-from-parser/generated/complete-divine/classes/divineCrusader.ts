@@ -54,6 +54,9 @@ export const DIVINE_CRUSADER: ClassSeed = {
     knowAll: true,
     noCantrips: true,
   },
+  aptitudePicks: [
+    { levels: [1], target: "aptitudes.divinecrusaderdomain.allowed" },
+  ],
 };
 
 // TODO: No modifiers defined — review if this class needs any
