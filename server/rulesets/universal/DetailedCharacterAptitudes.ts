@@ -123,6 +123,8 @@ export default class DetailedCharacterAptitudes {
      *  `Dnd35LevelsHooks.MAX_SPELL_LEVEL`). No default so a universal file
      *  never carries a ruleset-specific constant. */
     readonly maxSpellLevel: number,
+    /** The general feats a character has at its total level: the ruleset's rule, which a bonded creature has none of. */
+    private readonly countGeneralFeats: (totalLevel: number) => number,
   ) {}
 
   static getSegmentLabels(): Record<string, string> {
@@ -214,8 +216,8 @@ export default class DetailedCharacterAptitudes {
   }
 
   /**
-   * What each aptitude allows: the feats and the (non-free) powers the class levels grant through it, and a general
-   * feat at the first level and every third.
+   * What each aptitude allows: the feats and the (non-free) powers the class levels grant through it, and the general
+   * feats its total level gives (`countGeneralFeats`).
    */
   private applyAllowances(
     aptitudeById: AptitudesById,
@@ -232,7 +234,7 @@ export default class DetailedCharacterAptitudes {
     }
 
     const level = this.characterIdentity.getIdentity().meta.level;
-    this.detailedCharacterComprehensiveAptitudes["general"].allowed += level === 0 ? 0 : Math.floor(level / 3) + 1;
+    this.detailedCharacterComprehensiveAptitudes["general"].allowed += this.countGeneralFeats(level);
   }
 
   /** Sets what the character spent on each aptitude: flat, or per spell level for a leveled one. */

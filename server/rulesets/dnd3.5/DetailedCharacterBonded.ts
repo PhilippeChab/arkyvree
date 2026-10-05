@@ -66,6 +66,14 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     }
   }
 
+  /**
+   * None: a bonded creature's feats are its stat block's and those its hit dice give it (`scaleFeats`), never picked,
+   * so its levels give no general feat to pick.
+   */
+  protected override countGeneralFeats(): number {
+    return 0;
+  }
+
   protected override getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
     return { budget: [], ranks: [] };
   }

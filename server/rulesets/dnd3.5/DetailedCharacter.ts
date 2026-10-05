@@ -97,6 +97,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.detailedCharacterIdentity,
       this.detailedCharacterClasses,
       Dnd35LevelsHooks.MAX_SPELL_LEVEL,
+      (totalLevel) => this.countGeneralFeats(totalLevel),
     );
     this.detailedCharacterSkills = new DetailedCharacterSkills(
       this.detailedCharacterAbilities,
@@ -209,6 +210,11 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.klassLevelProperties = data.klassLevelProperties;
     this.klassBonusSpellAbilityMap = data.klassBonusSpellAbilityMap;
     this.klassCasterTypeMap = data.klassCasterTypeMap;
+  }
+
+  /** The general feats the character has at its total level (`Dnd35LevelsHooks.countGeneralFeats`). */
+  protected countGeneralFeats(totalLevel: number): number {
+    return Dnd35LevelsHooks.countGeneralFeats(totalLevel);
   }
 
   private getDiagnosticsIndex() {

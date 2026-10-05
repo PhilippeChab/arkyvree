@@ -93,6 +93,21 @@ describe("Bonded creatures", () => {
     },
   );
 
+  // A familiar's feats are its stat block's; a companion's and a mount's come with their hit dice, given, not picked
+  test.each([
+    ["a wizard's familiar", () => createWizardWithFamiliar(), DetailedCharacterFamiliar],
+    ["a druid's animal companion", () => createDruidWithCompanion(3), DetailedCharacterAnimalCompanion],
+    ["a paladin's special mount", () => createPaladinWithMount(5), DetailedCharacterMount],
+  ] as const)("%s has no general feat to pick, and no unspent slot", async (_, create, Kind) => {
+    const { bonded } = await create();
+    const detailed = await build(new Kind(bonded));
+    expect(detailed.getDetailedCharacterAptitudes().getAptitudes()["general"]).toMatchObject({
+      allowed: 0,
+      available: 0,
+    });
+    expect(detailed.validate().issues).toEqual([]);
+  });
+
   test("a companion loses a level with each of its druid's, and goes with the level that picked it", async () => {
     const { masterId, bonded } = await createDruidWithCompanion(3);
     const companionLevels = async () => (await CharacterLevels.findMany(db, { characterId: bonded.id })).length;
