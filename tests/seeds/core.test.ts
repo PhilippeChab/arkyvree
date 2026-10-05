@@ -78,7 +78,7 @@ describe("The seeded core rules", () => {
       }
     });
 
-    test("each open a domain spell a spell level, as the cleric reaches it, and carry their other powers", async () => {
+    test("each open a domain spell a spell level, as the cleric reaches it, join the cleric's list, and carry their other powers", async () => {
       const rows = await seededRows();
       // The cleric level each spell level opens at: the first at the first.
       const opensAt = [1, 3, 5, 7, 9, 11, 13, 15, 17];
@@ -99,6 +99,7 @@ describe("The seeded core rules", () => {
               const requirement = i === 0 ? "" : ` classes.cleric.level greater_than_or_equal ${clericLevel}`;
               return [`${i + 1}.allowed set -1${requirement}`, `${i + 1}.uses add 1${requirement}`];
             })
+            .concat("joinsclasslist set true")
             .sort(),
         });
         const others = modifiers

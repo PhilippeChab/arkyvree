@@ -237,7 +237,7 @@ Three granularities:
 |---|---|---|
 | `invalidateTargetPaths(id)` | Dependent target paths + segment labels | Entity property edited (spell school, weapon type) but entity list unchanged |
 | `invalidateRulesetEntities(id)` | Raw entities for this ruleset + dependent COW data; not target paths | Entity data (description, stats) edited |
-| `invalidateRuleset(id)` | Raw entities for this ruleset + dependent COW data and target paths | Entities added/removed/renamed (target paths change) |
+| `invalidateRuleset(id)` | Raw entities for this ruleset + dependent COW data and target paths | Entities added/removed/renamed, or a modifier written: a list's slots and joins decide which lists have spell levels and known-spell paths (target paths change) |
 | `invalidateAll()` | Every ruleset's everything | Test teardown, rare |
 
 In tests, the cache reads through the test's transaction and outlives its rollback: rows a test writes straight into a seeded ruleset stay cached once a read rebuilds that ruleset. Tests write into forks instead, or call `invalidateSeededRuleset` (`tests/helpers.ts`), which `tests/setup.ts` repeats after the rollback.

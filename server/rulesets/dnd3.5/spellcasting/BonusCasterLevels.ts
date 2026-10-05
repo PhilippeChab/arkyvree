@@ -2,19 +2,21 @@ import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type { FeatWithPMR, KlassLevelWithPMR } from "@/server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
+import { SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { Holders } from "@/server/rulesets/types.ts";
 import {
   ALLOWED_ALL,
   type AptitudeLevelData,
   clearAllKnown,
 } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
+import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A character level's key in the index of the class levels the character took. */
 const levelKey = (characterLevelId: string, klassLevelId: string) => `${characterLevelId}:${klassLevelId}`;
 
-/** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain spells they bring. */
+/** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain and school slots they bring. */
 export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithBonusCasterLevels extends Base {
     /** Attributes each bonus klass level to the class level that granted it ("Mystic Theurge Level 3"). */
@@ -68,6 +70,30 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     }
 
     /**
+     * Each list a feat brings that it gives slots in (`featListIds`: a cleric's domain, a specialist wizard's school):
+     * the class whose level gave the feat, and the feat's modifiers on the list's slots. A list stays with the first feat.
+     */
+    private featListSlots(feats: FeatWithPMR[], featListIds: Set<string>) {
+      const aptitudes = this.aptitudes.getAptitudes();
+      const classNameByKlassLevelId = this.classNameByKlassLevelId();
+      const slotsByList = new Map<string, { className: string; featId: string; modifiers: Modifier[] }>();
+      for (const feat of feats) {
+        const className = classNameByKlassLevelId.get(feat.klassLevelId);
+        if (!className) continue;
+        for (const modifier of feat.modifiers) {
+          const list = SLOT_TARGET.exec(modifier.target)?.[1];
+          const listId = list === undefined ? undefined : aptitudes[list]?.id;
+          if (list === undefined || !listId || !featListIds.has(listId)) continue;
+          const slots = slotsByList.get(list) ?? { className, featId: feat.id, modifiers: [] };
+          if (slots.featId !== feat.id) continue;
+          slots.modifiers.push(modifier);
+          slotsByList.set(list, slots);
+        }
+      }
+      return slotsByList;
+    }
+
+    /**
      * The class levels that granted the bonus caster levels `target` adds to, in level order: each level a feat adding
      * to it was taken at, but for a class level that adds to it itself.
      */
@@ -98,53 +124,65 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     }
 
     /**
-     * Sync domain spell aptitude levels to match the parent class's accessible spell levels.
+     * The slots a feat's modifiers give a list at one spell level, as the paths allow them: `uses` and `allowed` added,
+     * or `allowed` set to -1, every spell of the level known.
      */
-    protected syncDomainSpellAptitudes(feats: FeatWithPMR[]) {
+    private slotsGiven(modifiers: Modifier[]) {
+      let uses = 0;
+      let allowed = 0;
+      let allKnown = false;
+      for (const modifier of modifiers) {
+        const value = parseLiteralValue(modifier.value, "number");
+        if (typeof value !== "number") continue;
+        if (modifier.target.endsWith(".uses")) uses += value;
+        else if (modifier.operator === "set" && value === ALLOWED_ALL) allKnown = true;
+        else allowed += value;
+      }
+      return { uses, allowed: allKnown ? ALLOWED_ALL : allowed };
+    }
+
+    /**
+     * Keeps the slots a feat gives in a list it brings (a cleric's domain, a specialist wizard's school) at the spell
+     * levels its class casts, bonus caster levels counted: a level the class casts gets the slots the feat gives there
+     * whose requirements hold but the class's level (`isGateMet` with that target met), one it doesn't cast none. The
+     * feat's modifiers open their levels by the class's own level alone.
+     */
+    protected syncFeatListSlots(
+      feats: FeatWithPMR[],
+      featListIds: Set<string>,
+      isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
+    ) {
       const aptitudes = this.aptitudes.getAptitudes();
-      const classes = this.classes.getCharacterClasses();
-
-      // klassLevelId → className index so feat → class attribution is O(1)
-      // instead of O(classes × levels) per feat modifier.
-      const classNameByKlassLevelId = new Map<string, string>();
-      for (const [className, klassData] of Object.entries(classes)) {
-        for (const l of klassData.levels) {
-          classNameByKlassLevelId.set(l.klassLevel.id, className);
-        }
-      }
-
-      // Build domain aptitude key → owning class name by tracing feat → klassLevelId → class
-      const domainAptKeys = new Map<string, string>();
-      for (const feat of feats) {
-        for (const mod of feat.modifiers) {
-          if (!mod.target.includes("domainspells")) continue;
-          const parts = mod.target.split(".");
-          if (parts.length < 4 || parts[0] !== "aptitudes") continue;
-          const aptKey = parts[1];
-          if (domainAptKeys.has(aptKey)) continue;
-
-          const className = classNameByKlassLevelId.get(feat.klassLevelId);
-          if (className) domainAptKeys.set(aptKey, className);
-        }
-      }
-
-      // For each domain spell aptitude, sync levels with the parent class spell aptitude
-      for (const [domainAptKey, className] of domainAptKeys) {
-        const domainApt = aptitudes[domainAptKey] as Record<string, unknown> | undefined;
-        const classSpellApt = aptitudes[stripSeparators(className + "spells")] as Record<string, unknown> | undefined;
-        if (!domainApt || !classSpellApt) continue;
+      for (const [list, { className, modifiers }] of this.featListSlots(feats, featListIds)) {
+        const classLevel = `classes.${stripSeparators(className)}.level`;
+        const listLevels = aptitudes[list] as Record<string, unknown> | undefined;
+        const classLists = this.spellListsOf(className).flatMap((key) => {
+          const classList = aptitudes[key] as Record<string, unknown> | undefined;
+          return classList ? [classList] : [];
+        });
+        if (!listLevels || classLists.length === 0) continue;
 
         for (let level = 1; level <= 9; level++) {
-          const classLevel = classSpellApt[String(level)] as AptitudeLevelData | undefined;
-          const domainLevel = domainApt[String(level)] as AptitudeLevelData | undefined;
-          if (!classLevel || !domainLevel) continue;
+          const listLevel = listLevels[String(level)] as AptitudeLevelData | undefined;
+          const classLevels = classLists.flatMap((classList) => {
+            const classLevel = classList[String(level)] as AptitudeLevelData | undefined;
+            return classLevel ? [classLevel] : [];
+          });
+          if (!listLevel || classLevels.length < classLists.length) continue;
 
-          if (classLevel.allowed === ALLOWED_ALL && domainLevel.allowed === 0) {
-            domainLevel.allowed = ALLOWED_ALL;
-            domainLevel.uses = 1;
-          } else if (classLevel.allowed === 0 && domainLevel.allowed === ALLOWED_ALL) {
-            clearAllKnown(domainLevel);
-            domainLevel.uses = 0;
+          const casts = classLevels.some((classLevel) => classLevel.allowed !== 0 || classLevel.uses > 0);
+          if (casts && listLevel.allowed === 0) {
+            const given = this.slotsGiven(
+              modifiers.filter(
+                (modifier) =>
+                  modifier.target.startsWith(`aptitudes.${list}.${level}.`) && isGateMet(modifier, [classLevel]),
+              ),
+            );
+            listLevel.uses += given.uses;
+            listLevel.allowed = given.allowed;
+          } else if (!casts && listLevel.allowed !== 0) {
+            clearAllKnown(listLevel);
+            listLevel.uses = 0;
           }
         }
       }
@@ -152,9 +190,15 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
 
     /**
      * Applies the spell progression (`aptitudes.*`) of the class levels bonus caster levels reach, each modifier while
-     * its own requirements hold (`isGateMet`): a pious templar's slots go to the list she picked only.
+     * its own requirements hold (`isGateMet`): a pious templar's slots go to the list she picked only. Then the lists a
+     * feat brings (`featListIds`) follow their class's spell levels. `isGateMet` takes the targets to count as met.
      */
-    applyBonusCasterLevelModifiers(holders: Holders, feats: FeatWithPMR[], isGateMet: (modifier: Modifier) => boolean) {
+    applyBonusCasterLevelModifiers(
+      holders: Holders,
+      feats: FeatWithPMR[],
+      featListIds: Set<string>,
+      isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
+    ) {
       const aptitudeModifiers = this.bonusKlassLevelModifiers.filter(
         (m) => m.target.startsWith("aptitudes.") && isGateMet(m),
       );
@@ -163,7 +207,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         this.characterModifiers.evaluateModifier(modifier, holders);
       }
 
-      this.syncDomainSpellAptitudes(feats);
+      this.syncFeatListSlots(feats, featListIds, isGateMet);
     }
 
     getBonusKlassLevelAttribution() {

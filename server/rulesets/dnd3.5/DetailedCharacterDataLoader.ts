@@ -48,6 +48,7 @@ import type {
 } from "@/shared/relations.ts";
 
 import { readSkillFlags } from "./skillFlags.ts";
+import { collectFeatListIds } from "./spellcasting/spellLists.ts";
 
 // PMR types re-exported for the two files that reach in for them
 // (`DetailedCharacter.ts`, `DetailedCharacterSpellcasting.ts`).
@@ -590,6 +591,7 @@ export default class DetailedCharacterDataLoader {
       rulesetAptitudes: rulesetData.aptitudes,
       rulesetKlasses: rulesetData.klasses,
       leveledAptitudeIds: rulesetData.leveledAptitudeIds,
+      featListIds: collectFeatListIds(rulesetData),
     };
   }
 

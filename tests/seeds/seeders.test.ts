@@ -536,7 +536,7 @@ describe("Seeding", () => {
     ]);
   });
 
-  test("seeds a cleric domain: a feat in Cleric Domain whose spell list opens as the cleric casts each level, with the domain's spells", async () => {
+  test("seeds a cleric domain: a feat in Cleric Domain whose spell list opens as the cleric casts each level and joins the cleric's, with the domain's spells", async () => {
     const ctx = await freshSeedContext();
     await seedAptitudes(db, ctx, ["Cleric Domain"]);
     await seedPowers(db, ctx, [spell("Test Bless", 1), spell("Test Aid", 2)]);
@@ -568,6 +568,7 @@ describe("Seeding", () => {
       requirements: [],
       modifiers: [
         ...gatedSlots("testluckdomainspells", "classes.cleric.level"),
+        "aptitudes.testluckdomainspells.joinsclasslist set true boolean",
         "skills.spot.innate set true boolean",
       ].sort(),
       properties: [],

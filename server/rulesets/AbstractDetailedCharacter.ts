@@ -157,6 +157,8 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   protected leveledAptitudeIds: Set<string> = new Set();
 
+  protected featListIds: Set<string> = new Set();
+
   // ── Modifier/requirement collections ──────────────────────────────
   protected holders: Holders | null = null;
 
@@ -245,6 +247,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     this.rulesetAptitudes = data.rulesetAptitudes;
     this.rulesetKlasses = data.rulesetKlasses;
     this.leveledAptitudeIds = data.leveledAptitudeIds;
+    this.featListIds = data.featListIds;
     this.characterAbilityScores = data.characterAbilityScores;
     this.race = data.race;
     this.languages = data.languages;

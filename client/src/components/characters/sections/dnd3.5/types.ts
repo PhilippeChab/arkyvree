@@ -20,6 +20,7 @@ export interface Dnd35PowersSectionProps {
   virtualPowers?: CharacterDetail["virtualPowers"];
   aptitudes?: CharacterDetail["aptitudes"];
   spellTags?: CharacterDetail["spellTags"];
+  spellTagLists?: CharacterDetail["spellTagLists"];
   rulesetId?: string;
 }
 

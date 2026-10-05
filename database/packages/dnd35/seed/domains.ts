@@ -5,6 +5,7 @@ import { ownPower } from "@/database/packages/dnd35/seed/cow.ts";
 import {
   insertAll,
   insertGatedSpellSlots,
+  joinsClassList,
   modifierRows,
   spellListSlots,
   uniqueBy,
@@ -16,7 +17,8 @@ import { stripSeparators } from "@/shared/text.ts";
 
 /**
  * Seeds cleric domains: each a feat taken in Cleric Domain that gives its spell list ("X Domain Spells") a slot at
- * each spell level, once the cleric casts that level (`clericSpellLevels`), plus the domain's own modifiers.
+ * each spell level, once the cleric casts that level (`clericSpellLevels`), and joins it to the cleric's list, plus the
+ * domain's own modifiers.
  */
 export async function seedDomains(
   db: Db,
@@ -40,8 +42,10 @@ export async function seedDomains(
     db,
     domains.flatMap((d) => {
       const featId = ctx.featMap[`${d.name} Domain`];
+      const list = `${stripSeparators(d.name)}domainspells`;
       return [
-        ...spellListSlots(featId, "feats", `${stripSeparators(d.name)}domainspells`),
+        ...spellListSlots(featId, "feats", list),
+        joinsClassList(featId, "feats", list),
         ...modifierRows(featId, "feats", d.modifiers),
       ];
     }),

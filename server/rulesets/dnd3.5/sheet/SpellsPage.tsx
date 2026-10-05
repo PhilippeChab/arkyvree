@@ -68,6 +68,7 @@ const SpellsPage = ({ detailedCharacter }: { detailedCharacter: DetailedCharacte
     virtualPowers: buildVirtualEntities(detailedCharacter).virtualPowers,
     aptitudes: aptitudes.getAptitudes(),
     spellTags: detailedCharacter.getSpellTags(),
+    spellTagLists: detailedCharacter.getSpellTagLists(),
   });
 
   if (sorted.length === 0) return null;
@@ -156,15 +157,15 @@ const SpellsPage = ({ detailedCharacter }: { detailedCharacter: DetailedCharacte
                           {spell.name}
                           {spell.tags?.map((tag) => (
                             <Text
-                              key={tag}
+                              key={tag.name}
                               style={{
                                 fontSize: FONT_SIZE.xs,
                                 fontWeight: "normal",
-                                color: tag.includes("Domain") ? "#9c27b0" : "#1976d2",
+                                color: tag.joinsClassList ? "#9c27b0" : "#1976d2",
                               }}
                             >
                               {" "}
-                              [{tag}]
+                              [{tag.name}]
                             </Text>
                           ))}
                         </Text>

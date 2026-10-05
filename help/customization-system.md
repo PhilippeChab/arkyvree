@@ -92,6 +92,7 @@ Examples:
 - **Weapon Focus (Longsword)** — target `items.weapons.longsword.tohit.misc`, operator `add`, value `1`.
 - **+1 longsword** — two rows: `items.weapons.longsword.tohit.magic` add `1`, and `items.weapons.longsword.damage.magic` add `1`. Splitting attack and damage into two rows means each shows separately on the sheet.
 - **Toughness** — target `combat.hp.misc`, operator `add`, value `3`.
+- **A cleric's domain** — the domain's feat gives its spell list a slot at each spell level (`aptitudes.firedomainspells.1.uses` add `1`, `aptitudes.firedomainspells.1.allowed` set `-1`, and so on), and sets `aptitudes.firedomainspells.joinsclasslist` to `true`: the domain's spells join the cleric's list, tagged with the domain's name.
 
 The character engine computes the **base, permanent character sheet**. Conditional, situational, or activated effects do *not* belong as modifiers:
 

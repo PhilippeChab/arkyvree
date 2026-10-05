@@ -335,7 +335,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterCombat.initialize(this.race, this.klassLevelProperties);
     this.detailedCharacterInventory.initialize(this.inventory);
     this.detailedCharacterEncumbrance.initialize(this.inventory, this.race);
-    this.detailedCharacterPowers.initialize(this.powers, this.rulesetPowers, this.rulesetAptitudes);
+    this.detailedCharacterPowers.initialize(this.powers, this.rulesetPowers, this.rulesetAptitudes, this.featListIds);
 
     // Seed empty buckets for every school/descriptor in the ruleset so a
     // Spell Focus targeting a school the character has no spells in resolves
@@ -388,8 +388,19 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.characterLevels,
       this.rulesetKlasses,
     );
-    this.detailedCharacterSpellcasting.applyBonusCasterLevelModifiers(this.holders!, this.feats, (modifier) =>
-      this.areRequirementsMet([rulesetData.requirementsByEntity.get(modifier.id) ?? []]),
+    this.detailedCharacterSpellcasting.applyBonusCasterLevelModifiers(
+      this.holders!,
+      this.feats,
+      this.featListIds,
+      // A target counted as met reads as one any value meets: a class's level gate, which its spell levels replace
+      (modifier, metTargets = []) =>
+        this.areRequirementsMet([
+          (rulesetData.requirementsByEntity.get(modifier.id) ?? []).map((requirement) =>
+            requirement.target && metTargets.includes(requirement.target)
+              ? { ...requirement, operator: "greater_than_or_equal", value: "0", valueType: "number" }
+              : requirement,
+          ),
+        ]),
     );
     this.detailedCharacterSpellcasting.applyBonusSpellsFromAbilities(this.klassBonusSpellAbilityMap);
     this.detailedCharacterSpellcasting.computeSpellcasting(this.holders!, this.klassCasterTypeMap);
@@ -400,7 +411,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.rulesetAptitudes,
       this.klassBonusSpellAbilityMap,
     );
-    this.detailedCharacterSpellcasting.buildSpellTags(this.feats, this.rulesetAptitudes);
+    this.detailedCharacterSpellcasting.buildSpellTags(this.feats, this.featListIds);
   }
 
   protected postRequirementProcessing(): void {
@@ -463,6 +474,10 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   getDetailedCharacterWeapons() {
     return this.detailedCharacterWeapons;
+  }
+
+  getSpellTagLists() {
+    return this.detailedCharacterSpellcasting.getSpellTagLists();
   }
 
   getSpellTags() {

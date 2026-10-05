@@ -6,7 +6,8 @@ import type {
   PowerWithPMR,
 } from "@/server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
-import { ALLOWED_ALL } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
+import { JOIN_TARGET, listOpenedBy } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
+import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, Power, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -15,8 +16,8 @@ import { stripSeparators } from "@/shared/text.ts";
 export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithKnownPowers extends Base {
     /**
-     * The class each power-giving aptitude belongs to, traced through the applied modifiers: a class level's (its class,
-     * or the class a bonus caster level advances), then a feat's for domain spells (the class whose level gave the feat).
+     * The class each power-giving aptitude a class level gives slots in belongs to, traced through the applied modifiers:
+     * the class level's class, or the class a bonus caster level advances.
      */
     private aptitudeClassNames() {
       const appliedModifiers = this.characterModifiers.getModifiers().appliedModifiers;
@@ -24,19 +25,13 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
       const aptitudePowerAptitudeIds = new Set(this.allAptitudePowers.map((p) => p.aptitudeId));
-      // The aptitude a modifier of this source type targets, when it gives powers and has no class yet.
-      const targetedAptitude = (modifier: (typeof appliedModifiers)[number], sourceType: string) => {
-        if (modifier.sourceType !== sourceType) return undefined;
-        const parts = modifier.target.split(".");
-        if (parts[0] !== "aptitudes") return undefined;
-        const aptitude = aptitudes[parts[1]];
-        if (!aptitude || !aptitudePowerAptitudeIds.has(aptitude.id)) return undefined;
-        return aptitudeIdToClassName.has(aptitude.id) ? undefined : aptitude;
-      };
 
       for (const modifier of appliedModifiers) {
-        const aptitude = targetedAptitude(modifier, "klass_levels");
-        if (!aptitude) continue;
+        if (modifier.sourceType !== "klass_levels") continue;
+        const parts = modifier.target.split(".");
+        if (parts[0] !== "aptitudes") continue;
+        const aptitude = aptitudes[parts[1]];
+        if (!aptitude || !aptitudePowerAptitudeIds.has(aptitude.id) || aptitudeIdToClassName.has(aptitude.id)) continue;
         // Find which class owns this klass level
         for (const [className, klassData] of Object.entries(classes)) {
           if (klassData.levels.some((level) => level.klassLevel.id === modifier.sourceId)) {
@@ -50,58 +45,73 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
           if (bonusClassName) aptitudeIdToClassName.set(aptitude.id, bonusClassName);
         }
       }
-
-      // Map domain spell aptitudes via feat modifiers.
-      for (const modifier of appliedModifiers) {
-        const aptitude = targetedAptitude(modifier, "feats");
-        if (!aptitude || !aptitude.name.endsWith("Domain Spells")) continue;
-        // Trace feat → klassLevelId → class
-        for (const [className, klassData] of Object.entries(classes)) {
-          if (klassData.levels.some((level) => level.feats.some((f) => f.id === modifier.sourceId))) {
-            aptitudeIdToClassName.set(aptitude.id, className);
-            break;
-          }
-        }
-      }
       return aptitudeIdToClassName;
     }
 
     /**
-     * The aptitude powers the character doesn't have yet, each given at the first level of its class and free. Domain
-     * spells merge into the class's main spell list.
+     * The spell levels each aptitude knows every spell of: a leveled one's levels all known, and those of the classes a
+     * list joins (a cleric's domain spells, at the levels the cleric knows his list at). An unleveled one all known
+     * knows all its powers.
+     */
+    private knownAptitudeLevels() {
+      const aptitudes = this.aptitudes.getAptitudes();
+      const perAptitudeLevels = new Map<string, Set<number>>();
+      const unleveledAptitudeIds = new Set<string>();
+
+      for (const [key, aptitude] of Object.entries(aptitudes)) {
+        if (this.aptitudes.isLeveledAptitude(key)) {
+          const aptitudeObj = aptitude as Record<string, unknown>;
+          const levels = new Set<number>();
+          for (let level = 0; level <= 9; level++) {
+            const levelData = aptitudeObj[String(level)] as { allowed: number } | undefined;
+            if (levelData && levelData.allowed === ALLOWED_ALL) {
+              levels.add(level);
+            }
+          }
+          if (levels.size > 0) {
+            perAptitudeLevels.set(aptitude.id, levels);
+          }
+        } else if (aptitude.allowed === ALLOWED_ALL) {
+          unleveledAptitudeIds.add(aptitude.id);
+        }
+      }
+
+      for (const [list, classNames] of this.joiningClassNames()) {
+        const aptitude = aptitudes[list];
+        if (!aptitude || !this.aptitudes.isLeveledAptitude(list)) continue;
+        const levels = perAptitudeLevels.get(aptitude.id) ?? new Set<number>();
+        for (const className of classNames) {
+          for (let level = 0; level <= 9; level++) {
+            if (this.classListKnowing(className, level)) levels.add(level);
+          }
+        }
+        if (levels.size > 0) perAptitudeLevels.set(aptitude.id, levels);
+      }
+      return { perAptitudeLevels, unleveledAptitudeIds };
+    }
+
+    /**
+     * The aptitude powers the character doesn't have yet, each given at the first level of its class and free: on the
+     * list a class level gives slots in, and on the list of each class a list joins that knows the power's level (a
+     * cleric's domain spells on the cleric's). A joining list's power no such list knows stays on its own list, where it
+     * knows the level itself (a domain a fighter picks through a prestige class, its slots its own).
      */
     private newKnownPowers(powers: PowerWithPMR[], aptitudeIdToClassName: Map<string, string>): PowerWithPMR[] {
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
-      // Build className → class spell aptitude ID map
-      const classNameToSpellAptitudeId = new Map<string, string>();
-      for (const [, clsName] of aptitudeIdToClassName) {
-        if (classNameToSpellAptitudeId.has(clsName)) continue;
-        const spellApt = aptitudes[`${clsName}spells`];
-        if (spellApt) classNameToSpellAptitudeId.set(clsName, spellApt.id);
-      }
+      const aptitudeKeyById = new Map(Object.entries(aptitudes).map(([key, aptitude]) => [aptitude.id, key]));
+      const joining = this.joiningClassNames();
 
       // Deduplicate: exclude powers already present on the character
       const existingPowerIds = new Set(powers.map((p) => p.id));
       const newPowers: PowerWithPMR[] = [];
-      for (const power of this.allAptitudePowers) {
-        if (existingPowerIds.has(power.id)) continue;
-        const className = aptitudeIdToClassName.get(power.aptitudeId);
-        if (!className) continue;
+      const give = (power: (typeof this.allAptitudePowers)[number], className: string, aptitudeId: string) => {
         const klassData = classes[className];
-        if (!klassData || klassData.levels.length === 0) continue;
-
-        const powerAptitude = Object.values(aptitudes).find((a: { id: string }) => a.id === power.aptitudeId) as
-          | { id: string; name: string }
-          | undefined;
-        const resolvedAptitudeId = powerAptitude?.name.endsWith("Domain Spells")
-          ? (classNameToSpellAptitudeId.get(className) ?? power.aptitudeId)
-          : power.aptitudeId;
-
+        if (!klassData || klassData.levels.length === 0) return;
         const firstLevel = klassData.levels[0];
         const enrichedPower: PowerWithPMR = {
           ...power,
-          aptitudeId: resolvedAptitudeId,
+          aptitudeId,
           klassLevelId: firstLevel.klassLevel.id,
           characterLevelId: firstLevel.characterLevel.id,
           free: true,
@@ -111,6 +121,30 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         };
         firstLevel.powers.push(enrichedPower);
         newPowers.push(enrichedPower);
+      };
+
+      for (const power of this.allAptitudePowers) {
+        if (existingPowerIds.has(power.id)) continue;
+        const className = aptitudeIdToClassName.get(power.aptitudeId);
+        if (className) give(power, className, power.aptitudeId);
+
+        const list = aptitudeKeyById.get(power.aptitudeId);
+        const joiningClassNames = [...((list !== undefined && joining.get(list)) || [])];
+        let joined = false;
+        for (const joiningClassName of joiningClassNames) {
+          const classList = this.classListKnowing(joiningClassName, power.powerLevel);
+          if (!classList) continue;
+          give(power, joiningClassName, aptitudes[classList].id);
+          joined = true;
+        }
+        const ownLevel = (aptitudes[list ?? ""] as Record<string, unknown> | undefined)?.[String(power.powerLevel)];
+        if (
+          !joined &&
+          joiningClassNames.length > 0 &&
+          (ownLevel as AptitudeLevelData | undefined)?.allowed === ALLOWED_ALL
+        ) {
+          give(power, joiningClassNames[0], power.aptitudeId);
+        }
       }
       return newPowers;
     }
@@ -145,24 +179,46 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       this.characterPowers.injectGroupings(this.powerGroupings.getPowerGroupings());
     }
 
-    buildSpellTags(feats: FeatWithPMR[], rulesetAptitudes: Aptitude[]) {
-      const characterFeatNames = new Set(feats.map((f) => f.name));
-
-      const taggedAptitudes = new Map<string, string>();
-      for (const apt of rulesetAptitudes) {
-        if (apt.name.endsWith("Domain Spells") || apt.name.endsWith("Specialist Spells")) {
-          const featName = apt.name.replace(/ Spells$/, "");
-          if (characterFeatNames.has(featName)) taggedAptitudes.set(apt.id, featName);
+    /**
+     * Tags the spells of each list one of the character's feats brings (`featListIds`: it gives slots in it or joins it
+     * to its class's list) with the feat's name: a cleric's domain spells "Fire Domain", a specialist wizard's school
+     * spells "Evocation Specialist". A tag shows on that list and on the lists of the class whose level gave the feat.
+     */
+    buildSpellTags(feats: FeatWithPMR[], featListIds: Set<string>) {
+      const aptitudes = this.aptitudes.getAptitudes();
+      const classNameByKlassLevelId = this.classNameByKlassLevelId();
+      const tagsByAptitudeId = new Map<string, string[]>();
+      for (const feat of feats) {
+        const className = classNameByKlassLevelId.get(feat.klassLevelId);
+        const classListIds = className
+          ? this.spellListsOf(className).flatMap((key) => (aptitudes[key] ? [aptitudes[key].id] : []))
+          : [];
+        const lists = new Set(feat.modifiers.flatMap((modifier) => listOpenedBy(modifier.target) ?? []));
+        for (const list of lists) {
+          const aptitude = aptitudes[list];
+          if (!aptitude || !featListIds.has(aptitude.id)) continue;
+          const joinsClassList = feat.modifiers.some((modifier) => JOIN_TARGET.exec(modifier.target)?.[1] === list);
+          // A feat opening several lists shows its tag on each of them
+          const tagged = this.spellTagLists[feat.name] ?? { aptitudeIds: classListIds, joinsClassList: false };
+          this.spellTagLists[feat.name] = {
+            aptitudeIds: [...new Set([aptitude.id, ...tagged.aptitudeIds])],
+            joinsClassList: tagged.joinsClassList || joinsClassList,
+          };
+          tagsByAptitudeId.set(aptitude.id, [...(tagsByAptitudeId.get(aptitude.id) ?? []), feat.name]);
         }
       }
-      if (taggedAptitudes.size === 0) return;
+      if (tagsByAptitudeId.size === 0) return;
 
       for (const link of this.powerAptitudeLinks) {
-        const tag = taggedAptitudes.get(link.aptitudeId);
-        if (!tag) continue;
-        if (!this.spellTags[link.powerId]) this.spellTags[link.powerId] = [];
-        this.spellTags[link.powerId].push(tag);
+        for (const tag of tagsByAptitudeId.get(link.aptitudeId) ?? []) {
+          if (!this.spellTags[link.powerId]) this.spellTags[link.powerId] = [];
+          this.spellTags[link.powerId].push(tag);
+        }
       }
+    }
+
+    getSpellTagLists() {
+      return this.spellTagLists;
     }
 
     getSpellTags() {
@@ -183,28 +239,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     fetchAptitudePowerData(rulesetData: CachedRulesetData, powers: PowerWithPMR[]) {
-      const aptitudes = this.aptitudes.getAptitudes();
-      const perAptitudeLevels = new Map<string, Set<number>>();
-      const unleveledAptitudeIds = new Set<string>();
-
-      for (const [key, aptitude] of Object.entries(aptitudes)) {
-        if (this.aptitudes.isLeveledAptitude(key)) {
-          const aptitudeObj = aptitude as Record<string, unknown>;
-          const levels = new Set<number>();
-          for (let level = 0; level <= 9; level++) {
-            const levelData = aptitudeObj[String(level)] as { allowed: number } | undefined;
-            if (levelData && levelData.allowed === ALLOWED_ALL) {
-              levels.add(level);
-            }
-          }
-          if (levels.size > 0) {
-            perAptitudeLevels.set(aptitude.id, levels);
-          }
-        } else if (aptitude.allowed === ALLOWED_ALL) {
-          unleveledAptitudeIds.add(aptitude.id);
-        }
-      }
-
+      const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels();
       if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
 
       // Iterate the composed powers once, emitting one row per matching

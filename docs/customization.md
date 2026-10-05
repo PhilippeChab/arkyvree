@@ -363,6 +363,8 @@ Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude s
 
 A class's spell lists are those its levels give slots in (`aptitudes.<list>.<spell level>.uses|allowed`), or "<Class> Spells". A class can send its slots to one of several lists, each while that list's requirements hold: the pious templar picks the paladin's or the blackguard's at her first level, and the other list's slots stay gated out. Bonus spells from the casting ability and the caster type's highest spell level (`spellcasting.divine`) read each of a class's lists.
 
+A list a feat brings, one a feat gives slots in and no class does (a cleric's domain, a specialist wizard's school), follows the class whose level gave the feat: its slots follow the spell levels that class casts, bonus caster levels included, it has no known paths, and its spells carry the feat's name as a tag, shown on that list and on the class's lists. A domain's spells also join the cleric's list, because its feat sets `aptitudes.<list>.joinsclasslist`: they're known there. A school's don't: a specialist learns them. The engine reads this data, never a list's name.
+
 ### Seeded classes (for class-level requirements):
 
 All 11 core classes: fighter, barbarian, cleric, rogue, sorcerer, monk, wizard, druid, ranger, paladin, bard.
