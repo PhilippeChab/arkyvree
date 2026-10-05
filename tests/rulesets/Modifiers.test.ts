@@ -21,7 +21,7 @@ function modifier(values: Partial<Modifier> = {}): Modifier {
 }
 
 /** Evaluates a modifier on a target holding `value`; returns what the target ends with, and what was recorded. */
-function evaluate(applied: Modifier, value: number | boolean) {
+function evaluate(applied: Modifier, value: number | boolean | string[]) {
   const target = { misc: value };
   const modifiers = new DetailedCharacterModifiers({
     readsSource: () => false,
@@ -52,6 +52,27 @@ describe("DetailedCharacterModifiers", () => {
       value: 5,
       applied: 0,
       skipped: ['Template "1 / 0" divides by zero'],
+    });
+  });
+
+  test("adds a value to a list and takes one from it: a spell's descriptors", () => {
+    const descriptor = { valueType: "string", target: "powers.fear.properties.SPELL_DESCRIPTOR" } as const;
+    expect(evaluate(modifier({ ...descriptor, operator: "add", value: "Evil" }), ["Fear", "Mind-Affecting"])).toEqual({
+      value: ["Fear", "Mind-Affecting", "Evil"],
+      applied: 1,
+      skipped: [],
+    });
+    expect(
+      evaluate(modifier({ ...descriptor, operator: "subtract", value: "Fear" }), ["Fear", "Mind-Affecting"]),
+    ).toEqual({
+      value: ["Mind-Affecting"],
+      applied: 1,
+      skipped: [],
+    });
+    expect(evaluate(modifier({ target: descriptor.target }), ["Fear"])).toEqual({
+      value: ["Fear"],
+      applied: 0,
+      skipped: ["Value type mismatch: expected number, got object"],
     });
   });
 

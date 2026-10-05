@@ -195,8 +195,10 @@ Weapon items, armor items, and shield items auto-generate proficiency requiremen
 
 | Path | Type | Description |
 |------|------|-------------|
-| `powers.<name>.properties.<type>` | string | Power property value |
+| `powers.<name>.properties.<type>` | string list | Power property values: one per property row, in the type's options' order |
 | `powers.<spell>.<aptitude>.known` | boolean | Whether spell is known via this aptitude |
+
+A property path holds its type's values as a list (a spell's components: `Verbal`, `Somatic`, `Divine Focus`). A requirement asks whether one of them is there, whole (`contains` / `not_contains`: `Focus` isn't on a spell with only a divine focus), and a modifier adds a value or takes one (`add` / `subtract`). A sheet lists them joined, in the books' order.
 
 A list a feat brings (one a feat gives slots in or joins to its class's list, and no class gives slots in: a cleric's domain, a specialist wizard's school) has no known paths: its spells come with the feat.
 

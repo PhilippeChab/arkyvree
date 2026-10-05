@@ -1,7 +1,7 @@
 import type { Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
-import { parseLiteralValue } from "./literalValue.ts";
+import { hasValueType, parseLiteralValue } from "./literalValue.ts";
 import { evaluateTemplateExpression, extractTemplateExpression, isTemplateValue } from "./templateExpression.ts";
 
 type Node = {
@@ -203,7 +203,7 @@ export default class DetailedCharacterRequirements {
     const { valueType } = requirement;
     const { data } = result;
 
-    if (typeof data !== valueType) {
+    if (!hasValueType(data, valueType)) {
       this.warn(requirement, `Value type mismatch: expected ${valueType}, got ${typeof data}`);
       return false;
     }
@@ -212,7 +212,7 @@ export default class DetailedCharacterRequirements {
     const typedValue = this.resolveRequirementValue(requirement, holders);
     if (typedValue === null) return false;
 
-    if (typeof data !== typeof typedValue) {
+    if (!hasValueType(data, typeof typedValue)) {
       this.warn(requirement, `Value type mismatch: expected ${typeof data}, got ${typeof typedValue}`);
       return false;
     }

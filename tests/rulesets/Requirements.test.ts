@@ -87,6 +87,20 @@ describe("DetailedCharacterRequirements", () => {
     );
   });
 
+  // A spell's components are a list: contains asks for one of them, whole; a string's is a substring
+  test.each([
+    ["contains", "Focus", ["Verbal", "Somatic", "Divine Focus"], unmet],
+    ["contains", "Divine Focus", ["Verbal", "Somatic", "Divine Focus"], met],
+    ["not_contains", "Focus", ["Verbal", "Somatic", "Divine Focus"], met],
+    ["not_contains", "Somatic", ["Verbal", "Somatic", "Divine Focus"], unmet],
+    ["contains", "Focus", "Divine Focus", met],
+  ] as const)("%s %p on %p", (operator, value, data, expected) => {
+    const group = [
+      requirement({ target: "powers.bless.properties.SPELL_COMPONENT", operator, value, valueType: "string" }),
+    ];
+    expect(evaluate(group, () => [result(data)])).toEqual({ ...expected, invalid: [] });
+  });
+
   test("reports paths that don't resolve, judging the rest of a wildcard without them", () => {
     expect(evaluate([requirement()], () => [result(null, "Element not found: badpath"), result(true)])).toEqual({
       ...met,

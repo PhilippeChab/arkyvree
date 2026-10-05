@@ -17,3 +17,11 @@ export function parseLiteralValue(value: string, valueType: string | null): numb
       return undefined;
   }
 }
+
+/**
+ * Whether a target's value has the type of a modifier's or a requirement's value: its own, or, for a list (a spell's
+ * components), each of its values', one of which a requirement asks for and a modifier adds or takes.
+ */
+export function hasValueType(data: unknown, valueType: string | null): boolean {
+  return Array.isArray(data) ? data.every((item) => typeof item === valueType) : typeof data === valueType;
+}

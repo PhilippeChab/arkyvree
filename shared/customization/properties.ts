@@ -31,17 +31,27 @@ function sortByOptions(values: string[], options: readonly string[] | null): str
 }
 
 /**
- * An entity's properties by type, each type's values joined in the order of its options (`optionsOf`, a ruleset's
- * static values for the type: a spell's components as V, S, M…, its descriptors alphabetical, as the books print
- * them), those no option names after them as given. Never the order their rows are stored in, which no write
- * controls: a copy, an edit or a reseed could reorder them.
+ * An entity's property values by type, each type's in the order of its options (`optionsOf`, a ruleset's static
+ * values for the type: a spell's components as V, S, M…, its descriptors alphabetical, as the books print them),
+ * those no option names after them as given. Never the order their rows are stored in, which no write controls: a
+ * copy, an edit or a reseed could reorder them.
  */
-export function formatPropertyValues(
+export function groupPropertyValues(
   properties: { type: string; value: string }[],
   optionsOf: (type: string) => readonly string[] | null,
-): Record<string, string> {
+): Record<string, string[]> {
   const valuesByType: Record<string, string[]> = {};
   for (const { type, value } of properties) (valuesByType[type] ??= []).push(value);
+  return Object.fromEntries(
+    Object.entries(valuesByType).map(([type, values]) => [type, sortByOptions(values, optionsOf(type))]),
+  );
+}
+
+/** Each type's values joined in its options' order (`groupPropertyValues`): an entity's properties as a sheet lists them. */
+export function formatPropertyValues(
+  valuesByType: Record<string, string[]>,
+  optionsOf: (type: string) => readonly string[] | null,
+): Record<string, string> {
   return Object.fromEntries(
     Object.entries(valuesByType).map(([type, values]) => [type, sortByOptions(values, optionsOf(type)).join(", ")]),
   );
