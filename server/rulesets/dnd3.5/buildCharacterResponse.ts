@@ -3,7 +3,9 @@ import type { InferSelectModel } from "drizzle-orm";
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import type Dnd35DetailedCharacterBonded from "@/server/rulesets/dnd3.5/DetailedCharacterBonded.ts";
+import { getStaticPropertyValues } from "@/server/rulesets/dnd3.5/PropertyTypes.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
+import { formatPropertyValues } from "@/shared/customization/properties.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /** The requirements, each group and each invalid one with the name of the entity it belongs to. */
@@ -83,7 +85,7 @@ export function buildVirtualEntities(dc: Dnd35DetailedCharacter) {
       aptitudeId: entry.aptitudeId,
       level: entry.level,
       dc: entry.dc,
-      properties: Object.fromEntries(entry.properties.map((p) => [p.type, p.value])),
+      properties: formatPropertyValues(entry.properties, getStaticPropertyValues),
     })),
   };
 }

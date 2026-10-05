@@ -46,7 +46,7 @@ import {
   Requirements,
   Rulesets,
 } from "@/server/repositories/index.ts";
-import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
+import { buildFullCharacterResponse, buildVirtualEntities } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import type { WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
@@ -2906,6 +2906,15 @@ describe("DetailedCharacter", () => {
         const detailed = await setupGrantedSpell({ requirement: true });
         expect(detailed.getDetailedCharacterPowers().getSpellEntry("magicmissile", "wizard")?.known).toBe(true);
         expect(requirementIssues(detailed).find((issue) => issue.entityName === "Magic Missile")).toBeUndefined();
+      });
+
+      test("list each of their properties' values, in the books' order", async () => {
+        // Magic Missile's components: Verbal and Somatic, on a sheet's granted spells as on its others
+        const { virtualPowers } = buildVirtualEntities(await setupGrantedSpell());
+        expect(virtualPowers.find((power) => power.name === "Magic Missile")?.properties).toMatchObject({
+          SPELL_COMPONENT: "Verbal, Somatic",
+          SPELL_SCHOOL: "Evocation",
+        });
       });
 
       test("get the school's DC bonuses", async () => {

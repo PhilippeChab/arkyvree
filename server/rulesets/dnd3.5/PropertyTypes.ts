@@ -321,6 +321,11 @@ const PROPERTY_VALUES: Record<string, string[]> = {
   [RACE_QUADRUPED]: ["true", "false"],
 };
 
+/** A property type's options: the values the engine knows for it, in their order. None for a free-text type. */
+export function getStaticPropertyValues(type: string): string[] | null {
+  return PROPERTY_VALUES[type] ?? null;
+}
+
 export default class Dnd35PropertyTypes implements PropertyTypesProvider {
   getStaticPropertyTypes(entityType?: PropertyEntityType): Record<string, string> {
     if (!entityType) {
@@ -340,6 +345,6 @@ export default class Dnd35PropertyTypes implements PropertyTypesProvider {
   }
 
   getStaticPropertyValues(type: string): string[] | null {
-    return PROPERTY_VALUES[type] ?? null;
+    return getStaticPropertyValues(type);
   }
 }
