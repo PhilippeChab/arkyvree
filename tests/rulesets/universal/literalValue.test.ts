@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
+import { hasValueType, parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 
 describe("parseLiteralValue", () => {
   test.each([
@@ -19,5 +19,18 @@ describe("parseLiteralValue", () => {
     ["1", null, undefined],
   ] as const)("reads %p as a %s: %p", (value, valueType, expected) => {
     expect(parseLiteralValue(value, valueType)).toBe(expected);
+  });
+});
+
+describe("hasValueType", () => {
+  test.each([
+    ["Fire", "string", true],
+    [3, "string", false],
+    [["Verbal", "Somatic"], "string", true],
+    [["Verbal", 3], "string", false],
+    [[], "string", true],
+    [{ misc: 1 }, "string", false],
+  ] as const)("%p has the type %s, or each of its values does: %p", (data, valueType, expected) => {
+    expect(hasValueType(data, valueType)).toBe(expected);
   });
 });

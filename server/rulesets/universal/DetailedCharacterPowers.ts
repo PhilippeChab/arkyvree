@@ -1,5 +1,5 @@
 import type { PowerDc, PowerDcsByClass } from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
-import { formatPropertyType, formatPropertyValues } from "@/shared/customization/properties.ts";
+import { formatPropertyType, formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude, type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
@@ -7,7 +7,11 @@ import { stripSeparators } from "@/shared/text.ts";
 
 type PowerEntry = {
   power: Power;
-  properties: Record<string, string>;
+  /**
+   * Each property type's values, in its options' order: a list, which a requirement's `contains` asks one of and a
+   * modifier adds a value to or takes one from. A sheet lists them joined (`getFlatPowers`).
+   */
+  properties: Record<string, string[]>;
   /** Its DC as each of the character's classes casts it, by the class's aptitude slug. */
   dc?: PowerDcsByClass;
 };
@@ -55,7 +59,8 @@ export default class DetailedCharacterPowers {
           category: "powers",
           description: `${power.name} ${formatPropertyType(type)} property`,
           valueType: "string",
-          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal", "contains"],
+          // A list of values: one of them is required or added, never the whole list as text
+          operators: kind === "modifier" ? ["add", "subtract"] : ["contains", "not_contains"],
         });
       }
     }
@@ -138,11 +143,13 @@ export default class DetailedCharacterPowers {
     }
   }
 
-  getFlatPowers(): Record<string, PowerEntry> {
-    const result: Record<string, PowerEntry> = {};
+  /** The spells as a sheet lists them: each property type's values joined, those modifiers add included. */
+  getFlatPowers(): Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> {
+    const result: Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> = {};
     for (const [key, value] of Object.entries(this.detailedCharacterPowers)) {
       if ("power" in value) {
-        result[key] = value as PowerEntry;
+        const entry = value as PowerEntry;
+        result[key] = { ...entry, properties: formatPropertyValues(entry.properties, this.propertyValues) };
       }
     }
     return result;
@@ -163,7 +170,7 @@ export default class DetailedCharacterPowers {
 
   addPowerEntries(powers: (Power & { properties: Property[] })[]) {
     for (const power of powers) {
-      const propertiesMap = formatPropertyValues(power.properties, this.propertyValues);
+      const propertiesMap = groupPropertyValues(power.properties, this.propertyValues);
 
       // A spell already listed keeps what's on its entry: its known flags and its DCs by class
       const slug = stripSeparators(power.name);

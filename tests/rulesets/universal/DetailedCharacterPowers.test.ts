@@ -22,10 +22,35 @@ describe("DetailedCharacterPowers.addPowerEntries", () => {
     const powers = new DetailedCharacterPowers(getStaticPropertyValues);
     powers.addPowerEntries([{ ...enthrall, properties }]);
 
+    // Each type's values a list, which a requirement asks one of, and a sheet's line joined
     expect(powers.getPower("Enthrall")?.properties).toMatchObject({
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Chanting"],
+      [SPELL_DESCRIPTOR]: ["Language-Dependent", "Mind-Affecting", "Sonic"],
+      [SPELL_TARGET]: ["Any number of creatures", "One creature"],
+    });
+    expect(powers.getFlatPowers()["enthrall"].properties).toMatchObject({
       [SPELL_COMPONENT]: "Verbal, Somatic, Chanting",
       [SPELL_DESCRIPTOR]: "Language-Dependent, Mind-Affecting, Sonic",
       [SPELL_TARGET]: "Any number of creatures, One creature",
     });
+  });
+});
+
+describe("DetailedCharacterPowers.generateTargetPaths", () => {
+  test("offers a spell's values of a type as a list: one of them required, or added or taken", async () => {
+    const { rulesetId } = await getSeedCtx();
+    const enthrall = (await Powers.findOne(db, { name: "Enthrall", rulesetId }))!;
+    const properties = await Properties.findMany(db, { entityIds: [enthrall.id], entityType: "powers" });
+    const operatorsOf = (kind: "modifier" | "requirement") =>
+      DetailedCharacterPowers.generateTargetPaths(
+        [{ ...enthrall, powersAptitudesInRules: [], properties }],
+        [],
+        new Set(),
+        kind,
+      ).find((path) => path.path === `powers.enthrall.properties.${SPELL_COMPONENT}`)?.operators;
+    expect([operatorsOf("requirement"), operatorsOf("modifier")]).toEqual([
+      ["contains", "not_contains"],
+      ["add", "subtract"],
+    ]);
   });
 });

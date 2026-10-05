@@ -3,7 +3,7 @@ import type { Modifier } from "@/shared/relations.ts";
 
 import type DetailedCharacterRequirements from "./DetailedCharacterRequirements.ts";
 import { isTraversable } from "./isTraversable.ts";
-import { parseLiteralValue } from "./literalValue.ts";
+import { hasValueType, parseLiteralValue } from "./literalValue.ts";
 import {
   evaluateTemplateExpression,
   extractReferencedPaths,
@@ -72,7 +72,7 @@ export default class DetailedCharacterModifiers {
     const typedValue = this.resolveModifierValue(modifier, data, holders);
     if (typedValue === null) return;
 
-    if (typeof data !== typeof typedValue) {
+    if (!hasValueType(data, typeof typedValue)) {
       this.skip(modifier, `Value type mismatch: expected ${typeof data}, got ${typeof typedValue}`);
       return;
     }
@@ -160,7 +160,7 @@ export default class DetailedCharacterModifiers {
       }
       return resolved;
     }
-    if (typeof data !== valueType) {
+    if (!hasValueType(data, valueType)) {
       this.skip(modifier, `Value type mismatch: expected ${valueType}, got ${typeof data}`);
       return null;
     }
