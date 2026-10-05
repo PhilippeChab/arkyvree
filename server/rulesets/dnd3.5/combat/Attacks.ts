@@ -196,11 +196,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
 
     /**
      * A natural weapon's attacks: one at the base attack bonus, whatever it is, and when it's the creature's primary one
-     * (`repeats`), the extra ones `combat.naturalattacks.extraprimary` counts, each at −5.
+     * (`repeats`), the extra ones `combat.naturalattacks.extraattacks` counts, each at −5.
      */
     private naturalAttacks(repeats: boolean): number[] {
       const { bab, naturalattacks } = this.detailedCharacterCombat;
-      const extra = repeats ? Math.max(0, naturalattacks.extraprimary) : 0;
+      const extra = repeats ? Math.max(0, naturalattacks.extraattacks) : 0;
       return [bab, ...Array.from({ length: extra }, () => bab - CONSTANTS.ATTACK_STEP)];
     }
 
@@ -213,7 +213,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const otherDice = this.doubleWeapons.get(weapon);
       if (!otherDice || this.detailedCharacterCombat.weaponsets[setKey]?.twohanded !== weapon) return null;
       const { twoweapon } = this.detailedCharacterCombat;
-      const first = weapon.tohit.total[0] + twoweapon.offhand + CONSTANTS.LIGHT_OFF_HAND_BONUS;
+      const first = weapon.tohit.total[0] + twoweapon.offhandpenalty + CONSTANTS.LIGHT_OFF_HAND_BONUS;
       const total = Array.from(
         { length: Math.max(1, twoweapon.offhandattacks) },
         (_, index) => first - index * CONSTANTS.ATTACK_STEP,
@@ -247,8 +247,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     private thrownAttack(weapon: WeaponSlot): NonNullable<WeaponSlot["thrown"]> {
       const dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
       const { tohit } = weapon;
-      const throwing = this.detailedCharacterCombat.throwing.misc;
-      const bonuses = dexterity + tohit.magic + tohit.misc + tohit.size + tohit.gear + throwing;
+      const throwing = this.detailedCharacterCombat.throwing.tohit;
+      const bonuses = dexterity + tohit.magic + tohit.misc + tohit.size + tohit.gearpenalty + throwing;
       return { dexterity, total: iterativeAttacks(this.detailedCharacterCombat.bab).map((base) => base + bonuses) };
     }
 
@@ -262,7 +262,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const { twoweapon } = this.detailedCharacterCombat;
       // A double weapon in two hands fights as two weapons, its other end a light off-hand one (`offEndAttack`)
       if (weapon === twohanded && this.doubleWeapons.has(weapon)) {
-        const penalty = twoweapon.mainhand + CONSTANTS.LIGHT_OFF_HAND_BONUS;
+        const penalty = twoweapon.mainhandpenalty + CONSTANTS.LIGHT_OFF_HAND_BONUS;
         const damage = formatDamageTotal({ ...weapon.damage, strength: this.strengthDamage(1, null) });
         return { total: weapon.tohit.total.map((attack) => attack + penalty), thrown: null, damage };
       }
@@ -272,11 +272,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const lightBonus = offhand.light || this.oversizedOffHand ? CONSTANTS.LIGHT_OFF_HAND_BONUS : 0;
       const attacks =
         weapon === mainhand
-          ? (totals: number[]) => totals.map((attack) => attack + twoweapon.mainhand + lightBonus)
+          ? (totals: number[]) => totals.map((attack) => attack + twoweapon.mainhandpenalty + lightBonus)
           : (totals: number[]) =>
               Array.from(
                 { length: Math.max(1, twoweapon.offhandattacks) },
-                (_, index) => totals[0] + twoweapon.offhand + lightBonus - index * CONSTANTS.ATTACK_STEP,
+                (_, index) => totals[0] + twoweapon.offhandpenalty + lightBonus - index * CONSTANTS.ATTACK_STEP,
               );
       const thrown = weapon.thrown;
       return { total: attacks(weapon.tohit.total), thrown: thrown ? attacks(thrown.total) : null };
@@ -394,10 +394,12 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const sheet = {
         attackModifier: () => this.attackModifier(abilities),
         size: () => SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0,
-        gear: () => this.gearPenalty() + handPenalty,
-        secondary: () => (natural?.kind === "secondary" ? this.detailedCharacterCombat.naturalattacks.secondary : 0),
-        // A thrown weapon or a sling: a ranged weapon Strength adds to by the hand, not a bow or a crossbow
-        throwing: () => (ranged && strengthDamage === "Slot" ? this.detailedCharacterCombat.throwing.misc : 0),
+        gearPenalty: () => this.gearPenalty() + handPenalty,
+        // What only some weapons take: a secondary natural attack's penalty, and a thrown weapon's or a sling's bonus (a
+        // ranged weapon Strength adds to by the hand, not a bow or a crossbow)
+        kindBonus: () =>
+          (natural?.kind === "secondary" ? this.detailedCharacterCombat.naturalattacks.secondarypenalty : 0) +
+          (ranged && strengthDamage === "Slot" ? this.detailedCharacterCombat.throwing.tohit : 0),
         attacks: () =>
           natural ? this.naturalAttacks(natural.repeats) : iterativeAttacks(this.detailedCharacterCombat.bab),
         thrown: (weapon: WeaponSlot) => (!ranged && weapon.range > 0 ? this.thrownAttack(weapon) : null),
@@ -416,7 +418,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         ranged,
         range: Number(property(WEAPON_RANGE)?.value ?? 0),
         reach: Number(property(WEAPON_REACH)?.value ?? 0),
-        slot: slotKey,
+        wielded: slotKey,
         tohit: {
           get strength() {
             return sheet.attackModifier();
@@ -426,18 +428,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           get size() {
             return sheet.size();
           },
-          get gear() {
-            return sheet.gear();
-          },
-          get secondary() {
-            return sheet.secondary();
-          },
-          get throwing() {
-            return sheet.throwing();
+          get gearpenalty() {
+            return sheet.gearPenalty();
           },
           get total() {
-            const bonuses =
-              this.strength + this.magic + this.misc + this.size + this.gear + this.secondary + this.throwing;
+            const bonuses = this.strength + this.magic + this.misc + this.size + this.gearpenalty + sheet.kindBonus();
             return sheet.attacks().map((base) => base + bonuses);
           },
         },

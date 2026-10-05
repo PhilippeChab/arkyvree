@@ -120,7 +120,7 @@ const WEAPON_FAMILIARITY: Record<string, string> = {
  */
 function exoticProficiency(weapon: string, held: boolean): RequirementEntry[] {
   const asMartial = [
-    ...(held && MARTIAL_IN_TWO_HANDS.has(weapon) ? [eqStr("combat.slot", "twohanded")] : []),
+    ...(held && MARTIAL_IN_TWO_HANDS.has(weapon) ? [eqStr("weapon.wielded", "twohanded")] : []),
     ...(weapon in WEAPON_FAMILIARITY ? [eqStr("identity.physiology.race.name", WEAPON_FAMILIARITY[weapon])] : []),
   ];
   const own = eq(feat(`Exotic Weapon Proficiency: ${weapon}`));

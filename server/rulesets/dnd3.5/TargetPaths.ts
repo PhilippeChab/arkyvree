@@ -6,7 +6,7 @@ import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterC
 import DetailedCharacterEncumbrance from "@/server/rulesets/dnd3.5/DetailedCharacterEncumbrance.ts";
 import DetailedCharacterShields from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
 import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
-import DetailedCharacterWeapons from "@/server/rulesets/dnd3.5/DetailedCharacterWeapons.ts";
+import DetailedCharacterWeapons, { WEAPON_PATH_ROOTS } from "@/server/rulesets/dnd3.5/DetailedCharacterWeapons.ts";
 import type {
   Holder,
   Holders,
@@ -48,6 +48,7 @@ const DND35_CATEGORIES = [
   "skills",
   "saves",
   "combat",
+  "weapon",
   "items",
   "classes",
   "feats",
@@ -60,18 +61,23 @@ const DND35_CATEGORIES = [
 
 const PATH_DESCRIPTIONS: Record<string, string> = {
   // Combat
-  "combat.tohit": "Attack roll bonuses for the equipped source weapon",
-  "combat.damage": "Damage roll bonuses for the equipped source weapon",
-  "combat.damage.critical": "Critical hit properties",
   "combat.ac": "AC bonuses and totals",
+  "combat.armor": "The armor worn",
+  "combat.shield": "The shield carried",
   "combat.hp": "HP sources and total",
   "combat.initiative": "Initiative bonus components",
   "combat.grapple": "Grapple: BAB + Str + size",
   "combat.twoweapon": "Two-weapon fighting: each hand's penalty and the off hand's attacks",
+  "combat.naturalattacks": "Natural attacks: the secondary ones' penalty, extra attacks, and their count",
+  "combat.throwing": "Attacks with thrown weapons and slings",
   "combat.speed": "Movement speed (ft)",
   "combat.encumbrance": "Carry weight and load capacity",
+  // An item's own weapon
+  "weapon.tohit": "Attack roll bonuses of the item's own weapon",
+  "weapon.damage": "Damage roll bonuses of the item's own weapon",
+  "weapon.damage.critical": "Critical hit properties",
   // Items
-  "items.weapons": "Per-weapon attack, damage, critical, and slot stats",
+  "items.weapons": "Per-weapon attack, damage, critical, and how it's wielded",
   "items.armors": "Per-armor AC, check penalty, spell failure, and max dexterity",
   "items.shields": "Per-shield AC, check penalty, and spell failure",
   // Item sub-group intermediates (structural keys, dynamic group stripped)
@@ -107,7 +113,8 @@ const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   abilities: "Ability scores and modifiers",
   skills: "Skill ranks and modifiers",
   saves: "Fortitude, Reflex, and Will saving throws",
-  combat: "AC, hit points, attack bonuses, initiative, speed, and self-targeting weapon modifiers",
+  combat: "AC, hit points, attack bonuses, initiative, speed, armor and shield",
+  weapon: "On an item: its own weapon's to-hit, damage, and how it's wielded, wherever it's held",
   items: "Equipped weapon, armor, and shield stats",
   classes: "Class levels and bonus caster levels",
   feats: "Feat possession and stackable count",
@@ -123,6 +130,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   skills: "Skills",
   saves: "Saving Throws",
   combat: "Combat",
+  weapon: "Weapon",
   items: "Items",
   classes: "Classes",
   feats: "Feats",
@@ -147,12 +155,6 @@ const CATEGORY_HOLDERS: Record<string, { holderKey: string; getter: string }> = 
   spellcasting: { holderKey: "spellcasting", getter: "getSpellcasting" },
   bonded: { holderKey: "bonded", getter: "getBonds" },
 };
-
-/**
- * The combat sub-paths a weapon's modifier or requirement reads on itself: its own slot's to-hit, damage, strength
- * multiplier, and the hand holding it.
- */
-const WEAPON_SUB_PATHS = ["tohit", "damage", "strmultiplier", "slot"] as const;
 
 /** A path that reaches no value, with why. */
 const failed = (holder: Holder | null, key: string, error: string): TraversePathResult[] => [
@@ -259,6 +261,7 @@ function generatePaths(rulesetData: CachedRulesetData, kind: "modifier" | "requi
       Dnd35LevelsHooks.MAX_SPELL_LEVEL,
     ),
     ...DetailedCharacterCombat.generateTargetPaths(kind),
+    ...DetailedCharacterWeapons.generateItemWeaponPaths(kind),
     ...DetailedCharacterEncumbrance.generateTargetPaths(kind),
     ...DetailedCharacterAbilities.generateTargetPaths(abilities, kind),
     ...DetailedCharacterSavingThrows.generateTargetPaths(saves, kind),
@@ -475,8 +478,8 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
   }
 
   /**
-   * combat.tohit.* / combat.damage.* etc. — a self-targeting weapon modifier: it resolves to the weapon slot(s) its
-   * source item occupies.
+   * weapon.tohit.* / weapon.damage.* / weapon.wielded — an item's own weapon: the weapon slots holding its source, the
+   * item (its modifiers), or one entry of it (a weapon's proficiency).
    */
   private traverseSourceWeapon(rest: string[], holders: Holders, sourceId: string | undefined): TraversePathResult[] {
     if (!sourceId) return [];
@@ -492,7 +495,7 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
         // Its item's (a modifier's source), or its entry's (a proficiency read of the entry holding it)
         const held = weapon as { itemId?: string | null; entryId?: string | null } | null;
         if (held && typeof held === "object" && (held.itemId === sourceId || held.entryId === sourceId)) {
-          results.push(...this.traversePath(weaponsHolder, rest, weapon, rest[0], 0, ["combat"]));
+          results.push(...this.traversePath(weaponsHolder, rest, weapon, rest[0], 0, ["weapon"]));
         }
       }
     }
@@ -555,10 +558,10 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     return { paths: generatePaths(rulesetData, kind), segmentLabels: segmentLabelsOf(rulesetData) };
   }
 
-  /** Whether a target is the source weapon's own (`combat.tohit.misc`, `combat.slot`): the slots holding its item. */
+  /** Whether a target is an item's own weapon's (`weapon.tohit.misc`, `weapon.wielded`): the slots holding the item. */
   readsSource(target: string): boolean {
     const [category, sub] = target.split(".");
-    return category === "combat" && WEAPON_SUB_PATHS.includes(sub as (typeof WEAPON_SUB_PATHS)[number]);
+    return category === "weapon" && WEAPON_PATH_ROOTS.includes(sub);
   }
 
   /** A target's values: its category's data walked by the path (dot notation: category.item.property). */

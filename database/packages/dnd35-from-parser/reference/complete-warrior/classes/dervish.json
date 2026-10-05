@@ -19,19 +19,19 @@
             "requirements": [
               {
                 "operator": "not_equal",
-                "target": "combat.armorworn",
+                "target": "combat.armor.category",
                 "value": "medium",
                 "valueType": "string"
               },
               {
                 "operator": "not_equal",
-                "target": "combat.armorworn",
+                "target": "combat.armor.category",
                 "value": "heavy",
                 "valueType": "string"
               },
               {
                 "operator": "equal",
-                "target": "combat.shieldheld",
+                "target": "combat.shield.held",
                 "value": "false",
                 "valueType": "boolean"
               },
@@ -65,13 +65,13 @@
             "requirements": [
               {
                 "operator": "not_equal",
-                "target": "combat.armorworn",
+                "target": "combat.armor.category",
                 "value": "medium",
                 "valueType": "string"
               },
               {
                 "operator": "not_equal",
-                "target": "combat.armorworn",
+                "target": "combat.armor.category",
                 "value": "heavy",
                 "valueType": "string"
               },

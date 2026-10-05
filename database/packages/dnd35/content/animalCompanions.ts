@@ -78,14 +78,14 @@ const ANIMAL_COMPANION_CLASS_FEATURE_FEATS: FeatSeed[] = [
     // Multiattack: its secondary attacks at -2; without three attacks, a second one with its primary natural weapon
     modifiers: [
       {
-        target: "combat.naturalattacks.secondary",
+        target: "combat.naturalattacks.secondarypenalty",
         operator: "set",
         value: "-2",
         valueType: "number",
         requirements: [gte("combat.naturalattacks.count", 3)],
       },
       {
-        target: "combat.naturalattacks.extraprimary",
+        target: "combat.naturalattacks.extraattacks",
         operator: "add",
         value: "1",
         valueType: "number",

@@ -543,13 +543,13 @@
       "modifiers": [
         {
           "operator": "add",
-          "target": "combat.twoweapon.mainhand",
+          "target": "combat.twoweapon.mainhandpenalty",
           "value": "2",
           "valueType": "number"
         },
         {
           "operator": "add",
-          "target": "combat.twoweapon.offhand",
+          "target": "combat.twoweapon.offhandpenalty",
           "value": "6",
           "valueType": "number"
         }

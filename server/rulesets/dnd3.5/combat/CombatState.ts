@@ -17,7 +17,7 @@ export type WeaponSlot = {
   entryId: string | null;
   /**
    * A natural attack's kind, null for a weapon: a primary one adds its whole Strength bonus to damage (one and a half
-   * for a creature's only attack), a secondary one takes `combat.naturalattacks.secondary` to attack and adds half. Either
+   * for a creature's only attack), a secondary one takes `combat.naturalattacks.secondarypenalty` to attack and adds half. Either
    * attacks once a round, whatever the base attack bonus.
    */
   natural: NaturalAttackKind | null;
@@ -29,7 +29,8 @@ export type WeaponSlot = {
   ranged: boolean;
   range: number;
   reach: number;
-  slot: string;
+  /** How it's held: `mainhand`, `offhand` or `twohanded`, one value per inventory entry */
+  wielded: string;
   tohit: {
     readonly strength: number;
     magic: number;
@@ -39,11 +40,11 @@ export type WeaponSlot = {
      * What the gear costs its attacks: the check penalty of the armor and shields worn without proficiency, a tower
      * shield's −2, and its own penalty in one hand (a crossbow's)
      */
-    readonly gear: number;
-    /** A secondary natural attack's penalty: `combat.naturalattacks.secondary` */
-    readonly secondary: number;
-    /** A thrown weapon's or a sling's bonus: `combat.throwing.misc` (a halfling's +1) */
-    readonly throwing: number;
+    readonly gearpenalty: number;
+    /**
+     * Its attacks: these parts, and what only some weapons take, read where it's written: a secondary natural attack's
+     * `combat.naturalattacks.secondarypenalty`, a thrown weapon's or a sling's `combat.throwing.tohit`
+     */
     readonly total: number[];
   };
   /** A melee weapon's attack when thrown, if it has a range increment: with Dexterity, as every ranged attack. */
@@ -101,12 +102,12 @@ export const SLOT_MAP: Record<string, keyof WeaponSet> = {
   "Two Handed": "twohanded",
 };
 
-/** A weapon's slot as a path's values: its place in the set, labelled as an item's location names it. */
-export const WEAPON_SLOT_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
+/** How a weapon is held, as a path's values: its place in the set, labelled as an item's location names it. */
+export const WIELDED_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
 
-/** The armor a character wears, lightest first: none, or the armor's proficiency category. */
-export const ARMOR_WORN = ["none", "light", "medium", "heavy"] as const;
-export type ArmorWorn = (typeof ARMOR_WORN)[number];
+/** The category of the armor a character wears, lightest first: none, or the armor's proficiency category. */
+export const ARMOR_CATEGORIES = ["none", "light", "medium", "heavy"] as const;
+export type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 
 export type DetailedCharacterComprehensiveCombat = {
   ac: {
@@ -143,13 +144,13 @@ export type DetailedCharacterComprehensiveCombat = {
    * primary natural weapon makes, each at −5 (an animal companion's Multiattack without three natural attacks), and how
    * many attacks it makes (two claws are two).
    */
-  naturalattacks: { secondary: number; extraprimary: number; readonly count: number };
+  naturalattacks: { secondarypenalty: number; extraattacks: number; readonly count: number };
   /** Other bonuses to attack with thrown weapons and slings, a melee weapon's thrown attack included: a halfling's +1. */
-  throwing: { misc: number };
+  throwing: { tohit: number };
   /** Two-weapon fighting: the penalty on each hand's attacks, and how many attacks the off hand makes. */
   twoweapon: {
-    mainhand: number;
-    offhand: number;
+    mainhandpenalty: number;
+    offhandpenalty: number;
     offhandattacks: number;
   };
   grapple: {
@@ -165,10 +166,10 @@ export type DetailedCharacterComprehensiveCombat = {
     readonly total: number;
   };
   encumbrance: EncumbranceData;
-  /** The heaviest armor worn, "none" without: what a class feature's speed or AC bonus may require */
-  armorworn: ArmorWorn;
-  /** Whether a shield is carried */
-  shieldheld: boolean;
+  /** The category of the heaviest armor worn, "none" without: what a class feature's speed or AC bonus may require */
+  armor: { category: ArmorCategory };
+  /** Whether a shield is carried, in any weapon set (#236) */
+  shield: { held: boolean };
   weaponsets: Record<string, WeaponSet>;
   armors: ArmorsData;
   shields: ShieldsData;
@@ -205,11 +206,11 @@ export default abstract class CombatState {
     hp: { base: 0, constitution: 0, misc: 0, total: 0 },
     initiative: { dexterity: 0, misc: 0, total: 0 },
     bab: 0,
-    naturalattacks: { secondary: CONSTANTS.SECONDARY_NATURAL_ATTACK_PENALTY, extraprimary: 0, count: 0 },
-    throwing: { misc: 0 },
+    naturalattacks: { secondarypenalty: CONSTANTS.SECONDARY_NATURAL_ATTACK_PENALTY, extraattacks: 0, count: 0 },
+    throwing: { tohit: 0 },
     twoweapon: {
-      mainhand: CONSTANTS.TWO_WEAPON_MAIN_HAND_PENALTY,
-      offhand: CONSTANTS.TWO_WEAPON_OFF_HAND_PENALTY,
+      mainhandpenalty: CONSTANTS.TWO_WEAPON_MAIN_HAND_PENALTY,
+      offhandpenalty: CONSTANTS.TWO_WEAPON_OFF_HAND_PENALTY,
       offhandattacks: 1,
     },
     grapple: { bab: 0, strength: 0, size: 0, misc: 0, total: 0 },
@@ -223,8 +224,8 @@ export default abstract class CombatState {
       maxdex: Infinity,
       checkpenalty: 0,
     },
-    armorworn: "none",
-    shieldheld: false,
+    armor: { category: "none" },
+    shield: { held: false },
     weaponsets: {},
     armors: {},
     shields: {},

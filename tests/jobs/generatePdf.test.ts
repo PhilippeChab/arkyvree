@@ -63,7 +63,7 @@ describe("generatePdf", () => {
       });
 
     // A weapon's own attack bonus, with no such weapon wielded; an ability the rules don't have
-    await modifier("combat.tohit.misc");
+    await modifier("weapon.tohit.misc");
     await modifier("abilities.luck.misc");
     await requirement((await modifier("abilities.strength.misc")).id, "abilities.luck.total", "10");
     // More unmet requirements than the sheet lists
@@ -77,7 +77,7 @@ describe("generatePdf", () => {
     const { invalidRequirements, unmetRequirementGroups } = detailedCharacter
       .getDetailedCharacterRequirements()
       .getRequirements();
-    expect(inactiveModifiers.map((m) => m.target)).toEqual(["combat.tohit.misc"]);
+    expect(inactiveModifiers.map((m) => m.target)).toEqual(["weapon.tohit.misc"]);
     expect(skippedModifiers.map(({ modifier: m, warning }) => [m.target, warning])).toEqual([
       ["abilities.luck.misc", "Element not found: luck"],
     ]);

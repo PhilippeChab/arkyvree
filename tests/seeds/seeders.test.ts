@@ -422,7 +422,7 @@ describe("Seeding", () => {
         item("Test Flaming Blade", {
           sourceItem: "Test Blade",
           slot: "Main Hand",
-          modifiers: [{ target: "combat.tohit.misc", operator: "add", value: "1", valueType: "number" }],
+          modifiers: [{ target: "weapon.tohit.misc", operator: "add", value: "1", valueType: "number" }],
         }),
         item("Test Rope"),
       ],
@@ -452,7 +452,7 @@ describe("Seeding", () => {
     });
     expect(await customizationsOf(made["Test Flaming Blade"])).toEqual({
       requirements: [],
-      modifiers: ["combat.tohit.misc add 1 number"],
+      modifiers: ["weapon.tohit.misc add 1 number"],
       properties: [],
     });
   });

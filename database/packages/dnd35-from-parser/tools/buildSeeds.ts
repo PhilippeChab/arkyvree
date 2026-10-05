@@ -1245,7 +1245,7 @@ function weaponEnhancementModifiers(description: string): Modifier[] {
   if (!enhancement) return [];
   const bonus = (target: string, value: number): Modifier[] =>
     value ? [{ target, operator: "add", value: String(value), valueType: "number" }] : [];
-  return [...bonus("combat.tohit.magic", enhancement.attack), ...bonus("combat.damage.magic", enhancement.damage)];
+  return [...bonus("weapon.tohit.magic", enhancement.attack), ...bonus("weapon.damage.magic", enhancement.damage)];
 }
 
 /**

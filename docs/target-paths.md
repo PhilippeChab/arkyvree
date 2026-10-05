@@ -4,7 +4,7 @@ All available paths for modifiers and requirements. Dynamic segments are shown a
 
 Paths marked "req only" are available as requirement targets but not modifier targets.
 
-A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity`, `size`, `touch` and `flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size`, `tohit.gear`, `tohit.throwing`, `tohit.secondary` and `damage.strength`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
+A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity`, `size`, `touch` and `flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size`, `tohit.gearpenalty`, `damage.strength` and `wielded`, the armor's `category` and whether a shield is `held`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
 
 ## abilities
 
@@ -58,8 +58,8 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 | `combat.ac.total` | number | All AC bonuses combined (req only) |
 | `combat.ac.touch` | number | Ignores armor, shield, natural (req only) |
 | `combat.ac.flatfooted` | number | Ignores the Dexterity and dodge bonuses, unless uncanny dodge (req only) |
-| `combat.armorworn` | string | The heaviest armor worn: none, light, medium or heavy (req only) |
-| `combat.shieldheld` | boolean | Whether a shield is carried (req only) |
+| `combat.armor.category` | string | The category of the heaviest armor worn: none, light, medium or heavy (req only) |
+| `combat.shield.held` | boolean | Whether a shield is carried, in any weapon set (#236) (req only) |
 | `combat.hp.base` | number | From hit dice rolls |
 | `combat.hp.constitution` | number | Con modifier per level (req only) |
 | `combat.hp.misc` | number | Other bonuses to HP |
@@ -68,17 +68,17 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 | `combat.initiative.misc` | number | Other bonuses to initiative |
 | `combat.initiative.total` | number | All initiative bonuses combined (req only) |
 | `combat.bab` | number | From class progression |
-| `combat.throwing.misc` | number | Other bonuses to attack with thrown weapons and slings, a melee weapon's thrown attack included (a halfling's +1) |
-| `combat.naturalattacks.secondary` | number | Penalty on secondary natural attacks (−5; −2 with Multiattack) |
-| `combat.naturalattacks.extraprimary` | number | Extra attacks with the primary natural weapon, each at −5 (a companion's Multiattack, under 3 attacks) |
+| `combat.throwing.tohit` | number | Bonus to hit with thrown weapons and slings, a melee weapon's thrown attack included (a halfling's +1) |
+| `combat.naturalattacks.secondarypenalty` | number | Penalty on secondary natural attacks (−5; −2 with Multiattack) |
+| `combat.naturalattacks.extraattacks` | number | Extra attacks with the primary natural weapon, each at −5 (a companion's Multiattack, under 3 attacks) |
 | `combat.naturalattacks.count` | number | Natural attacks made in a round, two claws being two (req only) |
 | `combat.grapple.bab` | number | BAB contribution (req only) |
 | `combat.grapple.strength` | number | Str modifier (req only) |
 | `combat.grapple.size` | number | From race size (req only) |
 | `combat.grapple.misc` | number | Other bonuses to grapple |
 | `combat.grapple.total` | number | All grapple bonuses combined (req only) |
-| `combat.twoweapon.mainhand` | number | Penalty on main-hand attacks with two weapons (−6) |
-| `combat.twoweapon.offhand` | number | Penalty on off-hand attacks with two weapons (−10) |
+| `combat.twoweapon.mainhandpenalty` | number | Penalty on main-hand attacks with two weapons (−6) |
+| `combat.twoweapon.offhandpenalty` | number | Penalty on off-hand attacks with two weapons (−10) |
 | `combat.twoweapon.offhandattacks` | number | Attacks the off hand makes with two weapons (1) |
 | `combat.speed.base` | number | From race, and fast movement: what armor and load slow (ft) |
 | `combat.speed.misc` | number | Other bonuses to speed, after armor and load (ft) |
@@ -96,9 +96,8 @@ Grouped by weapon type, family, complexity, and item name. `items.weapons.unarme
 | `items.weapons.<group>.tohit.strength` | number | Str/Dex bonus to attack (a finessed one less a shield's check penalty, a composite bow's −2 below its rating) (req only) |
 | `items.weapons.<group>.tohit.magic` | number | Enhancement bonus to attack |
 | `items.weapons.<group>.tohit.misc` | number | Other bonuses to attack |
-| `items.weapons.<group>.tohit.gear` | number | Penalties from the gear: the check penalty of armor or a shield worn without proficiency, a tower shield's −2, a crossbow's in one hand (req only) |
-| `items.weapons.<group>.tohit.throwing` | number | A thrown weapon's or a sling's bonus: `combat.throwing.misc` (req only) |
-| `items.weapons.<group>.tohit.secondary` | number | A secondary natural attack's penalty: `combat.naturalattacks.secondary` (req only) |
+| `items.weapons.<group>.tohit.size` | number | Size modifier to attack (req only) |
+| `items.weapons.<group>.tohit.gearpenalty` | number | Penalty to attack from the gear: the check penalty of armor or a shield worn without proficiency, a tower shield's −2, a crossbow's in one hand (req only) |
 | `items.weapons.<group>.damage.base` | string | Base damage dice |
 | `items.weapons.<group>.damage.strength` | number | Str bonus to damage (req only) |
 | `items.weapons.<group>.damage.magic` | number | Enhancement bonus to damage |
@@ -106,7 +105,29 @@ Grouped by weapon type, family, complexity, and item name. `items.weapons.unarme
 | `items.weapons.<group>.damage.strmultiplier` | number | Str-to-damage ratio (1x/0.5x/1.5x) |
 | `items.weapons.<group>.damage.critical.range` | number | Critical threat range |
 | `items.weapons.<group>.damage.critical.multiplier` | number | Critical hit multiplier |
-| `items.weapons.<group>.slot` | string | Hand position (main/off/two-handed) |
+| `items.weapons.<group>.wielded` | string | How it's held: mainhand, offhand or twohanded (req only) |
+
+A weapon's attacks also take, where they apply, what's written once for the character: a secondary natural attack's `combat.naturalattacks.secondarypenalty`, and a thrown weapon's or a sling's `combat.throwing.tohit`.
+
+## weapon
+
+An item's own weapon: written on an item (its modifiers and requirements), `weapon.*` reaches the weapon it is, wherever it's held. An item held in several places (a dagger in each hand, a bastard sword in two weapon sets) is a weapon in each, each judged on its own. Anywhere else, `weapon.*` reaches no weapon, so a requirement on it is unmet. Its paths are the same as a weapon group's:
+
+| Path | Type | Description |
+|------|------|-------------|
+| `weapon.tohit.strength` | number | Str/Dex bonus to attack (req only) |
+| `weapon.tohit.magic` | number | Enhancement bonus to attack (a +1 sword's) |
+| `weapon.tohit.size` | number | Size modifier to attack (req only) |
+| `weapon.tohit.misc` | number | Other bonuses to attack |
+| `weapon.tohit.gearpenalty` | number | Penalty to attack from the gear (req only) |
+| `weapon.damage.base` | string | Base damage dice |
+| `weapon.damage.strength` | number | Str bonus to damage (req only) |
+| `weapon.damage.magic` | number | Enhancement bonus to damage |
+| `weapon.damage.misc` | number | Other bonuses to damage |
+| `weapon.damage.strmultiplier` | number | Str-to-damage ratio (1x/0.5x/1.5x) |
+| `weapon.damage.critical.range` | number | Critical threat range |
+| `weapon.damage.critical.multiplier` | number | Critical hit multiplier |
+| `weapon.wielded` | string | How it's held: mainhand, offhand or twohanded (req only): a bastard sword's martial proficiency counts while `twohanded` |
 
 ## items.armors
 

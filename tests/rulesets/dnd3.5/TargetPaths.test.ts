@@ -55,8 +55,8 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       ],
       [
         "a proficiency category grouping",
-        "items.weapons.Exotic.slot",
-        { weapons: { exotic: { "0_mainhand": { slot: "mainhand" } } } },
+        "items.weapons.Exotic.wielded",
+        { weapons: { exotic: { "0_mainhand": { wielded: "mainhand" } } } },
         ["mainhand"],
       ],
       [

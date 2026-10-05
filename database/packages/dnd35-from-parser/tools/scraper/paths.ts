@@ -2,6 +2,7 @@ import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
 import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
+import DetailedCharacterWeapons from "@/server/rulesets/dnd3.5/DetailedCharacterWeapons.ts";
 import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import DetailedCharacterIdentity from "@/server/rulesets/universal/DetailedCharacterIdentity.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
@@ -28,6 +29,7 @@ function buildValidPaths(kind: "modifier" | "requirement"): Set<string> {
     [
       ...DetailedCharacterAbilities.generateTargetPaths(stubAbilities, kind),
       ...DetailedCharacterCombat.generateTargetPaths(kind),
+      ...DetailedCharacterWeapons.generateItemWeaponPaths(kind),
       ...DetailedCharacterSavingThrows.generateTargetPaths(stubSaves, kind),
       ...DetailedCharacterSkills.generateTargetPaths(stubSkills, kind),
       ...DetailedCharacterIdentity.generateTargetPaths(kind),

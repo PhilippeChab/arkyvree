@@ -18,82 +18,11 @@ import { capitalize } from "@/shared/text.ts";
 
 import { ArmorClass } from "./combat/ArmorClass.ts";
 import { Attacks } from "./combat/Attacks.ts";
-import CombatState, {
-  ARMOR_WORN,
-  type DetailedCharacterComprehensiveCombat,
-  WEAPON_SLOT_VALUES,
-} from "./combat/CombatState.ts";
+import CombatState, { ARMOR_CATEGORIES, type DetailedCharacterComprehensiveCombat } from "./combat/CombatState.ts";
 import { HitPoints } from "./combat/HitPoints.ts";
 import { InitiativeAndSpeed } from "./combat/InitiativeAndSpeed.ts";
 
 const NAVIGATABLE_PATHS = [
-  // Self-targeting weapon paths (resolved to the source item's equipped weapon slot). A part the sheet computes when
-  // read (from an ability, the size, the other parts) is for requirements only: a modifier can't change it, its flat
-  // bonus belongs in the misc beside it
-  {
-    path: "tohit.strength",
-    description: "Weapon attack strength modifier",
-    type: "number" as const,
-    sortOrder: 0,
-    requirementOnly: true,
-  },
-  { path: "tohit.magic", description: "Enhancement bonus", type: "number" as const, sortOrder: 0 },
-  {
-    path: "tohit.size",
-    description: "Size modifier to attack",
-    type: "number" as const,
-    sortOrder: 0,
-    requirementOnly: true,
-  },
-  { path: "tohit.misc", description: "Other bonuses to attack", type: "number" as const, sortOrder: 0 },
-  {
-    path: "tohit.gear",
-    description:
-      "Penalties from the gear: armor or a shield without proficiency, a tower shield, a crossbow in one hand",
-    type: "number" as const,
-    sortOrder: 0,
-    requirementOnly: true,
-  },
-  {
-    path: "tohit.throwing",
-    description: "A thrown weapon's or a sling's bonus: combat.throwing.misc",
-    type: "number" as const,
-    sortOrder: 0,
-    requirementOnly: true,
-  },
-  {
-    path: "tohit.secondary",
-    description: "A secondary natural attack's penalty: combat.naturalattacks.secondary",
-    type: "number" as const,
-    sortOrder: 0,
-    requirementOnly: true,
-  },
-  { path: "damage.base", description: "Base damage dice", type: "string" as const, sortOrder: 1 },
-  {
-    path: "damage.strength",
-    description: "Weapon damage strength modifier",
-    type: "number" as const,
-    sortOrder: 1,
-    requirementOnly: true,
-  },
-  { path: "damage.magic", description: "Enhancement bonus", type: "number" as const, sortOrder: 1 },
-  { path: "damage.misc", description: "Other bonuses to damage", type: "number" as const, sortOrder: 1 },
-  { path: "damage.critical.range", description: "Weapon critical threat range", type: "number" as const, sortOrder: 1 },
-  { path: "damage.critical.multiplier", description: "Critical hit multiplier", type: "number" as const, sortOrder: 1 },
-  {
-    path: "damage.strmultiplier",
-    description: "Str-to-damage ratio (1x/0.5x/1.5x)",
-    type: "number" as const,
-    sortOrder: 1,
-  },
-  {
-    path: "slot",
-    description: "The hand holding the weapon, for its own requirements: a bastard sword's proficiency in two hands",
-    type: "string" as const,
-    sortOrder: 1,
-    requirementOnly: true,
-    possibleValues: WEAPON_SLOT_VALUES,
-  },
   // Armor class
   { path: "ac.base", description: "Default 10", type: "number" as const, sortOrder: 2 },
   {
@@ -159,16 +88,16 @@ const NAVIGATABLE_PATHS = [
   },
   // What a class feature's speed or AC bonus may require
   {
-    path: "armorworn",
-    description: "The heaviest armor worn: none, light, medium or heavy",
+    path: "armor.category",
+    description: "The category of the heaviest armor worn: none, light, medium or heavy",
     type: "string" as const,
     sortOrder: 2,
     requirementOnly: true,
-    possibleValues: ARMOR_WORN.map((armor) => ({ value: armor, label: capitalize(armor) })),
+    possibleValues: ARMOR_CATEGORIES.map((category) => ({ value: category, label: capitalize(category) })),
   },
   {
-    path: "shieldheld",
-    description: "Whether a shield is carried",
+    path: "shield.held",
+    description: "Whether a shield is carried, in any weapon set",
     type: "boolean" as const,
     sortOrder: 2,
     requirementOnly: true,
@@ -190,17 +119,17 @@ const NAVIGATABLE_PATHS = [
   // Attack
   { path: "bab", description: "From class progression", type: "number" as const },
   {
-    path: "throwing.misc",
-    description: "Other bonuses to attack with thrown weapons and slings (a halfling's +1)",
+    path: "throwing.tohit",
+    description: "Bonus to hit with thrown weapons and slings (a halfling's +1)",
     type: "number" as const,
   },
   {
-    path: "naturalattacks.secondary",
+    path: "naturalattacks.secondarypenalty",
     description: "Penalty on secondary natural attacks: -5, -2 with Multiattack",
     type: "number" as const,
   },
   {
-    path: "naturalattacks.extraprimary",
+    path: "naturalattacks.extraattacks",
     description:
       "Extra attacks with the primary natural weapon, each at -5 (a companion's Multiattack, under 3 attacks)",
     type: "number" as const,
@@ -221,8 +150,16 @@ const NAVIGATABLE_PATHS = [
     type: "number" as const,
     requirementOnly: true,
   },
-  { path: "twoweapon.mainhand", description: "Penalty on main-hand attacks with two weapons", type: "number" as const },
-  { path: "twoweapon.offhand", description: "Penalty on off-hand attacks with two weapons", type: "number" as const },
+  {
+    path: "twoweapon.mainhandpenalty",
+    description: "Penalty on main-hand attacks with two weapons: -6",
+    type: "number" as const,
+  },
+  {
+    path: "twoweapon.offhandpenalty",
+    description: "Penalty on off-hand attacks with two weapons: -10",
+    type: "number" as const,
+  },
   {
     path: "twoweapon.offhandattacks",
     description: "Attacks the off hand makes with two weapons",
@@ -245,13 +182,12 @@ const SEGMENT_LABELS: Record<string, string> = {
   bab: "Base Attack Bonus",
   grapple: "Grapple",
   twoweapon: "Two-Weapon Fighting",
-  mainhand: "Main Hand",
-  offhand: "Off Hand",
+  mainhandpenalty: "Main-Hand Penalty",
+  offhandpenalty: "Off-Hand Penalty",
   offhandattacks: "Off-Hand Attacks",
   naturalattacks: "Natural Attacks",
-  extraprimary: "Extra Primary Attacks",
-  armorworn: "Armor Worn",
-  shieldheld: "Shield Held",
+  secondarypenalty: "Secondary Penalty",
+  extraattacks: "Extra Attacks",
 };
 
 class DetailedCharacterCombat extends include(CombatState, ArmorClass, HitPoints, Attacks, InitiativeAndSpeed) {
