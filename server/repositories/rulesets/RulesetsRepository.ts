@@ -34,9 +34,9 @@ type RulesetScope =
 
 class RulesetsRepository extends include(
   BaseRepository<typeof rulesetsInRules>,
+  GuardsStaleEdits,
   Paginates,
   Searches,
-  GuardsStaleEdits,
 ) {
   constructor() {
     super(rulesetsInRules);

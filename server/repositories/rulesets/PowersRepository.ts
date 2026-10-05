@@ -15,7 +15,7 @@ import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class PowersRepository extends include(RulesetEntityRepository<typeof powersInRules>, ResolvesCopies, GrantsPerLevel) {
+class PowersRepository extends include(RulesetEntityRepository<typeof powersInRules>, GrantsPerLevel, ResolvesCopies) {
   constructor() {
     super(powersInRules);
   }

@@ -10,8 +10,8 @@ import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdit
 
 class ModifiersRepository extends include(
   BaseRepository<typeof modifiersInCustomization>,
-  GuardsStaleEdits,
   ChecksExistence,
+  GuardsStaleEdits,
 ) {
   constructor() {
     super(modifiersInCustomization);
