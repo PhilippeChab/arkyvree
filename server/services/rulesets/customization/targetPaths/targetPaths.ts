@@ -1,4 +1,4 @@
-import { getOrFetchTargetPathsAndLabels } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
@@ -21,7 +21,7 @@ export async function getTargetPathsWithLabels(
   if (!ruleset) throw new NotFoundError("Ruleset not found");
   // Compose inside the registered cache fill: composing beforehand can carry
   // a stale view across invalidation and later cache paths derived from it.
-  const result = await getOrFetchTargetPathsAndLabels(
+  const result = await RulesetCache.getTargetPaths(
     rulesetId,
     kind,
     () =>

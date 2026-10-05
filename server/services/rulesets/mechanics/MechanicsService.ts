@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { mechanicsInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Mechanics } from "@/server/repositories/index.ts";
@@ -80,7 +80,7 @@ class MechanicsService {
         return mechanic;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -126,7 +126,7 @@ class MechanicsService {
         return updatedMechanic;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -156,7 +156,7 @@ class MechanicsService {
         return deletedMechanic;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 }

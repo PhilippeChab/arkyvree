@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
@@ -11,7 +11,7 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 
-afterEach(invalidateAll);
+afterEach(() => RulesetCache.invalidateAll());
 
 // Real repository reads in separate request contexts: an earlier request loads
 // again only after another request's mutation and cache invalidation complete.
@@ -46,7 +46,7 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
     await Rulesets.update(db, { kind: "extension", status: "Published", private: false }, { id: extension.id });
     const [feat] = await Feats.create(db, { rulesetId: extension.id, name: "Extension Marker" });
     if (action === "unsubscribe") await RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id]);
-    invalidateAll();
+    RulesetCache.invalidateAll();
     await overlap(
       () => getTargetPathsWithLabels(host.id, "requirement"),
       () =>
@@ -70,7 +70,7 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
     const fork = await createSeededTestRuleset(session.userId);
     const seed = await getSeedCtx();
     const [local] = await Feats.create(db, { rulesetId: fork.id, name: "Before Marker", description: "before" });
-    invalidateAll();
+    RulesetCache.invalidateAll();
     const read = () =>
       scenario === "paths"
         ? getTargetPathsWithLabels(fork.id, "requirement")

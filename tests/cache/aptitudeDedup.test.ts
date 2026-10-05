@@ -15,9 +15,10 @@ import {
   powersInRules,
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
-import { getOrBuildCowData, getOrFetchRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
+import { getOrBuildCowData } from "@/server/services/rulesets/cow/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { createSeededTestRulesetWithExtensions } from "@/tests/helpers.ts";
@@ -29,7 +30,7 @@ import { createSeededTestRulesetWithExtensions } from "@/tests/helpers.ts";
 async function setup() {
   const ruleset = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
   const cowData = await getOrBuildCowData(ruleset);
-  const rulesetData = await getOrFetchRulesetData(ruleset.id, cowData);
+  const rulesetData = await RulesetCache.getData(ruleset.id, cowData);
   return { ruleset, cowData, rulesetData };
 }
 

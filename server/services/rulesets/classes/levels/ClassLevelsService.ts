@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";
@@ -253,8 +253,8 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         return { ...klassLevel, bab, skills };
       });
     });
-    invalidateRuleset(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) invalidateRuleset(klassRulesetId);
+    RulesetCache.invalidate(rulesetId);
+    if (klassRulesetId && klassRulesetId !== rulesetId) RulesetCache.invalidate(klassRulesetId);
     return result;
   }
 
@@ -352,8 +352,8 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         return hooks.classLevels.enrichWithProperties([{ ...level, id: resolvedLevelId }], finalProps)[0];
       });
     });
-    invalidateRuleset(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) invalidateRuleset(klassRulesetId);
+    RulesetCache.invalidate(rulesetId);
+    if (klassRulesetId && klassRulesetId !== rulesetId) RulesetCache.invalidate(klassRulesetId);
     return result;
   }
 
@@ -394,8 +394,8 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         return deletedLevel;
       });
     });
-    invalidateRuleset(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) invalidateRuleset(klassRulesetId);
+    RulesetCache.invalidate(rulesetId);
+    if (klassRulesetId && klassRulesetId !== rulesetId) RulesetCache.invalidate(klassRulesetId);
     return result;
   }
 }

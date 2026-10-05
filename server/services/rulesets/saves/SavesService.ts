@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { savesInRules } from "@/drizzle/schema.ts";
-import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { KlassLevelSaves, Saves } from "@/server/repositories/index.ts";
@@ -81,7 +81,7 @@ class SavesService {
         return save;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -128,7 +128,7 @@ class SavesService {
         return updatedSave;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 
@@ -162,7 +162,7 @@ class SavesService {
         return deletedSave;
       });
     });
-    invalidateRuleset(rulesetId);
+    RulesetCache.invalidate(rulesetId);
     return result;
   }
 }

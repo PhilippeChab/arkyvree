@@ -1,5 +1,5 @@
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
-import { getOrFetchRulesetRawData } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
@@ -8,7 +8,7 @@ import type { Requirement } from "@/shared/relations.ts";
 export async function seededRows(rulesetName = DND35_RULESET_NAME) {
   const ruleset = await Rulesets.findOne(db, { name: rulesetName });
   if (!ruleset) throw new Error(`${rulesetName} isn't seeded`);
-  const rows = await getOrFetchRulesetRawData(ruleset.id);
+  const rows = await RulesetCache.getRawData(ruleset.id);
   const named = <T extends { name: string }>(list: T[], name: string) => {
     const row = list.find((r) => r.name === name);
     if (!row) throw new Error(`${name} isn't seeded in ${rulesetName}`);

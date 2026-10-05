@@ -3,7 +3,7 @@ import { afterAll, afterEach, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { invalidateAll } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
@@ -15,7 +15,7 @@ import { createSeededTestRuleset, getSeedCtx, insertRows, makeSession } from "@/
 
 const pool = createTestPool();
 afterAll(() => pool.end());
-afterEach(invalidateAll);
+afterEach(() => RulesetCache.invalidateAll());
 test("owner mutation waits for a competing transaction and acquires the row after rollback", async () => {
   const seed = await getSeedCtx();
   const writer = await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`);

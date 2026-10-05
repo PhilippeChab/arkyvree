@@ -1,4 +1,4 @@
-import { warmSystemRulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import "@/server/instrument-web.ts";
 import "@/server/log.ts";
 import { waitForDatabase } from "@/server/database/index.ts";
@@ -21,7 +21,7 @@ await startBroadcastListener();
 // Warm the ruleset cache in the background so the server becomes healthy
 // immediately. Cold reads still populate and pin on miss — this just frontloads
 // the work for the first user.
-warmSystemRulesetCache().then(
+RulesetCache.warm().then(
   () => console.log("[cache] System ruleset cache warmed"),
   (err) => {
     const msg = err instanceof Error ? err.message : String(err);

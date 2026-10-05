@@ -1,20 +1,15 @@
 import { afterEach, expect, test } from "bun:test";
 
 import DependentCache from "@/server/cache/DependentCache.ts";
-import {
-  getOrBuildCowData,
-  getOrFetchRulesetRawData,
-  getOrFetchTargetPathsAndLabels,
-  invalidateAll,
-  invalidateRuleset,
-} from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
+import { getOrBuildCowData } from "@/server/services/rulesets/cow/index.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { timingStorage } from "@/server/timing.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
-afterEach(invalidateAll);
+afterEach(() => RulesetCache.invalidateAll());
 
 async function setup() {
   const session = makeSession();
@@ -41,20 +36,20 @@ function counters() {
 for (const phase of ["pending", "cached"] as const) {
   test(`editing A preserves ${phase} raw/COW/path reads for B with zero extra SQL`, async () => {
     const { edited, unrelated } = await setup();
-    invalidateAll();
+    RulesetCache.invalidateAll();
     const paths = async () => ({
       paths: [],
       segmentLabels: { name: (await Rulesets.findOne(db, { id: unrelated.id }))!.name },
     });
     const read = () =>
       Promise.all([
-        getOrFetchRulesetRawData(unrelated.id),
+        RulesetCache.getRawData(unrelated.id),
         getOrBuildCowData(unrelated),
-        getOrFetchTargetPathsAndLabels(unrelated.id, "modifier", paths, unrelated.ancestorRulesetIds),
+        RulesetCache.getTargetPaths(unrelated.id, "modifier", paths, unrelated.ancestorRulesetIds),
       ]);
     const pending = read();
     if (phase === "cached") await pending;
-    invalidateRuleset(edited.id);
+    RulesetCache.invalidate(edited.id);
     const first = await pending;
     const timing = counters();
     const next = await timingStorage.run(timing, read);
@@ -70,12 +65,12 @@ test("target-path service invalidates extension subscribers but retains an unrel
   await Rulesets.update(db, { kind: "extension", status: "Published" }, { id: edited.id });
   await Rulesets.update(db, { extensionRulesetIds: [edited.id] }, { id: host.id });
   const [feat] = await Feats.create(db, { rulesetId: edited.id, name: "Performance Marker", description: "Before" });
-  invalidateAll();
+  RulesetCache.invalidateAll();
   const before = await getTargetPathsWithLabels(host.id, "requirement");
   const untouched = await getTargetPathsWithLabels(unrelated.id, "requirement");
   expect(before.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(true);
   await Feats.update(db, { name: "Updated Marker" }, { id: feat.id });
-  invalidateRuleset(edited.id);
+  RulesetCache.invalidate(edited.id);
   const next = await getTargetPathsWithLabels(host.id, "requirement");
   expect(next.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(false);
   expect(next.paths.some((path) => path.path === "feats.updatedmarker.possessed")).toBe(true);
