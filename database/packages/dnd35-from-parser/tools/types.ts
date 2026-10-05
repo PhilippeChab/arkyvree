@@ -75,6 +75,9 @@ export type InheritedSpellList = {
  */
 export type ColumnModifier = { target: string; operator: "add" | "set"; requirements?: RequirementEntry[] };
 
+/** A list a class's slots can go to, while its requirements are met: a pious templar's paladin or blackguard list. */
+export type ClassSpellList = { name: string; inheritsFrom: InheritedSpellList; requirements: RequirementEntry[] };
+
 /** A class's own spell list: its slots per day, its spells known, and the list it inherits. */
 type ClassSpells = {
   slug: string;
@@ -83,6 +86,8 @@ type ClassSpells = {
   knowAll?: boolean;
   noCantrips?: boolean;
   inheritsFrom?: InheritedSpellList;
+  /** The lists its slots go to instead of its own, each while its requirements are met */
+  lists?: ClassSpellList[];
 };
 
 /** A class feature's fields a mapping derives and an override sets. */
@@ -93,6 +98,8 @@ type ClassFeatureFields = {
   selectable?: boolean;
   skip?: boolean;
   modifiers?: ModifierSeed[];
+  /** What it takes to pick it, when it's a pick (a pious templar's blackguard list: not good) */
+  requirements?: RequirementEntry[];
   /** Alternative occurrence names that map to this feature (e.g. "Summon Familiar" → "Familiar") */
   aliases?: string[];
 };

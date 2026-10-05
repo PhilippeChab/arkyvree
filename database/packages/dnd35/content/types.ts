@@ -82,6 +82,8 @@ export type ClassSeed = {
     knowAll?: boolean;
     /** The tables start at the first spell level. */
     noCantrips?: boolean;
+    /** The lists its slots go to instead of `slug`'s, each while its requirements are met (a pious templar's). */
+    lists?: { slug: string; requirements: RequirementEntry[] }[];
   };
 
   /** The levels that add a caster level to another class of this type. */

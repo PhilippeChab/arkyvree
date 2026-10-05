@@ -5,8 +5,8 @@ import { getTargetPathsWithLabels } from "@/server/services/rulesets/customizati
 import { seededRows } from "@/tests/seeds/seededRows.ts";
 
 // What the seed targets that no path offers yet: the slots of the prestige casters whose spell lists have no spells,
-// the divine crusader's and the temple raider's (#232) and the pious templar's (#206)
-const AWAITING = [/^aptitudes\.(divinecrusader|pioustemplar|templeraiderofolidammara)spells\.\d+\.(uses|allowed)$/];
+// the divine crusader's and the temple raider's (#232)
+const AWAITING = [/^aptitudes\.(divinecrusader|templeraiderofolidammara)spells\.\d+\.(uses|allowed)$/];
 
 // A target the editor doesn't offer is one an author can't write or save again, and one the engine may not read: a
 // Dragon Disciple's boosts on `abilities.strength`, an Ur-priest's slots on `aptitudes.ur-priestspells`

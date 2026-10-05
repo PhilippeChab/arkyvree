@@ -76,14 +76,18 @@ mapping                             # Built from detected, with overrides.featur
 │       ├── skip                    #     Exclude from generation
 │       ├── aptitude                #     Custom aptitude (pool sub-options)
 │       ├── modifiers[]             #     Auto-detected from description
+│       ├── requirements[]          #     What it takes to pick it (an override's: a list by alignment)
 │       └── aliases[]               #     Alt occurrence names
 ├── occurrenceMap{}                 #   Occurrence name → features{} key
 ├── bonusSpellAbility               #   Ability for bonus spells
 └── spells{}                        #   Spell slot config (slug, perDay, known, knowAll,
                                     #     noCantrips, inheritsFrom)
-    └── inheritsFrom{}              #   The list it draws on: other classes' (classes[], a spell
-                                    #     at the first's level), only schools[], none with one of
-                                    #     excludeDescriptors[], plus additions{level: spells[]}
+    ├── inheritsFrom{}              #   The list it draws on: other classes' (classes[], a spell
+    │                               #     at the first's level), only schools[], none with one of
+    │                               #     excludeDescriptors[], plus additions{level: spells[]}
+    └── lists[]                     #   The lists its slots go to instead, each its aptitude (name),
+                                    #     its inheritsFrom, and the requirements gating its slots
+                                    #     (the pious templar's paladin or blackguard list, by a pick)
 ```
 
 Next to `detected` and `mapping`, the loaded reference keeps `_meta` as stored; `raw` as stored, except that a class's `overrides.alignment` fills its prerequisites' alignment when they have none; and `overrides`, their text cleaned up (sanitized) except a spell's or a wizard school's.

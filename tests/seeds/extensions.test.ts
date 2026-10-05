@@ -182,5 +182,20 @@ describe("The seeded extensions", () => {
       "Magic Circle Against Law": 3,
       "Dispel Law": 4,
     });
+    // The pious templar's two: the paladin's, lawful spells included, and the blackguard's
+    expect(
+      await levelsOn(DND35_COMPLETE_DIVINE_NAME, "Pious Templar Spells", [
+        "Bless Weapon",
+        "Protection from Chaos",
+        "Cause Fear",
+      ]),
+    ).toEqual({ "Bless Weapon": 1, "Protection from Chaos": 1, "Cause Fear": undefined });
+    expect(
+      await levelsOn(DND35_COMPLETE_DIVINE_NAME, "Pious Templar Blackguard Spells", [
+        "Cause Fear",
+        "Contagion",
+        "Bless Weapon",
+      ]),
+    ).toEqual({ "Cause Fear": 1, Contagion: 3, "Bless Weapon": undefined });
   });
 });

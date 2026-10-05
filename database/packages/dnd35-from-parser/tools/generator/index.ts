@@ -635,6 +635,7 @@ function regenerateCowSpells(out: Output, book: string) {
     if (spells && ref.raw?.name) {
       classToApt.set(ref.raw.name, `${ref.raw.name} Spells`);
       if (spells.inheritsFrom) inheritedLists.push({ aptitude: `${ref.raw.name} Spells`, list: spells.inheritsFrom });
+      for (const list of spells.lists ?? []) inheritedLists.push({ aptitude: list.name, list: list.inheritsFrom });
     }
   }
 
