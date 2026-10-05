@@ -260,7 +260,7 @@ if (badPowerCombos.length > 0) {
 }
 
 // Phase 3: Ability increases — on the levels the ruleset gives one
-// Saving a level checks it (finalize.ts), but older rows can carry an
+// Saving a level checks it (ChangesLevels), but older rows can carry an
 // increase where none is due, or miss a due one. DetailedCharacter.validate()
 // doesn't flag either, while re-saving such a level throws: the user is stuck.
 

@@ -1,52 +1,27 @@
-import { getAvailableKlasses } from "./dnd3.5/classPicks.ts";
-import { getAvailableFeats, getAvailableFeatsGrouped } from "./dnd3.5/featPicks.ts";
-import { finalizeLevelUp, removeLevel, updateLevel } from "./dnd3.5/finalize.ts";
-import { getLevel } from "./dnd3.5/levelSelections.ts";
-import { getAvailablePowers } from "./dnd3.5/powerPicks.ts";
-import { getLevelUpPreview } from "./dnd3.5/preview.ts";
-// All level operations are currently 3.5-only (the underlying types + flows
-// assume 3.5 concepts: skill ranks, spell levels, class skills, wizard schools).
-// When a second ruleset ships, route to it from here by looking up the
-// character's ruleset before dispatching.
-import {
-  getAttributeSlots,
-  getEditFeatSlots,
-  getEditPowerSlots,
-  getFeatSlots,
-  getPowerSlots,
-  getSkillSlots,
-} from "./dnd3.5/slotQueries.ts";
+import { include } from "@/server/mixins.ts";
 
-class CharacterLevelsService {
-  readonly getAttributeSlots = getAttributeSlots;
+import { ChangesLevels } from "./dnd3.5/concerns/ChangesLevels.ts";
+import { CountsSlots } from "./dnd3.5/concerns/CountsSlots.ts";
+import { OffersClasses } from "./dnd3.5/concerns/OffersClasses.ts";
+import { OffersFeats } from "./dnd3.5/concerns/OffersFeats.ts";
+import { OffersPowers } from "./dnd3.5/concerns/OffersPowers.ts";
+import { Previews } from "./dnd3.5/concerns/Previews.ts";
+import { ReadsLevels } from "./dnd3.5/concerns/ReadsLevels.ts";
 
-  readonly getAvailableFeats = getAvailableFeats;
-
-  readonly getAvailableFeatsGrouped = getAvailableFeatsGrouped;
-
-  readonly getAvailableKlasses = getAvailableKlasses;
-
-  readonly getAvailablePowers = getAvailablePowers;
-
-  readonly getEditFeatSlots = getEditFeatSlots;
-
-  readonly getEditPowerSlots = getEditPowerSlots;
-
-  readonly getFeatSlots = getFeatSlots;
-
-  readonly getLevel = getLevel;
-
-  readonly getLevelUpPreview = getLevelUpPreview;
-
-  readonly getPowerSlots = getPowerSlots;
-
-  readonly getSkillSlots = getSkillSlots;
-
-  readonly updateLevel = updateLevel;
-
-  readonly removeLevel = removeLevel;
-
-  readonly finalizeLevelUp = finalizeLevelUp;
-}
+/**
+ * A character's levels: what a level-up offers and its slots, its preview, and adding, editing and removing levels.
+ * Each concern is D&D 3.5's (`dnd3.5/concerns/`, on the helpers beside them: the projection, the slot distribution, the
+ * validation): when a second ruleset ships, its operations dispatch from here by the character's ruleset.
+ */
+class CharacterLevelsService extends include(
+  Object,
+  CountsSlots,
+  OffersClasses,
+  OffersFeats,
+  OffersPowers,
+  Previews,
+  ReadsLevels,
+  ChangesLevels,
+) {}
 
 export default new CharacterLevelsService();

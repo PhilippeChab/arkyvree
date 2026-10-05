@@ -6,18 +6,18 @@
 
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
+import type { Constructor } from "@/server/mixins.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
 import type { Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { RulesetModule } from "@/server/rulesets/types.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { getPlannedClassSkills, getPlannedKlassLevels } from "@/server/services/characters/levels/dnd3.5/classes.ts";
+import { computePerLevelAptitudeSlots } from "@/server/services/characters/levels/dnd3.5/distribution.ts";
+import { buildBaselineAptitudes, projectPlannedLevels } from "@/server/services/characters/levels/dnd3.5/projection.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
-
-import { getPlannedClassSkills, getPlannedKlassLevels } from "./classes.ts";
-import { computePerLevelAptitudeSlots } from "./distribution.ts";
-import { buildBaselineAptitudes, projectPlannedLevels } from "./projection.ts";
 
 type PowerPools = ReturnType<DetailedCharacterAptitudes["extractPowerPools"]>;
 
@@ -104,93 +104,99 @@ async function planSkills(
   };
 }
 
-export async function getLevelUpPreview(
-  session: Session,
-  characterId: string,
-  levels: Array<{ klassId: string; level: number }>,
-  abilityIds: (string | null)[],
-) {
-  const characterRecord = await getEditableCharacter(db, session, characterId);
+/** A planned level-up's preview: the levels, their slots and what they grant, before anything is saved. */
+export function Previews<B extends Constructor>(Base: B) {
+  abstract class Previewing extends Base {
+    async getLevelUpPreview(
+      session: Session,
+      characterId: string,
+      levels: Array<{ klassId: string; level: number }>,
+      abilityIds: (string | null)[],
+    ) {
+      const characterRecord = await getEditableCharacter(db, session, characterId);
 
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const klassLevelEntries = getPlannedKlassLevels(
-      rulesetData,
-      levels.map((level, i) => ({ ...level, abilityId: abilityIds[i] ?? null })),
-    );
-    const { projectedData, allAutoGrantedFeatRecords } = projectPlannedLevels(
-      characterId,
-      klassLevelEntries,
-      rulesetData,
-    );
+      return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+        const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+        const klassLevelEntries = getPlannedKlassLevels(
+          rulesetData,
+          levels.map((level, i) => ({ ...level, abilityId: abilityIds[i] ?? null })),
+        );
+        const { projectedData, allAutoGrantedFeatRecords } = projectPlannedLevels(
+          characterId,
+          klassLevelEntries,
+          rulesetData,
+        );
 
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData);
-    const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter) as Dnd35LevelUpProjector;
-    const { featPools, powerPools, featsToSelect, powersToSelect } = splitPools(
-      detailedCharacter.getDetailedCharacterAptitudes(),
-      rulesetData,
-    );
+        const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+        await detailedCharacter.build(undefined, projectedData);
+        const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter) as Dnd35LevelUpProjector;
+        const { featPools, powerPools, featsToSelect, powersToSelect } = splitPools(
+          detailedCharacter.getDetailedCharacterAptitudes(),
+          rulesetData,
+        );
 
-    const existingLevels = await CharacterLevels.findMany(db, { characterId });
-    const abilities = detailedCharacter.getDetailedCharacterAbilities();
-    const autoGrantedFeats = allAutoGrantedFeatRecords.flat().map((rec) => rec.featsInRule);
-    const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
-    const { skills, perLevelSkillPoints, perLevelSkillPointBases, perLevelClassSkillIds } = await planSkills(
-      levelUpProjector,
-      rulesetData,
-      klassLevelEntries,
-      existingLevels.length,
-      levels.length,
-    );
+        const existingLevels = await CharacterLevels.findMany(db, { characterId });
+        const abilities = detailedCharacter.getDetailedCharacterAbilities();
+        const autoGrantedFeats = allAutoGrantedFeatRecords.flat().map((rec) => rec.featsInRule);
+        const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
+        const { skills, perLevelSkillPoints, perLevelSkillPointBases, perLevelClassSkillIds } = await planSkills(
+          levelUpProjector,
+          rulesetData,
+          klassLevelEntries,
+          existingLevels.length,
+          levels.length,
+        );
 
-    // ── Per-level aptitude slots for auto-assignment ──
-    // Build baseline character (without planned levels) to capture existing spent
-    const baselineApts = await buildBaselineAptitudes(db, rulesetModule, characterRecord, detailedCharacter);
+        // ── Per-level aptitude slots for auto-assignment ──
+        // Build baseline character (without planned levels) to capture existing spent
+        const baselineApts = await buildBaselineAptitudes(db, rulesetModule, characterRecord, detailedCharacter);
 
-    const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
-      rulesetData,
-      klassLevelIds,
-      allAutoGrantedFeatRecords,
-      Object.keys(featPools),
-      Object.keys(powerPools),
-      existingLevels.length,
-      baselineApts,
-    );
+        const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
+          rulesetData,
+          klassLevelIds,
+          allAutoGrantedFeatRecords,
+          Object.keys(featPools),
+          Object.keys(powerPools),
+          existingLevels.length,
+          baselineApts,
+        );
 
-    // ── Build level details ──
-    const levelDetails = klassLevelEntries.map(({ klass, klassLevel }, i) => ({
-      klassId: klass.id,
-      klassName: klass.name,
-      klassLevelId: klassLevel.id,
-      level: klassLevel.level,
-      hd: klass.hd,
-      skillPoints: perLevelSkillPoints[i],
-    }));
+        // ── Build level details ──
+        const levelDetails = klassLevelEntries.map(({ klass, klassLevel }, i) => ({
+          klassId: klass.id,
+          klassName: klass.name,
+          klassLevelId: klassLevel.id,
+          level: klassLevel.level,
+          hd: klass.hd,
+          skillPoints: perLevelSkillPoints[i],
+        }));
 
-    return {
-      skills,
-      feats: {
-        featsToSelect,
-        autoGrantedFeats,
-        aptitudePools: featPools,
-      },
-      powers: {
-        powersToSelect,
-        autoGrantedPowers: autoGrantedPowers(rulesetData, klassLevelIds),
-        aptitudePools: powerPools,
-      },
-      attributes: {
-        abilityIncreaseLevels: abilityIncreaseLevels(rulesetModule, existingLevels.length, levels.length),
-        attributes: abilities.getAbilitiesWithIds(),
-      },
-      // Per-level data for HP step, review, and auto-assignment
-      levelDetails,
-      perLevelSkillPoints,
-      perLevelSkillPointBases,
-      perLevelClassSkillIds,
-      perLevelFeatSlots,
-      perLevelPowerSlots,
-    };
-  });
+        return {
+          skills,
+          feats: {
+            featsToSelect,
+            autoGrantedFeats,
+            aptitudePools: featPools,
+          },
+          powers: {
+            powersToSelect,
+            autoGrantedPowers: autoGrantedPowers(rulesetData, klassLevelIds),
+            aptitudePools: powerPools,
+          },
+          attributes: {
+            abilityIncreaseLevels: abilityIncreaseLevels(rulesetModule, existingLevels.length, levels.length),
+            attributes: abilities.getAbilitiesWithIds(),
+          },
+          // Per-level data for HP step, review, and auto-assignment
+          levelDetails,
+          perLevelSkillPoints,
+          perLevelSkillPointBases,
+          perLevelClassSkillIds,
+          perLevelFeatSlots,
+          perLevelPowerSlots,
+        };
+      });
+    }
+  }
+  return Previewing;
 }

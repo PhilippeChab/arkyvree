@@ -283,7 +283,7 @@ Paginated / searched / filtered queries (e.g. `Feats.findPage({ search, paginati
 
 Within a single HTTP request, two calls to the same `Repo.findOne(db, ...)` / `Repo.findMany(db, ...)` with the same args return the same `Promise`. The second caller piggybacks on the first's in-flight query — no second round trip.
 
-Why this matters: our read paths have legitimate architectural duplicates. `powerPicks.getAvailablePowers` calls `Characters.findOne`, then later `detailedCharacter.build()` internally calls `Rulesets.findOne` — the same rows the outer function already looked up.
+Why this matters: our read paths have legitimate architectural duplicates. `CharacterLevelsService.getAvailablePowers` calls `Characters.findOne`, then later `detailedCharacter.build()` internally calls `Rulesets.findOne` — the same rows the outer function already looked up.
 
 ### How it works
 

@@ -433,16 +433,16 @@ server/
 │   │   ├── inventory/CharacterInventoryService.ts   ← universal
 │   │   ├── modifiers/CharacterModifiersService.ts   ← universal
 │   │   └── levels/
-│   │       ├── CharacterLevelsService.ts  ← thin dispatcher; forwards to the ruleset impl
+│   │       ├── CharacterLevelsService.ts  ← includes the ruleset's concerns
 │   │       └── dnd3.5/                    ← 3.5-only level-up flows
-│   │           ├── classPicks.ts, featPicks.ts, powerPicks.ts, levelSelections.ts
-│   │           ├── slotQueries.ts
-│   │           ├── preview.ts
-│   │           ├── finalize.ts
-│   │           ├── projection.ts
+│   │           ├── concerns/              ← the service's operations: CountsSlots, OffersClasses, OffersFeats,
+│   │           │                            OffersPowers, Previews, ReadsLevels, ChangesLevels
+│   │           ├── projection.ts          ← helpers the concerns share
 │   │           ├── classes.ts
 │   │           ├── validation.ts
-│   │           └── distribution.ts
+│   │           ├── distribution.ts
+│   │           ├── aptitudeModifiers.ts
+│   │           └── bondedReconcile.ts
 │   └── rulesets/                          ← entity CRUD for feats/powers/aptitudes/…
 └── routers/
     └── api/
@@ -538,27 +538,26 @@ Hooks are for **small predicates and constants**. More complex operations (bound
 
 ### The service split pattern
 
-Services that orchestrate 3.5-shaped flows (level-up, spell selection, wizard school exclusion, skill-point budgeting) live under `server/services/characters/levels/dnd3.5/`. The parent service class (`CharacterLevelsService`) imports the 3.5 impls and exposes them by name. When a second ruleset is added, dispatch moves up to `CharacterLevelsService`:
+Services that orchestrate 3.5-shaped flows (level-up, spell selection, wizard school exclusion, skill-point budgeting) live under `server/services/characters/levels/dnd3.5/`. Their operations are the concerns in `dnd3.5/concerns/`, which the parent service class (`CharacterLevelsService`) includes; the helpers they share sit beside them. When a second ruleset is added, dispatch moves up to `CharacterLevelsService`:
 
 ```ts
 // Today
-import { getAvailableKlasses } from "./dnd3.5/classPicks.ts";
-// …
-class CharacterLevelsService {
-  readonly getAvailableKlasses = getAvailableKlasses;
-  …
-}
+class CharacterLevelsService extends include(Object, CountsSlots, OffersClasses, OffersFeats, …) {}
 
-// With multiple rulesets (sketch)
-import * as dnd35 from "./levels/dnd3.5/index.ts";
-import * as pf2e from "./levels/pf2e/index.ts";
+// With multiple rulesets (sketch): each ruleset's concerns make a class of its own, the service dispatches to it
+class Dnd35Levels extends include(Object, CountsSlots, OffersClasses, OffersFeats, …) {}
+class Pf2eLevels extends include(Object, …) {}
+const LEVELS: Record<string, Dnd35Levels | Pf2eLevels> = {
+  "Dungeons & Dragons: 3.5": new Dnd35Levels(),
+  "Pathfinder 2e": new Pf2eLevels(),
+};
 
 class CharacterLevelsService {
   async getAvailableKlasses(session, characterId, where, pagination) {
     const ruleset = await getCharacterRuleset(characterId);
-    if (ruleset.name === "Dungeons & Dragons: 3.5") return dnd35.getAvailableKlasses(session, characterId, where, pagination);
-    if (ruleset.name === "Pathfinder 2e")           return pf2e.getAvailableKlasses(session, characterId, where, pagination);
-    throw new BadRequestError(`Unsupported ruleset: ${ruleset.name}`);
+    const levels = LEVELS[ruleset.name];
+    if (!levels) throw new BadRequestError(`Unsupported ruleset: ${ruleset.name}`);
+    return await levels.getAvailableKlasses(session, characterId, where, pagination);
   }
   …
 }
