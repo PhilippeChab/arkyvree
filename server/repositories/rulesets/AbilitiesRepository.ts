@@ -1,23 +1,12 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
 
 import { abilitiesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { include } from "@/server/mixins.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { ChecksExistence } from "@/server/repositories/concerns/ChecksExistence.ts";
-import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
-import { ScopesToRuleset } from "@/server/repositories/concerns/ScopesToRuleset.ts";
-import { Searches } from "@/server/repositories/concerns/Searches.ts";
+import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class AbilitiesRepository extends include(
-  BaseRepository<typeof abilitiesInRules>,
-  ChecksExistence,
-  Paginates,
-  ScopesToRuleset,
-  Searches,
-) {
+/** The abilities: immutable, read and created (by a ruleset's seed), never edited or deleted. */
+class AbilitiesRepository extends RulesetEntityRepository<typeof abilitiesInRules> {
   constructor() {
     super(abilitiesInRules);
   }
@@ -60,8 +49,8 @@ class AbilitiesRepository extends include(
     });
   }
 
-  async create(db: Db, values: InferInsertModel<typeof abilitiesInRules>) {
-    return await db.insert(this.table).values(values).returning();
+  async update(): Promise<never> {
+    throw new Error("Abilities are immutable and cannot be edited");
   }
 
   async delete(): Promise<never> {
