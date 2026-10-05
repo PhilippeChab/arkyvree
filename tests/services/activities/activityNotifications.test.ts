@@ -7,7 +7,7 @@ import { CharacterContributorsService } from "@/server/services/characters/contr
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { collectNotified } from "@/server/ws.ts";
+import { collectNotified } from "@/server/websockets/index.ts";
 import {
   addRulesetContributor,
   createTestCampaign,

@@ -15,7 +15,7 @@ import apiRouter from "@/server/routers/api.tsx";
 import authenticationRouter from "@/server/routers/authentication/index.ts";
 import staticRouter from "@/server/routers/static.ts";
 import wsRouter from "@/server/routers/ws.ts";
-import { collectNotified, publishWsEvent } from "@/server/ws.ts";
+import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
 
 const isDev = !isProduction();
 
