@@ -325,7 +325,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Repair Minor Damage",
     description: "As repair light damage, except you repair 1 point of damage to a construct.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },

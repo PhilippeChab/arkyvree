@@ -21,8 +21,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Bestow Curse, Greater",
     description: "You lay a potent curse on the creature you touch, selecting from three possible effects. You may also devise a custom curse of comparable power, subject to GM approval. Unlike a standard curse, this greater version cannot be removed by dispel magic, break enchantment, limited wish, or remove curse. Only miracle or wish can lift it. However, every greater curse must include a single specific deed the caster designates that will also remove it. The deed must be achievable within one year if pursued immediately, such as slaying a particular dragon or climbing the world's tallest peak. The cursed creature may receive assistance in completing the task.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 6, "Cleric Spells": 7, "Sorcerer Spells": 8, "Wizard Spells": 8 },
+    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    aptitudeLevels: { "Bard Spells": 6, "Cleric Spells": 7, "Sorcerer Spells": 8, "Spellthief Spells": 8, "Sublime Chord Spells": 6, "Suel Arcanamach Spells": 8, "Wizard Spells": 8 },
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -157,7 +157,7 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Fires of Purity",
     description: "The creature you touch erupts in magical flames that are harmless to the target but dangerous to others. On a successful melee attack, the subject deals an extra 1d6 fire damage +1 per caster level (maximum +15). Spell resistance applies to this effect. Creatures that hit the subject also take this fire damage unless they use weapons with exceptional reach (such as longspears). Any creature taking fire damage from this spell must succeed on a Reflex save or catch fire, burning for 1d4 rounds and taking 1d6 fire damage each round unless it succeeds on subsequent Reflex saves (at the spell's DC) or douses itself in water. The target takes only half damage from fire-based attacks; if such an attack allows a Reflex save for half damage, the target takes no damage on a successful save.",
-    aptitudes: ["Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Druid Spells", "Sorcerer Spells", "Sublime Chord Spells", "Wizard Spells"],
     savingThrow: "Reflex negates (harmless); see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Evocation" },
@@ -209,7 +209,7 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Probe Thoughts",
     description: "You gain access to all of the subject's memories and knowledge, from deeply buried recollections to easily recalled information. You can learn the answer to one question per round, to the limit of the subject's knowledge. Sleeping subjects can also be probed, though they may attempt a Will save to awaken after each question. Unwilling subjects can try to move beyond range if not physically restrained. Questions are posed telepathically, and answers are received directly in your mind. You and the subject need not share a language, though less intelligent creatures may respond only with relevant visual images.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
     savingThrow: "Will negates; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },

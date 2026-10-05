@@ -21,7 +21,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Animate Water",
     description: "As animate wood, but you can animate a quantity of water up to the maximum volume.Water animated by this spell has hardness 0, but has double the normal hit points that an animated object of the same size would have.Material Component: A vial of pure spring water mixed with cinnabar oil.",
-    aptitudes: ["Druid Spells"],
+    aptitudes: ["Druid Spells", "Spirit Shaman Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -39,7 +39,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Animate Wood",
     description: "This spell imbues a Small or smaller wooden object with mobility and a semblance of life, then causes it to immediately attack whomever or whatever you initially designate.Statistics for the animated wood are as for a Small animated object and can be found.Wooden objects animated by this spell have hardness 5.The spell cannot animate objects carried or worn by a creature.Material Component: A mixture of powdered cinnabar and ground peach pit.",
-    aptitudes: ["Druid Spells"],
+    aptitudes: ["Druid Spells", "Spirit Shaman Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -72,7 +72,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Fist of Stone",
     description: "You transform one of your hands into a mighty fist of living stone, gaining a +6 enhancement bonus to Strength for purposes of attacks, grapple checks, or breaking and crushing items.In addition, you gain the ability to make one natural slam attack as a standard action, dealing 1d6 points of damage plus your new Strength bonus (or 1-1/2 times your Strength bonus if you make no other attacks that round).You can make the slam attack as a natural secondary attack with the normal -5 penalty as part of a full attack action.However, you cannot gain more than one slam attack per round with this spell due to a high base attack bonus (+6 or higher).Your fist undergoes no change in size or form, remaining as flexible and responsive as it would normally be while under the spell's effect.Material Component: A pebble inscribed with a stylized fist design.",
-    aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -128,7 +128,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Low-light Vision",
     description: "The target creature gains low-light vision: the ability to see twice as far as a human in starlight, moonlight, torchlight, and similar conditions of poor illumination.The target retains the ability to distinguish color and detail under these conditions.Arcane Material Component: A small candle.",
-    aptitudes: ["Assassin Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Assassin Spells", "Consecrated Harrier Spells", "Ranger Spells", "Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -234,7 +234,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Repair Light Damage",
     description: "When laying your hand upon a construct that has at least 1 hit point remaining, you transmute its structure to repair the damage it has taken.The spell repairs 1d8 points of damage +1 point per caster level (maximum +5).",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },

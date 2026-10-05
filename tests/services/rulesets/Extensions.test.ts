@@ -3,6 +3,8 @@ import { describe, expect, test } from "bun:test";
 import type { InferInsertModel } from "drizzle-orm";
 
 import {
+  DND35_COMPLETE_ADVENTURER_NAME,
+  DND35_COMPLETE_ARCANE_NAME,
   DND35_COMPLETE_DIVINE_NAME,
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_DMG_NAME,
@@ -33,6 +35,7 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { cowEntity, getOrBuildCowData, invalidateAllCowData } from "@/server/services/rulesets/cow/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
@@ -497,6 +500,82 @@ describe("unsubscribing from an extension", () => {
 });
 
 describe("an extension's content in a fork", () => {
+  // A book puts its spells on its own copy of another book's list, which the fork merges with that book's
+  test.each([
+    ["the DMG's assassin list", DND35_DMG_NAME, "Assassin Spells", "Critical Strike"],
+    [
+      "Complete Arcane's sublime chord list, the bard's and the sorcerer's",
+      DND35_COMPLETE_ARCANE_NAME,
+      "Sublime Chord Spells",
+      "Fly, Swift",
+    ],
+  ])("lists Complete Adventurer's spells on %s once the fork takes both books", async (_, book, list, spell) => {
+    const { session } = await createTestUser();
+    const draft = await forkBase(session);
+    const [owner, adventurer] = [await seededRuleset(book), await seededRuleset(DND35_COMPLETE_ADVENTURER_NAME)];
+    const aptitude = (await Aptitudes.findOne(db, { name: list, rulesetId: owner.id }))!;
+    const spellsOnList = async () =>
+      (await PowersService.getPowers(draft.id, { aptitudeId: aptitude.id }, { limit: 1000, page: 1 })).items.map(
+        (power) => power.name,
+      );
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [owner.id]);
+    expect(await spellsOnList()).not.toContain(spell);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [adventurer.id]);
+    expect(await spellsOnList()).toContain(spell);
+  });
+
+  test("gives a spell picked on a list another book's copy composes its level there", async () => {
+    // With the DMG, Complete Warrior and Complete Divine in that order, the favored soul's list and Bless Water compose
+    // as Complete Warrior's copies, while Complete Divine's rows link Bane and Bless Water to its own list.
+    const { user, session, draft } = await setupFork();
+    const { abilityMap } = await getSeedCtx();
+    const [dmg, warrior, divine] = [
+      await seededRuleset(DND35_DMG_NAME),
+      await seededRuleset(DND35_COMPLETE_WARRIOR_NAME),
+      await seededRuleset(DND35_COMPLETE_DIVINE_NAME),
+    ];
+    for (const book of [dmg, warrior, divine]) {
+      await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
+    }
+    const ofDivine = { rulesetId: divine.id };
+    const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", ...ofDivine }))!;
+    const character = await createTestCharacter(user.id, { rulesetId: draft.id });
+    await db
+      .insert(characterAbilitiesInCharacter)
+      .values(Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })));
+
+    // Bane as the level-up offers it, and Bless Water as the fork composes it, on the composed list
+    const { aptitudePools } = await CharacterLevelsService.getPowerSlots(session, character.id, favoredSoul.id, 1);
+    const list = Object.values(aptitudePools).find((pool) => pool.name === "Favored Soul Spells")!;
+    expect(list.id).toBe((await Aptitudes.findOne(db, { name: "Favored Soul Spells", rulesetId: warrior.id }))!.id);
+    const offered = await CharacterLevelsService.getAvailablePowers(
+      session,
+      character.id,
+      list.id,
+      favoredSoul.id,
+      1,
+      { search: "Bane", powerLevel: 1 },
+      firstPage,
+    );
+    const bane = offered.items.find((power) => power.name === "Bane")!;
+    const blessWater = (await Powers.findOne(db, { name: "Bless Water", rulesetId: warrior.id }))!;
+    const [first] = (await KlassLevels.findMany(db, { klassId: favoredSoul.id })).filter((level) => level.level === 1);
+    await addCharacterLevel(character.id, first.id, {
+      powers: [
+        { powerId: bane.id, aptitudeId: list.id },
+        { powerId: blessWater.id, aptitudeId: list.id },
+      ],
+    });
+
+    const detailed = new DetailedCharacter(character);
+    await detailed.build();
+    const [level] = detailed.getDetailedCharacterClasses().getClasses()["favoredsoul"].levels;
+    expect(Object.fromEntries(level.powers.map((power) => [power.name, power.powerLevel]))).toEqual({
+      Bane: 1,
+      "Bless Water": 1,
+    });
+  });
+
   test("is edited and deleted on the fork's copies, the extension's rows untouched", async () => {
     const { session, extension, draft } = await setupFork();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);

@@ -4,7 +4,7 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Anticipate Teleportation, Greater",
     description: "As anticipate teleportation, except that greater anticipate teleportation identifies the type of the arriving creature (and any companions accompanying it) and creates a delay of 3 rounds, providing the recipient with even more warning and preparation time.Focus: A tiny hourglass of platinum and crystal filled with diamond dust, costing 1,000 gp.The hourglass must be carried or worn by the spell's recipient while the spell is in effect.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -34,8 +34,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Brilliant Blade",
     description: "You transform a single melee weapon, thrown weapon, or group of projectiles into a weapon of brilliant energy.A brilliant energy weapon sheds light as a torch (20-foot radius) and ignore nonliving matter.Armor bonuses to AC (including any enhancement bonuses to that armor) do not count against it because the weapon passes through armor.(Dexterity, deflection, dodge, natural armor, and other such bonuses still apply).A brilliant energy weapon cannot harm undead, constructs, or objects.If this spell is cast on arrows or crossbow bolts, the effect on a particular projectile ends after one use, whether or not the missile strikes its intended target.Treat shuriken as arrows, rather than as thrown weapons, for the purpose of this spell.",
-    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Cleric Spells": 8, "Sorcerer Spells": 6, "Wizard Spells": 6 },
+    aptitudes: ["Cleric Spells", "Favored Soul Spells", "Shugenja Spells", "Sorcerer Spells", "Spellthief Spells", "Ur-priest Spells", "Wizard Spells"],
+    aptitudeLevels: { "Cleric Spells": 8, "Favored Soul Spells": 8, "Shugenja Spells": 8, "Sorcerer Spells": 6, "Spellthief Spells": 6, "Ur-priest Spells": 8, "Wizard Spells": 6 },
     savingThrow: "Will negates (harmless, object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -50,8 +50,8 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Energy Immunity",
     description: "This abjuration grants a creature and its equipment complete protection against damage from one of the five energy types-acid, cold, electricity, fire, or sonic.Energy immunity absorbs only damage, so the recipient could still suffer side effects such as drowning in acid, being deafened by a sonic attack, or becoming immobilized in ice.Note: Energy immunity overlaps protection from energy and resist energy.So long as energy immunity is in effect, the other spells absorb no damage.",
-    aptitudes: ["Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Cleric Spells": 6, "Druid Spells": 6, "Sorcerer Spells": 7, "Wizard Spells": 7, "Wu Jen Spells": 7 },
+    aptitudes: ["Cleric Spells", "Druid Spells", "Favored Soul Spells", "Shugenja Spells", "Sorcerer Spells", "Spellthief Spells", "Spirit Shaman Spells", "Ur-priest Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudeLevels: { "Cleric Spells": 6, "Druid Spells": 6, "Favored Soul Spells": 6, "Shugenja Spells": 6, "Sorcerer Spells": 7, "Spellthief Spells": 7, "Spirit Shaman Spells": 6, "Ur-priest Spells": 6, "Wizard Spells": 7, "Wu Jen Spells": 7 },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -67,7 +67,7 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Fiendform",
     description: "This spell functions like alter self, except that you can take the form of any fiendish creature, demon, or devil that can be summoned by a summon monster I, II, III, or IV spell, regardless of size.You can assume only one form with each use of the spell, but you gain all that form's extraordinary, spell-like, and supernatural abilities, and your type changes to outsider.Spells and effects that harm or ward evil outsiders affect you, and any effect that would normally banish an outsider to its home plane instead ends the spell and leaves you staggered for 1 round per caster level.Material Component: A bone from any fiendish creature, half-fiendish creature, demon, or devil.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -85,7 +85,7 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Illusory Pit",
     description: "You create an illusory pit, and each creature entering or within the area is forced to make a Will save or believe the floor on which it stands has become a bottomless chasm.On a successful save, creatures suffer a mild case of vertigo and are stunned for 1 round, but those that fail their saves fall prone and are unable to take any action except clawing desperately at the floor in the hopes of stopping their apparent fall.An attack on an affected creature frees it from the effect of the illusion but leaves it stunned for 1 round.Likewise, when the spell ends, creatures that believed they were falling are stunned for 1 round.Flying creatures passing over an illusory pit that succeed on a Will save are unaffected by the spell, but those that fail are stunned for 1 round.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Will partial; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -118,7 +118,7 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Sign of Sealing, Greater",
     description: "This spell functions like sign of sealing, except that it can also be used to seal an open space (such as a corridor or an archway), creating a magical barrier of force that repels any creature attempting to pass.In addition, doors and objects protected by a greater sign of sealing are strengthened, increasing their hardness by 10 and gaining 5 hit points per caster level.Any object protected by the sign is treated as a magic item for the purpose of making saving throws and gains a +4 resistance bonus on all saves.If its seal is broken, a greater sign of sealing deals 1d6 points of damage per caster level (maximum 20d6) in a 40-foot radius (Reflex half).A greater sign of sealing cannot be passed with a knock spell, but it can be dispelled (DC 15 + the caster level of the sign's creator).It can be disarmed with a successful DC 31 Disable Device check.Material Component: A crushed emerald worth at least 500 gp.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Reflex half; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -149,7 +149,7 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
   {
     name: "Transfix",
     description: "This spell causes any Medium or smaller humanoids within the area of the spell to become paralyzed.When casting the spell, you must specify a condition that will end it (\"Wait here until the dragon arrives\"), even if that condition can never feasibly be met (\"Stay here until the sun shines at night\").Subjects in the area that fail their saves immediately become aware of the condition, but they cannot communicate it due to their paralyzed state (although someone could use a spell such as detect thoughts to ascertain the condition).For every hour the creatures are transfixed before the condition is met, they are allowed another saving throw to break free of the spell's effect.So long as the spell operates, any Medium or smaller humanoid that enters its area must make a successful saving throw or become transfixed with the same exit conditions (they too become aware of the exit conditions on becoming transfixed).Likewise, any creatures removed from the area are freed from the spell's effects.Material Component: A drop of pine resin.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Enchantment" },

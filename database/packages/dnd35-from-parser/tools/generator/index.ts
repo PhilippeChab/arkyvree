@@ -22,6 +22,8 @@ import {
   buildWizardSchoolSeeds,
   classSpells,
   collectAptitudes,
+  inheritedLevel,
+  inheritedLists,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import {
   featLines,
@@ -56,7 +58,6 @@ import {
 import type {
   ClassReference,
   FeatReference,
-  InheritedSpellList,
   ItemReference,
   MagicItemReference,
   RaceReference,
@@ -600,24 +601,6 @@ function regenerateCowFeats(out: Output, book: string) {
   writeGenerated(out, outPath, lines.join("\n"));
 }
 
-/**
- * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when
- * it's of the list's schools and has none of its excluded descriptors.
- */
-function inheritedLevel(
-  spell: SpellReference["raw"][number],
-  levelEntries: { className: string; level: number }[],
-  list: InheritedSpellList,
-): number | undefined {
-  if (list.schools && !list.schools.includes(spell.school)) return undefined;
-  if (spell.descriptors.some((descriptor) => list.excludeDescriptors?.includes(descriptor))) return undefined;
-  for (const className of list.classes) {
-    const entry = levelEntries.find((le) => le.className === className);
-    if (entry) return entry.level;
-  }
-  return undefined;
-}
-
 /** Regenerate cowSpells.ts for a book. Scans all OTHER books' spell references for spells that
  *  have levelEntries matching this book's casting classes. Produces per-class-level entries
  *  so the seed uses the correct level for each class (not the global minimum). */
@@ -627,16 +610,11 @@ function regenerateCowSpells(out: Output, book: string) {
 
   // Build map: className → aptitude name for classes that have spell lists
   const classToApt = new Map<string, string>();
-  // The lists classes draw on (`inheritsFrom`), each its class's aptitude
-  const inheritedLists: { aptitude: string; list: InheritedSpellList }[] = [];
   for (const { ref } of classes) {
-    const spells = classSpells(ref);
-    if (spells && ref.raw?.name) {
-      classToApt.set(ref.raw.name, `${ref.raw.name} Spells`);
-      if (spells.inheritsFrom) inheritedLists.push({ aptitude: `${ref.raw.name} Spells`, list: spells.inheritsFrom });
-      for (const list of spells.lists ?? []) inheritedLists.push({ aptitude: list.name, list: list.inheritsFrom });
-    }
+    if (classSpells(ref) && ref.raw?.name) classToApt.set(ref.raw.name, `${ref.raw.name} Spells`);
   }
+  // The lists classes draw on (`inheritsFrom`), each its class's aptitude
+  const bookInheritedLists = inheritedLists(book);
 
   // Load this book's own spell names (these don't need COW — they're seeded directly)
   const bookSpellNames = new Set<string>();
@@ -681,7 +659,7 @@ function regenerateCowSpells(out: Output, book: string) {
       // Inherited spell lists: from the base book + current book only
       if (isSameBook || isFromBase) {
         inheritable.add(spell.name);
-        for (const { aptitude, list } of inheritedLists) {
+        for (const { aptitude, list } of bookInheritedLists) {
           const level = inheritedLevel(spell, levelEntries, list);
           if (level !== undefined) matchedApts.push({ aptitude, level });
         }
@@ -704,7 +682,7 @@ function regenerateCowSpells(out: Output, book: string) {
   }
 
   // A list's additions, at their level there
-  for (const { aptitude, list } of inheritedLists) {
+  for (const { aptitude, list } of bookInheritedLists) {
     for (const [level, names] of Object.entries(list.additions ?? {})) {
       for (const name of names) {
         if (!inheritable.has(name)) throw new Error(`${aptitude}: "${name}" is neither a core spell nor the book's`);

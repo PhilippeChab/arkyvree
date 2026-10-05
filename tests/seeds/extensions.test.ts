@@ -198,6 +198,24 @@ describe("The seeded extensions", () => {
       ]),
     ).toEqual({ "Cause Fear": 1, Contagion: 3, "Bless Weapon": undefined });
   });
+  test("put a book's spells on its own copy of another book's list that draws on others', by that list's rule", async () => {
+    // Complete Adventurer's Fly, Swift (bard 2, sorcerer/wizard 2, druid 3; transmutation): the sublime chord's list
+    // (Complete Arcane: the bard's, then the sorcerer's), the Suel arcanamach's (the sorcerer's transmutation) and the
+    // spirit shaman's (Complete Divine: the druid's), each the book's own copy, which a ruleset merges with its book's
+    const adventurer = await seededRows(DND35_COMPLETE_ADVENTURER_NAME);
+    const lists = ["Sublime Chord Spells", "Suel Arcanamach Spells", "Spirit Shaman Spells"];
+    const fly = adventurer.powers.find((power) => power.name === "Fly, Swift")!;
+    const links = fly.powersAptitudesInRules.filter((link) => lists.includes(link.aptitudesInRule.name));
+    expect(Object.fromEntries(links.map((link) => [link.aptitudesInRule.name, link.level]))).toEqual({
+      "Sublime Chord Spells": 2,
+      "Suel Arcanamach Spells": 2,
+      "Spirit Shaman Spells": 3,
+    });
+    expect(links.map((link) => link.aptitudeId).sort()).toEqual(
+      lists.map((list) => adventurer.aptitude(list).id).sort(),
+    );
+  });
+
   test("give the divine crusader a pick of the core rules' and Complete Divine's domains, each joining its list to hers", async () => {
     const core = await seededRows();
     const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);

@@ -4,7 +4,7 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Aiming At the Target",
     description: "When you cast this spell as a swift action, you increase your ability to concentrate on a spell you have already cast.This spell is one of only a few spells (finding the center being another) that you can cast while maintaining concentration on another spell.Aiming at the target gives you a +10 circumstance bonus on Concentration checks you make to maintain concentration on the other spell, and its effect lasts as long as you concentrate on the other spell (to a maximum of 20 minutes).",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -19,7 +19,7 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Blink, Greater",
     description: "This spell functions like blink, except you have control over the timing of your \"blinking\" back and forth between the Ethereal Plane and the Material Plane.You can also ready an action to blink away from any physical or magical attack, with the attack missing automatically unless it also affects ethereal targets (as a force effect does).While blinking, you have no chance of interfering with your own attacks or your own spells.When moving through solid objects, you do not risk materializing inside one unless you actually end your movement there, in which case you materialize and are shunted off to the nearest open space, taking 1d6 points of damage per 5 feet traveled in this manner.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -35,7 +35,7 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Duelward",
     description: "You mantle yourself in a powerful magical field that facilitates your defense against enemy spells.While a duelward is in effect, counterspelling is an immediate action for you, allowing you to counterspell even when it is not your turn without having previously readied an action.You also gain a +4 competence bonus on Spellcraft checks made to identify spells being cast.The first time you successfully counterspell while the spell is in effect (whether you counterspell as an immediate action or not), duelward is discharged.Material Component: A miniature silk glove.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -88,7 +88,7 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Fly, Mass",
     description: "As fly, except this spell confers the power of flight upon all targeted creatures.Each recipient of the spell must remain within 30 feet of at least one other recipient, or the spell ends for the creature that is separated from the others.If only two individuals are affected, the spell ends for both if the distance between them exceeds 30 feet.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -155,7 +155,7 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Reciprocal Gyre",
     description: "You manipulate the magical aura of a creature or object, creating a damaging feedback reaction of arcane power.The target takes 1d6 points of damage per spell level of each functioning spell or spell-like ability currently affecting it (maximum 25d6).For example, a creature who is hasted (3rd level), flying (3rd level), and protected by a stoneskin spell (4th-level wizard version) takes 10d6 points of damage (Will save for half ).In addition, any creature that fails its save must then succeed on a Fortitude save or be dazed for 1d6 rounds.Only spells specifically targeted on the creature in question can be used to create the backlash of a reciprocal gyre, so spells that affect an area (such as invisibility sphere and solid fog) can't be used to deal reciprocal damage to creatures within their area.Likewise, persistent or continuous effects from magic items can't be used to deal reciprocal damage, but targeted spell effects can be-for example, the magic of a cloak of resistance can't be used by reciprocal gyre, but a spell cast by a wand of invisibility could be.Material Component: A tiny closed loop of copper wire.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Will half, then Fortitude negates; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -172,7 +172,7 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Refusal",
     description: "You create a special ward that prevents unauthorized spellcasters or creatures with spell-like abilities from entering an area.Any creature that has spells prepared, spell slots available for casting without preparation, or innate spell-like abilities must succeed on a Will save or be halted by an invisible barrier that prevents passage.The DC of the Will save increases by a number equal to the spell level of the highest-level spell the creature has prepared or is capable of casting (so that a 10th-level sorcerer who hasn't yet exhausted his 5th-level spell slots for the day adds +5 to the save DC).You can choose to designate a password or special condition (such as character race, alignment, possession of a token, or any other observable or detectable characteristic) by which spellcasting characters and creatures can enter the refusal-warded area.Creatures that have no spellcasting capability or spell-like abilities (including spellcasters who have exhausted their spell slots, and creatures with spell trigger or spell completion magic items) can pass through the barrier with no difficulty.Spellcasters and creatures that have spell-like abilities and that are already within the area you protect when you create the ward are not compelled to leave or restricted in their movement within it (and spells and spell-like abilities can pass through the barrier in either direction with no difficulty).However, if such creatures leave the area, they must succeed on saving throws as described above to return.Creatures attempting to use any teleportation spell or effect to enter the warded area make the normal saving throw.They are shunted harmlessly to the nearest safe space outside the warded area if they fail.Material Component: A pinch of dust from a wizard's tomb.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Will negates; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -293,7 +293,7 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Wood Rot",
     description: "When you cast this spell, an insidious rot immediately taints any wooden object or plant creature you touch.Any unattended nonmagical wooden item smaller than 6 feet in diameter, or a 3-foot-radius volume of a larger wooden object (such as a wooden door), is instantly destroyed by wood rot.In combat, you can use the spell to attempt to sunder any wooden or wooden-hafted weapon; the weapon or its wooden portion is destroyed on a successful melee touch attack.Attempting to sunder a weapon generally provokes attacks of opportunity, and wood rot has no effect on wooden or wooden-hafted weapons that strike you, even if you hold the charge.Against wooden shields or armor, you also make a melee touch attack.Targets too large to be destroyed outright take a -1d6 penalty to their bonus to Armor Class on a successful hit and are rendered unusable if the penalty exceeds the bonus.Any attack against a wooden object discharges the spell, and wooden magic items are immune to the effect of wood rot.Against plant creatures, wood rot deals 3d6 points of damage +1 point per caster level (maximum +15) on a successful attack.Against plant creatures only, the spell lasts for 1 round per level, and you can make one melee touch attack per round.Once it is used to make an attack against a plant creature, wood rot cannot be used to attack or destroy wooden items.Material Component: A live termite.",
-    aptitudes: ["Druid Spells"],
+    aptitudes: ["Druid Spells", "Spirit Shaman Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },

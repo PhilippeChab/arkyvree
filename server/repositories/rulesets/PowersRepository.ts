@@ -36,18 +36,10 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
         aptitudeId: klassLevelPowersInRules.aptitudeId,
         free: klassLevelPowersInRules.free,
         saveName: savesInRules.name,
-        powerLevel: powersAptitudesInRules.level,
       })
       .from(powersInRules)
       .innerJoin(klassLevelPowersInRules, eq(powersInRules.id, klassLevelPowersInRules.powerId))
       .leftJoin(savesInRules, eq(powersInRules.saveId, savesInRules.id))
-      .leftJoin(
-        powersAptitudesInRules,
-        and(
-          eq(powersInRules.id, powersAptitudesInRules.powerId),
-          eq(klassLevelPowersInRules.aptitudeId, powersAptitudesInRules.aptitudeId),
-        ),
-      )
       .where(
         and(
           inArray(klassLevelPowersInRules.klassLevelId, [...new Set(where.levels.map((level) => level.klassLevelId))]),
@@ -122,7 +114,8 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
           rulesetCondition,
           isNull(powersInRules.deletedAt),
           isNull(powersInRules.campaignId),
-          eq(powersAptitudesInRules.aptitudeId, aptitudeId),
+          // A list's copies too: books seed their own copy of a list their spells are on, which a ruleset merges
+          this.idMatches(powersAptitudesInRules.aptitudeId, aptitudeId),
           searchCondition,
           this.excludeIds(excludePowerIds),
           this.excludeIds(siblingLoserIds),
@@ -153,7 +146,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
             .from(powersAptitudesInRules)
             .where(
               and(
-                eq(powersAptitudesInRules.aptitudeId, where.aptitudeId),
+                this.idMatches(powersAptitudesInRules.aptitudeId, where.aptitudeId),
                 where.level != null ? eq(powersAptitudesInRules.level, where.level) : undefined,
               ),
             ),
@@ -197,20 +190,12 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
         characterLevelId: levelsInCharacter.id,
         aptitudeId: levelPowersInCharacter.aptitudeId,
         saveName: savesInRules.name,
-        powerLevel: powersAptitudesInRules.level,
       })
       .from(powersInRules)
       .innerJoin(levelPowersInCharacter, eq(powersInRules.id, levelPowersInCharacter.powerId))
       .innerJoin(levelsInCharacter, eq(levelPowersInCharacter.characterLevelId, levelsInCharacter.id))
       .innerJoin(klassLevelsInRules, eq(levelsInCharacter.klassLevelId, klassLevelsInRules.id))
       .leftJoin(savesInRules, eq(powersInRules.saveId, savesInRules.id))
-      .leftJoin(
-        powersAptitudesInRules,
-        and(
-          eq(powersInRules.id, powersAptitudesInRules.powerId),
-          eq(levelPowersInCharacter.aptitudeId, powersAptitudesInRules.aptitudeId),
-        ),
-      )
       .where(
         and(inArray(levelPowersInCharacter.characterLevelId, where.characterLevelIds), isNull(powersInRules.deletedAt)),
       )

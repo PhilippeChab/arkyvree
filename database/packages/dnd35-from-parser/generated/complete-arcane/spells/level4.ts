@@ -4,8 +4,8 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
   {
     name: "Arc of Lightning",
     description: "You create natural conductivity between two creatures, and a bolt of electricity arcs between them.This bolt deals 1d6 points of electricity damage per caster level (maximum 15d6) to both creatures and to anything in the line between them.Both creatures must be in range, and you must be able to target them (as if this spell had them as its targets).Draw the line from any corner in one creature's space to any corner in the other's space.Arcane Material Component: Two small iron rods.",
-    aptitudes: ["Druid Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Druid Spells": 4, "Sorcerer Spells": 5, "Warmage Spells": 5, "Wizard Spells": 5, "Wu Jen Spells": 5 },
+    aptitudes: ["Druid Spells", "Sorcerer Spells", "Spirit Shaman Spells", "Warmage Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudeLevels: { "Druid Spells": 4, "Sorcerer Spells": 5, "Spirit Shaman Spells": 4, "Warmage Spells": 5, "Wizard Spells": 5, "Wu Jen Spells": 5 },
     savingThrow: "Reflex half",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
@@ -25,7 +25,7 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
   {
     name: "Assay Resistance",
     description: "This spell enables you to divine the exact nature and vulnerabilities of a single creature's magical defenses, giving you a +10 bonus on caster level checks to overcome its spell resistance.Assay resistance is effective only against one specific creature per casting, and you must be able to see the creature when you cast the spell.",
-    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Cleric Spells", "Favored Soul Spells", "Shugenja Spells", "Sorcerer Spells", "Spellthief Spells", "Ur-priest Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -60,8 +60,8 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
   {
     name: "Blistering Radiance",
     description: "A blazing ball of light is hurled toward the point you designate, erupting into a brilliant hovering sphere.All sighted creatures in the area are dazzled (no save), and the heat from the blistering radiance deals 2d6 points of fire damage to all creatures and objects in the area each round on your turn (Fortitude save for half).Like fireball, blistering radiance erupts if it strikes any material body or solid barrier before attaining the prescribed range, and you must make a successful ranged touch attack to send the sphere through a narrow opening or passage.Blistering radiance counters or dispels any darkness spell of equal or lower level.Material Component: A bit of tinder and a small lens.",
-    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Cleric Spells": 5, "Sorcerer Spells": 4, "Wizard Spells": 4 },
+    aptitudes: ["Cleric Spells", "Favored Soul Spells", "Shugenja Spells", "Sorcerer Spells", "Ur-priest Spells", "Wizard Spells"],
+    aptitudeLevels: { "Cleric Spells": 5, "Favored Soul Spells": 5, "Shugenja Spells": 5, "Sorcerer Spells": 4, "Ur-priest Spells": 5, "Wizard Spells": 4 },
     savingThrow: "None and Fortitude partial; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Evocation" },
@@ -115,7 +115,7 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
   {
     name: "Darkvision, Mass",
     description: "As darkvision, except that all target creatures receive the spell's benefits.Unlike with darkvision, recipients of this spell cannot have the ability made permanent with a permanency spell.Material Component: A dried carrot or three small agates.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -289,7 +289,7 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
   {
     name: "Otiluke's Dispelling Screen",
     description: "You create an opaque, immobile, shimmering screen of violet energy.Any spell effect operating on a creature or unattended object that passes through the screen is affected as by a targeted dispel magic at your caster level.Attended items that pass through are not affected by the screen, which is the only way the screen differs from a normal targeted casting of dispel magic-attended items are essentially not targeted by the screen.Make a caster level check (1d20 + 1 per caster level, maximum +10) to dispel spell effects (DC 11 + caster level) or suppress an unattended object's magical properties for 1d4 rounds (DC equal to the item's caster level).Spell effects not operating on objects or unattended creatures cannot pass through the screen.A disintegrate or successful dispel magic removes Otiluke's dispelling screen, while an antimagic field suppresses it.Material Component: A sheet of fine lead crystal.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -323,7 +323,7 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
   {
     name: "Repair Critical Damage",
     description: "As repair light damage, except you repair 4d8 points of damage +1 point per caster level (maximum +20).",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -368,7 +368,7 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
   {
     name: "Unluck",
     description: "When you cast this spell, you negatively influence the randomness of fortune for the target.Whenever the affected creature undertakes an action involving random chance (specifically, whenever any die roll is made for the creature, including attack rolls, damage rolls, and saving throws), two separate rolls are made and the worse result applied.A creature carrying a stone of good luck is immune to the effect of unluck, but the stone's effects do not function for the duration of the spell if the creature fails its save.Material Component: A piece of a broken mirror.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },

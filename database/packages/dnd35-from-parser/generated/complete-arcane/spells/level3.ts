@@ -4,7 +4,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Anticipate Teleportation",
     description: "The subject of the spell is surrounded with an invisible aura that anticipates and delays the teleportation of any creature into the spell's area. Any teleportation spell or effect (including all spells with the teleportation descriptor) can be anticipated, making the spell's recipient instantly aware of the exact location where the teleporting creature will arrive (subject to the restrictions below), the creature's size, and how many other creatures (and their sizes) are arriving with the teleporting creature. The spell also delays the arrival of the teleporting creature by 1 round (so that it arrives on its initiative count immediately before its next turn), generally giving the recipient of the spell and anyone else made aware of the information 1 round to act or ready actions. The teleporting creature does not perceive this delay. Since a teleporting creature doesn't necessarily arrive at the precise location it intends, the spell also functions against a creature that arrives in range even though its intended destination was elsewhere.For a creature that intends to teleport into range but inadvertently arrives outside the spell's area, the spell gives the recipient awareness that a creature has attempted to teleport into range and delays the creature as normal, but doesn't give any awareness as to the actual location of its imminent arrival. The spell has no effect on creatures attempting to teleport away from the spell's area, though if their destination is within the area, the spell will affect their reentry as normal. Focus: A tiny hourglass of platinum and crystal costing 500 gp, which must be carried or worn by the spell's recipient while the spell is in effect.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -72,7 +72,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Discern Shapechanger",
     description: "By taking a standard action to concentrate, you can see the true form of creatures within 60 feet.Each round, you can examine one creature you can see to determine whether it is polymorphed, disguised, or transmuted, If you look at a shapechanger in its true form, you immediately sense its shapechanging ability, but you can't determine what other forms it might be capable of assuming.For the purpose of this spell, a shapechanger is any creature with the shapechanger type or a supernatural orextraordinary ability that allows it to assume an alternate form.A wizard who knows alter self is not a shapechanger (since a spell is not a supernatural or extraordinary ability), but a barghest is (since it has the supernatural ability to assume alternate forms, even though its type is outsider).Material Component: A balm of honey and lotus flower, smeared on your eyelids.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -124,7 +124,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Repair Serious Damage",
     description: "As repair light damage, except you repair 3d8 points of damage +1 point per caster level (maximum +15) to a construct.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -136,8 +136,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Resist Energy, Mass",
     description: "As resist energy, except that it affects all targeted creatures.",
-    aptitudes: ["Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
-    aptitudeLevels: { "Cleric Spells": 3, "Druid Spells": 3, "Sorcerer Spells": 4, "Wizard Spells": 4, "Wu Jen Spells": 4 },
+    aptitudes: ["Cleric Spells", "Druid Spells", "Favored Soul Spells", "Shugenja Spells", "Sorcerer Spells", "Spellthief Spells", "Spirit Shaman Spells", "Ur-priest Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudeLevels: { "Cleric Spells": 3, "Druid Spells": 3, "Favored Soul Spells": 3, "Shugenja Spells": 3, "Sorcerer Spells": 4, "Spellthief Spells": 4, "Spirit Shaman Spells": 3, "Ur-priest Spells": 3, "Wizard Spells": 4, "Wu Jen Spells": 4 },
     savingThrow: "Fortitude negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -172,7 +172,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Ring of Blades",
     description: "This spell conjures a horizontal ring of swirling metal blades around you. The ring extends 5 feet from you, into all squares adjacent to your space, and it moves with you as you move. Each round at the end of your turn, starting the round in which you cast the spell, the blades deal 1d6 points of damage +1 point per caster level (maximum +10) to all creatures in the affected area. The blades conjured by a lawful-aligned cleric are cold iron, those conjured by a chaotic-aligned cleric are silver, and those conjured by a cleric who is neither lawful nor chaotic are steel. Material Component: A small dagger.",
-    aptitudes: ["Cleric Spells", "Warmage Spells"],
+    aptitudes: ["Cleric Spells", "Favored Soul Spells", "Shugenja Spells", "Ur-priest Spells", "Warmage Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
@@ -190,7 +190,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Shadow Binding",
     description: "You cause a multitude of ribbonlike shadows to instantaneously explode outward from the target point.Creatures in the area that fail a Will save are dazed for 1 round and are subsequently entangled.Breaking free of the shadow binding requires a DC 20 Strength check or Escape Artist check, taken as a full-round action.Material Component: A few links of iron chain.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -208,7 +208,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Sign of Sealing",
     description: "You seal a door, chest, or similar closure with a prominent magical sigil that bars entry and prevents opening.A door or object protected by this spell can be opened only by breaking (add 10 to the normal break DC) or by the use of knock or dispel magic.If the door or object is forced open by any means (magical or physical), the sign of sealing deals 1d4 points of damage per caster level (maximum 10d4) in a 30-foot radius (Reflex half).A knock spell doesn't negate or automatically bypass a sign of sealing, but will suppress the sign for 10 minutes on a successful caster level check (DC 11 + the caster level of the sign's creator).A sign of sealing is a magical trap that can be disarmed with a successful DC 28 Disable Device check.You can pass your own sign safely, and it remains set behind you.Material Component: A crushed emerald worth 100 gp.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Reflex half; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -225,7 +225,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Stony Grasp",
     description: "As earthen grasp, except the stony arm can appear from any natural surface, including unworked rock, earth, mud, grass, or sand.The stone arm has AC 18, hardness 8, and 4 hit points per caster level.Material Component: A miniature hand sculpted from stone.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -239,7 +239,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Thornskin",
     description: "Your skin sprouts thorns when this spell is cast, increasing the damage you deal with an unarmed strike and making you difficult to grab.As well as dealing lethal damage on an unarmed strike (if you don't already do so), you deal an extra 1d6 points of piercing damage (so that a human under the effect of thornskin would deal 1d3 points of bludgeoning damage plus 1d6 points of piercing damage with an unarmed strike).In addition, any creature that hits you with a natural weapon or unarmed strike (including all successful grapple checks) takes 5 points of piercing damage.Material Component: A thorn.",
-    aptitudes: ["Druid Spells"],
+    aptitudes: ["Druid Spells", "Spirit Shaman Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
