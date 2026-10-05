@@ -14,7 +14,9 @@ import { getBondedRaceStats } from "@/server/rulesets/dnd3.5/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
+import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import {
@@ -284,6 +286,20 @@ describe("CharactersService with bonded creatures", () => {
       (id: string) => CharacterContributorsService.inviteContributor(owner, id, "anyone@example.com"),
     ],
     ["leave", (id: string) => CharacterContributorsService.leaveCharacter(owner, id)],
+    // Its levels follow its master's, never a pick: the level-up builds a player character
+    [
+      "list the classes for",
+      (id: string) => CharacterLevelsService.getAvailableKlasses(owner, id, {}, { limit: 10, page: 1 }),
+    ],
+    [
+      "count the feat slots of",
+      async (id: string) => CharacterLevelsService.getFeatSlots(owner, id, (await getSeedCtx()).klassMap.pc.Wizard, 2),
+    ],
+    ["level up", async (id: string) => addOneLevel(owner, id, (await getSeedCtx()).klassMap.pc.Wizard, 2, 4, null)],
+    ["remove a level from", (id: string) => CharacterLevelsService.removeLevel(owner, id)],
+    ["set the ability scores of", (id: string) => CharactersService.updateAbilities(owner, id, {})],
+    ["list the inventory of", (id: string) => CharacterInventoryService.getInventory(owner, id)],
+    ["list the modifiers of", (id: string) => CharacterModifiersService.getModifiers(owner, id)],
   ])("won't %s a familiar on its own", async (_, call) => {
     const { bonded } = await createWizardWithFamiliar();
     await expect(call(bonded.id)).rejects.toThrow(NotFoundError);
