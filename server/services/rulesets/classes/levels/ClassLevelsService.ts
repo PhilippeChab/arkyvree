@@ -185,14 +185,12 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       feats?: Array<{ featId: string; aptitudeId: string; free?: boolean }>;
     },
   ) {
-    let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        klassRulesetId = klass.rulesetId;
 
         // Copy an inherited class: the new level row would otherwise belong to the parent ruleset's class.
         const { id: targetKlassId } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
@@ -254,7 +252,6 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       });
     });
     RulesetCache.invalidate(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) RulesetCache.invalidate(klassRulesetId);
     return result;
   }
 
@@ -270,14 +267,12 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       feats?: Array<{ featId: string; aptitudeId: string; free?: boolean }>;
     },
   ) {
-    let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
 
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        klassRulesetId = klass.rulesetId;
 
         const level = rulesetData.klassLevelsById.get(levelId);
         if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
@@ -353,12 +348,10 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       });
     });
     RulesetCache.invalidate(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) RulesetCache.invalidate(klassRulesetId);
     return result;
   }
 
   async deleteClassLevel(session: Session, rulesetId: string, classId: string, levelId: string) {
-    let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -366,7 +359,6 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         const inUse = await hasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        klassRulesetId = klass.rulesetId;
 
         const level = rulesetData.klassLevelsById.get(levelId);
         if (!level || level.klassId !== klass.id) throw new NotFoundError("Level not found for this class");
@@ -395,7 +387,6 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       });
     });
     RulesetCache.invalidate(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) RulesetCache.invalidate(klassRulesetId);
     return result;
   }
 }

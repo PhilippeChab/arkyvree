@@ -25,7 +25,6 @@ class ClassSkillsService {
   }
 
   async addClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {
-    let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -33,7 +32,6 @@ class ClassSkillsService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        klassRulesetId = klass.rulesetId;
 
         const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
@@ -63,12 +61,10 @@ class ClassSkillsService {
       });
     });
     RulesetCache.invalidate(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) RulesetCache.invalidate(klassRulesetId);
     return result;
   }
 
   async removeClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {
-    let klassRulesetId: string | undefined;
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         const { sourceChain } = rulesetData.cow;
@@ -77,7 +73,6 @@ class ClassSkillsService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
-        klassRulesetId = klass.rulesetId;
 
         const klassSkill = rulesetData.klassSkillsByKlassId.get(klass.id)?.find((ks) => ks.skillId === skillId);
         if (!klassSkill) {
@@ -104,7 +99,6 @@ class ClassSkillsService {
       });
     });
     RulesetCache.invalidate(rulesetId);
-    if (klassRulesetId && klassRulesetId !== rulesetId) RulesetCache.invalidate(klassRulesetId);
     return result;
   }
 }
