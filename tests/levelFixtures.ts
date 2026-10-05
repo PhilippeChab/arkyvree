@@ -88,6 +88,22 @@ export const BUILDS = {
   },
 } satisfies Record<string, CharacterValues>;
 
+/** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
+export type Picks = {
+  skills: Record<string, number>;
+  feats: Record<string, string[]>;
+  powers: Record<string, string[]>;
+};
+
+/** A level's picks by name, with its hit points and ability increase. */
+export type LevelPlan = {
+  hp: number;
+  ability?: string;
+  skills?: Record<string, number>;
+  feats?: Record<string, string[]>;
+  powers?: Record<string, string[]>;
+};
+
 /** A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes. */
 export async function createSeedCharacter(
   ctx: SeedContext,
@@ -108,22 +124,6 @@ export async function createSeedCharacter(
     description: "Test",
   });
 }
-
-/** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
-export type Picks = {
-  skills: Record<string, number>;
-  feats: Record<string, string[]>;
-  powers: Record<string, string[]>;
-};
-
-/** A level's picks by name, with its hit points and ability increase. */
-export type LevelPlan = {
-  hp: number;
-  ability?: string;
-  skills?: Record<string, number>;
-  feats?: Record<string, string[]>;
-  powers?: Record<string, string[]>;
-};
 
 /** The ids of a plan's picks. */
 export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {

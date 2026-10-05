@@ -10,6 +10,24 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 type AptitudesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"], 200>;
 export type Aptitude = AptitudesPaginated["items"][number];
 
+interface AptitudesAutocompleteProps {
+  rulesetId: string;
+  value: Aptitude[];
+  onChange: (aptitudes: Aptitude[]) => void;
+  disabled?: boolean;
+  scope?: "feats" | "spells";
+}
+
+interface AptitudeAutocompleteProps {
+  rulesetId: string;
+  value: Aptitude | null;
+  onChange: (aptitude: Aptitude | null) => void;
+  disabled?: boolean;
+  label?: string;
+  size?: "small" | "medium";
+  scope?: "feats" | "spells";
+}
+
 function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
@@ -53,14 +71,6 @@ function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {
   return { fetchedOptions, autocompleteProps };
 }
 
-interface AptitudesAutocompleteProps {
-  rulesetId: string;
-  value: Aptitude[];
-  onChange: (aptitudes: Aptitude[]) => void;
-  disabled?: boolean;
-  scope?: "feats" | "spells";
-}
-
 export function AptitudesAutocomplete({ rulesetId, value, onChange, disabled, scope }: AptitudesAutocompleteProps) {
   const { fetchedOptions, autocompleteProps } = useAptitudeOptions(rulesetId, scope);
 
@@ -85,16 +95,6 @@ export function AptitudesAutocomplete({ rulesetId, value, onChange, disabled, sc
       renderInput={(params) => <TextField {...params} label="Aptitudes" />}
     />
   );
-}
-
-interface AptitudeAutocompleteProps {
-  rulesetId: string;
-  value: Aptitude | null;
-  onChange: (aptitude: Aptitude | null) => void;
-  disabled?: boolean;
-  label?: string;
-  size?: "small" | "medium";
-  scope?: "feats" | "spells";
 }
 
 export function AptitudeAutocomplete({

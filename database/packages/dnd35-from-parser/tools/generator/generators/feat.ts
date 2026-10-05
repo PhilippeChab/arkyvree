@@ -61,6 +61,9 @@ type TemplateFamily = {
   description: string;
 };
 
+/** The generated file's code, and the names it uses: what its imports are written from. */
+type FeatFile = { lines: string[]; uses: Set<string> };
+
 /**
  * What a feat reference makes: its feats by feat type, and its template families. An epic feat is left out unless an
  * override keeps it.
@@ -400,9 +403,6 @@ const IMPORTS: ImportTable = [
   ["@/database/packages/dnd35/content/creatureTypes.ts", ["favoredEnemyFeats"]],
   ["@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts", ["WIZARD_SCHOOLS"]],
 ];
-
-/** The generated file's code, and the names it uses: what its imports are written from. */
-type FeatFile = { lines: string[]; uses: Set<string> };
 
 /** The system feats of the core rules' feat file `fileName`. */
 function emitSystemFeats(file: FeatFile, fileName: string): void {

@@ -14,6 +14,21 @@ interface DetailPageHeaderProps {
   children?: ReactNode;
 }
 
+export interface SectionTab<K extends string> {
+  key: K;
+  label: ReactNode;
+  icon: ElementType;
+}
+
+interface SectionTabsProps<K extends string> {
+  tabs: SectionTab<K>[];
+  value: K;
+  onChange: (key: K) => void;
+  /** Warm a tab's data before it is clicked. */
+  onTabHover?: (key: K) => void;
+  "aria-label": string;
+}
+
 /** Centered title block of a ruleset or campaign page, with back and menu buttons. */
 export function DetailPageHeader({
   title,
@@ -63,21 +78,6 @@ export function DetailPageHeader({
       </Box>
     </Box>
   );
-}
-
-export interface SectionTab<K extends string> {
-  key: K;
-  label: ReactNode;
-  icon: ElementType;
-}
-
-interface SectionTabsProps<K extends string> {
-  tabs: SectionTab<K>[];
-  value: K;
-  onChange: (key: K) => void;
-  /** Warm a tab's data before it is clicked. */
-  onTabHover?: (key: K) => void;
-  "aria-label": string;
 }
 
 /** Scrollable pill tabs switching the sections of a detail page. */

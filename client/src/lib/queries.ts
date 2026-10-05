@@ -25,18 +25,32 @@ export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id
 
 type Direction = "asc" | "desc";
 
-export const dashboardStatsQuery = () =>
-  queryOptions({
-    queryKey: queryKeys.dashboard.stats,
-    queryFn: () => parseResponse(rpc.api.dashboard.stats.$get()),
-  });
-
 export interface CampaignListFilters {
   view: "active" | "archived";
   search: string;
   orderBy: NonNullable<CampaignListParams["orderBy"]>;
   orderDir: Direction;
 }
+
+export interface CharacterListFilters {
+  view: "active" | "shared" | "archived";
+  search: string;
+  orderBy: NonNullable<CharacterListParams["orderBy"]>;
+  orderDir: Direction;
+}
+
+export interface RulesetListFilters {
+  scope: RulesetListParams["scope"];
+  search: string;
+  orderBy: NonNullable<RulesetListParams["orderBy"]>;
+  orderDir: Direction;
+}
+
+export const dashboardStatsQuery = () =>
+  queryOptions({
+    queryKey: queryKeys.dashboard.stats,
+    queryFn: () => parseResponse(rpc.api.dashboard.stats.$get()),
+  });
 
 export const campaignListQuery = (filters: CampaignListFilters) =>
   infiniteQueryOptions({
@@ -57,13 +71,6 @@ export const campaignListQuery = (filters: CampaignListFilters) =>
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
-
-export interface CharacterListFilters {
-  view: "active" | "shared" | "archived";
-  search: string;
-  orderBy: NonNullable<CharacterListParams["orderBy"]>;
-  orderDir: Direction;
-}
 
 export const characterListQuery = (filters: CharacterListFilters) =>
   infiniteQueryOptions({
@@ -86,13 +93,6 @@ export const characterListQuery = (filters: CharacterListFilters) =>
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
-
-export interface RulesetListFilters {
-  scope: RulesetListParams["scope"];
-  search: string;
-  orderBy: NonNullable<RulesetListParams["orderBy"]>;
-  orderDir: Direction;
-}
 
 export const rulesetListQuery = (filters: RulesetListFilters) =>
   infiniteQueryOptions({

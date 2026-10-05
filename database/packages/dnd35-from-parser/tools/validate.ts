@@ -43,18 +43,6 @@ const DETECTED_ISSUES = [
   ["unresolvedAptitudePicks", "aptitude pick"],
 ] as const;
 
-/**
- * A reference's review list (`overrides.reviewed`): the entries it has, those that covered an issue (`use`), and,
- * once each, the ones that covered none or are repeated.
- */
-function reviewOf(reviewed: string[] = []) {
-  const used = new Set<string>();
-  return {
-    has: (entry: string) => reviewed.includes(entry),
-    use: (entry: string) => void used.add(entry),
-    stale: () => [...new Set(reviewed.filter((entry, i) => !used.has(entry) || reviewed.indexOf(entry) < i))],
-  };
-}
 type Review = ReturnType<typeof reviewOf>;
 
 export type Issue = {
@@ -79,6 +67,19 @@ export type Issue = {
 };
 
 type Found = { kind: Issue["kind"]; text: string };
+
+/**
+ * A reference's review list (`overrides.reviewed`): the entries it has, those that covered an issue (`use`), and,
+ * once each, the ones that covered none or are repeated.
+ */
+function reviewOf(reviewed: string[] = []) {
+  const used = new Set<string>();
+  return {
+    has: (entry: string) => reviewed.includes(entry),
+    use: (entry: string) => void used.add(entry),
+    stale: () => [...new Set(reviewed.filter((entry, i) => !used.has(entry) || reviewed.indexOf(entry) < i))],
+  };
+}
 
 /** An entry's detected issues. */
 const detectedIssues = (d: DetectedEntry): Found[] =>

@@ -23,6 +23,8 @@ interface FormSyncOptions {
   updatedAt?: string;
 }
 
+export type FormSync<T extends FieldValues> = ReturnType<typeof useFormSync<T>>;
+
 /**
  * Keep an edit form showing the latest server values without wiping unsaved
  * edits. While the form is clean it follows the server; a change that arrives
@@ -105,5 +107,3 @@ export function useFormSync<T extends FieldValues>(
     saved,
   };
 }
-
-export type FormSync<T extends FieldValues> = ReturnType<typeof useFormSync<T>>;

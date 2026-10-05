@@ -20,6 +20,14 @@ interface GroupedSkillRowsProps<S> {
   renderSkill: (skill: S, placement: SkillPlacement) => ReactNode;
 }
 
+interface SkillRowProps extends SkillPlacement {
+  name: string;
+  /** Wraps the shown name, e.g. in a description tooltip. */
+  renderName?: (label: string) => ReactNode;
+  /** The row's other cells. */
+  children: ReactNode;
+}
+
 /**
  * A skill table's rows, with the skills that share a prefix ("Knowledge (…)")
  * under a header row whose click shows or hides them.
@@ -70,14 +78,6 @@ const fadeInSx = {
   animation: "fadeInRow 200ms ease-out",
   "@keyframes fadeInRow": { from: { opacity: 0 }, to: { opacity: 1 } },
 };
-
-interface SkillRowProps extends SkillPlacement {
-  name: string;
-  /** Wraps the shown name, e.g. in a description tooltip. */
-  renderName?: (label: string) => ReactNode;
-  /** The row's other cells. */
-  children: ReactNode;
-}
 
 /** A skill's row. A grouped skill's name drops the group's prefix ("(arcana)") and sits indented. */
 export function SkillRow({ name, indented, hidden, renderName = (label) => label, children }: SkillRowProps) {

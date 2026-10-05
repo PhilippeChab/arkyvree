@@ -11,6 +11,9 @@ import type {
   RequirementEntry,
 } from "@/database/packages/dnd35/content/types.ts";
 
+/** Modules and the names a generated file can import from them, in the order its imports list them. */
+export type ImportTable = [string, string[]][];
+
 // ---------------------------------------------------------------------------
 // Naming helpers
 // ---------------------------------------------------------------------------
@@ -99,9 +102,6 @@ function builderCall(
   if (takes === "nothing") return `${name}(${quote(target)})`;
   return `${name}(${quote(target)}, ${takes === "number" ? Number(value) : quote(value)})`;
 }
-
-/** Modules and the names a generated file can import from them, in the order its imports list them. */
-export type ImportTable = [string, string[]][];
 
 /** The requirement builders a generated file imports. */
 export const REQUIREMENT_IMPORTS: ImportTable = [

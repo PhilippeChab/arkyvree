@@ -15,6 +15,31 @@ export type EncumbranceData = Omit<CharacterDetail["combat"]["encumbrance"], "ma
   maxdex: number | null;
 };
 
+type InventoryEntry = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>[number];
+
+/** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
+export interface InventoryFormData {
+  selectedItem: RulesetItem | null;
+  quantity: number;
+  location: ItemLocation | "none";
+  /** As shown, from 1 (see `shownWeaponSet`). */
+  weaponSet: number;
+  totalCharges: number;
+  remainingCharges: number;
+}
+
+/** The item fields placement depends on. */
+export type ItemColumns = { type: string | null; slot: string };
+
+type ItemProperties = { type: string; value: string }[];
+
+export type PlacementProfile = ReturnType<typeof placementProfile>;
+
+/** An inventory entry as the slot warnings read it. */
+type PlacedEntry = Pick<InventoryEntry, "id" | "equipped" | "location" | "weaponSet"> & {
+  item: Pick<InventoryEntry["item"], "name">;
+};
+
 /** A weapon set as the user sees it: stored from 0, shown from 1 ("Set 1"), as on the sheet and the PDF. */
 export const shownWeaponSet = (stored: number) => stored + 1;
 
@@ -27,21 +52,8 @@ export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "locati
   return entry.location;
 }
 
-type InventoryEntry = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>[number];
-
 /** A slot, or not equipped. */
 export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
-
-/** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
-export interface InventoryFormData {
-  selectedItem: RulesetItem | null;
-  quantity: number;
-  location: ItemLocation | "none";
-  /** As shown, from 1 (see `shownWeaponSet`). */
-  weaponSet: number;
-  totalCharges: number;
-  remainingCharges: number;
-}
 
 export const EMPTY_INVENTORY_FORM: InventoryFormData = {
   selectedItem: null,
@@ -64,10 +76,6 @@ export function placementPayload(data: InventoryFormData, hasCharges: boolean) {
     weaponSet: isHandLocation(location) ? data.weaponSet - 1 : null,
   };
 }
-
-/** The item fields placement depends on. */
-export type ItemColumns = { type: string | null; slot: string };
-type ItemProperties = { type: string; value: string }[];
 
 /** How an item is placed: the slots it can take, whether a weapon set applies, and its charges. */
 export function placementProfile(item: ItemColumns, properties: ItemProperties) {
@@ -92,8 +100,6 @@ export function placementProfile(item: ItemColumns, properties: ItemProperties) 
   };
 }
 
-export type PlacementProfile = ReturnType<typeof placementProfile>;
-
 /** The slot an item goes to when picked, or null to leave the choice (a weapon's hand) to the user. */
 export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
   if (item.type === "Weapon") return null; // hand slot picker
@@ -101,11 +107,6 @@ export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
   if (item.type === "Shield") return "Off Hand";
   return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
 }
-
-/** An inventory entry as the slot warnings read it. */
-type PlacedEntry = Pick<InventoryEntry, "id" | "equipped" | "location" | "weaponSet"> & {
-  item: Pick<InventoryEntry["item"], "name">;
-};
 
 /** The warning for a slot taken by `entry`, `weaponSet` as the form shows it. */
 const SLOT_CONFLICT_WARNINGS: Record<

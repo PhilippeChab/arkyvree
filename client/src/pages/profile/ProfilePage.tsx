@@ -27,16 +27,16 @@ interface ProfileFormData {
   emailAddress: string;
 }
 
-const toProfileForm = (user: Pick<AuthUser, "username" | "emailAddress">): ProfileFormData => ({
-  username: user.username ?? "",
-  emailAddress: user.emailAddress,
-});
-
 interface PasswordFormData {
   currentPassword: string;
   newPassword: string;
   newPasswordConfirmation: string;
 }
+
+const toProfileForm = (user: Pick<AuthUser, "username" | "emailAddress">): ProfileFormData => ({
+  username: user.username ?? "",
+  emailAddress: user.emailAddress,
+});
 
 function ProfileCard({ title, children, danger = false }: { title: string; children: ReactNode; danger?: boolean }) {
   return (

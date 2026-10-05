@@ -47,6 +47,21 @@ export const NUMBER_WORDS: Record<string, number> = {
   ten: 10,
 };
 
+type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string } };
+
+/** A reference's text checked against the fixed set the seed accepts: the option it is, or why it isn't one. */
+export type Checked<T> = { ok: true; value: T } | { ok: false; problem: string };
+
+/**
+ * What detecting an entry's modifiers finds: its modifiers (a feat's `ModifierSeed`, a domain's or a race's
+ * `Modifier`), the invalid paths and the text it couldn't parse.
+ */
+export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = {
+  modifiers: M[];
+  errors: string[];
+  unresolvedModifiers: string[];
+};
+
 /**
  * Extract the bonded-level contribution formula from a grant feat's SRD
  * description. The formula encodes how this class contributes to the
@@ -165,8 +180,6 @@ export function stripClassSuffix(name: string, className: string): string | unde
 // discoverRefs — used by the generator, sync, validate, overrides
 // ---------------------------------------------------------------------------
 
-type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string } };
-
 /** The books' references: a folder per book. */
 export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
 
@@ -253,9 +266,6 @@ export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): 
   return undefined;
 }
 
-/** A reference's text checked against the fixed set the seed accepts: the option it is, or why it isn't one. */
-export type Checked<T> = { ok: true; value: T } | { ok: false; problem: string };
-
 /** `value` checked against `options`: `what` names it in the problem. */
 export function checkOneOf<T extends string>(value: string, options: readonly T[], what: string): Checked<T> {
   return isOneOf(value, options)
@@ -275,16 +285,6 @@ export const normalizeWs = (text: string) => text.replace(/\s+/g, " ").trim();
 // ---------------------------------------------------------------------------
 // Per-entity modifiers — used by detectDomain, detectRace
 // ---------------------------------------------------------------------------
-
-/**
- * What detecting an entry's modifiers finds: its modifiers (a feat's `ModifierSeed`, a domain's or a race's
- * `Modifier`), the invalid paths and the text it couldn't parse.
- */
-export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = {
-  modifiers: M[];
-  errors: string[];
-  unresolvedModifiers: string[];
-};
 
 /** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
 export function detectModifiersOf<E extends { name: string }>(

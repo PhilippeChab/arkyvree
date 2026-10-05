@@ -30,6 +30,9 @@
  * - `concern-shape`: a concern (`function X<B extends Constructor>(Base: B)`) sits in `X.ts`, its class is named for
  *   what it adds (a verb's `-ing`, `Archives` → `Archiving`, or `With` a noun, `ArmorClass` → `WithArmorClass`), and
  *   it adds methods, never state.
+ * - `types-first`: a file's types sit at its top, after its imports, before its first function or class (or a const
+ *   holding one): a type isn't a helper, read where it's used, so it never lands among them. `oxlint --fix` lifts one
+ *   there, with its comments.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -503,6 +506,89 @@ const concernShape = {
   },
 };
 
+const isTypeDeclaration = (node) => node?.type === "TSTypeAliasDeclaration" || node?.type === "TSInterfaceDeclaration";
+
+const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "ClassExpression"];
+
+/** Whether a statement is code a file's types go before: a function or a class, or a const holding one. */
+const isCode = (node) =>
+  ["FunctionDeclaration", "TSDeclareFunction", "ClassDeclaration"].includes(node?.type) ||
+  (node?.type === "VariableDeclaration" && node.declarations.some((d) => FUNCTION_VALUES.includes(d.init?.type)));
+
+/** A top-level statement's declaration: an export's, or itself. */
+const declarationOf = (statement) =>
+  statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
+    ? statement.declaration
+    : statement;
+
+/** The end of a statement, with the comment ending its line (` // note`). */
+function endOf(text, statement) {
+  const [, end] = statement.range ?? [statement.start, statement.end];
+  const lineEnd = text.indexOf("\n", end);
+  const rest = text.slice(end, lineEnd === -1 ? text.length : lineEnd);
+  return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? end + rest.trimEnd().length : end;
+}
+
+const typesFirst = {
+  meta: { type: "suggestion", fixable: "code" },
+  create(context) {
+    return {
+      Program(program) {
+        const text = context.sourceCode.text;
+        const statements = program.body;
+        const firstCode = statements.findIndex((s) => isCode(declarationOf(s)));
+        if (firstCode === -1) return;
+        const misplaced = statements
+          .map((statement, index) => ({ statement, index }))
+          .filter(({ statement, index }) => index > firstCode && isTypeDeclaration(declarationOf(statement)));
+        if (misplaced.length === 0) return;
+
+        // A type moves with the comment on the lines right above it, its own; a banner a blank line above stays, heading
+        // the code below it
+        const attachedStart = (index) => {
+          const statement = statements[index];
+          const [start] = statement.range ?? [statement.start, statement.end];
+          const from = index === 0 ? 0 : endOf(text, statements[index - 1]);
+          const lines = text.slice(from, start).split("\n");
+          let at = start - lines.at(-1).length;
+          for (let i = lines.length - 2; i >= 0 && lines[i].trim() !== ""; i--) at -= lines[i].length + 1;
+          return at;
+        };
+        // Below the statement before the first code, or, when that code opens the file, below its header
+        const atTop = firstCode === 0;
+        const insertAt = atTop ? attachedStart(0) : endOf(text, statements[firstCode - 1]);
+        const moved = misplaced.map(({ index, statement }) => {
+          const from = attachedStart(index);
+          // What's removed: the type and its comment, and the blank lines before them
+          const removeFrom =
+            endOf(text, statements[index - 1]) + text.slice(endOf(text, statements[index - 1]), from).trimEnd().length;
+          return { removeFrom, end: endOf(text, statement), from };
+        });
+        const lifted = moved.map(({ from, end }) => text.slice(from, end));
+        let rest = "";
+        let cursor = insertAt;
+        for (const { removeFrom, end } of moved) {
+          rest += text.slice(cursor, removeFrom);
+          cursor = end;
+        }
+        const last = moved.at(-1).end;
+        context.report({
+          node: declarationOf(misplaced[0].statement),
+          message:
+            "A file's types sit at its top, after its imports: before its first function or class (`oxlint --fix` lifts it).",
+          fix: (fixer) =>
+            fixer.replaceTextRange(
+              [insertAt, last],
+              atTop
+                ? lifted.join("\n\n") + "\n\n" + rest.replace(/^\n*/, "")
+                : "\n\n" + lifted.join("\n\n") + rest.replace(/^\n*/, "\n\n"),
+            ),
+        });
+      },
+    };
+  },
+};
+
 export const rules = {
   "no-parent-imports": noParentImports,
   "no-helpers-modules": noHelpersModules,
@@ -516,4 +602,5 @@ export const rules = {
   "session-param": sessionParam,
   "test-placement": testPlacement,
   "concern-shape": concernShape,
+  "types-first": typesFirst,
 };

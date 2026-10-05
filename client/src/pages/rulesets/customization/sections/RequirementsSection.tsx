@@ -51,6 +51,15 @@ interface RequirementTreeNode {
   children: RequirementTreeNode[];
 }
 
+interface RequirementsSectionProps {
+  ruleset: RulesetDetail;
+  entityType: CustomizationOwnerType;
+  entityId: string;
+  data?: Requirement[];
+  queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  onEntityIdChange?: (copyId: string, sourceId: string) => void;
+}
+
 /** What a requirement saves: its level, then its chaining operator or its condition. */
 const requirementPayload = (type: RequirementType, level: string, data: RequirementFormData): RequirementFormData =>
   type === "chaining"
@@ -63,15 +72,6 @@ function PublishedWarning() {
       This ruleset is published. Changing requirements may break character validation for existing users.
     </Alert>
   );
-}
-
-interface RequirementsSectionProps {
-  ruleset: RulesetDetail;
-  entityType: CustomizationOwnerType;
-  entityId: string;
-  data?: Requirement[];
-  queryKeysToInvalidate?: readonly (readonly unknown[])[];
-  onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
 
 export function RequirementsSection({

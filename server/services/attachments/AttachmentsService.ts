@@ -21,6 +21,14 @@ type AttachableConfig = {
 
 const ATTACHABLE_TYPES = new Map<string, AttachableConfig>();
 
+interface SignedTokenPayload {
+  blobId: string;
+  recordType: string;
+  recordId: string;
+  name: string;
+  iat: number;
+}
+
 function registerAttachable(recordType: string, config: AttachableConfig): void {
   ATTACHABLE_TYPES.set(recordType, config);
 }
@@ -59,14 +67,6 @@ registerAttachable("Character", {
   policy: imagePolicy,
   names: ["portrait"],
 });
-
-interface SignedTokenPayload {
-  blobId: string;
-  recordType: string;
-  recordId: string;
-  name: string;
-  iat: number;
-}
 
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 

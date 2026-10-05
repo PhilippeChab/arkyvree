@@ -26,61 +26,6 @@ import { stripSeparators } from "@/shared/text.ts";
 import { type CachedCowData } from "./cowData.ts";
 import { getOrFetchRulesetRawData, type RulesetRawData } from "./rawData.ts";
 
-/**
- * Wraps a string-keyed Map so `.get(key)` and `.has(key)` auto-resolve the
- * key through `overrideMap` before hitting the underlying Map. Consumers
- * can pass either a pre-COW (stored) id or a post-COW id — both land on
- * the post-COW entity. `.size`, `.values()`, `.entries()`, etc. behave
- * normally (no alias duplication).
- *
- * Returns the original Map when overrideMap is empty (no allocation cost).
- */
-function cowResolvingMap<V>(map: Map<string, V>, overrideMap: IdResolveMap): Map<string, V> {
-  if (overrideMap.size === 0) return map;
-  return new Proxy(map, {
-    get(target, prop) {
-      if (prop === "get") {
-        return (key: string) => target.get(overrideMap.get(key) ?? key);
-      }
-      if (prop === "has") {
-        return (key: string) => target.has(overrideMap.get(key) ?? key);
-      }
-      const value = Reflect.get(target, prop, target);
-      return typeof value === "function" ? value.bind(target) : value;
-    },
-  });
-}
-
-/**
- * Variant of cowResolvingMap for Maps keyed by `${id}:${rest}` composites
- * (e.g. `klassLevelByKlassAndLevel`'s `${klassId}:${level}` keys). Resolves
- * the id portion before the first `:` through the override map, leaves the
- * rest untouched. So a caller passing a pre-COW klassId still lands on the
- * right klass level.
- */
-function cowResolvingCompositeKeyMap<V>(map: Map<string, V>, overrideMap: IdResolveMap): Map<string, V> {
-  if (overrideMap.size === 0) return map;
-  const resolveKey = (key: string): string => {
-    const sep = key.indexOf(":");
-    if (sep === -1) return key;
-    const idPart = key.slice(0, sep);
-    const resolved = overrideMap.get(idPart);
-    return resolved ? resolved + key.slice(sep) : key;
-  };
-  return new Proxy(map, {
-    get(target, prop) {
-      if (prop === "get") {
-        return (key: string) => target.get(resolveKey(key));
-      }
-      if (prop === "has") {
-        return (key: string) => target.has(resolveKey(key));
-      }
-      const value = Reflect.get(target, prop, target);
-      return typeof value === "function" ? value.bind(target) : value;
-    },
-  });
-}
-
 export interface CachedRulesetData {
   abilities: RulesetAbility[];
   saves: RulesetSave[];
@@ -185,6 +130,61 @@ interface CustomizationScope {
   siblingMap: CachedCowData["siblingMap"];
   siblingToWinner: Map<string, string>;
   visibleKlassLevelIds: Set<string>;
+}
+
+/**
+ * Wraps a string-keyed Map so `.get(key)` and `.has(key)` auto-resolve the
+ * key through `overrideMap` before hitting the underlying Map. Consumers
+ * can pass either a pre-COW (stored) id or a post-COW id — both land on
+ * the post-COW entity. `.size`, `.values()`, `.entries()`, etc. behave
+ * normally (no alias duplication).
+ *
+ * Returns the original Map when overrideMap is empty (no allocation cost).
+ */
+function cowResolvingMap<V>(map: Map<string, V>, overrideMap: IdResolveMap): Map<string, V> {
+  if (overrideMap.size === 0) return map;
+  return new Proxy(map, {
+    get(target, prop) {
+      if (prop === "get") {
+        return (key: string) => target.get(overrideMap.get(key) ?? key);
+      }
+      if (prop === "has") {
+        return (key: string) => target.has(overrideMap.get(key) ?? key);
+      }
+      const value = Reflect.get(target, prop, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+}
+
+/**
+ * Variant of cowResolvingMap for Maps keyed by `${id}:${rest}` composites
+ * (e.g. `klassLevelByKlassAndLevel`'s `${klassId}:${level}` keys). Resolves
+ * the id portion before the first `:` through the override map, leaves the
+ * rest untouched. So a caller passing a pre-COW klassId still lands on the
+ * right klass level.
+ */
+function cowResolvingCompositeKeyMap<V>(map: Map<string, V>, overrideMap: IdResolveMap): Map<string, V> {
+  if (overrideMap.size === 0) return map;
+  const resolveKey = (key: string): string => {
+    const sep = key.indexOf(":");
+    if (sep === -1) return key;
+    const idPart = key.slice(0, sep);
+    const resolved = overrideMap.get(idPart);
+    return resolved ? resolved + key.slice(sep) : key;
+  };
+  return new Proxy(map, {
+    get(target, prop) {
+      if (prop === "get") {
+        return (key: string) => target.get(resolveKey(key));
+      }
+      if (prop === "has") {
+        return (key: string) => target.has(resolveKey(key));
+      }
+      const value = Reflect.get(target, prop, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
 }
 
 /** A list's rows across the chain, the fork's first, without the overridden ones and the sibling losers. */

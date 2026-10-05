@@ -7,6 +7,13 @@ export type CustomizableEntityType = (typeof CUSTOMIZABLE_ENTITY_TYPES)[number];
 
 const customizableEntityTypes = new Set<string>(CUSTOMIZABLE_ENTITY_TYPES);
 
+export type CustomizationOwnerType = (typeof CUSTOMIZATION_OWNER_TYPES)[number];
+
+/** The customization owners with a page of their own: a class's customizations are tabs of its class page. */
+export type CustomizationPageType = Exclude<CustomizationOwnerType, "klasses">;
+
+export type PropertyEntityType = (typeof PROPERTY_ENTITY_TYPES)[number];
+
 /** Whether entities of this type are customizable: they own modifiers (sourced by their own type), not only rows. */
 export function isCustomizableEntityType(entityType: string): entityType is CustomizableEntityType {
   return customizableEntityTypes.has(entityType);
@@ -14,11 +21,6 @@ export function isCustomizableEntityType(entityType: string): entityType is Cust
 
 /** What a customization can belong to: a customizable entity, or a modifier, which has requirements of its own. */
 export const CUSTOMIZATION_OWNER_TYPES = [...CUSTOMIZABLE_ENTITY_TYPES, "modifiers"] as const;
-
-export type CustomizationOwnerType = (typeof CUSTOMIZATION_OWNER_TYPES)[number];
-
-/** The customization owners with a page of their own: a class's customizations are tabs of its class page. */
-export type CustomizationPageType = Exclude<CustomizationOwnerType, "klasses">;
 
 export const CUSTOMIZATION_PAGE_TYPES = CUSTOMIZATION_OWNER_TYPES.filter(
   (entityType): entityType is CustomizationPageType => entityType !== "klasses",
@@ -36,5 +38,3 @@ export function parseCustomizationSegment(segment: unknown): CustomizationPageTy
 
 /** What property types are defined for: a customizable entity, a ruleset or a skill. */
 export const PROPERTY_ENTITY_TYPES = [...CUSTOMIZABLE_ENTITY_TYPES, "rulesets", "skills"] as const;
-
-export type PropertyEntityType = (typeof PROPERTY_ENTITY_TYPES)[number];

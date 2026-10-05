@@ -94,6 +94,16 @@ import {
 } from "@/tests/helpers.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
 
+type Carried = {
+  item: string;
+  location?: ItemLocation;
+  weaponSet?: number;
+  equipped?: boolean;
+  quantity?: number;
+};
+
+type Detailed = Awaited<ReturnType<typeof build>>;
+
 async function build(character: Character) {
   const detailed = new DetailedCharacter(character);
   await detailed.build();
@@ -129,14 +139,6 @@ function requiring(
   };
   return [[requirement]];
 }
-
-type Carried = {
-  item: string;
-  location?: ItemLocation;
-  weaponSet?: number;
-  equipped?: boolean;
-  quantity?: number;
-};
 
 /** Replaces the character's inventory: seeded items by name, or item ids. */
 async function carry(character: Character, carried: Carried[]) {
@@ -212,8 +214,6 @@ async function asHalfling(name: string) {
   await db.update(charactersInCharacter).set({ raceId: halfling.id }).where(eq(charactersInCharacter.id, character.id));
   return { ...character, raceId: halfling.id };
 }
-
-type Detailed = Awaited<ReturnType<typeof build>>;
 const weaponSet = (detailed: Detailed, set = "0") => detailed.getDetailedCharacterCombat().getCombat().weaponsets[set];
 const spellLevel = (detailed: Detailed, aptitude: string, level: number) =>
   (detailed.getDetailedCharacterAptitudes().getAptitudes()[aptitude] as Record<string, unknown>)[

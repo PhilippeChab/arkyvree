@@ -1,3 +1,5 @@
+export type RollMethodId = "4d6-drop-lowest" | "3d6-straight" | "standard-array" | "point-buy";
+
 export function rollDie(sides: number): number {
   return Math.floor(Math.random() * sides) + 1;
 }
@@ -11,8 +13,6 @@ function roll4d6DropLowest(): number {
 function roll3d6(): number {
   return rollDie(6) + rollDie(6) + rollDie(6);
 }
-
-export type RollMethodId = "4d6-drop-lowest" | "3d6-straight" | "standard-array" | "point-buy";
 
 export const ROLL_METHODS: { id: RollMethodId; label: string }[] = [
   { id: "4d6-drop-lowest", label: "4d6 Drop Lowest" },

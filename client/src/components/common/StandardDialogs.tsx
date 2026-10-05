@@ -28,6 +28,26 @@ interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   submitIcon?: ReactNode;
 }
 
+type StandardFormDialogProps<T extends FieldValues> = Omit<FormActionDialogProps<T>, "submitLabel"> & {
+  submitLabel?: string;
+};
+
+export interface ConfirmDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+  title: string;
+  message: ReactNode;
+  /** Extra content below the message, e.g. an option the confirm depends on. */
+  children?: ReactNode;
+  confirmLabel?: string;
+  /** Intent of the confirm button — see docs/ui-buttons.md. */
+  confirmColor?: "primary" | "error" | "warning" | "success";
+  confirmIcon?: ReactNode;
+  maxWidth?: DialogProps["maxWidth"];
+}
+
 function FormActionDialog<T extends FieldValues = FieldValues>({
   open,
   onClose,
@@ -81,32 +101,12 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
   );
 }
 
-type StandardFormDialogProps<T extends FieldValues> = Omit<FormActionDialogProps<T>, "submitLabel"> & {
-  submitLabel?: string;
-};
-
 export function CreateDialog<T extends FieldValues = FieldValues>(props: StandardFormDialogProps<T>) {
   return <FormActionDialog submitLabel="Create" {...props} />;
 }
 
 export function EditDialog<T extends FieldValues = FieldValues>(props: StandardFormDialogProps<T>) {
   return <FormActionDialog submitLabel="Update" {...props} />;
-}
-
-export interface ConfirmDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
-  title: string;
-  message: ReactNode;
-  /** Extra content below the message, e.g. an option the confirm depends on. */
-  children?: ReactNode;
-  confirmLabel?: string;
-  /** Intent of the confirm button — see docs/ui-buttons.md. */
-  confirmColor?: "primary" | "error" | "warning" | "success";
-  confirmIcon?: ReactNode;
-  maxWidth?: DialogProps["maxWidth"];
 }
 
 export function ConfirmDialog({

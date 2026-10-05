@@ -73,10 +73,6 @@ export interface RulesetRawData {
 
 export const rulesetRawDataCache = new DependentCache<RulesetRawData>();
 
-function buildRawCacheKey(rulesetId: string, campaignId?: string): string {
-  return campaignId ? `${rulesetId}:${campaignId}` : rulesetId;
-}
-
 type RawEntities = Pick<
   RulesetRawData,
   | "abilities"
@@ -91,6 +87,10 @@ type RawEntities = Pick<
   | "items"
   | "mechanics"
 >;
+
+function buildRawCacheKey(rulesetId: string, campaignId?: string): string {
+  return campaignId ? `${rulesetId}:${campaignId}` : rulesetId;
+}
 
 /**
  * Rounds 3 and 4: the customizations and the klass-level sub-tables. Customizations include everything keyed on

@@ -21,6 +21,37 @@ type RegisteredFieldProps = UseFormRegisterReturn & {
   disabled?: boolean;
 };
 
+interface DescriptionFieldProps extends RegisteredFieldProps {
+  /** Rows shown before it grows. */
+  rows?: number;
+  placeholder?: string;
+}
+
+interface PasswordFieldProps extends RegisteredFieldProps {
+  label: string;
+  /** Tells password managers whether to fill the saved password or suggest a new one. */
+  autoComplete: "current-password" | "new-password";
+}
+
+type SelectOption = string | { value: string; label: ReactNode; disabled?: boolean };
+
+interface SelectFieldProps<T extends FieldValues> {
+  control: Control<T>;
+  name: FieldPath<T>;
+  label: string;
+  /** The choices; a plain string is both value and label. */
+  options: readonly SelectOption[];
+  rules?: ControllerProps<T>["rules"];
+  /** A first choice for no value ("None"); picking it stores null. */
+  emptyLabel?: string;
+  disabled?: boolean;
+  size?: "small" | "medium";
+  margin?: "normal";
+  sx?: SxProps<Theme>;
+  /** Loads more options as the open menu nears its end (see `createListboxScrollHandler`). */
+  onMenuScroll?: UIEventHandler<HTMLElement>;
+}
+
 /** An entity's name. Register it with `nameRules`. */
 export function NameField({
   error,
@@ -29,12 +60,6 @@ export function NameField({
   ...field
 }: RegisteredFieldProps & { label?: string; helperText?: string }) {
   return <TextField {...field} label={label} fullWidth error={!!error} helperText={error?.message ?? helperText} />;
-}
-
-interface DescriptionFieldProps extends RegisteredFieldProps {
-  /** Rows shown before it grows. */
-  rows?: number;
-  placeholder?: string;
 }
 
 /** An entity's description: several lines, resizable. */
@@ -70,12 +95,6 @@ export function EmailField({ error, label = "Email", ...field }: RegisteredField
   );
 }
 
-interface PasswordFieldProps extends RegisteredFieldProps {
-  label: string;
-  /** Tells password managers whether to fill the saved password or suggest a new one. */
-  autoComplete: "current-password" | "new-password";
-}
-
 export function PasswordField({ error, label, autoComplete, ...field }: PasswordFieldProps) {
   return (
     <TextField
@@ -90,25 +109,6 @@ export function PasswordField({ error, label, autoComplete, ...field }: Password
       slotProps={{ htmlInput: { autoComplete } }}
     />
   );
-}
-
-type SelectOption = string | { value: string; label: ReactNode; disabled?: boolean };
-
-interface SelectFieldProps<T extends FieldValues> {
-  control: Control<T>;
-  name: FieldPath<T>;
-  label: string;
-  /** The choices; a plain string is both value and label. */
-  options: readonly SelectOption[];
-  rules?: ControllerProps<T>["rules"];
-  /** A first choice for no value ("None"); picking it stores null. */
-  emptyLabel?: string;
-  disabled?: boolean;
-  size?: "small" | "medium";
-  margin?: "normal";
-  sx?: SxProps<Theme>;
-  /** Loads more options as the open menu nears its end (see `createListboxScrollHandler`). */
-  onMenuScroll?: UIEventHandler<HTMLElement>;
 }
 
 /** A labeled select bound to a form field; a value missing from the options (not loaded yet) shows empty. */

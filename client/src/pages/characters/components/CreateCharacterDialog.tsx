@@ -46,6 +46,10 @@ type CreateCharacterFormData = InferRequestType<typeof rpc.api.characters.$post>
 
 type AbilityOption = Pick<RulesetAbility, "id" | "name">;
 
+interface AbilityScoresHandle {
+  rollAll: () => void;
+}
+
 function AbilityCard({
   name,
   score,
@@ -189,10 +193,6 @@ function PointBuyScores({
       })}
     </Stack>
   );
-}
-
-interface AbilityScoresHandle {
-  rollAll: () => void;
 }
 
 function AbilityScoresSection({

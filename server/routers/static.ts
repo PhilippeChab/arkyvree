@@ -4,6 +4,11 @@ import { readEnv } from "@/server/environment.ts";
 
 const APP_URL = readEnv("APP_URL") || "http://localhost:8000";
 
+interface RouteMeta {
+  title: string;
+  description: string;
+}
+
 // Helper function to get MIME type based on file extension
 function getMimeType(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase();
@@ -30,11 +35,6 @@ function getMimeType(path: string): string {
 }
 
 // --- SEO: Route meta map ---
-
-interface RouteMeta {
-  title: string;
-  description: string;
-}
 
 // Routes that should be crawled and indexed via the SPA shell. Everything else
 // (auth-gated app routes, token-gated /share, utility pages like /sign-in) is

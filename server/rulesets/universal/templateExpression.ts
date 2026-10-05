@@ -33,6 +33,13 @@ type Token =
   | { type: "PATH"; value: string }
   | { type: "PUNC"; value: "(" | ")" | "," | "+" | "-" | "*" | "/" };
 
+type AstNode =
+  | { type: "number"; value: number }
+  | { type: "path"; value: string }
+  | { type: "call"; name: string; args: AstNode[] }
+  | { type: "binop"; op: "+" | "-" | "*" | "/"; left: AstNode; right: AstNode }
+  | { type: "unary"; op: "-"; arg: AstNode };
+
 class Tokenizer {
   constructor(private readonly src: string) {}
 
@@ -87,13 +94,6 @@ class Tokenizer {
     return tokens;
   }
 }
-
-type AstNode =
-  | { type: "number"; value: number }
-  | { type: "path"; value: string }
-  | { type: "call"; name: string; args: AstNode[] }
-  | { type: "binop"; op: "+" | "-" | "*" | "/"; left: AstNode; right: AstNode }
-  | { type: "unary"; op: "-"; arg: AstNode };
 
 class Parser {
   constructor(private readonly tokens: Token[]) {}

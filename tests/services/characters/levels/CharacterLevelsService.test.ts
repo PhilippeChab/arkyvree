@@ -72,6 +72,18 @@ import {
 const session = makeSession(SEED_USER_ID);
 const page = { limit: 500, page: 1 };
 
+/** The levels, ability increases, feats and skill ranks being added, which getAvailableKlasses takes after its paging. */
+type PendingPicks =
+  Parameters<typeof CharacterLevelsService.getAvailableKlasses> extends [
+    unknown,
+    unknown,
+    unknown,
+    unknown,
+    ...infer Rest,
+  ]
+    ? Rest
+    : never;
+
 /**
  * A small ruleset of a new user's, with a class of five levels, three skills,
  * feats (Power Attack, Weapon Focus which stacks, Dodge) and powers each in an
@@ -164,18 +176,6 @@ async function setupRuleset({ fork = false } = {}) {
 }
 
 const names = (rows: { name: string }[]) => rows.map((r) => r.name);
-
-/** The levels, ability increases, feats and skill ranks being added, which getAvailableKlasses takes after its paging. */
-type PendingPicks =
-  Parameters<typeof CharacterLevelsService.getAvailableKlasses> extends [
-    unknown,
-    unknown,
-    unknown,
-    unknown,
-    ...infer Rest,
-  ]
-    ? Rest
-    : never;
 
 describe("LevelsService", () => {
   test("refuses a missing character, another user's, a missing class level, and removing from a character without levels", async () => {

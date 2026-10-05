@@ -32,6 +32,32 @@ import type { Alignment, Gender, ItemLocation } from "@/shared/enums.ts";
 
 export const SEED_USER_ID = "00000000-0000-4000-8000-000000000456";
 
+/** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */
+export type SeedContext = RulesetSeedContext & {
+  langMap: Record<string, string>;
+  /** Race id by kind, then name. Use `raceMap.pc["Human"]`, `raceMap.familiar["Owl"]`. */
+  raceMap: Record<string, Record<string, string>>;
+  /** Klass id by kind, then name. Use `klassMap.pc["Fighter"]`, `klassMap.familiar["Familiar"]`. */
+  klassMap: Record<string, Record<string, string>>;
+  itemMap: Record<string, string>;
+};
+
+type CharacterData = Parameters<typeof createCharacter>[2];
+
+type Picks<K extends string> = { levelIndex: number } & Record<K, string>;
+
+/**
+ * A character of the seed user's: who it is, its levels (each class's in order, from the first, by the hit points
+ * it rolled) and its picks at each (`levelIndex` counts all its levels), and its inventory.
+ */
+export type CharacterSeed = Omit<CharacterData, "rulesetId"> & {
+  classes: { klass: string; hp: number[] }[];
+  skills: { levelIndex: number; skillName: string; rank: number }[];
+  feats: (Picks<"featName"> & { aptitude: string })[];
+  powers?: (Picks<"powerName"> & { aptitude: string })[];
+  inventory: Parameters<typeof addInventory>[3];
+};
+
 /**
  * Group kinded rows (races, klasses) by kind, then by name. Callers spell out
  * which kind they want (`ctx.raceMap.pc["Human"]`, `ctx.raceMap.familiar["Owl"]`)
@@ -45,16 +71,6 @@ function buildKindMap(rows: { name: string; id: string; kind: string }[]): Recor
   }
   return out;
 }
-
-/** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */
-export type SeedContext = RulesetSeedContext & {
-  langMap: Record<string, string>;
-  /** Race id by kind, then name. Use `raceMap.pc["Human"]`, `raceMap.familiar["Owl"]`. */
-  raceMap: Record<string, Record<string, string>>;
-  /** Klass id by kind, then name. Use `klassMap.pc["Fighter"]`, `klassMap.familiar["Familiar"]`. */
-  klassMap: Record<string, Record<string, string>>;
-  itemMap: Record<string, string>;
-};
 
 export async function getSeedContext(db: Db): Promise<SeedContext> {
   const rulesetId = await coreRulesetId(db, "The test data");
@@ -84,21 +100,6 @@ export async function getSeedContext(db: Db): Promise<SeedContext> {
     itemMap: idsByName(items),
   };
 }
-
-type CharacterData = Parameters<typeof createCharacter>[2];
-type Picks<K extends string> = { levelIndex: number } & Record<K, string>;
-
-/**
- * A character of the seed user's: who it is, its levels (each class's in order, from the first, by the hit points
- * it rolled) and its picks at each (`levelIndex` counts all its levels), and its inventory.
- */
-export type CharacterSeed = Omit<CharacterData, "rulesetId"> & {
-  classes: { klass: string; hp: number[] }[];
-  skills: { levelIndex: number; skillName: string; rank: number }[];
-  feats: (Picks<"featName"> & { aptitude: string })[];
-  powers?: (Picks<"powerName"> & { aptitude: string })[];
-  inventory: Parameters<typeof addInventory>[3];
-};
 
 export async function createCharacter(
   db: Db,

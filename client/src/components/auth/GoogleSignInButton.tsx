@@ -1,5 +1,12 @@
 import { Box, Button } from "@mui/material";
 
+interface GoogleSignInButtonProps {
+  overlayRef: React.RefObject<HTMLDivElement | null>;
+  disabled?: boolean;
+  label?: string;
+  fullWidth?: boolean;
+}
+
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
     <path
@@ -20,13 +27,6 @@ const GoogleIcon = () => (
     />
   </svg>
 );
-
-interface GoogleSignInButtonProps {
-  overlayRef: React.RefObject<HTMLDivElement | null>;
-  disabled?: boolean;
-  label?: string;
-  fullWidth?: boolean;
-}
 
 export function GoogleSignInButton({
   overlayRef,

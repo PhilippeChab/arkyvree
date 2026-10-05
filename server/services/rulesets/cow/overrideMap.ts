@@ -3,6 +3,8 @@ import { EntitySnapshots, RulesetEntities } from "@/server/repositories/index.ts
 
 import { NAME_FALLBACK_ENTITY_TYPES } from "./constants.ts";
 
+type SnapshotsByRuleset = Map<string, Awaited<ReturnType<typeof EntitySnapshots.findMany>>>;
+
 export function newOverrideMap(entries?: Iterable<readonly [string, string]>): OverrideMap {
   return new Map<string, string>(entries) as OverrideMap;
 }
@@ -38,8 +40,6 @@ export function assertCowMapsConsistent(overrideMap: OverrideMap, idResolveMap: 
 export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ancestorRulesetIds: string[] }): string[] {
   return [...ruleset.extensionRulesetIds, ...ruleset.ancestorRulesetIds];
 }
-
-type SnapshotsByRuleset = Map<string, Awaited<ReturnType<typeof EntitySnapshots.findMany>>>;
 
 /** The true overrides: each source entity to its closest fork's copy, following a copy of a copy to the last. */
 function snapshotOverrides(allRulesetIds: string[], byRuleset: SnapshotsByRuleset) {

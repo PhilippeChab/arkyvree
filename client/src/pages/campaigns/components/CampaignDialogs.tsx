@@ -42,6 +42,47 @@ interface CreateCampaignDialogProps {
   isLoading: boolean;
 }
 
+interface EditCampaignDialogProps {
+  open: boolean;
+  onClose: () => void;
+  form: UseFormReturn<EditCampaignFormData>;
+  onSubmit: (data: EditCampaignFormData) => void;
+  isLoading: boolean;
+}
+
+interface PlayerFieldProps {
+  form: UseFormReturn<PlayerFormData>;
+  isLoading: boolean;
+}
+
+interface AddPlayerDialogProps {
+  open: boolean;
+  onClose: () => void;
+  form: UseFormReturn<PlayerFormData>;
+  onSubmit: (data: PlayerFormData) => void;
+  isLoading: boolean;
+}
+
+interface EditPlayerDialogProps {
+  open: boolean;
+  onClose: () => void;
+  form: UseFormReturn<PlayerFormData>;
+  onSubmit: (data: PlayerFormData) => void;
+  isLoading: boolean;
+  /** The slot being edited, from `getPlayerSlot`. */
+  slot: PlayerSlot | null;
+}
+
+interface RemovePlayerDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+  isSelfRemoval?: boolean;
+  /** The slot being removed, from `getPlayerSlot`. */
+  slot: PlayerSlot | null;
+}
+
 export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading }: CreateCampaignDialogProps) {
   const [rulesetSearch, setRulesetSearch] = useState("");
   const debouncedRulesetSearch = useDebouncedValue(rulesetSearch);
@@ -102,14 +143,6 @@ export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading 
   );
 }
 
-interface EditCampaignDialogProps {
-  open: boolean;
-  onClose: () => void;
-  form: UseFormReturn<EditCampaignFormData>;
-  onSubmit: (data: EditCampaignFormData) => void;
-  isLoading: boolean;
-}
-
 export function EditCampaignDialog({ open, onClose, form, onSubmit, isLoading }: EditCampaignDialogProps) {
   return (
     <EditDialog
@@ -130,11 +163,6 @@ export function EditCampaignDialog({ open, onClose, form, onSubmit, isLoading }:
       <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
     </EditDialog>
   );
-}
-
-interface PlayerFieldProps {
-  form: UseFormReturn<PlayerFormData>;
-  isLoading: boolean;
 }
 
 function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
@@ -175,14 +203,6 @@ function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
   );
 }
 
-interface AddPlayerDialogProps {
-  open: boolean;
-  onClose: () => void;
-  form: UseFormReturn<PlayerFormData>;
-  onSubmit: (data: PlayerFormData) => void;
-  isLoading: boolean;
-}
-
 export function AddPlayerDialog({ open, onClose, form, onSubmit, isLoading }: AddPlayerDialogProps) {
   const inviting = !!form.watch("email");
 
@@ -206,16 +226,6 @@ export function AddPlayerDialog({ open, onClose, form, onSubmit, isLoading }: Ad
       <PlayerRoleSelect form={form} isLoading={isLoading} />
     </CreateDialog>
   );
-}
-
-interface EditPlayerDialogProps {
-  open: boolean;
-  onClose: () => void;
-  form: UseFormReturn<PlayerFormData>;
-  onSubmit: (data: PlayerFormData) => void;
-  isLoading: boolean;
-  /** The slot being edited, from `getPlayerSlot`. */
-  slot: PlayerSlot | null;
 }
 
 export function EditPlayerDialog({ open, onClose, form, onSubmit, isLoading, slot }: EditPlayerDialogProps) {
@@ -270,16 +280,6 @@ export function EditPlayerDialog({ open, onClose, form, onSubmit, isLoading, slo
       <PlayerRoleSelect form={form} isLoading={isLoading} />
     </EditDialog>
   );
-}
-
-interface RemovePlayerDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
-  isSelfRemoval?: boolean;
-  /** The slot being removed, from `getPlayerSlot`. */
-  slot: PlayerSlot | null;
 }
 
 export function RemovePlayerDialog({

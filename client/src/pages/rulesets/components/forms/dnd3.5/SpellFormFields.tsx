@@ -19,6 +19,15 @@ import { spellAptitude, type SpellAptitude, type SpellFormData } from "./spellFo
 
 type Save = RulesetSave;
 
+interface SpellFormFieldsProps {
+  form: UseFormReturn<SpellFormData>;
+  rulesetId: string;
+  saves: Save[];
+  hideProperties?: boolean;
+  /** Aptitudes the form may already hold (the spell's own), so they show by name. */
+  knownAptitudes?: Aptitude[];
+}
+
 /** A free-text list with suggestions, shown as chips. */
 function TagsField({
   form,
@@ -140,15 +149,6 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
       <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
     </>
   );
-}
-
-interface SpellFormFieldsProps {
-  form: UseFormReturn<SpellFormData>;
-  rulesetId: string;
-  saves: Save[];
-  hideProperties?: boolean;
-  /** Aptitudes the form may already hold (the spell's own), so they show by name. */
-  knownAptitudes?: Aptitude[];
 }
 
 export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownAptitudes = [] }: SpellFormFieldsProps) {

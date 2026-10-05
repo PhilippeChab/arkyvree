@@ -15,6 +15,23 @@ import type { ReactNode } from "react";
 import { ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
+interface ContributorRow {
+  id: string;
+  email: string;
+  status: string;
+  role?: string;
+  user?: { username?: string | null } | null;
+}
+
+interface ContributorsTableProps<T extends ContributorRow> {
+  owner: { username?: string | null; emailAddress: string } | null;
+  contributors: T[];
+  /** Show the Role column (rulesets have roles, characters don't). */
+  showRoles?: boolean;
+  /** Row buttons; when omitted there is no Actions column. */
+  renderActions?: (contributor: T) => ReactNode;
+}
+
 function contributorStatusColor(status: string): "warning" | "success" | "error" | "default" {
   switch (status) {
     case "Pending":
@@ -37,23 +54,6 @@ function roleColor(role: string): "error" | "primary" | "default" {
     default:
       return "default";
   }
-}
-
-interface ContributorRow {
-  id: string;
-  email: string;
-  status: string;
-  role?: string;
-  user?: { username?: string | null } | null;
-}
-
-interface ContributorsTableProps<T extends ContributorRow> {
-  owner: { username?: string | null; emailAddress: string } | null;
-  contributors: T[];
-  /** Show the Role column (rulesets have roles, characters don't). */
-  showRoles?: boolean;
-  /** Row buttons; when omitted there is no Actions column. */
-  renderActions?: (contributor: T) => ReactNode;
 }
 
 /** Owner row followed by the invited contributors, with their status. */

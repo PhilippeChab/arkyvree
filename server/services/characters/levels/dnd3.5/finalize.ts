@@ -52,6 +52,8 @@ import {
 } from "./projection.ts";
 import { checkAbilityIncrease, checkSelections, validateAndFetchLevelSelections } from "./validation.ts";
 
+type LevelSelections = Awaited<ReturnType<typeof validateAndFetchLevelSelections>>;
+
 /** Inserts skill, feat, and power child records for a character level. */
 async function insertLevelChildren(
   tx: Db,
@@ -74,8 +76,6 @@ async function insertLevelChildren(
   await CharacterLevelFeats.createMany(tx, featRows);
   await CharacterLevelPowers.createMany(tx, powerRows);
 }
-
-type LevelSelections = Awaited<ReturnType<typeof validateAndFetchLevelSelections>>;
 
 /** Deletes a character level's skills, feats and powers. */
 async function deleteLevelChildren(tx: Db, characterLevelId: string) {

@@ -18,6 +18,13 @@ interface TemplateSelectorProps {
   disabled?: boolean;
 }
 
+interface ItemFormFieldsProps {
+  form: UseFormReturn<ItemFormInternal>;
+  rulesetId: string;
+  /** Keeps the type, slot and template as they are (a duplicate copies them from its source). */
+  lockType?: boolean;
+}
+
 function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorProps) {
   const { data: templates, isLoading } = useQuery({
     queryKey: queryKeys.rulesets.section(rulesetId, `templates-${type}`),
@@ -46,13 +53,6 @@ function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorP
       ))}
     </TextField>
   );
-}
-
-interface ItemFormFieldsProps {
-  form: UseFormReturn<ItemFormInternal>;
-  rulesetId: string;
-  /** Keeps the type, slot and template as they are (a duplicate copies them from its source). */
-  lockType?: boolean;
 }
 
 export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProps) {

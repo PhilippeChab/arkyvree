@@ -36,6 +36,15 @@ const headerCellSx = { ...tableCellSx, fontWeight: 600 } as const;
 const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
 const summarySx = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
+/** A requirement's or modifier's target, operator, value and last column (chaining or value type). */
+type RuleCells = [target: ReactNode, operator: ReactNode, value: ReactNode, last: ReactNode];
+
+interface RuleGroup {
+  key: string;
+  source: string;
+  rules: RuleCells[];
+}
+
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
 function DiagnosticsGroup({ label, count, children }: { label: string; count: number; children: ReactNode }) {
   if (count === 0) return null;
@@ -69,9 +78,6 @@ function HeaderRow({ labels }: { labels: string[] }) {
   );
 }
 
-/** A requirement's or modifier's target, operator, value and last column (chaining or value type). */
-type RuleCells = [target: ReactNode, operator: ReactNode, value: ReactNode, last: ReactNode];
-
 function RuleCellsRow({ cells }: { cells: RuleCells }) {
   const [target, ...rest] = cells;
   return (
@@ -84,12 +90,6 @@ function RuleCellsRow({ cells }: { cells: RuleCells }) {
       ))}
     </>
   );
-}
-
-interface RuleGroup {
-  key: string;
-  source: string;
-  rules: RuleCells[];
 }
 
 /** Rules by source: a source with one rule is a row, one with several expands to list them. */

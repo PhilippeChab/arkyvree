@@ -15,6 +15,13 @@ interface CreateLevelDialogProps {
   rulesetId: string;
 }
 
+interface ConfirmActionProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+}
+
 export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, rulesetId }: CreateLevelDialogProps) {
   const { data: rulesetSaves } = useRulesetSaves(rulesetId, open);
 
@@ -82,13 +89,6 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       />
     </CreateDialog>
   );
-}
-
-interface ConfirmActionProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
 }
 
 export function RemoveSkillDialog(props: ConfirmActionProps) {

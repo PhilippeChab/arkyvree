@@ -46,6 +46,14 @@ pool.on("error", (err) => {
 
 export const db = drizzle(pool as NodePgClient, { schema: schemaWithRelations });
 
+export type Db = typeof db | Transaction;
+
+export type Transaction = PgTransaction<
+  PgQueryResultHKT,
+  typeof schemaWithRelations,
+  ExtractTablesWithRelations<typeof schemaWithRelations>
+>;
+
 export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
   const result = await db.transaction(callback);
   // Invalidate the request-scoped dedup cache: reads that happened before the
@@ -53,10 +61,3 @@ export async function withTransaction<T>(callback: (tx: Transaction) => Promise<
   clearRequestCache();
   return result;
 }
-
-export type Db = typeof db | Transaction;
-export type Transaction = PgTransaction<
-  PgQueryResultHKT,
-  typeof schemaWithRelations,
-  ExtractTablesWithRelations<typeof schemaWithRelations>
->;

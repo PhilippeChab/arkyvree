@@ -32,6 +32,8 @@ const LOWERCASE_WORDS = new Set([
   "vs",
 ]);
 
+type RawFeature = ClassReference["raw"]["classFeatures"][number];
+
 function titleCase(s: string): string {
   return s
     .split(/\s+/)
@@ -789,8 +791,6 @@ function parsePrerequisites($: cheerio.CheerioAPI): ClassReference["raw"]["prere
 //   3. Collect all text blocks from the Class Features section
 //   4. Match each feature name to its description in the text
 // ---------------------------------------------------------------------------
-
-type RawFeature = ClassReference["raw"]["classFeatures"][number];
 
 /** Names that always count as features even if not in the Special column.
  *  These are common features described on class pages but not listed in
