@@ -1016,6 +1016,17 @@ describe("DetailedCharacter", () => {
         expect(await proficientWith("Elara Starweaver", "Bastard Sword", "Two Handed")).toBe(false);
       });
 
+      test("judges each place an item is held by its own hands: a bastard sword in one hand, and in two", async () => {
+        const detailed = await buildCarrying("Bjorn Ironhand", [
+          { item: "Bastard Sword", location: "Main Hand", weaponSet: 0 },
+          { item: "Bastard Sword", location: "Two Handed", weaponSet: 1 },
+        ]);
+        const oneHanded = weaponSet(detailed).mainhand!;
+        const twoHanded = weaponSet(detailed, "1").twohanded!;
+        expect([oneHanded.proficient, twoHanded.proficient]).toEqual([false, true]);
+        expect(oneHanded.tohit.misc - twoHanded.tohit.misc).toBe(-4);
+      });
+
       test("reads the hand holding a weapon in its own modifiers' requirements too", async () => {
         // A battleaxe whose +1 to hit is only for the main hand
         const { itemMap, rulesetId } = await getSeedCtx();
@@ -1048,6 +1059,14 @@ describe("DetailedCharacter", () => {
           return (location === "Main Hand" ? set.mainhand : set.offhand)!.tohit.misc;
         };
         expect([await misc("Main Hand"), await misc("Off Hand")]).toEqual([1, 0]);
+        // One in each hand: the main-hand one alone
+        const both = weaponSet(
+          await buildCarrying("Bjorn Ironhand", [
+            { item: sword.id, location: "Main Hand", weaponSet: 0 },
+            { item: sword.id, location: "Off Hand", weaponSet: 0 },
+          ]),
+        );
+        expect([both.mainhand!.tohit.misc, both.offhand!.tohit.misc]).toEqual([1, 0]);
       });
 
       test("gives an elf the longsword, the rapier and the bows", async () => {

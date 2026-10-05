@@ -173,6 +173,8 @@ export type TraversePathResult = {
 };
 
 export interface TargetPathsTraverser {
+  /** Whether a target reads its source itself (a weapon's own paths: the place its item is held), not the sheet. */
+  readsSource(target: string): boolean;
   traversePathInit(target: string, holders: Holders, context?: { sourceId?: string }): TraversePathResult[];
 }
 

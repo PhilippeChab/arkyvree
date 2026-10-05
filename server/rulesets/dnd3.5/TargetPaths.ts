@@ -489,12 +489,9 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     const results: TraversePathResult[] = [];
     for (const weaponSet of Object.values(combat.weaponsets)) {
       for (const [, weapon] of Object.entries(weaponSet as Record<string, unknown>)) {
-        if (
-          weapon &&
-          typeof weapon === "object" &&
-          "itemId" in weapon &&
-          (weapon as { itemId: string | null }).itemId === sourceId
-        ) {
+        // Its item's (a modifier's source), or its entry's (a proficiency read of the entry holding it)
+        const held = weapon as { itemId?: string | null; entryId?: string | null } | null;
+        if (held && typeof held === "object" && (held.itemId === sourceId || held.entryId === sourceId)) {
           results.push(...this.traversePath(weaponsHolder, rest, weapon, rest[0], 0, ["combat"]));
         }
       }
@@ -558,13 +555,17 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
     return { paths: generatePaths(rulesetData, kind), segmentLabels: segmentLabelsOf(rulesetData) };
   }
 
+  /** Whether a target is the source weapon's own (`combat.tohit.misc`, `combat.slot`): the slots holding its item. */
+  readsSource(target: string): boolean {
+    const [category, sub] = target.split(".");
+    return category === "combat" && WEAPON_SUB_PATHS.includes(sub as (typeof WEAPON_SUB_PATHS)[number]);
+  }
+
   /** A target's values: its category's data walked by the path (dot notation: category.item.property). */
   traversePathInit(target: string, holders: Holders, context?: { sourceId?: string }): TraversePathResult[] {
     try {
       const [category, ...rest] = target.split(".");
-      if (category === "combat" && WEAPON_SUB_PATHS.includes(rest[0] as (typeof WEAPON_SUB_PATHS)[number])) {
-        return this.traverseSourceWeapon(rest, holders, context?.sourceId);
-      }
+      if (this.readsSource(target)) return this.traverseSourceWeapon(rest, holders, context?.sourceId);
       if (category === "items" && rest.length > 0) {
         const items = this.traverseItemGroup(target, rest, holders);
         if (items) return items;

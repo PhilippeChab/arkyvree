@@ -99,7 +99,7 @@ export default class DetailedCharacterInventory {
           entry.location as "Main Hand" | "Off Hand" | "Two Handed",
           entry.item,
           entry.item.properties,
-          entry.item.id,
+          { itemId: entry.item.id, entryId: entry.id },
         );
 
         this.characterWeapons.registerWeapon(setIndex, entry.location as string, entry.item, entry.item.properties);

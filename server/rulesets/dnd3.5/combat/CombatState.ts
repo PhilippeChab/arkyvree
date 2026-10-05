@@ -13,6 +13,8 @@ export type NaturalAttackKind = "primary" | "secondary";
 export type WeaponSlot = {
   name: string;
   itemId: string | null;
+  /** The inventory entry holding it: an item held in two places (a dagger in each hand) is two entries. */
+  entryId: string | null;
   /**
    * A natural attack's kind, null for a weapon: a primary one adds its whole Strength bonus to damage (one and a half
    * for a creature's only attack), a secondary one takes `combat.naturalattacks.secondary` to attack and adds half. Either

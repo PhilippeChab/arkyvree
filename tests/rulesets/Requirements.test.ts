@@ -37,7 +37,10 @@ function result(data: unknown, error: string | null = null): TraversePathResult 
 
 /** Evaluates one group of requirements, each path resolving as `resolve` says. */
 function evaluate(group: Requirement[], resolve: (target: string) => TraversePathResult[]) {
-  const evaluator = new DetailedCharacterRequirements({ traversePathInit: (target) => resolve(target) });
+  const evaluator = new DetailedCharacterRequirements({
+    readsSource: () => false,
+    traversePathInit: (target) => resolve(target),
+  });
   evaluator.evaluateRequirements({}, [group]);
   const { fulfilledRequirementGroups, unmetRequirementGroups, invalidRequirements } = evaluator.getRequirements();
   return {

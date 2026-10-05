@@ -20,7 +20,14 @@ type DetailedCharacterComprehensiveModifiers = {
 };
 
 export default class DetailedCharacterModifiers {
-  constructor(private readonly targetPaths: TargetPathsTraverser) {}
+  /**
+   * `sourcesOf` gives the sources a modifier applies from, each of which a target reading its source resolves by: by
+   * default its own.
+   */
+  constructor(
+    private readonly targetPaths: TargetPathsTraverser,
+    private readonly sourcesOf: (modifier: Modifier) => string[] = (modifier) => [modifier.sourceId],
+  ) {}
 
   /**
    * The source keys (`id:type`) an evaluation of requirements leaves unmet or invalid: a modifier is gated out when its
@@ -232,7 +239,9 @@ export default class DetailedCharacterModifiers {
   evaluateModifier(modifier: Modifier, holders: Holders) {
     const { target } = modifier;
 
-    const results = this.targetPaths.traversePathInit(target, holders, { sourceId: modifier.sourceId });
+    const results = this.sourcesOf(modifier).flatMap((sourceId) =>
+      this.targetPaths.traversePathInit(target, holders, { sourceId }),
+    );
     if (results.length === 0) {
       this.detailedCharacterModifiers.inactiveModifiers.push(modifier);
       return;

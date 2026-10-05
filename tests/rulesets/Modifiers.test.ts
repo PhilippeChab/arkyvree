@@ -24,6 +24,7 @@ function modifier(values: Partial<Modifier> = {}): Modifier {
 function evaluate(applied: Modifier, value: number | boolean) {
   const target = { misc: value };
   const modifiers = new DetailedCharacterModifiers({
+    readsSource: () => false,
     traversePathInit: () => [
       { holder: {}, object: target, data: target.misc, key: "misc", resolvedPath: applied.target, error: null },
     ],
