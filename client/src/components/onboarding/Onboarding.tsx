@@ -27,8 +27,6 @@ import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/l
 import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 
-const SIDEBAR_TRANSITION_MS = 380;
-
 interface OnboardingStep {
   icon: SvgIconComponent | null;
   logo?: boolean;
@@ -37,6 +35,17 @@ interface OnboardingStep {
   tooltip?: string;
   mode: "dialog" | "popper";
 }
+
+interface OnboardingProps {
+  open: boolean;
+  onClose: () => void;
+  activeStep: number;
+  onStepChange: (step: number) => void;
+  anchorEl: HTMLElement | null;
+  isMobile: boolean;
+}
+
+const SIDEBAR_TRANSITION_MS = 380;
 
 const steps: OnboardingStep[] = [
   {
@@ -74,15 +83,6 @@ const steps: OnboardingStep[] = [
     mode: "dialog",
   },
 ];
-
-interface OnboardingProps {
-  open: boolean;
-  onClose: () => void;
-  activeStep: number;
-  onStepChange: (step: number) => void;
-  anchorEl: HTMLElement | null;
-  isMobile: boolean;
-}
 
 export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, isMobile }: OnboardingProps) {
   const theme = useTheme();

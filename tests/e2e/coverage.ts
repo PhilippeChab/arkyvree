@@ -23,11 +23,6 @@ const options: CoverageReportOptions = {
   all: { dir: ["client/src"], filter: (filePath) => /\.tsx?$/.test(filePath) && !filePath.endsWith(".d.ts") },
 };
 
-/** Starts a run's coverage: forgets the previous run's. */
-export async function startCoverage() {
-  if (COVERAGE) await MCR(options).cleanCache();
-}
-
 /**
  * Starts recording the client code `page` runs, and returns what stops it and keeps what it recorded. A new document
  * drops the previous one's coverage (its scripts are collected), so the page's coverage is taken before each load it's
@@ -59,6 +54,11 @@ async function recordPage(page: Page) {
   return async () => {
     if (!page.isClosed()) await add();
   };
+}
+
+/** Starts a run's coverage: forgets the previous run's. */
+export async function startCoverage() {
+  if (COVERAGE) await MCR(options).cleanCache();
 }
 
 /** Records the client code the test's `page` runs until `run` ends. */

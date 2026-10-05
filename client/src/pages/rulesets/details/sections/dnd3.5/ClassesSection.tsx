@@ -18,14 +18,14 @@ import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
+type Class = ClassesPaginated["items"][number];
+
 const CLASSES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
   { key: "hitDie", label: "Hit Die", width: "15%" },
   { key: "description", label: "Description", width: "60%" },
 ];
-
-type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
-type Class = ClassesPaginated["items"][number];
 
 export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);

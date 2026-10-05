@@ -12,8 +12,6 @@ interface ThemeContextType {
   darkMode: boolean;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
 type ContainedColor =
   | "primary"
   | "secondary"
@@ -28,6 +26,8 @@ type ContainedColor =
 interface CustomThemeProviderProps {
   children: React.ReactNode;
 }
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 function containedGradient(color: ContainedColor, darkMode: boolean) {
   switch (color) {

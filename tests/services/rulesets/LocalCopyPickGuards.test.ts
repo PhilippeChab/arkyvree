@@ -13,8 +13,6 @@ import { LanguagesService } from "@/server/services/rulesets/languages/index.ts"
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
-afterEach(() => RulesetCache.invalidateAll());
-
 // A character that picked an inherited entity stores the source id. Deleting
 // the fork's later local copy leaves a tombstone that hides the source, which
 // would orphan that pick — so the delete must count it as in use.
@@ -39,6 +37,8 @@ async function setup() {
   });
   return { session, fork, baseId, human, character };
 }
+
+afterEach(() => RulesetCache.invalidateAll());
 
 test("a race picked before the fork copied it blocks deleting the copy, but not restoring the source", async () => {
   const { session, fork, human, character } = await setup();

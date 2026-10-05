@@ -56,7 +56,41 @@ import {
 } from "@/tests/helpers.ts";
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
+
+type EntityType = "feats" | "powers";
 const firstPage = { limit: 50, page: 1 };
+const ENTITIES = {
+  feats: {
+    name: "Toughness",
+    links: (id: string) => FeatsAptitudes.findMany(db, { featId: id }),
+    link: (id: string, aptitudeId: string) => FeatsAptitudes.create(db, { featId: id, aptitudeId }),
+    get: async (rulesetId: string, id: string) => {
+      const { featsAptitudesInRules, ...rest } = await FeatsService.getFeat(rulesetId, id);
+      return { ...rest, links: featsAptitudesInRules };
+    },
+    list: async (rulesetId: string, search: string) =>
+      (await FeatsService.getFeats(rulesetId, { search }, firstPage)).items.map(
+        ({ featsAptitudesInRules, ...rest }) => ({ ...rest, links: featsAptitudesInRules }),
+      ),
+    edit: (session: Session, rulesetId: string, id: string) =>
+      FeatsService.updateFeat(session, rulesetId, id, { name: "Toughness", description: "Mine" }),
+  },
+  powers: {
+    name: "Cure Light Wounds",
+    links: (id: string) => PowersAptitudes.findMany(db, { powerId: id }),
+    link: (id: string, aptitudeId: string) => PowersAptitudes.create(db, { powerId: id, aptitudeId, level: 1 }),
+    get: async (rulesetId: string, id: string) => {
+      const { powersAptitudesInRules, ...rest } = await PowersService.getPower(rulesetId, id);
+      return { ...rest, links: powersAptitudesInRules };
+    },
+    list: async (rulesetId: string, search: string) =>
+      (await PowersService.getPowers(rulesetId, { search }, firstPage)).items.map(
+        ({ powersAptitudesInRules, ...rest }) => ({ ...rest, links: powersAptitudesInRules }),
+      ),
+    edit: (session: Session, rulesetId: string, id: string) =>
+      PowersService.updatePower(session, rulesetId, id, { name: "Cure Light Wounds", description: "Mine" }),
+  },
+};
 
 async function seededRuleset(name: string) {
   return (await Rulesets.findOne(db, { name }))!;
@@ -155,6 +189,55 @@ async function pickFeat(userId: string, rulesetId: string, featId: string, aptit
 /** The fork's visible feats of this name. */
 async function featsNamed(rulesetId: string, name: string) {
   return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
+}
+
+const unique = (keys: string[]) => new Set(keys).size === keys.length;
+
+/** Two system extensions that each copy the base entity and give it an aptitude, a requirement and a modifier; and a fork using both. */
+async function setupSiblings(entityType: EntityType) {
+  const entity = ENTITIES[entityType];
+  const { session } = await createTestUser();
+  const { featMap, powerMap } = await getSeedCtx();
+  const baseId = entityType === "feats" ? featMap[entity.name] : powerMap[entity.name];
+  const contributions = [];
+  const extensions = [];
+  for (const ability of ["strength", "wisdom"]) {
+    const extension = await createExtension();
+    const copyId = (await cowEntity(db, entityType, baseId, extension.id, extension.ancestorRulesetIds, []))
+      .id as string;
+    const [aptitude] = await Aptitudes.create(db, {
+      name: `${ability} aptitude ${uniqueId()}`,
+      rulesetId: extension.id,
+    });
+    await entity.link(copyId, aptitude.id);
+    await Requirements.create(db, {
+      entityId: copyId,
+      entityType,
+      level: "9",
+      target: `abilities.${ability}.total`,
+      value: "13",
+      valueType: "number",
+      operator: "greater_than_or_equal",
+    });
+    await Modifiers.create(db, {
+      sourceId: copyId,
+      sourceType: entityType,
+      target: `abilities.${ability}.misc`,
+      value: "1",
+      valueType: "number",
+      operator: "add",
+    });
+    contributions.push({
+      copyId,
+      aptitudeId: aptitude.id,
+      requirement: `abilities.${ability}.total`,
+      modifier: `abilities.${ability}.misc`,
+    });
+    extensions.push(extension.id);
+  }
+  const draft = await forkBase(session);
+  await RulesetExtensionsService.subscribeExtension(session, draft.id, extensions);
+  return { session, draft, baseId, contributions };
 }
 
 describe("subscribing to an extension", () => {
@@ -719,89 +802,6 @@ describe("an extension's content in a fork", () => {
 });
 
 describe("two extensions overriding the same base entity", () => {
-  type EntityType = "feats" | "powers";
-  const ENTITIES = {
-    feats: {
-      name: "Toughness",
-      links: (id: string) => FeatsAptitudes.findMany(db, { featId: id }),
-      link: (id: string, aptitudeId: string) => FeatsAptitudes.create(db, { featId: id, aptitudeId }),
-      get: async (rulesetId: string, id: string) => {
-        const { featsAptitudesInRules, ...rest } = await FeatsService.getFeat(rulesetId, id);
-        return { ...rest, links: featsAptitudesInRules };
-      },
-      list: async (rulesetId: string, search: string) =>
-        (await FeatsService.getFeats(rulesetId, { search }, firstPage)).items.map(
-          ({ featsAptitudesInRules, ...rest }) => ({ ...rest, links: featsAptitudesInRules }),
-        ),
-      edit: (session: Session, rulesetId: string, id: string) =>
-        FeatsService.updateFeat(session, rulesetId, id, { name: "Toughness", description: "Mine" }),
-    },
-    powers: {
-      name: "Cure Light Wounds",
-      links: (id: string) => PowersAptitudes.findMany(db, { powerId: id }),
-      link: (id: string, aptitudeId: string) => PowersAptitudes.create(db, { powerId: id, aptitudeId, level: 1 }),
-      get: async (rulesetId: string, id: string) => {
-        const { powersAptitudesInRules, ...rest } = await PowersService.getPower(rulesetId, id);
-        return { ...rest, links: powersAptitudesInRules };
-      },
-      list: async (rulesetId: string, search: string) =>
-        (await PowersService.getPowers(rulesetId, { search }, firstPage)).items.map(
-          ({ powersAptitudesInRules, ...rest }) => ({ ...rest, links: powersAptitudesInRules }),
-        ),
-      edit: (session: Session, rulesetId: string, id: string) =>
-        PowersService.updatePower(session, rulesetId, id, { name: "Cure Light Wounds", description: "Mine" }),
-    },
-  };
-
-  /** Two system extensions that each copy the base entity and give it an aptitude, a requirement and a modifier; and a fork using both. */
-  async function setupSiblings(entityType: EntityType) {
-    const entity = ENTITIES[entityType];
-    const { session } = await createTestUser();
-    const { featMap, powerMap } = await getSeedCtx();
-    const baseId = entityType === "feats" ? featMap[entity.name] : powerMap[entity.name];
-    const contributions = [];
-    const extensions = [];
-    for (const ability of ["strength", "wisdom"]) {
-      const extension = await createExtension();
-      const copyId = (await cowEntity(db, entityType, baseId, extension.id, extension.ancestorRulesetIds, []))
-        .id as string;
-      const [aptitude] = await Aptitudes.create(db, {
-        name: `${ability} aptitude ${uniqueId()}`,
-        rulesetId: extension.id,
-      });
-      await entity.link(copyId, aptitude.id);
-      await Requirements.create(db, {
-        entityId: copyId,
-        entityType,
-        level: "9",
-        target: `abilities.${ability}.total`,
-        value: "13",
-        valueType: "number",
-        operator: "greater_than_or_equal",
-      });
-      await Modifiers.create(db, {
-        sourceId: copyId,
-        sourceType: entityType,
-        target: `abilities.${ability}.misc`,
-        value: "1",
-        valueType: "number",
-        operator: "add",
-      });
-      contributions.push({
-        copyId,
-        aptitudeId: aptitude.id,
-        requirement: `abilities.${ability}.total`,
-        modifier: `abilities.${ability}.misc`,
-      });
-      extensions.push(extension.id);
-    }
-    const draft = await forkBase(session);
-    await RulesetExtensionsService.subscribeExtension(session, draft.id, extensions);
-    return { session, draft, baseId, contributions };
-  }
-
-  const unique = (keys: string[]) => new Set(keys).size === keys.length;
-
   describe.each(["feats", "powers"] as const)("%s", (entityType) => {
     const entity = ENTITIES[entityType];
 

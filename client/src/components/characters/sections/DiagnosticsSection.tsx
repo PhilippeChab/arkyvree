@@ -31,11 +31,6 @@ type RequirementGroup = DiagnosticsSectionProps["requirements"]["unmetRequiremen
 /** A modifier in the applied, unapplied or inactive list, with its source's name. */
 type Modifier = DiagnosticsSectionProps["modifiers"]["appliedModifiers"][number];
 
-const tableCellSx = { py: 0.5, px: 1, fontSize: "0.8rem" } as const;
-const headerCellSx = { ...tableCellSx, fontWeight: 600 } as const;
-const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
-const summarySx = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
-
 /** A requirement's or modifier's target, operator, value and last column (chaining or value type). */
 type RuleCells = [target: ReactNode, operator: ReactNode, value: ReactNode, last: ReactNode];
 
@@ -44,6 +39,11 @@ interface RuleGroup {
   source: string;
   rules: RuleCells[];
 }
+
+const tableCellSx = { py: 0.5, px: 1, fontSize: "0.8rem" } as const;
+const headerCellSx = { ...tableCellSx, fontWeight: 600 } as const;
+const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
+const summarySx = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
 function DiagnosticsGroup({ label, count, children }: { label: string; count: number; children: ReactNode }) {

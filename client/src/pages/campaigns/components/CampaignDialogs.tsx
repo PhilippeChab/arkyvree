@@ -83,6 +83,44 @@ interface RemovePlayerDialogProps {
   slot: PlayerSlot | null;
 }
 
+function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
+  return (
+    <TextField
+      {...form.register("email")}
+      label="Email address"
+      placeholder="Enter an email to send an invite..."
+      type="email"
+      fullWidth
+      disabled={isLoading}
+    />
+  );
+}
+
+function RoleLabel({ icon: Icon, label }: { icon: ElementType; label: string }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Icon sx={{ fontSize: 20 }} />
+      {label}
+    </Box>
+  );
+}
+
+function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
+  return (
+    <SelectField
+      control={form.control}
+      name="role"
+      label="Role"
+      rules={{ required: "Role is required" }}
+      disabled={isLoading}
+      options={[
+        { value: "Player Character", label: <RoleLabel icon={PersonIcon} label="Player Character" /> },
+        { value: "Game Master", label: <RoleLabel icon={GMIcon} label="Game Master" /> },
+      ]}
+    />
+  );
+}
+
 export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading }: CreateCampaignDialogProps) {
   const [rulesetSearch, setRulesetSearch] = useState("");
   const debouncedRulesetSearch = useDebouncedValue(rulesetSearch);
@@ -162,44 +200,6 @@ export function EditCampaignDialog({ open, onClose, form, onSubmit, isLoading }:
       />
       <DescriptionField {...form.register("description")} disabled={isLoading} rows={4} />
     </EditDialog>
-  );
-}
-
-function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
-  return (
-    <TextField
-      {...form.register("email")}
-      label="Email address"
-      placeholder="Enter an email to send an invite..."
-      type="email"
-      fullWidth
-      disabled={isLoading}
-    />
-  );
-}
-
-function RoleLabel({ icon: Icon, label }: { icon: ElementType; label: string }) {
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <Icon sx={{ fontSize: 20 }} />
-      {label}
-    </Box>
-  );
-}
-
-function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
-  return (
-    <SelectField
-      control={form.control}
-      name="role"
-      label="Role"
-      rules={{ required: "Role is required" }}
-      disabled={isLoading}
-      options={[
-        { value: "Player Character", label: <RoleLabel icon={PersonIcon} label="Player Character" /> },
-        { value: "Game Master", label: <RoleLabel icon={GMIcon} label="Game Master" /> },
-      ]}
-    />
   );
 }
 

@@ -4,9 +4,11 @@ import { createMiddleware } from "hono/factory";
 import { isTest } from "@/server/environment.ts";
 import { TooManyRequestsError } from "@/server/errors/index.ts";
 
+type KeyGenerator = NonNullable<Parameters<typeof rateLimiter>[0]["keyGenerator"]>;
+
 const noop = createMiddleware(async (_, next) => next());
 
-type KeyGenerator = NonNullable<Parameters<typeof rateLimiter>[0]["keyGenerator"]>;
+const MINUTE = 60 * 1000;
 
 function getClientIp(c: { req: { header: (name: string) => string | undefined } }) {
   return c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "unknown";
@@ -49,8 +51,6 @@ export function limitRate(
     },
   });
 }
-
-const MINUTE = 60 * 1000;
 
 export const authRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 15 });
 

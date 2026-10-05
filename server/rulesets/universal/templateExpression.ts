@@ -19,14 +19,6 @@
 
 import type { Holders, TargetPathsTraverser } from "@/server/rulesets/types.ts";
 
-const FUNCTIONS: Record<string, (...args: number[]) => number> = {
-  min: Math.min,
-  max: Math.max,
-  floor: Math.floor,
-  ceil: Math.ceil,
-  abs: Math.abs,
-};
-
 type Token =
   | { type: "NUMBER"; value: number }
   | { type: "IDENT"; value: string }
@@ -39,6 +31,14 @@ type AstNode =
   | { type: "call"; name: string; args: AstNode[] }
   | { type: "binop"; op: "+" | "-" | "*" | "/"; left: AstNode; right: AstNode }
   | { type: "unary"; op: "-"; arg: AstNode };
+
+const FUNCTIONS: Record<string, (...args: number[]) => number> = {
+  min: Math.min,
+  max: Math.max,
+  floor: Math.floor,
+  ceil: Math.ceil,
+  abs: Math.abs,
+};
 
 class Tokenizer {
   constructor(private readonly src: string) {}

@@ -12,6 +12,19 @@ import {
 import type { Item, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+type ShieldSlot = {
+  name: string;
+  itemId: string;
+  /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
+  proficient: boolean;
+  ac: { bonus: number; misc: number; readonly total: number };
+  checkpenalty: number;
+  spellfailure: number;
+};
+
+// Grouping key (normalized) → shared ShieldSlot reference
+type ShieldsData = Record<string, ShieldSlot>;
+
 const NAVIGATABLE_SHIELD_PATHS = [
   { path: "ac.bonus", description: "Base AC bonus from shield", type: "number" as const },
   { path: "ac.misc", description: "Other bonuses to shield AC", type: "number" as const },
@@ -27,19 +40,6 @@ const SEGMENT_LABELS: Record<string, string> = {
 };
 
 const SHIELD_GROUPING_PROPERTIES = [SHIELD_TYPE] as const;
-
-type ShieldSlot = {
-  name: string;
-  itemId: string;
-  /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
-  proficient: boolean;
-  ac: { bonus: number; misc: number; readonly total: number };
-  checkpenalty: number;
-  spellfailure: number;
-};
-
-// Grouping key (normalized) → shared ShieldSlot reference
-type ShieldsData = Record<string, ShieldSlot>;
 
 export type { ShieldsData };
 

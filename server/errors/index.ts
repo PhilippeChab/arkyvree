@@ -11,6 +11,8 @@ export type ErrorJson = {
   issues?: { category: string; message: string; entityName?: string; entityType?: string; requirementTree?: string }[];
 };
 
+export const STALE_ENTITY_MESSAGE = "This was modified by someone else. Please refresh and try again.";
+
 class BaseError extends Error {
   static fromError(error: Error) {
     return new InternalError(error.message, { cause: error.cause });
@@ -66,8 +68,6 @@ export class ConflictError extends BaseError {
     this.code = 409;
   }
 }
-
-export const STALE_ENTITY_MESSAGE = "This was modified by someone else. Please refresh and try again.";
 
 export class UnprocessableEntityError extends BaseError {
   constructor(message = "Unprocessable entity", options?: ErrorOptions) {

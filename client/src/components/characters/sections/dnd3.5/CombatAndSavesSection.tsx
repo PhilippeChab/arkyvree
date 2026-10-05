@@ -8,14 +8,6 @@ import { capitalize } from "@/shared/text.ts";
 import { StatField } from "./statHelpers.tsx";
 import type { Dnd35CombatAndSavesSectionProps } from "./types.ts";
 
-function iterativeAttacks(bab: number): string {
-  const attacks: string[] = [];
-  for (let bonus = bab; bonus > 0; bonus -= 5) {
-    attacks.push(formatSigned(bonus));
-  }
-  return attacks.length > 0 ? attacks.join("/") : formatSigned(bab);
-}
-
 // The parts of the AC the breakdown lists, by their label
 const AC_PARTS = [
   ["Armor", "armor"],
@@ -27,6 +19,14 @@ const AC_PARTS = [
   ["Size", "size"],
   ["Misc", "misc"],
 ] as const;
+
+function iterativeAttacks(bab: number): string {
+  const attacks: string[] = [];
+  for (let bonus = bab; bonus > 0; bonus -= 5) {
+    attacks.push(formatSigned(bonus));
+  }
+  return attacks.length > 0 ? attacks.join("/") : formatSigned(bab);
+}
 
 export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSectionProps) {
   const bab = combat?.bab ?? 0;

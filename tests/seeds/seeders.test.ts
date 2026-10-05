@@ -40,6 +40,9 @@ import {
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { customizationsOf, freshExtensionContext, freshSeedContext, namesOf } from "@/tests/seeds/freshSeed.ts";
 
+/** The class level each spell level opens at, the first at the first: 1, 3, 5… */
+const SPELL_LEVELS = Object.fromEntries(Array.from({ length: 10 }, (_, level) => [level, Math.max(1, 2 * level - 1)]));
+
 const feats = (...names: string[]) => names.map((name) => ({ name, description: "", aptitudes: [] }));
 const spell = (name: string, level: number, fields: Partial<SpellSeed> = {}): SpellSeed => ({
   name,
@@ -92,9 +95,6 @@ async function aptitudesOfFeat(ctx: SeedContext, featId: string) {
     .sort();
 }
 
-/** The class level each spell level opens at, the first at the first: 1, 3, 5… */
-const SPELL_LEVELS = Object.fromEntries(Array.from({ length: 10 }, (_, level) => [level, Math.max(1, 2 * level - 1)]));
-
 /** A spell list's slot at each spell level, as `customizationsOf` reads it, gated from the second on by `classTarget`. */
 const gatedSlots = (list: string, classTarget: string) =>
   Array.from({ length: 9 }, (_, i) => {
@@ -104,6 +104,44 @@ const gatedSlots = (list: string, classTarget: string) =>
       `aptitudes.${list}.${i + 1}.uses add 1 number${gate}`,
     ];
   }).flat();
+
+/** Each level's properties (base attack, skill points), saves, modifiers, requirements and granted feats. */
+async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
+  const saves = namesOf(ctx.saveMap);
+  const feats = namesOf(ctx.featMap);
+  const aptitudes = namesOf(ctx.aptMap);
+  const ids = Object.values(levelIds);
+  const levelSaves = await db
+    .select()
+    .from(klassLevelSavesInRules)
+    .where(inArray(klassLevelSavesInRules.klassLevelId, ids));
+  const granted = await db
+    .select()
+    .from(klassLevelFeatsInRules)
+    .where(inArray(klassLevelFeatsInRules.klassLevelId, ids));
+  const levels = [];
+  for (const [level, id] of Object.entries(levelIds)) {
+    const { properties, modifiers, requirements } = await customizationsOf(id);
+    levels.push({
+      level: Number(level),
+      properties,
+      saves: Object.fromEntries(levelSaves.filter((s) => s.klassLevelId === id).map((s) => [saves[s.saveId], s.base])),
+      modifiers,
+      requirements,
+      feats: granted
+        .filter((g) => g.klassLevelId === id)
+        .map((g) => `${feats[g.featId]} in ${aptitudes[g.aptitudeId]}${g.free ? ", free" : ""}`)
+        .sort(),
+    });
+  }
+  return levels;
+}
+
+/** A level's properties: its base attack and skill points. */
+const levelProperties = (bab: number, skillPoints: number) => [
+  `${KLASS_LEVEL_BAB} ${bab}`,
+  `${KLASS_LEVEL_SKILL_POINTS} ${skillPoints}`,
+];
 
 describe("Seeding", () => {
   test("numbers an entity's requirements by their place in the tree", () => {
@@ -188,45 +226,6 @@ describe("Seeding", () => {
   });
 
   describe("a class", () => {
-    /** Each level's properties (base attack, skill points), saves, modifiers, requirements and granted feats. */
-    async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
-      const saves = namesOf(ctx.saveMap);
-      const feats = namesOf(ctx.featMap);
-      const aptitudes = namesOf(ctx.aptMap);
-      const ids = Object.values(levelIds);
-      const levelSaves = await db
-        .select()
-        .from(klassLevelSavesInRules)
-        .where(inArray(klassLevelSavesInRules.klassLevelId, ids));
-      const granted = await db
-        .select()
-        .from(klassLevelFeatsInRules)
-        .where(inArray(klassLevelFeatsInRules.klassLevelId, ids));
-      const levels = [];
-      for (const [level, id] of Object.entries(levelIds)) {
-        const { properties, modifiers, requirements } = await customizationsOf(id);
-        levels.push({
-          level: Number(level),
-          properties,
-          saves: Object.fromEntries(
-            levelSaves.filter((s) => s.klassLevelId === id).map((s) => [saves[s.saveId], s.base]),
-          ),
-          modifiers,
-          requirements,
-          feats: granted
-            .filter((g) => g.klassLevelId === id)
-            .map((g) => `${feats[g.featId]} in ${aptitudes[g.aptitudeId]}${g.free ? ", free" : ""}`)
-            .sort(),
-        });
-      }
-      return levels;
-    }
-    /** A level's properties: its base attack and skill points. */
-    const levelProperties = (bab: number, skillPoints: number) => [
-      `${KLASS_LEVEL_BAB} ${bab}`,
-      `${KLASS_LEVEL_SKILL_POINTS} ${skillPoints}`,
-    ];
-
     test("seeds its levels: base attack, saves, skill points, spell slots, picks, modifiers, granted feats and what it takes to reach each", async () => {
       const ctx = await freshSeedContext({ named: true });
       await seedAptitudes(db, ctx, ["Test Class Feature", "Test Bonus Feat"]);

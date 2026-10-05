@@ -15,6 +15,13 @@ const requirement = {
   operator: "greater_than_or_equal",
 } as const;
 
+const copiedCustomizations = {
+  modifiers: [{ target: "abilities.strength.misc", requirements: ["combat.bab"] }],
+  properties: ["Cold"],
+  requirements: ["combat.bab"],
+};
+const noCustomizations = { modifiers: [], properties: [], requirements: [] };
+
 /** Gives an item a modifier (with a requirement of its own), a property and a requirement. */
 async function customize(itemId: string) {
   const [modifier] = await Modifiers.create(db, {
@@ -48,13 +55,6 @@ async function customizationsOf(itemId: string) {
     requirements: (await Requirements.findMany(db, { entityIds: [itemId], entityType: "items" })).map((r) => r.target),
   };
 }
-
-const copiedCustomizations = {
-  modifiers: [{ target: "abilities.strength.misc", requirements: ["combat.bab"] }],
-  properties: ["Cold"],
-  requirements: ["combat.bab"],
-};
-const noCustomizations = { modifiers: [], properties: [], requirements: [] };
 
 /** A template with a property and a requirement, which its instances read, and a modifier, which they don't. */
 async function createTemplate(session: Parameters<typeof ItemsService.createItem>[0], rulesetId: string) {

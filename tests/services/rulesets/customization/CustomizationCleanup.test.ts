@@ -50,6 +50,8 @@ import {
   makeSession,
 } from "@/tests/helpers.ts";
 
+type OwnerType = keyof typeof OWNERS;
+
 /** The tables whose rows a customization can belong to, by the type it names them with. */
 const OWNERS = {
   aptitudes: aptitudesInRules,
@@ -66,8 +68,6 @@ const OWNERS = {
   saves: savesInRules,
   skills: skillsInRules,
 };
-
-type OwnerType = keyof typeof OWNERS;
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" };
 

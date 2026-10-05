@@ -28,8 +28,6 @@ import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { dashboardStatsQuery } from "@/client/src/lib/queries.ts";
 import { RecentNotificationsCard } from "@/client/src/pages/dashboard/components/index.ts";
 
-const textShadow = "0px 2px 4px rgba(0,0,0,0.3)";
-
 interface StatCardProps {
   icon: ElementType;
   count: number;
@@ -40,6 +38,8 @@ interface StatCardProps {
   colors: (theme: Theme) => [string, string];
   animationIndex: number;
 }
+
+const textShadow = "0px 2px 4px rgba(0,0,0,0.3)";
 
 function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animationIndex }: StatCardProps) {
   return (

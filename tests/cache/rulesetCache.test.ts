@@ -12,14 +12,22 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 import { createTestRuleset, getSeedCtx, insertRows, makeSession, uniqueId } from "@/tests/helpers.ts";
 
-describe("rulesetCache", () => {
-  async function getRuleset() {
-    const c = await getSeedCtx();
-    const ruleset = await Rulesets.findOne(db, { id: c.rulesetId });
-    if (!ruleset) throw new Error("Seed ruleset not found");
-    return ruleset;
-  }
+async function getRuleset() {
+  const c = await getSeedCtx();
+  const ruleset = await Rulesets.findOne(db, { id: c.rulesetId });
+  if (!ruleset) throw new Error("Seed ruleset not found");
+  return ruleset;
+}
 
+const createFork = (seedId: string) =>
+  createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
+
+async function composeFork(fork: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] }) {
+  const cowData = await getOrBuildCowData(fork);
+  return RulesetCache.getData(fork.id, cowData);
+}
+
+describe("rulesetCache", () => {
   // The caches are module-level singletons: start every test from an empty one, and leave none
   // behind holding rows written into the seeded ruleset, which the rollback undoes.
   beforeEach(() => RulesetCache.invalidateAll());
@@ -244,14 +252,6 @@ describe("rulesetCache", () => {
   // ──────────────────────────────────────────────────────────────
 
   describe("fork lifecycle", () => {
-    const createFork = (seedId: string) =>
-      createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
-
-    async function composeFork(fork: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] }) {
-      const cowData = await getOrBuildCowData(fork);
-      return RulesetCache.getData(fork.id, cowData);
-    }
-
     test("fork compose inherits all ancestor entities", async () => {
       const seed = await getRuleset();
       const fork = await createFork(seed.id);

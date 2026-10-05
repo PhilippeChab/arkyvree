@@ -1,27 +1,7 @@
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
-// Where equipped items go: the rules the server enforces and the inventory dialogs warn about.
-
-/** The locations a weapon set applies to: the hands. */
-export const HAND_LOCATIONS = ["Main Hand", "Off Hand", "Two Handed"] as const satisfies readonly ItemLocation[];
-
 export type HandLocation = (typeof HAND_LOCATIONS)[number];
-
-/** The locations that hold one item. */
-const SINGLE_OCCUPANCY_LOCATIONS = [
-  "Head",
-  "Neck",
-  "Shoulders",
-  "Torso",
-  "Wrists",
-  "Hands",
-  "Waist",
-  "Trinket",
-] as const satisfies readonly ItemLocation[];
-
-/** How many rings a character can wear. */
-export const MAX_FINGER_ITEMS = 2;
 
 /** An equipped inventory entry, as the slot rules read it. */
 interface EquippedEntry {
@@ -44,6 +24,26 @@ export type SlotConflictReason = "occupied" | "fingers" | "hands" | "twoHanded" 
 type SlotConflict<T extends EquippedEntry> =
   | { reason: Exclude<SlotConflictReason, "fingers">; entry: T }
   | { reason: "fingers" };
+
+// Where equipped items go: the rules the server enforces and the inventory dialogs warn about.
+
+/** The locations a weapon set applies to: the hands. */
+export const HAND_LOCATIONS = ["Main Hand", "Off Hand", "Two Handed"] as const satisfies readonly ItemLocation[];
+
+/** The locations that hold one item. */
+const SINGLE_OCCUPANCY_LOCATIONS = [
+  "Head",
+  "Neck",
+  "Shoulders",
+  "Torso",
+  "Wrists",
+  "Hands",
+  "Waist",
+  "Trinket",
+] as const satisfies readonly ItemLocation[];
+
+/** How many rings a character can wear. */
+export const MAX_FINGER_ITEMS = 2;
 
 /** Whether `location` is a hand, which a weapon set applies to. */
 export const isHandLocation = (location: unknown): location is HandLocation => isOneOf(location, HAND_LOCATIONS);

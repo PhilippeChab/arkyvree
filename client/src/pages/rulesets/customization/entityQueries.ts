@@ -11,8 +11,6 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationPageType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-const rulesetApi = rpc.api.rulesets[":id"];
-
 export type Feat = InferResponseType<(typeof rulesetApi)["feats"][":featId"]["$get"], 200>;
 export type Race = InferResponseType<(typeof rulesetApi)["races"][":raceId"]["$get"], 200>;
 export type Item = InferResponseType<(typeof rulesetApi)["items"][":itemId"]["$get"], 200>;
@@ -30,6 +28,8 @@ export type CustomizationEntity =
   | { type: "powers"; entity: Power }
   | { type: "klass_levels"; entity: ClassLevel }
   | { type: "modifiers"; entity: CustomizedModifier };
+
+const rulesetApi = rpc.api.rulesets[":id"];
 
 async function fetchEntity(id: string, type: CustomizationPageType, entityId: string): Promise<CustomizationEntity> {
   switch (type) {

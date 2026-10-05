@@ -18,33 +18,7 @@ const SLOW_QUERY_THRESHOLD_MS = 200;
 
 export const timingStorage = new AsyncLocalStorage<TimingStore>();
 
-export function getTimingStore(): TimingStore | undefined {
-  return timingStorage.getStore();
-}
-
-export function onCacheHit(): void {
-  const store = timingStorage.getStore();
-  if (!store) return;
-  store.cacheHits += 1;
-}
-
-export function onCacheMiss(): void {
-  const store = timingStorage.getStore();
-  if (!store) return;
-  store.cacheMisses += 1;
-}
-
-export function onDedupHit(): void {
-  const store = timingStorage.getStore();
-  if (!store) return;
-  store.dedupHits += 1;
-}
-
-export function onDedupMiss(): void {
-  const store = timingStorage.getStore();
-  if (!store) return;
-  store.dedupMisses += 1;
-}
+let patched = false;
 
 function onQueryStart(): void {
   const store = timingStorage.getStore();
@@ -117,7 +91,33 @@ function wrapPrototypeQuery(proto: { query(...args: unknown[]): unknown }): void
   };
 }
 
-let patched = false;
+export function getTimingStore(): TimingStore | undefined {
+  return timingStorage.getStore();
+}
+
+export function onCacheHit(): void {
+  const store = timingStorage.getStore();
+  if (!store) return;
+  store.cacheHits += 1;
+}
+
+export function onCacheMiss(): void {
+  const store = timingStorage.getStore();
+  if (!store) return;
+  store.cacheMisses += 1;
+}
+
+export function onDedupHit(): void {
+  const store = timingStorage.getStore();
+  if (!store) return;
+  store.dedupHits += 1;
+}
+
+export function onDedupMiss(): void {
+  const store = timingStorage.getStore();
+  if (!store) return;
+  store.dedupMisses += 1;
+}
 
 export function instrumentQueries(): void {
   if (patched) return;

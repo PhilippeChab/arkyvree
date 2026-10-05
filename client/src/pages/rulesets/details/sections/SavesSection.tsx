@@ -15,13 +15,13 @@ import { savesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.t
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+type Save = RulesetSave;
+
 const SAVES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
   { key: "description", label: "Description", width: "45%" },
   { key: "ability", label: "Linked Ability", width: "30%" },
 ];
-
-type Save = RulesetSave;
 
 export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);

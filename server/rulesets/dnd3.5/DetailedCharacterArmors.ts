@@ -13,6 +13,20 @@ import {
 import type { Item, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+type ArmorSlot = {
+  name: string;
+  itemId: string;
+  /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
+  proficient: boolean;
+  ac: { bonus: number; misc: number; readonly total: number };
+  checkpenalty: number;
+  spellfailure: number;
+  maxdex: number;
+};
+
+// Grouping key (normalized) → shared ArmorSlot reference
+type ArmorsData = Record<string, ArmorSlot>;
+
 const NAVIGATABLE_ARMOR_PATHS = [
   { path: "ac.bonus", description: "Base AC bonus from armor", type: "number" as const },
   { path: "ac.misc", description: "Other bonuses to armor AC", type: "number" as const },
@@ -30,20 +44,6 @@ const SEGMENT_LABELS: Record<string, string> = {
 };
 
 const ARMOR_GROUPING_PROPERTIES = [ARMOR_TYPE] as const;
-
-type ArmorSlot = {
-  name: string;
-  itemId: string;
-  /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
-  proficient: boolean;
-  ac: { bonus: number; misc: number; readonly total: number };
-  checkpenalty: number;
-  spellfailure: number;
-  maxdex: number;
-};
-
-// Grouping key (normalized) → shared ArmorSlot reference
-type ArmorsData = Record<string, ArmorSlot>;
 
 export type { ArmorsData };
 

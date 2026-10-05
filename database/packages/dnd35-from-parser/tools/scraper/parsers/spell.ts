@@ -39,6 +39,19 @@ const VALID_SCHOOLS = new Set([
   "Universal",
 ]);
 
+const STAT_LABEL_PREFIXES = [
+  "Level:",
+  "Components:",
+  "Casting Time:",
+  "Range:",
+  "Target:",
+  "Effect:",
+  "Area:",
+  "Duration:",
+  "Saving Throw:",
+  "Spell Resistance:",
+];
+
 // ---------------------------------------------------------------------------
 // Legacy: single-page all-spells parser (srd.dndtools.org)
 // ---------------------------------------------------------------------------
@@ -138,19 +151,6 @@ function parseStatFields($: cheerio.CheerioAPI): Map<string, string> {
 
   return stats;
 }
-
-const STAT_LABEL_PREFIXES = [
-  "Level:",
-  "Components:",
-  "Casting Time:",
-  "Range:",
-  "Target:",
-  "Effect:",
-  "Area:",
-  "Duration:",
-  "Saving Throw:",
-  "Spell Resistance:",
-];
 
 function isStatLabel(text: string): boolean {
   return STAT_LABEL_PREFIXES.some((p) => text.startsWith(p));

@@ -274,8 +274,6 @@ export type DetailedCharacterWithSheet = {
     portraitUrl?: string | null;
   }>;
 };
-
-const CHARACTER_KINDS_DND35 = ["pc", "familiar", "animalcompanion", "mount"] as const;
 export type CharacterKind = (typeof CHARACTER_KINDS_DND35)[number];
 
 export interface RulesetModule {
@@ -293,3 +291,5 @@ export interface RulesetModule {
   createTargetPaths(): TargetPathsInterface;
   createPropertyTypes(): PropertyTypesProvider;
 }
+
+const CHARACTER_KINDS_DND35 = ["pc", "familiar", "animalcompanion", "mount"] as const;

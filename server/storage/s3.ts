@@ -10,6 +10,14 @@ export interface StorageBackend {
   objectStats(key: string): Promise<{ size: number; etag: string } | null>;
 }
 
+let _storage: StorageBackend | null = null;
+
+function isNotFound(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false;
+  const e = err as { code?: string; status?: number; statusCode?: number };
+  return e.code === "NoSuchKey" || e.status === 404 || e.statusCode === 404;
+}
+
 export function isStorageConfigured(): boolean {
   return Boolean(
     readEnv("S3_BUCKET") &&
@@ -18,12 +26,6 @@ export function isStorageConfigured(): boolean {
     readEnv("S3_SECRET_ACCESS_KEY") &&
     readEnv("S3_PUBLIC_URL"),
   );
-}
-
-function isNotFound(err: unknown): boolean {
-  if (typeof err !== "object" || err === null) return false;
-  const e = err as { code?: string; status?: number; statusCode?: number };
-  return e.code === "NoSuchKey" || e.status === 404 || e.statusCode === 404;
 }
 
 class S3StorageBackend implements StorageBackend {
@@ -59,8 +61,6 @@ class S3StorageBackend implements StorageBackend {
     return `${base.replace(/\/$/, "")}/${key}`;
   }
 }
-
-let _storage: StorageBackend | null = null;
 
 export function getStorage(): StorageBackend {
   if (_storage) return _storage;

@@ -20,12 +20,6 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
-const PROPERTIES_COLUMNS = [
-  { key: "type", label: "Type", width: "20%" },
-  { key: "value", label: "Value", width: "40%" },
-  { key: "description", label: "Description", width: "40%" },
-];
-
 type PropertiesArray = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$get"],
   200
@@ -44,6 +38,12 @@ interface PropertiesSectionProps {
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
+
+const PROPERTIES_COLUMNS = [
+  { key: "type", label: "Type", width: "20%" },
+  { key: "value", label: "Value", width: "40%" },
+  { key: "description", label: "Description", width: "40%" },
+];
 
 export function PropertiesSection({
   ruleset,

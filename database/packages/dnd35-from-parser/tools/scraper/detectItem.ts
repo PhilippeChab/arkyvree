@@ -66,13 +66,39 @@ const DEFAULT_WEAPON_SKIPS = new Set([
   "Spiked shield, heavy",
 ]);
 
+// SRD armor extras that aren't standalone equipment
+const DEFAULT_ARMOR_SKIPS = new Set(["Armor spikes", "Gauntlet, locked", "Shield spikes"]);
+
+const TABLE_CATEGORIES: Record<string, string> = {
+  tableAdventuringGear: "Adventuring Gear",
+  tableSpecialSubstancesAndItems: "Special Substances and Items",
+  tableToolsAndSkillKits: "Tools and Skill Kits",
+  tableClothing: "Clothing",
+  tableFoodDrinkAndLodging: "Food, Drink, and Lodging",
+  tableMountsAndRelatedGear: "Mounts and Related Gear",
+  tableTransport: "Transport",
+};
+
 // Ammunition — not equippable weapons
 function isAmmunition(name: string): boolean {
   return /^(Arrows|Bolts|Bullets)\b/.test(name);
 }
 
-// SRD armor extras that aren't standalone equipment
-const DEFAULT_ARMOR_SKIPS = new Set(["Armor spikes", "Gauntlet, locked", "Shield spikes"]);
+// ---------------------------------------------------------------------------
+// Detection
+// ---------------------------------------------------------------------------
+
+function resolveWeaponName(srdName: string, overrideNameMap?: Record<string, string>): string {
+  if (overrideNameMap?.[srdName]) return overrideNameMap[srdName];
+  if (DEFAULT_WEAPON_NAME_MAP[srdName]) return DEFAULT_WEAPON_NAME_MAP[srdName];
+  return srdName;
+}
+
+function resolveArmorName(srdName: string, overrideNameMap?: Record<string, string>): string {
+  if (overrideNameMap?.[srdName]) return overrideNameMap[srdName];
+  if (DEFAULT_ARMOR_NAME_MAP[srdName]) return DEFAULT_ARMOR_NAME_MAP[srdName];
+  return srdName;
+}
 
 // ---------------------------------------------------------------------------
 // Cost / weight parsing
@@ -118,32 +144,6 @@ export function parseWeight(weight: string): string {
 
   return "0";
 }
-
-// ---------------------------------------------------------------------------
-// Detection
-// ---------------------------------------------------------------------------
-
-function resolveWeaponName(srdName: string, overrideNameMap?: Record<string, string>): string {
-  if (overrideNameMap?.[srdName]) return overrideNameMap[srdName];
-  if (DEFAULT_WEAPON_NAME_MAP[srdName]) return DEFAULT_WEAPON_NAME_MAP[srdName];
-  return srdName;
-}
-
-function resolveArmorName(srdName: string, overrideNameMap?: Record<string, string>): string {
-  if (overrideNameMap?.[srdName]) return overrideNameMap[srdName];
-  if (DEFAULT_ARMOR_NAME_MAP[srdName]) return DEFAULT_ARMOR_NAME_MAP[srdName];
-  return srdName;
-}
-
-const TABLE_CATEGORIES: Record<string, string> = {
-  tableAdventuringGear: "Adventuring Gear",
-  tableSpecialSubstancesAndItems: "Special Substances and Items",
-  tableToolsAndSkillKits: "Tools and Skill Kits",
-  tableClothing: "Clothing",
-  tableFoodDrinkAndLodging: "Food, Drink, and Lodging",
-  tableMountsAndRelatedGear: "Mounts and Related Gear",
-  tableTransport: "Transport",
-};
 
 /**
  * The weapons, armor and shields the generator has no definition of, and leaves out ("weapon: Name"): all of them, or

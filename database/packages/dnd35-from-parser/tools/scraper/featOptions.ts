@@ -6,12 +6,6 @@ import { stripSeparators } from "@/shared/text.ts";
 // Feats taken with a choice that isn't a feat of its own: "Energy Substitution (cold)" requires Energy Substitution
 const FEATS_WITH_A_CHOICE = ["Energy Substitution"];
 
-/** The feat a prerequisite names with its choice ("Energy Substitution (cold)"), alone; none for any other name. */
-export function featWithoutChoice(name: string): string | undefined {
-  const base = /^(.+?)\s*\(/.exec(name)?.[1];
-  return base ? FEATS_WITH_A_CHOICE.find((feat) => stripSeparators(feat) === stripSeparators(base)) : undefined;
-}
-
 // What a family of feats is taken for: a weapon feat's weapons, a spell school feat's schools, Skill Focus's skills
 const OPTIONS_OF: { family: RegExp; names: readonly string[] }[] = [
   { family: /^(?:Greater )?Weapon (?:Focus|Specialization)$|^Improved Critical$/i, names: ALL_WEAPONS },
@@ -29,6 +23,12 @@ function nameOf(option: string, names: readonly string[]): string | undefined {
     return nameWords.length === words.length && nameWords.every((word, i) => word.startsWith(words[i]));
   });
   return started.length === 1 ? started[0] : undefined;
+}
+
+/** The feat a prerequisite names with its choice ("Energy Substitution (cold)"), alone; none for any other name. */
+export function featWithoutChoice(name: string): string | undefined {
+  const base = /^(.+?)\s*\(/.exec(name)?.[1];
+  return base ? FEATS_WITH_A_CHOICE.find((feat) => stripSeparators(feat) === stripSeparators(base)) : undefined;
 }
 
 /**

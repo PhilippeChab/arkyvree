@@ -50,11 +50,6 @@ import type {
 import { readSkillFlags } from "./skillFlags.ts";
 import { collectClassListIds, collectFeatListIds } from "./spellcasting/spellLists.ts";
 
-// PMR types re-exported for the two files that reach in for them
-// (`DetailedCharacter.ts`, `DetailedCharacterSpellcasting.ts`).
-// `Dnd35ProjectedCharacterData` is imported directly from `./types.ts`.
-export type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR };
-
 /** Internal bag of rounds 1-3 DB results shared across projected/baseline builds. */
 interface SharedCharacterData {
   ruleset: Ruleset;
@@ -80,6 +75,11 @@ export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
 
 /** Resolves stored ids through the override map, when there is one. */
 type Resolve = <T extends Record<string, unknown>>(rows: T[]) => T[];
+
+// PMR types re-exported for the two files that reach in for them
+// (`DetailedCharacter.ts`, `DetailedCharacterSpellcasting.ts`).
+// `Dnd35ProjectedCharacterData` is imported directly from `./types.ts`.
+export type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR };
 
 export default class DetailedCharacterDataLoader {
   constructor(private readonly character: Character) {}

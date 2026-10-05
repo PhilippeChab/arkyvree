@@ -37,6 +37,9 @@ const check = (operator: string, valueType: string, value: string): RequirementC
 });
 const code = (req: RequirementEntry) => stringifyRequirement(req, new Set());
 
+const classRef = (book: string, slug: string) =>
+  loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class");
+
 describe("A generated requirement check", () => {
   test("is written with the builder that makes it", () => {
     expect(code(eq(feat("Power Attack")))).toBe(`eq("feats.powerattack.possessed")`);
@@ -265,9 +268,6 @@ describe("The generated feats", () => {
 });
 
 describe("A generated class", () => {
-  const classRef = (book: string, slug: string) =>
-    loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class");
-
   test("requires one of a family's feats, or a number of them", () => {
     expect(generateClassSeed(classRef("complete-scoundrel", "fortunesFriend"))).toContain(
       `eq("feats.luck.*.possessed"),`,

@@ -164,6 +164,66 @@ async function setup() {
   return { user, session, ruleset, refs };
 }
 
+/** Whether any of these requirements is left. */
+const remaining = async (ids: string[]) =>
+  (await Promise.all(ids.map((id) => Requirements.findOne(db, { id })))).filter(Boolean);
+
+/** Gives the entity a requirement, a property and, when its type can own one, a modifier with a requirement of its own. */
+async function customize(entityType: (typeof ENTITY_TYPES)[number], id: string) {
+  if (isCustomizableEntityType(entityType)) {
+    const [modifier] = await Modifiers.create(db, {
+      sourceId: id,
+      sourceType: entityType,
+      target: "abilities.strength.misc",
+      value: "2",
+      valueType: "number",
+      operator: "add",
+    });
+    await Requirements.create(db, {
+      entityId: modifier.id,
+      entityType: "modifiers",
+      level: "1",
+      chainingOperator: "and",
+    });
+  }
+  await Requirements.create(db, {
+    entityId: id,
+    entityType,
+    level: "1",
+    target: "abilities.strength.total",
+    value: "13",
+    valueType: "number",
+    operator: "greater_than_or_equal",
+  });
+  await Properties.create(db, { entityId: id, entityType, type: "NOTE", value: "doomed" });
+}
+
+/** The entity's customizations, and the ids of its modifiers' requirements. */
+async function customizationsOf(entityType: (typeof ENTITY_TYPES)[number], id: string) {
+  const modifiers = await Modifiers.findMany(db, { sourceIds: [id], sourceType: entityType });
+  const modifierRequirements = await Requirements.findMany(db, {
+    entityIds: modifiers.map((m) => m.id),
+    entityType: "modifiers",
+  });
+  return {
+    modifiers,
+    modifierRequirementIds: modifierRequirements.map((r) => r.id),
+    requirements: await Requirements.findMany(db, { entityIds: [id], entityType }),
+    properties: await Properties.findMany(db, { entityIds: [id], entityType, type: "NOTE" }),
+  };
+}
+
+/** How many of each an entity has. */
+const counts = async (entityType: (typeof ENTITY_TYPES)[number], id: string) => {
+  const { modifiers, modifierRequirementIds, requirements, properties } = await customizationsOf(entityType, id);
+  return {
+    modifiers: modifiers.length,
+    modifierRequirements: modifierRequirementIds.length,
+    requirements: requirements.length,
+    properties: properties.length,
+  };
+};
+
 describe.each(ENTITY_TYPES)("%s service", (entityType) => {
   const service = SERVICES[entityType];
 
@@ -260,61 +320,6 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
   const service = SERVICES[entityType];
   const ownsModifiers = isCustomizableEntityType(entityType);
 
-  /** Gives the entity a requirement, a property and, when its type can own one, a modifier with a requirement of its own. */
-  async function customize(id: string) {
-    if (ownsModifiers) {
-      const [modifier] = await Modifiers.create(db, {
-        sourceId: id,
-        sourceType: entityType,
-        target: "abilities.strength.misc",
-        value: "2",
-        valueType: "number",
-        operator: "add",
-      });
-      await Requirements.create(db, {
-        entityId: modifier.id,
-        entityType: "modifiers",
-        level: "1",
-        chainingOperator: "and",
-      });
-    }
-    await Requirements.create(db, {
-      entityId: id,
-      entityType,
-      level: "1",
-      target: "abilities.strength.total",
-      value: "13",
-      valueType: "number",
-      operator: "greater_than_or_equal",
-    });
-    await Properties.create(db, { entityId: id, entityType, type: "NOTE", value: "doomed" });
-  }
-
-  /** The entity's customizations, and the ids of its modifiers' requirements. */
-  async function customizationsOf(id: string) {
-    const modifiers = await Modifiers.findMany(db, { sourceIds: [id], sourceType: entityType });
-    const modifierRequirements = await Requirements.findMany(db, {
-      entityIds: modifiers.map((m) => m.id),
-      entityType: "modifiers",
-    });
-    return {
-      modifiers,
-      modifierRequirementIds: modifierRequirements.map((r) => r.id),
-      requirements: await Requirements.findMany(db, { entityIds: [id], entityType }),
-      properties: await Properties.findMany(db, { entityIds: [id], entityType, type: "NOTE" }),
-    };
-  }
-
-  /** How many of each an entity has. */
-  const counts = async (id: string) => {
-    const { modifiers, modifierRequirementIds, requirements, properties } = await customizationsOf(id);
-    return {
-      modifiers: modifiers.length,
-      modifierRequirements: modifierRequirementIds.length,
-      requirements: requirements.length,
-      properties: properties.length,
-    };
-  };
   const none = { modifiers: 0, modifierRequirements: 0, requirements: 0, properties: 0 };
   const one = {
     modifiers: Number(ownsModifiers),
@@ -323,40 +328,36 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
     properties: 1,
   };
 
-  /** Whether any of these requirements is left. */
-  const remaining = async (ids: string[]) =>
-    (await Promise.all(ids.map((id) => Requirements.findOne(db, { id })))).filter(Boolean);
-
   test("deletes the entity's modifiers, requirements and properties with it", async () => {
     const { session, ruleset, refs } = await setup();
     const { id } = await service.create(session, ruleset.id, "Doomed Entity", refs);
     // Customizations point at their entity polymorphically: no foreign key removes them.
-    await customize(id);
-    const { modifierRequirementIds } = await customizationsOf(id);
+    await customize(entityType, id);
+    const { modifierRequirementIds } = await customizationsOf(entityType, id);
 
     await service.remove(session, ruleset.id, id);
-    expect(await counts(id)).toEqual(none);
+    expect(await counts(entityType, id)).toEqual(none);
     expect(await remaining(modifierRequirementIds)).toEqual([]);
   });
 
   test("copies an inherited entity's customizations into the fork, and deletes them with the copy", async () => {
     const { session: parentSession, ruleset: parent, refs } = await setup();
     const inherited = await service.create(parentSession, parent.id, "Inherited Entity", refs);
-    await customize(inherited.id);
+    await customize(entityType, inherited.id);
     const { user, session } = await createTestUserAndRuleset();
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-    const source = await customizationsOf(inherited.id);
+    const source = await customizationsOf(entityType, inherited.id);
 
     const copy = await service.update(session, fork.id, inherited.id, "Forked Entity", refs);
-    expect(await counts(copy.id)).toEqual(one);
-    const copied = await customizationsOf(copy.id);
+    expect(await counts(entityType, copy.id)).toEqual(one);
+    const copied = await customizationsOf(entityType, copy.id);
     // The copy's modifier has its own copy of the modifier's requirements.
     expect(copied.modifierRequirementIds.filter((id) => source.modifierRequirementIds.includes(id))).toEqual([]);
 
     await service.remove(session, fork.id, inherited.id);
-    expect(await counts(copy.id)).toEqual(none);
+    expect(await counts(entityType, copy.id)).toEqual(none);
     expect(await remaining(copied.modifierRequirementIds)).toEqual([]);
-    expect(await customizationsOf(inherited.id)).toEqual(source);
+    expect(await customizationsOf(entityType, inherited.id)).toEqual(source);
   });
 });

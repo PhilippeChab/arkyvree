@@ -37,6 +37,12 @@ function proficiency(featName: string): RequirementEntry[] {
   return [eq(feat(featName))];
 }
 
+export const LIGHT_ARMOR_PROF = proficiency("Armor Proficiency (Light)");
+export const MEDIUM_ARMOR_PROF = proficiency("Armor Proficiency (Medium)");
+export const HEAVY_ARMOR_PROF = proficiency("Armor Proficiency (Heavy)");
+export const SHIELD_PROF = proficiency("Shield Proficiency");
+export const TOWER_SHIELD_PROF = proficiency("Tower Shield Proficiency");
+
 export { simple, martial, exotic } from "@/database/packages/dnd35/content/weapons.ts";
 
 export function weaponProperties(weaponTypeName: string): Property[] {
@@ -72,12 +78,6 @@ export function weaponProperties(weaponTypeName: string): Property[] {
 
   return props;
 }
-
-export const LIGHT_ARMOR_PROF = proficiency("Armor Proficiency (Light)");
-export const MEDIUM_ARMOR_PROF = proficiency("Armor Proficiency (Medium)");
-export const HEAVY_ARMOR_PROF = proficiency("Armor Proficiency (Heavy)");
-export const SHIELD_PROF = proficiency("Shield Proficiency");
-export const TOWER_SHIELD_PROF = proficiency("Tower Shield Proficiency");
 
 export function armorProperties(armorTypeName: string): Property[] {
   const def = getArmorDefinition(armorTypeName);

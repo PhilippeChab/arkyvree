@@ -5,13 +5,13 @@ import { apiOf } from "@/tests/e2e/api.ts";
 import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { createCampaign, createCharacter, signedInPage, signIn } from "@/tests/e2e/helpers.ts";
 
+type Campaign = { id: string; characters: Record<(typeof VISIBILITIES)[number], { id: string; name: string }> };
+
 /*
  * A player's characters in a campaign, by the visibility the player links each with: the Game Master sees them all,
  * whole; another player sees a public one whole, a partial one's identity only, and not a private one.
  */
 const VISIBILITIES = ["Public", "Partial", "Private"] as const;
-
-type Campaign = { id: string; characters: Record<(typeof VISIBILITIES)[number], { id: string; name: string }> };
 
 /**
  * A campaign `gm` runs, which `player` and `other` join: `player` links a character of each visibility. All through

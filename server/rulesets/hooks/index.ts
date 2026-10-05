@@ -6,10 +6,6 @@ import type { LevelsHooks } from "./LevelsHooks.ts";
 import type { PowersHooks } from "./PowersHooks.ts";
 import type { SkillsHooks } from "./SkillsHooks.ts";
 
-export type { ClassesHooks, ItemsHooks, PowersHooks, SkillsHooks, ClassLevelsHooks, LevelsHooks, InventoryHooks };
-export type { PowerBody } from "./PowersHooks.ts";
-export type { PropertyRecord, SkillFlags } from "./SkillsHooks.ts";
-
 export interface ServiceHooks {
   classes: ClassesHooks;
   items: ItemsHooks;
@@ -19,3 +15,7 @@ export interface ServiceHooks {
   levels: LevelsHooks;
   inventory: InventoryHooks;
 }
+
+export type { ClassesHooks, ItemsHooks, PowersHooks, SkillsHooks, ClassLevelsHooks, LevelsHooks, InventoryHooks };
+export type { PowerBody } from "./PowersHooks.ts";
+export type { PropertyRecord, SkillFlags } from "./SkillsHooks.ts";

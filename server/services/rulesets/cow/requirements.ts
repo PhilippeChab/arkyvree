@@ -1,5 +1,21 @@
 import type { Requirement } from "@/shared/relations.ts";
 
+type ReqLeafNode = {
+  source: Requirement;
+  kind: "leaf";
+  target: string;
+  operator: string;
+  value: string;
+  valueType: string;
+};
+type ReqChainNode = {
+  source: Requirement;
+  kind: "chain";
+  op: string; // "or" | "and"
+  children: ReqNode[];
+};
+type ReqNode = ReqLeafNode | ReqChainNode;
+
 // Requirement forest model (used by siblingMerge.ts + the
 // matching read-time compose in rulesetCache/compose.ts)
 //
@@ -17,22 +33,6 @@ import type { Requirement } from "@/shared/relations.ts";
 // indices are renumbered recursively.
 
 const MAX_REQ_TREE_DEPTH = 5;
-
-type ReqLeafNode = {
-  source: Requirement;
-  kind: "leaf";
-  target: string;
-  operator: string;
-  value: string;
-  valueType: string;
-};
-type ReqChainNode = {
-  source: Requirement;
-  kind: "chain";
-  op: string; // "or" | "and"
-  children: ReqNode[];
-};
-type ReqNode = ReqLeafNode | ReqChainNode;
 
 function parentLevelOf(level: string): string | null {
   const idx = level.lastIndexOf(".");

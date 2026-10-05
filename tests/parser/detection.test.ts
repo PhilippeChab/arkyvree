@@ -23,6 +23,13 @@ const conditional = (text: string) => {
   return isConditional(text, start, end);
 };
 
+/** The modifiers seeded with the entity named `name` of `seeds`, each as "target +value". */
+const seededModifiers = (seeds: { name: string; modifiers?: { target: string; value: string }[] }[], name: string) => {
+  const seed = seeds.find((entry) => entry.name === name);
+  if (!seed) throw new Error(`${name} isn't seeded`);
+  return (seed.modifiers ?? []).map(({ target, value }) => `${target} +${value}`).sort();
+};
+
 describe("A text's skill bonuses", () => {
   test("are read from a list, a check after another, with any bonus type and possessive", () => {
     expect(
@@ -106,13 +113,6 @@ describe("A bonus", () => {
     );
   });
 });
-
-/** The modifiers seeded with the entity named `name` of `seeds`, each as "target +value". */
-const seededModifiers = (seeds: { name: string; modifiers?: { target: string; value: string }[] }[], name: string) => {
-  const seed = seeds.find((entry) => entry.name === name);
-  if (!seed) throw new Error(`${name} isn't seeded`);
-  return (seed.modifiers ?? []).map(({ target, value }) => `${target} +${value}`).sort();
-};
 
 describe("A specific armor's text", () => {
   test("gives the stats it changes, its category and weight", () => {

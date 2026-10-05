@@ -75,11 +75,36 @@ async function featNames(rulesetId: string, search?: string) {
 
 const findFeat = async (rulesetId: string, name: string) => (await Feats.findOne(db, { rulesetId, name }))!;
 
-describe("Spell Focus", () => {
-  /** A spell's generated properties, read through the service. */
-  const spellFields = async (rulesetId: string, powerId: string) =>
-    (await PowersService.getPower(rulesetId, powerId)).properties.map((p) => `${p.type}: ${p.value}`).sort();
+/** A spell's generated properties, read through the service. */
+const spellFields = async (rulesetId: string, powerId: string) =>
+  (await PowersService.getPower(rulesetId, powerId)).properties.map((p) => `${p.type}: ${p.value}`).sort();
 
+const forkWithExtensions = async () => {
+  const session = makeSession();
+  return { session, fork: await createSeededTestRulesetWithExtensions(session.userId) };
+};
+
+/** The seed user's fork of the seeded ruleset, and its inherited Climb. */
+async function seededForkWithClimb() {
+  const session = makeSession();
+  const fork = await createSeededTestRuleset(session.userId);
+  const climb = (await Skills.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Climb" }))!;
+  const climbBody = {
+    name: "Climb",
+    primaryAbilityId: climb.primaryAbilityId,
+    impactedByWeight: true,
+    checkPenaltyMultiplier: 1,
+    usableWithoutTraining: true,
+  };
+  return { session, fork, climb, climbBody, feat: await findFeat(climb.rulesetId, "Skill Focus: Climb") };
+}
+
+const seededFork = async () => {
+  const session = makeSession();
+  return { session, fork: await createSeededTestRuleset(session.userId) };
+};
+
+describe("Spell Focus", () => {
   test.each([
     [
       "every field, several descriptors and components",
@@ -239,25 +264,10 @@ test("a fork's new skills and spells put their feats in the General aptitude it 
 });
 
 describe("an inherited skill's Skill Focus", () => {
-  /** The seed user's fork of the seeded ruleset, and its inherited Climb. */
-  async function seededFork() {
-    const session = makeSession();
-    const fork = await createSeededTestRuleset(session.userId);
-    const climb = (await Skills.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Climb" }))!;
-    const climbBody = {
-      name: "Climb",
-      primaryAbilityId: climb.primaryAbilityId,
-      impactedByWeight: true,
-      checkPenaltyMultiplier: 1,
-      usableWithoutTraining: true,
-    };
-    return { session, fork, climb, climbBody, feat: await findFeat(climb.rulesetId, "Skill Focus: Climb") };
-  }
-
   test.each(["rename", "delete"] as const)(
     "is hidden from the fork when it'd %s the skill, the ancestor's rows untouched",
     async (operation) => {
-      const { session, fork, climb, climbBody, feat } = await seededFork();
+      const { session, fork, climb, climbBody, feat } = await seededForkWithClimb();
       const modifiers = await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" });
       if (operation === "rename")
         await SkillsService.updateSkill(session, fork.id, climb.id, { ...climbBody, name: "Mountaineering" });
@@ -299,7 +309,7 @@ describe("an inherited skill's Skill Focus", () => {
     ["delete", "copied into the fork"],
     ["rename", "copied into the fork"],
   ] as const)("keeps the skill from being %sd while a character picked it, %s", async (operation, picked) => {
-    const { session, fork, climb, climbBody, feat } = await seededFork();
+    const { session, fork, climb, climbBody, feat } = await seededForkWithClimb();
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
     const [levelId] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
@@ -322,7 +332,7 @@ describe("an inherited skill's Skill Focus", () => {
   test.each(["delete and recreate", "rename and rename back"] as const)(
     "stays single after the fork's skill is %sd, and deleting the skill removes it",
     async (mode) => {
-      const { session, fork, climb, climbBody, feat } = await seededFork();
+      const { session, fork, climb, climbBody, feat } = await seededForkWithClimb();
       const restored =
         mode === "delete and recreate"
           ? (await SkillsService.deleteSkill(session, fork.id, climb.id),
@@ -347,7 +357,7 @@ describe("an inherited skill's Skill Focus", () => {
   );
 
   test("is cleaned up from the rules the caller loaded, without another lookup", async () => {
-    const { fork } = await seededFork();
+    const { fork } = await seededForkWithClimb();
     await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
       const timing = {
         dbTimeMs: 0,
@@ -369,15 +379,6 @@ describe("an inherited skill's Skill Focus", () => {
 });
 
 describe("generated feats", () => {
-  const seededFork = async () => {
-    const session = makeSession();
-    return { session, fork: await createSeededTestRuleset(session.userId) };
-  };
-  const forkWithExtensions = async () => {
-    const session = makeSession();
-    return { session, fork: await createSeededTestRulesetWithExtensions(session.userId) };
-  };
-
   test.each([
     "Skill Focus",
     "Spell Focus",

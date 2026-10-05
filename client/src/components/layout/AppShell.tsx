@@ -6,16 +6,6 @@ import { DiceSpinner } from "@/client/src/components/common/index.ts";
 
 import { Footer } from "./Footer.tsx";
 
-/** Logo and wordmark shown in the app bar. */
-export function AppBrand() {
-  return (
-    <>
-      <img src="/pwa-192x192.png" alt="" style={{ width: 28, height: 28, marginRight: 8, verticalAlign: "middle" }} />
-      Arkyvree
-    </>
-  );
-}
-
 // Place the main area right under the fixed app bar: the theme's toolbar
 // mixin with `top` for `minHeight`, media queries included.
 function belowToolbar(toolbar: CSSObject): CSSObject {
@@ -25,6 +15,16 @@ function belowToolbar(toolbar: CSSObject): CSSObject {
         ? ["top", value]
         : [key, typeof value === "object" && value ? belowToolbar(value as CSSObject) : value],
     ),
+  );
+}
+
+/** Logo and wordmark shown in the app bar. */
+export function AppBrand() {
+  return (
+    <>
+      <img src="/pwa-192x192.png" alt="" style={{ width: 28, height: 28, marginRight: 8, verticalAlign: "middle" }} />
+      Arkyvree
+    </>
   );
 }
 

@@ -137,6 +137,18 @@ function parseItemEntries($: cheerio.CheerioAPI, startH4Text: string, category: 
   return items;
 }
 
+/**
+ * Fallback: parse all h5 entries on the page (for pages without a clear section h4), those with a price only.
+ */
+function parseAllH5Entries($: cheerio.CheerioAPI, category: MagicItemCategory): RawMagicItem[] {
+  const items: RawMagicItem[] = [];
+  $("h5").each((_, el) => {
+    const block = readItemBlock($, $(el));
+    if (block.name && block.metadataText) items.push(...itemEntries(block, category));
+  });
+  return items;
+}
+
 // ---------------------------------------------------------------------------
 // Page-specific parsers
 // ---------------------------------------------------------------------------
@@ -169,18 +181,6 @@ export function parseRodsHtml(html: string): RawMagicItem[] {
 export function parseStaffsHtml(html: string): RawMagicItem[] {
   const $ = cheerio.load(html);
   return parseItemEntries($, "Staff Descriptions", "staff");
-}
-
-/**
- * Fallback: parse all h5 entries on the page (for pages without a clear section h4), those with a price only.
- */
-function parseAllH5Entries($: cheerio.CheerioAPI, category: MagicItemCategory): RawMagicItem[] {
-  const items: RawMagicItem[] = [];
-  $("h5").each((_, el) => {
-    const block = readItemBlock($, $(el));
-    if (block.name && block.metadataText) items.push(...itemEntries(block, category));
-  });
-  return items;
 }
 
 export function parseWondrousItemsHtml(html: string): RawMagicItem[] {

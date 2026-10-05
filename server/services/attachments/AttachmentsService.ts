@@ -19,8 +19,6 @@ type AttachableConfig = {
   names: readonly string[];
 };
 
-const ATTACHABLE_TYPES = new Map<string, AttachableConfig>();
-
 interface SignedTokenPayload {
   blobId: string;
   recordType: string;
@@ -28,6 +26,13 @@ interface SignedTokenPayload {
   name: string;
   iat: number;
 }
+
+const ATTACHABLE_TYPES = new Map<string, AttachableConfig>();
+
+const imagePolicy: UploadPolicy = {
+  maxBytes: MAX_UPLOAD_BYTES,
+  contentTypes: [...ALLOWED_IMAGE_TYPES],
+};
 
 function registerAttachable(recordType: string, config: AttachableConfig): void {
   ATTACHABLE_TYPES.set(recordType, config);
@@ -37,11 +42,6 @@ function registerAttachable(recordType: string, config: AttachableConfig): void 
 // the URL adds no exposure beyond the page (share-token gates that), so any
 // signed-in session can read them.
 const allowAuthenticated: OwnershipChecker = async () => true;
-
-const imagePolicy: UploadPolicy = {
-  maxBytes: MAX_UPLOAD_BYTES,
-  contentTypes: [...ALLOWED_IMAGE_TYPES],
-};
 
 registerAttachable("User", {
   isOwner: async (session, recordId) => session.userId === recordId,

@@ -14,13 +14,13 @@ import { languagesQuery } from "@/client/src/pages/rulesets/details/sectionQueri
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+type Language = RulesetLanguage;
+
 const LANGUAGES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
   { key: "type", label: "Type", width: "20%" },
   { key: "description", label: "Description", width: "55%" },
 ];
-
-type Language = RulesetLanguage;
 
 export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);

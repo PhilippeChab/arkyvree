@@ -10,17 +10,6 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { BaseRules, LevelUpFormData } from "./levelUpTypes.ts";
 import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
-export const editStepContent = ["hp", "attributes", "skills", "feats", "powers", "review"] as const;
-
-export const editStepLabels = [
-  "Select HP",
-  "Attribute Increase",
-  "Select Skills",
-  "Select Feats",
-  "Select Spells",
-  "Review Changes",
-];
-
 interface UseLevelWizardParams {
   open: boolean;
   onClose: () => void;
@@ -31,6 +20,17 @@ interface UseLevelWizardParams {
 }
 
 export type LevelWizard = ReturnType<typeof useLevelWizard>;
+
+export const editStepContent = ["hp", "attributes", "skills", "feats", "powers", "review"] as const;
+
+export const editStepLabels = [
+  "Select HP",
+  "Attribute Increase",
+  "Select Skills",
+  "Select Feats",
+  "Select Spells",
+  "Review Changes",
+];
 
 export function useLevelWizard({
   open,

@@ -64,6 +64,9 @@ interface CustomizationViewProps {
   locked: boolean;
 }
 
+// Entities with an editor on this page, which can also be deleted from it.
+const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
+
 const tabLabel = (label: string, help: string) => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
     {label}
@@ -101,9 +104,6 @@ const TABS: SectionTab<TabSection>[] = [
 // A modifier can only carry requirements.
 const tabsFor = (type: CustomizationPageType) =>
   type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
-
-// Entities with an editor on this page, which can also be deleted from it.
-const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
 const isEditable = (data: CustomizationEntity): data is EditableEntity =>
   EDITABLE_TYPES.some((type) => type === data.type);
 

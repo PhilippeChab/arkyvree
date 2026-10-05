@@ -3,6 +3,11 @@ import type { RefObject } from "react";
 
 import type { TemplateExpressionInputRef } from "./TemplateExpressionInput.tsx";
 
+interface TemplateExpressionToolbarProps {
+  inputRef: RefObject<TemplateExpressionInputRef | null>;
+  disabled?: boolean;
+}
+
 /** Operator display chars → expression chars (we render math symbols but save ASCII). */
 const OPERATORS: { display: string; insert: string }[] = [
   { display: "+", insert: "+" },
@@ -12,11 +17,6 @@ const OPERATORS: { display: string; insert: string }[] = [
 ];
 
 const FUNCTIONS = ["floor", "ceil", "min", "max", "abs"];
-
-interface TemplateExpressionToolbarProps {
-  inputRef: RefObject<TemplateExpressionInputRef | null>;
-  disabled?: boolean;
-}
 
 /**
  * Inline operator + function toolbar that drives a sibling

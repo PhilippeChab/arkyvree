@@ -136,53 +136,6 @@ export async function cowEntity(
   return newEntity;
 }
 
-/** The entity `entityId` names in the ruleset's composed view: the ruleset's own, or one inherited through its source chain. */
-export function findScopedEntity<T extends { rulesetId: string }>(
-  entities: ReadonlyMap<string, T>,
-  entityId: string,
-  rulesetId: string,
-  sourceChain: string[],
-  name: string,
-): T {
-  const entity = entities.get(entityId);
-  if (!entity || (entity.rulesetId !== rulesetId && !sourceChain.includes(entity.rulesetId))) {
-    throw new NotFoundError(`${name} not found in this ruleset`);
-  }
-  return entity;
-}
-
-/**
- * The row an edit of `entity` (from `findScopedEntity`) writes: the ruleset's own entity, or the copy of an inherited
- * one, made on its first edit. A copy takes no stale-edit check: the client's `updatedAt` is the source's.
- */
-export async function cowEntityToEdit(
-  tx: Db,
-  ruleset: { id: string; extensionRulesetIds: string[] },
-  sourceChain: string[],
-  entityType: EntityType,
-  entity: { id: string; rulesetId: string },
-): Promise<{ id: string; copied: boolean }> {
-  if (entity.rulesetId === ruleset.id) return { id: entity.id, copied: false };
-  const copy = await cowEntity(tx, entityType, entity.id, ruleset.id, sourceChain, ruleset.extensionRulesetIds);
-  return { id: copy.id, copied: true };
-}
-
-/**
- * The row a delete of `entity` removes: as `cowEntityToEdit`, and the ruleset's own entity is locked first, so its
- * customizations' writes wait for the delete.
- */
-export async function cowEntityToDelete(
-  tx: Db,
-  ruleset: { id: string; extensionRulesetIds: string[] },
-  sourceChain: string[],
-  entityType: EntityType,
-  entity: { id: string; rulesetId: string },
-): Promise<string> {
-  const target = await cowEntityToEdit(tx, ruleset, sourceChain, entityType, entity);
-  if (!target.copied) await lockEntityForMutation(tx, entityType, target.id);
-  return target.id;
-}
-
 /**
  * Resolve the stored row a customization update or delete should change.
  * `entityId` is the owner the row is shown on, so visible sibling contributions
@@ -332,4 +285,51 @@ export async function cowEntityForCustomization(
     customizationIds,
   );
   return cowResult.id;
+}
+
+/** The entity `entityId` names in the ruleset's composed view: the ruleset's own, or one inherited through its source chain. */
+export function findScopedEntity<T extends { rulesetId: string }>(
+  entities: ReadonlyMap<string, T>,
+  entityId: string,
+  rulesetId: string,
+  sourceChain: string[],
+  name: string,
+): T {
+  const entity = entities.get(entityId);
+  if (!entity || (entity.rulesetId !== rulesetId && !sourceChain.includes(entity.rulesetId))) {
+    throw new NotFoundError(`${name} not found in this ruleset`);
+  }
+  return entity;
+}
+
+/**
+ * The row an edit of `entity` (from `findScopedEntity`) writes: the ruleset's own entity, or the copy of an inherited
+ * one, made on its first edit. A copy takes no stale-edit check: the client's `updatedAt` is the source's.
+ */
+export async function cowEntityToEdit(
+  tx: Db,
+  ruleset: { id: string; extensionRulesetIds: string[] },
+  sourceChain: string[],
+  entityType: EntityType,
+  entity: { id: string; rulesetId: string },
+): Promise<{ id: string; copied: boolean }> {
+  if (entity.rulesetId === ruleset.id) return { id: entity.id, copied: false };
+  const copy = await cowEntity(tx, entityType, entity.id, ruleset.id, sourceChain, ruleset.extensionRulesetIds);
+  return { id: copy.id, copied: true };
+}
+
+/**
+ * The row a delete of `entity` removes: as `cowEntityToEdit`, and the ruleset's own entity is locked first, so its
+ * customizations' writes wait for the delete.
+ */
+export async function cowEntityToDelete(
+  tx: Db,
+  ruleset: { id: string; extensionRulesetIds: string[] },
+  sourceChain: string[],
+  entityType: EntityType,
+  entity: { id: string; rulesetId: string },
+): Promise<string> {
+  const target = await cowEntityToEdit(tx, ruleset, sourceChain, entityType, entity);
+  if (!target.copied) await lockEntityForMutation(tx, entityType, target.id);
+  return target.id;
 }

@@ -13,14 +13,6 @@ import {
 import { collectDiff, diffIsEmpty, renderSql } from "@/scripts/ops/diff/rows.ts";
 import { db } from "@/server/database/index.ts";
 
-/** The test's database, queried as diff-prod's pg client is: positional parameters ($1…), the rows. */
-const query: Query = async <R extends Record<string, unknown>>(text: string, params: unknown[] = []) => {
-  const chunks = text
-    .split(/\$(\d+)/)
-    .map((part, i) => (i % 2 === 0 ? sql.raw(part) : sql.param(params[Number(part) - 1])));
-  return (await db.execute(sql.join(chunks))).rows as R[];
-};
-
 /** The columns that aren't content: a row's bookkeeping, and what scopes it (its ruleset, a user's own data). */
 const BOOKKEEPING = ["id", "created_at", "updated_at", "deleted_at", "ruleset_id", "campaign_id", "user_id"];
 
@@ -97,6 +89,41 @@ const CHECKED: Record<string, string[]> = {
   chaining_operator: ["and", "or"],
 };
 
+/** Rows a table's test adds: one the seeds leave out of it, or a free target for a row moved under a unique key. */
+const FIXTURES: Record<string, string> = {
+  // A class with its 20th level alone: a level number and classes free to move it to
+  "rules.klass_levels": `with klass as (
+                           insert into rules.klasses (ruleset_id, name, hd)
+                           select id, 'Late Bloomer', 8 from rules.rulesets where system limit 1 returning id
+                         )
+                         insert into rules.klass_levels (klass_id, level) select id, 20 from klass`,
+  // A level without saves and a fourth save, which a level's save can move to
+  "rules.klass_level_saves": `insert into rules.saves (ruleset_id, name, ability_id)
+                              select ruleset_id, 'Sanity', ability_id from rules.saves limit 1;
+                              insert into rules.klass_levels (klass_id, level)
+                              select k.id, 20 from rules.klasses k join rules.rulesets r on r.id = k.ruleset_id
+                               where r.system and not exists (
+                                 select 1 from rules.klass_levels kl where kl.klass_id = k.id and kl.level = 20
+                               ) limit 1`,
+  "rules.mechanics": `insert into rules.mechanics (ruleset_id, name, description)
+                      select id, 'Flanking', 'Two allies on opposite sides' from rules.rulesets where system limit 1`,
+  "rules.klass_level_powers": `insert into rules.klass_level_powers (klass_level_id, power_id, aptitude_id, free)
+                               select kl.id, pa.power_id, pa.aptitude_id, true
+                                 from rules.klass_levels kl join rules.klasses k on k.id = kl.klass_id
+                                 join rules.powers p on p.ruleset_id = k.ruleset_id
+                                 join rules.powers_aptitudes pa on pa.power_id = p.id
+                                 join rules.rulesets r on r.id = k.ruleset_id
+                                where r.system limit 1`,
+};
+
+/** The test's database, queried as diff-prod's pg client is: positional parameters ($1…), the rows. */
+const query: Query = async <R extends Record<string, unknown>>(text: string, params: unknown[] = []) => {
+  const chunks = text
+    .split(/\$(\d+)/)
+    .map((part, i) => (i % 2 === 0 ? sql.raw(part) : sql.param(params[Number(part) - 1])));
+  return (await db.execute(sql.join(chunks))).rows as R[];
+};
+
 /** The table `column`'s ids point to: its foreign key's, else (a customization's owner, a snapshot's entity) its type's. */
 async function referencedTable(table: string, column: string, row: Record<string, unknown>): Promise<string> {
   const [fk] = await query<{ referenced: string }>(
@@ -166,33 +193,6 @@ async function attempt(statement: string): Promise<boolean> {
   await db.execute(sql`rollback to savepoint attempt`);
   return false;
 }
-
-/** Rows a table's test adds: one the seeds leave out of it, or a free target for a row moved under a unique key. */
-const FIXTURES: Record<string, string> = {
-  // A class with its 20th level alone: a level number and classes free to move it to
-  "rules.klass_levels": `with klass as (
-                           insert into rules.klasses (ruleset_id, name, hd)
-                           select id, 'Late Bloomer', 8 from rules.rulesets where system limit 1 returning id
-                         )
-                         insert into rules.klass_levels (klass_id, level) select id, 20 from klass`,
-  // A level without saves and a fourth save, which a level's save can move to
-  "rules.klass_level_saves": `insert into rules.saves (ruleset_id, name, ability_id)
-                              select ruleset_id, 'Sanity', ability_id from rules.saves limit 1;
-                              insert into rules.klass_levels (klass_id, level)
-                              select k.id, 20 from rules.klasses k join rules.rulesets r on r.id = k.ruleset_id
-                               where r.system and not exists (
-                                 select 1 from rules.klass_levels kl where kl.klass_id = k.id and kl.level = 20
-                               ) limit 1`,
-  "rules.mechanics": `insert into rules.mechanics (ruleset_id, name, description)
-                      select id, 'Flanking', 'Two allies on opposite sides' from rules.rulesets where system limit 1`,
-  "rules.klass_level_powers": `insert into rules.klass_level_powers (klass_level_id, power_id, aptitude_id, free)
-                               select kl.id, pa.power_id, pa.aptitude_id, true
-                                 from rules.klass_levels kl join rules.klasses k on k.id = kl.klass_id
-                                 join rules.powers p on p.ruleset_id = k.ruleset_id
-                                 join rules.powers_aptitudes pa on pa.power_id = p.id
-                                 join rules.rulesets r on r.id = k.ruleset_id
-                                where r.system limit 1`,
-};
 
 describe("The content comparison (diff-prod)", () => {
   test("compares every table the seeds write, or says why not", async () => {

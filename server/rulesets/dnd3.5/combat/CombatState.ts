@@ -94,19 +94,6 @@ export type WeaponAbilities = {
   /** Whether it takes a penalty to attack below that rating: a composite bow's, which has a WEAPON_MIGHTY, not a plain bow's. */
   ratingRequired: boolean;
 };
-
-/** A weapon slot's label, as an item's location names it, to its place in the weapon set. */
-export const SLOT_MAP: Record<string, keyof WeaponSet> = {
-  "Main Hand": "mainhand",
-  "Off Hand": "offhand",
-  "Two Handed": "twohanded",
-};
-
-/** How a weapon is held, as a path's values: its place in the set, labelled as an item's location names it. */
-export const WIELDED_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
-
-/** The category of the armor a character wears, lightest first: none, or the armor's proficiency category. */
-export const ARMOR_CATEGORIES = ["none", "light", "medium", "heavy"] as const;
 export type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 
 export type DetailedCharacterComprehensiveCombat = {
@@ -174,6 +161,19 @@ export type DetailedCharacterComprehensiveCombat = {
   armors: ArmorsData;
   shields: ShieldsData;
 };
+
+/** A weapon slot's label, as an item's location names it, to its place in the weapon set. */
+export const SLOT_MAP: Record<string, keyof WeaponSet> = {
+  "Main Hand": "mainhand",
+  "Off Hand": "offhand",
+  "Two Handed": "twohanded",
+};
+
+/** How a weapon is held, as a path's values: its place in the set, labelled as an item's location names it. */
+export const WIELDED_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
+
+/** The category of the armor a character wears, lightest first: none, or the armor's proficiency category. */
+export const ARMOR_CATEGORIES = ["none", "light", "medium", "heavy"] as const;
 
 /** What a character's combat sheet holds, which its concerns (armor class, hit points, attacks…) compute. */
 export default abstract class CombatState {

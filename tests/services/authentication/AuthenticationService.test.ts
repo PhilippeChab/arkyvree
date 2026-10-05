@@ -33,6 +33,15 @@ import {
   uniqueId,
 } from "@/tests/helpers.ts";
 
+const missingSession: Session = {
+  id: NIL_UUID,
+  userId: NIL_UUID,
+  createdAt: "",
+  updatedAt: "",
+  deletedAt: null,
+  expiresAt: "",
+};
+
 function credentials() {
   const suffix = uniqueId();
   return {
@@ -52,15 +61,6 @@ async function signUpAndVerify(account = credentials()) {
   const signedIn = await AuthenticationService.signIn(account.emailAddress, account.password);
   return { ...signedIn, account };
 }
-
-const missingSession: Session = {
-  id: NIL_UUID,
-  userId: NIL_UUID,
-  createdAt: "",
-  updatedAt: "",
-  deletedAt: null,
-  expiresAt: "",
-};
 const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 
 /** A user without a password, as Google sign-up makes them. */
@@ -72,6 +72,8 @@ async function createPasswordlessUser() {
   });
   return { user, session: makeSession(user.id) };
 }
+
+const googleAccount = (email = `google-${uniqueId()}@example.com`) => ({ sub: `google-${uniqueId()}`, email });
 
 describe("AuthenticationService", () => {
   describe("signing up", () => {
@@ -458,8 +460,6 @@ describe("AuthenticationService", () => {
 
   // What follows Google verifying an ID token: the Google account's id (`sub`) and email
   describe("Google", () => {
-    const googleAccount = (email = `google-${uniqueId()}@example.com`) => ({ sub: `google-${uniqueId()}`, email });
-
     test("signs up a new user, verified, with the invites sent to their email, then signs them in as that user", async () => {
       const account = googleAccount();
       const { user: gm, session: gmSession } = await createTestUser("gm");

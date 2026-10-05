@@ -9,6 +9,31 @@ import { type Character, type Language, type Race } from "@/shared/relations.ts"
 import type DetailedCharacterAbilities from "./DetailedCharacterAbilities.ts";
 import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";
 
+type DetailedCharacterComprehensiveIdentity = {
+  physiology: {
+    name: string;
+    description: string;
+    age?: number;
+    gender: string;
+    height?: string;
+    weight?: string;
+    race: Race;
+    languages: Language[];
+  };
+  beliefs: {
+    deity: string;
+    alignment: string;
+  };
+  background: {
+    notes: string;
+    privateNotes: string;
+  };
+  meta: {
+    level: number;
+    xp: number;
+  };
+};
+
 const NAVIGATABLE_IDENTITY_PATHS = [
   { path: "name", description: "Character name", type: "string" as const },
   { path: "description", description: "Physical description", type: "string" as const },
@@ -37,31 +62,6 @@ const NAVIGATABLE_META_PATHS = [
 
 const SEGMENT_LABELS: Record<string, string> = {
   xp: "Experience Points",
-};
-
-type DetailedCharacterComprehensiveIdentity = {
-  physiology: {
-    name: string;
-    description: string;
-    age?: number;
-    gender: string;
-    height?: string;
-    weight?: string;
-    race: Race;
-    languages: Language[];
-  };
-  beliefs: {
-    deity: string;
-    alignment: string;
-  };
-  background: {
-    notes: string;
-    privateNotes: string;
-  };
-  meta: {
-    level: number;
-    xp: number;
-  };
 };
 
 export default class DetailedCharacterIdentity {

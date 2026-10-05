@@ -11,8 +11,6 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
 
-afterEach(() => RulesetCache.invalidateAll());
-
 // Real repository reads in separate request contexts: an earlier request loads
 // again only after another request's mutation and cache invalidation complete.
 async function overlap(read: () => Promise<unknown>, mutate: () => Promise<unknown>) {
@@ -37,6 +35,8 @@ async function overlap(read: () => Promise<unknown>, mutate: () => Promise<unkno
     await old;
   }
 }
+
+afterEach(() => RulesetCache.invalidateAll());
 
 for (const action of ["subscribe", "unsubscribe"] as const) {
   test(`old request metadata cannot undo ${action} in shared COW data or paths`, async () => {

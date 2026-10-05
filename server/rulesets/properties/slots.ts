@@ -1,6 +1,12 @@
 import { type ItemLocation, LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 import { type HandLocation, isHandLocation } from "@/shared/equipment.ts";
 
+type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[HandLocation];
+
+type EquipmentSlot = Lowercase<Exclude<ItemLocation, HandLocation>>;
+
+type InventorySlot = EquipmentSlot | WeaponSetSlot;
+
 export const SIZE_ORDER: Record<string, number> = Object.fromEntries(SIZE_OPTIONS.map((size, i) => [size, i]));
 
 const WEAPON_LOCATION_MAP = {
@@ -8,12 +14,6 @@ const WEAPON_LOCATION_MAP = {
   "Off Hand": "offhand",
   "Two Handed": "twohanded",
 } as const satisfies Record<HandLocation, string>;
-
-type WeaponSetSlot = (typeof WEAPON_LOCATION_MAP)[HandLocation];
-
-type EquipmentSlot = Lowercase<Exclude<ItemLocation, HandLocation>>;
-
-type InventorySlot = EquipmentSlot | WeaponSetSlot;
 
 const LOCATION_TO_SLOT: Record<string, InventorySlot> = Object.fromEntries(
   LOCATION_OPTIONS.map((loc) => [

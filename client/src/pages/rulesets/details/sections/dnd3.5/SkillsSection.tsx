@@ -15,15 +15,15 @@ import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+type SkillsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>;
+type Skill = SkillsPaginated["items"][number];
+
 const SKILLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
   { key: "ability", label: "Ability", width: "15%" },
   { key: "trainedOnly", label: "Trained Only", width: "15%" },
   { key: "description", label: "Description", width: "45%" },
 ];
-
-type SkillsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>;
-type Skill = SkillsPaginated["items"][number];
 
 export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);

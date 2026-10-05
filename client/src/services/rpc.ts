@@ -4,6 +4,8 @@ import { ApiError, type ApiValidationIssue } from "@/client/src/services/apiErro
 import type { ErrorJson } from "@/server/errors/index.ts";
 import type { Application } from "@/server/routers/application.ts";
 
+export type RPC = typeof _rpc;
+
 // Same-origin in all environments — vite's dev proxy forwards
 // /api/* and /auth/* to API_PORT, and the SSR server serves them
 // directly in production. Hardcoding `localhost:8000` in dev meant
@@ -11,11 +13,8 @@ import type { Application } from "@/server/routers/application.ts";
 // failed sign-in because requests bypassed the configured proxy.
 const host = document.location.origin;
 
-export { ApiError, type ApiValidationIssue };
-
 // We need to do this in order for tsserver to be usuable
 const _rpc = hc<Application>("");
-export type RPC = typeof _rpc;
 
 const _rpcWithTypes = (...args: Parameters<typeof hc>): RPC => hc<Application>(...args);
 
@@ -43,6 +42,8 @@ const defaultFetch = async (input: URL | RequestInfo, init?: RequestInit) => {
 };
 
 export const rpc = _rpcWithTypes(`${host}/`, { fetch: defaultFetch });
+
+export { ApiError, type ApiValidationIssue };
 
 /**
  * Parse an RPC response as its success body type. Non-2xx responses never

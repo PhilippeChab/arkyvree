@@ -67,31 +67,6 @@ const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll",
 const INDEXED_TREES = ["server/", "client/src/components/"];
 const UNINDEXED_TREES = ["server/routers/"];
 
-const layers = {
-  meta: { type: "problem" },
-  create(context) {
-    const file = repoPath(context.filename);
-    const rules = LAYERS.filter((l) => file.startsWith(l.layer));
-    if (!rules.length) return {};
-    return onImports((node, spec, types) => {
-      const target = targetOf(file, spec);
-      if (!target) return;
-      for (const rule of rules) {
-        const denied = rule.deny.find((d) => target.startsWith(d));
-        if (!denied) continue;
-        if (rule.allow?.some((a) => target.startsWith(a))) continue;
-        if (types && rule.types?.some((t) => target.startsWith(t))) continue;
-        const typesOnly = rule.types?.some((t) => denied.startsWith(t)) ? " (types only)" : "";
-        context.report({
-          node,
-          message: `${rule.layer} doesn't import from ${denied}${typesOnly}: a layer imports what's below it.`,
-        });
-        return;
-      }
-    });
-  },
-};
-
 const queriesInRepositories = {
   meta: { type: "problem" },
   create(context) {
@@ -152,6 +127,31 @@ const queriesInRepositories = {
 };
 
 const indexCache = new Map();
+
+const layers = {
+  meta: { type: "problem" },
+  create(context) {
+    const file = repoPath(context.filename);
+    const rules = LAYERS.filter((l) => file.startsWith(l.layer));
+    if (!rules.length) return {};
+    return onImports((node, spec, types) => {
+      const target = targetOf(file, spec);
+      if (!target) return;
+      for (const rule of rules) {
+        const denied = rule.deny.find((d) => target.startsWith(d));
+        if (!denied) continue;
+        if (rule.allow?.some((a) => target.startsWith(a))) continue;
+        if (types && rule.types?.some((t) => target.startsWith(t))) continue;
+        const typesOnly = rule.types?.some((t) => denied.startsWith(t)) ? " (types only)" : "";
+        context.report({
+          node,
+          message: `${rule.layer} doesn't import from ${denied}${typesOnly}: a layer imports what's below it.`,
+        });
+        return;
+      }
+    });
+  },
+};
 const hasIndex = (dir) => {
   if (!indexCache.has(dir)) {
     indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));

@@ -8,6 +8,26 @@ import { isTemplateValue } from "@/server/rulesets/universal/templateExpression.
 import { buildSourceChain, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { PathCompletion, PathError, PathValidationResult, TargetPath } from "@/shared/customization/target.ts";
 
+/** Why a modifier's or requirement's operator and value don't suit the path, or null when they do. */
+function valueMismatch(pathDef: TargetPath, operator: string | undefined, value: string | undefined): string | null {
+  const { path, valueType } = pathDef;
+  if (operator !== undefined && !pathDef.operators.includes(operator)) {
+    return `The operator ${operator} isn't offered on ${path}: ${pathDef.operators.join(", ")}`;
+  }
+  if (value === undefined) return null;
+  if (isTemplateValue(value)) return pathDef.literalOnly ? `${path} takes a number, not a template` : null;
+  const literal = parseLiteralValue(value, valueType);
+  if (literal === undefined) return `Invalid ${valueType} value for ${path}: ${JSON.stringify(value)}`;
+  if (operator === "set" && pathDef.setValues) {
+    if (pathDef.setValues.some((choice) => choice.value === value)) return null;
+    return `A set on ${path} takes ${pathDef.setValues.map((choice) => `${choice.value} (${choice.label})`).join(", ")}`;
+  }
+  if (pathDef.minValue !== undefined && typeof literal === "number" && literal < pathDef.minValue) {
+    return `${path} takes ${pathDef.minValue} or more`;
+  }
+  return null;
+}
+
 /**
  * Get all target paths with segment labels in a single fetch.
  * Entity data is fetched once and used to build both.
@@ -100,26 +120,6 @@ export async function validatePath(
   }
 
   return { isValid: false, errors, suggestions, completions };
-}
-
-/** Why a modifier's or requirement's operator and value don't suit the path, or null when they do. */
-function valueMismatch(pathDef: TargetPath, operator: string | undefined, value: string | undefined): string | null {
-  const { path, valueType } = pathDef;
-  if (operator !== undefined && !pathDef.operators.includes(operator)) {
-    return `The operator ${operator} isn't offered on ${path}: ${pathDef.operators.join(", ")}`;
-  }
-  if (value === undefined) return null;
-  if (isTemplateValue(value)) return pathDef.literalOnly ? `${path} takes a number, not a template` : null;
-  const literal = parseLiteralValue(value, valueType);
-  if (literal === undefined) return `Invalid ${valueType} value for ${path}: ${JSON.stringify(value)}`;
-  if (operator === "set" && pathDef.setValues) {
-    if (pathDef.setValues.some((choice) => choice.value === value)) return null;
-    return `A set on ${path} takes ${pathDef.setValues.map((choice) => `${choice.value} (${choice.label})`).join(", ")}`;
-  }
-  if (pathDef.minValue !== undefined && typeof literal === "number" && literal < pathDef.minValue) {
-    return `${path} takes ${pathDef.minValue} or more`;
-  }
-  return null;
 }
 
 /**

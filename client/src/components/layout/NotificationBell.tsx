@@ -17,6 +17,8 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.$get, 200>["items"][number];
+
 const bellShake = keyframes`
   0%, 100% { transform: rotate(0deg); }
   15% { transform: rotate(14deg); }
@@ -25,8 +27,6 @@ const bellShake = keyframes`
   60% { transform: rotate(-8deg); }
   75% { transform: rotate(4deg); }
 `;
-
-type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.$get, 200>["items"][number];
 
 function NotificationSummary({ notification }: { notification: UnreadNotification }) {
   return (

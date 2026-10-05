@@ -4,12 +4,12 @@ import { MAX_OWN_LINES } from "@/lint/size.mjs";
 
 import { lintRepo } from "./lintRepo.ts";
 
-// Each test runs oxlint, which a busy suite can slow past the default 5s.
-setDefaultTimeout(30_000);
-
 /** `n` statements, one per line. */
 const statements = (n: number, indent = "  ") =>
   Array.from({ length: n }, (_, i) => `${indent}const v${i} = ${i};`).join("\n");
+
+// Each test runs oxlint, which a busy suite can slow past the default 5s.
+setDefaultTimeout(30_000);
 
 describe("function-length", () => {
   test("a function holds at most its limit of its own lines: blank lines, comments and nested functions aside", async () => {

@@ -104,6 +104,8 @@ type Carried = {
 
 type Detailed = Awaited<ReturnType<typeof build>>;
 
+const WIZARD_SCORES = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 16, Wisdom: 10, Charisma: 10 };
+
 async function build(character: Character) {
   const detailed = new DetailedCharacter(character);
   await detailed.build();
@@ -264,7 +266,180 @@ async function createSeedCharacter(
   });
 }
 
-const WIZARD_SCORES = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 16, Wisdom: 10, Charisma: 10 };
+/** A ranger 6 with Two-Weapon Fighting and its improved feat, through the combat style: STR 14, DEX 16, BAB +6. */
+async function buildRanger(carried: Carried[]) {
+  const ctx = await getSeedCtx();
+  const characterId = await createSeedCharacter(
+    "Two-Weapon Ranger",
+    { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 10, Wisdom: 12, Charisma: 8 },
+    { xp: 15000 },
+  );
+  const levels = await addClassLevels(db, ctx, characterId, "Ranger", [1, 2, 3, 4, 5, 6], [8, 5, 5, 5, 5, 5]);
+  await addFeats(db, ctx, levels, [
+    { levelIndex: 1, featName: "Two-Weapon Fighting", aptitude: "Ranger Combat Style (2nd)" },
+    { levelIndex: 5, featName: "Improved Two-Weapon Fighting", aptitude: "Ranger Improved Combat Style (6th)" },
+  ]);
+  const character = (await Characters.findOne(db, { id: characterId }))!;
+  await carry(character, carried);
+  return build(character);
+}
+
+/** Whether `name` is proficient with `item` held at `location`. */
+const proficientWith = async (name: string, item: string, location: "Main Hand" | "Two Handed") => {
+  const set = weaponSet(await buildCarrying(name, [{ item, location, weaponSet: 0 }]));
+  return (location === "Two Handed" ? set.twohanded : set.mainhand)!.proficient;
+};
+
+/** An item that requires `target` (equal true, or this check), with +2 to hit for the hand holding it. */
+async function requiringWithBonus(
+  item: Awaited<ReturnType<typeof createItem>>,
+  target: string,
+  check: Pick<Requirement, "operator" | "value" | "valueType"> = {
+    operator: "equal",
+    value: "true",
+    valueType: "boolean",
+  },
+) {
+  await Requirements.create(db, { entityId: item.id, entityType: "items", level: "1", target, ...check });
+  await Modifiers.create(db, {
+    sourceId: item.id,
+    sourceType: "items",
+    target: "weapon.tohit.misc",
+    value: "2",
+    valueType: "number",
+    operator: "add",
+  });
+  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+  return item;
+}
+
+/** Bjorn on a fork using Complete Warrior, with its Uncanny Blow, holding a bastard sword. */
+async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
+  const bjorn = await findSeededCharacter("Bjorn Ironhand");
+  const fork = await forkWith(DND35_COMPLETE_WARRIOR_NAME);
+  await db.update(charactersInCharacter).set({ rulesetId: fork.id }).where(eq(charactersInCharacter.id, bjorn.id));
+  const extension = (await Rulesets.findOne(db, { name: DND35_COMPLETE_WARRIOR_NAME }))!;
+  const uncannyBlow = (await Feats.findOne(db, {
+    name: "Uncanny Blow (Exotic Weapon Master Exotic Weapon Stunt)",
+    rulesetId: extension.id,
+  }))!;
+  const stunt = (await Aptitudes.findOne(db, {
+    name: "Exotic Weapon Master Exotic Weapon Stunt",
+    rulesetId: extension.id,
+  }))!;
+  const [level] = await CharacterLevels.findMany(db, { characterId: bjorn.id });
+  await CharacterLevelFeats.createMany(db, [
+    { characterLevelId: level.id, featId: uncannyBlow.id, aptitudeId: stunt.id },
+  ]);
+  const character = { ...bjorn, rulesetId: fork.id };
+  await carry(character, [{ item: "Bastard Sword", location, weaponSet: 0 }]);
+  return build(character);
+}
+
+/** A modifier of the character's race, gated by `requirements` when given: it applies to the seeded character. */
+async function raceModifier(
+  name: string,
+  modifier: { target: string; value: string; operator?: string },
+  requirements: { target: string; operator: string; value: string; valueType: string }[] = [],
+) {
+  const character = await findSeededCharacter(name);
+  const [created] = await Modifiers.create(db, {
+    sourceId: character.raceId,
+    sourceType: "races",
+    operator: "add",
+    valueType: "number",
+    ...modifier,
+  });
+  for (const [index, requirement] of requirements.entries()) {
+    await Requirements.create(db, {
+      entityId: created.id,
+      entityType: "modifiers",
+      level: String(index + 1),
+      ...requirement,
+    });
+  }
+  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+  return created;
+}
+
+/** A character of a fork with Complete Divine, with these modifiers of its own (`[target, value, valueType]`). */
+async function divineCharacter(
+  name: string,
+  abilities: Record<string, number>,
+  granted: [string, string, string][],
+  alignment?: "Neutral Good" | "Chaotic Neutral",
+) {
+  const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
+  const characterId = await createSeedCharacter(name, abilities, { rulesetId: fork.id, alignment });
+  for (const [target, value, valueType] of granted) {
+    const operator = valueType === "boolean" ? "set" : "add";
+    await Modifiers.create(db, {
+      sourceId: characterId,
+      sourceType: "characters",
+      target,
+      value,
+      valueType,
+      operator,
+    });
+  }
+  return characterId;
+}
+
+/** A new wizard 1 whose Toughness grants Magic Missile, which gets `requirement` of its own when given. */
+async function setupGrantedSpell({ requirement = false, spellFocus = false } = {}) {
+  const ctx = await getSeedCtx();
+  const characterId = await createSeedCharacter("Granted Spell Test", WIZARD_SCORES, { xp: 1000 });
+  const levelIds = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
+  await addSkills(db, ctx, levelIds, [
+    { levelIndex: 0, skillName: "Spellcraft", rank: 4 },
+    { levelIndex: 0, skillName: "Concentration", rank: 4 },
+  ]);
+  await addFeats(db, ctx, levelIds, [
+    {
+      levelIndex: 0,
+      featName: spellFocus ? "Spell Focus: Evocation" : "Improved Initiative",
+      aptitude: "General",
+    },
+    { levelIndex: 0, featName: "Scribe Scroll", aptitude: "Wizard Bonus Feat" },
+    { levelIndex: 0, featName: "Toughness", aptitude: "General" },
+  ]);
+  await addPowers(
+    db,
+    ctx,
+    levelIds,
+    ["Detect Magic", "Read Magic", "Mage Armor"].map((powerName) => ({
+      levelIndex: 0,
+      powerName,
+      aptitude: "Wizard Spells",
+    })),
+  );
+  await Modifiers.create(db, {
+    sourceId: ctx.featMap["Toughness"],
+    sourceType: "feats",
+    target: "powers.magicmissile.wizard.known",
+    value: "true",
+    valueType: "boolean",
+    operator: "set",
+  });
+  if (requirement) {
+    await Requirements.create(db, {
+      entityId: ctx.powerMap["Magic Missile"],
+      entityType: "powers",
+      level: "1",
+      target: "classes.wizard.level",
+      operator: "greater_than_or_equal",
+      value: "5",
+      valueType: "number",
+    });
+  }
+  invalidateSeededRuleset(ctx.rulesetId);
+  return build((await Characters.findOne(db, { id: characterId }))!);
+}
+
+const dexterityMisc = (detailed: Detailed) => detailed.getDetailedCharacterAbilities().getAbilities().dexterity.misc;
+
+const met = async (name: string, target: string, check?: Parameters<typeof requiring>[1]) =>
+  (await buildSeeded(name)).areRequirementsMet(requiring(target, check));
 
 describe("DetailedCharacter", () => {
   describe("building", () => {
@@ -799,24 +974,6 @@ describe("DetailedCharacter", () => {
     });
 
     describe("with two weapons", () => {
-      /** A ranger 6 with Two-Weapon Fighting and its improved feat, through the combat style: STR 14, DEX 16, BAB +6. */
-      async function buildRanger(carried: Carried[]) {
-        const ctx = await getSeedCtx();
-        const characterId = await createSeedCharacter(
-          "Two-Weapon Ranger",
-          { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 10, Wisdom: 12, Charisma: 8 },
-          { xp: 15000 },
-        );
-        const levels = await addClassLevels(db, ctx, characterId, "Ranger", [1, 2, 3, 4, 5, 6], [8, 5, 5, 5, 5, 5]);
-        await addFeats(db, ctx, levels, [
-          { levelIndex: 1, featName: "Two-Weapon Fighting", aptitude: "Ranger Combat Style (2nd)" },
-          { levelIndex: 5, featName: "Improved Two-Weapon Fighting", aptitude: "Ranger Improved Combat Style (6th)" },
-        ]);
-        const character = (await Characters.findOne(db, { id: characterId }))!;
-        await carry(character, carried);
-        return build(character);
-      }
-
       test("cost each hand the SRD's penalties, lighter for a light off-hand weapon, the off hand attacking once", async () => {
         // An elf rogue without the feats: BAB +2, DEX 20 (+5) through Weapon Finesse; a dagger is light (-4 / -8).
         const { mainhand, offhand } = weaponSet(await buildSeeded("Lyra Shadowstep"));
@@ -1017,12 +1174,6 @@ describe("DetailedCharacter", () => {
     });
 
     describe("proficiency", () => {
-      /** Whether `name` is proficient with `item` held at `location`. */
-      const proficientWith = async (name: string, item: string, location: "Main Hand" | "Two Handed") => {
-        const set = weaponSet(await buildCarrying(name, [{ item, location, weaponSet: 0 }]));
-        return (location === "Two Handed" ? set.twohanded : set.mainhand)!.proficient;
-      };
-
       test("counts a bastard sword or a dwarven waraxe as martial in two hands, and a dwarf's waraxe in one", async () => {
         // A human fighter, proficient with martial weapons
         for (const weapon of ["Bastard Sword", "Dwarven Waraxe"]) {
@@ -1148,29 +1299,6 @@ describe("DetailedCharacter", () => {
           character.getDetailedCharacterSavingThrows().getSavingThrows().will;
         expect(will(elara).misc).toBe(will(await buildCarrying("Elara Starweaver")).misc + 1);
       });
-
-      /** An item that requires `target` (equal true, or this check), with +2 to hit for the hand holding it. */
-      async function requiringWithBonus(
-        item: Awaited<ReturnType<typeof createItem>>,
-        target: string,
-        check: Pick<Requirement, "operator" | "value" | "valueType"> = {
-          operator: "equal",
-          value: "true",
-          valueType: "boolean",
-        },
-      ) {
-        await Requirements.create(db, { entityId: item.id, entityType: "items", level: "1", target, ...check });
-        await Modifiers.create(db, {
-          sourceId: item.id,
-          sourceType: "items",
-          target: "weapon.tohit.misc",
-          value: "2",
-          valueType: "number",
-          operator: "add",
-        });
-        invalidateSeededRuleset((await getSeedCtx()).rulesetId);
-        return item;
-      }
 
       test("costs a base weapon the character isn't proficient with 4 to hit, and nothing else", async () => {
         const blade = await requiringWithBonus(
@@ -1312,32 +1440,6 @@ describe("DetailedCharacter", () => {
     });
 
     describe("with Uncanny Blow", () => {
-      /** Bjorn on a fork using Complete Warrior, with its Uncanny Blow, holding a bastard sword. */
-      async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
-        const bjorn = await findSeededCharacter("Bjorn Ironhand");
-        const fork = await forkWith(DND35_COMPLETE_WARRIOR_NAME);
-        await db
-          .update(charactersInCharacter)
-          .set({ rulesetId: fork.id })
-          .where(eq(charactersInCharacter.id, bjorn.id));
-        const extension = (await Rulesets.findOne(db, { name: DND35_COMPLETE_WARRIOR_NAME }))!;
-        const uncannyBlow = (await Feats.findOne(db, {
-          name: "Uncanny Blow (Exotic Weapon Master Exotic Weapon Stunt)",
-          rulesetId: extension.id,
-        }))!;
-        const stunt = (await Aptitudes.findOne(db, {
-          name: "Exotic Weapon Master Exotic Weapon Stunt",
-          rulesetId: extension.id,
-        }))!;
-        const [level] = await CharacterLevels.findMany(db, { characterId: bjorn.id });
-        await CharacterLevelFeats.createMany(db, [
-          { characterLevelId: level.id, featId: uncannyBlow.id, aptitudeId: stunt.id },
-        ]);
-        const character = { ...bjorn, rulesetId: fork.id };
-        await carry(character, [{ item: "Bastard Sword", location, weaponSet: 0 }]);
-        return build(character);
-      }
-
       // The stunt needs the weapon in two hands or Power Attack, which Bjorn has.
       test.each(["Main Hand", "Two Handed"] as const)(
         "doubles strength to damage with an exotic weapon held %s",
@@ -1658,32 +1760,6 @@ describe("DetailedCharacter", () => {
   });
 
   describe("modifiers", () => {
-    /** A modifier of the character's race, gated by `requirements` when given: it applies to the seeded character. */
-    async function raceModifier(
-      name: string,
-      modifier: { target: string; value: string; operator?: string },
-      requirements: { target: string; operator: string; value: string; valueType: string }[] = [],
-    ) {
-      const character = await findSeededCharacter(name);
-      const [created] = await Modifiers.create(db, {
-        sourceId: character.raceId,
-        sourceType: "races",
-        operator: "add",
-        valueType: "number",
-        ...modifier,
-      });
-      for (const [index, requirement] of requirements.entries()) {
-        await Requirements.create(db, {
-          entityId: created.id,
-          entityType: "modifiers",
-          level: String(index + 1),
-          ...requirement,
-        });
-      }
-      invalidateSeededRuleset((await getSeedCtx()).rulesetId);
-      return created;
-    }
-
     test("leave a spell level all known after an add, a later round's included", async () => {
       // A cleric's 1st-level spells are all known (her first level's set -1); a gated add applies in a later round
       await raceModifier("Theron Lightbringer", { target: "aptitudes.clericspells.1.allowed", value: "1" }, [
@@ -2379,28 +2455,6 @@ describe("DetailedCharacter", () => {
         ]);
       });
 
-      /** A character of a fork with Complete Divine, with these modifiers of its own (`[target, value, valueType]`). */
-      async function divineCharacter(
-        name: string,
-        abilities: Record<string, number>,
-        granted: [string, string, string][],
-        alignment?: "Neutral Good" | "Chaotic Neutral",
-      ) {
-        const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
-        const characterId = await createSeedCharacter(name, abilities, { rulesetId: fork.id, alignment });
-        for (const [target, value, valueType] of granted) {
-          const operator = valueType === "boolean" ? "set" : "add";
-          await Modifiers.create(db, {
-            sourceId: characterId,
-            sourceType: "characters",
-            target,
-            value,
-            valueType,
-            operator,
-          });
-        }
-        return characterId;
-      }
       // The divine crusader's prerequisites
       const CRUSADER_PREREQUISITES: [string, string, string][] = [
         ["combat.bab", "7", "number"],
@@ -2843,57 +2897,6 @@ describe("DetailedCharacter", () => {
     });
 
     describe("granted by a feat's modifier", () => {
-      /** A new wizard 1 whose Toughness grants Magic Missile, which gets `requirement` of its own when given. */
-      async function setupGrantedSpell({ requirement = false, spellFocus = false } = {}) {
-        const ctx = await getSeedCtx();
-        const characterId = await createSeedCharacter("Granted Spell Test", WIZARD_SCORES, { xp: 1000 });
-        const levelIds = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
-        await addSkills(db, ctx, levelIds, [
-          { levelIndex: 0, skillName: "Spellcraft", rank: 4 },
-          { levelIndex: 0, skillName: "Concentration", rank: 4 },
-        ]);
-        await addFeats(db, ctx, levelIds, [
-          {
-            levelIndex: 0,
-            featName: spellFocus ? "Spell Focus: Evocation" : "Improved Initiative",
-            aptitude: "General",
-          },
-          { levelIndex: 0, featName: "Scribe Scroll", aptitude: "Wizard Bonus Feat" },
-          { levelIndex: 0, featName: "Toughness", aptitude: "General" },
-        ]);
-        await addPowers(
-          db,
-          ctx,
-          levelIds,
-          ["Detect Magic", "Read Magic", "Mage Armor"].map((powerName) => ({
-            levelIndex: 0,
-            powerName,
-            aptitude: "Wizard Spells",
-          })),
-        );
-        await Modifiers.create(db, {
-          sourceId: ctx.featMap["Toughness"],
-          sourceType: "feats",
-          target: "powers.magicmissile.wizard.known",
-          value: "true",
-          valueType: "boolean",
-          operator: "set",
-        });
-        if (requirement) {
-          await Requirements.create(db, {
-            entityId: ctx.powerMap["Magic Missile"],
-            entityType: "powers",
-            level: "1",
-            target: "classes.wizard.level",
-            operator: "greater_than_or_equal",
-            value: "5",
-            valueType: "number",
-          });
-        }
-        invalidateSeededRuleset(ctx.rulesetId);
-        return build((await Characters.findOne(db, { id: characterId }))!);
-      }
-
       test("are known, next to those picked", async () => {
         const spells = (await setupGrantedSpell()).getDetailedCharacterPowers();
         expect(
@@ -3184,9 +3187,6 @@ describe("DetailedCharacter", () => {
       expect(await strength()).toEqual({ misc: 2, total: 14 });
     });
 
-    const dexterityMisc = (detailed: Detailed) =>
-      detailed.getDetailedCharacterAbilities().getAbilities().dexterity.misc;
-
     test("give a character with any level of the class its modifiers, once", async () => {
       const ctx = await getSeedCtx();
       const [lyraBefore, bjornBefore] = [await buildSeeded("Lyra Shadowstep"), await buildSeeded("Bjorn Ironhand")];
@@ -3233,8 +3233,6 @@ describe("DetailedCharacter", () => {
   });
 
   describe("requirements on feats", () => {
-    const met = async (name: string, target: string, check?: Parameters<typeof requiring>[1]) =>
-      (await buildSeeded(name)).areRequirementsMet(requiring(target, check));
     const atLeastOne = { operator: "greater_than_or_equal", value: "1", valueType: "number" } as const;
 
     // Bjorn has Weapon Focus: Longsword and no Spell Focus; Elara, Spell Focus: Evocation and no Weapon Focus.

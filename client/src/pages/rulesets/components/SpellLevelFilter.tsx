@@ -1,7 +1,5 @@
 import { MenuItem, TextField } from "@mui/material";
 
-const SPELL_LEVELS = Array.from({ length: 10 }, (_, level) => level);
-
 interface SpellLevelFilterProps {
   /** The level, or "" for all of them. */
   value: number | "";
@@ -9,6 +7,8 @@ interface SpellLevelFilterProps {
   /** Adds an "All" choice. */
   allowAll?: boolean;
 }
+
+const SPELL_LEVELS = Array.from({ length: 10 }, (_, level) => level);
 
 /** The spell level select in a spell list's search bar. */
 export function SpellLevelFilter({ value, onChange, allowAll }: SpellLevelFilterProps) {

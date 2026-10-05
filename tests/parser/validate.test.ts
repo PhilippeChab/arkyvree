@@ -9,9 +9,6 @@ import { referenceIssues } from "@/database/packages/dnd35-from-parser/tools/val
 import { isRecord } from "@/shared/isRecord.ts";
 
 const folders: string[] = [];
-afterEach(() => {
-  for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true });
-});
 
 /**
  * The issues parser:validate reports of a committed reference whose overrides `edit` changes, as a hand edit of its
@@ -29,6 +26,9 @@ function issuesOf(file: string, edit: (overrides: Record<string, unknown>) => vo
   writeFileSync(join(folder, file), JSON.stringify(reference));
   return referenceIssues(discoverRefs(folder)).map(({ kind, entityName, text }) => ({ kind, entityName, text }));
 }
+afterEach(() => {
+  for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true });
+});
 
 describe("parser:validate", () => {
   test("reports a race size the seed refuses, and a seeded race's unreviewed detections", () => {

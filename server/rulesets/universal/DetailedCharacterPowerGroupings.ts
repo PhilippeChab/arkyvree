@@ -13,15 +13,15 @@ export type PowerDc = {
   readonly total: number;
 };
 
-const NAVIGATABLE_POWER_DC_PATHS = [
-  { path: "dc.misc", description: "Other bonuses to spell DC", type: "number" as const },
-  { path: "dc.total", description: "Final DC for this spell", type: "number" as const, requirementOnly: true },
-];
-
 // A spell's DC is its casting class's: grouping key (normalized) → spell → class (its aptitude's slug) → shared PowerDc
 export type PowerDcsByClass = Record<string, PowerDc>;
 type PowerGroup = Record<string, PowerDcsByClass>;
 type PowerGroupingsData = Record<string, PowerGroup>;
+
+const NAVIGATABLE_POWER_DC_PATHS = [
+  { path: "dc.misc", description: "Other bonuses to spell DC", type: "number" as const },
+  { path: "dc.total", description: "Final DC for this spell", type: "number" as const, requirementOnly: true },
+];
 
 export default class DetailedCharacterPowerGroupings {
   constructor(

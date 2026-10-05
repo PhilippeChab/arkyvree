@@ -2,6 +2,12 @@ import { writeSync } from "node:fs";
 
 import { logs, SeverityNumber } from "@opentelemetry/api-logs";
 
+// requestLogger / slow-query lines embed ANSI color codes for terminal
+// readability. Strip them before sending to OTel so Better Stack's logs table
+// doesn't show literal escape sequences. Built via String.fromCharCode to keep
+// the literal ESC byte out of the regex source (oxlint no-control-regex).
+const ANSI = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g");
+
 // Replace console.* with synchronous writes to stdout/stderr so logs are never
 // lost to Bun's stdout pipe buffering (the default block-buffered mode when
 // stdout is a pipe can drop trailing lines on VM suspend/stop). Also emit each
@@ -9,12 +15,6 @@ import { logs, SeverityNumber } from "@opentelemetry/api-logs";
 // OTEL_EXPORTER_OTLP_ENDPOINT is set (no-op otherwise).
 
 const fmt = (args: unknown[]) => args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
-
-// requestLogger / slow-query lines embed ANSI color codes for terminal
-// readability. Strip them before sending to OTel so Better Stack's logs table
-// doesn't show literal escape sequences. Built via String.fromCharCode to keep
-// the literal ESC byte out of the regex source (oxlint no-control-regex).
-const ANSI = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g");
 
 const out = (fd: 1 | 2, severity: SeverityNumber, args: unknown[]) => {
   const body = fmt(args);

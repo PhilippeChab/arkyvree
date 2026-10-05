@@ -69,7 +69,7 @@
     "arkyvree/writes-in-transactions": "error",
     "arkyvree/test-placement": "error",
     "arkyvree/concern-shape": "error",
-    "arkyvree/types-first": "error",
+    "arkyvree/file-layout": "error",
     // The client's conventions (lint/frontend.mjs) and the tests' (lint/testing.mjs).
     "arkyvree/accessible-icon-buttons": "error",
     "arkyvree/dialog-conventions": "error",

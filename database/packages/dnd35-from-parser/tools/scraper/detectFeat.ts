@@ -64,171 +64,16 @@ const ABILITY_PREREQ_PATTERNS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Build mapping (merged from detected + overrides)
+// Detect requirements + aptitudes for all feats
 // ---------------------------------------------------------------------------
 
-export function buildFeatMapping(
-  raw: FeatReference["raw"],
-  detected: FeatReference["detected"],
-  overrides: NonNullable<FeatReference["overrides"]>,
-  book: string,
-): FeatReference["mapping"] {
-  const bonusFeatAptitudes = loadBonusFeatAptitudes(book);
-  const bonusFeatClassLevels = loadBonusFeatClassLevels(book);
-  const mapping: FeatReference["mapping"] = {};
-  for (const entry of raw) {
-    const det = detected[entry.name];
-    const ovr = overrides[entry.name];
-    if (!det) continue;
-
-    const featNameMap = { ...det.featNameMap, ...ovr?.featNameMap };
-    const baseAptitudes = ovr?.aptitudes ?? det.aptitudes;
-    const extraAptitudes = (bonusFeatAptitudes.get(entry.name) ?? []).filter((a) => !baseAptitudes.includes(a));
-
-    // Wrap detected requirements with class-level alternatives from bonusFeatLists
-    let requirements = ovr?.requirements ?? det.requirements;
-    if (!ovr?.requirements && requirements.length > 0) {
-      const classLevels = bonusFeatClassLevels.get(entry.name);
-      if (classLevels?.length) {
-        const detectedBranch = requirements.length === 1 ? requirements[0] : and(...requirements);
-        const classAlts = classLevels.map((cl) => gte(`classes.${cl.classSlug}.level`, cl.minLevel));
-        requirements = [or(detectedBranch, ...classAlts)];
-      }
-    }
-
-    mapping[entry.name] = {
-      description: ovr?.description ?? entry.benefit,
-      aptitudes: [...baseAptitudes, ...extraAptitudes],
-      requirements,
-      modifiers: ovr?.modifiers ?? det.modifiers ?? [],
-      ...((ovr?.properties ?? det.properties)?.length ? { properties: ovr?.properties ?? det.properties } : {}),
-      ...((ovr?.stackable ?? det.stackable) ? { stackable: true } : {}),
-      ...(ovr?.selectable === false ? { selectable: false } : {}),
-      ...(det.template ? { template: det.template } : {}),
-      ...(Object.keys(featNameMap).length > 0 ? { featNameMap } : {}),
-      ...(ovr?.skip ? { skip: true } : {}),
-    };
-  }
-  return mapping;
-}
-
-// ---------------------------------------------------------------------------
-// Modifier detection from benefit text
-// ---------------------------------------------------------------------------
-
-export function detectModifiers(benefit: string): ModifierDetection {
-  const modifiers: ModifierSeed[] = [];
-  const errors: string[] = [];
-  const unresolvedModifiers: string[] = [];
-
-  if (!benefit) return { modifiers, errors, unresolvedModifiers };
-
-  /** Extract the full sentence containing the given index */
-  function extractSentence(idx: number): string {
-    const sentenceBoundary = /\.(?:\s+[A-Z]|\s*$)/g;
-    let start = 0;
-    let end = benefit.length;
-    let m: RegExpExecArray | null;
-    while ((m = sentenceBoundary.exec(benefit)) !== null) {
-      if (m.index < idx) start = m.index + 1;
-      else {
-        end = m.index;
-        break;
-      }
-    }
-    return benefit.slice(start, end).trim();
-  }
-
-  /** Whether the bonus matched at `index` applies only sometimes (`isConditional`). */
-  const conditional = (index: number, length: number) => isConditional(benefit, index, index + length);
-
-  // Skill bonuses: "+N bonus on [all] X checks [and Y checks]", "+N bonus on your X check"
-  for (const bonus of readSkillBonuses(benefit, (match) => conditional(match.index, match[0].length))) {
-    if (bonus.slug) {
-      modifiers.push({ target: `skills.${bonus.slug}.misc`, operator: "add", value: bonus.value, valueType: "number" });
-    } else {
-      unresolvedModifiers.push(`Unresolved skill: "${extractSentence(bonus.index)}"`);
-    }
-  }
-
-  // Pattern: "+N bonus on initiative checks" or "+N to initiative"
-  const initMatch = benefit.match(/\+(\d+)\s+(?:bonus (?:on|to)\s+)?initiative/i);
-  if (initMatch && !conditional(benefit.indexOf(initMatch[0]), initMatch[0].length)) {
-    modifiers.push({ target: "combat.initiative.misc", operator: "add", value: initMatch[1], valueType: "number" });
-  }
-
-  // Pattern: "+N hit points" or "gain +N hit points"
-  const hpMatch = benefit.match(/\+(\d+)\s+hit points/i);
-  if (hpMatch && !conditional(benefit.indexOf(hpMatch[0]), hpMatch[0].length)) {
-    modifiers.push({ target: "combat.hp.misc", operator: "add", value: hpMatch[1], valueType: "number" });
-  }
-
-  // Pattern: "+N bonus on Fortitude/Reflex/Will saves/saving throws"
-  const saveRegex =
-    /\+(\d+)\s+(?:bonus (?:on|to)\s+)?(?:all\s+)?(fortitude|reflex|will)(?:\s+saving)?\s+(?:saves|throws)/gi;
-  let match: RegExpExecArray | null;
-  while ((match = saveRegex.exec(benefit)) !== null) {
-    if (conditional(match.index, match[0].length)) continue;
-    const slug = SAVE_MAP[match[2].toLowerCase()];
-    if (slug) {
-      modifiers.push({ target: `saves.${slug}.misc`, operator: "add", value: match[1], valueType: "number" });
-    }
-  }
-
-  // Pattern: "+N natural armor bonus" or "+N to natural armor"
-  const natArmorMatch = benefit.match(/\+(\d+)\s+(?:natural armor|to natural armor)/i);
-  if (natArmorMatch) {
-    modifiers.push({ target: "combat.ac.natural", operator: "add", value: natArmorMatch[1], valueType: "number" });
-  }
-
-  // Pattern: "+N bonus on [all] attack rolls ... using the selected weapon"
-  const weaponAttackMatch = benefit.match(
-    /\+(\d+)\s+bonus on (?:all\s+)?attack rolls[^.]*(?:using the selected weapon|using \w+)/i,
-  );
-  if (weaponAttackMatch) {
-    modifiers.push({ target: "weapon.tohit.misc", operator: "add", value: weaponAttackMatch[1], valueType: "number" });
-  }
-
-  // Pattern: "+N bonus on [all] damage rolls ... using the selected weapon"
-  const weaponDamageMatch = benefit.match(
-    /\+(\d+)\s+bonus on (?:all\s+)?damage rolls[^.]*(?:using the selected weapon|using \w+)/i,
-  );
-  if (weaponDamageMatch) {
-    modifiers.push({ target: "weapon.damage.misc", operator: "add", value: weaponDamageMatch[1], valueType: "number" });
-  }
-
-  // Pattern: "threat range is doubled" (Improved Critical)
-  if (/threat range is doubled/i.test(benefit)) {
-    modifiers.push({ target: "weapon.damage.critical.range", operator: "multiply", value: "2", valueType: "number" });
-  }
-
-  // Pattern: "+N feet" speed bonus (e.g. "speed is faster... by +10 feet")
-  const speedMatch =
-    benefit.match(/\+?(\d+)\s*(?:feet|foot|ft\.?)\s*faster\b/i) ?? benefit.match(/\+(\d+)\s*(?:feet|foot|ft\.?)\b/i);
-  if (speedMatch && !conditional(benefit.indexOf(speedMatch[0]), speedMatch[0].length)) {
-    modifiers.push({ target: "combat.speed.misc", operator: "add", value: speedMatch[1], valueType: "number" });
-  }
-
-  // Pattern: "+N bonus on grapple checks"
-  const grappleMatch = benefit.match(/\+(\d+)\s+bonus on (?:all\s+)?grapple checks/i);
-  if (grappleMatch && !conditional(benefit.indexOf(grappleMatch[0]), grappleMatch[0].length)) {
-    modifiers.push({ target: "combat.grapple.misc", operator: "add", value: grappleMatch[1], valueType: "number" });
-  }
-
-  // Validate all paths — invalid paths are errors, not unresolved
-  const { validated, errors: validationErrors } = validateModifiers(modifiers, isValidModifierPath);
-  errors.push(...validationErrors);
-
-  // If benefit describes a numeric effect but we got no valid modifiers, it's unresolved
-  if (validated.length === 0 && /\+\d+\s+(?:bonus|penalty|modifier)/i.test(benefit)) {
-    const bonusMatch = benefit.match(/\+\d+\s+(?:bonus|penalty|modifier)/i);
-    if (bonusMatch) {
-      unresolvedModifiers.push(`Unresolved bonus: "${extractSentence(bonusMatch.index!)}"`);
-    }
-  }
-
-  return { modifiers: validated, errors, unresolvedModifiers };
-}
+// The alignment "Relevant alignment" asks of a feat for an alignment's spells ("Spell Focus (Chaos)")
+const RELEVANT_ALIGNMENTS: Record<string, string> = {
+  chaos: "Any chaotic",
+  evil: "Any evil",
+  good: "Any good",
+  law: "Any lawful",
+};
 
 // ---------------------------------------------------------------------------
 // Extract feat names from prerequisite text
@@ -696,16 +541,171 @@ function isStackable(entry: FeatReference["raw"][number]): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Detect requirements + aptitudes for all feats
+// Build mapping (merged from detected + overrides)
 // ---------------------------------------------------------------------------
 
-// The alignment "Relevant alignment" asks of a feat for an alignment's spells ("Spell Focus (Chaos)")
-const RELEVANT_ALIGNMENTS: Record<string, string> = {
-  chaos: "Any chaotic",
-  evil: "Any evil",
-  good: "Any good",
-  law: "Any lawful",
-};
+export function buildFeatMapping(
+  raw: FeatReference["raw"],
+  detected: FeatReference["detected"],
+  overrides: NonNullable<FeatReference["overrides"]>,
+  book: string,
+): FeatReference["mapping"] {
+  const bonusFeatAptitudes = loadBonusFeatAptitudes(book);
+  const bonusFeatClassLevels = loadBonusFeatClassLevels(book);
+  const mapping: FeatReference["mapping"] = {};
+  for (const entry of raw) {
+    const det = detected[entry.name];
+    const ovr = overrides[entry.name];
+    if (!det) continue;
+
+    const featNameMap = { ...det.featNameMap, ...ovr?.featNameMap };
+    const baseAptitudes = ovr?.aptitudes ?? det.aptitudes;
+    const extraAptitudes = (bonusFeatAptitudes.get(entry.name) ?? []).filter((a) => !baseAptitudes.includes(a));
+
+    // Wrap detected requirements with class-level alternatives from bonusFeatLists
+    let requirements = ovr?.requirements ?? det.requirements;
+    if (!ovr?.requirements && requirements.length > 0) {
+      const classLevels = bonusFeatClassLevels.get(entry.name);
+      if (classLevels?.length) {
+        const detectedBranch = requirements.length === 1 ? requirements[0] : and(...requirements);
+        const classAlts = classLevels.map((cl) => gte(`classes.${cl.classSlug}.level`, cl.minLevel));
+        requirements = [or(detectedBranch, ...classAlts)];
+      }
+    }
+
+    mapping[entry.name] = {
+      description: ovr?.description ?? entry.benefit,
+      aptitudes: [...baseAptitudes, ...extraAptitudes],
+      requirements,
+      modifiers: ovr?.modifiers ?? det.modifiers ?? [],
+      ...((ovr?.properties ?? det.properties)?.length ? { properties: ovr?.properties ?? det.properties } : {}),
+      ...((ovr?.stackable ?? det.stackable) ? { stackable: true } : {}),
+      ...(ovr?.selectable === false ? { selectable: false } : {}),
+      ...(det.template ? { template: det.template } : {}),
+      ...(Object.keys(featNameMap).length > 0 ? { featNameMap } : {}),
+      ...(ovr?.skip ? { skip: true } : {}),
+    };
+  }
+  return mapping;
+}
+
+// ---------------------------------------------------------------------------
+// Modifier detection from benefit text
+// ---------------------------------------------------------------------------
+
+export function detectModifiers(benefit: string): ModifierDetection {
+  const modifiers: ModifierSeed[] = [];
+  const errors: string[] = [];
+  const unresolvedModifiers: string[] = [];
+
+  if (!benefit) return { modifiers, errors, unresolvedModifiers };
+
+  /** Extract the full sentence containing the given index */
+  function extractSentence(idx: number): string {
+    const sentenceBoundary = /\.(?:\s+[A-Z]|\s*$)/g;
+    let start = 0;
+    let end = benefit.length;
+    let m: RegExpExecArray | null;
+    while ((m = sentenceBoundary.exec(benefit)) !== null) {
+      if (m.index < idx) start = m.index + 1;
+      else {
+        end = m.index;
+        break;
+      }
+    }
+    return benefit.slice(start, end).trim();
+  }
+
+  /** Whether the bonus matched at `index` applies only sometimes (`isConditional`). */
+  const conditional = (index: number, length: number) => isConditional(benefit, index, index + length);
+
+  // Skill bonuses: "+N bonus on [all] X checks [and Y checks]", "+N bonus on your X check"
+  for (const bonus of readSkillBonuses(benefit, (match) => conditional(match.index, match[0].length))) {
+    if (bonus.slug) {
+      modifiers.push({ target: `skills.${bonus.slug}.misc`, operator: "add", value: bonus.value, valueType: "number" });
+    } else {
+      unresolvedModifiers.push(`Unresolved skill: "${extractSentence(bonus.index)}"`);
+    }
+  }
+
+  // Pattern: "+N bonus on initiative checks" or "+N to initiative"
+  const initMatch = benefit.match(/\+(\d+)\s+(?:bonus (?:on|to)\s+)?initiative/i);
+  if (initMatch && !conditional(benefit.indexOf(initMatch[0]), initMatch[0].length)) {
+    modifiers.push({ target: "combat.initiative.misc", operator: "add", value: initMatch[1], valueType: "number" });
+  }
+
+  // Pattern: "+N hit points" or "gain +N hit points"
+  const hpMatch = benefit.match(/\+(\d+)\s+hit points/i);
+  if (hpMatch && !conditional(benefit.indexOf(hpMatch[0]), hpMatch[0].length)) {
+    modifiers.push({ target: "combat.hp.misc", operator: "add", value: hpMatch[1], valueType: "number" });
+  }
+
+  // Pattern: "+N bonus on Fortitude/Reflex/Will saves/saving throws"
+  const saveRegex =
+    /\+(\d+)\s+(?:bonus (?:on|to)\s+)?(?:all\s+)?(fortitude|reflex|will)(?:\s+saving)?\s+(?:saves|throws)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = saveRegex.exec(benefit)) !== null) {
+    if (conditional(match.index, match[0].length)) continue;
+    const slug = SAVE_MAP[match[2].toLowerCase()];
+    if (slug) {
+      modifiers.push({ target: `saves.${slug}.misc`, operator: "add", value: match[1], valueType: "number" });
+    }
+  }
+
+  // Pattern: "+N natural armor bonus" or "+N to natural armor"
+  const natArmorMatch = benefit.match(/\+(\d+)\s+(?:natural armor|to natural armor)/i);
+  if (natArmorMatch) {
+    modifiers.push({ target: "combat.ac.natural", operator: "add", value: natArmorMatch[1], valueType: "number" });
+  }
+
+  // Pattern: "+N bonus on [all] attack rolls ... using the selected weapon"
+  const weaponAttackMatch = benefit.match(
+    /\+(\d+)\s+bonus on (?:all\s+)?attack rolls[^.]*(?:using the selected weapon|using \w+)/i,
+  );
+  if (weaponAttackMatch) {
+    modifiers.push({ target: "weapon.tohit.misc", operator: "add", value: weaponAttackMatch[1], valueType: "number" });
+  }
+
+  // Pattern: "+N bonus on [all] damage rolls ... using the selected weapon"
+  const weaponDamageMatch = benefit.match(
+    /\+(\d+)\s+bonus on (?:all\s+)?damage rolls[^.]*(?:using the selected weapon|using \w+)/i,
+  );
+  if (weaponDamageMatch) {
+    modifiers.push({ target: "weapon.damage.misc", operator: "add", value: weaponDamageMatch[1], valueType: "number" });
+  }
+
+  // Pattern: "threat range is doubled" (Improved Critical)
+  if (/threat range is doubled/i.test(benefit)) {
+    modifiers.push({ target: "weapon.damage.critical.range", operator: "multiply", value: "2", valueType: "number" });
+  }
+
+  // Pattern: "+N feet" speed bonus (e.g. "speed is faster... by +10 feet")
+  const speedMatch =
+    benefit.match(/\+?(\d+)\s*(?:feet|foot|ft\.?)\s*faster\b/i) ?? benefit.match(/\+(\d+)\s*(?:feet|foot|ft\.?)\b/i);
+  if (speedMatch && !conditional(benefit.indexOf(speedMatch[0]), speedMatch[0].length)) {
+    modifiers.push({ target: "combat.speed.misc", operator: "add", value: speedMatch[1], valueType: "number" });
+  }
+
+  // Pattern: "+N bonus on grapple checks"
+  const grappleMatch = benefit.match(/\+(\d+)\s+bonus on (?:all\s+)?grapple checks/i);
+  if (grappleMatch && !conditional(benefit.indexOf(grappleMatch[0]), grappleMatch[0].length)) {
+    modifiers.push({ target: "combat.grapple.misc", operator: "add", value: grappleMatch[1], valueType: "number" });
+  }
+
+  // Validate all paths — invalid paths are errors, not unresolved
+  const { validated, errors: validationErrors } = validateModifiers(modifiers, isValidModifierPath);
+  errors.push(...validationErrors);
+
+  // If benefit describes a numeric effect but we got no valid modifiers, it's unresolved
+  if (validated.length === 0 && /\+\d+\s+(?:bonus|penalty|modifier)/i.test(benefit)) {
+    const bonusMatch = benefit.match(/\+\d+\s+(?:bonus|penalty|modifier)/i);
+    if (bonusMatch) {
+      unresolvedModifiers.push(`Unresolved bonus: "${extractSentence(bonusMatch.index!)}"`);
+    }
+  }
+
+  return { modifiers: validated, errors, unresolvedModifiers };
+}
 
 export function buildFeatDetected(raw: FeatReference["raw"]): FeatReference["detected"] {
   const detected: FeatReference["detected"] = {};

@@ -34,14 +34,14 @@ interface DistributedLevel {
   powers: Record<string, string[]>;
 }
 
-/** The slots an all-known spell level counts as: every spell of its level. */
-const ALL_KNOWN_SLOTS = 999;
-
 /** A planned level's slot deltas: per feat pool, and per power pool and spell level. */
 interface SlotDeltas {
   feats: Record<string, number>;
   powers: Record<string, Record<string, number>>;
 }
+
+/** The slots an all-known spell level counts as: every spell of its level. */
+const ALL_KNOWN_SLOTS = 999;
 
 const FEAT_POOL_TARGET = /^aptitudes\.(\w+)\.allowed$/;
 const SPELL_POOL_TARGET = /^aptitudes\.(\w+)\.(\d+)\.allowed$/;
@@ -128,143 +128,6 @@ function allKnownLevels(aptitudes: Record<string, { id: string } & Record<string
     }
   }
   return known;
-}
-
-/**
- * Computes per-level feat and power slot deltas from modifier data directly,
- * without incremental DetailedCharacter builds. Used by both getLevelUpPreview
- * and finalizeLevelUp.
- *
- * For each planned level, the delta comes from:
- * 1. Klass level modifiers targeting `aptitudes.<slug>.allowed`
- * 2. Auto-granted feat modifiers targeting aptitudes
- * 3. Auto-granted feat/power counts per aptitude
- * 4. General feat formula: `floor(charLevel/3) + 1`
- *
- * Baseline unspent slots (e.g., Human racial bonus) are captured by the
- * full character build and added to the first level's delta.
- */
-export function computePerLevelAptitudeSlots(
-  rulesetData: CachedRulesetData,
-  klassLevelIds: string[],
-  allAutoGrantedFeatRecords: { aptitudeId: string; featsInRule: { id: string } }[][],
-  featPoolIds: string[],
-  powerPoolIds: string[],
-  baseCharacterLevel: number,
-  // The character's aptitudes as its sheet has them: a pool's counts, and a power pool's spell levels by number
-  baselineAptitudes: Record<string, { id: string; allowed: number; spent: number } & Record<string, unknown>>,
-): {
-  perLevelFeatSlots: FeatSlots;
-  perLevelPowerSlots: PowerSlots;
-} {
-  const perLevelFeatSlots: FeatSlots = {};
-  const perLevelPowerSlots: PowerSlots = {};
-  for (const aptId of featPoolIds) perLevelFeatSlots[aptId] = [];
-  for (const aptId of powerPoolIds) perLevelPowerSlots[aptId] = [];
-  // A spell level all known (the character's already, or a planned level's set -1) takes no slot from a later add:
-  // the sheet's count, and the class tables'
-  const allKnown = allKnownLevels(baselineAptitudes);
-
-  for (let i = 0; i < klassLevelIds.length; i++) {
-    const deltas = levelDeltas(
-      rulesetData,
-      klassLevelIds[i],
-      allAutoGrantedFeatRecords[i] ?? [],
-      baseCharacterLevel + i + 1,
-      perLevelFeatSlots,
-      perLevelPowerSlots,
-    );
-    for (const aptId of featPoolIds) {
-      perLevelFeatSlots[aptId].push(Math.max(0, deltas.feats[aptId] ?? 0));
-    }
-    for (const aptId of powerPoolIds) {
-      const slots: Record<string, number> = {};
-      for (const [sl, delta] of Object.entries(deltas.powers[aptId] ?? {})) {
-        const key = `${aptId}:${sl}`;
-        if (allKnown.has(key)) continue;
-        if (delta >= ALL_KNOWN_SLOTS) allKnown.add(key);
-        if (delta > 0) slots[sl] = Math.min(delta, ALL_KNOWN_SLOTS);
-      }
-      perLevelPowerSlots[aptId].push(slots);
-    }
-  }
-
-  // Add baseline unspent slots to the first level (e.g., Human racial bonus feat)
-  for (const [, apt] of Object.entries(baselineAptitudes)) {
-    const baselineAvailable = apt.allowed - apt.spent;
-    if (baselineAvailable > 0 && perLevelFeatSlots[apt.id]?.[0] !== undefined) {
-      perLevelFeatSlots[apt.id][0] += baselineAvailable;
-    }
-  }
-
-  return { perLevelFeatSlots, perLevelPowerSlots };
-}
-
-/**
- * The spell level of each of these powers in each pool it's linked to, by `powerId:aptitudeId`: a spell can be at
- * different levels in different pools (Wizard 1, Bard 0).
- */
-export function buildPowerLevelLookup(rulesetData: CachedRulesetData, powerIds: string[]) {
-  const lookup = new Map<string, number | null>();
-  for (const powerId of powerIds) {
-    const power = rulesetData.powersById.get(powerId);
-    if (!power) continue;
-    for (const pa of power.powersAptitudesInRules) {
-      lookup.set(`${pa.powerId}:${pa.aptitudeId}`, pa.level);
-    }
-  }
-  return lookup;
-}
-
-/**
- * The feat each pool with no slots of its own comes from: a pool a feat's modifier creates (`aptitudes.<slug>….allowed`)
- * goes with the first-pass feat that targets it.
- */
-export function getDeferredAptitudeSources(
-  rulesetData: CachedRulesetData,
-  feats: Record<string, string[]>,
-  perLevelFeatSlots: FeatSlots,
-) {
-  const hasSlots = (aptId: string) => (perLevelFeatSlots[aptId] ?? []).some((s) => s > 0);
-  const deferredAptitudeIds = Object.keys(feats).filter((aptId) => !hasSlots(aptId));
-  const sources = new Map<string, string>();
-  if (deferredAptitudeIds.length === 0) return sources;
-
-  const deferredAptIdSet = new Set(deferredAptitudeIds);
-  const firstPassFeatIds = Object.entries(feats)
-    .filter(([aptId]) => hasSlots(aptId))
-    .flatMap(([, ids]) => ids);
-  for (const featId of firstPassFeatIds) {
-    const mods = rulesetData.modifiersBySource.get(featId);
-    if (!mods) continue;
-    for (const mod of mods) {
-      const match = mod.target.match(/^aptitudes\.(\w+)\..*allowed/);
-      if (!match) continue;
-      const aptId = rulesetData.aptitudeIdBySlug.get(match[1]);
-      if (aptId && deferredAptIdSet.has(aptId)) {
-        sources.set(aptId, mod.sourceId);
-      }
-    }
-  }
-  return sources;
-}
-
-/** Each skill's current rank, and whether it's a class skill: innate to the character, or a planned class's. */
-export function buildSkillContexts(
-  levelUpProjector: Dnd35LevelUpProjector,
-  skills: Skill[],
-  classSkillIds: Set<string>,
-) {
-  const characterSkills = levelUpProjector.getCharacterSkills();
-  const contexts = new Map<string, { isClassSkill: boolean; currentRank: number }>();
-  for (const skill of skills) {
-    const skillData = characterSkills[stripSeparators(skill.name)] as { innate?: boolean; rank?: number } | undefined;
-    contexts.set(skill.id, {
-      isClassSkill: skillData?.innate ?? classSkillIds.has(skill.id),
-      currentRank: skillData?.rank || 0,
-    });
-  }
-  return contexts;
 }
 
 /** Hands `ids` out in order to the levels' slots, as many to a level as `slotsAt` gives it. */
@@ -429,6 +292,143 @@ function distributePowers(
       }
     }
   }
+}
+
+/**
+ * Computes per-level feat and power slot deltas from modifier data directly,
+ * without incremental DetailedCharacter builds. Used by both getLevelUpPreview
+ * and finalizeLevelUp.
+ *
+ * For each planned level, the delta comes from:
+ * 1. Klass level modifiers targeting `aptitudes.<slug>.allowed`
+ * 2. Auto-granted feat modifiers targeting aptitudes
+ * 3. Auto-granted feat/power counts per aptitude
+ * 4. General feat formula: `floor(charLevel/3) + 1`
+ *
+ * Baseline unspent slots (e.g., Human racial bonus) are captured by the
+ * full character build and added to the first level's delta.
+ */
+export function computePerLevelAptitudeSlots(
+  rulesetData: CachedRulesetData,
+  klassLevelIds: string[],
+  allAutoGrantedFeatRecords: { aptitudeId: string; featsInRule: { id: string } }[][],
+  featPoolIds: string[],
+  powerPoolIds: string[],
+  baseCharacterLevel: number,
+  // The character's aptitudes as its sheet has them: a pool's counts, and a power pool's spell levels by number
+  baselineAptitudes: Record<string, { id: string; allowed: number; spent: number } & Record<string, unknown>>,
+): {
+  perLevelFeatSlots: FeatSlots;
+  perLevelPowerSlots: PowerSlots;
+} {
+  const perLevelFeatSlots: FeatSlots = {};
+  const perLevelPowerSlots: PowerSlots = {};
+  for (const aptId of featPoolIds) perLevelFeatSlots[aptId] = [];
+  for (const aptId of powerPoolIds) perLevelPowerSlots[aptId] = [];
+  // A spell level all known (the character's already, or a planned level's set -1) takes no slot from a later add:
+  // the sheet's count, and the class tables'
+  const allKnown = allKnownLevels(baselineAptitudes);
+
+  for (let i = 0; i < klassLevelIds.length; i++) {
+    const deltas = levelDeltas(
+      rulesetData,
+      klassLevelIds[i],
+      allAutoGrantedFeatRecords[i] ?? [],
+      baseCharacterLevel + i + 1,
+      perLevelFeatSlots,
+      perLevelPowerSlots,
+    );
+    for (const aptId of featPoolIds) {
+      perLevelFeatSlots[aptId].push(Math.max(0, deltas.feats[aptId] ?? 0));
+    }
+    for (const aptId of powerPoolIds) {
+      const slots: Record<string, number> = {};
+      for (const [sl, delta] of Object.entries(deltas.powers[aptId] ?? {})) {
+        const key = `${aptId}:${sl}`;
+        if (allKnown.has(key)) continue;
+        if (delta >= ALL_KNOWN_SLOTS) allKnown.add(key);
+        if (delta > 0) slots[sl] = Math.min(delta, ALL_KNOWN_SLOTS);
+      }
+      perLevelPowerSlots[aptId].push(slots);
+    }
+  }
+
+  // Add baseline unspent slots to the first level (e.g., Human racial bonus feat)
+  for (const [, apt] of Object.entries(baselineAptitudes)) {
+    const baselineAvailable = apt.allowed - apt.spent;
+    if (baselineAvailable > 0 && perLevelFeatSlots[apt.id]?.[0] !== undefined) {
+      perLevelFeatSlots[apt.id][0] += baselineAvailable;
+    }
+  }
+
+  return { perLevelFeatSlots, perLevelPowerSlots };
+}
+
+/**
+ * The spell level of each of these powers in each pool it's linked to, by `powerId:aptitudeId`: a spell can be at
+ * different levels in different pools (Wizard 1, Bard 0).
+ */
+export function buildPowerLevelLookup(rulesetData: CachedRulesetData, powerIds: string[]) {
+  const lookup = new Map<string, number | null>();
+  for (const powerId of powerIds) {
+    const power = rulesetData.powersById.get(powerId);
+    if (!power) continue;
+    for (const pa of power.powersAptitudesInRules) {
+      lookup.set(`${pa.powerId}:${pa.aptitudeId}`, pa.level);
+    }
+  }
+  return lookup;
+}
+
+/**
+ * The feat each pool with no slots of its own comes from: a pool a feat's modifier creates (`aptitudes.<slug>….allowed`)
+ * goes with the first-pass feat that targets it.
+ */
+export function getDeferredAptitudeSources(
+  rulesetData: CachedRulesetData,
+  feats: Record<string, string[]>,
+  perLevelFeatSlots: FeatSlots,
+) {
+  const hasSlots = (aptId: string) => (perLevelFeatSlots[aptId] ?? []).some((s) => s > 0);
+  const deferredAptitudeIds = Object.keys(feats).filter((aptId) => !hasSlots(aptId));
+  const sources = new Map<string, string>();
+  if (deferredAptitudeIds.length === 0) return sources;
+
+  const deferredAptIdSet = new Set(deferredAptitudeIds);
+  const firstPassFeatIds = Object.entries(feats)
+    .filter(([aptId]) => hasSlots(aptId))
+    .flatMap(([, ids]) => ids);
+  for (const featId of firstPassFeatIds) {
+    const mods = rulesetData.modifiersBySource.get(featId);
+    if (!mods) continue;
+    for (const mod of mods) {
+      const match = mod.target.match(/^aptitudes\.(\w+)\..*allowed/);
+      if (!match) continue;
+      const aptId = rulesetData.aptitudeIdBySlug.get(match[1]);
+      if (aptId && deferredAptIdSet.has(aptId)) {
+        sources.set(aptId, mod.sourceId);
+      }
+    }
+  }
+  return sources;
+}
+
+/** Each skill's current rank, and whether it's a class skill: innate to the character, or a planned class's. */
+export function buildSkillContexts(
+  levelUpProjector: Dnd35LevelUpProjector,
+  skills: Skill[],
+  classSkillIds: Set<string>,
+) {
+  const characterSkills = levelUpProjector.getCharacterSkills();
+  const contexts = new Map<string, { isClassSkill: boolean; currentRank: number }>();
+  for (const skill of skills) {
+    const skillData = characterSkills[stripSeparators(skill.name)] as { innate?: boolean; rank?: number } | undefined;
+    contexts.set(skill.id, {
+      isClassSkill: skillData?.innate ?? classSkillIds.has(skill.id),
+      currentRank: skillData?.rank || 0,
+    });
+  }
+  return contexts;
 }
 
 /**

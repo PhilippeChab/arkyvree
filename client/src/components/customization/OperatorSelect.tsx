@@ -2,8 +2,6 @@ import { MenuItem, TextField } from "@mui/material";
 
 import { MODIFIER_OPERATOR_LABELS, REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 
-const OPERATOR_LABELS = { modifier: MODIFIER_OPERATOR_LABELS, requirement: REQUIREMENT_OPERATOR_LABELS };
-
 interface OperatorSelectProps {
   kind: "modifier" | "requirement";
   value: string;
@@ -12,6 +10,8 @@ interface OperatorSelectProps {
   operators: string[];
   error?: boolean;
 }
+
+const OPERATOR_LABELS = { modifier: MODIFIER_OPERATOR_LABELS, requirement: REQUIREMENT_OPERATOR_LABELS };
 
 /** A modifier's or requirement's operator, among those its target path allows. */
 export function OperatorSelect({ kind, value, onChange, operators, error = false }: OperatorSelectProps) {

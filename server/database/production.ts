@@ -13,6 +13,14 @@ import { clearRequestCache } from "@/server/database/requestCache.ts";
 import { readEnv } from "@/server/environment.ts";
 import { instrumentQueries } from "@/server/timing.ts";
 
+export type Db = typeof db | Transaction;
+
+export type Transaction = PgTransaction<
+  PgQueryResultHKT,
+  typeof schemaWithRelations,
+  ExtractTablesWithRelations<typeof schemaWithRelations>
+>;
+
 instrumentQueries();
 
 const connectionString = readEnv("DATABASE_URL");
@@ -45,14 +53,6 @@ pool.on("error", (err) => {
 });
 
 export const db = drizzle(pool as NodePgClient, { schema: schemaWithRelations });
-
-export type Db = typeof db | Transaction;
-
-export type Transaction = PgTransaction<
-  PgQueryResultHKT,
-  typeof schemaWithRelations,
-  ExtractTablesWithRelations<typeof schemaWithRelations>
->;
 
 export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
   const result = await db.transaction(callback);

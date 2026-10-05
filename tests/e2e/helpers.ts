@@ -7,6 +7,36 @@ import { apiOf } from "@/tests/e2e/api.ts";
 import { recordContext } from "@/tests/e2e/coverage.ts";
 import { queryDatabase } from "@/tests/e2e/fixtures.ts";
 
+/** The core rules' id. */
+async function coreRulesetId(page: Page) {
+  const { items } = await parseResponse(
+    apiOf(page).api.rulesets.$get({ query: { scope: "base", search: "Core SRD 3.5" } }),
+  );
+  const core = items.find((ruleset) => ruleset.name === "Core SRD 3.5");
+  if (!core) throw new Error("Core SRD 3.5 isn't seeded");
+  return core.id;
+}
+
+/**
+ * The latest active code a user was sent, read from the test database: the e2e suite has no mailer.
+ * `table` is where the flow keeps its codes.
+ */
+async function latestCode(table: "email_verifications" | "password_resets", email: string): Promise<string> {
+  const [row] = await queryDatabase<{ code: string }>(
+    `SELECT c.code
+       FROM account.${table} c
+       JOIN account.users u ON u.id = c.user_id
+      WHERE u.email_address = $1
+        AND c.deleted_at IS NULL
+        AND c.expires_at > NOW()
+      ORDER BY c.created_at DESC
+      LIMIT 1`,
+    [email],
+  );
+  if (!row) throw new Error(`No active code in ${table} for ${email}`);
+  return row.code;
+}
+
 export async function selectOption(page: Page, label: string, optionText?: string) {
   // Scope to the open MUI dialog (aria-modal="true") when one is showing
   const modalDialog = page.locator('[role="dialog"][aria-modal="true"]');
@@ -53,16 +83,6 @@ export async function signedInPage(browser: Browser, user: { email: string; pass
   const page = await (await openContext(browser)).newPage();
   await signIn(page, user.email, user.password);
   return page;
-}
-
-/** The core rules' id. */
-async function coreRulesetId(page: Page) {
-  const { items } = await parseResponse(
-    apiOf(page).api.rulesets.$get({ query: { scope: "base", search: "Core SRD 3.5" } }),
-  );
-  const core = items.find((ruleset) => ruleset.name === "Core SRD 3.5");
-  if (!core) throw new Error("Core SRD 3.5 isn't seeded");
-  return core.id;
 }
 
 /** Waits for a successful `method` request to a URL matching `url`. Start it before the action that sends it. */
@@ -300,26 +320,6 @@ export async function fillOtp(scope: Page | Locator, code: string): Promise<void
       input.dispatchEvent(new Event("input", { bubbles: true }));
     }, code[i]);
   }
-}
-
-/**
- * The latest active code a user was sent, read from the test database: the e2e suite has no mailer.
- * `table` is where the flow keeps its codes.
- */
-async function latestCode(table: "email_verifications" | "password_resets", email: string): Promise<string> {
-  const [row] = await queryDatabase<{ code: string }>(
-    `SELECT c.code
-       FROM account.${table} c
-       JOIN account.users u ON u.id = c.user_id
-      WHERE u.email_address = $1
-        AND c.deleted_at IS NULL
-        AND c.expires_at > NOW()
-      ORDER BY c.created_at DESC
-      LIMIT 1`,
-    [email],
-  );
-  if (!row) throw new Error(`No active code in ${table} for ${email}`);
-  return row.code;
 }
 
 /** The code that verifies a user's email address. */

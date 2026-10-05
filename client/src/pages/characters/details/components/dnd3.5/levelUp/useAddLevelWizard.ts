@@ -15,6 +15,15 @@ import { computeLevelSkillPoints, computeMaxPointsForSkill } from "@/shared/dnd3
 import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
 import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
+type FinalizeJson = InferRequestType<(typeof rpc.api.characters.levels)[":characterId"]["finalize"]["$post"]>["json"];
+
+interface UseAddLevelWizardParams {
+  open: boolean;
+  onClose: () => void;
+  characterId: string;
+  baseRules: BaseRules;
+}
+
 export const addStepContent = ["class-plan", "hp", "attributes", "skills", "feats", "powers", "review"] as const;
 
 export const addStepLabels = [
@@ -26,15 +35,6 @@ export const addStepLabels = [
   "Select Spells",
   "Review Changes",
 ];
-
-type FinalizeJson = InferRequestType<(typeof rpc.api.characters.levels)[":characterId"]["finalize"]["$post"]>["json"];
-
-interface UseAddLevelWizardParams {
-  open: boolean;
-  onClose: () => void;
-  characterId: string;
-  baseRules: BaseRules;
-}
 
 export function useAddLevelWizard({ open, onClose, characterId, baseRules }: UseAddLevelWizardParams) {
   const snackbar = useSnackbar();

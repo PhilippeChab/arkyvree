@@ -6,10 +6,12 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { characterIdParam, limitDefaultingTo, page } from "@/server/routers/api/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
-const isUuid = (v: string) => z.string().uuid().safeParse(v).success;
-
 /** A number in the query string. */
 const queryNumber = z.string().pipe(z.coerce.number());
+
+const levelParams = z.object({ characterId: z.string().uuid(), characterLevelId: z.string().uuid() });
+
+const isUuid = (v: string) => z.string().uuid().safeParse(v).success;
 
 /** Comma-separated ids: what isn't one is dropped. */
 const idList = z
@@ -58,8 +60,6 @@ const levelQuery = {
   characterLevelId: z.string().uuid().optional(),
   pendingLevelClassLevelIds: idList,
 };
-
-const levelParams = z.object({ characterId: z.string().uuid(), characterLevelId: z.string().uuid() });
 
 const levels = new Hono<SessionContext>()
   .get(

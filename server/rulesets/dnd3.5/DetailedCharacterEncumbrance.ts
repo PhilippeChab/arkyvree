@@ -23,6 +23,16 @@ type RawInventoryEntry = CharacterInventory & {
   };
 };
 
+export type EncumbranceData = {
+  carriedweight: number;
+  readonly lightload: number;
+  readonly mediumload: number;
+  readonly heavyload: number;
+  readonly load: LoadCategory;
+  readonly maxdex: number;
+  readonly checkpenalty: number;
+};
+
 const NAVIGATABLE_PATHS = [
   { path: "carriedweight", description: "Total weight of items (lbs)", type: "number" as const },
   // Computed from the strength when read: for requirements only. The carried weight is an input, which modifiers change
@@ -41,16 +51,6 @@ const SEGMENT_LABELS: Record<string, string> = {
   carriedweight: "Carried Weight",
   heavyload: "Heavy Load",
   load: "Load",
-};
-
-export type EncumbranceData = {
-  carriedweight: number;
-  readonly lightload: number;
-  readonly mediumload: number;
-  readonly heavyload: number;
-  readonly load: LoadCategory;
-  readonly maxdex: number;
-  readonly checkpenalty: number;
 };
 
 export default class DetailedCharacterEncumbrance {

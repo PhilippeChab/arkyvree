@@ -1,3 +1,5 @@
+export type LoadCategory = (typeof LOAD_CATEGORIES)[number];
+
 export const CONSTANTS = {
   DEFAULT_ABILITY_SCORE: 10,
   DEFAULT_AC_BASE: 10,
@@ -154,7 +156,6 @@ export const ENCUMBERED_SPEED: Record<number, number> = {
 };
 
 export const LOAD_CATEGORIES = ["light", "medium", "heavy", "overloaded"] as const;
-export type LoadCategory = (typeof LOAD_CATEGORIES)[number];
 
 /** The weapon every character strikes with when its hand holds none: no item, always on the sheet. */
 export const UNARMED_STRIKE = "Unarmed Strike";

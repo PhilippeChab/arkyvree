@@ -24,8 +24,6 @@ import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestRuleset, createTestUser, insertRows } from "@/tests/helpers.ts";
 
-const requirement = { valueType: "number", operator: "greater_than_or_equal" } as const;
-
 type Row = { id: string };
 
 type Written = Row & { resolvedEntityId: string };
@@ -37,6 +35,58 @@ type Kind = {
   update: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
   remove: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
 };
+
+const requirement = { valueType: "number", operator: "greater_than_or_equal" } as const;
+
+const dexterityBonus = { target: "abilities.dexterity.misc", value: "5", operator: "add" };
+const dexterityAtLeast = {
+  level: "2",
+  target: "abilities.dexterity.misc",
+  value: "10",
+  operator: "greater_than_or_equal",
+};
+
+const KINDS: Record<string, Kind> = {
+  modifiers: {
+    rowsOf: (sourceType, sourceId) => Modifiers.findMany(db, { sourceIds: [sourceId], sourceType }),
+    list: ModifiersService.getModifiers.bind(ModifiersService),
+    create: (s, rulesetId, type, ownerId) =>
+      ModifiersService.createModifier(s, rulesetId, type, ownerId, dexterityBonus),
+    update: (s, rulesetId, type, ownerId, id) =>
+      ModifiersService.updateModifier(s, rulesetId, type, ownerId, id, dexterityBonus),
+    remove: ModifiersService.deleteModifier.bind(ModifiersService),
+  },
+  properties: {
+    rowsOf: (entityType, entityId) => Properties.findMany(db, { entityIds: [entityId], entityType }),
+    list: PropertiesService.getProperties.bind(PropertiesService),
+    create: (s, rulesetId, type, ownerId) =>
+      PropertiesService.createProperty(s, rulesetId, type, ownerId, { type: "tag", value: "fork" }),
+    update: (s, rulesetId, type, ownerId, id) =>
+      PropertiesService.updateProperty(s, rulesetId, type, ownerId, id, { type: "tag", value: "changed" }),
+    remove: PropertiesService.deleteProperty.bind(PropertiesService),
+  },
+  requirements: {
+    rowsOf: (entityType, entityId) => Requirements.findMany(db, { entityIds: [entityId], entityType }),
+    list: RequirementsService.getRequirements.bind(RequirementsService),
+    create: (s, rulesetId, type, ownerId) =>
+      RequirementsService.createRequirement(s, rulesetId, type, ownerId, dexterityAtLeast),
+    update: (s, rulesetId, type, ownerId, id) =>
+      RequirementsService.updateRequirement(s, rulesetId, type, ownerId, id, { ...dexterityAtLeast, level: "1" }),
+    remove: RequirementsService.deleteRequirement.bind(RequirementsService),
+  },
+};
+
+// A class level is copied with its whole class, and a modifier with the entity it modifies.
+const CASES = [
+  ["feats", "modifiers"],
+  ["feats", "properties"],
+  ["feats", "requirements"],
+  ["klasses", "modifiers"],
+  ["klasses", "properties"],
+  ["klasses", "requirements"],
+  ["klass_levels", "modifiers"],
+  ["modifiers", "requirements"],
+] as const;
 
 /**
  * A published ruleset whose feat has a modifier (with a requirement of its
@@ -117,68 +167,18 @@ async function setup() {
   };
 }
 
-const dexterityBonus = { target: "abilities.dexterity.misc", value: "5", operator: "add" };
-const dexterityAtLeast = {
-  level: "2",
-  target: "abilities.dexterity.misc",
-  value: "10",
-  operator: "greater_than_or_equal",
-};
-
-const KINDS: Record<string, Kind> = {
-  modifiers: {
-    rowsOf: (sourceType, sourceId) => Modifiers.findMany(db, { sourceIds: [sourceId], sourceType }),
-    list: ModifiersService.getModifiers.bind(ModifiersService),
-    create: (s, rulesetId, type, ownerId) =>
-      ModifiersService.createModifier(s, rulesetId, type, ownerId, dexterityBonus),
-    update: (s, rulesetId, type, ownerId, id) =>
-      ModifiersService.updateModifier(s, rulesetId, type, ownerId, id, dexterityBonus),
-    remove: ModifiersService.deleteModifier.bind(ModifiersService),
-  },
-  properties: {
-    rowsOf: (entityType, entityId) => Properties.findMany(db, { entityIds: [entityId], entityType }),
-    list: PropertiesService.getProperties.bind(PropertiesService),
-    create: (s, rulesetId, type, ownerId) =>
-      PropertiesService.createProperty(s, rulesetId, type, ownerId, { type: "tag", value: "fork" }),
-    update: (s, rulesetId, type, ownerId, id) =>
-      PropertiesService.updateProperty(s, rulesetId, type, ownerId, id, { type: "tag", value: "changed" }),
-    remove: PropertiesService.deleteProperty.bind(PropertiesService),
-  },
-  requirements: {
-    rowsOf: (entityType, entityId) => Requirements.findMany(db, { entityIds: [entityId], entityType }),
-    list: RequirementsService.getRequirements.bind(RequirementsService),
-    create: (s, rulesetId, type, ownerId) =>
-      RequirementsService.createRequirement(s, rulesetId, type, ownerId, dexterityAtLeast),
-    update: (s, rulesetId, type, ownerId, id) =>
-      RequirementsService.updateRequirement(s, rulesetId, type, ownerId, id, { ...dexterityAtLeast, level: "1" }),
-    remove: RequirementsService.deleteRequirement.bind(RequirementsService),
-  },
-};
-
-// A class level is copied with its whole class, and a modifier with the entity it modifies.
-const CASES = [
-  ["feats", "modifiers"],
-  ["feats", "properties"],
-  ["feats", "requirements"],
-  ["klasses", "modifiers"],
-  ["klasses", "properties"],
-  ["klasses", "requirements"],
-  ["klass_levels", "modifiers"],
-  ["modifiers", "requirements"],
-] as const;
+/** `setup()`, with the parent's rows of this kind before the fork touches them. */
+async function setupCase(ownerType: (typeof CASES)[number][0], kind: Kind) {
+  const context = await setup();
+  const ownerId = context.owners[ownerType];
+  return { ...context, ownerId, parentRows: await kind.rowsOf(ownerType, ownerId) };
+}
 
 describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
   const kind = KINDS[kindName];
 
-  /** `setup()`, with the parent's rows of this kind before the fork touches them. */
-  async function setupCase() {
-    const context = await setup();
-    const ownerId = context.owners[ownerType];
-    return { ...context, ownerId, parentRows: await kind.rowsOf(ownerType, ownerId) };
-  }
-
   test("get a new one on the fork's copy of the entity", async () => {
-    const { session, fork, feat, klass, ownerId, parentRows } = await setupCase();
+    const { session, fork, feat, klass, ownerId, parentRows } = await setupCase(ownerType, kind);
     const created = await kind.create(session, fork.id, ownerType, ownerId);
 
     expect(created.resolvedEntityId).not.toBe(ownerId);
@@ -192,7 +192,7 @@ describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
   });
 
   test("are edited on the fork's copy", async () => {
-    const { session, fork, ownerId, parentRows } = await setupCase();
+    const { session, fork, ownerId, parentRows } = await setupCase(ownerType, kind);
     const updated = await kind.update(session, fork.id, ownerType, ownerId, parentRows[0].id);
     expect(updated.resolvedEntityId).not.toBe(ownerId);
     expect(updated.id).not.toBe(parentRows[0].id);
@@ -201,7 +201,7 @@ describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
   });
 
   test("are deleted from the fork's copy", async () => {
-    const { session, fork, ownerId, parentRows } = await setupCase();
+    const { session, fork, ownerId, parentRows } = await setupCase(ownerType, kind);
     const removed = await kind.remove(session, fork.id, ownerType, ownerId, parentRows[0].id);
     expect(removed.resolvedEntityId).not.toBe(ownerId);
     expect(await kind.rowsOf(ownerType, removed.resolvedEntityId)).toEqual([]);

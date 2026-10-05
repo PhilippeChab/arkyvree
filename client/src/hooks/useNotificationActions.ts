@@ -16,6 +16,13 @@ type NotificationLike = Pick<NotificationItem, "id" | "type" | "targetTable" | "
 
 type NotificationData = Record<string, string | undefined>;
 
+type InviteType = keyof typeof INVITES;
+
+interface InviteAnswer {
+  notification: NotificationLike;
+  type: InviteType;
+}
+
 // Notification types that are invitations, answered in place with Accept /
 // Reject. `targetId` is the invite; `path` is where accepting takes the user.
 const INVITES = {
@@ -41,13 +48,6 @@ const INVITES = {
     path: (d: NotificationData) => (d.characterId ? `/characters/${d.characterId}` : "/characters"),
   },
 } as const;
-
-type InviteType = keyof typeof INVITES;
-
-interface InviteAnswer {
-  notification: NotificationLike;
-  type: InviteType;
-}
 
 // Shared by accept and reject, so every notification surface can tell which
 // invites are being answered, whichever surface the click came from.

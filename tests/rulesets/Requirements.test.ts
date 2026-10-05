@@ -4,6 +4,9 @@ import type { TraversePathResult } from "@/server/rulesets/types.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
+const met = { fulfilled: 1, unmet: 0 };
+const unmet = { fulfilled: 0, unmet: 1 };
+
 function requirement(values: Partial<Requirement> = {}): Requirement {
   const now = new Date().toISOString();
   return {
@@ -49,9 +52,6 @@ function evaluate(group: Requirement[], resolve: (target: string) => TraversePat
     invalid: invalidRequirements.map((r) => r.warning),
   };
 }
-
-const met = { fulfilled: 1, unmet: 0 };
-const unmet = { fulfilled: 0, unmet: 1 };
 
 describe("DetailedCharacterRequirements", () => {
   // A wildcard target resolves to several values: any of them meeting the requirement is enough.

@@ -8,10 +8,10 @@ import type { ContributorRole } from "@/shared/enums.ts";
 import type { Ruleset } from "@/shared/relations.ts";
 import { createTestRuleset, createTestUser, makeSession } from "@/tests/helpers.ts";
 
+type Actor = "Owner" | ContributorRole | "Stranger";
+
 const OWNER = "owner-id";
 const OTHER = "other-id";
-
-type Actor = "Owner" | ContributorRole | "Stranger";
 const ACTORS: Actor[] = ["Owner", "Admin", "Editor", "Viewer", "Stranger"];
 
 function rulesetOf(overrides: Partial<Ruleset> = {}): Ruleset {

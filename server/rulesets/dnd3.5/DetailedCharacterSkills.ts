@@ -15,6 +15,21 @@ import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+type DetailedCharacterComprehensiveSkills = {
+  [key: string]: {
+    name: string;
+    description?: string | null;
+    innate: boolean;
+    trained: boolean;
+    rank: number; // Rank from levels
+    readonly ability: number; // Bonus from ability modifier
+    readonly weight: number; // Armor check penalty, from armor, shield and load
+    size: number; // Size modifier (Hide only)
+    misc: number; // Misc from items
+    readonly total: number; // Total from everything
+  };
+};
+
 const NAVIGATABLE_PATHS = [
   { path: "rank", description: "Total ranks invested", type: "number" as const },
   { path: "ability", description: "From key ability modifier", type: "number" as const, requirementOnly: true },
@@ -32,21 +47,6 @@ const BUDGET_PATHS = [
   { path: "spent", description: "Skill points spent", requirementOnly: true },
   { path: "available", description: "Skill points left to spend", requirementOnly: true },
 ];
-
-type DetailedCharacterComprehensiveSkills = {
-  [key: string]: {
-    name: string;
-    description?: string | null;
-    innate: boolean;
-    trained: boolean;
-    rank: number; // Rank from levels
-    readonly ability: number; // Bonus from ability modifier
-    readonly weight: number; // Armor check penalty, from armor, shield and load
-    size: number; // Size modifier (Hide only)
-    misc: number; // Misc from items
-    readonly total: number; // Total from everything
-  };
-};
 
 /**
  * Whether the skill `name` is a subtype of one of `names`: a subtype names itself "<base> (<variant>)", and a

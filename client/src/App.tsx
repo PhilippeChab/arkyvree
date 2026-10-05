@@ -51,6 +51,10 @@ const VerifyEmail = lazy(() => import("@/client/src/pages/auth/VerifyEmail.tsx")
 const ForgotPassword = lazy(() => import("@/client/src/pages/auth/ForgotPassword.tsx"));
 const ResetPassword = lazy(() => import("@/client/src/pages/auth/ResetPassword.tsx"));
 
+// Seeded from current store so a localStorage-hydrated session that later
+// signs out triggers the clear. Assumes synchronous persist hydration.
+let lastUserId: string | null = useAuthStore.getState().user?.id ?? null;
+
 function handleGlobalError(error: unknown) {
   if (error instanceof ApiError && error.status === 401) {
     // Skip when already unauth — re-clearing on every 401 creates a refetch loop.
@@ -83,9 +87,6 @@ const queryClient = new QueryClient({
   }),
 });
 
-// Seeded from current store so a localStorage-hydrated session that later
-// signs out triggers the clear. Assumes synchronous persist hydration.
-let lastUserId: string | null = useAuthStore.getState().user?.id ?? null;
 useAuthStore.subscribe((state) => {
   const userId = state.user?.id ?? null;
   if (userId !== lastUserId) {

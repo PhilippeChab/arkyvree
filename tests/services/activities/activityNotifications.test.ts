@@ -30,6 +30,15 @@ async function inbox(recipient: User) {
 
 const users = (count: number) => Promise.all(Array.from({ length: count }, () => createTestUser()));
 
+/** A Game Master's campaign with an empty slot, and someone to invite into it. */
+async function setup() {
+  const [gm, invitee] = await users(2);
+  const { campaign } = await createTestCampaign(gm.user.id);
+  const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
+  const invite = () => inviteToSlot(gm.session, slot, invitee.user.emailAddress);
+  return { invitee, invite };
+}
+
 describe("activity notifications", () => {
   describe("of campaign invites", () => {
     test("go to the invitee, and the Game Masters get the answer", async () => {
@@ -180,15 +189,6 @@ describe("activity notifications", () => {
 
 // Who the server pushes a new notification to once a request is answered (server/websockets/notifiedUsers.ts)
 describe("the users a request notified", () => {
-  /** A Game Master's campaign with an empty slot, and someone to invite into it. */
-  async function setup() {
-    const [gm, invitee] = await users(2);
-    const { campaign } = await createTestCampaign(gm.user.id);
-    const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
-    const invite = () => inviteToSlot(gm.session, slot, invitee.user.emailAddress);
-    return { invitee, invite };
-  }
-
   test("are collected while it runs, through its transaction", async () => {
     const { invitee, invite } = await setup();
     const notified = await collectNotified(async () => {

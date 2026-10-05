@@ -80,46 +80,6 @@ const FAMILIAR_CLASS_FEATURE_FEATS: FeatSeed[] = [
 
 const FAMILIAR_RACE_NAMES = ["Bat", "Cat", "Hawk", "Lizard", "Owl", "Rat", "Raven", "Viper", "Toad", "Weasel"] as const;
 
-const bonus = (target: string, value: number): Modifier => ({
-  target,
-  operator: "add",
-  value: String(value),
-  valueType: "number",
-});
-
-/**
- * What each familiar gives its master (the SRD's familiar table), on the master's pick of it: the master's sheet, not
- * the familiar's. A situational one (a hawk's in bright light, an owl's in shadows) is only described.
- */
-const MASTER_BENEFITS: Record<(typeof FAMILIAR_RACE_NAMES)[number], { benefit: string; modifiers: Modifier[] }> = {
-  Bat: { benefit: "a +3 bonus on Listen checks", modifiers: [bonus("skills.listen.misc", 3)] },
-  Cat: { benefit: "a +3 bonus on Move Silently checks", modifiers: [bonus("skills.movesilently.misc", 3)] },
-  Hawk: { benefit: "a +3 bonus on Spot checks in bright light, applied at the table", modifiers: [] },
-  Lizard: { benefit: "a +3 bonus on Climb checks", modifiers: [bonus("skills.climb.misc", 3)] },
-  Owl: { benefit: "a +3 bonus on Spot checks in shadows, applied at the table", modifiers: [] },
-  Rat: { benefit: "a +2 bonus on Fortitude saves", modifiers: [bonus("saves.fortitude.misc", 2)] },
-  Raven: { benefit: "a +3 bonus on Appraise checks", modifiers: [bonus("skills.appraise.misc", 3)] },
-  Viper: { benefit: "a +3 bonus on Bluff checks", modifiers: [bonus("skills.bluff.misc", 3)] },
-  Toad: { benefit: "+3 hit points", modifiers: [bonus("combat.hp.misc", 3)] },
-  Weasel: { benefit: "a +2 bonus on Reflex saves", modifiers: [bonus("saves.reflex.misc", 2)] },
-};
-
-const FAMILIAR_RACE_PICK_FEATS: FeatSeed[] = FAMILIAR_RACE_NAMES.map((race) => ({
-  name: `${race} Familiar`,
-  description: `Bond with ${formatWithArticle(race)} as your familiar: while it's within a mile of you, you gain ${MASTER_BENEFITS[race].benefit}. The familiar appears on your sheet with stats derived from your level and the ${race} race profile.`,
-  selectable: true,
-  aptitudes: [FAMILIAR_APTITUDE],
-  modifiers: [
-    {
-      target: "bonded.familiar.race",
-      operator: "set",
-      value: race,
-      valueType: "string",
-    },
-    ...MASTER_BENEFITS[race].modifiers,
-  ],
-}));
-
 const FAMILIAR_RACES: RaceDefinition[] = [
   {
     name: "Bat",
@@ -217,6 +177,46 @@ const FAMILIAR_CLASS: ClassSeed = {
     [13, "Scry on Familiar (Familiar)"],
   ],
 };
+
+const bonus = (target: string, value: number): Modifier => ({
+  target,
+  operator: "add",
+  value: String(value),
+  valueType: "number",
+});
+
+/**
+ * What each familiar gives its master (the SRD's familiar table), on the master's pick of it: the master's sheet, not
+ * the familiar's. A situational one (a hawk's in bright light, an owl's in shadows) is only described.
+ */
+const MASTER_BENEFITS: Record<(typeof FAMILIAR_RACE_NAMES)[number], { benefit: string; modifiers: Modifier[] }> = {
+  Bat: { benefit: "a +3 bonus on Listen checks", modifiers: [bonus("skills.listen.misc", 3)] },
+  Cat: { benefit: "a +3 bonus on Move Silently checks", modifiers: [bonus("skills.movesilently.misc", 3)] },
+  Hawk: { benefit: "a +3 bonus on Spot checks in bright light, applied at the table", modifiers: [] },
+  Lizard: { benefit: "a +3 bonus on Climb checks", modifiers: [bonus("skills.climb.misc", 3)] },
+  Owl: { benefit: "a +3 bonus on Spot checks in shadows, applied at the table", modifiers: [] },
+  Rat: { benefit: "a +2 bonus on Fortitude saves", modifiers: [bonus("saves.fortitude.misc", 2)] },
+  Raven: { benefit: "a +3 bonus on Appraise checks", modifiers: [bonus("skills.appraise.misc", 3)] },
+  Viper: { benefit: "a +3 bonus on Bluff checks", modifiers: [bonus("skills.bluff.misc", 3)] },
+  Toad: { benefit: "+3 hit points", modifiers: [bonus("combat.hp.misc", 3)] },
+  Weasel: { benefit: "a +2 bonus on Reflex saves", modifiers: [bonus("saves.reflex.misc", 2)] },
+};
+
+const FAMILIAR_RACE_PICK_FEATS: FeatSeed[] = FAMILIAR_RACE_NAMES.map((race) => ({
+  name: `${race} Familiar`,
+  description: `Bond with ${formatWithArticle(race)} as your familiar: while it's within a mile of you, you gain ${MASTER_BENEFITS[race].benefit}. The familiar appears on your sheet with stats derived from your level and the ${race} race profile.`,
+  selectable: true,
+  aptitudes: [FAMILIAR_APTITUDE],
+  modifiers: [
+    {
+      target: "bonded.familiar.race",
+      operator: "set",
+      value: race,
+      valueType: "string",
+    },
+    ...MASTER_BENEFITS[race].modifiers,
+  ],
+}));
 
 export const FAMILIARS: BondContent = {
   kind: "familiar",

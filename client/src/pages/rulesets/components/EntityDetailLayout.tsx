@@ -7,9 +7,6 @@ import { PageError } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 
-/** An entity page's column: centered, up to 1200px. */
-const PAGE_SX = { maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } } as const;
-
 interface EntityDetailLayoutProps {
   entityName?: string;
   rulesetName?: string;
@@ -23,6 +20,9 @@ interface EntityDetailLayoutProps {
   isLoading?: boolean;
   children: ReactNode;
 }
+
+/** An entity page's column: centered, up to 1200px. */
+const PAGE_SX = { maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } } as const;
 
 /** An entity page that couldn't load its entity, in the page's column. */
 export function EntityPageError(props: ComponentProps<typeof PageError>) {

@@ -71,6 +71,17 @@ async function createSave(rulesetId: string, name: string) {
 const modifier = (sourceId: string, target: string, value: string) =>
   ({ sourceId, sourceType: "klass_levels", target, value, valueType: "number", operator: "add" }) as const;
 
+/** A fork of `setup()`'s ruleset, whose class has a first level. */
+async function setupFork() {
+  const context = await setup();
+  const inheritedLevel = await createLevel(context.session, context.ruleset.id, context.klass.id, 1);
+  const fork = await createTestRuleset(context.user.id, {
+    rulesetId: context.ruleset.id,
+    ancestorRulesetIds: [context.ruleset.id],
+  });
+  return { ...context, parent: context.ruleset, fork, inheritedLevel };
+}
+
 // Creating, reading, updating and deleting a level, and the requirement on the previous level, are covered in the class levels router test.
 describe("ClassLevelsService", () => {
   describe("feats and saves", () => {
@@ -340,17 +351,6 @@ describe("ClassLevelsService", () => {
   });
 
   describe("in a fork", () => {
-    /** A fork of `setup()`'s ruleset, whose class has a first level. */
-    async function setupFork() {
-      const context = await setup();
-      const inheritedLevel = await createLevel(context.session, context.ruleset.id, context.klass.id, 1);
-      const fork = await createTestRuleset(context.user.id, {
-        rulesetId: context.ruleset.id,
-        ancestorRulesetIds: [context.ruleset.id],
-      });
-      return { ...context, parent: context.ruleset, fork, inheritedLevel };
-    }
-
     test("reads the inherited class's levels", async () => {
       const { fork, klass, inheritedLevel } = await setupFork();
       expect(await ClassLevelsService.getClassLevels(fork.id, klass.id)).toMatchObject([

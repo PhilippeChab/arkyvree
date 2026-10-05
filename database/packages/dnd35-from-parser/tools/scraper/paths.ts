@@ -24,6 +24,15 @@ const stubSkills = SKILL_NAMES.map((name) => ({ name })) as Parameters<
   typeof DetailedCharacterSkills.generateTargetPaths
 >[0];
 
+// Base slugs for skill groups with subtypes (e.g. "knowledge", "craft", "perform", "profession").
+// Paths like "skills.knowledge.rank" are valid — the runtime resolves them as an OR across all subtypes.
+const SKILL_GROUP_SLUGS = new Set([
+  ...SKILL_NAMES.filter((n) => /\(/.test(n)).map((n) => stripSeparators(n.replace(/\s*\([^)]*\)/, ""))),
+  "craft",
+  "perform",
+  "profession",
+]);
+
 function buildValidPaths(kind: "modifier" | "requirement"): Set<string> {
   return new Set(
     [
@@ -39,19 +48,6 @@ function buildValidPaths(kind: "modifier" | "requirement"): Set<string> {
 
 const VALID_MODIFIER_PATHS = buildValidPaths("modifier");
 const VALID_REQUIREMENT_PATHS = buildValidPaths("requirement");
-
-// Base slugs for skill groups with subtypes (e.g. "knowledge", "craft", "perform", "profession").
-// Paths like "skills.knowledge.rank" are valid — the runtime resolves them as an OR across all subtypes.
-const SKILL_GROUP_SLUGS = new Set([
-  ...SKILL_NAMES.filter((n) => /\(/.test(n)).map((n) => stripSeparators(n.replace(/\s*\([^)]*\)/, ""))),
-  "craft",
-  "perform",
-  "profession",
-]);
-
-export function isValidModifierPath(path: string): boolean {
-  return VALID_MODIFIER_PATHS.has(path);
-}
 
 /** Validate requirement path. Dynamic patterns (feats, classes, spellcasting) are always structurally valid. */
 function isValidRequirementPath(path: string): boolean {
@@ -71,6 +67,10 @@ function isValidRequirementPath(path: string): boolean {
     }
   }
   return false;
+}
+
+export function isValidModifierPath(path: string): boolean {
+  return VALID_MODIFIER_PATHS.has(path);
 }
 
 /** Recursively find invalid paths in a requirement tree */
