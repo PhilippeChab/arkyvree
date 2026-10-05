@@ -36,10 +36,10 @@ To re-pull the parent's update onto an entity you've already edited, delete your
 
 **Official extensions** for Core SRD 3.5:
 
-- **Complete Warrior** — fighter-style classes, combat feats, exotic weapons.
+- **Complete Warrior** — fighter-style classes, combat feats, exotic weapons, five cleric domains.
 - **Complete Adventurer** — skill-focused classes and feats.
 - **Complete Arcane** — arcane classes, metamagic, spells.
-- **Complete Divine** — divine classes, domain spells, divine feats.
+- **Complete Divine** — divine classes, twenty cleric domains, divine feats.
 - **Complete Scoundrel** — skill tricks, rogue-style content.
 - **DMG** — additional magic items, prestige classes, optional rules.
 

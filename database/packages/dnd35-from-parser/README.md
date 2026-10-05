@@ -9,7 +9,7 @@ Pipeline for scraping D&D 3.5 SRD HTML pages from dndtools.net into structured J
 bun run parser:scrape -- class --book srd
 bun run parser:scrape -- feat --book srd
 bun run parser:scrape -- spell --book srd
-bun run parser:scrape -- domain --book srd --filter core
+bun run parser:scrape -- domain --book complete-divine
 bun run parser:scrape -- race --book srd
 bun run parser:scrape -- item --book srd
 bun run parser:scrape -- magicItem --book dmg
@@ -22,7 +22,6 @@ bun run parser:generate                      # everything, domains included
 bun run parser:generate srd                  # one book
 bun run parser:generate srd --type class     # one book's classes
 bun run parser:generate -- <path-to-json>    # one reference
-bun run parser:generate -- database/packages/dnd35-from-parser/reference/domains.json --book srd   # the domains, for one book
 # A generation runs in a copy of generated/, which replaces it only when every reference succeeds:
 # a failed one leaves generated/ as it was. One runs at a time (generated.lock)
 
@@ -117,15 +116,16 @@ Scrapes spell listing and detail pages into `SpellReference` JSON.
 
 ### Domains
 
-Scrapes domain pages into `DomainReference` JSON.
+Scrapes a book's domains into `reference/<book>/domains.json` (`DomainReference`), from dnd.arkalseif.info, a copy of dndtools' database that keeps each book's version of a domain apart ("Weather (CD)"): dndtools.net has since merged them, without their books. A version is the book's its page names, or, when it names none, the one its label's code ("CD") stands for in the versions that do.
 
 **Auto-detected:**
-- Domain name, granted power description
-- Spell list with levels
+- Domain name, page, granted power description
+- Spell list with levels: each 3.5 spell of the domain's versions whose page gives this version a level
 - Modifier detection from granted power text
 
 **Needs manual annotation in `overrides`:**
-- Description corrections (many dndtools.net pages lack granted power text)
+- Description rewording, as for every entity
+- The spells a version's pages miss or misplace: `parser:validate` reports a spell no parsed book has, a level from 1st to 9th without a spell, and a spell of the book whose level line puts it on one of its domains at a level the list doesn't
 - Modifier definitions for complex granted powers
 
 ### Races

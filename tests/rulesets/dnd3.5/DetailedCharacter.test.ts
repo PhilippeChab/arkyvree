@@ -2226,8 +2226,9 @@ describe("DetailedCharacter", () => {
       });
 
       test("open with bonus caster levels", async () => {
-        // Cleric 7 / Stormlord 5: the storm domain's fifth and sixth levels open.
+        // Cleric 7 / Stormlord 5: the weather domain's fifth and sixth levels open.
         const ctx = await getSeedCtx();
+        const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
         const extension = (await Rulesets.findOne(db, { name: DND35_COMPLETE_DIVINE_NAME }))!;
         const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
         const characterId = await createSeedCharacter(
@@ -2243,9 +2244,13 @@ describe("DetailedCharacter", () => {
           [1, 2, 3, 4, 5, 6, 7],
           [8, 6, 7, 6, 8, 6, 7],
         );
-        await addFeats(db, ctx, clericLevels, [
-          { levelIndex: 0, featName: "Storm Domain", aptitude: "Cleric Domain" },
-          { levelIndex: 0, featName: "War Domain", aptitude: "Cleric Domain" },
+        await addFeats(db, ctx, clericLevels, [{ levelIndex: 0, featName: "War Domain", aptitude: "Cleric Domain" }]);
+        await CharacterLevelFeats.createMany(db, [
+          {
+            characterLevelId: clericLevels[0],
+            featId: divine.feat("Weather Domain").id,
+            aptitudeId: ctx.aptMap["Cleric Domain"],
+          },
         ]);
         const stormlord = (await Klasses.findOne(db, { name: "Stormlord", rulesetId: extension.id }))!;
         const advance =
@@ -2264,16 +2269,16 @@ describe("DetailedCharacter", () => {
           level: 7,
           bonuscasterlevel: 5,
         });
-        expect([5, 6, 7].map((level) => spellLevel(detailed, "stormdomainspells", level))).toMatchObject([
+        expect([5, 6, 7].map((level) => spellLevel(detailed, "weatherdomainspells", level))).toMatchObject([
           { allowed: ALLOWED_ALL, uses: 1 },
           { allowed: ALLOWED_ALL, uses: 1 },
           { allowed: 0 },
         ]);
         const tags = detailed.getSpellTags();
-        const storm = allPowers(detailed)
-          .filter((p) => tags[p.id]?.includes("Storm Domain"))
+        const weather = allPowers(detailed)
+          .filter((p) => tags[p.id]?.includes("Weather Domain"))
           .map((p) => p.name);
-        expect(storm).toEqual(expect.arrayContaining(["Ice Storm", "Call Lightning Storm"]));
+        expect(weather).toEqual(expect.arrayContaining(["Binding Winds", "Cloudwalkers"]));
       });
 
       test("open with bonus caster levels only the slots whose other requirements hold", async () => {

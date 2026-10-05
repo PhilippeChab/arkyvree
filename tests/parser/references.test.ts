@@ -52,7 +52,7 @@ describe("A loaded reference", () => {
   const FILES: [string, ReferenceType, { detected: boolean; mapping: boolean }][] = [
     ["srd/classes/barbarian.json", "class", { detected: true, mapping: true }],
     ["srd/feats.json", "feat", { detected: true, mapping: true }],
-    ["domains.json", "domain", { detected: true, mapping: true }],
+    ["srd/domains.json", "domain", { detected: true, mapping: true }],
     ["srd/races.json", "race", { detected: true, mapping: true }],
     ["srd/items.json", "item", { detected: true, mapping: false }],
     ["srd/magicItems.json", "magicItem", { detected: true, mapping: false }],
