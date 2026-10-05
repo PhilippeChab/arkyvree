@@ -7,6 +7,7 @@ import { CharacterLevels, Powers } from "@/server/repositories/index.ts";
 import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -121,12 +122,8 @@ export async function getAvailablePowers(
     const result = await Powers.findOptionPage(
       db,
       {
-        rulesetId: characterRecord.rulesetId,
-        ancestorRulesetIds: rulesetData.cow.sourceChain,
-        aptitudeId,
+        ids: getListPowerIds(rulesetData, { aptitudeId, level: where.powerLevel }),
         excludePowerIds,
-        siblingLoserIds: rulesetData.cow.siblingIds,
-        powerLevel: where.powerLevel,
         search: where.search,
       },
       pagination,

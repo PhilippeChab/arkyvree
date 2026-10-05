@@ -1,7 +1,6 @@
 import { and, count, eq, getTableColumns, inArray, isNull, notInArray, sql } from "drizzle-orm";
 
 import {
-  featsAptitudesInRules,
   featsInRules,
   klassLevelFeatsInRules,
   klassLevelsInRules,
@@ -56,8 +55,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
       rulesetId: string;
       ancestorRulesetIds?: string[];
       childOnly?: boolean;
-      aptitudeId?: string;
-      aptitudeIds?: string[];
+      ids?: string[];
       excludeIds?: string[];
       search?: string;
     },
@@ -66,24 +64,6 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     const { search } = where;
     const searchCondition = this.search(search, [this.table.name]);
     const { limit, offset } = this.paginate(pagination);
-
-    const aptitudeCondition = where.aptitudeIds
-      ? inArray(
-          this.table.id,
-          db
-            .select({ id: featsAptitudesInRules.featId })
-            .from(featsAptitudesInRules)
-            .where(inArray(featsAptitudesInRules.aptitudeId, where.aptitudeIds)),
-        )
-      : where.aptitudeId
-        ? inArray(
-            this.table.id,
-            db
-              .select({ id: featsAptitudesInRules.featId })
-              .from(featsAptitudesInRules)
-              .where(eq(featsAptitudesInRules.aptitudeId, where.aptitudeId)),
-          )
-        : false;
 
     const excludeCondition =
       where.excludeIds && where.excludeIds.length > 0 ? notInArray(this.table.id, where.excludeIds) : false;
@@ -113,7 +93,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
           rulesetCondition,
           isNull(this.table.deletedAt),
           searchCondition,
-          aptitudeCondition,
+          where.ids !== undefined && inArray(this.table.id, where.ids),
           excludeCondition,
         ]),
       )
@@ -158,23 +138,15 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     });
   }
 
+  /** A picker's page of these feats (a list's, as the ruleset composes it), a family's variants as one row. */
   async findOptionGroupPage(
     db: Db,
-    where: {
-      rulesetId: string;
-      ancestorRulesetIds?: string[];
-      aptitudeId: string;
-      excludeFeatIds?: string[];
-      siblingLoserIds?: Iterable<string>;
-      search?: string;
-    },
+    where: { ids: string[]; excludeFeatIds?: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
-    const { aptitudeId, excludeFeatIds, siblingLoserIds, search } = where;
+    const { ids, excludeFeatIds, search } = where;
     const searchCondition = this.search(search, [featsInRules.name]);
     const { limit, offset } = this.paginate(pagination);
-
-    const rulesetCondition = this.buildRulesetCondition(db, where);
 
     const prop = propertiesInCustomization;
 
@@ -190,7 +162,6 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
         description: sql<string>`min(${featsInRules.description})`.as("description"),
       })
       .from(featsInRules)
-      .innerJoin(featsAptitudesInRules, eq(featsInRules.id, featsAptitudesInRules.featId))
       .leftJoin(
         prop,
         and(
@@ -203,14 +174,11 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
       )
       .where(
         this.where([
-          rulesetCondition,
+          inArray(featsInRules.id, ids),
           isNull(featsInRules.deletedAt),
-          isNull(featsInRules.campaignId),
-          eq(featsAptitudesInRules.aptitudeId, aptitudeId),
           eq(featsInRules.selectable, true),
           searchCondition,
           this.excludeIds(excludeFeatIds),
-          this.excludeIds(siblingLoserIds),
         ]),
       )
       .groupBy(sql`coalesce(${prop.value}, ${featsInRules.id}::text)`)
@@ -221,20 +189,13 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     return this.paginated(rows, pagination);
   }
 
+  /** A picker's page of these feats (a list's, as the ruleset composes it), by name: a family's, when one is given. */
   async findOptionPage(
     db: Db,
-    where: {
-      rulesetId: string;
-      ancestorRulesetIds?: string[];
-      aptitudeId: string;
-      excludeFeatIds?: string[];
-      siblingLoserIds?: Iterable<string>;
-      family?: string;
-      search?: string;
-    },
+    where: { ids: string[]; excludeFeatIds?: string[]; family?: string; search?: string },
     pagination: { limit: number; page: number },
   ) {
-    const { aptitudeId, excludeFeatIds, siblingLoserIds, family, search } = where;
+    const { ids, excludeFeatIds, family, search } = where;
     const searchCondition = this.search(search, [featsInRules.name]);
     const { limit, offset } = this.paginate(pagination);
 
@@ -255,30 +216,24 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
         )
       : false;
 
-    const rulesetCondition = this.buildRulesetCondition(db, where);
-
     const rows = await db
-      .selectDistinctOn([featsInRules.name], {
+      .select({
         id: featsInRules.id,
         name: featsInRules.name,
         description: featsInRules.description,
       })
       .from(featsInRules)
-      .innerJoin(featsAptitudesInRules, eq(featsInRules.id, featsAptitudesInRules.featId))
       .where(
         this.where([
-          rulesetCondition,
+          inArray(featsInRules.id, ids),
           isNull(featsInRules.deletedAt),
-          isNull(featsInRules.campaignId),
-          eq(featsAptitudesInRules.aptitudeId, aptitudeId),
           eq(featsInRules.selectable, true),
           searchCondition,
           familyCondition,
           this.excludeIds(excludeFeatIds),
-          this.excludeIds(siblingLoserIds),
         ]),
       )
-      .orderBy(this.orderBy(featsInRules.name))
+      .orderBy(this.orderBy(featsInRules.name), this.orderBy(featsInRules.id))
       .limit(limit)
       .offset(offset);
 
@@ -287,22 +242,12 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
 
   async findPage(
     db: Db,
-    where: RulesetEntityFilters<{ aptitudeId?: string; family?: string }>,
+    where: RulesetEntityFilters<{ ids?: string[]; family?: string }>,
     pagination: { limit: number; page: number },
   ) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
     const searchColumns = [this.table.name, this.table.description];
     const searchConditions = this.fuzzySearch(search, searchColumns);
-
-    const aptitudeCondition = where.aptitudeId
-      ? inArray(
-          this.table.id,
-          db
-            .select({ id: featsAptitudesInRules.featId })
-            .from(featsAptitudesInRules)
-            .where(eq(featsAptitudesInRules.aptitudeId, where.aptitudeId)),
-        )
-      : false;
 
     const familyCondition = where.family
       ? inArray(
@@ -329,7 +274,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
           rulesetCondition,
           isNull(this.table.deletedAt),
           searchConditions,
-          aptitudeCondition,
+          where.ids !== undefined && inArray(this.table.id, where.ids),
           familyCondition,
         ]),
         // The id breaks ties, so paging never repeats or skips a row.

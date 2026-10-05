@@ -10,6 +10,7 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/types.ts";
 import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { getListFeatIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Character, Ruleset, Session } from "@/shared/relations.ts";
 
@@ -153,8 +154,8 @@ async function projectFeatPick(
 
 /**
  * Runs a feat picker's query in the character's ruleset. `run` gets the character projected with the level's picks so
- * far (for each feat's eligibility) and the filters every picker shares: the pool's feats in the ruleset, but those the
- * character can't take again and the sibling losers.
+ * far (for each feat's eligibility) and the filters every picker shares: the pool's feats as the ruleset composes the
+ * list, but those the character can't take again.
  */
 async function withFeatPicker<R>(
   session: Session,
@@ -169,13 +170,7 @@ async function withFeatPicker<R>(
   run: (
     detailedCharacter: DetailedCharacterInterface,
     rulesetData: CachedRulesetData,
-    filters: {
-      rulesetId: string;
-      ancestorRulesetIds: string[];
-      aptitudeId: string;
-      excludeFeatIds: string[];
-      siblingLoserIds: Set<string>;
-    },
+    filters: { ids: string[]; excludeFeatIds: string[] },
   ) => Promise<R>,
 ): Promise<R> {
   const characterRecord = await getEditableCharacter(db, session, characterId);
@@ -194,11 +189,8 @@ async function withFeatPicker<R>(
       pendingLevelAbilityIds,
     );
     return await run(detailedCharacter, rulesetData, {
-      rulesetId: characterRecord.rulesetId,
-      ancestorRulesetIds: rulesetData.cow.sourceChain,
-      aptitudeId,
+      ids: getListFeatIds(rulesetData, aptitudeId),
       excludeFeatIds,
-      siblingLoserIds: rulesetData.cow.siblingIds,
     });
   });
 }

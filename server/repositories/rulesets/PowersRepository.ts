@@ -5,7 +5,6 @@ import {
   klassLevelsInRules,
   levelPowersInCharacter,
   levelsInCharacter,
-  powersAptitudesInRules,
   powersInRules,
   savesInRules,
 } from "@/drizzle/schema.ts";
@@ -82,90 +81,51 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
     });
   }
 
+  /** A picker's page of these spells (a list's, as the ruleset composes it), by name. */
   async findOptionPage(
     db: Db,
-    where: {
-      rulesetId: string;
-      ancestorRulesetIds?: string[];
-      aptitudeId: string;
-      excludePowerIds?: string[];
-      siblingLoserIds?: Iterable<string>;
-      search?: string;
-      powerLevel?: number;
-    },
+    where: { ids: string[]; excludePowerIds?: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
-    const { aptitudeId, excludePowerIds, siblingLoserIds, search, powerLevel } = where;
-    const searchCondition = this.search(search, [powersInRules.name]);
+    const { ids, excludePowerIds, search } = where;
     const { limit, offset } = this.paginate(pagination);
-
-    const rulesetCondition = this.buildRulesetCondition(db, where);
-
     const rows = await db
-      .selectDistinctOn([powersInRules.name], {
+      .select({
         id: powersInRules.id,
         name: powersInRules.name,
         description: powersInRules.description,
       })
       .from(powersInRules)
-      .innerJoin(powersAptitudesInRules, eq(powersInRules.id, powersAptitudesInRules.powerId))
       .where(
         this.where([
-          rulesetCondition,
+          inArray(powersInRules.id, ids),
           isNull(powersInRules.deletedAt),
-          isNull(powersInRules.campaignId),
-          // A list's copies too: books seed their own copy of a list their spells are on, which a ruleset merges
-          this.idMatches(powersAptitudesInRules.aptitudeId, aptitudeId),
-          searchCondition,
+          this.search(search, [powersInRules.name]),
           this.excludeIds(excludePowerIds),
-          this.excludeIds(siblingLoserIds),
-          ...(powerLevel != null ? [eq(powersAptitudesInRules.level, powerLevel)] : []),
         ]),
       )
-      .orderBy(this.orderBy(powersInRules.name))
+      .orderBy(this.orderBy(powersInRules.name), this.orderBy(powersInRules.id))
       .limit(limit)
       .offset(offset);
 
     return this.paginated(rows, pagination);
   }
 
-  async findPage(
-    db: Db,
-    where: RulesetEntityFilters<{ aptitudeId?: string; level?: number }>,
-    pagination: { limit: number; page: number },
-  ) {
+  async findPage(db: Db, where: RulesetEntityFilters<{ ids?: string[] }>, pagination: { limit: number; page: number }) {
     const { search, orderBy = "name", orderDir = "asc" } = where;
     const searchColumns = [this.table.name, this.table.description];
     const searchConditions = this.fuzzySearch(search, searchColumns);
-
-    const aptitudeLevelCondition = where.aptitudeId
-      ? inArray(
-          this.table.id,
-          db
-            .select({ id: powersAptitudesInRules.powerId })
-            .from(powersAptitudesInRules)
-            .where(
-              and(
-                this.idMatches(powersAptitudesInRules.aptitudeId, where.aptitudeId),
-                where.level != null ? eq(powersAptitudesInRules.level, where.level) : undefined,
-              ),
-            ),
-        )
-      : where.level != null
-        ? inArray(
-            this.table.id,
-            db
-              .select({ id: powersAptitudesInRules.powerId })
-              .from(powersAptitudesInRules)
-              .where(eq(powersAptitudesInRules.level, where.level)),
-          )
-        : false;
 
     const rulesetCondition = this.buildRulesetCondition(db, where);
 
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.powersInRules.findMany({
-        where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions, aptitudeLevelCondition]),
+        where: this.where([
+          rulesetCondition,
+          isNull(this.table.deletedAt),
+          searchConditions,
+          where.ids !== undefined && inArray(this.table.id, where.ids),
+        ]),
         orderBy: this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
         with: {
           powersAptitudesInRules: {

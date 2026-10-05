@@ -81,6 +81,48 @@ async function setupFork() {
   return { user, session, base, extension, draft };
 }
 
+/** A new user's fork of the base taking these books, in this order, and a character of theirs on it. */
+async function forkTaking(...books: string[]) {
+  const { user, session, draft } = await setupFork();
+  for (const book of books) {
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [(await seededRuleset(book)).id]);
+  }
+  const { abilityMap } = await getSeedCtx();
+  const character = await createTestCharacter(user.id, { rulesetId: draft.id });
+  await db
+    .insert(characterAbilitiesInCharacter)
+    .values(Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })));
+  return { session, draft, character };
+}
+
+/**
+ * A favored soul's first level on a fork taking the DMG, Complete Warrior and Complete Divine, in that order: the
+ * favored soul's list, as its level-up offers it, composes as Complete Warrior's copy.
+ */
+async function favoredSoulOnMixedFork() {
+  const fork = await forkTaking(DND35_DMG_NAME, DND35_COMPLETE_WARRIOR_NAME, DND35_COMPLETE_DIVINE_NAME);
+  const divine = await seededRuleset(DND35_COMPLETE_DIVINE_NAME);
+  const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", rulesetId: divine.id }))!;
+  const { aptitudePools } = await CharacterLevelsService.getPowerSlots(
+    fork.session,
+    fork.character.id,
+    favoredSoul.id,
+    1,
+  );
+  const list = Object.values(aptitudePools).find((pool) => pool.name === "Favored Soul Spells")!;
+  const offer = (where: { search: string; powerLevel?: number }) =>
+    CharacterLevelsService.getAvailablePowers(
+      fork.session,
+      fork.character.id,
+      list.id,
+      favoredSoul.id,
+      1,
+      where,
+      firstPage,
+    );
+  return { ...fork, favoredSoul, list, offer };
+}
+
 /** A published public extension of the seeded base (a system one when `userId` is null). */
 async function createExtension(userId: string | null = null, values: RulesetValues = {}) {
   const { rulesetId } = await getSeedCtx();
@@ -524,40 +566,48 @@ describe("an extension's content in a fork", () => {
     expect(await spellsOnList()).toContain(spell);
   });
 
-  test("gives a spell picked on a list another book's copy composes its level there", async () => {
-    // With the DMG, Complete Warrior and Complete Divine in that order, the favored soul's list and Bless Water compose
-    // as Complete Warrior's copies, while Complete Divine's rows link Bane and Bless Water to its own list.
-    const { user, session, draft } = await setupFork();
-    const { abilityMap } = await getSeedCtx();
-    const [dmg, warrior, divine] = [
-      await seededRuleset(DND35_DMG_NAME),
-      await seededRuleset(DND35_COMPLETE_WARRIOR_NAME),
-      await seededRuleset(DND35_COMPLETE_DIVINE_NAME),
-    ];
-    for (const book of [dmg, warrior, divine]) {
-      await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
-    }
-    const ofDivine = { rulesetId: divine.id };
-    const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", ...ofDivine }))!;
-    const character = await createTestCharacter(user.id, { rulesetId: draft.id });
-    await db
-      .insert(characterAbilitiesInCharacter)
-      .values(Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })));
+  test("lists and offers a spell whose link to a list is on another book's copy of the spell", async () => {
+    // Bull's Strength composes as Complete Warrior's copy, while Complete Divine's puts it on the favored soul's list
+    const { draft, list, offer } = await favoredSoulOnMixedFork();
+    const search = "Bull's Strength";
+    const listed = await PowersService.getPowers(draft.id, { aptitudeId: list.id, search }, firstPage);
+    expect(listed.items.map((power) => power.name)).toContain(search);
+    expect((await offer({ search })).items.map((power) => power.name)).toContain(search);
+  });
 
-    // Bane as the level-up offers it, and Bless Water as the fork composes it, on the composed list
-    const { aptitudePools } = await CharacterLevelsService.getPowerSlots(session, character.id, favoredSoul.id, 1);
-    const list = Object.values(aptitudePools).find((pool) => pool.name === "Favored Soul Spells")!;
-    expect(list.id).toBe((await Aptitudes.findOne(db, { name: "Favored Soul Spells", rulesetId: warrior.id }))!.id);
-    const offered = await CharacterLevelsService.getAvailablePowers(
+  test("lists and offers a feat whose link to a list is on another book's copy of the feat", async () => {
+    // With Complete Adventurer before Complete Warrior, Combat Casting composes as Complete Adventurer's copy, while
+    // Complete Warrior's puts it on the hexblade's bonus feats
+    const { session, draft, character } = await forkTaking(DND35_COMPLETE_ADVENTURER_NAME, DND35_COMPLETE_WARRIOR_NAME);
+    const warrior = await seededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+    const hexblade = (await Klasses.findOne(db, { name: "Hexblade", rulesetId: warrior.id }))!;
+    const list = (await Aptitudes.findOne(db, { name: "Hexblade Bonus Feat", rulesetId: warrior.id }))!;
+    const search = "Combat Casting";
+    const where = { aptitudeId: list.id, search };
+    expect((await FeatsService.getFeats(draft.id, where, firstPage)).items.map((feat) => feat.name)).toContain(search);
+    expect(
+      (await FeatsService.getFeatGroups(draft.id, where, firstPage)).items.map((group) => group.displayName),
+    ).toContain(search);
+    const offered = await CharacterLevelsService.getAvailableFeats(
       session,
       character.id,
       list.id,
-      favoredSoul.id,
+      hexblade.id,
       1,
-      { search: "Bane", powerLevel: 1 },
+      { search },
       firstPage,
     );
-    const bane = offered.items.find((power) => power.name === "Bane")!;
+    expect(offered.items.map((feat) => feat.name)).toContain(search);
+  });
+
+  test("gives a spell picked on a list another book's copy composes its level there", async () => {
+    // Complete Divine's rows link Bane and Bless Water to its own list; Bless Water composes as Complete Warrior's copy
+    const { character, favoredSoul, list, offer } = await favoredSoulOnMixedFork();
+    const warrior = await seededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+    expect(list.id).toBe((await Aptitudes.findOne(db, { name: "Favored Soul Spells", rulesetId: warrior.id }))!.id);
+
+    // Bane as the level-up offers it, and Bless Water as the fork composes it, on the composed list
+    const bane = (await offer({ search: "Bane", powerLevel: 1 })).items.find((power) => power.name === "Bane")!;
     const blessWater = (await Powers.findOne(db, { name: "Bless Water", rulesetId: warrior.id }))!;
     const [first] = (await KlassLevels.findMany(db, { klassId: favoredSoul.id })).filter((level) => level.level === 1);
     await addCharacterLevel(character.id, first.id, {
