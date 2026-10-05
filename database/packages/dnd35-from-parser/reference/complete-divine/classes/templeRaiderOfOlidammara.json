@@ -43,7 +43,8 @@
       "Weapon and Armor Proficiency": {
         "description": "Temple raiders are proficient with all simple weapons as well as the rapier. They also gain proficiency with light and medium armor."
       }
-    }
+    },
+    "skip": true
   },
   "raw": {
     "bonusSpellAbility": "Wisdom",

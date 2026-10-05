@@ -229,12 +229,4 @@ describe("The seeded extensions", () => {
       divine.modifiersOf(divine.klassLevel("Divine Crusader", 1).id).map((m) => `${m.target} ${m.operator} ${m.value}`),
     ).toContain("aptitudes.divinecrusaderdomain.allowed add 1");
   });
-
-  test("join the Luck domain's list to the temple raider's at his tenth level", async () => {
-    const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
-    const luck = divine.feat("Luck Domain (Temple Raider of Olidammara)");
-    expect(divine.modifiersOf(luck.id).map((m) => `${m.target} ${m.operator} ${m.value}`)).toEqual([
-      "aptitudes.luckdomainspells.joinsclasslist set true",
-    ]);
-  });
 });

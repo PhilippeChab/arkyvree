@@ -28,7 +28,6 @@ import { SHINING_BLADE_OF_HEIRONEOUS_FEATS } from "./shiningBladeOfHeironeous.ts
 import { SHUGENJA_FEATS } from "./shugenja.ts";
 import { SPIRIT_SHAMAN_FEATS } from "./spiritShaman.ts";
 import { STORMLORD_FEATS } from "./stormlord.ts";
-import { TEMPLE_RAIDER_OF_OLIDAMMARA_FEATS } from "./templeRaiderOfOlidammara.ts";
 import { UR_PRIEST_FEATS } from "./urPriest.ts";
 import { VOID_DISCIPLE_FEATS } from "./voidDisciple.ts";
 import { WARPRIEST_FEATS } from "./warpriest.ts";
@@ -61,7 +60,6 @@ const _allClassFeats: FeatSeed[] = [
   ...SHUGENJA_FEATS,
   ...SPIRIT_SHAMAN_FEATS,
   ...STORMLORD_FEATS,
-  ...TEMPLE_RAIDER_OF_OLIDAMMARA_FEATS,
   ...UR_PRIEST_FEATS,
   ...VOID_DISCIPLE_FEATS,
   ...WARPRIEST_FEATS,
@@ -100,7 +98,6 @@ export { SHINING_BLADE_OF_HEIRONEOUS_FEATS };
 export { SHUGENJA_FEATS };
 export { SPIRIT_SHAMAN_FEATS };
 export { STORMLORD_FEATS };
-export { TEMPLE_RAIDER_OF_OLIDAMMARA_FEATS };
 export { UR_PRIEST_FEATS };
 export { VOID_DISCIPLE_FEATS };
 export { WARPRIEST_FEATS };
