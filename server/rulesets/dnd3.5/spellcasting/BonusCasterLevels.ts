@@ -8,7 +8,7 @@ import {
   type AptitudeLevelData,
   clearAllKnown,
 } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
-import type { CharacterLevel, Klass, KlassLevel } from "@/shared/relations.ts";
+import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A character level's key in the index of the class levels the character took. */
@@ -150,9 +150,14 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       }
     }
 
-    applyBonusCasterLevelModifiers(holders: Holders, feats: FeatWithPMR[]) {
-      // Filter to aptitudes.* targets only — we only want spell progression
-      const aptitudeModifiers = this.bonusKlassLevelModifiers.filter((m) => m.target.startsWith("aptitudes."));
+    /**
+     * Applies the spell progression (`aptitudes.*`) of the class levels bonus caster levels reach, each modifier while
+     * its own requirements hold (`isGateMet`): a pious templar's slots go to the list she picked only.
+     */
+    applyBonusCasterLevelModifiers(holders: Holders, feats: FeatWithPMR[], isGateMet: (modifier: Modifier) => boolean) {
+      const aptitudeModifiers = this.bonusKlassLevelModifiers.filter(
+        (m) => m.target.startsWith("aptitudes.") && isGateMet(m),
+      );
 
       for (const modifier of aptitudeModifiers) {
         this.characterModifiers.evaluateModifier(modifier, holders);

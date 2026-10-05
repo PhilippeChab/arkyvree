@@ -54,9 +54,14 @@ export const PIOUS_TEMPLAR: ClassSeed = {
     ],
     knowAll: true,
     noCantrips: true,
+    lists: [
+      { slug: "pioustemplarspells", requirements: [eq("feats.paladinspelllistpioustemplar.possessed")] },
+      { slug: "pioustemplarblackguardspells", requirements: [eq("feats.blackguardspelllistpioustemplar.possessed")] },
+    ],
   },
   aptitudePicks: [
     { levels: [4, 8], target: "aptitudes.fighterbonusfeat.allowed" },
+    { levels: [1], target: "aptitudes.pioustemplarspelllist.allowed" },
   ],
 };
 

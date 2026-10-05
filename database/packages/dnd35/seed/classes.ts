@@ -1,4 +1,10 @@
-import type { BabType, ClassSeed, SaveType } from "@/database/packages/dnd35/content/types.ts";
+import type {
+  BabType,
+  ClassSeed,
+  ModifierSeed,
+  RequirementEntry,
+  SaveType,
+} from "@/database/packages/dnd35/content/types.ts";
 import { idOf, type SeedContext } from "@/database/packages/dnd35/seed/context.ts";
 import { insertAll, insertModifiers, requirementRows } from "@/database/packages/dnd35/seed/customization.ts";
 import {
@@ -58,19 +64,20 @@ function tableOpenings(table: number[][]) {
   });
 }
 
-/**
- * A spellcaster's slots, by class level: its spells a day, and the spells it knows (`known`) or can prepare,
- * all of each level it can cast (`knowAll`).
- */
-function spellSlots(spells: NonNullable<ClassSeed["spells"]>) {
+/** A spellcaster's slots in one of its lists, gated by its requirements. */
+function listSlots(
+  spells: NonNullable<ClassSeed["spells"]>,
+  list: { slug: string; requirements: RequirementEntry[] },
+): (ModifierSeed & { level: number })[] {
   const slot = (spellLevel: number, kind: string) =>
-    `aptitudes.${spells.slug}.${spellLevel + (spells.noCantrips ? 1 : 0)}.${kind}`;
+    `aptitudes.${list.slug}.${spellLevel + (spells.noCantrips ? 1 : 0)}.${kind}`;
   const modifier = (level: number, target: string, value: string, operator: string) => ({
     level,
     target,
     value,
     valueType: "number",
     operator,
+    ...(list.requirements.length > 0 && { requirements: list.requirements }),
   });
   return [
     ...tableGains(spells.perDay).map((g) => modifier(g.level, slot(g.spellLevel, "uses"), String(g.delta), "add")),
@@ -81,6 +88,16 @@ function spellSlots(spells: NonNullable<ClassSeed["spells"]>) {
       ? tableOpenings(spells.perDay).map((o) => modifier(o.level, slot(o.spellLevel, "allowed"), "-1", "set"))
       : []),
   ];
+}
+
+/**
+ * A spellcaster's slots, by class level: its spells a day, and the spells it knows (`known`) or can prepare,
+ * all of each level it can cast (`knowAll`). They go to its list, or to each of its `lists` while that one's
+ * requirements are met.
+ */
+function spellSlots(spells: NonNullable<ClassSeed["spells"]>): (ModifierSeed & { level: number })[] {
+  const lists = spells.lists ?? [{ slug: spells.slug, requirements: [] }];
+  return lists.flatMap((list) => listSlots(spells, list));
 }
 
 /** The class level each spell level opens at, by class. */

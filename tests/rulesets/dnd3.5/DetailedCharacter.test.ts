@@ -79,6 +79,7 @@ import {
   makeSession,
   NIL_UUID,
 } from "@/tests/helpers.ts";
+import { seededRows } from "@/tests/seeds/seededRows.ts";
 
 async function build(character: Character) {
   const detailed = new DetailedCharacter(character);
@@ -231,7 +232,7 @@ async function forkWith(...extensionNames: string[]) {
 async function createSeedCharacter(
   name: string,
   abilities: Record<string, number>,
-  values: { xp?: number; rulesetId?: string; alignment?: "Neutral Good" | "Chaotic Neutral" } = {},
+  values: { xp?: number; rulesetId?: string; alignment?: "Neutral Good" | "Chaotic Neutral" | "Neutral Evil" } = {},
 ) {
   const ctx = await getSeedCtx();
   return createCharacter(db, ctx, {
@@ -2011,6 +2012,74 @@ describe("DetailedCharacter", () => {
       const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
       expect(spellUses(detailed, "spellthiefspells", [1])).toEqual([1]);
       expect(spellLevel(detailed, "spellthiefspells", 1).allowed).toBe(3);
+    });
+
+    test("give a pious templar the list she picks, as her alignment allows: the paladin's or the blackguard's", async () => {
+      const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+      const listFeat = (list: string) => divine.feat(`${list} Spell List (Pious Templar)`);
+      const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
+      const scores = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 10, Charisma: 10 };
+      // A good templar's list is the paladin's, an evil one's the blackguard's; a neutral one picks either
+      const allowed = async (alignment: "Neutral Good" | "Chaotic Neutral" | "Neutral Evil") => {
+        const characterId = await createSeedCharacter(alignment, scores, { rulesetId: fork.id, alignment });
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        return ["Paladin", "Blackguard"].filter((list) =>
+          detailed.areRequirementsMet([divine.requirementsOf(listFeat(list).id)]),
+        );
+      };
+      expect(await allowed("Neutral Good")).toEqual(["Paladin"]);
+      expect(await allowed("Neutral Evil")).toEqual(["Blackguard"]);
+      expect(await allowed("Chaotic Neutral")).toEqual(["Paladin", "Blackguard"]);
+
+      // A pious templar 3 who meets the class's prerequisites, Wis 16, with `bonus` caster levels: her slots, bonus spells
+      // and caster level go to the list she picked, none to the other
+      const templar = divine.klasses.find((klass) => klass.name === "Pious Templar")!;
+      const sheetWith = async (list: string, bonus = 0) => {
+        const characterId = await createSeedCharacter(
+          `${list} Templar`,
+          { ...scores, Wisdom: 16 },
+          { rulesetId: fork.id, alignment: "Chaotic Neutral" },
+        );
+        const granted: [string, string, string][] = [
+          ["combat.bab", "5", "number"],
+          ["skills.knowledgereligion.rank", "4", "number"],
+          ["feats.truebeliever.possessed", "true", "boolean"],
+          ["feats.weaponfocuslongsword.possessed", "true", "boolean"],
+          ...(bonus > 0
+            ? [["classes.pioustemplar.bonuscasterlevel", String(bonus), "number"] as [string, string, string]]
+            : []),
+        ];
+        for (const [target, value, valueType] of granted) {
+          const operator = valueType === "boolean" ? "set" : "add";
+          await Modifiers.create(db, {
+            sourceId: characterId,
+            sourceType: "characters",
+            target,
+            value,
+            valueType,
+            operator,
+          });
+        }
+        const pick = { featId: listFeat(list).id, aptitudeId: divine.aptitude("Pious Templar Spell List").id };
+        for (let level = 1; level <= 3; level++) {
+          const klassLevel = (await findKlassLevel(templar.id, level))!;
+          await addCharacterLevel(characterId, klassLevel.id, level === 1 ? { feats: [pick] } : {});
+        }
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        const divineLevel = [0, 1, 2, 3, 4].find((n) =>
+          detailed.areRequirementsMet(requiring("spellcasting.divine", exactly(n))),
+        );
+        return {
+          paladin: spellUses(detailed, "pioustemplarspells", [1, 2, 3]),
+          blackguard: spellUses(detailed, "pioustemplarblackguardspells", [1, 2, 3]),
+          divine: divineLevel,
+        };
+      };
+      // A 1st- and a 2nd-level spell a day, each with Wisdom's bonus one
+      expect(await sheetWith("Paladin")).toEqual({ paladin: [2, 2, 0], blackguard: [0, 0, 0], divine: 2 });
+      expect(await sheetWith("Blackguard")).toEqual({ paladin: [0, 0, 0], blackguard: [2, 2, 0], divine: 2 });
+      // Two bonus caster levels, a templar 5's: her 3rd level opens on her list alone
+      expect(await sheetWith("Blackguard", 2)).toEqual({ paladin: [0, 0, 0], blackguard: [2, 2, 1], divine: 3 });
     });
 
     describe("save DCs", () => {

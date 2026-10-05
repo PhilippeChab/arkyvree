@@ -8,7 +8,22 @@ import { BonusCasterLevels } from "./spellcasting/BonusCasterLevels.ts";
 import { KnownPowers } from "./spellcasting/KnownPowers.ts";
 import SpellcastingState from "./spellcasting/SpellcastingState.ts";
 
+/** A spell list's slot: `aptitudes.<list>.<spell level>.uses` or `.allowed`. */
+const SLOT_TARGET = /^aptitudes\.([^.]+)\.\d+\.(?:uses|allowed)$/;
+
 class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCasterLevels, KnownPowers) {
+  /**
+   * A class's spell lists: those its levels give slots in, a pious templar's paladin and blackguard lists (the slots of
+   * the one she didn't pick gated out), else "<Class> Spells".
+   */
+  private spellListsOf(className: string): string[] {
+    const { levels } = this.classes.getCharacterClasses()[className];
+    const lists = new Set(
+      levels.flatMap(({ klassLevel }) => klassLevel.modifiers.flatMap((m) => SLOT_TARGET.exec(m.target)?.[1] ?? [])),
+    );
+    return lists.size > 0 ? [...lists] : [stripSeparators(className + " Spells")];
+  }
+
   /** Lightweight init: sets spellcasting.arcane/divine based on caster type presence.
    *  Called before modifiers so requirements like Scribe Scroll can check spellcasting.arcane >= 1. */
   initSpellcastingHolder(
@@ -22,8 +37,7 @@ class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCast
     for (const [className, klassData] of Object.entries(characterClasses)) {
       const casterType = klassCasterTypeMap.get(klassData.klass.id);
       if (!casterType) continue;
-      const aptitudeKey = stripSeparators(className + " Spells");
-      spellAptitudeToCasterType.set(aptitudeKey, casterType);
+      for (const list of this.spellListsOf(className)) spellAptitudeToCasterType.set(list, casterType);
     }
 
     // Scan modifiers for spell slot targets (aptitudes.<spellAptKey>.<level>.allowed)
@@ -56,18 +70,20 @@ class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCast
       const abilityMod = this.abilities.getAbilityModifier(abilityName);
       if (abilityMod <= 0) continue;
 
-      const aptitudeKey = stripSeparators(className + " Spells");
-      const aptitude = aptitudes[aptitudeKey];
-      if (!aptitude || !this.aptitudes.isLeveledAptitude(aptitudeKey)) continue;
+      // Each of its lists: one it has no slot in (a pious templar's other list) has none to add to
+      for (const aptitudeKey of this.spellListsOf(className)) {
+        const aptitude = aptitudes[aptitudeKey];
+        if (!aptitude || !this.aptitudes.isLeveledAptitude(aptitudeKey)) continue;
 
-      const aptitudeObj = aptitude as Record<string, unknown>;
-      for (let spellLevel = 1; spellLevel <= 9; spellLevel++) {
-        const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
-        if (!levelData || levelData.allowed === 0) continue;
-        if (abilityMod < spellLevel) continue;
+        const aptitudeObj = aptitude as Record<string, unknown>;
+        for (let spellLevel = 1; spellLevel <= 9; spellLevel++) {
+          const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
+          if (!levelData || levelData.allowed === 0) continue;
+          if (abilityMod < spellLevel) continue;
 
-        const bonusSpells = Math.floor((abilityMod - spellLevel) / 4) + 1;
-        levelData.uses += bonusSpells;
+          const bonusSpells = Math.floor((abilityMod - spellLevel) / 4) + 1;
+          levelData.uses += bonusSpells;
+        }
       }
     }
   }
@@ -84,22 +100,24 @@ class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCast
       const casterType = klassCasterTypeMap.get(klassData.klass.id);
       if (!casterType) continue;
 
-      const aptitudeKey = stripSeparators(className + " Spells");
-      const aptitude = aptitudes[aptitudeKey];
-      if (!aptitude || !this.aptitudes.isLeveledAptitude(aptitudeKey)) continue;
+      // The highest spell level any of its lists has slots at
+      for (const aptitudeKey of this.spellListsOf(className)) {
+        const aptitude = aptitudes[aptitudeKey];
+        if (!aptitude || !this.aptitudes.isLeveledAptitude(aptitudeKey)) continue;
 
-      const aptitudeObj = aptitude as Record<string, unknown>;
-      let maxLevel = 0;
-      for (let spellLevel = 9; spellLevel >= 0; spellLevel--) {
-        const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
-        if (levelData && levelData.allowed !== 0) {
-          maxLevel = spellLevel;
-          break;
+        const aptitudeObj = aptitude as Record<string, unknown>;
+        let maxLevel = 0;
+        for (let spellLevel = 9; spellLevel >= 0; spellLevel--) {
+          const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
+          if (levelData && levelData.allowed !== 0) {
+            maxLevel = spellLevel;
+            break;
+          }
         }
-      }
 
-      if (casterType === "Arcane") maxArcane = Math.max(maxArcane, maxLevel);
-      else maxDivine = Math.max(maxDivine, maxLevel);
+        if (casterType === "Arcane") maxArcane = Math.max(maxArcane, maxLevel);
+        else maxDivine = Math.max(maxDivine, maxLevel);
+      }
     }
 
     const spellcasting = { arcane: maxArcane, divine: maxDivine };

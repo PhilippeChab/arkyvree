@@ -318,6 +318,13 @@ export function classSpells(ref: ClassReference) {
   return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
 }
 
+/** The spell lists a class's slots go to (`spells.lists`), or its own, "<Class> Spells": none for a class without slots. */
+export function classSpellLists(ref: ClassReference): string[] {
+  const spells = classSpells(ref);
+  if (!spells) return [];
+  return spells.lists?.map((list) => list.name) ?? [`${ref.raw.name} Spells`];
+}
+
 /**
  * A class's aptitude picks: detected, with the overrides', then split per level where a bonus feat list has one per
  * level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug); and how the split
@@ -401,6 +408,10 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
       feature.aptitude && feature.aptitude !== mapping.classFeatureAptitude
         ? aptitudeMinLevel.get(stripSeparators(feature.aptitude))
         : undefined;
+    const requirements = [
+      ...(feature.requirements ?? []),
+      ...(poolLevel != null && poolLevel > 1 ? levelRequirement(poolLevel) : []),
+    ];
     const isAutoGranted = feature.level != null && !feature.aptitude;
     const family = lockedType ? FAVORED_ENEMY_FAMILY : detectClassFeatFamily(name);
     feats.push({
@@ -414,7 +425,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
           : {}),
       aptitudes,
       ...(modifiers.length > 0 ? { modifiers } : {}),
-      ...(poolLevel != null && poolLevel > 1 ? { requirements: levelRequirement(poolLevel) } : {}),
+      ...(requirements.length > 0 ? { requirements } : {}),
       ...(family ? { properties: [{ type: FEAT_FAMILY, value: family }] } : {}),
     });
   }
@@ -1011,7 +1022,7 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
   for (const { ref } of classReferences(book)) {
     allFeats.push(...buildClassFeatSeeds(ref));
     if (ref.mapping.classFeatureAptitude) names.add(ref.mapping.classFeatureAptitude);
-    if (ref.mapping.spells) names.add(`${ref.raw.name} Spells`);
+    for (const list of classSpellLists(ref)) names.add(list);
 
     // From detected bonusFeatLists
     if (ref.detected?.bonusFeatLists) {
@@ -1075,8 +1086,7 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
     const isSibling = other !== "srd" && book !== "srd";
     for (const { ref } of classReferences(other)) {
       if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
-      const spellApt = ref.mapping.spells ? `${ref.raw.name} Spells` : null;
-      if (spellApt) {
+      for (const spellApt of classSpellLists(ref)) {
         if (isSibling && spellAptitudes.has(spellApt)) {
           names.add(spellApt);
         } else {

@@ -25,6 +25,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/generator/generators/feat.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 // ---------------------------------------------------------------------------
 // Generate FeatSeed[] TypeScript file
@@ -273,6 +274,14 @@ export function generateClassSeed(ref: ClassReference): string {
     }
     if (spells.knowAll && !spells.known) lines.push(`    knowAll: true,`);
     if (spells.noCantrips) lines.push(`    noCantrips: true,`);
+    if (spells.lists) {
+      lines.push(`    lists: [`);
+      for (const list of spells.lists) {
+        const requirements = list.requirements.map((r) => stringifyRequirement(r, uses, 3));
+        lines.push(`      { slug: ${quote(stripSeparators(list.name))}, requirements: [${requirements.join(", ")}] },`);
+      }
+      lines.push(`    ],`);
+    }
     lines.push(`  },`);
   }
 

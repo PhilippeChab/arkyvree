@@ -6,6 +6,14 @@
     "type": "class"
   },
   "overrides": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          1
+        ],
+        "target": "aptitudes.pioustemplarspelllist.allowed"
+      }
+    ],
     "classSkills": [
       "Concentration",
       "Craft",
@@ -17,6 +25,32 @@
     ],
     "description": "Dedicated to safeguarding a holy site, the pious templar is a divine warrior who receives supernatural combat ability and exceptional resilience from her patron deity.",
     "features": {
+      "Blackguard Spell List": {
+        "aptitude": "Pious Templar Spell List",
+        "description": "An evil pious templar draws her spells from the blackguard spell list. The choice is permanent. A pious templar neither good nor evil draws from the list of her deity's alignment, and chooses either when her deity is neither good nor evil.",
+        "level": 1,
+        "requirements": [
+          {
+            "operator": "not_equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "not_equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Good",
+            "valueType": "string"
+          },
+          {
+            "operator": "not_equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Good",
+            "valueType": "string"
+          }
+        ],
+        "seedName": "Blackguard Spell List (Pious Templar)"
+      },
       "Bonus Feat": {
         "description": "At 4th level and once more at 8th level, a pious templar receives a bonus feat. These feats must be selected from those available as fighter bonus feats. If the pious templar chooses a feat that must be applied to a particular weapon (such as Improved Critical), she must apply it to her deity's favored weapon."
       },
@@ -25,6 +59,32 @@
       },
       "Mettle": {
         "description": "Through divine favor, a pious templar can resist magical effects that would normally harm her. When she succeeds on a Will or Fortitude saving throw against a spell that normally has a reduced effect on a successful save, she instead negates the spell's effect entirely. This applies only to spells whose saving throw entries indicate a partial or reduced effect, such as \"Will partial\" or \"Fortitude half.\""
+      },
+      "Paladin Spell List": {
+        "aptitude": "Pious Templar Spell List",
+        "description": "A good pious templar draws her spells from the paladin spell list. The choice is permanent. A pious templar neither good nor evil draws from the list of her deity's alignment, and chooses either when her deity is neither good nor evil.",
+        "level": 1,
+        "requirements": [
+          {
+            "operator": "not_equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Lawful Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "not_equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Neutral Evil",
+            "valueType": "string"
+          },
+          {
+            "operator": "not_equal",
+            "target": "identity.beliefs.alignment",
+            "value": "Chaotic Evil",
+            "valueType": "string"
+          }
+        ],
+        "seedName": "Paladin Spell List (Pious Templar)"
       },
       "Smite": {
         "description": "Once per day, a pious templar of 2nd level or higher can attempt a single melee strike with a +4 bonus on the attack roll and bonus damage equal to her pious templar level. She must declare the smite before rolling the attack. At 6th level she gains a second daily use, and at 10th level a third. If the pious templar already possesses a smite evil or similar smite ability from another class (such as paladin or a cleric with the Destruction domain), she instead receives one additional daily use of that ability (two additional uses at 7th level). The attack bonus remains unchanged, but the damage bonus is calculated using the character's combined levels in pious templar and the class that granted the original smite."
@@ -38,6 +98,42 @@
       "Weapon and Armor Proficiency": {
         "description": "This prestige class does not grant any additional weapon or armor proficiencies."
       }
+    },
+    "spells": {
+      "lists": [
+        {
+          "inheritsFrom": {
+            "classes": [
+              "Paladin"
+            ]
+          },
+          "name": "Pious Templar Spells",
+          "requirements": [
+            {
+              "operator": "equal",
+              "target": "feats.paladinspelllistpioustemplar.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        },
+        {
+          "inheritsFrom": {
+            "classes": [
+              "Blackguard"
+            ]
+          },
+          "name": "Pious Templar Blackguard Spells",
+          "requirements": [
+            {
+              "operator": "equal",
+              "target": "feats.blackguardspelllistpioustemplar.possessed",
+              "value": "true",
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ]
     }
   },
   "raw": {

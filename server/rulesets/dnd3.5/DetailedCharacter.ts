@@ -388,7 +388,9 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.characterLevels,
       this.rulesetKlasses,
     );
-    this.detailedCharacterSpellcasting.applyBonusCasterLevelModifiers(this.holders!, this.feats);
+    this.detailedCharacterSpellcasting.applyBonusCasterLevelModifiers(this.holders!, this.feats, (modifier) =>
+      this.areRequirementsMet([rulesetData.requirementsByEntity.get(modifier.id) ?? []]),
+    );
     this.detailedCharacterSpellcasting.applyBonusSpellsFromAbilities(this.klassBonusSpellAbilityMap);
     this.detailedCharacterSpellcasting.computeSpellcasting(this.holders!, this.klassCasterTypeMap);
     this.detailedCharacterSpellcasting.fetchAptitudePowerData(rulesetData, this.powers);

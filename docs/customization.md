@@ -357,7 +357,11 @@ Item creation feats use `identity.meta.level` (character level) for their caster
 
 ### Caster level advancement:
 
-Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `database/packages/dnd35/seed/classes.ts` for implementation.
+Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `database/packages/dnd35/seed/classes.ts` for implementation. The class levels a bonus caster level reaches apply their spell slots each while its own requirements hold.
+
+### A class's spell lists:
+
+A class's spell lists are those its levels give slots in (`aptitudes.<list>.<spell level>.uses|allowed`), or "<Class> Spells". A class can send its slots to one of several lists, each while that list's requirements hold: the pious templar picks the paladin's or the blackguard's at her first level, and the other list's slots stay gated out. Bonus spells from the casting ability and the caster type's highest spell level (`spellcasting.divine`) read each of a class's lists.
 
 ### Seeded classes (for class-level requirements):
 
