@@ -20,7 +20,8 @@ export function parseLiteralValue(value: string, valueType: string | null): numb
 
 /**
  * Whether a target's value has the type of a modifier's or a requirement's value: its own, or, for a list (a spell's
- * components), each of its values', one of which a requirement asks for and a modifier adds or takes.
+ * components), each of its values', one of which a requirement asks for and a modifier adds or takes. An empty list
+ * (a subtract took its last value) has none to disagree, so any type passes; a list's path takes strings only.
  */
 export function hasValueType(data: unknown, valueType: string | null): boolean {
   return Array.isArray(data) ? data.every((item) => typeof item === valueType) : typeof data === valueType;
