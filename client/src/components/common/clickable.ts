@@ -1,5 +1,11 @@
 import type { KeyboardEvent } from "react";
 
+/** The pointer and the keyboard focus ring of a `clickableProps` element. */
+export const CLICKABLE_SX = {
+  cursor: "pointer",
+  "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 },
+};
+
 /**
  * A row or card that opens or expands on click, reachable from the keyboard too: focusable
  * with Tab and activated with Enter or Space. Spread into the element, with `CLICKABLE_SX`
@@ -19,9 +25,3 @@ export function clickableProps(onActivate: () => void) {
     },
   };
 }
-
-/** The pointer and the keyboard focus ring of a `clickableProps` element. */
-export const CLICKABLE_SX = {
-  cursor: "pointer",
-  "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 },
-};

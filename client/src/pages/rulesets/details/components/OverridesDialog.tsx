@@ -45,6 +45,8 @@ interface OverridesDialogProps {
   canEdit?: boolean;
 }
 
+const restoreApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].restore;
+
 function getEntityUrl(rulesetId: string, change: Change): string | undefined {
   if (change.status === "deleted") return undefined;
   const { entityType, entityId } = change;
@@ -52,8 +54,6 @@ function getEntityUrl(rulesetId: string, change: Change): string | undefined {
     ? `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, entityId)}`
     : `/rulesets/${rulesetId}/${getUrlSegment(entityType)}/${entityId}`;
 }
-
-const restoreApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].restore;
 
 export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit = false }: OverridesDialogProps) {
   const queryClient = useQueryClient();

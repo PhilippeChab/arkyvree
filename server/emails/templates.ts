@@ -9,6 +9,13 @@ import { EmailVerificationEmail } from "@/emails/email-verification.tsx";
 import { PasswordResetEmail } from "@/emails/password-reset.tsx";
 import { WelcomeEmail } from "@/emails/welcome.tsx";
 
+export type TemplateName = keyof typeof TEMPLATES;
+type PropsFor<K extends TemplateName> = Parameters<(typeof TEMPLATES)[K]>[0];
+
+export type EmailJobPayload = {
+  [K in TemplateName]: { template: K; props: PropsFor<K> };
+}[TemplateName];
+
 const TEMPLATES = {
   campaignInvitation: CampaignInvitationEmail,
   characterContributorInvitation: CharacterContributorInvitationEmail,
@@ -18,13 +25,6 @@ const TEMPLATES = {
   passwordReset: PasswordResetEmail,
   welcome: WelcomeEmail,
 } as const;
-
-export type TemplateName = keyof typeof TEMPLATES;
-type PropsFor<K extends TemplateName> = Parameters<(typeof TEMPLATES)[K]>[0];
-
-export type EmailJobPayload = {
-  [K in TemplateName]: { template: K; props: PropsFor<K> };
-}[TemplateName];
 
 export const EmailTemplate = {
   CampaignInvitation: "campaignInvitation",

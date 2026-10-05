@@ -1,19 +1,5 @@
 export type RollMethodId = "4d6-drop-lowest" | "3d6-straight" | "standard-array" | "point-buy";
 
-export function rollDie(sides: number): number {
-  return Math.floor(Math.random() * sides) + 1;
-}
-
-function roll4d6DropLowest(): number {
-  const rolls = Array.from({ length: 4 }, () => rollDie(6));
-  rolls.sort((a, b) => a - b);
-  return rolls[1] + rolls[2] + rolls[3];
-}
-
-function roll3d6(): number {
-  return rollDie(6) + rollDie(6) + rollDie(6);
-}
-
 export const ROLL_METHODS: { id: RollMethodId; label: string }[] = [
   { id: "4d6-drop-lowest", label: "4d6 Drop Lowest" },
   { id: "3d6-straight", label: "3d6 Straight" },
@@ -38,6 +24,20 @@ export const POINT_BUY_COSTS: Record<number, number> = {
 };
 
 export const POINT_BUY_TOTAL = 25;
+
+export function rollDie(sides: number): number {
+  return Math.floor(Math.random() * sides) + 1;
+}
+
+function roll4d6DropLowest(): number {
+  const rolls = Array.from({ length: 4 }, () => rollDie(6));
+  rolls.sort((a, b) => a - b);
+  return rolls[1] + rolls[2] + rolls[3];
+}
+
+function roll3d6(): number {
+  return rollDie(6) + rollDie(6) + rollDie(6);
+}
 
 export function getRollFunction(method: RollMethodId): (() => number) | null {
   switch (method) {

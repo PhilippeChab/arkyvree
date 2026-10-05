@@ -29,6 +29,8 @@ import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 type EntityType = "feats" | "powers";
 type Pairing = "snapshot" | "name";
 
+const modifierValues = { target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" };
+
 async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 2) {
   const session = makeSession();
   const host = await createSeededTestRuleset(session.userId);
@@ -70,8 +72,6 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
     loserRulesetId: extensions.find((e) => e.copy.id === loser.id)!.extension.id,
   };
 }
-
-const modifierValues = { target: "abilities.strength.misc", value: "2", valueType: "number", operator: "add" };
 
 for (const entityType of ["feats", "powers"] as const) {
   for (const pairing of ["snapshot", "name"] as const) {

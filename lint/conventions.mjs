@@ -30,9 +30,6 @@
  * - `concern-shape`: a concern (`function X<B extends Constructor>(Base: B)`) sits in `X.ts`, its class is named for
  *   what it adds (a verb's `-ing`, `Archives` → `Archiving`, or `With` a noun, `ArmorClass` → `WithArmorClass`), and
  *   it adds methods, never state.
- * - `types-first`: a file's types sit at its top, after its imports, before its first function or class (or a const
- *   holding one): a type isn't a helper, read where it's used, so it never lands among them. `oxlint --fix` lifts one
- *   there, with its comments.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -101,159 +98,16 @@ const repositoryInstances = {
 };
 
 const ROUTE_METHODS = new Set(["get", "post", "put", "patch", "delete", "route"]);
-
-/** A route's path, written as a string or a template literal (its fixed parts). */
-function pathOf(node) {
-  if (node?.type === "Literal" && typeof node.value === "string") return node.value;
-  if (node?.type === "TemplateLiteral") return node.quasis.map((q) => q.value.cooked).join("");
-  return null;
-}
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
 // kebab-case, a file's name (`sitemap.xml`) or a wildcard
 const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
-
-const routeConventions = {
-  meta: { type: "problem" },
-  create(context) {
-    const file = repoPath(context.filename);
-    if (!file.startsWith("server/")) return {};
-    const inRouters = file.startsWith("server/routers/");
-    const inApi = file.startsWith("server/routers/api/");
-    return {
-      // .get("/:id/feats/:featId", …)
-      CallExpression(node) {
-        if (!inRouters) return;
-        const callee = node.callee;
-        if (callee.type !== "MemberExpression") return;
-        // c.json(body) → c.json(body, 200): a route says its status, which its types list.
-        if (
-          callee.object.type === "Identifier" &&
-          callee.object.name === "c" &&
-          callee.property.name === "json" &&
-          node.arguments.length < 2
-        ) {
-          context.report({ node, message: "A route answers with its status: `c.json(body, status)`." });
-          return;
-        }
-        // .get("/:id", …), .route("/:id", sub), .on("GET", "/:id", …)
-        const route = ROUTE_METHODS.has(callee.property.name)
-          ? node.arguments[0]
-          : callee.property.name === "on"
-            ? node.arguments[1]
-            : null;
-        const routePath = pathOf(route);
-        if (!routePath?.startsWith("/")) return;
-        for (const segment of routePath.split("/")) {
-          if (segment === "") continue;
-          const param = segment.startsWith(":") ? segment.slice(1).replace(/[{?].*$/, "") : null;
-          if (param !== null && !CAMEL_CASE.test(param)) {
-            context.report({ node: route, message: `A path param is camelCase: \`:${param}\` isn't.` });
-          } else if (param === null && !FIXED_SEGMENT.test(segment)) {
-            context.report({ node: route, message: `A path's fixed segment is kebab-case: \`${segment}\` isn't.` });
-          }
-        }
-      },
-      // A try that only cleans up (`finally`) lets the error through.
-      TryStatement(node) {
-        if (!inApi || !node.handler) return;
-        context.report({
-          node,
-          message: "A route lets an error reach the app's `onError`, which answers in the API's envelope: no try.",
-        });
-      },
-      ...onImports((node, spec) => {
-        if (spec === "@hono/zod-validator" && !file.startsWith("server/middlewares/")) {
-          context.report({
-            node,
-            message:
-              "Validate with `zValidator` from `@/server/middlewares/index.ts`: it answers in the API's envelope.",
-          });
-        }
-      }),
-    };
-  },
-};
 
 const METHOD_VERBS = JSON.parse(
   fs.readFileSync(new URL("../server/repositories/methodVerbs.json", import.meta.url), "utf8"),
 );
 const WRITE_VERBS = [...METHOD_VERBS.write, ...METHOD_VERBS.lock];
 
-/** A parameter's binding: `session: Session`, a constructor's `private session: Session`, or one with a default. */
-function parameter(param) {
-  let binding = param.type === "TSParameterProperty" ? param.parameter : param;
-  if (binding.type === "AssignmentPattern") binding = binding.left;
-  return binding.type === "Identifier" ? binding : null;
-}
-
-/** The calls in `node`'s subtree, itself included. */
-function* callsIn(node) {
-  if (node.type === "CallExpression") yield node;
-  for (const [key, value] of Object.entries(node)) {
-    if (key === "parent") continue;
-    for (const child of Array.isArray(value) ? value : [value]) {
-      if (typeof child?.type === "string") yield* callsIn(child);
-    }
-  }
-}
-
-/** Whether `name` is a parameter of a function `node` sits in: a handle it's given, which may be a transaction. */
-function isParameterOf(node, name) {
-  for (let p = node.parent; p; p = p.parent) {
-    if (p.params?.some((param) => parameter(param)?.name === name)) return true;
-  }
-  return false;
-}
-
 const CONCURRENT = new Set(["all", "allSettled", "any", "race"]);
-
-const writesInTransactions = {
-  meta: { type: "problem" },
-  create(context) {
-    const file = repoPath(context.filename);
-    if (!file.startsWith("server/") || /^server\/(repositories|database)\//.test(file)) return {};
-    // The repositories' shared instances this file imports.
-    const repositories = new Set();
-    return {
-      ImportDeclaration(node) {
-        if (!String(node.source.value).startsWith("@/server/repositories/")) return;
-        for (const specifier of node.specifiers) {
-          if (specifier.type === "ImportSpecifier") repositories.add(specifier.local.name);
-        }
-      },
-      CallExpression(node) {
-        const callee = node.callee;
-        if (callee.type !== "MemberExpression" || callee.object.type !== "Identifier") return;
-        if (callee.object.name === "Promise" && CONCURRENT.has(callee.property.name) && node.arguments[0]) {
-          const onTransaction = [...callsIn(node.arguments[0])].some((call) => {
-            const handle = call.arguments[0];
-            if (handle?.type !== "Identifier") return false;
-            if (handle.name === "tx") return true;
-            const isRepository = call.callee.type === "MemberExpression" && repositories.has(call.callee.object.name);
-            return isRepository && isParameterOf(call, handle.name);
-          });
-          if (onTransaction) {
-            context.report({
-              node,
-              message:
-                "A transaction runs one query at a time, on its one connection: await these in turn, not in `Promise.all` (pg queues them, and pg@9 throws).",
-            });
-          }
-          return;
-        }
-        if (!repositories.has(callee.object.name) || callee.property.type !== "Identifier") return;
-        const method = callee.property.name;
-        if (!WRITE_VERBS.some((verb) => startsWithVerb(method, verb))) return;
-        const handle = node.arguments[0];
-        if (handle?.type === "Identifier" && handle.name === "tx") return;
-        context.report({
-          node: handle ?? node,
-          message: `\`${callee.object.name}.${method}\` writes: give it a transaction's handle, \`tx\` (\`withTransaction(async (tx) => …)\`), not the shared \`db\`.`,
-        });
-      },
-    };
-  },
-};
 
 // An `eslint-disable` / `oxlint-disable` comment's text: its rules, then its reason after `--`.
 const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
@@ -352,6 +206,164 @@ const sharedRuntime = {
   },
 };
 
+/** Each test area and the source tree it mirrors. */
+const TEST_MIRRORS = [
+  ["tests/services/", "server/services/"],
+  ["tests/routers/", "server/routers/"],
+  ["tests/jobs/", "server/jobs/"],
+  ["tests/cache/", "server/cache/"],
+  ["tests/rulesets/", "server/rulesets/"],
+  ["tests/middlewares/", "server/middlewares/"],
+  ["tests/emails/", "server/emails/"],
+  ["tests/shared/", "shared/"],
+  ["tests/client/", "client/src/"],
+  ["tests/lint/", "lint/"],
+  ["tests/scripts/", "scripts/"],
+];
+
+/** A route's path, written as a string or a template literal (its fixed parts). */
+function pathOf(node) {
+  if (node?.type === "Literal" && typeof node.value === "string") return node.value;
+  if (node?.type === "TemplateLiteral") return node.quasis.map((q) => q.value.cooked).join("");
+  return null;
+}
+
+const routeConventions = {
+  meta: { type: "problem" },
+  create(context) {
+    const file = repoPath(context.filename);
+    if (!file.startsWith("server/")) return {};
+    const inRouters = file.startsWith("server/routers/");
+    const inApi = file.startsWith("server/routers/api/");
+    return {
+      // .get("/:id/feats/:featId", …)
+      CallExpression(node) {
+        if (!inRouters) return;
+        const callee = node.callee;
+        if (callee.type !== "MemberExpression") return;
+        // c.json(body) → c.json(body, 200): a route says its status, which its types list.
+        if (
+          callee.object.type === "Identifier" &&
+          callee.object.name === "c" &&
+          callee.property.name === "json" &&
+          node.arguments.length < 2
+        ) {
+          context.report({ node, message: "A route answers with its status: `c.json(body, status)`." });
+          return;
+        }
+        // .get("/:id", …), .route("/:id", sub), .on("GET", "/:id", …)
+        const route = ROUTE_METHODS.has(callee.property.name)
+          ? node.arguments[0]
+          : callee.property.name === "on"
+            ? node.arguments[1]
+            : null;
+        const routePath = pathOf(route);
+        if (!routePath?.startsWith("/")) return;
+        for (const segment of routePath.split("/")) {
+          if (segment === "") continue;
+          const param = segment.startsWith(":") ? segment.slice(1).replace(/[{?].*$/, "") : null;
+          if (param !== null && !CAMEL_CASE.test(param)) {
+            context.report({ node: route, message: `A path param is camelCase: \`:${param}\` isn't.` });
+          } else if (param === null && !FIXED_SEGMENT.test(segment)) {
+            context.report({ node: route, message: `A path's fixed segment is kebab-case: \`${segment}\` isn't.` });
+          }
+        }
+      },
+      // A try that only cleans up (`finally`) lets the error through.
+      TryStatement(node) {
+        if (!inApi || !node.handler) return;
+        context.report({
+          node,
+          message: "A route lets an error reach the app's `onError`, which answers in the API's envelope: no try.",
+        });
+      },
+      ...onImports((node, spec) => {
+        if (spec === "@hono/zod-validator" && !file.startsWith("server/middlewares/")) {
+          context.report({
+            node,
+            message:
+              "Validate with `zValidator` from `@/server/middlewares/index.ts`: it answers in the API's envelope.",
+          });
+        }
+      }),
+    };
+  },
+};
+
+/** A parameter's binding: `session: Session`, a constructor's `private session: Session`, or one with a default. */
+function parameter(param) {
+  let binding = param.type === "TSParameterProperty" ? param.parameter : param;
+  if (binding.type === "AssignmentPattern") binding = binding.left;
+  return binding.type === "Identifier" ? binding : null;
+}
+
+/** The calls in `node`'s subtree, itself included. */
+function* callsIn(node) {
+  if (node.type === "CallExpression") yield node;
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "parent") continue;
+    for (const child of Array.isArray(value) ? value : [value]) {
+      if (typeof child?.type === "string") yield* callsIn(child);
+    }
+  }
+}
+
+/** Whether `name` is a parameter of a function `node` sits in: a handle it's given, which may be a transaction. */
+function isParameterOf(node, name) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.params?.some((param) => parameter(param)?.name === name)) return true;
+  }
+  return false;
+}
+
+const writesInTransactions = {
+  meta: { type: "problem" },
+  create(context) {
+    const file = repoPath(context.filename);
+    if (!file.startsWith("server/") || /^server\/(repositories|database)\//.test(file)) return {};
+    // The repositories' shared instances this file imports.
+    const repositories = new Set();
+    return {
+      ImportDeclaration(node) {
+        if (!String(node.source.value).startsWith("@/server/repositories/")) return;
+        for (const specifier of node.specifiers) {
+          if (specifier.type === "ImportSpecifier") repositories.add(specifier.local.name);
+        }
+      },
+      CallExpression(node) {
+        const callee = node.callee;
+        if (callee.type !== "MemberExpression" || callee.object.type !== "Identifier") return;
+        if (callee.object.name === "Promise" && CONCURRENT.has(callee.property.name) && node.arguments[0]) {
+          const onTransaction = [...callsIn(node.arguments[0])].some((call) => {
+            const handle = call.arguments[0];
+            if (handle?.type !== "Identifier") return false;
+            if (handle.name === "tx") return true;
+            const isRepository = call.callee.type === "MemberExpression" && repositories.has(call.callee.object.name);
+            return isRepository && isParameterOf(call, handle.name);
+          });
+          if (onTransaction) {
+            context.report({
+              node,
+              message:
+                "A transaction runs one query at a time, on its one connection: await these in turn, not in `Promise.all` (pg queues them, and pg@9 throws).",
+            });
+          }
+          return;
+        }
+        if (!repositories.has(callee.object.name) || callee.property.type !== "Identifier") return;
+        const method = callee.property.name;
+        if (!WRITE_VERBS.some((verb) => startsWithVerb(method, verb))) return;
+        const handle = node.arguments[0];
+        if (handle?.type === "Identifier" && handle.name === "tx") return;
+        context.report({
+          node: handle ?? node,
+          message: `\`${callee.object.name}.${method}\` writes: give it a transaction's handle, \`tx\` (\`withTransaction(async (tx) => …)\`), not the shared \`db\`.`,
+        });
+      },
+    };
+  },
+};
+
 /** Whether a type is `Session`, or a union with it (`Session | null`). */
 function isSessionType(type) {
   if (type?.type === "TSUnionType") return type.types.some(isSessionType);
@@ -383,21 +395,6 @@ const sessionParam = {
     };
   },
 };
-
-/** Each test area and the source tree it mirrors. */
-const TEST_MIRRORS = [
-  ["tests/services/", "server/services/"],
-  ["tests/routers/", "server/routers/"],
-  ["tests/jobs/", "server/jobs/"],
-  ["tests/cache/", "server/cache/"],
-  ["tests/rulesets/", "server/rulesets/"],
-  ["tests/middlewares/", "server/middlewares/"],
-  ["tests/emails/", "server/emails/"],
-  ["tests/shared/", "shared/"],
-  ["tests/client/", "client/src/"],
-  ["tests/lint/", "lint/"],
-  ["tests/scripts/", "scripts/"],
-];
 
 /**
  * Every module under `tree` (a repo path), by its name without the extension: `FeatsService` → its paths. Read again
@@ -506,89 +503,6 @@ const concernShape = {
   },
 };
 
-const isTypeDeclaration = (node) => node?.type === "TSTypeAliasDeclaration" || node?.type === "TSInterfaceDeclaration";
-
-const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "ClassExpression"];
-
-/** Whether a statement is code a file's types go before: a function or a class, or a const holding one. */
-const isCode = (node) =>
-  ["FunctionDeclaration", "TSDeclareFunction", "ClassDeclaration"].includes(node?.type) ||
-  (node?.type === "VariableDeclaration" && node.declarations.some((d) => FUNCTION_VALUES.includes(d.init?.type)));
-
-/** A top-level statement's declaration: an export's, or itself. */
-const declarationOf = (statement) =>
-  statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
-    ? statement.declaration
-    : statement;
-
-/** The end of a statement, with the comment ending its line (` // note`). */
-function endOf(text, statement) {
-  const [, end] = statement.range ?? [statement.start, statement.end];
-  const lineEnd = text.indexOf("\n", end);
-  const rest = text.slice(end, lineEnd === -1 ? text.length : lineEnd);
-  return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? end + rest.trimEnd().length : end;
-}
-
-const typesFirst = {
-  meta: { type: "suggestion", fixable: "code" },
-  create(context) {
-    return {
-      Program(program) {
-        const text = context.sourceCode.text;
-        const statements = program.body;
-        const firstCode = statements.findIndex((s) => isCode(declarationOf(s)));
-        if (firstCode === -1) return;
-        const misplaced = statements
-          .map((statement, index) => ({ statement, index }))
-          .filter(({ statement, index }) => index > firstCode && isTypeDeclaration(declarationOf(statement)));
-        if (misplaced.length === 0) return;
-
-        // A type moves with the comment on the lines right above it, its own; a banner a blank line above stays, heading
-        // the code below it
-        const attachedStart = (index) => {
-          const statement = statements[index];
-          const [start] = statement.range ?? [statement.start, statement.end];
-          const from = index === 0 ? 0 : endOf(text, statements[index - 1]);
-          const lines = text.slice(from, start).split("\n");
-          let at = start - lines.at(-1).length;
-          for (let i = lines.length - 2; i >= 0 && lines[i].trim() !== ""; i--) at -= lines[i].length + 1;
-          return at;
-        };
-        // Below the statement before the first code, or, when that code opens the file, below its header
-        const atTop = firstCode === 0;
-        const insertAt = atTop ? attachedStart(0) : endOf(text, statements[firstCode - 1]);
-        const moved = misplaced.map(({ index, statement }) => {
-          const from = attachedStart(index);
-          // What's removed: the type and its comment, and the blank lines before them
-          const removeFrom =
-            endOf(text, statements[index - 1]) + text.slice(endOf(text, statements[index - 1]), from).trimEnd().length;
-          return { removeFrom, end: endOf(text, statement), from };
-        });
-        const lifted = moved.map(({ from, end }) => text.slice(from, end));
-        let rest = "";
-        let cursor = insertAt;
-        for (const { removeFrom, end } of moved) {
-          rest += text.slice(cursor, removeFrom);
-          cursor = end;
-        }
-        const last = moved.at(-1).end;
-        context.report({
-          node: declarationOf(misplaced[0].statement),
-          message:
-            "A file's types sit at its top, after its imports: before its first function or class (`oxlint --fix` lifts it).",
-          fix: (fixer) =>
-            fixer.replaceTextRange(
-              [insertAt, last],
-              atTop
-                ? lifted.join("\n\n") + "\n\n" + rest.replace(/^\n*/, "")
-                : "\n\n" + lifted.join("\n\n") + rest.replace(/^\n*/, "\n\n"),
-            ),
-        });
-      },
-    };
-  },
-};
-
 export const rules = {
   "no-parent-imports": noParentImports,
   "no-helpers-modules": noHelpersModules,
@@ -602,5 +516,4 @@ export const rules = {
   "session-param": sessionParam,
   "test-placement": testPlacement,
   "concern-shape": concernShape,
-  "types-first": typesFirst,
 };

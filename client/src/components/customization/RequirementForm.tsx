@@ -14,11 +14,6 @@ export type RequirementFormData = InferRequestType<
 /** A condition checks a path; a chaining node joins its children with AND / OR. */
 export type RequirementType = "condition" | "chaining";
 
-const CHAINING_OPERATORS = [
-  { value: "and", label: "AND" },
-  { value: "or", label: "OR" },
-];
-
 interface RequirementFormProps {
   form: UseFormReturn<RequirementFormData>;
   type: RequirementType;
@@ -26,6 +21,11 @@ interface RequirementFormProps {
   rulesetId: string;
   mode: "create" | "edit";
 }
+
+const CHAINING_OPERATORS = [
+  { value: "and", label: "AND" },
+  { value: "or", label: "OR" },
+];
 
 /** A requirement's type, then its condition (target, operator, value) or its chaining operator. */
 export function RequirementForm({ form, type, onTypeChange, rulesetId, mode }: RequirementFormProps) {

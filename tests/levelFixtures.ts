@@ -11,6 +11,22 @@ import { addOneLevel, getSeedCtx, makeSession, uniqueId } from "@/tests/helpers.
 
 type CharacterValues = Omit<Parameters<typeof createCharacter>[2], "name" | "xp" | "description">;
 
+/** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
+export type Picks = {
+  skills: Record<string, number>;
+  feats: Record<string, string[]>;
+  powers: Record<string, string[]>;
+};
+
+/** A level's picks by name, with its hit points and ability increase. */
+export type LevelPlan = {
+  hp: number;
+  ability?: string;
+  skills?: Record<string, number>;
+  feats?: Record<string, string[]>;
+  powers?: Record<string, string[]>;
+};
+
 /** The character builds the tests level up. */
 export const BUILDS = {
   /** Human, INT 12: (2 + 1 + 1) skill points a fighter level, ×4 at the first. */
@@ -88,56 +104,6 @@ export const BUILDS = {
   },
 } satisfies Record<string, CharacterValues>;
 
-/** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
-export type Picks = {
-  skills: Record<string, number>;
-  feats: Record<string, string[]>;
-  powers: Record<string, string[]>;
-};
-
-/** A level's picks by name, with its hit points and ability increase. */
-export type LevelPlan = {
-  hp: number;
-  ability?: string;
-  skills?: Record<string, number>;
-  feats?: Record<string, string[]>;
-  powers?: Record<string, string[]>;
-};
-
-/** A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes. */
-export async function createSeedCharacter(
-  ctx: SeedContext,
-  build: keyof typeof BUILDS = "fighter",
-  {
-    xp = 0,
-    abilities = {},
-    ...values
-  }: Partial<Omit<CharacterValues, "abilities">> & { xp?: number; abilities?: Record<string, number> } = {},
-) {
-  const base = BUILDS[build];
-  return await createCharacter(db, ctx, {
-    ...base,
-    ...values,
-    abilities: { ...base.abilities, ...abilities },
-    name: `Test ${build} ${uniqueId()}`,
-    xp,
-    description: "Test",
-  });
-}
-
-/** The ids of a plan's picks. */
-export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {
-  const byAptitude = (named: Record<string, string[]>, ids: Record<string, string>) =>
-    Object.fromEntries(
-      Object.entries(named).map(([aptitude, names]) => [ctx.aptMap[aptitude], names.map((name) => ids[name])]),
-    );
-  return {
-    skills: Object.fromEntries(Object.entries(skills).map(([name, rank]) => [ctx.skillMap[name], rank])),
-    feats: byAptitude(feats, ctx.featMap),
-    powers: byAptitude(powers, ctx.powerMap),
-  };
-}
-
 /** A human fighter's first four levels: 2 General feats and a bonus feat at the first, a strength increase at the fourth. */
 export const FIGHTER_LEVELS: LevelPlan[] = [
   {
@@ -213,18 +179,46 @@ const PALADIN_1: LevelPlan = {
   feats: { General: ["Toughness", "Power Attack"] },
 };
 
-/** `plan` with these picks through `aptitude` instead of its own, or none. */
-export function picking(plan: LevelPlan, aptitude: string, feats: string[]): LevelPlan {
-  const { [aptitude]: _, ...others } = plan.feats ?? {};
-  return { ...plan, feats: feats.length > 0 ? { ...others, [aptitude]: feats } : others };
-}
-
 /** A first cleric level taken as a second character level: the War and Good domains, and the longsword as war weapon. */
 export const WAR_CLERIC_1: LevelPlan = {
   hp: 8,
   skills: { Concentration: 1, Heal: 1, Spellcraft: 1, Diplomacy: 1 },
   feats: { "Cleric Domain": ["War Domain", "Good Domain"], "War Domain Weapon": ["War Domain Weapon: Longsword"] },
 };
+
+/** A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes. */
+export async function createSeedCharacter(
+  ctx: SeedContext,
+  build: keyof typeof BUILDS = "fighter",
+  {
+    xp = 0,
+    abilities = {},
+    ...values
+  }: Partial<Omit<CharacterValues, "abilities">> & { xp?: number; abilities?: Record<string, number> } = {},
+) {
+  const base = BUILDS[build];
+  return await createCharacter(db, ctx, {
+    ...base,
+    ...values,
+    abilities: { ...base.abilities, ...abilities },
+    name: `Test ${build} ${uniqueId()}`,
+    xp,
+    description: "Test",
+  });
+}
+
+/** The ids of a plan's picks. */
+export function picks(ctx: SeedContext, { skills = {}, feats = {}, powers = {} }: Omit<LevelPlan, "hp">): Picks {
+  const byAptitude = (named: Record<string, string[]>, ids: Record<string, string>) =>
+    Object.fromEntries(
+      Object.entries(named).map(([aptitude, names]) => [ctx.aptMap[aptitude], names.map((name) => ids[name])]),
+    );
+  return {
+    skills: Object.fromEntries(Object.entries(skills).map(([name, rank]) => [ctx.skillMap[name], rank])),
+    feats: byAptitude(feats, ctx.featMap),
+    powers: byAptitude(powers, ctx.powerMap),
+  };
+}
 
 /** Finalizes one level of `klass` as `plan` says. */
 export function levelUp(
@@ -286,6 +280,12 @@ async function createMaster(
   const bonded = await Characters.findOne(db, { parentCharacterId: masterId, kind });
   if (!bonded) throw new Error(`No ${kind} was bonded to the ${build}`);
   return { ctx, masterId, bonded };
+}
+
+/** `plan` with these picks through `aptitude` instead of its own, or none. */
+export function picking(plan: LevelPlan, aptitude: string, feats: string[]): LevelPlan {
+  const { [aptitude]: _, ...others } = plan.feats ?? {};
+  return { ...plan, feats: feats.length > 0 ? { ...others, [aptitude]: feats } : others };
 }
 
 /** A wizard whose first level, `plan`, picks this familiar. */

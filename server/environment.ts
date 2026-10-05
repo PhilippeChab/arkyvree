@@ -1,3 +1,5 @@
+export type EnvironmentVariable = keyof typeof VARIABLES;
+
 /**
  * The server's environment, read in one place (`arkyvree/environment`): every variable it reads, and what for. A
  * variable is read when asked for, never kept, so a test that changes one is seen (tests/emails/EmailService.test.ts
@@ -29,8 +31,6 @@ const VARIABLES = {
   DISABLE_CACHE: "`true` turns the in-memory caches off",
   BUN_TEST_WORKER_ID: "a parallel test run's worker, whose own database it uses",
 } as const;
-
-export type EnvironmentVariable = keyof typeof VARIABLES;
 
 /** The variables set on Fly: docs/deployment.md's table lists each (tests/environment.test.ts). */
 // oxfmt-ignore

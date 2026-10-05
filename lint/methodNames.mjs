@@ -91,6 +91,9 @@ const FUNCTION_VERBS = [
 /** Names a library gave them, kept: Hono's validator, which `zValidator` wraps. */
 const FUNCTION_EXCEPTIONS = new Set(["zValidator"]);
 
+/** A function a field holds: written there, or another one's (`readonly finalizeLevelUp = finalizeLevelUp`). */
+const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "Identifier", "MemberExpression"];
+
 /** The functions a module exports: declared, or an arrow or function expression a const holds. */
 function exportedFunctions(node) {
   const declaration = node.declaration;
@@ -143,9 +146,6 @@ const functionNames = {
     };
   },
 };
-
-/** A function a field holds: written there, or another one's (`readonly finalizeLevelUp = finalizeLevelUp`). */
-const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "Identifier", "MemberExpression"];
 
 const isMethod = (member) =>
   (member.type === "MethodDefinition" || member.type === "TSAbstractMethodDefinition"

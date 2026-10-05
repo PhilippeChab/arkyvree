@@ -2,37 +2,12 @@ import { Hono } from "hono";
 
 import { readEnv } from "@/server/environment.ts";
 
-const APP_URL = readEnv("APP_URL") || "http://localhost:8000";
-
 interface RouteMeta {
   title: string;
   description: string;
 }
 
-// Helper function to get MIME type based on file extension
-function getMimeType(path: string): string {
-  const ext = path.split(".").pop()?.toLowerCase();
-  const mimeTypes: Record<string, string> = {
-    html: "text/html",
-    css: "text/css",
-    js: "text/javascript",
-    json: "application/json",
-    png: "image/png",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    gif: "image/gif",
-    svg: "image/svg+xml",
-    ico: "image/x-icon",
-    webmanifest: "application/manifest+json",
-    txt: "text/plain",
-    xml: "application/xml",
-    gz: "application/gzip",
-    wasm: "application/wasm",
-    md: "text/markdown; charset=utf-8",
-  };
-
-  return mimeTypes[ext || ""] || "application/octet-stream";
-}
+const APP_URL = readEnv("APP_URL") || "http://localhost:8000";
 
 // --- SEO: Route meta map ---
 
@@ -60,6 +35,44 @@ const DEFAULT_DESCRIPTION =
 const DEFAULT_OG_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creator";
 const DEFAULT_OG_DESCRIPTION =
   "A programmable ruleset engine and character creator for tabletop RPGs. Customize rules, build characters, and manage campaigns.";
+
+// Cache landing.html template at startup
+let cachedLanding: string | null = null;
+
+// Cache index.html template at startup
+let cachedTemplate: string | null = null;
+
+const APP_CONFIG = JSON.stringify({
+  googleClientId: readEnv("GOOGLE_CLIENT_ID") || null,
+  sentryDsn: readEnv("SENTRY_CLIENT_DSN") || null,
+  sentryEnvironment: readEnv("NODE_ENV") || null,
+  sentryRelease: readEnv("FLY_MACHINE_VERSION") || null,
+});
+
+// Helper function to get MIME type based on file extension
+function getMimeType(path: string): string {
+  const ext = path.split(".").pop()?.toLowerCase();
+  const mimeTypes: Record<string, string> = {
+    html: "text/html",
+    css: "text/css",
+    js: "text/javascript",
+    json: "application/json",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    svg: "image/svg+xml",
+    ico: "image/x-icon",
+    webmanifest: "application/manifest+json",
+    txt: "text/plain",
+    xml: "application/xml",
+    gz: "application/gzip",
+    wasm: "application/wasm",
+    md: "text/markdown; charset=utf-8",
+  };
+
+  return mimeTypes[ext || ""] || "application/octet-stream";
+}
 
 function injectMeta(html: string, path: string): string {
   const meta = INDEXABLE_ROUTE_META[path];
@@ -97,9 +110,6 @@ function injectMeta(html: string, path: string): string {
   return result;
 }
 
-// Cache landing.html template at startup
-let cachedLanding: string | null = null;
-
 async function getLandingTemplate(): Promise<string> {
   if (cachedLanding) return cachedLanding;
   const file = Bun.file("./server/landing.html");
@@ -107,16 +117,6 @@ async function getLandingTemplate(): Promise<string> {
   cachedLanding = raw.replaceAll("__APP_URL__", APP_URL);
   return cachedLanding;
 }
-
-// Cache index.html template at startup
-let cachedTemplate: string | null = null;
-
-const APP_CONFIG = JSON.stringify({
-  googleClientId: readEnv("GOOGLE_CLIENT_ID") || null,
-  sentryDsn: readEnv("SENTRY_CLIENT_DSN") || null,
-  sentryEnvironment: readEnv("NODE_ENV") || null,
-  sentryRelease: readEnv("FLY_MACHINE_VERSION") || null,
-});
 
 async function getTemplate(): Promise<string> {
   if (cachedTemplate) return cachedTemplate;

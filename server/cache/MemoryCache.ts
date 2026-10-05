@@ -1,10 +1,6 @@
 import { readEnv } from "@/server/environment.ts";
 import { onCacheHit, onCacheMiss } from "@/server/timing.ts";
 
-const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const DEFAULT_SWEEP_INTERVAL_MS = 60 * 1000; // 1 minute
-const DEFAULT_MAX_SIZE = 200;
-
 interface CacheEntry<T> {
   value: T;
   expiresAt: number;
@@ -15,6 +11,10 @@ interface MemoryCacheOptions {
   maxSize?: number;
   sweepInterval?: number;
 }
+
+const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_SWEEP_INTERVAL_MS = 60 * 1000; // 1 minute
+const DEFAULT_MAX_SIZE = 200;
 
 let globalCacheEnabled = readEnv("DISABLE_CACHE") !== "true";
 

@@ -19,10 +19,20 @@ import type {
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-// Re-export stripSeparators — used as the slug function throughout the tools
-export { stripSeparators } from "@/shared/text.ts";
+type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string } };
 
-export { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+/** A reference's text checked against the fixed set the seed accepts: the option it is, or why it isn't one. */
+export type Checked<T> = { ok: true; value: T } | { ok: false; problem: string };
+
+/**
+ * What detecting an entry's modifiers finds: its modifiers (a feat's `ModifierSeed`, a domain's or a race's
+ * `Modifier`), the invalid paths and the text it couldn't parse.
+ */
+export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = {
+  modifiers: M[];
+  errors: string[];
+  unresolvedModifiers: string[];
+};
 
 const COMPANION_GRANT_PATTERNS: {
   pattern: RegExp;
@@ -47,20 +57,18 @@ export const NUMBER_WORDS: Record<string, number> = {
   ten: 10,
 };
 
-type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string } };
+// ---------------------------------------------------------------------------
+// discoverRefs — used by the generator, sync, validate, overrides
+// ---------------------------------------------------------------------------
 
-/** A reference's text checked against the fixed set the seed accepts: the option it is, or why it isn't one. */
-export type Checked<T> = { ok: true; value: T } | { ok: false; problem: string };
+/** The books' references: a folder per book. */
+export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
 
-/**
- * What detecting an entry's modifiers finds: its modifiers (a feat's `ModifierSeed`, a domain's or a race's
- * `Modifier`), the invalid paths and the text it couldn't parse.
- */
-export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = {
-  modifiers: M[];
-  errors: string[];
-  unresolvedModifiers: string[];
-};
+// ---------------------------------------------------------------------------
+// SKILL_MAP — used by detectFeat, detectDomain
+// ---------------------------------------------------------------------------
+
+export const SKILL_MAP: Record<string, string> = {};
 
 /**
  * Extract the bonded-level contribution formula from a grant feat's SRD
@@ -107,6 +115,11 @@ function detectBondedLevelFormula(description: string, classSlug: string): strin
 
   return base;
 }
+
+// Re-export stripSeparators — used as the slug function throughout the tools
+export { stripSeparators } from "@/shared/text.ts";
+
+export { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 
 /**
  * Every class-feature feat matching one of these patterns emits two
@@ -176,13 +189,6 @@ export function stripClassSuffix(name: string, className: string): string | unde
   return undefined;
 }
 
-// ---------------------------------------------------------------------------
-// discoverRefs — used by the generator, sync, validate, overrides
-// ---------------------------------------------------------------------------
-
-/** The books' references: a folder per book. */
-export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
-
 /** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */
 export function referenceBooks(): string[] {
   return readdirSync(REFERENCE_DIR, { withFileTypes: true })
@@ -207,12 +213,6 @@ export function discoverRefs(
     return { path, type: _meta.type, url: _meta.sourceUrl, book: _meta.book };
   });
 }
-
-// ---------------------------------------------------------------------------
-// SKILL_MAP — used by detectFeat, detectDomain
-// ---------------------------------------------------------------------------
-
-export const SKILL_MAP: Record<string, string> = {};
 for (const name of SKILL_NAMES) {
   SKILL_MAP[name.toLowerCase()] = stripSeparators(name);
 }

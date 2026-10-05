@@ -4,16 +4,6 @@
  * Should NEVER be imported in production code.
  */
 
-import { readEnv } from "@/server/environment.ts";
-
-// Safety check
-if (!readEnv("DATABASE_URL")?.includes("test")) {
-  throw new Error(
-    "FATAL: Test database module loaded with non-test DATABASE_URL. " +
-      "This is a safety violation. Ensure DATABASE_URL contains 'test'.",
-  );
-}
-
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { NodePgClient } from "drizzle-orm/node-postgres";
 import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
@@ -23,13 +13,30 @@ import { Pool as PgPool } from "pg";
 import * as relations from "@/drizzle/relations.ts";
 import * as schema from "@/drizzle/schema.ts";
 import { clearRequestCache } from "@/server/database/requestCache.ts";
+import { readEnv } from "@/server/environment.ts";
 import { instrumentQueries } from "@/server/timing.ts";
-
-instrumentQueries();
 
 declare global {
   var __getTestDb: (() => Db | null) | undefined;
 }
+
+type Transaction = PgTransaction<
+  PgQueryResultHKT,
+  typeof schemaWithRelations,
+  ExtractTablesWithRelations<typeof schemaWithRelations>
+>;
+
+type Db = typeof db | Transaction;
+
+// Safety check, before anything here connects (imports load first wherever they sit)
+if (!readEnv("DATABASE_URL")?.includes("test")) {
+  throw new Error(
+    "FATAL: Test database module loaded with non-test DATABASE_URL. " +
+      "This is a safety violation. Ensure DATABASE_URL contains 'test'.",
+  );
+}
+
+instrumentQueries();
 
 // Route to the per-worker DB when running under `bun test --parallel`.
 // BUN_TEST_WORKER_ID is 1-based. Falls back to the base URL for direct
@@ -57,14 +64,6 @@ export const db = new Proxy(_db, {
     return (currentDb as unknown as Record<string | symbol, unknown>)[prop];
   },
 });
-
-type Transaction = PgTransaction<
-  PgQueryResultHKT,
-  typeof schemaWithRelations,
-  ExtractTablesWithRelations<typeof schemaWithRelations>
->;
-
-type Db = typeof db | Transaction;
 
 export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
   // In a test, the test's own transaction: this one is a savepoint in it, which a failure rolls back as in production.

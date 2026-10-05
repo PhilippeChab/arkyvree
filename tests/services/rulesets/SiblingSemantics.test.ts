@@ -15,8 +15,6 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import type { Requirement } from "@/shared/relations.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
-afterEach(() => RulesetCache.invalidateAll());
-
 async function setup(
   configure: (extensionId: string, baseId: string, index: number) => Promise<void>,
   reverseOrder = false,
@@ -41,6 +39,8 @@ async function setup(
   );
   return { session, host };
 }
+
+afterEach(() => RulesetCache.invalidateAll());
 
 test("editing a shared aptitude preserves references from both extensions", async () => {
   const aptitudeIds: string[] = [];

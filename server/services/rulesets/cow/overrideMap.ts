@@ -9,38 +9,6 @@ export function newOverrideMap(entries?: Iterable<readonly [string, string]>): O
   return new Map<string, string>(entries) as OverrideMap;
 }
 
-export function newIdResolveMap(seed?: OverrideMap | IdResolveMap): IdResolveMap {
-  return new Map<string, string>(seed) as IdResolveMap;
-}
-
-/**
- * Construction-time invariant: `idResolveMap` MUST be a superset of
- * `overrideMap`. The proxy / cowResolvingMap layer needs every stale id
- * compose can skip to also resolve to a winner. Throws if not — bugs in
- * `buildOverrideMap` / `getOrBuildCowData` should fail fast, not silently
- * corrupt downstream.
- */
-export function assertCowMapsConsistent(overrideMap: OverrideMap, idResolveMap: IdResolveMap): void {
-  if (idResolveMap.size < overrideMap.size) {
-    throw new Error(
-      `CowData invariant violated: idResolveMap.size (${idResolveMap.size}) < overrideMap.size (${overrideMap.size})`,
-    );
-  }
-  for (const key of overrideMap.keys()) {
-    if (!idResolveMap.has(key)) {
-      throw new Error(`CowData invariant violated: overrideMap key ${key} missing from idResolveMap`);
-    }
-  }
-}
-
-/**
- * Build the combined source chain for COW lookups:
- * extensions first (their new entities are visible), then ancestors.
- */
-export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ancestorRulesetIds: string[] }): string[] {
-  return [...ruleset.extensionRulesetIds, ...ruleset.ancestorRulesetIds];
-}
-
 /** The true overrides: each source entity to its closest fork's copy, following a copy of a copy to the last. */
 function snapshotOverrides(allRulesetIds: string[], byRuleset: SnapshotsByRuleset) {
   const map = newOverrideMap();
@@ -175,6 +143,38 @@ function suppressLocalSiblings(
       idResolveMap.set(siblingId, resolvedId);
     }
   }
+}
+
+export function newIdResolveMap(seed?: OverrideMap | IdResolveMap): IdResolveMap {
+  return new Map<string, string>(seed) as IdResolveMap;
+}
+
+/**
+ * Construction-time invariant: `idResolveMap` MUST be a superset of
+ * `overrideMap`. The proxy / cowResolvingMap layer needs every stale id
+ * compose can skip to also resolve to a winner. Throws if not — bugs in
+ * `buildOverrideMap` / `getOrBuildCowData` should fail fast, not silently
+ * corrupt downstream.
+ */
+export function assertCowMapsConsistent(overrideMap: OverrideMap, idResolveMap: IdResolveMap): void {
+  if (idResolveMap.size < overrideMap.size) {
+    throw new Error(
+      `CowData invariant violated: idResolveMap.size (${idResolveMap.size}) < overrideMap.size (${overrideMap.size})`,
+    );
+  }
+  for (const key of overrideMap.keys()) {
+    if (!idResolveMap.has(key)) {
+      throw new Error(`CowData invariant violated: overrideMap key ${key} missing from idResolveMap`);
+    }
+  }
+}
+
+/**
+ * Build the combined source chain for COW lookups:
+ * extensions first (their new entities are visible), then ancestors.
+ */
+export function buildSourceChain(ruleset: { extensionRulesetIds: string[]; ancestorRulesetIds: string[] }): string[] {
+  return [...ruleset.extensionRulesetIds, ...ruleset.ancestorRulesetIds];
 }
 
 /**

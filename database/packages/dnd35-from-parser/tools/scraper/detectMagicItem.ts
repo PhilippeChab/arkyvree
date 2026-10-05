@@ -4,6 +4,8 @@ import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/sc
 import { SAVE_MAP } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
+type Modifier = { target: string; operator: string; value: string; valueType: string };
+
 // ---------------------------------------------------------------------------
 // Base item template names (sorted longest-first per category)
 // ---------------------------------------------------------------------------
@@ -117,37 +119,6 @@ const ALIASES: Partial<Record<MagicItemCategory, Record<string, string>>> = {
   },
 };
 
-type Modifier = { target: string; operator: string; value: string; valueType: string };
-
-export function detectBaseItem(name: string, description: string, category: MagicItemCategory): string | undefined {
-  let candidates: string[];
-  if (category === "specificWeapon") candidates = BASE_WEAPONS;
-  else if (category === "specificArmor") candidates = BASE_ARMOR;
-  else if (category === "specificShield") candidates = BASE_SHIELDS;
-  else return undefined;
-
-  const lowerDesc = description.toLowerCase();
-
-  // Check category-scoped aliases first (e.g., "chainmail" → "Chain Mail" for armor only)
-  const categoryAliases = ALIASES[category];
-  if (categoryAliases) {
-    for (const [alias, canonical] of Object.entries(categoryAliases)) {
-      if (lowerDesc.includes(alias)) return canonical;
-    }
-  }
-
-  for (const base of candidates) {
-    if (lowerDesc.includes(base.toLowerCase())) return base;
-  }
-
-  const lowerName = name.toLowerCase();
-  for (const base of candidates) {
-    if (lowerName.includes(base.toLowerCase())) return base;
-  }
-
-  return undefined;
-}
-
 // ---------------------------------------------------------------------------
 // Category → item type mapping
 // ---------------------------------------------------------------------------
@@ -185,47 +156,6 @@ const WONDROUS_SLOT_PATTERNS: [RegExp, string][] = [
   [/\b(?:Robe|Vest)\b/i, "Torso"],
   [/\b(?:Boots|Slippers|Sandals)\b/i, "Other"],
 ];
-
-function inferSlot(name: string, category: MagicItemCategory): string {
-  if (category !== "wondrousItem") {
-    return CATEGORY_SLOT_MAP[category] ?? "Other";
-  }
-
-  for (const [pattern, slot] of WONDROUS_SLOT_PATTERNS) {
-    if (pattern.test(name)) return slot;
-  }
-  return "Other";
-}
-
-// ---------------------------------------------------------------------------
-// Metadata parsing
-// ---------------------------------------------------------------------------
-
-function parseAura(metadataText: string): string | undefined {
-  const match = metadataText.match(/(faint|moderate|strong|overwhelming)\s+([\w][\w\s,]+?)(?:;|$)/i);
-  if (!match) return undefined;
-  const strength = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
-  const school = match[2].trim();
-  return `${strength} ${school}`;
-}
-
-function parseCasterLevel(metadataText: string): number | undefined {
-  const match = metadataText.match(/CL\s+(\d+)(?:st|nd|rd|th)/i);
-  return match ? parseInt(match[1], 10) : undefined;
-}
-
-function parseMetadataPrice(metadataText: string): string {
-  // For variant items, the metadata may have multiple prices — we extract the first one
-  const match = metadataText.match(/Price\s+([\d,]+)\s*gp/i);
-  if (match) return parseCost(`${match[1]} gp`);
-  return "0";
-}
-
-function parseMetadataWeight(metadataText: string): string {
-  const match = metadataText.match(/Weight\s+([\d.]+)\s*lb/i);
-  if (match) return parseWeight(`${match[1]} lb.`);
-  return "0";
-}
 
 // ---------------------------------------------------------------------------
 // Modifier detection
@@ -293,6 +223,47 @@ const NAME_MODIFIER_PATTERNS: { pattern: RegExp; toModifiers: (match: RegExpMatc
     },
   },
 ];
+
+function inferSlot(name: string, category: MagicItemCategory): string {
+  if (category !== "wondrousItem") {
+    return CATEGORY_SLOT_MAP[category] ?? "Other";
+  }
+
+  for (const [pattern, slot] of WONDROUS_SLOT_PATTERNS) {
+    if (pattern.test(name)) return slot;
+  }
+  return "Other";
+}
+
+// ---------------------------------------------------------------------------
+// Metadata parsing
+// ---------------------------------------------------------------------------
+
+function parseAura(metadataText: string): string | undefined {
+  const match = metadataText.match(/(faint|moderate|strong|overwhelming)\s+([\w][\w\s,]+?)(?:;|$)/i);
+  if (!match) return undefined;
+  const strength = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+  const school = match[2].trim();
+  return `${strength} ${school}`;
+}
+
+function parseCasterLevel(metadataText: string): number | undefined {
+  const match = metadataText.match(/CL\s+(\d+)(?:st|nd|rd|th)/i);
+  return match ? parseInt(match[1], 10) : undefined;
+}
+
+function parseMetadataPrice(metadataText: string): string {
+  // For variant items, the metadata may have multiple prices — we extract the first one
+  const match = metadataText.match(/Price\s+([\d,]+)\s*gp/i);
+  if (match) return parseCost(`${match[1]} gp`);
+  return "0";
+}
+
+function parseMetadataWeight(metadataText: string): string {
+  const match = metadataText.match(/Weight\s+([\d.]+)\s*lb/i);
+  if (match) return parseWeight(`${match[1]} lb.`);
+  return "0";
+}
 
 /** An item's modifiers, from its name and description, and the bonuses it names that no modifier can hold. */
 function detectModifiers(name: string, description: string): { modifiers: Modifier[]; unresolvedModifiers: string[] } {
@@ -395,6 +366,35 @@ function parseAllVariantPrices(metadataText: string): Map<string, string> | null
     variants.set(tag, match[1].replace(/,/g, ""));
   }
   return variants.size > 1 ? variants : null;
+}
+
+export function detectBaseItem(name: string, description: string, category: MagicItemCategory): string | undefined {
+  let candidates: string[];
+  if (category === "specificWeapon") candidates = BASE_WEAPONS;
+  else if (category === "specificArmor") candidates = BASE_ARMOR;
+  else if (category === "specificShield") candidates = BASE_SHIELDS;
+  else return undefined;
+
+  const lowerDesc = description.toLowerCase();
+
+  // Check category-scoped aliases first (e.g., "chainmail" → "Chain Mail" for armor only)
+  const categoryAliases = ALIASES[category];
+  if (categoryAliases) {
+    for (const [alias, canonical] of Object.entries(categoryAliases)) {
+      if (lowerDesc.includes(alias)) return canonical;
+    }
+  }
+
+  for (const base of candidates) {
+    if (lowerDesc.includes(base.toLowerCase())) return base;
+  }
+
+  const lowerName = name.toLowerCase();
+  for (const base of candidates) {
+    if (lowerName.includes(base.toLowerCase())) return base;
+  }
+
+  return undefined;
 }
 
 export function buildMagicItemDetected(raw: MagicItemReference["raw"]): MagicItemReference["detected"] {

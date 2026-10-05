@@ -22,14 +22,14 @@ import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+type SpellsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>;
+type Spell = SpellsPaginated["items"][number];
+
 const SPELLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
   { key: "aptitudes", label: "Aptitudes", width: "15%" },
   { key: "description", label: "Description", width: "60%" },
 ];
-
-type SpellsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>;
-type Spell = SpellsPaginated["items"][number];
 
 export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);

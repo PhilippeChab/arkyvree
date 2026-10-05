@@ -3,59 +3,6 @@ import { isRecord } from "@/shared/isRecord.ts";
 
 import { getActivityLabelOverrides } from "./rulesetLabels.ts";
 
-/** An activity's payload: the fields its type records, or none. */
-const payload = (data: unknown): Record<string, unknown> => (isRecord(data) ? data : {});
-
-const isChangedField = (value: unknown): value is ChangedField => isRecord(value) && typeof value.field === "string";
-
-export function formatActivityType(type: string, data?: unknown): string {
-  let formatted = type.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
-
-  const d = payload(data);
-  if (typeof d.baseRules === "string") {
-    const overrides = getActivityLabelOverrides(d.baseRules);
-    for (const [generic, specific] of Object.entries(overrides)) {
-      formatted = formatted.replaceAll(generic, specific);
-    }
-  }
-
-  if (d.entityName) {
-    formatted += `: ${d.entityName}`;
-  }
-
-  return formatted;
-}
-
-/** A date on its own ("9/27/2026"), in the viewer's locale. */
-export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString();
-}
-
-export function formatActivityDate(dateString: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(dateString));
-}
-
-export function formatRelativeTime(dateString: string): string {
-  const now = Date.now();
-  const then = new Date(dateString).getTime();
-  const diff = now - then;
-
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  return formatActivityDate(dateString);
-}
-
 const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, unknown>) => string> = {
   // Campaign invites
   createCampaignInvite: (actor, d) => `${actor} invited you to ${d.campaignName || "a campaign"}`,
@@ -136,17 +83,6 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   pdfFailed: (_actor, d) => `PDF generation failed for ${d.characterName || "your character"}`,
 };
 
-export function formatNotificationMessage(type: string, data: unknown): string {
-  const d = payload(data);
-  const actorName = typeof d.actorName === "string" && d.actorName ? d.actorName : "Someone";
-
-  const formatter = NOTIFICATION_MESSAGES[type];
-  if (formatter) return formatter(actorName, d);
-
-  const typeFormatted = formatActivityType(type, data).toLowerCase();
-  return `${actorName}: ${typeFormatted}`;
-}
-
 const FIELD_LABELS: Record<string, string> = {
   name: "Name",
   description: "Description",
@@ -163,6 +99,11 @@ const FIELD_LABELS: Record<string, string> = {
   saveId: "Save",
 };
 
+/** An activity's payload: the fields its type records, or none. */
+const payload = (data: unknown): Record<string, unknown> => (isRecord(data) ? data : {});
+
+const isChangedField = (value: unknown): value is ChangedField => isRecord(value) && typeof value.field === "string";
+
 function formatChange(change: ChangedField): string {
   const label = FIELD_LABELS[change.field] ?? change.field;
   if (change.from == null && change.to == null) {
@@ -175,6 +116,65 @@ function formatChange(change: ChangedField): string {
     return `${label} set to ${change.to}`;
   }
   return `${label} cleared`;
+}
+
+export function formatActivityType(type: string, data?: unknown): string {
+  let formatted = type.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
+
+  const d = payload(data);
+  if (typeof d.baseRules === "string") {
+    const overrides = getActivityLabelOverrides(d.baseRules);
+    for (const [generic, specific] of Object.entries(overrides)) {
+      formatted = formatted.replaceAll(generic, specific);
+    }
+  }
+
+  if (d.entityName) {
+    formatted += `: ${d.entityName}`;
+  }
+
+  return formatted;
+}
+
+/** A date on its own ("9/27/2026"), in the viewer's locale. */
+export function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString();
+}
+
+export function formatActivityDate(dateString: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateString));
+}
+
+export function formatRelativeTime(dateString: string): string {
+  const now = Date.now();
+  const then = new Date(dateString).getTime();
+  const diff = now - then;
+
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return formatActivityDate(dateString);
+}
+
+export function formatNotificationMessage(type: string, data: unknown): string {
+  const d = payload(data);
+  const actorName = typeof d.actorName === "string" && d.actorName ? d.actorName : "Someone";
+
+  const formatter = NOTIFICATION_MESSAGES[type];
+  if (formatter) return formatter(actorName, d);
+
+  const typeFormatted = formatActivityType(type, data).toLowerCase();
+  return `${actorName}: ${typeFormatted}`;
 }
 
 export function formatActivityDetails(data: unknown): string | null {

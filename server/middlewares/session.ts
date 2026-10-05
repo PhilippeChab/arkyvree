@@ -8,16 +8,16 @@ import { UnauthorizedError } from "@/server/errors/index.ts";
 import { SESSION_TTL_SECONDS, Sessions, Users } from "@/server/repositories/index.ts";
 import type { Session, User } from "@/shared/relations.ts";
 
-export const SESSION_COOKIE_NAME = "session-id";
-const SESSION_CONTEXT_KEY = "requestSession";
-const USER_CONTEXT_KEY = "requestUser";
-
 export type SessionContext = {
   Variables: {
     requestSession: Session;
     requestUser: User;
   };
 };
+
+export const SESSION_COOKIE_NAME = "session-id";
+const SESSION_CONTEXT_KEY = "requestSession";
+const USER_CONTEXT_KEY = "requestUser";
 
 export function getSessionCookie(c: Context) {
   return getCookie(c, SESSION_COOKIE_NAME);

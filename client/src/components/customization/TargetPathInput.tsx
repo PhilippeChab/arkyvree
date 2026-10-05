@@ -1,17 +1,17 @@
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import type { PathCompletion, PathValidationResult, TargetPath } from "@/shared/customization/target.ts";
-
 /** What the input reports about a completed path. */
-export type PathInfo = Pick<
-  TargetPath,
-  "path" | "valueType" | "operators" | "possibleValues" | "setValues" | "literalOnly"
->;
 import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useLatest } from "@/client/src/hooks/index.ts";
+import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import type { PathCompletion, PathValidationResult, TargetPath } from "@/shared/customization/target.ts";
 
 import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
+
+export type PathInfo = Pick<
+  TargetPath,
+  "path" | "valueType" | "operators" | "possibleValues" | "setValues" | "literalOnly"
+>;
 
 interface TargetPathInputProps {
   value: string;

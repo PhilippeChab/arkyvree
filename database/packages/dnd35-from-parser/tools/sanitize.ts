@@ -1,4 +1,7 @@
 import { isRecord } from "@/shared/isRecord.ts";
+
+/** Replacements, applied in order. */
+type Replacements = [RegExp, string][];
 /** Book abbreviation suffixes found in scraped feat prerequisites (e.g., "Dodge (PH)"). */
 export const BOOK_ABBREV_PATTERN = /\s*\((?:CAd|CAr|CA|CC|CD|CS|CW|DMG|DMG2|ECS|ELH|FR|MIC|MM|PH|PH2|PHB|PHB2|CV)\)/;
 
@@ -7,11 +10,6 @@ const BOOK =
   "(?:Player's Handbook|Dungeon Master's Guide|Monster Manual|Complete Divine|Complete Warrior|Complete Arcane|Complete Adventurer)";
 // Matches "Book" or "the Book" with optional trailing "book"/"handbook"/"sourcebook"
 const THE_BOOK = `(?:the )?${BOOK}(?:\\s+(?:book|handbook|sourcebook))?`;
-
-/** Replacements, applied in order. */
-type Replacements = [RegExp, string][];
-const applyAll = (text: string, replacements: Replacements) =>
-  replacements.reduce((result, [pattern, replacement]) => result.replace(pattern, replacement), text);
 
 /** Smart quotes, dashes, ellipses and non-breaking spaces, as entities or characters, and garbled apostrophes. */
 const ENCODING: Replacements = [
@@ -41,6 +39,27 @@ const TEXT_FIXES: Replacements = [
   [/\s*\n\s*/g, " "], // collapse newlines into single space
   [/  +/g, " "], // collapse multiple spaces
 ];
+
+/** dndtools.net's HTML quirks and typos, and the encoding fixes. */
+const HTML_FIXES: Replacements = [
+  // Strip script tags and their content (dndtools.net injects ad scripts)
+  [/<script[\s\S]*?<\/script>/gi, ""],
+  [/<noscript[\s\S]*?<\/noscript>/gi, ""],
+  // Fix broken closing tags (dndtools.net quirk):
+  // `</\n` → `</p>\n` (missing tag name) and `</p\n` → `</p>\n` (missing >)
+  [/<\/\s*\n/g, "</p>\n"],
+  [/<\/(\w+)\s*\n/g, "</$1>\n"],
+  ...APOSTROPHES,
+  // Known typos from dndtools.net
+  [/Enhanse/g, "Enhance"],
+  [/[Pp]rofi [Cc]iency/g, "Proficiency"],
+  ...ENCODING,
+];
+
+/** Keys whose string values get full sanitization (encoding + book-reference stripping) */
+const DESCRIPTION_KEYS = new Set(["description", "benefit", "normal", "special", "prerequisiteText", "text"]);
+const applyAll = (text: string, replacements: Replacements) =>
+  replacements.reduce((result, [pattern, replacement]) => result.replace(pattern, replacement), text);
 
 /**
  * Fix encoding artifacts only — safe to run on any string (names, descriptions, etc.).
@@ -127,22 +146,6 @@ export function sanitizeText(text: string): string {
   );
 }
 
-/** dndtools.net's HTML quirks and typos, and the encoding fixes. */
-const HTML_FIXES: Replacements = [
-  // Strip script tags and their content (dndtools.net injects ad scripts)
-  [/<script[\s\S]*?<\/script>/gi, ""],
-  [/<noscript[\s\S]*?<\/noscript>/gi, ""],
-  // Fix broken closing tags (dndtools.net quirk):
-  // `</\n` → `</p>\n` (missing tag name) and `</p\n` → `</p>\n` (missing >)
-  [/<\/\s*\n/g, "</p>\n"],
-  [/<\/(\w+)\s*\n/g, "</$1>\n"],
-  ...APOSTROPHES,
-  // Known typos from dndtools.net
-  [/Enhanse/g, "Enhance"],
-  [/[Pp]rofi [Cc]iency/g, "Proficiency"],
-  ...ENCODING,
-];
-
 /**
  * Sanitize raw HTML before Cheerio parsing.
  *
@@ -154,9 +157,6 @@ const HTML_FIXES: Replacements = [
 export function sanitizeHtml(html: string): string {
   return applyAll(html, HTML_FIXES);
 }
-
-/** Keys whose string values get full sanitization (encoding + book-reference stripping) */
-const DESCRIPTION_KEYS = new Set(["description", "benefit", "normal", "special", "prerequisiteText", "text"]);
 
 /**
  * Recursively sanitize all string values inside a parsed JSON object.

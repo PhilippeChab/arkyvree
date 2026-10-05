@@ -61,6 +61,86 @@ async function projectLevel(characterId: string, klassLevelId: string, projectio
   return { level, data };
 }
 
+/** The feat pools of a projected level: a pool is shared when its aptitude has spells too, and isn't counted then. */
+async function featSlots(
+  session: Session,
+  characterId: string,
+  klassId: string,
+  level: number,
+  projection: LevelProjection,
+) {
+  const characterRecord = await getEditableCharacter(db, session, characterId);
+
+  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+    const klassLevel = getKlassLevel(rulesetData, klassId, level);
+    const autoGrantedRecords = rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [];
+    const autoGrantedCustomizations = loadFeatCustomizations(
+      rulesetData,
+      autoGrantedRecords.map((rec) => rec.featsInRule.id),
+    );
+
+    const { level: projectedLevel, data } = await projectLevel(characterId, klassLevel.id, projection);
+    const projectedData: Dnd35ProjectedCharacterData = {
+      ...data,
+      givenFeats: buildProjectedGivenFeats(autoGrantedRecords, projectedLevel.id, autoGrantedCustomizations),
+    };
+
+    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+    await detailedCharacter.build(undefined, projectedData);
+
+    const aptitudePools = detailedCharacter.getDetailedCharacterAptitudes().extractFeatPools();
+    let featsToSelect = 0;
+    for (const pool of Object.values(aptitudePools)) {
+      pool.shared = rulesetData.aptitudeIdsByHavingPowers.has(pool.id);
+      if (!pool.shared) featsToSelect += pool.available;
+    }
+
+    return {
+      featsToSelect,
+      autoGrantedFeats: autoGrantedRecords.map((rec) => rec.featsInRule),
+      aptitudePools,
+    };
+  });
+}
+
+/** A projected character's spell pools, without the non-leveled aptitudes no spell belongs to (feat pools). */
+function spellPools(aptitudes: DetailedCharacterAptitudes, rulesetData: CachedRulesetData) {
+  const pools = aptitudes.extractPowerPools();
+  for (const aptitudeId of aptitudes.getNonLeveledAptitudeIds()) {
+    if (!rulesetData.aptitudeIdsByHavingPowers.has(aptitudeId)) delete pools[aptitudeId];
+  }
+  return pools;
+}
+
+/** The spell pools of a projected level, and the powers its class level grants. */
+async function powerSlots(
+  session: Session,
+  characterId: string,
+  klassId: string,
+  level: number,
+  projection: LevelProjection,
+) {
+  const characterRecord = await getEditableCharacter(db, session, characterId);
+
+  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+    const klassLevel = getKlassLevel(rulesetData, klassId, level);
+    const { data: projectedData } = await projectLevel(characterId, klassLevel.id, projection);
+
+    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+    await detailedCharacter.build(undefined, projectedData);
+
+    const aptitudePools = spellPools(detailedCharacter.getDetailedCharacterAptitudes(), rulesetData);
+    const powersToSelect = Object.values(aptitudePools).reduce((total, pool) => total + pool.available, 0);
+    const autoGrantedPowers = (rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? []).map(
+      (rec) => ({ ...rec.powersInRule, free: rec.free }),
+    );
+
+    return { powersToSelect, autoGrantedPowers, aptitudePools };
+  });
+}
+
 export async function getSkillSlots(
   session: Session,
   characterId: string,
@@ -112,49 +192,6 @@ export async function getSkillSlots(
   });
 }
 
-/** The feat pools of a projected level: a pool is shared when its aptitude has spells too, and isn't counted then. */
-async function featSlots(
-  session: Session,
-  characterId: string,
-  klassId: string,
-  level: number,
-  projection: LevelProjection,
-) {
-  const characterRecord = await getEditableCharacter(db, session, characterId);
-
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-    const klassLevel = getKlassLevel(rulesetData, klassId, level);
-    const autoGrantedRecords = rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [];
-    const autoGrantedCustomizations = loadFeatCustomizations(
-      rulesetData,
-      autoGrantedRecords.map((rec) => rec.featsInRule.id),
-    );
-
-    const { level: projectedLevel, data } = await projectLevel(characterId, klassLevel.id, projection);
-    const projectedData: Dnd35ProjectedCharacterData = {
-      ...data,
-      givenFeats: buildProjectedGivenFeats(autoGrantedRecords, projectedLevel.id, autoGrantedCustomizations),
-    };
-
-    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData);
-
-    const aptitudePools = detailedCharacter.getDetailedCharacterAptitudes().extractFeatPools();
-    let featsToSelect = 0;
-    for (const pool of Object.values(aptitudePools)) {
-      pool.shared = rulesetData.aptitudeIdsByHavingPowers.has(pool.id);
-      if (!pool.shared) featsToSelect += pool.available;
-    }
-
-    return {
-      featsToSelect,
-      autoGrantedFeats: autoGrantedRecords.map((rec) => rec.featsInRule),
-      aptitudePools,
-    };
-  });
-}
-
 export async function getFeatSlots(
   session: Session,
   characterId: string,
@@ -173,43 +210,6 @@ export async function getEditFeatSlots(
   characterLevelId: string,
 ) {
   return await featSlots(session, characterId, klassId, level, { editedLevelId: characterLevelId });
-}
-
-/** A projected character's spell pools, without the non-leveled aptitudes no spell belongs to (feat pools). */
-function spellPools(aptitudes: DetailedCharacterAptitudes, rulesetData: CachedRulesetData) {
-  const pools = aptitudes.extractPowerPools();
-  for (const aptitudeId of aptitudes.getNonLeveledAptitudeIds()) {
-    if (!rulesetData.aptitudeIdsByHavingPowers.has(aptitudeId)) delete pools[aptitudeId];
-  }
-  return pools;
-}
-
-/** The spell pools of a projected level, and the powers its class level grants. */
-async function powerSlots(
-  session: Session,
-  characterId: string,
-  klassId: string,
-  level: number,
-  projection: LevelProjection,
-) {
-  const characterRecord = await getEditableCharacter(db, session, characterId);
-
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-    const klassLevel = getKlassLevel(rulesetData, klassId, level);
-    const { data: projectedData } = await projectLevel(characterId, klassLevel.id, projection);
-
-    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
-    await detailedCharacter.build(undefined, projectedData);
-
-    const aptitudePools = spellPools(detailedCharacter.getDetailedCharacterAptitudes(), rulesetData);
-    const powersToSelect = Object.values(aptitudePools).reduce((total, pool) => total + pool.available, 0);
-    const autoGrantedPowers = (rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? []).map(
-      (rec) => ({ ...rec.powersInRule, free: rec.free }),
-    );
-
-    return { powersToSelect, autoGrantedPowers, aptitudePools };
-  });
 }
 
 export async function getPowerSlots(

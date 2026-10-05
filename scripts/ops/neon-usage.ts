@@ -1,27 +1,4 @@
 #!/usr/bin/env bun
-/**
- * Usage: bun --env-file=.env.production run scripts/ops/neon-usage.ts [--csv]
- * Or:    bun run prod:neon-usage [--csv]
- *
- * Prints current billing-period usage for the Neon project identified by
- * NEON_PROJECT_ID, authenticated with NEON_API_KEY.
- *
- * Neon's `/consumption_history` endpoint only works on Scale/Business/
- * Enterprise plans, so we read the totals off `GET /projects/{id}` instead,
- * which works on every plan (including Launch / Free).
- */
-export {};
-
-const API = "https://console.neon.tech/api/v2";
-const csv = process.argv.includes("--csv");
-
-const apiKey = process.env.NEON_API_KEY;
-const projectId = process.env.NEON_PROJECT_ID;
-if (!apiKey || !projectId) {
-  console.error("Missing NEON_API_KEY or NEON_PROJECT_ID in env");
-  process.exit(1);
-}
-
 type Project = {
   id: string;
   name: string;
@@ -36,6 +13,33 @@ type Project = {
   owner?: { subscription_type?: string };
 };
 
+const API = "https://console.neon.tech/api/v2";
+const csv = process.argv.includes("--csv");
+
+const apiKey = process.env.NEON_API_KEY;
+const projectId = process.env.NEON_PROJECT_ID;
+
+const mb = (b: number) => b / 1024 / 1024;
+const gb = (b: number) => b / 1024 / 1024 / 1024;
+const hrs = (s: number) => s / 3600;
+
+/**
+ * Usage: bun --env-file=.env.production run scripts/ops/neon-usage.ts [--csv]
+ * Or:    bun run prod:neon-usage [--csv]
+ *
+ * Prints current billing-period usage for the Neon project identified by
+ * NEON_PROJECT_ID, authenticated with NEON_API_KEY.
+ *
+ * Neon's `/consumption_history` endpoint only works on Scale/Business/
+ * Enterprise plans, so we read the totals off `GET /projects/{id}` instead,
+ * which works on every plan (including Launch / Free).
+ */
+export {};
+if (!apiKey || !projectId) {
+  console.error("Missing NEON_API_KEY or NEON_PROJECT_ID in env");
+  process.exit(1);
+}
+
 const r = await fetch(`${API}/projects/${projectId}`, {
   headers: { Authorization: `Bearer ${apiKey}`, Accept: "application/json" },
 });
@@ -44,10 +48,6 @@ if (!r.ok) {
   process.exit(1);
 }
 const { project } = (await r.json()) as { project: Project };
-
-const mb = (b: number) => b / 1024 / 1024;
-const gb = (b: number) => b / 1024 / 1024 / 1024;
-const hrs = (s: number) => s / 3600;
 
 const periodStart = project.consumption_period_start.slice(0, 10);
 const periodEnd = project.consumption_period_end.slice(0, 10);

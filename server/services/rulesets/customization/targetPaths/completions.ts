@@ -5,6 +5,38 @@ import { capitalize } from "@/shared/text.ts";
 type SegmentInfo = { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined };
 
 /**
+ * The segments that come after `baseDot` and start with `segmentPrefix`, each with its first path, whether it's a group
+ * (it has a wildcard under it) and its group's description.
+ */
+function nextSegments(allPaths: TargetPath[], baseDot: string, segmentPrefix: string) {
+  const segmentInfo = new Map<string, SegmentInfo>();
+  for (const p of allPaths) {
+    if (!p.path.startsWith(baseDot)) continue;
+    const pathAfterBase = p.path.substring(baseDot.length);
+    const nextSegment = pathAfterBase.split(".")[0];
+    if (!nextSegment || !nextSegment.toLowerCase().startsWith(segmentPrefix)) continue;
+
+    let info = segmentInfo.get(nextSegment);
+    if (!info) {
+      info = { examplePath: null, isGroup: false, groupDesc: undefined };
+      segmentInfo.set(nextSegment, info);
+    }
+
+    const fullPrefix = baseDot + nextSegment;
+    if (!info.examplePath && (p.path.startsWith(fullPrefix + ".") || p.path === fullPrefix)) {
+      info.examplePath = p;
+    }
+    if (!info.isGroup && p.path.startsWith(fullPrefix + ".*")) {
+      info.isGroup = true;
+    }
+    if (!info.groupDesc && p.groupDescription && p.path.startsWith(fullPrefix + ".")) {
+      info.groupDesc = p.groupDescription;
+    }
+  }
+  return segmentInfo;
+}
+
+/**
  * Every leaf path that matches `search`, by its path or a segment's label, ignoring the drill prefix: the path browser's
  * search-first mode, so users can type "wizard known" and find paths across the whole tree without drilling.
  */
@@ -120,38 +152,6 @@ export function buildSegmentDescriber(
 
     return fallback || `${segmentLabels[segment] || capitalize(segment)} properties`;
   };
-}
-
-/**
- * The segments that come after `baseDot` and start with `segmentPrefix`, each with its first path, whether it's a group
- * (it has a wildcard under it) and its group's description.
- */
-function nextSegments(allPaths: TargetPath[], baseDot: string, segmentPrefix: string) {
-  const segmentInfo = new Map<string, SegmentInfo>();
-  for (const p of allPaths) {
-    if (!p.path.startsWith(baseDot)) continue;
-    const pathAfterBase = p.path.substring(baseDot.length);
-    const nextSegment = pathAfterBase.split(".")[0];
-    if (!nextSegment || !nextSegment.toLowerCase().startsWith(segmentPrefix)) continue;
-
-    let info = segmentInfo.get(nextSegment);
-    if (!info) {
-      info = { examplePath: null, isGroup: false, groupDesc: undefined };
-      segmentInfo.set(nextSegment, info);
-    }
-
-    const fullPrefix = baseDot + nextSegment;
-    if (!info.examplePath && (p.path.startsWith(fullPrefix + ".") || p.path === fullPrefix)) {
-      info.examplePath = p;
-    }
-    if (!info.isGroup && p.path.startsWith(fullPrefix + ".*")) {
-      info.isGroup = true;
-    }
-    if (!info.groupDesc && p.groupDescription && p.path.startsWith(fullPrefix + ".")) {
-      info.groupDesc = p.groupDescription;
-    }
-  }
-  return segmentInfo;
 }
 
 /**

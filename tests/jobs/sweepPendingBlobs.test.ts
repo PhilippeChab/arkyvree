@@ -9,6 +9,20 @@ import { fakeStorage } from "@/tests/storage.ts";
 
 const DAY = 24 * 60 * 60 * 1000;
 
+/** A blob no attachment references, uploaded `ageMs` ago. */
+async function createPendingBlob(filename: string, ageMs = 0) {
+  const [blob] = await Blobs.create(db, {
+    key: `blobs/${crypto.randomUUID()}/${filename}`,
+    filename,
+    contentType: "image/png",
+    byteSize: 100,
+  });
+  if (ageMs) await Blobs.update(db, { createdAt: new Date(Date.now() - ageMs).toISOString() }, { id: blob.id });
+  return blob;
+}
+
+const rowOf = (id: string) => db.query.blobsInStorage.findFirst({ where: (t, { eq }) => eq(t.id, id) });
+
 describe("sweepPendingBlobs", () => {
   let deleted: string[];
 
@@ -22,20 +36,6 @@ describe("sweepPendingBlobs", () => {
       }),
     );
   });
-
-  /** A blob no attachment references, uploaded `ageMs` ago. */
-  async function createPendingBlob(filename: string, ageMs = 0) {
-    const [blob] = await Blobs.create(db, {
-      key: `blobs/${crypto.randomUUID()}/${filename}`,
-      filename,
-      contentType: "image/png",
-      byteSize: 100,
-    });
-    if (ageMs) await Blobs.update(db, { createdAt: new Date(Date.now() - ageMs).toISOString() }, { id: blob.id });
-    return blob;
-  }
-
-  const rowOf = (id: string) => db.query.blobsInStorage.findFirst({ where: (t, { eq }) => eq(t.id, id) });
 
   test("deletes pending blobs (S3 object and row) older than the TTL", async () => {
     const oldBlob = await createPendingBlob("old.png", 2 * DAY);

@@ -11,6 +11,9 @@ import { createTestUser } from "@/tests/helpers.ts";
 /** The seeded session of the seeded user (`SEED_USER_ID`, LocalUser). */
 export const SEED_SESSION_ID = "00000000-0000-4000-8000-000000000123";
 
+/** Signed out. */
+export const guestApi = testClient<Application>(application);
+
 /** An API client whose requests carry `sessionId`'s cookie. */
 export function apiAs(sessionId: string) {
   return testClient<Application>(application, {}, undefined, {
@@ -20,9 +23,6 @@ export function apiAs(sessionId: string) {
 
 /** Signed in as the seeded user, who owns most seeded content. */
 export const api = apiAs(SEED_SESSION_ID);
-
-/** Signed out. */
-export const guestApi = testClient<Application>(application);
 
 /** A client signed in as `userId`, through a stored session. */
 export async function signedInApi(userId: string = SEED_USER_ID) {

@@ -6,6 +6,29 @@ import { stripSeparators } from "@/shared/text.ts";
 import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";
 import type DetailedCharacterIdentity from "./DetailedCharacterIdentity.ts";
 
+export type AptitudeLevelData = {
+  uses: number;
+  allowed: number;
+  spent: number;
+  available: number;
+};
+
+type DetailedCharacterComprehensiveAptitudes = {
+  [key: string]: {
+    id: string;
+    name: string;
+    description: string;
+    uses: number;
+    allowed: number;
+    spent: number;
+    available: number;
+    /** A spell list's: whether its spells join the list of the class whose level gave it. */
+    joinsclasslist?: boolean;
+  };
+};
+
+type AptitudesById = Map<string, DetailedCharacterComprehensiveAptitudes[string]>;
+
 const ALLOWED_ENTITY_TYPES = ["feats", "klass_levels", "races"];
 
 const NAVIGATABLE_PATHS = [
@@ -61,31 +84,8 @@ const POOL_SLOT_MODIFIERS: Pick<TargetPath, "operators" | "literalOnly" | "minVa
 
 export const ALLOWED_ALL = -1;
 
-export type AptitudeLevelData = {
-  uses: number;
-  allowed: number;
-  spent: number;
-  available: number;
-};
-
 /** The spell levels whose spells are all known: a state of the level, not a count it holds (`newSpellLevel`). */
 const ALL_KNOWN = new WeakSet<AptitudeLevelData>();
-
-type DetailedCharacterComprehensiveAptitudes = {
-  [key: string]: {
-    id: string;
-    name: string;
-    description: string;
-    uses: number;
-    allowed: number;
-    spent: number;
-    available: number;
-    /** A spell list's: whether its spells join the list of the class whose level gave it. */
-    joinsclasslist?: boolean;
-  };
-};
-
-type AptitudesById = Map<string, DetailedCharacterComprehensiveAptitudes[string]>;
 
 /**
  * A spell level's entry. Its known slots are a count, or all known (ALLOWED_ALL), which a `set -1` makes them and an

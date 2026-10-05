@@ -7,6 +7,8 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 
 import type { AptitudePool, LevelUpFormData } from "./levelUpTypes.ts";
 
+type LevelWizardBase = ReturnType<typeof useLevelWizardBase>;
+
 const EMPTY_PICKS: LevelUpFormData = {
   selectedClass: null,
   selectedHP: null,
@@ -15,8 +17,6 @@ const EMPTY_PICKS: LevelUpFormData = {
   selectedPowers: {},
   skillPointAllocations: {},
 };
-
-type LevelWizardBase = ReturnType<typeof useLevelWizardBase>;
 
 /** Feat or spell picks as the aptitude → ids map the save endpoints take. */
 export const pickIds = (picks: Record<string, { id: string }[]>) =>

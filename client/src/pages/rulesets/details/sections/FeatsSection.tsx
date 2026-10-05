@@ -51,6 +51,12 @@ import { featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/detai
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;
+type Feat = FeatsPaginated["items"][number];
+
+type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
+type GroupedFeatRow = GroupedPaginated["items"][number];
+
 const FEATS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
   { key: "aptitudes", label: "Aptitudes", width: "15%" },
@@ -62,12 +68,6 @@ const GROUPED_COLUMNS = [
   { key: "name", label: "Name", width: "50%" },
   { key: "variants", label: "Variants", width: "50%" },
 ];
-
-type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;
-type Feat = FeatsPaginated["items"][number];
-
-type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
-type GroupedFeatRow = GroupedPaginated["items"][number];
 
 function GroupedRow({
   row,

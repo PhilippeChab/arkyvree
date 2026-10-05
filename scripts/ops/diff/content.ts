@@ -7,6 +7,8 @@ import { collectDiff, diffIsEmpty, type IdentifiedRow, stripVolatile, type Table
 /** Runs a query with positional parameters ($1…) and gives its rows, as pg's client does. */
 export type Query = <R extends Record<string, unknown>>(text: string, params?: unknown[]) => Promise<R[]>;
 
+type ContentTable = (typeof CONTENT_TABLES)[number];
+
 /** The tables scoped by their ruleset_id, compared field by field. */
 export const CONTENT_TABLES = [
   "abilities",
@@ -21,8 +23,6 @@ export const CONTENT_TABLES = [
   "saves",
   "skills",
 ] as const;
-
-type ContentTable = (typeof CONTENT_TABLES)[number];
 
 /** The content tables' references to other entities, compared by what they name: `<ruleset>: <name>`. */
 const REFERENCES: Partial<Record<ContentTable, Record<string, ContentTable>>> = {
@@ -360,6 +360,14 @@ export const COMPARED_TABLES = [
   ...KEYED_TABLES.map(({ table }) => table),
 ];
 
+/** The system rulesets (the base rulesets and the published extensions), which seeds write, by name and base rules. */
+async function systemRulesets(query: Query) {
+  const rows = await query<{ id: string; name: string; base_rules: string }>(
+    `select id, name, base_rules from rules.rulesets where user_id is null and system = true and deleted_at is null`,
+  );
+  return new Map(rows.map((r) => [`${r.name}|${r.base_rules}`, r]));
+}
+
 /** A compared table's rows of the ruleset. */
 export async function pullTable(query: Query, table: string, rulesetId: string): Promise<IdentifiedRow[]> {
   if (table === "rules.rulesets") return pullRulesetRow(query, rulesetId);
@@ -368,14 +376,6 @@ export async function pullTable(query: Query, table: string, rulesetId: string):
   const keyedTable = KEYED_TABLES.find((t) => t.table === table);
   if (!keyedTable) throw new Error(`${table} isn't compared`);
   return keyedTable.pull(query, rulesetId);
-}
-
-/** The system rulesets (the base rulesets and the published extensions), which seeds write, by name and base rules. */
-async function systemRulesets(query: Query) {
-  const rows = await query<{ id: string; name: string; base_rules: string }>(
-    `select id, name, base_rules from rules.rulesets where user_id is null and system = true and deleted_at is null`,
-  );
-  return new Map(rows.map((r) => [`${r.name}|${r.base_rules}`, r]));
 }
 
 /** How the target's system rulesets differ from the reference's: those on one side only, and the others' drifts. */

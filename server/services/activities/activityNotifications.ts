@@ -36,6 +36,8 @@ import {
 import { noteNotified } from "@/server/websockets/index.ts";
 import type { ChangedField } from "@/shared/activity.ts";
 
+type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
+
 // Ruleset entities' tables, named like their types (abilities raise no activity)
 const RULESET_ENTITY_TABLES = new Set<string>(RULESET_ENTITY_TYPES.filter((type) => type !== "abilities"));
 
@@ -46,8 +48,6 @@ const INVITES_TABLE = getTableName(invitesInCampaign);
 const CONTRIBUTORS_TABLE = getTableName(contributorsInRules);
 const CHARACTER_CONTRIBUTORS_TABLE = getTableName(contributorsInCharacter);
 
-type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
-
 const LONG_TEXT_FIELDS = new Set(["description"]);
 
 function normalize(v: unknown): string {
@@ -57,32 +57,6 @@ function normalize(v: unknown): string {
     if (Number.isFinite(n)) return String(n);
   }
   return String(v);
-}
-
-/**
- * Compare an existing entity with an update body and return a list of changes.
- * Short fields include before/after values; long text fields only note the change.
- */
-export function getChangedFields(existing: object, body: object): ChangedField[] {
-  const before = new Map(Object.entries(existing));
-  const changes: ChangedField[] = [];
-  for (const [key, newVal] of Object.entries(body)) {
-    if (!before.has(key)) continue;
-    const oldVal = before.get(key);
-    if (oldVal == null && newVal == null) continue;
-    if (normalize(oldVal) === normalize(newVal)) continue;
-
-    if (LONG_TEXT_FIELDS.has(key)) {
-      changes.push({ field: key });
-    } else {
-      changes.push({
-        field: key,
-        from: oldVal != null ? normalize(oldVal) : undefined,
-        to: newVal != null ? normalize(newVal) : undefined,
-      });
-    }
-  }
-  return changes;
 }
 
 /**
@@ -269,6 +243,32 @@ async function resolveRecipients(
   // Never notify the actor
   recipients.delete(actorId);
   return Array.from(recipients);
+}
+
+/**
+ * Compare an existing entity with an update body and return a list of changes.
+ * Short fields include before/after values; long text fields only note the change.
+ */
+export function getChangedFields(existing: object, body: object): ChangedField[] {
+  const before = new Map(Object.entries(existing));
+  const changes: ChangedField[] = [];
+  for (const [key, newVal] of Object.entries(body)) {
+    if (!before.has(key)) continue;
+    const oldVal = before.get(key);
+    if (oldVal == null && newVal == null) continue;
+    if (normalize(oldVal) === normalize(newVal)) continue;
+
+    if (LONG_TEXT_FIELDS.has(key)) {
+      changes.push({ field: key });
+    } else {
+      changes.push({
+        field: key,
+        from: oldVal != null ? normalize(oldVal) : undefined,
+        to: newVal != null ? normalize(newVal) : undefined,
+      });
+    }
+  }
+  return changes;
 }
 
 /**

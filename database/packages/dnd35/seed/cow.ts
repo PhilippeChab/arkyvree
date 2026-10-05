@@ -149,13 +149,6 @@ async function cowPower(db: Db, powerId: string, rulesetId: string) {
   return copy.id;
 }
 
-/** The ruleset's own power named so, copying the inherited one first when it has none. */
-export async function ownPower(db: Db, ctx: SeedContext, name: string): Promise<string | undefined> {
-  const inheritedId = ctx.inheritedPowerMap[name];
-  if (!ctx.powerMap[name] && inheritedId) ctx.powerMap[name] = await cowPower(db, inheritedId, ctx.rulesetId);
-  return ctx.powerMap[name];
-}
-
 /**
  * Adds class levels to a feat's first-level `or` of requirements, which a single first-level requirement becomes.
  * A feat with neither gets none.
@@ -208,6 +201,13 @@ async function addClassLevelAlternatives(db: Db, featId: string, classLevels: Co
       valueType: "number",
     })),
   );
+}
+
+/** The ruleset's own power named so, copying the inherited one first when it has none. */
+export async function ownPower(db: Db, ctx: SeedContext, name: string): Promise<string | undefined> {
+  const inheritedId = ctx.inheritedPowerMap[name];
+  if (!ctx.powerMap[name] && inheritedId) ctx.powerMap[name] = await cowPower(db, inheritedId, ctx.rulesetId);
+  return ctx.powerMap[name];
 }
 
 /**

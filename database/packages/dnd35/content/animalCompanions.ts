@@ -134,6 +134,28 @@ const ANIMAL_COMPANION_RACE_PICK_FEATS: FeatSeed[] = ANIMAL_COMPANION_RACE_NAMES
   ],
 }));
 
+const ANIMAL_COMPANION_CLASS: ClassSeed = {
+  name: "Animal Companion",
+  description:
+    "A creature of the wild bonded to its master. The companion's hit points, base attack bonus, and saving throws are derived from the master; its class progression grants special bonds and abilities as the master grows in power.",
+  hd: 8,
+  levels: 20,
+  skillPoints: 2,
+  kind: "animalcompanion",
+  bab: "medium",
+  saves: { fortitude: "good", reflex: "good", will: "poor" },
+  classSkills: ["Listen", "Spot", "Survival", "Swim"],
+  classFeatureAptitude: ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE,
+  classFeatures: [
+    [1, "Link (Animal Companion)"],
+    [1, "Share Spells (Animal Companion)"],
+    [3, "Evasion (Animal Companion)"],
+    [6, "Devotion (Animal Companion)"],
+    [9, "Multiattack (Animal Companion)"],
+    [15, "Improved Evasion (Animal Companion)"],
+  ],
+};
+
 const grantFeat = (slug: string) => ({
   target: `feats.${slug}.possessed`,
   operator: "set",
@@ -243,28 +265,6 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     modifiers: [grantFeat("trip")],
   },
 ];
-
-const ANIMAL_COMPANION_CLASS: ClassSeed = {
-  name: "Animal Companion",
-  description:
-    "A creature of the wild bonded to its master. The companion's hit points, base attack bonus, and saving throws are derived from the master; its class progression grants special bonds and abilities as the master grows in power.",
-  hd: 8,
-  levels: 20,
-  skillPoints: 2,
-  kind: "animalcompanion",
-  bab: "medium",
-  saves: { fortitude: "good", reflex: "good", will: "poor" },
-  classSkills: ["Listen", "Spot", "Survival", "Swim"],
-  classFeatureAptitude: ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE,
-  classFeatures: [
-    [1, "Link (Animal Companion)"],
-    [1, "Share Spells (Animal Companion)"],
-    [3, "Evasion (Animal Companion)"],
-    [6, "Devotion (Animal Companion)"],
-    [9, "Multiattack (Animal Companion)"],
-    [15, "Improved Evasion (Animal Companion)"],
-  ],
-};
 
 export const ANIMAL_COMPANIONS: BondContent = {
   kind: "animalcompanion",

@@ -17,6 +17,20 @@ function signTestToken(payload: Record<string, unknown>): string {
   return `${data}.${sig}`;
 }
 
+function uploadParams(
+  userId: string,
+  overrides?: Partial<{ name: string; filename: string; contentType: string; byteSize: number }>,
+) {
+  return {
+    recordType: "User",
+    recordId: userId,
+    name: overrides?.name ?? "avatar",
+    filename: overrides?.filename ?? "me.png",
+    contentType: overrides?.contentType ?? "image/png",
+    byteSize: overrides?.byteSize ?? 12345,
+  };
+}
+
 describe("AttachmentsService", () => {
   let presignCalls: Array<{ key: string; contentType: string }>;
   let stats: Map<string, { size: number; etag: string } | null>;
@@ -52,20 +66,6 @@ describe("AttachmentsService", () => {
       }),
     );
   });
-
-  function uploadParams(
-    userId: string,
-    overrides?: Partial<{ name: string; filename: string; contentType: string; byteSize: number }>,
-  ) {
-    return {
-      recordType: "User",
-      recordId: userId,
-      name: overrides?.name ?? "avatar",
-      filename: overrides?.filename ?? "me.png",
-      contentType: overrides?.contentType ?? "image/png",
-      byteSize: overrides?.byteSize ?? 12345,
-    };
-  }
 
   describe("createDirectUpload", () => {
     test("creates a pending blob (attached_at null) and returns a presigned URL + signed id", async () => {

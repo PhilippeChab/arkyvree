@@ -11,12 +11,12 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { abilitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 
+type Ability = RulesetAbility;
+
 const ABILITIES_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
   { key: "description", label: "Description", width: "70%" },
 ];
-
-type Ability = RulesetAbility;
 
 export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);

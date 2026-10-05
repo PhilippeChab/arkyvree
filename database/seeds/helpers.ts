@@ -30,8 +30,6 @@ import { reconcileAllBondedKinds } from "@/server/services/characters/levels/ind
 import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type { Alignment, Gender, ItemLocation } from "@/shared/enums.ts";
 
-export const SEED_USER_ID = "00000000-0000-4000-8000-000000000456";
-
 /** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */
 export type SeedContext = RulesetSeedContext & {
   langMap: Record<string, string>;
@@ -58,6 +56,8 @@ export type CharacterSeed = Omit<CharacterData, "rulesetId"> & {
   inventory: Parameters<typeof addInventory>[3];
 };
 
+export const SEED_USER_ID = "00000000-0000-4000-8000-000000000456";
+
 /**
  * Group kinded rows (races, klasses) by kind, then by name. Callers spell out
  * which kind they want (`ctx.raceMap.pc["Human"]`, `ctx.raceMap.familiar["Owl"]`)
@@ -70,6 +70,45 @@ function buildKindMap(rows: { name: string; id: string; kind: string }[]): Recor
     (out[row.kind] ??= {})[row.name] = row.id;
   }
   return out;
+}
+
+async function addInventory(
+  db: Db,
+  ctx: SeedContext,
+  characterId: string,
+  items: {
+    name: string;
+    quantity: number;
+    equipped?: boolean;
+    location?: ItemLocation;
+    weaponSet?: number;
+  }[],
+) {
+  if (items.length === 0) return;
+  await db.insert(inventoryInCharacter).values(
+    items.map((item) => ({
+      characterId,
+      itemId: ctx.itemMap[item.name],
+      quantity: item.quantity,
+      equipped: item.equipped ?? false,
+      location: item.location,
+      weaponSet: item.weaponSet,
+    })),
+  );
+}
+
+/** Builds a seeded master's bonded creatures (familiar, companion, mount) from its levels, as leveling up does. */
+async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise<void> {
+  const master = await Characters.findOne(tx, { id: characterId });
+  if (!master) throw new NotFoundError(`Character ${characterId} not found`);
+  if (master.kind !== "pc") return;
+
+  await withRulesetScope(tx, master.rulesetId, async ({ ruleset, rulesetData }) => {
+    const module = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const detailed = module.createDetailedCharacter(master) as Dnd35DetailedCharacter;
+    await detailed.build(tx, undefined, { ruleset, cowData: rulesetData.cow, rulesetData });
+    await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
+  });
 }
 
 export async function getSeedContext(db: Db): Promise<SeedContext> {
@@ -228,45 +267,6 @@ export async function addPowers(
       aptitudeId: ctx.aptMap[p.aptitude],
     })),
   );
-}
-
-async function addInventory(
-  db: Db,
-  ctx: SeedContext,
-  characterId: string,
-  items: {
-    name: string;
-    quantity: number;
-    equipped?: boolean;
-    location?: ItemLocation;
-    weaponSet?: number;
-  }[],
-) {
-  if (items.length === 0) return;
-  await db.insert(inventoryInCharacter).values(
-    items.map((item) => ({
-      characterId,
-      itemId: ctx.itemMap[item.name],
-      quantity: item.quantity,
-      equipped: item.equipped ?? false,
-      location: item.location,
-      weaponSet: item.weaponSet,
-    })),
-  );
-}
-
-/** Builds a seeded master's bonded creatures (familiar, companion, mount) from its levels, as leveling up does. */
-async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise<void> {
-  const master = await Characters.findOne(tx, { id: characterId });
-  if (!master) throw new NotFoundError(`Character ${characterId} not found`);
-  if (master.kind !== "pc") return;
-
-  await withRulesetScope(tx, master.rulesetId, async ({ ruleset, rulesetData }) => {
-    const module = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailed = module.createDetailedCharacter(master) as Dnd35DetailedCharacter;
-    await detailed.build(tx, undefined, { ruleset, cowData: rulesetData.cow, rulesetData });
-    await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
-  });
 }
 
 /** Seeds a character, and the creatures its feats bond it to. */

@@ -1,8 +1,6 @@
 import { readEnv } from "@/server/environment.ts";
 import { UnauthorizedError } from "@/server/errors/index.ts";
 
-const GOOGLE_CLIENT_ID = readEnv("GOOGLE_CLIENT_ID");
-
 interface GoogleTokenPayload {
   sub: string;
   email: string;
@@ -13,6 +11,8 @@ interface GoogleTokenPayload {
   iss: string;
   exp: number;
 }
+
+const GOOGLE_CLIENT_ID = readEnv("GOOGLE_CLIENT_ID");
 
 export async function verifyGoogleIdToken(idToken: string): Promise<GoogleTokenPayload> {
   const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);

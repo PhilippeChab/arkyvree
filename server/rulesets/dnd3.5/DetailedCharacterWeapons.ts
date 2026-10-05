@@ -8,6 +8,12 @@ import { WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/shared/dnd3.5/properties/inde
 import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+// Record of weapon key ("setIndex_slotKey") → shared WeaponSlot reference
+type WeaponGroup = Record<string, NonNullable<WeaponSet[keyof WeaponSet]>>;
+
+// Grouping key (normalized) → WeaponGroup
+type WeaponsData = Record<string, WeaponGroup>;
+
 /**
  * A weapon's paths: a weapon group's (`items.weapons.<group>.tohit.misc`), and an item's own weapon's
  * (`weapon.tohit.misc`, on the item). A part the sheet computes when read is for requirements only, the flat bonus in
@@ -43,12 +49,6 @@ const WEAPON_PATHS = [
 
 /** The first segments of a weapon's paths, which `weapon.*` reads on an item's own weapon. */
 export const WEAPON_PATH_ROOTS = [...new Set(WEAPON_PATHS.map(({ path }) => path.split(".")[0]))];
-
-// Record of weapon key ("setIndex_slotKey") → shared WeaponSlot reference
-type WeaponGroup = Record<string, NonNullable<WeaponSet[keyof WeaponSet]>>;
-
-// Grouping key (normalized) → WeaponGroup
-type WeaponsData = Record<string, WeaponGroup>;
 
 export default class DetailedCharacterWeapons {
   constructor(private readonly characterCombat: DetailedCharacterCombat) {}

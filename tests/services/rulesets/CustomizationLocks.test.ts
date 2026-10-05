@@ -14,6 +14,35 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 import { createSeededTestRuleset, getSeedCtx, insertRows, makeSession } from "@/tests/helpers.ts";
 
 const pool = createTestPool();
+
+// The composed ruleset data a request reads can predate a concurrent delete
+// (for example one that committed while this request waited on the owner lock).
+// Every customization kind re-reads its row after the lock and reports it missing.
+async function setupRemovedCustomizations() {
+  const session = makeSession();
+  const ruleset = await createSeededTestRuleset(session.userId);
+  const [feat] = await insertRows(featsInRules, [{ name: "Removed Customizations", rulesetId: ruleset.id }]);
+  const owner = { entityId: feat.id, entityType: "feats" };
+  const [modifier] = await Modifiers.createMany(db, [
+    {
+      target: "abilities.strength.misc",
+      value: "1",
+      operator: "add",
+      valueType: "number",
+      sourceId: feat.id,
+      sourceType: "feats",
+    },
+  ]);
+  const [property] = await Properties.createMany(db, [{ ...owner, type: "NOTE", value: "Removed" }]);
+  const [requirement] = await Requirements.createMany(db, [
+    { ...owner, level: "1", target: "combat.bab", operator: "greater_than_or_equal", value: "1", valueType: "number" },
+  ]);
+  await withRulesetScope(db, ruleset.id, async () => {});
+  await Modifiers.delete(db, { ids: [modifier.id] });
+  await Properties.delete(db, { ids: [property.id] });
+  await Requirements.delete(db, { ids: [requirement.id] });
+  return { session, rulesetId: ruleset.id, featId: feat.id, modifier, property, requirement };
+}
 afterAll(() => pool.end());
 afterEach(() => RulesetCache.invalidateAll());
 test("owner mutation waits for a competing transaction and acquires the row after rollback", async () => {
@@ -70,35 +99,6 @@ test("owner locks leave other entities independent and shared copy reads compati
 test("a missing owner is rejected before customization writes", async () => {
   await expect(lockEntityForMutation(db, "feats", crypto.randomUUID())).rejects.toThrow("no longer exists");
 });
-
-// The composed ruleset data a request reads can predate a concurrent delete
-// (for example one that committed while this request waited on the owner lock).
-// Every customization kind re-reads its row after the lock and reports it missing.
-async function setupRemovedCustomizations() {
-  const session = makeSession();
-  const ruleset = await createSeededTestRuleset(session.userId);
-  const [feat] = await insertRows(featsInRules, [{ name: "Removed Customizations", rulesetId: ruleset.id }]);
-  const owner = { entityId: feat.id, entityType: "feats" };
-  const [modifier] = await Modifiers.createMany(db, [
-    {
-      target: "abilities.strength.misc",
-      value: "1",
-      operator: "add",
-      valueType: "number",
-      sourceId: feat.id,
-      sourceType: "feats",
-    },
-  ]);
-  const [property] = await Properties.createMany(db, [{ ...owner, type: "NOTE", value: "Removed" }]);
-  const [requirement] = await Requirements.createMany(db, [
-    { ...owner, level: "1", target: "combat.bab", operator: "greater_than_or_equal", value: "1", valueType: "number" },
-  ]);
-  await withRulesetScope(db, ruleset.id, async () => {});
-  await Modifiers.delete(db, { ids: [modifier.id] });
-  await Properties.delete(db, { ids: [property.id] });
-  await Requirements.delete(db, { ids: [requirement.id] });
-  return { session, rulesetId: ruleset.id, featId: feat.id, modifier, property, requirement };
-}
 
 test("every customization kind reports a row removed before the owner lock as missing", async () => {
   const { session, rulesetId, featId, modifier, property, requirement } = await setupRemovedCustomizations();

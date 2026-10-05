@@ -24,8 +24,6 @@ interface SnackbarContextType {
   warning: (message: string) => void;
 }
 
-const SnackbarContext = createContext<SnackbarContextType | undefined>(undefined);
-
 interface SnackbarProviderProps {
   children: ReactNode;
 }
@@ -36,6 +34,8 @@ interface ToastItem {
   action?: ToastAction;
   persistent?: boolean;
 }
+
+const SnackbarContext = createContext<SnackbarContextType | undefined>(undefined);
 
 export function SnackbarProvider({ children }: SnackbarProviderProps) {
   const [queue, setQueue] = useState<ToastItem[]>([]);

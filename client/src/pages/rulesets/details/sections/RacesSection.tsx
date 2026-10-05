@@ -15,15 +15,15 @@ import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.t
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+type RacesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>;
+type Race = RacesPaginated["items"][number];
+
 const RACES_COLUMNS = [
   { key: "name", label: "Name", width: "15%" },
   { key: "size", label: "Size", width: "10%" },
   { key: "speed", label: "Speed", width: "10%" },
   { key: "description", label: "Description", width: "65%" },
 ];
-
-type RacesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>;
-type Race = RacesPaginated["items"][number];
 
 export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);

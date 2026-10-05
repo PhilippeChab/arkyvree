@@ -9,8 +9,6 @@ import { getTargetPathsWithLabels } from "@/server/services/rulesets/customizati
 import { timingStorage } from "@/server/timing.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
-afterEach(() => RulesetCache.invalidateAll());
-
 async function setup() {
   const session = makeSession();
   return {
@@ -32,6 +30,8 @@ function counters() {
     dedupMisses: 0,
   };
 }
+
+afterEach(() => RulesetCache.invalidateAll());
 
 for (const phase of ["pending", "cached"] as const) {
   test(`editing A preserves ${phase} raw/COW/path reads for B with zero extra SQL`, async () => {

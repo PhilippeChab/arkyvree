@@ -38,6 +38,87 @@ import {
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 
 // ---------------------------------------------------------------------------
+// Race requirements — e.g. "Race: Elf or half-elf", "Race: Dwarf"
+// ---------------------------------------------------------------------------
+
+const RACE_NAMES: Record<string, string> = {
+  elf: "Elf",
+  "half-elf": "Half-Elf",
+  halfelf: "Half-Elf",
+  dwarf: "Dwarf",
+  gnome: "Gnome",
+  halfling: "Halfling",
+  human: "Human",
+  "half-orc": "Half-Orc",
+  halforc: "Half-Orc",
+};
+
+// ---------------------------------------------------------------------------
+// Pool sub-option extraction
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse a combined pool feature description into individual sub-options.
+ * Matches patterns like: "Name (Ex): description text" or "Name: description text"
+ *
+ * The intro text (before the first sub-option) is returned separately.
+ */
+const STACKABLE_PATTERNS = [
+  /can be selected .* second time/i,
+  /can be taken multiple times/i,
+  /selected more than one time/i,
+  /selected more than once/i,
+  /can be selected more than once/i,
+  /this ability can be selected more than once/i,
+  /changes .* are cumulative/i,
+];
+
+// ---------------------------------------------------------------------------
+// Aptitude pick detection
+// ---------------------------------------------------------------------------
+
+// Patterns indicating the character makes a selection from a pool
+const CHOICE_PATTERN =
+  /\b(choose|chooses|select|selects|picks?|chosen|drawn from|from the following|from those given|from among)\b/i;
+
+/** Description patterns that indicate gameplay/tactical choices, not character-build picks.
+ *  These filter AFTER CHOICE_PATTERN matches — if any match, the feature is skipped.
+ *  Keep these narrow: a description can contain both build choices and gameplay language.
+ *  Only match when the ENTIRE feature is clearly not a build pick. */
+const NON_PICK_DESCRIPTION: RegExp[] = [
+  // Bonus feat with alternative: "if he already has the feat, he can choose"
+  /already has the feat.{0,20}choose/i,
+  // "roll and choose" / "choose the result" / "choose between the two results" — random table picks
+  /choose (?:the result|between the two)/i,
+  /roll .{0,20}choose/i,
+];
+
+/** Features that match CHOICE_PATTERN but aren't character-build picks.
+ *  Add new entries here instead of scattering regex blocks in detectAptitudePicks. */
+const NON_PICK_FEATURES: RegExp[] = [
+  // Scaling abilities that increase in power, not choices
+  /sneak attack|rage|wild shape|summon|damage reduction|save|trap sense|uncanny dodge|flurry|bonus language/i,
+  // Named feats granted as freeFeats
+  /^(Skill Focus|Skill Mastery|Precise Shot|Mettle|Catch Weapon|Evasion|Improved Evasion)\b/i,
+  // Combat/passive abilities whose descriptions incidentally contain choice words
+  /parry|waist|bleed|wound|grapple|intimidat|reckless|combat trap|weapon bond|oath|visage|wings|trackless/i,
+  // Class abilities that aren't character-build picks
+  /bardic knowledge|unarmed strike|lay on hands|turn or rebuke|weaken spirit|sense element|spirit guide|steal spell|justice blade|brilliant blade|animal companion|^mount$/i,
+  // Per-use abilities whose descriptions contain incidental choice words (tactical/gameplay picks)
+  /bloodwalk|arcane fist|fist of energy|spin fate|seal fate|combine songs|glyph of warding|spellpool|enhanced accuracy|student of chaos|thrall|effortless change|shapechanger|reflexive change|infinite variety|favored shape/i,
+  // Elemental/energy abilities that reference a prior one-time class-entry choice
+  /elemental specialty|elemental perfection|energy (?:resistance|immunity)|resistance to energy/i,
+];
+
+// D&D type suffixes embedded in raw class feature names, e.g. "Tattoo (Su or Sp)"
+const TYPE_SUFFIX = /\s*\((?:Ex|Su|Sp|Su or Sp)\)$/i;
+
+const ORDINAL_PREFIX = /^\d+(st|nd|rd|th)\s+/i;
+
+// Build weapon name → proficiency slug lookup
+const WEAPON_PROF_MAP = new Map<string, string>();
+
+// ---------------------------------------------------------------------------
 // BAB detection
 // ---------------------------------------------------------------------------
 
@@ -152,22 +233,6 @@ function featPrerequisites(scraped: string[]): string[] {
   if (languages < 0) return feats;
   return [...feats.slice(0, languages), feats[languages].replace(/\s*\bLanguages?:.*$/, "")];
 }
-
-// ---------------------------------------------------------------------------
-// Race requirements — e.g. "Race: Elf or half-elf", "Race: Dwarf"
-// ---------------------------------------------------------------------------
-
-const RACE_NAMES: Record<string, string> = {
-  elf: "Elf",
-  "half-elf": "Half-Elf",
-  halfelf: "Half-Elf",
-  dwarf: "Dwarf",
-  gnome: "Gnome",
-  halfling: "Halfling",
-  human: "Human",
-  "half-orc": "Half-Orc",
-  halforc: "Half-Orc",
-};
 
 function parseRaceRequirement(text: string): RequirementEntry | undefined {
   const match = text.match(/^Race:\s*(.+)$/i);
@@ -477,26 +542,6 @@ function detectCasterAdvancement(
   return { type, levels };
 }
 
-// ---------------------------------------------------------------------------
-// Pool sub-option extraction
-// ---------------------------------------------------------------------------
-
-/**
- * Parse a combined pool feature description into individual sub-options.
- * Matches patterns like: "Name (Ex): description text" or "Name: description text"
- *
- * The intro text (before the first sub-option) is returned separately.
- */
-const STACKABLE_PATTERNS = [
-  /can be selected .* second time/i,
-  /can be taken multiple times/i,
-  /selected more than one time/i,
-  /selected more than once/i,
-  /can be selected more than once/i,
-  /this ability can be selected more than once/i,
-  /changes .* are cumulative/i,
-];
-
 function detectStackable(description: string): boolean {
   return STACKABLE_PATTERNS.some((p) => p.test(description));
 }
@@ -607,46 +652,6 @@ function parseTreatedAsHavingFeats(description: string): string[] | undefined {
   return feats.length >= 2 ? feats : undefined;
 }
 
-// ---------------------------------------------------------------------------
-// Aptitude pick detection
-// ---------------------------------------------------------------------------
-
-// Patterns indicating the character makes a selection from a pool
-const CHOICE_PATTERN =
-  /\b(choose|chooses|select|selects|picks?|chosen|drawn from|from the following|from those given|from among)\b/i;
-
-/** Description patterns that indicate gameplay/tactical choices, not character-build picks.
- *  These filter AFTER CHOICE_PATTERN matches — if any match, the feature is skipped.
- *  Keep these narrow: a description can contain both build choices and gameplay language.
- *  Only match when the ENTIRE feature is clearly not a build pick. */
-const NON_PICK_DESCRIPTION: RegExp[] = [
-  // Bonus feat with alternative: "if he already has the feat, he can choose"
-  /already has the feat.{0,20}choose/i,
-  // "roll and choose" / "choose the result" / "choose between the two results" — random table picks
-  /choose (?:the result|between the two)/i,
-  /roll .{0,20}choose/i,
-];
-
-/** Features that match CHOICE_PATTERN but aren't character-build picks.
- *  Add new entries here instead of scattering regex blocks in detectAptitudePicks. */
-const NON_PICK_FEATURES: RegExp[] = [
-  // Scaling abilities that increase in power, not choices
-  /sneak attack|rage|wild shape|summon|damage reduction|save|trap sense|uncanny dodge|flurry|bonus language/i,
-  // Named feats granted as freeFeats
-  /^(Skill Focus|Skill Mastery|Precise Shot|Mettle|Catch Weapon|Evasion|Improved Evasion)\b/i,
-  // Combat/passive abilities whose descriptions incidentally contain choice words
-  /parry|waist|bleed|wound|grapple|intimidat|reckless|combat trap|weapon bond|oath|visage|wings|trackless/i,
-  // Class abilities that aren't character-build picks
-  /bardic knowledge|unarmed strike|lay on hands|turn or rebuke|weaken spirit|sense element|spirit guide|steal spell|justice blade|brilliant blade|animal companion|^mount$/i,
-  // Per-use abilities whose descriptions contain incidental choice words (tactical/gameplay picks)
-  /bloodwalk|arcane fist|fist of energy|spin fate|seal fate|combine songs|glyph of warding|spellpool|enhanced accuracy|student of chaos|thrall|effortless change|shapechanger|reflexive change|infinite variety|favored shape/i,
-  // Elemental/energy abilities that reference a prior one-time class-entry choice
-  /elemental specialty|elemental perfection|energy (?:resistance|immunity)|resistance to energy/i,
-];
-
-// D&D type suffixes embedded in raw class feature names, e.g. "Tattoo (Su or Sp)"
-const TYPE_SUFFIX = /\s*\((?:Ex|Su|Sp|Su or Sp)\)$/i;
-
 function buildFeatureMap<T>(
   features: ClassReference["raw"]["classFeatures"],
   valueFn: (cf: ClassReference["raw"]["classFeatures"][number]) => T,
@@ -694,8 +699,6 @@ function isScalingFeature(normalizedName: string, progression: ClassReference["r
   }
   return false;
 }
-
-const ORDINAL_PREFIX = /^\d+(st|nd|rd|th)\s+/i;
 function stripOrdinalPrefix(name: string): string {
   return name.replace(ORDINAL_PREFIX, "");
 }
@@ -1157,6 +1160,17 @@ function detectLockedFavoredEnemies(
   return results.length > 0 ? { lockedFavoredEnemies: results } : {};
 }
 
+// ---------------------------------------------------------------------------
+// Weapon and Armor Proficiency detection
+// ---------------------------------------------------------------------------
+
+const PROF = (slug: string) => ({
+  operator: "set" as const,
+  target: `feats.${slug}.possessed`,
+  value: "true",
+  valueType: "boolean" as const,
+});
+
 export function buildDetected(raw: ClassReference["raw"]): ClassReference["detected"] {
   const levels = raw.progression.length;
   const featureOccurrences = detectFeatureOccurrences(raw.progression);
@@ -1187,20 +1201,6 @@ export function buildDetected(raw: ClassReference["raw"]): ClassReference["detec
     ...(unresolvedPrereqs.length > 0 ? { unresolvedPrereqs } : {}),
   };
 }
-
-// ---------------------------------------------------------------------------
-// Weapon and Armor Proficiency detection
-// ---------------------------------------------------------------------------
-
-const PROF = (slug: string) => ({
-  operator: "set" as const,
-  target: `feats.${slug}.possessed`,
-  value: "true",
-  valueType: "boolean" as const,
-});
-
-// Build weapon name → proficiency slug lookup
-const WEAPON_PROF_MAP = new Map<string, string>();
 for (const w of SIMPLE_WEAPONS) WEAPON_PROF_MAP.set(w.toLowerCase(), `simpleweaponproficiency${stripSeparators(w)}`);
 for (const w of MARTIAL_WEAPONS) WEAPON_PROF_MAP.set(w.toLowerCase(), `martialweaponproficiency${stripSeparators(w)}`);
 for (const w of EXOTIC_WEAPONS) WEAPON_PROF_MAP.set(w.toLowerCase(), `exoticweaponproficiency${stripSeparators(w)}`);

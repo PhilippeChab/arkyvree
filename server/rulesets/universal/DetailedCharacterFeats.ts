@@ -3,17 +3,6 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Feat } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-const NAVIGATABLE_PATHS = [
-  { path: "possessed", description: "Whether the character has this feat", type: "boolean" as const },
-  {
-    path: "count",
-    description: "Times taken (stackable feats only)",
-    type: "number" as const,
-    requirementOnly: true,
-    stackableOnly: true,
-  },
-];
-
 export type FeatEntry = {
   name: string;
   possessed: boolean;
@@ -25,6 +14,17 @@ type FeatGroupEntry = Record<string, FeatEntry>;
 type DetailedCharacterComprehensiveFeats = {
   [key: string]: FeatEntry | FeatGroupEntry;
 };
+
+const NAVIGATABLE_PATHS = [
+  { path: "possessed", description: "Whether the character has this feat", type: "boolean" as const },
+  {
+    path: "count",
+    description: "Times taken (stackable feats only)",
+    type: "number" as const,
+    requirementOnly: true,
+    stackableOnly: true,
+  },
+];
 
 /** A feat's entry, not a family's group: a group's values are its feats. */
 function isFeatEntry(entry: FeatEntry | FeatGroupEntry | undefined): entry is FeatEntry {

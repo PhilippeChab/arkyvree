@@ -27,6 +27,8 @@ const VERB_GROUPS = [
 ];
 const ACTIONS = VERB_GROUPS.length;
 
+const ROUTE_METHODS = ["get", "post", "put", "patch", "delete"];
+
 /** Whether `name` starts with the word `verb`: `find` starts `findOne`, not `finder`. */
 export const startsWithVerb = (name, verb) => new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
 
@@ -55,8 +57,6 @@ function memberRank(member) {
     (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
   return [isPublic ? 0 : -1, verbGroup(name), lifecycleStep(name), name];
 }
-
-const ROUTE_METHODS = ["get", "post", "put", "patch", "delete"];
 
 /** A path's segments, each a kind (0 fixed, 1 parameter, 2 wildcard) and its text. */
 function segments(path) {

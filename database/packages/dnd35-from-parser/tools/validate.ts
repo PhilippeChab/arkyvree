@@ -35,14 +35,6 @@ type DetectedEntry = {
   unresolvedAptitudePicks?: string[];
 };
 
-/** A detection's kinds of issue, each with the issue it's reported as. */
-const DETECTED_ISSUES = [
-  ["errors", "error"],
-  ["unresolvedModifiers", "modifier"],
-  ["unresolvedPrereqs", "prereq"],
-  ["unresolvedAptitudePicks", "aptitude pick"],
-] as const;
-
 type Review = ReturnType<typeof reviewOf>;
 
 export type Issue = {
@@ -67,6 +59,14 @@ export type Issue = {
 };
 
 type Found = { kind: Issue["kind"]; text: string };
+
+/** A detection's kinds of issue, each with the issue it's reported as. */
+const DETECTED_ISSUES = [
+  ["errors", "error"],
+  ["unresolvedModifiers", "modifier"],
+  ["unresolvedPrereqs", "prereq"],
+  ["unresolvedAptitudePicks", "aptitude pick"],
+] as const;
 
 /**
  * A reference's review list (`overrides.reviewed`): the entries it has, those that covered an issue (`use`), and,

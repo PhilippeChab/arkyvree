@@ -69,9 +69,6 @@ import {
   WIZARD_1,
 } from "@/tests/levelFixtures.ts";
 
-const session = makeSession(SEED_USER_ID);
-const page = { limit: 500, page: 1 };
-
 /** The levels, ability increases, feats and skill ranks being added, which getAvailableKlasses takes after its paging. */
 type PendingPicks =
   Parameters<typeof CharacterLevelsService.getAvailableKlasses> extends [
@@ -83,6 +80,9 @@ type PendingPicks =
   ]
     ? Rest
     : never;
+
+const session = makeSession(SEED_USER_ID);
+const page = { limit: 500, page: 1 };
 
 /**
  * A small ruleset of a new user's, with a class of five levels, three skills,
@@ -176,6 +176,99 @@ async function setupRuleset({ fork = false } = {}) {
 }
 
 const names = (rows: { name: string }[]) => rows.map((r) => r.name);
+
+// The Blackguard (Dungeon Master's Guide) needs BAB 6, 5 ranks of Hide, 2 of
+// Knowledge (Religion), Power Attack, Cleave and Improved Sunder. Each case
+// leaves one out of the character and supplies it as a pending pick.
+async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: string }) {
+  const ctx = await getSeedCtx();
+  const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
+    name: `Blackguard Fork ${uniqueId()}`,
+    private: false,
+  });
+  const dmg = (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!;
+  await RulesetExtensionsService.subscribeExtension(session, fork.id, [dmg.id]);
+  const blackguard = (await Klasses.findOne(db, { name: "Blackguard", rulesetId: dmg.id }))!;
+
+  const characterId = await createSeedCharacter(ctx, "fighter", {
+    xp: 36000,
+    alignment: "Chaotic Evil",
+    rulesetId: fork.id,
+  });
+  const fighterLevels = missing.bab ? [1, 2, 3, 4, 5] : [1, 2, 3, 4, 5, 6];
+  const levelIds = await addClassLevels(
+    db,
+    ctx,
+    characterId,
+    "Fighter",
+    fighterLevels,
+    fighterLevels.map(() => 10),
+  );
+  // Both skills are cross-class for a fighter: 2 points a rank.
+  const skills = [
+    { skillName: "Hide", rank: 10 },
+    { skillName: "Knowledge (Religion)", rank: 4 },
+  ].filter((s) => s.skillName !== missing.skill);
+  await addSkills(
+    db,
+    ctx,
+    levelIds,
+    skills.map((s) => ({ ...s, levelIndex: 0 })),
+  );
+  const feats = [
+    { levelIndex: 0, aptitude: "General", featName: "Power Attack" },
+    { levelIndex: 0, aptitude: "Fighter Bonus Feat", featName: "Improved Sunder" },
+    { levelIndex: 1, aptitude: "Fighter Bonus Feat", featName: "Cleave" },
+  ].filter((f) => f.featName !== missing.feat);
+  await addFeats(db, ctx, levelIds, feats);
+
+  const eligible = async (...pending: PendingPicks) =>
+    (await CharacterLevelsService.getAvailableKlasses(session, characterId, {}, page, ...pending)).items.find(
+      (k) => k.id === blackguard.id,
+    )!.eligible;
+  const fighterLevel = async (level: number) => (await findKlassLevel(ctx.klassMap.pc["Fighter"], level))!.id;
+  return { ctx, eligible, fighterLevel };
+}
+
+const spellNames = async (characterId: string, level: number, where: object = {}) => {
+  const ctx = await getSeedCtx();
+  return names(
+    (
+      await CharacterLevelsService.getAvailablePowers(
+        session,
+        characterId,
+        ctx.aptMap["Wizard Spells"],
+        ctx.klassMap.pc["Wizard"],
+        level,
+        where,
+        page,
+      )
+    ).items,
+  );
+};
+
+const pool = (pools: Record<string, { name: string; allowed: number; available: number }>, name: string) =>
+  Object.values(pools).find((p) => p.name === name);
+
+/** A dwarf with a barbarian level, then fighter levels, made in that order. */
+async function setupMulticlass(fighterLevels: number) {
+  const ctx = await getSeedCtx();
+  const characterId = await createSeedCharacter(ctx, "dwarf", { xp: 9000 });
+  const levelIds = [(await addClassLevels(db, ctx, characterId, "Barbarian", [1], [12]))[0]];
+  for (let level = 1; level <= fighterLevels; level++)
+    levelIds.push((await addClassLevels(db, ctx, characterId, "Fighter", [level], [8]))[0]);
+  // Rows made in one transaction share a creation time: order them.
+  for (const [offset, id] of levelIds.entries()) {
+    await db
+      .update(levelsInCharacter)
+      .set({ createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, offset)).toISOString() })
+      .where(eq(levelsInCharacter.id, id));
+  }
+  return { ctx, characterId, levelIds };
+}
+
+const skillRanks = (ctx: Awaited<ReturnType<typeof getSeedCtx>>, ranks: Record<string, number>) =>
+  picks(ctx, { skills: ranks }).skills;
 
 describe("LevelsService", () => {
   test("refuses a missing character, another user's, a missing class level, and removing from a character without levels", async () => {
@@ -286,59 +379,6 @@ describe("LevelsService", () => {
     });
 
     describe("counts the levels, feats and skill ranks being added toward a prestige class", () => {
-      // The Blackguard (Dungeon Master's Guide) needs BAB 6, 5 ranks of Hide, 2 of
-      // Knowledge (Religion), Power Attack, Cleave and Improved Sunder. Each case
-      // leaves one out of the character and supplies it as a pending pick.
-      async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: string }) {
-        const ctx = await getSeedCtx();
-        const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
-          name: `Blackguard Fork ${uniqueId()}`,
-          private: false,
-        });
-        const dmg = (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!;
-        await RulesetExtensionsService.subscribeExtension(session, fork.id, [dmg.id]);
-        const blackguard = (await Klasses.findOne(db, { name: "Blackguard", rulesetId: dmg.id }))!;
-
-        const characterId = await createSeedCharacter(ctx, "fighter", {
-          xp: 36000,
-          alignment: "Chaotic Evil",
-          rulesetId: fork.id,
-        });
-        const fighterLevels = missing.bab ? [1, 2, 3, 4, 5] : [1, 2, 3, 4, 5, 6];
-        const levelIds = await addClassLevels(
-          db,
-          ctx,
-          characterId,
-          "Fighter",
-          fighterLevels,
-          fighterLevels.map(() => 10),
-        );
-        // Both skills are cross-class for a fighter: 2 points a rank.
-        const skills = [
-          { skillName: "Hide", rank: 10 },
-          { skillName: "Knowledge (Religion)", rank: 4 },
-        ].filter((s) => s.skillName !== missing.skill);
-        await addSkills(
-          db,
-          ctx,
-          levelIds,
-          skills.map((s) => ({ ...s, levelIndex: 0 })),
-        );
-        const feats = [
-          { levelIndex: 0, aptitude: "General", featName: "Power Attack" },
-          { levelIndex: 0, aptitude: "Fighter Bonus Feat", featName: "Improved Sunder" },
-          { levelIndex: 1, aptitude: "Fighter Bonus Feat", featName: "Cleave" },
-        ].filter((f) => f.featName !== missing.feat);
-        await addFeats(db, ctx, levelIds, feats);
-
-        const eligible = async (...pending: PendingPicks) =>
-          (await CharacterLevelsService.getAvailableKlasses(session, characterId, {}, page, ...pending)).items.find(
-            (k) => k.id === blackguard.id,
-          )!.eligible;
-        const fighterLevel = async (level: number) => (await findKlassLevel(ctx.klassMap.pc["Fighter"], level))!.id;
-        return { ctx, eligible, fighterLevel };
-      }
-
       test("a pending level brings the BAB", async () => {
         const { eligible, fighterLevel } = await setupCandidate({ bab: true });
         expect(await eligible()).toBe(false);
@@ -1053,22 +1093,6 @@ describe("LevelsService", () => {
     });
 
     describe("prohibited schools", () => {
-      const spellNames = async (characterId: string, level: number, where: object = {}) => {
-        const ctx = await getSeedCtx();
-        return names(
-          (
-            await CharacterLevelsService.getAvailablePowers(
-              session,
-              characterId,
-              ctx.aptMap["Wizard Spells"],
-              ctx.klassMap.pc["Wizard"],
-              level,
-              where,
-              page,
-            )
-          ).items,
-        );
-      };
       const ILLUSION = "Silent Image";
       const NECROMANCY = ["Disrupt Undead", "Touch of Fatigue", "Ray of Enfeeblement"];
 
@@ -1307,9 +1331,6 @@ describe("LevelsService", () => {
   });
 
   describe("editing a level", () => {
-    const pool = (pools: Record<string, { name: string; allowed: number; available: number }>, name: string) =>
-      Object.values(pools).find((p) => p.name === name);
-
     test("counts a human fighter's bonus feats at the first level", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx);
@@ -1344,25 +1365,6 @@ describe("LevelsService", () => {
     });
 
     describe("of a multiclass character", () => {
-      /** A dwarf with a barbarian level, then fighter levels, made in that order. */
-      async function setupMulticlass(fighterLevels: number) {
-        const ctx = await getSeedCtx();
-        const characterId = await createSeedCharacter(ctx, "dwarf", { xp: 9000 });
-        const levelIds = [(await addClassLevels(db, ctx, characterId, "Barbarian", [1], [12]))[0]];
-        for (let level = 1; level <= fighterLevels; level++)
-          levelIds.push((await addClassLevels(db, ctx, characterId, "Fighter", [level], [8]))[0]);
-        // Rows made in one transaction share a creation time: order them.
-        for (const [offset, id] of levelIds.entries()) {
-          await db
-            .update(levelsInCharacter)
-            .set({ createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, offset)).toISOString() })
-            .where(eq(levelsInCharacter.id, id));
-        }
-        return { ctx, characterId, levelIds };
-      }
-      const skillRanks = (ctx: Awaited<ReturnType<typeof getSeedCtx>>, ranks: Record<string, number>) =>
-        picks(ctx, { skills: ranks }).skills;
-
       test("keeps a General feat saved at a level that grants none", async () => {
         const {
           ctx,

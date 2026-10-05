@@ -5,13 +5,13 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+type FeatGroup = Record<string, FeatEntry>;
+type FeatGroupingsData = Record<string, FeatGroup>;
+
 const NAVIGATABLE_PATHS = [
   { path: "possessed", description: "Whether this feat is possessed", type: "boolean" as const },
   { path: "count", description: "Times this feat was taken", type: "number" as const, requirementOnly: true },
 ];
-
-type FeatGroup = Record<string, FeatEntry>;
-type FeatGroupingsData = Record<string, FeatGroup>;
 
 // A family's `count`: how many times the character has its feats, all together (every class's sneak attack dice).
 // It's read when checked, and isn't enumerable: the family's wildcard (`feats.<family>.*`) reaches its feats only

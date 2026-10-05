@@ -23,13 +23,6 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { SectionAddButton } from "./SectionAddButton.tsx";
 import { useCopyFollow } from "./useCopyFollow.ts";
 
-const MODIFIERS_COLUMNS = [
-  { key: "target", label: "Target", width: "30%" },
-  { key: "operator", label: "Operator", width: "10%" },
-  { key: "value", label: "Value", width: "25%" },
-  { key: "createdAt", label: "Created", width: "20%" },
-];
-
 type ModifiersArray = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"],
   200
@@ -48,6 +41,13 @@ interface ModifiersSectionProps {
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
+
+const MODIFIERS_COLUMNS = [
+  { key: "target", label: "Target", width: "30%" },
+  { key: "operator", label: "Operator", width: "10%" },
+  { key: "value", label: "Value", width: "25%" },
+  { key: "createdAt", label: "Created", width: "20%" },
+];
 
 export function ModifiersSection({
   ruleset,

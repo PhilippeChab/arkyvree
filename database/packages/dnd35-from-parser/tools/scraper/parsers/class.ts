@@ -9,6 +9,8 @@ import {
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
+type RawFeature = ClassReference["raw"]["classFeatures"][number];
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -32,7 +34,55 @@ const LOWERCASE_WORDS = new Set([
   "vs",
 ]);
 
-type RawFeature = ClassReference["raw"]["classFeatures"][number];
+// ---------------------------------------------------------------------------
+// Class Skills — table under <h3>Class skills</h3>
+// ---------------------------------------------------------------------------
+
+/** Known Knowledge subspecialties for expansion */
+const KNOWLEDGE_SUBSPECIALTIES: Record<string, string> = {
+  arcana: "Knowledge (Arcana)",
+  "architecture and engineering": "Knowledge (Architecture and Engineering)",
+  dungeoneering: "Knowledge (Dungeoneering)",
+  geography: "Knowledge (Geography)",
+  history: "Knowledge (History)",
+  local: "Knowledge (Local)",
+  nature: "Knowledge (Nature)",
+  "nobility and royalty": "Knowledge (Nobility and Royalty)",
+  psionics: "Knowledge (Psionics)",
+  religion: "Knowledge (Religion)",
+  "the planes": "Knowledge (The Planes)",
+};
+
+const ALL_KNOWLEDGE = Object.values(KNOWLEDGE_SUBSPECIALTIES);
+
+// ---------------------------------------------------------------------------
+// Class features — driven by the advancement table's Special column
+//
+// Strategy:
+//   1. Collect unique feature names from the Special column (authoritative list)
+//   2. Always include "Weapon and Armor Proficiency" and "Spells" (not in Special)
+//   3. Collect all text blocks from the Class Features section
+//   4. Match each feature name to its description in the text
+// ---------------------------------------------------------------------------
+
+/** Names that always count as features even if not in the Special column.
+ *  These are common features described on class pages but not listed in
+ *  the progression table's Special column. */
+const IMPLICIT_FEATURES = [
+  "Weapon and Armor Proficiency",
+  "Spells",
+  "Spells per Day",
+  "Spells per Day/Spells Known",
+  "Spells and Caster Level",
+  "AC Bonus",
+  "Spontaneous Casting",
+  "Chaotic, Evil, Good, and Lawful Spells",
+  "Spellbooks",
+  "Aura",
+  "Deity, Domains, and Domain Spells",
+  "Fast Movement",
+  "Flurry of Blows",
+];
 
 function titleCase(s: string): string {
   return s
@@ -509,27 +559,6 @@ function parseSkillPoints($: cheerio.CheerioAPI): string {
   return "2 + Int modifier";
 }
 
-// ---------------------------------------------------------------------------
-// Class Skills — table under <h3>Class skills</h3>
-// ---------------------------------------------------------------------------
-
-/** Known Knowledge subspecialties for expansion */
-const KNOWLEDGE_SUBSPECIALTIES: Record<string, string> = {
-  arcana: "Knowledge (Arcana)",
-  "architecture and engineering": "Knowledge (Architecture and Engineering)",
-  dungeoneering: "Knowledge (Dungeoneering)",
-  geography: "Knowledge (Geography)",
-  history: "Knowledge (History)",
-  local: "Knowledge (Local)",
-  nature: "Knowledge (Nature)",
-  "nobility and royalty": "Knowledge (Nobility and Royalty)",
-  psionics: "Knowledge (Psionics)",
-  religion: "Knowledge (Religion)",
-  "the planes": "Knowledge (The Planes)",
-};
-
-const ALL_KNOWLEDGE = Object.values(KNOWLEDGE_SUBSPECIALTIES);
-
 function parseClassSkills($: cheerio.CheerioAPI): string[] {
   const skills: string[] = [];
 
@@ -781,35 +810,6 @@ function parsePrerequisites($: cheerio.CheerioAPI): ClassReference["raw"]["prere
   const parsed = parsePrerequisiteText(text);
   return { text, parsed };
 }
-
-// ---------------------------------------------------------------------------
-// Class features — driven by the advancement table's Special column
-//
-// Strategy:
-//   1. Collect unique feature names from the Special column (authoritative list)
-//   2. Always include "Weapon and Armor Proficiency" and "Spells" (not in Special)
-//   3. Collect all text blocks from the Class Features section
-//   4. Match each feature name to its description in the text
-// ---------------------------------------------------------------------------
-
-/** Names that always count as features even if not in the Special column.
- *  These are common features described on class pages but not listed in
- *  the progression table's Special column. */
-const IMPLICIT_FEATURES = [
-  "Weapon and Armor Proficiency",
-  "Spells",
-  "Spells per Day",
-  "Spells per Day/Spells Known",
-  "Spells and Caster Level",
-  "AC Bonus",
-  "Spontaneous Casting",
-  "Chaotic, Evil, Good, and Lawful Spells",
-  "Spellbooks",
-  "Aura",
-  "Deity, Domains, and Domain Spells",
-  "Fast Movement",
-  "Flurry of Blows",
-];
 
 /**
  * Clean a Special column entry to its base feature name.

@@ -18,10 +18,6 @@ import { capitalize } from "@/shared/text.ts";
 
 import { type EncumbranceData, type EquipmentRow, formatSlotDisplay } from "./equipment.ts";
 
-const headerSx = { fontWeight: 600 };
-// Slots and figures stay on one line; the table scrolls on narrow screens.
-const noWrap = { whiteSpace: "nowrap" };
-
 type EquipmentTableRow = Omit<EquipmentRow, "type" | "updatedAt">;
 
 interface EquipmentTableProps<T extends EquipmentTableRow> {
@@ -32,6 +28,10 @@ interface EquipmentTableProps<T extends EquipmentTableRow> {
   /** The row's actions, when the viewer can change the inventory. */
   renderActions?: (row: T) => ReactNode;
 }
+
+const headerSx = { fontWeight: 600 };
+// Slots and figures stay on one line; the table scrolls on narrow screens.
+const noWrap = { whiteSpace: "nowrap" };
 
 /** A character's inventory: slot, quantity, weight, value, and the carried load under it. */
 export function EquipmentTable<T extends EquipmentTableRow>({

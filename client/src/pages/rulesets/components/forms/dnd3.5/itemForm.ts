@@ -16,6 +16,14 @@ export type TemplateType = NonNullable<
   InferRequestType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"]>["query"]["type"]
 >;
 
+export const DECIMAL_PATTERN = { value: /^(\d+\.?\d*|\.\d+)?$/, message: "Must be a number" };
+
+function parseNumericField(value: string | undefined): number | undefined {
+  if (value === undefined || value.trim() === "") return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 export const isTemplateType = (type: string | null | undefined): type is TemplateType =>
   type === "Weapon" || type === "Armor" || type === "Shield";
 
@@ -33,12 +41,6 @@ export const toItemForm = (
   sourceItemId: item.isTemplate ? undefined : (item.sourceItemId ?? undefined),
 });
 
-function parseNumericField(value: string | undefined): number | undefined {
-  if (value === undefined || value.trim() === "") return undefined;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
-}
-
 export function toItemPayload(data: ItemFormInternal): ItemFormData {
   const { sourceItemId, ...rest } = data;
   return {
@@ -48,5 +50,3 @@ export function toItemPayload(data: ItemFormInternal): ItemFormData {
     ...(!data.isTemplate && sourceItemId ? { sourceItemId } : {}),
   };
 }
-
-export const DECIMAL_PATTERN = { value: /^(\d+\.?\d*|\.\d+)?$/, message: "Must be a number" };

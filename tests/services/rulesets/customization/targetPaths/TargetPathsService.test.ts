@@ -17,6 +17,35 @@ async function seedPaths(kind: Kind, entityType?: EntityType) {
 const isAptitudeGrant = (p: { category: string; path: string }) =>
   p.category === "aptitudes" && /\.(uses|allowed)$/.test(p.path);
 
+const complete = async (
+  partialPath: string,
+  kind: Kind,
+  {
+    search,
+    limit = 50,
+    page = 1,
+    flat = false,
+  }: { search?: string; limit?: number; page?: number; flat?: boolean } = {},
+) => {
+  const { rulesetId } = await getSeedCtx();
+  return await TargetPathsService.getCompletions(
+    rulesetId,
+    partialPath,
+    partialPath.length,
+    kind,
+    undefined,
+    search,
+    limit,
+    page,
+    flat,
+  );
+};
+
+const pathsOf = (result: Awaited<ReturnType<typeof complete>>) => result.items.map((item) => item.path);
+
+const validate = async (path: string, kind: Kind = "modifier") =>
+  TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind);
+
 // Completing and validating a path through the API are covered in the customization target router test.
 describe("TargetPathsService", () => {
   test("lists paths in every category, with a readable label for each segment", async () => {
@@ -247,31 +276,6 @@ describe("TargetPathsService", () => {
   });
 
   describe("completing a path", () => {
-    const complete = async (
-      partialPath: string,
-      kind: Kind,
-      {
-        search,
-        limit = 50,
-        page = 1,
-        flat = false,
-      }: { search?: string; limit?: number; page?: number; flat?: boolean } = {},
-    ) => {
-      const { rulesetId } = await getSeedCtx();
-      return await TargetPathsService.getCompletions(
-        rulesetId,
-        partialPath,
-        partialPath.length,
-        kind,
-        undefined,
-        search,
-        limit,
-        page,
-        flat,
-      );
-    };
-    const pathsOf = (result: Awaited<ReturnType<typeof complete>>) => result.items.map((item) => item.path);
-
     // The path browser's search box: any leaf, whatever the drilled prefix.
     test("finds leaves anywhere by their path or a segment's label, in order, a page at a time", async () => {
       // "Knowledge (Arcana)" is only the label of the knowledgearcana segment.
@@ -339,9 +343,6 @@ describe("TargetPathsService", () => {
   });
 
   describe("validating a path", () => {
-    const validate = async (path: string, kind: Kind = "modifier") =>
-      TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind);
-
     test("accepts a full path", async () => {
       expect(await validate("abilities.strength.misc")).toMatchObject({ isValid: true, errors: [], suggestions: [] });
       expect(await validate("abilities.strength.total", "requirement")).toMatchObject({ isValid: true });

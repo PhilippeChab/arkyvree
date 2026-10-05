@@ -2,33 +2,6 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 import { openActionsMenu } from "@/tests/e2e/helpers.ts";
 
-/** The d&d 3.5 Add Level wizard: opening it, planning its levels and walking its steps. */
-
-/** Opens the Add Level wizard of the character on the page. */
-export async function openAddLevelWizard(page: Page) {
-  await openActionsMenu(page, /^Add Level/);
-  const wizard = page.getByRole("dialog", { name: "Add Level" });
-  await expect(wizard).toBeVisible({ timeout: 10_000 });
-  return wizard;
-}
-
-/** Queues `count` levels of each class, in order, then moves on from the class plan. */
-export async function planLevels(wizard: Locator, page: Page, plan: [klass: string, count: number][]) {
-  for (const [klass, count] of plan) {
-    for (let i = 0; i < count; i++) {
-      await wizard.getByRole("button", { name: "Add Level" }).first().click();
-      const combobox = wizard.getByRole("combobox").last();
-      await combobox.click();
-      await combobox.fill(klass);
-      await page
-        .getByRole("option", { name: new RegExp(`^${klass}`) })
-        .first()
-        .click();
-    }
-  }
-  await wizard.getByRole("button", { name: /^Next$/ }).click();
-}
-
 /**
  * Picks, for each pool chip still short of its total (`name picked/total`), the first item it lists, until every
  * pool is full. Returns what it picked.
@@ -58,6 +31,33 @@ async function fillPools(wizard: Locator, { skipOptional }: { skipOptional: bool
     await item.click();
   }
   throw new Error("The pools never filled up");
+}
+
+/** The d&d 3.5 Add Level wizard: opening it, planning its levels and walking its steps. */
+
+/** Opens the Add Level wizard of the character on the page. */
+export async function openAddLevelWizard(page: Page) {
+  await openActionsMenu(page, /^Add Level/);
+  const wizard = page.getByRole("dialog", { name: "Add Level" });
+  await expect(wizard).toBeVisible({ timeout: 10_000 });
+  return wizard;
+}
+
+/** Queues `count` levels of each class, in order, then moves on from the class plan. */
+export async function planLevels(wizard: Locator, page: Page, plan: [klass: string, count: number][]) {
+  for (const [klass, count] of plan) {
+    for (let i = 0; i < count; i++) {
+      await wizard.getByRole("button", { name: "Add Level" }).first().click();
+      const combobox = wizard.getByRole("combobox").last();
+      await combobox.click();
+      await combobox.fill(klass);
+      await page
+        .getByRole("option", { name: new RegExp(`^${klass}`) })
+        .first()
+        .click();
+    }
+  }
+  await wizard.getByRole("button", { name: /^Next$/ }).click();
 }
 
 /** Walks from hit points to the Feats step: maximum hit points, `ability` for an increase, random skills. */

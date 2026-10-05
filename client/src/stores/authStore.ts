@@ -36,6 +36,13 @@ interface AuthState {
   updateUser: (patch: Partial<AuthUser>) => void;
 }
 
+const signedOut = {
+  user: null,
+  isAuthenticated: false,
+  pendingVerificationEmail: null,
+  pendingPasswordResetEmail: null,
+} as const;
+
 /** The fields the store keeps (and persists) from a user response, whatever else it carries. */
 const toAuthUser = ({
   id,
@@ -52,13 +59,6 @@ const toAuthUser = ({
   onboardingCompletedAt,
   expiresAt,
 });
-
-const signedOut = {
-  user: null,
-  isAuthenticated: false,
-  pendingVerificationEmail: null,
-  pendingPasswordResetEmail: null,
-} as const;
 
 export const useAuthStore = create<AuthState>()(
   persist(

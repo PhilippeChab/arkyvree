@@ -15,13 +15,13 @@ type Call = (args: unknown[]) => unknown;
 const READS = new Set(methodVerbs.read);
 const WRITES = new Set(methodVerbs.write);
 
-/** A method's verb, its first camelCase word: what `methodVerbs.json` classifies it by (lint holds every public one). */
-const verbOf = (method: string) => /^[a-z]+/.exec(method)?.[0] ?? "";
-
 // A short id per copy-on-write state, so that a request's reads in two of them (a character's ruleset and another's)
 // never share a cached result.
 const stateIds = new WeakMap<IdResolveMap, string>();
 let lastStateId = 0;
+
+/** A method's verb, its first camelCase word: what `methodVerbs.json` classifies it by (lint holds every public one). */
+const verbOf = (method: string) => /^[a-z]+/.exec(method)?.[0] ?? "";
 
 function getStateId(map: IdResolveMap): string {
   let id = stateIds.get(map);

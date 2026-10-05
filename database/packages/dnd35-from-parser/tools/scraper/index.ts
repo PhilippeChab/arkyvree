@@ -57,6 +57,37 @@ import type {
 import { isRecord } from "@/shared/isRecord.ts";
 
 // ---------------------------------------------------------------------------
+// Domain scraping
+// ---------------------------------------------------------------------------
+
+/** dndtools' domains as its copy at dnd.arkalseif.info keeps them: a page per book's version (`parsers/domain.ts`). */
+const DOMAIN_SITE = "https://dnd.arkalseif.info/spells";
+const DOMAIN_INDEX_URL = `${DOMAIN_SITE}/domains/index.html`;
+
+// ---------------------------------------------------------------------------
+// Item scraping (d20srd.org — static pages, not book-parameterized)
+// ---------------------------------------------------------------------------
+
+const D20SRD_URLS = {
+  weapons: "https://www.d20srd.org/srd/equipment/weapons.htm",
+  armor: "https://www.d20srd.org/srd/equipment/armor.htm",
+  goods: "https://www.d20srd.org/srd/equipment/goodsAndServices.htm",
+};
+
+// ---------------------------------------------------------------------------
+// Magic item scraping (d20srd.org — 6 pages for specific/named magic items)
+// ---------------------------------------------------------------------------
+
+const D20SRD_MAGIC_URLS = {
+  magicArmor: "https://www.d20srd.org/srd/magicItems/magicArmor.htm",
+  magicWeapons: "https://www.d20srd.org/srd/magicItems/magicWeapons.htm",
+  wondrousItems: "https://www.d20srd.org/srd/magicItems/wondrousItems.htm",
+  rings: "https://www.d20srd.org/srd/magicItems/rings.htm",
+  rods: "https://www.d20srd.org/srd/magicItems/rods.htm",
+  staffs: "https://www.d20srd.org/srd/magicItems/staffs.htm",
+};
+
+// ---------------------------------------------------------------------------
 // Write helper — only updates scrapedAt when content actually changed
 // ---------------------------------------------------------------------------
 
@@ -308,14 +339,6 @@ async function scrapeSingleSpell(url: string) {
   console.log(JSON.stringify(spell, null, 2));
 }
 
-// ---------------------------------------------------------------------------
-// Domain scraping
-// ---------------------------------------------------------------------------
-
-/** dndtools' domains as its copy at dnd.arkalseif.info keeps them: a page per book's version (`parsers/domain.ts`). */
-const DOMAIN_SITE = "https://dnd.arkalseif.info/spells";
-const DOMAIN_INDEX_URL = `${DOMAIN_SITE}/domains/index.html`;
-
 /** A page of the domain index: the copy keeps page N as `index.html?page=N`, its `?` escaped. */
 const domainIndexPageUrl = (page: number) => (page === 1 ? DOMAIN_INDEX_URL : `${DOMAIN_INDEX_URL}%3Fpage=${page}`);
 
@@ -446,16 +469,6 @@ async function scrapeSingleRace(url: string) {
   console.log(JSON.stringify(race, null, 2));
 }
 
-// ---------------------------------------------------------------------------
-// Item scraping (d20srd.org — static pages, not book-parameterized)
-// ---------------------------------------------------------------------------
-
-const D20SRD_URLS = {
-  weapons: "https://www.d20srd.org/srd/equipment/weapons.htm",
-  armor: "https://www.d20srd.org/srd/equipment/armor.htm",
-  goods: "https://www.d20srd.org/srd/equipment/goodsAndServices.htm",
-};
-
 async function scrapeAllItems(book: string) {
   console.log(`Fetching item pages from d20srd.org...`);
 
@@ -501,19 +514,6 @@ async function scrapeAllItems(book: string) {
     for (const u of detected.unresolved) console.log(`    ${u}`);
   }
 }
-
-// ---------------------------------------------------------------------------
-// Magic item scraping (d20srd.org — 6 pages for specific/named magic items)
-// ---------------------------------------------------------------------------
-
-const D20SRD_MAGIC_URLS = {
-  magicArmor: "https://www.d20srd.org/srd/magicItems/magicArmor.htm",
-  magicWeapons: "https://www.d20srd.org/srd/magicItems/magicWeapons.htm",
-  wondrousItems: "https://www.d20srd.org/srd/magicItems/wondrousItems.htm",
-  rings: "https://www.d20srd.org/srd/magicItems/rings.htm",
-  rods: "https://www.d20srd.org/srd/magicItems/rods.htm",
-  staffs: "https://www.d20srd.org/srd/magicItems/staffs.htm",
-};
 
 async function scrapeAllMagicItems(book: string) {
   console.log(`Fetching magic item pages from d20srd.org...`);

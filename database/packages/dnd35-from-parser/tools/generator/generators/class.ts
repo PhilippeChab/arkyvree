@@ -51,26 +51,6 @@ function stringifyFeat(feat: FeatSeed, classFeatureAptitude: string, uses: Set<s
   return `  { ${parts.join(", ")} },`;
 }
 
-/** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`classDomainPickFeats`). */
-export function generateFeatSeeds(ref: ClassReference): string {
-  const aptitude = ref.mapping.classFeatureAptitude;
-  const uses = new Set<string>();
-  const feats = [...buildClassFeatSeeds(ref), ...classDomainPickFeats(ref)].map((feat) =>
-    stringifyFeat(feat, aptitude, uses),
-  );
-  return [
-    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
-    ...requirementImports(uses),
-    "",
-    `const APT = ${quote(aptitude)};`,
-    "",
-    `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
-    ...feats,
-    `];`,
-    "",
-  ].join("\n");
-}
-
 // ---------------------------------------------------------------------------
 // Build classFeatures array from mapping + detected
 // ---------------------------------------------------------------------------
@@ -163,6 +143,26 @@ function buildClassFeatures(
   features.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
   autoFreeFeats.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
   return { classFeatures: features, autoFreeFeats };
+}
+
+/** A class's feats file: its own feats (`buildClassFeatSeeds`), and the domains it picks from (`classDomainPickFeats`). */
+export function generateFeatSeeds(ref: ClassReference): string {
+  const aptitude = ref.mapping.classFeatureAptitude;
+  const uses = new Set<string>();
+  const feats = [...buildClassFeatSeeds(ref), ...classDomainPickFeats(ref)].map((feat) =>
+    stringifyFeat(feat, aptitude, uses),
+  );
+  return [
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    ...requirementImports(uses),
+    "",
+    `const APT = ${quote(aptitude)};`,
+    "",
+    `export const ${toConstName(ref.raw.name)}_FEATS: FeatSeed[] = [`,
+    ...feats,
+    `];`,
+    "",
+  ].join("\n");
 }
 
 // ---------------------------------------------------------------------------

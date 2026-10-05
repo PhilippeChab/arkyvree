@@ -10,9 +10,6 @@ interface WeaponAttacks {
   offend: { total: number[]; damage: string } | null;
 }
 
-/** A weapon slot's label, as an item's location names it. */
-const SLOT_LABELS = { mainhand: "Main Hand", offhand: "Off Hand", twohanded: "Two Handed" } as const;
-
 /**
  * One attack a sheet lists for a weapon: its label (the slot, "thrown" and "two weapons" added), to-hit and range, and
  * its damage when it isn't the weapon's (a double weapon's other end).
@@ -24,6 +21,9 @@ export interface AttackRow {
   range: string;
   damage?: string;
 }
+
+/** A weapon slot's label, as an item's location names it. */
+const SLOT_LABELS = { mainhand: "Main Hand", offhand: "Off Hand", twohanded: "Two Handed" } as const;
 
 /** The label a sheet gives a weapon: its slot's, or a natural attack's kind ("Primary", "Secondary"), whatever slot holds it. */
 export function describeWeaponSlot(

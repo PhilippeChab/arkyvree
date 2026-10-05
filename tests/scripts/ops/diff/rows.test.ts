@@ -11,6 +11,8 @@ import {
 
 const UUID = "0b9c6a1e-3f5d-4c2a-9e8b-7d6f5a4b3c2d";
 
+const row = (bk: string, fields: Record<string, unknown>, id = `${bk}-id`) => ({ bk, id, row: fields });
+
 describe("A compared row", () => {
   test("keeps its content, without bookkeeping columns nor any id another seed would draw anew", () => {
     expect(
@@ -31,8 +33,6 @@ describe("A compared row", () => {
 });
 
 describe("A table's diff", () => {
-  const row = (bk: string, fields: Record<string, unknown>, id = `${bk}-id`) => ({ bk, id, row: fields });
-
   test("is the rows on one side only and the fields that differ, by business key", () => {
     const diff = collectDiff(
       [row("Dodge", { level: 1 }), row("Cleave", { level: 1 }), row("Alertness", { tags: ["a"] })],

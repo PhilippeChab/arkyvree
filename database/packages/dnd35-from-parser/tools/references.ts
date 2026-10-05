@@ -50,6 +50,19 @@ export type StoredReference<T extends ReferenceType = ReferenceType> = Pick<
   "_meta" | "raw" | "overrides"
 >;
 
+const STORED_KEYS = new Set(["_meta", "raw", "overrides"]);
+
+const loaded: { [T in ReferenceType]: Map<string, ReferenceByType[T]> } = {
+  class: new Map(),
+  feat: new Map(),
+  spell: new Map(),
+  domain: new Map(),
+  race: new Map(),
+  item: new Map(),
+  magicItem: new Map(),
+  wizardSchool: new Map(),
+};
+
 /** A class's mapping: its features as detected, with the overrides applied (a null field removes the detected one). */
 function resolveClass({ _meta, raw, overrides }: StoredReference<"class">): ClassReference {
   const scraped = structuredClone(raw);
@@ -117,6 +130,15 @@ const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => Referen
   wizardSchool: (stored) => stored,
 };
 
+/** Freezes a value and everything in it. */
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
+}
+
 /**
  * A reference with what the generator reads derived from it, in the shape a reference file has: keys sorted,
  * no undefined values.
@@ -125,8 +147,6 @@ export function resolveReference<T extends ReferenceType>(type: T, stored: Store
   const resolve: (stored: StoredReference<T>) => ReferenceByType[T] = RESOLVERS[type];
   return JSON.parse(stableStringify(resolve(stored)));
 }
-
-const STORED_KEYS = new Set(["_meta", "raw", "overrides"]);
 
 /**
  * The reference stored at `path`, checked to be of `type` and to store nothing else: anything else (a correction
@@ -140,26 +160,6 @@ export function readStoredReference<T extends ReferenceType>(path: string, type:
     throw new Error(`${path} stores ${extra.join(", ")}: a reference stores _meta, raw and overrides only`);
   return stored;
 }
-
-/** Freezes a value and everything in it. */
-function deepFreeze<T>(value: T): T {
-  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    for (const child of Object.values(value)) deepFreeze(child);
-  }
-  return value;
-}
-
-const loaded: { [T in ReferenceType]: Map<string, ReferenceByType[T]> } = {
-  class: new Map(),
-  feat: new Map(),
-  spell: new Map(),
-  domain: new Map(),
-  race: new Map(),
-  item: new Map(),
-  magicItem: new Map(),
-  wizardSchool: new Map(),
-};
 
 /**
  * Loads a reference of `type`, with what the generator reads derived from it. A process loads each file once (the

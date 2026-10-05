@@ -24,10 +24,10 @@ import {
   picks,
 } from "@/tests/levelFixtures.ts";
 
-const session = makeSession(SEED_USER_ID);
-
 /** A level of a batch: class, level, hit points and the ability it increases. */
 type BatchLevel = [klass: string, level: number, hp: number, ability?: string];
+
+const session = makeSession(SEED_USER_ID);
 
 /** Finalizes several levels at once, the picks pooled across them. */
 function finalizeBatch(
@@ -52,6 +52,80 @@ const fighterLevels = (count: number): BatchLevel[] =>
   FIGHTER_LEVELS.slice(0, count).map((plan, index) => ["Fighter", index + 1, plan.hp, plan.ability]);
 
 const levelsOf = (klass: string, hps: number[]): BatchLevel[] => hps.map((hp, index) => [klass, index + 1, hp]);
+
+const preview = async (
+  ctx: SeedContext,
+  characterId: string,
+  levels: [string, number][],
+  abilities: (string | null)[] = levels.map(() => null),
+) =>
+  CharacterLevelsService.getLevelUpPreview(
+    session,
+    characterId,
+    levels.map(([klass, level]) => ({ klassId: ctx.klassMap.pc[klass], level })),
+    abilities,
+  );
+
+/** Whether a feat is eligible at `level` of a batch of fighter levels, with these earlier picks and increases. */
+async function eligible(
+  search: string,
+  level: number,
+  options: { strength?: number; pendingPicks?: string[]; increases?: (string | undefined)[] } = {},
+) {
+  const ctx = await getSeedCtx();
+  const characterId = await createSeedCharacter(ctx, "fighter", {
+    xp: 6000,
+    abilities: { Strength: options.strength ?? 14 },
+  });
+  const { levelDetails } = await CharacterLevelsService.getLevelUpPreview(
+    session,
+    characterId,
+    FIGHTER_LEVELS.slice(0, level).map((_, i) => ({ klassId: ctx.klassMap.pc["Fighter"], level: i + 1 })),
+    FIGHTER_LEVELS.slice(0, level).map(() => null),
+  );
+  const pendingLevelFeatPicks = (options.pendingPicks ?? []).map((name) => ({
+    featId: ctx.featMap[name],
+    aptitudeId: ctx.aptMap["General"],
+  }));
+  const { items } = await CharacterLevelsService.getAvailableFeatsGrouped(
+    session,
+    characterId,
+    ctx.aptMap["General"],
+    ctx.klassMap.pc["Fighter"],
+    level,
+    { search, selectedFeatPicks: [], pendingLevelFeatPicks },
+    { limit: 20, page: 1 },
+    undefined,
+    levelDetails.map((d) => d.klassLevelId),
+    options.increases,
+  );
+  return items.find((row) => row.displayName === search)!.eligible;
+}
+
+/** A fighter's first two levels, and the plan the first was saved with. */
+async function setupFighter() {
+  const ctx = await getSeedCtx();
+  const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+  const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
+  await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1]);
+  const resave = (plan: Partial<LevelPlan> & { abilityId?: string | null }, force = false) => {
+    const { skills, feats, powers } = picks(ctx, { ...FIGHTER_LEVELS[0], ...plan });
+    return CharacterLevelsService.updateLevel(
+      session,
+      characterId,
+      first.id,
+      10,
+      plan.abilityId ?? null,
+      skills,
+      feats,
+      powers,
+      force,
+    );
+  };
+  return { ctx, characterId, first, resave };
+}
+
+const fighter = (count: number) => Array.from({ length: count }, (_, i): [string, number] => ["Fighter", i + 1]);
 
 describe("finalizing several levels at once", () => {
   const WIZARD_FEATS = {
@@ -336,20 +410,6 @@ describe("finalizing several levels at once", () => {
 });
 
 describe("previewing a level-up", () => {
-  const preview = async (
-    ctx: SeedContext,
-    characterId: string,
-    levels: [string, number][],
-    abilities: (string | null)[] = levels.map(() => null),
-  ) =>
-    CharacterLevelsService.getLevelUpPreview(
-      session,
-      characterId,
-      levels.map(([klass, level]) => ({ klassId: ctx.klassMap.pc[klass], level })),
-      abilities,
-    );
-  const fighter = (count: number) => Array.from({ length: count }, (_, i): [string, number] => ["Fighter", i + 1]);
-
   test("describes each level, its skill points and where the ability increase falls", async () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx);
@@ -417,42 +477,6 @@ describe("previewing a level-up", () => {
 });
 
 describe("the feats of a level in a batch", () => {
-  /** Whether a feat is eligible at `level` of a batch of fighter levels, with these earlier picks and increases. */
-  async function eligible(
-    search: string,
-    level: number,
-    options: { strength?: number; pendingPicks?: string[]; increases?: (string | undefined)[] } = {},
-  ) {
-    const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", {
-      xp: 6000,
-      abilities: { Strength: options.strength ?? 14 },
-    });
-    const { levelDetails } = await CharacterLevelsService.getLevelUpPreview(
-      session,
-      characterId,
-      FIGHTER_LEVELS.slice(0, level).map((_, i) => ({ klassId: ctx.klassMap.pc["Fighter"], level: i + 1 })),
-      FIGHTER_LEVELS.slice(0, level).map(() => null),
-    );
-    const pendingLevelFeatPicks = (options.pendingPicks ?? []).map((name) => ({
-      featId: ctx.featMap[name],
-      aptitudeId: ctx.aptMap["General"],
-    }));
-    const { items } = await CharacterLevelsService.getAvailableFeatsGrouped(
-      session,
-      characterId,
-      ctx.aptMap["General"],
-      ctx.klassMap.pc["Fighter"],
-      level,
-      { search, selectedFeatPicks: [], pendingLevelFeatPicks },
-      { limit: 20, page: 1 },
-      undefined,
-      levelDetails.map((d) => d.klassLevelId),
-      options.increases,
-    );
-    return items.find((row) => row.displayName === search)!.eligible;
-  }
-
   test("count what earlier levels of the batch pick", async () => {
     // Cleave needs Power Attack.
     expect(await eligible("Cleave", 1)).toBe(false);
@@ -473,29 +497,6 @@ describe("the feats of a level in a batch", () => {
 });
 
 describe("re-saving a level", () => {
-  /** A fighter's first two levels, and the plan the first was saved with. */
-  async function setupFighter() {
-    const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
-    const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
-    await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1]);
-    const resave = (plan: Partial<LevelPlan> & { abilityId?: string | null }, force = false) => {
-      const { skills, feats, powers } = picks(ctx, { ...FIGHTER_LEVELS[0], ...plan });
-      return CharacterLevelsService.updateLevel(
-        session,
-        characterId,
-        first.id,
-        10,
-        plan.abilityId ?? null,
-        skills,
-        feats,
-        powers,
-        force,
-      );
-    };
-    return { ctx, characterId, first, resave };
-  }
-
   test("refuses ranks above the level's cap, and a pool left unspent", async () => {
     const { resave } = await setupFighter();
     await expect(resave({ skills: { Climb: 8, Intimidate: 4, Jump: 4 } })).rejects.toThrow("rank");

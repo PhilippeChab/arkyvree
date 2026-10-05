@@ -14,13 +14,13 @@ import { mechanicsQuery } from "@/client/src/pages/rulesets/details/sectionQueri
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+type MechanicsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$get"], 200>;
+type Mechanic = MechanicsPaginated["items"][number];
+
 const MECHANICS_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
   { key: "description", label: "Description", width: "70%" },
 ];
-
-type MechanicsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["mechanics"]["$get"], 200>;
-type Mechanic = MechanicsPaginated["items"][number];
 
 export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);

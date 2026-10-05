@@ -65,6 +65,93 @@ type TemplateFamily = {
 type FeatFile = { lines: string[]; uses: Set<string> };
 
 /**
+ * The feats no reference lists that the core rules' feat files add, each: its file and export, the content code the
+ * generated file builds it with (and the names that code uses), and the feats that code builds.
+ */
+const CORE_SYSTEM_FEATS: {
+  file: string;
+  name: string;
+  code: string;
+  uses: string[];
+  build: (wizardSchools: WizardSchoolDefinition[]) => FeatSeed[];
+}[] = [
+  {
+    file: "feats.ts",
+    name: "WIZARD_SCHOOL_FEATS",
+    code: "wizardSchoolFeats(WIZARD_SCHOOLS)",
+    uses: ["wizardSchoolFeats", "WIZARD_SCHOOLS"],
+    build: wizardSchoolFeats,
+  },
+  {
+    file: "feats.ts",
+    name: "WEAPON_PROFICIENCY_FEATS",
+    code: "weaponProficiencyFeats",
+    uses: ["weaponProficiencyFeats"],
+    build: () => weaponProficiencyFeats,
+  },
+  {
+    file: "feats.ts",
+    name: "SPELL_WEAPON_FOCUS_FEATS",
+    code: "spellWeaponFocusFeats",
+    uses: ["spellWeaponFocusFeats"],
+    build: () => spellWeaponFocusFeats,
+  },
+  {
+    file: "favoredEnemy.ts",
+    name: "favoredEnemy",
+    code: "favoredEnemyFeats",
+    uses: ["favoredEnemyFeats"],
+    build: () => favoredEnemyFeats,
+  },
+];
+
+/** A single martial weapon's proficiency feat is for a character without them all. */
+const NOT_MARTIAL_PROFICIENT: RequirementCondition = {
+  target: feat("Martial Weapon Proficiency"),
+  operator: "not_equal",
+  value: "true",
+  valueType: "boolean",
+};
+
+/** Weapon proficiency families expand over their own weapons, the others over every weapon. */
+const WEAPON_LISTS: Record<string, string> = {
+  "Simple Weapon Proficiency": "SIMPLE_WEAPONS",
+  "Martial Weapon Proficiency": "MARTIAL_WEAPONS",
+  "Exotic Weapon Proficiency": "EXOTIC_WEAPONS",
+};
+
+// ---------------------------------------------------------------------------
+// Generate FeatSeed[] TypeScript file from a FeatReference
+// ---------------------------------------------------------------------------
+
+/** Where each name the generated feats use comes from, in the order the imports are written. */
+const IMPORTS: ImportTable = [
+  ...REQUIREMENT_IMPORTS,
+  [
+    "@/database/packages/dnd35/content/weapons.ts",
+    [
+      "ALL_WEAPONS",
+      "SIMPLE_WEAPONS",
+      "MARTIAL_WEAPONS",
+      "EXOTIC_WEAPONS",
+      "CROSSBOW_WEAPONS",
+      "proficiencyRequirements",
+      "spellWeaponFocusFeats",
+      "weaponProficiencyFeats",
+    ],
+  ],
+  ["@/database/packages/dnd35/content/skills.ts", ["SKILL_NAMES"]],
+  ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
+  ["@/shared/text.ts", ["stripSeparators"]],
+  ["@/database/packages/dnd35/content/wizardSchools.ts", ["wizardSchoolFeats"]],
+  ["@/database/packages/dnd35/content/creatureTypes.ts", ["favoredEnemyFeats"]],
+  ["@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts", ["WIZARD_SCHOOLS"]],
+];
+
+/** Each book's template families, read once: every class of the book asks for them. */
+const bookTemplateNamesCache = new Map<string, Set<string>>();
+
+/**
  * What a feat reference makes: its feats by feat type, and its template families. An epic feat is left out unless an
  * override keeps it.
  */
@@ -116,64 +203,6 @@ function referenceFeats(ref: FeatReference) {
     templates,
     templateNames: new Set(kept.filter(({ mapped }) => mapped.template).map(({ entry }) => entry.name)),
   };
-}
-
-/**
- * The feats no reference lists that the core rules' feat files add, each: its file and export, the content code the
- * generated file builds it with (and the names that code uses), and the feats that code builds.
- */
-const CORE_SYSTEM_FEATS: {
-  file: string;
-  name: string;
-  code: string;
-  uses: string[];
-  build: (wizardSchools: WizardSchoolDefinition[]) => FeatSeed[];
-}[] = [
-  {
-    file: "feats.ts",
-    name: "WIZARD_SCHOOL_FEATS",
-    code: "wizardSchoolFeats(WIZARD_SCHOOLS)",
-    uses: ["wizardSchoolFeats", "WIZARD_SCHOOLS"],
-    build: wizardSchoolFeats,
-  },
-  {
-    file: "feats.ts",
-    name: "WEAPON_PROFICIENCY_FEATS",
-    code: "weaponProficiencyFeats",
-    uses: ["weaponProficiencyFeats"],
-    build: () => weaponProficiencyFeats,
-  },
-  {
-    file: "feats.ts",
-    name: "SPELL_WEAPON_FOCUS_FEATS",
-    code: "spellWeaponFocusFeats",
-    uses: ["spellWeaponFocusFeats"],
-    build: () => spellWeaponFocusFeats,
-  },
-  {
-    file: "favoredEnemy.ts",
-    name: "favoredEnemy",
-    code: "favoredEnemyFeats",
-    uses: ["favoredEnemyFeats"],
-    build: () => favoredEnemyFeats,
-  },
-];
-
-/** The core rules' system feats (the wizard's school choice, the weapon proficiencies, Weapon Focus for spells, the favored enemies). */
-export function coreSystemFeats(wizardSchools: WizardSchoolDefinition[]): FeatSeed[] {
-  return CORE_SYSTEM_FEATS.flatMap(({ build }) => build(wizardSchools));
-}
-
-/**
- * A feat reference's feats as the aptitude list reads them (names, aptitudes, modifiers): a template family once, as
- * its feats share their aptitudes and their modifiers only differ in the item they target.
- */
-export function featAptitudeSources(ref: FeatReference): Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] {
-  const { byType, templates } = referenceFeats(ref);
-  return [
-    ...[...byType.values()].flat(),
-    ...templates.map(({ familyName, aptitudes, modifiers }) => ({ name: familyName, aptitudes, modifiers })),
-  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -257,23 +286,8 @@ function featRequirement({ uses }: FeatFile, featName: string, perItem: boolean,
   return perItem ? `eq(feat(\`${escapeTemplate(featName)}: \${${variable}}\`))` : `eq(feat(${quote(featName)}))`;
 }
 
-/** A single martial weapon's proficiency feat is for a character without them all. */
-const NOT_MARTIAL_PROFICIENT: RequirementCondition = {
-  target: feat("Martial Weapon Proficiency"),
-  operator: "not_equal",
-  value: "true",
-  valueType: "boolean",
-};
-
 /** A weapon family's modifier target, made the item's: a weapon.X path becomes items.weapons.<weapon>.X. */
 const weaponTarget = (target: string) => target.replace(/^weapon\./, "items.weapons.${stripSeparators(w)}.");
-
-/** Weapon proficiency families expand over their own weapons, the others over every weapon. */
-const WEAPON_LISTS: Record<string, string> = {
-  "Simple Weapon Proficiency": "SIMPLE_WEAPONS",
-  "Martial Weapon Proficiency": "MARTIAL_WEAPONS",
-  "Exotic Weapon Proficiency": "EXOTIC_WEAPONS",
-};
 
 /**
  * A template's `requirements`, for its item (`variable`): a family it requires (`families`) is that family's feat for
@@ -376,34 +390,6 @@ const TEMPLATE_EMITTERS: Record<TemplateType, (file: FeatFile, family: TemplateF
     school: emitSchoolTemplate,
   };
 
-// ---------------------------------------------------------------------------
-// Generate FeatSeed[] TypeScript file from a FeatReference
-// ---------------------------------------------------------------------------
-
-/** Where each name the generated feats use comes from, in the order the imports are written. */
-const IMPORTS: ImportTable = [
-  ...REQUIREMENT_IMPORTS,
-  [
-    "@/database/packages/dnd35/content/weapons.ts",
-    [
-      "ALL_WEAPONS",
-      "SIMPLE_WEAPONS",
-      "MARTIAL_WEAPONS",
-      "EXOTIC_WEAPONS",
-      "CROSSBOW_WEAPONS",
-      "proficiencyRequirements",
-      "spellWeaponFocusFeats",
-      "weaponProficiencyFeats",
-    ],
-  ],
-  ["@/database/packages/dnd35/content/skills.ts", ["SKILL_NAMES"]],
-  ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
-  ["@/shared/text.ts", ["stripSeparators"]],
-  ["@/database/packages/dnd35/content/wizardSchools.ts", ["wizardSchoolFeats"]],
-  ["@/database/packages/dnd35/content/creatureTypes.ts", ["favoredEnemyFeats"]],
-  ["@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts", ["WIZARD_SCHOOLS"]],
-];
-
 /** The system feats of the core rules' feat file `fileName`. */
 function emitSystemFeats(file: FeatFile, fileName: string): void {
   for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
@@ -423,9 +409,6 @@ function featFileCode(file: FeatFile): string {
   ].join("\n");
 }
 
-/** Each book's template families, read once: every class of the book asks for them. */
-const bookTemplateNamesCache = new Map<string, Set<string>>();
-
 /** A book's template families, from its feat reference: none for a book without feats. */
 function bookTemplateNames(book: string): Set<string> {
   let names = bookTemplateNamesCache.get(book);
@@ -435,6 +418,23 @@ function bookTemplateNames(book: string): Set<string> {
     bookTemplateNamesCache.set(book, names);
   }
   return names;
+}
+
+/** The core rules' system feats (the wizard's school choice, the weapon proficiencies, Weapon Focus for spells, the favored enemies). */
+export function coreSystemFeats(wizardSchools: WizardSchoolDefinition[]): FeatSeed[] {
+  return CORE_SYSTEM_FEATS.flatMap(({ build }) => build(wizardSchools));
+}
+
+/**
+ * A feat reference's feats as the aptitude list reads them (names, aptitudes, modifiers): a template family once, as
+ * its feats share their aptitudes and their modifiers only differ in the item they target.
+ */
+export function featAptitudeSources(ref: FeatReference): Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[] {
+  const { byType, templates } = referenceFeats(ref);
+  return [
+    ...[...byType.values()].flat(),
+    ...templates.map(({ familyName, aptitudes, modifiers }) => ({ name: familyName, aptitudes, modifiers })),
+  ];
 }
 
 /**

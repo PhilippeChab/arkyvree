@@ -35,6 +35,9 @@ import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts"
 import { prefetchSection } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts";
 
+type FilterScope = (typeof SCOPES)[number];
+type SortField = RulesetListFilters["orderBy"];
+
 const SCOPES = [
   "base",
   "extensions",
@@ -45,8 +48,6 @@ const SCOPES = [
   "starred",
   "archived",
 ] as const;
-type FilterScope = (typeof SCOPES)[number];
-type SortField = RulesetListFilters["orderBy"];
 
 const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
   { value: undefined, label: "All" },

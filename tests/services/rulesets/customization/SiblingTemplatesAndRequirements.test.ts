@@ -12,8 +12,6 @@ import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { api, expectStatus } from "@/tests/api.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
-afterEach(() => RulesetCache.invalidateAll());
-
 async function setup(
   entityType: "items" | "feats",
   configure?: (copyId: string, index: number) => Promise<void>,
@@ -56,6 +54,8 @@ async function setup(
   await RulesetExtensionsService.subscribeExtension(session, host.id, extensionIds);
   return { session, host, source, copies };
 }
+
+afterEach(() => RulesetCache.invalidateAll());
 
 for (const index of [0, 1]) {
   test(`derived item can override template property from extension ${index}`, async () => {

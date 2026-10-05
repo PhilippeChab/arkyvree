@@ -89,37 +89,52 @@ async function addPlayableContent(rulesetId: string) {
   return { race, klass, skill, feat };
 }
 
+/** The user's view of a dozen rulesets: owned, others', system, contributed to and reached through a campaign. */
+async function setupListing() {
+  const { user, session } = await createTestUser();
+  const { user: other } = await createTestUser();
+  const base = await createTestRuleset(null, { private: false, status: "Published" });
+  const fork = { rulesetId: base.id, ancestorRulesetIds: [base.id] };
+  const published = { private: false, status: "Published" } as const;
+  const rulesets = {
+    base,
+    systemExtension: await createTestRuleset(null, { ...fork, ...published, kind: "extension" }),
+    ownDraft: await createTestRuleset(user.id, fork),
+    ownPublic: await createTestRuleset(user.id, { ...fork, ...published }),
+    ownArchived: await createTestRuleset(user.id, { ...fork, status: "Archived" }),
+    othersDraft: await createTestRuleset(other.id, { ...fork, private: false }),
+    othersPublished: await createTestRuleset(other.id, { ...fork, ...published }),
+    othersPrivate: await createTestRuleset(other.id, { ...fork, status: "Published" }),
+    othersExtension: await createTestRuleset(other.id, { ...fork, ...published, kind: "extension" }),
+    contributedDraft: await createTestRuleset(other.id, fork),
+    contributedPublished: await createTestRuleset(other.id, { ...fork, status: "Published" }),
+    campaign: await createTestRuleset(other.id, fork),
+  };
+  await addRulesetContributor(rulesets.contributedDraft.id, user, other.id);
+  await addRulesetContributor(rulesets.contributedPublished.id, user, other.id);
+  const { campaign } = await createTestCampaign(other.id, rulesets.campaign.id);
+  await Players.create(db, { userId: user.id, campaignId: campaign.id, role: "Player Character" });
+  await insertRows(starredRulesetsInAccount, [{ userId: user.id, rulesetId: rulesets.othersExtension.id }]);
+  return { session, rulesets };
+}
+
+/** A fork of another user's ruleset with three feats, and an aptitude that links one of them. */
+async function setupChanges(values: { private?: boolean } = {}) {
+  const { user: owner } = await createTestUser();
+  const { user, session } = await createTestUser();
+  const parent = await createParent(owner.id);
+  const [aptitude] = await Aptitudes.create(db, { name: "General", rulesetId: parent.id });
+  const [modified, deleted, untouched] = await insertRows(
+    featsInRules,
+    ["Power Attack", "Cleave", "Dodge"].map((name) => ({ name, rulesetId: parent.id })),
+  );
+  await FeatsAptitudes.create(db, { featId: modified.id, aptitudeId: aptitude.id });
+  const forked = await fork(session, parent, values);
+  return { user, session, owner, parent, fork: forked, aptitude, modified, deleted, untouched };
+}
+
 describe("RulesetsService", () => {
   describe("listing", () => {
-    /** The user's view of a dozen rulesets: owned, others', system, contributed to and reached through a campaign. */
-    async function setupListing() {
-      const { user, session } = await createTestUser();
-      const { user: other } = await createTestUser();
-      const base = await createTestRuleset(null, { private: false, status: "Published" });
-      const fork = { rulesetId: base.id, ancestorRulesetIds: [base.id] };
-      const published = { private: false, status: "Published" } as const;
-      const rulesets = {
-        base,
-        systemExtension: await createTestRuleset(null, { ...fork, ...published, kind: "extension" }),
-        ownDraft: await createTestRuleset(user.id, fork),
-        ownPublic: await createTestRuleset(user.id, { ...fork, ...published }),
-        ownArchived: await createTestRuleset(user.id, { ...fork, status: "Archived" }),
-        othersDraft: await createTestRuleset(other.id, { ...fork, private: false }),
-        othersPublished: await createTestRuleset(other.id, { ...fork, ...published }),
-        othersPrivate: await createTestRuleset(other.id, { ...fork, status: "Published" }),
-        othersExtension: await createTestRuleset(other.id, { ...fork, ...published, kind: "extension" }),
-        contributedDraft: await createTestRuleset(other.id, fork),
-        contributedPublished: await createTestRuleset(other.id, { ...fork, status: "Published" }),
-        campaign: await createTestRuleset(other.id, fork),
-      };
-      await addRulesetContributor(rulesets.contributedDraft.id, user, other.id);
-      await addRulesetContributor(rulesets.contributedPublished.id, user, other.id);
-      const { campaign } = await createTestCampaign(other.id, rulesets.campaign.id);
-      await Players.create(db, { userId: user.id, campaignId: campaign.id, role: "Player Character" });
-      await insertRows(starredRulesetsInAccount, [{ userId: user.id, rulesetId: rulesets.othersExtension.id }]);
-      return { session, rulesets };
-    }
-
     type Scope = Parameters<typeof RulesetsService.getRulesets>[1]["scope"];
     type Name = keyof Awaited<ReturnType<typeof setupListing>>["rulesets"];
 
@@ -474,21 +489,6 @@ describe("RulesetsService", () => {
   });
 
   describe("a fork's changes", () => {
-    /** A fork of another user's ruleset with three feats, and an aptitude that links one of them. */
-    async function setupChanges(values: { private?: boolean } = {}) {
-      const { user: owner } = await createTestUser();
-      const { user, session } = await createTestUser();
-      const parent = await createParent(owner.id);
-      const [aptitude] = await Aptitudes.create(db, { name: "General", rulesetId: parent.id });
-      const [modified, deleted, untouched] = await insertRows(
-        featsInRules,
-        ["Power Attack", "Cleave", "Dodge"].map((name) => ({ name, rulesetId: parent.id })),
-      );
-      await FeatsAptitudes.create(db, { featId: modified.id, aptitudeId: aptitude.id });
-      const forked = await fork(session, parent, values);
-      return { user, session, owner, parent, fork: forked, aptitude, modified, deleted, untouched };
-    }
-
     test("lists the entities it modified, deleted and added", async () => {
       const { session, fork, modified, deleted } = await setupChanges();
       expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);

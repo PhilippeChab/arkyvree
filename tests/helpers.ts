@@ -37,9 +37,6 @@ import { CharacterLevelsService } from "@/server/services/characters/levels/inde
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Player, Session } from "@/shared/relations.ts";
 
-/** An id no row has: for "not found" cases. */
-export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
-
 type LevelPicks = {
   feats?: { featId: string; aptitudeId: string }[];
   powers?: { powerId: string; aptitudeId: string }[];
@@ -47,6 +44,18 @@ type LevelPicks = {
 };
 
 type Contributor = { id: string; emailAddress: string };
+
+/** An id no row has: for "not found" cases. */
+export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+
+let seedContext: Promise<SeedContext> | undefined;
+
+const writtenSeededRulesets = new Set<string>();
+
+/** Worker job helpers with a silent logger, for running a task directly. */
+export const silentJobHelpers = {
+  logger: { info() {}, warn() {}, error() {}, debug() {} },
+} as unknown as JobHelpers;
 
 /** A short random suffix that keeps names and emails unique between tests. */
 export function uniqueId() {
@@ -68,8 +77,6 @@ export function makeSession(userId: string = SEED_USER_ID): Session {
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   };
 }
-
-let seedContext: Promise<SeedContext> | undefined;
 
 /** Ids of the seeded D&D 3.5 content, by name. Loaded once per test process. */
 export function getSeedCtx() {
@@ -176,8 +183,6 @@ export async function createSeededTestRuleset(
 
   return ruleset;
 }
-
-const writtenSeededRulesets = new Set<string>();
 
 /**
  * Drops a seeded ruleset's cached rules after the test wrote rows straight into it, so what it reads next
@@ -345,11 +350,6 @@ export async function createTestAttachment(recordType: "User" | "Character", rec
   const [attachment] = await Attachments.create(db, { recordType, recordId, name, blobId: blob.id });
   return attachment;
 }
-
-/** Worker job helpers with a silent logger, for running a task directly. */
-export const silentJobHelpers = {
-  logger: { info() {}, warn() {}, error() {}, debug() {} },
-} as unknown as JobHelpers;
 
 /** The jobs queued whose payload's `key` is `value`: their task, queue and payload. */
 export async function queuedJobs(key: string, value: string) {

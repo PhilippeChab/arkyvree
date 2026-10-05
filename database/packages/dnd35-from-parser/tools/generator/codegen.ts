@@ -14,17 +14,27 @@ import type {
 /** Modules and the names a generated file can import from them, in the order its imports list them. */
 export type ImportTable = [string, string[]][];
 
+export const MAX_CLASS_DESC = MAX_DESC;
+
 // ---------------------------------------------------------------------------
-// Naming helpers
+// Requirement stringification
 // ---------------------------------------------------------------------------
 
-export function toConstName(name: string): string {
-  return name
-    .replace(/[()'']/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "_")
-    .replace(/^_|_$/g, "")
-    .toUpperCase();
-}
+/** The builders of content/requirements.ts the generated code writes checks with. */
+const BUILDERS = { eq, eqNum, gte, eqStr };
+
+/** Each builder, with how it takes a check's value: not at all (`eq` checks a flag is set), as a number or a string. */
+const CHECK_BUILDERS: { name: keyof typeof BUILDERS; takes: "nothing" | "number" | "string" }[] = [
+  { name: "eq", takes: "nothing" },
+  { name: "eqNum", takes: "number" },
+  { name: "gte", takes: "number" },
+  { name: "eqStr", takes: "string" },
+];
+
+/** The requirement builders a generated file imports. */
+export const REQUIREMENT_IMPORTS: ImportTable = [
+  ["@/database/packages/dnd35/content/requirements.ts", ["and", "eq", "eqNum", "eqStr", "feat", "gte", "or"]],
+];
 
 // ---------------------------------------------------------------------------
 // Indentation
@@ -47,36 +57,10 @@ function escapeString(s: string): string {
   return JSON.stringify(String(s)).slice(1, -1);
 }
 
-/** `s` escaped for a template literal: as for a string literal, and its backticks and `${` too. */
-export function escapeTemplate(s: string): string {
-  return escapeString(s).replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
-}
-
 /** `s` as a string literal. */
 export function quote(s: string): string {
   return `"${escapeString(s)}"`;
 }
-
-export const MAX_CLASS_DESC = MAX_DESC;
-
-export function truncateDesc(text: string, maxLen = MAX_DESC): string {
-  return normalizeDescription(text, maxLen);
-}
-
-// ---------------------------------------------------------------------------
-// Requirement stringification
-// ---------------------------------------------------------------------------
-
-/** The builders of content/requirements.ts the generated code writes checks with. */
-const BUILDERS = { eq, eqNum, gte, eqStr };
-
-/** Each builder, with how it takes a check's value: not at all (`eq` checks a flag is set), as a number or a string. */
-const CHECK_BUILDERS: { name: keyof typeof BUILDERS; takes: "nothing" | "number" | "string" }[] = [
-  { name: "eq", takes: "nothing" },
-  { name: "eqNum", takes: "number" },
-  { name: "gte", takes: "number" },
-  { name: "eqStr", takes: "string" },
-];
 
 /**
  * The builder the generated code writes `check` with: one that builds that very check from its target and value. A
@@ -103,10 +87,40 @@ function builderCall(
   return `${name}(${quote(target)}, ${takes === "number" ? Number(value) : quote(value)})`;
 }
 
-/** The requirement builders a generated file imports. */
-export const REQUIREMENT_IMPORTS: ImportTable = [
-  ["@/database/packages/dnd35/content/requirements.ts", ["and", "eq", "eqNum", "eqStr", "feat", "gte", "or"]],
-];
+// ---------------------------------------------------------------------------
+// Modifier stringification
+// ---------------------------------------------------------------------------
+
+/** A modifier's fields written as code, its target as `target`. */
+function modifierFields(mod: ModifierEffect, target: string): string[] {
+  return [
+    `target: ${target}`,
+    `operator: ${quote(mod.operator)}`,
+    `value: ${quote(mod.value)}`,
+    `valueType: ${quote(mod.valueType)}`,
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Naming helpers
+// ---------------------------------------------------------------------------
+
+export function toConstName(name: string): string {
+  return name
+    .replace(/[()'']/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_|_$/g, "")
+    .toUpperCase();
+}
+
+/** `s` escaped for a template literal: as for a string literal, and its backticks and `${` too. */
+export function escapeTemplate(s: string): string {
+  return escapeString(s).replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+}
+
+export function truncateDesc(text: string, maxLen = MAX_DESC): string {
+  return normalizeDescription(text, maxLen);
+}
 
 /** The imports of the names a file's code uses (`uses`), from `table`. A name `table` doesn't list throws. */
 export function importLines(uses: Set<string>, table: ImportTable): string[] {
@@ -145,20 +159,6 @@ export function stringifyRequirement(req: RequirementEntry, uses: Set<string>, i
   }
   const { target, operator, value, valueType } = req;
   return `{ target: ${quote(target)}, operator: ${quote(operator)}, value: ${quote(value)}, valueType: ${quote(valueType)} }`;
-}
-
-// ---------------------------------------------------------------------------
-// Modifier stringification
-// ---------------------------------------------------------------------------
-
-/** A modifier's fields written as code, its target as `target`. */
-function modifierFields(mod: ModifierEffect, target: string): string[] {
-  return [
-    `target: ${target}`,
-    `operator: ${quote(mod.operator)}`,
-    `value: ${quote(mod.value)}`,
-    `valueType: ${quote(mod.valueType)}`,
-  ];
 }
 
 /** A modifier written as code: a domain's, a race's or an item's, which has no requirements (only a feat's has). */

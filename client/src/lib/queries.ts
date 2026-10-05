@@ -11,8 +11,6 @@ import type { InferRequestType, InferResponseType } from "hono/client";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-const LIST_PAGE_SIZE = 10;
-
 type CampaignListParams = InferRequestType<typeof rpc.api.campaigns.$get>["query"];
 type CharacterListParams = InferRequestType<typeof rpc.api.characters.$get>["query"];
 type RulesetListParams = InferRequestType<typeof rpc.api.rulesets.$get>["query"];
@@ -45,6 +43,8 @@ export interface RulesetListFilters {
   orderBy: NonNullable<RulesetListParams["orderBy"]>;
   orderDir: Direction;
 }
+
+const LIST_PAGE_SIZE = 10;
 
 export const dashboardStatsQuery = () =>
   queryOptions({

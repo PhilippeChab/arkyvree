@@ -1,14 +1,14 @@
 import type React from "react";
 
-// Listboxes patched by `lockableScroll`, each mapped to the function that
-// holds its scroll position while the next page of options is appended.
-const scrollLocks = new WeakMap<Element, () => void>();
-
 interface InfiniteList {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => unknown;
 }
+
+// Listboxes patched by `lockableScroll`, each mapped to the function that
+// holds its scroll position while the next page of options is appended.
+const scrollLocks = new WeakMap<Element, () => void>();
 
 /**
  * Make a listbox ignore the scroll reset MUI's Autocomplete performs when its

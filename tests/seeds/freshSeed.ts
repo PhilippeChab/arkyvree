@@ -13,6 +13,10 @@ import { db } from "@/server/database/index.ts";
 import { uniqueId } from "@/tests/helpers.ts";
 import { describeRequirement } from "@/tests/seeds/seededRows.ts";
 
+/** A modifier as a line: "target operator value valueType". */
+const describeModifier = (m: { target: string; operator: string; value: string; valueType: string }) =>
+  `${m.target} ${m.operator} ${m.value} ${m.valueType}`;
+
 /** A new system ruleset for a test to seed into, and its context: empty, or naming the seeded core's rows (`named`). */
 export async function freshSeedContext({ named = false } = {}): Promise<SeedContext> {
   const rulesetId = await createSystemRuleset(db, {
@@ -38,10 +42,6 @@ export const freshExtensionContext = (base: SeedContext) =>
 /** The names of a context's ids, by id. */
 export const namesOf = (ids: Record<string, string>) =>
   Object.fromEntries(Object.entries(ids).map(([name, id]) => [id, name]));
-
-/** A modifier as a line: "target operator value valueType". */
-const describeModifier = (m: { target: string; operator: string; value: string; valueType: string }) =>
-  `${m.target} ${m.operator} ${m.value} ${m.valueType}`;
 
 /**
  * What an entity was seeded with, as its content reads: its requirements ("level target operator value") by level,

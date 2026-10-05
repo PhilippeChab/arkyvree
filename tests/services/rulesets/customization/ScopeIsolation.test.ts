@@ -17,6 +17,18 @@ async function setup() {
   return { session, own, feat };
 }
 
+async function createModifier(sourceId: string) {
+  const [modifier] = await Modifiers.create(db, {
+    sourceId,
+    sourceType: "feats",
+    target: "abilities.strength.misc",
+    value: "2",
+    valueType: "number",
+    operator: "add",
+  });
+  return modifier;
+}
+
 describe("ruleset customization isolation", () => {
   test("rejects foreign properties, modifiers, and requirements before writing", async () => {
     const { session, own, feat } = await setup();
@@ -90,18 +102,6 @@ describe("ruleset customization isolation", () => {
     ).toBe(false);
   });
 });
-
-async function createModifier(sourceId: string) {
-  const [modifier] = await Modifiers.create(db, {
-    sourceId,
-    sourceType: "feats",
-    target: "abilities.strength.misc",
-    value: "2",
-    valueType: "number",
-    operator: "add",
-  });
-  return modifier;
-}
 
 describe("modifier requirement ownership", () => {
   test("creates, updates, and deletes a requirement on a locally owned modifier", async () => {

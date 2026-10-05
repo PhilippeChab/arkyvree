@@ -2,10 +2,10 @@ import { describe, expect, setDefaultTimeout, test } from "bun:test";
 
 import { lintRepo } from "./lintRepo.ts";
 
+const lint = (files: Record<string, string>) => lintRepo(files, ["method-names"]);
+
 // Each test runs oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);
-
-const lint = (files: Record<string, string>) => lintRepo(files, ["method-names"]);
 
 describe("method-names", () => {
   test("a repository's public methods start with one of methodVerbs.json's verbs", async () => {

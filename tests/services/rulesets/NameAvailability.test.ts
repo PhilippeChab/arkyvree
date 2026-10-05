@@ -12,8 +12,6 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
 
-afterEach(() => RulesetCache.invalidateAll());
-
 async function setup() {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
@@ -27,6 +25,8 @@ async function setup() {
     }))!;
   return { session, fork, baseId, general, baseFeat };
 }
+
+afterEach(() => RulesetCache.invalidateAll());
 
 // A renamed local copy is still the override: inherited picks of the source
 // must keep resolving to it, and its snapshot must not move to a new entity

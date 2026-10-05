@@ -17,6 +17,8 @@ import staticRouter from "@/server/routers/static.ts";
 import wsRouter from "@/server/routers/ws.ts";
 import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
 
+export type Application = typeof app;
+
 const isDev = !isProduction();
 
 const origin = isDev ? ["http://localhost:5173"] : readEnv("APP_URL") ? [readEnv("APP_URL")!] : [];
@@ -114,6 +116,4 @@ const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
     const [error, code] = toJson(err);
     return c.json(error, code);
   });
-
-export type Application = typeof app;
 export const application = app;

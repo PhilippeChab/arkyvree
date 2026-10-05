@@ -48,6 +48,21 @@ async function join(campaignId: string, role: CampaignRole) {
   return { ...member, player };
 }
 
+/** The seeded user's character linked as a Private player character, and a new member with `role`. */
+async function setupExport(role: CampaignRole) {
+  const { campaignId, characterId } = await setup();
+  const owner = (await Players.findOne(db, { campaignId, userId: SEED_USER_ID }))!;
+  await Players.update(db, { role: "Player Character" }, { id: owner.id });
+  await PlayerCharacters.create(db, { playerId: owner.id, characterId, visibility: "Private" });
+  return { campaignId, characterId, member: await join(campaignId, role) };
+}
+
+async function queuedPdfPayload(characterId: string) {
+  const jobs = await queuedPdfJobs(characterId);
+  expect(jobs).toHaveLength(1);
+  return jobs[0].payload;
+}
+
 describe("campaigns characters", () => {
   test("links a character, lists it and finds it by name", async () => {
     const { campaignId, characterId } = await setup();
@@ -145,21 +160,6 @@ describe("campaigns characters", () => {
   }
 
   describe("PDF export", () => {
-    /** The seeded user's character linked as a Private player character, and a new member with `role`. */
-    async function setupExport(role: CampaignRole) {
-      const { campaignId, characterId } = await setup();
-      const owner = (await Players.findOne(db, { campaignId, userId: SEED_USER_ID }))!;
-      await Players.update(db, { role: "Player Character" }, { id: owner.id });
-      await PlayerCharacters.create(db, { playerId: owner.id, characterId, visibility: "Private" });
-      return { campaignId, characterId, member: await join(campaignId, role) };
-    }
-
-    async function queuedPdfPayload(characterId: string) {
-      const jobs = await queuedPdfJobs(characterId);
-      expect(jobs).toHaveLength(1);
-      return jobs[0].payload;
-    }
-
     test("lets the Game Master export a player's character", async () => {
       const { campaignId, characterId, member } = await setupExport("Game Master");
       const theirs = member.api.api.campaigns[":id"].characters[":characterId"];

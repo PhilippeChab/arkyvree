@@ -4,12 +4,6 @@ import type { ElementType } from "react";
 /** What an action does, shown by its color (see docs/ui-buttons.md). */
 type Intent = "default" | "destructive" | "caution" | "positive";
 
-const INTENT_COLORS = {
-  destructive: "error.main",
-  caution: "warning.main",
-  positive: "success.main",
-} as const;
-
 interface ActionMenuItemProps {
   icon: ElementType;
   label: string;
@@ -18,6 +12,12 @@ interface ActionMenuItemProps {
   intent?: Intent;
   onClick: () => void;
 }
+
+const INTENT_COLORS = {
+  destructive: "error.main",
+  caution: "warning.main",
+  positive: "success.main",
+} as const;
 
 /** An item of a page's action menu: icon, label, and the intent's color. */
 export function ActionMenuItem({ icon: Icon, label, description, intent = "default", onClick }: ActionMenuItemProps) {

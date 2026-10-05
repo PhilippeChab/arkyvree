@@ -17,6 +17,13 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** The bookkeeping columns, which differ between any two seeds. */
 const VOLATILE = new Set(["id", "created_at", "updated_at", "deleted_at", "ruleset_id"]);
 
+/** A Postgres string literal, dollar-quoted with a tag the text doesn't hold. */
+function dollarQuote(s: string): string {
+  let tag = "q";
+  while (s.includes(`$${tag}$`)) tag += "q";
+  return `$${tag}$${s}$${tag}$`;
+}
+
 /**
  * A row's comparable fields: without its bookkeeping columns, nor any UUID, a reference each seed draws anew.
  */
@@ -64,13 +71,6 @@ export function renderHuman(d: TableDiff): string[] {
       `  target:    ${JSON.stringify(c.tgt)}`,
     ]),
   ];
-}
-
-/** A Postgres string literal, dollar-quoted with a tag the text doesn't hold. */
-function dollarQuote(s: string): string {
-  let tag = "q";
-  while (s.includes(`$${tag}$`)) tag += "q";
-  return `$${tag}$${s}$${tag}$`;
 }
 
 /** A value as a Postgres literal: text dollar-quoted, anything that isn't a scalar as jsonb. */

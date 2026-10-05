@@ -1,5 +1,8 @@
 import { SKILL_MAP } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
+/** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
+export type SkillBonus = { value: string; name: string; slug: string | undefined; index: number };
+
 /** A skill's name: capitalized words, a parenthesis allowed ("Knowledge (architecture and engineering)", "Sleight of Hand"). */
 const NAME = String.raw`[A-Z][\w'-]*(?:\s+(?:\([^)]*\)|of|the|[A-Z][\w'-]*))*`;
 /** Names joined by commas and "and": "Listen, Search, and Spot". */
@@ -14,9 +17,6 @@ const SKILL_BONUS = new RegExp(
     String.raw`(${LIST}\s+checks?(?:(?:\s*,\s*|\s+and\s+)${LIST}\s+checks?)*)`,
   "g",
 );
-
-/** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
-export type SkillBonus = { value: string; name: string; slug: string | undefined; index: number };
 
 /** A list's names: split on commas and "and", but not inside parentheses ("Knowledge (architecture and engineering)"). */
 function splitSkillList(list: string): string[] {

@@ -21,10 +21,6 @@ const MAX_RETRIES = 3;
 
 let globalOptions: HttpOptions = {};
 
-export function configureHttp(opts: HttpOptions): void {
-  globalOptions = { ...globalOptions, ...opts };
-}
-
 // ---------------------------------------------------------------------------
 // Rate limiting
 // ---------------------------------------------------------------------------
@@ -69,6 +65,10 @@ function writeCache(url: string, html: string): void {
 
   mkdirSync(CACHE_DIR, { recursive: true });
   writeFileSync(cachePath(url), html);
+}
+
+export function configureHttp(opts: HttpOptions): void {
+  globalOptions = { ...globalOptions, ...opts };
 }
 
 // ---------------------------------------------------------------------------

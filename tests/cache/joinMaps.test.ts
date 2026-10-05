@@ -18,6 +18,8 @@ import { getOrBuildCowData } from "@/server/services/rulesets/cow/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { getSeedCtx } from "@/tests/helpers.ts";
 
+const sortById = <T extends { id: string }>(xs: T[]) => [...xs].sort((a, b) => a.id.localeCompare(b.id));
+
 describe("cache join-maps — parity with repository queries", () => {
   let ctx: SeedContext;
   let rulesetData: CachedRulesetData;
@@ -29,8 +31,6 @@ describe("cache join-maps — parity with repository queries", () => {
     const cowData = await getOrBuildCowData(ruleset);
     rulesetData = await RulesetCache.getData(ctx.rulesetId, cowData);
   });
-
-  const sortById = <T extends { id: string }>(xs: T[]) => [...xs].sort((a, b) => a.id.localeCompare(b.id));
 
   test("klassLevelFeatsWithFeatsByKlassLevel matches the class level's feats with their feat", async () => {
     const fighterId = ctx.klassMap.pc["Fighter"];

@@ -24,6 +24,21 @@ export interface EntityWithId {
   [key: string]: unknown;
 }
 
+/**
+ * What the COW code calls on any ruleset entity's repository. Properties, which TypeScript checks strictly, except
+ * `create`: a method, whose looser check lets each repository's insert model stand for a copied row.
+ */
+interface EntityRepository {
+  lock: (db: Db, where: { id: string }, mode?: "update" | "share") => Promise<boolean>;
+  exists: (db: Db, where: { id: string }) => Promise<boolean>;
+  findOne: (db: Db, where: { id: string } | { name: string; rulesetId: string }) => Promise<EntityWithId | undefined>;
+  findMany: (db: Db, where: { ids: string[] }) => Promise<EntityWithId[]>;
+  create(db: Db, values: Record<string, unknown>): Promise<EntityWithId[]>;
+  delete: (db: Db, where: { id: string }) => Promise<unknown>;
+}
+
+export type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
+
 // Tables that participate in the name-based sibling fallback. Limited to
 // feats and powers because those are the entity types D&D sourcebooks
 // commonly reprint (e.g. a spell appearing in CA + CD). For other entity
@@ -39,19 +54,6 @@ export interface EntityWithId {
 // so the runtime pairing and the subscribe-time block agree on which
 // types pair.
 export const NAME_FALLBACK_ENTITY_TYPES = ["feats", "powers"] as const;
-
-/**
- * What the COW code calls on any ruleset entity's repository. Properties, which TypeScript checks strictly, except
- * `create`: a method, whose looser check lets each repository's insert model stand for a copied row.
- */
-interface EntityRepository {
-  lock: (db: Db, where: { id: string }, mode?: "update" | "share") => Promise<boolean>;
-  exists: (db: Db, where: { id: string }) => Promise<boolean>;
-  findOne: (db: Db, where: { id: string } | { name: string; rulesetId: string }) => Promise<EntityWithId | undefined>;
-  findMany: (db: Db, where: { ids: string[] }) => Promise<EntityWithId[]>;
-  create(db: Db, values: Record<string, unknown>): Promise<EntityWithId[]>;
-  delete: (db: Db, where: { id: string }) => Promise<unknown>;
-}
 
 export const ENTITY_REPOS: Record<EntityType, EntityRepository> = {
   abilities: Abilities,
@@ -72,5 +74,3 @@ export const CUSTOMIZATION_REPOS = {
   requirement: Requirements,
   modifier: Modifiers,
 } as const;
-
-export type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;

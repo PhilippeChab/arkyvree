@@ -5,16 +5,16 @@ import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import { getStorage, isStorageConfigured } from "@/server/storage/s3.ts";
 import { UNATTACHED_BLOB_TTL_MS } from "@/shared/attachments.ts";
 
-const BATCH_SIZE = 500;
-
 interface Logger {
   info(message: string): void;
   warn(message: string): void;
 }
 
-const noopLogger: Logger = { info() {}, warn() {} };
-
 type SweepResult = "swept" | "failed" | "skipped";
+
+const BATCH_SIZE = 500;
+
+const noopLogger: Logger = { info() {}, warn() {} };
 
 async function sweepOne(blobId: string, key: string, logger: Logger): Promise<SweepResult> {
   return await withTransaction(async (tx) => {

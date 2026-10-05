@@ -4,6 +4,17 @@ import type { AnyNode } from "domhandler";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { ArmorRow, WeaponRow } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
+const GOODS_TABLE_IDS = [
+  "tableAdventuringGear",
+  "tableSpecialSubstancesAndItems",
+  "tableToolsAndSkillKits",
+  "tableClothing",
+  "tableFoodDrinkAndLodging",
+  "tableMountsAndRelatedGear",
+  "tableTransport",
+  // Skip "tableSpellcastingAndServices" — services, not physical items
+];
+
 /** A table cell's text, without its footnote markers (<sup>). */
 function cellText(cell: cheerio.Cheerio<AnyNode>): string {
   const copy = cell.clone();
@@ -108,17 +119,6 @@ export function parseArmorHtml(html: string): ArmorRow[] {
 
   return items;
 }
-
-const GOODS_TABLE_IDS = [
-  "tableAdventuringGear",
-  "tableSpecialSubstancesAndItems",
-  "tableToolsAndSkillKits",
-  "tableClothing",
-  "tableFoodDrinkAndLodging",
-  "tableMountsAndRelatedGear",
-  "tableTransport",
-  // Skip "tableSpellcastingAndServices" — services, not physical items
-];
 
 export function parseGoodsHtml(html: string): {
   name: string;

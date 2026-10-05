@@ -40,6 +40,21 @@ type PlacedEntry = Pick<InventoryEntry, "id" | "equipped" | "location" | "weapon
   item: Pick<InventoryEntry["item"], "name">;
 };
 
+/** A slot, or not equipped. */
+export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
+
+/** The warning for a slot taken by `entry`, `weaponSet` as the form shows it. */
+const SLOT_CONFLICT_WARNINGS: Record<
+  Exclude<SlotConflictReason, "fingers">,
+  (location: ItemLocation, entry: PlacedEntry, weaponSet: number) => string
+> = {
+  occupied: (location, entry) => `${location} slot is occupied by ${entry.item.name}`,
+  hands: (_, entry, weaponSet) =>
+    `Cannot equip two-handed: ${entry.item.name} is in ${entry.location} (Set ${weaponSet})`,
+  twoHanded: (_, entry, weaponSet) => `Cannot equip: ${entry.item.name} is two-handed in Set ${weaponSet}`,
+  sameHand: (location, entry, weaponSet) => `${location} is occupied by ${entry.item.name} (Set ${weaponSet})`,
+};
+
 /** A weapon set as the user sees it: stored from 0, shown from 1 ("Set 1"), as on the sheet and the PDF. */
 export const shownWeaponSet = (stored: number) => stored + 1;
 
@@ -51,9 +66,6 @@ export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "locati
   }
   return entry.location;
 }
-
-/** A slot, or not equipped. */
-export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
 export const EMPTY_INVENTORY_FORM: InventoryFormData = {
   selectedItem: null,
@@ -107,18 +119,6 @@ export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
   if (item.type === "Shield") return "Off Hand";
   return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
 }
-
-/** The warning for a slot taken by `entry`, `weaponSet` as the form shows it. */
-const SLOT_CONFLICT_WARNINGS: Record<
-  Exclude<SlotConflictReason, "fingers">,
-  (location: ItemLocation, entry: PlacedEntry, weaponSet: number) => string
-> = {
-  occupied: (location, entry) => `${location} slot is occupied by ${entry.item.name}`,
-  hands: (_, entry, weaponSet) =>
-    `Cannot equip two-handed: ${entry.item.name} is in ${entry.location} (Set ${weaponSet})`,
-  twoHanded: (_, entry, weaponSet) => `Cannot equip: ${entry.item.name} is two-handed in Set ${weaponSet}`,
-  sameHand: (location, entry, weaponSet) => `${location} is occupied by ${entry.item.name} (Set ${weaponSet})`,
-};
 
 /**
  * Why the slot is taken (by another entry, the same item's in another place included, or a two-handed weapon in the
