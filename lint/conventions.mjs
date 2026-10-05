@@ -548,13 +548,15 @@ const typesFirst = {
         const attachedStart = (index) => {
           const statement = statements[index];
           const [start] = statement.range ?? [statement.start, statement.end];
-          const from = endOf(text, statements[index - 1]);
+          const from = index === 0 ? 0 : endOf(text, statements[index - 1]);
           const lines = text.slice(from, start).split("\n");
           let at = start - lines.at(-1).length;
           for (let i = lines.length - 2; i >= 0 && lines[i].trim() !== ""; i--) at -= lines[i].length + 1;
           return at;
         };
-        const insertAt = firstCode === 0 ? 0 : endOf(text, statements[firstCode - 1]);
+        // Below the statement before the first code, or, when that code opens the file, below its header
+        const atTop = firstCode === 0;
+        const insertAt = atTop ? attachedStart(0) : endOf(text, statements[firstCode - 1]);
         const moved = misplaced.map(({ index, statement }) => {
           const from = attachedStart(index);
           // What's removed: the type and its comment, and the blank lines before them
@@ -570,7 +572,6 @@ const typesFirst = {
           cursor = end;
         }
         const last = moved.at(-1).end;
-        const before = insertAt === 0 ? "" : "\n\n";
         context.report({
           node: declarationOf(misplaced[0].statement),
           message:
@@ -578,10 +579,9 @@ const typesFirst = {
           fix: (fixer) =>
             fixer.replaceTextRange(
               [insertAt, last],
-              before +
-                lifted.join("\n\n") +
-                (insertAt === 0 ? "\n\n" : "") +
-                rest.replace(/^\n*/, insertAt === 0 ? "" : "\n\n"),
+              atTop
+                ? lifted.join("\n\n") + "\n\n" + rest.replace(/^\n*/, "")
+                : "\n\n" + lifted.join("\n\n") + rest.replace(/^\n*/, "\n\n"),
             ),
         });
       },

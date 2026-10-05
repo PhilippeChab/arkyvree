@@ -399,6 +399,13 @@ describe("conventions", () => {
         "",
       ].join("\n"),
     );
+
+    // A file opening with its code keeps its header above the lifted types
+    fs.writeFileSync(file, "/** The module. */\n\n/** f's doc */\nfunction f() {}\n\ntype A = number;\n");
+    await runOxlint(["-c", config, "--fix", dir]);
+    expect(fs.readFileSync(file, "utf8")).toBe(
+      "/** The module. */\n\ntype A = number;\n\n/** f's doc */\nfunction f() {}\n",
+    );
     fs.rmSync(dir, { recursive: true });
   });
 });
