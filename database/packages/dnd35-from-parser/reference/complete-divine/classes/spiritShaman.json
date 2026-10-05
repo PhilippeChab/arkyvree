@@ -65,7 +65,11 @@
       }
     },
     "spells": {
-      "inheritsFrom": "Druid"
+      "inheritsFrom": {
+        "classes": [
+          "Druid"
+        ]
+      }
     }
   },
   "raw": {

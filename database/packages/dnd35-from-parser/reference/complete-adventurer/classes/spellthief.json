@@ -9,7 +9,21 @@
     "reviewed": [
       "Absorb Spell",
       "Discover Spells"
-    ]
+    ],
+    "spells": {
+      "inheritsFrom": {
+        "classes": [
+          "Sorcerer"
+        ],
+        "schools": [
+          "Abjuration",
+          "Divination",
+          "Enchantment",
+          "Illusion",
+          "Transmutation"
+        ]
+      }
+    }
   },
   "raw": {
     "bonusSpellAbility": "Charisma",

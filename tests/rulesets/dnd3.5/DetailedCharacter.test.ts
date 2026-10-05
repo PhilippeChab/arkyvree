@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { and, eq } from "drizzle-orm";
 
 import {
+  DND35_COMPLETE_ADVENTURER_NAME,
   DND35_COMPLETE_DIVINE_NAME,
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_DMG_NAME,
@@ -1997,6 +1998,21 @@ describe("DetailedCharacter", () => {
   });
 
   describe("spells", () => {
+    test("give a class drawing on another class's list its slots: a spellthief's, of the sorcerer's", async () => {
+      const fork = await forkWith(DND35_COMPLETE_ADVENTURER_NAME);
+      const scores = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 10, Charisma: 10 };
+      const characterId = await createSeedCharacter("Spellthief", scores, { rulesetId: fork.id });
+      const adventurerId = (await Rulesets.findOne(db, { name: DND35_COMPLETE_ADVENTURER_NAME }))!.id;
+      const spellthief = (await Klasses.findOne(db, { name: "Spellthief", rulesetId: adventurerId }))!;
+      for (let level = 1; level <= 6; level++) {
+        await addCharacterLevel(characterId, (await findKlassLevel(spellthief.id, level))!.id);
+      }
+      // Spellthief 6: one 1st-level spell a day, three known
+      const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+      expect(spellUses(detailed, "spellthiefspells", [1])).toEqual([1]);
+      expect(spellLevel(detailed, "spellthiefspells", 1).allowed).toBe(3);
+    });
+
     describe("save DCs", () => {
       test("add the spell's level, the casting ability and focus bonuses, shared across its groupings", async () => {
         // A wizard, INT 18 (+4), with Spell Focus: Evocation.

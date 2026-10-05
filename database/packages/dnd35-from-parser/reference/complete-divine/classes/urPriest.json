@@ -26,6 +26,13 @@
       "Weapon and Armor Proficiency": {
         "description": "An ur-priest gains proficiency with all simple weapons but receives no proficiency with any type of armor or shields."
       }
+    },
+    "spells": {
+      "inheritsFrom": {
+        "classes": [
+          "Cleric"
+        ]
+      }
     }
   },
   "raw": {

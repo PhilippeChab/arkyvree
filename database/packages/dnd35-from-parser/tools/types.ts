@@ -57,6 +57,18 @@ type DomainFeatPool = {
   description?: string;
 };
 
+/**
+ * The spell list a class draws on, made of other classes' (`classes`, a spell at its level on the first that has it):
+ * only their spells of `schools` when given, none with one of `excludeDescriptors`, and `additions`, its own spells by
+ * level.
+ */
+export type InheritedSpellList = {
+  classes: string[];
+  schools?: string[];
+  excludeDescriptors?: string[];
+  additions?: Record<string, string[]>;
+};
+
 /** A class's own spell list: its slots per day, its spells known, and the list it inherits. */
 type ClassSpells = {
   slug: string;
@@ -64,7 +76,7 @@ type ClassSpells = {
   known?: number[][];
   knowAll?: boolean;
   noCantrips?: boolean;
-  inheritsFrom?: string;
+  inheritsFrom?: InheritedSpellList;
 };
 
 /** A class feature's fields a mapping derives and an override sets. */

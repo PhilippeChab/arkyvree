@@ -38,6 +38,40 @@
       "Weapon and Armor Proficiency": {
         "description": "The consecrated harrier does not gain any additional weapon or armor proficiencies."
       }
+    },
+    "spells": {
+      "inheritsFrom": {
+        "additions": {
+          "1": [
+            "Animate Rope",
+            "Calm Emotions",
+            "Command",
+            "Disguise Self",
+            "Doom"
+          ],
+          "2": [
+            "Charm Person",
+            "Daylight",
+            "Detect Thoughts",
+            "Hold Person"
+          ],
+          "3": [
+            "Clairaudience/clairvoyance",
+            "Death Ward",
+            "Discern Lies",
+            "See Invisibility"
+          ],
+          "4": [
+            "Dismissal",
+            "Dominate Person",
+            "Legend Lore",
+            "Mark of Justice"
+          ]
+        },
+        "classes": [
+          "Ranger"
+        ]
+      }
     }
   },
   "raw": {
