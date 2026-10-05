@@ -77,10 +77,10 @@ export default new Hono()
   .get("/me", async (c) => {
     return c.json(await AuthenticationService.getCurrentUser(c.var.requestSession), 200);
   })
-  .route("/", account)
-  .route("/", linkedAccounts)
   .post("/sign-out", async (c) => {
     await AuthenticationService.signOut(c.var.requestSession);
     deleteSessionCookie(c);
     return c.json({ success: true }, 200);
-  });
+  })
+  .route("/", account)
+  .route("/", linkedAccounts);
