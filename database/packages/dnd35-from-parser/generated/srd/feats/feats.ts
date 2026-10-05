@@ -692,8 +692,8 @@ export const FIGHTER_FEATS: FeatSeed[] = [
       or(gte("abilities.dexterity.total", 15), gte("classes.ranger.level", 2)),
     ],
     modifiers: [
-      { target: "combat.twoweapon.mainhand", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.twoweapon.offhand", operator: "add", value: "6", valueType: "number" },
+      { target: "combat.twoweapon.mainhandpenalty", operator: "add", value: "2", valueType: "number" },
+      { target: "combat.twoweapon.offhandpenalty", operator: "add", value: "6", valueType: "number" },
     ],
   },
   {

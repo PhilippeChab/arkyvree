@@ -55,7 +55,7 @@
                 "children": [
                   {
                     "operator": "equal",
-                    "target": "items.weapons.exotic.slot",
+                    "target": "items.weapons.exotic.wielded",
                     "value": "twohanded",
                     "valueType": "string"
                   },

@@ -28,7 +28,7 @@
             "requirements": [
               {
                 "operator": "not_equal",
-                "target": "combat.armorworn",
+                "target": "combat.armor.category",
                 "value": "heavy",
                 "valueType": "string"
               },

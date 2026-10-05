@@ -91,9 +91,13 @@ describe("TargetPathsService", () => {
   test("leaves the parts the sheet computes to requirements: a modifier can't change them", async () => {
     // From an ability, the size, the gear and the load, computed when read
     const computed = [
-      "combat.tohit.strength",
-      "combat.tohit.size",
-      "combat.damage.strength",
+      "weapon.tohit.strength",
+      "weapon.tohit.size",
+      "weapon.tohit.gearpenalty",
+      "weapon.damage.strength",
+      "weapon.wielded",
+      "combat.armor.category",
+      "combat.shield.held",
       "combat.ac.dexterity",
       "combat.ac.size",
       "combat.ac.touch",
@@ -106,6 +110,8 @@ describe("TargetPathsService", () => {
       "combat.encumbrance.heavyload",
       "items.weapons.longsword.tohit.strength",
       "items.weapons.longsword.damage.strength",
+      "items.weapons.longsword.tohit.gearpenalty",
+      "items.weapons.longsword.wielded",
       "skills.climb.ability",
       "skills.climb.weight",
       "saves.fortitude.ability",

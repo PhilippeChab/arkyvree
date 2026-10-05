@@ -184,11 +184,11 @@ describe("The generated feats", () => {
     const ref = structuredClone(loadReference(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
     ref.mapping["Weapon Focus"].modifiers = [
       {
-        target: "combat.tohit.misc",
+        target: "weapon.tohit.misc",
         operator: "add",
         value: "1",
         valueType: "number",
-        requirements: [gte("combat.tohit.base", 3)],
+        requirements: [gte("weapon.tohit.base", 3)],
       },
     ];
     expect(() => generateFeatSeeds(ref)).toThrow("a template feat's modifier can't have requirements");

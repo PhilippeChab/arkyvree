@@ -39,9 +39,9 @@ export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) 
 
     /** The base speed under the load and the armor: slowed by a medium or heavy load or by armor, unless the race isn't. */
     private loadedSpeed(base: number): number {
-      const { encumbrance, armorworn } = this.detailedCharacterCombat;
+      const { encumbrance, armor } = this.detailedCharacterCombat;
       const heavy = (category: string) => category === "medium" || category === "heavy";
-      const slowed = !this.speedIgnoresEncumbrance && (heavy(encumbrance.load) || heavy(armorworn));
+      const slowed = !this.speedIgnoresEncumbrance && (heavy(encumbrance.load) || heavy(armor.category));
       return slowed && this.characterEncumbrance ? this.characterEncumbrance.getEncumberedSpeed(base) : base;
     }
   }

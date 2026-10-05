@@ -1,6 +1,6 @@
 import type { Constructor } from "@/server/mixins.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD } from "@/server/rulesets/constants.ts";
-import { ARMOR_WORN } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import { ARMOR_CATEGORIES } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import type { ArmorsData } from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
 import type { ShieldsData } from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
@@ -87,16 +87,16 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
     /** An armor the character wears: the heaviest one worn (medium and heavy armor slow the character down). */
     addArmor(properties: { type: string; value: string }[]) {
       const category = properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value.toLowerCase();
-      const worn = ARMOR_WORN.find((armor) => armor === category);
-      const combat = this.detailedCharacterCombat;
-      if (worn && ARMOR_WORN.indexOf(worn) > ARMOR_WORN.indexOf(combat.armorworn)) combat.armorworn = worn;
+      const worn = ARMOR_CATEGORIES.find((armor) => armor === category);
+      const { armor } = this.detailedCharacterCombat;
+      if (worn && ARMOR_CATEGORIES.indexOf(worn) > ARMOR_CATEGORIES.indexOf(armor.category)) armor.category = worn;
     }
 
     /** A shield the character carries: its maximum Dexterity bonus caps the AC's, a tower shield's bulk the attacks. */
     addShield(properties: { type: string; value: string }[]) {
       const category = properties.find((property) => property.type === SHIELD_PROFICIENCY)?.value;
       if (!category) return;
-      this.detailedCharacterCombat.shieldheld = true;
+      this.detailedCharacterCombat.shield.held = true;
       if (category === "Tower") this.towerShield = true;
       const dexterityLimitation = properties.find((property) => property.type === ARMOR_MAX_DEX)?.value ?? null;
       if (dexterityLimitation) {

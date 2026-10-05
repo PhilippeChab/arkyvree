@@ -262,8 +262,8 @@ const NOT_MARTIAL_PROFICIENT: RequirementCondition = {
   valueType: "boolean",
 };
 
-/** A weapon family's modifier target, made the item's: a combat.X path becomes items.weapons.<weapon>.X. */
-const weaponTarget = (target: string) => target.replace(/^combat\./, "items.weapons.${stripSeparators(w)}.");
+/** A weapon family's modifier target, made the item's: a weapon.X path becomes items.weapons.<weapon>.X. */
+const weaponTarget = (target: string) => target.replace(/^weapon\./, "items.weapons.${stripSeparators(w)}.");
 
 /** Weapon proficiency families expand over their own weapons, the others over every weapon. */
 const WEAPON_LISTS: Record<string, string> = {

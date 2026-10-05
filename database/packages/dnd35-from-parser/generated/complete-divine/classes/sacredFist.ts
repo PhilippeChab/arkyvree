@@ -31,8 +31,8 @@ export const SACRED_FIST: ClassSeed = {
     [10, "Inner Armor (Sacred Fist)"],
   ],
   modifiers: [
-    { level: 3, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armorworn", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armorworn", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
-    { level: 6, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armorworn", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armorworn", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
-    { level: 8, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armorworn", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armorworn", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
+    { level: 3, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armor.category", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armor.category", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
+    { level: 6, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armor.category", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armor.category", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
+    { level: 8, target: "combat.speed.base", value: "10", valueType: "number", operator: "add", requirements: [{ target: "combat.armor.category", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armor.category", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
   ],
 };

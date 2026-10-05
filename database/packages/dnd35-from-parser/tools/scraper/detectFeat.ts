@@ -186,7 +186,7 @@ export function detectModifiers(benefit: string): ModifierDetection {
     /\+(\d+)\s+bonus on (?:all\s+)?attack rolls[^.]*(?:using the selected weapon|using \w+)/i,
   );
   if (weaponAttackMatch) {
-    modifiers.push({ target: "combat.tohit.misc", operator: "add", value: weaponAttackMatch[1], valueType: "number" });
+    modifiers.push({ target: "weapon.tohit.misc", operator: "add", value: weaponAttackMatch[1], valueType: "number" });
   }
 
   // Pattern: "+N bonus on [all] damage rolls ... using the selected weapon"
@@ -194,12 +194,12 @@ export function detectModifiers(benefit: string): ModifierDetection {
     /\+(\d+)\s+bonus on (?:all\s+)?damage rolls[^.]*(?:using the selected weapon|using \w+)/i,
   );
   if (weaponDamageMatch) {
-    modifiers.push({ target: "combat.damage.misc", operator: "add", value: weaponDamageMatch[1], valueType: "number" });
+    modifiers.push({ target: "weapon.damage.misc", operator: "add", value: weaponDamageMatch[1], valueType: "number" });
   }
 
   // Pattern: "threat range is doubled" (Improved Critical)
   if (/threat range is doubled/i.test(benefit)) {
-    modifiers.push({ target: "combat.damage.critical.range", operator: "multiply", value: "2", valueType: "number" });
+    modifiers.push({ target: "weapon.damage.critical.range", operator: "multiply", value: "2", valueType: "number" });
   }
 
   // Pattern: "+N feet" speed bonus (e.g. "speed is faster... by +10 feet")

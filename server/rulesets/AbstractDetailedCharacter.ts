@@ -198,7 +198,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   protected targetPaths!: TargetPathsTraverser;
 
   /**
-   * The item a requirement group is of, whose weapon its own paths (`combat.slot`) read: an item's requirements, or
+   * The item a requirement group is of, whose weapon its own paths (`weapon.wielded`) read: an item's requirements, or
    * those of a modifier the item is the source of.
    */
   private itemOf = (group: Requirement[]): string | undefined => {

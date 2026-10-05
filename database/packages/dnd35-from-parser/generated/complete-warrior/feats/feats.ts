@@ -171,7 +171,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "While wearing light or no armor and carrying no more than a light load, your movement speed increases by 5 feet.",
     aptitudes: ["General"],
     modifiers: [
-      { target: "combat.speed.base", operator: "add", value: "5", valueType: "number", requirements: [{ target: "combat.armorworn", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armorworn", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
+      { target: "combat.speed.base", operator: "add", value: "5", valueType: "number", requirements: [{ target: "combat.armor.category", operator: "not_equal", value: "medium", valueType: "string" }, { target: "combat.armor.category", operator: "not_equal", value: "heavy", valueType: "string" }, eqStr("combat.encumbrance.load", "light")] },
     ],
   },
   {

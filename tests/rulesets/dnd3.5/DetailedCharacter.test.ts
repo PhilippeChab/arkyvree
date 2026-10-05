@@ -36,6 +36,7 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
+import type { WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -499,7 +500,7 @@ describe("DetailedCharacter", () => {
           [WEAPON_TYPE]: "Longsword",
         },
       );
-      for (const target of ["combat.tohit.misc", "combat.damage.misc"]) {
+      for (const target of ["weapon.tohit.misc", "weapon.damage.misc"]) {
         await Modifiers.create(db, {
           sourceId: blade.id,
           sourceType: "items",
@@ -769,8 +770,8 @@ describe("DetailedCharacter", () => {
               { item: shield, location: "Off Hand", weaponSet: 0 },
             ]),
           ).mainhand!.tohit;
-        expect(await finessed("Heavy Steel Shield")).toMatchObject({ strength: 3, gear: 0 });
-        expect(await finessed("Tower Shield")).toMatchObject({ strength: 0, gear: -2 });
+        expect(await finessed("Heavy Steel Shield")).toMatchObject({ strength: 3, gearpenalty: 0 });
+        expect(await finessed("Tower Shield")).toMatchObject({ strength: 0, gearpenalty: -2 });
       });
 
       test("take a shield's penalty once without proficiency: every attack takes it already", async () => {
@@ -781,7 +782,7 @@ describe("DetailedCharacter", () => {
             { item: "Heavy Steel Shield", location: "Off Hand", weaponSet: 0 },
           ]),
         );
-        expect(mainhand!.tohit).toMatchObject({ strength: 5, gear: -2 });
+        expect(mainhand!.tohit).toMatchObject({ strength: 5, gearpenalty: -2 });
       });
     });
 
@@ -931,17 +932,17 @@ describe("DetailedCharacter", () => {
         ];
         const attacks = async (name: string, carried: Carried[]) => {
           const { tohit, thrown } = weaponSet(await buildCarrying(name, [dagger, ...carried])).mainhand!;
-          return { gear: tohit.gear, total: tohit.total, thrown: thrown!.total };
+          return { gearpenalty: tohit.gearpenalty, total: tohit.total, thrown: thrown!.total };
         };
         // A wizard, proficient with neither: full plate costs 6, a heavy steel shield 2, her thrown dagger as well
         const bare = await attacks("Elara Starweaver", []);
         expect(await attacks("Elara Starweaver", plateAndShield)).toEqual({
-          gear: -8,
+          gearpenalty: -8,
           total: bare.total.map((attack) => attack - 8),
           thrown: bare.thrown.map((attack) => attack - 8),
         });
         // A fighter, proficient with both: nothing
-        expect((await attacks("Bjorn Ironhand", plateAndShield)).gear).toBe(0);
+        expect((await attacks("Bjorn Ironhand", plateAndShield)).gearpenalty).toBe(0);
       });
 
       test("costs every attack 2 with a tower shield, and its check penalty without proficiency", async () => {
@@ -951,7 +952,7 @@ describe("DetailedCharacter", () => {
               { item: "Dagger", location: "Main Hand", weaponSet: 0 },
               { item: "Tower Shield", location: "Off Hand", weaponSet: 1 },
             ]),
-          ).mainhand!.tohit.gear;
+          ).mainhand!.tohit.gearpenalty;
         // A fighter, proficient with it; a wizard, who isn't, takes its 10 as well
         expect([await gear("Bjorn Ironhand"), await gear("Elara Starweaver")]).toEqual([-2, -12]);
       });
@@ -960,7 +961,7 @@ describe("DetailedCharacter", () => {
         const SLOTS = { "Main Hand": "mainhand", "Off Hand": "offhand", "Two Handed": "twohanded" } as const;
         const gear = async (item: string, location: keyof typeof SLOTS) =>
           weaponSet(await buildCarrying("Bjorn Ironhand", [{ item, location, weaponSet: 0 }]))[SLOTS[location]]!.tohit
-            .gear;
+            .gearpenalty;
         expect([
           await gear("Light Crossbow", "Main Hand"),
           await gear("Heavy Crossbow", "Off Hand"),
@@ -986,15 +987,21 @@ describe("DetailedCharacter", () => {
       ]);
       const detailed = await build(halfling);
       const { bab, throwing } = detailed.getDetailedCharacterCombat().getCombat();
-      expect(throwing.misc).toBe(1);
-      expect(weaponSet(detailed).mainhand!.tohit.throwing).toBe(1);
-      expect(weaponSet(detailed, "2").twohanded!.tohit.throwing).toBe(0);
-      // A requirement reads it under the weapon's grouping too
-      expect(detailed.areRequirementsMet(requiring("items.weapons.Sling.tohit.throwing", exactly(1)))).toBe(true);
+      expect(throwing.tohit).toBe(1);
+      expect(detailed.areRequirementsMet(requiring("combat.throwing.tohit", exactly(1)))).toBe(true);
+      /** A weapon's first attack without the bonus: its base attack and its parts. */
+      const without = ({ tohit }: WeaponSlot) =>
+        bab + tohit.strength + tohit.magic + tohit.misc + tohit.size + tohit.gearpenalty;
+      const sling = weaponSet(detailed).mainhand!;
+      const bow = weaponSet(detailed, "2").twohanded!;
+      expect([sling.tohit.total[0] - without(sling), bow.tohit.total[0] - without(bow)]).toEqual([1, 0]);
       // The dagger's melee attack doesn't take it; its thrown one does
-      const { tohit, thrown } = weaponSet(detailed, "1").mainhand!;
-      expect(tohit.throwing).toBe(0);
-      expect(thrown!.total[0]).toBe(bab + thrown!.dexterity + tohit.magic + tohit.misc + tohit.size + tohit.gear + 1);
+      const dagger = weaponSet(detailed, "1").mainhand!;
+      const { tohit, thrown } = dagger;
+      expect(tohit.total[0]).toBe(without(dagger));
+      expect(thrown!.total[0]).toBe(
+        bab + thrown!.dexterity + tohit.magic + tohit.misc + tohit.size + tohit.gearpenalty + 1,
+      );
     });
 
     describe("proficiency", () => {
@@ -1041,7 +1048,7 @@ describe("DetailedCharacter", () => {
         const [bonus] = await Modifiers.create(db, {
           sourceId: sword.id,
           sourceType: "items",
-          target: "combat.tohit.misc",
+          target: "weapon.tohit.misc",
           value: "1",
           valueType: "number",
           operator: "add",
@@ -1050,7 +1057,7 @@ describe("DetailedCharacter", () => {
           entityId: bonus.id,
           entityType: "modifiers",
           level: "1",
-          target: "combat.slot",
+          target: "weapon.wielded",
           operator: "equal",
           value: "mainhand",
           valueType: "string",
@@ -1144,7 +1151,7 @@ describe("DetailedCharacter", () => {
         await Modifiers.create(db, {
           sourceId: item.id,
           sourceType: "items",
-          target: "combat.tohit.misc",
+          target: "weapon.tohit.misc",
           value: "2",
           valueType: "number",
           operator: "add",
@@ -1419,16 +1426,16 @@ describe("DetailedCharacter", () => {
       // Elven chain: light chainmail, +4 Dexterity at most
       const elven = await wearing("Elven Chain");
       expect(elven.armor).toMatchObject({ ac: { total: 5 }, checkpenalty: -2, spellfailure: 20, maxdex: 4 });
-      expect(elven.combat).toMatchObject({ armorworn: "light", ac: { armor: 5, dexterity: 4 } });
+      expect(elven.combat).toMatchObject({ armor: { category: "light" }, ac: { armor: 5, dexterity: 4 } });
       // Celestial armor: +3 chainmail made as elven chain is, +8 Dexterity at most
       const celestial = await wearing("Celestial Armor");
       expect(celestial.armor).toMatchObject({ checkpenalty: -2, spellfailure: 15, maxdex: 8 });
-      expect(celestial.combat).toMatchObject({ armorworn: "light", ac: { armor: 8, dexterity: 5 } });
+      expect(celestial.combat).toMatchObject({ armor: { category: "light" }, ac: { armor: 8, dexterity: 5 } });
       // Banded mail of luck: +3 banded mail, masterwork as magic armor is (-6 lessened by 1)
       const banded = await wearing("Banded Mail of Luck");
       expect([banded.armor.checkpenalty, banded.combat.ac.armor]).toEqual([-5, 9]);
       // Mithral full plate: medium armor
-      expect((await wearing("Mithral Full Plate of Speed")).combat.armorworn).toBe("medium");
+      expect((await wearing("Mithral Full Plate of Speed")).combat.armor.category).toBe("medium");
     });
 
     test("adds a shield, dexterity uncapped", async () => {

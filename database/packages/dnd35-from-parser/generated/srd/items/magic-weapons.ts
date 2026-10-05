@@ -9,7 +9,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     sourceItem: "Battleaxe",
     properties: [],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -19,7 +19,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     sourceItem: "Dagger",
     properties: [],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -32,8 +32,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "9" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -46,8 +46,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "5" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -60,8 +60,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "10" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -74,8 +74,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "12" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -88,8 +88,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "14" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "3", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "3", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "3", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "3", valueType: "number" },
     ],
   },
   {
@@ -111,8 +111,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "18" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -135,8 +135,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -150,8 +150,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     ],
     modifiers: [
       { target: "saves.*.misc", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -165,8 +165,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     ],
     modifiers: [
       { target: "saves.*.misc", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -180,8 +180,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     ],
     modifiers: [
       { target: "saves.*.misc", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -195,8 +195,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     ],
     modifiers: [
       { target: "saves.*.misc", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -209,8 +209,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "11" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "3", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "3", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "3", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "3", valueType: "number" },
     ],
   },
   {
@@ -223,8 +223,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -234,7 +234,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     sourceItem: "Longsword",
     properties: [],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -246,8 +246,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -261,8 +261,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "WEAPON_MIGHTY", value: "2" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -275,8 +275,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -298,8 +298,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "13" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -312,8 +312,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "15" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -323,7 +323,7 @@ export const MAGIC_WEAPONS: ItemDef[] = [
     sourceItem: "Dagger",
     properties: [],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -354,8 +354,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "10" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -368,8 +368,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "17" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
   {
@@ -382,8 +382,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "7" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -396,8 +396,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "15" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -410,8 +410,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "11" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "3", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "3", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "3", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "3", valueType: "number" },
     ],
   },
   {
@@ -424,8 +424,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "7" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "1", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "1", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "1", valueType: "number" },
     ],
   },
   {
@@ -438,8 +438,8 @@ export const MAGIC_WEAPONS: ItemDef[] = [
       { type: "MAGIC_CASTER_LEVEL", value: "7" },
     ],
     modifiers: [
-      { target: "combat.tohit.magic", operator: "add", value: "2", valueType: "number" },
-      { target: "combat.damage.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.tohit.magic", operator: "add", value: "2", valueType: "number" },
+      { target: "weapon.damage.magic", operator: "add", value: "2", valueType: "number" },
     ],
   },
 ];

@@ -296,7 +296,7 @@ export default class DetailedCharacterRequirements {
       .some((result) => !result.error && this.evaluateRequirement(requirement, result, holders));
   }
 
-  /** Evaluates the groups, each with the item it's of (`itemOf`), which a weapon's own paths (`combat.slot`) read. */
+  /** Evaluates the groups, each with the item it's of (`itemOf`), which a weapon's own paths (`weapon.wielded`) read. */
   evaluateRequirements(
     holders: Holders,
     requirements: Requirement[][],

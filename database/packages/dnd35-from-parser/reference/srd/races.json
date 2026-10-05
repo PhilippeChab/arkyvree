@@ -96,7 +96,7 @@
         },
         {
           "operator": "add",
-          "target": "combat.throwing.misc",
+          "target": "combat.throwing.tohit",
           "value": "1",
           "valueType": "number"
         }
