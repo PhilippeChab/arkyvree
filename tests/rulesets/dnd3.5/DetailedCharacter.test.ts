@@ -87,6 +87,9 @@ async function build(character: Character) {
 
 const buildSeeded = async (name: string) => build(await findSeededCharacter(name));
 
+/** A requirement's check that a number is `value`. */
+const exactly = (value: number) => ({ operator: "equal", value: String(value), valueType: "number" }) as const;
+
 /** One group holding one requirement on `target`: by default, that it's true. */
 function requiring(
   target: string,
@@ -984,6 +987,8 @@ describe("DetailedCharacter", () => {
       expect(throwing.misc).toBe(1);
       expect(weaponSet(detailed).mainhand!.tohit.throwing).toBe(1);
       expect(weaponSet(detailed, "2").twohanded!.tohit.throwing).toBe(0);
+      // A requirement reads it under the weapon's grouping too
+      expect(detailed.areRequirementsMet(requiring("items.weapons.Sling.tohit.throwing", exactly(1)))).toBe(true);
       // The dagger's melee attack doesn't take it; its thrown one does
       const { tohit, thrown } = weaponSet(detailed, "1").mainhand!;
       expect(tohit.throwing).toBe(0);
@@ -2592,7 +2597,6 @@ describe("DetailedCharacter", () => {
     });
 
     test("a family's count is how many times the character has its feats, every class's sneak attack dice together", async () => {
-      const exactly = (value: number) => ({ operator: "equal", value: String(value), valueType: "number" }) as const;
       expect(await met("Elara Starweaver", "feats.spellfocus.count", exactly(1))).toBe(true);
       expect(await met("Bjorn Ironhand", "feats.spellfocus.count", exactly(0))).toBe(true);
       // A rogue 3 has her Sneak Attack (Rogue) twice: +2d6
@@ -2620,7 +2624,6 @@ describe("DetailedCharacter", () => {
     });
 
     test("a feat named like its family is that feat, and the family's wildcard reaches the family's feats", async () => {
-      const exactly = (value: number) => ({ operator: "equal", value: String(value), valueType: "number" }) as const;
       // Martial Weapon Proficiency is every martial weapon, a fighter's. A rogue has some, each a feat of the family,
       // and so has an elf, by her race; a sorcerer, none
       expect(await met("Bjorn Ironhand", "feats.martialweaponproficiency.possessed")).toBe(true);
