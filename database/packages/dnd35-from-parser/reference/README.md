@@ -14,7 +14,8 @@ raw                                 # Verbatim scrape from the HTML page
 ├── prerequisites                   #   Raw prereq text + parsed struct
 │   └── parsed                      #     bab, skills, feats, spells, alignment, special,
 │                                   #     saves, casterLevel, classLevels
-├── progression[]                   #   Level table (BAB, saves, special, spellsPerDay)
+├── progression[]                   #   Level table (BAB, saves, special, spellsPerDay, and the other
+│                                   #     columns by header: "AC Bonus": "+1")
 ├── classFeatures[]                 #   Feature name + type + description blocks
 ├── spellsKnown[]                   #   Separate "spells known" table if any
 ├── hasCantrips?                    #   Does spell table start at 0th?
@@ -30,6 +31,9 @@ overrides                           # MANUAL — the only hand-edited part
 ├── proficiencies[]                 #   Weapon/armor proficiency strings
 ├── freeFeats[]                     #   [level, featName, aptitude]
 ├── modifiers[]                     #   Class-level modifiers (passive bonuses)
+├── columns{}                       #   Table column (header) → modifiers at each level its value changes:
+│                                   #     { target, operator: add (the number's rise) | set (the text),
+│                                   #     requirements? }; parser:validate reports a column none reads
 ├── aptitudePicks[]                 #   Override detected.aptitudePicks
 ├── bonusFeatLists[]                #   Override detected.bonusFeatLists
 ├── casterType                      #   Override detected.casterType

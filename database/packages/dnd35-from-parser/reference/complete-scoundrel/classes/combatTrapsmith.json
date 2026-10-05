@@ -1,9 +1,14 @@
 {
   "_meta": {
     "book": "complete-scoundrel",
-    "scrapedAt": "2026-03-23T18:43:44.289Z",
+    "scrapedAt": "2026-10-05T01:13:40.999Z",
     "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/combat-trapsmith/",
     "type": "class"
+  },
+  "overrides": {
+    "reviewed": [
+      "Combat Traps Known"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -80,6 +85,9 @@
     "progression": [
       {
         "bab": 0,
+        "columns": {
+          "Combat Traps Known": "2"
+        },
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
@@ -91,6 +99,9 @@
       },
       {
         "bab": 1,
+        "columns": {
+          "Combat Traps Known": "3"
+        },
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
@@ -101,6 +112,9 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "Combat Traps Known": "4"
+        },
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
@@ -111,6 +125,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "Combat Traps Known": "5"
+        },
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
@@ -121,6 +138,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "Combat Traps Known": "6"
+        },
         "fortSave": 4,
         "level": 5,
         "refSave": 4,

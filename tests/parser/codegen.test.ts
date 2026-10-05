@@ -8,7 +8,7 @@ import {
   WIZARD_SCHOOL_FEATS,
 } from "@/database/packages/dnd35-from-parser/generated/srd/feats/feats.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
-import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
+import { buildClassFeatSeeds, classModifiers } from "@/database/packages/dnd35-from-parser/tools/buildSeeds.ts";
 import {
   escapeTemplate,
   importLines,
@@ -280,6 +280,43 @@ describe("A generated class", () => {
     );
     // "Spell Focus (two schools of magic)"
     expect(generateClassSeed(classRef("dmg", "archmage"))).toContain(`gte("feats.spellfocus.count", 2),`);
+  });
+
+  test("reads its table's columns into level modifiers: a number's rise, a text where it changes", () => {
+    const monk = structuredClone(classRef("srd", "monk"));
+    const modifiers = (column: string) =>
+      classModifiers(monk)
+        .filter(({ target }) => target === monk.overrides?.columns?.[column]?.target)
+        .map(({ level, value, operator }) => `${level} ${operator} ${value}`);
+    // "+0 ft." … "+60 ft."; "+0" … "+4"; "1d6" … "2d10"
+    expect(modifiers("Unarmored Speed Bonus")).toEqual([
+      "3 add 10",
+      "6 add 10",
+      "9 add 10",
+      "12 add 10",
+      "15 add 10",
+      "18 add 10",
+    ]);
+    expect(modifiers("AC Bonus")).toEqual(["5 add 1", "10 add 1", "15 add 1", "20 add 1"]);
+    expect(modifiers("Unarmed Damage")).toEqual([
+      "1 set 1d6",
+      "4 set 1d8",
+      "8 set 1d10",
+      "12 set 2d6",
+      "16 set 2d8",
+      "20 set 2d10",
+    ]);
+    // Gated as its mapping says
+    expect(classModifiers(monk).find(({ target }) => target === "combat.speed.base")?.requirements).toEqual(
+      monk.overrides?.columns?.["Unarmored Speed Bonus"]?.requirements,
+    );
+    // A blank cell keeps the value above it, and a typographic minus is a minus
+    monk.raw.progression[5].columns!["AC Bonus"] = "";
+    monk.raw.progression[6].columns!["AC Bonus"] = "\u22121";
+    expect(modifiers("AC Bonus").slice(0, 4)).toEqual(["5 add 1", "7 add -2", "8 add 2", "10 add 1"]);
+    // A column its table doesn't have
+    monk.overrides!.columns = { "Ki Points": { target: "combat.ac.misc", operator: "add" } };
+    expect(() => classModifiers(monk)).toThrow('Monk: its table has no "Ki Points" column');
   });
 
   test("grants the existing feat a feature is, named in another case or by a family's option, not a copy of it", () => {

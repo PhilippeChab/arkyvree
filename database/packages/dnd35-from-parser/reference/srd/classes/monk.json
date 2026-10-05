@@ -1,12 +1,60 @@
 {
   "_meta": {
     "book": "srd",
-    "scrapedAt": "2026-03-23T01:56:26.570Z",
+    "scrapedAt": "2026-10-05T01:14:18.141Z",
     "sourceUrl": "https://dndtools.net/classes/players-handbook-v35--6/monk/",
     "type": "class"
   },
   "overrides": {
     "alignment": "Any lawful",
+    "columns": {
+      "AC Bonus": {
+        "operator": "add",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.shieldheld",
+            "value": "false",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ],
+        "target": "combat.ac.misc"
+      },
+      "Unarmed Damage": {
+        "operator": "set",
+        "target": "items.weapons.unarmedstrike.damage.base"
+      },
+      "Unarmored Speed Bonus": {
+        "operator": "add",
+        "requirements": [
+          {
+            "operator": "equal",
+            "target": "combat.armorworn",
+            "value": "none",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ],
+        "target": "combat.speed.base"
+      }
+    },
     "description": "Scattered throughout the world are isolated monasteries - small, fortified enclaves where monks devote themselves to achieving personal excellence through disciplined action and focused meditation. They hone their bodies into versatile fighting instruments, mastering combat without reliance on weapons or armor. Those who study under virtuous masters serve as guardians of the common folk, blending seamlessly into crowds while remaining ever-ready to confront bandits, tyrants, and corrupt officials. Conversely, monks trained under sinister masters use fear to dominate nearby territories, functioning much like warlords with loyal retinues. Such monks excel as spies, saboteurs, and assassins. Most individual monks care little for crusading on behalf of the downtrodden or accumulating riches. Their primary concern is the mastery of their discipline and, through that mastery, the perfection of themselves. They aspire to transcend mortal limitations entirely. A monk treats every adventure as a crucible for self-improvement. Though not inclined toward ostentatious displays, monks readily pit their abilities against any challenge that presents itself. Material wealth holds little appeal for them, but they eagerly pursue anything that furthers their art.",
     "features": {
       "AC Bonus": {
@@ -191,283 +239,8 @@
         "description": "Beginning at 7th level, a monk can mend her own injuries through focused will. Each day she can restore a total number of hit points equal to twice her current monk level, and she may divide this healing across multiple uses throughout the day."
       }
     },
-    "modifiers": [
-      {
-        "level": 3,
-        "operator": "add",
-        "target": "combat.speed.base",
-        "value": "10",
-        "valueType": "number",
-        "requirements": [
-          {
-            "operator": "equal",
-            "target": "combat.armorworn",
-            "value": "none",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.encumbrance.load",
-            "value": "light",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "level": 6,
-        "operator": "add",
-        "target": "combat.speed.base",
-        "value": "10",
-        "valueType": "number",
-        "requirements": [
-          {
-            "operator": "equal",
-            "target": "combat.armorworn",
-            "value": "none",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.encumbrance.load",
-            "value": "light",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "level": 9,
-        "operator": "add",
-        "target": "combat.speed.base",
-        "value": "10",
-        "valueType": "number",
-        "requirements": [
-          {
-            "operator": "equal",
-            "target": "combat.armorworn",
-            "value": "none",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.encumbrance.load",
-            "value": "light",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "level": 12,
-        "operator": "add",
-        "target": "combat.speed.base",
-        "value": "10",
-        "valueType": "number",
-        "requirements": [
-          {
-            "operator": "equal",
-            "target": "combat.armorworn",
-            "value": "none",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.encumbrance.load",
-            "value": "light",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "level": 15,
-        "operator": "add",
-        "target": "combat.speed.base",
-        "value": "10",
-        "valueType": "number",
-        "requirements": [
-          {
-            "operator": "equal",
-            "target": "combat.armorworn",
-            "value": "none",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.encumbrance.load",
-            "value": "light",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "level": 18,
-        "operator": "add",
-        "target": "combat.speed.base",
-        "value": "10",
-        "valueType": "number",
-        "requirements": [
-          {
-            "operator": "equal",
-            "target": "combat.armorworn",
-            "value": "none",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.encumbrance.load",
-            "value": "light",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "level": 5,
-        "operator": "add",
-        "target": "combat.ac.misc",
-        "value": "1",
-        "valueType": "number",
-        "requirements": [
-          {
-            "operator": "equal",
-            "target": "combat.armorworn",
-            "value": "none",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.shieldheld",
-            "value": "false",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.encumbrance.load",
-            "value": "light",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "level": 10,
-        "operator": "add",
-        "target": "combat.ac.misc",
-        "value": "1",
-        "valueType": "number",
-        "requirements": [
-          {
-            "operator": "equal",
-            "target": "combat.armorworn",
-            "value": "none",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.shieldheld",
-            "value": "false",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.encumbrance.load",
-            "value": "light",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "level": 15,
-        "operator": "add",
-        "target": "combat.ac.misc",
-        "value": "1",
-        "valueType": "number",
-        "requirements": [
-          {
-            "operator": "equal",
-            "target": "combat.armorworn",
-            "value": "none",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.shieldheld",
-            "value": "false",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.encumbrance.load",
-            "value": "light",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "level": 20,
-        "operator": "add",
-        "target": "combat.ac.misc",
-        "value": "1",
-        "valueType": "number",
-        "requirements": [
-          {
-            "operator": "equal",
-            "target": "combat.armorworn",
-            "value": "none",
-            "valueType": "string"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.shieldheld",
-            "value": "false",
-            "valueType": "boolean"
-          },
-          {
-            "operator": "equal",
-            "target": "combat.encumbrance.load",
-            "value": "light",
-            "valueType": "string"
-          }
-        ]
-      },
-      {
-        "level": 1,
-        "operator": "set",
-        "target": "items.weapons.unarmedstrike.damage.base",
-        "value": "1d6",
-        "valueType": "string"
-      },
-      {
-        "level": 4,
-        "operator": "set",
-        "target": "items.weapons.unarmedstrike.damage.base",
-        "value": "1d8",
-        "valueType": "string"
-      },
-      {
-        "level": 8,
-        "operator": "set",
-        "target": "items.weapons.unarmedstrike.damage.base",
-        "value": "1d10",
-        "valueType": "string"
-      },
-      {
-        "level": 12,
-        "operator": "set",
-        "target": "items.weapons.unarmedstrike.damage.base",
-        "value": "2d6",
-        "valueType": "string"
-      },
-      {
-        "level": 16,
-        "operator": "set",
-        "target": "items.weapons.unarmedstrike.damage.base",
-        "value": "2d8",
-        "valueType": "string"
-      },
-      {
-        "level": 20,
-        "operator": "set",
-        "target": "items.weapons.unarmedstrike.damage.base",
-        "value": "2d10",
-        "valueType": "string"
-      }
+    "reviewed": [
+      "Flurry BAB"
     ]
   },
   "raw": {
@@ -608,6 +381,12 @@
     "progression": [
       {
         "bab": 0,
+        "columns": {
+          "AC Bonus": "+0",
+          "Flurry BAB": "-2/-2",
+          "Unarmed Damage": "1d6",
+          "Unarmored Speed Bonus": "+0 ft"
+        },
         "fortSave": 2,
         "level": 1,
         "refSave": 2,
@@ -620,6 +399,12 @@
       },
       {
         "bab": 1,
+        "columns": {
+          "AC Bonus": "+0",
+          "Flurry BAB": "-1/-1",
+          "Unarmed Damage": "1d6",
+          "Unarmored Speed Bonus": "+0 ft"
+        },
         "fortSave": 3,
         "level": 2,
         "refSave": 3,
@@ -631,6 +416,12 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "AC Bonus": "+0",
+          "Flurry BAB": "+0/+0",
+          "Unarmed Damage": "1d6",
+          "Unarmored Speed Bonus": "+10 ft"
+        },
         "fortSave": 3,
         "level": 3,
         "refSave": 3,
@@ -641,6 +432,12 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "AC Bonus": "+0",
+          "Flurry BAB": "+1/+1",
+          "Unarmed Damage": "1d8",
+          "Unarmored Speed Bonus": "+10 ft"
+        },
         "fortSave": 4,
         "level": 4,
         "refSave": 4,
@@ -652,6 +449,12 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "AC Bonus": "+1",
+          "Flurry BAB": "+2/+2",
+          "Unarmed Damage": "1d8",
+          "Unarmored Speed Bonus": "+10 ft"
+        },
         "fortSave": 4,
         "level": 5,
         "refSave": 4,
@@ -662,6 +465,12 @@
       },
       {
         "bab": 4,
+        "columns": {
+          "AC Bonus": "+1",
+          "Flurry BAB": "+3/+3",
+          "Unarmed Damage": "1d8",
+          "Unarmored Speed Bonus": "+20 ft"
+        },
         "fortSave": 5,
         "level": 6,
         "refSave": 5,
@@ -673,6 +482,12 @@
       },
       {
         "bab": 5,
+        "columns": {
+          "AC Bonus": "+1",
+          "Flurry BAB": "+4/+4",
+          "Unarmed Damage": "1d8",
+          "Unarmored Speed Bonus": "+20 ft"
+        },
         "fortSave": 5,
         "level": 7,
         "refSave": 5,
@@ -683,6 +498,12 @@
       },
       {
         "bab": 6,
+        "columns": {
+          "AC Bonus": "+1",
+          "Flurry BAB": "+5/+5/+0",
+          "Unarmed Damage": "1d10",
+          "Unarmored Speed Bonus": "+20 ft"
+        },
         "fortSave": 6,
         "level": 8,
         "refSave": 6,
@@ -693,6 +514,12 @@
       },
       {
         "bab": 6,
+        "columns": {
+          "AC Bonus": "+1",
+          "Flurry BAB": "+6/+6/+1",
+          "Unarmed Damage": "1d10",
+          "Unarmored Speed Bonus": "+30 ft"
+        },
         "fortSave": 6,
         "level": 9,
         "refSave": 6,
@@ -703,6 +530,12 @@
       },
       {
         "bab": 7,
+        "columns": {
+          "AC Bonus": "+2",
+          "Flurry BAB": "+7/+7/+2",
+          "Unarmed Damage": "1d10",
+          "Unarmored Speed Bonus": "+30 ft"
+        },
         "fortSave": 7,
         "level": 10,
         "refSave": 7,
@@ -714,6 +547,12 @@
       },
       {
         "bab": 8,
+        "columns": {
+          "AC Bonus": "+2",
+          "Flurry BAB": "+8/+8/+8/+3",
+          "Unarmed Damage": "1d10",
+          "Unarmored Speed Bonus": "+30 ft"
+        },
         "fortSave": 7,
         "level": 11,
         "refSave": 7,
@@ -725,6 +564,12 @@
       },
       {
         "bab": 9,
+        "columns": {
+          "AC Bonus": "+2",
+          "Flurry BAB": "+9/+9/+9/+4",
+          "Unarmed Damage": "2d6",
+          "Unarmored Speed Bonus": "+40 ft"
+        },
         "fortSave": 8,
         "level": 12,
         "refSave": 8,
@@ -736,6 +581,12 @@
       },
       {
         "bab": 9,
+        "columns": {
+          "AC Bonus": "+2",
+          "Flurry BAB": "+9/+9/+9/+4",
+          "Unarmed Damage": "2d6",
+          "Unarmored Speed Bonus": "+40 ft"
+        },
         "fortSave": 8,
         "level": 13,
         "refSave": 8,
@@ -746,6 +597,12 @@
       },
       {
         "bab": 10,
+        "columns": {
+          "AC Bonus": "+2",
+          "Flurry BAB": "+10/+10/+10/+5",
+          "Unarmed Damage": "2d6",
+          "Unarmored Speed Bonus": "+40 ft"
+        },
         "fortSave": 9,
         "level": 14,
         "refSave": 9,
@@ -756,6 +613,12 @@
       },
       {
         "bab": 11,
+        "columns": {
+          "AC Bonus": "+3",
+          "Flurry BAB": "+11/+11/+11/+6/+1",
+          "Unarmed Damage": "2d6",
+          "Unarmored Speed Bonus": "+50 ft"
+        },
         "fortSave": 9,
         "level": 15,
         "refSave": 9,
@@ -766,6 +629,12 @@
       },
       {
         "bab": 12,
+        "columns": {
+          "AC Bonus": "+3",
+          "Flurry BAB": "+12/+12/+12/+7/+2",
+          "Unarmed Damage": "2d8",
+          "Unarmored Speed Bonus": "+50 ft"
+        },
         "fortSave": 10,
         "level": 16,
         "refSave": 10,
@@ -777,6 +646,12 @@
       },
       {
         "bab": 12,
+        "columns": {
+          "AC Bonus": "+3",
+          "Flurry BAB": "+12/+12/+12/+7/+2",
+          "Unarmed Damage": "2d8",
+          "Unarmored Speed Bonus": "+50 ft"
+        },
         "fortSave": 10,
         "level": 17,
         "refSave": 10,
@@ -788,6 +663,12 @@
       },
       {
         "bab": 13,
+        "columns": {
+          "AC Bonus": "+3",
+          "Flurry BAB": "+13/+13/+13/+8/+3",
+          "Unarmed Damage": "2d8",
+          "Unarmored Speed Bonus": "+60 ft"
+        },
         "fortSave": 11,
         "level": 18,
         "refSave": 11,
@@ -798,6 +679,12 @@
       },
       {
         "bab": 14,
+        "columns": {
+          "AC Bonus": "+3",
+          "Flurry BAB": "+14/+14/+14/+9/+4",
+          "Unarmed Damage": "2d8",
+          "Unarmored Speed Bonus": "+60 ft"
+        },
         "fortSave": 11,
         "level": 19,
         "refSave": 11,
@@ -808,6 +695,12 @@
       },
       {
         "bab": 15,
+        "columns": {
+          "AC Bonus": "+4",
+          "Flurry BAB": "+15/+15/+15/+10/+5",
+          "Unarmed Damage": "2d10",
+          "Unarmored Speed Bonus": "+60 ft"
+        },
         "fortSave": 12,
         "level": 20,
         "refSave": 12,

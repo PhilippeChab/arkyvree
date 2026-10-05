@@ -1,9 +1,78 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-03-24T22:27:47.330Z",
+    "scrapedAt": "2026-10-05T01:13:02.660Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/ninja/",
     "type": "class"
+  },
+  "overrides": {
+    "features": {
+      "AC Bonus": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "combat.armorworn",
+                "value": "none",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.shieldheld",
+                "value": "false",
+                "valueType": "boolean"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.encumbrance.load",
+                "value": "light",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "feats.acbonusmonk.possessed",
+                "value": "false",
+                "valueType": "boolean"
+              }
+            ],
+            "target": "combat.ac.misc",
+            "value": "{{ max(0, [abilities.wisdom.modifier]) }}",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "equal",
+                "target": "combat.armorworn",
+                "value": "none",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.shieldheld",
+                "value": "false",
+                "valueType": "boolean"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.encumbrance.load",
+                "value": "light",
+                "valueType": "string"
+              }
+            ],
+            "target": "combat.ac.misc",
+            "value": "{{ floor([classes.ninja.level] / 5) }}",
+            "valueType": "number"
+          }
+        ]
+      }
+    },
+    "reviewed": [
+      "AC Bonus"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -133,6 +202,9 @@
     "progression": [
       {
         "bab": 0,
+        "columns": {
+          "AC Bonus": "+0"
+        },
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
@@ -145,6 +217,9 @@
       },
       {
         "bab": 1,
+        "columns": {
+          "AC Bonus": "+0"
+        },
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
@@ -155,6 +230,9 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "AC Bonus": "+0"
+        },
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
@@ -166,6 +244,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "AC Bonus": "+0"
+        },
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
@@ -176,6 +257,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "AC Bonus": "+1"
+        },
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
@@ -186,6 +270,9 @@
       },
       {
         "bab": 4,
+        "columns": {
+          "AC Bonus": "+1"
+        },
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
@@ -197,6 +284,9 @@
       },
       {
         "bab": 5,
+        "columns": {
+          "AC Bonus": "+1"
+        },
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
@@ -208,6 +298,9 @@
       },
       {
         "bab": 6,
+        "columns": {
+          "AC Bonus": "+1"
+        },
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
@@ -218,6 +311,9 @@
       },
       {
         "bab": 6,
+        "columns": {
+          "AC Bonus": "+1"
+        },
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
@@ -229,6 +325,9 @@
       },
       {
         "bab": 7,
+        "columns": {
+          "AC Bonus": "+2"
+        },
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
@@ -239,6 +338,9 @@
       },
       {
         "bab": 8,
+        "columns": {
+          "AC Bonus": "+2"
+        },
         "fortSave": 3,
         "level": 11,
         "refSave": 7,
@@ -249,6 +351,9 @@
       },
       {
         "bab": 9,
+        "columns": {
+          "AC Bonus": "+2"
+        },
         "fortSave": 4,
         "level": 12,
         "refSave": 8,
@@ -260,6 +365,9 @@
       },
       {
         "bab": 9,
+        "columns": {
+          "AC Bonus": "+2"
+        },
         "fortSave": 4,
         "level": 13,
         "refSave": 8,
@@ -270,6 +378,9 @@
       },
       {
         "bab": 10,
+        "columns": {
+          "AC Bonus": "+2"
+        },
         "fortSave": 4,
         "level": 14,
         "refSave": 9,
@@ -280,6 +391,9 @@
       },
       {
         "bab": 11,
+        "columns": {
+          "AC Bonus": "+3"
+        },
         "fortSave": 5,
         "level": 15,
         "refSave": 9,
@@ -290,6 +404,9 @@
       },
       {
         "bab": 12,
+        "columns": {
+          "AC Bonus": "+3"
+        },
         "fortSave": 5,
         "level": 16,
         "refSave": 10,
@@ -300,6 +417,9 @@
       },
       {
         "bab": 12,
+        "columns": {
+          "AC Bonus": "+3"
+        },
         "fortSave": 5,
         "level": 17,
         "refSave": 10,
@@ -310,6 +430,9 @@
       },
       {
         "bab": 13,
+        "columns": {
+          "AC Bonus": "+3"
+        },
         "fortSave": 6,
         "level": 18,
         "refSave": 11,
@@ -321,6 +444,9 @@
       },
       {
         "bab": 14,
+        "columns": {
+          "AC Bonus": "+3"
+        },
         "fortSave": 6,
         "level": 19,
         "refSave": 11,
@@ -331,6 +457,9 @@
       },
       {
         "bab": 15,
+        "columns": {
+          "AC Bonus": "+4"
+        },
         "fortSave": 6,
         "level": 20,
         "refSave": 12,
@@ -341,71 +470,5 @@
       }
     ],
     "skillPointsPerLevel": "6 + Int modifier"
-  },
-  "overrides": {
-    "features": {
-      "AC Bonus": {
-        "modifiers": [
-          {
-            "operator": "add",
-            "requirements": [
-              {
-                "operator": "equal",
-                "target": "combat.armorworn",
-                "value": "none",
-                "valueType": "string"
-              },
-              {
-                "operator": "equal",
-                "target": "combat.shieldheld",
-                "value": "false",
-                "valueType": "boolean"
-              },
-              {
-                "operator": "equal",
-                "target": "combat.encumbrance.load",
-                "value": "light",
-                "valueType": "string"
-              },
-              {
-                "operator": "equal",
-                "target": "feats.acbonusmonk.possessed",
-                "value": "false",
-                "valueType": "boolean"
-              }
-            ],
-            "target": "combat.ac.misc",
-            "value": "{{ max(0, [abilities.wisdom.modifier]) }}",
-            "valueType": "number"
-          },
-          {
-            "operator": "add",
-            "requirements": [
-              {
-                "operator": "equal",
-                "target": "combat.armorworn",
-                "value": "none",
-                "valueType": "string"
-              },
-              {
-                "operator": "equal",
-                "target": "combat.shieldheld",
-                "value": "false",
-                "valueType": "boolean"
-              },
-              {
-                "operator": "equal",
-                "target": "combat.encumbrance.load",
-                "value": "light",
-                "valueType": "string"
-              }
-            ],
-            "target": "combat.ac.misc",
-            "value": "{{ floor([classes.ninja.level] / 5) }}",
-            "valueType": "number"
-          }
-        ]
-      }
-    }
   }
 }

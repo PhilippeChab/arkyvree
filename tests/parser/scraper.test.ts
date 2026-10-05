@@ -95,6 +95,8 @@ describe("The scraper reads from a page the reference's entries:", () => {
     ["cleric", "srd"],
     ["sorcerer", "srd"],
     ["wizard", "srd"],
+    // Its table's other columns, each named by the header over it too: "AC" over "Bonus"
+    ["monk", "srd"],
     ["assassin", "dmg"],
     ["urPriest", "complete-divine"],
     ["shadowmind", "complete-adventurer"],

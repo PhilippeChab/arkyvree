@@ -1,9 +1,19 @@
 {
   "_meta": {
     "book": "complete-scoundrel",
-    "scrapedAt": "2026-03-23T01:26:43.588Z",
+    "scrapedAt": "2026-10-05T01:13:43.701Z",
     "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/master-of-masks/",
     "type": "class"
+  },
+  "overrides": {
+    "features": {
+      "Persona Masks": {
+        "modifiers": null
+      }
+    },
+    "reviewed": [
+      "*Masks Known"
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -67,6 +77,9 @@
     "progression": [
       {
         "bab": 0,
+        "columns": {
+          "*Masks Known": "2"
+        },
         "fortSave": 0,
         "level": 1,
         "refSave": 2,
@@ -78,6 +91,9 @@
       },
       {
         "bab": 1,
+        "columns": {
+          "*Masks Known": "3"
+        },
         "fortSave": 0,
         "level": 2,
         "refSave": 3,
@@ -87,6 +103,9 @@
       },
       {
         "bab": 1,
+        "columns": {
+          "*Masks Known": "4"
+        },
         "fortSave": 1,
         "level": 3,
         "refSave": 3,
@@ -98,6 +117,9 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "*Masks Known": "4"
+        },
         "fortSave": 1,
         "level": 4,
         "refSave": 4,
@@ -107,6 +129,9 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "*Masks Known": "5"
+        },
         "fortSave": 1,
         "level": 5,
         "refSave": 4,
@@ -118,6 +143,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "*Masks Known": "5"
+        },
         "fortSave": 2,
         "level": 6,
         "refSave": 5,
@@ -129,6 +157,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "*Masks Known": "6"
+        },
         "fortSave": 2,
         "level": 7,
         "refSave": 5,
@@ -138,6 +169,9 @@
       },
       {
         "bab": 4,
+        "columns": {
+          "*Masks Known": "6"
+        },
         "fortSave": 2,
         "level": 8,
         "refSave": 6,
@@ -149,6 +183,9 @@
       },
       {
         "bab": 4,
+        "columns": {
+          "*Masks Known": "7"
+        },
         "fortSave": 3,
         "level": 9,
         "refSave": 6,
@@ -158,6 +195,9 @@
       },
       {
         "bab": 5,
+        "columns": {
+          "*Masks Known": "7"
+        },
         "fortSave": 3,
         "level": 10,
         "refSave": 7,
@@ -169,12 +209,5 @@
       }
     ],
     "skillPointsPerLevel": "4 + Int modifier"
-  },
-  "overrides": {
-    "features": {
-      "Persona Masks": {
-        "modifiers": null
-      }
-    }
   }
 }

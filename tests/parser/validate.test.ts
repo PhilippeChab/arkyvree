@@ -168,6 +168,20 @@ describe("parser:validate", () => {
     ]);
   });
 
+  test("reports a class table's column no modifier reads, unless the class maps it or reviews it", () => {
+    const unread = (edit: (overrides: Record<string, unknown>) => void) =>
+      issuesOf("srd/classes/monk.json", edit)
+        .filter(({ kind }) => kind === "unread column")
+        .map(({ entityName, text }) => `${entityName}: ${text}`);
+    expect(unread(() => {})).toEqual([]);
+    expect(unread((overrides) => void (overrides.reviewed = []))).toEqual(["Monk: Flurry BAB"]);
+    expect(unread((overrides) => void delete overrides.columns)).toEqual([
+      "Monk: AC Bonus",
+      "Monk: Unarmed Damage",
+      "Monk: Unarmored Speed Bonus",
+    ]);
+  });
+
   test("reports an item without a definition, which the generator leaves out, unless reviewed", () => {
     const undefinedSickle = (overrides: Record<string, unknown>) =>
       void (overrides.nameMap = { ...(isRecord(overrides.nameMap) ? overrides.nameMap : {}), Sickle: "Laser sickle" });

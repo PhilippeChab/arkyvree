@@ -131,6 +131,33 @@ function splitSpecial(text: string): string[] {
   return parts;
 }
 
+/**
+ * The text over each column of a table's header rows above its main one, by column: each cell placed past those a row
+ * above spans down into, over the columns it spans ("Unarmed" over the monk's "Damage").
+ */
+function headersAbove($: cheerio.CheerioAPI, rows: AnyNode[]): string[] {
+  const grid: string[][] = rows.map(() => []);
+  for (const [r, row] of rows.entries()) {
+    let column = 0;
+    $(row)
+      .children("th")
+      .each((_, th) => {
+        while (grid[r][column] !== undefined) column++;
+        const text = normalizeWs($(th).text().trim());
+        const rowspan = parseInt($(th).attr("rowspan") ?? "1", 10);
+        const colspan = parseInt($(th).attr("colspan") ?? "1", 10);
+        for (let dr = 0; dr < rowspan && r + dr < rows.length; dr++) {
+          for (let dc = 0; dc < colspan; dc++) grid[r + dr][column + dc] = text;
+        }
+        column += colspan;
+      });
+  }
+  const width = Math.max(0, ...grid.map((row) => row.length));
+  return Array.from({ length: width }, (_, column) =>
+    [...new Set(grid.map((row) => row[column]).filter(Boolean))].join(" "),
+  );
+}
+
 function parseProgression($: cheerio.CheerioAPI): {
   progression: ClassReference["raw"]["progression"];
   hasCantrips?: boolean;
@@ -150,8 +177,10 @@ function parseProgression($: cheerio.CheerioAPI): {
     // Find the header row that contains Level and BAB columns
     // This may be the first row (simple) or the second (when first row is spanning groups)
     let mainHeaderRow: cheerio.Cheerio<AnyNode> | null = null;
-    headerRows.each((_, row) => {
+    let mainHeaderIndex = 0;
+    headerRows.each((index, row) => {
       if (mainHeaderRow) return;
+      mainHeaderIndex = index;
       const ths: string[] = [];
       $(row)
         .children("th")
@@ -169,15 +198,20 @@ function parseProgression($: cheerio.CheerioAPI): {
     const dataRowContainer = tbody.length > 0 ? tbody : $(table);
     const directRows = dataRowContainer.children("tr");
 
-    // Build column map including colspan expansion
+    // Build column map including colspan expansion, and each column's header as the page writes it
     const firstRowHeaders: string[] = [];
+    const headerNames: string[] = [];
     const headerRow = mainHeaderRow as cheerio.Cheerio<AnyNode>;
+    const above = headersAbove($, headerRows.toArray().slice(0, mainHeaderIndex));
     headerRow.children("th").each((_, th) => {
       const text = $(th).text().trim().toLowerCase();
+      const name = [above[headerNames.length], normalizeWs($(th).text().trim())].filter(Boolean).join(" ");
       const colspan = parseInt($(th).attr("colspan") ?? "1", 10);
       firstRowHeaders.push(text);
+      headerNames.push(name);
       for (let i = 1; i < colspan; i++) {
         firstRowHeaders.push(`${text}:${i}`);
+        headerNames.push(`${name}:${i}`);
       }
     });
 
@@ -230,6 +264,11 @@ function parseProgression($: cheerio.CheerioAPI): {
       }
     }
 
+    // The table's other columns, by header: what only they give (a monk's AC bonus) a class's overrides can read
+    const knownIdx = new Set([levelIdx, babIdx, fortIdx, refIdx, willIdx, specialIdx]);
+    for (let i = 0; i < spellColCount; i++) knownIdx.add(spellStartIdx + i);
+    const otherIdx = headerNames.map((_, i) => i).filter((i) => !knownIdx.has(i) && headerNames[i]);
+
     let expectedLevel = 1;
     directRows.each((_, row) => {
       const cells: string[] = [];
@@ -279,7 +318,17 @@ function parseProgression($: cheerio.CheerioAPI): {
         }
       }
 
-      progression.push({ level, bab, fortSave, refSave, willSave, special, spellsPerDay });
+      const columns = Object.fromEntries(otherIdx.map((i) => [headerNames[i], normalizeWs(cells[i] ?? "")]));
+      progression.push({
+        level,
+        bab,
+        fortSave,
+        refSave,
+        willSave,
+        special,
+        spellsPerDay,
+        ...(otherIdx.length > 0 && { columns }),
+      });
     });
 
     if (progression.length > 0) return false;

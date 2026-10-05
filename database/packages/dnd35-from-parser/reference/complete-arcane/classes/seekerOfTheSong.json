@@ -1,11 +1,15 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T22:10:46.614Z",
+    "scrapedAt": "2026-10-05T01:13:18.240Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/seeker-of-the-song/",
     "type": "class"
   },
-  "overrides": {},
+  "overrides": {
+    "reviewed": [
+      "Seeker Music"
+    ]
+  },
   "raw": {
     "classFeatures": [
       {
@@ -79,6 +83,9 @@
     "progression": [
       {
         "bab": 0,
+        "columns": {
+          "Seeker Music": "Burning melody"
+        },
         "fortSave": 0,
         "level": 1,
         "refSave": 0,
@@ -90,6 +97,9 @@
       },
       {
         "bab": 1,
+        "columns": {
+          "Seeker Music": "Song of unmaking"
+        },
         "fortSave": 0,
         "level": 2,
         "refSave": 0,
@@ -100,6 +110,9 @@
       },
       {
         "bab": 1,
+        "columns": {
+          "Seeker Music": "Dirge of frozen loss"
+        },
         "fortSave": 1,
         "level": 3,
         "refSave": 1,
@@ -108,6 +121,9 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "Seeker Music": "Song of life"
+        },
         "fortSave": 1,
         "level": 4,
         "refSave": 1,
@@ -118,6 +134,9 @@
       },
       {
         "bab": 2,
+        "columns": {
+          "Seeker Music": "Anthem of thunder and pain"
+        },
         "fortSave": 1,
         "level": 5,
         "refSave": 1,
@@ -128,6 +147,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "Seeker Music": "Hymn of spelldeath"
+        },
         "fortSave": 2,
         "level": 6,
         "refSave": 2,
@@ -136,6 +158,9 @@
       },
       {
         "bab": 3,
+        "columns": {
+          "Seeker Music": "Ballad of agony reborn"
+        },
         "fortSave": 2,
         "level": 7,
         "refSave": 2,
@@ -146,6 +171,9 @@
       },
       {
         "bab": 4,
+        "columns": {
+          "Seeker Music": "Aria of everywhere"
+        },
         "fortSave": 2,
         "level": 8,
         "refSave": 2,
@@ -154,6 +182,9 @@
       },
       {
         "bab": 4,
+        "columns": {
+          "Seeker Music": "Dirge of songdeath"
+        },
         "fortSave": 3,
         "level": 9,
         "refSave": 3,
@@ -162,6 +193,9 @@
       },
       {
         "bab": 5,
+        "columns": {
+          "Seeker Music": "Hymn of revealing"
+        },
         "fortSave": 3,
         "level": 10,
         "refSave": 3,
