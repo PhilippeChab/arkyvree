@@ -3,9 +3,20 @@ import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import type { InventoryHooks } from "@/server/rulesets/hooks/index.ts";
 import { SIZE_ORDER } from "@/server/rulesets/properties/index.ts";
-import { WEAPON_SIZE } from "@/shared/dnd3.5/properties/index.ts";
+import { WEAPON_ONE_HAND_TRAINING, WEAPON_SIZE } from "@/shared/dnd3.5/properties/index.ts";
 
 export class Dnd35InventoryHooks implements InventoryHooks {
+  /** A weapon whose WEAPON_ONE_HAND_TRAINING is true, its own or its template's: a bastard sword, a dwarven waraxe. */
+  isUnwieldyInOneHand(rulesetData: CachedRulesetData, itemId: string): boolean {
+    const item = rulesetData.itemsById.get(itemId);
+    const ownProps = rulesetData.propertiesByEntity.get(itemId) ?? [];
+    const templateProps = item?.sourceItemId ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []) : [];
+    const training =
+      ownProps.find((p) => p.type === WEAPON_ONE_HAND_TRAINING) ??
+      templateProps.find((p) => p.type === WEAPON_ONE_HAND_TRAINING);
+    return training?.value === "true";
+  }
+
   /**
    * A weapon's WEAPON_SIZE is its effort as the weapon table gives it for a Medium wielder: Tiny and Small are light,
    * Medium one-handed, Large two-handed (a bow too: it needs both hands, whatever its size). Every weapon is sized for

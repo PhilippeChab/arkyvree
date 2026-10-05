@@ -87,6 +87,41 @@ async function validateItemRequirements(
   }
 }
 
+/**
+ * A weapon too large for one hand without training (a bastard sword) held in one: only its proficiency there lets it be
+ * wielded, "as impossible as wielding a greatsword one-handed" without. Its proficiency is read in no hand, so what only
+ * two hands give (a martial weapon's) doesn't count, and a race's familiarity (a dwarf's waraxe) does.
+ */
+async function validateWeaponInOneHand(
+  tx: Db,
+  characterRecord: CharacterRecord,
+  item: { id: string; type: string | null; sourceItemId: string | null },
+  location: ItemLocation,
+  ruleset: Ruleset,
+  rulesetData: CachedRulesetData,
+) {
+  if (item.type !== "Weapon" || !isHandLocation(location) || location === "Two Handed") return;
+  const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+  if (!rulesetModule.hooks.inventory.isUnwieldyInOneHand(rulesetData, item.id)) return;
+
+  // Its proficiency: its template's requirements, or its own when it's a template (`DetailedCharacterDataLoader`)
+  const isTemplate = rulesetData.itemsById.get(item.id)?.isTemplate ?? false;
+  const proficiencyOf = isTemplate ? item.id : item.sourceItemId;
+  const proficiency = proficiencyOf ? (rulesetData.requirementsByEntity.get(proficiencyOf) ?? []) : [];
+  if (proficiency.length === 0) return;
+
+  const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
+  await detailedCharacter.build(tx);
+  if (!detailedCharacter.areRequirementsMet([proficiency], { sourceId: null })) {
+    // An issue, as an unmet requirement is: the form shows it, and can equip it anyway (`force`)
+    const message = "This weapon is too large to use in one hand without its proficiency";
+    const entityName = rulesetData.itemsById.get(item.id)?.name;
+    throw new BadRequestError(message, {
+      issues: [{ category: "requirements", message, entityName, entityType: "items" }],
+    });
+  }
+}
+
 /** An entry's charges: both set or both null, and no more remaining than total. */
 export function validateCharges(totalCharges: number | null, remainingCharges: number | null) {
   if ((totalCharges === null) !== (remainingCharges === null)) {
@@ -115,5 +150,7 @@ export async function validateEquipping(
     throw new BadRequestError("A weapon set is required when equipping to a hand slot");
   }
   await validateEquipmentSlot(tx, characterRecord.id, item, location, weaponSet, ruleset, rulesetData);
-  if (!force) await validateItemRequirements(tx, characterRecord, item, ruleset, rulesetData);
+  if (force) return;
+  await validateItemRequirements(tx, characterRecord, item, ruleset, rulesetData);
+  await validateWeaponInOneHand(tx, characterRecord, item, location, ruleset, rulesetData);
 }

@@ -619,9 +619,10 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   /**
    * Whether the groups are met, each of the item its owner names, or of `context.sourceId` when given: a weapon's
-   * proficiency, its base item's requirements, reads its own hand.
+   * proficiency, its base item's requirements, reads its own hand. A `null` source is no item: a weapon's own paths
+   * (its hand) reach nothing, as for a weapon not yet held.
    */
-  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string }): boolean {
+  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean {
     if (!this.holders) return false;
 
     const tempRequirements = new DetailedCharacterRequirements(this.targetPaths);
@@ -629,7 +630,11 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     if (nonEmpty.length === 0) return true;
 
     const sourceId = context?.sourceId;
-    tempRequirements.evaluateRequirements(this.holders, nonEmpty, sourceId ? () => sourceId : this.itemOf);
+    tempRequirements.evaluateRequirements(
+      this.holders,
+      nonEmpty,
+      sourceId === undefined ? this.itemOf : () => sourceId ?? undefined,
+    );
     const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
     return unmetRequirementGroups.length === 0 && invalidRequirements.length === 0;
   }

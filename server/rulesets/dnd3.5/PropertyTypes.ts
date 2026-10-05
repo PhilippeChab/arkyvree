@@ -49,6 +49,7 @@ import {
   WEAPON_FAMILY,
   WEAPON_FINESSABLE,
   WEAPON_MIGHTY,
+  WEAPON_ONE_HAND_TRAINING,
   WEAPON_ONE_HANDED_PENALTY,
   WEAPON_PROFICIENCY,
   WEAPON_RANGE,
@@ -173,6 +174,8 @@ const ITEM_PROPERTY_TYPES: Record<string, string> = {
   [WEAPON_STRENGTH_DAMAGE]: "Strength to damage: Slot (the hand's share; default), Rating (bows: up to Mighty), None",
   [WEAPON_MIGHTY]:
     "A composite bow's Strength rating: the most Strength bonus it adds to damage; below it, -2 to attack",
+  [WEAPON_ONE_HAND_TRAINING]:
+    "Whether it's too large for one hand without training (a bastard sword): there, only its proficiency lets it be used",
   [WEAPON_ONE_HANDED_PENALTY]:
     "Penalty to attack in one hand, when it takes two to load: a crossbow's (-2 light, -4 heavy; absent = none)",
   [WEAPON_RANGE]: "Range increment in feet: a ranged weapon's, or a thrown melee weapon's (0 or absent = none)",
@@ -304,6 +307,7 @@ const PROPERTY_VALUES: Record<string, string[]> = {
   [WEAPON_RANGED]: ["true", "false"],
   [WEAPON_STRENGTH_DAMAGE]: ["Slot", "Rating", "None"],
   [FEAT_WEAPON_FINESSE]: ["true", "false"],
+  [WEAPON_ONE_HAND_TRAINING]: ["true", "false"],
   [WEAPON_TYPE]: [...WEAPON_TYPE_NAMES],
   [KLASS_CASTER_TYPE]: ["Arcane", "Divine"],
   [FEAT_FAMILY]: [...FEAT_FAMILIES],
