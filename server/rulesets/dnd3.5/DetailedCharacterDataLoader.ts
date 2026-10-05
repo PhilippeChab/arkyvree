@@ -184,8 +184,12 @@ export default class DetailedCharacterDataLoader {
   ) {
     const modifiers: Modifier[] = [...parts.characterSourcedModifiers, ...parts.race.modifiers];
     const requirementGroups: Requirement[][] = [parts.race.requirements];
+    // An equipped item's modifiers once, however many places it's in (a dagger in each hand): one that targets the
+    // weapon holding it reaches each of them already
+    const equippedItemIds = new Set<string>();
     for (const inv of parts.inventory) {
-      if (!inv.equipped) continue;
+      if (!inv.equipped || equippedItemIds.has(inv.item.id)) continue;
+      equippedItemIds.add(inv.item.id);
       modifiers.push(...inv.item.modifiers);
       requirementGroups.push(inv.item.requirements);
     }

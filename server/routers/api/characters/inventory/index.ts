@@ -50,8 +50,8 @@ const inventory = new Hono<SessionContext>()
     },
   )
   .put(
-    "/:characterId/:itemId",
-    zValidator("param", z.object({ characterId: z.string().uuid(), itemId: z.string().uuid() })),
+    "/:characterId/:entryId",
+    zValidator("param", z.object({ characterId: z.string().uuid(), entryId: z.string().uuid() })),
     zValidator(
       "json",
       z.object({
@@ -66,14 +66,14 @@ const inventory = new Hono<SessionContext>()
       }),
     ),
     async (c) => {
-      const { characterId, itemId } = c.req.valid("param");
+      const { characterId, entryId } = c.req.valid("param");
       const { quantity, equipped, location, totalCharges, remainingCharges, weaponSet, force, updatedAt } =
         c.req.valid("json");
       return c.json(
         await CharacterInventoryService.updateItem(
           c.var.requestSession,
           characterId,
-          itemId,
+          entryId,
           quantity,
           equipped,
           location,
@@ -88,11 +88,11 @@ const inventory = new Hono<SessionContext>()
     },
   )
   .delete(
-    "/:characterId/:itemId",
-    zValidator("param", z.object({ characterId: z.string().uuid(), itemId: z.string().uuid() })),
+    "/:characterId/:entryId",
+    zValidator("param", z.object({ characterId: z.string().uuid(), entryId: z.string().uuid() })),
     async (c) => {
-      const { characterId, itemId } = c.req.valid("param");
-      return c.json(await CharacterInventoryService.removeItem(c.var.requestSession, characterId, itemId), 200);
+      const { characterId, entryId } = c.req.valid("param");
+      return c.json(await CharacterInventoryService.removeItem(c.var.requestSession, characterId, entryId), 200);
     },
   );
 

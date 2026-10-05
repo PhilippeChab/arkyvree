@@ -103,7 +103,7 @@ export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
 }
 
 /** An inventory entry as the slot warnings read it. */
-type PlacedEntry = Pick<InventoryEntry, "equipped" | "location" | "weaponSet" | "itemId"> & {
+type PlacedEntry = Pick<InventoryEntry, "id" | "equipped" | "location" | "weaponSet"> & {
   item: Pick<InventoryEntry["item"], "name">;
 };
 
@@ -119,17 +119,20 @@ const SLOT_CONFLICT_WARNINGS: Record<
   sameHand: (location, entry, weaponSet) => `${location} is occupied by ${entry.item.name} (Set ${weaponSet})`,
 };
 
-/** Why the slot is taken (by another item, or a two-handed weapon in the same set), if it is. */
+/**
+ * Why the slot is taken (by another entry, the same item's in another place included, or a two-handed weapon in the
+ * same set), if it is: the entry being edited (`excludeEntryId`) aside.
+ */
 export function getSlotConflictWarning(
   location: ItemLocation | "none",
   /** As the form shows it, from 1. */
   weaponSet: number,
   inventoryItems: PlacedEntry[],
-  excludeItemId?: string,
+  excludeEntryId?: string,
 ): string | null {
   if (!location || location === "none") return null;
 
-  const equipped = inventoryItems.filter((e) => e.equipped && e.location && e.itemId !== excludeItemId);
+  const equipped = inventoryItems.filter((e) => e.equipped && e.location && e.id !== excludeEntryId);
   const conflict = findSlotConflict(location, weaponSet - 1, equipped);
   if (!conflict) return null;
   if (conflict.reason === "fingers") return "Both finger slots are occupied";

@@ -69,7 +69,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({
           </TableHead>
           <TableBody>
             {rows.map((entry) => (
-              <TableRow key={entry.itemId} sx={entry.equipped ? { backgroundColor: "action.hover" } : {}}>
+              <TableRow key={entry.id} sx={entry.equipped ? { backgroundColor: "action.hover" } : {}}>
                 <TableCell>
                   {rulesetId ? (
                     <MuiLink

@@ -78,9 +78,10 @@ class CharacterInventoryRepository extends include(
     });
   }
 
-  async findOne(db: Db, where: { characterId: string; itemId: string }) {
+  /** A character's inventory entry: one of the rows its items take, an item in several places taking several. */
+  async findOne(db: Db, where: { characterId: string; id: string }) {
     return await db.query.inventoryInCharacter.findFirst({
-      where: and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.itemId, where.itemId)),
+      where: and(eq(this.table.characterId, where.characterId), eq(this.table.id, where.id)),
     });
   }
 
@@ -91,7 +92,7 @@ class CharacterInventoryRepository extends include(
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof inventoryInCharacter>>,
-    where: { characterId: string; itemId: string; expectedUpdatedAt?: string },
+    where: { characterId: string; id: string; expectedUpdatedAt?: string },
   ) {
     return await db
       .update(this.table)
@@ -99,7 +100,7 @@ class CharacterInventoryRepository extends include(
       .where(
         this.where([
           eq(this.table.characterId, where.characterId),
-          this.idMatches(this.table.itemId, where.itemId),
+          eq(this.table.id, where.id),
           this.casUpdatedAt(where.expectedUpdatedAt),
         ]),
       )
@@ -107,10 +108,10 @@ class CharacterInventoryRepository extends include(
   }
 
   // Exception to soft-delete: inventory entries are disposable
-  async delete(db: Db, where: { characterId: string; itemId: string }) {
+  async delete(db: Db, where: { characterId: string; id: string }) {
     return await db
       .delete(this.table)
-      .where(and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.itemId, where.itemId)));
+      .where(and(eq(this.table.characterId, where.characterId), eq(this.table.id, where.id)));
   }
 }
 

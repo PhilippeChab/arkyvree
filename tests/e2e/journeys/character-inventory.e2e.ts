@@ -3,17 +3,23 @@ import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@/tests/e2e/fixtures.ts";
 import { apiResponse, createCharacter, selectOption, signIn } from "@/tests/e2e/helpers.ts";
 
-/** Opens the add-item dialog and picks the item `search` finds under `option`, waiting for its details to load. */
-async function pickItem(page: Page, search: string, option: string | RegExp) {
+/**
+ * Opens the add-item dialog and picks the item `search` finds under `option`, waiting for its details to load: their
+ * request, or `ready`, what they show, when the item was picked before and its details are cached.
+ */
+async function pickItem(page: Page, search: string, option: string | RegExp, ready?: (dialog: Locator) => Locator) {
   await page.getByRole("button", { name: "Add Item" }).click();
   const dialog = page.getByRole("dialog", { name: "Add Item to Inventory" });
   const field = dialog.getByRole("combobox", { name: "Search Item" });
   await field.click();
   await field.fill(search);
   // The item's details choose its slot: create only once they're in.
-  const details = page.waitForResponse((r) => /\/api\/rulesets\/[^/]+\/items\/[^/]+$/.test(r.url()) && r.ok());
+  const details = ready
+    ? null
+    : page.waitForResponse((r) => /\/api\/rulesets\/[^/]+\/items\/[^/]+$/.test(r.url()) && r.ok());
   await page.getByRole("option", { name: option }).first().click();
-  await details;
+  if (ready) await expect(ready(dialog)).toBeVisible();
+  else await details;
   return dialog;
 }
 
@@ -78,5 +84,23 @@ test.describe("Character inventory", () => {
     await selectOption(page, "Hand Slot", "Two Handed");
     await save(edit, /^Update$/);
     await expect(row().getByText("Two Handed (Set 1)")).toBeVisible();
+  });
+
+  test("the same weapon goes in each hand, as two entries", async ({ page }) => {
+    // A dagger in the main hand, then a second one in the off hand: the inventory lists both. A weapon's details make
+    // its slot a hand's, cached the second time
+    for (const hand of ["Main Hand", "Off Hand"]) {
+      const dialog = await pickItem(page, "Dagger", /^Dagger\s/, (d) => d.getByRole("combobox", { name: "Hand Slot" }));
+      await selectOption(page, "Hand Slot", hand);
+      const added = apiResponse(page, "POST", /\/api\/characters\/inventory/);
+      await save(dialog, /^Create$/);
+      await added;
+    }
+    const daggers = page
+      .locator("div", { hasText: /^Equipment & Inventory/ })
+      .first()
+      .locator("table tbody tr", { hasText: /^Dagger/ });
+    await expect(daggers.filter({ hasText: "Main Hand (Set 1)" })).toHaveCount(1);
+    await expect(daggers.filter({ hasText: "Off Hand (Set 1)" })).toHaveCount(1);
   });
 });

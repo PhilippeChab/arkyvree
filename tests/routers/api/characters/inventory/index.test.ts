@@ -5,7 +5,7 @@ import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
 import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
 
 const inventory = api.api.characters.inventory[":characterId"];
-const entry = inventory[":itemId"];
+const entry = inventory[":entryId"];
 const unequipped = { quantity: 1, equipped: false, location: null, totalCharges: null, remainingCharges: null };
 
 /** A character in a seeded fork, and an item of that fork it doesn't carry yet. */
@@ -44,18 +44,19 @@ describe("character inventory", () => {
 
     const added = await inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, quantity: 5 } });
     expect(added.status).toBe(201);
-    expect(await expectOk(added)).toMatchObject({ quantity: 5, equipped: false });
+    const { id: entryId, ...addedEntry } = await expectOk(added);
+    expect(addedEntry).toMatchObject({ quantity: 5, equipped: false });
     expect((await expectOk(inventory.$get({ param: { characterId } }))).map((e) => e.itemId)).toContain(itemId);
 
     const updated = await expectOk(
       entry.$put({
-        param: { characterId, itemId },
+        param: { characterId, entryId },
         json: { ...unequipped, quantity: 10, equipped: true, location: "Trinket" },
       }),
     );
     expect(updated).toMatchObject({ quantity: 10, equipped: true, location: "Trinket" });
 
-    expect(await expectOk(entry.$delete({ param: { characterId, itemId } }))).toEqual({ success: true });
+    expect(await expectOk(entry.$delete({ param: { characterId, entryId } }))).toEqual({ success: true });
     expect((await expectOk(inventory.$get({ param: { characterId } }))).map((e) => e.itemId)).not.toContain(itemId);
   });
 
@@ -66,7 +67,7 @@ describe("character inventory", () => {
     );
     expect(equipped).toMatchObject({ equipped: true, location: "Trinket" });
 
-    await expectOk(entry.$delete({ param: { characterId, itemId } }));
+    await expectOk(entry.$delete({ param: { characterId, entryId: equipped.id } }));
     const charged = await expectOk(
       inventory.$post({
         param: { characterId },
@@ -76,16 +77,20 @@ describe("character inventory", () => {
     expect(charged).toMatchObject({ totalCharges: 50, remainingCharges: 50 });
   });
 
-  test("refuses an item the character already carries", async () => {
+  test("adds an item the character already carries as another entry: a second one, placed apart", async () => {
     const { characterId, itemId } = await setup();
-    await expectOk(inventory.$post({ param: { characterId }, json: { ...unequipped, itemId } }));
-    await expectStatus(inventory.$post({ param: { characterId }, json: { ...unequipped, itemId } }), 400);
+    const first = await expectOk(inventory.$post({ param: { characterId }, json: { ...unequipped, itemId } }));
+    const second = await expectOk(inventory.$post({ param: { characterId }, json: { ...unequipped, itemId } }));
+    expect(second.id).not.toBe(first.id);
+    expect((await expectOk(inventory.$get({ param: { characterId } }))).map((e) => e.id)).toEqual(
+      expect.arrayContaining([first.id, second.id]),
+    );
   });
 
-  test("returns 404 for an item the character doesn't carry", async () => {
+  test("returns 404 for an entry the character doesn't have", async () => {
     const { characterId, itemId } = await setup();
-    await expectStatus(entry.$put({ param: { characterId, itemId }, json: unequipped }), 404);
-    await expectStatus(entry.$delete({ param: { characterId, itemId } }), 404);
+    await expectStatus(entry.$put({ param: { characterId, entryId: itemId }, json: unequipped }), 404);
+    await expectStatus(entry.$delete({ param: { characterId, entryId: itemId } }), 404);
   });
 
   test("requires a session", async () => {
@@ -93,7 +98,7 @@ describe("character inventory", () => {
     const guest = guestApi.api.characters.inventory[":characterId"];
     await expectStatus(guest.$get({ param: { characterId } }), 401);
     await expectStatus(guest.$post({ param: { characterId }, json: { ...unequipped, itemId } }), 401);
-    await expectStatus(guest[":itemId"].$put({ param: { characterId, itemId }, json: unequipped }), 401);
-    await expectStatus(guest[":itemId"].$delete({ param: { characterId, itemId } }), 401);
+    await expectStatus(guest[":entryId"].$put({ param: { characterId, entryId: itemId }, json: unequipped }), 401);
+    await expectStatus(guest[":entryId"].$delete({ param: { characterId, entryId: itemId } }), 401);
   });
 });

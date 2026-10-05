@@ -104,13 +104,10 @@ class CharacterInventoryService {
 
         validateCharges(totalCharges, remainingCharges);
 
-        const existing = await CharacterInventory.findOne(tx, { characterId, itemId });
-        if (existing) {
-          throw new BadRequestError("Item already in inventory");
-        }
-
+        // An item already carried takes another entry: a second dagger, held in the other hand
         if (equipped && location) {
-          await validateEquipping(tx, characterRecord, itemRecord, location, weaponSet, force, ruleset, rulesetData);
+          const entry = { id: null, item: itemRecord };
+          await validateEquipping(tx, characterRecord, entry, location, weaponSet, force, ruleset, rulesetData);
         }
 
         const rows = await CharacterInventory.create(tx, {
@@ -135,7 +132,7 @@ class CharacterInventoryService {
   async updateItem(
     session: Session,
     characterId: string,
-    itemId: string,
+    entryId: string,
     quantity: number,
     equipped: boolean,
     location: ItemLocation | null,
@@ -149,7 +146,7 @@ class CharacterInventoryService {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
-        const existing = await CharacterInventory.findOne(tx, { characterId, itemId });
+        const existing = await CharacterInventory.findOne(tx, { characterId, id: entryId });
         if (!existing) {
           throw new NotFoundError("Item not in inventory");
         }
@@ -157,17 +154,18 @@ class CharacterInventoryService {
         validateCharges(totalCharges, remainingCharges);
 
         if (equipped && location) {
-          const itemRecord = rulesetData.itemsById.get(itemId);
+          const itemRecord = rulesetData.itemsById.get(existing.itemId);
           if (!itemRecord) {
             throw new NotFoundError("Item not found");
           }
-          await validateEquipping(tx, characterRecord, itemRecord, location, weaponSet, force, ruleset, rulesetData);
+          const entry = { id: entryId, item: itemRecord };
+          await validateEquipping(tx, characterRecord, entry, location, weaponSet, force, ruleset, rulesetData);
         }
 
         const rows = await CharacterInventory.update(
           tx,
           { quantity, ...this.entryFields(equipped, location, weaponSet, totalCharges, remainingCharges) },
-          { characterId, itemId, expectedUpdatedAt },
+          { characterId, id: entryId, expectedUpdatedAt },
         );
         if (expectedUpdatedAt && rows.length === 0) {
           throw new ConflictError(STALE_ENTITY_MESSAGE);
@@ -185,17 +183,17 @@ class CharacterInventoryService {
     });
   }
 
-  async removeItem(session: Session, characterId: string, itemId: string) {
+  async removeItem(session: Session, characterId: string, entryId: string) {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async () => {
-        const existing = await CharacterInventory.findOne(tx, { characterId, itemId });
+        const existing = await CharacterInventory.findOne(tx, { characterId, id: entryId });
         if (!existing) {
           throw new NotFoundError("Item not in inventory");
         }
 
-        await CharacterInventory.delete(tx, { characterId, itemId });
+        await CharacterInventory.delete(tx, { characterId, id: entryId });
 
         await Activities.create(tx, {
           userId: session.userId,
