@@ -209,7 +209,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
   /**
    * The sources a modifier applies from: its own, or, for an item's modifier on the item itself (a weapon's own paths)
-   * behind gates, each entry holding the item whose gates are met there. An item held in two places is a weapon in
+   * behind gates, each equipped entry of the item whose gates are met there. An item held in two places is a weapon in
    * each: a bonus gated on the main hand reaches the main-hand dagger, not the off-hand one.
    */
   protected readonly sourcesOf = (modifier: Modifier): string[] => {
@@ -219,7 +219,12 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     );
     if (gates.length === 0) return [modifier.sourceId];
     return this.inventory
-      .filter((entry) => entry.item.id === modifier.sourceId && this.areRequirementsMet(gates, { sourceId: entry.id }))
+      .filter(
+        (entry) =>
+          entry.equipped &&
+          entry.item.id === modifier.sourceId &&
+          this.areRequirementsMet(gates, { sourceId: entry.id }),
+      )
       .map((entry) => entry.id);
   };
 
