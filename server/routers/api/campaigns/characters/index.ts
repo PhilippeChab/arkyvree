@@ -78,6 +78,7 @@ export default new Hono<SessionContext>()
             virtualPowers: [],
             aptitudes: {},
             spellTags: {},
+            spellTagLists: {},
             requirements: {},
             modifiers: {},
             validation: { valid: true, issues: [] },

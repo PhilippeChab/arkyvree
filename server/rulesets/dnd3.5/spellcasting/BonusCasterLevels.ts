@@ -2,6 +2,7 @@ import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type { FeatWithPMR, KlassLevelWithPMR } from "@/server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
+import { SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { Holders } from "@/server/rulesets/types.ts";
 import {
   ALLOWED_ALL,
@@ -14,7 +15,7 @@ import { stripSeparators } from "@/shared/text.ts";
 /** A character level's key in the index of the class levels the character took. */
 const levelKey = (characterLevelId: string, klassLevelId: string) => `${characterLevelId}:${klassLevelId}`;
 
-/** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain spells they bring. */
+/** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain slots they bring. */
 export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithBonusCasterLevels extends Base {
     /** Attributes each bonus klass level to the class level that granted it ("Mystic Theurge Level 3"). */
@@ -98,53 +99,48 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     }
 
     /**
-     * Sync domain spell aptitude levels to match the parent class's accessible spell levels.
+     * Keeps the slots a feat gives in a list joining its class's list (a cleric's domain) at the spell levels that class
+     * knows its list at: the levels bonus caster levels open get the list's slot, and those the class doesn't cast yet
+     * have none. A list stays with the first class one of the character's feats gives it slots for.
      */
-    protected syncDomainSpellAptitudes(feats: FeatWithPMR[]) {
+    protected syncJoinedListSlots(feats: FeatWithPMR[]) {
       const aptitudes = this.aptitudes.getAptitudes();
-      const classes = this.classes.getCharacterClasses();
+      const classNameByKlassLevelId = this.classNameByKlassLevelId();
+      const joining = this.joiningClassNames();
 
-      // klassLevelId → className index so feat → class attribution is O(1)
-      // instead of O(classes × levels) per feat modifier.
-      const classNameByKlassLevelId = new Map<string, string>();
-      for (const [className, klassData] of Object.entries(classes)) {
-        for (const l of klassData.levels) {
-          classNameByKlassLevelId.set(l.klassLevel.id, className);
-        }
-      }
-
-      // Build domain aptitude key → owning class name by tracing feat → klassLevelId → class
-      const domainAptKeys = new Map<string, string>();
+      const classNameByList = new Map<string, string>();
       for (const feat of feats) {
-        for (const mod of feat.modifiers) {
-          if (!mod.target.includes("domainspells")) continue;
-          const parts = mod.target.split(".");
-          if (parts.length < 4 || parts[0] !== "aptitudes") continue;
-          const aptKey = parts[1];
-          if (domainAptKeys.has(aptKey)) continue;
-
-          const className = classNameByKlassLevelId.get(feat.klassLevelId);
-          if (className) domainAptKeys.set(aptKey, className);
+        const className = classNameByKlassLevelId.get(feat.klassLevelId);
+        if (!className) continue;
+        for (const modifier of feat.modifiers) {
+          const list = SLOT_TARGET.exec(modifier.target)?.[1];
+          if (list === undefined || classNameByList.has(list) || !joining.get(list)?.has(className)) continue;
+          classNameByList.set(list, className);
         }
       }
 
-      // For each domain spell aptitude, sync levels with the parent class spell aptitude
-      for (const [domainAptKey, className] of domainAptKeys) {
-        const domainApt = aptitudes[domainAptKey] as Record<string, unknown> | undefined;
-        const classSpellApt = aptitudes[stripSeparators(className + "spells")] as Record<string, unknown> | undefined;
-        if (!domainApt || !classSpellApt) continue;
+      for (const [list, className] of classNameByList) {
+        const listLevels = aptitudes[list] as Record<string, unknown> | undefined;
+        const classLists = this.spellListsOf(className).flatMap((key) => {
+          const classList = aptitudes[key] as Record<string, unknown> | undefined;
+          return classList ? [classList] : [];
+        });
+        if (!listLevels || classLists.length === 0) continue;
 
         for (let level = 1; level <= 9; level++) {
-          const classLevel = classSpellApt[String(level)] as AptitudeLevelData | undefined;
-          const domainLevel = domainApt[String(level)] as AptitudeLevelData | undefined;
-          if (!classLevel || !domainLevel) continue;
+          const listLevel = listLevels[String(level)] as AptitudeLevelData | undefined;
+          const known = classLists.flatMap((classList) => {
+            const classLevel = classList[String(level)] as AptitudeLevelData | undefined;
+            return classLevel ? [classLevel.allowed] : [];
+          });
+          if (!listLevel || known.length < classLists.length) continue;
 
-          if (classLevel.allowed === ALLOWED_ALL && domainLevel.allowed === 0) {
-            domainLevel.allowed = ALLOWED_ALL;
-            domainLevel.uses = 1;
-          } else if (classLevel.allowed === 0 && domainLevel.allowed === ALLOWED_ALL) {
-            clearAllKnown(domainLevel);
-            domainLevel.uses = 0;
+          if (known.includes(ALLOWED_ALL) && listLevel.allowed === 0) {
+            listLevel.allowed = ALLOWED_ALL;
+            listLevel.uses = 1;
+          } else if (known.every((allowed) => allowed === 0) && listLevel.allowed === ALLOWED_ALL) {
+            clearAllKnown(listLevel);
+            listLevel.uses = 0;
           }
         }
       }
@@ -163,7 +159,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         this.characterModifiers.evaluateModifier(modifier, holders);
       }
 
-      this.syncDomainSpellAptitudes(feats);
+      this.syncJoinedListSlots(feats);
     }
 
     getBonusKlassLevelAttribution() {

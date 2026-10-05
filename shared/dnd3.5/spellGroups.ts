@@ -9,6 +9,22 @@ import { stripSeparators } from "@/shared/text.ts";
 
 /** The property a spell's school is in, which the sheets show as its own column. */
 
+/**
+ * Where a feat's tag on the spells of a list it gives slots in or joins to its class's list shows (a cleric's domain,
+ * "Fire Domain"; a specialist wizard's school, "Evocation Specialist"): on that list and on the lists of the class whose
+ * level gave the feat. `joinsClassList`: whether the list's spells join that class's list, as a domain's do.
+ */
+export interface SpellTagLists {
+  aptitudeIds: string[];
+  joinsClassList: boolean;
+}
+
+/** A tag a spell row shows. */
+export interface SpellRowTag {
+  name: string;
+  joinsClassList: boolean;
+}
+
 export interface SpellRow {
   id: string;
   name: string;
@@ -17,7 +33,7 @@ export interface SpellRow {
   dc: number | null;
   description: string;
   properties: Record<string, string>;
-  tags?: string[];
+  tags?: SpellRowTag[];
 }
 
 export interface SpellGroup {
@@ -71,17 +87,17 @@ export interface SpellSheet {
   virtualPowers?: GivenSpell[];
   aptitudes?: Record<string, { id: string; name: string }>;
   spellTags?: Record<string, string[]>;
+  spellTagLists?: Record<string, SpellTagLists>;
 }
 
 const saveOf = (saveName: string | null | undefined, saveEffect: string | null | undefined) =>
   saveName && saveEffect ? `${saveName} ${saveEffect}` : saveEffect || "None";
 
-/** A spell's tags that belong on this list: a domain's on a cleric's or a domain's, a school's on a wizard's. */
-function tagsFor(tags: string[] | undefined, aptitudeName: string) {
-  const kept = tags?.filter((tag) => {
-    if (tag.includes("Domain")) return aptitudeName.includes("Cleric") || aptitudeName.includes("Domain");
-    if (tag.includes("Specialist")) return aptitudeName.includes("Wizard") || aptitudeName.includes("Specialist");
-    return true;
+/** A spell's tags that show on this list: a domain's on the cleric's, a school's on the wizard's. */
+function tagsFor(sheet: SpellSheet, powerId: string | undefined, aptitudeId: string): SpellRowTag[] | undefined {
+  const kept = (powerId ? sheet.spellTags?.[powerId] : undefined)?.flatMap((name) => {
+    const lists = sheet.spellTagLists?.[name];
+    return lists?.aptitudeIds.includes(aptitudeId) ? [{ name, joinsClassList: lists.joinsClassList }] : [];
   });
   return kept?.length ? kept : undefined;
 }
@@ -114,10 +130,11 @@ function groupSpells(sheet: SpellSheet, aptitudeNameById: Map<string, string>) {
         const group = groupOf(power.aptitudeId, power.powerLevel ?? level.klassLevel?.level ?? 0);
         const powerData = sheet.powers?.[stripSeparators(power.name)];
         const properties = powerData?.properties ?? {};
-        const tags = tagsFor(power.id ? sheet.spellTags?.[power.id] : undefined, group.aptitudeName);
+        const tags = tagsFor(sheet, power.id, power.aptitudeId);
         const existing = group.spells.find((row) => row.name === power.name);
         if (existing) {
-          if (tags) existing.tags = [...new Set([...(existing.tags || []), ...tags])];
+          const added = tags?.filter((tag) => !existing.tags?.some((had) => had.name === tag.name)) ?? [];
+          if (added.length > 0) existing.tags = [...(existing.tags || []), ...added];
           continue;
         }
         group.spells.push({

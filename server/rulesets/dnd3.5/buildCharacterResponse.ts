@@ -126,6 +126,7 @@ export function buildFullCharacterResponse(
     ...buildVirtualEntities(dc),
     aptitudes: detailedCharacter.getDetailedCharacterAptitudes().getAptitudes(),
     spellTags: dc.getSpellTags(),
+    spellTagLists: dc.getSpellTagLists(),
     requirements,
     modifiers,
     validation,

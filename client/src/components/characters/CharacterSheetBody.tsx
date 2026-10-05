@@ -129,6 +129,7 @@ export function CharacterSheetBody({
               virtualPowers={character.virtualPowers}
               aptitudes={character.aptitudes}
               spellTags={character.spellTags}
+              spellTagLists={character.spellTagLists}
               rulesetId={rulesetId}
             />
           )}

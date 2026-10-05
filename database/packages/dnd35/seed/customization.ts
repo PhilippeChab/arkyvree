@@ -81,6 +81,16 @@ export const spellListSlots = (sourceId: string, sourceType: string, list: strin
     },
   ]).flat();
 
+/** A spell list's spells joining the list of the class whose level gave the source: a cleric's domain, the cleric's. */
+export const joinsClassList = (sourceId: string, sourceType: string, list: string): ModifierRow => ({
+  sourceId,
+  sourceType,
+  target: `aptitudes.${list}.joinsclasslist`,
+  value: "true",
+  valueType: "boolean",
+  operator: "set",
+});
+
 /** Inserts the rows, if there are any. */
 export async function insertAll<T extends PgTable>(db: Db, table: T, rows: T["$inferInsert"][]) {
   if (rows.length > 0) await db.insert(table).values(rows);

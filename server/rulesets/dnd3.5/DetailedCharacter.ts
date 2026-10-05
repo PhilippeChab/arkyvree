@@ -335,7 +335,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterCombat.initialize(this.race, this.klassLevelProperties);
     this.detailedCharacterInventory.initialize(this.inventory);
     this.detailedCharacterEncumbrance.initialize(this.inventory, this.race);
-    this.detailedCharacterPowers.initialize(this.powers, this.rulesetPowers, this.rulesetAptitudes);
+    this.detailedCharacterPowers.initialize(this.powers, this.rulesetPowers, this.rulesetAptitudes, this.featListIds);
 
     // Seed empty buckets for every school/descriptor in the ruleset so a
     // Spell Focus targeting a school the character has no spells in resolves
@@ -400,7 +400,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.rulesetAptitudes,
       this.klassBonusSpellAbilityMap,
     );
-    this.detailedCharacterSpellcasting.buildSpellTags(this.feats, this.rulesetAptitudes);
+    this.detailedCharacterSpellcasting.buildSpellTags(this.feats);
   }
 
   protected postRequirementProcessing(): void {
@@ -463,6 +463,10 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   getDetailedCharacterWeapons() {
     return this.detailedCharacterWeapons;
+  }
+
+  getSpellTagLists() {
+    return this.detailedCharacterSpellcasting.getSpellTagLists();
   }
 
   getSpellTags() {

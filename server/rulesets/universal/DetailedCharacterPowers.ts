@@ -36,6 +36,7 @@ export default class DetailedCharacterPowers {
   static generateTargetPaths(
     powers: (PowerWithAptitudes & { properties: Property[] })[],
     aptitudes: Aptitude[],
+    featListIds: Set<string>,
     kind: "modifier" | "requirement",
   ): TargetPath[] {
     const paths: TargetPath[] = [];
@@ -56,10 +57,10 @@ export default class DetailedCharacterPowers {
       }
     }
 
-    // Spell known paths (exclude domain/specialist aptitudes — those are auto-granted)
+    // Spell known paths, but on the lists a feat brings (a domain's, a specialist's school): their spells come with it
     const aptitudeIdToSlug = new Map<string, string>();
     for (const apt of aptitudes) {
-      if (apt.name.includes("Domain") || apt.name.includes("Specialist")) continue;
+      if (featListIds.has(apt.id)) continue;
       aptitudeIdToSlug.set(apt.id, toSpellPossessionSlug(apt.name));
     }
 
@@ -90,18 +91,19 @@ export default class DetailedCharacterPowers {
 
   private readonly detailedCharacterPowers: DetailedCharacterComprehensivePowers = {};
 
+  /** `featListIds`: the lists a feat brings (a domain's, a specialist's school), whose spells it gives, never known. */
   initialize(
     powers: (Power & { properties: Property[]; aptitudeId: string; powerLevel: number | null })[],
     rulesetPowers: PowerWithAptitudes[],
     rulesetAptitudes: Aptitude[],
+    featListIds: Set<string>,
   ) {
     this.addPowerEntries(powers);
 
-    // Build spell known data nested under each spell entry: spell → aptitude → { known }
-    // Exclude domain/specialist aptitudes — those are auto-granted, not "known"
+    // Build spell known data nested under each spell entry: spell → aptitude → { known }, but on the lists a feat brings
     const aptitudeIdToSlug = new Map<string, string>();
     for (const apt of rulesetAptitudes) {
-      if (apt.name.includes("Domain") || apt.name.includes("Specialist")) continue;
+      if (featListIds.has(apt.id)) continue;
       aptitudeIdToSlug.set(apt.id, toSpellPossessionSlug(apt.name));
     }
 

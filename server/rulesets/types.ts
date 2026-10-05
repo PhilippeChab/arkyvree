@@ -127,6 +127,8 @@ export interface LoadedCharacterData {
   rulesetAptitudes: Aptitude[];
   rulesetKlasses: Klass[];
   leveledAptitudeIds: Set<string>;
+  /** The spell lists a feat brings (a domain's, a specialist's school): their spells come with it, never learned. */
+  featListIds: Set<string>;
   characterAbilityScores: { abilityId: string; name: string; score: number }[];
   race: RaceWithPMR;
   languages: Language[];

@@ -1,10 +1,14 @@
+import { JOIN_TARGET, SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
+import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import type DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
 import type DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
 import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
+import type { SpellTagLists } from "@/shared/dnd3.5/spellGroups.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 /** What a character's spellcasting holds: its bonus caster levels, its aptitudes' powers, its spell tags. */
 export default abstract class SpellcastingState {
@@ -39,4 +43,72 @@ export default abstract class SpellcastingState {
   protected powerAptitudeLinks: { powerId: string; aptitudeId: string }[] = [];
 
   protected spellTags: Record<string, string[]> = {};
+
+  /** Where each spell tag shows, by its name. */
+  protected spellTagLists: Record<string, SpellTagLists> = {};
+
+  /**
+   * A class's list that knows every spell of a spell level (`allowed` all known), if one does: where the spells of a
+   * list joining it go.
+   */
+  protected classListKnowing(className: string, spellLevel: number | null) {
+    if (spellLevel === null) return undefined;
+    const aptitudes = this.aptitudes.getAptitudes();
+    return this.spellListsOf(className).find((key) => {
+      const level = (aptitudes[key] as Record<string, unknown> | undefined)?.[String(spellLevel)];
+      return (level as AptitudeLevelData | undefined)?.allowed === ALLOWED_ALL;
+    });
+  }
+
+  /** The class of each of the character's class levels. */
+  protected classNameByKlassLevelId() {
+    const classNames = new Map<string, string>();
+    for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
+      for (const level of klassData.levels) classNames.set(level.klassLevel.id, className);
+    }
+    return classNames;
+  }
+
+  /**
+   * The classes each spell list joins (`aptitudes.<list>.joinsclasslist`), by list: the class whose level gave the feat
+   * that joins it, or the class level's own class. A cleric's domain joins the cleric's list.
+   */
+  protected joiningClassNames() {
+    const aptitudes = this.aptitudes.getAptitudes() as Record<string, { joinsclasslist?: boolean }>;
+    const classes = Object.entries(this.classes.getClasses());
+    const classNameByKlassLevelId = this.classNameByKlassLevelId();
+    const classOf = (modifier: Modifier) => {
+      if (modifier.sourceType === "klass_levels") {
+        return classNameByKlassLevelId.get(modifier.sourceId) ?? this.bonusKlassLevelClassMap.get(modifier.sourceId);
+      }
+      if (modifier.sourceType !== "feats") return undefined;
+      return classes.find(([, klassData]) =>
+        klassData.levels.some((level) => level.feats.some((feat) => feat.id === modifier.sourceId)),
+      )?.[0];
+    };
+
+    const joining = new Map<string, Set<string>>();
+    for (const modifier of this.characterModifiers.getModifiers().appliedModifiers) {
+      const list = JOIN_TARGET.exec(modifier.target)?.[1];
+      if (list === undefined || aptitudes[list]?.joinsclasslist !== true || modifier.value === "false") continue;
+      const className = classOf(modifier);
+      if (!className) continue;
+      const classNames = joining.get(list) ?? new Set<string>();
+      classNames.add(className);
+      joining.set(list, classNames);
+    }
+    return joining;
+  }
+
+  /**
+   * A class's spell lists: those its levels give slots in, a pious templar's paladin and blackguard lists (the slots of
+   * the one she didn't pick gated out), else "<Class> Spells".
+   */
+  protected spellListsOf(className: string): string[] {
+    const { levels } = this.classes.getCharacterClasses()[className];
+    const lists = new Set(
+      levels.flatMap(({ klassLevel }) => klassLevel.modifiers.flatMap((m) => SLOT_TARGET.exec(m.target)?.[1] ?? [])),
+    );
+    return lists.size > 0 ? [...lists] : [stripSeparators(className + " Spells")];
+  }
 }

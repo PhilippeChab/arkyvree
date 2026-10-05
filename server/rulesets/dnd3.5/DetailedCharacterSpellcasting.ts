@@ -2,28 +2,12 @@ import { include } from "@/server/mixins.ts";
 import type { Holders } from "@/server/rulesets/types.ts";
 import { type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
 
 import { BonusCasterLevels } from "./spellcasting/BonusCasterLevels.ts";
 import { KnownPowers } from "./spellcasting/KnownPowers.ts";
 import SpellcastingState from "./spellcasting/SpellcastingState.ts";
 
-/** A spell list's slot: `aptitudes.<list>.<spell level>.uses` or `.allowed`. */
-const SLOT_TARGET = /^aptitudes\.([^.]+)\.\d+\.(?:uses|allowed)$/;
-
 class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCasterLevels, KnownPowers) {
-  /**
-   * A class's spell lists: those its levels give slots in, a pious templar's paladin and blackguard lists (the slots of
-   * the one she didn't pick gated out), else "<Class> Spells".
-   */
-  private spellListsOf(className: string): string[] {
-    const { levels } = this.classes.getCharacterClasses()[className];
-    const lists = new Set(
-      levels.flatMap(({ klassLevel }) => klassLevel.modifiers.flatMap((m) => SLOT_TARGET.exec(m.target)?.[1] ?? [])),
-    );
-    return lists.size > 0 ? [...lists] : [stripSeparators(className + " Spells")];
-  }
-
   /** Lightweight init: sets spellcasting.arcane/divine based on caster type presence.
    *  Called before modifiers so requirements like Scribe Scroll can check spellcasting.arcane >= 1. */
   initSpellcastingHolder(

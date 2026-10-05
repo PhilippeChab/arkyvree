@@ -56,11 +56,11 @@ function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: strin
             )}
             {spell.tags?.map((tag) => (
               <Chip
-                key={tag}
-                label={tag}
+                key={tag.name}
+                label={tag.name}
                 size="small"
                 variant="outlined"
-                color={tag.includes("Domain") ? "secondary" : "primary"}
+                color={tag.joinsClassList ? "secondary" : "primary"}
                 sx={{ ml: 0.5, height: 20, fontSize: "0.7rem" }}
               />
             ))}
@@ -190,11 +190,12 @@ export function SpellsSection({
   virtualPowers,
   aptitudes,
   spellTags,
+  spellTagLists,
   rulesetId,
 }: Dnd35PowersSectionProps) {
   const groups = useMemo(
-    () => buildSpellGroups({ classes, powers, virtualPowers, aptitudes, spellTags }),
-    [classes, powers, virtualPowers, aptitudes, spellTags],
+    () => buildSpellGroups({ classes, powers, virtualPowers, aptitudes, spellTags, spellTagLists }),
+    [classes, powers, virtualPowers, aptitudes, spellTags, spellTagLists],
   );
 
   if (groups.length === 0) return null;

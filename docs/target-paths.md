@@ -198,7 +198,7 @@ Weapon items, armor items, and shield items auto-generate proficiency requiremen
 | `powers.<name>.properties.<type>` | string | Power property value |
 | `powers.<spell>.<aptitude>.known` | boolean | Whether spell is known via this aptitude |
 
-Domain and specialist aptitudes are excluded from known paths (those spells are auto-granted).
+A list a feat gives slots in or joins to its class's list (a cleric's domain, a specialist wizard's school) has no known paths: its spells come with the feat.
 
 ### powers (DC groupings)
 
@@ -259,5 +259,8 @@ Note: D&D 3.5 skill budget data (total, available, spent, perlevel) lives on `sk
 | `aptitudes.<name>.allowed` | number | Slots for known spells or feats |
 | `aptitudes.<name>.<level>.uses` | number | Uses per day at spell level (leveled aptitudes only) |
 | `aptitudes.<name>.<level>.allowed` | number | Slots at spell level (leveled aptitudes only) |
+| `aptitudes.<name>.joinsclasslist` | boolean | Whether the list's spells join the list of the class whose level gave it (leveled aptitudes only) |
 
 A modifier on a pool's slots grants more, with a number: `add` on `aptitudes.<name>.allowed` (a feat pool) and on a spell level's `uses` and `allowed`, or `set` -1 on a spell level's `allowed`, all of that level known. The level-up wizard and the class tables count these without a character, the sheet's way; another operator or a template would count differently there, so the editor doesn't offer them and the API refuses them (`TargetPath.setValues`, `literalOnly`). A pool's own `uses` (Turn Undead's) counts on the sheet alone and takes any modifier.
+
+A feat or a class level sets `joinsclasslist` (`set` true): a cleric's domain feat sets its domain list's. The list's spells are then known on the list of the class whose level gave the feat (or the class level's own class), at the spell levels that class knows its whole list at, and the slots the feat gives in the list follow that class's spell levels: bonus caster levels open them. A list a feat gives slots in without joining, a specialist wizard's school, keeps its slots alone.

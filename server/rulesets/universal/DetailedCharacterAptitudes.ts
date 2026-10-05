@@ -24,6 +24,18 @@ const NAVIGATABLE_PATHS = [
 ];
 
 /**
+ * A spell list's spells joining the list of the class that gives it (`aptitudes.<list>.joinsclasslist`): a cleric's
+ * domain joins the cleric's list. A feat or a class level sets it, and the class is its own, or the one whose level gave
+ * the feat.
+ */
+const JOINS_CLASS_LIST = {
+  path: "joinsclasslist",
+  label: "Joins Class List",
+  description: "Whether its spells join the list of the class whose level gave it",
+  allowedEntityTypes: ["feats", "klass_levels"],
+};
+
+/**
  * What a modifier on a pool's slots may do: grant more (`add` 0 or more: -1 is all known), or make a spell level's all
  * known (`set` -1). The level-up wizard and the class tables count these without a character, the sheet's way: other
  * operators, and templates, would count differently there than on the sheet. A pool's own uses per day count on the
@@ -95,6 +107,8 @@ type DetailedCharacterComprehensiveAptitudes = {
     allowed: number;
     spent: number;
     available: number;
+    /** A spell list's: whether its spells join the list of the class whose level gave it. */
+    joinsclasslist?: boolean;
   };
 };
 
@@ -112,7 +126,7 @@ export default class DetailedCharacterAptitudes {
   ) {}
 
   static getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(NAVIGATABLE_PATHS);
+    return deriveSegmentLabels(NAVIGATABLE_PATHS, { [JOINS_CLASS_LIST.path]: JOINS_CLASS_LIST.label });
   }
 
   static generateTargetPaths(
@@ -142,6 +156,14 @@ export default class DetailedCharacterAptitudes {
             });
           }
         }
+        paths.push({
+          path: `aptitudes.${normalizedAptitudeName}.${JOINS_CLASS_LIST.path}`,
+          category: "aptitudes",
+          description: JOINS_CLASS_LIST.description,
+          valueType: "boolean",
+          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
+          allowedEntityTypes: JOINS_CLASS_LIST.allowedEntityTypes,
+        });
       } else {
         // Generate flat paths for non-leveled aptitudes
         for (const subPath of NAVIGATABLE_PATHS) {
@@ -186,6 +208,7 @@ export default class DetailedCharacterAptitudes {
         for (let level = 0; level <= this.maxSpellLevel; level++) {
           aptitudeObj[String(level)] = newSpellLevel();
         }
+        aptitudeObj[JOINS_CLASS_LIST.path] = false;
       }
     }
   }

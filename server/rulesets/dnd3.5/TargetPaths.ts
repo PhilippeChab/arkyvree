@@ -41,6 +41,7 @@ import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { Dnd35LevelsHooks } from "./hooks/index.ts";
+import { collectFeatListIds } from "./spellcasting/spellLists.ts";
 
 // D&D 3.5 specific constants
 const DND35_CATEGORIES = [
@@ -250,7 +251,12 @@ function generatePaths(rulesetData: CachedRulesetData, kind: "modifier" | "requi
     ...DetailedCharacterWeapons.generateTargetPaths(groupings.weaponGroupings, kind),
     ...DetailedCharacterArmors.generateTargetPaths(groupings.armorGroupings, kind),
     ...DetailedCharacterShields.generateTargetPaths(groupings.shieldGroupings, kind),
-    ...DetailedCharacterPowers.generateTargetPaths(groupings.powersWithProperties, aptitudes, kind),
+    ...DetailedCharacterPowers.generateTargetPaths(
+      groupings.powersWithProperties,
+      aptitudes,
+      collectFeatListIds(rulesetData),
+      kind,
+    ),
     ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.schoolGroupings, kind, true, "school"),
     ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.descriptorGroupings, kind, true, "descriptor"),
     ...DetailedCharacterPowerGroupings.generateTargetPaths(groupings.individualPowerDcNames, kind, false),

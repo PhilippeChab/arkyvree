@@ -18,7 +18,17 @@ import {
   createCharacter,
   SEED_USER_ID,
 } from "@/database/seeds/helpers.ts";
-import { characterAbilitiesInCharacter, charactersInCharacter, inventoryInCharacter } from "@/drizzle/schema.ts";
+import {
+  aptitudesInRules,
+  characterAbilitiesInCharacter,
+  charactersInCharacter,
+  featsAptitudesInRules,
+  featsInRules,
+  inventoryInCharacter,
+  modifiersInCustomization,
+  powersAptitudesInRules,
+  powersInRules,
+} from "@/drizzle/schema.ts";
 import { invalidateRuleset } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -76,6 +86,7 @@ import {
   findKlassLevel,
   findSeededCharacter,
   getSeedCtx,
+  insertRows,
   invalidateSeededRuleset,
   makeSession,
   NIL_UUID,
@@ -2262,6 +2273,95 @@ describe("DetailedCharacter", () => {
           .filter((p) => tags[p.id]?.includes("Storm Domain"))
           .map((p) => p.name);
         expect(storm).toEqual(expect.arrayContaining(["Ice Storm", "Call Lightning Storm"]));
+      });
+
+      test("join the cleric's list by their feat's flag, whatever their lists are named", async () => {
+        // A homebrew domain whose list isn't named "… Domain Spells" and joins the cleric's, and one named so that doesn't
+        const ctx = await getSeedCtx();
+        const fork = await forkWith();
+        const [prayers, moon] = await insertRows(aptitudesInRules, [
+          { name: "Sun Prayers", rulesetId: fork.id },
+          { name: "Moon Domain Spells", rulesetId: fork.id },
+        ]);
+        const [dawn, dusk] = await insertRows(powersInRules, [
+          { name: "Dawn Hymn", rulesetId: fork.id },
+          { name: "Dusk Hymn", rulesetId: fork.id },
+        ]);
+        await insertRows(powersAptitudesInRules, [
+          { powerId: dawn.id, aptitudeId: prayers.id, level: 1 },
+          { powerId: dusk.id, aptitudeId: moon.id, level: 1 },
+        ]);
+        const [sun, moonDomain] = await insertRows(featsInRules, [
+          { name: "Prayers of the Sun", rulesetId: fork.id },
+          { name: "Moon Domain", rulesetId: fork.id },
+        ]);
+        const clericDomain = ctx.aptMap["Cleric Domain"];
+        await insertRows(featsAptitudesInRules, [
+          { featId: sun.id, aptitudeId: clericDomain },
+          { featId: moonDomain.id, aptitudeId: clericDomain },
+        ]);
+        const slot = (sourceId: string, list: string) => [
+          {
+            sourceId,
+            sourceType: "feats",
+            target: `aptitudes.${list}.1.uses`,
+            value: "1",
+            valueType: "number",
+            operator: "add",
+          },
+          {
+            sourceId,
+            sourceType: "feats",
+            target: `aptitudes.${list}.1.allowed`,
+            value: "-1",
+            valueType: "number",
+            operator: "set",
+          },
+        ];
+        await insertRows(modifiersInCustomization, [
+          ...slot(sun.id, "sunprayers"),
+          {
+            sourceId: sun.id,
+            sourceType: "feats",
+            target: "aptitudes.sunprayers.joinsclasslist",
+            value: "true",
+            valueType: "boolean",
+            operator: "set",
+          },
+          ...slot(moonDomain.id, "moondomainspells"),
+        ]);
+        invalidateRuleset(fork.id);
+
+        const characterId = await createSeedCharacter("Sun Cleric", WIZARD_SCORES, { rulesetId: fork.id });
+        const clericClass = (await Klasses.findOne(db, { name: "Cleric", rulesetId: ctx.rulesetId }))!;
+        const cleric = (await findKlassLevel(clericClass.id, 1))!;
+        await addCharacterLevel(characterId, cleric.id, {
+          feats: [
+            { featId: sun.id, aptitudeId: clericDomain },
+            { featId: moonDomain.id, aptitudeId: clericDomain },
+          ],
+        });
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        const clericSpells = detailed.getDetailedCharacterAptitudes().getAptitudes()["clericspells"].id;
+        const onClericList = allPowers(detailed)
+          .filter((power) => power.aptitudeId === clericSpells)
+          .map((power) => power.name);
+        expect(onClericList).toContain("Dawn Hymn");
+        expect(onClericList).not.toContain("Dusk Hymn");
+
+        // Each feat's list tags its spells, shown on that list and the cleric's, and comes with the feat: nothing to know
+        expect(detailed.getSpellTags()).toMatchObject({
+          [dawn.id]: ["Prayers of the Sun"],
+          [dusk.id]: ["Moon Domain"],
+        });
+        expect(detailed.getSpellTagLists()).toEqual({
+          "Prayers of the Sun": { aptitudeIds: [prayers.id, clericSpells], joinsClassList: true },
+          "Moon Domain": { aptitudeIds: [moon.id, clericSpells], joinsClassList: false },
+        });
+        const powers = detailed.getDetailedCharacterPowers();
+        expect(powers.getSpellEntry("dawnhymn", "sunprayers")).toBeUndefined();
+        expect(powers.getSpellEntry("duskhymn", "moondomain")).toBeUndefined();
+        expect(powers.getSpellEntry("bless", "cleric")).toBeDefined();
       });
     });
 
