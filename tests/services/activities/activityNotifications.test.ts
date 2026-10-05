@@ -178,7 +178,7 @@ describe("activity notifications", () => {
   });
 });
 
-// Who the server pushes a new notification to once a request is answered (server/ws.ts)
+// Who the server pushes a new notification to once a request is answered (server/websockets/notifiedUsers.ts)
 describe("the users a request notified", () => {
   /** A Game Master's campaign with an empty slot, and someone to invite into it. */
   async function setup() {
