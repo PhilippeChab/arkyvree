@@ -1,6 +1,7 @@
 import { eq, type InferInsertModel, isNull } from "drizzle-orm";
 
 import type {
+  abilitiesInRules,
   aptitudesInRules,
   featsInRules,
   itemsInRules,
@@ -22,6 +23,7 @@ import { ScopesToRuleset } from "@/server/repositories/concerns/ScopesToRuleset.
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
 type RulesetEntityTable =
+  | typeof abilitiesInRules
   | typeof aptitudesInRules
   | typeof featsInRules
   | typeof itemsInRules

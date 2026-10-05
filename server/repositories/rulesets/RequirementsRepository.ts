@@ -1,18 +1,10 @@
 import { eq, inArray, isNull } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { include } from "@/server/mixins.ts";
-import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { ChecksExistence } from "@/server/repositories/concerns/ChecksExistence.ts";
-import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
+import CustomizationRepository from "@/server/repositories/CustomizationRepository.ts";
 
-class RequirementsRepository extends include(
-  BaseRepository<typeof requirementsInCustomization>,
-  ChecksExistence,
-  GuardsStaleEdits,
-) {
+class RequirementsRepository extends CustomizationRepository<typeof requirementsInCustomization> {
   constructor() {
     super(requirementsInCustomization);
   }
@@ -38,33 +30,6 @@ class RequirementsRepository extends include(
         ],
       ),
     });
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof requirementsInCustomization>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof requirementsInCustomization>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof requirementsInCustomization>>,
-    where: { id: string; expectedUpdatedAt?: string },
-  ) {
-    return await db
-      .update(this.table)
-      .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
-      .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
