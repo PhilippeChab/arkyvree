@@ -296,20 +296,32 @@ export default class DetailedCharacterDataLoader {
     return {
       skills: projectedData?.skills ? [...realSkills, ...projectedData.skills] : realSkills,
       ...this.composeFeats(picks, rulesetData.feats, projectedData, allCharacterLevels, resolve),
-      ...this.composePowers(picks, rulesetData.powers, projectedData, allCharacterLevels, resolve),
+      ...this.composePowers(picks, rulesetData, projectedData, allCharacterLevels, resolve),
     };
   }
 
-  /** The powers: picked, given, then projected; and the given (not free) per aptitude. */
+  /**
+   * The powers: picked, given, then projected; and the given (not free) per aptitude. A pick's or a grant's spell level
+   * is its composed link's: the ruleset merges the books' copies of a spell and of a list, so a stored pair (Complete
+   * Divine's Bane on Complete Warrior's copy of the favored soul's list) may have no link row of its own.
+   */
   private composePowers(
     picks: Awaited<ReturnType<DetailedCharacterDataLoader["fetchPicks"]>>,
-    rulesetPowers: CachedRulesetData["powers"],
+    rulesetData: CachedRulesetData,
     projectedData: Dnd35ProjectedCharacterData | undefined,
     allCharacterLevels: CharacterLevel[],
     resolve: Resolve,
   ) {
-    const pickedPowers = refreshEntityData(resolve(picks.pickedPowers), rulesetPowers, ["name", "description"]);
-    const givenPowers = refreshEntityData(resolve(picks.givenPowers), rulesetPowers, ["name", "description"]);
+    const compose = <T extends Record<string, unknown> & { id: string; aptitudeId: string }>(rows: T[]) =>
+      refreshEntityData(resolve(rows), rulesetData.powers, ["name", "description"]).map((power) => ({
+        ...power,
+        powerLevel:
+          rulesetData.powersById
+            .get(power.id)
+            ?.powersAptitudesInRules.find((link) => link.aptitudeId === power.aptitudeId)?.level ?? null,
+      }));
+    const pickedPowers = compose(picks.pickedPowers);
+    const givenPowers = compose(picks.givenPowers);
 
     const characterLevelIdSet = new Set(allCharacterLevels.map((l) => l.id));
     const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(
