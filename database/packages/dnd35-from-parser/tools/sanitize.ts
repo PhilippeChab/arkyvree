@@ -58,8 +58,9 @@ const HTML_FIXES: Replacements = [
 
 /** Keys whose string values get full sanitization (encoding + book-reference stripping) */
 const DESCRIPTION_KEYS = new Set(["description", "benefit", "normal", "special", "prerequisiteText", "text"]);
-const applyAll = (text: string, replacements: Replacements) =>
-  replacements.reduce((result, [pattern, replacement]) => result.replace(pattern, replacement), text);
+function applyAll(text: string, replacements: Replacements) {
+  return replacements.reduce((result, [pattern, replacement]) => result.replace(pattern, replacement), text);
+}
 
 /**
  * Fix encoding artifacts only — safe to run on any string (names, descriptions, etc.).

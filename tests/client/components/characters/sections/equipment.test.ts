@@ -4,13 +4,15 @@ import { getSlotConflictWarning, placementPayload } from "@/client/src/component
 import type { ItemLocation } from "@/shared/enums.ts";
 
 /** An equipped item named `name` at `location`, in `weaponSet` (stored from 0) for a hand: its entry's id `id`. */
-const placed = (name: string, location: ItemLocation, weaponSet: number | null = null, id = name) => ({
-  id,
-  equipped: true,
-  location,
-  weaponSet,
-  item: { name },
-});
+function placed(name: string, location: ItemLocation, weaponSet: number | null = null, id = name) {
+  return {
+    id,
+    equipped: true,
+    location,
+    weaponSet,
+    item: { name },
+  };
+}
 
 describe("The inventory dialog's slot warning", () => {
   const inventory = [

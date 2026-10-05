@@ -4,10 +4,12 @@ import { computeLevelSkillPoints, computeMaxPointsForSkill, distributeSkillPoint
 
 const CLIMB = "climb";
 /** Levels by whether Climb is a class skill at them, with the skill points each gives. */
-const levels = (...entries: [classSkill: boolean, points: number][]) => ({
-  classSkills: entries.map(([classSkill]) => (classSkill ? [CLIMB] : [])),
-  points: entries.map(([, points]) => points),
-});
+function levels(...entries: [classSkill: boolean, points: number][]) {
+  return {
+    classSkills: entries.map(([classSkill]) => (classSkill ? [CLIMB] : [])),
+    points: entries.map(([, points]) => points),
+  };
+}
 
 // A class skill takes a point a rank, a cross-class one two: class-skill levels are spent first.
 describe("skill points", () => {

@@ -21,7 +21,9 @@ const stateIds = new WeakMap<IdResolveMap, string>();
 let lastStateId = 0;
 
 /** A method's verb, its first camelCase word: what `methodVerbs.json` classifies it by (lint holds every public one). */
-const verbOf = (method: string) => /^[a-z]+/.exec(method)?.[0] ?? "";
+function verbOf(method: string) {
+  return /^[a-z]+/.exec(method)?.[0] ?? "";
+}
 
 function getStateId(map: IdResolveMap): string {
   let id = stateIds.get(map);

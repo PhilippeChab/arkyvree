@@ -165,8 +165,9 @@ async function setup() {
 }
 
 /** Whether any of these requirements is left. */
-const remaining = async (ids: string[]) =>
-  (await Promise.all(ids.map((id) => Requirements.findOne(db, { id })))).filter(Boolean);
+async function remaining(ids: string[]) {
+  return (await Promise.all(ids.map((id) => Requirements.findOne(db, { id })))).filter(Boolean);
+}
 
 /** Gives the entity a requirement, a property and, when its type can own one, a modifier with a requirement of its own. */
 async function customize(entityType: (typeof ENTITY_TYPES)[number], id: string) {
@@ -214,7 +215,7 @@ async function customizationsOf(entityType: (typeof ENTITY_TYPES)[number], id: s
 }
 
 /** How many of each an entity has. */
-const counts = async (entityType: (typeof ENTITY_TYPES)[number], id: string) => {
+async function counts(entityType: (typeof ENTITY_TYPES)[number], id: string) {
   const { modifiers, modifierRequirementIds, requirements, properties } = await customizationsOf(entityType, id);
   return {
     modifiers: modifiers.length,
@@ -222,7 +223,7 @@ const counts = async (entityType: (typeof ENTITY_TYPES)[number], id: string) => 
     requirements: requirements.length,
     properties: properties.length,
   };
-};
+}
 
 describe.each(ENTITY_TYPES)("%s service", (entityType) => {
   const service = SERVICES[entityType];

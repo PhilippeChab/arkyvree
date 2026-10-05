@@ -27,5 +27,6 @@ export async function seededRows(rulesetName = DND35_RULESET_NAME) {
 }
 
 /** A requirement as its level and check, "2 classes.fighter.level greater_than_or_equal 4", or its level and chaining for a group, "1 or". */
-export const describeRequirement = (r: Requirement) =>
-  r.target ? `${r.level} ${r.target} ${r.operator} ${r.value}` : `${r.level} ${r.chainingOperator}`;
+export function describeRequirement(r: Requirement) {
+  return r.target ? `${r.level} ${r.target} ${r.operator} ${r.value}` : `${r.level} ${r.chainingOperator}`;
+}

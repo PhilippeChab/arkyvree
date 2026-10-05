@@ -8,19 +8,26 @@ import { describeRequirement, seededRows } from "@/tests/seeds/seededRows.ts";
 
 const bab1 = "2 combat.bab greater_than_or_equal 1";
 
-const proficiency = (kind: string, weapon: string) => [
-  "1 or",
-  `1.1 feats.${kind}weaponproficiency.possessed equal true`,
-  `1.2 feats.${kind}weaponproficiency${weapon}.possessed equal true`,
-];
-const casterLevel = (level: number) => [
-  "1 or",
-  `1.1 spellcasting.arcane greater_than_or_equal ${level}`,
-  `1.2 spellcasting.divine greater_than_or_equal ${level}`,
-];
+function proficiency(kind: string, weapon: string) {
+  return [
+    "1 or",
+    `1.1 feats.${kind}weaponproficiency.possessed equal true`,
+    `1.2 feats.${kind}weaponproficiency${weapon}.possessed equal true`,
+  ];
+}
+function casterLevel(level: number) {
+  return [
+    "1 or",
+    `1.1 spellcasting.arcane greater_than_or_equal ${level}`,
+    `1.2 spellcasting.divine greater_than_or_equal ${level}`,
+  ];
+}
 
-const umbrellaSlots = (rows: Awaited<ReturnType<typeof seededRows>>) =>
-  rows.modifiersOf(rows.feat("Favored Enemy (Ranger)").id).filter((m) => m.target === "aptitudes.favoredenemy.allowed");
+function umbrellaSlots(rows: Awaited<ReturnType<typeof seededRows>>) {
+  return rows
+    .modifiersOf(rows.feat("Favored Enemy (Ranger)").id)
+    .filter((m) => m.target === "aptitudes.favoredenemy.allowed");
+}
 
 describe("The seeded core rules", () => {
   test.each([

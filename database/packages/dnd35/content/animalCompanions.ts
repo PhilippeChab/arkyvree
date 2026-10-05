@@ -156,12 +156,14 @@ const ANIMAL_COMPANION_CLASS: ClassSeed = {
   ],
 };
 
-const grantFeat = (slug: string) => ({
-  target: `feats.${slug}.possessed`,
-  operator: "set",
-  value: "true",
-  valueType: "boolean",
-});
+function grantFeat(slug: string) {
+  return {
+    target: `feats.${slug}.possessed`,
+    operator: "set",
+    value: "true",
+    valueType: "boolean",
+  };
+}
 
 const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
   {

@@ -48,23 +48,27 @@ function finalizeBatch(
 }
 
 /** Fighter levels 1 to `count`, as a batch. */
-const fighterLevels = (count: number): BatchLevel[] =>
-  FIGHTER_LEVELS.slice(0, count).map((plan, index) => ["Fighter", index + 1, plan.hp, plan.ability]);
+function fighterLevels(count: number): BatchLevel[] {
+  return FIGHTER_LEVELS.slice(0, count).map((plan, index) => ["Fighter", index + 1, plan.hp, plan.ability]);
+}
 
-const levelsOf = (klass: string, hps: number[]): BatchLevel[] => hps.map((hp, index) => [klass, index + 1, hp]);
+function levelsOf(klass: string, hps: number[]): BatchLevel[] {
+  return hps.map((hp, index) => [klass, index + 1, hp]);
+}
 
-const preview = async (
+async function preview(
   ctx: SeedContext,
   characterId: string,
   levels: [string, number][],
   abilities: (string | null)[] = levels.map(() => null),
-) =>
-  CharacterLevelsService.getLevelUpPreview(
+) {
+  return CharacterLevelsService.getLevelUpPreview(
     session,
     characterId,
     levels.map(([klass, level]) => ({ klassId: ctx.klassMap.pc[klass], level })),
     abilities,
   );
+}
 
 /** Whether a feat is eligible at `level` of a batch of fighter levels, with these earlier picks and increases. */
 async function eligible(
@@ -125,7 +129,9 @@ async function setupFighter() {
   return { ctx, characterId, first, resave };
 }
 
-const fighter = (count: number) => Array.from({ length: count }, (_, i): [string, number] => ["Fighter", i + 1]);
+function fighter(count: number) {
+  return Array.from({ length: count }, (_, i): [string, number] => ["Fighter", i + 1]);
+}
 
 describe("finalizing several levels at once", () => {
   const WIZARD_FEATS = {

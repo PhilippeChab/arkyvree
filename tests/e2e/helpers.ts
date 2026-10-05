@@ -115,7 +115,9 @@ export async function invitePlayer(page: Page, email: string) {
 }
 
 /** A name no other test uses: ruleset names are unique across users, and parallel tests can start in the same millisecond. */
-export const uniqueName = (prefix: string) => `${prefix} ${randomUUID().slice(0, 8)}`;
+export function uniqueName(prefix: string) {
+  return `${prefix} ${randomUUID().slice(0, 8)}`;
+}
 
 /** Forks the core rules through the API, and opens the fork's page. Returns the fork's id. */
 export async function forkCoreRuleset(page: Page, name: string) {
@@ -237,7 +239,9 @@ export async function answerInvite(page: Page, name: string, answer: "Accept" | 
 }
 
 /** The notification bell, whose name says how many notifications are unread. */
-export const notificationBell = (page: Page) => page.locator('button[aria-label*=" unread notification"]');
+export function notificationBell(page: Page) {
+  return page.locator('button[aria-label*=" unread notification"]');
+}
 
 /** How many notifications the bell says are unread. */
 export async function unreadCount(page: Page) {
@@ -323,7 +327,9 @@ export async function fillOtp(scope: Page | Locator, code: string): Promise<void
 }
 
 /** The code that verifies a user's email address. */
-export const getEmailVerificationCode = (email: string) => latestCode("email_verifications", email);
+export function getEmailVerificationCode(email: string) {
+  return latestCode("email_verifications", email);
+}
 
 /** Signs up a new user and verifies their email, leaving them on the dashboard with its onboarding open. */
 export async function signUpAndVerify(page: Page, email: string, password: string) {
@@ -339,4 +345,6 @@ export async function signUpAndVerify(page: Page, email: string, password: strin
 }
 
 /** The code that resets a user's password. */
-export const getPasswordResetCode = (email: string) => latestCode("password_resets", email);
+export function getPasswordResetCode(email: string) {
+  return latestCode("password_resets", email);
+}

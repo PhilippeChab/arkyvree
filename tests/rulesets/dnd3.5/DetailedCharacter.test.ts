@@ -112,10 +112,14 @@ async function build(character: Character) {
   return detailed;
 }
 
-const buildSeeded = async (name: string) => build(await findSeededCharacter(name));
+async function buildSeeded(name: string) {
+  return build(await findSeededCharacter(name));
+}
 
 /** A requirement's check that a number is `value`. */
-const exactly = (value: number) => ({ operator: "equal", value: String(value), valueType: "number" }) as const;
+function exactly(value: number) {
+  return { operator: "equal", value: String(value), valueType: "number" } as const;
+}
 
 /** One group holding one requirement on `target`: by default, that it's true. */
 function requiring(
@@ -198,8 +202,8 @@ async function createAbilityItem(ability: string, bonus: number, slot: ItemLocat
 }
 
 /** A composite longbow of the seeded ruleset made for this Strength bonus. */
-const mightyBow = async (rating: number) =>
-  createItem(
+async function mightyBow(rating: number) {
+  return createItem(
     {
       name: `Composite Longbow (+${rating} Str)`,
       type: "Weapon",
@@ -208,6 +212,7 @@ const mightyBow = async (rating: number) =>
     },
     { [WEAPON_MIGHTY]: String(rating) },
   );
+}
 
 /** The seeded character, now a halfling. */
 async function asHalfling(name: string) {
@@ -216,19 +221,25 @@ async function asHalfling(name: string) {
   await db.update(charactersInCharacter).set({ raceId: halfling.id }).where(eq(charactersInCharacter.id, character.id));
   return { ...character, raceId: halfling.id };
 }
-const weaponSet = (detailed: Detailed, set = "0") => detailed.getDetailedCharacterCombat().getCombat().weaponsets[set];
-const spellLevel = (detailed: Detailed, aptitude: string, level: number) =>
-  (detailed.getDetailedCharacterAptitudes().getAptitudes()[aptitude] as Record<string, unknown>)[
+function weaponSet(detailed: Detailed, set = "0") {
+  return detailed.getDetailedCharacterCombat().getCombat().weaponsets[set];
+}
+function spellLevel(detailed: Detailed, aptitude: string, level: number) {
+  return (detailed.getDetailedCharacterAptitudes().getAptitudes()[aptitude] as Record<string, unknown>)[
     String(level)
   ] as AptitudeLevelData;
-const spellUses = (detailed: Detailed, aptitude: string, levels: number[]) =>
-  levels.map((level) => spellLevel(detailed, aptitude, level).uses);
-const allPowers = (detailed: Detailed) =>
-  Object.values(detailed.getDetailedCharacterClasses().getCharacterClasses()).flatMap((klass) =>
+}
+function spellUses(detailed: Detailed, aptitude: string, levels: number[]) {
+  return levels.map((level) => spellLevel(detailed, aptitude, level).uses);
+}
+function allPowers(detailed: Detailed) {
+  return Object.values(detailed.getDetailedCharacterClasses().getCharacterClasses()).flatMap((klass) =>
     klass.levels.flatMap((level) => level.powers),
   );
-const requirementIssues = (detailed: Detailed) =>
-  detailed.validate().issues.filter((issue) => issue.category === "requirements");
+}
+function requirementIssues(detailed: Detailed) {
+  return detailed.validate().issues.filter((issue) => issue.category === "requirements");
+}
 
 /** A fork of the seeded ruleset that uses these extensions. */
 async function forkWith(...extensionNames: string[]) {
@@ -285,10 +296,10 @@ async function buildRanger(carried: Carried[]) {
 }
 
 /** Whether `name` is proficient with `item` held at `location`. */
-const proficientWith = async (name: string, item: string, location: "Main Hand" | "Two Handed") => {
+async function proficientWith(name: string, item: string, location: "Main Hand" | "Two Handed") {
   const set = weaponSet(await buildCarrying(name, [{ item, location, weaponSet: 0 }]));
   return (location === "Two Handed" ? set.twohanded : set.mainhand)!.proficient;
-};
+}
 
 /** An item that requires `target` (equal true, or this check), with +2 to hit for the hand holding it. */
 async function requiringWithBonus(
@@ -436,10 +447,13 @@ async function setupGrantedSpell({ requirement = false, spellFocus = false } = {
   return build((await Characters.findOne(db, { id: characterId }))!);
 }
 
-const dexterityMisc = (detailed: Detailed) => detailed.getDetailedCharacterAbilities().getAbilities().dexterity.misc;
+function dexterityMisc(detailed: Detailed) {
+  return detailed.getDetailedCharacterAbilities().getAbilities().dexterity.misc;
+}
 
-const met = async (name: string, target: string, check?: Parameters<typeof requiring>[1]) =>
-  (await buildSeeded(name)).areRequirementsMet(requiring(target, check));
+async function met(name: string, target: string, check?: Parameters<typeof requiring>[1]) {
+  return (await buildSeeded(name)).areRequirementsMet(requiring(target, check));
+}
 
 describe("DetailedCharacter", () => {
   describe("building", () => {

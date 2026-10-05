@@ -13,8 +13,9 @@ import type { Dnd35BondedSectionProps } from "./types.ts";
 type FeatEntry = NonNullable<Dnd35BondedSectionProps["bonded"]["feats"]>[string];
 
 /** A feat entry, as opposed to a family of variants keyed by name. */
-const isFeat = (entry: FeatEntry): entry is Extract<FeatEntry, { possessed: boolean }> =>
-  "possessed" in entry && typeof entry.possessed === "boolean";
+function isFeat(entry: FeatEntry): entry is Extract<FeatEntry, { possessed: boolean }> {
+  return "possessed" in entry && typeof entry.possessed === "boolean";
+}
 
 export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionProps) {
   const abilityEntries = sortAbilities(

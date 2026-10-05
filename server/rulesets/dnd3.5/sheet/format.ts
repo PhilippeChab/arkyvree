@@ -1,5 +1,5 @@
 /** A modifier as the sheet prints it: signed, +0 when missing. */
-export const formatModifier = (value?: number): string => {
+export function formatModifier(value?: number): string {
   if (value === undefined) return "+0";
   return value >= 0 ? `+${value}` : value.toString();
-};
+}

@@ -139,21 +139,23 @@ export const styles = {
   } as CSSProperties,
 };
 
-export const EmailLayout = ({ preview, children }: EmailLayoutProps) => (
-  <Html>
-    <Head />
-    <Preview>{preview}</Preview>
-    <Body style={body}>
-      <Container style={container}>
-        <Section style={header}>
-          <Img src={`${APP_URL}/pwa-192x192.png`} width={64} height={64} alt="Arkyvree" style={logo} />
-          <Text style={wordmark}>Arkyvree</Text>
-        </Section>
-        <Hr style={accentBar} />
-        {children}
-        <Hr style={divider} />
-        <Text style={footer}>© {new Date().getFullYear()} Arkyvree · Happy adventuring</Text>
-      </Container>
-    </Body>
-  </Html>
-);
+export function EmailLayout({ preview, children }: EmailLayoutProps) {
+  return (
+    <Html>
+      <Head />
+      <Preview>{preview}</Preview>
+      <Body style={body}>
+        <Container style={container}>
+          <Section style={header}>
+            <Img src={`${APP_URL}/pwa-192x192.png`} width={64} height={64} alt="Arkyvree" style={logo} />
+            <Text style={wordmark}>Arkyvree</Text>
+          </Section>
+          <Hr style={accentBar} />
+          {children}
+          <Hr style={divider} />
+          <Text style={footer}>© {new Date().getFullYear()} Arkyvree · Happy adventuring</Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+}

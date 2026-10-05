@@ -19,9 +19,15 @@ const csv = process.argv.includes("--csv");
 const apiKey = process.env.NEON_API_KEY;
 const projectId = process.env.NEON_PROJECT_ID;
 
-const mb = (b: number) => b / 1024 / 1024;
-const gb = (b: number) => b / 1024 / 1024 / 1024;
-const hrs = (s: number) => s / 3600;
+function mb(b: number) {
+  return b / 1024 / 1024;
+}
+function gb(b: number) {
+  return b / 1024 / 1024 / 1024;
+}
+function hrs(s: number) {
+  return s / 3600;
+}
 
 /**
  * Usage: bun --env-file=.env.production run scripts/ops/neon-usage.ts [--csv]

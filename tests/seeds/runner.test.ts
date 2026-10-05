@@ -22,16 +22,18 @@ function testPackage(seedsVersion: number, updateVersions: number[], ran: string
   };
 }
 
-const recordedVersion = async (name: string) =>
-  (
+async function recordedVersion(name: string) {
+  return (
     await db
       .select({ version: contentPackagesInRules.version })
       .from(contentPackagesInRules)
       .where(eq(contentPackagesInRules.name, name))
   )[0]?.version;
+}
 
-const record = (pkg: ContentPackage, version: number) =>
-  db.insert(contentPackagesInRules).values({ name: pkg.name, type: pkg.type, version });
+function record(pkg: ContentPackage, version: number) {
+  return db.insert(contentPackagesInRules).values({ name: pkg.name, type: pkg.type, version });
+}
 
 describe("Applying content packages", () => {
   test("installs a new package: its seeds, then every update, at its last update's version", async () => {

@@ -88,7 +88,7 @@ function containedBorderColor(color: ContainedColor, darkMode: boolean) {
 }
 
 // Ancient Tome Theme - Adapted for both light and dark modes
-const createAppTheme = (darkMode: boolean): Theme => {
+function createAppTheme(darkMode: boolean): Theme {
   return responsiveFontSizes(
     createTheme({
       palette: {
@@ -400,7 +400,7 @@ const createAppTheme = (darkMode: boolean): Theme => {
       },
     }),
   );
-};
+}
 
 export function CustomThemeProvider({ children }: CustomThemeProviderProps) {
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {

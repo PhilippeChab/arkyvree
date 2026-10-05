@@ -36,7 +36,9 @@ import { db } from "@/server/database/index.ts";
 import { invalidateSeededRuleset } from "@/tests/helpers.ts";
 
 const BONDS = [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS];
-const sortedNames = (rows: { name: string }[]) => rows.map((row) => row.name).sort();
+function sortedNames(rows: { name: string }[]) {
+  return rows.map((row) => row.name).sort();
+}
 
 /** Renames the seeded system rulesets (the seeds find the core rules by name, and a system ruleset's name is its own). Returns their ids. */
 async function renameSeeded() {

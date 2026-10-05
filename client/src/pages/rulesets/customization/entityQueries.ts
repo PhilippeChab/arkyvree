@@ -72,8 +72,9 @@ async function fetchEntity(id: string, type: CustomizationPageType, entityId: st
   }
 }
 
-export const customizationEntityQuery = (rulesetId: string, type: CustomizationPageType, entityId: string) =>
-  queryOptions({
+export function customizationEntityQuery(rulesetId: string, type: CustomizationPageType, entityId: string) {
+  return queryOptions({
     queryKey: queryKeys.rulesets.entity(rulesetId, type, entityId),
     queryFn: () => fetchEntity(rulesetId, type, entityId),
   });
+}

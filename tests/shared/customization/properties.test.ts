@@ -2,7 +2,9 @@ import { expect, test } from "bun:test";
 
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 
-const optionsOf = (type: string) => (type === "COMPONENT" ? ["Verbal", "Somatic", "Material"] : null);
+function optionsOf(type: string) {
+  return type === "COMPONENT" ? ["Verbal", "Somatic", "Material"] : null;
+}
 
 test("groupPropertyValues lists a type's values in its options' order, those no option names after them as given", () => {
   const rows = [

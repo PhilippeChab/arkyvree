@@ -158,24 +158,25 @@ const CATEGORY_HOLDERS: Record<string, { holderKey: string; getter: string }> = 
 };
 
 /** A path that reaches no value, with why. */
-const failed = (holder: Holder | null, key: string, error: string): TraversePathResult[] => [
-  { holder, object: null, data: null, key, resolvedPath: null, error },
-];
+function failed(holder: Holder | null, key: string, error: string): TraversePathResult[] {
+  return [{ holder, object: null, data: null, key, resolvedPath: null, error }];
+}
 
 /** The distinct slugs of the properties' values of `type`. */
-const slugsOf = (properties: { type: string; value: string }[], type: string) => [
-  ...new Set(properties.filter((p) => p.type === type).map((p) => stripSeparators(p.value))),
-];
+function slugsOf(properties: { type: string; value: string }[], type: string) {
+  return [...new Set(properties.filter((p) => p.type === type).map((p) => stripSeparators(p.value)))];
+}
 
 /** The entries of `value` that are objects and whose slug starts with `slug` (but isn't it): a skill's subtypes. */
-const subtypesOf = (value: Record<string, unknown>, slug: string) =>
-  Object.entries(value).filter(
+function subtypesOf(value: Record<string, unknown>, slug: string) {
+  return Object.entries(value).filter(
     ([key, entry]) =>
       entry !== null &&
       typeof entry === "object" &&
       stripSeparators(key).startsWith(slug) &&
       stripSeparators(key) !== slug,
   );
+}
 
 /**
  * The groupings the ruleset's properties and powers define, which the paths are generated for: weapons by type

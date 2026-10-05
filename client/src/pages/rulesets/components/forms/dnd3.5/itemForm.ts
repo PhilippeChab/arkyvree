@@ -24,22 +24,25 @@ function parseNumericField(value: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export const isTemplateType = (type: string | null | undefined): type is TemplateType =>
-  type === "Weapon" || type === "Armor" || type === "Shield";
+export function isTemplateType(type: string | null | undefined): type is TemplateType {
+  return type === "Weapon" || type === "Armor" || type === "Shield";
+}
 
 /** The form values of an existing item: the editor's, or a duplicate's starting point. */
-export const toItemForm = (
+export function toItemForm(
   item: Pick<Item, "name" | "description" | "costGp" | "weight" | "type" | "slot" | "isTemplate" | "sourceItemId">,
-): ItemFormInternal => ({
-  name: item.name,
-  description: item.description ?? "",
-  costGp: formatDecimal(item.costGp) ?? "",
-  weight: formatDecimal(item.weight) ?? "",
-  type: item.type,
-  slot: item.slot ?? undefined,
-  isTemplate: item.isTemplate,
-  sourceItemId: item.isTemplate ? undefined : (item.sourceItemId ?? undefined),
-});
+): ItemFormInternal {
+  return {
+    name: item.name,
+    description: item.description ?? "",
+    costGp: formatDecimal(item.costGp) ?? "",
+    weight: formatDecimal(item.weight) ?? "",
+    type: item.type,
+    slot: item.slot ?? undefined,
+    isTemplate: item.isTemplate,
+    sourceItemId: item.isTemplate ? undefined : (item.sourceItemId ?? undefined),
+  };
+}
 
 export function toItemPayload(data: ItemFormInternal): ItemFormData {
   const { sourceItemId, ...rest } = data;

@@ -32,7 +32,7 @@ type Placement = {
   force?: boolean;
 };
 
-const add = (
+function add(
   session: Session,
   characterId: string,
   itemId: string,
@@ -44,8 +44,8 @@ const add = (
     charges = [null, null],
     force = false,
   }: Placement = {},
-) =>
-  CharacterInventoryService.addItem(
+) {
+  return CharacterInventoryService.addItem(
     session,
     characterId,
     itemId,
@@ -57,6 +57,7 @@ const add = (
     weaponSet,
     force,
   );
+}
 
 /** The character's entry of the item, by the item: a test carries each item once. An id it doesn't carry is its own. */
 async function entryOf(characterId: string, itemId: string) {
@@ -64,7 +65,7 @@ async function entryOf(characterId: string, itemId: string) {
   return entries.find((entry) => entry.itemId === itemId)?.id ?? itemId;
 }
 
-const update = async (
+async function update(
   session: Session,
   characterId: string,
   itemId: string,
@@ -77,8 +78,8 @@ const update = async (
     force = false,
   }: Placement = {},
   updatedAt?: string,
-) =>
-  CharacterInventoryService.updateItem(
+) {
+  return CharacterInventoryService.updateItem(
     session,
     characterId,
     await entryOf(characterId, itemId),
@@ -91,16 +92,20 @@ const update = async (
     force,
     updatedAt,
   );
+}
 
 /** Removes the character's entry of the item. */
-const remove = async (session: Session, characterId: string, itemId: string) =>
-  CharacterInventoryService.removeItem(session, characterId, await entryOf(characterId, itemId));
+async function remove(session: Session, characterId: string, itemId: string) {
+  return CharacterInventoryService.removeItem(session, characterId, await entryOf(characterId, itemId));
+}
 
-const equipped = (location: ItemLocation, weaponSet: number | null = null): Placement => ({
-  equipped: true,
-  location,
-  weaponSet,
-});
+function equipped(location: ItemLocation, weaponSet: number | null = null): Placement {
+  return {
+    equipped: true,
+    location,
+    weaponSet,
+  };
+}
 
 /** A new item of the ruleset, with these properties. */
 async function createItem(

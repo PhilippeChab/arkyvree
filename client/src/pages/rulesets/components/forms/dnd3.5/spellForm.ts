@@ -7,5 +7,6 @@ export type SpellFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["p
 export type SpellAptitude = SpellFormData["aptitudes"][number];
 
 /** A spell's aptitude and its level, without an empty `level` key so clearing one leaves the form clean. */
-export const spellAptitude = (id: string, level: number | null | undefined): SpellAptitude =>
-  level == null ? { id } : { id, level };
+export function spellAptitude(id: string, level: number | null | undefined): SpellAptitude {
+  return level == null ? { id } : { id, level };
+}

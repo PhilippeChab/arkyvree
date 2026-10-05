@@ -15,15 +15,19 @@
  */
 import { repoPath } from "./paths.mjs";
 
-const inClient = (context) => repoPath(context.filename).startsWith("client/src/");
+function inClient(context) {
+  return repoPath(context.filename).startsWith("client/src/");
+}
 
 /** A JSX element's name: `IconButton`, `Dialog`. */
-const elementName = (node) =>
-  node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
+function elementName(node) {
+  return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
+}
 
 /** Whether a JSX element has the attribute `name`. */
-const hasAttribute = (node, name) =>
-  node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
+function hasAttribute(node, name) {
+  return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
+}
 
 /** The nearest JSX element around `node`. */
 function parentElement(node) {

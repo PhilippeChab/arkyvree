@@ -21,7 +21,9 @@ async function createPendingBlob(filename: string, ageMs = 0) {
   return blob;
 }
 
-const rowOf = (id: string) => db.query.blobsInStorage.findFirst({ where: (t, { eq }) => eq(t.id, id) });
+function rowOf(id: string) {
+  return db.query.blobsInStorage.findFirst({ where: (t, { eq }) => eq(t.id, id) });
+}
 
 describe("sweepPendingBlobs", () => {
   let deleted: string[];

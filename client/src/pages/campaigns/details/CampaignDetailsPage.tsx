@@ -48,7 +48,9 @@ const SECTION_COMPONENTS = {
   players: PlayersSection,
 } as const;
 
-const isTabSection = (section: string | undefined): section is TabSection => TABS.some((tab) => tab.key === section);
+function isTabSection(section: string | undefined): section is TabSection {
+  return TABS.some((tab) => tab.key === section);
+}
 
 export default function CampaignDetailsPage() {
   const { id = "", section } = useParams<{ id: string; section?: string }>();

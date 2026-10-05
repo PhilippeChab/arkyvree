@@ -25,5 +25,6 @@ export const MODIFIER_OPERATORS = ["add", "subtract", "multiply", "divide", "set
 export const CHAINING_OPERATORS = ["and", "or"] as const;
 
 /** The operators a numeric target path offers a modifier, or a requirement. */
-export const getNumericOperators = (kind: "modifier" | "requirement"): string[] =>
-  kind === "modifier" ? [...MODIFIER_OPERATORS] : [...NUMERIC_REQUIREMENT_OPERATORS];
+export function getNumericOperators(kind: "modifier" | "requirement"): string[] {
+  return kind === "modifier" ? [...MODIFIER_OPERATORS] : [...NUMERIC_REQUIREMENT_OPERATORS];
+}

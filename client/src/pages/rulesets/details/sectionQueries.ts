@@ -42,20 +42,25 @@ interface PowerFilters extends AptitudeFilters {
   level?: number;
 }
 
-const listQuery = (pageParam: number, { search, childOnly }: ListFilters) => ({
-  page: pageParam.toString(),
-  limit: "10",
-  search: search || undefined,
-  childOnly: childOnly ? ("true" as const) : undefined,
-});
+function listQuery(pageParam: number, { search, childOnly }: ListFilters) {
+  return {
+    page: pageParam.toString(),
+    limit: "10",
+    search: search || undefined,
+    childOnly: childOnly ? ("true" as const) : undefined,
+  };
+}
 
-const nextPage = (lastPage: { nextPage?: number }) => lastPage.nextPage;
+function nextPage(lastPage: { nextPage?: number }) {
+  return lastPage.nextPage;
+}
 
-const sectionKey = (rulesetId: string, section: RulesetSection, filters: ListFilters) =>
-  [...queryKeys.rulesets.section(rulesetId, section), filters.search, filters.childOnly] as const;
+function sectionKey(rulesetId: string, section: RulesetSection, filters: ListFilters) {
+  return [...queryKeys.rulesets.section(rulesetId, section), filters.search, filters.childOnly] as const;
+}
 
-export const languagesQuery = (rulesetId: string, filters: ListFilters) =>
-  infiniteQueryOptions({
+export function languagesQuery(rulesetId: string, filters: ListFilters) {
+  return infiniteQueryOptions({
     queryKey: sectionKey(rulesetId, "languages", filters),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -67,9 +72,10 @@ export const languagesQuery = (rulesetId: string, filters: ListFilters) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const aptitudesQuery = (rulesetId: string, filters: ListFilters) =>
-  infiniteQueryOptions({
+export function aptitudesQuery(rulesetId: string, filters: ListFilters) {
+  return infiniteQueryOptions({
     queryKey: sectionKey(rulesetId, "aptitudes", filters),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -81,9 +87,10 @@ export const aptitudesQuery = (rulesetId: string, filters: ListFilters) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const mechanicsQuery = (rulesetId: string, filters: ListFilters) =>
-  infiniteQueryOptions({
+export function mechanicsQuery(rulesetId: string, filters: ListFilters) {
+  return infiniteQueryOptions({
     queryKey: sectionKey(rulesetId, "mechanics", filters),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -95,9 +102,10 @@ export const mechanicsQuery = (rulesetId: string, filters: ListFilters) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const savesQuery = (rulesetId: string, filters: ListFilters) =>
-  infiniteQueryOptions({
+export function savesQuery(rulesetId: string, filters: ListFilters) {
+  return infiniteQueryOptions({
     queryKey: sectionKey(rulesetId, "saves", filters),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -109,9 +117,10 @@ export const savesQuery = (rulesetId: string, filters: ListFilters) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const skillsQuery = (rulesetId: string, filters: ListFilters) =>
-  infiniteQueryOptions({
+export function skillsQuery(rulesetId: string, filters: ListFilters) {
+  return infiniteQueryOptions({
     queryKey: sectionKey(rulesetId, "skills", filters),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -123,9 +132,10 @@ export const skillsQuery = (rulesetId: string, filters: ListFilters) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const itemsQuery = (rulesetId: string, filters: ListFilters) =>
-  infiniteQueryOptions({
+export function itemsQuery(rulesetId: string, filters: ListFilters) {
+  return infiniteQueryOptions({
     queryKey: sectionKey(rulesetId, "items", filters),
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -137,9 +147,10 @@ export const itemsQuery = (rulesetId: string, filters: ListFilters) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const racesQuery = (rulesetId: string, filters: EntityFilters) =>
-  infiniteQueryOptions({
+export function racesQuery(rulesetId: string, filters: EntityFilters) {
+  return infiniteQueryOptions({
     queryKey: [...sectionKey(rulesetId, "races", filters), filters.kind, filters.orderBy, filters.orderDir],
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -156,9 +167,10 @@ export const racesQuery = (rulesetId: string, filters: EntityFilters) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const classesQuery = (rulesetId: string, filters: EntityFilters) =>
-  infiniteQueryOptions({
+export function classesQuery(rulesetId: string, filters: EntityFilters) {
+  return infiniteQueryOptions({
     queryKey: [...sectionKey(rulesetId, "classes", filters), filters.kind, filters.orderBy, filters.orderDir],
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -175,9 +187,10 @@ export const classesQuery = (rulesetId: string, filters: EntityFilters) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const powersQuery = (rulesetId: string, filters: PowerFilters) =>
-  infiniteQueryOptions({
+export function powersQuery(rulesetId: string, filters: PowerFilters) {
+  return infiniteQueryOptions({
     queryKey: [...sectionKey(rulesetId, "powers", filters), filters.aptitudeId, filters.level],
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -193,9 +206,10 @@ export const powersQuery = (rulesetId: string, filters: PowerFilters) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const featsQuery = (rulesetId: string, filters: AptitudeFilters) =>
-  infiniteQueryOptions({
+export function featsQuery(rulesetId: string, filters: AptitudeFilters) {
+  return infiniteQueryOptions({
     queryKey: [...sectionKey(rulesetId, "feats", filters), filters.aptitudeId],
     queryFn: ({ pageParam }) =>
       parseResponse(
@@ -207,10 +221,11 @@ export const featsQuery = (rulesetId: string, filters: AptitudeFilters) =>
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
 /** Feats with variant families collapsed into one row each — the Feats tab's default view. */
-export const featsGroupedQuery = (rulesetId: string, filters: AptitudeFilters) =>
-  infiniteQueryOptions({
+export function featsGroupedQuery(rulesetId: string, filters: AptitudeFilters) {
+  return infiniteQueryOptions({
     queryKey: [
       ...queryKeys.rulesets.sectionGrouped(rulesetId, "feats"),
       filters.search,
@@ -227,9 +242,10 @@ export const featsGroupedQuery = (rulesetId: string, filters: AptitudeFilters) =
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });
+}
 
-export const abilitiesQuery = (rulesetId: string, childOnly: boolean) =>
-  queryOptions({
+export function abilitiesQuery(rulesetId: string, childOnly: boolean) {
+  return queryOptions({
     queryKey: [...queryKeys.rulesets.section(rulesetId, "abilities"), childOnly],
     queryFn: () =>
       parseResponse(
@@ -239,6 +255,7 @@ export const abilitiesQuery = (rulesetId: string, childOnly: boolean) =>
         }),
       ),
   });
+}
 
 /**
  * Warm the first page of a tab the way it opens: switching tabs clears the

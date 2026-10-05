@@ -12,13 +12,13 @@ interface SlotParams {
 }
 
 /** Refetches the slot's attachment once it changed. */
-const refreshSlot = (queryClient: QueryClient, slot: SlotParams) => {
+function refreshSlot(queryClient: QueryClient, slot: SlotParams) {
   if (slot.recordId) {
     void queryClient.invalidateQueries({
       queryKey: queryKeys.attachments.slot(slot.recordType, slot.recordId, slot.name),
     });
   }
-};
+}
 
 export function useDirectUpload(slot: SlotParams) {
   const queryClient = useQueryClient();

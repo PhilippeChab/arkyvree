@@ -14,10 +14,11 @@ async function seedPaths(kind: Kind, entityType?: EntityType) {
   return await getTargetPathsWithLabels(rulesetId, kind, entityType);
 }
 
-const isAptitudeGrant = (p: { category: string; path: string }) =>
-  p.category === "aptitudes" && /\.(uses|allowed)$/.test(p.path);
+function isAptitudeGrant(p: { category: string; path: string }) {
+  return p.category === "aptitudes" && /\.(uses|allowed)$/.test(p.path);
+}
 
-const complete = async (
+async function complete(
   partialPath: string,
   kind: Kind,
   {
@@ -26,7 +27,7 @@ const complete = async (
     page = 1,
     flat = false,
   }: { search?: string; limit?: number; page?: number; flat?: boolean } = {},
-) => {
+) {
   const { rulesetId } = await getSeedCtx();
   return await TargetPathsService.getCompletions(
     rulesetId,
@@ -39,12 +40,15 @@ const complete = async (
     page,
     flat,
   );
-};
+}
 
-const pathsOf = (result: Awaited<ReturnType<typeof complete>>) => result.items.map((item) => item.path);
+function pathsOf(result: Awaited<ReturnType<typeof complete>>) {
+  return result.items.map((item) => item.path);
+}
 
-const validate = async (path: string, kind: Kind = "modifier") =>
-  TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind);
+async function validate(path: string, kind: Kind = "modifier") {
+  return TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind);
+}
 
 // Completing and validating a path through the API are covered in the customization target router test.
 describe("TargetPathsService", () => {

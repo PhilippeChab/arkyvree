@@ -5,14 +5,14 @@ import type {
 } from "@/database/packages/dnd35/content/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-const check =
-  (operator: string, valueType: string) =>
-  (target: string, value: string | number): RequirementCondition => ({
+function check(operator: string, valueType: string) {
+  return (target: string, value: string | number): RequirementCondition => ({
     target,
     operator,
     value: String(value),
     valueType,
   });
+}
 
 // Numeric
 export const eqNum = check("equal", "number");
@@ -27,10 +27,18 @@ export const eqStr = check("equal", "string");
 // any other check as an object.
 
 /** The path of having a feat. */
-export const feat = (name: string) => `feats.${stripSeparators(name)}.possessed`;
+export function feat(name: string) {
+  return `feats.${stripSeparators(name)}.possessed`;
+}
 
-export const or = (...children: RequirementEntry[]): RequirementGroup => ({ chainingOperator: "or", children });
-export const and = (...children: RequirementEntry[]): RequirementGroup => ({ chainingOperator: "and", children });
+export function or(...children: RequirementEntry[]): RequirementGroup {
+  return { chainingOperator: "or", children };
+}
+export function and(...children: RequirementEntry[]): RequirementGroup {
+  return { chainingOperator: "and", children };
+}
 
 // Boolean
-export const eq = (target: string) => check("equal", "boolean")(target, "true");
+export function eq(target: string) {
+  return check("equal", "boolean")(target, "true");
+}

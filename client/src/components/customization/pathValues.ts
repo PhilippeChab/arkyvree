@@ -8,10 +8,12 @@ const BOOLEAN_CHOICES: PathChoice[] = [
 ];
 
 /** The values a path's input offers as a select: its own, True / False for a boolean, or null for free input. */
-export const pathChoices = (
+export function pathChoices(
   valueType: PathValueType | undefined,
   possibleValues: PathChoice[] | undefined,
-): PathChoice[] | null => possibleValues ?? (valueType === "boolean" ? BOOLEAN_CHOICES : null);
+): PathChoice[] | null {
+  return possibleValues ?? (valueType === "boolean" ? BOOLEAN_CHOICES : null);
+}
 
 export function defaultValueForPath(
   valueType: PathValueType | undefined,

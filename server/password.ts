@@ -15,8 +15,9 @@ function sameDigest(a: string, b: string): boolean {
 }
 
 /** A password's digest: argon2id, with its cheapest cost in tests. */
-export const hashPassword = (password: string) =>
-  Bun.password.hash(password, { algorithm: "argon2id", ...(isTest() && { timeCost: 1, memoryCost: 1024 }) });
+export function hashPassword(password: string) {
+  return Bun.password.hash(password, { algorithm: "argon2id", ...(isTest() && { timeCost: 1, memoryCost: 1024 }) });
+}
 
 /** Whether `password` matches `digest`; a legacy SHA-256 digest that matches is to be rehashed with argon2id. */
 export async function verifyPassword(

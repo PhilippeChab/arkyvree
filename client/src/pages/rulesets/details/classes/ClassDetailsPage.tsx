@@ -76,14 +76,17 @@ const SECTION_COMPONENTS = {
   requirements: ClassRequirementsSection,
 } as const;
 
-const toClassForm = (klass: Pick<ClassDetail, "name" | "description" | "hd">): ClassFormData => ({
-  name: klass.name,
-  description: klass.description ?? "",
-  hd: oneOf(klass.hd, HIT_DIE_VALUES, 8),
-});
+function toClassForm(klass: Pick<ClassDetail, "name" | "description" | "hd">): ClassFormData {
+  return {
+    name: klass.name,
+    description: klass.description ?? "",
+    hd: oneOf(klass.hd, HIT_DIE_VALUES, 8),
+  };
+}
 
-const isClassSection = (section: string | undefined): section is ClassSection =>
-  TABS.some((tab) => tab.key === section);
+function isClassSection(section: string | undefined): section is ClassSection {
+  return TABS.some((tab) => tab.key === section);
+}
 
 export default function ClassDetailsPage() {
   const navigate = useNavigate();

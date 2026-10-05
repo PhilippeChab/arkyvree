@@ -153,20 +153,24 @@ function exoticProficiency(weapon: string, held: boolean): RequirementEntry[] {
  * Being proficient with a simple weapon: with them all, or with it alone. A strike with a gauntlet "is otherwise
  * considered an unarmed attack": the unarmed strike's proficiency is the gauntlet's too.
  */
-export const simple = (weapon: string): RequirementEntry[] => [
-  or(
-    eq(feat("Simple Weapon Proficiency")),
-    eq(feat(`Simple Weapon Proficiency: ${weapon}`)),
-    ...(weapon === "Gauntlet" ? [eq(feat("Simple Weapon Proficiency: Unarmed Strike"))] : []),
-  ),
-];
+export function simple(weapon: string): RequirementEntry[] {
+  return [
+    or(
+      eq(feat("Simple Weapon Proficiency")),
+      eq(feat(`Simple Weapon Proficiency: ${weapon}`)),
+      ...(weapon === "Gauntlet" ? [eq(feat("Simple Weapon Proficiency: Unarmed Strike"))] : []),
+    ),
+  ];
+}
 /** Being proficient with a martial weapon: with them all, or with it alone. */
-export const martial = (weapon: string): RequirementEntry[] => [
-  or(eq(feat("Martial Weapon Proficiency")), eq(feat(`Martial Weapon Proficiency: ${weapon}`))),
-];
+export function martial(weapon: string): RequirementEntry[] {
+  return [or(eq(feat("Martial Weapon Proficiency")), eq(feat(`Martial Weapon Proficiency: ${weapon}`)))];
+}
 
 /** An exotic weapon's proficiency, which the weapon requires: in two hands too. */
-export const exotic = (weapon: string): RequirementEntry[] => exoticProficiency(weapon, true);
+export function exotic(weapon: string): RequirementEntry[] {
+  return exoticProficiency(weapon, true);
+}
 
 /** Being proficient with `weapon`, by its group. */
 export function proficiencyRequirements(weapon: string): RequirementEntry[] {

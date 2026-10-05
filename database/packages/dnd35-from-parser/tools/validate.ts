@@ -82,8 +82,9 @@ function reviewOf(reviewed: string[] = []) {
 }
 
 /** An entry's detected issues. */
-const detectedIssues = (d: DetectedEntry): Found[] =>
-  DETECTED_ISSUES.flatMap(([key, kind]) => (d[key] ?? []).map((text) => ({ kind, text })));
+function detectedIssues(d: DetectedEntry): Found[] {
+  return DETECTED_ISSUES.flatMap(([key, kind]) => (d[key] ?? []).map((text) => ({ kind, text })));
+}
 
 /** The issues of the references `refs` (`discoverRefs`): what the header lists. */
 export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] {

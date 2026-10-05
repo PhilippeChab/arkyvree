@@ -61,10 +61,11 @@ interface RequirementsSectionProps {
 }
 
 /** What a requirement saves: its level, then its chaining operator or its condition. */
-const requirementPayload = (type: RequirementType, level: string, data: RequirementFormData): RequirementFormData =>
-  type === "chaining"
+function requirementPayload(type: RequirementType, level: string, data: RequirementFormData): RequirementFormData {
+  return type === "chaining"
     ? { level, chainingOperator: data.chainingOperator }
     : { level, target: data.target, operator: data.operator, value: data.value };
+}
 
 function PublishedWarning() {
   return (

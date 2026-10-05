@@ -66,8 +66,9 @@ export interface PaginatedCompletions {
 }
 
 /** A path segment as a label ("privateNotes" → "Private Notes"). */
-export const formatSegment = (segment: string) =>
-  segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
+export function formatSegment(segment: string) {
+  return segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
+}
 
 /** The label of each segment of `paths`: its override, else the segment formatted. */
 export function deriveSegmentLabels(

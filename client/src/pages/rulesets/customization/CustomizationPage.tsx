@@ -67,12 +67,14 @@ interface CustomizationViewProps {
 // Entities with an editor on this page, which can also be deleted from it.
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
 
-const tabLabel = (label: string, help: string) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-    {label}
-    <FaqHelpIcon text={help} />
-  </Box>
-);
+function tabLabel(label: string, help: string) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+      {label}
+      <FaqHelpIcon text={help} />
+    </Box>
+  );
+}
 
 const TABS: SectionTab<TabSection>[] = [
   {
@@ -102,10 +104,12 @@ const TABS: SectionTab<TabSection>[] = [
 ];
 
 // A modifier can only carry requirements.
-const tabsFor = (type: CustomizationPageType) =>
-  type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
-const isEditable = (data: CustomizationEntity): data is EditableEntity =>
-  EDITABLE_TYPES.some((type) => type === data.type);
+function tabsFor(type: CustomizationPageType) {
+  return type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
+}
+function isEditable(data: CustomizationEntity): data is EditableEntity {
+  return EDITABLE_TYPES.some((type) => type === data.type);
+}
 
 /** Where a modifier's page goes back to: its class's Modifiers tab, or its entity's customization page. */
 function modifierSourcePath(rulesetId: string, sourceType: string, sourceId: string) {

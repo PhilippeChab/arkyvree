@@ -13,22 +13,23 @@ import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/sc
 import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/scraper/weaponStats.ts";
 
 /** The skill bonuses a text gives, each as "slug +value", or "?name" for a name that isn't a skill. */
-const bonuses = (text: string) =>
-  readSkillBonuses(text, () => false).map(({ slug, name, value }) => (slug ? `${slug} +${value}` : `?${name}`));
+function bonuses(text: string) {
+  return readSkillBonuses(text, () => false).map(({ slug, name, value }) => (slug ? `${slug} +${value}` : `?${name}`));
+}
 
 /** Whether the first bonus ("+N …") in `text` applies only sometimes. */
-const conditional = (text: string) => {
+function conditional(text: string) {
   const start = text.indexOf("+");
   const end = text.indexOf(" checks", start) + " checks".length;
   return isConditional(text, start, end);
-};
+}
 
 /** The modifiers seeded with the entity named `name` of `seeds`, each as "target +value". */
-const seededModifiers = (seeds: { name: string; modifiers?: { target: string; value: string }[] }[], name: string) => {
+function seededModifiers(seeds: { name: string; modifiers?: { target: string; value: string }[] }[], name: string) {
   const seed = seeds.find((entry) => entry.name === name);
   if (!seed) throw new Error(`${name} isn't seeded`);
   return (seed.modifiers ?? []).map(({ target, value }) => `${target} +${value}`).sort();
-};
+}
 
 describe("A text's skill bonuses", () => {
   test("are read from a list, a check after another, with any bonus type and possessive", () => {

@@ -191,7 +191,9 @@ async function featsNamed(rulesetId: string, name: string) {
   return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
 }
 
-const unique = (keys: string[]) => new Set(keys).size === keys.length;
+function unique(keys: string[]) {
+  return new Set(keys).size === keys.length;
+}
 
 /** Two system extensions that each copy the base entity and give it an aptitude, a requirement and a modifier; and a fork using both. */
 async function setupSiblings(entityType: EntityType) {

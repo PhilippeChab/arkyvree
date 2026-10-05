@@ -70,7 +70,9 @@ export function playerDisplay(
 }
 
 /** The request body for a player form: an empty email field means no invite. */
-export const toPlayerPayload = (data: PlayerFormData): PlayerFormData => ({
-  ...data,
-  email: data.email || undefined,
-});
+export function toPlayerPayload(data: PlayerFormData): PlayerFormData {
+  return {
+    ...data,
+    email: data.email || undefined,
+  };
+}

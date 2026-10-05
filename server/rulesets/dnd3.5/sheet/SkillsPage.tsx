@@ -6,7 +6,7 @@ import ContinuationHeader from "./ContinuationHeader.tsx";
 import { formatModifier } from "./format.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-const SkillsPage = ({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) => {
+function SkillsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.getDetailedCharacterIdentity();
   const skills = detailedCharacter.getDetailedCharacterSkills();
   const identityData = identity.getIdentity();
@@ -100,6 +100,6 @@ const SkillsPage = ({ detailedCharacter }: { detailedCharacter: DetailedCharacte
       </View>
     </Page>
   );
-};
+}
 
 export default SkillsPage;

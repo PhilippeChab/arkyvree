@@ -175,7 +175,9 @@ async function setupRuleset({ fork = false } = {}) {
   };
 }
 
-const names = (rows: { name: string }[]) => rows.map((r) => r.name);
+function names(rows: { name: string }[]) {
+  return rows.map((r) => r.name);
+}
 
 // The Blackguard (Dungeon Master's Guide) needs BAB 6, 5 ranks of Hide, 2 of
 // Knowledge (Religion), Power Attack, Cleave and Improved Sunder. Each case
@@ -230,7 +232,7 @@ async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: s
   return { ctx, eligible, fighterLevel };
 }
 
-const spellNames = async (characterId: string, level: number, where: object = {}) => {
+async function spellNames(characterId: string, level: number, where: object = {}) {
   const ctx = await getSeedCtx();
   return names(
     (
@@ -245,10 +247,11 @@ const spellNames = async (characterId: string, level: number, where: object = {}
       )
     ).items,
   );
-};
+}
 
-const pool = (pools: Record<string, { name: string; allowed: number; available: number }>, name: string) =>
-  Object.values(pools).find((p) => p.name === name);
+function pool(pools: Record<string, { name: string; allowed: number; available: number }>, name: string) {
+  return Object.values(pools).find((p) => p.name === name);
+}
 
 /** A dwarf with a barbarian level, then fighter levels, made in that order. */
 async function setupMulticlass(fighterLevels: number) {
@@ -267,8 +270,9 @@ async function setupMulticlass(fighterLevels: number) {
   return { ctx, characterId, levelIds };
 }
 
-const skillRanks = (ctx: Awaited<ReturnType<typeof getSeedCtx>>, ranks: Record<string, number>) =>
-  picks(ctx, { skills: ranks }).skills;
+function skillRanks(ctx: Awaited<ReturnType<typeof getSeedCtx>>, ranks: Record<string, number>) {
+  return picks(ctx, { skills: ranks }).skills;
+}
 
 describe("LevelsService", () => {
   test("refuses a missing character, another user's, a missing class level, and removing from a character without levels", async () => {

@@ -14,7 +14,9 @@ import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relat
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A character level's key in the index of the class levels the character took. */
-const levelKey = (characterLevelId: string, klassLevelId: string) => `${characterLevelId}:${klassLevelId}`;
+function levelKey(characterLevelId: string, klassLevelId: string) {
+  return `${characterLevelId}:${klassLevelId}`;
+}
 
 /** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain and school slots they bring. */
 export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base: B) {

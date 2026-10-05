@@ -13,8 +13,9 @@ import {
 } from "@/tests/e2e/helpers.ts";
 
 /** Where a customization of `section` is saved. */
-const customizationApi = (section: string) =>
-  new RegExp(`/api/rulesets/[a-f0-9-]+/customization/[^/]+/[^/]+/${section}(?:\\?|$)`);
+function customizationApi(section: string) {
+  return new RegExp(`/api/rulesets/[a-f0-9-]+/customization/[^/]+/[^/]+/${section}(?:\\?|$)`);
+}
 
 test.describe("Customization of a fork", () => {
   test.setTimeout(120_000);

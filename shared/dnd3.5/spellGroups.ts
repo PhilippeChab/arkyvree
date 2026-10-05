@@ -90,8 +90,9 @@ export interface SpellSheet {
   spellTagLists?: Record<string, SpellTagLists>;
 }
 
-const saveOf = (saveName: string | null | undefined, saveEffect: string | null | undefined) =>
-  saveName && saveEffect ? `${saveName} ${saveEffect}` : saveEffect || "None";
+function saveOf(saveName: string | null | undefined, saveEffect: string | null | undefined) {
+  return saveName && saveEffect ? `${saveName} ${saveEffect}` : saveEffect || "None";
+}
 
 /** A spell's tags that show on this list: a domain's on the cleric's, a school's on the wizard's. */
 function tagsFor(sheet: SpellSheet, powerId: string | undefined, aptitudeId: string): SpellRowTag[] | undefined {

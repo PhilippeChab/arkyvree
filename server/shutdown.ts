@@ -3,7 +3,9 @@ import { stopOtel } from "@/server/otel.ts";
 let shuttingDown = false;
 
 /** Whether the process has begun shutting down: a health check answers 503 from then on. */
-export const isShuttingDown = () => shuttingDown;
+export function isShuttingDown() {
+  return shuttingDown;
+}
 
 /**
  * Stops the process cleanly on SIGTERM or SIGINT: `stop` runs once, then OpenTelemetry flushes. A shutdown that

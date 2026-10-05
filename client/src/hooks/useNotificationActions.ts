@@ -53,15 +53,18 @@ const INVITES = {
 // invites are being answered, whichever surface the click came from.
 const ANSWER_INVITE_KEY = ["notifications", "answerInvite"] as const;
 
-const isInviteType = (type: string): type is InviteType => type in INVITES;
+function isInviteType(type: string): type is InviteType {
+  return type in INVITES;
+}
 
 /** A notification's payload: its string fields (ids, names); anything else is left out. */
-const notificationData = (n: NotificationLike): NotificationData =>
-  isRecord(n.data)
+function notificationData(n: NotificationLike): NotificationData {
+  return isRecord(n.data)
     ? Object.fromEntries(
         Object.entries(n.data).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
       )
     : {};
+}
 
 /**
  * What a user can do with a notification, shared by the bell, the dashboard

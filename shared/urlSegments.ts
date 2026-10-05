@@ -17,8 +17,12 @@ const URL_SEGMENTS = { klass_levels: "class-levels", klasses: "classes" } as con
 /** The other way: the entity type each renamed segment names. */
 const ENTITY_TYPES = { "class-levels": "klass_levels", classes: "klasses" } as const;
 
-const isRenamedType = (entityType: string): entityType is RenamedType => Object.hasOwn(URL_SEGMENTS, entityType);
-const isRenamedSegment = (segment: string): segment is RenamedSegment => Object.hasOwn(ENTITY_TYPES, segment);
+function isRenamedType(entityType: string): entityType is RenamedType {
+  return Object.hasOwn(URL_SEGMENTS, entityType);
+}
+function isRenamedSegment(segment: string): segment is RenamedSegment {
+  return Object.hasOwn(ENTITY_TYPES, segment);
+}
 
 /** An entity type's URL segment: what a page's path or an API route names it by. */
 export function getUrlSegment<T extends string>(entityType: T): UrlSegment<T> {

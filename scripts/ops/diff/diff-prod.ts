@@ -40,10 +40,9 @@ const referenceConnectionString = process.env.REFERENCE_DATABASE_URL;
 const emitSql = process.argv.includes("--emit-sql");
 
 /** A pool client's queries, as the content diff runs them. */
-const queryOf =
-  (client: PoolClient): Query =>
-  async (text, params) =>
-    (await client.query(text, params)).rows;
+function queryOf(client: PoolClient): Query {
+  return async (text, params) => (await client.query(text, params)).rows;
+}
 
 /**
  * Prints how the target's content differs from the reference's: for a person, or with `--emit-sql` as the UPDATEs

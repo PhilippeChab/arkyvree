@@ -20,7 +20,9 @@ import {
 type User = Awaited<ReturnType<typeof createTestUser>>;
 
 /** A notification of `type`, from `actor`. */
-const note = (type: string, actor: User) => `${type} from ${actor.user.id}`;
+function note(type: string, actor: User) {
+  return `${type} from ${actor.user.id}`;
+}
 
 /** What `recipient` was notified of. */
 async function inbox(recipient: User) {
@@ -28,7 +30,9 @@ async function inbox(recipient: User) {
   return items.map((n) => `${n.type} from ${n.actorId}`).sort();
 }
 
-const users = (count: number) => Promise.all(Array.from({ length: count }, () => createTestUser()));
+function users(count: number) {
+  return Promise.all(Array.from({ length: count }, () => createTestUser()));
+}
 
 /** A Game Master's campaign with an empty slot, and someone to invite into it. */
 async function setup() {

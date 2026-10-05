@@ -12,7 +12,9 @@ import { uniqueId } from "@/tests/helpers.ts";
 const auth = guestApi.auth;
 const password = "password1234";
 
-const newEmail = (label: string) => `test+${label}+${uniqueId()}@example.com`;
+function newEmail(label: string) {
+  return `test+${label}+${uniqueId()}@example.com`;
+}
 
 async function signUp(email: string) {
   await expectOk(auth["sign-up"].$post({ json: { emailAddress: email, password, passwordConfirmation: password } }));

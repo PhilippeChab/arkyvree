@@ -42,7 +42,9 @@ import {
 } from "@/tests/levelFixtures.ts";
 
 const owner = makeSession();
-const familiarOf = (masterId: string) => Characters.findOne(db, { parentCharacterId: masterId, kind: "familiar" });
+function familiarOf(masterId: string) {
+  return Characters.findOne(db, { parentCharacterId: masterId, kind: "familiar" });
+}
 
 async function build<T extends { build(): Promise<unknown> }>(detailed: T) {
   await detailed.build();

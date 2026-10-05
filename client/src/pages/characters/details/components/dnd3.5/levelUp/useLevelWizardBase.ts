@@ -19,8 +19,11 @@ const EMPTY_PICKS: LevelUpFormData = {
 };
 
 /** Feat or spell picks as the aptitude → ids map the save endpoints take. */
-export const pickIds = (picks: Record<string, { id: string }[]>) =>
-  Object.fromEntries(Object.entries(picks).map(([aptitudeId, items]) => [aptitudeId, items.map((item) => item.id)]));
+export function pickIds(picks: Record<string, { id: string }[]>) {
+  return Object.fromEntries(
+    Object.entries(picks).map(([aptitudeId, items]) => [aptitudeId, items.map((item) => item.id)]),
+  );
+}
 
 /**
  * What the Add Level and Edit Level wizards share: the picks form, the step,

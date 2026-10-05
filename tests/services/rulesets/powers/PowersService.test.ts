@@ -38,8 +38,9 @@ async function linkedAptitudes(powerId: string) {
     .sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
 }
 
-const sorted = (links: { aptitudeId: string; level: number | null }[]) =>
-  [...links].sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
+function sorted(links: { aptitudeId: string; level: number | null }[]) {
+  return [...links].sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
+}
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts,
 // and the spell properties a power generates in GeneratedFeats.test.ts.

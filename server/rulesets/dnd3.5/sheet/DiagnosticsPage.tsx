@@ -25,18 +25,20 @@ const MODIFIER_COLUMNS: DiagnosticColumn[] = [
 ];
 
 /** The diagnostics page's counts above a section's tables. */
-const DiagnosticCounts = ({ counts }: { counts: { label: string; color: string }[] }) => (
-  <View style={{ marginBottom: 10, flexDirection: "row", justifyContent: "space-between" }}>
-    {counts.map(({ label, color }) => (
-      <Text key={label} style={{ fontSize: FONT_SIZE.md, color }}>
-        {label}
-      </Text>
-    ))}
-  </View>
-);
+function DiagnosticCounts({ counts }: { counts: { label: string; color: string }[] }) {
+  return (
+    <View style={{ marginBottom: 10, flexDirection: "row", justifyContent: "space-between" }}>
+      {counts.map(({ label, color }) => (
+        <Text key={label} style={{ fontSize: FONT_SIZE.md, color }}>
+          {label}
+        </Text>
+      ))}
+    </View>
+  );
+}
 
 /** One of the diagnostics page's tables, when it has rows: the first `max`, and how many more there are. */
-const DiagnosticTable = ({
+function DiagnosticTable({
   title,
   columns,
   rows,
@@ -48,7 +50,7 @@ const DiagnosticTable = ({
   rows: (string | null | undefined)[][];
   max?: number;
   noun?: string;
-}) => {
+}) {
   if (rows.length === 0) return null;
   const cellStyle = (column: DiagnosticColumn) => ({
     width: column.width,
@@ -99,9 +101,9 @@ const DiagnosticTable = ({
       </View>
     </View>
   );
-};
+}
 
-const DiagnosticsPage = ({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) => {
+function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.getDetailedCharacterIdentity();
   const requirements = detailedCharacter.getDetailedCharacterRequirements();
   const identityData = identity.getIdentity();
@@ -236,6 +238,6 @@ const DiagnosticsPage = ({ detailedCharacter }: { detailedCharacter: DetailedCha
       </View>
     </Page>
   );
-};
+}
 
 export default DiagnosticsPage;

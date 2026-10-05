@@ -36,8 +36,9 @@ export type SeedContext = {
 };
 
 /** Ids by name. */
-export const idsByName = (rows: { id: string; name: string }[]): Ids =>
-  Object.fromEntries(rows.map((row) => [row.name, row.id]));
+export function idsByName(rows: { id: string; name: string }[]): Ids {
+  return Object.fromEntries(rows.map((row) => [row.name, row.id]));
+}
 
 /** Creates a published system ruleset, the core rules or an extension of `baseId`, and returns its id. */
 export async function createSystemRuleset(db: Db, ruleset: { name: string; description: string }, baseId?: string) {
@@ -69,16 +70,18 @@ export async function coreRulesetId(db: Db, user: string): Promise<string> {
 }
 
 /** The context of a ruleset about to be seeded. */
-export const newSeedContext = (rulesetId: string): SeedContext => ({
-  rulesetId,
-  abilityMap: {},
-  saveMap: {},
-  skillMap: {},
-  aptMap: {},
-  featMap: {},
-  powerMap: {},
-  inheritedPowerMap: {},
-});
+export function newSeedContext(rulesetId: string): SeedContext {
+  return {
+    rulesetId,
+    abilityMap: {},
+    saveMap: {},
+    skillMap: {},
+    aptMap: {},
+    featMap: {},
+    powerMap: {},
+    inheritedPowerMap: {},
+  };
+}
 
 /** The context of a seeded ruleset: the ids of its unarchived rows. */
 export async function loadSeedContext(db: Db, rulesetId: string): Promise<SeedContext> {

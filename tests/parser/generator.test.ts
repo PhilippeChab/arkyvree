@@ -8,11 +8,12 @@ import { generateAll, generateAtomically } from "@/database/packages/dnd35-from-
 const GENERATED = join(import.meta.dirname, "../../database/packages/dnd35-from-parser/generated");
 
 /** The files under `folder`, by their path in it. */
-const filesOf = (folder: string) =>
-  readdirSync(folder, { recursive: true, withFileTypes: true })
+function filesOf(folder: string) {
+  return readdirSync(folder, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
     .map((entry) => relative(folder, join(entry.parentPath, entry.name)))
     .sort();
+}
 
 describe("The generator", () => {
   test("writes, from the committed references, exactly the committed generated files", () => {

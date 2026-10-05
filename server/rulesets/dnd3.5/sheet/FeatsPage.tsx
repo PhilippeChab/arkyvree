@@ -5,7 +5,7 @@ import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.t
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-const FeatsPage = ({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) => {
+function FeatsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.getDetailedCharacterIdentity();
   const classes = detailedCharacter.getDetailedCharacterClasses();
   const identityData = identity.getIdentity();
@@ -91,6 +91,6 @@ const FeatsPage = ({ detailedCharacter }: { detailedCharacter: DetailedCharacter
       </View>
     </Page>
   );
-};
+}
 
 export default FeatsPage;

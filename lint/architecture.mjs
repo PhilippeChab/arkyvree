@@ -152,12 +152,12 @@ const layers = {
     });
   },
 };
-const hasIndex = (dir) => {
+function hasIndex(dir) {
   if (!indexCache.has(dir)) {
     indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
   }
   return indexCache.get(dir);
-};
+}
 
 const folderIndex = {
   meta: { type: "problem" },

@@ -57,8 +57,9 @@ export function collectDiff(ref: IdentifiedRow[], tgt: IdentifiedRow[]): TableDi
   return diff;
 }
 
-export const diffIsEmpty = (d: TableDiff) =>
-  d.onlyInRef.length === 0 && d.onlyInTgt.length === 0 && d.fieldChanges.length === 0;
+export function diffIsEmpty(d: TableDiff) {
+  return d.onlyInRef.length === 0 && d.onlyInTgt.length === 0 && d.fieldChanges.length === 0;
+}
 
 /** A diff, line by line, for a person. */
 export function renderHuman(d: TableDiff): string[] {
