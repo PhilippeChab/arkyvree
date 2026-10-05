@@ -1,0 +1,280 @@
+{
+  "_meta": {
+    "book": "complete-warrior",
+    "scrapedAt": "2026-10-05T16:57:21.941Z",
+    "sourceUrl": "https://dnd.arkalseif.info/spells/domains/index.html",
+    "type": "domain"
+  },
+  "overrides": {
+    "Courage": {
+      "description": "You continuously emit a supernatural aura of bravery that provides you and all allies within 10 feet a +4 morale bonus on saving throws made to resist fear effects. This aura operates whenever you are conscious but ceases to function if you fall unconscious or die.",
+      "spells": [
+        {
+          "level": 1,
+          "name": "Remove Fear"
+        },
+        {
+          "level": 2,
+          "name": "Aid"
+        },
+        {
+          "level": 3,
+          "name": "Cloak of Bravery"
+        },
+        {
+          "level": 4,
+          "name": "Heroism"
+        },
+        {
+          "level": 5,
+          "name": "Valiant Fury"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast"
+        },
+        {
+          "level": 7,
+          "name": "Heroism, Greater"
+        },
+        {
+          "level": 8,
+          "name": "Lion's Roar"
+        },
+        {
+          "level": 9,
+          "name": "Cloak of Bravery, Greater"
+        }
+      ]
+    },
+    "Fate": {
+      "description": "You possess the uncanny dodge ability, which lets you keep your Dexterity bonus to AC (if any) even when flat-footed or when attacked by an unseen opponent. Being immobilized still causes you to lose your Dexterity bonus to AC as normal. If another one of your classes also grants uncanny dodge, you may add your cleric levels to that class's levels when determining whether you qualify for improved uncanny dodge."
+    },
+    "Nobility": {
+      "description": "Once per day as a standard action, you can use a spell-like ability to rally your allies, granting them a +2 morale bonus on saving throws, attack rolls, damage rolls, ability checks, and skill checks. Affected allies must be able to hear you speak for 1 round to receive this benefit. The effect persists for a number of rounds equal to your Charisma bonus."
+    },
+    "Planning": {
+      "description": "You receive Extend Spell as a bonus feat."
+    },
+    "Tyranny": {
+      "description": "The saving throw DC of any compulsion spell you cast increases by +1."
+    }
+  },
+  "raw": [
+    {
+      "description": "You radiate an aura of courage that grants all allies within 10 feet (including yourself) a +4 morale bonus on saving throws against fear effects. This supernatural ability functions while you are conscious, but not if you are unconscious or dead.",
+      "name": "Courage",
+      "page": 114,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Remove Fear"
+        },
+        {
+          "level": 2,
+          "name": "Aid"
+        },
+        {
+          "level": 3,
+          "name": "Cloak of Bravery"
+        },
+        {
+          "level": 3,
+          "name": "Heroism"
+        },
+        {
+          "level": 5,
+          "name": "Valiant Fury"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast"
+        },
+        {
+          "level": 7,
+          "name": "Heroism, Greater"
+        },
+        {
+          "level": 8,
+          "name": "Lion's Roar"
+        },
+        {
+          "level": 9,
+          "name": "Cloak of Bravery, Greater"
+        }
+      ]
+    },
+    {
+      "description": "You gain the uncanny dodge ability, allowing you to retain your Dexterity bonus to AC (if any) even if caught flat-footed or struck by an invisible attacker. However, you still lose your Dexterity bonus to AC if immobilized. If you have another class that gives you uncanny dodge, your cleric levels add to that class's level for determining when you gain the improved uncanny dodge class feature.",
+      "name": "Fate",
+      "page": 114,
+      "spells": [
+        {
+          "level": 1,
+          "name": "True Strike"
+        },
+        {
+          "level": 2,
+          "name": "Augury"
+        },
+        {
+          "level": 3,
+          "name": "Bestow Curse"
+        },
+        {
+          "level": 4,
+          "name": "Status"
+        },
+        {
+          "level": 5,
+          "name": "Mark of Justice"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest"
+        },
+        {
+          "level": 7,
+          "name": "Vision"
+        },
+        {
+          "level": 8,
+          "name": "Mind Blank"
+        },
+        {
+          "level": 9,
+          "name": "Foresight"
+        }
+      ]
+    },
+    {
+      "description": "You have the spell-like ability to inspire allies, giving them a +2 morale bonus on saving throws, attack and damage rolls, ability checks, and skill checks. Allies must be able to hear you speak for 1 round. Using this ability is a standard action. It lasts a number of rounds equal to your Charisma bonus and can be used once per day.",
+      "name": "Nobility",
+      "page": 115,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Divine Favor"
+        },
+        {
+          "level": 2,
+          "name": "Enthrall"
+        },
+        {
+          "level": 3,
+          "name": "Magic Vestment"
+        },
+        {
+          "level": 4,
+          "name": "Discern Lies"
+        },
+        {
+          "level": 5,
+          "name": "Command, Greater"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest"
+        },
+        {
+          "level": 7,
+          "name": "Repulsion"
+        },
+        {
+          "level": 8,
+          "name": "Demand"
+        },
+        {
+          "level": 9,
+          "name": "Storm of Vengeance"
+        }
+      ]
+    },
+    {
+      "description": "You gain Extend Spell as a bonus feat.",
+      "name": "Planning",
+      "page": 115,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Deathwatch"
+        },
+        {
+          "level": 2,
+          "name": "Augury"
+        },
+        {
+          "level": 3,
+          "name": "Clairaudience/Clairvoyance"
+        },
+        {
+          "level": 4,
+          "name": "Status"
+        },
+        {
+          "level": 5,
+          "name": "Detect Scrying"
+        },
+        {
+          "level": 6,
+          "name": "Heroes' Feast"
+        },
+        {
+          "level": 7,
+          "name": "Scrying, Greater"
+        },
+        {
+          "level": 8,
+          "name": "Discern Location"
+        },
+        {
+          "level": 9,
+          "name": "Time Stop"
+        }
+      ]
+    },
+    {
+      "description": "Add +1 to the save DC of any compulsion spell you cast.",
+      "name": "Tyranny",
+      "page": 115,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Command"
+        },
+        {
+          "level": 2,
+          "name": "Enthrall"
+        },
+        {
+          "level": 3,
+          "name": "Discern Lies"
+        },
+        {
+          "level": 4,
+          "name": "Fear"
+        },
+        {
+          "level": 5,
+          "name": "Command, Greater"
+        },
+        {
+          "level": 6,
+          "name": "Geas/Quest"
+        },
+        {
+          "level": 7,
+          "name": "Bigby's Grasping Hand"
+        },
+        {
+          "level": 8,
+          "name": "Charm Monster, Mass"
+        },
+        {
+          "level": 9,
+          "name": "Dominate Monster"
+        }
+      ]
+    }
+  ]
+}

@@ -71,7 +71,7 @@ An **aptitude** is a pool of choices that opens at certain class levels. The lev
 Examples on the SRD ruleset:
 
 - **Fighter Bonus Feat** — picks at Fighter levels 1, 2, 4, 6, 8, 10, …
-- **Cleric Domain** — two picks at Cleric level 1.
+- **Cleric Domain** — two picks at Cleric level 1, from the Player's Handbook's 22 domains and those of the extensions the ruleset subscribes to (Complete Divine's 20, Complete Warrior's 5).
 - **Divine Crusader Domain** — one pick at Divine Crusader level 1 (Complete Divine): her spell list is that domain's spells.
 - **Wizard Spells** — spells added to the spellbook at every level.
 - **Sorcerer Spells Known** — the spontaneous spell list.

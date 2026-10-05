@@ -67,6 +67,37 @@ describe("parser:validate", () => {
     ]);
   });
 
+  test("reports what a domain's list lacks: a spell no parsed book has, a level without a spell, a spell its book puts on it", () => {
+    const issues = issuesOf("complete-divine/domains.json", (overrides) => {
+      overrides.Pestilence = {
+        ...(isRecord(overrides.Pestilence) ? overrides.Pestilence : {}),
+        spells: [
+          { level: 1, name: "Doom" },
+          { level: 2, name: "Summon Swarm" },
+          { level: 3, name: "Contagion" },
+          { level: 4, name: "Poison" },
+          { level: 5, name: "Plague of Rats" },
+          { level: 6, name: "Curse of Lycanthropy" },
+          { level: 7, name: "Scourge" },
+          { level: 8, name: "Create Greatest Undead" },
+        ],
+      };
+    });
+    expect(issues).toEqual([
+      {
+        kind: "not seedable",
+        entityName: "Pestilence",
+        text: "Create Greatest Undead (level 8) is no spell of the core rules or the book",
+      },
+      { kind: "not seedable", entityName: "Pestilence", text: "no spell at level 9" },
+      {
+        kind: "not seedable",
+        entityName: "Pestilence",
+        text: "the book's Otyugh Swarm is Pestilence 9, not on its list",
+      },
+    ]);
+  });
+
   test("finds no issue in the committed references", () => {
     expect(referenceIssues(discoverRefs())).toEqual([]);
   });
@@ -91,7 +122,7 @@ describe("parser:validate", () => {
   test.each([
     "srd/classes/monk.json",
     "srd/feats.json",
-    "domains.json",
+    "srd/domains.json",
     "srd/races.json",
     "srd/items.json",
     "srd/magicItems.json",

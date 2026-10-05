@@ -197,15 +197,14 @@ export type FeatReference = {
 };
 
 export type DomainReference = {
-  _meta: ScrapedMeta<"domain"> & {
-    /** Which domains the page lists ("all"). */
-    filter?: string;
-  };
+  _meta: ScrapedMeta<"domain">;
 
+  /** The book's domains as it prints them: its version of each, the page it's on, its granted power, its spells. */
   raw: {
     name: string;
+    page?: number;
     description: string;
-    spells: { name: string; slug?: string; level: number }[];
+    spells: { name: string; level: number }[];
   }[];
 
   detected: Record<string, DetectedModifiers>;

@@ -165,9 +165,9 @@ export function stripClassSuffix(name: string, className: string): string | unde
 // discoverRefs — used by the generator, sync, validate, overrides
 // ---------------------------------------------------------------------------
 
-type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string; filter?: string } };
+type RefMeta = { _meta: { type: ReferenceType; sourceUrl?: string; book: string } };
 
-/** The books' references: a folder per book, and the files every book shares (domains.json). */
+/** The books' references: a folder per book. */
 export const REFERENCE_DIR = join(import.meta.dirname!, "../reference");
 
 /** The books with references: the folders of REFERENCE_DIR (a symlinked one too), sorted, so generation is the same on every filesystem. */
@@ -181,17 +181,17 @@ export function referenceBooks(): string[] {
     .sort();
 }
 
-/** The reference files under `refDir`: each book's, and the ones every book shares (domains.json). */
+/** The reference files under `refDir`: each book's. */
 export function discoverRefs(
   refDir = REFERENCE_DIR,
-): { path: string; type: ReferenceType; url?: string; book: string; filter?: string }[] {
+): { path: string; type: ReferenceType; url?: string; book: string }[] {
   const files = readdirSync(refDir, { withFileTypes: true, recursive: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
     .map((entry) => join(entry.parentPath, entry.name))
     .sort();
   return files.map((path) => {
     const { _meta }: RefMeta = JSON.parse(readFileSync(path, "utf-8"));
-    return { path, type: _meta.type, url: _meta.sourceUrl, book: _meta.book, filter: _meta.filter };
+    return { path, type: _meta.type, url: _meta.sourceUrl, book: _meta.book };
   });
 }
 
