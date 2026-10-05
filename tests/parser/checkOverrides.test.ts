@@ -89,7 +89,7 @@ describe("A redundant class override", () => {
 
 describe("A class override the generator ignores", () => {
   test("is spells, even a spell list it inherits, for a class without detected spells", () => {
-    for (const spells of [{ perDay: [[1]] }, { inheritsFrom: "Cleric" }]) {
+    for (const spells of [{ perDay: [[1]] }, { inheritsFrom: { classes: ["Cleric"] } }]) {
       const stored = classReference("srd/classes/barbarian.json", (overrides) => {
         overrides.spells = spells;
       });

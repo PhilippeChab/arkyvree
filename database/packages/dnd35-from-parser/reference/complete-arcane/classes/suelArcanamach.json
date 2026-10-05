@@ -5,7 +5,21 @@
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/suel-arcanamach/",
     "type": "class"
   },
-  "overrides": {},
+  "overrides": {
+    "spells": {
+      "inheritsFrom": {
+        "classes": [
+          "Sorcerer"
+        ],
+        "schools": [
+          "Abjuration",
+          "Divination",
+          "Illusion",
+          "Transmutation"
+        ]
+      }
+    }
+  },
   "raw": {
     "bonusSpellAbility": "Charisma",
     "classFeatures": [

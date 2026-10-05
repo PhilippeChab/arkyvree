@@ -65,7 +65,11 @@
       "Deity's Weapon Specialization"
     ],
     "spells": {
-      "inheritsFrom": "Cleric"
+      "inheritsFrom": {
+        "classes": [
+          "Cleric"
+        ]
+      }
     }
   },
   "raw": {

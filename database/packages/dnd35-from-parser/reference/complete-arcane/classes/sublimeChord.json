@@ -5,6 +5,16 @@
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/sublime-chord/",
     "type": "class"
   },
+  "overrides": {
+    "spells": {
+      "inheritsFrom": {
+        "classes": [
+          "Bard",
+          "Sorcerer"
+        ]
+      }
+    }
+  },
   "raw": {
     "bonusSpellAbility": "Charisma",
     "classFeatures": [

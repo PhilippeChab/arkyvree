@@ -38,6 +38,31 @@
       "Weapon and Armor Proficiency": {
         "description": "Holy liberators have proficiency with all simple and martial weapons, every category of armor, and shields."
       }
+    },
+    "spells": {
+      "inheritsFrom": {
+        "additions": {
+          "1": [
+            "Protection from Law"
+          ],
+          "2": [
+            "Heroism"
+          ],
+          "3": [
+            "Magic Circle Against Law"
+          ],
+          "4": [
+            "Dispel Law",
+            "Freedom of Movement"
+          ]
+        },
+        "classes": [
+          "Paladin"
+        ],
+        "excludeDescriptors": [
+          "Lawful"
+        ]
+      }
     }
   },
   "raw": {

@@ -57,6 +57,7 @@ import type {
   ClassReference,
   DomainReference,
   FeatReference,
+  InheritedSpellList,
   ItemReference,
   MagicItemReference,
   RaceReference,
@@ -600,6 +601,24 @@ function regenerateCowFeats(out: Output, book: string) {
   writeGenerated(out, outPath, lines.join("\n"));
 }
 
+/**
+ * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when
+ * it's of the list's schools and has none of its excluded descriptors.
+ */
+function inheritedLevel(
+  spell: SpellReference["raw"][number],
+  levelEntries: { className: string; level: number }[],
+  list: InheritedSpellList,
+): number | undefined {
+  if (list.schools && !list.schools.includes(spell.school)) return undefined;
+  if (spell.descriptors.some((descriptor) => list.excludeDescriptors?.includes(descriptor))) return undefined;
+  for (const className of list.classes) {
+    const entry = levelEntries.find((le) => le.className === className);
+    if (entry) return entry.level;
+  }
+  return undefined;
+}
+
 /** Regenerate cowSpells.ts for a book. Scans all OTHER books' spell references for spells that
  *  have levelEntries matching this book's casting classes. Produces per-class-level entries
  *  so the seed uses the correct level for each class (not the global minimum). */
@@ -609,18 +628,13 @@ function regenerateCowSpells(out: Output, book: string) {
 
   // Build map: className → aptitude name for classes that have spell lists
   const classToApt = new Map<string, string>();
-  // Build map: parentClassName → [{ aptitude, className }] for classes that inherit another class's spell list
-  const inheritedApts = new Map<string, { aptitude: string }[]>();
+  // The lists classes draw on (`inheritsFrom`), each its class's aptitude
+  const inheritedLists: { aptitude: string; list: InheritedSpellList }[] = [];
   for (const { ref } of classes) {
     const spells = classSpells(ref);
     if (spells && ref.raw?.name) {
       classToApt.set(ref.raw.name, `${ref.raw.name} Spells`);
-      if (spells.inheritsFrom) {
-        const aptName = `${ref.raw.name} Spells`;
-        const existing = inheritedApts.get(spells.inheritsFrom) ?? [];
-        existing.push({ aptitude: aptName });
-        inheritedApts.set(spells.inheritsFrom, existing);
-      }
+      if (spells.inheritsFrom) inheritedLists.push({ aptitude: `${ref.raw.name} Spells`, list: spells.inheritsFrom });
     }
   }
 
@@ -635,6 +649,8 @@ function regenerateCowSpells(out: Output, book: string) {
   // Scan ALL other books' spell references
   type CowEntry = { spell: string; aptitudes: { aptitude: string; level: number }[] };
   const entries = new Map<string, CowEntry>();
+  // The spells an inherited list can take: the base book's and this book's
+  const inheritable = new Set<string>();
 
   // Find the base book (the one defining core classes like Wizard).
   // COW only makes sense for spells from the base book, not siblings.
@@ -650,7 +666,8 @@ function regenerateCowSpells(out: Output, book: string) {
       const isFromBase = otherBook === baseBook;
       const matchedApts: { aptitude: string; level: number }[] = [];
       const overrideLe = ref.overrides?.[spell.name]?.levelEntries ?? [];
-      for (const le of [...spell.levelEntries, ...overrideLe]) {
+      const levelEntries = [...spell.levelEntries, ...overrideLe];
+      for (const le of levelEntries) {
         // Direct class matches: only from the base book (not siblings).
         // Same-book spells are seeded by seedPowers directly.
         // The base book itself never needs COW entries (extensions link via seedPowers).
@@ -660,12 +677,13 @@ function regenerateCowSpells(out: Output, book: string) {
             matchedApts.push({ aptitude: aptName, level: le.level });
           }
         }
-        // Inherited spell lists: from the base book + current book only
-        const inherited = inheritedApts.get(le.className);
-        if (inherited && (isSameBook || isFromBase)) {
-          for (const { aptitude } of inherited) {
-            matchedApts.push({ aptitude, level: le.level });
-          }
+      }
+      // Inherited spell lists: from the base book + current book only
+      if (isSameBook || isFromBase) {
+        inheritable.add(spell.name);
+        for (const { aptitude, list } of inheritedLists) {
+          const level = inheritedLevel(spell, levelEntries, list);
+          if (level !== undefined) matchedApts.push({ aptitude, level });
         }
       }
 
@@ -681,6 +699,21 @@ function regenerateCowSpells(out: Output, book: string) {
         }
       } else {
         entries.set(spell.name, { spell: spell.name, aptitudes: matchedApts });
+      }
+    }
+  }
+
+  // A list's additions, at their level there
+  for (const { aptitude, list } of inheritedLists) {
+    for (const [level, names] of Object.entries(list.additions ?? {})) {
+      for (const name of names) {
+        if (!inheritable.has(name)) throw new Error(`${aptitude}: "${name}" is neither a core spell nor the book's`);
+        const entry = entries.get(name) ?? { spell: name, aptitudes: [] };
+        entry.aptitudes = [
+          ...entry.aptitudes.filter((a) => a.aptitude !== aptitude),
+          { aptitude, level: Number(level) },
+        ];
+        entries.set(name, entry);
       }
     }
   }

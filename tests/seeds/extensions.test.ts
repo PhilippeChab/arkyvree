@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  DND35_COMPLETE_ADVENTURER_NAME,
+  DND35_COMPLETE_ARCANE_NAME,
   DND35_COMPLETE_DIVINE_NAME,
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_DMG_NAME,
@@ -88,5 +90,97 @@ describe("The seeded extensions", () => {
     expect(missile.powersAptitudesInRules.map((link) => link.aptitudeId)).toContain(
       divine.aptitude("Force Domain Spells").id,
     );
+  });
+
+  test("give the prestige casters that draw on other classes' lists their spells, by their book's rules", async () => {
+    /** The levels some spells are at on a seeded ruleset's list, by spell (none when it isn't on it). */
+    const levelsOn = async (rulesetName: string, list: string, spells: string[]) => {
+      const { powers } = await seededRows(rulesetName);
+      return Object.fromEntries(
+        spells.map((spell) => [
+          spell,
+          powers
+            .find((power) => power.name === spell)
+            ?.powersAptitudesInRules.find((link) => link.aptitudesInRule.name === list)?.level,
+        ]),
+      );
+    };
+    // The cleric's
+    const core = await seededRows();
+    const clericSpells = core.powers.flatMap((power) =>
+      power.powersAptitudesInRules
+        .filter((link) => link.aptitudesInRule.name === "Cleric Spells")
+        .map((link) => [power.name, link.level] as const),
+    );
+    expect(clericSpells.length).toBeGreaterThan(200);
+    expect(
+      await levelsOn(
+        DND35_COMPLETE_DIVINE_NAME,
+        "Ur-priest Spells",
+        clericSpells.map(([name]) => name),
+      ),
+    ).toEqual(Object.fromEntries(clericSpells));
+    // The bard's and the sorcerer's, at the bard's level where they differ; a wizard's own isn't on it
+    expect(
+      await levelsOn(DND35_COMPLETE_ARCANE_NAME, "Sublime Chord Spells", [
+        "Suggestion",
+        "Charm Monster",
+        "Cure Light Wounds",
+        "Fireball",
+        "Rary's Mnemonic Enhancer",
+      ]),
+    ).toEqual({
+      Suggestion: 2,
+      "Charm Monster": 3,
+      "Cure Light Wounds": 1,
+      Fireball: 3,
+      "Rary's Mnemonic Enhancer": undefined,
+    });
+    // The sorcerer's of some schools: the spellthief's five, the Suel arcanamach's four
+    const schools = ["Charm Person", "Dispel Magic", "Invisibility", "Haste", "Fireball", "Magic Missile"];
+    expect(await levelsOn(DND35_COMPLETE_ADVENTURER_NAME, "Spellthief Spells", schools)).toEqual({
+      "Charm Person": 1,
+      "Dispel Magic": 3,
+      Invisibility: 2,
+      Haste: 3,
+      Fireball: undefined,
+      "Magic Missile": undefined,
+    });
+    expect(await levelsOn(DND35_COMPLETE_ARCANE_NAME, "Suel Arcanamach Spells", schools)).toEqual({
+      "Charm Person": undefined,
+      "Dispel Magic": 3,
+      Invisibility: 2,
+      Haste: 3,
+      Fireball: undefined,
+      "Magic Missile": undefined,
+    });
+    // The ranger's and the paladin's, with their additions; the holy liberator's without the lawful spells
+    expect(
+      await levelsOn(DND35_COMPLETE_DIVINE_NAME, "Consecrated Harrier Spells", [
+        "Entangle",
+        "Animate Rope",
+        "Hold Person",
+        "Mark of Justice",
+      ]),
+    ).toEqual({ Entangle: 1, "Animate Rope": 1, "Hold Person": 2, "Mark of Justice": 4 });
+    expect(
+      await levelsOn(DND35_COMPLETE_DIVINE_NAME, "Holy Liberator Spells", [
+        "Bless",
+        "Protection from Chaos",
+        "Dispel Chaos",
+        "Protection from Law",
+        "Heroism",
+        "Magic Circle Against Law",
+        "Dispel Law",
+      ]),
+    ).toEqual({
+      Bless: 1,
+      "Protection from Chaos": undefined,
+      "Dispel Chaos": undefined,
+      "Protection from Law": 1,
+      Heroism: 2,
+      "Magic Circle Against Law": 3,
+      "Dispel Law": 4,
+    });
   });
 });

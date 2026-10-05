@@ -19,7 +19,11 @@
       }
     },
     "spells": {
-      "inheritsFrom": "Cleric"
+      "inheritsFrom": {
+        "classes": [
+          "Cleric"
+        ]
+      }
     }
   },
   "raw": {
