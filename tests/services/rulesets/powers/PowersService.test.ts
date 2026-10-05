@@ -11,10 +11,13 @@ import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import {
   addCharacterLevel,
+  createSeededTestRuleset,
   createTestCharacter,
   createTestKlassLevel,
   createTestRuleset,
+  createTestUser,
   createTestUserAndRuleset,
+  getSeedCtx,
   insertRows,
 } from "@/tests/helpers.ts";
 
@@ -73,6 +76,35 @@ describe("PowersService", () => {
 
       await PowersService.updatePower(session, ruleset.id, power.id, { name: "Fireball", aptitudes: [] });
       expect(await linkedAptitudes(power.id)).toEqual([]);
+    });
+
+    test("links a spell to the lists it names only: a school's specialist list as a domain's", async () => {
+      // A new evocation spell on the wizard's list is on the evocation specialist's only when it names it
+      const { user, session } = await createTestUser();
+      const fork = await createSeededTestRuleset(user.id);
+      const { aptMap } = await getSeedCtx();
+      const [wizard, specialist] = [aptMap["Wizard Spells"], aptMap["Evocation Specialist Spells"]];
+      const wizardOnly = await PowersService.createPower(session, fork.id, {
+        name: "Test Bolt",
+        school: "Evocation",
+        aptitudes: [{ id: wizard, level: 3 }],
+      });
+      expect(await linkedAptitudes(wizardOnly.id)).toEqual([{ aptitudeId: wizard, level: 3 }]);
+
+      const both = await PowersService.createPower(session, fork.id, {
+        name: "Test Blast",
+        school: "Evocation",
+        aptitudes: [
+          { id: wizard, level: 3 },
+          { id: specialist, level: 3 },
+        ],
+      });
+      expect(await linkedAptitudes(both.id)).toEqual(
+        sorted([
+          { aptitudeId: wizard, level: 3 },
+          { aptitudeId: specialist, level: 3 },
+        ]),
+      );
     });
 
     test("refuses a new power without an aptitude", async () => {

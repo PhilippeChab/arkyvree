@@ -196,10 +196,6 @@ class PowersService {
           await hooks.powers.generateGroupingFeats(tx, rulesetId, sourceChain, groupingValue);
         }
 
-        if (hooks.powers.afterPowerLinked) {
-          await hooks.powers.afterPowerLinked(tx, power.id, rulesetId, sourceChain);
-        }
-
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: power.id,
@@ -249,10 +245,6 @@ class PowersService {
         }
         if (SPELL_FIELDS.some((field) => body[field] !== undefined)) {
           await this.regenerateSpellProperties(tx, hooks, rulesetId, sourceChain, targetId, body);
-        }
-
-        if (hooks.powers.afterPowerLinked) {
-          await hooks.powers.afterPowerLinked(tx, targetId, rulesetId, sourceChain);
         }
 
         await createActivityWithNotifications(tx, {
