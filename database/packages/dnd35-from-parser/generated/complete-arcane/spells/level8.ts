@@ -34,7 +34,7 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   {
     name: "Flensing",
     description: "When you cast this spell, you literally strip the flesh from a corporeal creature's body, inflicting incredible pain and psychological trauma.Each round, the target takes 2d6 points of damage, 1d6 points of Charisma damage, and 1d6 points of Constitution damage.A successful Fortitude save negates the ability damage, reduces the hit point damage by half, and ends the spell.In each round when the target creature is affected, it gets a new save.Flensing has no effect on creatures in gaseous form.Material Component: An onion.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Fortitude partial; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -52,7 +52,7 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
   {
     name: "Ghostform",
     description: "You assume a visible, incorporeal form like that of a manifesting ghost.You have no physical body while in this state.You can be harmed only by other incorporeal creatures, magic weapons or creatures that strike as magic weapons, and spells, spell-like abilities, or supernatural abilities.You are immune to all nonmagical attack forms.Even when hit by spells or magic weapons, you have a 50% chance to ignore any damage from a corporeal source (except for positive energy, negative energy, force effects such as magic missile, or attacks made with ghost touch weapons).Non damaging spell effects affect you normally unless they require corporeal targets to function (such as implosion) or they create a corporeal effect that incorporeal creatures would normally be unaffected by (such as a web or wall of stone spell).As an incorporeal creature, you have no natural armor bonus but have a deflection bonus equal to your Charisma bonus (always at least +1, even if your Charisma score does not normally provide a bonus).You can enter or pass through solid objects while in ghostform, but you must remain adjacent to the object's exterior, and so cannot pass entirely through an object whose space is larger than your own.You can sense the presence of creatures or objects within a square adjacent to your current location, but enemies have total concealment (50% miss chance) from you while you are inside an object.In order to see farther from the object you are in and attack normally, you must emerge.While inside an object, you have total cover, but when you attack a creature outside the object you have cover only, so a creature outside with a readied action could strike at you as you attack.You cannot pass through a force effect.While under the effect of ghostform, your attacks pass through (ignore) natural armor, armor, and shields, although deflection bonuses and force effects (such as mage armor) work normally against you.Your nonmagical attacks have no effect on corporeal targets...",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },

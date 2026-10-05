@@ -4,8 +4,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Augment Familiar",
     description: "When cast on your familiar, this spell bestows a +4 enhancement bonus to its Strength, Dexterity, and Constitution scores, grants it damage reduction 5/magic, and gives it a +2 resistance bonus on all saving throws.",
-    aptitudes: ["Hexblade Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Hexblade Spells": 1, "Sorcerer Spells": 2, "Wizard Spells": 2 },
+    aptitudes: ["Hexblade Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    aptitudeLevels: { "Hexblade Spells": 1, "Sorcerer Spells": 2, "Spellthief Spells": 2, "Sublime Chord Spells": 2, "Suel Arcanamach Spells": 2, "Wizard Spells": 2 },
     savingThrow: "Fortitude negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -21,7 +21,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Phantom Threat",
     description: "You implant a false perception in the target's mind that it is beset by more opponents than are actually present. The subject does not see or interact with these illusory foes and does not waste attacks on them, but it is treated as flanked regardless of whether any other creatures actually threaten it. No amount of persuasion from others can overcome this effect - only a successful saving throw at the time of casting can prevent it.",
-    aptitudes: ["Bard Spells", "Hexblade Spells"],
+    aptitudes: ["Bard Spells", "Hexblade Spells", "Sublime Chord Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },

@@ -34,6 +34,7 @@ import type {
   BonusFeatList,
   ClassReference,
   DomainReference,
+  InheritedSpellList,
   ItemReference,
   MagicItemCategory,
   MagicItemReference,
@@ -316,6 +317,36 @@ export function classModifiers(ref: ClassReference): (ModifierSeed & { level: nu
 export function classSpells(ref: ClassReference) {
   const { spells } = ref.mapping;
   return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
+}
+
+/**
+ * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when
+ * it's of the list's schools and has none of its excluded descriptors.
+ */
+export function inheritedLevel(
+  spell: Pick<SpellReference["raw"][number], "school" | "descriptors">,
+  levelEntries: { className: string; level: number }[],
+  list: InheritedSpellList,
+): number | undefined {
+  if (list.schools && !list.schools.includes(spell.school)) return undefined;
+  if (spell.descriptors.some((descriptor) => list.excludeDescriptors?.includes(descriptor))) return undefined;
+  for (const className of list.classes) {
+    const entry = levelEntries.find((le) => le.className === className);
+    if (entry) return entry.level;
+  }
+  return undefined;
+}
+
+/** The lists a book's classes draw on others' lists for (`inheritsFrom`): each class's own, or each of its `lists`. */
+export function inheritedLists(book: string): { aptitude: string; list: InheritedSpellList }[] {
+  const lists: { aptitude: string; list: InheritedSpellList }[] = [];
+  for (const { ref } of classReferences(book)) {
+    const spells = classSpells(ref);
+    if (!spells || !ref.raw?.name || ref.overrides?.skip) continue;
+    if (spells.inheritsFrom) lists.push({ aptitude: `${ref.raw.name} Spells`, list: spells.inheritsFrom });
+    for (const list of spells.lists ?? []) lists.push({ aptitude: list.name, list: list.inheritsFrom });
+  }
+  return lists;
 }
 
 /** The spell lists a class's slots go to (`spells.lists`), or its own, "<Class> Spells": none for a class without slots. */
@@ -895,7 +926,13 @@ function normalizeSpellText(text: string): string {
 
 export type SpellSeedWithLevel = PowerSeed & { level: number };
 
-export function buildSpellSeeds(ref: SpellReference, _book?: string): { spells: SpellSeedWithLevel[] } {
+export function buildSpellSeeds(ref: SpellReference, book?: string): { spells: SpellSeedWithLevel[] } {
+  // The lists other books' classes draw on others' lists for (`inheritsFrom`), which an extension's spell can be on:
+  // the book seeds its own copy of each that takes one, which a ruleset merges with that book's when it takes both, as
+  // it does a class list the spell's level line names. The core rules' spells reach them through each book's copies.
+  const othersInherited =
+    book && book !== "srd" ? referenceBooks().flatMap((other) => (other === book ? [] : inheritedLists(other))) : [];
+
   // Build name lookup (case-insensitive) for base spell resolution
   const rawByName = new Map<string, SpellReference["raw"][number]>();
   for (const entry of ref.raw) {
@@ -1005,6 +1042,14 @@ export function buildSpellSeeds(ref: SpellReference, _book?: string): { spells: 
           minLevel = Math.min(minLevel, le.level);
         }
       }
+    }
+
+    for (const { aptitude, list } of othersInherited) {
+      if (aptitudes.has(aptitude)) continue;
+      const level = inheritedLevel(entry, entry.levelEntries, list);
+      if (level === undefined) continue;
+      aptitudes.add(aptitude);
+      aptitudeLevels[aptitude] = level;
     }
 
     // Fallback: if no mapped entries found, use the lowest level from any entry

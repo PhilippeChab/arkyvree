@@ -21,7 +21,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Body of the Sun",
     description: "Drawing on solar energy, you cause your body to radiate fire in a 5-foot emanation. This light illuminates the surrounding area and deals 1d4+1 points of fire damage (Reflex save for half) to any creature it contacts, except you.",
-    aptitudes: ["Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Druid Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -178,7 +178,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Scent",
     description: "You grant the target creature a powerful sense of smell equivalent to the scent special ability. This enables detection of approaching enemies, tracking by scent, and identification of familiar odors (much as humans recognize familiar sights). The creature can detect opponents within 30 feet by smell; the range increases to 60 feet if the opponent is upwind and drops to 15 feet if downwind. Strong odors (smoke, rotting garbage) double the detection range, and overpowering scents (skunk musk, troglodyte stench) triple it. Detection reveals the presence of a scent somewhere within range but not the exact location. A partial action can determine the scent's direction, and moving within 5 feet pinpoints the source. A creature with scent can follow tracks by smell using a Wisdom check. A fresh trail has a base DC of 10 regardless of surface. The DC increases by 2 for each hour the trail has gone cold, and otherwise follows the rules for the Track feat. Scent-based tracking ignores surface conditions and poor visibility. Material Component: A pinch of mustard and pepper, plus a drop of sweat.",
-    aptitudes: ["Druid Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Druid Spells", "Ranger Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -212,7 +212,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Wave of Grief",
     description: "All creatures within the cone when cast are overwhelmed by sorrow and grief, suffering a -3 morale penalty on all attack rolls, saving throws, ability checks, and skill checks. Material Component: Three tears.",
-    aptitudes: ["Bard Spells", "Blackguard Spells", "Cleric Spells"],
+    aptitudes: ["Bard Spells", "Blackguard Spells", "Cleric Spells", "Sublime Chord Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Enchantment" },

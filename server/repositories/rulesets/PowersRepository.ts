@@ -122,7 +122,8 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
           rulesetCondition,
           isNull(powersInRules.deletedAt),
           isNull(powersInRules.campaignId),
-          eq(powersAptitudesInRules.aptitudeId, aptitudeId),
+          // A list's copies too: books seed their own copy of a list their spells are on, which a ruleset merges
+          this.idMatches(powersAptitudesInRules.aptitudeId, aptitudeId),
           searchCondition,
           this.excludeIds(excludePowerIds),
           this.excludeIds(siblingLoserIds),
@@ -153,7 +154,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
             .from(powersAptitudesInRules)
             .where(
               and(
-                eq(powersAptitudesInRules.aptitudeId, where.aptitudeId),
+                this.idMatches(powersAptitudesInRules.aptitudeId, where.aptitudeId),
                 where.level != null ? eq(powersAptitudesInRules.level, where.level) : undefined,
               ),
             ),

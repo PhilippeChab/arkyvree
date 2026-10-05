@@ -260,7 +260,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Telepathic Bond, Lesser",
     description: "You establish a telepathic link with one willing creature that has an Intelligence of 6 or higher. Communication through the bond transcends language barriers. The bond confers no special power or influence over the subject. Once formed, the link functions at any distance on the same plane.",
-    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -346,8 +346,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Wrack",
     description: "The targeted humanoid is seized by such intense agony that it doubles over and collapses. Its face and hands blister and weep fluid while its eyes cloud with blood, causing blindness. For the duration, the subject is helpless and unable to take actions. Even after the spell ends, the subject remains visibly shaken, suffering a -2 penalty on attack rolls, saves, and checks for 3d10 minutes. Sight returns when the spell's duration expires.",
-    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Cleric Spells": 3, "Sorcerer Spells": 4, "Wizard Spells": 4 },
+    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Sublime Chord Spells", "Wizard Spells"],
+    aptitudeLevels: { "Cleric Spells": 3, "Sorcerer Spells": 4, "Sublime Chord Spells": 4, "Wizard Spells": 4 },
     savingThrow: "Fortitude negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },

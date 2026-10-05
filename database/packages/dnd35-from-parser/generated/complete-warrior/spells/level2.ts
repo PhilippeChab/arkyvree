@@ -4,8 +4,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Cloak of Bravery",
     description: "You and every ally within the emanation receive a morale bonus on saving throws against fear effects. This bonus equals your caster level, up to a maximum of +10 at caster level 10th.",
-    aptitudes: ["Cleric Spells", "Paladin Spells"],
-    aptitudeLevels: { "Cleric Spells": 3, "Paladin Spells": 2 },
+    aptitudes: ["Cleric Spells", "Favored Soul Spells", "Holy Liberator Spells", "Paladin Spells", "Pious Templar Spells", "Shugenja Spells", "Ur-priest Spells"],
+    aptitudeLevels: { "Cleric Spells": 3, "Favored Soul Spells": 3, "Holy Liberator Spells": 2, "Paladin Spells": 2, "Pious Templar Spells": 2, "Shugenja Spells": 3, "Ur-priest Spells": 3 },
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },

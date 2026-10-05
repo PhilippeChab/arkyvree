@@ -4,7 +4,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Animate Fire",
     description: "As animate wood, but you can animate a fire no larger than the maximum volume.Animated fire has the fire subtype and the burn special attack of a fire elemental, dealing bludgeoning damage plus fire damage on a successful slam attack and possibly setting opponents on fire.Fire animated by this spell has hardness 0.Material Component: A handful of charcoal, sulfur, and soda ash.",
-    aptitudes: ["Druid Spells"],
+    aptitudes: ["Druid Spells", "Spirit Shaman Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -39,7 +39,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Blades of Fire",
     description: "Flames sheathe your melee weapons, harming neither you nor the weapons but possibly burning your opponents.Your melee weapons each deal an extra 1d6 points of fire damage.This damage stacks with any energy damage your weapons already deal.",
-    aptitudes: ["Ranger Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
+    aptitudes: ["Consecrated Harrier Spells", "Ranger Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
@@ -56,7 +56,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Chameleon",
     description: "This spell alters the coloration of the recipient's body and clothing so as to blend in with the surrounding background, granting the creature a +10 circumstance bonus on any Hide checks.In areas where the background changes gradually (such as stepping from forest to green field), the coloration shifts quickly enough to grant the bonus while moving at up to one-half normal speed.When the background changes abruptly (from forest to stone wall, for example), the creature loses thecircumstance bonus for 1 round while the coloration change takes effect.Material Component: The shed skin of a small lizard.",
-    aptitudes: ["Druid Spells", "Wu Jen Spells"],
+    aptitudes: ["Druid Spells", "Spirit Shaman Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -74,7 +74,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Earthen Grasp",
     description: "You bring forth from the ground an arm made of dense, compacted earth or soil that can grapple your foes.You can cause the arm to rise out of only earth, mud, grass, or sand, and the spell fails if you attempt to cast it in an area with the wrong materials (including stone).Treated the arm as a Medium creature, with a base attack bonus equal to your caster level and a Strength score of 14 +2 per three caster levels (16 at 3rd level, 18 at 6th level, and so on).The arm doesn't move from the square it appears in, but can make one grapple attempt per round against any creature inits square or any adjacent square, provoking attacks of opportunity as normal.If the arm can target multiple creatures, the caster chooses one.If the caster is unable to choose a target, the arm attacks a random creature within reach (possibly including the caster's allies).Each round that it successfully pins a target, the hand deals 1d6 points of lethal damage (plus its Strength modifier).The earthen arm has AC 15, hardness 4, and 3 hit points per caster level.If reduced to 0 or fewer hit points, it crumbles to dust.Material Component: A miniature hand sculpted from clay.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -215,7 +215,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Phantasmal Assailants",
     description: "You create phantasmal images of nightmare creatures in the target's mind, visible only as shadowy shapes to you and unseen by all others. If the target succeeds on an initial Will save, it recognizes that the images are not real, and the spell fails. If not, the phantasms strike the target, dealing 4 points of Wisdom damage and 4 points of Dexterity damage (2 points each on a successful Fortitude save). If the subject of a phantasmal assailant succeeds in disbelieving and is wearing a helm of telepathy, the spell can be turned back upon you with the same effect.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "Will disbelief (if interacted with), then Fortitude half; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -251,7 +251,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Repair Moderate Damage",
     description: "As repair light damage, except you repair 2d8 points of damage +1 point per caster level (maximum +10) to a construct.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -263,7 +263,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Swim",
     description: "This spell gives the recipient a swim speed like any aquatic creature (though not the ability to breathe water or hold one's breath beyond normal limits).So long as the creature isn't carrying more than a light load, it can swim at its normal speed without making Swim checks.It also gains a +8 competence bonus on any Swim checks to perform special actions or avoid hazards, though it still takes the normal penalty for weight carried (-1 per 5 pounds).The recipient can choose to take 10 on swim checks, even if rushed or threatened, and can use the run action while swimming if it swims in a straight line.If the creature is carrying more than a light load, it must make Swim checks to move (taking the normal penalty for weight carried), but all other benefits and bonuses of the spell still apply.Material Component: A goldfish scale.",
-    aptitudes: ["Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Druid Spells", "Sorcerer Spells", "Spellthief Spells", "Spirit Shaman Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -281,7 +281,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Wall of Gloom",
     description: "You create a barrier of ominous shadow that obscures vision and deters passage.Creatures in squares adjacent to the wall have concealment against attacks from the other side, while creatures more than 1 square away have total concealment.Although the wall is not substantial, a creature with 6 or fewer Hit Dice must succeed on a Will save or be halted at its edge, ending its move action (though a creatures canmove away from the wall or attempt to move through again if it has a second move action available).A creature can attempt to pass the wall any number of times, but each previous failure imposes a cumulative -1 penalty on its Will save.Wall of gloom counters or dispels any light spell of equal or lower level.Material Component: A bit of fleece from a black sheep.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -302,7 +302,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Whirling Blade",
     description: "As you cast this spell, you hurl a single slashing weapon at your foes, magically striking at all enemies along a line to the extent of the spell's range.You make a normal melee attack, just as if you attacked with the weapon in melee, against each foe in the weapon's path, but you can choose to substitute your Intelligence or Charisma modifier (as appropriate for your spellcasting class) for your Strength modifier on the weapon's attack rolls and damage rolls.Even if your base attack bonus would normally give you multiple attack rolls, a whirling blade gets only one attack (at your best attack bonus) against each target.The weapon deals damage just as if you had swung it in melee, including any bonuses you might have from ability scores or feats.No matter how many targets your weapon hits or misses, it instantly and unerringly returns to your hand after attempting the last of its attacks.Focus: A slashing melee weapon that the caster hurls.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Spellthief Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },

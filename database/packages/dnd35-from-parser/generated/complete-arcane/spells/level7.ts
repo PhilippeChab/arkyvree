@@ -73,7 +73,7 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   {
     name: "Otiluke's Greater Dispelling Screen",
     description: "As Otiluke's dispelling screen, except that the maximum caster level bonus on the dispel check is +20.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -120,7 +120,7 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   {
     name: "Withering Palm",
     description: "Your successful melee touch attack deals 1 point of Strength damage and 1 point of Constitution damage per two caster levels to the target (maximum of 15 points each).If you score a critical hit, the subject takes ability drain instead.",
-    aptitudes: ["Cleric Spells", "Wu Jen Spells"],
+    aptitudes: ["Cleric Spells", "Favored Soul Spells", "Shugenja Spells", "Ur-priest Spells", "Wu Jen Spells"],
     savingThrow: "Fortitude negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },

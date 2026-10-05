@@ -3,6 +3,8 @@ import { describe, expect, test } from "bun:test";
 import type { InferInsertModel } from "drizzle-orm";
 
 import {
+  DND35_COMPLETE_ADVENTURER_NAME,
+  DND35_COMPLETE_ARCANE_NAME,
   DND35_COMPLETE_DIVINE_NAME,
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_DMG_NAME,
@@ -497,6 +499,30 @@ describe("unsubscribing from an extension", () => {
 });
 
 describe("an extension's content in a fork", () => {
+  // A book puts its spells on its own copy of another book's list, which the fork merges with that book's
+  test.each([
+    ["the DMG's assassin list", DND35_DMG_NAME, "Assassin Spells", "Critical Strike"],
+    [
+      "Complete Arcane's sublime chord list, the bard's and the sorcerer's",
+      DND35_COMPLETE_ARCANE_NAME,
+      "Sublime Chord Spells",
+      "Fly, Swift",
+    ],
+  ])("lists Complete Adventurer's spells on %s once the fork takes both books", async (_, book, list, spell) => {
+    const { session } = await createTestUser();
+    const draft = await forkBase(session);
+    const [owner, adventurer] = [await seededRuleset(book), await seededRuleset(DND35_COMPLETE_ADVENTURER_NAME)];
+    const aptitude = (await Aptitudes.findOne(db, { name: list, rulesetId: owner.id }))!;
+    const spellsOnList = async () =>
+      (await PowersService.getPowers(draft.id, { aptitudeId: aptitude.id }, { limit: 1000, page: 1 })).items.map(
+        (power) => power.name,
+      );
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [owner.id]);
+    expect(await spellsOnList()).not.toContain(spell);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [adventurer.id]);
+    expect(await spellsOnList()).toContain(spell);
+  });
+
   test("is edited and deleted on the fork's copies, the extension's rows untouched", async () => {
     const { session, extension, draft } = await setupFork();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);

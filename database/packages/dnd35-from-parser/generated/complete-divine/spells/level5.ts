@@ -20,7 +20,7 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Blink, Improved",
     description: "Similar to the standard blink spell, you rapidly shift between the Material Plane and the Ethereal Plane. However, you can control the timing of each transition, making the effect far more advantageous. While blinking in this manner: Physical attacks against you have a 50% miss chance (Blind-Fight does not help the attacker). Attacks that can strike invisible or incorporeal creatures reduce this to 20%. Attackers who can both see and hit ethereal creatures suffer no miss chance. Your own attacks are never disrupted. Targeted spells have a 50% chance of failing against you unless the caster can target invisible or ethereal creatures. Your own spells function without interference. You take only half damage from area effects (full damage if the area extends onto the Ethereal Plane). You strike as an invisible creature (+2 attack bonus), denying your target its Dexterity bonus to AC. Falling damage is halved since gravity affects you only while material. You can ready an action to blink away from a specific attack, causing it to miss automatically unless it also affects ethereal targets. Your movement speed is reduced to three-quarters normal. You can pass through solid objects but cannot see through them. If you end your move inside a solid object, you materialize and are shunted to the nearest open space, taking 1d6 damage per 5 feet traveled this way. Because you spend roughly half your time ethereal, you can perceive and attack ethereal creatures, interacting with them much as you do with material ones (their attacks also have a 50% miss chance against you).",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -85,7 +85,7 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Dragon Breath",
     description: "You gain the ability to exhale a gout of energy mimicking a dragon's breath weapon as a standard action. After using the breath attack, you must wait 1d4 rounds before using it again. When casting, you select which true dragon's breath to emulate. Choosing a chromatic dragon gives the spell the evil descriptor; choosing a metallic dragon gives it the good descriptor.",
-    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Sublime Chord Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Evocation" },
@@ -208,8 +208,8 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
     name: "Subvert Planar Essence",
     description: "Outsiders within the emanation find their connection to their home plane disrupted. Those who fail their saves have both their damage reduction and spell resistance reduced by 10 points. For example, a barbed devil would lose its damage reduction entirely and have its SR reduced to 13, while a pit fiend would have DR 5/good and silver and SR 22. Outsiders make Fortitude saves and check SR when first entering the area. Those who succeed are thereafter unaffected by that casting and can enter and exit freely. Those who fail are affected as long as they remain within the area and are automatically affected again if they leave and re-enter. Material Component: A rough statuette carved from adamantine ore (100 gp).",
-    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Cleric Spells": 5, "Sorcerer Spells": 6, "Wizard Spells": 6 },
+    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Spellthief Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    aptitudeLevels: { "Cleric Spells": 5, "Sorcerer Spells": 6, "Spellthief Spells": 6, "Sublime Chord Spells": 6, "Suel Arcanamach Spells": 6, "Wizard Spells": 6 },
     savingThrow: "Fortitude negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },

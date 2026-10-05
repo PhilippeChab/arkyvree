@@ -24,6 +24,7 @@ export const ALL_APTITUDES: string[] = [
   "Loremaster Class Feature",
   "Loremaster Secret",
   "Mystic Theurge Class Feature",
+  "Pious Templar Blackguard Spells",
   "Shadowdancer Class Feature",
   "Thaumaturgist Class Feature",
 ];
