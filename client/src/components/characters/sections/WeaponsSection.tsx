@@ -90,7 +90,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
                         <TableCell align="center">
                           {row.attack.length ? row.attack.map(formatSigned).join("/") : "+0"}
                         </TableCell>
-                        <TableCell align="center">{weapon.damage?.total || "—"}</TableCell>
+                        <TableCell align="center">{row.damage ?? (weapon.damage?.total || "—")}</TableCell>
                         <TableCell align="center">
                           {weapon.damage?.critical
                             ? `${

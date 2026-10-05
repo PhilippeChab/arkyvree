@@ -412,6 +412,9 @@ export const FIGHTER_FEATS: FeatSeed[] = [
       gte("abilities.strength.total", 13),
       eq("feats.twoweaponfighting.possessed"),
     ],
+    properties: [
+      { type: "FEAT_OVERSIZED_TWO_WEAPON_FIGHTING", value: "true" },
+    ],
   },
   {
     name: "Power Throw",

@@ -9,6 +9,7 @@ import {
   ARMOR_TYPE,
   DAMAGE_TYPE,
   FEAT_FAMILY,
+  FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
   FEAT_WEAPON_FINESSE,
   ITEM_HAS_CHARGES,
   ITEM_MADE_OF,
@@ -46,6 +47,7 @@ import {
   WEAPON_BASE_DAMAGE,
   WEAPON_CRITICAL_MULTIPLIER,
   WEAPON_CRITICAL_RANGE,
+  WEAPON_DOUBLE_DAMAGE,
   WEAPON_FAMILY,
   WEAPON_FINESSABLE,
   WEAPON_MIGHTY,
@@ -174,6 +176,7 @@ const ITEM_PROPERTY_TYPES: Record<string, string> = {
   [WEAPON_STRENGTH_DAMAGE]: "Strength to damage: Slot (the hand's share; default), Rating (bows: up to Mighty), None",
   [WEAPON_MIGHTY]:
     "A composite bow's Strength rating: the most Strength bonus it adds to damage; below it, -2 to attack",
+  [WEAPON_DOUBLE_DAMAGE]: "A double weapon's other end's damage dice: in two hands, it fights as two weapons",
   [WEAPON_ONE_HAND_TRAINING]:
     "Whether it's too large for one hand without training (a bastard sword): there, only its proficiency lets it be used",
   [WEAPON_ONE_HANDED_PENALTY]:
@@ -233,6 +236,8 @@ const FEAT_PROPERTY_TYPES: Record<string, string> = {
   [FEAT_FAMILY]: "Feat family grouping (Weapon Focus, Spell Focus, etc.)",
   [FEAT_WEAPON_FINESSE]:
     "Whether the feat lets its owner attack with Dexterity with a finessable weapon (Weapon Finesse)",
+  [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING]:
+    "Whether the feat makes a one-handed off-hand weapon count as light in two-weapon fighting (Oversized Two-Weapon Fighting)",
   [WIZARD_PROHIBITED_SCHOOL]: "School of magic prohibited by wizard specialization",
 };
 
@@ -307,6 +312,7 @@ const PROPERTY_VALUES: Record<string, string[]> = {
   [WEAPON_RANGED]: ["true", "false"],
   [WEAPON_STRENGTH_DAMAGE]: ["Slot", "Rating", "None"],
   [FEAT_WEAPON_FINESSE]: ["true", "false"],
+  [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING]: ["true", "false"],
   [WEAPON_ONE_HAND_TRAINING]: ["true", "false"],
   [WEAPON_TYPE]: [...WEAPON_TYPE_NAMES],
   [KLASS_CASTER_TYPE]: ["Arcane", "Divine"],
