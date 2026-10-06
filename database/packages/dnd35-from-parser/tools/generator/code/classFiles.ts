@@ -17,11 +17,10 @@ import {
 import {
   formatStringArray,
   listField,
-  MAX_CLASS_DESC,
   quote,
   toConstName,
-  truncateDesc,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -175,7 +174,7 @@ export function generateClassSeed(ref: ClassReference): string {
   const { lines } = file;
   lines.push(`export const ${constName}: ClassSeed = {`);
   lines.push(`  name: ${quote(raw.name)},`);
-  lines.push(`  description: ${quote(truncateDesc(overrides.description ?? raw.description, MAX_CLASS_DESC))},`);
+  lines.push(`  description: ${quote(normalizeDescription(overrides.description ?? raw.description))},`);
   lines.push(`  hd: ${detected.hd}, levels: ${detected.levels}, skillPoints: ${detected.skillPoints},`);
   lines.push(`  bab: ${quote(bab)},`);
   lines.push(

@@ -6,7 +6,7 @@ import { inheritedLevel, inheritedLists } from "@/database/packages/dnd35-from-p
 import { REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { classReferences } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { normalizeDescription, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { normalizeDescription, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { PowerSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 import {

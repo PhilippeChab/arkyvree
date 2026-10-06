@@ -1,9 +1,5 @@
 /** Values written as code: a string as a literal, a list an item per line, a name as a constant's. */
 
-import { MAX_DESC, normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text.ts";
-
-export const MAX_CLASS_DESC = MAX_DESC;
-
 function escapeString(s: string): string {
   // String(): a hand-typed reference can hold a number or a boolean where the seed has text
   return JSON.stringify(String(s)).slice(1, -1);
@@ -45,8 +41,4 @@ export function toConstName(name: string): string {
     .replace(/[^a-zA-Z0-9]+/g, "_")
     .replace(/^_|_$/g, "")
     .toUpperCase();
-}
-
-export function truncateDesc(text: string, maxLen = MAX_DESC): string {
-  return normalizeDescription(text, maxLen);
 }

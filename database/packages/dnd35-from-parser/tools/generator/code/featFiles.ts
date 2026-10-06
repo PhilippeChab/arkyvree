@@ -11,11 +11,11 @@ import {
   FeatsFile,
   type TemplateFamily,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/FeatsFile.ts";
-import { truncateDesc } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { autoCompanionGrantModifiers } from "@/database/packages/dnd35-from-parser/tools/grants.ts";
 import { normalizeName, toCamelCase } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
@@ -79,7 +79,7 @@ function referenceFeats(ref: FeatReference) {
     byType.set(entry.featType, feats);
     feats.push({
       name,
-      description: truncateDesc(mapped.description ?? entry.benefit),
+      description: normalizeDescription(mapped.description ?? entry.benefit),
       ...(mapped.stackable ? { stackable: true } : {}),
       ...(mapped.selectable === false ? { selectable: false } : {}),
       aptitudes: mapped.aptitudes ?? [],

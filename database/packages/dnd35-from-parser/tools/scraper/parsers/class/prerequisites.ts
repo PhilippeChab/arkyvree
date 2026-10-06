@@ -4,7 +4,7 @@ import type * as cheerio from "cheerio";
 
 import { findSectionHeader } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
 import { sectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 function extractPrerequisiteText($: cheerio.CheerioAPI): string {

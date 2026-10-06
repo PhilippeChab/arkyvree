@@ -3,7 +3,7 @@
  * names.
  */
 
-import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
 
 const COMPANION_GRANT_PATTERNS: {

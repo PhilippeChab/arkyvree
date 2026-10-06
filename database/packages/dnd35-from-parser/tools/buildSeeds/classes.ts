@@ -16,7 +16,7 @@ import {
   stripClassSuffix,
 } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { classReferences } from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import {
   type AptitudePick,
   type BonusFeatList,

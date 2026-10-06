@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
 import { sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import type {
   MagicItemCategory,
   MagicItemReference,

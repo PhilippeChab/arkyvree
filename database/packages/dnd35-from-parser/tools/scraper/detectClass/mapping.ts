@@ -15,7 +15,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/features.ts";
 import { detectWAPModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/proficiencies.ts";
 import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { type NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { stripSeparators } from "@/shared/text.ts";

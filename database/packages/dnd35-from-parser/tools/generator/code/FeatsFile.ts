@@ -9,9 +9,8 @@ import {
   escapeTemplate,
   listField,
   quote,
-  truncateDesc,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import { expandTemplateDescription } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { expandTemplateDescription, normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import { feat } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
@@ -230,7 +229,7 @@ export class FeatsFile extends CodeFile {
   /** A template's description, each mention of the chosen item made the item (`variable`). */
   private templateDescription({ description, type }: TemplateFamily, variable: string): string {
     const ITEM = "\u0000";
-    return expandTemplateDescription(truncateDesc(description), type, ITEM)
+    return expandTemplateDescription(normalizeDescription(description), type, ITEM)
       .split(ITEM)
       .map(escapeTemplate)
       .join(`\${${variable}}`);

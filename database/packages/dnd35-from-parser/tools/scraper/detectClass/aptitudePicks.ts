@@ -6,7 +6,7 @@ import {
   buildFeatureMap,
   isScalingFeature,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/features.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { type AptitudePick, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
 import { stripSeparators } from "@/shared/text.ts";

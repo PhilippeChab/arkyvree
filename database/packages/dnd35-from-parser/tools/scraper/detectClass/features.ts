@@ -1,6 +1,6 @@
 /** Groups a class's features: their names, occurrences, sub-options and ordinal variants. */
 
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 /**

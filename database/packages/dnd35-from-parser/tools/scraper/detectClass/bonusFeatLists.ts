@@ -6,7 +6,7 @@ import {
   buildFeatureMap,
   parsePoolSubOptions,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/features.ts";
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { type BonusFeatList, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 /** A bonus feat list: "from the following list: Feat1, Feat2, ...". */

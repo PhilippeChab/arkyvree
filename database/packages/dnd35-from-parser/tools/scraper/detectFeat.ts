@@ -16,7 +16,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
 import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
 import { anySkillRequirement, SAVE_MAP, skillSlug } from "@/database/packages/dnd35-from-parser/tools/targets.ts";
-import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/text.ts";
+import { NUMBER_WORDS } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
