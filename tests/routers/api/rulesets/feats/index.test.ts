@@ -2,24 +2,15 @@ import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededForkWithAptitude, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const feats = api.api.rulesets[":id"].feats;
 const feat = feats[":featId"];
 
-/** A seeded fork with a new aptitude for its feats. */
-async function setup() {
-  const { id } = await createSeededTestRuleset(SEED_USER_ID);
-  const aptitude = await expectOk(
-    api.api.rulesets[":id"].aptitudes.$post({ param: { id }, json: { name: "Feat Aptitude" } }),
-  );
-  return { id, aptitudeId: aptitude.id };
-}
-
 describe("rulesets feats", () => {
   test("creates, reads, lists, updates and deletes a feat", async () => {
-    const { id, aptitudeId } = await setup();
+    const { id, aptitudeId } = await createSeededForkWithAptitude();
 
     const created = await expectOk(
       feats.$post({
@@ -60,7 +51,7 @@ describe("rulesets feats", () => {
   });
 
   test("rejects a feat without a name or an aptitude", async () => {
-    const { id, aptitudeId } = await setup();
+    const { id, aptitudeId } = await createSeededForkWithAptitude();
     for (const json of [
       { name: "", aptitudeIds: [aptitudeId] },
       { name: "Feat", aptitudeIds: [] },
@@ -71,7 +62,7 @@ describe("rulesets feats", () => {
   });
 
   test("returns 404 for a missing ruleset or feat", async () => {
-    const { id } = await setup();
+    const { id } = await createSeededForkWithAptitude();
     await expectStatus(feats.$get({ param: { id: NIL_UUID }, query: {} }), 404);
     const param = { id, featId: NIL_UUID };
     await expectStatus(feat.$get({ param }), 404);
@@ -80,7 +71,7 @@ describe("rulesets feats", () => {
   });
 
   test("refuses a feat in an aptitude that spells already use", async () => {
-    const { id, aptitudeId } = await setup();
+    const { id, aptitudeId } = await createSeededForkWithAptitude();
     await expectOk(
       api.api.rulesets[":id"].powers.$post({
         param: { id },

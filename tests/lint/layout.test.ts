@@ -1,33 +1,6 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 
-import { lintRepo, runOxlint } from "./lintRepo.ts";
-
-function lines(...rows: string[]) {
-  return rows.join("\n") + "\n";
-}
-
-/** What `oxlint --fix` makes of each file, run until it settles. */
-async function fixed(files: Record<string, string>) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lint-"));
-  for (const [file, source] of Object.entries(files)) {
-    fs.mkdirSync(path.join(dir, path.dirname(file)), { recursive: true });
-    fs.writeFileSync(path.join(dir, file), source);
-  }
-  const config = path.join(dir, ".oxlintrc.json");
-  fs.writeFileSync(
-    config,
-    JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/file-layout": "error" } }),
-  );
-  for (let pass = 0; pass < 4; pass++) await runOxlint(["-c", config, "--fix", dir]);
-  const out = Object.fromEntries(
-    Object.keys(files).map((file) => [file, fs.readFileSync(path.join(dir, file), "utf8")]),
-  );
-  fs.rmSync(dir, { recursive: true });
-  return out;
-}
+import { fixRepo, lines, lintRepo } from "./lintRepo.ts";
 
 // Each test runs oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);
@@ -100,29 +73,33 @@ describe("file layout", () => {
   });
 
   test("--fix puts a file's own types and constants before its exported ones, a constant below one it reads", async () => {
-    const out = await fixed({
-      "shared/exports.ts": lines(
-        "export type Shape = { n: number };",
-        "",
-        "type Local = { s: string };",
-        "",
-        "export interface Size {",
-        "  w: number;",
-        "}",
-        "",
-        "export const BASE = 1;",
-        "",
-        "export const DOUBLED = BASE * 2;",
-        "",
-        "const LOCAL = 3;",
-        "",
-        "export const TOTAL = LOCAL + 1;",
-        "",
-        "export function f(s: Shape, l: Local, z: Size) {",
-        "  return [s, l, z, DOUBLED, TOTAL];",
-        "}",
-      ),
-    });
+    const out = await fixRepo(
+      {
+        "shared/exports.ts": lines(
+          "export type Shape = { n: number };",
+          "",
+          "type Local = { s: string };",
+          "",
+          "export interface Size {",
+          "  w: number;",
+          "}",
+          "",
+          "export const BASE = 1;",
+          "",
+          "export const DOUBLED = BASE * 2;",
+          "",
+          "const LOCAL = 3;",
+          "",
+          "export const TOTAL = LOCAL + 1;",
+          "",
+          "export function f(s: Shape, l: Local, z: Size) {",
+          "  return [s, l, z, DOUBLED, TOTAL];",
+          "}",
+        ),
+      },
+      ["file-layout"],
+      4,
+    );
     expect(out["shared/exports.ts"]).toBe(
       lines(
         "type Local = { s: string };",
@@ -149,27 +126,38 @@ describe("file layout", () => {
   });
 
   test("--fix orders a file, keeping a statement above what uses it and its comments with it, a #! line first, but nothing after a step", async () => {
-    const out = await fixed({
-      "server/a.ts": lines(
-        'import { x } from "@/x.ts";',
-        "",
-        "/** The entry. */",
-        "export function main(s: Shape) {",
-        "  return helper(s.n);",
-        "}",
-        "",
-        "// Shared",
-        "function helper(n: number) {",
-        "  return n * LIMIT + x;",
-        "}",
-        "",
-        "type Shape = { n: number }; // why",
-        "",
-        "const LIMIT = 3;",
-      ),
-      "scripts/b.ts": lines("#!/usr/bin/env bun", "go(f());", "function f() {", "  return 1;", "}", "type T = number;"),
-      "scripts/c.ts": lines("#!/usr/bin/env bun", "function f() {", "  return 1;", "}", "type T = number;"),
-    });
+    const out = await fixRepo(
+      {
+        "server/a.ts": lines(
+          'import { x } from "@/x.ts";',
+          "",
+          "/** The entry. */",
+          "export function main(s: Shape) {",
+          "  return helper(s.n);",
+          "}",
+          "",
+          "// Shared",
+          "function helper(n: number) {",
+          "  return n * LIMIT + x;",
+          "}",
+          "",
+          "type Shape = { n: number }; // why",
+          "",
+          "const LIMIT = 3;",
+        ),
+        "scripts/b.ts": lines(
+          "#!/usr/bin/env bun",
+          "go(f());",
+          "function f() {",
+          "  return 1;",
+          "}",
+          "type T = number;",
+        ),
+        "scripts/c.ts": lines("#!/usr/bin/env bun", "function f() {", "  return 1;", "}", "type T = number;"),
+      },
+      ["file-layout"],
+      4,
+    );
     expect(out["server/a.ts"]).toBe(
       lines(
         'import { x } from "@/x.ts";',
@@ -218,11 +206,15 @@ describe("file layout", () => {
       "export const C = B;",
     );
     const defaulting = lines("export default defineConfig({});", "", "const B = compute();");
-    const out = await fixed({
-      "server/running.ts": running,
-      "server/extending.ts": extending,
-      "server/defaulting.ts": defaulting,
-    });
+    const out = await fixRepo(
+      {
+        "server/running.ts": running,
+        "server/extending.ts": extending,
+        "server/defaulting.ts": defaulting,
+      },
+      ["file-layout"],
+      4,
+    );
     // Own before exported would run `b()` first: reported, never fixed
     expect(out["server/running.ts"]).toBe(running);
     expect(out["server/extending.ts"]).toBe(extending);
@@ -262,7 +254,7 @@ describe("file layout", () => {
       '  test("t", () => expect(twin()).toBe(2));',
       "});",
     );
-    const out = (await fixed({ "tests/a.test.ts": source }))["tests/a.test.ts"];
+    const out = (await fixRepo({ "tests/a.test.ts": source }, ["file-layout"], 4))["tests/a.test.ts"];
     expect(out).toStartWith(lines("/** Makes one. */", "async function make() {", "  return 2;", "}", ""));
     expect(out).toContain("  const withOwner = () => owner;");
     expect(out.match(/^ {2}const twin/gm)).toHaveLength(2);

@@ -26,3 +26,12 @@ export async function invitePlayer(page: Page, email: string) {
   await invited;
   await expect(page.locator('text="Invite Pending"').first()).toBeVisible({ timeout: 15_000 });
 }
+
+/** Invites `email` to play in campaign `id`, as `page`'s user does, through the API: the invite. */
+export async function postPlayerInvite(page: Page, id: string, email: string) {
+  const { invite } = await parseResponse(
+    apiOf(page).api.campaigns[":id"].players.$post({ param: { id }, json: { role: "Player Character", email } }),
+  );
+  if (!invite) throw new Error("The invite wasn't created");
+  return invite;
+}

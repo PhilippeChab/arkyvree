@@ -10,6 +10,7 @@ import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
+import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
@@ -367,10 +368,7 @@ describe("rulesetCache", () => {
         {
           sourceId: baseFeat.id,
           sourceType: "feats",
-          target: "abilities.strength.misc",
-          value: "2",
-          valueType: "number",
-          operator: "add",
+          ...STRENGTH_BONUS,
         },
       ]);
       await Requirements.createMany(db, [
@@ -405,7 +403,7 @@ describe("rulesetCache", () => {
 
       // Fork the seed and COW the feat through the service.
       const fork = await createFork(seed.id);
-      const forkSession = makeSession(SEED_USER_ID);
+      const forkSession = makeSession();
       await FeatsService.updateFeat(forkSession, fork.id, baseFeat.id, {
         name: baseFeat.name,
         description: "COW'd",
@@ -444,7 +442,7 @@ describe("rulesetCache", () => {
       const sampleFeat = sampleFeats[0];
       expect(sampleFeat).toBeDefined();
 
-      const forkSession = makeSession(SEED_USER_ID);
+      const forkSession = makeSession();
       await FeatsService.updateFeat(forkSession, fork.id, sampleFeat.id, {
         name: sampleFeat.name,
         description: "Edited by fork (COW)",
@@ -473,7 +471,7 @@ describe("rulesetCache", () => {
       );
       const sampleFeat = sampleFeats[0];
 
-      const forkSession = makeSession(SEED_USER_ID);
+      const forkSession = makeSession();
       await FeatsService.deleteFeat(forkSession, fork.id, sampleFeat.id);
 
       const forkData = await composeFork(fork);
@@ -520,7 +518,7 @@ describe("rulesetCache", () => {
 
       // Create a modifier on the inherited feat through the service (COWs the
       // feat + invalidates the fork's cache).
-      const forkSession = makeSession(SEED_USER_ID);
+      const forkSession = makeSession();
       await ModifiersService.createModifier(forkSession, fork.id, "feats", sampleFeat.id, {
         target: "abilities.strength.misc",
         value: "2",

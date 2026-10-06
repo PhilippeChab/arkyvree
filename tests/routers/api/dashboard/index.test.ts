@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { postCampaign } from "@/tests/support/campaigns.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 describe("dashboard", () => {
@@ -18,7 +19,7 @@ describe("dashboard", () => {
         json: { name: "Dashboard Fork", description: "", private: true },
       }),
     );
-    await expectOk(api.api.campaigns.$post({ json: { name: "Dashboard Campaign", rulesetId } }));
+    await postCampaign({ name: "Dashboard Campaign" }, api);
     expect(await expectOk(api.api.dashboard.stats.$get())).toEqual({
       totalRulesets: before.totalRulesets + 1,
       totalCharacters: 0,

@@ -33,7 +33,6 @@ import {
   Properties,
   Races,
   Requirements,
-  Rulesets,
   Skills,
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
@@ -58,7 +57,7 @@ import {
 } from "@/tests/support/levelFixtures.ts";
 import { addCharacterLevel, addOneLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
-import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 /** The levels, ability increases, feats and skill ranks being added, which getAvailableKlasses takes after its paging. */
@@ -73,7 +72,7 @@ type PendingPicks =
     ? Rest
     : never;
 
-const session = makeSession(SEED_USER_ID);
+const session = makeSession();
 const page = { limit: 500, page: 1 };
 
 function names(rows: { name: string }[]) {
@@ -98,7 +97,7 @@ async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: s
     name: `Blackguard Fork ${uniqueId()}`,
     private: false,
   });
-  const dmg = (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!;
+  const dmg = await findSeededRuleset(DND35_DMG_NAME);
   await RulesetExtensionsService.subscribeExtension(session, fork.id, [dmg.id]);
   const blackguard = (await Klasses.findOne(db, { name: "Blackguard", rulesetId: dmg.id }))!;
 
