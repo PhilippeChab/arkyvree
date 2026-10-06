@@ -1,7 +1,8 @@
 /**
  * `file-layout`: a file reads in one order, so its parts are always where you look for them: its imports, its types,
  * its constants, its helpers, then what the file is for (its exports, its class, a test file's `describe` and `test`
- * blocks, an index's re-exports), then its run. Within its types, and within its constants, the file's own come first,
+ * blocks), its export lists and its default export's value last (an index's re-exports, `export default new Hono()`),
+ * then its run. Within its types, and within its constants, the file's own come first,
  * then the ones it exports. A constant is a value: it never uses the file's own functions or classes, and one the file
  * keeps never reads one it exports. A helper is a function the file keeps to itself (it may call an export below it:
  * functions are hoisted); a test file's helper never sits in a `describe`. A call, a condition or a loop at the file's
@@ -30,13 +31,14 @@ const LOOPS = new Set(["ForStatement", "ForOfStatement", "ForInStatement", "Whil
 
 const MESSAGE =
   "A file reads in order: its imports, its types, its constants (each the file's own, then its exports), its " +
-  "helpers, then what it's for (its exports, its class, its tests). `oxlint --fix` orders it.";
+  "helpers, then what it's for (its exports, its class, its tests), its export lists and default export last. " +
+  "`oxlint --fix` orders it.";
 
 const MODULE_RUN =
   "A module (a file that exports) has no step at its top: a script imports it, and runs it in a function it calls " +
   "last.";
 /** The groups, in a file's order */
-const RANK = { type: 1, constant: 2, helper: 3, main: 4 };
+const RANK = { type: 1, constant: 2, helper: 3, main: 4, export: 5, effect: 6 };
 const STEP =
   "A file's run (a call, a condition, a loop at its top) comes last: nothing is declared after it. Its steps go below " +
   "its declarations, or into a function it calls last (a script's `main()`; a test file's setup, a `beforeAll`).";
@@ -295,8 +297,11 @@ function kindOf(statement) {
   if (statement.type === "ImportDeclaration" || statement.type === "TSImportEqualsDeclaration") return "import";
   // A directive prologue ("use strict") opens the file, as its imports do
   if (statement.type === "ExpressionStatement" && statement.directive) return "import";
-  if (statement.type === "ExportAllDeclaration") return "main";
-  if (statement.type === "ExportNamedDeclaration" && !statement.declaration) return "main";
+  // Its export lists and its default export's value close what it's for: what the file is, once it's all declared
+  if (statement.type === "ExportAllDeclaration") return "export";
+  if (statement.type === "ExportNamedDeclaration" && !statement.declaration) return "export";
+  if (statement.type === "ExportDefaultDeclaration" && !statement.declaration.type.endsWith("Declaration"))
+    return "export";
   if (statement.type === "TSModuleDeclaration") return "type";
   const declaration = declarationOf(statement);
   if (declaration?.type === "TSTypeAliasDeclaration" || declaration?.type === "TSInterfaceDeclaration") return "type";

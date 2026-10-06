@@ -12,7 +12,6 @@ const dbModule = isTest() ? await import("./test.ts") : await import("./producti
 
 export const db = dbModule.db;
 export const withTransaction = dbModule.withTransaction;
-export type { Db } from "./production.ts";
 
 /** Whether the database answers: throws when it doesn't. */
 export async function pingDatabase() {
@@ -38,6 +37,8 @@ export async function waitForDatabase(attempts = 4, delayMs = 500) {
   console.error("[db] Unreachable after all retries — exiting");
   process.exit(1);
 }
+
+export type { Db } from "./production.ts";
 
 export { getCowContext, withCowContext } from "./cowContext.ts";
 export { default as CowData } from "./CowData.ts";

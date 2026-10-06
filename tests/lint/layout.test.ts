@@ -53,6 +53,8 @@ describe("file layout", () => {
             "  return 1;",
             "}",
           ),
+          // A default export's value above an exported function: it goes last, with the export lists
+          "server/a/default.ts": lines("export default make(f);", "export function f() {", "  return 1;", "}"),
           // A test file's helper in a `describe`
           "tests/a.test.ts": lines('describe("a", () => {', "  function h() {}", '  test("t", h);', "});"),
         },
@@ -64,6 +66,7 @@ describe("file layout", () => {
       "file-layout scripts/run.ts",
       "file-layout scripts/run.ts",
       "file-layout server/a/built.ts",
+      "file-layout server/a/default.ts",
       "file-layout server/a/fromExport.ts",
       "file-layout server/a/runs.ts",
       "file-layout server/a/type.ts",
