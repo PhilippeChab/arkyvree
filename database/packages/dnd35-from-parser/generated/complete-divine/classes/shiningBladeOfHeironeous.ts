@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SHINING_BLADE_OF_HEIRONEOUS: ClassSeed = {
   name: "Shining Blade of Heironeous",
-  description: "A shining blade of Heironeous belongs to a knightly order devoted to excellence in close-quarters combat.",
-  hd: 10, levels: 10, skillPoints: 2,
+  description:
+    "A shining blade of Heironeous belongs to a knightly order devoted to excellence in close-quarters combat.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: ["Concentration", "Craft", "Diplomacy", "Heal", "Knowledge (Religion)", "Profession", "Spellcraft"],
@@ -27,5 +35,3 @@ export const SHINING_BLADE_OF_HEIRONEOUS: ClassSeed = {
     [9, "Brilliant Blade (Shining Blade of Heironeous)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

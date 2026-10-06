@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const GEOMETER: ClassSeed = {
   name: "Geometer",
   description: "The geometer is the master of written magic and spells inscribed within a perfectly rendered diagram.",
-  hd: 4, levels: 5, skillPoints: 2,
+  hd: 4,
+  levels: 5,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -49,5 +56,3 @@ export const GEOMETER: ClassSeed = {
     [5, "Powerful Spellglyph (Geometer)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const MINDSPY: ClassSeed = {
   name: "Mindspy",
   description: "A mindspy uses telepathic perception to predict her opponents' actions an instant before they occur.",
-  hd: 8, levels: 5, skillPoints: 2,
+  hd: 8,
+  levels: 5,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: ["Bluff", "Concentration", "Craft", "Intimidate", "Profession", "Sense Motive"],
@@ -25,5 +32,3 @@ export const MINDSPY: ClassSeed = {
     [5, "Multiple Surface Thoughts (Mindspy)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

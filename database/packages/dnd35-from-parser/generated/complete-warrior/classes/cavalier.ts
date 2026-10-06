@@ -1,20 +1,21 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const CAVALIER: ClassSeed = {
   name: "Cavalier",
-  description: "The cavalier embodies the pinnacle of mounted combat, serving as the archetypal armored knight astride a warhorse.",
-  hd: 10, levels: 10, skillPoints: 2,
+  description:
+    "The cavalier embodies the pinnacle of mounted combat, serving as the archetypal armored knight astride a warhorse.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
-  classSkills: [
-    "Diplomacy",
-    "Handle Animal",
-    "Intimidate",
-    "Knowledge (Nobility and Royalty)",
-    "Profession",
-    "Ride",
-  ],
+  classSkills: ["Diplomacy", "Handle Animal", "Intimidate", "Knowledge (Nobility and Royalty)", "Profession", "Ride"],
   requirements: [
     gte("combat.bab", 8),
     gte("skills.handleanimal.rank", 4),
@@ -24,7 +25,11 @@ export const CAVALIER: ClassSeed = {
     eq("feats.weaponfocuslance.possessed"),
     eq("feats.mountedcombat.possessed"),
     eq("feats.ridebyattack.possessed"),
-    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Good"),
+      eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+    ),
   ],
   classFeatureAptitude: "Cavalier Class Feature",
   classFeatures: [
@@ -50,5 +55,3 @@ export const CAVALIER: ClassSeed = {
     [10, "Unstoppable Charge (Cavalier)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -3,7 +3,8 @@ import type { DomainDefinition } from "@/database/packages/dnd35/content/types.t
 export const ALL_DOMAINS: DomainDefinition[] = [
   {
     name: "Courage",
-    description: "You continuously emit a supernatural aura of bravery that provides you and all allies within 10 feet a +4 morale bonus on saving throws made to resist fear effects. This aura operates whenever you are conscious but ceases to function if you fall unconscious or die.",
+    description:
+      "You continuously emit a supernatural aura of bravery that provides you and all allies within 10 feet a +4 morale bonus on saving throws made to resist fear effects. This aura operates whenever you are conscious but ceases to function if you fall unconscious or die.",
     spells: [
       { name: "Remove Fear", level: 1 },
       { name: "Aid", level: 2 },
@@ -18,7 +19,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Fate",
-    description: "You possess the uncanny dodge ability, which lets you keep your Dexterity bonus to AC (if any) even when flat-footed or when attacked by an unseen opponent. Being immobilized still causes you to lose your Dexterity bonus to AC as normal. If another one of your classes also grants uncanny dodge, you may add your cleric levels to that class's levels when determining whether you qualify for improved uncanny dodge.",
+    description:
+      "You possess the uncanny dodge ability, which lets you keep your Dexterity bonus to AC (if any) even when flat-footed or when attacked by an unseen opponent. Being immobilized still causes you to lose your Dexterity bonus to AC as normal. If another one of your classes also grants uncanny dodge, you may add your cleric levels to that class's levels when determining whether you qualify for improved uncanny dodge.",
     spells: [
       { name: "True Strike", level: 1 },
       { name: "Augury", level: 2 },
@@ -33,7 +35,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Nobility",
-    description: "Once per day as a standard action, you can use a spell-like ability to rally your allies, granting them a +2 morale bonus on saving throws, attack rolls, damage rolls, ability checks, and skill checks. Affected allies must be able to hear you speak for 1 round to receive this benefit. The effect persists for a number of rounds equal to your Charisma bonus.",
+    description:
+      "Once per day as a standard action, you can use a spell-like ability to rally your allies, granting them a +2 morale bonus on saving throws, attack rolls, damage rolls, ability checks, and skill checks. Affected allies must be able to hear you speak for 1 round to receive this benefit. The effect persists for a number of rounds equal to your Charisma bonus.",
     spells: [
       { name: "Divine Favor", level: 1 },
       { name: "Enthrall", level: 2 },

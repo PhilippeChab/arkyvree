@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const KNIGHT_PROTECTOR: ClassSeed = {
   name: "Knight Protector",
-  description: "Knight protectors are warriors who have sworn themselves to upholding the traditions of chivalric honor, striving to keep those noble ideals alive in a world that threatens to abandon them.",
-  hd: 10, levels: 10, skillPoints: 2,
+  description:
+    "Knight protectors are warriors who have sworn themselves to upholding the traditions of chivalric honor, striving to keep those noble ideals alive in a world that threatens to abandon them.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: ["Diplomacy", "Intimidate", "Knowledge (Nobility and Royalty)", "Ride", "Spot"],
@@ -35,9 +43,5 @@ export const KNIGHT_PROTECTOR: ClassSeed = {
     [10, "Defensive Stance (Knight Protector)"],
     [10, "Retributive Attack (Knight Protector)"],
   ],
-  freeFeats: [
-    [2, "Iron Will", "Knight Protector Class Feature"],
-  ],
+  freeFeats: [[2, "Iron Will", "Knight Protector Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -1,7 +1,5 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "printWidth": 120,
-  "sortImports": {},
-  // Written by tools, which lay them out: drizzle-kit pull and the parser's generator
-  "ignorePatterns": ["drizzle/schema.ts", "drizzle/relations.ts", "**/generated/**"]
+  "sortImports": {}
 }

@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const WARPRIEST: ClassSeed = {
   name: "Warpriest",
   description: "Warpriests are battle-hardened divine spellcasters who desire peace yet stand ever ready for combat.",
-  hd: 10, levels: 10, skillPoints: 2,
+  hd: 10,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -43,9 +50,5 @@ export const WARPRIEST: ClassSeed = {
     [10, "Implacable Foe (Warpriest)"],
     [10, "Inflame (Warpriest)"],
   ],
-  freeFeats: [
-    [1, "Bonus Domain", "Warpriest Class Feature"],
-  ],
+  freeFeats: [[1, "Bonus Domain", "Warpriest Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

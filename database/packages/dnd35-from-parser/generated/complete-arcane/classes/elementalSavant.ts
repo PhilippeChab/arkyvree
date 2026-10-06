@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const ELEMENTAL_SAVANT: ClassSeed = {
   name: "Elemental Savant",
-  description: "Elemental savants study the basic building blocks of existence - air, earth, fire, and water - learning to harness their powers.",
-  hd: 4, levels: 10, skillPoints: 2,
+  description:
+    "Elemental savants study the basic building blocks of existence - air, earth, fire, and water - learning to harness their powers.",
+  hd: 4,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: ["Concentration", "Knowledge (Arcana)", "Knowledge (The Planes)", "Profession", "Spellcraft"],
@@ -34,5 +42,3 @@ export const ELEMENTAL_SAVANT: ClassSeed = {
     [10, "Energy Immunity (Elemental Savant)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

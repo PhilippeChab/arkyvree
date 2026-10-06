@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const FOCHLUCAN_LYRIST: ClassSeed = {
   name: "Fochlucan Lyrist",
-  description: "The Fochlucan lyrist is a legendary figure who serves as the herald and teacher to great kings, the champion of the common folk, and the keeper of lore long forgotten elsewhere. Those who aspire to join the Fochlucan College face a long and dif?cult road. The great bards who lead the school choose only individuals who have demonstrated skill at arms and stealth, learning and cleverness, superb talent with the lute and an ear for the stories of old. Finally, all applicants must ?rst study the lore of the druids, learning the ways of growth and the hidden secrets of nature. Few indeed can stand up to the rigorous scrutiny of the Fochlucan masters. Fochlucan lyrists adventure to gain information. They are spies and rumormongers, ever on the watch for news of events that may upset the balance they seek to preserve. A lyrist can serve as a diplomat, messenger, or assassin, as needed. The Fochlucans strongly believe in fostering the careers of other adventurers whose viewpoints align with their own, and many lyrists attach themselves to adventuring companies speci?cally for the purpose of guiding their comrades to oppose the right enemies and advance the interests of the Fochlucan College.",
-  hd: 6, levels: 10, skillPoints: 6,
+  description:
+    "The Fochlucan lyrist is a legendary figure who serves as the herald and teacher to great kings, the champion of the common folk, and the keeper of lore long forgotten elsewhere. Those who aspire to join the Fochlucan College face a long and dif?cult road. The great bards who lead the school choose only individuals who have demonstrated skill at arms and stealth, learning and cleverness, superb talent with the lute and an ear for the stories of old. Finally, all applicants must ?rst study the lore of the druids, learning the ways of growth and the hidden secrets of nature. Few indeed can stand up to the rigorous scrutiny of the Fochlucan masters. Fochlucan lyrists adventure to gain information. They are spies and rumormongers, ever on the watch for news of events that may upset the balance they seek to preserve. A lyrist can serve as a diplomat, messenger, or assassin, as needed. The Fochlucans strongly believe in fostering the careers of other adventurers whose viewpoints align with their own, and many lyrists attach themselves to adventuring companies speci?cally for the purpose of guiding their comrades to oppose the right enemies and advance the interests of the Fochlucan College.",
+  hd: 6,
+  levels: 10,
+  skillPoints: 6,
   bab: "good",
   saves: { fortitude: "poor", reflex: "good", will: "good" },
   classSkills: [
@@ -67,5 +75,3 @@ export const FOCHLUCAN_LYRIST: ClassSeed = {
     [1, "Weapon and Armor Proficiency (Fochlucan Lyrist)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

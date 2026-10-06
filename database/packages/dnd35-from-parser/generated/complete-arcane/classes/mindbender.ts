@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const MINDBENDER: ClassSeed = {
   name: "Mindbender",
   description: "Mindbenders seek to control the thoughts and dreams of others.",
-  hd: 4, levels: 10, skillPoints: 2,
+  hd: 4,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -63,5 +70,3 @@ export const MINDBENDER: ClassSeed = {
     [10, "Thrall (Mindbender)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

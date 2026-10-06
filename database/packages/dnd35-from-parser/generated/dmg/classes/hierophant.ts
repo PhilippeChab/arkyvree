@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const HIEROPHANT: ClassSeed = {
   name: "Hierophant",
-  description: "A divine caster who has attained great standing with their deity unlocks extraordinary magical powers and capabilities far beyond those available to ordinary followers.",
-  hd: 8, levels: 5, skillPoints: 2,
+  description:
+    "A divine caster who has attained great standing with their deity unlocks extraordinary magical powers and capabilities far beyond those available to ordinary followers.",
+  hd: 8,
+  levels: 5,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -33,5 +41,3 @@ export const HIEROPHANT: ClassSeed = {
     [5, "Special Ability (Hierophant)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

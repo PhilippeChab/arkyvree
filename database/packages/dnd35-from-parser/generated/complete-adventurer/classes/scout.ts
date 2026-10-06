@@ -1,9 +1,17 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SCOUT: ClassSeed = {
   name: "Scout",
-  description: "A scout has some training in weapons and a unique combat style that favors fast movement and devastating attacks.",
-  hd: 8, levels: 20, skillPoints: 8,
+  description:
+    "A scout has some training in weapons and a unique combat style that favors fast movement and devastating attacks.",
+  hd: 8,
+  levels: 20,
+  skillPoints: 8,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -62,9 +70,5 @@ export const SCOUT: ClassSeed = {
     [20, "Blind Sight (Scout)"],
     [20, "Bonus Feat (Scout)"],
   ],
-  freeFeats: [
-    [10, "Blindsense", "Scout Class Feature"],
-  ],
+  freeFeats: [[10, "Blindsense", "Scout Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

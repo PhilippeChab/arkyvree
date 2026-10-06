@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const BLACKGUARD: ClassSeed = {
   name: "Blackguard",
   description: "The blackguard epitomizes the dark knight archetype, a warrior who has wholly embraced evil.",
-  hd: 10, levels: 10, skillPoints: 2,
+  hd: 10,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -25,7 +32,11 @@ export const BLACKGUARD: ClassSeed = {
     eq("feats.cleave.possessed"),
     eq("feats.improvedsunder.possessed"),
     eq("feats.powerattack.possessed"),
-    or(eqStr("identity.beliefs.alignment", "Lawful Evil"), eqStr("identity.beliefs.alignment", "Neutral Evil"), eqStr("identity.beliefs.alignment", "Chaotic Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+      eqStr("identity.beliefs.alignment", "Neutral Evil"),
+      eqStr("identity.beliefs.alignment", "Chaotic Evil"),
+    ),
   ],
   classFeatureAptitude: "Blackguard Class Feature",
   classFeatures: [
@@ -49,21 +60,8 @@ export const BLACKGUARD: ClassSeed = {
   casterType: "Divine",
   spells: {
     slug: "blackguardspells",
-    perDay: [
-      [0],
-      [1],
-      [1, 0],
-      [1, 1],
-      [1, 1, 0],
-      [1, 1, 1],
-      [2, 1, 1, 0],
-      [2, 1, 1, 1],
-      [2, 2, 1, 1],
-      [2, 2, 2, 1],
-    ],
+    perDay: [[0], [1], [1, 0], [1, 1], [1, 1, 0], [1, 1, 1], [2, 1, 1, 0], [2, 1, 1, 1], [2, 2, 1, 1], [2, 2, 2, 1]],
     knowAll: true,
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

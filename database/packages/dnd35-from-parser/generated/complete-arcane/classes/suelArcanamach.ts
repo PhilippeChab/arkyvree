@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SUEL_ARCANAMACH: ClassSeed = {
   name: "Suel Arcanamach",
   description: "Arcanamach formerly served as elite guards and agents for powerful wizards.",
-  hd: 8, levels: 10, skillPoints: 4,
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "good" },
   classSkills: [
@@ -83,5 +90,3 @@ export const SUEL_ARCANAMACH: ClassSeed = {
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

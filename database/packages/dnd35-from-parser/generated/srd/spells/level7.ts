@@ -3,7 +3,8 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_7_SPELLS: PowerSeed[] = [
   {
     name: "Animate Plants",
-    description: "You grant inanimate plants mobility and a semblance of life. Each animated plant immediately attacks your designated targets as an animated object of the corresponding size. You may animate one Large or smaller plant per three caster levels, with larger plants counting as multiples: Huge counts as 2, Gargantuan as 4, and Colossal as 8. You can change targets as a move action. Plants smaller than Large lack hardness unless the GM rules otherwise. This spell cannot affect plant creatures or nonliving vegetable material. Alternatively, you may imbue all plants within range with mobility to entangle nearby creatures, duplicating the entangle spell. Spell resistance does not prevent entanglement. This alternate effect lasts 1 hour per caster level.",
+    description:
+      "You grant inanimate plants mobility and a semblance of life. Each animated plant immediately attacks your designated targets as an animated object of the corresponding size. You may animate one Large or smaller plant per three caster levels, with larger plants counting as multiples: Huge counts as 2, Gargantuan as 4, and Colossal as 8. You can change targets as a move action. Plants smaller than Large lack hardness unless the GM rules otherwise. This spell cannot affect plant creatures or nonliving vegetable material. Alternatively, you may imbue all plants within range with mobility to entangle nearby creatures, duplicating the entangle spell. Spell resistance does not prevent entanglement. This alternate effect lasts 1 hour per caster level.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -18,7 +19,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Arcane Sight, Greater",
-    description: "This functions like arcane sight, except you automatically identify which spells or magical effects are active on any individual or object you observe. It does not identify magic items. Unlike arcane sight, this version cannot be made permanent with permanency.",
+    description:
+      "This functions like arcane sight, except you automatically identify which spells or magical effects are active on any individual or object you observe. It does not identify magic items. Unlike arcane sight, this version cannot be made permanent with permanency.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -34,7 +36,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bigby's Grasping Hand",
-    description: "A Large hand appears that can interpose defensively or grapple. It provides cover (+4 AC bonus) when interposing and can initiate grapples with a bonus equal to your caster level + your relevant ability modifier + 10 (for its Strength and size). A grappled target takes 2d6+10 points of damage per round. You can redirect the hand to a new target as a move action.",
+    description:
+      "A Large hand appears that can interpose defensively or grapple. It provides cover (+4 AC bonus) when interposing and can initiate grapples with a bonus equal to your caster level + your relevant ability modifier + 10 (for its Strength and size). A grappled target takes 2d6+10 points of damage per round. You can redirect the hand to a new target as a move action.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -52,7 +55,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Blasphemy",
-    description: "Any nongood creature within the area suffers cumulative, concurrent effects based on its HD relative to your caster level, with no saving throw. These effects include: deafened for 1d4 rounds, dazed for 1 round, weakened (with 2d4 points of Strength damage), and potentially paralyzed for 1d10 minutes. Nongood extraplanar creatures on your home plane are instantly banished and cannot return for at least 24 hours; the banishment allows a Will save at -4. Creatures whose HD exceed your caster level are unaffected.",
+    description:
+      "Any nongood creature within the area suffers cumulative, concurrent effects based on its HD relative to your caster level, with no saving throw. These effects include: deafened for 1d4 rounds, dazed for 1 round, weakened (with 2d4 points of Strength damage), and potentially paralyzed for 1d10 minutes. Nongood extraplanar creatures on your home plane are instantly banished and cannot return for at least 24 hours; the banishment allows a Will save at -4. Creatures whose HD exceed your caster level are unaffected.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None or Will negates; see text",
     properties: [
@@ -69,7 +73,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Changestaff",
-    description: "You transform a specially prepared quarterstaff into a Huge treant-like creature approximately 24 feet tall. The staff-creature fights and defends you, obeying spoken commands, but cannot converse with actual treants or control trees. If reduced to 0 or fewer hit points, it crumbles and the staff is destroyed. Otherwise, the staff returns to normal when the spell expires or is dismissed, and can be reused. The creature is always at full strength when created. Focus: A specially prepared quarterstaff carved from a sound ash, oak, or yew limb, requiring twenty-eight days of curing, shaping, and polishing with no strenuous activity.",
+    description:
+      "You transform a specially prepared quarterstaff into a Huge treant-like creature approximately 24 feet tall. The staff-creature fights and defends you, obeying spoken commands, but cannot converse with actual treants or control trees. If reduced to 0 or fewer hit points, it crumbles and the staff is destroyed. Otherwise, the staff returns to normal when the spell expires or is dismissed, and can be reused. The creature is always at full strength when created. Focus: A specially prepared quarterstaff carved from a sound ash, oak, or yew limb, requiring twenty-eight days of curing, shaping, and polishing with no strenuous activity.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -85,14 +90,18 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Control Undead",
-    description: "You command undead creatures by voice for a short period. They understand you regardless of language. Even if silenced, controlled undead will not attack you. At the spell's end, they revert to normal behavior. Intelligent undead remember being controlled. Material Component: A piece of bone and a piece of raw meat.",
+    description:
+      "You command undead creatures by voice for a short period. They understand you regardless of language. Even if silenced, controlled undead will not attack you. At the spell's end, they revert to normal behavior. Intelligent undead remember being controlled. Material Component: A piece of bone and a piece of raw meat.",
     aptitudes: ["Blighter Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
-      { type: "SPELL_TARGET", value: "Up to 2 HD/level of undead creatures, no two of which can be more than 30 ft. apart" },
+      {
+        type: "SPELL_TARGET",
+        value: "Up to 2 HD/level of undead creatures, no two of which can be more than 30 ft. apart",
+      },
       { type: "SPELL_DURATION", value: "1 min./level" },
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
@@ -102,7 +111,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Creeping Doom",
-    description: "You summon a mass of centipede swarms (one per two caster levels, maximum ten at 20th level) that need not appear adjacent. They attack any creatures in their area and remain stationary unless you direct them (standard action). You can command any number of swarms to pursue prey within 100 feet. Swarms that move beyond 100 feet become stationary but can be commanded again if you return within range.",
+    description:
+      "You summon a mass of centipede swarms (one per two caster levels, maximum ten at 20th level) that need not appear adjacent. They attack any creatures in their area and remain stationary unless you direct them (standard action). You can command any number of swarms to pursue prey within 100 feet. Swarms that move beyond 100 feet become stationary but can be commanded again if you return within range.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -119,7 +129,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Cure Serious Wounds, Mass",
-    description: "This functions like mass cure light wounds, except it restores 3d8 points of damage + 1 per caster level (maximum +35).",
+    description:
+      "This functions like mass cure light wounds, except it restores 3d8 points of damage + 1 per caster level (maximum +35).",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     aptitudeLevels: { "Cleric Spells": 7, "Druid Spells": 8 },
     savingThrow: "Will half (harmless) or Will half; see text",
@@ -137,7 +148,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Delayed Blast Fireball",
-    description: "This functions like fireball, except it deals 1d6 fire damage per caster level (maximum 20d6) and can be delayed up to 5 rounds after casting. The glowing bead sits at its destination until detonation. A creature can pick up and throw the bead (10-foot range increment). If handled within 1 round of detonation, there is a 25% chance of premature detonation.",
+    description:
+      "This functions like fireball, except it deals 1d6 fire damage per caster level (maximum 20d6) and can be delayed up to 5 rounds after casting. The glowing bead sits at its destination until detonation. A creature can pick up and throw the bead (10-foot range increment). If handled within 1 round of detonation, there is a 25% chance of premature detonation.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "Reflex half",
     properties: [
@@ -155,7 +167,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Destruction",
-    description: "The target is instantly slain and its remains utterly consumed (equipment is unaffected). A successful Fortitude save instead deals 10d6 points of damage. Only true resurrection, a carefully worded wish followed by resurrection, or miracle can restore a creature killed by this spell. Focus: A special silver holy (or unholy) symbol marked with verses of anathema (500 gp).",
+    description:
+      "The target is instantly slain and its remains utterly consumed (equipment is unaffected). A successful Fortitude save instead deals 10d6 points of damage. Only true resurrection, a carefully worded wish followed by resurrection, or miracle can restore a creature killed by this spell. Focus: A special silver holy (or unholy) symbol marked with verses of anathema (500 gp).",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Fortitude partial",
     properties: [
@@ -172,7 +185,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Dictum",
-    description: "Any nonlawful creature in the area suffers cumulative effects with no save based on HD relative to your caster level: deafened 1d4 rounds, slowed 2d4 rounds, paralyzed 1d10 minutes, and killed (living creatures die, undead are destroyed). Nonlawful extraplanar creatures on your home plane are banished for at least 24 hours (Will at -4 negates). Creatures with HD exceeding your caster level are unaffected.",
+    description:
+      "Any nonlawful creature in the area suffers cumulative effects with no save based on HD relative to your caster level: deafened 1d4 rounds, slowed 2d4 rounds, paralyzed 1d10 minutes, and killed (living creatures die, undead are destroyed). Nonlawful extraplanar creatures on your home plane are banished for at least 24 hours (Will at -4 negates). Creatures with HD exceeding your caster level are unaffected.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None or Will negates; see text",
     properties: [
@@ -189,7 +203,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Drawmij's Instant Summons",
-    description: "You call a nonliving item to your hand from virtually any location. First, place your arcane mark on the item, then cast this spell to inscribe the item's name on a sapphire (worth at least 1,000 gp). Thereafter, speaking a command word and crushing the gem summons the item instantly. If another creature possesses it, the spell fails but reveals the possessor's identity and approximate location. The item can be summoned across planes unless another creature has claimed it. Material Component: A sapphire worth at least 1,000 gp.",
+    description:
+      "You call a nonliving item to your hand from virtually any location. First, place your arcane mark on the item, then cast this spell to inscribe the item's name on a sapphire (worth at least 1,000 gp). Thereafter, speaking a command word and crushing the gem summons the item instantly. If another creature possesses it, the spell fails but reveals the possessor's identity and approximate location. The item can be summoned across planes unless another creature has claimed it. Material Component: A sapphire worth at least 1,000 gp.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -207,7 +222,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Earthquake",
-    description: "An intense, localized tremor rips the ground for 1 round. Creatures on the ground cannot move or attack. Spellcasters must make a Concentration check (DC 20 + spell level) or lose spells. Effects vary by terrain: Cave/Tunnel: Roof collapses for 8d6 bludgeoning (Reflex DC 15 half), pinning creatures. Cliff: Creates a landslide traveling horizontally equal to the fall distance, dealing 8d6 (Reflex DC 15 half) and pinning. Open Ground: DC 15 Reflex or fall prone; 25% chance of falling into a fissure (Reflex DC 20 to avoid); fissures close at spell's end, killing trapped creatures. Structure: 100 points of damage (ignoring hardness), collapsing typical buildings; trapped creatures take 8d6 (Reflex DC 15 half). River/Lake/Marsh: Fissures drain water; swampland becomes quicksand (DC 15 Reflex or sink). Pinned creatures take 1d6 nonlethal per minute; unconscious pinned creatures must make DC 15 Constitution checks or take 1d6 lethal per minute.",
+    description:
+      "An intense, localized tremor rips the ground for 1 round. Creatures on the ground cannot move or attack. Spellcasters must make a Concentration check (DC 20 + spell level) or lose spells. Effects vary by terrain: Cave/Tunnel: Roof collapses for 8d6 bludgeoning (Reflex DC 15 half), pinning creatures. Cliff: Creates a landslide traveling horizontally equal to the fall distance, dealing 8d6 (Reflex DC 15 half) and pinning. Open Ground: DC 15 Reflex or fall prone; 25% chance of falling into a fissure (Reflex DC 20 to avoid); fissures close at spell's end, killing trapped creatures. Structure: 100 points of damage (ignoring hardness), collapsing typical buildings; trapped creatures take 8d6 (Reflex DC 15 half). River/Lake/Marsh: Fissures drain water; swampland becomes quicksand (DC 15 Reflex or sink). Pinned creatures take 1d6 nonlethal per minute; unconscious pinned creatures must make DC 15 Constitution checks or take 1d6 lethal per minute.",
     aptitudes: ["Blighter Spells", "Cleric Spells", "Druid Spells", "Warmage Spells"],
     aptitudeLevels: { "Blighter Spells": 7, "Cleric Spells": 8, "Druid Spells": 8, "Warmage Spells": 7 },
     savingThrow: "See text",
@@ -226,7 +242,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Ethereal Jaunt",
-    description: "You become ethereal along with your equipment. You are invisible, insubstantial, and can move in any direction at half speed, passing through solid objects. You can see and hear the Material Plane (limited to 60 feet) but everything appears gray. Force effects and abjurations affect you normally. You cannot attack material creatures, and your spells affect only ethereal things. Ending the spell while inside a solid object shunts you to the nearest open space for 1d6 damage per 5 feet traveled.",
+    description:
+      "You become ethereal along with your equipment. You are invisible, insubstantial, and can move in any direction at half speed, passing through solid objects. You can see and hear the Material Plane (limited to 60 feet) but everything appears gray. Force effects and abjurations affect you normally. You cannot attack material creatures, and your spells affect only ethereal things. Ending the spell while inside a solid object shunts you to the nearest open space for 1d6 damage per 5 feet traveled.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -242,7 +259,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Fire Storm",
-    description: "Sheets of roaring flame fill the entire area, dealing 1d6 fire damage per caster level (maximum 20d6) to all creatures. Natural vegetation, ground cover, and plant creatures you wish to exclude are unharmed.",
+    description:
+      "Sheets of roaring flame fill the entire area, dealing 1d6 fire damage per caster level (maximum 20d6) to all creatures. Natural vegetation, ground cover, and plant creatures you wish to exclude are unharmed.",
     aptitudes: ["Blighter Spells", "Cleric Spells", "Druid Spells", "Warmage Spells"],
     aptitudeLevels: { "Blighter Spells": 7, "Cleric Spells": 8, "Druid Spells": 7, "Warmage Spells": 7 },
     savingThrow: "Reflex half",
@@ -260,7 +278,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Forcecage",
-    description: "An immobile, invisible prison of force bars or solid walls. Creatures inside are trapped unless too large. Teleportation allows escape, but the bars/walls extend to the Ethereal Plane. Resists dispel magic; vulnerable to disintegrate, sphere of annihilation, and rod of cancellation. Barred Cage: 20-foot cube with half-inch bars and gaps; tiny creatures can escape, spells pass through. Windowless Cell: 10-foot cube with solid walls. Material Component: Ruby dust worth 1,500 gp.",
+    description:
+      "An immobile, invisible prison of force bars or solid walls. Creatures inside are trapped unless too large. Teleportation allows escape, but the bars/walls extend to the Ethereal Plane. Resists dispel magic; vulnerable to disintegrate, sphere of annihilation, and rod of cancellation. Barred Cage: 20-foot cube with half-inch bars and gaps; tiny creatures can escape, spells pass through. Windowless Cell: 10-foot cube with solid walls. Material Component: Ruby dust worth 1,500 gp.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -297,7 +316,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Holy Word",
-    description: "Nongood creatures hearing the holy word suffer cumulative effects with no save based on HD relative to your caster level: deafened 1d4 rounds, blinded 2d4 rounds, paralyzed 1d10 minutes, killed (living die, undead destroyed). Nongood extraplanar creatures on your home plane are banished for at least 24 hours (Will at -4 negates). Creatures with HD exceeding your caster level are unaffected.",
+    description:
+      "Nongood creatures hearing the holy word suffer cumulative effects with no save based on HD relative to your caster level: deafened 1d4 rounds, blinded 2d4 rounds, paralyzed 1d10 minutes, killed (living die, undead destroyed). Nongood extraplanar creatures on your home plane are banished for at least 24 hours (Will at -4 negates). Creatures with HD exceeding your caster level are unaffected.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None or Will negates; see text",
     properties: [
@@ -314,7 +334,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Inflict Serious Wounds, Mass",
-    description: "This functions like mass inflict light wounds, except it deals 3d8 + 1 per caster level (maximum +35).",
+    description:
+      "This functions like mass inflict light wounds, except it deals 3d8 + 1 per caster level (maximum +35).",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will half",
     properties: [
@@ -330,7 +351,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Insanity",
-    description: "The target suffers permanent confusion (as the spell). Remove curse is ineffective. Greater restoration, heal, limited wish, miracle, or wish can cure it.",
+    description:
+      "The target suffers permanent confusion (as the spell). Remove curse is ineffective. Greater restoration, heal, limited wish, miracle, or wish can cure it.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -348,7 +370,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Invisibility, Mass",
-    description: "This functions like invisibility, except the effect is mobile with the group and breaks for anyone who attacks. Individuals cannot see each other. The effect ends for anyone moving more than 180 feet from the nearest group member. Material Component: An eyelash in gum arabic.",
+    description:
+      "This functions like invisibility, except the effect is mobile with the group and breaks for anyone who attacks. Individuals cannot see each other. The effect ends for anyone moving more than 180 feet from the nearest group member. Material Component: An eyelash in gum arabic.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless) or Will negates (harmless, object)",
     properties: [
@@ -383,7 +406,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mordenkainen's Magnificent Mansion",
-    description: "You conjure an extradimensional dwelling with a faint shimmering entry (4x8 feet). Only those you designate may enter. Inside is a foyer with customizable chambers, furnishings, a nine-course feast for twelve per caster level, and up to two near-transparent servants per caster level (as visible unseen servants). Outside conditions do not affect the interior. Focus: A miniature ivory portal, marble piece, and silver spoon (5 gp each).",
+    description:
+      "You conjure an extradimensional dwelling with a faint shimmering entry (4x8 feet). Only those you designate may enter. Inside is a foyer with customizable chambers, furnishings, a nine-course feast for twelve per caster level, and up to two near-transparent servants per caster level (as visible unseen servants). Outside conditions do not affect the interior. Focus: A miniature ivory portal, marble piece, and silver spoon (5 gp each).",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -400,7 +424,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mordenkainen's Sword",
-    description: "A swordlike plane of force attacks a designated target once per round with attack bonus equal to caster level + Int or Cha modifier + 3. As a force effect, it strikes ethereal and incorporeal creatures. Deals 4d6+3 force damage (threat 19-20, x2 crit). Always strikes from your direction. Redirecting is a standard action. Cannot be physically harmed; vulnerable to dispel magic, disintegrate, and similar. AC 13; spell resistance is tested on the first strike. Focus: A miniature platinum sword (250 gp).",
+    description:
+      "A swordlike plane of force attacks a designated target once per round with attack bonus equal to caster level + Int or Cha modifier + 3. As a force effect, it strikes ethereal and incorporeal creatures. Deals 4d6+3 force damage (threat 19-20, x2 crit). Always strikes from your direction. Redirecting is a standard action. Cannot be physically harmed; vulnerable to dispel magic, disintegrate, and similar. AC 13; spell resistance is tested on the first strike. Focus: A miniature platinum sword (250 gp).",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -417,7 +442,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Phase Door",
-    description: "You create an invisible ethereal passage through wood, plaster, or stone (not other materials). Only you can use it (one Medium companion per use counts as two uses). It blocks light, sound, and spells. A gem of true seeing reveals but does not enable use. Subject to dispel magic (safe ejection). You can set triggering conditions for others. Can be made permanent with permanency.",
+    description:
+      "You create an invisible ethereal passage through wood, plaster, or stone (not other materials). Only you can use it (one Medium companion per use counts as two uses). It blocks light, sound, and spells. A gem of true seeing reveals but does not enable use. Subject to dispel magic (safe ejection). You can set triggering conditions for others. Can be made permanent with permanency.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -433,7 +459,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Power Word Blind",
-    description: "A single word of power blinds one creature regardless of whether it can hear. Duration depends on current hit points. Creatures with 201+ hp are unaffected.",
+    description:
+      "A single word of power blinds one creature regardless of whether it can hear. Duration depends on current hit points. Creatures with 201+ hp are unaffected.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -450,7 +477,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Prismatic Spray",
-    description: "Seven multicolored beams spray from your hand. Creatures with 8 HD or less are blinded for 2d4 rounds. Each creature is randomly struck by one or more beams, each with different effects.",
+    description:
+      "Seven multicolored beams spray from your hand. Creatures with 8 HD or less are blinded for 2d4 rounds. Each creature is randomly struck by one or more beams, each with different effects.",
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     savingThrow: "See text",
     properties: [
@@ -466,7 +494,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Refuge",
-    description: "You enchant a specially prepared object that, when broken while speaking a command word, instantly transports the possessor to your abode (or you to the possessor's location, if you choose that variant at casting). Material Component: The prepared object with gems worth 1,500 gp.",
+    description:
+      "You enchant a specially prepared object that, when broken while speaking a command word, instantly transports the possessor to your abode (or you to the possessor's location, if you choose that variant at casting). Material Component: The prepared object with gems worth 1,500 gp.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     aptitudeLevels: { "Cleric Spells": 7, "Sorcerer Spells": 9, "Wizard Spells": 9 },
     savingThrow: "None",
@@ -485,7 +514,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Regenerate",
-    description: "Severed members, broken bones, and ruined organs regrow. Regeneration completes in 1 round if severed parts are touching the creature, or 2d10 rounds otherwise. Also heals 4d8 + 1 per caster level (maximum +35), eliminates exhaustion, fatigue, and all nonlethal damage. No effect on nonliving creatures including undead.",
+    description:
+      "Severed members, broken bones, and ruined organs regrow. Regeneration completes in 1 round if severed parts are touching the creature, or 2d10 rounds otherwise. Also heals 4d8 + 1 per caster level (maximum +35), eliminates exhaustion, fatigue, and all nonlethal damage. No effect on nonliving creatures including undead.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
     aptitudeLevels: { "Cleric Spells": 7, "Druid Spells": 9 },
     savingThrow: "Fortitude negates (harmless)",
@@ -504,7 +534,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Repel Metal Or Stone",
-    description: "Invisible energy waves push metal and stone objects away at 40 feet per round. Fixed objects larger than 3 inches are unaffected; smaller ones break. Loose objects over 500 pounds are unaffected. Creatures in metal armor are dragged along. Even magic items are repelled (antimagic fields block the effect). The path is set at casting.",
+    description:
+      "Invisible energy waves push metal and stone objects away at 40 feet per round. Fixed objects larger than 3 inches are unaffected; smaller ones break. Loose objects over 500 pounds are unaffected. Creatures in metal armor are dragged along. Even magic items are repelled (antimagic fields block the effect). The path is set at casting.",
     aptitudes: ["Blighter Spells", "Druid Spells"],
     aptitudeLevels: { "Blighter Spells": 7, "Druid Spells": 8 },
     savingThrow: "None",
@@ -522,7 +553,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Restoration, Greater",
-    description: "This functions like lesser restoration, plus it dispels all negative levels, reverses all level drains (within one week per caster level), dispels all ability-penalizing effects, cures all temporary and permanent ability damage, eliminates fatigue, exhaustion, insanity, confusion, and similar mental effects. Does not restore levels or Constitution lost to death. XP Cost: 500 XP.",
+    description:
+      "This functions like lesser restoration, plus it dispels all negative levels, reverses all level drains (within one week per caster level), dispels all ability-penalizing effects, cures all temporary and permanent ability damage, eliminates fatigue, exhaustion, insanity, confusion, and similar mental effects. Does not restore levels or Constitution lost to death. XP Cost: 500 XP.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -540,7 +572,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Resurrection",
-    description: "This functions like raise dead, except it fully restores the creature regardless of remains condition (some small portion must exist). Dead up to 10 years per caster level. Restored to full hp and vigor with no lost prepared spells. Loses one level (or 2 Constitution if 1st level). Can resurrect death-effect victims and destroyed undead. Cannot resurrect those dead of old age, constructs, elementals, or outsiders (which cannot be raised at all). Material Component: Holy water and diamonds worth at least 10,000 gp.",
+    description:
+      "This functions like raise dead, except it fully restores the creature regardless of remains condition (some small portion must exist). Dead up to 10 years per caster level. Restored to full hp and vigor with no lost prepared spells. Loses one level (or 2 Constitution if 1st level). Can resurrect death-effect victims and destroyed undead. Cannot resurrect those dead of old age, constructs, elementals, or outsiders (which cannot be raised at all). Material Component: Holy water and diamonds worth at least 10,000 gp.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None; see text",
     properties: [
@@ -559,7 +592,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Reverse Gravity",
-    description: "Gravity reverses in the area for the duration. Unattached objects and creatures fall upward, striking any ceiling as normal. At the top with nothing to hit, they oscillate until the spell ends, then fall normally. Creatures can Reflex save to grab something. Flying/levitating creatures are unaffected. Arcane Material Component: A lodestone and iron filings.",
+    description:
+      "Gravity reverses in the area for the duration. Unattached objects and creatures fall upward, striking any ceiling as normal. At the top with nothing to hit, they oscillate until the spell ends, then fall normally. Creatures can Reflex save to grab something. Flying/levitating creatures are unaffected. Arcane Material Component: A lodestone and iron filings.",
     aptitudes: ["Druid Spells", "Sorcerer Spells", "Wizard Spells"],
     aptitudeLevels: { "Druid Spells": 8, "Sorcerer Spells": 7, "Wizard Spells": 7 },
     savingThrow: "None; see text",
@@ -578,7 +612,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Sequester",
-    description: "The subject becomes undetectable by divination and invisible to all sight. Affected creatures enter suspended animation. A Will save prevents sequestering of attended or magical objects. There is no save to detect the sequestered subject. Material Component: Basilisk eyelash, gum arabic, and whitewash.",
+    description:
+      "The subject becomes undetectable by divination and invisible to all sight. Affected creatures enter suspended animation. A Will save prevents sequestering of attended or magical objects. There is no save to detect the sequestered subject. Material Component: Basilisk eyelash, gum arabic, and whitewash.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None or Will negates (object)",
     properties: [
@@ -595,7 +630,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Shadow Conjuration, Greater",
-    description: "This functions like shadow conjuration, except it mimics conjuration spells of 6th level or lower at 60% effectiveness against nonbelievers.",
+    description:
+      "This functions like shadow conjuration, except it mimics conjuration spells of 6th level or lower at 60% effectiveness against nonbelievers.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will disbelief (if interacted with); varies; see text",
     properties: [
@@ -612,7 +648,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Simulacrum",
-    description: "You create an illusory duplicate from ice or snow at half the original's levels/HD. It has appropriate abilities for its reduced level. You must Disguise check for the likeness. The simulacrum is under your absolute command but cannot improve. If destroyed, it melts. Repair costs 24+ hours and 100 gp per hp. Material Component: The snow form, a piece of the original, and powdered ruby (100 gp/HD). XP Cost: 100 XP per HD (minimum 1,000).",
+    description:
+      "You create an illusory duplicate from ice or snow at half the original's levels/HD. It has appropriate abilities for its reduced level. You must Disguise check for the likeness. The simulacrum is under your absolute command but cannot improve. If destroyed, it melts. Repair costs 24+ hours and 100 gp per hp. Material Component: The snow form, a piece of the original, and powdered ruby (100 gp/HD). XP Cost: 100 XP per HD (minimum 1,000).",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -631,7 +668,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Spell Turning",
-    description: "Targeted spells are turned back on the original caster. Only spells targeting you are affected (not area or touch spells). 1d4+6 spell levels are affected. When a spell exceeds remaining turning, it is partially turned (proportional damage/chance split between you and the caster). Two spell turning effects interacting create a resonating field with random results. Arcane Material Component: A small silver mirror.",
+    description:
+      "Targeted spells are turned back on the original caster. Only spells targeting you are affected (not area or touch spells). 1d4+6 spell levels are affected. When a spell exceeds remaining turning, it is partially turned (proportional damage/chance split between you and the caster). Two spell turning effects interacting create a resonating field with random results. Arcane Material Component: A small silver mirror.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -649,7 +687,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Statue",
-    description: "The subject becomes solid stone (hardness 8) retaining hp, senses, and save bonuses. Gains +10 natural armor but Dexterity becomes 0, speed 0, and immune to critical hits. Can freely switch between statue and normal form (free action). Equipment changes with you. Material Component: Lime, sand, and water stirred by an iron bar.",
+    description:
+      "The subject becomes solid stone (hardness 8) retaining hp, senses, and save bonuses. Gains +10 natural armor but Dexterity becomes 0, speed 0, and immune to critical hits. Can freely switch between statue and normal form (free action). Equipment changes with you. Material Component: Lime, sand, and water stirred by an iron bar.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -666,7 +705,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Summon Monster VII",
-    description: "This functions like summon monster I, except you summon one 7th-level, 1d3 6th-level, or 1d4+1 lower-level creatures.",
+    description:
+      "This functions like summon monster I, except you summon one 7th-level, 1d3 6th-level, or 1d4+1 lower-level creatures.",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None",
     properties: [
@@ -684,7 +724,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Summon Nature's Ally VII",
-    description: "This functions like summon nature's ally I, except you summon one 7th-level, 1d3 6th-level, or 1d4+1 lower-level creatures.",
+    description:
+      "This functions like summon nature's ally I, except you summon one 7th-level, 1d3 6th-level, or 1d4+1 lower-level creatures.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -702,7 +743,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Sunbeam",
-    description: "Each round (standard action), you evoke a dazzling beam (one per three levels, max six at 18th). Creatures in the beam are blinded and take 4d6 damage (double for sun-sensitive). Reflex negates blindness, halves damage. Undead take 1d6 per caster level (max 20d6, Reflex half); sun-vulnerable undead that fail are destroyed. Also damages fungi, molds, oozes, and slimes as undead.",
+    description:
+      "Each round (standard action), you evoke a dazzling beam (one per three levels, max six at 18th). Creatures in the beam are blinded and take 4d6 damage (double for sun-sensitive). Reflex negates blindness, halves damage. Undead take 1d6 per caster level (max 20d6, Reflex half); sun-vulnerable undead that fail are destroyed. Also damages fungi, molds, oozes, and slimes as undead.",
     aptitudes: ["Druid Spells", "Warmage Spells"],
     savingThrow: "Reflex negates and Reflex half; see text",
     properties: [
@@ -720,7 +762,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Symbol of Stunning",
-    description: "This functions like symbol of death, except creatures within 60 feet are stunned for 1d6 rounds. Magical trap (DC 32). Material Component: Mercury, phosphorus, and diamond/opal (5,000 gp total).",
+    description:
+      "This functions like symbol of death, except creatures within 60 feet are stunned for 1d6 rounds. Magical trap (DC 32). Material Component: Mercury, phosphorus, and diamond/opal (5,000 gp total).",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -739,7 +782,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Symbol of Weakness",
-    description: "This functions like symbol of death, except creatures suffer 3d6 Strength damage. No hp limit; active 10 minutes per caster level. Magical trap (DC 32). Material Component: Mercury, phosphorus, and diamond/opal (5,000 gp total).",
+    description:
+      "This functions like symbol of death, except creatures suffer 3d6 Strength damage. No hp limit; active 10 minutes per caster level. Magical trap (DC 32). Material Component: Mercury, phosphorus, and diamond/opal (5,000 gp total).",
     aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Fortitude negates",
     properties: [
@@ -756,7 +800,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Teleport Object",
-    description: "This functions like teleport, except it moves an object (not creatures or magical forces). The object can optionally be sent to the Ethereal Plane; a targeted dispel magic on the departure point retrieves it.",
+    description:
+      "This functions like teleport, except it moves an object (not creatures or magical forces). The object can optionally be sent to the Ethereal Plane; a targeted dispel magic on the departure point retrieves it.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates (object)",
     properties: [
@@ -772,7 +817,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Teleport, Greater",
-    description: "This functions like teleport, except there is no range limit and no chance of arriving off target. You need not have seen the destination if you have a reliable description. Insufficient information simply returns you to your origin. No interplanar travel.",
+    description:
+      "This functions like teleport, except there is no range limit and no chance of arriving off target. You need not have seen the destination if you have a reliable description. Insufficient information simply returns you to your origin. No interplanar travel.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "None and Will negates (object)",
     properties: [
@@ -788,7 +834,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Transmute Metal to Wood",
-    description: "All metal objects in the area become wood. Magic items get SR 20 + CL; artifacts are immune. Wooden weapons take -2 on attacks and damage. Wooden armor loses 2 AC. Weapons break on natural 1 or 2; armor loses additional AC on natural 19 or 20 hits. Only limited wish, miracle, or wish can restore the metal.",
+    description:
+      "All metal objects in the area become wood. Magic items get SR 20 + CL; artifacts are immune. Wooden weapons take -2 on attacks and damage. Wooden armor loses 2 AC. Weapons break on natural 1 or 2; armor loses additional AC on natural 19 or 20 hits. Only limited wish, miracle, or wish can restore the metal.",
     aptitudes: ["Druid Spells"],
     savingThrow: "None",
     properties: [
@@ -805,7 +852,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Vision",
-    description: "This functions like legend lore, but works faster with some strain. You pose a question and make a caster level check: DC 20 if at hand, DC 25 for detailed info (incomplete results), DC 30 for rumors only (vague results). XP Cost: 100 XP.",
+    description:
+      "This functions like legend lore, but works faster with some strain. You pose a question and make a caster level check: DC 20 if at hand, DC 25 for detailed info (incomplete results), DC 30 for rumors only (vague results). XP Cost: 100 XP.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None",
     properties: [
@@ -840,7 +888,8 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
   },
   {
     name: "Word of Chaos",
-    description: "Nonchaotic creatures hearing the word suffer cumulative effects with no save based on HD relative to your caster level: deafened 1d4 rounds, stunned 1 round, confused 1d10 minutes (mind-affecting enchantment), killed (living die, undead destroyed). Nonchaotic extraplanar creatures on your home plane are banished for at least 24 hours (Will at -4 negates). Creatures with HD exceeding your caster level are unaffected.",
+    description:
+      "Nonchaotic creatures hearing the word suffer cumulative effects with no save based on HD relative to your caster level: deafened 1d4 rounds, stunned 1 round, confused 1d10 minutes (mind-affecting enchantment), killed (living die, undead destroyed). Nonchaotic extraplanar creatures on your home plane are banished for at least 24 hours (Will at -4 negates). Creatures with HD exceeding your caster level are unaffected.",
     aptitudes: ["Cleric Spells"],
     savingThrow: "None or Will negates; see text",
     properties: [

@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const ALIENIST: ClassSeed = {
   name: "Alienist",
-  description: "Alienists deal with powers and entities from terrifyingly remote reaches of space and time. For them, magical power is the triumph of the mind over the rude boundaries of dimension, distance, and often, sanity. With knowledge and determination, they pierce the barrier at the edge of time itself. In the Far Realm, outside time, Herculean minds drift, absorbed in contemplations of madness. Unspeakable beings whisper terrifying secrets to those who dare communication. These secrets were not meant for mortals, but the alienist plunges into abysses of chaos and entropy that would blast a weaker mind. An alienist's mad certainty is sometimes strong enough to sway others to believe in her own future transcendence. Alienists might, on rare occasions, gather in secluded groups to enact some obscure ritual, but more often they are encountered singly. NPC alienists sometimes haunt libraries or specialty bookshops in large cities, skulking and mumbling among stacks of rare (and dangerous) volumes.",
-  hd: 4, levels: 10, skillPoints: 2,
+  description:
+    "Alienists deal with powers and entities from terrifyingly remote reaches of space and time. For them, magical power is the triumph of the mind over the rude boundaries of dimension, distance, and often, sanity. With knowledge and determination, they pierce the barrier at the edge of time itself. In the Far Realm, outside time, Herculean minds drift, absorbed in contemplations of madness. Unspeakable beings whisper terrifying secrets to those who dare communication. These secrets were not meant for mortals, but the alienist plunges into abysses of chaos and entropy that would blast a weaker mind. An alienist's mad certainty is sometimes strong enough to sway others to believe in her own future transcendence. Alienists might, on rare occasions, gather in secluded groups to enact some obscure ritual, but more often they are encountered singly. NPC alienists sometimes haunt libraries or specialty bookshops in large cities, skulking and mumbling among stacks of rare (and dangerous) volumes.",
+  hd: 4,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -56,5 +64,3 @@ export const ALIENIST: ClassSeed = {
     [10, "Alien Transcendence (Alienist)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

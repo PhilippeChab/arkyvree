@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const LOREMASTER: ClassSeed = {
   name: "Loremaster",
-  description: "Loremasters are arcane or divine casters devoted to the pursuit of knowledge, prizing hidden wisdom and obscure lore above material wealth.",
-  hd: 4, levels: 10, skillPoints: 4,
+  description:
+    "Loremasters are arcane or divine casters devoted to the pursuit of knowledge, prizing hidden wisdom and obscure lore above material wealth.",
+  hd: 4,
+  levels: 10,
+  skillPoints: 4,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -35,7 +43,12 @@ export const LOREMASTER: ClassSeed = {
   requirements: [
     or(gte("spellcasting.arcane", 7), gte("spellcasting.divine", 7)),
     gte("skills.spellcraft.rank", 10),
-    { target: "feats.metamagic.count", operator: "greater_than_or_equal", value: "{{ 3 - [feats.itemcreation.count] }}", valueType: "number" },
+    {
+      target: "feats.metamagic.count",
+      operator: "greater_than_or_equal",
+      value: "{{ 3 - [feats.itemcreation.count] }}",
+      valueType: "number",
+    },
   ],
   casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Loremaster Class Feature",
@@ -64,5 +77,3 @@ export const LOREMASTER: ClassSeed = {
     [10, "True Lore (Loremaster)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

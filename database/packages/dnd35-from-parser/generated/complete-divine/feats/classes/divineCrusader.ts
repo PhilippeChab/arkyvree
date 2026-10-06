@@ -1,59 +1,542 @@
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 
 const APT = "Divine Crusader Class Feature";
 
 export const DIVINE_CRUSADER_FEATS: FeatSeed[] = [
-  { name: "Aura (Divine Crusader)", description: "The strength of a divine crusader's alignment aura equals her divine crusader level combined with levels from any other classes that also produce an alignment aura (for example, cleric or paladin levels).", selectable: false, aptitudes: [APT] },
-  { name: "Darkvision (Divine Crusader)", description: "At 7th level, a divine crusader acquires darkvision with a 60-foot range. If she already possesses darkvision, its range extends by an additional 30 feet.", selectable: false, aptitudes: [APT] },
-  { name: "Perfect Self (Divine Crusader)", description: "Upon reaching 10th level, the divine crusader undergoes a fundamental transformation into a planar being. Her creature type becomes outsider (native). Despite this change, she can still be raised, reincarnated, or resurrected like any other living creature, and she continues to be native to the Material Plane. She also gains damage reduction 10/magic.", selectable: false, aptitudes: [APT] },
+  {
+    name: "Aura (Divine Crusader)",
+    description:
+      "The strength of a divine crusader's alignment aura equals her divine crusader level combined with levels from any other classes that also produce an alignment aura (for example, cleric or paladin levels).",
+    selectable: false,
+    aptitudes: [APT],
+  },
+  {
+    name: "Darkvision (Divine Crusader)",
+    description:
+      "At 7th level, a divine crusader acquires darkvision with a 60-foot range. If she already possesses darkvision, its range extends by an additional 30 feet.",
+    selectable: false,
+    aptitudes: [APT],
+  },
+  {
+    name: "Perfect Self (Divine Crusader)",
+    description:
+      "Upon reaching 10th level, the divine crusader undergoes a fundamental transformation into a planar being. Her creature type becomes outsider (native). Despite this change, she can still be raised, reincarnated, or resurrected like any other living creature, and she continues to be native to the Material Plane. She also gains damage reduction 10/magic.",
+    selectable: false,
+    aptitudes: [APT],
+  },
   { name: "Resistance to Acid 5 (Divine Crusader)", description: "", selectable: false, aptitudes: [APT] },
-  { name: "Resistance to Acid and Electricity 10 (Divine Crusader)", description: "", selectable: false, aptitudes: [APT] },
+  {
+    name: "Resistance to Acid and Electricity 10 (Divine Crusader)",
+    description: "",
+    selectable: false,
+    aptitudes: [APT],
+  },
   { name: "Resistance to Electricity 5 (Divine Crusader)", description: "", selectable: false, aptitudes: [APT] },
-  { name: "Spells per Day (Divine Crusader)", description: "The divine crusader is a divine spellcaster whose spell selection is limited to a single chosen domain. In practice, her entire class spell list consists of just nine spells (one at each spell level). Preparing or casting a spell requires a Charisma score of at least 10 + the spell's level. The save DC for her spells is 10 + spell level + her Charisma modifier, and she receives bonus spells for a high Charisma. She prepares and casts spells in the same manner as a cleric, with the exception that she cannot spontaneously convert prepared spells into cure or inflict spells. Electricity Resistance (Ex): Starting at 3rd level, the divine crusader gains electricity resistance 5. This improves to electricity resistance 10 at 9th level.", selectable: false, aptitudes: [APT] },
-  { name: "Weapon Specialization (Divine Crusader)", description: "At 5th level, the divine crusader receives Weapon Specialization with her deity's favored weapon as a bonus feat. Acid Resistance (Ex): Beginning at 6th level, the divine crusader gains acid resistance 5. At 9th level, this increases to acid resistance 10.", selectable: false, aptitudes: [APT] },
-  { name: "Weapon and Armor Proficiency (Divine Crusader)", description: "This class does not grant proficiency with any weapons or armor.", selectable: false, aptitudes: [APT] },
-  { name: "Advance Divine Crusader Spellcasting", description: "Your effective divinecrusader caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in divinecrusader.", stackable: true, aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"], modifiers: [{ target: "classes.divinecrusader.bonuscasterlevel", operator: "add", value: "1", valueType: "number" }], requirements: [gte("classes.divinecrusader.level", 1)] },
-  { name: "Air Domain (Divine Crusader)", description: "The Air domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.airdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Animal Domain (Divine Crusader)", description: "The Animal domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.animaldomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Celerity Domain (Divine Crusader)", description: "The Celerity domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.celeritydomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Chaos Domain (Divine Crusader)", description: "The Chaos domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.chaosdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Cold Domain (Divine Crusader)", description: "The Cold domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.colddomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Community Domain (Divine Crusader)", description: "The Community domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.communitydomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Competition Domain (Divine Crusader)", description: "The Competition domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.competitiondomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Creation Domain (Divine Crusader)", description: "The Creation domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.creationdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Death Domain (Divine Crusader)", description: "The Death domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.deathdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Destruction Domain (Divine Crusader)", description: "The Destruction domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.destructiondomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Domination Domain (Divine Crusader)", description: "The Domination domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.dominationdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Dream Domain (Divine Crusader)", description: "The Dream domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.dreamdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Earth Domain (Divine Crusader)", description: "The Earth domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.earthdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Evil Domain (Divine Crusader)", description: "The Evil domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.evildomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Fire Domain (Divine Crusader)", description: "The Fire domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.firedomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Force Domain (Divine Crusader)", description: "The Force domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.forcedomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Glory Domain (Divine Crusader)", description: "The Glory domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.glorydomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Good Domain (Divine Crusader)", description: "The Good domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.gooddomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Healing Domain (Divine Crusader)", description: "The Healing domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.healingdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Inquisition Domain (Divine Crusader)", description: "The Inquisition domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.inquisitiondomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Knowledge Domain (Divine Crusader)", description: "The Knowledge domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.knowledgedomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Law Domain (Divine Crusader)", description: "The Law domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.lawdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Liberation Domain (Divine Crusader)", description: "The Liberation domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.liberationdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Luck Domain (Divine Crusader)", description: "The Luck domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.luckdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Madness Domain (Divine Crusader)", description: "The Madness domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.madnessdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Magic Domain (Divine Crusader)", description: "The Magic domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.magicdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Mind Domain (Divine Crusader)", description: "The Mind domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.minddomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Mysticism Domain (Divine Crusader)", description: "The Mysticism domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.mysticismdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Oracle Domain (Divine Crusader)", description: "The Oracle domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.oracledomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Pact Domain (Divine Crusader)", description: "The Pact domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.pactdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Pestilence Domain (Divine Crusader)", description: "The Pestilence domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.pestilencedomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Plant Domain (Divine Crusader)", description: "The Plant domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.plantdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Protection Domain (Divine Crusader)", description: "The Protection domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.protectiondomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Purification Domain (Divine Crusader)", description: "The Purification domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.purificationdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Strength Domain (Divine Crusader)", description: "The Strength domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.strengthdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Summoner Domain (Divine Crusader)", description: "The Summoner domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.summonerdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Sun Domain (Divine Crusader)", description: "The Sun domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.sundomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Travel Domain (Divine Crusader)", description: "The Travel domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.traveldomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Trickery Domain (Divine Crusader)", description: "The Trickery domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.trickerydomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "War Domain (Divine Crusader)", description: "The War domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.wardomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Water Domain (Divine Crusader)", description: "The Water domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.waterdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
-  { name: "Weather Domain (Divine Crusader)", description: "The Weather domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.", selectable: true, aptitudes: ["Divine Crusader Domain"], modifiers: [{ target: "aptitudes.weatherdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" }] },
+  {
+    name: "Spells per Day (Divine Crusader)",
+    description:
+      "The divine crusader is a divine spellcaster whose spell selection is limited to a single chosen domain. In practice, her entire class spell list consists of just nine spells (one at each spell level). Preparing or casting a spell requires a Charisma score of at least 10 + the spell's level. The save DC for her spells is 10 + spell level + her Charisma modifier, and she receives bonus spells for a high Charisma. She prepares and casts spells in the same manner as a cleric, with the exception that she cannot spontaneously convert prepared spells into cure or inflict spells. Electricity Resistance (Ex): Starting at 3rd level, the divine crusader gains electricity resistance 5. This improves to electricity resistance 10 at 9th level.",
+    selectable: false,
+    aptitudes: [APT],
+  },
+  {
+    name: "Weapon Specialization (Divine Crusader)",
+    description:
+      "At 5th level, the divine crusader receives Weapon Specialization with her deity's favored weapon as a bonus feat. Acid Resistance (Ex): Beginning at 6th level, the divine crusader gains acid resistance 5. At 9th level, this increases to acid resistance 10.",
+    selectable: false,
+    aptitudes: [APT],
+  },
+  {
+    name: "Weapon and Armor Proficiency (Divine Crusader)",
+    description: "This class does not grant proficiency with any weapons or armor.",
+    selectable: false,
+    aptitudes: [APT],
+  },
+  {
+    name: "Advance Divine Crusader Spellcasting",
+    description:
+      "Your effective divinecrusader caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in divinecrusader.",
+    stackable: true,
+    aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
+    modifiers: [
+      { target: "classes.divinecrusader.bonuscasterlevel", operator: "add", value: "1", valueType: "number" },
+    ],
+    requirements: [gte("classes.divinecrusader.level", 1)],
+  },
+  {
+    name: "Air Domain (Divine Crusader)",
+    description:
+      "The Air domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.airdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Animal Domain (Divine Crusader)",
+    description:
+      "The Animal domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.animaldomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Celerity Domain (Divine Crusader)",
+    description:
+      "The Celerity domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.celeritydomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Chaos Domain (Divine Crusader)",
+    description:
+      "The Chaos domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.chaosdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Cold Domain (Divine Crusader)",
+    description:
+      "The Cold domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.colddomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Community Domain (Divine Crusader)",
+    description:
+      "The Community domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.communitydomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Competition Domain (Divine Crusader)",
+    description:
+      "The Competition domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.competitiondomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Creation Domain (Divine Crusader)",
+    description:
+      "The Creation domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.creationdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Death Domain (Divine Crusader)",
+    description:
+      "The Death domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.deathdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Destruction Domain (Divine Crusader)",
+    description:
+      "The Destruction domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.destructiondomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Domination Domain (Divine Crusader)",
+    description:
+      "The Domination domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.dominationdomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Dream Domain (Divine Crusader)",
+    description:
+      "The Dream domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.dreamdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Earth Domain (Divine Crusader)",
+    description:
+      "The Earth domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.earthdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Evil Domain (Divine Crusader)",
+    description:
+      "The Evil domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.evildomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Fire Domain (Divine Crusader)",
+    description:
+      "The Fire domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.firedomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Force Domain (Divine Crusader)",
+    description:
+      "The Force domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.forcedomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Glory Domain (Divine Crusader)",
+    description:
+      "The Glory domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.glorydomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Good Domain (Divine Crusader)",
+    description:
+      "The Good domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.gooddomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Healing Domain (Divine Crusader)",
+    description:
+      "The Healing domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.healingdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Inquisition Domain (Divine Crusader)",
+    description:
+      "The Inquisition domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.inquisitiondomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Knowledge Domain (Divine Crusader)",
+    description:
+      "The Knowledge domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.knowledgedomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Law Domain (Divine Crusader)",
+    description:
+      "The Law domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.lawdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Liberation Domain (Divine Crusader)",
+    description:
+      "The Liberation domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.liberationdomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Luck Domain (Divine Crusader)",
+    description:
+      "The Luck domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.luckdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Madness Domain (Divine Crusader)",
+    description:
+      "The Madness domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.madnessdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Magic Domain (Divine Crusader)",
+    description:
+      "The Magic domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.magicdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Mind Domain (Divine Crusader)",
+    description:
+      "The Mind domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.minddomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Mysticism Domain (Divine Crusader)",
+    description:
+      "The Mysticism domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.mysticismdomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Oracle Domain (Divine Crusader)",
+    description:
+      "The Oracle domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.oracledomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Pact Domain (Divine Crusader)",
+    description:
+      "The Pact domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.pactdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Pestilence Domain (Divine Crusader)",
+    description:
+      "The Pestilence domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.pestilencedomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Plant Domain (Divine Crusader)",
+    description:
+      "The Plant domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.plantdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Protection Domain (Divine Crusader)",
+    description:
+      "The Protection domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.protectiondomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Purification Domain (Divine Crusader)",
+    description:
+      "The Purification domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      {
+        target: "aptitudes.purificationdomainspells.joinsclasslist",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+    ],
+  },
+  {
+    name: "Strength Domain (Divine Crusader)",
+    description:
+      "The Strength domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.strengthdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Summoner Domain (Divine Crusader)",
+    description:
+      "The Summoner domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.summonerdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Sun Domain (Divine Crusader)",
+    description:
+      "The Sun domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.sundomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Travel Domain (Divine Crusader)",
+    description:
+      "The Travel domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.traveldomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Trickery Domain (Divine Crusader)",
+    description:
+      "The Trickery domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.trickerydomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "War Domain (Divine Crusader)",
+    description:
+      "The War domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.wardomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Water Domain (Divine Crusader)",
+    description:
+      "The Water domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.waterdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
+  {
+    name: "Weather Domain (Divine Crusader)",
+    description:
+      "The Weather domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.",
+    selectable: true,
+    aptitudes: ["Divine Crusader Domain"],
+    modifiers: [
+      { target: "aptitudes.weatherdomainspells.joinsclasslist", operator: "set", value: "true", valueType: "boolean" },
+    ],
+  },
 ];

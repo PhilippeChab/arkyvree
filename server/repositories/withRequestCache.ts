@@ -1,8 +1,8 @@
 import {
   clearRequestCache,
+  type CowData,
   getCowContext,
   db as globalDb,
-  type IdResolveMap,
   memoizeRequest,
 } from "@/server/database/index.ts";
 
@@ -19,14 +19,14 @@ const WRITES = new Set(methodVerbs.write);
  * A short id per copy-on-write state, so that a request's reads in two of them (a character's ruleset and another's)
  * never share a cached result.
  */
-const stateIds = new WeakMap<IdResolveMap, string>();
+const stateIds = new WeakMap<CowData, string>();
 let lastStateId = 0;
 
-function getStateId(map: IdResolveMap): string {
-  let id = stateIds.get(map);
+function getStateId(cow: CowData): string {
+  let id = stateIds.get(cow);
   if (!id) {
     id = String(++lastStateId);
-    stateIds.set(map, id);
+    stateIds.set(cow, id);
   }
   return id;
 }
@@ -42,8 +42,8 @@ function getReadKey(repository: string, method: string, args: unknown[]): string
   } catch {
     return undefined;
   }
-  const map = getCowContext()?.idResolveMap;
-  return map && map.size > 0 ? `${key}|cow:${getStateId(map)}` : key;
+  const cow = getCowContext();
+  return cow && !cow.isEmpty() ? `${key}|cow:${getStateId(cow)}` : key;
 }
 
 /**

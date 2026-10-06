@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const MAGE_OF_THE_ARCANE_ORDER: ClassSeed = {
   name: "Mage of the Arcane Order",
-  description: "Also called a \"guildmage,\" a member of this prestige class is a spellcaster who belongs to an academy and guild known as the Arcane Order.",
-  hd: 4, levels: 10, skillPoints: 2,
+  description:
+    'Also called a "guildmage," a member of this prestige class is a spellcaster who belongs to an academy and guild known as the Arcane Order.',
+  hd: 4,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -50,5 +58,3 @@ export const MAGE_OF_THE_ARCANE_ORDER: ClassSeed = {
     [10, "Regent (Mage of the Arcane Order)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

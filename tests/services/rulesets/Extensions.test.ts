@@ -10,7 +10,7 @@ import {
   DND35_DMG_NAME,
 } from "@/database/packages/dnd35/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
-import { getOrBuildCowData, invalidateAllCowData } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
@@ -415,17 +415,17 @@ describe("subscribing to an extension", () => {
         await Powers.create(db, { name: "Reprint", rulesetId: a.id }),
       ];
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id]);
-      invalidateAllCowData();
-      const cow = await getOrBuildCowData((await Rulesets.findOne(db, { id: draft.id }))!);
+      RulesetCache.invalidate(draft.id);
+      const cow = await RulesetCache.getCowData((await Rulesets.findOne(db, { id: draft.id }))!);
 
-      const [winner, loser] = cow.siblingMap.has(spellA.id) ? [spellA, spellB] : [spellB, spellA];
-      expect(cow.siblingMap.get(winner.id)).toContain(loser.id);
-      expect(cow.idResolveMap.get(loser.id)).toBe(winner.id);
+      const [winner, loser] = cow.hasSiblings(spellA.id) ? [spellA, spellB] : [spellB, spellA];
+      expect(cow.getSiblings(winner.id)).toContain(loser.id);
+      expect(cow.resolve(loser.id)).toBe(winner.id);
       expect(cow.siblingIds.has(loser.id)).toBe(true);
 
-      expect(cow.siblingMap.get(reprint.id)).toContain(basePower.id);
-      expect(cow.idResolveMap.get(basePower.id)).toBe(reprint.id);
-      expect(cow.idResolveMap.has(reprint.id)).toBe(false);
+      expect(cow.getSiblings(reprint.id)).toContain(basePower.id);
+      expect(cow.resolve(basePower.id)).toBe(reprint.id);
+      expect(cow.getStaleIds()).not.toContain(reprint.id);
     });
   });
 
@@ -781,7 +781,7 @@ describe("an extension's content in a fork", () => {
           : {};
       await addCharacterLevel(character.id, level.id, picks);
     }
-    invalidateAllCowData();
+    RulesetCache.invalidate(draft.id);
 
     const detailed = new DetailedCharacter(character);
     await detailed.build();
@@ -888,10 +888,10 @@ describe("two extensions overriding the same base entity", () => {
 
   test("pairs the two copies once, by the snapshot, not again by name", async () => {
     const { draft, baseId, contributions } = await setupSiblings("feats");
-    invalidateAllCowData();
-    const cow = await getOrBuildCowData((await Rulesets.findOne(db, { id: draft.id }))!);
-    const winner = cow.overrideMap.get(baseId)!;
+    RulesetCache.invalidate(draft.id);
+    const cow = await RulesetCache.getCowData((await Rulesets.findOne(db, { id: draft.id }))!);
+    const winner = cow.resolve(baseId);
     const loser = contributions.map((c) => c.copyId).find((id) => id !== winner)!;
-    expect((cow.siblingMap.get(winner) ?? []).filter((id) => id === loser)).toHaveLength(1);
+    expect(cow.getSiblings(winner).filter((id) => id === loser)).toHaveLength(1);
   });
 });

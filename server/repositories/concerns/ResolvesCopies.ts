@@ -8,14 +8,8 @@ import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Base: B) {
   abstract class ResolvingCopies extends Base {
     /**
-     * Build an `id NOT IN (...)` clause for a list of entity IDs. Returns `false`
-     * (sentinel for `this.where([...])`) when the exclude set is empty so no
-     * clause is emitted.
-     *
-     * Intended for service-layer callers that want to exclude sibling-loser IDs
-     * (from `rulesetData.cow.siblingIds`) at the SQL level, so pagination counts
-     * stay accurate. The sibling-loser set is computed at compose time and
-     * applies to raw repo queries that don't otherwise know the cache exists.
+     * An `id NOT IN (...)` clause for the ids a query leaves out (a picker's, those a character already has), or `false`
+     * (`this.where([...])`'s sentinel) when there are none. A list's sibling losers are left out by `ScopesToRuleset`.
      */
     protected excludeIds(ids: Iterable<string> | undefined): SQL | false {
       if (!ids) return false;
@@ -34,13 +28,9 @@ export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Bas
      */
     protected idMatches(column: Column, id: string): SQL {
       const cow = getCowContext();
-      if (!cow || cow.idResolveMap.size === 0) return eq(column, id);
-      const target = cow.idResolveMap.get(id) ?? id;
-      const candidates = new Set<string>([target]);
-      for (const [pre, post] of cow.idResolveMap) {
-        if (post === target) candidates.add(pre);
-      }
-      return candidates.size === 1 ? eq(column, target) : inArray(column, [...candidates]);
+      if (!cow || cow.isEmpty()) return eq(column, id);
+      const candidates = cow.getEquivalentIds(id);
+      return candidates.length === 1 ? eq(column, candidates[0]) : inArray(column, candidates);
     }
   }
   return ResolvingCopies;

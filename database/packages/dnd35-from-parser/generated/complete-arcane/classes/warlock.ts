@@ -1,9 +1,16 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const WARLOCK: ClassSeed = {
   name: "Warlock",
   description: "A supernatural character whose sinister powers are inborn abilities, not spells.",
-  hd: 6, levels: 20, skillPoints: 2,
+  hd: 6,
+  levels: 20,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -52,5 +59,3 @@ export const WARLOCK: ClassSeed = {
     [20, "Energy Resistance 10 (Warlock)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

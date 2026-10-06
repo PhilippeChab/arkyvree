@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const JUSTICIAR: ClassSeed = {
   name: "Justiciar",
-  description: "Justiciars specialize in tracking down and apprehending lawbreakers, using measured force to bring offenders to justice alive.",
-  hd: 10, levels: 10, skillPoints: 4,
+  description:
+    "Justiciars specialize in tracking down and apprehending lawbreakers, using measured force to bring offenders to justice alive.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -45,7 +53,11 @@ export const JUSTICIAR: ClassSeed = {
     gte("skills.survival.rank", 5),
     eq("feats.skillfocusgatherinformation.possessed"),
     eq("feats.track.possessed"),
-    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Good"),
+      eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+    ),
   ],
   classFeatureAptitude: "Justiciar Class Feature",
   classFeatures: [
@@ -64,9 +76,5 @@ export const JUSTICIAR: ClassSeed = {
     [10, "Intuition (Justiciar)"],
     [10, "Nonlethal Strike (Justiciar)"],
   ],
-  freeFeats: [
-    [2, "Improved Grapple", "Justiciar Class Feature"],
-  ],
+  freeFeats: [[2, "Improved Grapple", "Justiciar Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

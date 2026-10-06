@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const BARD: ClassSeed = {
   name: "Bard",
-  description: "Traveling performers and lore-keepers who weave arcane magic through music, poetry, and oral tradition. Bards blend artistic talent with supernatural power, drawing on a broad base of knowledge picked up during their wanderings. Their versatility allows them to fill many roles: inspiring allies in battle, unraveling ancient mysteries, and charming both friends and foes with their performances.",
-  hd: 6, levels: 20, skillPoints: 6,
+  description:
+    "Traveling performers and lore-keepers who weave arcane magic through music, poetry, and oral tradition. Bards blend artistic talent with supernatural power, drawing on a broad base of knowledge picked up during their wanderings. Their versatility allows them to fill many roles: inspiring allies in battle, unraveling ancient mysteries, and charming both friends and foes with their performances.",
+  hd: 6,
+  levels: 20,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "good" },
   classSkills: [
@@ -123,5 +131,3 @@ export const BARD: ClassSeed = {
     ],
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -3,18 +3,17 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 
 import type { CachedRulesetData } from "./compose.ts";
-import { getOrBuildCowData } from "./cowData.ts";
 import RulesetCache from "./RulesetCache.ts";
 
 /**
- * Scope helper: loads the ruleset, builds cowData, and runs `fn` inside a
+ * Scope helper: loads the ruleset and its view (`RulesetCache.getData`), and runs `fn` inside a
  * cowContext so every repository read inside auto-resolves pre-COW ids to
  * post-COW (output Proxy) AND every entity-id WHERE-clause input is
  * auto-canonicalized (input Proxy). Services call this once at the top of
  * a character-scoped operation; downstream code stops caring about COW.
  *
  * Throws `NotFoundError("Ruleset not found")` if `rulesetId` doesn't exist,
- * so the callback always receives non-null `{ ruleset, cowData }` and
+ * so the callback always receives non-null `{ ruleset, rulesetData }` and
  * doesn't have to branch or add defensive sourceChain fallbacks.
  */
 export async function withRulesetScope<T>(
@@ -27,9 +26,8 @@ export async function withRulesetScope<T>(
 ): Promise<T> {
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
   if (!ruleset) throw new NotFoundError("Ruleset not found");
-  const cowData = await getOrBuildCowData(ruleset);
-  const rulesetData = await RulesetCache.getData(rulesetId, cowData);
-  return await withCowContext(cowData, () => fn({ ruleset, rulesetData }));
+  const rulesetData = await RulesetCache.getData(ruleset);
+  return await withCowContext(rulesetData.cow, () => fn({ ruleset, rulesetData }));
 }
 
 /**
@@ -39,7 +37,7 @@ export async function withRulesetScope<T>(
  * `cowContext` would have to pick one ruleset, excluding the others.
  *
  * No `cowContext` is activated — the composed `rulesetData.*` Maps already
- * wrap stored ids through their own per-ruleset overrideMap, so lookups
+ * resolve stored ids through their own ruleset's CowData, so lookups
  * work without ambient context. Services that need character-scoped repo
  * auto-resolution for a specific character should use `withRulesetScope`
  * inside their per-character enrichment path.
@@ -57,8 +55,7 @@ export async function withRulesetScopes<T>(
   for (const rulesetId of unique) {
     const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
     if (!ruleset) continue;
-    const cowData = await getOrBuildCowData(ruleset);
-    const rulesetData = await RulesetCache.getData(rulesetId, cowData);
+    const rulesetData = await RulesetCache.getData(ruleset);
     map.set(rulesetId, rulesetData);
   }
   return fn(map);

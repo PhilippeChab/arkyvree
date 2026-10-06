@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { featsInRules, itemsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { getOrBuildCowData, invalidateCowData } from "@/server/cache/rulesetCache/index.ts";
 import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
@@ -28,8 +27,7 @@ async function getRuleset() {
 }
 
 async function composeFork(fork: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] }) {
-  const cowData = await getOrBuildCowData(fork);
-  return RulesetCache.getData(fork.id, cowData);
+  return RulesetCache.getData(fork);
 }
 
 describe("rulesetCache", () => {
@@ -38,35 +36,34 @@ describe("rulesetCache", () => {
   beforeEach(() => RulesetCache.invalidateAll());
   afterEach(() => RulesetCache.invalidateAll());
 
-  test("getOrBuildCowData returns correct structure for base ruleset", async () => {
+  test("getCowData returns correct structure for base ruleset", async () => {
     const ruleset = await getRuleset();
 
-    const cowData = await getOrBuildCowData(ruleset);
+    const cowData = await RulesetCache.getCowData(ruleset);
 
     expect(cowData).toBeDefined();
     expect(cowData.sourceChain).toBeArray();
-    expect(cowData.overrideMap).toBeInstanceOf(Map);
-    // Base ruleset has no ancestors, so override map is empty
+    // Base ruleset has no ancestors, so it resolves no id
     expect(cowData.sourceChain.length).toBe(0);
-    expect(cowData.overrideMap.size).toBe(0);
+    expect(cowData.isEmpty()).toBe(true);
   });
 
-  test("getOrBuildCowData returns same result on second call (cached)", async () => {
+  test("getCowData returns same result on second call (cached)", async () => {
     const ruleset = await getRuleset();
 
-    const first = await getOrBuildCowData(ruleset);
-    const second = await getOrBuildCowData(ruleset);
+    const first = await RulesetCache.getCowData(ruleset);
+    const second = await RulesetCache.getCowData(ruleset);
 
     // Same reference — confirms it was served from cache
     expect(second).toBe(first);
   });
 
-  test("invalidateCowData clears COW cache for a specific ruleset", async () => {
+  test("invalidateEntities clears COW cache for a specific ruleset", async () => {
     const ruleset = await getRuleset();
 
-    const first = await getOrBuildCowData(ruleset);
-    invalidateCowData(ruleset.id);
-    const second = await getOrBuildCowData(ruleset);
+    const first = await RulesetCache.getCowData(ruleset);
+    RulesetCache.invalidateEntities(ruleset.id);
+    const second = await RulesetCache.getCowData(ruleset);
 
     // Different reference — confirms cache was invalidated and data re-fetched
     expect(second).not.toBe(first);
@@ -77,8 +74,7 @@ describe("rulesetCache", () => {
   test("getData returns all entity types", async () => {
     const ruleset = await getRuleset();
 
-    const cowData = await getOrBuildCowData(ruleset);
-    const rulesetData = await RulesetCache.getData(ruleset.id, cowData);
+    const rulesetData = await RulesetCache.getData(ruleset);
 
     expect(rulesetData).toBeDefined();
     expect(rulesetData.abilities.length).toBeGreaterThan(0);
@@ -113,9 +109,8 @@ describe("rulesetCache", () => {
   test("getData produces structurally stable composed output", async () => {
     const ruleset = await getRuleset();
 
-    const cowData = await getOrBuildCowData(ruleset);
-    const first = await RulesetCache.getData(ruleset.id, cowData);
-    const second = await RulesetCache.getData(ruleset.id, cowData);
+    const first = await RulesetCache.getData(ruleset);
+    const second = await RulesetCache.getData(ruleset);
 
     // Compose produces a fresh object each call, but the content must match.
     expect(second.abilities.length).toBe(first.abilities.length);
@@ -153,15 +148,15 @@ describe("rulesetCache", () => {
   test("invalidate clears COW and raw entity caches", async () => {
     const ruleset = await getRuleset();
 
-    const cowData = await getOrBuildCowData(ruleset);
+    const cowData = await RulesetCache.getCowData(ruleset);
     const rawData = await RulesetCache.getRawData(ruleset.id);
-    const rulesetData = await RulesetCache.getData(ruleset.id, cowData);
+    const rulesetData = await RulesetCache.getData(ruleset);
 
     RulesetCache.invalidate(ruleset.id);
 
-    const cowData2 = await getOrBuildCowData(ruleset);
+    const cowData2 = await RulesetCache.getCowData(ruleset);
     const rawData2 = await RulesetCache.getRawData(ruleset.id);
-    const rulesetData2 = await RulesetCache.getData(ruleset.id, cowData2);
+    const rulesetData2 = await RulesetCache.getData(ruleset);
 
     // Different references for raw + COW — confirms those caches were invalidated.
     expect(cowData2).not.toBe(cowData);
@@ -179,12 +174,12 @@ describe("rulesetCache", () => {
   test("invalidateAll clears all cached data including pinned entries", async () => {
     const ruleset = await getRuleset();
 
-    const cowData = await getOrBuildCowData(ruleset);
+    const cowData = await RulesetCache.getCowData(ruleset);
     const rawData = await RulesetCache.getRawData(ruleset.id);
 
     RulesetCache.invalidateAll();
 
-    const cowData2 = await getOrBuildCowData(ruleset);
+    const cowData2 = await RulesetCache.getCowData(ruleset);
     const rawData2 = await RulesetCache.getRawData(ruleset.id);
 
     // Both caches cleared, including the pinned system-owned raw entry.
@@ -197,8 +192,7 @@ describe("rulesetCache", () => {
     const ruleset = await getRuleset();
     RulesetCache.invalidateAll();
 
-    const cowData = await getOrBuildCowData(ruleset);
-    const rulesetData = await RulesetCache.getData(ruleset.id, cowData);
+    const rulesetData = await RulesetCache.getData(ruleset);
 
     // Verify ability names include D&D 3.5 standard abilities
     const abilityNames = rulesetData.abilities.map((a) => a.name);
@@ -258,7 +252,7 @@ describe("rulesetCache", () => {
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
 
-      const seedData = await RulesetCache.getData(seed.id, await getOrBuildCowData(seed));
+      const seedData = await RulesetCache.getData(seed);
       const forkData = await composeFork(fork);
 
       // Fresh fork has no own entities — compose should show exactly what seed has.
@@ -281,7 +275,7 @@ describe("rulesetCache", () => {
 
     test("items cache includes templates AND non-template catalog items (no isTemplate filter)", async () => {
       const seed = await getRuleset();
-      const seedData = await RulesetCache.getData(seed.id, await getOrBuildCowData(seed));
+      const seedData = await RulesetCache.getData(seed);
 
       // The seed should have BOTH templates (isTemplate=true) and concrete catalog
       // items (isTemplate=false) — e.g., weapons/armor archetypes + magic items.
@@ -293,7 +287,7 @@ describe("rulesetCache", () => {
 
     test("race modifiers are included in the composed modifiers array", async () => {
       const seed = await getRuleset();
-      const seedData = await RulesetCache.getData(seed.id, await getOrBuildCowData(seed));
+      const seedData = await RulesetCache.getData(seed);
 
       // D&D 3.5 races define ability score modifiers (e.g., Dwarf CON+2), so
       // the composed modifiers must include rows with sourceType='races'.
@@ -307,7 +301,7 @@ describe("rulesetCache", () => {
 
     test("klass sub-tables compose only rows for visible klasses/klass-levels", async () => {
       const seed = await getRuleset();
-      const seedData = await RulesetCache.getData(seed.id, await getOrBuildCowData(seed));
+      const seedData = await RulesetCache.getData(seed);
 
       const visibleKlassIds = new Set(seedData.klasses.map((k) => k.id));
       const visibleKlassLevelIds = new Set(seedData.klassLevels.map((kl) => kl.id));
@@ -403,7 +397,7 @@ describe("rulesetCache", () => {
       RulesetCache.invalidate(seed.id);
 
       // Sanity: seed compose sees the new feat + its customizations.
-      const seedBefore = await RulesetCache.getData(seed.id, await getOrBuildCowData(seed));
+      const seedBefore = await RulesetCache.getData(seed);
       expect(seedBefore.featsById.get(baseFeat.id)).toBeDefined();
       expect(seedBefore.modifiersBySource.get(baseFeat.id)?.some((m) => m.id === baseModifier.id)).toBe(true);
       expect(seedBefore.requirementsByEntity.get(baseFeat.id)?.length).toBe(1);
@@ -457,7 +451,7 @@ describe("rulesetCache", () => {
       });
 
       const forkData = await composeFork(fork);
-      const seedData = await RulesetCache.getData(seed.id, await getOrBuildCowData(seed));
+      const seedData = await RulesetCache.getData(seed);
 
       // Fork's compose: the original ancestor feat is excluded, the COW copy is present.
       expect(forkData.feats.find((f) => f.id === sampleFeat.id)).toBeUndefined();
@@ -483,7 +477,7 @@ describe("rulesetCache", () => {
       await FeatsService.deleteFeat(forkSession, fork.id, sampleFeat.id);
 
       const forkData = await composeFork(fork);
-      const seedData = await RulesetCache.getData(seed.id, await getOrBuildCowData(seed));
+      const seedData = await RulesetCache.getData(seed);
 
       expect(forkData.feats.find((f) => f.id === sampleFeat.id)).toBeUndefined();
       // Deleted COW copy is also absent (archived).
@@ -577,16 +571,16 @@ describe("rulesetCache", () => {
       });
       RulesetCache.invalidateAll();
 
-      const cowData = await getOrBuildCowData(child);
+      const cowData = await RulesetCache.getCowData(child);
       // siblingIds should be precomputed and non-empty (one extension wins, the other is a loser).
       expect(cowData.siblingIds.size).toBeGreaterThan(0);
-      const winnerId = cowData.overrideMap.get(baseFeat.id);
-      expect(winnerId).toBeDefined();
+      const winnerId = cowData.resolve(baseFeat.id);
+      expect(cowData.isOverridden(baseFeat.id)).toBe(true);
       expect([cowA.id, cowB.id]).toContain(winnerId!);
       const loserId = winnerId === cowA.id ? cowB.id : cowA.id;
       expect(cowData.siblingIds.has(loserId)).toBe(true);
 
-      const composed = await RulesetCache.getData(child.id, cowData);
+      const composed = await RulesetCache.getData(child);
       // Winner is present; loser and original base feat are excluded.
       expect(composed.feats.find((f) => f.id === winnerId)).toBeDefined();
       expect(composed.feats.find((f) => f.id === loserId)).toBeUndefined();
@@ -632,14 +626,14 @@ describe("rulesetCache", () => {
       });
       RulesetCache.invalidateAll();
 
-      const cowData = await getOrBuildCowData(child);
-      const winnerId = cowData.overrideMap.get(baseItem.id);
-      expect(winnerId).toBeDefined();
+      const cowData = await RulesetCache.getCowData(child);
+      const winnerId = cowData.resolve(baseItem.id);
+      expect(cowData.isOverridden(baseItem.id)).toBe(true);
       expect([cowA.id, cowB.id]).toContain(winnerId!);
       const loserId = winnerId === cowA.id ? cowB.id : cowA.id;
       expect(cowData.siblingIds.has(loserId)).toBe(true);
 
-      const composed = await RulesetCache.getData(child.id, cowData);
+      const composed = await RulesetCache.getData(child);
       expect(composed.items.find((i) => i.id === winnerId)).toBeDefined();
       expect(composed.items.find((i) => i.id === loserId)).toBeUndefined();
       expect(composed.items.find((i) => i.id === baseItem.id)).toBeUndefined();

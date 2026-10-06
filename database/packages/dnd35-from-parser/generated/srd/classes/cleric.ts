@@ -2,8 +2,11 @@ import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const CLERIC: ClassSeed = {
   name: "Cleric",
-  description: "Evidence of divine power permeates the world - visible in pristine wilderness, righteous campaigns, towering cathedrals, and the devotion of the faithful. Gods, much like mortals, span the full spectrum from kind to cruel, passive to meddlesome, straightforward to enigmatic. Yet the gods typically act through mortal agents - their clerics. Benevolent clerics mend wounds, shield the innocent, and deliver justice. Malevolent clerics plunder, ravage, and undermine. A cleric channels divine authority to enact the will of a deity. And if that divine power also elevates the cleric's own standing, that is simply to be expected. A cleric's quests should ideally serve the interests of the deity, at least broadly. A good cleric, for instance, aids those who suffer. If such righteous deeds also bolster the standing of the cleric's god or temple, all the better. An evil cleric works to expand both personal influence and the reach of the deity, so that others come to respect and dread them both. Clerics may from time to time receive directives - or at least guidance - from religious superiors, tasking them with missions on behalf of the faith. Such missions are fairly compensated, and the church can be particularly generous with spellcasting services or divine magic items as payment. Naturally, clerics are also individuals with their own motivations, and they may pursue adventure for any of the usual personal reasons.",
-  hd: 8, levels: 20, skillPoints: 2,
+  description:
+    "Evidence of divine power permeates the world - visible in pristine wilderness, righteous campaigns, towering cathedrals, and the devotion of the faithful. Gods, much like mortals, span the full spectrum from kind to cruel, passive to meddlesome, straightforward to enigmatic. Yet the gods typically act through mortal agents - their clerics. Benevolent clerics mend wounds, shield the innocent, and deliver justice. Malevolent clerics plunder, ravage, and undermine. A cleric channels divine authority to enact the will of a deity. And if that divine power also elevates the cleric's own standing, that is simply to be expected. A cleric's quests should ideally serve the interests of the deity, at least broadly. A good cleric, for instance, aids those who suffer. If such righteous deeds also bolster the standing of the cleric's god or temple, all the better. An evil cleric works to expand both personal influence and the reach of the deity, so that others come to respect and dread them both. Clerics may from time to time receive directives - or at least guidance - from religious superiors, tasking them with missions on behalf of the faith. Such missions are fairly compensated, and the church can be particularly generous with spellcasting services or divine magic items as payment. Naturally, clerics are also individuals with their own motivations, and they may pursue adventure for any of the usual personal reasons.",
+  hd: 8,
+  levels: 20,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -55,7 +58,5 @@ export const CLERIC: ClassSeed = {
     ],
     knowAll: true,
   },
-  modifiers: [
-    { level: 1, target: "aptitudes.clericdomain.allowed", value: "2", valueType: "number", operator: "add" },
-  ],
+  modifiers: [{ level: 1, target: "aptitudes.clericdomain.allowed", value: "2", valueType: "number", operator: "add" }],
 };

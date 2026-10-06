@@ -63,7 +63,7 @@ test("a list leaves out a book's copy that lost to another book's in its query: 
   const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
   const staleIds = await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
     expect(rulesetData.cow.siblingIds.size).toBeGreaterThan(0);
-    return new Set(rulesetData.cow.idResolveMap.keys());
+    return new Set(rulesetData.cow.getStaleIds());
   });
   const pagination = (page: number) => ({ limit: 100, page });
   for (const getPage of [

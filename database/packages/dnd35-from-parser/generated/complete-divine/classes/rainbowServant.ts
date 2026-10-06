@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const RAINBOW_SERVANT: ClassSeed = {
   name: "Rainbow Servant",
-  description: "Individuals who have discovered and studied the sacred knowledge within the hidden couatl temples are called rainbow servants.",
-  hd: 4, levels: 10, skillPoints: 2,
+  description:
+    "Individuals who have discovered and studied the sacred knowledge within the hidden couatl temples are called rainbow servants.",
+  hd: 4,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -44,5 +52,3 @@ export const RAINBOW_SERVANT: ClassSeed = {
     [10, "Detect Thoughts (Rainbow Servant)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

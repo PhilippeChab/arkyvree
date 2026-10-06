@@ -3,7 +3,8 @@ import type { DomainDefinition } from "@/database/packages/dnd35/content/types.t
 export const ALL_DOMAINS: DomainDefinition[] = [
   {
     name: "Celerity",
-    description: "You move faster on foot than others of your race, gaining a +10 foot enhancement to your base land speed. This bonus does not apply while you wear medium or heavy armor or carry a medium or heavy load.",
+    description:
+      "You move faster on foot than others of your race, gaining a +10 foot enhancement to your base land speed. This bonus does not apply while you wear medium or heavy armor or carry a medium or heavy load.",
     spells: [
       { name: "Expeditious Retreat", level: 1 },
       { name: "Cat's Grace", level: 2 },
@@ -18,7 +19,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Cold",
-    description: "You have the ability to turn or destroy fire creatures in the same manner that a good cleric turns undead. Additionally, you can rebuke or command cold creatures just as an evil cleric rebukes undead. The total number of times you may use these abilities each day equals 3 + your Charisma modifier. This granted power is supernatural in nature.",
+    description:
+      "You have the ability to turn or destroy fire creatures in the same manner that a good cleric turns undead. Additionally, you can rebuke or command cold creatures just as an evil cleric rebukes undead. The total number of times you may use these abilities each day equals 3 + your Charisma modifier. This granted power is supernatural in nature.",
     spells: [
       { name: "Chill Touch", level: 1 },
       { name: "Chill Metal", level: 2 },
@@ -33,7 +35,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Community",
-    description: "Once per day, you can use calm emotions as a spell-like ability. You also receive a +2 bonus on Diplomacy checks.",
+    description:
+      "Once per day, you can use calm emotions as a spell-like ability. You also receive a +2 bonus on Diplomacy checks.",
     spells: [
       { name: "Bless", level: 1 },
       { name: "Status", level: 2 },
@@ -48,7 +51,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Competition",
-    description: "You thrive on challenges and direct confrontation. As an extraordinary ability, you receive a +1 bonus to every opposed check you attempt.",
+    description:
+      "You thrive on challenges and direct confrontation. As an extraordinary ability, you receive a +1 bonus to every opposed check you attempt.",
     spells: [
       { name: "Remove Fear", level: 1 },
       { name: "Zeal", level: 2 },
@@ -93,7 +97,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Dream",
-    description: "Your extensive exploration of the realm of dreams and nightmares has rendered you completely immune to all fear effects.",
+    description:
+      "Your extensive exploration of the realm of dreams and nightmares has rendered you completely immune to all fear effects.",
     spells: [
       { name: "Sleep", level: 1 },
       { name: "Augury", level: 2 },
@@ -108,7 +113,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Force",
-    description: "Through mastery over fundamental forces of motion and energy, once per day you may reroll any single damage roll - whether from a weapon attack, a spell, or a special ability - and keep whichever result is higher. This granted power is a supernatural ability.",
+    description:
+      "Through mastery over fundamental forces of motion and energy, once per day you may reroll any single damage roll - whether from a weapon attack, a spell, or a special ability - and keep whichever result is higher. This granted power is a supernatural ability.",
     spells: [
       { name: "Mage Armor", level: 1 },
       { name: "Magic Missile", level: 2 },
@@ -123,7 +129,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Glory",
-    description: "When you turn undead, you receive a +2 bonus to your turning check and deal an additional +1d6 turning damage.",
+    description:
+      "When you turn undead, you receive a +2 bonus to your turning check and deal an additional +1d6 turning damage.",
     spells: [
       { name: "Disrupt Undead", level: 1 },
       { name: "Bless Weapon", level: 2 },
@@ -153,7 +160,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Liberation",
-    description: "When you fail a saving throw against a charm, compulsion, or fear effect, you may attempt the save again 1 round later at the same DC. You receive only this one additional chance to succeed. This granted power is a supernatural ability.",
+    description:
+      "When you fail a saving throw against a charm, compulsion, or fear effect, you may attempt the save again 1 round later at the same DC. You receive only this one additional chance to succeed. This granted power is a supernatural ability.",
     spells: [
       { name: "Omen of Peril", level: 1 },
       { name: "Undetectable Alignment", level: 2 },
@@ -168,7 +176,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Madness",
-    description: "Your fractured mind grants you flashes of brilliance. You take a -1 penalty on all Wisdom-based skill checks and Will saving throws. However, once per day you may tap into the clarity that comes from true madness, adding half your character level to a single Wisdom-based skill check or Will save. You must decide to use this ability before making the roll.",
+    description:
+      "Your fractured mind grants you flashes of brilliance. You take a -1 penalty on all Wisdom-based skill checks and Will saving throws. However, once per day you may tap into the clarity that comes from true madness, adding half your character level to a single Wisdom-based skill check or Will save. You must decide to use this ability before making the roll.",
     spells: [
       { name: "Confusion, Lesser", level: 1 },
       { name: "Touch of Madness", level: 2 },
@@ -198,7 +207,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Mysticism",
-    description: "Once per day as a free action, you may channel divine power to gain a luck bonus on all saving throws equal to your Charisma modifier (with a minimum bonus of +1). This supernatural ability persists for 1 round per cleric level. A good cleric's 7th- and 8th-level domain spells are holy word and holy aura; an evil cleric's are blasphemy and unholy aura.",
+    description:
+      "Once per day as a free action, you may channel divine power to gain a luck bonus on all saving throws equal to your Charisma modifier (with a minimum bonus of +1). This supernatural ability persists for 1 round per cleric level. A good cleric's 7th- and 8th-level domain spells are holy word and holy aura; an evil cleric's are blasphemy and unholy aura.",
     spells: [
       { name: "Divine Favor", level: 1 },
       { name: "Spiritual Weapon", level: 2 },
@@ -250,7 +260,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Pestilence",
-    description: "You are completely immune to the effects of any disease. Despite this immunity, you can still serve as a carrier for infectious diseases.",
+    description:
+      "You are completely immune to the effects of any disease. Despite this immunity, you can still serve as a carrier for infectious diseases.",
     spells: [
       { name: "Doom", level: 1 },
       { name: "Summon Swarm", level: 2 },
@@ -295,7 +306,8 @@ export const ALL_DOMAINS: DomainDefinition[] = [
   },
   {
     name: "Weather",
-    description: "Harsh weather conditions affect you less than normal. Neither rain nor snow imposes penalties on your Spot or Search checks. You traverse snow-covered ground and icy surfaces at your full movement speed. Both natural and magical wind effects treat you as though you were one size category larger than your actual size.",
+    description:
+      "Harsh weather conditions affect you less than normal. Neither rain nor snow imposes penalties on your Spot or Search checks. You traverse snow-covered ground and icy surfaces at your full movement speed. Both natural and magical wind effects treat you as though you were one size category larger than your actual size.",
     spells: [
       { name: "Obscuring Mist", level: 1 },
       { name: "Gust of Wind", level: 2 },

@@ -19,7 +19,7 @@ export async function assertAncestorNamesHidden(
   entityType: EntityType,
   ancestorIds: string[],
 ): Promise<Set<string>> {
-  if (ancestorIds.some((id) => !cow.overrideMap.has(id) && !cow.siblingIds.has(id))) {
+  if (ancestorIds.some((id) => !cow.isHidden(id))) {
     throw new ConflictError("Name already exists in the source chain (an ancestor or subscribed extension)");
   }
   const repo = ENTITY_REPOS[entityType];

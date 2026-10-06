@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const CONTEMPLATIVE: ClassSeed = {
   name: "Contemplative",
   description: "Contemplatives dedicate themselves to deepening their spiritual connection with their patron deity.",
-  hd: 6, levels: 10, skillPoints: 2,
+  hd: 6,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -18,10 +25,7 @@ export const CONTEMPLATIVE: ClassSeed = {
     "Sense Motive",
     "Spellcraft",
   ],
-  requirements: [
-    gte("skills.knowledgereligion.rank", 13),
-    gte("spellcasting.divine", 1),
-  ],
+  requirements: [gte("skills.knowledgereligion.rank", 13), gte("spellcasting.divine", 1)],
   casterLevelAdvancement: { type: "divine", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Contemplative Class Feature",
   classFeatures: [
@@ -40,5 +44,3 @@ export const CONTEMPLATIVE: ClassSeed = {
     [6, "Bonus Domain", "Contemplative Class Feature"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

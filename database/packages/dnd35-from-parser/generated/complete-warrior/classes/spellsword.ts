@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SPELLSWORD: ClassSeed = {
   name: "Spellsword",
   description: "A spellsword represents the ideal union of arcane magic and armed combat.",
-  hd: 8, levels: 10, skillPoints: 2,
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -50,9 +57,5 @@ export const SPELLSWORD: ClassSeed = {
     [9, "Ignore Spell Failure (Spellsword)"],
     [10, "Multiple Channel Spell (Spellsword)"],
   ],
-  aptitudePicks: [
-    { levels: [2], target: "aptitudes.fighterbonusfeat.allowed" },
-  ],
+  aptitudePicks: [{ levels: [2], target: "aptitudes.fighterbonusfeat.allowed" }],
 };
-
-// TODO: No modifiers defined — review if this class needs any

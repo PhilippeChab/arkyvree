@@ -1,4 +1,4 @@
-import type { CowData, IdResolveMap } from "@/server/database/index.ts";
+import type { CowData } from "@/server/database/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Aptitude,
@@ -23,7 +23,6 @@ import type {
 } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { resolveOverrides } from "./overrideMap.ts";
 import { type RulesetRawData } from "./rawData.ts";
 import { mergeSiblingRequirements } from "./siblingRequirements.ts";
 
@@ -31,14 +30,9 @@ type Chain = RulesetRawData[];
 
 /** What a composed customization keeps, drops or moves to a sibling loser's winner. */
 interface CustomizationScope {
-  overriddenIds: CachedCowData["overrideMap"];
-  siblingMap: CachedCowData["siblingMap"];
-  siblingToWinner: Map<string, string>;
+  cow: CowData;
   visibleKlassLevelIds: Set<string>;
 }
-
-/** A ruleset's copy-on-write state, which its view composes by. */
-export type CachedCowData = CowData;
 
 export interface CachedRulesetData {
   abilities: RulesetAbility[];
@@ -133,7 +127,7 @@ export interface CachedRulesetData {
   /** COW context. Most consumers can ignore this and let the id Maps auto-
    *  resolve, but lineage/sibling-aware code can reach it through here
    *  without taking `cowData` as a separate parameter. */
-  cow: CachedCowData;
+  cow: CowData;
 }
 
 function buildById<T extends { id: string }>(list: T[]): Map<string, T> {
@@ -157,13 +151,13 @@ function composeLeveledAptitudeIds(chain: Chain, isExcluded: (id: string) => boo
  * in excludedModifierIds so their requirements drop too.
  */
 function composeModifiers(chain: Chain, scope: CustomizationScope) {
-  const { overriddenIds, siblingMap, siblingToWinner, visibleKlassLevelIds } = scope;
+  const { cow, visibleKlassLevelIds } = scope;
   const modifiers: Modifier[] = [];
   const excludedModifierIds = new Set<string>();
   const modDedupByWinner = new Map<string, Set<string>>();
   for (const raw of chain) {
     for (const m of raw.modifiers) {
-      if (overriddenIds.has(m.sourceId)) {
+      if (cow.isOverridden(m.sourceId)) {
         excludedModifierIds.add(m.id);
         continue;
       }
@@ -171,7 +165,7 @@ function composeModifiers(chain: Chain, scope: CustomizationScope) {
         excludedModifierIds.add(m.id);
         continue;
       }
-      const winnerId = siblingToWinner.get(m.sourceId);
+      const winnerId = cow.getWinner(m.sourceId);
       if (winnerId) {
         const key = `${m.target}|${m.value}|${m.operator}|${m.valueType}`;
         const seen = modDedupByWinner.get(winnerId) ?? new Set<string>();
@@ -184,7 +178,7 @@ function composeModifiers(chain: Chain, scope: CustomizationScope) {
         modifiers.push({ ...m, sourceId: winnerId });
       } else {
         modifiers.push(m);
-        if (siblingMap.has(m.sourceId)) {
+        if (cow.hasSiblings(m.sourceId)) {
           const seen = modDedupByWinner.get(m.sourceId) ?? new Set<string>();
           seen.add(`${m.target}|${m.value}|${m.operator}|${m.valueType}`);
           modDedupByWinner.set(m.sourceId, seen);
@@ -197,19 +191,19 @@ function composeModifiers(chain: Chain, scope: CustomizationScope) {
 
 /**
  * Properties: concat, remap sibling props to winner entityId, dedup (type|value) within each winner group.
- * Ruleset-level properties (entityId === rulesetId) are never excluded because ruleset IDs aren't in overrideMap. Also
+ * Ruleset-level properties (entityId === rulesetId) are never excluded because a ruleset's ID is never overridden. Also
  * drop klass-level properties whose parent klass is a sibling loser — those klass levels have already been filtered
  * out of `klassLevels`, so their props would be orphans in `propertiesByEntity`.
  */
 function composeProperties(chain: Chain, scope: CustomizationScope): Property[] {
-  const { overriddenIds, siblingMap, siblingToWinner, visibleKlassLevelIds } = scope;
+  const { cow, visibleKlassLevelIds } = scope;
   const properties: Property[] = [];
   const propDedupByWinner = new Map<string, Set<string>>();
   for (const raw of chain) {
     for (const prop of raw.properties) {
-      if (overriddenIds.has(prop.entityId)) continue;
+      if (cow.isOverridden(prop.entityId)) continue;
       if (prop.entityType === "klass_levels" && !visibleKlassLevelIds.has(prop.entityId)) continue;
-      const winnerId = siblingToWinner.get(prop.entityId);
+      const winnerId = cow.getWinner(prop.entityId);
       if (winnerId) {
         const key = `${prop.type}|${prop.value}`;
         const seen = propDedupByWinner.get(winnerId) ?? new Set<string>();
@@ -219,7 +213,7 @@ function composeProperties(chain: Chain, scope: CustomizationScope): Property[] 
         properties.push({ ...prop, entityId: winnerId });
       } else {
         properties.push(prop);
-        if (siblingMap.has(prop.entityId)) {
+        if (cow.hasSiblings(prop.entityId)) {
           const seen = propDedupByWinner.get(prop.entityId) ?? new Set<string>();
           seen.add(`${prop.type}|${prop.value}`);
           propDedupByWinner.set(prop.entityId, seen);
@@ -239,7 +233,7 @@ function composeProperties(chain: Chain, scope: CustomizationScope): Property[] 
  * The result is the same in-memory list shape as before.
  */
 function composeRequirements(chain: Chain, scope: CustomizationScope, excludedModifierIds: Set<string>): Requirement[] {
-  const { overriddenIds, siblingToWinner, visibleKlassLevelIds } = scope;
+  const { cow, visibleKlassLevelIds } = scope;
   const requirements: Requirement[] = [];
   // Group winner-side rows by winnerId so we can build forests per entity.
   const winnerOwnReqs = new Map<string, Requirement[]>();
@@ -252,9 +246,9 @@ function composeRequirements(chain: Chain, scope: CustomizationScope, excludedMo
         if (!excludedModifierIds.has(r.entityId)) requirements.push(r);
         continue;
       }
-      if (overriddenIds.has(r.entityId)) continue;
+      if (cow.isOverridden(r.entityId)) continue;
       if (r.entityType === "klass_levels" && !visibleKlassLevelIds.has(r.entityId)) continue;
-      const winnerId = siblingToWinner.get(r.entityId);
+      const winnerId = cow.getWinner(r.entityId);
       if (winnerId) {
         if (!siblingReqsByWinner.has(winnerId)) siblingReqsByWinner.set(winnerId, new Map());
         const bySibling = siblingReqsByWinner.get(winnerId)!;
@@ -286,8 +280,8 @@ function composeRows<T extends { id: string }>(
 }
 
 /**
- * The class rows. Klass levels: `overrideMap` carries klass-level id pairs for COW'd klasses (back-filled by cow/
- * after `buildOverrideMap`), so isExcluded covers both entity-level and klass-level IDs uniformly. Additionally drop
+ * The class rows. Klass levels: a COW'd klass's levels are overridden by its copy's (paired by
+ * `CowDataBuilder`), so isExcluded covers both entity-level and klass-level IDs uniformly. Additionally drop
  * levels whose parent klass is a sibling loser — siblingIds only has klass IDs, not klass-level IDs. The klass
  * sub-tables follow their parent klass level's visibility; klassSkills belongs to klasses directly, so it follows
  * the visible klass IDs.
@@ -313,18 +307,16 @@ function composeKlassRows(chain: Chain, klasses: Klass[], isExcluded: (id: strin
 /**
  * Variant of cowResolvingMap for Maps keyed by `${id}:${rest}` composites
  * (e.g. `klassLevelByKlassAndLevel`'s `${klassId}:${level}` keys). Resolves
- * the id portion before the first `:` through the override map, leaves the
+ * the id portion before the first `:` through `CowData.resolve`, leaves the
  * rest untouched. So a caller passing a pre-COW klassId still lands on the
  * right klass level.
  */
-function cowResolvingCompositeKeyMap<V>(map: Map<string, V>, overrideMap: IdResolveMap): Map<string, V> {
-  if (overrideMap.size === 0) return map;
+function cowResolvingCompositeKeyMap<V>(map: Map<string, V>, cow: CowData): Map<string, V> {
+  if (cow.isEmpty()) return map;
   const resolveKey = (key: string): string => {
     const sep = key.indexOf(":");
     if (sep === -1) return key;
-    const idPart = key.slice(0, sep);
-    const resolved = overrideMap.get(idPart);
-    return resolved ? resolved + key.slice(sep) : key;
+    return cow.resolve(key.slice(0, sep)) + key.slice(sep);
   };
   return new Proxy(map, {
     get(target, prop) {
@@ -342,22 +334,22 @@ function cowResolvingCompositeKeyMap<V>(map: Map<string, V>, overrideMap: IdReso
 
 /**
  * Wraps a string-keyed Map so `.get(key)` and `.has(key)` auto-resolve the
- * key through `overrideMap` before hitting the underlying Map. Consumers
+ * key through `CowData.resolve` before hitting the underlying Map. Consumers
  * can pass either a pre-COW (stored) id or a post-COW id — both land on
  * the post-COW entity. `.size`, `.values()`, `.entries()`, etc. behave
  * normally (no alias duplication).
  *
- * Returns the original Map when overrideMap is empty (no allocation cost).
+ * Returns the original Map when the scope resolves no id (no allocation cost).
  */
-function cowResolvingMap<V>(map: Map<string, V>, overrideMap: IdResolveMap): Map<string, V> {
-  if (overrideMap.size === 0) return map;
+function cowResolvingMap<V>(map: Map<string, V>, cow: CowData): Map<string, V> {
+  if (cow.isEmpty()) return map;
   return new Proxy(map, {
     get(target, prop) {
       if (prop === "get") {
-        return (key: string) => target.get(overrideMap.get(key) ?? key);
+        return (key: string) => target.get(cow.resolve(key));
       }
       if (prop === "has") {
-        return (key: string) => target.has(overrideMap.get(key) ?? key);
+        return (key: string) => target.has(cow.resolve(key));
       }
       const value = Reflect.get(target, prop, target);
       return typeof value === "function" ? value.bind(target) : value;
@@ -452,14 +444,14 @@ function klassIndices(
  * compose filters out sibling entities before this point.
  */
 function siblingAptitudeLinks(chain: Chain, scope: CustomizationScope) {
-  const { overriddenIds, siblingMap, siblingToWinner } = scope;
+  const { cow } = scope;
   const feats = new Map<string, FeatWithAptitudes["featsAptitudesInRules"]>();
   const powers = new Map<string, PowerWithAptitudes["powersAptitudesInRules"]>();
-  if (siblingMap.size === 0) return { feats, powers };
+  if (cow.siblingIds.size === 0) return { feats, powers };
   for (const raw of chain) {
     for (const f of raw.feats) {
-      if (overriddenIds.has(f.id)) continue;
-      const w = siblingToWinner.get(f.id);
+      if (cow.isOverridden(f.id)) continue;
+      const w = cow.getWinner(f.id);
       if (!w) continue;
       const remapped = f.featsAptitudesInRules.map((l) => ({ ...l, featId: w }));
       const g = feats.get(w);
@@ -467,8 +459,8 @@ function siblingAptitudeLinks(chain: Chain, scope: CustomizationScope) {
       else feats.set(w, remapped);
     }
     for (const p of raw.powers) {
-      if (overriddenIds.has(p.id)) continue;
-      const w = siblingToWinner.get(p.id);
+      if (cow.isOverridden(p.id)) continue;
+      const w = cow.getWinner(p.id);
       if (!w) continue;
       const remapped = p.powersAptitudesInRules.map((l) => ({ ...l, powerId: w }));
       const g = powers.get(w);
@@ -480,22 +472,21 @@ function siblingAptitudeLinks(chain: Chain, scope: CustomizationScope) {
 }
 
 /**
- * Resolve IDs nested inside the feat/power join arrays. `resolveOverrides` only touches top-level string fields; the
+ * Resolve IDs nested inside the feat/power join arrays. `CowData.resolveRows` only touches top-level string fields; the
  * inline powersAptitudesInRules / featsAptitudesInRules arrays still hold pre-COW aptitudeIds + pre-COW Aptitude join
  * objects after a sibling-dedup or aptitude COW. Downstream consumers compare these against post-COW IDs from the
  * composed cache (`pa.aptitudeId === rulesetData.aptitudesById...`) and silently miss. Walk the arrays once here so
  * every `aptitudeId`, `powerId`, `featId`, and `aptitudesInRule` entry is post-COW. Also merge sibling aptitude links
- * here; dedup by resolved aptitudeId so sibling duplicates collapse naturally. Siblings always imply entries in
- * overrideMap (buildOverrideMap puts sourceId → winnerForkedId for extension-COW siblings; aptitude dedup puts loser
- * → winner for aptitude siblings), so the caller runs this only when there are overrides, and the shallow-copied
- * feats and powers are safe to mutate.
+ * here; dedup by resolved aptitudeId so sibling duplicates collapse naturally. Siblings always imply stale ids
+ * (`CowDataBuilder` aliases each sibling loser to its winner), so the caller runs this only when the scope resolves an
+ * id, and the shallow-copied feats and powers are safe to mutate.
  */
 function resolveAptitudeLinks(
   feats: FeatWithAptitudes[],
   powers: PowerWithAptitudes[],
   aptitudes: Aptitude[],
   links: ReturnType<typeof siblingAptitudeLinks>,
-  idResolveMap: IdResolveMap,
+  cow: CowData,
 ) {
   const aptitudesByIdMap = new Map(aptitudes.map((apt) => [apt.id, apt]));
 
@@ -505,10 +496,10 @@ function resolveAptitudeLinks(
     const seen = new Set<string>();
     const rewritten: typeof feat.featsAptitudesInRules = [];
     for (const link of source) {
-      const resolvedAptId = idResolveMap.get(link.aptitudeId) ?? link.aptitudeId;
+      const resolvedAptId = cow.resolve(link.aptitudeId);
       if (seen.has(resolvedAptId)) continue;
       seen.add(resolvedAptId);
-      const resolvedFeatId = idResolveMap.get(link.featId) ?? link.featId;
+      const resolvedFeatId = cow.resolve(link.featId);
       const aptitudesInRule = aptitudesByIdMap.get(resolvedAptId) ?? link.aptitudesInRule;
       rewritten.push({ ...link, aptitudeId: resolvedAptId, featId: resolvedFeatId, aptitudesInRule });
     }
@@ -521,15 +512,56 @@ function resolveAptitudeLinks(
     const seen = new Set<string>();
     const rewritten: typeof power.powersAptitudesInRules = [];
     for (const link of source) {
-      const resolvedAptId = idResolveMap.get(link.aptitudeId) ?? link.aptitudeId;
+      const resolvedAptId = cow.resolve(link.aptitudeId);
       if (seen.has(resolvedAptId)) continue;
       seen.add(resolvedAptId);
-      const resolvedPowerId = idResolveMap.get(link.powerId) ?? link.powerId;
+      const resolvedPowerId = cow.resolve(link.powerId);
       const aptitudesInRule = aptitudesByIdMap.get(resolvedAptId) ?? link.aptitudesInRule;
       rewritten.push({ ...link, aptitudeId: resolvedAptId, powerId: resolvedPowerId, aptitudesInRule });
     }
     power.powersAptitudesInRules = rewritten;
   }
+}
+
+/** The composed rows, before the lookup indices: each list across the chain, COW-resolved. */
+function composeChain(chain: Chain, cow: CowData) {
+  // A row is left out when a copy overrides it or it's a sibling loser. A loser's customizations merge into its winner
+  // (the customization steps below skip only the overridden ones), and every stored id resolves to the winner.
+  const isExcluded = (id: string) => cow.isHidden(id);
+  const rowsOf = <T extends { id: string } & Record<string, unknown>>(pick: (raw: RulesetRawData) => T[]) =>
+    cow.resolveRows(composeRows(chain, pick, isExcluded));
+
+  const klasses = composeRows(chain, (r) => r.klasses, isExcluded);
+  const klassRows = composeKlassRows(chain, klasses, isExcluded);
+  const scope: CustomizationScope = { cow, visibleKlassLevelIds: klassRows.visibleKlassLevelIds };
+  const { modifiers, excludedModifierIds } = composeModifiers(chain, scope);
+  const composed = {
+    abilities: rowsOf((r) => r.abilities),
+    saves: rowsOf((r) => r.saves),
+    skills: rowsOf((r) => r.skills),
+    feats: rowsOf((r) => r.feats),
+    powers: rowsOf((r) => r.powers),
+    aptitudes: rowsOf((r) => r.aptitudes),
+    klasses: cow.resolveRows(klasses),
+    races: rowsOf((r) => r.races),
+    languages: rowsOf((r) => r.languages),
+    items: rowsOf((r) => r.items),
+    mechanics: rowsOf((r) => r.mechanics),
+    klassLevels: cow.resolveRows(klassRows.klassLevels),
+    klassSkills: cow.resolveRows(klassRows.klassSkills),
+    klassLevelFeats: cow.resolveRows(klassRows.klassLevelFeats),
+    klassLevelPowers: cow.resolveRows(klassRows.klassLevelPowers),
+    klassLevelSaves: cow.resolveRows(klassRows.klassLevelSaves),
+    leveledAptitudeIds: composeLeveledAptitudeIds(chain, isExcluded),
+    properties: composeProperties(chain, scope),
+    modifiers,
+    requirements: composeRequirements(chain, scope, excludedModifierIds),
+  };
+  const links = siblingAptitudeLinks(chain, scope);
+  if (!cow.isEmpty()) {
+    resolveAptitudeLinks(composed.feats, composed.powers, composed.aptitudes, links, cow);
+  }
+  return composed;
 }
 
 /**
@@ -559,76 +591,12 @@ function slugIndices(aptitudes: Aptitude[], feats: FeatWithAptitudes[], powers: 
   };
 }
 
-/** Reverse sibling index for O(1) winner lookup from a sibling id. */
-function winnersBySibling(siblingMap: CachedCowData["siblingMap"]): Map<string, string> {
-  const siblingToWinner = new Map<string, string>();
-  for (const [winnerId, sibs] of siblingMap) {
-    for (const sid of sibs) siblingToWinner.set(sid, winnerId);
-  }
-  return siblingToWinner;
-}
-
-/** The composed rows, before the lookup indices: each list across the chain, COW-resolved. */
-function composeChain(chain: Chain, cowData: CachedCowData) {
-  // Compose-skip uses overrideMap (true overrides only — keys are sourceEntityIds whose data is replaced by a child
-  // COW). Sibling losers are filtered separately via siblingIds; their customizations need to merge into the winner,
-  // not be skipped wholesale.
-  const overriddenIds = cowData.overrideMap;
-  const isExcluded = (id: string) => overriddenIds.has(id) || cowData.siblingIds.has(id);
-  // FK / id remapping (used by `wrap` and `resolveOverrides`) uses idResolveMap: overrides + aptitude losers +
-  // snapshot sibling losers. Anything callers hand in via stored ids should be remapped to the canonical winner.
-  const idResolveMap = cowData.idResolveMap;
-  const hasOverrides = idResolveMap.size > 0;
-  const resolve = <T extends Record<string, unknown>>(rows: T[]): T[] =>
-    hasOverrides ? resolveOverrides(rows, idResolveMap) : rows;
-  const rowsOf = <T extends { id: string } & Record<string, unknown>>(pick: (raw: RulesetRawData) => T[]) =>
-    resolve(composeRows(chain, pick, isExcluded));
-
-  const klasses = composeRows(chain, (r) => r.klasses, isExcluded);
-  const klassRows = composeKlassRows(chain, klasses, isExcluded);
-  const scope: CustomizationScope = {
-    overriddenIds,
-    siblingMap: cowData.siblingMap,
-    siblingToWinner: winnersBySibling(cowData.siblingMap),
-    visibleKlassLevelIds: klassRows.visibleKlassLevelIds,
-  };
-  const { modifiers, excludedModifierIds } = composeModifiers(chain, scope);
-  const composed = {
-    abilities: rowsOf((r) => r.abilities),
-    saves: rowsOf((r) => r.saves),
-    skills: rowsOf((r) => r.skills),
-    feats: rowsOf((r) => r.feats),
-    powers: rowsOf((r) => r.powers),
-    aptitudes: rowsOf((r) => r.aptitudes),
-    klasses: resolve(klasses),
-    races: rowsOf((r) => r.races),
-    languages: rowsOf((r) => r.languages),
-    items: rowsOf((r) => r.items),
-    mechanics: rowsOf((r) => r.mechanics),
-    klassLevels: resolve(klassRows.klassLevels),
-    klassSkills: resolve(klassRows.klassSkills),
-    klassLevelFeats: resolve(klassRows.klassLevelFeats),
-    klassLevelPowers: resolve(klassRows.klassLevelPowers),
-    klassLevelSaves: resolve(klassRows.klassLevelSaves),
-    leveledAptitudeIds: composeLeveledAptitudeIds(chain, isExcluded),
-    properties: composeProperties(chain, scope),
-    modifiers,
-    requirements: composeRequirements(chain, scope, excludedModifierIds),
-  };
-  const links = siblingAptitudeLinks(chain, scope);
-  if (hasOverrides) {
-    resolveAptitudeLinks(composed.feats, composed.powers, composed.aptitudes, links, idResolveMap);
-  }
-  return composed;
-}
-
 /**
  * A ruleset's view: its own rows and its source chain's (`chain`, the ruleset's first), composed by copy-on-write. The
  * copies' and siblings' exclusions apply, references resolve to the winners, and every id-keyed map takes a stored id.
  */
-export function buildRulesetData(chain: RulesetRawData[], cowData: CachedCowData): CachedRulesetData {
+export function buildRulesetData(chain: RulesetRawData[], cowData: CowData): CachedRulesetData {
   const { properties, modifiers, requirements, ...rows } = composeChain(chain, cowData);
-  const idResolveMap = cowData.idResolveMap;
   const featsById = buildById(rows.feats);
   const powersById = buildById(rows.powers);
   const skillsById = buildById(rows.skills);
@@ -639,7 +607,7 @@ export function buildRulesetData(chain: RulesetRawData[], cowData: CachedCowData
   // Consumers don't need to thread cowData through or remember to call canonicalize for the common lookup path.
   // Composite-key Maps (e.g. klassLevelByKlassAndLevel) use a specialized wrapper that canonicalizes the id portion
   // before the first `:`.
-  const wrap = <V>(map: Map<string, V>) => cowResolvingMap(map, idResolveMap);
+  const wrap = <V>(map: Map<string, V>) => cowResolvingMap(map, cowData);
 
   return {
     ...rows,
@@ -655,7 +623,7 @@ export function buildRulesetData(chain: RulesetRawData[], cowData: CachedCowData
     itemsById: wrap(buildById(rows.items)),
     mechanicsById: wrap(buildById(rows.mechanics)),
     klassLevelsById: wrap(buildById(rows.klassLevels)),
-    klassLevelByKlassAndLevel: cowResolvingCompositeKeyMap(klass.klassLevelByKlassAndLevel, idResolveMap),
+    klassLevelByKlassAndLevel: cowResolvingCompositeKeyMap(klass.klassLevelByKlassAndLevel, cowData),
     klassLevelsByKlassId: wrap(klass.klassLevelsByKlassId),
     propertiesByEntity: wrap(customizations.propertiesByEntity),
     propertiesByEntityType: customizations.propertiesByEntityType,
@@ -672,7 +640,7 @@ export function buildRulesetData(chain: RulesetRawData[], cowData: CachedCowData
     klassSkillsByKlassId: wrap(klass.klassSkillsByKlassId),
     klassLevelSavesByKlassLevelId: wrap(klass.klassLevelSavesByKlassLevelId),
     ...slugIndices(rows.aptitudes, rows.feats, rows.powers),
-    canonicalize: (id: string) => idResolveMap.get(id) ?? id,
+    canonicalize: (id: string) => cowData.resolve(id),
     cow: cowData,
   };
 }

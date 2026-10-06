@@ -1,10 +1,19 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - Unresolved aptitude pick: "Bring 'em Back Alive"
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const BLOODHOUND: ClassSeed = {
   name: "Bloodhound",
-  description: "A bloodhound tracks down wrongdoers and brings them to whatever justice awaits them. Low-level bloodhounds depend on their keen senses and careful training to hunt their targets. As they gain experience, their obsessive determination gives them supernatural abilities that make them nearly unstoppable. Though some bloodhounds leave calling cards or even brands on their targets, most don't kill their quarry if they can help it. They prefer instead to subdue their targets and bring them in. For those of good alignment, this practice satis?es some deeply held belief in the cause of justice. For neutral and evil bloodhounds, it ensures a steady stream of income from catching the same targetsover and over when they break out of jail. Rangers and barbarians make the best bloodhounds, but rogues, bards, druids, and ?ghters can also excel in this role. Occasionally, a paladin shoulders the mantle, but never for money. Most bloodhounds are human, though elves and half-elves sometimes ?nd this lifestyle satisfying. Some of the best bloodhounds are humanoids such as gnolls, hobgoblins, and bugbears.",
-  hd: 10, levels: 10, skillPoints: 6,
+  description:
+    "A bloodhound tracks down wrongdoers and brings them to whatever justice awaits them. Low-level bloodhounds depend on their keen senses and careful training to hunt their targets. As they gain experience, their obsessive determination gives them supernatural abilities that make them nearly unstoppable. Though some bloodhounds leave calling cards or even brands on their targets, most don't kill their quarry if they can help it. They prefer instead to subdue their targets and bring them in. For those of good alignment, this practice satis?es some deeply held belief in the cause of justice. For neutral and evil bloodhounds, it ensures a steady stream of income from catching the same targetsover and over when they break out of jail. Rangers and barbarians make the best bloodhounds, but rogues, bards, druids, and ?ghters can also excel in this role. Occasionally, a paladin shoulders the mantle, but never for money. Most bloodhounds are human, though elves and half-elves sometimes ?nd this lifestyle satisfying. Some of the best bloodhounds are humanoids such as gnolls, hobgoblins, and bugbears.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 6,
   bab: "good",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: [
@@ -60,10 +69,5 @@ export const BLOODHOUND: ClassSeed = {
     [10, "Find the Path (Bloodhound)"],
     [10, "Mark (Bloodhound)"],
   ],
-  freeFeats: [
-    [9, "Scent", "Bloodhound Class Feature"],
-  ],
+  freeFeats: [[9, "Scent", "Bloodhound Class Feature"]],
 };
-
-// TODO: Unresolved aptitude pick: "Bring 'em Back Alive"
-// TODO: No modifiers defined — review if this class needs any

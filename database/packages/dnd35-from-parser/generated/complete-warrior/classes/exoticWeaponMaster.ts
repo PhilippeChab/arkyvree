@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const EXOTIC_WEAPON_MASTER: ClassSeed = {
   name: "Exotic Weapon Master",
-  description: "Becoming an exotic weapon master demands nothing more than dedication and relentless practice with unusual armaments.",
-  hd: 10, levels: 3, skillPoints: 2,
+  description:
+    "Becoming an exotic weapon master demands nothing more than dedication and relentless practice with unusual armaments.",
+  hd: 10,
+  levels: 3,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: ["Craft", "Intimidate", "Profession"],
@@ -22,5 +30,3 @@ export const EXOTIC_WEAPON_MASTER: ClassSeed = {
     [3, "Exotic Weapon Stunt (Exotic Weapon Master)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

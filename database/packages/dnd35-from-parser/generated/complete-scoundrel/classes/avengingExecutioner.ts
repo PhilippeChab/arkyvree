@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const AVENGING_EXECUTIONER: ClassSeed = {
   name: "Avenging Executioner",
   description: "Relentless and inventive, these stalkers wield psychology as deftly as their weapons.",
-  hd: 8, levels: 5, skillPoints: 6,
+  hd: 8,
+  levels: 5,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "good" },
   classSkills: [
@@ -49,5 +56,3 @@ export const AVENGING_EXECUTIONER: ClassSeed = {
     [5, "Sudden Strike (Avenging Executioner)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

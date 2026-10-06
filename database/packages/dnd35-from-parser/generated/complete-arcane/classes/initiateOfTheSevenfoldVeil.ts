@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const INITIATE_OF_THE_SEVENFOLD_VEIL: ClassSeed = {
   name: "Initiate of the Sevenfold Veil",
-  description: "A master of defensive magic, the Initiate of the Sevenfold Veil approaches the prismatic barrier by mastering one by one its constituent veils or layers.",
-  hd: 4, levels: 7, skillPoints: 2,
+  description:
+    "A master of defensive magic, the Initiate of the Sevenfold Veil approaches the prismatic barrier by mastering one by one its constituent veils or layers.",
+  hd: 4,
+  levels: 7,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -58,5 +66,3 @@ export const INITIATE_OF_THE_SEVENFOLD_VEIL: ClassSeed = {
     [7, "Warding (Initiate of the Sevenfold Veil)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

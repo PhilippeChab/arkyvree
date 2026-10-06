@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const ARCANE_ARCHER: ClassSeed = {
   name: "Arcane Archer",
-  description: "The arcane archer combines martial archery expertise with arcane magical ability, weaving spells into her ranged combat techniques.",
-  hd: 8, levels: 10, skillPoints: 4,
+  description:
+    "The arcane archer combines martial archery expertise with arcane magical ability, weaving spells into her ranged combat techniques.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "good",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: ["Craft", "Hide", "Listen", "Move Silently", "Ride", "Spot", "Survival", "Use Rope"],
@@ -31,5 +39,3 @@ export const ARCANE_ARCHER: ClassSeed = {
     [10, "Arrow of Death (Arcane Archer)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -2,7 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 
 import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { getOrBuildCowData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
@@ -23,15 +23,15 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
   await Rulesets.update(db, { extensionRulesetIds: [extension.id] }, { id: host.id });
   const updatedHost = (await Rulesets.findOne(db, { id: host.id }))!;
   const source = (await Feats.findOne(db, { rulesetId: extension.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
-  const before = await getOrBuildCowData(updatedHost);
-  await RulesetCache.getData(host.id, before);
+  const before = await RulesetCache.getCowData(updatedHost);
+  await RulesetCache.getData(updatedHost);
   const copy = await cowEntity(db, "feats", source.id, extension.id, extension.ancestorRulesetIds, []);
   await Feats.update(db, { description: "Updated extension feat" }, { id: copy.id });
   RulesetCache.invalidate(extension.id);
-  const after = await getOrBuildCowData(updatedHost);
+  const after = await RulesetCache.getCowData(updatedHost);
   expect(after).not.toBe(before);
-  expect(after.idResolveMap.get(source.id)).toBe(copy.id);
-  const data = await RulesetCache.getData(host.id, after);
+  expect(after.resolve(source.id)).toBe(copy.id);
+  const data = await RulesetCache.getData(updatedHost);
   expect(data.featsById.get(copy.id)?.description).toBe("Updated extension feat");
   expect(data.feats.some((f) => f.id === source.id)).toBe(false);
 });
@@ -41,10 +41,10 @@ test("worker cache mode reads changes between builds without web invalidation", 
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
   const [feat] = await Feats.create(db, { name: "Worker freshness", description: "Before", rulesetId: fork.id });
-  const first = await RulesetCache.getData(fork.id, await getOrBuildCowData(fork));
+  const first = await RulesetCache.getData(fork);
   expect(first.featsById.get(feat.id)?.description).toBe("Before");
   await Feats.update(db, { description: "After" }, { id: feat.id });
-  const next = await RulesetCache.getData(fork.id, await getOrBuildCowData(fork));
+  const next = await RulesetCache.getData(fork);
   expect(next.featsById.get(feat.id)?.description).toBe("After");
 });
 

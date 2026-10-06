@@ -1,9 +1,19 @@
+/**
+ * To review:
+ * - Unresolved aptitude pick: "Absorb Spell"
+ * - Unresolved aptitude pick: "Discover Spells"
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const SPELLTHIEF: ClassSeed = {
   name: "Spellthief",
-  description: "Spellthieves use skill and arcane magic to drain the abilities of their opponents and turn their foes' own powers against them. Spellthieves love the challenges that adventure brings, and they relish finding unique and inventive ways to use their abilities. Because they have such a wide variety of abilities, spellthieves can adapt themselves to overcome nearly any challenge, but they have neither the overpowering arcane might of wizards nor the brute force of fighters. Spellthieves never cast two spells when one will do, and they excel at using misdirection and deception to overcome seemingly stronger opponents. Good spellthieves use their skills and magic to entertain themselves, protect those less gifted than themselves, and occasionally serve a cause or nation as a spy. Evil spellthieves use their versatile skills to trick and deceive, or plague large cities as daring cat burglars.",
-  hd: 6, levels: 20, skillPoints: 6,
+  description:
+    "Spellthieves use skill and arcane magic to drain the abilities of their opponents and turn their foes' own powers against them. Spellthieves love the challenges that adventure brings, and they relish finding unique and inventive ways to use their abilities. Because they have such a wide variety of abilities, spellthieves can adapt themselves to overcome nearly any challenge, but they have neither the overpowering arcane might of wizards nor the brute force of fighters. Spellthieves never cast two spells when one will do, and they excel at using misdirection and deception to overcome seemingly stronger opponents. Good spellthieves use their skills and magic to entertain themselves, protect those less gifted than themselves, and occasionally serve a cause or nation as a spy. Evil spellthieves use their versatile skills to trick and deceive, or plague large cities as daring cat burglars.",
+  hd: 6,
+  levels: 20,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -118,7 +128,3 @@ export const SPELLTHIEF: ClassSeed = {
     noCantrips: true,
   },
 };
-
-// TODO: Unresolved aptitude pick: "Absorb Spell"
-// TODO: Unresolved aptitude pick: "Discover Spells"
-// TODO: No modifiers defined — review if this class needs any

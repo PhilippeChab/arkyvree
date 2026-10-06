@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const FATESPINNER: ClassSeed = {
   name: "Fatespinner",
-  description: "A fatespinner has pulled back the curtain of chance, circumstance, and chaos to glimpse a deeper truth: probability.",
-  hd: 4, levels: 5, skillPoints: 2,
+  description:
+    "A fatespinner has pulled back the curtain of chance, circumstance, and chaos to glimpse a deeper truth: probability.",
+  hd: 4,
+  levels: 5,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -34,5 +42,3 @@ export const FATESPINNER: ClassSeed = {
     [5, "Seal Fate (Fatespinner)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

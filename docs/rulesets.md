@@ -150,9 +150,9 @@ The child's own entities are always included. Ancestor entities are included onl
 
 ### Override Map
 
-`buildOverrideMap()` creates a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain. Used for:
-- **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies
-- **Detail views**: `resolveOverrides()` applies the map to remap ID references in query results
+`CowDataBuilder` builds a ruleset's `CowData`: a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain, and of each sibling loser to its winner. Used for:
+- **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies (`CowDataBuilder.buildForCopy`, `CowData.resolve`)
+- **Detail views**: `CowData.resolveRows()` remaps ID references in query results
 
 ### Snapshots
 
@@ -168,7 +168,7 @@ Every entity create (and bulk item variants) checks the name with
 `assertEntityNameAvailable` / `assertAncestorNamesHidden` against the fork's
 composed view. A local entity, or an inherited one that is still visible, with
 the same name blocks it. Inherited entities hidden by an override
-(`cow.overrideMap` or `cow.siblingIds`) do not. If a hidden ancestor's local
+(`cow.isHidden`: overridden, or a sibling loser) do not. If a hidden ancestor's local
 copy was deleted, its snapshot is a tombstone, and `repointTombstoneSnapshot`
 moves it to the new entity. A live local copy keeps its snapshot even after a
 rename, so picks of the source keep resolving to that copy.
@@ -197,7 +197,7 @@ User's Fork (subscribed to A, then B)
 
 **How it works:**
 
-1. `buildOverrideMap()` detects when multiple extension snapshots share the same `sourceEntityId`. It builds a `siblingMap: Map<string, string[]>` mapping the winner's `forkedEntityId` → sibling `forkedEntityId`s. Feats and powers that several rulesets in the source chain define natively under the same name (reprints, `NAME_FALLBACK_ENTITY_TYPES`) are paired the same way, closest ruleset first.
+1. `CowDataBuilder` detects when multiple extension snapshots share the same `sourceEntityId`. It pairs the winner's `forkedEntityId` with the sibling `forkedEntityId`s (`CowData.getSiblings(winnerId)`, `getWinner(loserId)`). Feats and powers that several rulesets in the source chain define natively under the same name (reprints, `NAME_FALLBACK_ENTITY_TYPES`) are paired the same way, closest ruleset first.
 
 2. **Entity list filtering**: Sibling entities are left out of every ruleset entity's list in its query (only the winner is returned), so the user never sees duplicate feats and a page keeps its size: `ScopesToRuleset.buildRulesetCondition` reads the scope's `siblingIds` (`withRulesetScope`'s copy-on-write context) and excludes them from the inherited rows. A list read outside a scope, or inside `withCowContext(undefined, …)`, sees them.
 
@@ -226,7 +226,7 @@ until the override is restored.
 Aptitudes are named pools — they have `name` but no per-ruleset content — so the seed only creates a row in the ruleset that *introduces* the name (see `docs/packages.md`: COW-ing core entities into extensions → Aptitude ownership rules). Two cases matter here:
 
 - **Base-inherited names** (`General`, `Cleric Domain`, `Fighter Bonus Feat`, etc.): exactly one row exists, in base. Extensions and forks adding new feats/spells just link to base's id via `aptMap`. No sibling rows, no dedup needed.
-- **Sibling-shared names** (e.g. `Assassin Spells`, `Blackguard Spells`, `Hexblade Spells`): multiple extensions each create their own copy because siblings can't FK to each other. A book copies another book's spell list that its spells are on: one its spells' level line names (a Complete Adventurer spell's "Assassin 1"), or one that draws on other classes' lists (`spells.inheritsFrom`: Complete Arcane's `Sublime Chord Spells` takes Complete Adventurer's bard and sorcerer spells), so a list holds the spells of every book a ruleset takes, as the copies of a core spell merge. The sibling mechanism (the aptitude-name grouping in `buildCowData`, `cow/cowData.ts`) picks a winner per name across the source chain, closest first. Losers go into `siblingMap` / `siblingIds`, so the compose step drops them, and into `idResolveMap`, so references to a loser remap to the visible winner (its local copy, if the fork has one). They are intentionally not added to `overrideMap`, which is for true overrides only. The user never sees duplicates. A list's feats and spells, on the ruleset's pages and in the level-up's pickers, are the composed view's (`getListFeatIds` / `getListPowerIds`, `services/rulesets/aptitudes/listMembers.ts`), never the stored links: the winning copy of a feat or a spell takes every copy's links, so a link stored on a losing copy of either, or of the list, still counts.
+- **Sibling-shared names** (e.g. `Assassin Spells`, `Blackguard Spells`, `Hexblade Spells`): multiple extensions each create their own copy because siblings can't FK to each other. A book copies another book's spell list that its spells are on: one its spells' level line names (a Complete Adventurer spell's "Assassin 1"), or one that draws on other classes' lists (`spells.inheritsFrom`: Complete Arcane's `Sublime Chord Spells` takes Complete Adventurer's bard and sorcerer spells), so a list holds the spells of every book a ruleset takes, as the copies of a core spell merge. The sibling mechanism (`CowDataBuilder`'s aptitude pass, `cache/rulesetCache/CowDataBuilder.ts`) picks a winner per name across the source chain, closest first. Losers become the winner's siblings (`CowData.siblingIds`), so the compose step drops them, and its aliases, so references to a loser resolve to the visible winner (its local copy, if the fork has one). They are intentionally not overrides, which are for true copies only. The user never sees duplicates. A list's feats and spells, on the ruleset's pages and in the level-up's pickers, are the composed view's (`getListFeatIds` / `getListPowerIds`, `services/rulesets/aptitudes/listMembers.ts`), never the stored links: the winning copy of a feat or a spell takes every copy's links, so a link stored on a losing copy of either, or of the list, still counts.
 
 ### COW-ing a Merged Entity (Sibling Bake-in)
 
@@ -238,13 +238,13 @@ Before COW (runtime view):
 
 User edits Power Attack → cowEntity triggers:
   1. Copies the winner (A's Power Attack) + all its customizations
-  2. Detects siblings via siblingMap → finds B's Power Attack
+  2. Detects siblings via its CowData (getSiblings) → finds B's Power Attack
   3. Calls mergeSiblingData() to bake sibling data into the new local copy
   4. User's local copy now contains the full merged result
 
 After COW:
   User's fork has its own "Power Attack" with the merged customizations of both extensions
-  The siblingMap no longer applies — local fork wins completely
+  The sibling pairing no longer applies — local fork wins completely
 ```
 
 `mergeSiblingData()` merges four types of customizations, using the same rules as the read-time merge above:
@@ -621,7 +621,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 
 | File | Purpose |
 |---|---|
-| `server/cache/rulesetCache/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `buildOverrideMap` (+ `siblingMap`), `resolveOverrides`: copy-on-write's read side. |
+| `server/cache/rulesetCache/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `CowDataBuilder` (the overrides and sibling pairs), `RulesetCache.getCowData`: copy-on-write's read side. `CowData` itself (`server/database/CowData.ts`) is what a scope resolves ids through. |
 | `server/cow/` | `cowEntity`, `cowEntityForCustomization`: copy-on-write's write side. `mergeSiblingData` (`siblingMerge.ts`) runs on the COW write path to bake sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache/compose.ts`). |
 | `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
 | `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getExtensions` |
@@ -638,4 +638,4 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/rulesets/dnd3.5/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
 | `database/packages/dnd35/seed/cow.ts` | Seed-time COW: copies the core feats and spells an extension changes |
 | `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
-| `tests/services/rulesets/RulesetsService.test.ts` | Includes `extension siblingMap` test block — sibling detection, filtering, requirement/modifier/aptitude merging |
+| `tests/services/rulesets/Sibling*.test.ts`, `tests/services/rulesets/customization/Sibling*.test.ts`, `tests/cache/aptitudeDedup.test.ts` | Siblings: what the composed view shows, edits and customization writes on a sibling-merged entity, aptitude deduplication |

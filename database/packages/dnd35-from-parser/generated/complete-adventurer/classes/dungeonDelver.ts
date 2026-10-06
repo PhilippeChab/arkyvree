@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const DUNGEON_DELVER: ClassSeed = {
   name: "Dungeon Delver",
-  description: "In many ways, the dungeon delver is the ultimate adventuring rogue. He's skilled at moving stealthily through all types of dungeon terrain, detecting and disarming inconvenient traps, bypassing locks, locating treasure, and ?lching protected items. Since a dungeon delver frequently works alone, he must learn to think and act independently, relying upon no one but himself. Even when exploring a dungeon in the company of other adventurers, he often keeps to himself?scouting ahead, disarming traps a safe distance from the group, or seeking treasure while the others are distracted. The typical dungeon delver has forsaken interaction skills to concentrate on the nuts and bolts of dungeon exploration and treasure retrieval. Rogues and scouts make excellent dungeon delvers, as do the rare few ninjas and spellthieves who choose to pursue this track. Multiclass rogue/rangers who favor the darkness of caverns to the light of the sky also make good dungeon delvers.",
-  hd: 6, levels: 10, skillPoints: 8,
+  description:
+    "In many ways, the dungeon delver is the ultimate adventuring rogue. He's skilled at moving stealthily through all types of dungeon terrain, detecting and disarming inconvenient traps, bypassing locks, locating treasure, and ?lching protected items. Since a dungeon delver frequently works alone, he must learn to think and act independently, relying upon no one but himself. Even when exploring a dungeon in the company of other adventurers, he often keeps to himself?scouting ahead, disarming traps a safe distance from the group, or seeking treasure while the others are distracted. The typical dungeon delver has forsaken interaction skills to concentrate on the nuts and bolts of dungeon exploration and treasure retrieval. Rogues and scouts make excellent dungeon delvers, as do the rare few ninjas and spellthieves who choose to pursue this track. Multiclass rogue/rangers who favor the darkness of caverns to the light of the sky also make good dungeon delvers.",
+  hd: 6,
+  levels: 10,
+  skillPoints: 8,
   bab: "medium",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: [
@@ -65,5 +73,3 @@ export const DUNGEON_DELVER: ClassSeed = {
     [10, "Blindsense", "Dungeon Delver Class Feature"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

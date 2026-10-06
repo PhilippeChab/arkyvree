@@ -1,10 +1,17 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const THIEF_ACROBAT: ClassSeed = {
   name: "Thief-acrobat",
   description: "A thief-acrobat excels in getting in and getting out.",
-  hd: 6, levels: 5, skillPoints: 6,
+  hd: 6,
+  levels: 5,
+  skillPoints: 6,
   bab: "medium",
   saves: { fortitude: "poor", reflex: "good", will: "poor" },
   classSkills: [
@@ -46,5 +53,3 @@ export const THIEF_ACROBAT: ClassSeed = {
     [5, "Improved Evasion (Thief-acrobat)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

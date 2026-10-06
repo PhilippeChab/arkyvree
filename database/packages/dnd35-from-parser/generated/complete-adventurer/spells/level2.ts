@@ -3,8 +3,18 @@ import type { PowerSeed } from "@/database/packages/dnd35/content/types.ts";
 export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Balancing Lorecall",
-    description: "You intuit the precise spot and stance necessary to stand on areas of even the most unstable footing.You gain a +4 insight bonus on Balance checks.If you have sufficient ranks in the Balance skill, you can even balance on an otherwise impossible surface with a DC 20 Balance check.If you have 5 or more ranks in Balance, you can balance on vertical surfaces; the normal modifier for a sloped or angled surface no longer applies to you, though other DC modifiers (such as for a slippery surface) do apply.If you balance on a vertical surface, you can move up or down as if you were climbing.However, you are not actually climbing, so you can make attacks normally, retain your Dexterity bonus to Armor Class, and generally follow the rules of the Balance skill rather than the Climb skill.If you have 10 or more ranks in Balance, you can balance on liquids, semisolid surfaces such as mud or snow, or similar surfaces that normally couldn't support your weight.For each consecutive round that you begin balanced on a particular surface of this sort, the DC of your Balance check increases by 5.As with all uses of the Balance skill, you move at half speed unless you decide to use the accelerated movement option (thereby increasing the DC of the Balance check by 5).For more information on the Balance skill, the Player's Handbook.Arcane Material Component: A thin, three-inch-long wooden dowel.",
-    aptitudes: ["Consecrated Harrier Spells", "Druid Spells", "Ranger Spells", "Sorcerer Spells", "Spirit Shaman Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    description:
+      "You intuit the precise spot and stance necessary to stand on areas of even the most unstable footing.You gain a +4 insight bonus on Balance checks.If you have sufficient ranks in the Balance skill, you can even balance on an otherwise impossible surface with a DC 20 Balance check.If you have 5 or more ranks in Balance, you can balance on vertical surfaces; the normal modifier for a sloped or angled surface no longer applies to you, though other DC modifiers (such as for a slippery surface) do apply.If you balance on a vertical surface, you can move up or down as if you were climbing.However, you are not actually climbing, so you can make attacks normally, retain your Dexterity bonus to Armor Class, and generally follow the rules of the Balance skill rather than the Climb skill.If you have 10 or more ranks in Balance, you can balance on liquids, semisolid surfaces such as mud or snow, or similar surfaces that normally couldn't support your weight.For each consecutive round that you begin balanced on a particular surface of this sort, the DC of your Balance check increases by 5.As with all uses of the Balance skill, you move at half speed unless you decide to use the accelerated movement option (thereby increasing the DC of the Balance check by 5).For more information on the Balance skill, the Player's Handbook.Arcane Material Component: A thin, three-inch-long wooden dowel.",
+    aptitudes: [
+      "Consecrated Harrier Spells",
+      "Druid Spells",
+      "Ranger Spells",
+      "Sorcerer Spells",
+      "Spirit Shaman Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -21,8 +31,16 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Bladeweave",
-    description: "A bladeweave spell imbues your melee attacks with a fascinating pattern or rhythm that entrances your opponent.Any round that you attack with a melee weapon, you can make a single additional touch attack with that weapon at your normal attack bonus as a free action.This attack deals no damage.Instead, anyone successfully touched by the weapon must succeed on a Will save or be dazed for 1 round.Spell resistance applies to this effect.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Vigilante Spells", "Wizard Spells"],
+    description:
+      "A bladeweave spell imbues your melee attacks with a fascinating pattern or rhythm that entrances your opponent.Any round that you attack with a melee weapon, you can make a single additional touch attack with that weapon at your normal attack bonus as a free action.This attack deals no damage.Instead, anyone successfully touched by the weapon must succeed on a Will save or be dazed for 1 round.Spell resistance applies to this effect.",
+    aptitudes: [
+      "Bard Spells",
+      "Sorcerer Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "See text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -37,8 +55,16 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Daggerspell Stance",
-    description: "This spell, favored by the Daggerspell Guardians, improves your ability to defend yourself when wielding a pair of daggers.The spell, like many of the daggerspell techniques, depends on the use of daggers to bring down a foe.The spell's effect cannot be realized unless you are wielding two daggers, but the spell does not end if you drop, throw, or otherwise lose a hold on one or both of your daggers.While this spell is in effect, if you make a full attack while holding a dagger in each hand, you gain a +2 insight bonus on attack rolls and damage rolls made with daggers in that round.The magical energy that permeates your daggers while this spell is active allows you to deflect the magical energy of many spells.When wielding two daggers and fighting defensively, you gain spell resistance equal to 5 + your caster level.The spell focuses your concentration so that when you devote all of your attention to defense, you can turn theforce of most blows away from your body with your daggers.When wielding two daggers and using the total defense action, you gain both the spell resistance benefit described above and damage reduction 5/magic.Focus: A pair of daggers.",
-    aptitudes: ["Druid Spells", "Sorcerer Spells", "Spirit Shaman Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    description:
+      "This spell, favored by the Daggerspell Guardians, improves your ability to defend yourself when wielding a pair of daggers.The spell, like many of the daggerspell techniques, depends on the use of daggers to bring down a foe.The spell's effect cannot be realized unless you are wielding two daggers, but the spell does not end if you drop, throw, or otherwise lose a hold on one or both of your daggers.While this spell is in effect, if you make a full attack while holding a dagger in each hand, you gain a +2 insight bonus on attack rolls and damage rolls made with daggers in that round.The magical energy that permeates your daggers while this spell is active allows you to deflect the magical energy of many spells.When wielding two daggers and fighting defensively, you gain spell resistance equal to 5 + your caster level.The spell focuses your concentration so that when you devote all of your attention to defense, you can turn theforce of most blows away from your body with your daggers.When wielding two daggers and using the total defense action, you gain both the spell resistance benefit described above and damage reduction 5/magic.Focus: A pair of daggers.",
+    aptitudes: [
+      "Druid Spells",
+      "Sorcerer Spells",
+      "Spirit Shaman Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -52,8 +78,17 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Divine Insight",
-    description: "When you cast this spell, you invoke the power of your deity to guide your actions. Once during the spell's duration, you can choose to use its effect. This spell grants you an insight bonus equal to 5 + your caster level (maximum bonus of +15) on any single skill check. Activating the effect requires an immediate action. You must choose to use divine insight before you make the check you want to modify.Once used, the spell ends. You can't have more than one divine insight effect active on you at the same time.",
-    aptitudes: ["Cleric Spells", "Favored Soul Spells", "Holy Liberator Spells", "Paladin Spells", "Pious Templar Spells", "Shugenja Spells", "Ur-priest Spells"],
+    description:
+      "When you cast this spell, you invoke the power of your deity to guide your actions. Once during the spell's duration, you can choose to use its effect. This spell grants you an insight bonus equal to 5 + your caster level (maximum bonus of +15) on any single skill check. Activating the effect requires an immediate action. You must choose to use divine insight before you make the check you want to modify.Once used, the spell ends. You can't have more than one divine insight effect active on you at the same time.",
+    aptitudes: [
+      "Cleric Spells",
+      "Favored Soul Spells",
+      "Holy Liberator Spells",
+      "Paladin Spells",
+      "Pious Templar Spells",
+      "Shugenja Spells",
+      "Ur-priest Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -69,7 +104,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Easy Climb",
-    description: "You create a path of handholds and footholds up the surface of a cliff face, tree trunk, wall, or other vertical obstacle.This effect changes the surface to the equivalent of a very rough wall (DC 10 to climb).",
+    description:
+      "You create a path of handholds and footholds up the surface of a cliff face, tree trunk, wall, or other vertical obstacle.This effect changes the surface to the equivalent of a very rough wall (DC 10 to climb).",
     aptitudes: ["Consecrated Harrier Spells", "Ranger Spells"],
     savingThrow: "None (object)",
     properties: [
@@ -86,8 +122,26 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Fly, Swift",
     description: "This spell functions like fly, except as noted above.",
-    aptitudes: ["Bard Spells", "Druid Spells", "Sorcerer Spells", "Spirit Shaman Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Vigilante Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 2, "Druid Spells": 3, "Sorcerer Spells": 2, "Spirit Shaman Spells": 3, "Sublime Chord Spells": 2, "Suel Arcanamach Spells": 2, "Vigilante Spells": 2, "Wizard Spells": 2 },
+    aptitudes: [
+      "Bard Spells",
+      "Druid Spells",
+      "Sorcerer Spells",
+      "Spirit Shaman Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+    ],
+    aptitudeLevels: {
+      "Bard Spells": 2,
+      "Druid Spells": 3,
+      "Sorcerer Spells": 2,
+      "Spirit Shaman Spells": 3,
+      "Sublime Chord Spells": 2,
+      "Suel Arcanamach Spells": 2,
+      "Vigilante Spells": 2,
+      "Wizard Spells": 2,
+    },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -116,7 +170,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Insidious Rhythm",
-    description: "You play a catchy, silly little tune that gets stuck in the mind of the subject unless she succeeds on a Will save.The endlessly recycling melody makes it difficult for the subject to cast spells or perform any other action that requires mental focus.The subject takes a -4 penalty on all Intelligence-based skill checks and Concentration checks.Whenever the target attempts to cast, concentrate on, or direct a spell, she must succeed on a Concentration check (DC equal to insidious rhythm's save DC + spell's level) or fail at the attempt.",
+    description:
+      "You play a catchy, silly little tune that gets stuck in the mind of the subject unless she succeeds on a Will save.The endlessly recycling melody makes it difficult for the subject to cast spells or perform any other action that requires mental focus.The subject takes a -4 penalty on all Intelligence-based skill checks and Concentration checks.Whenever the target attempts to cast, concentrate on, or direct a spell, she must succeed on a Concentration check (DC equal to insidious rhythm's save DC + spell's level) or fail at the attempt.",
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -150,8 +205,18 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Iron Silence",
-    description: "While this spell is in effect, the armor check penalty from the affected suit or suits of armor does not apply on Hide and Move Silently checks.Only wearers proficient in the armor's use get this benefit when wearing the affected armor.The armor check penalty still applies to other skill checks as normal.",
-    aptitudes: ["Assassin Spells", "Bard Spells", "Cleric Spells", "Favored Soul Spells", "Shugenja Spells", "Sublime Chord Spells", "Ur-priest Spells", "Vigilante Spells"],
+    description:
+      "While this spell is in effect, the armor check penalty from the affected suit or suits of armor does not apply on Hide and Move Silently checks.Only wearers proficient in the armor's use get this benefit when wearing the affected armor.The armor check penalty still applies to other skill checks as normal.",
+    aptitudes: [
+      "Assassin Spells",
+      "Bard Spells",
+      "Cleric Spells",
+      "Favored Soul Spells",
+      "Shugenja Spells",
+      "Sublime Chord Spells",
+      "Ur-priest Spells",
+      "Vigilante Spells",
+    ],
     savingThrow: "Will negates (harmless, object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -167,8 +232,18 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Listening Lorecall",
-    description: "You gain the ability to precisely and instantaneously identify and locate the origins of even the most minute sounds you detect.You gain a +4 insight bonus on Listen checks.In addition, if you have 5 or more ranks in Listen, you gain blindsense out to 30 feet.If you have 10 or more ranks in Listen, you gain blindsight out to 30 feet instead.A silence spell or effect negates blindsense or blindsight granted by a listening lorecall spell.",
-    aptitudes: ["Consecrated Harrier Spells", "Druid Spells", "Ranger Spells", "Sorcerer Spells", "Spirit Shaman Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    description:
+      "You gain the ability to precisely and instantaneously identify and locate the origins of even the most minute sounds you detect.You gain a +4 insight bonus on Listen checks.In addition, if you have 5 or more ranks in Listen, you gain blindsense out to 30 feet.If you have 10 or more ranks in Listen, you gain blindsight out to 30 feet instead.A silence spell or effect negates blindsense or blindsight granted by a listening lorecall spell.",
+    aptitudes: [
+      "Consecrated Harrier Spells",
+      "Druid Spells",
+      "Ranger Spells",
+      "Sorcerer Spells",
+      "Spirit Shaman Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -184,7 +259,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Mindless Rage",
-    description: "You fill the subject with so great a rage that it can do nothing but focus on engaging you in personal physical combat.The target must be able to see you when you cast this spell.If the subject later loses line of sight to you, the spell immediately ends.(A subject can't voluntarily break line of sight with you, such as by closing its eyes, to end this spell prematurely).If the subject threatens you, it must make a full attack against you using its melee weapons or natural melee attacks.If the subject doesn't threaten you, it must move at up to twice its speed, ending its movement as close to you as possible.If it moves close enough with a single move to threaten you, it may stop and make a melee attack against you as normal.While under the effect of a mindless rage spell, the subject can make use of all normal melee combat skills, abilities, and feats-either offensive or defensive.The subject can't make any attack against a creature other than you.The subject of this spell, though overcome with rage, is by no means rendered idiotic or suicidal.For example, an affected creature will not charge off a cliff in an attempt to reach you.An interesting side effect of mindless rage occurs when the spell affects any character or creature with the rage ability (such as a barbarian).In these cases, the mindless rage spell automatically activates the character's rage ability (and counts as one of the character's uses of rage for that day).Focus: A scarlet handkerchief or similar piece of cloth, waved in the target's direction while you vocalize the verbal component.",
+    description:
+      "You fill the subject with so great a rage that it can do nothing but focus on engaging you in personal physical combat.The target must be able to see you when you cast this spell.If the subject later loses line of sight to you, the spell immediately ends.(A subject can't voluntarily break line of sight with you, such as by closing its eyes, to end this spell prematurely).If the subject threatens you, it must make a full attack against you using its melee weapons or natural melee attacks.If the subject doesn't threaten you, it must move at up to twice its speed, ending its movement as close to you as possible.If it moves close enough with a single move to threaten you, it may stop and make a melee attack against you as normal.While under the effect of a mindless rage spell, the subject can make use of all normal melee combat skills, abilities, and feats-either offensive or defensive.The subject can't make any attack against a creature other than you.The subject of this spell, though overcome with rage, is by no means rendered idiotic or suicidal.For example, an affected creature will not charge off a cliff in an attempt to reach you.An interesting side effect of mindless rage occurs when the spell affects any character or creature with the rage ability (such as a barbarian).In these cases, the mindless rage spell automatically activates the character's rage ability (and counts as one of the character's uses of rage for that day).Focus: A scarlet handkerchief or similar piece of cloth, waved in the target's direction while you vocalize the verbal component.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Sublime Chord Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
@@ -202,7 +278,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Nature's Favor",
-    description: "By calling on the power of nature, you grant the subject animal a +1 luck bonus on attack and damage rolls for every three caster levels you possess, to a maximum bonus of +5 at 15th level.",
+    description:
+      "By calling on the power of nature, you grant the subject animal a +1 luck bonus on attack and damage rolls for every three caster levels you possess, to a maximum bonus of +5 at 15th level.",
     aptitudes: ["Consecrated Harrier Spells", "Druid Spells", "Ranger Spells", "Spirit Shaman Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -219,8 +296,16 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Sonic Weapon",
-    description: "This spell temporarily sheathes a weapon in sonic energy.While the spell is in effect, the affected weapon deals an extra 1d6 points of sonic damage with each successful attack.The sonic energy does not harm the weapon's wielder.Bows, crossbows, and slings that are affected by this spell bestow the sonic energy upon their ammunition.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Vigilante Spells", "Wizard Spells"],
+    description:
+      "This spell temporarily sheathes a weapon in sonic energy.While the spell is in effect, the affected weapon deals an extra 1d6 points of sonic damage with each successful attack.The sonic energy does not harm the weapon's wielder.Bows, crossbows, and slings that are affected by this spell bestow the sonic energy upon their ammunition.",
+    aptitudes: [
+      "Bard Spells",
+      "Sorcerer Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -235,7 +320,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Tactical Precision",
-    description: "When you cast this spell, you grant your allies greater insight into one another's actions, allowing them to better coordinate their attacks.If two affected allies flank the same creature, each gains a +2 insight bonus on attack rolls made against the flanked creature.This bonus is in addition to the normal +2 bonus on attack rolls granted to flanking creatures.In addition, if an affected ally successfully deals damage against an opponent that is flanked by another affected ally, she deals an extra 1d6 points of damage.Creatures immune to sneak attacks are immune to this extra damage.Material Component: A toy soldier.",
+    description:
+      "When you cast this spell, you grant your allies greater insight into one another's actions, allowing them to better coordinate their attacks.If two affected allies flank the same creature, each gains a +2 insight bonus on attack rolls made against the flanked creature.This bonus is in addition to the normal +2 bonus on attack rolls granted to flanking creatures.In addition, if an affected ally successfully deals damage against an opponent that is flanked by another affected ally, she deals an extra 1d6 points of damage.Creatures immune to sneak attacks are immune to this extra damage.Material Component: A toy soldier.",
     aptitudes: ["Bard Spells", "Sublime Chord Spells", "Vigilante Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -253,7 +339,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Train Animal",
-    description: "You temporarily boost the number of tricks that an animal knows.While this spell is in effect, the affected animal gains a number of additional tricks equal to half your caster level (maximum five).For more information on tricks and trained animals, see the descriptions of the Handle Animal skill of this book, and of the Player's Handbook.This spell does not modify an animal's attitude toward you, nor does it guarantee that an animal will cooperate when instructed to perform the newly learned tricks.",
+    description:
+      "You temporarily boost the number of tricks that an animal knows.While this spell is in effect, the affected animal gains a number of additional tricks equal to half your caster level (maximum five).For more information on tricks and trained animals, see the descriptions of the Handle Animal skill of this book, and of the Player's Handbook.This spell does not modify an animal's attitude toward you, nor does it guarantee that an animal will cooperate when instructed to perform the newly learned tricks.",
     aptitudes: ["Consecrated Harrier Spells", "Druid Spells", "Ranger Spells", "Spirit Shaman Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
@@ -272,7 +359,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Wracking Touch",
-    description: "Your touch causes horrible agony in a creature's vital area.You lay your hand upon a creature and deal 1d6 points of damage +1 point per caster level (maximum +10).In addition, if you have the sneak attack ability, you also deal sneak attack damage to the affected creature unless the creature is immune to extra damage from critical hits.The creature still takes the spell damage even if it does not take the sneak attack damage.Unlike a normal use of sneak attack, your target need not be flanked or denied its Dexterity bonus to take sneak attack damage from this spell.",
+    description:
+      "Your touch causes horrible agony in a creature's vital area.You lay your hand upon a creature and deal 1d6 points of damage +1 point per caster level (maximum +10).In addition, if you have the sneak attack ability, you also deal sneak attack damage to the affected creature unless the creature is immune to extra damage from critical hits.The creature still takes the spell damage even if it does not take the sneak attack damage.Unlike a normal use of sneak attack, your target need not be flanked or denied its Dexterity bonus to take sneak attack damage from this spell.",
     aptitudes: ["Druid Spells", "Sorcerer Spells", "Spirit Shaman Spells", "Sublime Chord Spells", "Wizard Spells"],
     savingThrow: "Fortitude half",
     properties: [
@@ -288,8 +376,15 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   },
   {
     name: "Wraithstrike",
-    description: "When you cast this spell, your melee weapons or natural weapons become ghostly and nearly transparent for a brief time.While this spell is in effect, your melee attacks are resolved as melee touch attacks rather than normal melee attacks.",
-    aptitudes: ["Assassin Spells", "Sorcerer Spells", "Sublime Chord Spells", "Suel Arcanamach Spells", "Wizard Spells"],
+    description:
+      "When you cast this spell, your melee weapons or natural weapons become ghostly and nearly transparent for a brief time.While this spell is in effect, your melee attacks are resolved as melee touch attacks rather than normal melee attacks.",
+    aptitudes: [
+      "Assassin Spells",
+      "Sorcerer Spells",
+      "Sublime Chord Spells",
+      "Suel Arcanamach Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },

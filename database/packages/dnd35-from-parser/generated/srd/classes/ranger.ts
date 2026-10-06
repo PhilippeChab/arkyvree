@@ -1,9 +1,17 @@
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const RANGER: ClassSeed = {
   name: "Ranger",
-  description: "Wilderness warriors who master the art of tracking and survival, rangers are expert hunters equally at home stalking prey through dense forests or open plains. Through dedicated study of specific enemy types and rigorous combat training, they develop deadly effectiveness against their chosen foes. Rangers serve as guardians of the frontier, protecting travelers and settlers from the dangerous creatures that roam wild lands. They combine martial prowess with specialized fighting techniques, keen survival instincts, and the ability to form bonds with animal companions. As they grow in experience, rangers develop an ever-deepening connection to the natural world, eventually gaining the capacity to channel divine magic drawn from nature itself, similar to a druid's power.",
-  hd: 8, levels: 20, skillPoints: 6,
+  description:
+    "Wilderness warriors who master the art of tracking and survival, rangers are expert hunters equally at home stalking prey through dense forests or open plains. Through dedicated study of specific enemy types and rigorous combat training, they develop deadly effectiveness against their chosen foes. Rangers serve as guardians of the frontier, protecting travelers and settlers from the dangerous creatures that roam wild lands. They combine martial prowess with specialized fighting techniques, keen survival instincts, and the ability to form bonds with animal companions. As they grow in experience, rangers develop an ever-deepening connection to the natural world, eventually gaining the capacity to channel divine magic drawn from nature itself, similar to a druid's power.",
+  hd: 8,
+  levels: 20,
+  skillPoints: 6,
   bab: "good",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: [
@@ -86,5 +94,3 @@ export const RANGER: ClassSeed = {
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

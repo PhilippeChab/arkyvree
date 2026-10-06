@@ -1,17 +1,22 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const BLOOD_MAGUS: ClassSeed = {
   name: "Blood Magus",
-  description: "Blood magi are deceased spellcasters who gain an understanding of blood's importance when returned to life.",
-  hd: 6, levels: 10, skillPoints: 2,
+  description:
+    "Blood magi are deceased spellcasters who gain an understanding of blood's importance when returned to life.",
+  hd: 6,
+  levels: 10,
+  skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: ["Bluff", "Concentration", "Craft", "Heal", "Spellcraft"],
-  requirements: [
-    gte("skills.concentration.rank", 4),
-    eq("feats.greatfortitude.possessed"),
-  ],
+  requirements: [gte("skills.concentration.rank", 4), eq("feats.greatfortitude.possessed")],
   casterLevelAdvancement: { type: "arcane", levels: [1, 2, 3, 4, 6, 7, 8, 9] },
   classFeatureAptitude: "Blood Magus Class Feature",
   classFeatures: [
@@ -31,5 +36,3 @@ export const BLOOD_MAGUS: ClassSeed = {
     [10, "Bloodwalk (Blood Magus)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

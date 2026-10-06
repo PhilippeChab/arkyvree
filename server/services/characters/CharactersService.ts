@@ -81,7 +81,7 @@ class CharactersService extends include(Object, Archives) {
       const { sourceChain } = rulesetData.cow;
 
       // Races.findPage's output has its FK fields auto-resolved by
-      // the Proxy since cowContext is active. No manual resolveOverrides pass.
+      // the Proxy since cowContext is active. No manual `CowData.resolveRows` pass.
       const result = await Races.findPage(
         db,
         { rulesetId, ancestorRulesetIds: sourceChain, kind: "pc", search: where.search },

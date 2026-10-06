@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const HEXBLADE: ClassSeed = {
   name: "Hexblade",
-  description: "The hexblade merges martial combat skill with arcane power, posing a formidable threat to enemies who are unprepared for such a versatile adversary.",
-  hd: 10, levels: 20, skillPoints: 2,
+  description:
+    "The hexblade merges martial combat skill with arcane power, posing a formidable threat to enemies who are unprepared for such a versatile adversary.",
+  hd: 10,
+  levels: 20,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: [
@@ -101,5 +109,3 @@ export const HEXBLADE: ClassSeed = {
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

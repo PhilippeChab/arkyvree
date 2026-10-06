@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const RADIANT_SERVANT_OF_PELOR: ClassSeed = {
   name: "Radiant Servant of Pelor",
-  description: "Radiant servants of Pelor embody their faith's teachings by channeling divine solar power through acts of generosity and humble service.",
-  hd: 6, levels: 10, skillPoints: 2,
+  description:
+    "Radiant servants of Pelor embody their faith's teachings by channeling divine solar power through acts of generosity and humble service.",
+  hd: 6,
+  levels: 10,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "good", reflex: "poor", will: "good" },
   classSkills: [
@@ -41,9 +49,5 @@ export const RADIANT_SERVANT_OF_PELOR: ClassSeed = {
     [8, "Positive Energy Burst (Radiant Servant of Pelor)"],
     [10, "Supreme Healing (Radiant Servant of Pelor)"],
   ],
-  freeFeats: [
-    [5, "Bonus Domain", "Radiant Servant of Pelor Class Feature"],
-  ],
+  freeFeats: [[5, "Bonus Domain", "Radiant Servant of Pelor Class Feature"]],
 };
-
-// TODO: No modifiers defined — review if this class needs any

@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const RAGE_MAGE: ClassSeed = {
   name: "Rage Mage",
-  description: "Rage mages tap into the raw, instinctive essence of arcane power rather than relying on methodical, scholarly techniques of spellcasting.",
-  hd: 8, levels: 10, skillPoints: 2,
+  description:
+    "Rage mages tap into the raw, instinctive essence of arcane power rather than relying on methodical, scholarly techniques of spellcasting.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 2,
   bab: "medium",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: ["Concentration", "Profession", "Spellcraft", "Survival"],
@@ -38,5 +46,3 @@ export const RAGE_MAGE: ClassSeed = {
     [10, "Warrior Cry (Rage Mage)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

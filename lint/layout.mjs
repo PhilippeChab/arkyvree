@@ -9,13 +9,10 @@
  * `oxlint --fix` puts a file in order, each statement above what uses it, and lifts a helper out of a `describe` when it
  * uses nothing the block declares and its name is free (the report says what to change otherwise). It never changes
  * the order code runs in: it moves nothing in a file with a declaration after a step, or whose order would swap two
- * declarations that run code (a call, `new`, `await`); the code moves them. What a tool writes
- * keeps the tool's layout: the parser's `generated/`, drizzle's schema and relations.
+ * declarations that run code (a call, `new`, `await`); the code moves them.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
-
-import { isToolWritten } from "./paths.mjs";
 
 const FUNCTION_VALUES = new Set(["ArrowFunctionExpression", "FunctionExpression", "ClassExpression"]);
 
@@ -424,8 +421,6 @@ function checkNested(context, text, statement) {
 }
 
 function createFileLayout(context) {
-  // What a tool writes keeps the tool's layout: the parser's output, drizzle's schema and relations
-  if (isToolWritten(context.filename)) return {};
   const text = context.sourceCode.text;
   return {
     Program(node) {

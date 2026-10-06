@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const KNIGHT_OF_THE_CHALICE: ClassSeed = {
   name: "Knight of the Chalice",
-  description: "The knight of the Chalice belongs to a prestigious order of holy warriors dedicated to combating demons and other fiends from the lower planes.",
-  hd: 10, levels: 10, skillPoints: 2,
+  description:
+    "The knight of the Chalice belongs to a prestigious order of holy warriors dedicated to combating demons and other fiends from the lower planes.",
+  hd: 10,
+  levels: 10,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: [
@@ -43,21 +51,8 @@ export const KNIGHT_OF_THE_CHALICE: ClassSeed = {
   casterType: "Divine",
   spells: {
     slug: "knightofthechalicespells",
-    perDay: [
-      [0],
-      [1],
-      [1, 0],
-      [1, 1],
-      [1, 1, 0],
-      [1, 1, 1],
-      [2, 1, 1, 0],
-      [2, 1, 1, 1],
-      [2, 2, 1, 1],
-      [2, 2, 2, 1],
-    ],
+    perDay: [[0], [1], [1, 0], [1, 1], [1, 1, 0], [1, 1, 1], [2, 1, 1, 0], [2, 1, 1, 1], [2, 2, 1, 1], [2, 2, 2, 1]],
     knowAll: true,
     noCantrips: true,
   },
 };
-
-// TODO: No modifiers defined — review if this class needs any

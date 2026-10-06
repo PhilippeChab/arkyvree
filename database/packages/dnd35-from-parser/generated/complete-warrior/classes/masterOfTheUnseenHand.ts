@@ -1,16 +1,22 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { gte } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const MASTER_OF_THE_UNSEEN_HAND: ClassSeed = {
   name: "Master of the Unseen Hand",
-  description: "Those who pursue this path revel in the power of telekinetic force, using invisible energy to smash opponents, hurl heavy objects skyward, and strip weapons from foes through sheer mental will.",
-  hd: 4, levels: 5, skillPoints: 2,
+  description:
+    "Those who pursue this path revel in the power of telekinetic force, using invisible energy to smash opponents, hurl heavy objects skyward, and strip weapons from foes through sheer mental will.",
+  hd: 4,
+  levels: 5,
+  skillPoints: 2,
   bab: "good",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: ["Concentration", "Craft", "Intimidate", "Knowledge (Arcana)", "Profession", "Spellcraft"],
-  requirements: [
-    gte("skills.concentration.rank", 8),
-  ],
+  requirements: [gte("skills.concentration.rank", 8)],
   classFeatureAptitude: "Master of the Unseen Hand Class Feature",
   classFeatures: [
     [1, "Improved Caster Level (Master of the Unseen Hand)"],
@@ -24,5 +30,3 @@ export const MASTER_OF_THE_UNSEEN_HAND: ClassSeed = {
     [5, "Fling Skyward (Master of the Unseen Hand)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any

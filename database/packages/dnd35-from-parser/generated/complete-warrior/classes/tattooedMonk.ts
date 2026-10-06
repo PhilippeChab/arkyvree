@@ -1,10 +1,18 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+/**
+ * To review:
+ * - No modifiers defined — review if this class needs any
+ */
+
 import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
 
 export const TATTOOED_MONK: ClassSeed = {
   name: "Tattooed Monk",
-  description: "Some monastic traditions grant their members supernatural and spell-like abilities through the application of magical tattoos inscribed upon their bodies. These monks adopt ascetic practices such as shaving their heads and speaking in enigmatic sayings, and many wander the land seeking spiritual growth by confronting and overcoming worldly temptations.",
-  hd: 8, levels: 10, skillPoints: 4,
+  description:
+    "Some monastic traditions grant their members supernatural and spell-like abilities through the application of magical tattoos inscribed upon their bodies. These monks adopt ascetic practices such as shaving their heads and speaking in enigmatic sayings, and many wander the land seeking spiritual growth by confronting and overcoming worldly temptations.",
+  hd: 8,
+  levels: 10,
+  skillPoints: 4,
   bab: "medium",
   saves: { fortitude: "good", reflex: "good", will: "good" },
   classSkills: [
@@ -40,7 +48,11 @@ export const TATTOOED_MONK: ClassSeed = {
     eq("feats.endurance.possessed"),
     eq("feats.improvedgrapple.possessed"),
     eq("feats.improvedunarmedstrike.possessed"),
-    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Evil")),
+    or(
+      eqStr("identity.beliefs.alignment", "Lawful Good"),
+      eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+    ),
   ],
   classFeatureAptitude: "Tattooed Monk Class Feature",
   classFeatures: [
@@ -53,5 +65,3 @@ export const TATTOOED_MONK: ClassSeed = {
     [9, "Tattoo (Tattooed Monk)"],
   ],
 };
-
-// TODO: No modifiers defined — review if this class needs any
