@@ -14,7 +14,7 @@ const dnd35CompleteAdventurer: ContentPackage = {
         name: DND35_COMPLETE_ADVENTURER_NAME,
         description: "Rogue, scout, and skill-focused options for D&D 3.5.",
       });
-      await seeder.seedBook(BOOK, CORE.spellLevels["Cleric"]);
+      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
     },
   ],
 };

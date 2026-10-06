@@ -67,6 +67,7 @@ export class BaseSeeder {
     };
   }
 
+  /** A source's modifiers as rows. */
   protected modifierRows(
     sourceId: string,
     sourceType: string,
@@ -82,6 +83,7 @@ export class BaseSeeder {
     }));
   }
 
+  /** An entity's properties as rows. */
   protected propertyRows(entityId: string, entityType: string, properties: Property[] = []): PropertyRow[] {
     return properties.map(({ type, value }) => ({ entityId, entityType, type, value }));
   }

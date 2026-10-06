@@ -16,3 +16,10 @@ export function buildClassSpellLevels(classes: ClassSeed[]): Record<string, Reco
   }
   return byClass;
 }
+
+/** The class level each of `name`'s spell levels opens at: a class of `classes` that casts spells, or an error. */
+export function spellLevelsOf(classes: ClassSeed[], name: string): Record<number, number> {
+  const levels = buildClassSpellLevels(classes)[name];
+  if (!levels) throw new Error(`${name} isn't a spellcasting class of these classes`);
+  return levels;
+}

@@ -79,7 +79,7 @@ export type ClassSeed = {
 
 /**
  * The core rules' content: the SRD's, as the generator wrote it, and the hand-written core rules, template items and
- * bonded creatures, with the class level each core class's spell levels open at (`spellLevels`, by class).
+ * bonded creatures, with the class level the cleric's and the wizard's spell levels open at.
  */
 export type CoreContent = {
   aptitudes: string[];
@@ -97,7 +97,10 @@ export type CoreContent = {
   wizardSchools: WizardSchoolDefinition[];
   domains: DomainDefinition[];
   bonds: BondContent[];
-  spellLevels: Record<string, Record<number, number>>;
+  /** The class level each of the cleric's spell levels opens at, which a domain's slots open at too. */
+  clericSpellLevels: Record<number, number>;
+  /** The class level each of the wizard's spell levels opens at, which a school's slots open at too. */
+  wizardSpellLevels: Record<number, number>;
 };
 /** A core feat an extension changes: more aptitudes it's taken in, and the class levels that also qualify for it. */
 export type CowFeatEntry = {

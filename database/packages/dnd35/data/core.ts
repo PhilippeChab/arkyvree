@@ -20,7 +20,7 @@ import {
 import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
 import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
-import { buildClassSpellLevels } from "@/database/packages/dnd35/content/spellLevels.ts";
+import { spellLevelsOf } from "@/database/packages/dnd35/content/spellLevels.ts";
 import type {
   AbilityDefinition,
   CoreContent,
@@ -155,7 +155,8 @@ export const CORE: CoreContent = {
   wizardSchools: WIZARD_SCHOOLS,
   domains: ALL_DOMAINS,
   bonds: [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS],
-  spellLevels: buildClassSpellLevels(ALL_CLASSES),
+  clericSpellLevels: spellLevelsOf(ALL_CLASSES, "Cleric"),
+  wizardSpellLevels: spellLevelsOf(ALL_CLASSES, "Wizard"),
 };
 
 export const CORE_RULESET = {

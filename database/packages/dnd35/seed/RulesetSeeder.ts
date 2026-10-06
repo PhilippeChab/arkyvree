@@ -71,13 +71,13 @@ export class RulesetSeeder extends include(
     });
   }
 
-  /** The seeded core rules' id, which `user` (what needs them) can't do without. */
-  static async findCoreRulesetId(db: Db, user: string): Promise<string> {
+  /** The seeded core rules' id, which `neededBy` (the step that needs them) can't do without. */
+  static async findCoreRulesetId(db: Db, neededBy: string): Promise<string> {
     const [core] = await db
       .select({ id: rulesetsInRules.id })
       .from(rulesetsInRules)
       .where(eq(rulesetsInRules.name, DND35_RULESET_NAME));
-    if (!core) throw new Error(`${user} needs ${DND35_RULESET_NAME}, which isn't seeded`);
+    if (!core) throw new Error(`${neededBy} needs ${DND35_RULESET_NAME}, which isn't seeded`);
     return core.id;
   }
 
@@ -189,8 +189,8 @@ export class RulesetSeeder extends include(
     );
 
     await this.seedPowers(core.spells);
-    await this.seedWizardSchools(core.wizardSchools, core.spellLevels["Wizard"]);
-    await this.seedDomains(core.domains, core.spellLevels["Cleric"]);
+    await this.seedWizardSchools(core.wizardSchools, core.wizardSpellLevels);
+    await this.seedDomains(core.domains, core.clericSpellLevels);
     for (const bond of core.bonds) await this.seedBond(bond);
   }
 

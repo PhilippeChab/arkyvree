@@ -20,7 +20,7 @@ const dnd35CompleteDivine: ContentPackage = {
           ...BOOK,
           standaloneFeats: [...BOOK.standaloneFeats, ...DEITYS_WEAPON_FEATS],
         },
-        CORE.spellLevels["Cleric"],
+        CORE.clericSpellLevels,
       );
     },
   ],

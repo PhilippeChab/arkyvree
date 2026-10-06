@@ -14,7 +14,7 @@ const dnd35CompleteWarrior: ContentPackage = {
         name: DND35_COMPLETE_WARRIOR_NAME,
         description: "Martial feats and combat options for D&D 3.5.",
       });
-      await seeder.seedBook(BOOK, CORE.spellLevels["Cleric"]);
+      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
     },
   ],
 };

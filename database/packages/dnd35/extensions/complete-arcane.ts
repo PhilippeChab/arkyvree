@@ -14,7 +14,7 @@ const dnd35CompleteArcane: ContentPackage = {
         name: DND35_COMPLETE_ARCANE_NAME,
         description: "Arcane spellcasting options, prestige classes, and feats for D&D 3.5.",
       });
-      await seeder.seedBook(BOOK, CORE.spellLevels["Cleric"]);
+      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
     },
   ],
 };
