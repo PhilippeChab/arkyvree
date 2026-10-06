@@ -9,14 +9,14 @@
  *   the request cache wraps; only that file builds one.
  * - `route-conventions`: a route's path params are camelCase (`:modifierId`; `.get`, `.route`, `.on`) and its fixed
  *   segments kebab-case (`/class-levels`; a file's name, `robots.txt`, or `*` too), it answers with its status
- *   (`c.json(body, status)`), its validation
- *   is the app's `validate` (`@/server/middlewares/index.ts`, which answers in the API's error envelope), its params
- *   are a named schema (`validate("param", featParams)`: from a `validation.ts` when several routers use it,
- *   declared at the top of its router otherwise), its body and query are written in it (or at its router's top, as
- *   `itemBody`, when several of its routes take one, as it is or derived), its handler reads its input into a const
- *   and destructures what it reads of it (`body` or `query` when it reads one whole), a router is its module's export (`export default new Hono()…`) and names a
- *   schema for what it validates (never `…Schema`), and it lets an error reach `onError` instead of catching it
- *   (`server/routers/api/`; a `finally` alone is fine).
+ *   (`c.json(body, status)`), its validation is the app's `validate` (`@/server/middlewares/index.ts`, which answers in
+ *   the API's error envelope), its params are a named schema (`validate("param", featParams)`: from a `validation.ts`
+ *   when several routers use it, declared at the top of its router otherwise), its body and query are written in it
+ *   (or at its router's top, as `itemBody`, when several of its routes take one, as it is or derived), its handler
+ *   reads its input into a const and destructures what it reads of it (`body` or `query` when it reads one whole), a
+ *   router is its module's export (`export default new Hono()…`) and names a schema for what it validates (never
+ *   `…Schema`), and it lets an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone
+ *   is fine).
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
  *   drizzle's `asc` / `desc`.
  * - `shared-runtime`: `shared/` runs in the client too, so it uses neither Bun's APIs (`bun`, the `Bun` global) nor
@@ -312,7 +312,14 @@ function chainRootOf(node) {
  * (`itemBody.partial()`).
  */
 function checkNamedInputs(context, named, constants) {
-  for (const [name, { bare, derived }] of named) {
+  for (const [name, { bare, derived, targets }] of named) {
+    const misnamed = [...targets].find((target) => !INPUT_NAMES[target].test(name));
+    if (constants.has(name) && derived.length > 0 && misnamed) {
+      context.report({
+        node: derived[0],
+        message: `A route's ${misnamed} schema is named for what it validates (\`itemBody\`, a query's \`…Query\`): \`${name}\` isn't.`,
+      });
+    }
     const reported = !constants.has(name) ? bare : bare.length + derived.length > 1 ? [] : [...bare, ...derived];
     for (const node of reported) {
       context.report({
@@ -371,8 +378,10 @@ function checkValidation(context, node, named) {
   } else if (target.value !== "param") {
     const root = schema?.type === "Identifier" ? schema : chainRootOf(schema);
     if (root?.type !== "Identifier") return;
-    if (!named.has(root.name)) named.set(root.name, { bare: [], derived: [] });
-    named.get(root.name)[root === schema ? "bare" : "derived"].push(root);
+    if (!named.has(root.name)) named.set(root.name, { bare: [], derived: [], targets: new Set() });
+    const uses = named.get(root.name);
+    uses[root === schema ? "bare" : "derived"].push(root);
+    uses.targets.add(target.value);
   }
 }
 

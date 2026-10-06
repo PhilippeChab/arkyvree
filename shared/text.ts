@@ -10,7 +10,7 @@ export function capitalize(s: string) {
   return String(s).charAt(0).toUpperCase() + String(s).slice(1);
 }
 
-/** Text as it's stored: Unicode-normalized (NFKC) and trimmed. The server stores it so, and the client measures it so. */
+/** Text as it's stored: Unicode-normalized (NFKC) and trimmed. The server stores it so; the client measures it so. */
 export function sanitizeText(text: string) {
   return text.normalize("NFKC").trim();
 }

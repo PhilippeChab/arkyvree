@@ -159,6 +159,8 @@ describe("conventions", () => {
           ),
           "server/routers/api/derived.ts":
             'const itemBody = z.object({});\nexport const r = app.post("/", validate("json", itemBody), (c) => c).put("/", validate("json", itemBody.partial()), (c) => c);\n',
+          "server/routers/api/derivedMisnamed.ts":
+            'const base = z.object({});\nexport const r = app.post("/", validate("json", base.extend({})), (c) => c).put("/", validate("json", base.partial()), (c) => c);\n',
           "server/routers/api/derivedOnce.ts":
             'const itemBody = z.object({});\nexport const r = app.put("/", validate("json", itemBody.partial()), (c) => c);\n',
           "server/routers/api/declared.ts":
@@ -174,6 +176,7 @@ describe("conventions", () => {
       ),
     ).toEqual([
       "route-conventions server/routers/api/data.ts",
+      "route-conventions server/routers/api/derivedMisnamed.ts",
       "route-conventions server/routers/api/derivedOnce.ts",
       "route-conventions server/routers/api/destructuredLater.ts",
       "route-conventions server/routers/api/fields.ts",
