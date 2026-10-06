@@ -1,4 +1,6 @@
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { expect } from "@playwright/test";
+
+import { test } from "@/tests/e2e/fixtures.ts";
 import { createCharacter, openSharedCharacter } from "@/tests/e2e/support/characters.ts";
 import { answerInvite, inviteContributor, openContributors } from "@/tests/e2e/support/contributors.ts";
 import { apiResponse } from "@/tests/e2e/support/page.ts";

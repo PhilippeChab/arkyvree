@@ -57,5 +57,3 @@ class ErrorReporting {
 }
 
 export default new ErrorReporting();
-
-export { Sentry };

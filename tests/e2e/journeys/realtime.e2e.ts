@@ -1,4 +1,6 @@
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { expect } from "@playwright/test";
+
+import { test } from "@/tests/e2e/fixtures.ts";
 import { createCampaign, postPlayerInvite } from "@/tests/e2e/support/campaigns.ts";
 import { unreadCount } from "@/tests/e2e/support/notifications.ts";
 import { uniqueName } from "@/tests/e2e/support/page.ts";

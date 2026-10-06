@@ -1,5 +1,6 @@
 import { Stars as AptitudesIcon } from "@mui/icons-material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
@@ -16,7 +17,7 @@ import { aptitudeQuery } from "@/client/src/pages/rulesets/details/entities/enti
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { aptitudesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 const APTITUDES_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },

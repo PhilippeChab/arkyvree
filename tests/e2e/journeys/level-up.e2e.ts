@@ -1,4 +1,6 @@
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { expect } from "@playwright/test";
+
+import { test } from "@/tests/e2e/fixtures.ts";
 import { createCharacter } from "@/tests/e2e/support/characters.ts";
 import {
   addLevels,

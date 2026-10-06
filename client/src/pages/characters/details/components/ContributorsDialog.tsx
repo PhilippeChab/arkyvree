@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -32,7 +33,7 @@ import { ContributorsTable, InviteContributorDialog } from "@/client/src/compone
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 type Contributor = InferResponseType<(typeof rpc.api.characters)[":id"]["contributors"]["$get"], 200>["items"][number];
 

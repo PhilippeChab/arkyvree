@@ -8,6 +8,7 @@ import {
 import { Box, Button, IconButton, Tooltip } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useState } from "react";
 
 import {
@@ -30,7 +31,7 @@ import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 type Contributor = InferResponseType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$get"], 200>["items"][number];
 type ContributorInvite = InferRequestType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$post"]>["json"];

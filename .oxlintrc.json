@@ -55,6 +55,7 @@
     "arkyvree/layers": "error",
     "arkyvree/queries-in-repositories": "error",
     "arkyvree/folder-index": "error",
+    "arkyvree/re-exports": "error",
     // AGENTS.md's conventions (lint/conventions.mjs): imports through @/, no helpers.ts, the shared repository
     // instances, route params / validation / errors, sorting through the repository, shared/'s runtime, `session`,
     // the environment read in server/environment.ts, repository writes inside a transaction.

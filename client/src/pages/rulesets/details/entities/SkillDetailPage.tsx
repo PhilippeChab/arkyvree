@@ -1,4 +1,5 @@
 import { Chip } from "@mui/material";
+import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
@@ -7,7 +8,7 @@ import {
   type SkillFormData,
   SkillFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import { skillQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";

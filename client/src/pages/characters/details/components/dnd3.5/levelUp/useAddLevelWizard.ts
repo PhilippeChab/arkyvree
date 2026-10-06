@@ -1,5 +1,6 @@
 import { keepPreviousData, skipToken, useMutation, useQuery } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -8,7 +9,7 @@ import { rollDie } from "@/client/src/lib/dice.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 

@@ -1,9 +1,10 @@
 import { Group as ContributorIcon } from "@mui/icons-material";
+import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
 import { InviteLandingPage } from "@/client/src/components/invites/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 export default function RulesetContributorInvitePage() {
   const { contributorId = "" } = useParams<{ contributorId: string }>();

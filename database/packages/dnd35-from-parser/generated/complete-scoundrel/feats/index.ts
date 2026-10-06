@@ -36,15 +36,3 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...disembowelingStrike,
   ...headShot,
 ];
-
-export {
-  SKILL_TRICK_FEATS,
-  LUCK_FEATS,
-  GENERAL_FEATS,
-  BARDIC_FEATS,
-  AMBUSH_FEATS,
-  FIGHTER_FEATS,
-  disembowelingStrike,
-  headShot,
-  ALL_CLASS_FEATS,
-};

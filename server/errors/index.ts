@@ -1,5 +1,6 @@
+import * as Sentry from "@sentry/bun";
+
 import { isDevelopment } from "@/server/environment.ts";
-import { Sentry } from "@/server/sentry.ts";
 
 type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
 

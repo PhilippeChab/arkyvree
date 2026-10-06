@@ -6,9 +6,10 @@
 
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
+import { parseResponse } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 type CampaignListParams = InferRequestType<typeof rpc.api.campaigns.$get>["query"];
 type CharacterListParams = InferRequestType<typeof rpc.api.characters.$get>["query"];

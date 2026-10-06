@@ -1,9 +1,10 @@
 import { Chip } from "@mui/material";
+import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
 import { useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import { saveQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";

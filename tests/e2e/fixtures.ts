@@ -47,5 +47,3 @@ export const test = base.extend<
     { scope: "worker" },
   ],
 });
-
-export { expect } from "@playwright/test";

@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { keepPreviousData, skipToken, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
 
 import {
@@ -49,7 +50,7 @@ import { customizationEntityQuery } from "@/client/src/pages/rulesets/customizat
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 type Feat = FeatsPaginated["items"][number];
 type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;

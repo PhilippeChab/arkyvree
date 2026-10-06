@@ -33,14 +33,3 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...greaterResiliency,
   ...powerCritical,
 ];
-
-export {
-  STYLE_FEATS,
-  GENERAL_FEATS,
-  FIGHTER_FEATS,
-  DIVINE_FEATS,
-  TACTICAL_FEATS,
-  greaterResiliency,
-  powerCritical,
-  ALL_CLASS_FEATS,
-};

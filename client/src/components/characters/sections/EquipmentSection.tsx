@@ -2,6 +2,7 @@ import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from "@mui/ico
 import { Autocomplete, Box, Button, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { Link } from "react-router-dom";
@@ -21,7 +22,7 @@ import { useDebouncedValue, useFormWith, useListboxQuery, useValidationIssues } 
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, type RPC, rpc } from "@/client/src/services/rpc.ts";
+import { type RPC, rpc } from "@/client/src/services/rpc.ts";
 
 import {
   detectSlotFromItem,

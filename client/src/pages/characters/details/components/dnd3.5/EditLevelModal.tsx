@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useMemo } from "react";
 
 import { LoadError } from "@/client/src/components/common/index.ts";
 import { useFormSync } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 
 import {

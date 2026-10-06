@@ -30,13 +30,3 @@ export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...HERITAGE_FEATS,
   ...arcaneDefense,
 ];
-
-export {
-  GENERAL_FEATS,
-  METAMAGIC_FEATS,
-  ITEM_CREATION_FEATS,
-  DRACONIC_FEATS,
-  HERITAGE_FEATS,
-  arcaneDefense,
-  ALL_CLASS_FEATS,
-};

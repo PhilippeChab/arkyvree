@@ -12,8 +12,9 @@ import { bookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/bui
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/spells.ts";
 import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/wizardSchools.ts";
 import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import { REFERENCE_DIR, referenceBooks, stripSeparators } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 /** A book's aptitudes: its feats' (`feats`, and its classes'), its classes' and spell lists', its domains' feat pools. */
 export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[], book: string): string[] {

@@ -1,5 +1,6 @@
 import { Autocomplete, Box, Button, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
 import { useController } from "react-hook-form";
 
@@ -9,7 +10,7 @@ import { type RulesetLanguage, useFormWith, useRulesetLanguages } from "@/client
 import { useDirtyForm, useFormSync } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 import type { CharacterData } from "./characterData.ts";

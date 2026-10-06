@@ -1,11 +1,12 @@
 import { Button, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useState } from "react";
 
 import { AnimatedAlert, DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface DeleteAccountDialogProps {

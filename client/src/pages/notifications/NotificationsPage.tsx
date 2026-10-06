@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 
 import {
   BlankState,
@@ -38,7 +39,7 @@ import {
 } from "@/client/src/lib/activityFormatters.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 const FILTER_OPTIONS: FilterOption<"unread">[] = [
   { value: undefined, label: "All" },

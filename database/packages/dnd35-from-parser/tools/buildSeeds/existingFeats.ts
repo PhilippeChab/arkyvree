@@ -7,7 +7,8 @@ import { join } from "node:path";
 
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { familyFeatNamed } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
-import { REFERENCE_DIR, stripSeparators } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 const _existingFeatsCache = new Map<string, Set<string>>();
 

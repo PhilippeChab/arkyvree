@@ -37,17 +37,3 @@ export const ALL_CLASS_FEATS: FeatSeed[] = _allClassFeats.filter((f) => {
   _seen.add(f.name);
   return true;
 });
-
-export { AVENGING_EXECUTIONER_FEATS };
-export { BATTLE_TRICKSTER_FEATS };
-export { CLOAKED_DANCER_FEATS };
-export { COMBAT_TRAPSMITH_FEATS };
-export { FORTUNES_FRIEND_FEATS };
-export { GRAY_GUARD_FEATS };
-export { MAGICAL_TRICKSTER_FEATS };
-export { MALCONVOKER_FEATS };
-export { MASTER_OF_MASKS_FEATS };
-export { MOUNTEBANK_FEATS };
-export { PSIBOND_AGENT_FEATS };
-export { SPELLWARP_SNIPER_FEATS };
-export { UNCANNY_TRICKSTER_FEATS };

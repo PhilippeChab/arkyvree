@@ -1,4 +1,5 @@
 import { Chip } from "@mui/material";
+import { parseResponse } from "hono/client";
 
 import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -11,7 +12,7 @@ import {
 import { byName } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Power } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./types.ts";
 import { useEditorSave } from "./useEditorSave.ts";

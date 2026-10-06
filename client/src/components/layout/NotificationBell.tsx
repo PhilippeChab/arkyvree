@@ -3,6 +3,7 @@ import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Tooltip, Typog
 import { keyframes } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -15,7 +16,7 @@ import {
 } from "@/client/src/lib/activityFormatters.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.$get, 200>["items"][number];
 

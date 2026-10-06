@@ -1,7 +1,8 @@
+import { expect } from "@playwright/test";
 import type { InferResponseType } from "hono/client";
 
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { test } from "@/tests/e2e/fixtures.ts";
 import { uniqueName } from "@/tests/e2e/support/page.ts";
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";

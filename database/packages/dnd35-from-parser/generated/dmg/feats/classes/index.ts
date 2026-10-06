@@ -41,19 +41,3 @@ export const ALL_CLASS_FEATS: FeatSeed[] = _allClassFeats.filter((f) => {
   _seen.add(f.name);
   return true;
 });
-
-export { ARCANE_ARCHER_FEATS };
-export { ARCANE_TRICKSTER_FEATS };
-export { ARCHMAGE_FEATS };
-export { ASSASSIN_FEATS };
-export { BLACKGUARD_FEATS };
-export { DRAGON_DISCIPLE_FEATS };
-export { DUELIST_FEATS };
-export { DWARVEN_DEFENDER_FEATS };
-export { ELDRITCH_KNIGHT_FEATS };
-export { HIEROPHANT_FEATS };
-export { HORIZON_WALKER_FEATS };
-export { LOREMASTER_FEATS };
-export { MYSTIC_THEURGE_FEATS };
-export { SHADOWDANCER_FEATS };
-export { THAUMATURGIST_FEATS };
