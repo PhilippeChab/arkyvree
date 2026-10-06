@@ -10,13 +10,10 @@ import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/in
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
-import {
-  createTestCharacter,
-  createTestRuleset,
-  createTestUserAndRuleset,
-  insertRows,
-  pickFeat,
-} from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { pickFeat } from "@/tests/support/levels.ts";
+import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 /** A new user's empty ruleset with three aptitudes. */
 async function setup() {

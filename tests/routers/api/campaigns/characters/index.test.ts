@@ -5,8 +5,10 @@ import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
-import { api, createSignedInUser, expectOk, expectStatus, guestApi, postCharacter } from "@/tests/api.ts";
-import { getSeedCtx, NIL_UUID, queuedPdfJobs, silentJobHelpers } from "@/tests/helpers.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { postCharacter } from "@/tests/support/characters.ts";
+import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 const characters = api.api.campaigns[":id"].characters;
 const character = characters[":characterId"];

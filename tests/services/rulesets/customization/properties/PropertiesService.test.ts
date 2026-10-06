@@ -5,7 +5,9 @@ import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Items, Properties } from "@/server/repositories/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
-import { activityTypes, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { activityTypes } from "@/tests/support/activities.ts";
+import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const acBonus = { type: "AC_BONUS", value: "5", description: "Armor class bonus" };
 

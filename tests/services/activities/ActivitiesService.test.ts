@@ -13,15 +13,11 @@ import {
 import { ActivitiesService } from "@/server/services/activities/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import {
-  createTestCampaign,
-  createTestCharacter,
-  createTestRuleset,
-  createTestUser,
-  getSeedCtx,
-  makeSession,
-  NIL_UUID,
-} from "@/tests/helpers.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 function resolve(targetTable: string, targetId: string, session: Session = makeSession()) {
   return ActivitiesService.getActivityUrl(session, targetTable, targetId);

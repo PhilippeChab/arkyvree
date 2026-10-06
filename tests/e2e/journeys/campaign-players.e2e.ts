@@ -3,9 +3,11 @@ import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
-import { apiOf } from "@/tests/e2e/api.ts";
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { createCampaign, selectOption, signedInPage, signIn, uniqueName } from "@/tests/e2e/helpers.ts";
+import { apiOf } from "@/tests/e2e/support/api.ts";
+import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
+import { selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
+import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
 /*
  * A Game Master managing a campaign's players from its Players tab: a player's role, a pending invite, a player's

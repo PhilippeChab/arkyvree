@@ -4,7 +4,7 @@ import { isValidElement, type ReactNode } from "react";
 
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import InfoPage from "@/server/rulesets/dnd3.5/sheet/InfoPage.tsx";
-import { findSeededCharacter } from "@/tests/helpers.ts";
+import { findSeededCharacter } from "@/tests/support/seed.ts";
 
 /** The text a page's element tree shows, its components called, each piece in order. */
 function textOf(node: ReactNode): string[] {

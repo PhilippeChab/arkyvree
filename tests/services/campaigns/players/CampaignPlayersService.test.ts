@@ -4,7 +4,9 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Campaigns, Invites, Players } from "@/server/repositories/index.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
-import { createTestCampaign, createTestUser, NIL_UUID } from "@/tests/helpers.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 const firstPage = { limit: 10, page: 1 };
 

@@ -1,17 +1,13 @@
 import type { Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
-import { apiOf } from "@/tests/e2e/api.ts";
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import {
-  createCampaign,
-  createCharacter,
-  forkCoreRuleset,
-  signedInPage,
-  signIn,
-  submitSignIn,
-  uniqueName,
-} from "@/tests/e2e/helpers.ts";
+import { apiOf } from "@/tests/e2e/support/api.ts";
+import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
+import { createCharacter } from "@/tests/e2e/support/characters.ts";
+import { uniqueName } from "@/tests/e2e/support/page.ts";
+import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
+import { signedInPage, signIn, submitSignIn } from "@/tests/e2e/support/signIn.ts";
 
 /*
  * The pages an invitation email links to: the invite, answered there, or why it can't be anymore. The sender, the

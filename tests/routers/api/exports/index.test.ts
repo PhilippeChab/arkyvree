@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { createSignedInUser, expectStatus, guestApi } from "@/tests/api.ts";
-import { createExport } from "@/tests/helpers.ts";
+import { createSignedInUser, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { createExport } from "@/tests/support/files.ts";
 
 describe("exports", () => {
   test("downloads the user's export as an attachment", async () => {

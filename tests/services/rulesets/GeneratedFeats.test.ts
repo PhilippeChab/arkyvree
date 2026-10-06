@@ -24,17 +24,16 @@ import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
+import { measure } from "@/tests/support/database.ts";
+import { createSeedCharacter } from "@/tests/support/levelFixtures.ts";
 import {
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
-  createTestUser,
   createTestUserAndRuleset,
-  getSeedCtx,
-  makeSession,
-  measure,
-} from "@/tests/helpers.ts";
-import { createSeedCharacter } from "@/tests/levelFixtures.ts";
+} from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 /** A ruleset of its own with Strength, a spell list and, unless left out, the General aptitude generated feats go in. */
 async function bareRuleset({ general = true } = {}) {

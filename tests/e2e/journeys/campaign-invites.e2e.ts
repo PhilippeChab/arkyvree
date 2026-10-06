@@ -1,5 +1,8 @@
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { answerInvite, createCampaign, invitePlayer, signedInPage, unreadCount } from "@/tests/e2e/helpers.ts";
+import { createCampaign, invitePlayer } from "@/tests/e2e/support/campaigns.ts";
+import { answerInvite } from "@/tests/e2e/support/contributors.ts";
+import { unreadCount } from "@/tests/e2e/support/notifications.ts";
+import { signedInPage } from "@/tests/e2e/support/signIn.ts";
 
 test.describe("Campaign invites", () => {
   test("an invitee who accepts joins the campaign, and the GM sees them as a player", async ({

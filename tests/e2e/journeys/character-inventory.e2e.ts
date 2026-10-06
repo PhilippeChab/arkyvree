@@ -1,7 +1,9 @@
 import type { Locator, Page } from "@playwright/test";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { apiResponse, createCharacter, selectOption, signIn } from "@/tests/e2e/helpers.ts";
+import { createCharacter } from "@/tests/e2e/support/characters.ts";
+import { apiResponse, selectOption } from "@/tests/e2e/support/page.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 /**
  * Opens the add-item dialog and picks the item `search` finds under `option`, waiting for its details to load: their

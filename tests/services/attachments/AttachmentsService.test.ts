@@ -6,8 +6,10 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "@/server/errors/
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import { AttachmentsService } from "@/server/services/attachments/index.ts";
 import { setStorageForTest } from "@/server/storage/s3.ts";
-import { createTestCharacter, createTestUser, NIL_UUID } from "@/tests/helpers.ts";
-import { fakeStorage } from "@/tests/storage.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
+import { fakeStorage } from "@/tests/support/storage.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 // Replicates the service's HMAC signing so tests can craft tokens with
 // arbitrary `iat` values (e.g. expired) without exposing internals.

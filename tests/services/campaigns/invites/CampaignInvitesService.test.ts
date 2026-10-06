@@ -7,7 +7,9 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, Players, Users } from "@/server/repositories/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
-import { createTestCampaign, createTestUser, inviteToSlot, makeSession, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
+import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
+import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 async function createEmptySlot(campaignId: string) {
   const [slot] = await Players.create(db, { campaignId, role: "Player Character" });

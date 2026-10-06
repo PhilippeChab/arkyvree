@@ -13,7 +13,6 @@ import {
   CharacterLevelSkills,
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
-import { getSeedCtx, makeSession, NIL_UUID } from "@/tests/helpers.ts";
 import {
   addFighterLevels,
   type BUILDS,
@@ -22,7 +21,9 @@ import {
   type LevelPlan,
   levelUp,
   picks,
-} from "@/tests/levelFixtures.ts";
+} from "@/tests/support/levelFixtures.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 /** A level of a batch: class, level, hit points and the ability it increases. */
 type BatchLevel = [klass: string, level: number, hp: number, ability?: string];

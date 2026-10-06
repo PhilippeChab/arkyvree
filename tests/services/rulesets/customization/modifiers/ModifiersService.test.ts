@@ -7,13 +7,11 @@ import { Abilities, Aptitudes, Feats, Items, Powers, Races, Requirements } from 
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
-import {
-  activityTypes,
-  createTestKlassLevel,
-  createTestUserAndRuleset,
-  insertRows,
-  NIL_UUID,
-} from "@/tests/helpers.ts";
+import { activityTypes } from "@/tests/support/activities.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { createTestKlassLevel } from "@/tests/support/levels.ts";
+import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", operator: "add" };
 

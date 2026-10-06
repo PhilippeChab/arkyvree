@@ -1,14 +1,9 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import {
-  apiResponse,
-  forkCoreRuleset,
-  openActionsMenu,
-  selectOption,
-  signIn,
-  uniqueName,
-} from "@/tests/e2e/helpers.ts";
+import { apiResponse, openActionsMenu, selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
+import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 /*
  * A fork's own entities of each kind with a page of its own: created from its section, renamed on its page (surviving a

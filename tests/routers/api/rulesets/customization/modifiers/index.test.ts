@@ -4,9 +4,10 @@ import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { application } from "@/server/routers/application.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
-import { api, expectOk, expectStatus, guestApi, SEED_SESSION_ID } from "@/tests/api.ts";
-import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
 import { createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
+import { api, expectOk, expectStatus, guestApi, SEED_SESSION_ID } from "@/tests/support/api.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const modifiers = api.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers;
 const modifier = modifiers[":modifierId"];

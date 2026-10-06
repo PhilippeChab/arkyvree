@@ -12,8 +12,9 @@ import {
   WEAPON_CRITICAL_RANGE,
   WEAPON_PROFICIENCY,
 } from "@/shared/dnd3.5/properties/index.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { createSeededTestRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const properties = api.api.rulesets[":id"].customization.properties;
 const types = properties.types;

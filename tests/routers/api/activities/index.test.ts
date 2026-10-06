@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+import { createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 /** A new user whose only activities are forking the seeded ruleset, then adding an aptitude to the fork. */
 async function userWithActivities() {

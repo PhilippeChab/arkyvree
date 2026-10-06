@@ -22,7 +22,9 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createTestRuleset, createTestUser, insertRows } from "@/tests/helpers.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 type Row = { id: string };
 

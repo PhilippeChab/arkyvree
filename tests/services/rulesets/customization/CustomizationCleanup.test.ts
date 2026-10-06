@@ -41,14 +41,10 @@ import {
   Users,
 } from "@/server/repositories/index.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
-import {
-  createSeededTestRuleset,
-  createTestCharacter,
-  createTestKlassLevel,
-  createTestRuleset,
-  createTestUserAndRuleset,
-  makeSession,
-} from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestKlassLevel } from "@/tests/support/levels.ts";
+import { createSeededTestRuleset, createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 type OwnerType = keyof typeof OWNERS;
 

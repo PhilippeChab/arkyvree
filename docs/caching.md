@@ -4,11 +4,11 @@
 
 The server runs three cooperating layers, each solving a different problem:
 
-| Layer | Scope | Lifetime | Shared by | Purpose |
-|---|---|---|---|---|
-| **Ruleset cache** | Per ruleset | Cross-request; pinned for system-owned | All requests for that ruleset | Avoid re-reading the same ~thousand entity rows on every character read |
-| **Request-scoped dedup** | Per HTTP request | One request | Any code in that request | Collapse accidental duplicate queries (same SELECT, same args) fired by different layers in a single request |
-| **COW context** | Per ruleset-scoped operation | One async scope | The repos + cache inside that scope | Auto-remap stored pre-COW ids to post-COW so callers don't need to canonicalize manually |
+| Layer                    | Scope                        | Lifetime                               | Shared by                           | Purpose                                                                                                      |
+| ------------------------ | ---------------------------- | -------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Ruleset cache**        | Per ruleset                  | Cross-request; pinned for system-owned | All requests for that ruleset       | Avoid re-reading the same ~thousand entity rows on every character read                                      |
+| **Request-scoped dedup** | Per HTTP request             | One request                            | Any code in that request            | Collapse accidental duplicate queries (same SELECT, same args) fired by different layers in a single request |
+| **COW context**          | Per ruleset-scoped operation | One async scope                        | The repos + cache inside that scope | Auto-remap stored pre-COW ids to post-COW so callers don't need to canonicalize manually                     |
 
 The first two are in-memory data stores; the third is an AsyncLocalStorage-backed context that activates resolution behavior on the other two. Nothing is persisted. On process restart, everything is cold.
 
@@ -30,6 +30,7 @@ return await withRulesetScopes(db, rulesetIds, async (rulesetDataByRulesetId) =>
 ```
 
 Inside the scope:
+
 - `ruleset` — the ruleset row (non-null; throws `NotFoundError` if missing).
 - `rulesetData` — the composed cache: `*ById` Maps, `klassLevelByKlassAndLevel`, `propertiesByEntity`, etc. Also `rulesetData.cow` exposes the underlying `cowData` (sourceChain, overrideMap, siblingMap) for lineage checks.
 - A `cowContext` is activated, which turns on three automatic behaviours in the repository Proxy:
@@ -125,27 +126,27 @@ The cow + rulesetCache modules have two kinds of callers. The split is by owners
 
 From `server/services/rulesets/cow/`:
 
-| Symbol | Purpose |
-|---|---|
-| `withRulesetScope` | The single entry point for a single-ruleset operation. |
-| `withRulesetScopes` | Multi-ruleset list enrichment. |
-| `cowEntity`, `cowEntityForCustomization` | Fork an inherited entity into the current ruleset (for admin-CRUD edits / deletes). |
-| `cowCustomizationForMutation` | Resolve the modifier / property / requirement row an update or delete changes: copies an inherited owner, maps the row to its copy, re-checks a local row after the owner lock. |
-| `lockEntityForMutation` | Lock an already-local owner before deleting its customizations. |
-| `findScopedEntity` | The entity an id names in the composed view (the ruleset's own, or inherited through its source chain), or a 404. |
-| `cowEntityToEdit` / `cowEntityToDelete` | The row a CRUD update or delete writes: the ruleset's own entity, or the copy of an inherited one (`cowEntityToDelete` locks its own). |
+| Symbol                                   | Purpose                                                                                                                                                                         |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `withRulesetScope`                       | The single entry point for a single-ruleset operation.                                                                                                                          |
+| `withRulesetScopes`                      | Multi-ruleset list enrichment.                                                                                                                                                  |
+| `cowEntity`, `cowEntityForCustomization` | Fork an inherited entity into the current ruleset (for admin-CRUD edits / deletes).                                                                                             |
+| `cowCustomizationForMutation`            | Resolve the modifier / property / requirement row an update or delete changes: copies an inherited owner, maps the row to its copy, re-checks a local row after the owner lock. |
+| `lockEntityForMutation`                  | Lock an already-local owner before deleting its customizations.                                                                                                                 |
+| `findScopedEntity`                       | The entity an id names in the composed view (the ruleset's own, or inherited through its source chain), or a 404.                                                               |
+| `cowEntityToEdit` / `cowEntityToDelete`  | The row a CRUD update or delete writes: the ruleset's own entity, or the copy of an inherited one (`cowEntityToDelete` locks its own).                                          |
 
 For lineage checks (entity-belongs-to-sourceChain), `findScopedEntity`. For id canonicalization (pre-COW → post-COW) use `rulesetData.canonicalize(id)`. Sibling merging (aptitude links, modifiers, properties, requirements) is pre-baked into `rulesetData` by the compose step, so consumers only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
 
 From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cache/index.ts`): `RulesetCache`, the class that holds the cache (`RulesetCache.ts`), and the types of what it holds.
 
-| Symbol | Purpose |
-|---|---|
-| `RulesetCache.invalidate` | Clear the cache entries for a single ruleset. Call after every mutation. |
-| `RulesetCache.invalidateEntities` | Same, but keep target-paths cache (used by customization mutations that don't change the entity set). |
-| `RulesetCache.invalidateAll` | Nuclear option — every ruleset. Used by tests and broad recomputations. |
-| `RulesetCache.warm` | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`. |
-| `CachedCowData`, `CachedRulesetData` (types) | Parameter / return types for scope callbacks and framework extension points. |
+| Symbol                                       | Purpose                                                                                               |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `RulesetCache.invalidate`                    | Clear the cache entries for a single ruleset. Call after every mutation.                              |
+| `RulesetCache.invalidateEntities`            | Same, but keep target-paths cache (used by customization mutations that don't change the entity set). |
+| `RulesetCache.invalidateAll`                 | Nuclear option — every ruleset. Used by tests and broad recomputations.                               |
+| `RulesetCache.warm`                          | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`.                      |
+| `CachedCowData`, `CachedRulesetData` (types) | Parameter / return types for scope callbacks and framework extension points.                          |
 
 ### Framework / copy primitives
 
@@ -169,14 +170,25 @@ One tier: per-ruleset **raw** entities, keyed by `rulesetId[:campaignId]`. The c
 ```ts
 interface RulesetRawData {
   // Entities owned by this ruleset only — no ancestor merging.
-  abilities: RulesetAbility[]; saves: RulesetSave[]; skills: Skill[];
-  feats: Feat[]; powers: PowerWithAptitudes[]; aptitudes: Aptitude[];
-  klasses: Klass[]; races: Race[]; languages: Language[]; items: Item[];
-  klassLevels: KlassLevel[]; klassSkills: KlassSkill[];
-  klassLevelFeats: KlassLevelFeat[]; klassLevelPowers: KlassLevelPower[];
+  abilities: RulesetAbility[];
+  saves: RulesetSave[];
+  skills: Skill[];
+  feats: Feat[];
+  powers: PowerWithAptitudes[];
+  aptitudes: Aptitude[];
+  klasses: Klass[];
+  races: Race[];
+  languages: Language[];
+  items: Item[];
+  klassLevels: KlassLevel[];
+  klassSkills: KlassSkill[];
+  klassLevelFeats: KlassLevelFeat[];
+  klassLevelPowers: KlassLevelPower[];
   klassLevelSaves: KlassLevelSave[];
   leveledAptitudeIds: Set<string>;
-  properties: Property[]; modifiers: Modifier[]; requirements: Requirement[];
+  properties: Property[];
+  modifiers: Modifier[];
+  requirements: Requirement[];
 }
 ```
 
@@ -233,37 +245,37 @@ flowchart LR
 
 Three granularities:
 
-| Call | Clears | Use when |
-|---|---|---|
-| `invalidateTargetPaths(id)` | Dependent target paths + segment labels | Entity property edited (spell school, weapon type) but entity list unchanged |
-| `RulesetCache.invalidateEntities(id)` | Raw entities for this ruleset + dependent COW data; not target paths | Entity data (description, stats) edited |
-| `RulesetCache.invalidate(id)` | Raw entities for this ruleset + dependent COW data and target paths | Entities added/removed/renamed, or a modifier written: a list's slots and joins decide which lists have spell levels and known-spell paths (target paths change) |
-| `invalidateAll()` | Every ruleset's everything | Test teardown, rare |
+| Call                                  | Clears                                                               | Use when                                                                                                                                                         |
+| ------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `invalidateTargetPaths(id)`           | Dependent target paths + segment labels                              | Entity property edited (spell school, weapon type) but entity list unchanged                                                                                     |
+| `RulesetCache.invalidateEntities(id)` | Raw entities for this ruleset + dependent COW data; not target paths | Entity data (description, stats) edited                                                                                                                          |
+| `RulesetCache.invalidate(id)`         | Raw entities for this ruleset + dependent COW data and target paths  | Entities added/removed/renamed, or a modifier written: a list's slots and joins decide which lists have spell levels and known-spell paths (target paths change) |
+| `invalidateAll()`                     | Every ruleset's everything                                           | Test teardown, rare                                                                                                                                              |
 
-In tests, the cache reads through the test's transaction and outlives its rollback: rows a test writes straight into a seeded ruleset stay cached once a read rebuilds that ruleset. Tests write into forks instead, or call `invalidateSeededRuleset` (`tests/helpers.ts`), which `tests/setup.ts` repeats after the rollback.
+In tests, the cache reads through the test's transaction and outlives its rollback: rows a test writes straight into a seeded ruleset stay cached once a read rebuilds that ruleset. Tests write into forks instead, or call `invalidateSeededRuleset` (`tests/support/rulesets.ts`), which `tests/setup.ts` repeats after the rollback.
 
 ### Lookup indices (accessor maps)
 
 Services used to query the DB for single rows even after the cache was warm. The composed view now exposes pre-built Maps over the arrays so consumers do O(1) lookups without round-tripping Postgres:
 
-| Index | Holds |
-|---|---|
-| `featsById`, `powersById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `klassLevelsById` | Each entity of the composed view by id (a stored pre-COW id resolves to its copy) |
-| `klassLevelByKlassAndLevel` (key `${klassId}:${level}`) | A class's level |
-| `klassLevelsByKlassId`, `maxLevelByKlassId` | A class's levels, and its highest |
-| `propertiesByEntity` | An entity's properties |
-| `propertiesByEntityType` (key `"items"` / `"powers"` / `"rulesets"` / ...) | Every property of one entity type |
-| `klassLevelFeatsWithFeatsByKlassLevel`, `klassLevelPowersWithPowersByKlassLevel` | A class level's feats and powers, each with its entity |
-| `klassSkillsWithSkillsByKlass`, `klassSkillsByKlassId` | A class's skills, with or without each skill |
-| `klassLevelSavesByKlassLevelId` | A class level's saves |
-| `aptitudeIdsByHavingPowers` | The aptitudes some power belongs to |
-| `modifiersBySource` | A source's modifiers |
-| `requirementsByEntity` | An entity's requirements |
-| `entityIdsByPropertyLookup` (key `${entityType}:${type}:${value}`) | The entities with a property value |
-| `klassLevelFeatsByKlassLevel`, `klassLevelPowersByKlassLevel` | A class level's feat and power rows, without their entities |
-| `modifiersById` | Each modifier by id |
-| `leveledAptitudeIds` | The aptitudes counted by spell level (spell pools) |
-| `aptitudeIdBySlug`, `aptitudeIdBySpellSlug`, `featIdBySlug`, `powerIdsBySlug` | An aptitude, feat or powers by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `powers.<slug>.<aptitude>.known`) |
+| Index                                                                                                                                                                                | Holds                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `featsById`, `powersById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `klassLevelsById` | Each entity of the composed view by id (a stored pre-COW id resolves to its copy)                                                                          |
+| `klassLevelByKlassAndLevel` (key `${klassId}:${level}`)                                                                                                                              | A class's level                                                                                                                                            |
+| `klassLevelsByKlassId`, `maxLevelByKlassId`                                                                                                                                          | A class's levels, and its highest                                                                                                                          |
+| `propertiesByEntity`                                                                                                                                                                 | An entity's properties                                                                                                                                     |
+| `propertiesByEntityType` (key `"items"` / `"powers"` / `"rulesets"` / ...)                                                                                                           | Every property of one entity type                                                                                                                          |
+| `klassLevelFeatsWithFeatsByKlassLevel`, `klassLevelPowersWithPowersByKlassLevel`                                                                                                     | A class level's feats and powers, each with its entity                                                                                                     |
+| `klassSkillsWithSkillsByKlass`, `klassSkillsByKlassId`                                                                                                                               | A class's skills, with or without each skill                                                                                                               |
+| `klassLevelSavesByKlassLevelId`                                                                                                                                                      | A class level's saves                                                                                                                                      |
+| `aptitudeIdsByHavingPowers`                                                                                                                                                          | The aptitudes some power belongs to                                                                                                                        |
+| `modifiersBySource`                                                                                                                                                                  | A source's modifiers                                                                                                                                       |
+| `requirementsByEntity`                                                                                                                                                               | An entity's requirements                                                                                                                                   |
+| `entityIdsByPropertyLookup` (key `${entityType}:${type}:${value}`)                                                                                                                   | The entities with a property value                                                                                                                         |
+| `klassLevelFeatsByKlassLevel`, `klassLevelPowersByKlassLevel`                                                                                                                        | A class level's feat and power rows, without their entities                                                                                                |
+| `modifiersById`                                                                                                                                                                      | Each modifier by id                                                                                                                                        |
+| `leveledAptitudeIds`                                                                                                                                                                 | The aptitudes counted by spell level (spell pools)                                                                                                         |
+| `aptitudeIdBySlug`, `aptitudeIdBySpellSlug`, `featIdBySlug`, `powerIdsBySlug`                                                                                                        | An aptitude, feat or powers by the slug a target path names them by (the modifier scans for `feats.<slug>.possessed` and `powers.<slug>.<aptitude>.known`) |
 
 All are derived from the composed arrays at compose time. They add a few hundred KB of pointer overhead per cached ruleset — negligible against the entity data itself.
 

@@ -13,7 +13,8 @@ import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/inde
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 async function setup(
   configure: (extensionId: string, baseId: string, index: number) => Promise<void>,

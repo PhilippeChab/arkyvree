@@ -1,13 +1,8 @@
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import {
-  answerInvite,
-  apiResponse,
-  createCharacter,
-  inviteContributor,
-  openContributors,
-  openSharedCharacter,
-  signedInPage,
-} from "@/tests/e2e/helpers.ts";
+import { createCharacter, openSharedCharacter } from "@/tests/e2e/support/characters.ts";
+import { answerInvite, inviteContributor, openContributors } from "@/tests/e2e/support/contributors.ts";
+import { apiResponse } from "@/tests/e2e/support/page.ts";
+import { signedInPage } from "@/tests/e2e/support/signIn.ts";
 
 test.describe("Character contributors", () => {
   test("a contributor who accepts renames the character, without its owner's actions, and the owner sees the name", async ({

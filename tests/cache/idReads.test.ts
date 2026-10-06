@@ -6,7 +6,8 @@ import { db } from "@/server/database/index.ts";
 import { mapResultIds } from "@/server/repositories/copyOnWriteIds.ts";
 import { Characters, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
-import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 
 test("a read returning ids gives ids in a ruleset's scope, whose copies map other ids", async () => {
   const seed = await getSeedCtx();

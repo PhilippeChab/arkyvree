@@ -19,16 +19,9 @@ import { CharacterLevelsService } from "@/server/services/characters/levels/inde
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import {
-  addCharacterContributor,
-  addOneLevel,
-  createTestCampaign,
-  createTestUser,
-  getSeedCtx,
-  invalidateSeededRuleset,
-  makeSession,
-  queuedPdfJobs,
-} from "@/tests/helpers.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { addCharacterContributor } from "@/tests/support/contributors.ts";
+import { queuedPdfJobs } from "@/tests/support/jobs.ts";
 import {
   createDruidWithCompanion,
   createPaladinWithMount,
@@ -39,7 +32,11 @@ import {
   picks,
   SORCERER_1,
   WIZARD_1,
-} from "@/tests/levelFixtures.ts";
+} from "@/tests/support/levelFixtures.ts";
+import { addOneLevel } from "@/tests/support/levels.ts";
+import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 const owner = makeSession();
 function familiarOf(masterId: string) {

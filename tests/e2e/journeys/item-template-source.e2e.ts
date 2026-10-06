@@ -2,7 +2,9 @@ import type { InferResponseType } from "hono/client";
 
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { forkCoreRuleset, signIn, uniqueName } from "@/tests/e2e/helpers.ts";
+import { uniqueName } from "@/tests/e2e/support/page.ts";
+import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 type Templates = InferResponseType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"], 200>;
 type EditedItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$put"], 200>;

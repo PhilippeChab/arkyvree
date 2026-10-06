@@ -9,8 +9,9 @@ import { PropertiesService } from "@/server/services/rulesets/customization/prop
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { api, expectStatus } from "@/tests/api.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { api, expectStatus } from "@/tests/support/api.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 async function setup(
   entityType: "items" | "feats",

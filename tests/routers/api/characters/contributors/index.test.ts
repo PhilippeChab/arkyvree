@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { getSeedCtx } from "@/tests/helpers.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 
 /** A character of the seeded user's, and a new user invited to contribute to it. */
 async function setup() {

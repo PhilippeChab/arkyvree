@@ -22,16 +22,11 @@ import { signInAsGoogleAccount } from "@/server/services/authentication/index.ts
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
 import { LinkedAccountsService, linkGoogleAccountTo } from "@/server/services/authentication/linkedAccounts/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import {
-  createTestCampaign,
-  createTestCharacter,
-  createTestRuleset,
-  createTestUser,
-  inviteToSlot,
-  makeSession,
-  NIL_UUID,
-  uniqueId,
-} from "@/tests/helpers.ts";
+import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 const missingSession: Session = {
   id: NIL_UUID,

@@ -29,22 +29,15 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import { cowEntity } from "@/server/services/rulesets/cow/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import {
-  addCharacterLevel,
-  addRulesetContributor,
-  createCharacterAs,
-  createTestAttachment,
-  createTestCampaign,
-  createTestRuleset,
-  createTestUser,
-  findKlassLevel,
-  getSeedCtx,
-  invalidateSeededRuleset,
-  makeSession,
-  NIL_UUID,
-  queuedPdfJobs,
-  uniqueId,
-} from "@/tests/helpers.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { createCharacterAs } from "@/tests/support/characters.ts";
+import { addRulesetContributor } from "@/tests/support/contributors.ts";
+import { createTestAttachment } from "@/tests/support/files.ts";
+import { queuedPdfJobs } from "@/tests/support/jobs.ts";
+import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
+import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 const page = { limit: 100, page: 1 };
 

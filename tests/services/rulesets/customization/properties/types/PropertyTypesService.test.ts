@@ -12,7 +12,8 @@ import {
   SPELL_SCHOOL,
   WEAPON_PROFICIENCY,
 } from "@/shared/dnd3.5/properties/index.ts";
-import { createTestUserAndRuleset, insertRows } from "@/tests/helpers.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 const firstPage = { limit: 50, page: 1 };
 

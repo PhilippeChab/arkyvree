@@ -1,12 +1,8 @@
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import {
-  apiResponse,
-  createCampaign,
-  createCharacter,
-  filterList,
-  openActionsMenu,
-  signIn,
-} from "@/tests/e2e/helpers.ts";
+import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
+import { createCharacter } from "@/tests/e2e/support/characters.ts";
+import { apiResponse, filterList, openActionsMenu } from "@/tests/e2e/support/page.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 test.describe("Campaigns", () => {
   test.setTimeout(60_000);

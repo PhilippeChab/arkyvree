@@ -2,9 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import { addClassLevels, addPowers, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
-import { api, expectOk, expectStatus, guestApi, postCharacter } from "@/tests/api.ts";
-import { createSeededTestRulesetWithExtensions, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
-import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/levelFixtures.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { postCharacter } from "@/tests/support/characters.ts";
+import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/support/levelFixtures.ts";
+import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 const levels = api.api.characters.levels[":characterId"];
 const level = levels[":characterLevelId"];

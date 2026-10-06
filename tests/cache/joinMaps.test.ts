@@ -16,7 +16,7 @@ import { db } from "@/server/database/index.ts";
 import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
 import { getOrBuildCowData } from "@/server/services/rulesets/cow/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
-import { getSeedCtx } from "@/tests/helpers.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 
 function sortById<T extends { id: string }>(xs: T[]) {
   return [...xs].sort((a, b) => a.id.localeCompare(b.id));

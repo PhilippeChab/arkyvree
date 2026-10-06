@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 /**
  * A new user invited to a campaign of the seeded user's, which gives them an

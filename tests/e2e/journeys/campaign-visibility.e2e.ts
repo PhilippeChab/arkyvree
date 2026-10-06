@@ -1,9 +1,11 @@
 import type { Browser, Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
-import { apiOf } from "@/tests/e2e/api.ts";
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { createCampaign, createCharacter, signedInPage, signIn } from "@/tests/e2e/helpers.ts";
+import { apiOf } from "@/tests/e2e/support/api.ts";
+import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
+import { createCharacter } from "@/tests/e2e/support/characters.ts";
+import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
 type Campaign = { id: string; characters: Record<(typeof VISIBILITIES)[number], { id: string; name: string }> };
 

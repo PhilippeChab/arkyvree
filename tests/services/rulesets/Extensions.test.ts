@@ -44,16 +44,11 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import {
-  addCharacterLevel,
-  createTestCharacter,
-  createTestRuleset,
-  createTestUser,
-  getSeedCtx,
-  invalidateSeededRuleset,
-  pickFeat,
-  uniqueId,
-} from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { addCharacterLevel, pickFeat } from "@/tests/support/levels.ts";
+import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 

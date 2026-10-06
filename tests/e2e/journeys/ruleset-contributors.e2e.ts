@@ -1,15 +1,8 @@
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import {
-  answerInvite,
-  apiResponse,
-  forkCoreRuleset,
-  inviteContributor,
-  openContributors,
-  openRace,
-  renameEntity,
-  signedInPage,
-  uniqueName,
-} from "@/tests/e2e/helpers.ts";
+import { answerInvite, inviteContributor, openContributors } from "@/tests/e2e/support/contributors.ts";
+import { apiResponse, uniqueName } from "@/tests/e2e/support/page.ts";
+import { forkCoreRuleset, openRace, renameEntity } from "@/tests/e2e/support/rulesets.ts";
+import { signedInPage } from "@/tests/e2e/support/signIn.ts";
 
 test.describe("Ruleset contributors", () => {
   test("an Editor who accepts edits the fork, and the owner sees the change", async ({

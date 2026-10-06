@@ -9,7 +9,9 @@ import { PropertiesService } from "@/server/services/rulesets/customization/prop
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 // Real repository reads in separate request contexts: an earlier request loads
 // again only after another request's mutation and cache invalidation complete.

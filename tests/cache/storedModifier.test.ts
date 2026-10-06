@@ -6,7 +6,9 @@ import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
-import { createSeededTestRuleset, getSeedCtx, measure } from "@/tests/helpers.ts";
+import { measure } from "@/tests/support/database.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 
 test("stored modifier reads preserve ownership without changing ordinary COW reads", async () => {
   const seed = await getSeedCtx();

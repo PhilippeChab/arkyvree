@@ -9,17 +9,12 @@ import { Properties } from "@/server/repositories/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
-import {
-  addCharacterLevel,
-  createSeededTestRuleset,
-  createTestCharacter,
-  createTestKlassLevel,
-  createTestRuleset,
-  createTestUser,
-  createTestUserAndRuleset,
-  getSeedCtx,
-  insertRows,
-} from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
+import { createSeededTestRuleset, createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 /** A new user's empty ruleset with three aptitudes. */
 async function setup() {

@@ -33,7 +33,7 @@ import {
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { invalidateSeededRuleset } from "@/tests/helpers.ts";
+import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 
 const BONDS = [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS];
 function sortedNames(rows: { name: string }[]) {

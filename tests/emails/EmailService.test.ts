@@ -3,7 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { APP_URL } from "@/emails/EmailLayout.tsx";
 import { emailService } from "@/server/emails/EmailService.ts";
 import { renderEmail } from "@/server/emails/templates.ts";
-import { queuedJobs, uniqueId } from "@/tests/helpers.ts";
+import { queuedJobs } from "@/tests/support/jobs.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
 
 /** Runs `run` as the app does outside the tests, where emails are queued for the worker. */
 async function outsideTests<T>(run: () => Promise<T>) {

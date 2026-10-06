@@ -6,7 +6,8 @@ import { Campaigns, Players } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Ruleset } from "@/shared/relations.ts";
-import { createTestRuleset, createTestUser, makeSession } from "@/tests/helpers.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 type Actor = "Owner" | ContributorRole | "Stranger";
 

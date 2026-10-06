@@ -5,7 +5,8 @@ import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { cowEntity, getOrBuildCowData, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 afterEach(() => {
   RulesetCache.invalidateAll();

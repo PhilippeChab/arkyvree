@@ -7,15 +7,11 @@ import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, CharacterLevels, Characters, Players } from "@/server/repositories/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
-import {
-  addCharacterContributor,
-  createTestCampaign,
-  createTestCharacter,
-  createTestUser,
-  getSeedCtx,
-  makeSession,
-  NIL_UUID,
-} from "@/tests/helpers.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { addCharacterContributor } from "@/tests/support/contributors.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 type Visibility = "Private" | "Public" | "Partial";
 

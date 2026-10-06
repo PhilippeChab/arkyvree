@@ -1,5 +1,5 @@
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { apiResponse, createCharacter, openActionsMenu, signIn } from "@/tests/e2e/helpers.ts";
+import { createCharacter } from "@/tests/e2e/support/characters.ts";
 import {
   addLevels,
   finishWithoutWarnings,
@@ -7,7 +7,9 @@ import {
   planLevels,
   walkFromFeats,
   walkToFeats,
-} from "@/tests/e2e/levelUpHelpers.ts";
+} from "@/tests/e2e/support/levelUp.ts";
+import { apiResponse, openActionsMenu } from "@/tests/e2e/support/page.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 /** Every wizard here must finish without "Proceed Anyway": a warning means a pick a real user would have to make was missed. */
 test.describe("Level up", () => {

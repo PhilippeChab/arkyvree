@@ -10,7 +10,8 @@ import {
 } from "@/server/services/rulesets/customization/customizableEntities.ts";
 import { WEAPON_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 import type { Modifier, Property } from "@/shared/relations.ts";
-import { createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const now = new Date().toISOString();
 function modifierOn(sourceId: string, sourceType: string): Modifier {

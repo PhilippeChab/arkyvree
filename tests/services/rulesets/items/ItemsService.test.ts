@@ -5,7 +5,9 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { createTestCharacter, createTestRuleset, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const requirement = {
   level: "1",

@@ -1,15 +1,9 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import {
-  apiResponse,
-  filterList,
-  forkCoreRuleset,
-  openActionsMenu,
-  signIn,
-  uniqueName,
-  visitCoreRulesetList,
-} from "@/tests/e2e/helpers.ts";
+import { apiResponse, filterList, openActionsMenu, uniqueName } from "@/tests/e2e/support/page.ts";
+import { forkCoreRuleset, visitCoreRulesetList } from "@/tests/e2e/support/rulesets.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 /** Opens the core rules. */
 async function openCoreRuleset(page: Page) {

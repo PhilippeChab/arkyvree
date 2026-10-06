@@ -15,13 +15,10 @@ import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts"
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import {
-  addCharacterLevel,
-  createTestCharacter,
-  createTestKlassLevel,
-  createTestUserAndRuleset,
-  insertRows,
-} from "@/tests/helpers.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
+import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("AptitudesService", () => {

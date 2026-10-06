@@ -7,8 +7,10 @@ import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { refreshEntityData } from "@/server/services/rulesets/cow/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { createSeededTestRuleset, getSeedCtx, makeSession } from "@/tests/helpers.ts";
-import { createSeedCharacter } from "@/tests/levelFixtures.ts";
+import { createSeedCharacter } from "@/tests/support/levelFixtures.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 describe("refreshEntityData", () => {
   const rows = [

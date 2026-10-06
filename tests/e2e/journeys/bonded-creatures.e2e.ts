@@ -1,8 +1,8 @@
 import { parseResponse } from "hono/client";
 
-import { apiOf } from "@/tests/e2e/api.ts";
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { signIn } from "@/tests/e2e/helpers.ts";
+import { apiOf } from "@/tests/e2e/support/api.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 /*
  * The seeded characters bonded to a creature: its master's sheet sums it up under the feat that bonds it, and links to

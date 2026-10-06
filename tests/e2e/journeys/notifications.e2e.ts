@@ -1,13 +1,9 @@
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import {
-  answerInvite,
-  apiResponse,
-  createCampaign,
-  invitePlayer,
-  notificationBell,
-  signedInPage,
-  unreadCount,
-} from "@/tests/e2e/helpers.ts";
+import { createCampaign, invitePlayer } from "@/tests/e2e/support/campaigns.ts";
+import { answerInvite } from "@/tests/e2e/support/contributors.ts";
+import { notificationBell, unreadCount } from "@/tests/e2e/support/notifications.ts";
+import { apiResponse } from "@/tests/e2e/support/page.ts";
+import { signedInPage } from "@/tests/e2e/support/signIn.ts";
 
 test.describe("Notifications", () => {
   test("the bell counts an invite, answers it and takes the invitee to the campaign", async ({

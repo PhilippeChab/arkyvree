@@ -16,7 +16,7 @@ import { type SeedContext } from "@/database/seeds/helpers.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest, runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Characters, Feats, Notifications, Rulesets } from "@/server/repositories/index.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 describe("requestCache — repository Proxy memoization", () => {
   let ctx: SeedContext;

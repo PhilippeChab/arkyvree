@@ -1,5 +1,5 @@
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { signIn } from "@/tests/e2e/helpers.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 test.describe("A session", () => {
   test.beforeEach(async ({ page, user }) => {

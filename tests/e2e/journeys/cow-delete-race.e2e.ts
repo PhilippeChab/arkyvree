@@ -2,7 +2,9 @@ import { Pool } from "pg";
 import { z } from "zod";
 
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { signIn, uniqueName, visitCoreRulesetList } from "@/tests/e2e/helpers.ts";
+import { uniqueName } from "@/tests/e2e/support/page.ts";
+import { visitCoreRulesetList } from "@/tests/e2e/support/rulesets.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 for (const operation of ["delete", "revert"] as const) {
   for (const kind of ["properties", "requirements", "modifiers"] as const) {

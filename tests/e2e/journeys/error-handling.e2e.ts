@@ -1,5 +1,6 @@
 import { expect, test } from "@/tests/e2e/fixtures.ts";
-import { fillNewCharacter, signIn } from "@/tests/e2e/helpers.ts";
+import { fillNewCharacter } from "@/tests/e2e/support/characters.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
 
 test.describe("Errors", () => {
   // Saves wait for the connection (TanStack Query pauses them offline) instead of failing.

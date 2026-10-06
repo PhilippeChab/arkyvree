@@ -1,6 +1,6 @@
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
-import { api, expectOk } from "@/tests/api.ts";
-import { uniqueId } from "@/tests/helpers.ts";
+import { api, expectOk } from "@/tests/support/api.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
 
 /**
  * A new entity of `entityType` created in the ruleset, so customizing it edits
