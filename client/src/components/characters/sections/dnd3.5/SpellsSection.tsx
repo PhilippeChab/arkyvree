@@ -2,7 +2,6 @@ import {
   Box,
   Chip,
   Collapse,
-  IconButton,
   Link as MuiLink,
   Stack,
   Table,
@@ -17,7 +16,7 @@ import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
+import { CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
@@ -46,14 +45,12 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
   return (
     <Box sx={{ mb: 3, "&:last-child": { mb: 0 } }}>
       <Stack
-        onClick={() => setOpen((prev) => !prev)}
+        {...toggleProps(open, () => setOpen((prev) => !prev))}
         direction="row"
         spacing={0.5}
-        sx={{ alignItems: "center", cursor: "pointer", mb: 1 }}
+        sx={{ alignItems: "center", mb: 1, ...CLICKABLE_SX }}
       >
-        <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${apt.aptitudeName}`} sx={{ p: 0 }}>
-          {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-        </IconButton>
+        <ExpandArrow open={open} />
         <Typography component="h3" variant="h6" sx={{ fontWeight: 600 }}>
           {apt.aptitudeName} ({totalSpells})
         </Typography>
@@ -76,14 +73,12 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
   return (
     <Box sx={{ mb: 1, "&:last-child": { mb: 0 } }}>
       <Stack
-        onClick={() => setOpen((prev) => !prev)}
+        {...toggleProps(open, () => setOpen((prev) => !prev))}
         direction="row"
         spacing={0.5}
-        sx={{ alignItems: "center", cursor: "pointer", mb: 0.5 }}
+        sx={{ alignItems: "center", mb: 0.5, ...CLICKABLE_SX }}
       >
-        <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${label} spells`} sx={{ p: 0 }}>
-          {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-        </IconButton>
+        <ExpandArrow open={open} />
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
           {label} ({group.spells.length})
           {group.uses != null && (
@@ -132,14 +127,12 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
     <Fragment>
       <TableRow
         hover
-        onClick={() => setOpen((prev) => !prev)}
-        sx={{ cursor: "pointer", "& > td": { borderBottom: open ? "none" : undefined } }}
+        {...toggleProps(open, () => setOpen((prev) => !prev))}
+        sx={{ ...CLICKABLE_SX, "& > td": { borderBottom: open ? "none" : undefined } }}
       >
         <TableCell>
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-            <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${spell.name}'s details`} sx={{ p: 0 }}>
-              {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-            </IconButton>
+            <ExpandArrow open={open} />
             {spellLink ? (
               <MuiLink
                 component={Link}

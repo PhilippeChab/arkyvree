@@ -66,6 +66,8 @@
  *   "This action cannot be undone."
  * - `page-errors`: a page that couldn't load says why in `loadFailureMessage`'s words.
  * - `tag-chips`: a role, a status or a fact is a `TagChip`, and a chip's color is its `color` prop.
+ * - `expand-arrows`: a row or a header that shows or hides what's under it is the toggle (`toggleProps`) and shows
+ *   its state with `ExpandArrow`; a component's own arrow (`expandIcon`) stays its own.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -162,6 +164,12 @@ const ERROR_ALERT_FILES = new Set([
   "client/src/components/auth/AuthLayout.tsx",
   "client/src/contexts/ToastContext.tsx",
 ]);
+
+/** The arrows that show a group open or shut, which `ExpandArrow` draws */
+const EXPAND_ARROWS = new Set(["ExpandLessIcon", "ExpandMoreIcon"]);
+
+/** The props a component takes its own expand arrow by (`AccordionSummary`'s `expandIcon`, a tree's slots) */
+const EXPAND_ICON_PROPS = new Set(["collapseIcon", "expandIcon"]);
 
 /** The form writes an effect never makes, but `useFormSync`'s. */
 const FIELD_WRITES = new Set(["setValue", "resetField", "reset"]);
@@ -711,6 +719,24 @@ function createErrorAlerts(context) {
           "An error reaches the user one way per kind: a load failure is a `LoadError`, a page that can't show a " +
           "`PageError`, a failed action a toast (`snackbar.error`), a wrong value its field's error: never an error " +
           "`Alert` of its own. An `Alert` writes out its `severity` and `color`, so this can read them.",
+      });
+    },
+  };
+}
+
+function createExpandArrows(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/ExpandArrow.tsx") return {};
+  return {
+    JSXIdentifier(node) {
+      if (!EXPAND_ARROWS.has(node.name) || node.parent.type !== "JSXOpeningElement") return;
+      for (let p = node.parent; p; p = p.parent) {
+        if (p.type === "JSXAttribute" && EXPAND_ICON_PROPS.has(p.name.name)) return;
+      }
+      context.report({
+        node,
+        message:
+          "A row or a header that shows or hides what's under it is the toggle (`toggleProps(open, onToggle)`), and " +
+          "shows it with `ExpandArrow`: one arrow, turned up while open.",
       });
     },
   };
@@ -1432,4 +1458,5 @@ export default {
   "confirm-wording": { meta: { type: "suggestion" }, create: createConfirmWording },
   "page-errors": { meta: { type: "suggestion" }, create: createPageErrors },
   "tag-chips": { meta: { type: "suggestion" }, create: createTagChips },
+  "expand-arrows": { meta: { type: "suggestion" }, create: createExpandArrows },
 };

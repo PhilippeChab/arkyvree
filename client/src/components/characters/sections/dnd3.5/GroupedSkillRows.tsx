@@ -1,9 +1,9 @@
-import { IconButton, TableCell, TableRow } from "@mui/material";
+import { TableCell, TableRow } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
 
-import { ExpandLessIcon } from "@/client/src/components/icons/index.ts";
+import { CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
-import { ANIMATIONS, DURATION, transitionOf } from "@/client/src/lib/animations.ts";
+import { ANIMATIONS } from "@/client/src/lib/animations.ts";
 
 import { groupSkills } from "./skillGroups.ts";
 
@@ -54,24 +54,15 @@ export function GroupedSkillRows<S extends { name: string }>({
         return (
           <TableRow
             key={`group-${row.prefix}`}
-            sx={{ bgcolor: "action.hover", cursor: "pointer" }}
-            onClick={() => toggle(row.prefix)}
+            {...toggleProps(isExpanded, () => toggle(row.prefix))}
+            sx={{ bgcolor: "action.hover", ...CLICKABLE_SX }}
           >
             <TableCell sx={{ fontWeight: 600 }}>
               {row.prefix} ({row.count})
             </TableCell>
             <TableCell colSpan={columns - 2} />
             <TableCell align="center">
-              <IconButton
-                size="small"
-                aria-label={`${isExpanded ? "Hide" : "Show"} ${row.prefix} skills`}
-                sx={{
-                  transition: transitionOf(["transform"], DURATION.fast),
-                  transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
-                }}
-              >
-                <ExpandLessIcon fontSize="small" />
-              </IconButton>
+              <ExpandArrow open={isExpanded} />
             </TableCell>
           </TableRow>
         );

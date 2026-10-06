@@ -24,6 +24,7 @@ import {
   clickableProps,
   CreateDialog,
   DiceSpinner,
+  ExpandArrow,
   LoadMoreButton,
   NoMatchesState,
   SearchBar,
@@ -31,9 +32,10 @@ import {
   TABLE_CONTAINER_LOADING_STYLE,
   TABLE_CONTAINER_STYLE,
   TABLE_STYLE,
+  toggleProps,
 } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
-import { ExpandLessIcon, ExpandMoreIcon, FeatsIcon } from "@/client/src/components/icons/index.ts";
+import { FeatsIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText, useToggleSet } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
@@ -127,13 +129,12 @@ function GroupedRow({
       <>
         <TableRow
           hover
-          {...clickableProps(() => onToggleFamily(family))}
-          aria-expanded={isExpanded}
+          {...toggleProps(isExpanded, () => onToggleFamily(family))}
           sx={{ ...CLICKABLE_SX, ...fadeInUpSx(rowIndex) }}
         >
           <TableCell>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+              <ExpandArrow open={isExpanded} />
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {row.displayName}
               </Typography>

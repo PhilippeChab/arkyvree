@@ -1,9 +1,8 @@
-import { Box, Collapse, IconButton, Link as MuiLink, Stack, Typography } from "@mui/material";
+import { Box, Collapse, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { BlankState } from "@/client/src/components/common/index.ts";
-import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
+import { BlankState, CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 import { SheetSection } from "./SheetSection.tsx";
@@ -12,7 +11,6 @@ type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number
 
 interface FeatRowProps {
   name: React.ReactNode;
-  label: string;
   description?: string | null;
   extra?: React.ReactNode;
 }
@@ -29,30 +27,25 @@ interface GrantedFeatsSectionProps {
   rulesetId?: string;
 }
 
-function FeatRow({ name, label, description, extra }: FeatRowProps) {
+function FeatRow({ name, description, extra }: FeatRowProps) {
   const [open, setOpen] = useState(false);
   const hasExtra = extra != null && extra !== false;
 
   return (
     <Box sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ alignItems: "center", justifyContent: "space-between", ...(hasExtra && CLICKABLE_SX) }}
+        {...(hasExtra && toggleProps(open, () => setOpen((p) => !p)))}
+      >
         <Typography
           component="h3"
           sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
         >
           {name}
         </Typography>
-        {hasExtra && (
-          <IconButton
-            size="small"
-            onClick={() => setOpen((p) => !p)}
-            sx={{ p: 0 }}
-            aria-label={open ? `Hide ${label} details` : `Show ${label} details`}
-            aria-expanded={open}
-          >
-            {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-          </IconButton>
-        )}
+        {hasExtra && <ExpandArrow open={open} />}
       </Stack>
       <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
         {description || "—"}
@@ -72,21 +65,14 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
   return (
     <Box>
       <Stack
-        onClick={() => setOpen((prev) => !prev)}
+        {...toggleProps(open, () => setOpen((prev) => !prev))}
         direction="row"
-        sx={{ alignItems: "center", justifyContent: "space-between", cursor: "pointer", mb: 2 }}
+        sx={{ alignItems: "center", justifyContent: "space-between", mb: 2, ...CLICKABLE_SX }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Granted ({feats.length})
         </Typography>
-        <IconButton
-          size="small"
-          sx={{ p: 0 }}
-          aria-label={open ? "Hide granted feats" : "Show granted feats"}
-          aria-expanded={open}
-        >
-          {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-        </IconButton>
+        <ExpandArrow open={open} />
       </Stack>
       <Collapse in={open} unmountOnExit>
         <Stack spacing={3}>
@@ -159,7 +145,6 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
         <FeatRow
           key={`${feat.name}-${groupIndex}`}
           name={renderFeatName(feat, `(x${count})`)}
-          label={`${feat.name} (x${count})`}
           description={feat.description}
           extra={renderFeatExtra?.(feat)}
         />
@@ -170,7 +155,6 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
       <FeatRow
         key={`${featInstance.name}-${groupIndex}-${instanceIndex}`}
         name={renderFeatName(featInstance)}
-        label={featInstance.name}
         description={featInstance.description}
         extra={renderFeatExtra?.(featInstance)}
       />

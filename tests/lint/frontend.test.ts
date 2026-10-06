@@ -729,4 +729,19 @@ describe("frontend rules", () => {
       ),
     ).toEqual(["dialog-conventions client/src/icon.tsx", "dialog-conventions client/src/toolbar.tsx"]);
   });
+
+  test("a toggle shows its state with ExpandArrow, an accordion with its own expandIcon", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/swapped.tsx": "export const s = open ? <ExpandLessIcon /> : <ExpandMoreIcon />;\n",
+          "client/src/arrowed.tsx":
+            "export const a = <Stack {...toggleProps(open, toggle)}><ExpandArrow open={open} /></Stack>;\n",
+          "client/src/accordion.tsx":
+            "export const c = <AccordionSummary expandIcon={<ExpandMoreIcon />}>Diagnostics</AccordionSummary>;\n",
+        },
+        ["expand-arrows"],
+      ),
+    ).toEqual(["expand-arrows client/src/swapped.tsx", "expand-arrows client/src/swapped.tsx"]);
+  });
 });

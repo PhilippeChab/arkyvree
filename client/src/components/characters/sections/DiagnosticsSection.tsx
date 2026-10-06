@@ -4,7 +4,6 @@ import {
   AccordionSummary,
   Chip,
   Collapse,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -17,7 +16,8 @@ import {
 } from "@mui/material";
 import { Fragment, type ReactNode, useMemo } from "react";
 
-import { ChevronRightIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
+import { CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
+import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
@@ -135,11 +135,9 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
           const isOpen = expanded.has(key);
           return (
             <Fragment key={key}>
-              <TableRow hover onClick={() => toggle(key)} sx={{ cursor: "pointer" }}>
+              <TableRow hover {...toggleProps(isOpen, () => toggle(key))} sx={CLICKABLE_SX}>
                 <TableCell sx={{ ...tableCellSx, pr: 0 }}>
-                  <IconButton size="small" aria-label={`${isOpen ? "Hide" : "Show"} ${source}'s rules`} sx={{ p: 0 }}>
-                    {isOpen ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
-                  </IconButton>
+                  <ExpandArrow open={isOpen} />
                 </TableCell>
                 <TableCell sx={{ ...tableCellSx, fontWeight: 600 }}>{source}</TableCell>
                 <TableCell sx={tableCellSx} colSpan={4}>
