@@ -19,6 +19,7 @@ import { useController } from "react-hook-form";
 
 import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { useLatest } from "@/client/src/hooks/index.ts";
 import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 import type { SkillsData } from "./levelUp/index.ts";
@@ -152,6 +153,8 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
   const { skillData, isLoadingSkills, skillsError, control, perLevelClassSkillIds, perLevelSkillPoints } = wizard;
   const { field: allocationsField } = useController({ control, name: "skillPointAllocations" });
   const skillPointAllocations = allocationsField.value;
+  // Read as a row allocates, so the callback the memoized rows get stays the same
+  const latestAllocations = useLatest(skillPointAllocations);
   const setAllocations = allocationsField.onChange;
   const randomAssign = useCallback(() => {
     if (!skillData) return;
@@ -191,7 +194,7 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
   const onAllocate = useCallback(
     (skillId: string, rawPoints: number) => {
       if (!skillPointsToSpend) return;
-      const allocs = skillPointAllocations;
+      const allocs = latestAllocations.current;
       const currentTotal = Object.entries(allocs)
         .filter(([id]) => id !== skillId)
         .reduce((sum, [, points]) => sum + points, 0);
@@ -199,7 +202,7 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
       const clamped = Math.max(0, Math.min(rawPoints, maxFromAvailable));
       setAllocations({ ...allocs, [skillId]: clamped });
     },
-    [skillPointsToSpend, skillPointAllocations, setAllocations],
+    [skillPointsToSpend, latestAllocations, setAllocations],
   );
 
   if (isLoadingSkills) return <DiceSpinner />;

@@ -63,7 +63,8 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
   const expressionInputRef = useRef<TemplateExpressionInputRef | null>(null);
 
   // The value's editor (its mode, and each mode's text) is its own: seeded from the value as it mounts, once its dialog
-  // opens on a reset form, then writing the value it makes. The value never comes back into it.
+  // opens on a reset form, then writing the value it makes. The value never comes back into it, so a dialog reopened
+  // during its exit transition (still mounted) keeps the editor it closed with.
   const writeFormValue = (next: string) => {
     if (next !== value) onChange("value", next);
   };
