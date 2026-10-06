@@ -85,9 +85,11 @@ export function DetailPageHeader({
             ))}
           </Stack>
         )}
-        <Typography component="div" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>
-          {description}
-        </Typography>
+        {description && (
+          <Typography component="div" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>
+            {description}
+          </Typography>
+        )}
         {children}
       </Stack>
       {onMenuOpen ? (

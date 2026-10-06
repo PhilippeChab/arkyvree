@@ -90,8 +90,9 @@
  * - `spacing`: the gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s, a row's its
  *   `spacing` or a flex component's `gap`), never a block's own margin, on any side; an indent is padding, a heading's
  *   gutter `gutterBottom`. A margin only aligns (`auto`) or resets (`0`), in a nested selector too. A gap is a step of
- *   the ladder, by what it spaces (`GAPS`): a row of buttons or chips is 1 apart, a group of panels or cards 2. A
- *   padding is a step too, an indent (`pl: 6`), or its role's per-screen shape (`PADDING_SHAPES`).
+ *   the ladder, by what it spaces (`GAPS`): a row of icon buttons is 0.5 apart, of buttons or chips 1, a group of
+ *   panels or cards 2. A padding is a step too, an indent (`pl: 6`), its role's per-screen shape (`PADDING_SHAPES`),
+ *   or derived from data, never a constant that hides a step.
  * - `surfaces`: a panel of a page is a `Section` (a `Paper`, its padding, its title); a `Card` is a card one opens:
  *   `StyledCard`, or one holding a `CardActionArea`.
  * - `shadows`: a shadow is the theme's: an elevation (`boxShadow: 2`, `0` for none; a `Paper`, a `Card` or an
@@ -352,7 +353,7 @@ const PICKED_VALUE_PROPS = new Set(["getItemProps", "getTagProps"]);
 /** The requests an `rpc` endpoint makes. */
 const REQUEST_METHODS = new Set(["$get", "$post", "$put", "$patch", "$delete"]);
 
-/** What a row of items holds, 1 apart: buttons and chips */
+/** What a row of items holds, 1 apart: buttons and chips (icon buttons are one control's parts, 0.5 apart) */
 const ROW_ITEMS = new Set(["Button", "ChoiceChip", "TagChip"]);
 
 /** The shadow keys, and the helpers of `theme/shadows.ts` that give each one (a `filter`'s is `iconGlow`) */
@@ -620,12 +621,13 @@ function createButtonSizes(context) {
     JSXElement(node) {
       const name = elementName(node);
       const size = attributeText(node, "size");
-      if (name === "IconButton" && size !== "small" && size !== "large") {
+      const sizes = attributeTexts(node, "size");
+      if (name === "IconButton" && (sizes.length === 0 || sizes.some((s) => s !== "small" && s !== "large"))) {
         context.report({
           node: node.openingElement,
           message:
-            "An icon button's size is its place's, written out: `size=\"large\"` in the app bar and a page header's " +
-            'corners, `size="small"` anywhere else.',
+            'An icon button writes its size, `size="small"` or `size="large"` (a condition\'s branches count, a ' +
+            "spread doesn't): large in the app bar and a page header's corners, small anywhere else.",
         });
       }
       if (name === "Button" && sxSetsAny(node, PADDINGS)) {
@@ -1413,15 +1415,21 @@ function createSpacing(context) {
       );
       if (kids.length === 0 || (kids.length === 1 && !mapped)) return;
       const row = attributeText(node, "direction") === "row";
-      const step = row && kids.every((k) => ROW_ITEMS.has(k)) ? 1 : kids.every((k) => PANELS.has(k)) ? 2 : null;
+      const step =
+        row && kids.every((k) => k === "IconButton")
+          ? 0.5
+          : row && kids.every((k) => ROW_ITEMS.has(k))
+            ? 1
+            : kids.every((k) => PANELS.has(k))
+              ? 2
+              : null;
       if (step === null || numberAttribute(node, "spacing") === step) return;
-      context.report({
-        node: node.openingElement,
-        message:
-          step === 1
-            ? "A row of buttons or chips holds items: `spacing={1}`."
-            : "Panels or cards of a group are `spacing={2}` apart.",
-      });
+      const messages = {
+        0.5: "Icon buttons side by side are one control's parts: `spacing={0.5}`.",
+        1: "A row of buttons or chips holds items: `spacing={1}`.",
+        2: "Panels or cards of a group are `spacing={2}` apart.",
+      };
+      context.report({ node: node.openingElement, message: messages[step] });
     },
     Property(node) {
       const key = node.key.type === "Identifier" ? node.key.name : null;
@@ -1858,12 +1866,13 @@ function onlyNavigates(handler) {
   return !!to && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression";
 }
 
-/** Whether a padding is on the ladder: a step, an indent (`pl: 6`), a role's per-screen shape, or computed */
+/** Whether a padding is on the ladder: a step, an indent (`pl: 6`), a role's per-screen shape, or derived from data */
 function onPaddingLadder(key, value) {
   if (value.type === "Literal") {
     return GAPS.has(value.value) || value.value === 0 || (value.value === 6 && (key === "pl" || key === "paddingLeft"));
   }
-  if (value.type !== "ObjectExpression") return value.type !== "TemplateLiteral";
+  // A value derived from data (`actions.length * 5`) is the data's; a constant or a template hides a step
+  if (value.type !== "ObjectExpression") return value.type === "BinaryExpression" || value.type === "CallExpression";
   const steps = Object.fromEntries(
     value.properties.map((p) => [p.key?.name, p.value?.type === "Literal" ? p.value.value : null]),
   );

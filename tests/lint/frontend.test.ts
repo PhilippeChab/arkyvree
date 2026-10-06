@@ -961,6 +961,10 @@ describe("frontend rules", () => {
           "client/src/panels.tsx":
             'export const p = (\n  <Stack spacing={3}>\n    <Section title="A">a</Section>\n    <Section title="B">b</Section>\n  </Stack>\n);\n',
           "client/src/padded.tsx": "export const d = <Box sx={{ py: 1.5, px: 2 }} />;\n",
+          "client/src/constant.tsx": "export const k = <Box sx={{ p: PAD }} />;\n",
+          "client/src/icons.tsx":
+            'export const i = (\n  <Stack direction="row" spacing={3}>\n    <IconButton size="small" aria-label="Edit" />\n    <IconButton size="small" aria-label="Delete" />\n  </Stack>\n);\n',
+          "client/src/derived.tsx": "export const v = <Box sx={{ pr: actions.length * 5 }} />;\n",
           "client/src/region.tsx": "export const g = <Paper sx={{ p: { xs: 3, sm: 4 } }} />;\n",
           "client/src/nested.tsx": 'export const n = <Tabs sx={{ "& .MuiTab-root": { mx: 0.5 } }} />;\n',
           "client/src/ladder.tsx":
@@ -977,7 +981,9 @@ describe("frontend rules", () => {
       "spacing client/src/buttons.tsx",
       "spacing client/src/chips.tsx",
       "spacing client/src/computed.tsx",
+      "spacing client/src/constant.tsx",
       "spacing client/src/grid.tsx",
+      "spacing client/src/icons.tsx",
       "spacing client/src/nested.tsx",
       "spacing client/src/none.tsx",
       "spacing client/src/padded.tsx",
@@ -1039,6 +1045,9 @@ describe("frontend rules", () => {
             'export const s = <IconButton size={isMobile ? "medium" : "large"} aria-label="Back" />;\n',
           "client/src/section.tsx": 'export const t = <Button size="large" onClick={add}>Add Player</Button>;\n',
           "client/src/padded.tsx": "export const d = <Button sx={{ px: 3, py: 1.5 }}>Create</Button>;\n",
+          "client/src/branched.tsx":
+            'export const b = <IconButton size={dense ? "small" : "large"} aria-label="Back" />;\n',
+          "client/src/spread.tsx": 'export const r = <IconButton {...sizeProps} aria-label="Back" />;\n',
           "client/src/placed.tsx":
             'export const p = (\n  <>\n    <IconButton size="small" aria-label="Edit" />\n    <IconButton size="large" aria-label="Back" />\n    <PageHeader title="Notifications" action={<Button size="large">Mark All as Read</Button>} />\n    <Button size="small">Max</Button>\n  </>\n);\n',
           "client/src/components/common/PageActionButton.tsx":
@@ -1050,6 +1059,7 @@ describe("frontend rules", () => {
       "button-sizes client/src/padded.tsx",
       "button-sizes client/src/screens.tsx",
       "button-sizes client/src/section.tsx",
+      "button-sizes client/src/spread.tsx",
       "button-sizes client/src/unsized.tsx",
     ]);
   });
