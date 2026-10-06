@@ -1,7 +1,13 @@
 export { createRulesetModule } from "./rulesetModule.ts";
-export type { default as Dnd35DetailedCharacter } from "./DetailedCharacter.ts";
-export { isSkillSubtypeOf } from "./DetailedCharacterSkills.ts";
-export { getBondedRaceStats } from "./bondedRaceData.ts";
-export { Dnd35LevelsHooks } from "./hooks/index.ts";
-export { buildBondedMap, buildBondedResponse, buildFullCharacterResponse } from "./buildCharacterResponse.ts";
+export type { default as AbilitiesComponent } from "./abilities/AbilitiesComponent.ts";
+export { ALLOWED_ALL } from "./aptitudes/AptitudesComponent.ts";
+export type { default as AptitudesComponent } from "./aptitudes/AptitudesComponent.ts";
+export type { ValidationResult } from "./character/AbstractDetailedCharacter.ts";
+export type { default as Dnd35DetailedCharacter } from "./character/DetailedCharacter.ts";
+export type { default as IdentityComponent } from "./identity/IdentityComponent.ts";
+export { isSkillSubtypeOf } from "./skills/SkillsComponent.ts";
+export { getBondedRaceStats } from "./bonded/bondedRaceData.ts";
+export { Dnd35LevelsHooks } from "./levels/LevelsHooks.ts";
+export { buildBondedMap, buildBondedResponse, buildFullCharacterResponse } from "./response/buildCharacterResponse.ts";
+export { redactPrivateNotes } from "./response/redactPrivateNotes.ts";
 export type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "./types.ts";

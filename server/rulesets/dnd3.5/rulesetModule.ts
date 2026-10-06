@@ -1,18 +1,18 @@
 import type { Db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
-import type { CharacterKind, DetailedCharacterWithSheet, RulesetModule } from "@/server/rulesets/types.ts";
+import type { CharacterKind, DetailedCharacterWithSheet, RulesetModule } from "@/server/rulesets/engine/types.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 import type { Character as CharacterRecord, Property } from "@/shared/relations.ts";
 
-import Dnd35DetailedCharacter from "./DetailedCharacter.ts";
-import Dnd35DetailedCharacterAnimalCompanion from "./DetailedCharacterAnimalCompanion.ts";
-import type Dnd35DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
-import Dnd35DetailedCharacterFamiliar from "./DetailedCharacterFamiliar.ts";
-import Dnd35DetailedCharacterMount from "./DetailedCharacterMount.ts";
-import { createServiceHooks } from "./hooks/index.ts";
-import Dnd35LevelUpProjector from "./LevelUpProjector.ts";
+import Dnd35DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAnimalCompanion.ts";
+import type Dnd35DetailedCharacterBonded from "./bonded/DetailedCharacterBonded.ts";
+import Dnd35DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.ts";
+import Dnd35DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
+import Dnd35DetailedCharacter from "./character/DetailedCharacter.ts";
+import Dnd35LevelUpProjector from "./character/LevelUpProjector.ts";
+import { seedTemplateItems } from "./items/seedTemplateItems.ts";
 import Dnd35PropertyTypes from "./PropertyTypes.ts";
-import { seedTemplateItems } from "./seedTemplateItems.ts";
+import { createServiceHooks } from "./serviceHooks.ts";
 import Dnd35DetailedCharacterSheet from "./sheet/DetailedCharacterSheet.tsx";
 import Dnd35TargetPaths from "./TargetPaths.ts";
 

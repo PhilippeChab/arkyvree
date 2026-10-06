@@ -22,7 +22,7 @@ import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
-import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { reconcileAllBondedKinds } from "@/server/services/characters/levels/index.ts";
 import { type Alignment, type Gender, type ItemLocation } from "@/shared/enums.ts";

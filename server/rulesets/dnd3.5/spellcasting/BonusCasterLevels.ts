@@ -1,10 +1,10 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
+import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import { SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
-import type { FeatWithPMR, Holders, KlassLevelWithPMR } from "@/server/rulesets/types.ts";
-import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
-import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
+import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
+import type { FeatWithPMR, Holders, KlassLevelWithPMR } from "@/server/rulesets/engine/types.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

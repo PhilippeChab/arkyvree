@@ -1,6 +1,6 @@
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
-import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
-import { getWeaponDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/weaponGenerator.ts";
+import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/items/armorGenerator.ts";
+import { getWeaponDefinition } from "@/server/rulesets/dnd3.5/items/weaponGenerator.ts";
 
 /** SRD armor table uses short names; generators use full names */
 const DEFAULT_ARMOR_NAME_MAP: Record<string, string> = {

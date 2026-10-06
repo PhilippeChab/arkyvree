@@ -5,7 +5,7 @@ import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 import type { Constructor } from "@/server/mixins.ts";
-import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/hooks/generators/armorGenerator.ts";
+import { getArmorDefinition, getShieldDefinition } from "@/server/rulesets/dnd3.5/items/armorGenerator.ts";
 
 type ItemSeeds = ReturnType<typeof buildItemSeeds>;
 

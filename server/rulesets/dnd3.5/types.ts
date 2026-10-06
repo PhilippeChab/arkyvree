@@ -2,7 +2,7 @@
  * D&D 3.5-specific type extensions layered on top of the generic ruleset types.
  *
  * The generic `ProjectedCharacterData` and `LevelUpProjector` in
- * `server/rulesets/types.ts` only carry concepts that apply to every
+ * `server/rulesets/engine/types.ts` only carry concepts that apply to every
  * level-based system. Anything 3.5-specific — skill ranks, spell levels,
  * Fort/Ref/Will save names, skill-points-per-level, wizard-prohibited
  * schools, class-skill distinction — lives here so other rulesets don't
@@ -11,7 +11,7 @@
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { LevelUpProjector, ProjectedCharacterData } from "@/server/rulesets/types.ts";
+import type { LevelUpProjector, ProjectedCharacterData } from "@/server/rulesets/engine/types.ts";
 import type { Power, Property, Skill } from "@/shared/relations.ts";
 
 /** A projected power row with 3.5 spell-level and save-name fields. */

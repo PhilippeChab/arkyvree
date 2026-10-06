@@ -39,7 +39,7 @@ import {
   Saves,
   Skills,
 } from "@/server/repositories/index.ts";
-import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { getListPowerIds } from "@/server/services/rulesets/aptitudes/listMembers.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";

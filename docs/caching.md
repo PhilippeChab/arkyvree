@@ -161,7 +161,7 @@ Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`,
 - **Copy-on-write data**: `CowDataBuilder` (`cache/rulesetCache/CowDataBuilder.ts`) builds a `CowData`, for copy-on-write only, one way (`CowDataBuilder.build(database, ruleset)`), through the handle it's given: the shared `db` for its read side, which `RulesetCache.getCowData` caches, and a copy's transaction for its write side, which `EntityCopy` remaps a copy's references and merges its siblings by, seeing the transaction's own copies. It reads stored ids, copy-on-write resolution off.
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`RulesetCache.getCowData`, `EntityCopy`) and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `RulesetCache.getData`, which gets its `CowData` (`RulesetCache.getCowData`); `RulesetCache.invalidate*` drop it with the rest.
-- **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `CowData.resolveRows`, then the engine's `refreshEntityData` (`rulesets/dnd3.5/refreshEntityData.ts`) takes the view's fields (a name, a description) for the row the id now names.
+- **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `CowData.resolveRows`, then the engine's `refreshEntityData` (`rulesets/dnd3.5/loading/refreshEntityData.ts`) takes the view's fields (a name, a description) for the row the id now names.
 - **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `RulesetCache.getRawData`, `RulesetCache.isRawDataPinned`.
 - **AsyncLocalStorage wiring**: `withCowContext`, `getCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy, `idMatches` (`ResolvesCopies`) and a ruleset entity list's sibling losers (`ScopesToRuleset`).
 
@@ -501,8 +501,8 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
 - `server/repositories/concerns/ResolvesCopies.ts` — `idMatches()` predicate for cowContext-aware composite-key WHERE clauses
-- `server/rulesets/AbstractDetailedCharacter.ts` — `build()` wraps in `withRulesetScope` and hands preloaded ruleset data to the data loader
-- `server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts` — requires `PreloadedRulesetData`; never fetches ruleset-level state itself
+- `server/rulesets/dnd3.5/character/AbstractDetailedCharacter.ts` — `build()` wraps in `withRulesetScope` and hands preloaded ruleset data to the data loader
+- `server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts` — requires `PreloadedRulesetData`; never fetches ruleset-level state itself
 - `server/timing.ts` — hit/miss counters surfaced in request logs
 - `tests/cache/rulesetCache.test.ts` — compose + invalidation + pinning semantics + COW-fork auto-resolve
 - `tests/cache/joinMaps.test.ts` — accessor-map parity with replaced repo queries

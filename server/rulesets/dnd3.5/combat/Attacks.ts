@@ -1,5 +1,5 @@
 import type { Constructor } from "@/server/mixins.ts";
-import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/server/rulesets/constants.ts";
+import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
 import {
   type NaturalAttackKind,
@@ -7,9 +7,9 @@ import {
   type WeaponAbilities,
   type WeaponSlot,
 } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/server/rulesets/dnd3.5/constants.ts";
+import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/server/rulesets/dnd3.5/items/slots.ts";
 import type { WeaponProperty } from "@/server/rulesets/dnd3.5/types.ts";
-import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/server/rulesets/properties/index.ts";
-import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 import {
   DAMAGE_TYPE,
   WEAPON_BASE_DAMAGE,
@@ -162,7 +162,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     }
 
     protected initializeBaseAttackBonus(
-      classes: ReturnType<DetailedCharacterClasses["getClasses"]>,
+      classes: ReturnType<ClassesComponent["getClasses"]>,
       klassLevelProperties: Map<string, { bab: number; skills: number }>,
     ): void {
       const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {

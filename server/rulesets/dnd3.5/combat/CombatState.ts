@@ -1,11 +1,11 @@
-import { CONSTANTS } from "@/server/rulesets/constants.ts";
-import type { ArmorsData } from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
-import type DetailedCharacterEncumbrance from "@/server/rulesets/dnd3.5/DetailedCharacterEncumbrance.ts";
-import type { EncumbranceData } from "@/server/rulesets/dnd3.5/DetailedCharacterEncumbrance.ts";
-import type { ShieldsData } from "@/server/rulesets/dnd3.5/DetailedCharacterShields.ts";
-import type DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
-import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
-import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
+import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
+import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
+import type { ArmorsData } from "@/server/rulesets/dnd3.5/combat/ArmorsComponent.ts";
+import type EncumbranceComponent from "@/server/rulesets/dnd3.5/combat/EncumbranceComponent.ts";
+import type { EncumbranceData } from "@/server/rulesets/dnd3.5/combat/EncumbranceComponent.ts";
+import type { ShieldsData } from "@/server/rulesets/dnd3.5/combat/ShieldsComponent.ts";
+import { CONSTANTS } from "@/server/rulesets/dnd3.5/constants.ts";
+import type SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
 
 export type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 
@@ -178,8 +178,8 @@ export const WIELDED_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => (
 /** What a character's combat sheet holds, which its concerns (armor class, hit points, attacks…) compute. */
 export default abstract class CombatState {
   constructor(
-    protected readonly characterAbilities: DetailedCharacterAbilities,
-    protected readonly characterClasses: DetailedCharacterClasses,
+    protected readonly characterAbilities: AbilitiesComponent,
+    protected readonly characterClasses: ClassesComponent,
   ) {}
 
   /**
@@ -242,9 +242,9 @@ export default abstract class CombatState {
   /** Whether the race keeps its speed in medium or heavy armor and load (RACE_SPEED_IGNORES_ENCUMBRANCE: the dwarf). */
   protected speedIgnoresEncumbrance = false;
 
-  protected characterSkills: DetailedCharacterSkills | null = null;
+  protected characterSkills: SkillsComponent | null = null;
 
-  protected characterEncumbrance: DetailedCharacterEncumbrance | null = null;
+  protected characterEncumbrance: EncumbranceComponent | null = null;
 
   protected raceSize = "Medium";
 

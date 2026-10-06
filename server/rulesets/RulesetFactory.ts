@@ -5,7 +5,7 @@ import { Rulesets } from "@/server/repositories/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { createRulesetModule as createDnd35Module } from "./dnd3.5/index.ts";
-import type { RulesetModule } from "./types.ts";
+import type { RulesetModule } from "./engine/types.ts";
 
 /** Each base rules' module: one the database's enum gains has to be written here, or the server doesn't compile. */
 const MODULES: Record<BaseRules, () => RulesetModule> = {

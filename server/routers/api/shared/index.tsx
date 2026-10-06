@@ -3,8 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { validate } from "@/server/middlewares/index.ts";
-import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/index.ts";
-import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
+import { buildBondedMap, buildFullCharacterResponse, redactPrivateNotes } from "@/server/rulesets/dnd3.5/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 
 const shareTokenParam = z.object({ shareToken: z.string().uuid() });

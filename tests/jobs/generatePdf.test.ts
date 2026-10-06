@@ -4,7 +4,7 @@ import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";
-import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { silentJobHelpers } from "@/tests/support/jobs.ts";

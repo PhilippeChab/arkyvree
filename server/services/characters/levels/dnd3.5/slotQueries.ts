@@ -12,9 +12,12 @@ import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
-import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
+import type {
+  AptitudesComponent,
+  Dnd35LevelUpProjector,
+  Dnd35ProjectedCharacterData,
+} from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -38,7 +41,7 @@ type LevelProjection = {
 };
 
 /** A projected character's spell pools, without the non-leveled aptitudes no spell belongs to (feat pools). */
-function spellPools(aptitudes: DetailedCharacterAptitudes, rulesetData: RulesetData) {
+function spellPools(aptitudes: AptitudesComponent, rulesetData: RulesetData) {
   const pools = aptitudes.extractPowerPools();
   for (const aptitudeId of aptitudes.getNonLeveledAptitudeIds()) {
     if (!rulesetData.aptitudeIdsByHavingPowers.has(aptitudeId)) delete pools[aptitudeId];

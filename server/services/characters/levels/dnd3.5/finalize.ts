@@ -21,13 +21,13 @@ import {
   CharacterLevelSkills,
 } from "@/server/repositories/index.ts";
 import type {
+  AptitudesComponent,
   Dnd35DetailedCharacter,
   Dnd35LevelUpProjector,
   Dnd35ProjectedCharacterData,
 } from "@/server/rulesets/dnd3.5/index.ts";
+import type { PreloadedRulesetData, RulesetModule } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import type { PreloadedRulesetData, RulesetModule } from "@/server/rulesets/types.ts";
-import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
@@ -58,7 +58,7 @@ type LevelSelections = Awaited<ReturnType<typeof validateAndFetchLevelSelections
  * The feat and power pools of the character with its planned levels: a leveled aptitude is a power pool, an unleveled
  * one a feat pool, and a power pool too when it has powers.
  */
-function poolIds(aptitudesInstance: DetailedCharacterAptitudes, rulesetData: RulesetData) {
+function poolIds(aptitudesInstance: AptitudesComponent, rulesetData: RulesetData) {
   const featPoolIds: string[] = [];
   const powerPoolIds: string[] = [];
   const nonLeveledAptitudeIds: string[] = [];

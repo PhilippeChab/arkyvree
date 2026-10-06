@@ -3,8 +3,8 @@ import type { JobHelpers } from "graphile-worker";
 
 import { withTransaction } from "@/server/database/index.ts";
 import { Exports, Notifications } from "@/server/repositories/index.ts";
+import type { CharacterKind } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import type { CharacterKind } from "@/server/rulesets/types.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { findExportableCharacter, getCharacterPdfTargetTable } from "@/server/services/characters/index.ts";
 import { publishWsEvent } from "@/server/websockets/index.ts";

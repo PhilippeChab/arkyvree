@@ -1,24 +1,24 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
+import type AptitudesComponent from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
+import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
+import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
+import type PowerGroupingsComponent from "@/server/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
+import type PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
 import { collectClassLists, JOIN_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
-import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
-import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
-import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
-import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
-import type DetailedCharacterModifiers from "@/server/rulesets/universal/DetailedCharacterModifiers.ts";
-import type DetailedCharacterPowerGroupings from "@/server/rulesets/universal/DetailedCharacterPowerGroupings.ts";
-import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
+import type ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
 import type { SpellTagLists } from "@/shared/dnd3.5/spellGroups.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
 
 /** What a character's spellcasting holds: its bonus caster levels, its aptitudes' powers, its spell tags. */
 export default abstract class SpellcastingState {
   constructor(
-    protected readonly classes: DetailedCharacterClasses,
-    protected readonly abilities: DetailedCharacterAbilities,
-    protected readonly aptitudes: DetailedCharacterAptitudes,
-    protected readonly characterPowers: DetailedCharacterPowers,
-    protected readonly powerGroupings: DetailedCharacterPowerGroupings,
-    protected readonly characterModifiers: DetailedCharacterModifiers,
+    protected readonly classes: ClassesComponent,
+    protected readonly abilities: AbilitiesComponent,
+    protected readonly aptitudes: AptitudesComponent,
+    protected readonly characterPowers: PowersComponent,
+    protected readonly powerGroupings: PowerGroupingsComponent,
+    protected readonly characterModifiers: ModifierEvaluator,
   ) {}
 
   /**
