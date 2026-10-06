@@ -29,23 +29,15 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
       .returning();
   }
 
-  /** Levels' grants, or a ruleset's classes' grants from lists (`aptitudeIds`) or of powers (`powerIds`). */
-  async findMany(
-    db: Db,
-    where:
-      | { klassLevelIds: string[] }
-      | { rulesetId: string; aptitudeIds: string[] }
-      | { rulesetId: string; powerIds: string[] },
-  ) {
+  /** Levels' grants, or a ruleset's classes' grants from lists (`aptitudeIds`). */
+  async findMany(db: Db, where: { klassLevelIds: string[] } | { rulesetId: string; aptitudeIds: string[] }) {
     if ("klassLevelIds" in where && where.klassLevelIds.length === 0) return [];
     if ("aptitudeIds" in where && where.aptitudeIds.length === 0) return [];
-    if ("powerIds" in where && where.powerIds.length === 0) return [];
     return await db.query.klassLevelPowersInRules.findMany({
       where: this.branchWhere(
         [
           "klassLevelIds" in where && inArray(this.table.klassLevelId, where.klassLevelIds),
           "aptitudeIds" in where && inArray(this.table.aptitudeId, where.aptitudeIds),
-          "powerIds" in where && inArray(this.table.powerId, where.powerIds),
         ],
         [
           "rulesetId" in where &&

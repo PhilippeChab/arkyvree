@@ -3,7 +3,8 @@
  * its feats' and spells' links to the book's lists (the book's own, and the fork's copies of them), and its classes'
  * level grants from those lists, are repointed to the list of the same name its remaining books give it. A list's name
  * is its identity: namesakes pair by it (`CowDataBuilder`). A reference the fork would lose refuses the unsubscribe: a
- * link to a list no remaining book has, or a class's grant of one of the book's feats or spells.
+ * link to a list no remaining book has, or a row naming one of the book's other entities (an item's template, a
+ * class's skill or granted feat…).
  */
 
 import { buildSourceChain, CowDataBuilder, type RulesetSources } from "@/server/cache/rulesetCache/index.ts";
@@ -11,12 +12,10 @@ import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
   Aptitudes,
-  Feats,
   FeatsAptitudes,
   KlassLevelFeats,
   KlassLevelPowers,
   KlassLevels,
-  Powers,
   PowersAptitudes,
   RulesetEntities,
 } from "@/server/repositories/index.ts";
@@ -26,6 +25,9 @@ type Copies = ReadonlyMap<string, string[]>;
 
 /** How many lost references the refusal names. */
 const NAMED_LOSSES = 10;
+
+/** The entity types a fork's rows can name besides lists: what `RulesetEntities.findReferences` looks for. */
+const REFERENCED_TYPES = ["abilities", "feats", "items", "klasses", "powers", "races", "saves", "skills"] as const;
 
 /** The lists leaving the fork, by id, with their names: the book's own, and the fork's copies of them. */
 async function findDepartingLists(tx: Db, extensionId: string, copies: Copies) {
@@ -45,28 +47,25 @@ async function findKeptLists(tx: Db, ruleset: RulesetSources, extensionId: strin
   return new Map(kept.map((list) => [list.name, list.id]));
 }
 
-/** The fork's classes' grants of the book's feats and spells (and of the fork's copies of them), by name. */
-async function findLostGrants(
-  tx: Db,
-  rulesetId: string,
-  extensionId: string,
-  copies: Copies,
-  deletedLevels: Set<string>,
-) {
-  const bookFeats = await RulesetEntities.findNames(tx, "feats", { rulesetId: extensionId });
-  const bookPowers = await RulesetEntities.findNames(tx, "powers", { rulesetId: extensionId });
-  const feats = [...bookFeats, ...(await Feats.findMany(tx, { ids: copies.get("feats") ?? [] }))];
-  const powers = [...bookPowers, ...(await Powers.findMany(tx, { ids: copies.get("powers") ?? [] }))];
-  const featNames = new Map(feats.map((feat) => [feat.id, feat.name]));
-  const powerNames = new Map(powers.map((power) => [power.id, power.name]));
-  const featGrants = await KlassLevelFeats.findMany(tx, { rulesetId, featIds: [...featNames.keys()] });
-  const powerGrants = await KlassLevelPowers.findMany(tx, { rulesetId, powerIds: [...powerNames.keys()] });
-  return [
-    ...featGrants.filter((grant) => !deletedLevels.has(grant.klassLevelId)).map((grant) => featNames.get(grant.featId)),
-    ...powerGrants
-      .filter((grant) => !deletedLevels.has(grant.klassLevelId))
-      .map((grant) => powerNames.get(grant.powerId)),
-  ].map((name) => `${name}, which a class grants`);
+/**
+ * What the fork keeps that names the book's entities (or the fork's copies of them) other than its lists, each of
+ * which would dangle once they're gone (`RulesetEntities.findReferences`): an item's template, a class's skill or
+ * granted feat… The rows the unsubscribe deletes, the copies, are left out.
+ */
+async function findLostReferences(tx: Db, rulesetId: string, extensionId: string, copies: Copies) {
+  const names = new Map<string, string>();
+  for (const type of REFERENCED_TYPES) {
+    const entities = [
+      ...(await RulesetEntities.findNames(tx, type, { rulesetId: extensionId })),
+      ...(await RulesetEntities.findNames(tx, type, { ids: copies.get(type) ?? [] })),
+    ];
+    for (const entity of entities) names.set(entity.id, entity.name);
+  }
+  const deleted = new Set([...copies.values()].flat());
+  const references = await RulesetEntities.findReferences(tx, { rulesetId, entityIds: [...names.keys()] });
+  return references
+    .filter((reference) => !deleted.has(reference.id))
+    .map((reference) => `${reference.name}, which uses ${names.get(reference.targetId)}`);
 }
 
 /** Repoints the fork's feats' links: to the kept list, or out when the feat links to it already. */
@@ -143,7 +142,7 @@ export async function repointDepartingReferences(tx: Db, ruleset: RulesetSources
     ...[...featLinks, ...powerLinks, ...featGrants, ...powerGrants]
       .filter((reference) => !keptOf(reference.aptitudeId))
       .map((reference) => `${departing.get(reference.aptitudeId)}, a list no other book of this ruleset has`),
-    ...(await findLostGrants(tx, ruleset.id, extensionId, copies, deletedLevels)),
+    ...(await findLostReferences(tx, ruleset.id, extensionId, copies)),
   ];
   if (lost.length > 0) {
     const named = [...new Set(lost)];

@@ -33,23 +33,15 @@ class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInR
       .returning();
   }
 
-  /** Levels' grants, or a ruleset's classes' grants from lists (`aptitudeIds`) or of feats (`featIds`). */
-  async findMany(
-    db: Db,
-    where:
-      | { klassLevelIds: string[] }
-      | { rulesetId: string; aptitudeIds: string[] }
-      | { rulesetId: string; featIds: string[] },
-  ) {
+  /** Levels' grants, or a ruleset's classes' grants from lists (`aptitudeIds`). */
+  async findMany(db: Db, where: { klassLevelIds: string[] } | { rulesetId: string; aptitudeIds: string[] }) {
     if ("klassLevelIds" in where && where.klassLevelIds.length === 0) return [];
     if ("aptitudeIds" in where && where.aptitudeIds.length === 0) return [];
-    if ("featIds" in where && where.featIds.length === 0) return [];
     return await db.query.klassLevelFeatsInRules.findMany({
       where: this.branchWhere(
         [
           "klassLevelIds" in where && inArray(this.table.klassLevelId, where.klassLevelIds),
           "aptitudeIds" in where && inArray(this.table.aptitudeId, where.aptitudeIds),
-          "featIds" in where && inArray(this.table.featId, where.featIds),
         ],
         [
           "rulesetId" in where &&

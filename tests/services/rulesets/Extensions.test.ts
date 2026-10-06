@@ -15,6 +15,7 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
+  Abilities,
   Aptitudes,
   Characters,
   EntitySnapshots,
@@ -25,6 +26,7 @@ import {
   KlassLevelFeats,
   KlassLevelPowers,
   KlassLevels,
+  KlassSkills,
   Languages,
   Mechanics,
   Modifiers,
@@ -589,7 +591,25 @@ describe("unsubscribing from an extension", () => {
     await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, featId: monkeyGrip.id, aptitudeId: general.id });
 
     await expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id)).rejects.toThrow(
-      "Monkey Grip, which a class grants",
+      /, which uses Monkey Grip/,
+    );
+  });
+
+  test("refuses to leave a row naming another of the extension's entities: a class's skill", async () => {
+    const { user, session, draft } = await setupFork();
+    const extension = await createExtension(user.id);
+    const strength = (await Abilities.findOne(db, { rulesetId: draft.ancestorRulesetIds[0], name: "Strength" }))!;
+    const [skill] = await Skills.create(db, {
+      name: `Probe Skill ${uniqueId()}`,
+      rulesetId: extension.id,
+      primaryAbilityId: strength.id,
+    });
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
+    const [klass] = await Klasses.create(db, { name: `Probe Class ${uniqueId()}`, rulesetId: draft.id, hd: 8 });
+    await KlassSkills.createMany(db, [{ klassId: klass.id, skillId: skill.id }]);
+
+    await expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
+      `${klass.name}, which uses ${skill.name}`,
     );
   });
 
