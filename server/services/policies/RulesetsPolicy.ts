@@ -20,10 +20,10 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
     const role =
       ruleset.userId && !isOwner
         ? await Contributors.findRole(db, { userId: session.userId, rulesetId: ruleset.id })
-        : null;
+        : undefined;
     const isCampaignPlayer =
       !isOwner &&
-      role === null &&
+      role === undefined &&
       !isPublicRuleset(ruleset) &&
       (await Players.exists(db, { userId: session.userId, rulesetId: ruleset.id }));
     return new RulesetsPolicy(session, ruleset, role, isCampaignPlayer);

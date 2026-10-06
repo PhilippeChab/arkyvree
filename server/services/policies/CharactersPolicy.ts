@@ -15,9 +15,9 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   static async for(db: Db, session: Session, character: Character) {
     const role =
       character.userId === session.userId
-        ? null
+        ? undefined
         : await CharacterContributors.findRole(db, { userId: session.userId, characterId: character.id });
-    return new CharactersPolicy(session, character, role !== null);
+    return new CharactersPolicy(session, character, role !== undefined);
   }
 
   private readonly isActiveContributor: boolean;

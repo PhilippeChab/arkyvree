@@ -16,7 +16,7 @@ export default abstract class RulesetRoles extends BasePolicy<Ruleset> {
   constructor(
     session: Pick<Session, "userId">,
     entity: Ruleset,
-    contributorRole: ContributorRole | null = null,
+    contributorRole?: ContributorRole,
     isCampaignPlayer = false,
   ) {
     super(session, entity);
@@ -24,7 +24,7 @@ export default abstract class RulesetRoles extends BasePolicy<Ruleset> {
     this.isCampaignPlayer = isCampaignPlayer;
   }
 
-  protected readonly contributorRole: ContributorRole | null;
+  protected readonly contributorRole: ContributorRole | undefined;
 
   /** Plays in a campaign on the ruleset: looked up only for a ruleset that isn't public, where it lets them in. */
   protected readonly isCampaignPlayer: boolean;
@@ -34,7 +34,7 @@ export default abstract class RulesetRoles extends BasePolicy<Ruleset> {
   }
 
   protected get isContributor() {
-    return this.contributorRole !== null;
+    return this.contributorRole !== undefined;
   }
 
   protected get isEditorContributor() {

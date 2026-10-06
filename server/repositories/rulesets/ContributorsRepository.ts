@@ -171,8 +171,8 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
     return this.paginated(items, pagination);
   }
 
-  /** The user's role on the ruleset as an active contributor, or null: what the ruleset's policy grants by. */
-  async findRole(db: Db, where: { userId: string; rulesetId: string }): Promise<ContributorRole | null> {
+  /** The user's role on the ruleset, when they're an active contributor: what the ruleset's policy grants by. */
+  async findRole(db: Db, where: { userId: string; rulesetId: string }): Promise<ContributorRole | undefined> {
     const contributor = await db.query.contributorsInRules.findFirst({
       where: this.where([
         eq(this.table.userId, where.userId),
@@ -182,7 +182,7 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
       ]),
     });
 
-    return contributor?.role ?? null;
+    return contributor?.role;
   }
 
   async update(db: Db, values: Partial<InferInsertModel<typeof contributorsInRules>>, where: { id: string }) {

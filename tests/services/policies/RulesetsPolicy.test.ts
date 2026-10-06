@@ -31,7 +31,7 @@ function expectOnly(
 
 /** The policy `actor` gets on a draft fork owned by OWNER, adjusted by `overrides`. */
 function policyOf(actor: Actor, overrides: Partial<Ruleset> = {}) {
-  const role: ContributorRole | null = actor === "Owner" || actor === "Stranger" ? null : actor;
+  const role: ContributorRole | undefined = actor === "Owner" || actor === "Stranger" ? undefined : actor;
   return new RulesetsPolicy(makeSession(actor === "Owner" ? OWNER : OTHER), rulesetOf(overrides), role);
 }
 
