@@ -2,7 +2,6 @@ import { afterEach, expect, test } from "bun:test";
 
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { getOrBuildCowData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
@@ -31,7 +30,7 @@ for (const phase of ["pending", "cached"] as const) {
     const read = () =>
       Promise.all([
         RulesetCache.getRawData(unrelated.id),
-        getOrBuildCowData(unrelated),
+        RulesetCache.getCowData(unrelated),
         RulesetCache.getTargetPaths(unrelated.id, "modifier", paths, unrelated.ancestorRulesetIds),
       ]);
     const pending = read();

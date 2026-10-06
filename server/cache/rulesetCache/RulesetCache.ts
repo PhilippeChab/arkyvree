@@ -1,10 +1,10 @@
 import DependentCache from "@/server/cache/DependentCache.ts";
-import { db, withCowContext } from "@/server/database/index.ts";
+import { type CowData, db, withCowContext } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
-import { buildRulesetData, type CachedCowData, type CachedRulesetData } from "./compose.ts";
-import { invalidateAllCowData, invalidateCowData } from "./cowData.ts";
+import { buildRulesetData, type CachedRulesetData } from "./compose.ts";
+import CowDataBuilder, { buildSourceChain, type RulesetSources } from "./CowDataBuilder.ts";
 import { fetchRulesetRawData, type RulesetRawData } from "./rawData.ts";
 
 type TargetPathsAndLabels = { paths: TargetPath[]; segmentLabels: Record<string, string> };
@@ -15,12 +15,15 @@ function getRawDataKey(rulesetId: string, campaignId?: string): string {
 }
 
 /**
- * The rulesets' cache, read through `withRulesetScope` (`scope.ts`). It holds each ruleset's own rows,
- * a system ruleset's pinned (every fork reads them), which compose into a ruleset's view on each read, and each
- * ruleset's target paths. It reads committed rows only, through the shared `db`, never a transaction's: a change's
- * uncommitted rows would reach every reader. A change to a ruleset invalidates what it touched (`invalidate`).
+ * The rulesets' cache, read through `withRulesetScope` (`scope.ts`). It holds each ruleset's copy-on-write data, each
+ * ruleset's own rows, a system ruleset's pinned (every fork reads them), which compose into a ruleset's view on each
+ * read, and each ruleset's target paths. It reads committed rows only, through the shared `db`, never a
+ * transaction's: a change's uncommitted rows would reach every reader. A change to a ruleset invalidates what it
+ * touched (`invalidate`).
  */
 class RulesetCache {
+  private readonly cowData = new DependentCache<CowData>();
+
   private readonly rawData = new DependentCache<RulesetRawData>();
 
   private readonly targetPaths = new DependentCache<TargetPathsAndLabels>();
@@ -38,21 +41,35 @@ class RulesetCache {
 
   /** Drops everything the cache holds. */
   invalidateAll(): void {
-    invalidateAllCowData();
+    this.cowData.invalidateAll();
     this.rawData.invalidateAll();
     this.targetPaths.invalidateAll();
   }
 
   /** Drops a ruleset's copy-on-write data and rows, for a change that leaves its target paths (a requirement's). */
   invalidateEntities(rulesetId: string): void {
-    invalidateCowData(rulesetId);
+    this.cowData.invalidate(rulesetId);
     this.rawData.invalidate(rulesetId);
   }
 
-  /** A ruleset's view: its own rows and its source chain's, composed by copy-on-write. */
-  async getData(rulesetId: string, cowData: CachedCowData, campaignId?: string): Promise<CachedRulesetData> {
+  /**
+   * A ruleset's copy-on-write data: its source chain, its overrides and sibling pairs. Keyed by the ruleset and its
+   * ordered source chain: a request holding old ruleset metadata must not cache its old subscription chain under the
+   * key readers of the newly committed chain use. Built outside any scope: never through a caller's active one (notably
+   * during nested master/companion character builds).
+   */
+  async getCowData(ruleset: RulesetSources): Promise<CowData> {
+    const dependencies = [ruleset.id, ...buildSourceChain(ruleset)];
+    return this.cowData.getOrFetch(JSON.stringify(dependencies), dependencies, async () => ({
+      data: await withCowContext(undefined, () => CowDataBuilder.build(ruleset)),
+    }));
+  }
+
+  /** A ruleset's view: its own rows and its source chain's, composed by its copy-on-write data. */
+  async getData(ruleset: RulesetSources, campaignId?: string): Promise<CachedRulesetData> {
+    const cowData = await this.getCowData(ruleset);
     const chain = await Promise.all([
-      this.getRawData(rulesetId, campaignId),
+      this.getRawData(ruleset.id, campaignId),
       ...cowData.sourceChain.map((id) => this.getRawData(id)),
     ]);
     return buildRulesetData(chain, cowData);

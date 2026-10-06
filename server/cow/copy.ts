@@ -1,4 +1,4 @@
-import type { Db } from "@/server/database/index.ts";
+import type { CowData, Db } from "@/server/database/index.ts";
 import {
   FeatsAptitudes,
   KlassLevelFeats,
@@ -121,7 +121,7 @@ async function copyKlassLevels(
   tx: Db,
   sourceKlassId: string,
   targetKlassId: string,
-  idMap: Record<string, string>,
+  cow: CowData,
   customizationIds?: Map<string, string>,
 ) {
   const levels = await KlassLevels.findMany(tx, { klassId: sourceKlassId });
@@ -157,7 +157,7 @@ async function copyKlassLevels(
     tx,
     levelSaves.map((ls) => ({
       klassLevelId: levelIdMapLocal[ls.klassLevelId],
-      saveId: idMap[ls.saveId] ?? ls.saveId,
+      saveId: cow.resolve(ls.saveId),
       base: ls.base,
     })),
   );
@@ -165,8 +165,8 @@ async function copyKlassLevels(
     tx,
     levelFeats.map((lf) => ({
       klassLevelId: levelIdMapLocal[lf.klassLevelId],
-      featId: idMap[lf.featId] ?? lf.featId,
-      aptitudeId: idMap[lf.aptitudeId] ?? lf.aptitudeId,
+      featId: cow.resolve(lf.featId),
+      aptitudeId: cow.resolve(lf.aptitudeId),
       free: lf.free,
     })),
   );
@@ -174,8 +174,8 @@ async function copyKlassLevels(
     tx,
     levelPowers.map((lp) => ({
       klassLevelId: levelIdMapLocal[lp.klassLevelId],
-      powerId: idMap[lp.powerId] ?? lp.powerId,
-      aptitudeId: idMap[lp.aptitudeId] ?? lp.aptitudeId,
+      powerId: cow.resolve(lp.powerId),
+      aptitudeId: cow.resolve(lp.aptitudeId),
       free: lp.free,
     })),
   );
@@ -187,7 +187,7 @@ export async function copyEntityRelationships(
   entityType: EntityType,
   sourceEntityId: string,
   targetEntityId: string,
-  idMap: Record<string, string>,
+  cow: CowData,
   customizationIds?: Map<string, string>,
 ): Promise<void> {
   if (entityType === "feats") {
@@ -197,7 +197,7 @@ export async function copyEntityRelationships(
         tx,
         featsAptitudes.map((fa) => ({
           featId: targetEntityId,
-          aptitudeId: idMap[fa.aptitudeId] ?? fa.aptitudeId,
+          aptitudeId: cow.resolve(fa.aptitudeId),
         })),
       );
     }
@@ -208,7 +208,7 @@ export async function copyEntityRelationships(
         tx,
         powersAptitudes.map((pa) => ({
           powerId: targetEntityId,
-          aptitudeId: idMap[pa.aptitudeId] ?? pa.aptitudeId,
+          aptitudeId: cow.resolve(pa.aptitudeId),
           level: pa.level,
         })),
       );
@@ -220,11 +220,11 @@ export async function copyEntityRelationships(
         tx,
         klassSkills.map((ks) => ({
           klassId: targetEntityId,
-          skillId: idMap[ks.skillId] ?? ks.skillId,
+          skillId: cow.resolve(ks.skillId),
         })),
       );
     }
 
-    await copyKlassLevels(tx, sourceEntityId, targetEntityId, idMap, customizationIds);
+    await copyKlassLevels(tx, sourceEntityId, targetEntityId, cow, customizationIds);
   }
 }

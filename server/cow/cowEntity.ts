@@ -1,4 +1,4 @@
-import { buildOverrideMap, buildSourceChain } from "@/server/cache/rulesetCache/index.ts";
+import { buildSourceChain, CowDataBuilder } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Klasses, KlassLevels, Modifiers, Rulesets } from "@/server/repositories/index.ts";
@@ -105,24 +105,15 @@ export async function cowEntity(
   await copyEntityCustomizations(tx, entityId, newEntity.id, entityType, cust, customizationIds);
 
   // 4. Copy relationships (aptitudes, klass levels, etc.)
-  // idResolveMap (true overrides + sibling-loser aliases) is what we want for
-  // FK remapping — a child copy's references should always point at the
+  // Resolved through the copy's CowData (true overrides + sibling-loser
+  // aliases) — a child copy's references should always point at the
   // canonical winner, never at a stale loser.
-  const { siblingMap, idResolveMap } = await buildOverrideMap(
-    tx,
-    childRulesetId,
-    ancestorRulesetIds,
-    extensionRulesetIds,
-  );
-  const idMap: Record<string, string> = {};
-  for (const [sourceId, forkedId] of idResolveMap) {
-    idMap[sourceId] = forkedId;
-  }
-  await copyEntityRelationships(tx, entityType, entityId, newEntity.id, idMap, customizationIds);
+  const cow = await CowDataBuilder.buildForCopy(tx, childRulesetId, ancestorRulesetIds, extensionRulesetIds);
+  await copyEntityRelationships(tx, entityType, entityId, newEntity.id, cow, customizationIds);
 
   // 4b. Merge sibling data when multiple extensions COW the same base entity
-  const siblingIds = siblingMap.get(entityId);
-  if (siblingIds && siblingIds.length > 0) {
+  const siblingIds = cow.getSiblings(entityId);
+  if (siblingIds.length > 0) {
     await mergeSiblingData(tx, newEntity.id, entityType, sourceType, siblingIds, customizationIds);
   }
 

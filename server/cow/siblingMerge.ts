@@ -11,7 +11,7 @@ type SiblingCustomizations = Awaited<ReturnType<typeof fetchSiblingCustomization
 /**
  * Merges sibling aptitude links of a feat or a power. Sibling reads turn copy-on-write resolution off (loser ids would
  * otherwise be canonicalized to the winner). Existing reads on targetEntityId go through the repo since the new id
- * isn't in idResolveMap.
+ * isn't a stale id.
  */
 async function mergeAptitudeLinks(tx: Db, targetEntityId: string, entityType: EntityType, siblingIds: string[]) {
   if (entityType === "feats") {
@@ -178,7 +178,7 @@ export async function mergeSiblingData(
   siblingIds: string[],
   customizationIds?: Map<string, string>,
 ): Promise<void> {
-  // Sibling-loser ids are aliased to their winners in idResolveMap, so the
+  // Sibling-loser ids resolve to their winners in a scope's CowData, so the
   // repo proxy would rewrite `Modifiers.findMany({ sourceIds: siblingIds })` to fetch the
   // winner's rows. mergeSiblingData explicitly wants the literal stored
   // loser rows, so it reads through Drizzle directly (the proxy wraps repos

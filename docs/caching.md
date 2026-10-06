@@ -32,7 +32,7 @@ return await withRulesetScopes(db, rulesetIds, async (rulesetDataByRulesetId) =>
 Inside the scope:
 
 - `ruleset` — the ruleset row (non-null; throws `NotFoundError` if missing).
-- `rulesetData` — the composed cache: `*ById` Maps, `klassLevelByKlassAndLevel`, `propertiesByEntity`, etc. Also `rulesetData.cow` exposes the underlying `cowData` (sourceChain, overrideMap, siblingMap) for lineage checks.
+- `rulesetData` — the composed cache: `*ById` Maps, `klassLevelByKlassAndLevel`, `propertiesByEntity`, etc. Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
 - A `cowContext` is activated, which turns on three automatic behaviours in the repository Proxy:
   1. **Input canonicalization** — `Items.findOne({ id: preCowId })` rewrites `id` to post-COW before hitting Postgres.
   2. **Output FK resolution** — returned rows have every `*Id` field remapped to post-COW.
@@ -61,13 +61,13 @@ flowchart LR
 
 ### The problem
 
-Ruleset entities can be [Copy-On-Write'd](./rulesets.md) in a fork. A COW creates a new entity with a new id; the `overrideMap` records `preCowId → postCowId`. Characters saved **before** a COW store pre-COW ids in their rows (`level_feats.feat_id`, `character_abilities.ability_id`, ...). The composed ruleset cache is keyed by **post-COW ids**.
+Ruleset entities can be [Copy-On-Write'd](./rulesets.md) in a fork. A COW creates a new entity with a new id; the ruleset's `CowData` (`server/database/CowData.ts`) records `preCowId → postCowId`. Characters saved **before** a COW store pre-COW ids in their rows (`level_feats.feat_id`, `character_abilities.ability_id`, ...). The composed ruleset cache is keyed by **post-COW ids**.
 
-Without intervention, every lookup site had to remember to do `rulesetData.featsById.get(overrideMap.get(storedId) ?? storedId)`. Missing a call produced a silent cache miss. Three layers close the gap automatically.
+Without intervention, every lookup site had to remember to do `rulesetData.featsById.get(cow.resolve(storedId))`. Missing a call produced a silent cache miss. Three layers close the gap automatically.
 
 ### Layer 1 — cache id Maps auto-resolve on get/has
 
-Every `*ById` / `*BySource` / `*ByEntity` Map returned by `RulesetCache.getData` is wrapped in a Proxy (`cowResolvingMap`). `.get(key)` and `.has(key)` run the key through `cowData.overrideMap` first, then hit the underlying Map. `.size`, `.values()`, `.entries()`, iteration — all behave normally (no alias dup).
+Every `*ById` / `*BySource` / `*ByEntity` Map returned by `RulesetCache.getData` is wrapped in a Proxy (`cowResolvingMap`). `.get(key)` and `.has(key)` run the key through `CowData.resolve` first, then hit the underlying Map. `.size`, `.values()`, `.entries()`, iteration — all behave normally (no alias dup).
 
 ```ts
 // storedFeatId may be pre-COW or post-COW; both land on the post-COW entity.
@@ -76,7 +76,7 @@ const feat = rulesetData.featsById.get(storedFeatId);
 
 This covers ~30 lookup sites. Zero caller changes after the rollout. When the ruleset has no overrides (e.g. the base itself), the Proxy is skipped and the underlying Map is returned directly — zero overhead.
 
-Also at compose time: the inline join rows on feats/powers (`powersAptitudesInRules[].aptitudeId`, `featsAptitudesInRules[].aptitudeId`, and their nested `aptitudesInRule` objects) are remapped and deduped. Earlier versions missed this because `resolveOverrides` only touches top-level string fields — nested arrays kept pre-COW ids and broke multi-extension sibling-dedup scenarios.
+Also at compose time: the inline join rows on feats/powers (`powersAptitudesInRules[].aptitudeId`, `featsAptitudesInRules[].aptitudeId`, and their nested `aptitudesInRule` objects) are remapped and deduped. Earlier versions missed this because `CowData.resolveRows` only touches top-level string fields — nested arrays kept pre-COW ids and broke multi-extension sibling-dedup scenarios.
 
 ### Layer 2 — Character\* repo reads auto-resolve when a COW context is active
 
@@ -96,13 +96,13 @@ The request-dedup key for these calls includes a per-cowData identity tag, so tw
 `withRulesetScope(tx, rulesetId, fn)` is the single entry point. It:
 
 1. Loads the ruleset (throws `NotFoundError("Ruleset not found")` if missing).
-2. Builds / fetches `cowData` (from the COW cache) and `rulesetData` (from the composed cache) — both are cached; warm cost is sub-millisecond.
-3. Activates a cowContext via `withCowContext(cowData, fn)` — AsyncLocalStorage-backed. The activation is a no-op if overrideMap is empty, so bases / extensions pay nothing.
+2. Gets `rulesetData` (`RulesetCache.getData`): its `CowData` from the COW cache (`RulesetCache.getCowData`), composed with the raw tier — both cached; warm cost is sub-millisecond.
+3. Activates a cowContext via `withCowContext(rulesetData.cow, fn)` — AsyncLocalStorage-backed. The activation is a no-op if the `CowData` resolves no id (`isEmpty()`), so bases / extensions pay nothing.
 4. Calls `fn({ ruleset, rulesetData })` — non-null invariants let callbacks skip defensive branches.
 
 Every downstream read inside `fn` — including nested `detailedCharacter.build()`, `validateAndFetchLevelSelections`, `insertLevelChildren`, anything — sees the same context.
 
-`withRulesetScopes(tx, rulesetIds, fn)` is the multi-ruleset variant for list endpoints that span characters from several rulesets at once. It pre-loads `rulesetData` for every unique id and hands the map to `fn`, without activating a cowContext (a single context can only represent one ruleset). Inside `fn`, all lookups go through the per-ruleset `rulesetData.*` Maps, which each wrap their own overrideMap and therefore still auto-resolve.
+`withRulesetScopes(tx, rulesetIds, fn)` is the multi-ruleset variant for list endpoints that span characters from several rulesets at once. It pre-loads `rulesetData` for every unique id and hands the map to `fn`, without activating a cowContext (a single context can only represent one ruleset). Inside `fn`, all lookups go through the per-ruleset `rulesetData.*` Maps, which each resolve stored ids through their own ruleset's `CowData` and therefore still auto-resolve.
 
 `withCowContext` / `getCowContext` are infrastructure primitives (`server/database/cowContext.ts`, marked `@internal`) — application code never calls them directly.
 
@@ -116,7 +116,7 @@ Rare but real:
 
 - **Multi-ruleset list enrichment.** Can't fit under a single `withRulesetScope`. Use `withRulesetScopes` — see `CharactersService.getCharacters` and `CampaignCharactersService.getCharacters`.
 
-Other historic manual patterns (`overrideMap.get(id) ?? id`, `resolveOverrides(rows, overrideMap)`, `canonicalize(id)`) are now handled by the repo Proxy and the `rulesetData.*` Map wrappers. If you find yourself tempted to write one, step back and check — you probably just need to be inside a scope.
+Manual resolution (`cow.resolve(id)` before a lookup, `cow.resolveRows(rows)`, `canonicalize(id)`) is handled by the repo Proxy and the `rulesetData.*` Map wrappers. If you find yourself tempted to write one, step back and check — you probably just need to be inside a scope.
 
 ## API surface
 
@@ -146,7 +146,9 @@ From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cac
 | `RulesetCache.invalidateEntities`            | Same, but keep target-paths cache (used by customization mutations that don't change the entity set). |
 | `RulesetCache.invalidateAll`                 | Nuclear option — every ruleset. Used by tests and broad recomputations.                               |
 | `RulesetCache.warm`                          | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`.                      |
-| `CachedCowData`, `CachedRulesetData` (types) | Parameter / return types for scope callbacks and framework extension points.                          |
+| `CachedRulesetData` (type)                   | Parameter / return type for scope callbacks and framework extension points.                           |
+
+`CowData`, the class `rulesetData.cow` is (`server/database/CowData.ts`), comes from `server/database/index.ts`: the cowContext holds it.
 
 ### Framework / copy primitives
 
@@ -154,10 +156,10 @@ Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`,
 
 - **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `cowEntity` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateItem` / `createVariants` and `ModifiersService.duplicateModifier`. `cowEntity` also uses `copyEntityRelationships`, `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow/index.ts` doesn't export.
 - **Extensions** (`RulesetExtensionsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `cowEntity` copies an entity on its first edit.
-- **Override map**: `buildOverrideMap`, called only by copy-on-write: its read side (`getOrBuildCowData`, `cache/rulesetCache/cowData.ts`) and its write side (`cowEntity`, `server/cow/`).
-- **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`getOrBuildCowData`, `cowEntity`) and target-path cache keys.
-- **Scope internals** (`withRulesetScope` wiring): `getOrBuildCowData`, `RulesetCache.getData`, `invalidateCowData`, `invalidateAllCowData`.
-- **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `resolveOverrides`.
+- **Copy-on-write data**: `CowDataBuilder` (`cache/rulesetCache/CowDataBuilder.ts`) builds a `CowData`, for copy-on-write only: its read side (`CowDataBuilder.build`, which `RulesetCache.getCowData` caches) and its write side (`CowDataBuilder.buildForCopy`, which `cowEntity` remaps a copy's references and merges its siblings by).
+- **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`RulesetCache.getCowData`, `cowEntity`) and target-path cache keys.
+- **Scope internals** (`withRulesetScope` wiring): `RulesetCache.getData`, which gets its `CowData` (`RulesetCache.getCowData`); `RulesetCache.invalidate*` drop it with the rest.
+- **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `CowData.resolveRows`.
 - **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `RulesetCache.getRawData`, `RulesetCache.isRawDataPinned`.
 - **AsyncLocalStorage wiring**: `withCowContext`, `getCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy and `idMatches` (`ResolvesCopies`).
 
@@ -202,22 +204,22 @@ An earlier design cached the fully-composed `CachedRulesetData` per fork. That d
 
 ```mermaid
 flowchart TD
-    Start([RulesetCache.getData fork, cowData]) --> Fetch{Fetch raw entries<br/>in parallel}
+    Start([RulesetCache.getData fork]) --> Fetch{Fetch raw entries<br/>in parallel}
     Fetch -->|Tier-1 hit<br/>if pinned base| ForkRaw[Fork raw]
     Fetch -->|Tier-1 hit<br/>if pinned ancestor| BaseRaw[Base raw]
     Fetch -->|Tier-1 hit<br/>if pinned ancestor| ExtRaw[Extension raw]
     ForkRaw --> Concat[Concat chain]
     BaseRaw --> Concat
     ExtRaw --> Concat
-    Concat --> Exclude[Drop ids in cowData.overrideMap<br/>Drop ids in cowData.siblingIds]
-    Exclude --> FKRemap[resolveOverrides<br/>remap FK fields]
+    Concat --> Exclude[Drop ids CowData.isHidden<br/>overridden or sibling losers]
+    Exclude --> FKRemap[CowData.resolveRows<br/>remap FK fields]
     FKRemap --> BuildMaps[Build lookup indices<br/>featsById, powersById,<br/>klassLevelByKlassAndLevel,<br/>propertiesByEntity, ...]
     BuildMaps --> Out([CachedRulesetData])
 ```
 
 Roughly: concat arrays from fork+ancestors → drop COW'd ids and sibling ids → apply FK remap → build id-indexed Maps for O(1) lookups.
 
-`siblingIds` / `overrideMap` pick up two flavors of loser in `buildOverrideMap` (`server/cache/rulesetCache/overrideMap.ts`): (1) entity-level COW siblings — multiple extensions COW'd the same base entity; (2) aptitude-name collisions — independently-created copies of the same aptitude name across the chain, typically sibling-shared class spell lists like `Assassin Spells`. Both are treated identically by the compose step: losers dropped from the entities array, FKs remapped to the winner. Base-inherited aptitudes (`General`, `Cleric Domain`, etc.) are not duplicated at seed time (see `docs/packages.md`), so they don't participate.
+`CowData`'s sibling losers come in two flavors, paired by `CowDataBuilder` (`server/cache/rulesetCache/CowDataBuilder.ts`): (1) entity-level COW siblings — multiple extensions COW'd the same base entity; (2) aptitude-name collisions — independently-created copies of the same aptitude name across the chain, typically sibling-shared class spell lists like `Assassin Spells`. Both are treated identically by the compose step: losers dropped from the entities array, FKs remapped to the winner. Base-inherited aptitudes (`General`, `Cleric Domain`, etc.) are not duplicated at seed time (see `docs/packages.md`), so they don't participate.
 
 ### Pinning
 
@@ -474,10 +476,10 @@ sequenceDiagram
 1. Add the entity's type + an array field to `RulesetRawData` in `server/cache/rulesetCache/rawData.ts`.
 2. Fetch it in the appropriate round of `fetchRulesetRawData` (rounds gate on dependencies — klass-level fetches need `klasses` first, customizations need all entity IDs).
 3. Add the composed array to `CachedRulesetData`.
-4. Extend the compose step: concat across chain → filter `isExcluded(id)` → `resolveOverrides` if it has FKs.
-5. Build a `<entity>ById` Map alongside (`buildById(resolvedX)`, like `featsById`) **and** wrap it with `cowResolvingMap(map, overriddenIds)` before returning so `.get` auto-resolves stored pre-COW ids.
+4. Extend the compose step: concat across chain → filter `isExcluded(id)` → `cow.resolveRows` if it has FKs.
+5. Build a `<entity>ById` Map alongside (`buildById(resolvedX)`, like `featsById`) **and** wrap it with `cowResolvingMap(map, cowData)` before returning so `.get` auto-resolves stored pre-COW ids.
 6. If callers need a filter like "X by Y", build that index in the compose step too and wrap it the same way.
-7. If the entity carries inline join arrays (like `powersAptitudesInRules`), remap the nested ids in the compose step too — `resolveOverrides` only touches top-level fields.
+7. If the entity carries inline join arrays (like `powersAptitudesInRules`), remap the nested ids in the compose step too — `CowData.resolveRows` only touches top-level fields.
 8. Update `tests/cache/rulesetCache.test.ts` with a smoke test (the existing compose+invalidation patterns are copy-paste templates); include a COW-fork assertion so regressions in the auto-resolve path are caught.
 9. Migrate callers: `Repo.findOne(db, { id })` inside a `withRulesetScope` → `rulesetData.<entity>ById.get(id)`. No canonicalize needed — the wrapper handles it. Either access pattern works; the cache Map is preferred when you already have `rulesetData` in scope.
 
@@ -491,8 +493,9 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
 - `server/cache/rulesetCache/` — `RulesetCache` (`RulesetCache.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up), the raw rows' fetch (`rawData.ts`), and the compose step with its sibling merging, FK remap and accessor maps, `cowResolvingMap` included (`compose.ts`)
-- `server/cache/rulesetCache/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), COW data and its invalidation (`cowData.ts`), the override map and `resolveOverrides` (`overrideMap.ts`), the sibling requirements' merge (`siblingRequirements.ts`)
+- `server/cache/rulesetCache/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), the COW data's build (`CowDataBuilder.ts`; `RulesetCache` caches and invalidates it), the sibling requirements' merge (`siblingRequirements.ts`)
 - `server/cow/` (copy-on-write's write side) — `cowEntity` and the other copies a change makes, the copy primitives
+- `server/database/CowData.ts` — a ruleset's copy-on-write state: what an id resolves to, and whether it's overridden or a sibling loser
 - `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `getCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
