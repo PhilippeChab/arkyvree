@@ -1,6 +1,6 @@
 import { eq, type InferInsertModel } from "drizzle-orm";
 
-import { coreRulesetId } from "@/database/packages/dnd35/seed/context.ts";
+import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
@@ -66,7 +66,7 @@ export async function createSeededTestRuleset(
     status?: "Draft" | "Published" | "Archived";
   } = {},
 ) {
-  const coreId = await coreRulesetId(db, "A seeded test ruleset");
+  const coreId = await RulesetSeeder.findCoreRulesetId(db, "A seeded test ruleset");
 
   const ruleset = await createTestRuleset(userId, {
     rulesetId: coreId,

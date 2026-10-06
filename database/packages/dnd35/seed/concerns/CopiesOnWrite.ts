@@ -6,7 +6,7 @@
 import { and, eq, like } from "drizzle-orm";
 
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/types.ts";
-import type { SeederState } from "@/database/packages/dnd35/seed/SeederState.ts";
+import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   aptitudesInRules,
   entitySnapshotsInRules,
@@ -21,7 +21,7 @@ import {
 import type { Constructor } from "@/server/mixins.ts";
 
 /** Copying the core's feats and spells into an extension that changes them. */
-export function CopiesOnWrite<B extends Constructor<SeederState>>(Base: B) {
+export function CopiesOnWrite<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class CopyingOnWrite extends Base {
     /**
      * Adds class levels to a feat's first-level `or` of requirements, which a single first-level requirement becomes.

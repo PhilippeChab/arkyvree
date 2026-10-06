@@ -78,7 +78,7 @@ requirements: [
 ]
 ```
 
-`requirementRows()` in `database/packages/dnd35/seed/customizationRows.ts` walks the tree and assigns hierarchical levels:
+`requirementRows()` in `database/packages/dnd35/seed/BaseSeeder.ts` walks the tree and assigns hierarchical levels:
 - Root entries: `"1"`, `"2"`, `"3"`
 - Children: `"1.1"`, `"1.2"`, nested: `"1.1.1"`, `"1.1.2"`
 

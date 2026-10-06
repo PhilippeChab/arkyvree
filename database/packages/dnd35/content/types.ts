@@ -2,6 +2,9 @@
 
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 
+/** An ability: its name and what it measures. */
+export type AbilityDefinition = { name: string; description: string };
+
 export type BabType = "good" | "medium" | "poor";
 /** A creature bonded to a character (a familiar, an animal companion, a special mount): its aptitudes, feats, races and class, all of `kind`. */
 export type BondContent = {
@@ -73,6 +76,29 @@ export type ClassSeed = {
     levels: number[];
   };
 };
+
+/**
+ * The core rules' content: the SRD's, as the generator wrote it, and the hand-written core rules, template items and
+ * bonded creatures, with the class level each core class's spell levels open at (`spellLevels`, by class).
+ */
+export type CoreContent = {
+  aptitudes: string[];
+  languages: LanguageDefinition[];
+  races: RaceDefinition[];
+  abilities: AbilityDefinition[];
+  skills: SkillDefinition[];
+  saves: SaveDefinition[];
+  feats: FeatSeed[];
+  classes: ClassSeed[];
+  /** The items others are made from, which a new ruleset starts with. */
+  templateItems: ItemDef[];
+  items: ItemDef[];
+  spells: SpellSeed[];
+  wizardSchools: WizardSchoolDefinition[];
+  domains: DomainDefinition[];
+  bonds: BondContent[];
+  spellLevels: Record<string, Record<number, number>>;
+};
 /** A core feat an extension changes: more aptitudes it's taken in, and the class levels that also qualify for it. */
 export type CowFeatEntry = {
   feat: string;
@@ -121,6 +147,9 @@ export interface ItemDef {
   modifiers?: Modifier[];
 }
 
+/** A language: its name, its type (Common, Exotic…) and who speaks it. */
+export type LanguageDefinition = { name: string; type: string; description: string };
+
 /** A modifier with no requirements: a class level's, a domain's, a race's or an item's (only a feat's has some). */
 export type Modifier = ModifierEffect & { requirements?: never };
 
@@ -159,7 +188,20 @@ export type RequirementEntry = RequirementCondition | RequirementGroup;
 /** Requirements chained with `and` or `or`. */
 export type RequirementGroup = { chainingOperator: "and" | "or"; children: RequirementEntry[] };
 
+/** A save: its name, what it resists, and the ability it adds. */
+export type SaveDefinition = { name: string; description: string; ability: string };
+
 export type SaveType = "good" | "poor";
+
+/** A skill: its name, what it does, its key ability, and whether armor weighs on it or it can be used untrained. */
+export type SkillDefinition = {
+  name: string;
+  description: string;
+  ability: string;
+  impactedByWeight?: boolean;
+  checkPenaltyMultiplier?: number;
+  usableWithoutTraining?: boolean;
+};
 
 export type SpellSeed = PowerSeed & { level: number };
 

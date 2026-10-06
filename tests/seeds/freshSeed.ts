@@ -1,13 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 
-import {
-  coreRulesetId,
-  createSystemRuleset,
-  extensionContext,
-  loadSeedContext,
-  newSeedContext,
-  type SeedContext,
-} from "@/database/packages/dnd35/seed/context.ts";
+import type { SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
+import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import { modifiersInCustomization, propertiesInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { describeRequirement } from "@/tests/seeds/seededRows.ts";
@@ -18,12 +12,13 @@ function describeModifier(m: { target: string; operator: string; value: string; 
   return `${m.target} ${m.operator} ${m.value} ${m.valueType}`;
 }
 
-/** A new extension of the context's ruleset, and its context (`seedExtension`'s). */
-export function freshExtensionContext(base: SeedContext) {
-  return extensionContext(db, base, {
-    name: `Seed test extension ${uniqueId()}`,
-    description: "An extension a test seeds into",
-  });
+/** A seeder of a new extension of the context's ruleset, as an extension's package makes one. */
+export function freshExtensionSeeder(base: SeedContext) {
+  return RulesetSeeder.createExtension(
+    db,
+    { name: `Seed test extension ${uniqueId()}`, description: "An extension a test seeds into" },
+    base,
+  );
 }
 
 /** The names of a context's ids, by id. */
@@ -64,17 +59,17 @@ export async function describeCustomizations(entityId: string) {
   };
 }
 
-/** A new system ruleset for a test to seed into, and its context: empty, or naming the seeded core's rows (`named`). */
-export async function freshSeedContext({ named = false } = {}): Promise<SeedContext> {
-  const rulesetId = await createSystemRuleset(db, {
+/** A seeder of a new system ruleset for a test to seed into: naming no rows, or the seeded core's (`named`). */
+export async function freshSeeder({ named = false } = {}) {
+  const seeder = await RulesetSeeder.createCore(db, {
     name: `Seed test ${uniqueId()}`,
     description: "A ruleset a test seeds into",
   });
-  if (!named) return newSeedContext(rulesetId);
-  return {
-    ...(await loadSeedContext(db, await coreRulesetId(db, "A seed test naming its rows"))),
-    rulesetId,
+  if (!named) return seeder;
+  return new RulesetSeeder(db, {
+    ...(await RulesetSeeder.loadContext(db, await RulesetSeeder.findCoreRulesetId(db, "A seed test naming its rows"))),
+    rulesetId: seeder.ctx.rulesetId,
     powerMap: {},
     inheritedPowerMap: {},
-  };
+  });
 }

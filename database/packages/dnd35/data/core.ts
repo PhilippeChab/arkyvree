@@ -1,8 +1,40 @@
-/** The core rules' hand-written content: the ruleset and its abilities, saves, skills and languages. */
+/**
+ * The core rules' content: the ruleset, its hand-written abilities, saves, skills and languages, and all it's seeded
+ * with (`CORE`).
+ */
 
+import { ALL_APTITUDES } from "@/database/packages/dnd35-from-parser/generated/srd/aptitudes.ts";
+import { ALL_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
+import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains/data.ts";
+import { ALL_FEATS } from "@/database/packages/dnd35-from-parser/generated/srd/feats/index.ts";
+import {
+  GOODS,
+  MAGIC_ARMOR,
+  MAGIC_SHIELDS,
+  MAGIC_WEAPONS,
+  RINGS,
+  RODS,
+  STAFFS,
+  WONDROUS_ITEMS,
+} from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
+import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
+import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
+import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
+import { buildClassSpellLevels } from "@/database/packages/dnd35/content/spellLevels.ts";
+import type {
+  AbilityDefinition,
+  CoreContent,
+  LanguageDefinition,
+  SaveDefinition,
+  SkillDefinition,
+} from "@/database/packages/dnd35/content/types.ts";
+import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/data/bonds/animalCompanions.ts";
+import { FAMILIARS } from "@/database/packages/dnd35/data/bonds/familiars.ts";
+import { SPECIAL_MOUNTS } from "@/database/packages/dnd35/data/bonds/mounts.ts";
+import { TEMPLATE_ITEMS } from "@/database/packages/dnd35/data/templateItems.ts";
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 
-export const ABILITIES = [
+export const ABILITIES: AbilityDefinition[] = [
   { name: "Strength", description: "Measures physical power and carrying capacity" },
   { name: "Dexterity", description: "Measures agility, reflexes, and balance" },
   { name: "Constitution", description: "Measures health, stamina, and vital force" },
@@ -11,14 +43,8 @@ export const ABILITIES = [
   { name: "Charisma", description: "Measures force of personality and leadership" },
 ];
 
-export const CORE_RULESET = {
-  name: DND35_RULESET_NAME,
-  description:
-    "The 3.5 System Reference Document is a role-playing game system that allows players to create and control characters in a fantasy world.",
-};
-
 // oxfmt-ignore
-export const LANGUAGES = [
+export const LANGUAGES: LanguageDefinition[] = [
   { name: "Abyssal", type: "Exotic", description: "The language of demons, full of curses and threats." },
   { name: "Aquan", type: "Exotic", description: "The language of the sea" },
   { name: "Auran", type: "Exotic", description: "The language of the sky" },
@@ -43,7 +69,7 @@ export const LANGUAGES = [
 
 /** The saves, each with the ability it adds. */
 // oxfmt-ignore
-export const SAVES = [
+export const SAVES: SaveDefinition[] = [
   { name: "Fortitude", description: "Represents physical toughness and resistance to physical threats like poison, disease, and fatigue", ability: "Constitution" },
   { name: "Reflex", description: "Represents agility and the ability to dodge area attacks like fireballs and dragon breath", ability: "Dexterity" },
   { name: "Will", description: "Represents mental resilience and resistance to mind-affecting spells and effects", ability: "Wisdom" },
@@ -54,7 +80,7 @@ export const SAVES = [
  * penalty is applied to Swim checks") and whether it can be used untrained.
  */
 // oxfmt-ignore
-export const SKILLS = [
+export const SKILLS: SkillDefinition[] = [
   { name: "Appraise", description: "Determine the value of an item.", ability: "Intelligence", impactedByWeight: false, usableWithoutTraining: true },
   { name: "Balance", description: "Keep your balance while walking on a narrow or treacherous surface.", ability: "Dexterity", impactedByWeight: true, usableWithoutTraining: true },
   { name: "Bluff", description: "Convince others that what you are saying is true or make others believe something that isn't true.", ability: "Charisma", impactedByWeight: false, usableWithoutTraining: true },
@@ -103,3 +129,37 @@ export const SKILLS = [
   { name: "Use Psionic Device", description: "Activate psionic items that you otherwise could not activate, such as dorjes, power stones, and psicrowns.", ability: "Charisma", impactedByWeight: false, usableWithoutTraining: false },
   { name: "Use Rope", description: "Tie knots, bind prisoners, and handle rope in many different situations.", ability: "Dexterity", impactedByWeight: false, usableWithoutTraining: true },
 ];
+
+/** All the core rules are seeded with, its items the SRD's goods and magic items. */
+export const CORE: CoreContent = {
+  aptitudes: ALL_APTITUDES,
+  languages: LANGUAGES,
+  races: ALL_RACES,
+  abilities: ABILITIES,
+  skills: SKILLS,
+  saves: SAVES,
+  feats: ALL_FEATS,
+  classes: ALL_CLASSES,
+  templateItems: TEMPLATE_ITEMS,
+  items: [
+    ...GOODS,
+    ...MAGIC_ARMOR,
+    ...MAGIC_SHIELDS,
+    ...MAGIC_WEAPONS,
+    ...WONDROUS_ITEMS,
+    ...RINGS,
+    ...RODS,
+    ...STAFFS,
+  ],
+  spells: ALL_SPELLS,
+  wizardSchools: WIZARD_SCHOOLS,
+  domains: ALL_DOMAINS,
+  bonds: [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS],
+  spellLevels: buildClassSpellLevels(ALL_CLASSES),
+};
+
+export const CORE_RULESET = {
+  name: DND35_RULESET_NAME,
+  description:
+    "The 3.5 System Reference Document is a role-playing game system that allows players to create and control characters in a fantasy world.",
+};

@@ -1,7 +1,5 @@
 import type { SpellSeed } from "@/database/packages/dnd35/content/types.ts";
-import { idsByName } from "@/database/packages/dnd35/seed/context.ts";
-import { propertyRows, uniqueBy } from "@/database/packages/dnd35/seed/customizationRows.ts";
-import type { SeederState } from "@/database/packages/dnd35/seed/SeederState.ts";
+import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { powersAptitudesInRules, powersInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -14,7 +12,7 @@ function parseSavingThrow(savingThrow: string | undefined, saveMap: Record<strin
 }
 
 /** Seeding spells. */
-export function SeedsPowers<B extends Constructor<SeederState>>(Base: B) {
+export function SeedsPowers<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingPowers extends Base {
     /**
      * Seeds spells with their properties, each in its spell lists at its level there, and adds them to the context.
@@ -23,7 +21,7 @@ export function SeedsPowers<B extends Constructor<SeederState>>(Base: B) {
     async seedPowers(spells: SpellSeed[]) {
       if (spells.length === 0) return;
 
-      const ids = idsByName(
+      const ids = BaseSeeder.idsByName(
         await this.db
           .insert(powersInRules)
           .values(
@@ -49,12 +47,12 @@ export function SeedsPowers<B extends Constructor<SeederState>>(Base: B) {
       );
       await this.insertAll(
         powersAptitudesInRules,
-        uniqueBy(links, (l) => `${l.powerId}:${l.aptitudeId}`),
+        this.uniqueBy(links, (l) => `${l.powerId}:${l.aptitudeId}`),
       );
       await this.insertAll(
         propertiesInCustomization,
-        uniqueBy(
-          spells.flatMap((spell) => propertyRows(ids[spell.name], "powers", spell.properties)),
+        this.uniqueBy(
+          spells.flatMap((spell) => this.propertyRows(ids[spell.name], "powers", spell.properties)),
           (p) => `${p.entityId}:${p.type}:${p.value}`,
         ),
       );

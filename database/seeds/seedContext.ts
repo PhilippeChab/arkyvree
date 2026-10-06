@@ -2,12 +2,8 @@
 
 import { eq } from "drizzle-orm";
 
-import {
-  coreRulesetId,
-  idsByName,
-  loadSeedContext,
-  type SeedContext as RulesetSeedContext,
-} from "@/database/packages/dnd35/seed/context.ts";
+import { BaseSeeder, type SeedContext as RulesetSeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
+import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import { itemsInRules, klassesInRules, languagesInRules, racesInRules } from "@/drizzle/schema.ts";
 import { type Db } from "@/server/database/index.ts";
 
@@ -36,9 +32,9 @@ function buildKindMap(rows: { name: string; id: string; kind: string }[]): Recor
 }
 
 export async function getSeedContext(db: Db): Promise<SeedContext> {
-  const rulesetId = await coreRulesetId(db, "The test data");
+  const rulesetId = await RulesetSeeder.findCoreRulesetId(db, "The test data");
   // One after the other: a transaction runs one query at a time.
-  const names = await loadSeedContext(db, rulesetId);
+  const names = await RulesetSeeder.loadContext(db, rulesetId);
   const langs = await db
     .select({ id: languagesInRules.id, name: languagesInRules.name })
     .from(languagesInRules)
@@ -57,9 +53,9 @@ export async function getSeedContext(db: Db): Promise<SeedContext> {
     .where(eq(itemsInRules.rulesetId, rulesetId));
   return {
     ...names,
-    langMap: idsByName(langs),
+    langMap: BaseSeeder.idsByName(langs),
     raceMap: buildKindMap(races),
     klassMap: buildKindMap(klasses),
-    itemMap: idsByName(items),
+    itemMap: BaseSeeder.idsByName(items),
   };
 }
