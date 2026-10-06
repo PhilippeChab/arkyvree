@@ -1,5 +1,7 @@
+import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
+import { collectClassLists } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { ClassLevelsHooks } from "@/server/rulesets/hooks/index.ts";
 import type { PropertyRecord } from "@/server/rulesets/hooks/index.ts";
 import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
@@ -24,6 +26,16 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
         value: String(skills),
       },
     ];
+  }
+
+  getSpellListId(
+    rulesetData: Pick<CachedRulesetData, "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
+    klassId: string,
+  ): string | undefined {
+    const klassLevels = rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
+    const [list] =
+      collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klassId) ?? [];
+    return list === undefined ? undefined : rulesetData.aptitudeIdBySlug.get(list);
   }
 
   enrichWithFeatPools<T extends { id: string; level: number }>(

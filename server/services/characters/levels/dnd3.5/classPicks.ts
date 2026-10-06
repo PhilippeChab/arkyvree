@@ -130,7 +130,6 @@ export async function getAvailableKlasses(
         rulesetId: characterRecord.rulesetId,
         ancestorRulesetIds: sourceChain,
         characterId,
-        siblingLoserIds: rulesetData.cow.siblingIds,
         kind: "pc",
         search: where.search,
       },

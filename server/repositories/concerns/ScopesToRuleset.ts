@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNull, notInArray, or, type SQL, type Table } from "drizzle-orm";
 
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
+import { type Db, getCowContext } from "@/server/database/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
@@ -17,8 +17,9 @@ export type RulesetEntityFilters<Extra extends object = object> = Extra & {
 };
 
 /**
- * A ruleset entity's list: the ruleset's own rows, its source chain's (less what a later ruleset copied), and a
- * campaign's. A repository that includes it names its `entityType`, the type its copies' snapshots record.
+ * A ruleset entity's list: the ruleset's own rows, its source chain's (less what a later ruleset copied, and a book's
+ * copy that lost to another book's, its scope's sibling losers), and a campaign's. A repository that includes it names
+ * its `entityType`, the type its copies' snapshots record.
  */
 export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Base: B) {
   abstract class ScopingToRuleset extends Base {
@@ -48,7 +49,12 @@ export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Ba
         );
         return and(eq(this.column("rulesetId"), ancestorId), isNull(this.column("campaignId")), cowExcluded);
       });
-      const inherited = inheritedClauses.length > 0 ? or(...inheritedClauses) : undefined;
+      // A book's copy of an entity another book copied too, which lost to that copy: left out in the query, so a page
+      // keeps its size
+      const siblingIds = getCowContext()?.siblingIds;
+      const siblingLosers =
+        siblingIds && siblingIds.size > 0 ? notInArray(this.column("id"), [...siblingIds]) : undefined;
+      const inherited = inheritedClauses.length > 0 ? and(or(...inheritedClauses), siblingLosers) : undefined;
 
       if (where.campaignId) {
         const campaignOwned = and(

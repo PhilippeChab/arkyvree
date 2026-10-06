@@ -40,15 +40,10 @@ class FeatsService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain, siblingIds } = rulesetData.cow;
+      const { sourceChain } = rulesetData.cow;
       const { aptitudeId, ...filters } = where;
       const ids = aptitudeId === undefined ? undefined : getListFeatIds(rulesetData, aptitudeId);
-      const excludeIds = siblingIds.size > 0 ? [...siblingIds] : undefined;
-      return await Feats.findGroupPage(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ids, excludeIds, ...filters },
-        pagination,
-      );
+      return await Feats.findGroupPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ids, ...filters }, pagination);
     });
   }
 
@@ -65,7 +60,7 @@ class FeatsService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain, siblingIds } = rulesetData.cow;
+      const { sourceChain } = rulesetData.cow;
       const { aptitudeId, ...filters } = where;
       const ids = aptitudeId === undefined ? undefined : getListFeatIds(rulesetData, aptitudeId);
       const result = await Feats.findPage(
@@ -73,13 +68,11 @@ class FeatsService {
         { rulesetId, ancestorRulesetIds: sourceChain, ...filters, ids },
         pagination,
       );
-      // Filter sibling losers (if any) and replace each row's aptitude links
-      // with the compose-step version (sibling-merged + FK-remapped).
+      // Each inherited feat's lists as the ruleset composes them: its siblings' links merged in, their ids remapped
       if (sourceChain.length > 0 && !where.childOnly) {
-        const filtered = siblingIds.size > 0 ? result.items.filter((f) => !siblingIds.has(f.id)) : result.items;
-        result.items = filtered.map((f) => {
-          const merged = rulesetData.featsById.get(f.id);
-          return merged ? { ...f, featsAptitudesInRules: merged.featsAptitudesInRules } : f;
+        result.items = result.items.map((feat) => {
+          const merged = rulesetData.featsById.get(feat.id);
+          return merged ? { ...feat, featsAptitudesInRules: merged.featsAptitudesInRules } : feat;
         });
       }
       return result;

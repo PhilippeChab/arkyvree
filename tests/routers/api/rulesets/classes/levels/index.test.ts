@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import { DND35_COMPLETE_DIVINE_NAME } from "@/database/packages/dnd35/names.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { db } from "@/server/database/index.ts";
+import { Klasses, Rulesets } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -77,6 +80,26 @@ describe("rulesets class levels", () => {
       }),
     );
     expect(spells.items.map((s) => s.name)).toContain("Magic Missile");
+
+    // A class whose levels give slots in no list has no spell list
+    const none = await expectOk(
+      klass["spell-list"].$get({ param: { id, classId: klassMap.pc["Fighter"] }, query: {} }),
+    );
+    expect(none).toMatchObject({ items: [], page: 1 });
+  });
+
+  test("reads the first spell list a class's levels give slots in, by level: the Pious Templar's own", async () => {
+    const divine = (await Rulesets.findOne(db, { name: DND35_COMPLETE_DIVINE_NAME }))!;
+    const templar = (await Klasses.findOne(db, { name: "Pious Templar", rulesetId: divine.id }))!;
+    const spells = await expectOk(
+      klass["spell-list"].$get({ param: { id: divine.id, classId: templar.id }, query: { limit: "100" } }),
+    );
+    expect(spells.items.length).toBeGreaterThan(0);
+    expect(
+      spells.items.every((spell) =>
+        spell.powersAptitudesInRules.some((link) => link.aptitudesInRule?.name === "Pious Templar Spells"),
+      ),
+    ).toBe(true);
   });
 
   test("requires a session", async () => {

@@ -5,7 +5,8 @@
  *
  * This file is part of the COW auto-resolution machinery:
  * - `withCowContext` is wrapped by `withRulesetScope` (the public entry).
- * - `getCowContext` is read by the repo Proxy + `idMatches` (`ResolvesCopies`).
+ * - `getCowContext` is read by the repo Proxy, `idMatches` (`ResolvesCopies`) and a ruleset entity list's sibling
+ *   losers (`ScopesToRuleset`).
  *
  * Services should use `withRulesetScope` / `withRulesetScopes` from `server/cache/rulesetCache/` instead. Importing
  * from this file directly bypasses the rulesetData loading that the scope helpers provide.
@@ -22,9 +23,9 @@ const storage = new AsyncLocalStorage<CowData | undefined>();
 /**
  * The currently active cowData, or `undefined` outside any wrapper.
  *
- * @internal — Read by the repo Proxy / `idMatches` (`ResolvesCopies`). Service
- * code should read values off `rulesetData.cow` (from `withRulesetScope`)
- * instead — it's the same data with stronger typing and non-null contract.
+ * @internal — Read by the repo Proxy, `idMatches` (`ResolvesCopies`) and an entity list's sibling losers
+ * (`ScopesToRuleset`). Service code should read values off `rulesetData.cow` (from `withRulesetScope`) instead — it's
+ * the same data with stronger typing and non-null contract.
  */
 export function getCowContext(): CowData | undefined {
   return storage.getStore();

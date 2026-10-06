@@ -40,16 +40,7 @@ class AptitudesService {
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      // Exclude loser aptitude IDs (and any other stale id) at the DB level so
-      // pagination counts are accurate. The stale ids are the right source:
-      // aptitude name-grouping losers, sibling losers, and overridden source
-      // IDs — all things that shouldn't appear in the list.
-      const excludeIds = sourceChain.length > 0 && !where.childOnly ? rulesetData.cow.getStaleIds() : undefined;
-      return await Aptitudes.findPage(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, excludeIds, ...where },
-        pagination,
-      );
+      return await Aptitudes.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
   }
 

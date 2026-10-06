@@ -2,12 +2,10 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import { include } from "@/server/mixins.ts";
-import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class KlassesRepository extends include(RulesetEntityRepository<typeof klassesInRules>, ResolvesCopies) {
+class KlassesRepository extends RulesetEntityRepository<typeof klassesInRules> {
   constructor() {
     super(klassesInRules);
   }
@@ -35,10 +33,10 @@ class KlassesRepository extends include(RulesetEntityRepository<typeof klassesIn
 
   async findPage(
     db: Db,
-    where: RulesetEntityFilters<{ characterId?: string; siblingLoserIds?: Iterable<string>; kind?: string }>,
+    where: RulesetEntityFilters<{ characterId?: string; kind?: string }>,
     pagination: { limit: number; page: number },
   ) {
-    const { search, orderBy = "name", orderDir = "asc", characterId, siblingLoserIds, kind } = where;
+    const { search, orderBy = "name", orderDir = "asc", characterId, kind } = where;
     const searchColumns = [this.table.name, this.table.description];
     const searchConditions = this.fuzzySearch(search, searchColumns);
 
@@ -68,7 +66,6 @@ class KlassesRepository extends include(RulesetEntityRepository<typeof klassesIn
           isNull(this.table.deletedAt),
           kind !== undefined && eq(this.table.kind, kind),
           searchConditions,
-          this.excludeIds(siblingLoserIds),
         ]),
         orderBy: orderByClause,
         limit,

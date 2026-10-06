@@ -6,6 +6,7 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { classParams } from "@/server/routers/api/rulesets/classes/validation.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 
 const levelParams = classParams.extend({ levelId: z.string().uuid() });
 const classLevelParams = idParam.extend({ classLevelId: z.string().uuid() });
@@ -48,7 +49,7 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, classId } = c.req.valid("param");
       const { limit, page, level, search } = c.req.valid("query");
-      return c.json(await ClassLevelsService.getClassSpellList(id, classId, { level, search }, { limit, page }), 200);
+      return c.json(await PowersService.getPowers(id, { classId, level, search }, { limit, page }), 200);
     },
   )
   .get("/:id/classes/:classId/spells", validate("param", classParams), async (c) => {
