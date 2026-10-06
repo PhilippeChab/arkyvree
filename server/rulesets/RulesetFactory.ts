@@ -7,16 +7,14 @@ import type { BaseRules } from "@/shared/enums.ts";
 import { createRulesetModule as createDnd35Module } from "./dnd3.5/index.ts";
 import type { RulesetModule } from "./types.ts";
 
+/** Each base rules' module: one the database's enum gains has to be written here, or the server doesn't compile. */
+const MODULES: Record<BaseRules, () => RulesetModule> = {
+  "Dungeons & Dragons: 3.5": createDnd35Module,
+};
+
 export class RulesetFactory {
   static fromBaseRules(baseRules: BaseRules): RulesetModule {
-    switch (baseRules) {
-      case "Dungeons & Dragons: 3.5":
-        return createDnd35Module();
-      default:
-        throw new Error(
-          `Unsupported ruleset: ${baseRules}. Supported rulesets: ${this.getSupportedRulesets().join(", ")}`,
-        );
-    }
+    return MODULES[baseRules]();
   }
 
   static async fromRulesetId(rulesetId: string): Promise<RulesetModule> {

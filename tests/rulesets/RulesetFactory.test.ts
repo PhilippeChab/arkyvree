@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { NotFoundError } from "@/server/errors/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 describe("RulesetFactory", () => {
@@ -12,12 +11,6 @@ describe("RulesetFactory", () => {
 
   test("throws NotFoundError for a ruleset that doesn't exist", async () => {
     await expect(RulesetFactory.fromRulesetId(NIL_UUID)).rejects.toThrow(NotFoundError);
-  });
-
-  test("throws for unsupported base rules", () => {
-    // As a row could hold it: base rules no module implements
-    const unsupported: string = "Unsupported Ruleset";
-    expect(() => RulesetFactory.fromBaseRules(unsupported as BaseRules)).toThrow("Unsupported ruleset");
   });
 
   test("builds the D&D 3.5 module", () => {

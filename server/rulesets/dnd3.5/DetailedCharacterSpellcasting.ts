@@ -1,5 +1,4 @@
 import { include } from "@/server/mixins.ts";
-import type { Holders } from "@/server/rulesets/types.ts";
 import { type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
@@ -8,13 +7,11 @@ import { KnownPowers } from "./spellcasting/KnownPowers.ts";
 import SpellcastingState from "./spellcasting/SpellcastingState.ts";
 
 class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCasterLevels, KnownPowers) {
-  /** Lightweight init: sets spellcasting.arcane/divine based on caster type presence.
-   *  Called before modifiers so requirements like Scribe Scroll can check spellcasting.arcane >= 1. */
-  initSpellcastingHolder(
-    holders: Holders,
-    modifiers: Modifier[],
-    klassCasterTypeMap: Map<string, "Arcane" | "Divine">,
-  ) {
+  /**
+   * Lightweight init: sets spellcasting.arcane/divine based on caster type presence. Called before modifiers so
+   * requirements like Scribe Scroll can check spellcasting.arcane >= 1.
+   */
+  initCasterLevels(modifiers: Modifier[], klassCasterTypeMap: Map<string, "Arcane" | "Divine">) {
     // Build a map of spell aptitude key → caster type by scanning character classes.
     const spellAptitudeToCasterType = new Map<string, "Arcane" | "Divine">();
     const characterClasses = this.classes.getCharacterClasses();
@@ -39,8 +36,7 @@ class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCast
       else maxDivine = Math.max(maxDivine, spellLevel);
     }
 
-    const spellcasting = { arcane: maxArcane, divine: maxDivine };
-    holders["spellcasting"] = { getSpellcasting: () => spellcasting };
+    this.casterLevels = { arcane: maxArcane, divine: maxDivine };
   }
 
   applyBonusSpellsFromAbilities(klassBonusSpellAbilityMap: Map<string, string>) {
@@ -72,8 +68,13 @@ class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCast
     }
   }
 
+  /** The highest arcane and divine spell levels the character casts: the `spellcasting` holder's, its target paths'. */
+  getSpellcasting(): { arcane: number; divine: number } {
+    return this.casterLevels;
+  }
+
   /** Full computation: scans spell aptitude data for actual max spell levels. */
-  computeSpellcasting(holders: Holders, klassCasterTypeMap: Map<string, "Arcane" | "Divine">) {
+  computeSpellcasting(klassCasterTypeMap: Map<string, "Arcane" | "Divine">) {
     const characterClasses = this.classes.getCharacterClasses();
     const aptitudes = this.aptitudes.getAptitudes();
 
@@ -104,8 +105,7 @@ class DetailedCharacterSpellcasting extends include(SpellcastingState, BonusCast
       }
     }
 
-    const spellcasting = { arcane: maxArcane, divine: maxDivine };
-    holders["spellcasting"] = { getSpellcasting: () => spellcasting };
+    this.casterLevels = { arcane: maxArcane, divine: maxDivine };
   }
 }
 

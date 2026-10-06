@@ -27,7 +27,6 @@ import DetailedCharacterPowerGroupings from "@/server/rulesets/universal/Detaile
 import DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCharacterPowers.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
-import { readHolder } from "@/server/rulesets/universal/readHolder.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import {
   FEAT_FAMILY,
@@ -37,7 +36,6 @@ import {
   SPELL_SCHOOL,
 } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
-import { isRecord } from "@/shared/isRecord.ts";
 import type {
   Character,
   CharacterLevel,
@@ -61,11 +59,6 @@ import { Dnd35LevelsHooks } from "./hooks/index.ts";
 import { getStaticPropertyValues } from "./PropertyTypes.ts";
 import TargetPaths from "./TargetPaths.ts";
 import type { Dnd35ProjectedCharacterData } from "./types.ts";
-
-/** Whether `value` is the spellcasting holder's caster levels: its highest arcane and divine spell levels. */
-function isCasterLevels(value: unknown): value is { arcane: number; divine: number } {
-  return isRecord(value) && typeof value.arcane === "number" && typeof value.divine === "number";
-}
 
 export default class DetailedCharacter extends AbstractDetailedCharacter {
   constructor(character: Character) {
@@ -207,6 +200,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       identity: this.detailedCharacterIdentity,
       aptitudes: this.detailedCharacterAptitudes,
       bonded: this.detailedCharacterBonds,
+      spellcasting: this.detailedCharacterSpellcasting,
     };
   }
 
@@ -426,7 +420,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
         ]),
     );
     this.detailedCharacterSpellcasting.applyBonusSpellsFromAbilities(this.klassBonusSpellAbilityMap);
-    this.detailedCharacterSpellcasting.computeSpellcasting(this.holders!, this.klassCasterTypeMap);
+    this.detailedCharacterSpellcasting.computeSpellcasting(this.klassCasterTypeMap);
     this.detailedCharacterSpellcasting.fetchAptitudePowerData(rulesetData, this.powers);
     this.detailedCharacterSpellcasting.enrichAllKnownPowers(
       this.powers,
@@ -439,7 +433,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   protected async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {
     this.detailedCharacterSpellcasting.loadClassLists(rulesetData);
-    this.detailedCharacterSpellcasting.initSpellcastingHolder(this.holders!, this.modifiers, this.klassCasterTypeMap);
+    this.detailedCharacterSpellcasting.initCasterLevels(this.modifiers, this.klassCasterTypeMap);
     // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read
     this.detailedCharacterCombat.applyWeaponFinesse(this.hasFeatWith(rulesetData, FEAT_WEAPON_FINESSE));
     this.detailedCharacterCombat.applyOversizedTwoWeaponFighting(
@@ -492,9 +486,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
   }
 
   getSpellcasting(): { arcane: number; divine: number } {
-    const holder = this.holders?.["spellcasting"];
-    const spellcasting = holder ? readHolder(holder, "getSpellcasting") : undefined;
-    return isCasterLevels(spellcasting) ? spellcasting : { arcane: 0, divine: 0 };
+    return this.detailedCharacterSpellcasting.getSpellcasting();
   }
 
   getVirtuallyPossessedPowerIds() {

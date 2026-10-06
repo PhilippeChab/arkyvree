@@ -67,12 +67,12 @@ abstract class BaseRepository<T extends Table> {
    * `skipLocked`: a row another transaction holds counts as not found instead of being waited for.
    */
   async lock(db: Db, where: { id: string }, mode: "update" | "share" = "update", skipLocked = false): Promise<boolean> {
-    const columns = getTableColumns(this.table);
-    if (!columns.id) throw new Error("Row locking requires an id column");
+    // A table without `deletedAt` keeps no archived rows to skip
+    const { deletedAt } = getTableColumns(this.table);
     const rows = await db
       .select({ locked: sql<number>`1` })
       .from(sql`${this.table}`)
-      .where(and(eq(columns.id, where.id), columns.deletedAt ? isNull(columns.deletedAt) : undefined))
+      .where(and(eq(this.column("id"), where.id), deletedAt ? isNull(deletedAt) : undefined))
       .for(mode, skipLocked ? { skipLocked: true } : {});
     return rows.length > 0;
   }
