@@ -1,16 +1,16 @@
-import type { PgTable } from "drizzle-orm/pg-core";
+/** The customization rows a seed writes for its content: modifiers, requirements and properties, by their owner. */
 
 import type { Modifier, ModifierSeed, Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
-import {
+import type {
   modifiersInCustomization,
-  type propertiesInCustomization,
+  propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 
-type ModifierRow = typeof modifiersInCustomization.$inferInsert;
 type PropertyRow = typeof propertiesInCustomization.$inferInsert;
 type RequirementRow = typeof requirementsInCustomization.$inferInsert;
+
+export type ModifierRow = typeof modifiersInCustomization.$inferInsert;
 
 /** A spell list's spells joining the list of the class whose level gave the source: a cleric's domain, the cleric's. */
 export function joinsClassList(sourceId: string, sourceType: string, list: string): ModifierRow {
@@ -94,70 +94,4 @@ export function spellListSlots(sourceId: string, sourceType: string, list: strin
 export function uniqueBy<T>(rows: T[], key: (row: T) => string): T[] {
   const seen = new Set<string>();
   return rows.filter((row) => !seen.has(key(row)) && seen.add(key(row)));
-}
-
-/** Inserts the rows, if there are any. */
-export async function insertAll<T extends PgTable>(db: Db, table: T, rows: T["$inferInsert"][]) {
-  if (rows.length > 0) await db.insert(table).values(rows);
-}
-
-/**
- * Inserts modifiers and gates the ones that give spell slots by the class level that opens their spell level:
- * `spellLevels` maps a spell level to it. The first class level needs no gate.
- */
-export async function insertGatedSpellSlots(
-  db: Db,
-  rows: ModifierRow[],
-  classTarget: string,
-  spellLevels: Record<number, number>,
-) {
-  if (rows.length === 0) return;
-  const inserted = await db
-    .insert(modifiersInCustomization)
-    .values(rows)
-    .returning({ id: modifiersInCustomization.id, target: modifiersInCustomization.target });
-  await insertAll(
-    db,
-    requirementsInCustomization,
-    inserted.flatMap(({ id, target }) => {
-      const spellLevel = target.match(/^aptitudes\.\w+\.(\d+)\.(uses|allowed)$/)?.[1];
-      const classLevel = spellLevel === undefined ? undefined : spellLevels[Number(spellLevel)];
-      if (classLevel === undefined || classLevel <= 1) return [];
-      return [
-        {
-          entityId: id,
-          entityType: "modifiers",
-          level: "1",
-          target: classTarget,
-          operator: "greater_than_or_equal",
-          value: String(classLevel),
-          valueType: "number",
-        },
-      ];
-    }),
-  );
-}
-
-/**
- * Modifiers with their sources: the ones without requirements in one insert, and each one with requirements alone, its
- * requirements as rows of it.
- */
-export async function insertModifiers(
-  db: Db,
-  sourceType: string,
-  modifiers: { sourceId: string; modifier: ModifierSeed }[],
-): Promise<void> {
-  const plain = modifiers.filter(({ modifier }) => !modifier.requirements?.length);
-  await insertAll(
-    db,
-    modifiersInCustomization,
-    plain.flatMap(({ sourceId, modifier }) => modifierRows(sourceId, sourceType, [modifier])),
-  );
-  for (const { sourceId, modifier } of modifiers.filter(({ modifier }) => modifier.requirements?.length)) {
-    const [row] = await db
-      .insert(modifiersInCustomization)
-      .values(modifierRows(sourceId, sourceType, [modifier]))
-      .returning({ id: modifiersInCustomization.id });
-    await insertAll(db, requirementsInCustomization, requirementRows(row.id, "modifiers", modifier.requirements));
-  }
 }

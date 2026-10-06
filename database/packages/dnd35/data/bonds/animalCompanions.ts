@@ -1,8 +1,8 @@
 import { formatWithArticle } from "@/database/packages/dnd35/content/articles.ts";
 import { grantFeat } from "@/database/packages/dnd35/content/modifiers.ts";
-import { QUADRUPED } from "@/database/packages/dnd35/content/raceProperties.ts";
 import { gte, lt } from "@/database/packages/dnd35/content/requirements.ts";
 import type { BondContent, ClassSeed, FeatSeed, RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
+import { QUADRUPED } from "@/database/packages/dnd35/data/bonds/raceProperties.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 const ANIMAL_COMPANION_APTITUDE = "Animal Companion Bond";

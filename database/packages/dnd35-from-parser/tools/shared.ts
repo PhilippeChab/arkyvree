@@ -9,13 +9,13 @@ import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import type { DetectedModifiers } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
 import type {
   Modifier,
   ModifierEffect,
   ModifierSeed,
   RequirementEntry,
 } from "@/database/packages/dnd35/content/types.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

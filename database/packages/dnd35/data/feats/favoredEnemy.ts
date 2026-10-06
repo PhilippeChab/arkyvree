@@ -1,8 +1,7 @@
 import { eq, feat } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
-
-type CreatureType = (typeof CREATURE_TYPES)[number];
 
 const FAVORED_ENEMY_APTITUDE = "Favored Enemy";
 const FAVORED_ENEMY_SPECIALIZATION_APTITUDE = "Favored Enemy Specialization";
@@ -19,41 +18,6 @@ const favoredEnemySpecializationUmbrella: FeatSeed = {
     { target: "aptitudes.favoredenemyspecialization.allowed", operator: "add", value: "1", valueType: "number" },
   ],
 };
-
-export const CREATURE_TYPES = [
-  "Aberration",
-  "Animal",
-  "Construct",
-  "Dragon",
-  "Elemental",
-  "Fey",
-  "Giant",
-  "Humanoid (Aquatic)",
-  "Humanoid (Dwarf)",
-  "Humanoid (Elf)",
-  "Humanoid (Gnoll)",
-  "Humanoid (Gnome)",
-  "Humanoid (Goblinoid)",
-  "Humanoid (Halfling)",
-  "Humanoid (Human)",
-  "Humanoid (Orc)",
-  "Humanoid (Reptilian)",
-  "Magical Beast",
-  "Monstrous Humanoid",
-  "Ooze",
-  "Outsider (Air)",
-  "Outsider (Chaotic)",
-  "Outsider (Earth)",
-  "Outsider (Evil)",
-  "Outsider (Fire)",
-  "Outsider (Good)",
-  "Outsider (Lawful)",
-  "Outsider (Native)",
-  "Outsider (Water)",
-  "Plant",
-  "Undead",
-  "Vermin",
-] as const;
 
 export const FAVORED_ENEMY_FAMILY = "Favored Enemy";
 
@@ -79,19 +43,3 @@ export const favoredEnemyFeats: FeatSeed[] = [
   })),
   favoredEnemySpecializationUmbrella,
 ];
-
-export function findCreatureType(text: string): CreatureType | null {
-  if (!text) return null;
-  const tries: { keyword: string; variant: CreatureType }[] = [];
-  for (const t of CREATURE_TYPES) {
-    const m = t.match(/^(.+?)\s*\(([^)]+)\)$/);
-    if (m) tries.push({ keyword: m[2], variant: t });
-  }
-  for (const t of CREATURE_TYPES) {
-    if (!/\(/.test(t)) tries.push({ keyword: t, variant: t });
-  }
-  for (const { keyword, variant } of tries) {
-    if (new RegExp(`\\b${RegExp.escape(keyword)}s?\\b`, "i").test(text)) return variant;
-  }
-  return null;
-}

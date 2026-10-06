@@ -15,7 +15,7 @@ import {
   EXOTIC_WEAPONS,
   MARTIAL_WEAPONS,
   SIMPLE_WEAPONS,
-} from "@/database/packages/dnd35/content/weapons.ts";
+} from "@/database/packages/dnd35/data/weapons.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 function buildDomainFeatPoolSeeds(ref: DomainReference): FeatSeed[] {

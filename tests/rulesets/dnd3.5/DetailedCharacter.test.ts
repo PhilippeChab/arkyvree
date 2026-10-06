@@ -9,7 +9,7 @@ import {
   DND35_DMG_NAME,
   DND35_RULESET_NAME,
 } from "@/database/packages/dnd35/names.ts";
-import { seedClass } from "@/database/packages/dnd35/seed/classes.ts";
+import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import { addClassLevels, addFeats, addPowers, addSkills, createCharacter } from "@/database/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {
@@ -2222,7 +2222,7 @@ describe("DetailedCharacter", () => {
       test.each([1, 2])("rise with %i bonus caster level(s) from a prestige class", async (bonus) => {
         const ctx = await getSeedCtx();
         const theron = await findSeededCharacter("Theron Lightbringer");
-        const { levelIds } = await seedClass(db, ctx, {
+        const { levelIds } = await new RulesetSeeder(db, ctx).seedClass({
           name: "Test Theurge",
           description: "Advances divine casting",
           hd: 6,
@@ -2575,27 +2575,23 @@ describe("DetailedCharacter", () => {
             valueType: "boolean",
           },
         ]);
-        const { levelIds } = await seedClass(
-          db,
-          {
-            ...ctx,
-            featMap: { ...ctx.featMap, "Test Raider Luck": luck.id },
-            aptMap: { ...ctx.aptMap, "Test Raider Class Feature": feature.id },
-          },
-          {
-            name: "Test Raider",
-            description: "Steals a domain's luck",
-            hd: 6,
-            levels: 2,
-            skillPoints: 4,
-            bab: "medium",
-            saves: { fortitude: "poor", reflex: "good", will: "good" },
-            classSkills: ["Search"],
-            classFeatureAptitude: "Test Raider Class Feature",
-            classFeatures: [[2, "Test Raider Luck"]],
-            spells: { slug: "testraiderspells", perDay: [[1], [1]], knowAll: true, noCantrips: true },
-          },
-        );
+        const { levelIds } = await new RulesetSeeder(db, {
+          ...ctx,
+          featMap: { ...ctx.featMap, "Test Raider Luck": luck.id },
+          aptMap: { ...ctx.aptMap, "Test Raider Class Feature": feature.id },
+        }).seedClass({
+          name: "Test Raider",
+          description: "Steals a domain's luck",
+          hd: 6,
+          levels: 2,
+          skillPoints: 4,
+          bab: "medium",
+          saves: { fortitude: "poor", reflex: "good", will: "good" },
+          classSkills: ["Search"],
+          classFeatureAptitude: "Test Raider Class Feature",
+          classFeatures: [[2, "Test Raider Luck"]],
+          spells: { slug: "testraiderspells", perDay: [[1], [1]], knowAll: true, noCantrips: true },
+        });
         invalidateSeededRuleset(ctx.rulesetId);
 
         const knownAt = async (levels: number) => {
@@ -2622,7 +2618,7 @@ describe("DetailedCharacter", () => {
         await insertRows(powersAptitudesInRules, [
           { powerId: ctx.powerMap["Bless"], aptitudeId: sunPriestSpells.id, level: 1 },
         ]);
-        const { levelIds } = await seedClass(db, ctx, {
+        const { levelIds } = await new RulesetSeeder(db, ctx).seedClass({
           name: "Test Sun Priest",
           description: "Draws on a domain",
           hd: 6,

@@ -1,6 +1,6 @@
 import { BOOK } from "@/database/packages/dnd35-from-parser/generated/complete-arcane/index.ts";
 import { DND35_COMPLETE_ARCANE_NAME } from "@/database/packages/dnd35/names.ts";
-import { seedExtension } from "@/database/packages/dnd35/seed/extension.ts";
+import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import type { ContentPackage } from "@/database/packages/types.ts";
 
 const dnd35CompleteArcane: ContentPackage = {
@@ -9,7 +9,7 @@ const dnd35CompleteArcane: ContentPackage = {
   seedsVersion: 1,
   seeds: [
     (db) =>
-      seedExtension(
+      RulesetSeeder.seedExtension(
         db,
         {
           name: DND35_COMPLETE_ARCANE_NAME,

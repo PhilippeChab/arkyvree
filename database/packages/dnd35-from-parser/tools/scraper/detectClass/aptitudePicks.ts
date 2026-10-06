@@ -7,8 +7,10 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/features.ts";
 import { lookupWithPluralVariants, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { type AptitudePick, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { findCreatureType } from "@/database/packages/dnd35/content/creatureTypes.ts";
+import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+type CreatureType = (typeof CREATURE_TYPES)[number];
 
 /** Description patterns that indicate gameplay/tactical choices, not character-build picks.
  *  These filter AFTER CHOICE_PATTERN matches — if any match, the feature is skipped.
@@ -49,6 +51,23 @@ export const CHOICE_PATTERN =
 function detectExistingAptitudeReference(desc: string): string | null {
   if (/fighter bonus feat|feats available to fighters?\b|bonus feats allowed to a fighter/i.test(desc))
     return "aptitudes.fighterbonusfeat.allowed";
+  return null;
+}
+
+/** The creature type a text names, a subtype ("Humanoid (Elf)" for elves) before a type. */
+function findCreatureType(text: string): CreatureType | null {
+  if (!text) return null;
+  const tries: { keyword: string; variant: CreatureType }[] = [];
+  for (const t of CREATURE_TYPES) {
+    const m = t.match(/^(.+?)\s*\(([^)]+)\)$/);
+    if (m) tries.push({ keyword: m[2], variant: t });
+  }
+  for (const t of CREATURE_TYPES) {
+    if (!/\(/.test(t)) tries.push({ keyword: t, variant: t });
+  }
+  for (const { keyword, variant } of tries) {
+    if (new RegExp(`\\b${RegExp.escape(keyword)}s?\\b`, "i").test(text)) return variant;
+  }
   return null;
 }
 
