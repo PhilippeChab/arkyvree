@@ -1,15 +1,20 @@
 /** An entry's name as the books write it: normalized, matched whatever its number, and made an identifier. */
 
-export function lookupWithPluralVariants<V>(map: Map<string, V>, name: string): V | undefined {
-  for (const v of pluralVariants(name)) {
+export function findWithPluralVariants<V>(map: Map<string, V>, name: string): V | undefined {
+  for (const v of getPluralVariants(name)) {
     const result = map.get(v);
     if (result !== undefined) return result;
   }
   return undefined;
 }
 
-export function matchesWithPluralVariants(a: string, b: string): boolean {
-  return pluralVariants(a).includes(b.toLowerCase());
+export function getPluralVariants(name: string): string[] {
+  const n = name.toLowerCase();
+  return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
+}
+
+export function hasPluralVariant(a: string, b: string): boolean {
+  return getPluralVariants(a).includes(b.toLowerCase());
 }
 
 /**
@@ -21,11 +26,6 @@ export function normalizeName(name: string): string {
     const capitalized = inner.replace(/\b[a-z]/g, (c) => c.toUpperCase());
     return `(${capitalized})`;
   });
-}
-
-export function pluralVariants(name: string): string[] {
-  const n = name.toLowerCase();
-  return [n, n + "s", n.replace(/y$/, "ies"), n.replace(/ies$/, "y"), n.replace(/s$/, "")];
 }
 
 /** Strip class suffix: "Track (Ranger)" → "Track" */

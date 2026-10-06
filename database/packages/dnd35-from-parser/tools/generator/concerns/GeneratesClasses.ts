@@ -10,7 +10,7 @@ import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator
 import { quote, toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { classReferences, loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -66,18 +66,15 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
         entries.map((e) => ({ constName: e.constName, file: `${e.slug}.ts` })),
       );
 
-      // Deduplicate: a feat like "Familiar" may appear in multiple class feat files
+      // Each feat once, its first class's: a feat like "Familiar" may appear in multiple class feat files
       lines.push(`const _allClassFeats: FeatSeed[] = [`);
       for (const e of entries) {
         lines.push(`  ...${e.constName},`);
       }
       lines.push(`];`);
-      lines.push(`const _seen = new Set<string>();`);
-      lines.push(`export const ALL_CLASS_FEATS: FeatSeed[] = _allClassFeats.filter((f) => {`);
-      lines.push(`  if (_seen.has(f.name)) return false;`);
-      lines.push(`  _seen.add(f.name);`);
-      lines.push(`  return true;`);
-      lines.push(`});`);
+      lines.push(
+        `export const ALL_CLASS_FEATS: FeatSeed[] = [...Map.groupBy(_allClassFeats, (f) => f.name).values()].map(([f]) => f);`,
+      );
       lines.push(``);
 
       const outPath = join(classFeatDir, "index.ts");
@@ -86,7 +83,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
 
     /** Regenerate classes/index.ts for a book from class reference JSONs. */
     writeClassIndex(book: string) {
-      const classes = classReferences(book).sort((a, b) => (a.file < b.file ? -1 : 1));
+      const classes = ReferenceLoader.loadClasses(book).sort((a, b) => (a.file < b.file ? -1 : 1));
       if (classes.length === 0) return; // no classes for this book
 
       type ClassEntry = { slug: string; constName: string; isBase: boolean };
@@ -129,13 +126,13 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
      *  their aptitudes added directly by the feat generator. */
     writeCowFeats(book: string) {
       if (!this.copiesFromCore(book)) return;
-      const classes = classReferences(book);
+      const classes = ReferenceLoader.loadClasses(book);
 
       // Load the book's own raw feat names — these already get aptitudes via the feat generator
       const bookFeats = new Set<string>();
       const bookFeatsPath = join(REFERENCE_DIR, book, "feats.json");
       if (existsSync(bookFeatsPath)) {
-        const ref = loadReference(bookFeatsPath, "feat");
+        const ref = ReferenceLoader.load(bookFeatsPath, "feat");
         for (const feat of ref.raw) bookFeats.add(feat.name);
       }
 

@@ -2,14 +2,18 @@
 
 import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { parseAlignmentRequirement } from "@/database/packages/dnd35-from-parser/tools/scraper/alignment.ts";
-import { familyFeatRequirements } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
+import { buildFamilyFeatRequirements } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
 import {
-  familyOptions,
-  featWithoutChoice,
-  weaponNamed,
+  findWeapon,
+  parseFamilyOptions,
+  stripFeatChoice,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
 import { findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/scraper/paths.ts";
-import { anySkillRequirement, SKILL_MAP, skillSlug } from "@/database/packages/dnd35-from-parser/tools/targets.ts";
+import {
+  buildAnySkillRequirement,
+  SKILL_MAP,
+  toSkillSlug,
+} from "@/database/packages/dnd35-from-parser/tools/targets.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
@@ -44,7 +48,7 @@ function expandAnyFeatRequirement(text: string): RequirementEntry | undefined {
 /** Expand "Knowledge (any)" to OR of all matching knowledge skills, or handle multi-option parentheticals */
 function expandSkillRequirement(name: string, ranks: number): RequirementEntry | null {
   // "Knowledge (any)" → OR of all Knowledge skills
-  const anySkill = anySkillRequirement(name, ranks);
+  const anySkill = buildAnySkillRequirement(name, ranks);
   if (anySkill) return anySkill;
 
   // "Knowledge (arcana, local or psionics)" or "Craft (leather, metal, or woodworking)" → OR of individual skills
@@ -108,18 +112,18 @@ function featRequirements(
     // "Improved Unarmed Strike (or monk's unarmed strike ability)": the feat, which the alternative grants
     f = f.replace(/\s*\(or\b[^)]*\)$/i, "");
     // "Exotic Weapon Proficiency (kukri)": proficiency with the weapon, which may be martial
-    const proficiencyWeapon = weaponNamed(/^Exotic Weapon Proficiency \((.+)\)$/i.exec(f)?.[1] ?? "");
+    const proficiencyWeapon = findWeapon(/^Exotic Weapon Proficiency \((.+)\)$/i.exec(f)?.[1] ?? "");
     if (proficiencyWeapon) {
       reqs.push(...proficiencyRequirements(proficiencyWeapon));
       continue;
     }
-    const withoutChoice = featWithoutChoice(f);
+    const withoutChoice = stripFeatChoice(f);
     if (withoutChoice) {
       reqs.push(eq(feat(withoutChoice)));
       continue;
     }
 
-    const familyReqs = familyFeatRequirements(f);
+    const familyReqs = buildFamilyFeatRequirements(f);
     if (familyReqs.length > 0) {
       reqs.push(...familyReqs);
       continue;
@@ -182,7 +186,7 @@ function parseCompoundFeatRequirement(text: string, featNameMap: Record<string, 
   if (!match) return undefined;
 
   const baseFeat = match[1].trim();
-  const options = familyOptions(baseFeat, match[2]);
+  const options = parseFamilyOptions(baseFeat, match[2]);
 
   if (options.length < 2) return undefined;
 
@@ -382,7 +386,7 @@ function skillRequirements(skills: { name: string; ranks: number }[]): Requireme
         .map((p) => p.trim())
         .filter(Boolean);
       if (parts.length >= 2) {
-        reqs.push(or(...parts.map((p) => gte(`skills.${skillSlug(p)}.rank`, s.ranks))));
+        reqs.push(or(...parts.map((p) => gte(`skills.${toSkillSlug(p)}.rank`, s.ranks))));
         lastSkillReqIdx = reqs.length - 1;
         continue;
       }
@@ -390,7 +394,7 @@ function skillRequirements(skills: { name: string; ranks: number }[]): Requireme
     // "or Intimidate" as a separate entry → merge with previous skill req as OR
     if (/^or\s+/i.test(s.name)) {
       const name = s.name.replace(/^or\s+/i, "");
-      const newTarget = `skills.${skillSlug(name)}.rank`;
+      const newTarget = `skills.${toSkillSlug(name)}.rank`;
       if (lastSkillReqIdx >= 0) {
         const prev = reqs[lastSkillReqIdx];
         // Skip if it resolves to the same path (e.g. Perform subtypes)
@@ -402,7 +406,7 @@ function skillRequirements(skills: { name: string; ranks: number }[]): Requireme
       }
       continue;
     }
-    reqs.push(gte(`skills.${skillSlug(s.name)}.rank`, s.ranks));
+    reqs.push(gte(`skills.${toSkillSlug(s.name)}.rank`, s.ranks));
     lastSkillReqIdx = reqs.length - 1;
   }
   return reqs;

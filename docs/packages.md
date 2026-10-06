@@ -144,7 +144,7 @@ A reference file (`reference/<book>/…json`) has three parts:
 - **`raw`** — what the scraper read. Re-scraping replaces it.
 - **`overrides`** — corrections made by hand. Re-scraping keeps them. Nothing else in the file is hand-edited.
 
-What the generator reads is derived from the two each time a reference is loaded (`tools/references.ts`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`) and `mapping` (the entities to generate). Items and magic items have only `detected`; spells and wizard schools, neither. The overrides win over both. So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
+What the generator reads is derived from the two each time a reference is loaded (`ReferenceLoader`, which derives them with `tools/references.ts`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`) and `mapping` (the entities to generate). Items and magic items have only `detected`; spells and wizard schools, neither. The overrides win over both. So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
 
 `bun run parser:validate` lists:
 - unresolved detections, and items without a definition (the generator leaves them out), not yet listed in `overrides.reviewed`; and entries of `overrides.reviewed` that cover none of them, or repeat one;

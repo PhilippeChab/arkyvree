@@ -13,8 +13,8 @@ import { type AnyNode } from "domhandler";
 
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { findSectionHeader } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
-import { titleCase } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/titleCase.ts";
-import { sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/titleCase.ts";
+import { findSectionElements, getTagName } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 /** A feature's type (Ex, Su, Sp), when its heading gives one, and its description. */
@@ -194,9 +194,9 @@ function orderedFeatures(
       if (!entry) entry = descriptions.get(key.replace(/y$/, "ies"));
 
       if (entry) {
-        features.push({ name: titleCase(cleaned), type: entry.type, description: entry.desc });
+        features.push({ name: capitalizeTitle(cleaned), type: entry.type, description: entry.desc });
       } else {
-        features.push({ name: titleCase(cleaned), description: "" });
+        features.push({ name: capitalizeTitle(cleaned), description: "" });
       }
     }
   }
@@ -206,7 +206,7 @@ function orderedFeatures(
     if (seen.has(key)) continue;
     if (key.includes(":")) {
       seen.add(key);
-      features.push({ name: titleCase(key), type: entry.type, description: entry.desc });
+      features.push({ name: capitalizeTitle(key), type: entry.type, description: entry.desc });
     }
   }
   return features;
@@ -343,8 +343,8 @@ class FeatureDescriptions {
 
   /** A sub-section's paragraphs ("Name: desc"), each a sub-feature of `parentName`'s ("Terrain Mastery: X"). */
   private readSubSection(el: cheerio.Cheerio<AnyNode>, parentName: string) {
-    for (const next of sectionElements(el, ["h2", "h3", "h4", "table"])) {
-      if (tagOf(next) === "p") {
+    for (const next of findSectionElements(el, ["h2", "h3", "h4", "table"])) {
+      if (getTagName(next) === "p") {
         const pText = next.text().trim();
         const subFeatureMatch = pText.match(/^([A-Z][^:]{1,60}?)\s*:\s*([\s\S]*)/);
         if (subFeatureMatch) {
@@ -359,7 +359,7 @@ class FeatureDescriptions {
 
   /** An element of the Class Features section. */
   read(el: cheerio.Cheerio<AnyNode>) {
-    const tag = tagOf(el);
+    const tag = getTagName(el);
     // h4 heading — potential feature or sub-section header
     if (tag === "h4") return this.readHeading(el);
     // Paragraph — could be inline feature or continuation
@@ -418,7 +418,7 @@ export function parseClassFeatures(
   if (cfHeader.length === 0) return [];
 
   const descriptions = new FeatureDescriptions($, featureNames);
-  for (const el of sectionElements(cfHeader)) descriptions.read(el);
+  for (const el of findSectionElements(cfHeader)) descriptions.read(el);
   descriptions.readPageTables();
 
   // Step 3: Build the features array in progression order

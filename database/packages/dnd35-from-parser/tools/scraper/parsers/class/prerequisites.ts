@@ -4,7 +4,7 @@ import type * as cheerio from "cheerio";
 
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { findSectionHeader } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
-import { sectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { findSectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 type Parsed = ClassReference["raw"]["prerequisites"]["parsed"];
@@ -14,7 +14,7 @@ function extractPrerequisiteText($: cheerio.CheerioAPI): string {
   const reqHeader = findSectionHeader($, /^Requirements?$/i);
   if (reqHeader.length > 0) {
     const lines: string[] = [];
-    for (const el of sectionElements(reqHeader)) {
+    for (const el of findSectionElements(reqHeader)) {
       // Collapse whitespace within each line but preserve newlines as section separators
       const subLines = el.text().split(/\n/).map(normalizeWs).filter(Boolean);
       if (subLines.length) lines.push(subLines.join("\n"));
@@ -32,7 +32,7 @@ function extractPrerequisiteText($: cheerio.CheerioAPI): string {
   );
   if (h6Header.length > 0) {
     const lines: string[] = [];
-    for (const el of sectionElements(h6Header.first(), ["h6", "h3", "table"])) {
+    for (const el of findSectionElements(h6Header.first(), ["h6", "h3", "table"])) {
       const text = el.text().trim();
       if (text) lines.push(text);
     }

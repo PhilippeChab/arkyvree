@@ -7,7 +7,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 import { type DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
@@ -85,7 +85,7 @@ function domainSeed(ref: DomainReference, entry: DomainReference["raw"][number])
  * name them. `parser:validate` reports a spell neither the core rules nor the book has.
  */
 function domainSeeds(ref: DomainReference): DomainDefinition[] {
-  const spellNames = domainSpellNames(ref._meta.book);
+  const spellNames = getDomainSpellNames(ref._meta.book);
   const seeds = ref.raw.map((entry) => domainSeed(ref, entry));
   for (const seed of seeds) {
     for (const spell of seed.spells) spell.name = spellNames.get(spell.name.toLowerCase()) ?? spell.name;
@@ -108,10 +108,10 @@ function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | s
 }
 
 /** A book's domains as it prints them (`reference/<book>/domains.json`; none for a book without), and their feat pools' feats. */
-export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[] } {
+export function buildBookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[] } {
   const path = join(REFERENCE_DIR, book, "domains.json");
   if (!existsSync(path)) return { seeds: [], poolFeats: [] };
-  const ref = loadReference(path, "domain");
+  const ref = ReferenceLoader.load(path, "domain");
   return { seeds: domainSeeds(ref), poolFeats: buildDomainFeatPoolSeeds(ref) };
 }
 
@@ -120,10 +120,10 @@ export function bookDomainSeeds(book: string): { seeds: DomainDefinition[]; pool
  * leaves it out), a spell level from 1st to 9th without a spell, and a spell of the book whose level line puts it on
  * one of them at a level the list doesn't. An override of the domain's spells corrects them.
  */
-export function domainSpellIssues(ref: DomainReference): { domain: string; text: string }[] {
-  const spellNames = domainSpellNames(ref._meta.book);
+export function findDomainSpellIssues(ref: DomainReference): { domain: string; text: string }[] {
+  const spellNames = getDomainSpellNames(ref._meta.book);
   const spellsPath = join(REFERENCE_DIR, ref._meta.book, "spells.json");
-  const bookSpells = existsSync(spellsPath) ? loadReference(spellsPath, "spell").raw : [];
+  const bookSpells = existsSync(spellsPath) ? ReferenceLoader.load(spellsPath, "spell").raw : [];
   const issues: { domain: string; text: string }[] = [];
   for (const { name: domain, spells } of domainSeeds(ref)) {
     const has = (name: string, level: number) =>
@@ -148,10 +148,10 @@ export function domainSpellIssues(ref: DomainReference): { domain: string; text:
 }
 
 /** The spells a book's domains can name, by their lowercase name: the core rules' and the book's. */
-export function domainSpellNames(book: string): Map<string, string> {
+export function getDomainSpellNames(book: string): Map<string, string> {
   const spellNames = (b: string) => {
     const path = join(REFERENCE_DIR, b, "spells.json");
-    return existsSync(path) ? loadReference(path, "spell").raw.map((spell) => spell.name) : [];
+    return existsSync(path) ? ReferenceLoader.load(path, "spell").raw.map((spell) => spell.name) : [];
   };
   return new Map(
     [...spellNames("srd"), ...(book === "srd" ? [] : spellNames(book))].map((name) => [name.toLowerCase(), name]),

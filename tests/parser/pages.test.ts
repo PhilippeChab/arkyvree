@@ -4,18 +4,18 @@ import * as cheerio from "cheerio";
 
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/classPage.ts";
 import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
-import { frameHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/frame.ts";
+import { buildFrameHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/frame.ts";
 import {
-  contentHeading,
-  pageTitle,
+  findContentHeading,
+  findSectionElements,
+  getPageTitle,
   parseListingHtml,
-  sectionElements,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
 import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
 
 function headingOf(html: string, frame?: RegExp) {
-  return contentHeading(cheerio.load(html), frame)?.text();
+  return findContentHeading(cheerio.load(html), frame)?.text();
 }
 
 function page(...headings: string[]) {
@@ -38,19 +38,19 @@ describe("A page's content heading", () => {
 
   test("skips the headings a page's frame adds", () => {
     expect(headingOf(page("Races", "Elf"))).toBe("Races");
-    expect(headingOf(page("Races", "Elf"), frameHeading("Races"))).toBe("Elf");
+    expect(headingOf(page("Races", "Elf"), buildFrameHeading("Races"))).toBe("Elf");
     expect(parseRaceDetailHtml(page("Races", "Elf"))?.name).toBe("Elf");
   });
 
   test("gives the page's title, or none", () => {
-    expect(pageTitle(cheerio.load(page("D&D Tools", "  Power Attack  ")))).toBe("Power Attack");
-    expect(pageTitle(cheerio.load(page("D&D Tools")))).toBe("");
-    expect(pageTitle(cheerio.load(page("Races", "Elf")), frameHeading("Races"))).toBe("Elf");
+    expect(getPageTitle(cheerio.load(page("D&D Tools", "  Power Attack  ")))).toBe("Power Attack");
+    expect(getPageTitle(cheerio.load(page("D&D Tools")))).toBe("");
+    expect(getPageTitle(cheerio.load(page("Races", "Elf")), buildFrameHeading("Races"))).toBe("Elf");
   });
 
   test("matches a frame heading literally", () => {
-    expect(frameHeading("A.B").test("AxB")).toBe(false);
-    expect(frameHeading("A.B").test("A.B")).toBe(true);
+    expect(buildFrameHeading("A.B").test("AxB")).toBe(false);
+    expect(buildFrameHeading("A.B").test("A.B")).toBe(true);
   });
 });
 
@@ -59,7 +59,7 @@ describe("A section", () => {
     const $ = cheerio.load(
       "<h3>Traits</h3><p>one</p><ul><li>two</li></ul><h4>Sub</h4><p>three</p><h3>Next</h3><p>four</p>",
     );
-    const texts = (stops?: string[]) => sectionElements($("h3").first(), stops).map((el) => el.text());
+    const texts = (stops?: string[]) => findSectionElements($("h3").first(), stops).map((el) => el.text());
     expect(texts()).toEqual(["one", "two", "Sub", "three"]);
     expect(texts(["h3", "h4"])).toEqual(["one", "two"]);
   });

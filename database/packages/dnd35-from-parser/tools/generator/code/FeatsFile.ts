@@ -246,7 +246,7 @@ export class FeatsFile extends CodeFile {
   /** The system feats of the core rules' feat file `fileName`. */
   emitSystemFeats(fileName: string): void {
     for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
-      this.lines.push(`/** A system feat list (\`coreSystemFeats\`): no reference lists it. */`);
+      this.lines.push(`/** A system feat list (\`buildCoreSystemFeats\`): no reference lists it. */`);
       this.lines.push(`export const ${name}: FeatSeed[] = ${code};`);
       for (const used of uses) this.uses.add(used);
     }

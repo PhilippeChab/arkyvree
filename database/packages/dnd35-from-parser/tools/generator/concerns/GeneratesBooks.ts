@@ -5,7 +5,7 @@ import {
   type BaseGenerator,
   GENERATED_HEADER,
 } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import { importLine } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
+import { formatImport } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
 /** Generating a book's index. */
@@ -35,7 +35,7 @@ export function GeneratesBooks<B extends Constructor<BaseGenerator>>(Base: B) {
           .filter((part) => part.file === file)
           .map((part) => part.name)
           .sort();
-        lines.push(importLine(names, `./${file}`));
+        lines.push(formatImport(names, `./${file}`));
       }
       lines.push(``);
       lines.push(`export const BOOK: BookContent = {`);

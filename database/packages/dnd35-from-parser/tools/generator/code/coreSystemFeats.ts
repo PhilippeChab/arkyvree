@@ -48,6 +48,6 @@ export const CORE_SYSTEM_FEATS: {
 ];
 
 /** The core rules' system feats (the wizard's school choice, the weapon proficiencies, Weapon Focus for spells, the favored enemies). */
-export function coreSystemFeats(wizardSchools: WizardSchoolDefinition[]): FeatSeed[] {
+export function buildCoreSystemFeats(wizardSchools: WizardSchoolDefinition[]): FeatSeed[] {
   return CORE_SYSTEM_FEATS.flatMap(({ build }) => build(wizardSchools));
 }

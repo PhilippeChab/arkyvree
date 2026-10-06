@@ -6,11 +6,9 @@
  * at the next generate and can't be lost to a re-scrape.
  */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
 
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { sanitizeJsonValues, stableStringify } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+import { sanitizeJsonValues, stringifyStably } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { buildDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/detected.ts";
 import {
   buildInitialMapping,
@@ -49,17 +47,6 @@ export type StoredReference<T extends ReferenceType = ReferenceType> = Pick<
   ReferenceByType[T],
   "_meta" | "raw" | "overrides"
 >;
-
-const loaded: { [T in ReferenceType]: Map<string, ReferenceByType[T]> } = {
-  class: new Map(),
-  feat: new Map(),
-  spell: new Map(),
-  domain: new Map(),
-  race: new Map(),
-  item: new Map(),
-  magicItem: new Map(),
-  wizardSchool: new Map(),
-};
 
 const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => ReferenceByType[T] } = {
   // A class's mapping: its features as detected, with the overrides applied (a null field removes the detected one).
@@ -128,39 +115,9 @@ const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => Referen
 
 const STORED_KEYS = new Set(["_meta", "raw", "overrides"]);
 
-/** Freezes a value and everything in it. */
-function deepFreeze<T>(value: T): T {
-  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    for (const child of Object.values(value)) deepFreeze(child);
-  }
-  return value;
-}
-
-/** A book's class references with their file's name, sorted by it: none for a book without classes. */
-export function classReferences(book: string): { file: string; ref: ClassReference }[] {
-  const dir = join(REFERENCE_DIR, book, "classes");
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((file) => file.endsWith(".json"))
-    .sort()
-    .map((file) => ({ file, ref: loadReference(join(dir, file), "class") }))
-    .filter(({ ref }) => !ref.overrides?.skip);
-}
-
-/**
- * Loads a reference of `type`, with what the generator reads derived from it. A process loads each file once (the
- * generator reads the same references many times, and writes none). The reference is shared, so it's frozen:
- * changing it throws. Its type stays mutable, as the generator's functions and the content types take mutable data.
- */
-export function loadReference<T extends ReferenceType>(path: string, type: T): ReferenceByType[T] {
-  const cache: Map<string, ReferenceByType[T]> = loaded[type];
-  const key = resolve(path);
-  const cached = cache.get(key);
-  if (cached) return cached;
-  const reference = deepFreeze(resolveReference(type, readStoredReference(key, type)));
-  cache.set(key, reference);
-  return reference;
+/** The overrides of the reference of `type` stored at `path`, which a re-scrape keeps. */
+export function readStoredOverrides<T extends ReferenceType>(path: string, type: T): StoredReference<T>["overrides"] {
+  return existsSync(path) ? readStoredReference(path, type).overrides : undefined;
 }
 
 /**
@@ -182,10 +139,5 @@ export function readStoredReference<T extends ReferenceType>(path: string, type:
  */
 export function resolveReference<T extends ReferenceType>(type: T, stored: StoredReference<T>): ReferenceByType[T] {
   const resolve: (stored: StoredReference<T>) => ReferenceByType[T] = RESOLVERS[type];
-  return JSON.parse(stableStringify(resolve(stored)));
-}
-
-/** The overrides of the reference of `type` stored at `path`, which a re-scrape keeps. */
-export function storedOverrides<T extends ReferenceType>(path: string, type: T): StoredReference<T>["overrides"] {
-  return existsSync(path) ? readStoredReference(path, type).overrides : undefined;
+  return JSON.parse(stringifyStably(resolve(stored)));
 }

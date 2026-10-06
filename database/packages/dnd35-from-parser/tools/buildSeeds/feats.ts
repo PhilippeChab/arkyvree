@@ -3,7 +3,7 @@
  * them.
  */
 
-import { classReferences } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 
 /** Build map of feat name → additional aptitudes from all class bonusFeatLists in a given book. */
 export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {
@@ -17,7 +17,7 @@ export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {
     }
   }
 
-  for (const { ref } of classReferences(book)) {
+  for (const { ref } of ReferenceLoader.loadClasses(book)) {
     // Bonus feat lists → aptitudes
     const lists = ref.detected?.bonusFeatLists;
     if (lists) {
@@ -47,7 +47,7 @@ export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {
 export function loadBonusFeatClassLevels(book: string): Map<string, { classSlug: string; minLevel: number }[]> {
   const map = new Map<string, { classSlug: string; minLevel: number }[]>();
 
-  for (const { file, ref } of classReferences(book)) {
+  for (const { file, ref } of ReferenceLoader.loadClasses(book)) {
     const lists = ref.detected?.bonusFeatLists;
     if (!lists) continue;
     const classSlug = file.replace(".json", "");

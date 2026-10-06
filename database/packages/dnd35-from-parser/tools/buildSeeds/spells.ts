@@ -1,10 +1,11 @@
 /** A spell reference's seeds: its PowerSeed[], each with its level. */
 
-import { existsSync } from "node:fs";
-
-import { inheritedLevel, inheritedLists } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
-import { REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { classReferences } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import {
+  getInheritedLevel,
+  getInheritedLists,
+} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
+import ClassSpellMaps from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classSpellMaps.ts";
+import { listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { normalizeDescription, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
@@ -27,8 +28,6 @@ import { capitalize } from "@/shared/text.ts";
 type RawSpell = SpellReference["raw"][number];
 
 export type SpellSeedWithLevel = PowerSeed & { level: number };
-
-let _classSpellMaps: ReturnType<typeof buildClassSpellMaps> | undefined;
 
 const COMPONENT_MAP: Record<string, string> = {
   V: "Verbal",
@@ -64,51 +63,6 @@ const SUBSCHOOL_CANON: Record<string, string> = Object.fromEntries(
   ].map((s) => [s.toLowerCase(), s]),
 );
 
-/**
- * Build class name → aptitude name mappings by scanning all class reference files.
- * Any class with a `mapping.spells` config gets an entry: "ClassName" → "ClassName Spells".
- * Also includes legacy abbreviations for the SRD single-page parser.
- */
-function buildClassSpellMaps(): { classMap: Record<string, string>; dualMap: Record<string, string[]> } {
-  const classMap: Record<string, string> = {
-    // Legacy SRD abbreviations (single-page parser uses these)
-    "Sor/Wiz": "Wizard Spells",
-    Wiz: "Wizard Spells",
-    Sor: "Sorcerer Spells",
-    Clr: "Cleric Spells",
-    Brd: "Bard Spells",
-    Drd: "Druid Spells",
-    Pal: "Paladin Spells",
-    Rgr: "Ranger Spells",
-  };
-
-  const dualMap: Record<string, string[]> = {
-    "Sor/Wiz": ["Wizard Spells", "Sorcerer Spells"],
-    "sorcerer/wizard": ["Wizard Spells", "Sorcerer Spells"],
-  };
-
-  // Auto-discover from class references (scoped to book if provided)
-  if (existsSync(REFERENCE_DIR)) {
-    for (const book of referenceBooks()) {
-      // Discover casting classes
-      for (const { ref } of classReferences(book)) {
-        if (ref.mapping?.spells && ref.raw?.name) {
-          const aptName = `${ref.raw.name} Spells`;
-          classMap[ref.raw.name] = aptName;
-          classMap[ref.raw.name.toLowerCase()] = aptName;
-        }
-      }
-
-      // Note: domain entries (Air, Fire, Courage, etc.) are NOT mapped here.
-      // Domain spell linking is handled separately by seed-domains.ts, which
-      // links spells to domain aptitudes by name. Adding them here would cause
-      // duplicate links and broken class-level requirements.
-    }
-  }
-
-  return { classMap, dualMap };
-}
-
 function expandComponents(components: string[]): string[] {
   const result: string[] = [];
   for (const comp of components) {
@@ -121,21 +75,6 @@ function expandComponents(components: string[]): string[] {
     if (mapped && !result.includes(mapped)) result.push(mapped);
   }
   return result;
-}
-
-/** Class name → aptitude name (auto-discovered from class references) */
-function getClassAbbrevMap(): Record<string, string> {
-  return getClassSpellMaps().classMap;
-}
-
-function getClassSpellMaps() {
-  if (!_classSpellMaps) _classSpellMaps = buildClassSpellMaps();
-  return _classSpellMaps;
-}
-
-/** Combined class entries that map to multiple aptitudes */
-function getDualClassMap(): Record<string, string[]> {
-  return getClassSpellMaps().dualMap;
 }
 
 /** Whether a spell lacks a field its base spell can give it ("functions like" another). */
@@ -216,13 +155,13 @@ function simplifyRange(range: string): string {
  * A spell's aptitudes (its classes' spell lists, and the lists of other books' classes inherit, `othersInherited`), its
  * level on each, and its lowest level: on a list it's on, else in any level entry, else 0.
  */
-function spellLevels(entry: RawSpell, othersInherited: ReturnType<typeof inheritedLists>) {
+function spellLevels(entry: RawSpell, othersInherited: ReturnType<typeof getInheritedLists>) {
   const aptitudes = new Set<string>();
   const aptitudeLevels: Record<string, number> = {};
   let minLevel = 99;
 
-  const classAbbrevMap = getClassAbbrevMap();
-  const dualClassMap = getDualClassMap();
+  const classAbbrevMap = ClassSpellMaps.abbreviations();
+  const dualClassMap = ClassSpellMaps.duals();
   for (const le of entry.levelEntries) {
     const dual = dualClassMap[le.className];
     if (dual) {
@@ -243,7 +182,7 @@ function spellLevels(entry: RawSpell, othersInherited: ReturnType<typeof inherit
 
   for (const { aptitude, list } of othersInherited) {
     if (aptitudes.has(aptitude)) continue;
-    const level = inheritedLevel(entry, entry.levelEntries, list);
+    const level = getInheritedLevel(entry, entry.levelEntries, list);
     if (level === undefined) continue;
     aptitudes.add(aptitude);
     aptitudeLevels[aptitude] = level;
@@ -339,7 +278,9 @@ export function buildSpellSeeds(ref: SpellReference, book?: string): { spells: S
   // the book seeds its own copy of each that takes one, which a ruleset merges with that book's when it takes both, as
   // it does a class list the spell's level line names. The core rules' spells reach them through each book's copies.
   const othersInherited =
-    book && book !== "srd" ? referenceBooks().flatMap((other) => (other === book ? [] : inheritedLists(other))) : [];
+    book && book !== "srd"
+      ? listReferenceBooks().flatMap((other) => (other === book ? [] : getInheritedLists(other)))
+      : [];
 
   // Build name lookup (case-insensitive) for base spell resolution
   const rawByName = new Map<string, RawSpell>();

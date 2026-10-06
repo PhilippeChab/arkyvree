@@ -1,22 +1,20 @@
 import {
+  buildClassModifiers,
   buildPoolParentNameMap,
-  classAptitudePicks,
-  classModifiers,
-  classSpells,
-  existingFeatGranted,
+  findGrantedExistingFeat,
+  getClassAptitudePicks,
+  getClassSpells,
   insertOrdinalInName,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import {
-  anyOfFamilies,
-  requirableFamilies,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
+import { resolveFamilyChecks } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
 import {
   formatStringArray,
   listField,
   quote,
   toConstName,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/generator/code/templateFamilies.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
@@ -25,7 +23,7 @@ import { stripSeparators } from "@/shared/text.ts";
 /** A class's features and the existing feats it grants, a feature split per level named as `perLevelPicks` splits its pick. */
 function buildClassFeatures(
   ref: ClassReference,
-  perLevelPicks: ReturnType<typeof classAptitudePicks>["perLevel"],
+  perLevelPicks: ReturnType<typeof getClassAptitudePicks>["perLevel"],
 ): {
   classFeatures: [number, string][];
   autoFreeFeats: [number, string, string][];
@@ -61,7 +59,7 @@ function buildClassFeatures(
     const mappedName = feature?.seedName ?? findMappedName(occ.name, features_);
     const name = mappedName ?? poolParentNames.get(occ.name.toLowerCase()) ?? occ.name;
 
-    const freeFeatName = existingFeatGranted(ref, name, feature?.description);
+    const freeFeatName = findGrantedExistingFeat(ref, name, feature?.description);
     if (freeFeatName && mapping.classFeatureAptitude) {
       for (const level of occ.levels) autoFreeFeats.push([level, freeFeatName, mapping.classFeatureAptitude]);
     } else {
@@ -85,7 +83,7 @@ function buildClassFeatures(
     if (feat.skip || feat.level == null || coveredKeys.has(key.toLowerCase())) continue;
     if (feat.aptitude && feat.aptitude !== mapping.classFeatureAptitude) continue;
     const name = feat.seedName ?? key;
-    const freeFeatName = existingFeatGranted(ref, name, feat.description);
+    const freeFeatName = findGrantedExistingFeat(ref, name, feat.description);
     if (freeFeatName && mapping.classFeatureAptitude) {
       autoFreeFeats.push([feat.level, freeFeatName, mapping.classFeatureAptitude]);
     } else {
@@ -142,7 +140,7 @@ export class ClassFile extends CodeFile {
   }
 
   /** The class's aptitude picks, but those its features' modifiers already give (`remap`ped or split `perLevel`). */
-  private writeAptitudePicks({ aptitudePicks, remap, perLevel }: ReturnType<typeof classAptitudePicks>) {
+  private writeAptitudePicks({ aptitudePicks, remap, perLevel }: ReturnType<typeof getClassAptitudePicks>) {
     if (!aptitudePicks || aptitudePicks.length === 0) return;
     // Strip picks already handled by feat modifiers on class features
     const mf = this.ref.mapping.features;
@@ -227,7 +225,7 @@ export class ClassFile extends CodeFile {
 
   /** The class's modifiers, each at its level, with the requirements that gate it. */
   private writeModifiers() {
-    const modifiers = classModifiers(this.ref);
+    const modifiers = buildClassModifiers(this.ref);
     if (modifiers.length === 0) return;
     this.lines.push(`  modifiers: [`);
     for (const m of modifiers) {
@@ -242,7 +240,7 @@ export class ClassFile extends CodeFile {
 
   /** The class's spells: its slots per day and spells known by level, and the lists it casts from. */
   private writeSpells() {
-    const spells = classSpells(this.ref);
+    const spells = getClassSpells(this.ref);
     if (!spells) return;
     this.lines.push(`  spells: {`);
     this.lines.push(`    slug: ${quote(spells.slug)},`);
@@ -301,11 +299,11 @@ export class ClassFile extends CodeFile {
   /** The class's file: its fields, then what's left to review opening it, and the imports of what its checks use. */
   classCode(): string {
     const { detected, mapping } = this.ref;
-    const requirements = anyOfFamilies(
+    const requirements = resolveFamilyChecks(
       this.ref.overrides?.requirements ?? detected.requirements,
-      requirableFamilies(this.ref._meta.book),
+      TemplateFamilies.requirable(this.ref._meta.book),
     );
-    const picks = classAptitudePicks(this.ref);
+    const picks = getClassAptitudePicks(this.ref);
     const features = buildClassFeatures(this.ref, picks.perLevel);
 
     this.writeSummary(requirements);

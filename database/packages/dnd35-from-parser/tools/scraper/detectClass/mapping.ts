@@ -1,14 +1,11 @@
 /** A class reference's mapping: its initial section, and where its features' occurrences go. */
 
-import {
-  lookupWithPluralVariants,
-  matchesWithPluralVariants,
-} from "@/database/packages/dnd35-from-parser/tools/names.ts";
+import { findWithPluralVariants, hasPluralVariant } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { CHOICE_PATTERN } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/aptitudePicks.ts";
 import {
   buildFeatureMap,
-  featureBaseName,
+  getFeatureBaseName,
   normalizeFeatureName,
   ORDINAL_PREFIX,
   parsePoolSubOptions,
@@ -77,8 +74,8 @@ class InitialMapping {
         // aptitudes.favoredenemy.allowed). The shared branch is gated on
         // the prefix check to avoid matching "combatstyle" across classes.
         const matches =
-          matchesWithPluralVariants(featureSlug, pickSlug) ||
-          (!pickSlug.startsWith(classSlug) && matchesWithPluralVariants(keySlug, pickSlug));
+          hasPluralVariant(featureSlug, pickSlug) ||
+          (!pickSlug.startsWith(classSlug) && hasPluralVariant(keySlug, pickSlug));
         if (matches) {
           // If per-level bonusFeatLists exist for this pick, the feat will be split
           // into per-level variants — don't mark stackable (e.g. Monk Bonus Feat).
@@ -176,9 +173,7 @@ class InitialMapping {
     const { raw, detected } = this;
     const normalizedDesc = normalizeWs(cf.description);
     const baseSlug = stripSeparators(baseName);
-    const poolOcc = detected.featureOccurrences.find((fo) =>
-      matchesWithPluralVariants(stripSeparators(fo.name), baseSlug),
-    );
+    const poolOcc = detected.featureOccurrences.find((fo) => hasPluralVariant(stripSeparators(fo.name), baseSlug));
     const poolLevel = poolOcc ? Math.min(...poolOcc.levels) : 1;
     const poolStackable = poolOcc && poolOcc.levels.length > 1 ? true : undefined;
 
@@ -252,7 +247,7 @@ class InitialMapping {
 
     for (let i = 0; i < raw.classFeatures.length; i++) {
       const cf = raw.classFeatures[i];
-      const baseName = featureBaseName(cf.name);
+      const baseName = getFeatureBaseName(cf.name);
       if (
         !this.poolAptitudes.has(`__pool__${cf.name.toLowerCase()}`) &&
         !this.poolAptitudes.has(`__pool__${baseName.toLowerCase()}`)
@@ -268,7 +263,7 @@ class InitialMapping {
       const orphans: NamedText[] = [];
       for (let j = i + 1; j < raw.classFeatures.length; j++) {
         const next = raw.classFeatures[j];
-        const nextBase = featureBaseName(next.name);
+        const nextBase = getFeatureBaseName(next.name);
         const nextNorm = normalizeFeatureName(nextBase).toLowerCase();
         // Stop when we hit a feature that appears in the progression table
         if (progressionFeatureNames.has(nextNorm) || progressionFeatureNames.has(nextBase.toLowerCase())) break;
@@ -309,7 +304,7 @@ class InitialMapping {
       if (!occ) continue;
 
       // Find the raw class feature description
-      const cf = lookupWithPluralVariants(descMap, occ.name);
+      const cf = findWithPluralVariants(descMap, occ.name);
       if (!cf) continue;
 
       const normalizedDesc = normalizeWs(cf.description);
@@ -398,7 +393,7 @@ class InitialMapping {
     this.detectTableSubOptions();
 
     for (const cf of raw.classFeatures) {
-      const baseName = featureBaseName(cf.name);
+      const baseName = getFeatureBaseName(cf.name);
 
       // Skip "Table:" entries — not class features
       if (baseName.startsWith("Table:")) continue;
@@ -490,7 +485,7 @@ export function buildOccurrenceMap(
         continue;
       }
       // Plural match ("Bonus Feat" ↔ "Bonus Feats")
-      if (matchesWithPluralVariants(foLower, keyLower)) {
+      if (hasPluralVariant(foLower, keyLower)) {
         occurrenceMap[fo.name] = key;
         continue;
       }

@@ -15,8 +15,12 @@
 import * as cheerio from "cheerio";
 
 import { normalizeWs, PART_SEPARATOR } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
-import { frameHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/frame.ts";
-import { pageTitle, sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { buildFrameHeading } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/frame.ts";
+import {
+  findSectionElements,
+  getPageTitle,
+  getTagName,
+} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
@@ -40,7 +44,7 @@ const DNDTOOLS_SIZE_IDS: Record<string, SizeType> = {
 const PAGE_TRAIT_MARK = "\u0001";
 
 /** A race page's frame also heads its listing "Races". */
-const RACE_FRAME_HEADING = frameHeading("Races");
+const RACE_FRAME_HEADING = buildFrameHeading("Races");
 
 function parseAbilityValue(text: string): number {
   // Handle "+2", "−2" (Unicode minus), "-2" (ASCII hyphen), "+0"
@@ -95,7 +99,7 @@ function parseSpeed(text: string): number {
 export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] | null {
   const $ = cheerio.load(html.replaceAll(PAGE_TRAIT_MARK, PART_SEPARATOR));
 
-  const name = pageTitle($, RACE_FRAME_HEADING);
+  const name = getPageTitle($, RACE_FRAME_HEADING);
   if (!name) return null;
 
   // Parse attributes table
@@ -135,8 +139,8 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
     .first();
 
   if (descHeader.length > 0) {
-    for (const el of sectionElements(descHeader)) {
-      const tag = tagOf(el);
+    for (const el of findSectionElements(descHeader)) {
+      const tag = getTagName(el);
       if (tag === "p" || tag === "div") {
         const text = el.text().trim();
         if (text) descParts.push(text);
@@ -152,8 +156,8 @@ export function parseRaceDetailHtml(html: string): RaceReference["raw"][number] 
     .first();
 
   if (traitsHeader.length > 0) {
-    for (const el of sectionElements(traitsHeader)) {
-      const tag = tagOf(el);
+    for (const el of findSectionElements(traitsHeader)) {
+      const tag = getTagName(el);
       if (tag === "ul" || tag === "ol") {
         el.find("li").each((_, li) => {
           const text = normalizeWs($(li).text());

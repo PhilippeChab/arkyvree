@@ -4,14 +4,13 @@ import { join } from "node:path";
 
 import {
   buildMagicItemSeeds,
-  seededMagicItems,
+  getSeededMagicItems,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
-import { buildRaceSeeds, seededRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
+import { buildRaceSeeds, getSeededRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
 import { checkOneOf } from "@/database/packages/dnd35-from-parser/tools/checks.ts";
-import { REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
+import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 import {
-  classReferences,
-  loadReference,
   readStoredReference,
   type ReferenceType,
   resolveReference,
@@ -36,7 +35,7 @@ function anyOf(family: string, options: string[]) {
 }
 
 function classRequirementsOf(book: string, slug: string) {
-  return loadReference(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class").detected.requirements;
+  return ReferenceLoader.load(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class").detected.requirements;
 }
 
 function featDetectedOf(name: string, prerequisiteText: string) {
@@ -64,13 +63,13 @@ describe("A book's class references", () => {
     const files = readdirSync(join(REFERENCE_DIR, "srd", "classes"))
       .filter((file) => file.endsWith(".json"))
       .sort();
-    const classes = classReferences("srd");
+    const classes = ReferenceLoader.loadClasses("srd");
     expect(classes.map(({ file }) => file)).toEqual(files);
     expect(classes.every(({ ref }) => ref._meta.type === "class" && ref.raw.name.length > 0)).toBe(true);
   });
 
   test("are none for a book without classes", () => {
-    expect(classReferences("a-book-without-classes")).toEqual([]);
+    expect(ReferenceLoader.loadClasses("a-book-without-classes")).toEqual([]);
   });
 });
 
@@ -78,7 +77,7 @@ test("The books with references are their folders, sorted", () => {
   const folders = readdirSync(REFERENCE_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
-  expect(referenceBooks()).toEqual(folders.sort());
+  expect(listReferenceBooks()).toEqual(folders.sort());
 });
 
 describe("A loaded reference", () => {
@@ -139,7 +138,7 @@ describe("A race reference's races", () => {
     const size = first.size === "Small" ? "Large" : "Small";
     reference.overrides = { ...reference.overrides, [first.name]: { ...reference.overrides?.[first.name], size } };
     const sizeOf = (name: string) =>
-      seededRaces(resolveReference("race", reference)).find((race) => race.name === name)?.size;
+      getSeededRaces(resolveReference("race", reference)).find((race) => race.name === name)?.size;
     expect(sizeOf(first.name)).toEqual({ ok: true, value: size });
     expect(sizeOf(second.name)).toEqual(checkOneOf(second.size, SIZE_OPTIONS, `${second.name}'s size`));
 
@@ -337,19 +336,19 @@ describe("A magic item reference's items", () => {
     // A slot the item isn't detected with
     const slot = LOCATION_OPTIONS.find((option) => option !== loaded.detected[slotted].slot) ?? "Waist";
     reference.overrides = { ...reference.overrides, [skipped]: { skip: true }, [slotted]: { slot } };
-    const items = seededMagicItems(resolveReference("magicItem", reference));
+    const items = getSeededMagicItems(resolveReference("magicItem", reference));
     expect(items.map(({ name }) => name)).not.toContain(skipped);
     expect(items.find(({ name }) => name === slotted)?.slot).toEqual({ ok: true, value: slot });
 
     // An empty slot is no slot, not a refused one
     reference.overrides = { ...reference.overrides, [slotted]: { slot: "" } };
     expect(
-      seededMagicItems(resolveReference("magicItem", reference)).find(({ name }) => name === slotted)?.slot,
+      getSeededMagicItems(resolveReference("magicItem", reference)).find(({ name }) => name === slotted)?.slot,
     ).toBeUndefined();
     expect(() => buildMagicItemSeeds(resolveReference("magicItem", reference))).not.toThrow();
 
     reference.overrides = { ...reference.overrides, [slotted]: { slot: "Tail" } };
-    const refused = seededMagicItems(resolveReference("magicItem", reference)).find(
+    const refused = getSeededMagicItems(resolveReference("magicItem", reference)).find(
       ({ name }) => name === slotted,
     )?.slot;
     expect(refused).toEqual({

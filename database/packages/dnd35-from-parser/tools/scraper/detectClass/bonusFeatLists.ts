@@ -1,6 +1,6 @@
 /** Detects a class's bonus feat lists: the existing feats its player picks from. */
 
-import { lookupWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/names.ts";
+import { findWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { parseTreatedAsHavingFeats } from "@/database/packages/dnd35-from-parser/tools/scraper/detectClass/aptitudePicks.ts";
 import {
@@ -76,7 +76,7 @@ export function detectBonusFeatLists(
   const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf);
 
   for (const occ of featureOccurrences) {
-    const cf = lookupWithPluralVariants(descMap, occ.name);
+    const cf = findWithPluralVariants(descMap, occ.name);
     if (!cf) continue;
 
     const desc = normalizeWs(cf.description);

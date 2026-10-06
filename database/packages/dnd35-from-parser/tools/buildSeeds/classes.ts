@@ -3,19 +3,19 @@
  * features, its domain picks).
  */
 
-import { bookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
-import { existingFeatNamed } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/existingFeats.ts";
+import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
+import ExistingFeats from "@/database/packages/dnd35-from-parser/tools/buildSeeds/existingFeats.ts";
 import {
-  autoCompanionGrantModifiers,
-  autoUncannyDodgeModifiers,
+  buildCompanionGrantModifiers,
+  buildUncannyDodgeModifiers,
   extractGrantedFeatNames,
 } from "@/database/packages/dnd35-from-parser/tools/grants.ts";
 import {
-  matchesWithPluralVariants,
-  pluralVariants,
+  getPluralVariants,
+  hasPluralVariant,
   stripClassSuffix,
 } from "@/database/packages/dnd35-from-parser/tools/names.ts";
-import { classReferences } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import {
   type AptitudePick,
@@ -207,13 +207,40 @@ function spellcastingAdvanceFeats(ref: ClassReference, classSlug: string): FeatS
 }
 
 /**
+ * The feats a class's domain pool offers (`spells.domainPool`, a divine crusader's): one per domain her book and the
+ * core rules have, each joining that domain's list to hers. The domain gives her its spells, not its granted power.
+ */
+export function buildClassDomainPickFeats(ref: ClassReference): FeatSeed[] {
+  const pool = getClassSpells(ref)?.domainPool;
+  if (!pool) return [];
+  const book = ref._meta.book;
+  const domains = [...buildBookDomainSeeds("srd").seeds, ...(book === "srd" ? [] : buildBookDomainSeeds(book).seeds)];
+  return domains
+    .map(({ name }) => ({
+      name: `${name} Domain (${ref.raw.name})`,
+      description: `The ${name} domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.`,
+      selectable: true,
+      aptitudes: [pool],
+      modifiers: [
+        {
+          target: `aptitudes.${stripSeparators(name)}domainspells.joinsclasslist`,
+          operator: "set",
+          value: "true",
+          valueType: "boolean",
+        },
+      ],
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
  * A class's own feats: its class features (other than the existing feats it grants), one per level for a feature
  * that gives a pick at several (its first, second… pick), and the feat advancing its spellcasting.
  */
 export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
   const { mapping } = ref;
   const classSlug = stripSeparators(ref.raw.name);
-  const { aptitudeMinLevel, remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = classAptitudePicks(ref);
+  const { aptitudeMinLevel, remap: aptitudeTargetRemap, perLevel: perLevelExpansion } = getClassAptitudePicks(ref);
   const lockedFavoredEnemies = lockedFavoredEnemiesOf(ref);
 
   const feats: FeatSeed[] = [];
@@ -222,7 +249,7 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
     const name = feature.seedName ?? (feature.aptitude ? `${key} (${feature.aptitude})` : key);
     const lockedType = lockedFavoredEnemies.get(key.toLowerCase());
     // An existing feat the class grants is a free feat, not one of its own.
-    if (!lockedType && existingFeatGranted(ref, name, feature.description)) continue;
+    if (!lockedType && findGrantedExistingFeat(ref, name, feature.description)) continue;
 
     const description = normalizeDescription(feature.description ?? "");
     const aptitudes = [feature.aptitude ?? mapping.classFeatureAptitude];
@@ -237,8 +264,8 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
 
     const modifiers: ModifierSeed[] = [
       ...(feature.modifiers ?? []).map((m) => ({ ...m, target: aptitudeTargetRemap.get(m.target) ?? m.target })),
-      ...autoCompanionGrantModifiers(name, feature.description ?? ""),
-      ...autoUncannyDodgeModifiers(name),
+      ...buildCompanionGrantModifiers(name, feature.description ?? ""),
+      ...buildUncannyDodgeModifiers(name),
       ...(lockedType
         ? [{ target: feat(`Favored Enemy: ${lockedType}`), operator: "set", value: "true", valueType: "boolean" }]
         : []),
@@ -274,86 +301,11 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
   return feats;
 }
 
-/** Build a map from pool parent variant names (lowercase) → mapping seedName.
- *  Used to resolve occurrences like "Special Ability" to "Special Abilities (Rogue)". */
-export function buildPoolParentNameMap(
-  mf: ClassReference["mapping"]["features"],
-  className: string,
-  classFeatureAptitude: string,
-): Map<string, string> {
-  const nameMap = new Map<string, string>();
-  // Collect unique aptitude groups
-  const seen = new Set<string>();
-  for (const feat of Object.values(mf)) {
-    if (!feat.aptitude || feat.aptitude === classFeatureAptitude) continue;
-    if (seen.has(feat.aptitude)) continue;
-    seen.add(feat.aptitude);
-    const suffix = feat.aptitude.replace(new RegExp(`^${className}\\s+`, "i"), "");
-    const s = suffix.toLowerCase();
-    // Find the mapping entry whose key matches one of the variants (the pool parent itself)
-    const parentEntry = Object.entries(mf).find(([key]) => matchesWithPluralVariants(key, s));
-    if (!parentEntry) continue;
-    const seedName = parentEntry[1].seedName ?? `${parentEntry[0]} (${className})`;
-    // Map all variants to this seedName
-    for (const variant of pluralVariants(s)) {
-      nameMap.set(variant, seedName);
-    }
-  }
-  return nameMap;
-}
-
-/**
- * A class's aptitude picks: detected, with the overrides', then split per level where a bonus feat list has one per
- * level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug); and how the split
- * retargets the merged picks (`remap` one to one, `perLevel` one to several).
- */
-export function classAptitudePicks(ref: ClassReference) {
-  const { overrides } = ref;
-  const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
-  const aptitudePicks = expandPerLevelAptitudePicks(
-    mergedPicks,
-    overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists,
-  );
-  const aptitudeMinLevel = new Map<string, number>();
-  for (const pick of aptitudePicks ?? []) {
-    const slug = pick.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1];
-    if (slug) aptitudeMinLevel.set(slug, Math.min(...pick.levels));
-  }
-  return { aptitudePicks, aptitudeMinLevel, ...buildAptitudeExpansionMaps(mergedPicks, aptitudePicks) };
-}
-
-/**
- * The feats a class's domain pool offers (`spells.domainPool`, a divine crusader's): one per domain her book and the
- * core rules have, each joining that domain's list to hers. The domain gives her its spells, not its granted power.
- */
-export function classDomainPickFeats(ref: ClassReference): FeatSeed[] {
-  const pool = classSpells(ref)?.domainPool;
-  if (!pool) return [];
-  const book = ref._meta.book;
-  const domains = [...bookDomainSeeds("srd").seeds, ...(book === "srd" ? [] : bookDomainSeeds(book).seeds)];
-  return domains
-    .map(({ name }) => ({
-      name: `${name} Domain (${ref.raw.name})`,
-      description: `The ${name} domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.`,
-      selectable: true,
-      aptitudes: [pool],
-      modifiers: [
-        {
-          target: `aptitudes.${stripSeparators(name)}domainspells.joinsclasslist`,
-          operator: "set",
-          value: "true",
-          valueType: "boolean",
-        },
-      ],
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
 /**
  * A class's level modifiers: its overrides', then those its table's columns give (`overrides.columns`), at each level a
  * column's value changes: a number's rise, or its text.
  */
-export function classModifiers(ref: ClassReference): (ModifierSeed & { level: number })[] {
+export function buildClassModifiers(ref: ClassReference): (ModifierSeed & { level: number })[] {
   const fromColumns = Object.entries(ref.overrides?.columns ?? {}).flatMap(
     ([column, { target, operator, requirements }]) => {
       if (!ref.raw.progression.some((row) => row.columns?.[column] !== undefined)) {
@@ -376,42 +328,90 @@ export function classModifiers(ref: ClassReference): (ModifierSeed & { level: nu
   return [...(ref.overrides?.modifiers ?? []), ...fromColumns];
 }
 
-/** The spell lists a class's slots go to (`spells.lists`), or its own, "<Class> Spells": none for a class without slots. */
-export function classSpellLists(ref: ClassReference): string[] {
-  const spells = classSpells(ref);
-  if (!spells) return [];
-  return spells.lists?.map((list) => list.name) ?? [`${ref.raw.name} Spells`];
-}
-
-/** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
-export function classSpells(ref: ClassReference) {
-  const { spells } = ref.mapping;
-  return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
+/** Build a map from pool parent variant names (lowercase) → mapping seedName.
+ *  Used to resolve occurrences like "Special Ability" to "Special Abilities (Rogue)". */
+export function buildPoolParentNameMap(
+  mf: ClassReference["mapping"]["features"],
+  className: string,
+  classFeatureAptitude: string,
+): Map<string, string> {
+  const nameMap = new Map<string, string>();
+  // Collect unique aptitude groups
+  const seen = new Set<string>();
+  for (const feat of Object.values(mf)) {
+    if (!feat.aptitude || feat.aptitude === classFeatureAptitude) continue;
+    if (seen.has(feat.aptitude)) continue;
+    seen.add(feat.aptitude);
+    const suffix = feat.aptitude.replace(new RegExp(`^${className}\\s+`, "i"), "");
+    const s = suffix.toLowerCase();
+    // Find the mapping entry whose key matches one of the variants (the pool parent itself)
+    const parentEntry = Object.entries(mf).find(([key]) => hasPluralVariant(key, s));
+    if (!parentEntry) continue;
+    const seedName = parentEntry[1].seedName ?? `${parentEntry[0]} (${className})`;
+    // Map all variants to this seedName
+    for (const variant of getPluralVariants(s)) {
+      nameMap.set(variant, seedName);
+    }
+  }
+  return nameMap;
 }
 
 /**
  * The existing feat a class's feature named `name` grants instead of being a feat of its own: that feat (with or without
  * the class's suffix), or one its description says it gains as a bonus feat.
  */
-export function existingFeatGranted(ref: ClassReference, name: string, description: string | undefined) {
+export function findGrantedExistingFeat(ref: ClassReference, name: string, description: string | undefined) {
   const book = ref._meta.book;
   const baseName = stripClassSuffix(name, ref.raw.name);
   return (
-    (baseName && existingFeatNamed(book, baseName)) ||
-    existingFeatNamed(book, name) ||
+    (baseName && ExistingFeats.find(book, baseName)) ||
+    ExistingFeats.find(book, name) ||
     (description
       ? extractGrantedFeatNames(description)
-          .map((n) => existingFeatNamed(book, n))
+          .map((n) => ExistingFeats.find(book, n))
           .find(Boolean)
       : undefined)
   );
 }
 
 /**
+ * A class's aptitude picks: detected, with the overrides', then split per level where a bonus feat list has one per
+ * level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug); and how the split
+ * retargets the merged picks (`remap` one to one, `perLevel` one to several).
+ */
+export function getClassAptitudePicks(ref: ClassReference) {
+  const { overrides } = ref;
+  const mergedPicks = mergeAptitudePicks(ref.detected.aptitudePicks, overrides?.aptitudePicks);
+  const aptitudePicks = expandPerLevelAptitudePicks(
+    mergedPicks,
+    overrides?.bonusFeatLists ?? ref.detected.bonusFeatLists,
+  );
+  const aptitudeMinLevel = new Map<string, number>();
+  for (const pick of aptitudePicks ?? []) {
+    const slug = pick.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1];
+    if (slug) aptitudeMinLevel.set(slug, Math.min(...pick.levels));
+  }
+  return { aptitudePicks, aptitudeMinLevel, ...buildAptitudeExpansionMaps(mergedPicks, aptitudePicks) };
+}
+
+/** The spell lists a class's slots go to (`spells.lists`), or its own, "<Class> Spells": none for a class without slots. */
+export function getClassSpellLists(ref: ClassReference): string[] {
+  const spells = getClassSpells(ref);
+  if (!spells) return [];
+  return spells.lists?.map((list) => list.name) ?? [`${ref.raw.name} Spells`];
+}
+
+/** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
+export function getClassSpells(ref: ClassReference) {
+  const { spells } = ref.mapping;
+  return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
+}
+
+/**
  * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when
  * it's of the list's schools and has none of its excluded descriptors.
  */
-export function inheritedLevel(
+export function getInheritedLevel(
   spell: Pick<SpellReference["raw"][number], "school" | "descriptors">,
   levelEntries: { className: string; level: number }[],
   list: InheritedSpellList,
@@ -426,10 +426,10 @@ export function inheritedLevel(
 }
 
 /** The lists a book's classes draw on others' lists for (`inheritsFrom`): each class's own, or each of its `lists`. */
-export function inheritedLists(book: string): { aptitude: string; list: InheritedSpellList }[] {
+export function getInheritedLists(book: string): { aptitude: string; list: InheritedSpellList }[] {
   const lists: { aptitude: string; list: InheritedSpellList }[] = [];
-  for (const { ref } of classReferences(book)) {
-    const spells = classSpells(ref);
+  for (const { ref } of ReferenceLoader.loadClasses(book)) {
+    const spells = getClassSpells(ref);
     if (!spells || !ref.raw?.name || ref.overrides?.skip) continue;
     if (spells.inheritsFrom) lists.push({ aptitude: `${ref.raw.name} Spells`, list: spells.inheritsFrom });
     for (const list of spells.lists ?? []) lists.push({ aptitude: list.name, list: list.inheritsFrom });

@@ -1,11 +1,12 @@
-import { domainSpellIssues } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
-import { seededMagicItems } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
-import { seededRaces, skippedRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
+import { findDomainSpellIssues } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
+import { getSeededMagicItems } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
+import { getSeededRaces, getSkippedRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
 import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/checkOverrides.ts";
-import { type discoverRefs } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import { loadReference, readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import { type listReferenceFiles } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import { readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { unresolvedItems } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
+import { findUnresolvedItems } from "@/database/packages/dnd35-from-parser/tools/scraper/detectItem.ts";
 
 type DetectedEntry = {
   errors?: string[];
@@ -65,8 +66,8 @@ function reviewOf(reviewed: string[] = []) {
   };
 }
 
-/** The issues of the references `refs` (`discoverRefs`): what the header lists. */
-export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] {
+/** The issues of the references `refs` (`listReferenceFiles`): what the header lists. */
+export function findReferenceIssues(refs: ReturnType<typeof listReferenceFiles>): Issue[] {
   const issues: Issue[] = [];
 
   for (const ref of refs) {
@@ -98,7 +99,7 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
     const reviewedIssues = (): Review => {
       switch (ref.type) {
         case "class": {
-          const data = loadReference(ref.path, "class");
+          const data = ReferenceLoader.load(ref.path, "class");
           const review = reviewOf(data.overrides?.reviewed);
           unreviewed(review, detectedIssues(data.detected), { label: "class", entityName: data.raw.name });
           // What only a column of its table gives (a monk's AC bonus) reaches the class through a modifier reading it
@@ -121,7 +122,7 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
         }
         case "feat": {
           // The generator skips epic feats unless an override keeps them.
-          const data = loadReference(ref.path, "feat");
+          const data = ReferenceLoader.load(ref.path, "feat");
           const { overrides } = data;
           const review = reviewOf(overrides?.reviewed);
           entityIssues(
@@ -134,25 +135,25 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
           return review;
         }
         case "domain": {
-          const data = loadReference(ref.path, "domain");
+          const data = ReferenceLoader.load(ref.path, "domain");
           const review = reviewOf(data.overrides?.reviewed);
           entityIssues(data.detected, review);
-          for (const { domain, text } of domainSpellIssues(data)) notSeedable(domain, text);
+          for (const { domain, text } of findDomainSpellIssues(data)) notSeedable(domain, text);
           return review;
         }
         case "race": {
           // A skipped race isn't seeded: its detections don't matter. A seeded one's size must be one the seed accepts.
-          const data = loadReference(ref.path, "race");
+          const data = ReferenceLoader.load(ref.path, "race");
           const review = reviewOf(data.overrides?.reviewed);
-          entityIssues(data.detected, review, skippedRaces(data));
-          for (const { name, size } of seededRaces(data)) if (!size.ok) notSeedable(name, size.problem);
+          entityIssues(data.detected, review, getSkippedRaces(data));
+          for (const { name, size } of getSeededRaces(data)) if (!size.ok) notSeedable(name, size.problem);
           return review;
         }
         case "item": {
           // An item the generator has no definition of isn't generated, whether its override skips it or not
-          const data = loadReference(ref.path, "item");
+          const data = ReferenceLoader.load(ref.path, "item");
           const review = reviewOf(data.overrides?.reviewed);
-          const unresolved = unresolvedItems(data.detected, (name) => Boolean(data.overrides?.[name]?.skip));
+          const unresolved = findUnresolvedItems(data.detected, (name) => Boolean(data.overrides?.[name]?.skip));
           unreviewed(
             review,
             unresolved.map((text) => ({ kind: "unresolved item" as const, text })),
@@ -162,11 +163,11 @@ export function referenceIssues(refs: ReturnType<typeof discoverRefs>): Issue[] 
         }
         case "magicItem": {
           // A seeded magic item's slot must be one the seed accepts; a skipped one's detections don't matter
-          const data = loadReference(ref.path, "magicItem");
+          const data = ReferenceLoader.load(ref.path, "magicItem");
           const review = reviewOf(data.overrides?.reviewed);
           const skipped = Object.keys(data.detected).filter((name) => data.overrides?.[name]?.skip);
           entityIssues(data.detected, review, new Set(skipped));
-          for (const { name, slot } of seededMagicItems(data)) if (slot && !slot.ok) notSeedable(name, slot.problem);
+          for (const { name, slot } of getSeededMagicItems(data)) if (slot && !slot.ok) notSeedable(name, slot.problem);
           return review;
         }
         case "spell":

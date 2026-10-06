@@ -19,7 +19,7 @@ const LOWERCASE_WORDS = new Set([
   "vs",
 ]);
 
-export function titleCase(s: string): string {
+export function capitalizeTitle(s: string): string {
   return s
     .split(/\s+/)
     .map((w, i) => {

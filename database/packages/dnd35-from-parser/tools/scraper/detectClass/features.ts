@@ -28,25 +28,6 @@ function detectStackable(description: string): boolean {
   return STACKABLE_PATTERNS.some((p) => p.test(description));
 }
 
-/** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
-export function aggregateOrdinalVariants(
-  featureOccurrences: { name: string; levels: number[] }[],
-): { name: string; levels: number[] }[] {
-  const map = new Map<string, { name: string; levels: Set<number> }>();
-  for (const occ of featureOccurrences) {
-    const base = stripOrdinalPrefix(occ.name);
-    const key = base.toLowerCase();
-    const existing = map.get(key);
-    if (existing) {
-      for (const l of occ.levels) existing.levels.add(l);
-      if (existing.name !== base && /^\d/.test(existing.name)) existing.name = base;
-    } else {
-      map.set(key, { name: base, levels: new Set(occ.levels) });
-    }
-  }
-  return Array.from(map.values()).map(({ name, levels }) => ({ name, levels: [...levels].sort((a, b) => a - b) }));
-}
-
 export function buildFeatureMap<T>(
   features: ClassReference["raw"]["classFeatures"],
   valueFn: (cf: ClassReference["raw"]["classFeatures"][number]) => T,
@@ -90,7 +71,7 @@ export function detectFeatureOccurrences(
 }
 
 /** A class feature's name without its ability type ("Rage (Ex)" → "Rage"). */
-export function featureBaseName(name: string): string {
+export function getFeatureBaseName(name: string): string {
   return name.replace(/\s*\((Ex|Su|Sp)\)\s*$/, "").trim();
 }
 
@@ -125,6 +106,25 @@ export function isScalingFeature(normalizedName: string, progression: ClassRefer
     return true;
   }
   return false;
+}
+
+/** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
+export function mergeOrdinalVariants(
+  featureOccurrences: { name: string; levels: number[] }[],
+): { name: string; levels: number[] }[] {
+  const map = new Map<string, { name: string; levels: Set<number> }>();
+  for (const occ of featureOccurrences) {
+    const base = stripOrdinalPrefix(occ.name);
+    const key = base.toLowerCase();
+    const existing = map.get(key);
+    if (existing) {
+      for (const l of occ.levels) existing.levels.add(l);
+      if (existing.name !== base && /^\d/.test(existing.name)) existing.name = base;
+    } else {
+      map.set(key, { name: base, levels: new Set(occ.levels) });
+    }
+  }
+  return Array.from(map.values()).map(({ name, levels }) => ({ name, levels: [...levels].sort((a, b) => a - b) }));
 }
 
 export function normalizeFeatureName(name: string): string {

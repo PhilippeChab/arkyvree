@@ -9,7 +9,7 @@ import {
   stringifyProperty,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
 import type { MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { ARMOR_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
@@ -23,7 +23,7 @@ export function GeneratesMagicItems<B extends Constructor<BaseGenerator>>(Base: 
     private baseItemWeights(referenceDir: string): Record<string, string> {
       const path = join(referenceDir, "items.json");
       if (!existsSync(path)) return {};
-      const seeds = buildItemSeeds(loadReference(path, "item"));
+      const seeds = buildItemSeeds(ReferenceLoader.load(path, "item"));
       const bases = [
         ...seeds.simpleWeapons,
         ...seeds.martialWeapons,

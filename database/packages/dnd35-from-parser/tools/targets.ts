@@ -22,7 +22,7 @@ export const SKILL_MAP: Record<string, string> = Object.fromEntries(
 );
 
 /** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
-export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
+export function buildAnySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
   if (!/\(any\)/i.test(name)) return undefined;
   const baseName = name
     .replace(/\s*\(any\)/i, "")
@@ -39,7 +39,7 @@ export function anySkillRequirement(name: string, ranks: number): RequirementEnt
  * A skill's slug: its own ("Knowledge (arcana)" → "knowledgearcana"), else its base skill's, for a specialization the
  * skill list doesn't name ("Perform (dance)" → "perform").
  */
-export function skillSlug(name: string): string {
+export function toSkillSlug(name: string): string {
   const fullKey = name.toLowerCase().trim();
   if (SKILL_MAP[fullKey]) return SKILL_MAP[fullKey];
   const baseName = name

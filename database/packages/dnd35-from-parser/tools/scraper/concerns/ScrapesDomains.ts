@@ -1,9 +1,9 @@
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import {
-  domainBookCode,
-  domainName,
   type DomainPageSpell,
+  parseDomainBookCode,
   parseDomainIndexHtml,
+  parseDomainName,
   parseDomainPageHtml,
   parseSpellDomainLevelsHtml,
 } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
@@ -52,11 +52,11 @@ export function ScrapesDomains<B extends Constructor<BaseScraper>>(Base: B) {
       // A version whose page names no book (Glory (CD)'s) is the book's when its label ends with the book's code, the
       // code ("CD") the versions that name the book end with
       const codes = new Set(
-        pages.filter((page) => page.bookSlug === bookSlug).map((page) => domainBookCode(page.label)),
+        pages.filter((page) => page.bookSlug === bookSlug).map((page) => parseDomainBookCode(page.label)),
       );
       codes.delete(undefined);
       const versions = pages.filter(
-        (page) => page.bookSlug === bookSlug || (!page.bookSlug && codes.has(domainBookCode(page.label))),
+        (page) => page.bookSlug === bookSlug || (!page.bookSlug && codes.has(parseDomainBookCode(page.label))),
       );
       const bookless = pages.filter((page) => !page.bookSlug && !versions.includes(page)).length;
       console.log(
@@ -65,9 +65,9 @@ export function ScrapesDomains<B extends Constructor<BaseScraper>>(Base: B) {
 
       const raw = [];
       for (const version of versions) {
-        const name = domainName(version.label);
+        const name = parseDomainName(version.label);
         const candidates = new Map<string, DomainPageSpell>();
-        for (const page of pages.filter((p) => domainName(p.label) === name)) {
+        for (const page of pages.filter((p) => parseDomainName(p.label) === name)) {
           for (const spell of page.spells) if (spell.edition.includes("3.5")) candidates.set(spell.path, spell);
         }
         const spells = [];

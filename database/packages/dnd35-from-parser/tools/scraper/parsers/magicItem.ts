@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
-import { sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { findSectionElements, getTagName } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import type {
   MagicItemCategory,
   MagicItemReference,
@@ -74,7 +74,7 @@ function parseItemEntries($: cheerio.CheerioAPI, startH4Text: string, category: 
   const items: RawMagicItem[] = [];
   let current = startEl.next();
   while (current.length) {
-    const tag = tagOf(current);
+    const tag = getTagName(current);
     if (tag === "h4" || tag === "h3") break;
     if (tag === "h5") {
       const block = readItemBlock($, current);
@@ -125,9 +125,9 @@ function readItemBlock($: cheerio.CheerioAPI, heading: CheerioEl) {
   const charges: { spell: string; charges: number }[] = [];
   let metadataText = "";
 
-  const section = sectionElements(heading, ["h3", "h4", "h5"]);
+  const section = findSectionElements(heading, ["h3", "h4", "h5"]);
   for (const sibling of section) {
-    const tag = tagOf(sibling);
+    const tag = getTagName(sibling);
     if (tag === "ul" && !metadataText) {
       // Spell charges (staffs): <li>Spell Name (N charges)</li>
       sibling.find("li").each((_, li) => {

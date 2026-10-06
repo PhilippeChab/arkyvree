@@ -1,7 +1,7 @@
 import {
+  buildModifierMapping,
   detectModifiersOf,
   type ModifierDetection,
-  modifierMapping,
   validateModifiers,
 } from "@/database/packages/dnd35-from-parser/tools/modifierDetection.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
@@ -104,5 +104,5 @@ export function buildRaceMapping(
   detected: RaceReference["detected"],
   overrides: NonNullable<RaceReference["overrides"]>,
 ): RaceReference["mapping"] {
-  return modifierMapping(raw, detected, overrides, () => ({}));
+  return buildModifierMapping(raw, detected, overrides, () => ({}));
 }
