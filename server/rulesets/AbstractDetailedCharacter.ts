@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db } from "@/server/database/index.ts";
 import type {
@@ -347,7 +347,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   protected abstract normalizeData(): void;
 
   /** Ruleset-specific processing after non-power modifiers are applied. */
-  protected abstract postModifierProcessing(rulesetData: CachedRulesetData): Promise<void>;
+  protected abstract postModifierProcessing(rulesetData: RulesetData): Promise<void>;
 
   /** Ruleset-specific processing after requirements, before modifiers (e.g. proficiency penalties). */
   protected abstract postRequirementProcessing(): void;
@@ -379,7 +379,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   }
 
   /** Ruleset-specific setup before requirement evaluation (e.g. spellcasting holder). */
-  protected abstract preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void>;
+  protected abstract preRequirementProcessing(rulesetData: RulesetData): Promise<void>;
 
   /** An unmet requirement group's issue: on the entity of `owner`, one of its requirements, or naming its targets. */
   private unmetRequirementIssue(group: Requirement[], owner: Requirement): RequirementIssue {

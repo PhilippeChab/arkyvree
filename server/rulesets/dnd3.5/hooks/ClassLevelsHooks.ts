@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { collectClassLists } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
@@ -201,10 +201,7 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
   }
 
   getSpellListIds(
-    rulesetData: Pick<
-      CachedRulesetData,
-      "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug"
-    >,
+    rulesetData: Pick<RulesetData, "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
     klassId: string,
   ): string[] {
     const klassLevels = rulesetData.klassLevelsByKlassId.get(klassId) ?? [];

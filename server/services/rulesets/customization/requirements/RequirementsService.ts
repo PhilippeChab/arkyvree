@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -22,12 +22,7 @@ import type { Session } from "@/shared/relations.ts";
 
 class RequirementsService {
   /** A requirement on the entity, its own or a visible sibling's contribution, or a 404. */
-  private findEntityRequirement(
-    rulesetData: CachedRulesetData,
-    entityType: string,
-    entityId: string,
-    requirementId: string,
-  ) {
+  private findEntityRequirement(rulesetData: RulesetData, entityType: string, entityId: string, requirementId: string) {
     const requirement = rulesetData.requirementsByEntity
       .get(entityId)
       ?.find((row) => row.id === requirementId && row.entityType === entityType);

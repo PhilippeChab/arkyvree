@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import type { InventoryHooks } from "@/server/rulesets/hooks/index.ts";
@@ -7,7 +7,7 @@ import { WEAPON_ONE_HAND_TRAINING, WEAPON_SIZE } from "@/shared/dnd3.5/propertie
 
 export class Dnd35InventoryHooks implements InventoryHooks {
   /** A weapon whose WEAPON_ONE_HAND_TRAINING is true, its own or its template's: a bastard sword, a dwarven waraxe. */
-  isUnwieldyInOneHand(rulesetData: CachedRulesetData, itemId: string): boolean {
+  isUnwieldyInOneHand(rulesetData: RulesetData, itemId: string): boolean {
     const item = rulesetData.itemsById.get(itemId);
     const ownProps = rulesetData.propertiesByEntity.get(itemId) ?? [];
     const templateProps = item?.sourceItemId ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []) : [];
@@ -23,7 +23,7 @@ export class Dnd35InventoryHooks implements InventoryHooks {
    * its wielder, as its damage is, so a halfling's longsword is one-handed as a human's is, and its greatsword
    * two-handed.
    */
-  async validateWeaponHands(_tx: Db, rulesetData: CachedRulesetData, itemId: string, location: string): Promise<void> {
+  async validateWeaponHands(_tx: Db, rulesetData: RulesetData, itemId: string, location: string): Promise<void> {
     const item = rulesetData.itemsById.get(itemId);
     const ownProps = rulesetData.propertiesByEntity.get(itemId) ?? [];
     const templateProps = item?.sourceItemId ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []) : [];

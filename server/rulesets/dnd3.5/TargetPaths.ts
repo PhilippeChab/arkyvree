@@ -1,6 +1,6 @@
 /** Import DetailedCharacter components that generate paths */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { UNARMED_STRIKE } from "@/server/rulesets/constants.ts";
 import DetailedCharacterArmors from "@/server/rulesets/dnd3.5/DetailedCharacterArmors.ts";
 import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
@@ -167,7 +167,7 @@ const PATH_DESCRIPTIONS: Record<string, string> = {
  * (e.g. "longsword") and proficiency category (e.g. "exotic"), each armor and shield type, spell schools and
  * descriptors (wildcard DC paths), each leveled power (flat DC paths), and feat families with their display names.
  */
-function collectGroupings(rulesetData: CachedRulesetData) {
+function collectGroupings(rulesetData: RulesetData) {
   const { powers, propertiesByEntityType } = rulesetData;
   const itemProperties = propertiesByEntityType.get("items") ?? [];
   const powerProperties = propertiesByEntityType.get("powers") ?? [];
@@ -225,7 +225,7 @@ function failed(holder: Holder | null, key: string, error: string): TraversePath
 }
 
 /** Every target path, from the DetailedCharacter components' static generators, and the requirement-only spellcasting. */
-function generatePaths(rulesetData: CachedRulesetData, kind: "modifier" | "requirement"): TargetPath[] {
+function generatePaths(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
   const { abilities, saves, skills, feats, aptitudes, klasses } = rulesetData;
   const groupings = collectGroupings(rulesetData);
   const paths: TargetPath[] = [
@@ -295,7 +295,7 @@ function generatePaths(rulesetData: CachedRulesetData, kind: "modifier" | "requi
 }
 
 /** Each path segment's display label: the categories', the components' structural ones, and the ruleset's names. */
-function segmentLabelsOf(rulesetData: CachedRulesetData): Record<string, string> {
+function segmentLabelsOf(rulesetData: RulesetData): Record<string, string> {
   const { abilities, saves, skills, feats, items, aptitudes, klasses, powers, propertiesByEntityType } = rulesetData;
   const segmentLabels: Record<string, string> = {
     "*": "All",
@@ -594,7 +594,7 @@ export default class Dnd35TargetPaths implements TargetPathsInterface, TargetPat
   }
 
   async getTargetPathsAndLabels(
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     kind: "modifier" | "requirement",
   ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
     return { paths: generatePaths(rulesetData, kind), segmentLabels: segmentLabelsOf(rulesetData) };

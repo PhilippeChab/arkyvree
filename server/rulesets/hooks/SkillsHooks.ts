@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 
 export type PropertyRecord = {
@@ -25,7 +25,7 @@ export interface SkillsHooks {
   deleteSkillFeat(
     tx: Db,
     ruleset: { id: string; extensionRulesetIds: string[] },
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     skillName: string,
   ): Promise<void>;
 }

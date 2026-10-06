@@ -2,7 +2,7 @@
  * Feats a level-up can pick: those available for an aptitude pool, flat or grouped by feat family.
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Feats } from "@/server/repositories/index.ts";
@@ -72,7 +72,7 @@ async function getExcludeNonStackableFeatIds(
 async function projectFeatPick(
   characterRecord: Character,
   ruleset: Ruleset,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   klassLevelId: string,
   featPicks: FeatPick[],
   excludeCharacterLevelId?: string,
@@ -141,7 +141,7 @@ async function withFeatPicker<R>(
   pendingLevelAbilityIds: (string | undefined)[] | undefined,
   run: (
     detailedCharacter: DetailedCharacterInterface,
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     filters: { ids: string[]; excludeFeatIds: string[] },
   ) => Promise<R>,
 ): Promise<R> {
@@ -168,7 +168,7 @@ async function withFeatPicker<R>(
 }
 
 /** Resolves aptitude-targeting modifiers (aptitudes.<slug>.allowed) for feats, grouped by feat ID. */
-export function resolveAptitudeModifiers(featIds: string[], rulesetData: CachedRulesetData) {
+export function resolveAptitudeModifiers(featIds: string[], rulesetData: RulesetData) {
   const result = new Map<string, { aptitudeId: string; value: number; operator: string }[]>();
   if (featIds.length === 0) return result;
 

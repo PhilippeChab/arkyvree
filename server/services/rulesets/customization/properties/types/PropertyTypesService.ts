@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { type Paginated, paginateItems } from "@/server/repositories/index.ts";
@@ -15,7 +15,7 @@ class PropertyTypesService {
    * The ruleset's custom property types (of one entity type, and containing `query`, when given): each with how many
    * properties use it, the most used first.
    */
-  private countPropertyTypes(rulesetData: CachedRulesetData, entityType?: PropertyEntityType, query = "") {
+  private countPropertyTypes(rulesetData: RulesetData, entityType?: PropertyEntityType, query = "") {
     const counts = new Map<string, { type: string; entityType: string; count: number }>();
     const groups = entityType
       ? [rulesetData.propertiesByEntityType.get(entityType) ?? []]

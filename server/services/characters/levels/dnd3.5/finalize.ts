@@ -9,7 +9,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
@@ -58,7 +58,7 @@ type LevelSelections = Awaited<ReturnType<typeof validateAndFetchLevelSelections
  * The feat and power pools of the character with its planned levels: a leveled aptitude is a power pool, an unleveled
  * one a feat pool, and a power pool too when it has powers.
  */
-function poolIds(aptitudesInstance: DetailedCharacterAptitudes, rulesetData: CachedRulesetData) {
+function poolIds(aptitudesInstance: DetailedCharacterAptitudes, rulesetData: RulesetData) {
   const featPoolIds: string[] = [];
   const powerPoolIds: string[] = [];
   const nonLeveledAptitudeIds: string[] = [];
@@ -165,7 +165,7 @@ async function insertLevelChildren(
 async function insertPlannedLevels(
   tx: Db,
   rulesetModule: RulesetModule,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   characterId: string,
   levels: { hp: number; abilityId: string | null }[],
   klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
@@ -244,7 +244,7 @@ async function levelDistributionData(
   tx: Db,
   rulesetModule: RulesetModule,
   characterRecord: Character,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
   baseLevelCount: number,
 ): Promise<PerLevelDistributionData> {

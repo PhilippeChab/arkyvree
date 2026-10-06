@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { copyEntityCustomizations, fetchEntityCustomizations, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -22,7 +22,7 @@ import type { Session } from "@/shared/relations.ts";
 
 class ModifiersService {
   /** A modifier the entity is the source of, or a 404. */
-  private findEntityModifier(rulesetData: CachedRulesetData, entityType: string, entityId: string, modifierId: string) {
+  private findEntityModifier(rulesetData: RulesetData, entityType: string, entityId: string, modifierId: string) {
     const modifier = rulesetData.modifiersById.get(modifierId);
     if (!modifier || modifier.sourceId !== entityId || modifier.sourceType !== entityType) {
       throw new NotFoundError("Modifier not found for this entity");

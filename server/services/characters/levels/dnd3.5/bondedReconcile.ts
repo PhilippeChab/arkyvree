@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterAbilities, CharacterLevels, Characters } from "@/server/repositories/index.ts";
@@ -20,7 +20,7 @@ async function createBonded(
   kind: BondedKind,
   raceId: string,
   raceName: string,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ): Promise<string> {
   const inserted = await Characters.create(tx, {
     userId: master.userId,
@@ -55,7 +55,7 @@ async function reconcileBonded(
   masterRecord: Character,
   kind: BondedKind,
   detailedMaster: Dnd35DetailedCharacter,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ): Promise<void> {
   const { className } = BONDED_KIND_BY_SLUG[kind];
   const targetRaceName = detailedMaster.getDetailedCharacterBonds().getBondedRace(kind);
@@ -112,7 +112,7 @@ async function syncBondedLevels(
   bondedId: string,
   bondedKlassId: string,
   targetHD: number,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ): Promise<void> {
   const existingLevels = await CharacterLevels.findMany(tx, {
     characterId: bondedId,
@@ -149,7 +149,7 @@ export async function reconcileAllBondedKinds(
   tx: Db,
   masterRecord: Character,
   detailedMaster: Dnd35DetailedCharacter,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ): Promise<void> {
   for (const kind of BONDED_KIND_SLUGS) {
     await reconcileBonded(tx, masterRecord, kind, detailedMaster, rulesetData);

@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import AbstractDetailedCharacter, {
   type DataLoader,
@@ -290,7 +290,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
    * Whether the character has a feat with this property true (FEAT_WEAPON_FINESSE: Weapon Finesse): picked, granted or
    * given by a modifier.
    */
-  protected hasFeatWith(rulesetData: CachedRulesetData, propertyType: string): boolean {
+  protected hasFeatWith(rulesetData: RulesetData, propertyType: string): boolean {
     return rulesetData.feats.some(
       (feat) =>
         (rulesetData.propertiesByEntity.get(feat.id) ?? []).some(
@@ -397,7 +397,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterCombat.applyProficiencyPenalties(unproficient);
   }
 
-  protected async postModifierProcessing(rulesetData: CachedRulesetData): Promise<void> {
+  protected async postModifierProcessing(rulesetData: RulesetData): Promise<void> {
     this.detailedCharacterSpellcasting.fetchBonusCasterLevelData(
       rulesetData,
       this.klassLevels,
@@ -431,7 +431,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.detailedCharacterSpellcasting.buildSpellTags(this.feats, this.featListIds);
   }
 
-  protected async preRequirementProcessing(rulesetData: CachedRulesetData): Promise<void> {
+  protected async preRequirementProcessing(rulesetData: RulesetData): Promise<void> {
     this.detailedCharacterSpellcasting.loadClassLists(rulesetData);
     this.detailedCharacterSpellcasting.initCasterLevels(this.modifiers, this.klassCasterTypeMap);
     // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read

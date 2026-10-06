@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -26,7 +26,7 @@ import { ListsSpells } from "./concerns/ListsSpells.ts";
 class ClassLevelsService extends include(Object, ListsSpells) {
   private buildClassLevelDetail<L extends KlassLevel>(
     ruleset: { baseRules: BaseRules },
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     level: L,
   ) {
     const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;

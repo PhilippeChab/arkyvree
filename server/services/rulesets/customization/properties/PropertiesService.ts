@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -21,7 +21,7 @@ class PropertiesService {
    * its own and visible sibling contributions. A derived item also shows its
    * template's properties; editing one creates an override on the item.
    */
-  private findEntityProperty(rulesetData: CachedRulesetData, entityType: string, entityId: string, propertyId: string) {
+  private findEntityProperty(rulesetData: RulesetData, entityType: string, entityId: string, propertyId: string) {
     const matches = (p: Property) => p.id === propertyId && p.entityType === entityType;
     const own = rulesetData.propertiesByEntity.get(entityId)?.find(matches);
     if (own) return { property: own, fromTemplate: false };
