@@ -57,6 +57,9 @@ database/packages/dnd35-from-parser/
 └── tools/                # Scraper, generator, validate, overrides
     ├── types/            # A reference's types, a module per kind of reference
     ├── scraper/          # Pages → reference/
+    │   ├── BaseScraper.ts    # A scraper's core: its book, its HttpClient, the listings, saving a reference
+    │   ├── Scraper.ts        # A concern per kind of reference (concerns/): ScrapesClasses, ScrapesFeats…
+    │   └── parsers/          # A page's HTML → what its reference stores
     ├── buildSeeds/       # A reference → the seeds it makes
     └── generator/        # The seeds → generated/
         ├── BaseGenerator.ts  # A generator's core: the folder it writes to, the writes kinds of files share

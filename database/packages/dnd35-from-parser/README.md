@@ -64,6 +64,8 @@ Loading a reference (`tools/references.ts`) derives the rest: **`detected`** (BA
 
 The generator (`tools/generator/`) is a `Generator`, built as the seeder is: a step that writes one kind of file is a concern (`concerns/`: `GeneratesClasses`, `GeneratesFeats`…) on a `BaseGenerator` (the folder it writes to, what several kinds of files are written with), and the steps a reference takes, which rewrite the files the kinds share (the aptitudes, the indexes, what an extension copies from the core rules), are its own. A file's code is a `CodeFile` (`code/`): its lines, and the names they use, which its imports are written from.
 
+The scraper (`tools/scraper/`) is a `Scraper`, built the same way: a concern per kind of reference (`concerns/`: `ScrapesClasses`, `ScrapesFeats`…) on a `BaseScraper` (the book it scrapes, the `HttpClient` it fetches pages with, the listings it finds the book's entries in, and the reference files it saves what it read to, their overrides kept). What reads a page is a parser (`parsers/`), and what reads a reference's text a detector (`detect*.ts`): pure functions both, which the tests run on saved pages.
+
 ## Supported entity types
 
 ### Classes
