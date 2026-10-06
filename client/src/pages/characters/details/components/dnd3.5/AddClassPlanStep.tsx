@@ -74,7 +74,7 @@ export function AddClassPlanStep({
   }, [levels, quickAddKlasses, queuedCounts]);
 
   return (
-    <Stack spacing={0.5}>
+    <Stack spacing={3}>
       <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
         <Button startIcon={<AddIcon />} onClick={onAddLevel} size="small">
           Add Level
