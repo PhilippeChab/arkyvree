@@ -247,7 +247,7 @@ After COW:
   The sibling pairing no longer applies — local fork wins completely
 ```
 
-The sibling merge (`EntityCopy`'s `mergeSiblings`) merges four types of customizations by the read-time merge's rules (`siblingMerge.ts`), against the winner's rows it just copied, so the copy holds what the view showed (`tests/services/rulesets/SiblingCopyParity.test.ts` copies every winner of a fork of every extension and compares):
+The sibling merge (`EntityCopy`'s `mergeSiblings`) merges four types of customizations by the read-time merge's rules (`siblingMerge.ts`), against the winner's rows it just copied, so the copy holds what the view showed (`tests/services/rulesets/SiblingSemantics.test.ts` copies every winner of a fork of every extension and compares):
 
 | Type | Merge strategy | Deduplication key |
 |---|---|---|
