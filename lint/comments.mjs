@@ -13,7 +13,8 @@
 import { isToolWritten } from "./paths.mjs";
 
 /** A tool reads it: its syntax is the tool's */
-const DIRECTIVE = /^\s*(?:(?:eslint|oxlint)-(?:disable|enable)|@ts-|oxfmt-ignore|prettier-ignore)|^\/ <reference/;
+const DIRECTIVE =
+  /^\s*(?:(?:eslint|oxlint)-(?:disable|enable)|@ts-|oxfmt-ignore|prettier-ignore|[#@]__PURE__|@vite-ignore|webpack[A-Z]|(?:istanbul|c8|v8) ignore)|^\/ <reference/;
 /** A line of rule characters: `-----`, `═══` */
 const SEPARATOR = /^\s*[-─━=═*#~_]{3,}\s*$/;
 /** A title between rule characters: `── Title ──` */
@@ -70,6 +71,11 @@ function wordsOf(comment) {
   return lines.map((line) => " " + line);
 }
 
+/** Whether a stack's words hold `*\/`, which would end the doc comment they'd make. */
+function closesEarly(stack) {
+  return stack.some((comment) => wordsOf(comment).some((line) => line.includes("*/")));
+}
+
 /**
  * `lines` wrapped to `width`: a paragraph's lines joined and wrapped again, a list item, a table row, a tag or an
  * indented line kept as it is.
@@ -111,6 +117,15 @@ function docComment(lines, indent) {
   while (kept.length && !kept.at(-1).trim()) kept.pop();
   if (kept.length === 1 && indent.length + kept[0].length + "/**  */".length <= WIDTH) return `/** ${kept[0]} */`;
   return ["/**", ...kept.map((line) => (line.trim() ? ` * ${line}` : " *"))].join(`\n${indent}`) + `\n${indent} */`;
+}
+
+/** A comment's words as `//` lines at `indent`, wrapped as a doc comment is. */
+function lineComment(comment, indent) {
+  const lines = wrap(
+    wordsOf(comment).map((line) => line.replace(/^ /, "")),
+    WIDTH - indent.length - "// ".length,
+  );
+  return lines.map((line) => (line ? `// ${line}` : "//")).join(`\n${indent}`);
 }
 
 /** A stack's comments as one doc comment: each comment's words, a blank line between two. */
@@ -188,13 +203,12 @@ function createCommentStyle(context) {
           });
         } else if (comment.type === "Block" && !isDoc(comment)) {
           const indent = text.slice(text.lastIndexOf("\n", s - 1) + 1, s);
-          const lines = wordsOf(comment);
           context.report({
             node: comment,
             message: "A comment in code is `//`, not `/* … */`.",
             fix:
               isAlone(text, comment) && /^\s*$/.test(indent)
-                ? (fixer) => fixer.replaceTextRange([s, e], lines.map((l) => `//${l}`).join(`\n${indent}`))
+                ? (fixer) => fixer.replaceTextRange([s, e], lineComment(comment, indent))
                 : undefined,
           });
         }
@@ -245,7 +259,9 @@ function createCommentStyle(context) {
           context.report({
             node: worded[0],
             message: "A declaration's description is one `/** … */` right above it.",
-            fix: (fixer) => fixer.replaceTextRange([start, end], mergedDoc(stack, indent)),
+            fix: closesEarly(stack)
+              ? undefined
+              : (fixer) => fixer.replaceTextRange([start, end], mergedDoc(stack, indent)),
           });
         } else if (opening) {
           if (oneDoc && stack.length === 1 && !attached) continue;
@@ -254,7 +270,9 @@ function createCommentStyle(context) {
             message: attached
               ? "A file's opening comment stands apart, a blank line under it: on an import, sorting the imports moves it."
               : "A file opens with one `/** … */` describing it.",
-            fix: (fixer) => fixer.replaceTextRange([start, end], mergedDoc(stack, indent) + (attached ? "\n" : "")),
+            fix: closesEarly(stack)
+              ? undefined
+              : (fixer) => fixer.replaceTextRange([start, end], mergedDoc(stack, indent) + (attached ? "\n" : "")),
           });
         } else if (attached && next.type === "ImportDeclaration") {
           context.report({
@@ -272,13 +290,7 @@ function createCommentStyle(context) {
               message: isDoc(comment)
                 ? "A `/** … */` describes a declaration: on a statement, a comment is `//`."
                 : "A comment in code is `//`, not `/* … */`.",
-              fix: (fixer) =>
-                fixer.replaceTextRange(
-                  [s, e],
-                  wordsOf(comment)
-                    .map((l) => `//${l}`)
-                    .join(`\n${indent}`),
-                ),
+              fix: (fixer) => fixer.replaceTextRange([s, e], lineComment(comment, indent)),
             });
           }
         } else {

@@ -42,12 +42,12 @@ export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptio
       }
     }
 
-    function scheduleReconnect() {
+    /** Calls `reconnect` after the backoff's next delay. */
+    function scheduleReconnect(reconnect: () => void) {
       if (disposed) return;
       const delay = Math.min(RECONNECT_BASE_MS * 2 ** reconnectAttempt, RECONNECT_MAX_MS);
       reconnectAttempt++;
-      // oxlint-disable-next-line no-use-before-define -- connect and scheduleReconnect call each other
-      reconnectTimer = setTimeout(connect, delay);
+      reconnectTimer = setTimeout(reconnect, delay);
     }
 
     function connect() {
@@ -88,7 +88,7 @@ export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptio
 
       ws.onclose = () => {
         cleanup();
-        scheduleReconnect();
+        scheduleReconnect(connect);
       };
 
       ws.onerror = () => {

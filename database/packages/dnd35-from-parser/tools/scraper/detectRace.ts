@@ -20,7 +20,10 @@ const ABILITY_MAP: Record<string, string> = {
   charisma: "charisma",
 };
 
-/** Whether the bonus `match` read applies only sometimes (`isConditional`). */
+/**
+ * Whether the bonus `match` read applies only sometimes (`isConditional`): what follows it says when ("checks that are
+ * related to stone", "checks to notice…", "saving throws against poison", "…vs. enchantments", "…, if…").
+ */
 function conditional(text: string, match: RegExpMatchArray): boolean {
   const start = match.index ?? 0;
   return isConditional(text, start, start + match[0].length);

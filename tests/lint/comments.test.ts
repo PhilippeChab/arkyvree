@@ -47,7 +47,8 @@ describe("comment style", () => {
         "/* A block that describes a function. */",
         "// oxlint-disable-next-line no-console -- a directive sits between",
         "function f() {",
-        "  /* in code */",
+        "  /* in code, a note an older formatter wrapped at eighty columns, so its lines are",
+        "   * shorter than the ones it would get today. */",
         "  return N;",
         "}",
         "",
@@ -74,7 +75,8 @@ describe("comment style", () => {
         "/** A block that describes a function. */",
         "// oxlint-disable-next-line no-console -- a directive sits between",
         "function f() {",
-        "  // in code",
+        "  // in code, a note an older formatter wrapped at eighty columns, so its lines are shorter than the ones it would get",
+        "  // today.",
         "  return N;",
         "}",
         "",
@@ -111,6 +113,19 @@ describe("comment style", () => {
       Array(4).fill("comment-style server/c.ts"),
     );
     expect((await fixed({ "server/c.ts": source }))["server/c.ts"]).toBe(source);
+  });
+
+  test("--fix leaves what a doc can't hold, and the comments a tool reads", async () => {
+    const source = lines(
+      "// Matches every file under src/**/*.ts",
+      "export const GLOB = /x/;",
+      "",
+      "export function make() {",
+      "  return /*#__PURE__*/ Object.freeze(/* @vite-ignore */ GLOB);",
+      "}",
+    );
+    expect(await lintRepo({ "server/e.ts": source }, ["comment-style"])).toEqual(["comment-style server/e.ts"]);
+    expect((await fixed({ "server/e.ts": source }))["server/e.ts"]).toBe(source);
   });
 
   test("a doc comment is wrapped to 120 columns, keeping a list's lines and a new sentence's", async () => {

@@ -85,8 +85,7 @@ export default defineConfig({
   globalSetup: "./tests/fixtures/global.setup.ts",
   globalTeardown: "./tests/fixtures/global.teardown.ts",
 
-  // Per-test timeout. 60s gives heavier journey tests slack under parallel
-  // worker load while still failing fast on real hangs. Specific multi-step
-  // tests can call test.setTimeout() for more.
+  // Per-test timeout. 60s gives heavier journey tests slack under parallel worker load while still failing fast on real
+  // hangs. Specific multi-step tests can call test.setTimeout() for more.
   timeout: 60 * 1000,
 });
