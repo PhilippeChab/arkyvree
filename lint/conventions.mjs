@@ -286,7 +286,7 @@ function createOrderThroughRepository(context) {
         if (s.type === "ImportNamespaceSpecifier") namespaces.add(s.local.name);
       }
     },
-    // A method that pages (`this.withPagination`, `this.paginate`) orders by `this.pageOrder(…)`
+    // A method that pages (`this.withPagination`, `this.paginate`, `this.paginated`) orders by `this.pageOrder(…)`
     MethodDefinition(node) {
       if (!file.startsWith("server/repositories/") || file === "server/repositories/concerns/Paginates.ts") return;
       const called = new Set();
@@ -295,7 +295,7 @@ function createOrderThroughRepository(context) {
         if (callee.type === "MemberExpression" && callee.object.type === "ThisExpression")
           called.add(callee.property.name);
       }
-      if ((called.has("withPagination") || called.has("paginate")) && !called.has("pageOrder")) {
+      if (["withPagination", "paginate", "paginated"].some((name) => called.has(name)) && !called.has("pageOrder")) {
         context.report({
           node: node.key,
           message:

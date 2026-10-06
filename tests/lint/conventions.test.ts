@@ -207,6 +207,8 @@ describe("conventions", () => {
             "export class R {\n  findPage(db, p) {\n    return this.withPagination(p, () => db.select().orderBy(this.orderBy(n)));\n  }\n}\n",
           "server/repositories/Raw.ts":
             "export class R {\n  findPage(db, p) {\n    const { limit } = this.paginate(p);\n    return db.select().limit(limit);\n  }\n}\n",
+          "server/repositories/Sliced.ts":
+            "export class R {\n  async findPage(db, p) {\n    return this.paginated(await db.select().offset(p.page), p);\n  }\n}\n",
           "server/repositories/concerns/Paginates.ts":
             "export class P {\n  withPagination(q, f) {\n    return f(this.paginate(q));\n  }\n}\n",
         },
@@ -216,6 +218,7 @@ describe("conventions", () => {
       "order-through-repository server/repositories/Feats.ts",
       "order-through-repository server/repositories/Orm.ts",
       "order-through-repository server/repositories/Raw.ts",
+      "order-through-repository server/repositories/Sliced.ts",
       "order-through-repository server/repositories/Unordered.ts",
     ]);
   });
