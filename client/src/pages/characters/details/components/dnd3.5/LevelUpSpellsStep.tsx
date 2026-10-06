@@ -12,9 +12,9 @@ import {
 } from "@mui/material";
 import { useController } from "react-hook-form";
 
-import { DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError, NoMatchesState } from "@/client/src/components/common/index.ts";
 
-import type { PowerAptitudePool } from "./levelUp/index.ts";
+import { type PowerAptitudePool, withoutPick } from "./levelUp/index.ts";
 import type { LevelUpPowersStepProps } from "./levelUpFactory.ts";
 
 export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
@@ -24,6 +24,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
     powersError,
     control,
     selectedFeats,
+    selectedPowers,
     selectedPowerAptitude,
     selectedPowerLevel,
     setSelectedPowerAptitude,
@@ -32,14 +33,13 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
     isLoadingAvailablePowers,
     isFetchingNextPowersPage,
     powerSearch,
-    handleDeletePower,
     setPowerSearch,
     handlePowersScroll,
   } = wizard;
+  // Changed from the picks as they fit the pools, which the wizard reads
   const { field: powers } = useController({ control, name: "selectedPowers" });
-  const selectedPowers = powers.value;
   if (isLoadingPowers) return <DiceSpinner />;
-  if (powersError) return <Alert severity="error">Error loading spells.</Alert>;
+  if (powersError) return <LoadError what="Spells" error={powersError} />;
   if (!powerData) return null;
 
   const getPowerPoolAvailable = (pool: PowerAptitudePool) => {
@@ -210,7 +210,9 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                         >
                           <Chip
                             label={power.name}
-                            onDelete={() => handleDeletePower(power.id, selectedPowerAptitude)}
+                            onDelete={() =>
+                              powers.onChange(withoutPick(selectedPowers, selectedPowerAptitude, power.id))
+                            }
                           />
                         </Tooltip>
                       ))

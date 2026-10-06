@@ -2,7 +2,7 @@ import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from "@mui/ico
 import { Autocomplete, Box, Button, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { Link } from "react-router-dom";
 
@@ -50,6 +50,16 @@ interface EquipmentSectionProps {
   encumbrance?: EncumbranceData;
 }
 
+/** An item's placement, from its details: its columns and properties' profile (slot, weapon, charges). */
+function placementOf(detail: {
+  type?: string | null;
+  slot?: string | null;
+  properties?: Parameters<typeof placementProfile>[1];
+}) {
+  const columns: ItemColumns = { type: detail.type ?? null, slot: detail.slot ?? "Other" };
+  return { columns, profile: placementProfile(columns, detail.properties ?? []) };
+}
+
 export function EquipmentSection({
   characterId,
   rulesetId,
@@ -89,47 +99,36 @@ export function EquipmentSection({
   const editLocation = editForm.watch("location");
   const editWeaponSet = editForm.watch("weaponSet");
 
-  // Fetch item details when an item is selected in the add dialog
-  const { data: itemDetail } = useQuery({
-    queryKey: queryKeys.characters.rulesetItem(rulesetId, selectedItem?.id ?? ""),
-    queryFn: selectedItem
-      ? () =>
-          parseResponse(
-            rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId: selectedItem.id } }),
-          )
-      : skipToken,
+  // The picked item's details (add dialog): its placement profile
+  const itemQuery = (itemId: string) => ({
+    queryKey: queryKeys.characters.rulesetItem(rulesetId, itemId),
+    queryFn: () => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId } })),
   });
-
-  const addItemProperties = useMemo(
-    () => (itemDetail && "properties" in itemDetail ? itemDetail.properties : []),
-    [itemDetail],
+  const { data: itemDetail } = useQuery(
+    selectedItem
+      ? itemQuery(selectedItem.id)
+      : { queryKey: queryKeys.characters.rulesetItem(rulesetId, ""), queryFn: skipToken },
   );
+  const addProfile = useMemo(() => (itemDetail ? placementOf(itemDetail).profile : null), [itemDetail]);
 
-  const addItemColumns: ItemColumns = useMemo(
-    () => ({ type: itemDetail?.type ?? null, slot: itemDetail?.slot ?? "Other" }),
-    [itemDetail],
-  );
-
-  const addProfile = useMemo(
-    () => (itemDetail ? placementProfile(addItemColumns, addItemProperties) : null),
-    [itemDetail, addItemColumns, addItemProperties],
-  );
-
-  // Auto-detect slot when item details load (add dialog)
-  useEffect(() => {
-    if (!itemDetail) return;
-    const detected = detectSlotFromItem(addItemColumns);
-    if (detected) {
-      addForm.setValue("location", detected);
-    } else if (!addProfile?.isWeapon) {
-      addForm.setValue("location", "none");
-    }
-    // Auto-fill charges
-    if (addProfile?.charges.has) {
-      addForm.setValue("totalCharges", addProfile.charges.defaultCount);
-      addForm.setValue("remainingCharges", addProfile.charges.defaultCount);
-    }
-  }, [itemDetail, addItemColumns, addProfile, addForm]);
+  // An item picked in the add dialog fills its slot and charges once its details arrive, unless another was picked since
+  const fillPlacement = (itemId: string) => {
+    queryClient.fetchQuery(itemQuery(itemId)).then(
+      (detail) => {
+        if (addForm.getValues("selectedItem")?.id !== itemId) return;
+        const { columns, profile } = placementOf(detail);
+        const detected = detectSlotFromItem(columns);
+        if (detected) addForm.setValue("location", detected);
+        else if (!profile.isWeapon) addForm.setValue("location", "none");
+        if (profile.charges.has) {
+          addForm.setValue("totalCharges", profile.charges.defaultCount);
+          addForm.setValue("remainingCharges", profile.charges.defaultCount);
+        }
+      },
+      // The details' query shows its own failure
+      () => undefined,
+    );
+  };
 
   // Edit dialog properties from the inventory entry
   const editItemProperties = useMemo(() => editingEntry?.item.properties ?? [], [editingEntry]);
@@ -404,7 +403,9 @@ export function EquipmentSection({
               value={field.value}
               onChange={(_, newValue) => {
                 field.onChange(newValue);
-                if (!newValue) {
+                if (newValue) {
+                  fillPlacement(newValue.id);
+                } else {
                   addForm.setValue("location", "none");
                   addForm.setValue("totalCharges", 0);
                   addForm.setValue("remainingCharges", 0);

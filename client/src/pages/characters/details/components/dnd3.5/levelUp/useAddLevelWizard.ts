@@ -1,6 +1,6 @@
 import { keepPreviousData, skipToken, useMutation, useQuery } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
@@ -10,10 +10,11 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
-import { computeLevelSkillPoints, computeMaxPointsForSkill } from "@/shared/dnd3.5/skills.ts";
+import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
+import { featPickString, fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
 import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
-import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
+import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
 type FinalizeJson = InferRequestType<(typeof rpc.api.characters.levels)[":characterId"]["finalize"]["$post"]>["json"];
 
@@ -40,18 +41,14 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   const snackbar = useSnackbar();
   const base = useLevelWizardBase(characterId);
   const {
-    getValues,
-    setValue,
-    selectedFeats,
+    picked,
     activeStep,
     setActiveStep,
-    selectedAptitude,
     selectedPowerAptitude,
     selectedPowerLevel,
     setShowCancelConfirm,
     debouncedFeatSearch,
     debouncedPowerSearch,
-    allSelectedFeatPickString,
     setValidationErrors,
     resetPicks,
     refreshAfterSave,
@@ -313,6 +310,19 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   // Power data (from preview)
   const powerData = useMemo(() => previewQuery.data?.powers ?? null, [previewQuery.data]);
 
+  // The picks, fitted to the slots the plan gives
+  const { feats: selectedFeats, pools: adjustedFeatPools } = useMemo(
+    () => fitFeats(picked.feats, featData?.aptitudePools),
+    [picked.feats, featData],
+  );
+  const selectedPowers = useMemo(() => fitPowers(picked.powers, powerData?.aptitudePools), [picked.powers, powerData]);
+  const skillPointAllocations = useMemo(
+    () => fitSkillPoints(picked.skillPoints, skillData, perLevelClassSkillIds, perLevelSkillPoints),
+    [picked.skillPoints, skillData, perLevelClassSkillIds, perLevelSkillPoints],
+  );
+  const selectedAptitude = openPoolOf(base.selectedAptitude, adjustedFeatPools);
+  const allSelectedFeatPickString = useMemo(() => featPickString(selectedFeats), [selectedFeats]);
+
   const isLoadingPowers = previewQuery.isLoading;
   const powersError = previewQuery.error;
 
@@ -452,91 +462,6 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
-  const adjustedFeatPools = useAdjustedFeatPools(featData?.aptitudePools, base);
-
-  // Trim power selections when pools shrink
-  useEffect(() => {
-    if (!powerData?.aptitudePools) return;
-    let changed = false;
-    const currentPowers = getValues("selectedPowers");
-    const updated = { ...currentPowers };
-    for (const [poolId, powers] of Object.entries(updated)) {
-      const pool = powerData.aptitudePools[poolId];
-      if (!pool) {
-        if (powers.length > 0) {
-          updated[poolId] = [];
-          changed = true;
-        }
-        continue;
-      }
-      if (pool.leveled && pool.levels) {
-        const trimmed = [...powers];
-        let levelChanged = false;
-        for (const [level, levelData] of Object.entries(pool.levels)) {
-          const lvl = Number(level);
-          const atLevel = trimmed.filter((p) => p.powerLevel === lvl);
-          if (atLevel.length > levelData.available) {
-            const excess = atLevel.length - levelData.available;
-            let removed = 0;
-            for (let i = trimmed.length - 1; i >= 0 && removed < excess; i--) {
-              if (trimmed[i].powerLevel === lvl) {
-                trimmed.splice(i, 1);
-                removed++;
-              }
-            }
-            levelChanged = true;
-          }
-        }
-        if (levelChanged) {
-          updated[poolId] = trimmed;
-          changed = true;
-        }
-      } else {
-        const max = Math.max(0, pool.available);
-        if (powers.length > max) {
-          updated[poolId] = powers.slice(0, max);
-          changed = true;
-        }
-      }
-    }
-    if (changed) setValue("selectedPowers", updated);
-  }, [powerData?.aptitudePools, getValues, setValue]);
-
-  // Trim skill allocations when pool shrinks
-  useEffect(() => {
-    if (!skillData || !perLevelClassSkillIds || !perLevelSkillPoints) return;
-    const allocs = getValues("skillPointAllocations");
-    if (Object.keys(allocs).length === 0) return;
-
-    let changed = false;
-    const updated: Record<string, number> = {};
-    let total = 0;
-
-    for (const [skillId, points] of Object.entries(allocs)) {
-      const skill = skillData.skills.find((s) => s.id === skillId);
-      if (!skill || points <= 0) continue;
-
-      const maxRank = skill.isClassSkill ? skillData.totalCharacterLevel + 3 : (skillData.totalCharacterLevel + 3) / 2;
-      const maxRanksCanAdd = maxRank - skill.currentRank;
-      const maxFromLevel = computeMaxPointsForSkill(
-        skillId,
-        maxRanksCanAdd,
-        perLevelClassSkillIds,
-        perLevelSkillPoints,
-      );
-      const maxFromAvailable = skillData.skillPointsToSpend - total;
-      const clamped = Math.min(points, maxFromLevel, maxFromAvailable);
-
-      if (clamped > 0) {
-        updated[skillId] = clamped;
-        total += clamped;
-      }
-      if (clamped !== points) changed = true;
-    }
-
-    if (changed) setValue("skillPointAllocations", updated);
-  }, [skillData, perLevelClassSkillIds, perLevelSkillPoints, getValues, setValue]);
-
   const resetWizard = useCallback(() => {
     resetPicks();
     slotCounter.current = 0;
@@ -573,13 +498,21 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
           hp: hpValues[i] ?? 1,
           abilityId: abilityIncreases[i] ?? null,
         })),
-        skills: getValues("skillPointAllocations"),
-        feats: pickIds(getValues("selectedFeats")),
-        powers: pickIds(getValues("selectedPowers")),
+        skills: skillPointAllocations,
+        feats: pickIds(selectedFeats),
+        powers: pickIds(selectedPowers),
         force,
       });
     },
-    [previewQuery.data, hpValues, abilityIncreases, getValues, finalizeMutation],
+    [
+      previewQuery.data,
+      hpValues,
+      abilityIncreases,
+      skillPointAllocations,
+      selectedFeats,
+      selectedPowers,
+      finalizeMutation,
+    ],
   );
 
   const handleNext = useCallback(() => {
@@ -625,6 +558,11 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
 
   return {
     ...base,
+    selectedFeats,
+    selectedPowers,
+    skillPointAllocations,
+    selectedAptitude,
+    allSelectedFeatPickString,
     isLastStep,
 
     // Class plan (step 1)

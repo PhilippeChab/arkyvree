@@ -1,13 +1,19 @@
-import { Alert } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import { useMemo } from "react";
 
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { LoadError } from "@/client/src/components/common/index.ts";
+import { useFormSync } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 
-import { type BaseRules, editStepContent, editStepLabels, useLevelWizard } from "./levelUp/index.ts";
+import {
+  type BaseRules,
+  editStepContent,
+  editStepLabels,
+  type LevelUpFormData,
+  useLevelWizard,
+} from "./levelUp/index.ts";
 import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 
 interface EditLevelModalProps {
@@ -21,25 +27,7 @@ interface EditLevelModalProps {
 export function EditLevelModal({ open, onClose, characterId, baseRules, editingLevel }: EditLevelModalProps) {
   const editingLevelId = editingLevel.characterLevelId;
 
-  // Pre-population refs
-  const editDataAppliedRef = useRef(false);
-  const editFeatsAppliedRef = useRef(false);
-  const editPowersAppliedRef = useRef(false);
-
-  const resetEditRefs = useCallback(() => {
-    editDataAppliedRef.current = false;
-    editFeatsAppliedRef.current = false;
-    editPowersAppliedRef.current = false;
-  }, []);
-
-  const wizard = useLevelWizard({
-    open,
-    onClose,
-    characterId,
-    baseRules,
-    editingLevelId,
-    onReset: resetEditRefs,
-  });
+  const wizard = useLevelWizard({ open, onClose, characterId, baseRules, editingLevelId });
 
   // Edit-only: fetch existing level data
   const {
@@ -58,52 +46,30 @@ export function EditLevelModal({ open, onClose, characterId, baseRules, editingL
     enabled: open && !!editingLevelId,
   });
 
-  const { setValue: wizardSetValue } = wizard;
+  // The saved level, as the wizard's picks: the form takes them once it loads
+  const savedPicks = useMemo<LevelUpFormData | undefined>(
+    () =>
+      editLevelData && {
+        selectedClass: {
+          id: editingLevel.klassId,
+          name: editingLevel.klassName,
+          nextLevel: editingLevel.level,
+          maxLevel: editingLevel.level,
+          hd: editingLevel.hd,
+          eligible: true,
+        },
+        selectedHP: editLevelData.hp,
+        selectedAttribute: editLevelData.abilityId,
+        selectedFeats: editLevelData.feats,
+        selectedPowers: editLevelData.powers,
+        skillPointAllocations: editLevelData.skills,
+      },
+    [editLevelData, editingLevel],
+  );
+  useFormSync(wizard.form, savedPicks, { key: editingLevelId });
 
-  // Set selectedClass + basic fields from edit data
-  useEffect(() => {
-    if (!editLevelData || !editingLevel || editDataAppliedRef.current) return;
-    editDataAppliedRef.current = true;
-
-    wizardSetValue("selectedClass", {
-      id: editingLevel.klassId,
-      name: editingLevel.klassName,
-      nextLevel: editingLevel.level,
-      maxLevel: editingLevel.level,
-      hd: editingLevel.hd,
-      eligible: true,
-    });
-
-    wizardSetValue("selectedHP", editLevelData.hp);
-    wizardSetValue("selectedAttribute", editLevelData.abilityId);
-    wizardSetValue("skillPointAllocations", editLevelData.skills);
-  }, [editLevelData, editingLevel, wizardSetValue]);
-
-  // Pre-populate feats from edit data
-  useEffect(() => {
-    if (!editLevelData || !wizard.featData || editFeatsAppliedRef.current) return;
-    editFeatsAppliedRef.current = true;
-    // A saved level's feats have the selected-feat shape.
-    if (Object.keys(editLevelData.feats).length > 0) wizardSetValue("selectedFeats", editLevelData.feats);
-  }, [editLevelData, wizard.featData, wizardSetValue]);
-
-  // Pre-populate powers from edit data
-  useEffect(() => {
-    if (!editLevelData || !wizard.powerData || editPowersAppliedRef.current) return;
-    editPowersAppliedRef.current = true;
-    if (Object.keys(editLevelData.powers).length > 0) wizardSetValue("selectedPowers", editLevelData.powers);
-  }, [editLevelData, wizard.powerData, wizardSetValue]);
-
-  // Reset refs when dialog opens
-  useEffect(() => {
-    if (open) {
-      resetEditRefs();
-    }
-  }, [open, editingLevelId, resetEditRefs]);
-
-  // The saved level fills the picks in as it loads (the level, then its class's feat and power slots): Next waits while
-  // it loads, or a quick Finish would save the level without its feats and powers. Saving without them would erase
-  // them, so a load that failed stops the wizard at the step that shows its error.
+  // The saved level fills the picks in as it loads, and its class's feat and power slots, which load after it, fit them:
+  // Next waits for both, and a load that failed stops the wizard at the step that shows its error.
   const loading =
     isLoadingLevel || (!!editLevelData && !wizard.selectedClass) || wizard.isLoadingFeats || wizard.isLoadingPowers;
   const step = editStepContent[wizard.activeStep];
@@ -112,7 +78,7 @@ export function EditLevelModal({ open, onClose, characterId, baseRules, editingL
   const Sections = wizard.levelUpSections;
 
   const renderStepContent = () => {
-    if (!editLevelData && levelError) return <Alert severity="error">{loadFailureMessage("Level", levelError)}</Alert>;
+    if (!editLevelData && levelError) return <LoadError what="Level" error={levelError} />;
 
     switch (step) {
       case "hp":

@@ -10,7 +10,7 @@ import {
   VerificationCodeInput,
 } from "@/client/src/components/auth/index.ts";
 import { PasswordField } from "@/client/src/components/common/index.ts";
-import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { confirmPasswordRules, newPasswordRules } from "@/client/src/lib/validation.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
@@ -24,11 +24,9 @@ interface ResetPasswordFormData {
 
 export default function ResetPassword() {
   usePageTitle("Reset Password");
-  const resetPassword = useAuthStore((s) => s.resetPassword);
-  const forgotPassword = useAuthStore((s) => s.forgotPassword);
   const pendingPasswordResetEmail = useAuthStore((s) => s.pendingPasswordResetEmail);
-  const isLoading = useAuthStore((s) => s.isLoading);
   const navigate = useNavigate();
+  const auth = useAuthRequests({ onPasswordReset: () => navigate("/sign-in") });
 
   const form = useFormWith<ResetPasswordFormData>({
     digits: EMPTY_VERIFICATION_CODE,
@@ -37,27 +35,25 @@ export default function ResetPassword() {
   });
   const digits = form.watch("digits");
 
-  const { error, setError, handleResend, notice } = useResendCode(() =>
-    forgotPassword(pendingPasswordResetEmail ?? ""),
+  const { error, setError, handleResend, notice } = useResendCode((callbacks) =>
+    auth.forgotPassword.mutate(pendingPasswordResetEmail ?? "", callbacks),
   );
 
   if (!pendingPasswordResetEmail) {
     return <Navigate to="/forgot-password" replace />;
   }
 
-  const onSubmit = async (data: ResetPasswordFormData) => {
-    try {
-      setError(null);
-      await resetPassword(
-        pendingPasswordResetEmail,
-        data.digits.join(""),
-        data.newPassword,
-        data.newPasswordConfirmation,
-      );
-      navigate("/sign-in");
-    } catch (error) {
-      setError(errorMessage(error, "Failed to reset password"));
-    }
+  const onSubmit = (data: ResetPasswordFormData) => {
+    setError(null);
+    auth.resetPassword.mutate(
+      {
+        emailAddress: pendingPasswordResetEmail,
+        code: data.digits.join(""),
+        newPassword: data.newPassword,
+        newPasswordConfirmation: data.newPasswordConfirmation,
+      },
+      { onError: (error) => setError(errorMessage(error, "Failed to reset password")) },
+    );
   };
 
   const isComplete = digits.every((d) => d !== "");
@@ -96,12 +92,12 @@ export default function ResetPassword() {
           autoComplete="new-password"
         />
 
-        <AuthSubmitButton loading={isLoading} disabled={!isComplete}>
+        <AuthSubmitButton loading={auth.pending} disabled={!isComplete}>
           Reset Password
         </AuthSubmitButton>
       </form>
       <Box sx={{ textAlign: "center" }}>
-        <ResendCodeLink onResend={handleResend} disabled={isLoading} />
+        <ResendCodeLink onResend={handleResend} disabled={auth.pending} />
         <Typography variant="body2" sx={{ mt: 1 }}>
           <MuiLink component={Link} to="/sign-in" underline="hover">
             Back to Sign In

@@ -17,7 +17,7 @@ export default function CampaignInvitePage() {
       listPath="/campaigns"
       icon={InviteIcon}
       queryKey={queryKeys.invites.detail("campaign", inviteId)}
-      loadInvite={async () => {
+      inviteFn={async () => {
         const invite = await parseResponse(rpc.api.campaigns.invites[":inviteId"].$get(param));
         const campaign = invite.playersInCampaign?.campaignsInCampaign;
         return {
@@ -28,8 +28,8 @@ export default function CampaignInvitePage() {
           invitedAt: invite.createdAt,
         };
       }}
-      acceptInvite={() => rpc.api.campaigns.invites[":inviteId"].accept.$post(param)}
-      rejectInvite={() => rpc.api.campaigns.invites[":inviteId"].reject.$post(param)}
+      acceptFn={() => rpc.api.campaigns.invites[":inviteId"].accept.$post(param)}
+      rejectFn={() => rpc.api.campaigns.invites[":inviteId"].reject.$post(param)}
       acceptedStatus="Accepted"
       joinVerb="join"
       description="You've been invited to join this campaign. Would you like to accept or reject this invitation?"

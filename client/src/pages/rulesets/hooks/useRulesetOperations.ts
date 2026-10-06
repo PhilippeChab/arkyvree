@@ -28,6 +28,7 @@ export function useRulesetOperations() {
   const [forkDialogOpen, setForkDialogOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [publishKind, setPublishKind] = useState<PublishKind>("ruleset");
   const [subscribeDialogOpen, setSubscribeDialogOpen] = useState(false);
   const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState(false);
   const [unsubscribeTarget, setUnsubscribeTarget] = useState<{
@@ -216,6 +217,7 @@ export function useRulesetOperations() {
 
   const handlePublish = (ruleset: Ruleset) => {
     setSelectedRuleset(ruleset);
+    setPublishKind(ruleset.kind ?? "ruleset");
     setPublishDialogOpen(true);
   };
 
@@ -280,6 +282,8 @@ export function useRulesetOperations() {
     setArchiveDialogOpen,
     publishDialogOpen,
     setPublishDialogOpen,
+    publishKind,
+    setPublishKind,
     subscribeDialogOpen,
     setSubscribeDialogOpen,
     unsubscribeDialogOpen,

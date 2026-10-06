@@ -8,8 +8,8 @@ import {
 } from "@mui/icons-material";
 import { Alert, Box, Chip, Container, Menu, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
   ActionMenuItem,
@@ -117,11 +117,9 @@ export default function CampaignDetailsPage() {
   });
 
   // Normalize the URL to a known tab.
-  useEffect(() => {
-    if (id && !isTabSection(section)) {
-      navigate(`/campaigns/${id}/characters`, { replace: true });
-    }
-  }, [id, section, navigate]);
+  if (id && !isTabSection(section)) {
+    return <Navigate to={`/campaigns/${id}/characters`} replace />;
+  }
 
   if (isLoading) {
     return (

@@ -35,7 +35,7 @@ export function ItemEditor({
     onSaved,
     listKey: queryKeys.rulesets.section(rulesetId, "items"),
     label: "Item",
-    save: (data: ItemFormInternal) =>
+    saveFn: (data: ItemFormInternal) =>
       parseResponse(
         rpc.api.rulesets[":id"].items[":itemId"].$put({
           param: { id: rulesetId, itemId: entityId },

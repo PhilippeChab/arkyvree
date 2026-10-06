@@ -1,4 +1,5 @@
 export { useAttachment, useAttachments } from "./useAttachment.ts";
+export { checkSession, useAuthRequests } from "./useAuthRequests.ts";
 export { useDebouncedValue } from "./useDebouncedValue.ts";
 export { useDirtyForm } from "./useDirtyForm.ts";
 export { useDetachAttachment, useDirectUpload } from "./useDirectUpload.ts";

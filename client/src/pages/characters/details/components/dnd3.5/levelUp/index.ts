@@ -1,3 +1,4 @@
+export { withoutPick } from "./fitPicks.ts";
 export { addStepContent, addStepLabels, useAddLevelWizard } from "./useAddLevelWizard.ts";
 export { editStepContent, editStepLabels, useLevelWizard, type LevelWizard } from "./useLevelWizard.ts";
 export type {

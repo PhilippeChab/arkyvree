@@ -1,6 +1,5 @@
 import { Casino as CasinoIcon } from "@mui/icons-material";
 import {
-  Alert,
   Box,
   Button,
   Stack,
@@ -18,7 +17,7 @@ import { memo, useCallback } from "react";
 import { useController } from "react-hook-form";
 
 import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
 import { useLatest } from "@/client/src/hooks/index.ts";
 import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
@@ -150,9 +149,17 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
 const columnHeaderSx = { whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
 
 export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
-  const { skillData, isLoadingSkills, skillsError, control, perLevelClassSkillIds, perLevelSkillPoints } = wizard;
+  const {
+    skillData,
+    isLoadingSkills,
+    skillsError,
+    control,
+    skillPointAllocations,
+    perLevelClassSkillIds,
+    perLevelSkillPoints,
+  } = wizard;
+  // Changed from the points as they fit the slots, which the wizard reads
   const { field: allocationsField } = useController({ control, name: "skillPointAllocations" });
-  const skillPointAllocations = allocationsField.value;
   // Read as a row allocates, so the callback the memoized rows get stays the same
   const latestAllocations = useLatest(skillPointAllocations);
   const setAllocations = allocationsField.onChange;
@@ -206,7 +213,7 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
   );
 
   if (isLoadingSkills) return <DiceSpinner />;
-  if (skillsError) return <Alert severity="error">Error loading skills.</Alert>;
+  if (skillsError) return <LoadError what="Skills" error={skillsError} />;
   if (!skillData) return null;
 
   const pointsSpent = Object.values(skillPointAllocations).reduce((sum, points) => sum + points, 0);

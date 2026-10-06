@@ -1,8 +1,8 @@
 import { Settings as ModifiersIcon, Label as PropertiesIcon, Rule as RequirementsIcon } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
 import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { type ReactNode, useState } from "react";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
   DeleteDialog,
@@ -242,16 +242,10 @@ function CustomizationView({
     );
   };
 
-  // Once the copy's own data is in, forget where it came from, so going
-  // back and forth in history never carries edits between the two.
-  useEffect(() => {
-    const current = entityPageState(location.state);
-    if (!current.copiedFrom || locked) return;
-    // A navigation still loading has moved the address bar on: leave it be.
-    if (window.location.pathname !== location.pathname) return;
-    const { copiedFrom: _done, ...rest } = current;
-    navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: rest });
-  }, [location.state, locked, location.pathname, location.search, location.hash, navigate]);
+  // Once the copy's own data is in, forget where it came from, so going back and forth in history never carries edits
+  // between the two. A navigation still loading has moved the address bar on: leave it be.
+  const { copiedFrom, ...stateAfterCopy } = state;
+  const forgetsCopy = !!copiedFrom && !locked && window.location.pathname === location.pathname;
 
   const handleSaved = (sourceId: string, saved: { id: string }, listKey: QueryKey, message: string) => {
     if (saved.id !== sourceId) followCopy(saved.id, sourceId);
@@ -293,6 +287,9 @@ function CustomizationView({
       canDelete={canEdit && isEditable(data) && !locked}
       onDelete={() => setDeleteDialogOpen(true)}
     >
+      {forgetsCopy && (
+        <Navigate to={`${location.pathname}${location.search}${location.hash}`} replace state={stateAfterCopy} />
+      )}
       {isEditable(data) &&
         renderEditor(data, {
           rulesetId,
@@ -397,14 +394,15 @@ export default function CustomizationPage() {
   const currentTab = tabs.find((tab) => tab.key === section)?.key;
 
   // Normalize the URL to a tab the entity has.
-  useEffect(() => {
-    if (validType && entityId && !currentTab) {
-      navigate(`/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}/${tabsFor(validType)[0].key}`, {
-        replace: true,
-        state: location.state,
-      });
-    }
-  }, [rulesetId, validType, entityId, currentTab, navigate, location.state]);
+  if (validType && entityId && !currentTab) {
+    return (
+      <Navigate
+        to={`/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}/${tabsFor(validType)[0].key}`}
+        replace
+        state={location.state}
+      />
+    );
+  }
 
   // A failed refetch keeps showing the data it has (and any unsaved edits).
   if (

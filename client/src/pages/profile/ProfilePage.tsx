@@ -83,15 +83,15 @@ export default function ProfilePage() {
 
   const isGoogleLinked = linkedAccounts?.some((a) => a.provider === "google") ?? false;
 
-  const { overlayRef, isAvailable: isGoogleAvailable } = useGoogleSignIn(async (idToken) => {
-    try {
-      await rpc.auth["link-google"].$post({ json: { idToken } });
+  const linkGoogle = useMutation({
+    mutationFn: (idToken: string) => rpc.auth["link-google"].$post({ json: { idToken } }),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.linkedAccounts });
       snackbar.success("Google account linked");
-    } catch (error) {
-      snackbar.error(error, "Failed to link Google account");
-    }
+    },
+    onError: (error) => snackbar.error(error, "Failed to link Google account"),
   });
+  const { overlayRef, isAvailable: isGoogleAvailable } = useGoogleSignIn((idToken) => linkGoogle.mutate(idToken));
 
   const unlinkOauthMutation = useMutation({
     mutationFn: (provider: string) => rpc.auth["unlink-oauth"].$post({ json: { provider } }),

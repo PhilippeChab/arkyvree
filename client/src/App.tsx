@@ -9,13 +9,14 @@ import { Layout, PublicLayout } from "@/client/src/components/layout/index.ts";
 import { CustomThemeProvider } from "@/client/src/contexts/ThemeContext.tsx";
 import { SnackbarProvider } from "@/client/src/contexts/ToastContext.tsx";
 import { WebSocketProvider } from "@/client/src/contexts/WebSocketContext.tsx";
+import { checkSession } from "@/client/src/hooks/index.ts";
 import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
 import { createQueryClient } from "@/client/src/lib/queryClient.ts";
 import SignIn from "@/client/src/pages/auth/SignIn.tsx";
 import DashboardPage from "@/client/src/pages/dashboard/DashboardPage.tsx";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 import "./App.css";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 const ActivitiesPage = lazy(() => import("@/client/src/pages/activities/ActivitiesPage.tsx"));
 const RulesetContributorInvitePage = lazy(
@@ -63,12 +64,11 @@ let authProbe: Promise<void> | null = null;
 
 function PrivateRoute() {
   const location = useLocation();
-  const checkAuth = useAuthStore((s) => s.checkAuth);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (!authProbe) authProbe = checkAuth();
+    authProbe ??= checkSession(queryClient);
     let cancelled = false;
     void authProbe.finally(() => {
       if (!cancelled) setChecked(true);
@@ -76,7 +76,7 @@ function PrivateRoute() {
     return () => {
       cancelled = true;
     };
-  }, [checkAuth]);
+  }, []);
 
   if (!checked && !isAuthenticated) return null;
   if (isAuthenticated) return <Outlet />;

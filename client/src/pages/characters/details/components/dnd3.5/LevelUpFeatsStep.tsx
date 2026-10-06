@@ -17,14 +17,20 @@ import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useController } from "react-hook-form";
 
-import { CLICKABLE_SX, clickableProps, DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
+import {
+  CLICKABLE_SX,
+  clickableProps,
+  DiceSpinner,
+  LoadError,
+  NoMatchesState,
+} from "@/client/src/components/common/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-import type { AptitudePool, FeatsData, SelectedFeat } from "./levelUp/index.ts";
+import { type AptitudePool, type FeatsData, type SelectedFeat, withoutPick } from "./levelUp/index.ts";
 import type { LevelUpFeatsStepProps } from "./levelUpFactory.ts";
 
 function AutoGrantedFeats({
@@ -206,6 +212,7 @@ export function LevelUpFeatsStep({
     featsError,
     adjustedFeatPools,
     control,
+    selectedFeats,
     selectedAptitude,
     setSelectedAptitude,
     groupedFeats,
@@ -217,12 +224,11 @@ export function LevelUpFeatsStep({
     featSearch,
     setFeatSearch,
     handleFeatsScroll,
-    handleDeleteFeat,
   } = wizard;
+  // Changed from the picks as they fit the pools, which the wizard reads
   const { field: feats } = useController({ control, name: "selectedFeats" });
-  const selectedFeats = feats.value;
   if (isLoadingFeats) return <DiceSpinner />;
-  if (featsError) return <Alert severity="error">Error loading feats.</Alert>;
+  if (featsError) return <LoadError what="Feats" error={featsError} />;
   if (!featData) return null;
 
   const aptitudePools: AptitudePool[] = Object.values(adjustedFeatPools);
@@ -306,7 +312,10 @@ export function LevelUpFeatsStep({
                           enterDelay={300}
                           arrow
                         >
-                          <Chip label={feat.name} onDelete={() => handleDeleteFeat(feat.id, selectedAptitude)} />
+                          <Chip
+                            label={feat.name}
+                            onDelete={() => feats.onChange(withoutPick(selectedFeats, selectedAptitude, feat.id))}
+                          />
                         </Tooltip>
                       ))
                     : Array.from({ length: currentPool?.available || 0 }, (_, i) => (

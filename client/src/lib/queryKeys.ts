@@ -1,6 +1,8 @@
 export const queryKeys = {
   auth: {
     me: ["auth", "me"] as const,
+    /** Every sign-in, sign-up, verification, reset and sign-out request: whether one is in flight, whichever page sent it. */
+    requests: ["auth", "requests"] as const,
     linkedAccounts: ["auth", "linkedAccounts"] as const,
   },
   rulesets: {
@@ -34,9 +36,9 @@ export const queryKeys = {
       ["rulesets", "detail", id, "entity", entityType, entityId] as const,
     targetCompletions: (id: string, prefix: string, kind: string, search: string, entityType?: string) =>
       ["rulesets", "detail", id, "targetCompletions", prefix, kind, search, entityType] as const,
-    /** Whether a complete target path is one the ruleset knows, and what it may have meant. */
-    targetPathValidation: (id: string, kind: string, path: string) =>
-      ["rulesets", "detail", id, "targetPathValidation", kind, path] as const,
+    /** What a target path takes, once it's complete and its entity type takes it. */
+    targetPath: (id: string, kind: string, path: string, entityType?: string) =>
+      ["rulesets", "detail", id, "targetPath", kind, path, entityType] as const,
     changes: (id: string) => ["rulesets", "detail", id, "changes"] as const,
     /** Every language of the ruleset, for pickers; nested like `abilities`. */
     languages: (id: string) => ["rulesets", "detail", id, "languages", "options"] as const,
@@ -190,6 +192,8 @@ export const queryKeys = {
   activities: {
     all: ["activities"] as const,
     list: (filters?: Record<string, unknown>) => ["activities", "list", filters] as const,
+    /** Where an activity's or a notification's target is now, resolved as it's opened. */
+    target: (targetTable: string, targetId: string) => ["activities", "target", targetTable, targetId] as const,
   },
   notifications: {
     all: ["notifications"] as const,

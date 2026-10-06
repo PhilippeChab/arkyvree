@@ -3,7 +3,7 @@ import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
-import { useIsMobile, useStartDemo } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useIsMobile, useStartDemo } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
 import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
@@ -257,23 +257,22 @@ export function AuthLayoutRoute() {
   const isMobile = useIsMobile();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isDemo = useAuthStore((s) => !!s.user?.expiresAt);
-  const signOut = useAuthStore((s) => s.signOut);
-  const clearSession = useAuthStore((s) => s.clearSession);
+
   // Only kill the demo if we were already one at mount — a freshly-created
   // demo on /sign-up must survive the route change.
   const [isClearingDemo, setIsClearingDemo] = useState(isDemo);
   const demoSignOutStarted = useRef(false);
+  const { signOut } = useAuthRequests({ onSignedOut: () => setIsClearingDemo(false) });
+  const signOutDemo = signOut.mutate;
 
   // Demo sessions live only inside the app — drop the demo on entry to any auth route.
-  // clearSession fallback covers signOut failures (server already 401'd, network blip):
-  // server-side demo may already be gone, so locally unauth is the right end state.
+  // A sign-out that fails (server already 401'd, network blip) still ends signed out locally: the server-side demo may
+  // already be gone.
   useEffect(() => {
     if (!isClearingDemo || demoSignOutStarted.current) return;
     demoSignOutStarted.current = true;
-    signOut()
-      .catch(() => clearSession())
-      .finally(() => setIsClearingDemo(false));
-  }, [isClearingDemo, signOut, clearSession]);
+    signOutDemo();
+  }, [isClearingDemo, signOutDemo]);
 
   if (isClearingDemo) {
     return <DiceSpinner sx={{ minHeight: "100vh" }} />;
