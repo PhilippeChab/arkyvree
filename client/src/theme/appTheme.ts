@@ -33,7 +33,8 @@ type ContainedColor =
   | string
   | undefined;
 
-function containedBorderColor(color: ContainedColor, darkMode: boolean) {
+/** A contained button's border, by its color (the landing page's too) */
+export function containedBorderColor(color: ContainedColor, darkMode: boolean) {
   switch (color) {
     case "error":
       return darkMode ? "rgba(239, 83, 80, 0.5)" : "rgba(141, 30, 30, 0.4)";
@@ -46,7 +47,8 @@ function containedBorderColor(color: ContainedColor, darkMode: boolean) {
   }
 }
 
-function containedGradient(color: ContainedColor, darkMode: boolean) {
+/** A contained button's gradient, and its hover's, by its color (the landing page's too) */
+export function containedGradient(color: ContainedColor, darkMode: boolean) {
   switch (color) {
     case "error":
       return darkMode
