@@ -22,7 +22,8 @@ async function openLocalChanges(page: Page, forkId: string) {
 
 /** Restores the renamed entity listed in the Local Changes dialog, under `group`, which leaves the fork with no changes. */
 async function restore(page: Page, dialog: ReturnType<Page["getByRole"]>, group: string, renamed: string) {
-  await expect(dialog.getByText(group, { exact: true })).toBeVisible();
+  // A group's heading counts its changes: "Races (1)"
+  await expect(dialog.getByText(new RegExp(`^${group} \\(\\d+\\)$`))).toBeVisible();
   const row = dialog.getByRole("listitem").filter({ hasText: renamed });
   await expect(row.locator(".MuiChip-root", { hasText: "modified" })).toBeVisible();
   const restored = apiResponse(page, "POST", /\/api\/rulesets\/[a-f0-9-]+\/entities\/[^/]+\/[^/]+\/restore/);
