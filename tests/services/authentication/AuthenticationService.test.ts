@@ -53,6 +53,10 @@ function googleAccount(email = `google-${uniqueId()}@example.com`) {
   return { sub: `google-${uniqueId()}`, email };
 }
 
+async function codeFor(userId: string) {
+  return (await EmailVerifications.findOne(db, { userId }))!.code;
+}
+
 /** A user without a password, as Google sign-up makes them. */
 async function createPasswordlessUser() {
   const [user] = await Users.create(db, {
@@ -61,10 +65,6 @@ async function createPasswordlessUser() {
     emailVerifiedAt: new Date().toISOString(),
   });
   return { user, session: makeSession(user.id) };
-}
-
-async function codeFor(userId: string) {
-  return (await EmailVerifications.findOne(db, { userId }))!.code;
 }
 
 /** A new verified user, signed in. */

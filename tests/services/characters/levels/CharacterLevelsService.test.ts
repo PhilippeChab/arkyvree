@@ -73,8 +73,8 @@ type PendingPicks =
     ? Rest
     : never;
 
-const session = makeSession(SEED_USER_ID);
 const page = { limit: 500, page: 1 };
+const session = makeSession(SEED_USER_ID);
 
 function names(rows: { name: string }[]) {
   return rows.map((r) => r.name);

@@ -18,42 +18,9 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 import "./App.css";
 
-const ActivitiesPage = lazy(() => import("@/client/src/pages/activities/ActivitiesPage.tsx"));
-const RulesetContributorInvitePage = lazy(
-  () => import("@/client/src/pages/ruleset-contributor-invite/RulesetContributorInvitePage.tsx"),
-);
-const CharacterContributorInvitePage = lazy(
-  () => import("@/client/src/pages/character-contributor-invite/CharacterContributorInvitePage.tsx"),
-);
-const NotificationsPage = lazy(() => import("@/client/src/pages/notifications/NotificationsPage.tsx"));
-const CampaignsPage = lazy(() => import("@/client/src/pages/campaigns/CampaignsPage.tsx"));
-const CampaignCharacterPage = lazy(() => import("@/client/src/pages/campaigns/CampaignCharacterPage.tsx"));
-const CampaignDetailsPage = lazy(() => import("@/client/src/pages/campaigns/details/CampaignDetailsPage.tsx"));
-const CharactersPage = lazy(() => import("@/client/src/pages/characters/CharactersPage.tsx"));
-const CharacterDetailsPage = lazy(() => import("@/client/src/pages/characters/details/CharacterDetailsPage.tsx"));
-const CampaignInvitePage = lazy(() => import("@/client/src/pages/campaign-invite/CampaignInvitePage.tsx"));
-const ProfilePage = lazy(() => import("@/client/src/pages/profile/ProfilePage.tsx"));
-const SettingsPage = lazy(() => import("@/client/src/pages/settings/SettingsPage.tsx"));
-const DemoExpiredPage = lazy(() => import("@/client/src/pages/demo-expired/DemoExpiredPage.tsx"));
-const RulesetsPage = lazy(() => import("@/client/src/pages/rulesets/RulesetsPage.tsx"));
-const RulesetDetailsPage = lazy(() => import("@/client/src/pages/rulesets/details/RulesetDetailsPage.tsx"));
-const ClassDetailsPage = lazy(() => import("@/client/src/pages/rulesets/details/classes/ClassDetailsPage.tsx"));
-const CustomizationPage = lazy(() => import("@/client/src/pages/rulesets/customization/CustomizationPage.tsx"));
-const LanguageDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/LanguageDetailPage.tsx"));
-const SkillDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/SkillDetailPage.tsx"));
-const SaveDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/SaveDetailPage.tsx"));
-const MechanicDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/MechanicDetailPage.tsx"));
-const AptitudeDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/AptitudeDetailPage.tsx"));
 const AbilityDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/AbilityDetailPage.tsx"));
-const SharedCharacterPage = lazy(() => import("@/client/src/pages/shared/SharedCharacterPage.tsx"));
-const LegalPage = lazy(() => import("@/client/src/pages/legal/LegalPage.tsx"));
-const SignUp = lazy(() => import("@/client/src/pages/auth/SignUp.tsx"));
-const VerifyEmail = lazy(() => import("@/client/src/pages/auth/VerifyEmail.tsx"));
-const ForgotPassword = lazy(() => import("@/client/src/pages/auth/ForgotPassword.tsx"));
-const ResetPassword = lazy(() => import("@/client/src/pages/auth/ResetPassword.tsx"));
-
-const queryClient = createQueryClient();
-
+const ActivitiesPage = lazy(() => import("@/client/src/pages/activities/ActivitiesPage.tsx"));
+const AptitudeDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/AptitudeDetailPage.tsx"));
 /**
  * One-shot per browser-tab: probe /auth/me at most once even if the visitor bounces between auth-only routes while
  * unauth. Memoizing a Promise (rather than a boolean "started" flag) keeps strict-mode's double-effect honest — each
@@ -61,6 +28,39 @@ const queryClient = createQueryClient();
  * cleanup cancels its peer.
  */
 let authProbe: Promise<void> | null = null;
+const CampaignCharacterPage = lazy(() => import("@/client/src/pages/campaigns/CampaignCharacterPage.tsx"));
+const CampaignDetailsPage = lazy(() => import("@/client/src/pages/campaigns/details/CampaignDetailsPage.tsx"));
+const CampaignInvitePage = lazy(() => import("@/client/src/pages/campaign-invite/CampaignInvitePage.tsx"));
+const CampaignsPage = lazy(() => import("@/client/src/pages/campaigns/CampaignsPage.tsx"));
+const CharacterContributorInvitePage = lazy(
+  () => import("@/client/src/pages/character-contributor-invite/CharacterContributorInvitePage.tsx"),
+);
+const CharacterDetailsPage = lazy(() => import("@/client/src/pages/characters/details/CharacterDetailsPage.tsx"));
+const CharactersPage = lazy(() => import("@/client/src/pages/characters/CharactersPage.tsx"));
+const ClassDetailsPage = lazy(() => import("@/client/src/pages/rulesets/details/classes/ClassDetailsPage.tsx"));
+const CustomizationPage = lazy(() => import("@/client/src/pages/rulesets/customization/CustomizationPage.tsx"));
+const DemoExpiredPage = lazy(() => import("@/client/src/pages/demo-expired/DemoExpiredPage.tsx"));
+const ForgotPassword = lazy(() => import("@/client/src/pages/auth/ForgotPassword.tsx"));
+const LanguageDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/LanguageDetailPage.tsx"));
+const LegalPage = lazy(() => import("@/client/src/pages/legal/LegalPage.tsx"));
+const MechanicDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/MechanicDetailPage.tsx"));
+const NotificationsPage = lazy(() => import("@/client/src/pages/notifications/NotificationsPage.tsx"));
+const ProfilePage = lazy(() => import("@/client/src/pages/profile/ProfilePage.tsx"));
+const queryClient = createQueryClient();
+const ResetPassword = lazy(() => import("@/client/src/pages/auth/ResetPassword.tsx"));
+const RulesetContributorInvitePage = lazy(
+  () => import("@/client/src/pages/ruleset-contributor-invite/RulesetContributorInvitePage.tsx"),
+);
+const RulesetDetailsPage = lazy(() => import("@/client/src/pages/rulesets/details/RulesetDetailsPage.tsx"));
+const RulesetsPage = lazy(() => import("@/client/src/pages/rulesets/RulesetsPage.tsx"));
+const SaveDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/SaveDetailPage.tsx"));
+const SettingsPage = lazy(() => import("@/client/src/pages/settings/SettingsPage.tsx"));
+const SharedCharacterPage = lazy(() => import("@/client/src/pages/shared/SharedCharacterPage.tsx"));
+const SignUp = lazy(() => import("@/client/src/pages/auth/SignUp.tsx"));
+
+const SkillDetailPage = lazy(() => import("@/client/src/pages/rulesets/details/entities/SkillDetailPage.tsx"));
+
+const VerifyEmail = lazy(() => import("@/client/src/pages/auth/VerifyEmail.tsx"));
 
 function PrivateRoute() {
   const location = useLocation();

@@ -14,9 +14,9 @@ type DetectedEntry = {
   unresolvedAptitudePicks?: string[];
 };
 
-type Review = ReturnType<typeof reviewOf>;
-
 type Found = { kind: Issue["kind"]; text: string };
+
+type Review = ReturnType<typeof reviewOf>;
 
 export type Issue = {
   book: string;

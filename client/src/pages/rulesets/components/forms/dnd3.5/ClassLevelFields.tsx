@@ -6,10 +6,6 @@ import { useDebouncedValue, useRulesetFeats, useRulesetSaves } from "@/client/sr
 
 import { featKey, type LevelFeat, levelFeatLabel, type LevelSave } from "./classLevelForm.ts";
 
-interface FeatOption extends LevelFeat {
-  label: string;
-}
-
 interface ClassLevelFieldsProps {
   rulesetId: string;
   saves: LevelSave[];
@@ -18,6 +14,10 @@ interface ClassLevelFieldsProps {
   onFeatsChange: (feats: LevelFeat[]) => void;
   /** Labels for feats the options may not list (e.g. from a parent ruleset), by `featId-aptitudeId`. */
   featLabels?: Map<string, string>;
+}
+
+interface FeatOption extends LevelFeat {
+  label: string;
 }
 
 /** Base saves and granted feats of a class level, shared by its create dialog and its customization page. */

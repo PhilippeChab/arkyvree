@@ -25,11 +25,6 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
 
   private readonly player: Player | null;
 
-  /** Whether the session is the campaign's Game Master, by an active player row. */
-  isGameMaster() {
-    return this.player?.role === "Game Master" && !this.player.deletedAt;
-  }
-
   canDelete() {
     if (this.player?.role !== "Game Master") {
       throw new ForbiddenError("Only the Game Master can manage this campaign");
@@ -66,5 +61,10 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     }
 
     return true;
+  }
+
+  /** Whether the session is the campaign's Game Master, by an active player row. */
+  isGameMaster() {
+    return this.player?.role === "Game Master" && !this.player.deletedAt;
   }
 }

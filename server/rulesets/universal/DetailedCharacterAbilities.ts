@@ -66,38 +66,6 @@ export default class DetailedCharacterAbilities {
     return Math.floor((total - CONSTANTS.ABILITY_MODIFIER_OFFSET) / CONSTANTS.ABILITY_MODIFIER_DIVISOR);
   }
 
-  initialize(characterAbilities: { abilityId: string; name: string; score: number }[], levels: CharacterLevel[]) {
-    // Initialize abilities from the character's ability scores
-    for (const { abilityId, name, score } of characterAbilities) {
-      const normalizedName = stripSeparators(name);
-      this.abilityIdToName.set(abilityId, normalizedName);
-
-      const computeModifier = (total: number) => this.computeModifier(total);
-      // The total and the modifier are computed from the parts when read, so they follow every change to them
-      this.detailedCharacterAbilities[normalizedName] = {
-        base: score,
-        level: 0,
-        misc: 0,
-        get total() {
-          return this.base + this.misc + this.level;
-        },
-        get modifier() {
-          return computeModifier(this.total);
-        },
-      };
-    }
-
-    // Apply level-up ability increases
-    for (const level of levels) {
-      if (level.abilityId) {
-        const normalizedName = this.abilityIdToName.get(level.abilityId);
-        if (normalizedName && this.detailedCharacterAbilities[normalizedName]) {
-          this.detailedCharacterAbilities[normalizedName].level += 1;
-        }
-      }
-    }
-  }
-
   getAbilities() {
     return this.detailedCharacterAbilities;
   }
@@ -139,5 +107,37 @@ export default class DetailedCharacterAbilities {
     const ability = this.detailedCharacterAbilities[stripSeparators(abilityName)];
     if (!ability) return 0;
     return this.computeModifier(ability.base + ability.level);
+  }
+
+  initialize(characterAbilities: { abilityId: string; name: string; score: number }[], levels: CharacterLevel[]) {
+    // Initialize abilities from the character's ability scores
+    for (const { abilityId, name, score } of characterAbilities) {
+      const normalizedName = stripSeparators(name);
+      this.abilityIdToName.set(abilityId, normalizedName);
+
+      const computeModifier = (total: number) => this.computeModifier(total);
+      // The total and the modifier are computed from the parts when read, so they follow every change to them
+      this.detailedCharacterAbilities[normalizedName] = {
+        base: score,
+        level: 0,
+        misc: 0,
+        get total() {
+          return this.base + this.misc + this.level;
+        },
+        get modifier() {
+          return computeModifier(this.total);
+        },
+      };
+    }
+
+    // Apply level-up ability increases
+    for (const level of levels) {
+      if (level.abilityId) {
+        const normalizedName = this.abilityIdToName.get(level.abilityId);
+        if (normalizedName && this.detailedCharacterAbilities[normalizedName]) {
+          this.detailedCharacterAbilities[normalizedName].level += 1;
+        }
+      }
+    }
   }
 }

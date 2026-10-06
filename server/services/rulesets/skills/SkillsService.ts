@@ -21,48 +21,6 @@ import type { Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 class SkillsService {
-  async getSkill(rulesetId: string, skillId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
-
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-      const properties = rulesetData.propertiesByEntity.get(skill.id) ?? [];
-      const [enriched] = hooks.skills.enrichWithProperties([skill], properties);
-      return enriched;
-    });
-  }
-
-  async getSkills(
-    rulesetId: string,
-    where: {
-      childOnly?: boolean;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-      const result = await Skills.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-
-      // Flatten per-skill properties from the cache into a single array for
-      // enrichWithProperties (which does the entity-type filtering internally).
-      const properties: Property[] = [];
-      for (const s of result.items) {
-        const ps = rulesetData.propertiesByEntity.get(s.id);
-        if (ps) properties.push(...ps);
-      }
-
-      return {
-        ...result,
-        items: hooks.skills.enrichWithProperties(result.items, properties),
-      };
-    });
-  }
-
   async createSkill(
     session: Session,
     rulesetId: string,
@@ -122,6 +80,83 @@ class SkillsService {
     return result;
   }
 
+  async deleteSkill(session: Session, rulesetId: string, skillId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "skills", skillId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
+
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "skills", skill);
+
+        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);
+
+        // FK CASCADE on klass_skills.skill_id wipes those join rows.
+        // The database deletes its customizations with it.
+        const rows = await Skills.delete(tx, { id: targetId });
+        const deletedSkill = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(skillsInRules),
+          type: "deleteSkill",
+          data: { rulesetId, entityName: skill.name },
+        });
+
+        return deletedSkill;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getSkill(rulesetId: string, skillId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
+
+      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+      const properties = rulesetData.propertiesByEntity.get(skill.id) ?? [];
+      const [enriched] = hooks.skills.enrichWithProperties([skill], properties);
+      return enriched;
+    });
+  }
+
+  async getSkills(
+    rulesetId: string,
+    where: {
+      childOnly?: boolean;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+      const result = await Skills.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+
+      // Flatten per-skill properties from the cache into a single array for
+      // enrichWithProperties (which does the entity-type filtering internally).
+      const properties: Property[] = [];
+      for (const s of result.items) {
+        const ps = rulesetData.propertiesByEntity.get(s.id);
+        if (ps) properties.push(...ps);
+      }
+
+      return {
+        ...result,
+        items: hooks.skills.enrichWithProperties(result.items, properties),
+      };
+    });
+  }
+
   async updateSkill(
     session: Session,
     rulesetId: string,
@@ -179,41 +214,6 @@ class SkillsService {
         });
 
         return { ...updatedSkill, ...storedFlags };
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteSkill(session: Session, rulesetId: string, skillId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "skills", skillId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "skills", skill);
-
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-        await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);
-
-        // FK CASCADE on klass_skills.skill_id wipes those join rows.
-        // The database deletes its customizations with it.
-        const rows = await Skills.delete(tx, { id: targetId });
-        const deletedSkill = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(skillsInRules),
-          type: "deleteSkill",
-          data: { rulesetId, entityName: skill.name },
-        });
-
-        return deletedSkill;
       });
     });
     RulesetCache.invalidate(rulesetId);

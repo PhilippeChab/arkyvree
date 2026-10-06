@@ -21,6 +21,13 @@ import { nameRules } from "@/client/src/lib/validation.ts";
 import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
+interface ArchiveRulesetDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+}
+
 interface EditRulesetDialogProps {
   open: boolean;
   onClose: () => void;
@@ -36,13 +43,6 @@ interface ForkRulesetDialogProps {
   onClose: () => void;
   form: UseFormReturn<ForkRulesetFormData>;
   onSubmit: (data: ForkRulesetFormData) => void;
-  isLoading: boolean;
-}
-
-interface ArchiveRulesetDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
   isLoading: boolean;
 }
 

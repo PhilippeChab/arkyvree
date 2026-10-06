@@ -1,13 +1,13 @@
 /** Text: as it's stored, a name or a label written for display, or reduced to a slug. */
 
-/** A name's first letter, capitalized, for an avatar. */
-export function getInitial(name: string) {
-  return name.charAt(0).toUpperCase();
-}
-
 /** `s` with its first letter capitalized. */
 export function capitalize(s: string) {
   return String(s).charAt(0).toUpperCase() + String(s).slice(1);
+}
+
+/** A name's first letter, capitalized, for an avatar. */
+export function getInitial(name: string) {
+  return name.charAt(0).toUpperCase();
 }
 
 /** Text as it's stored: Unicode-normalized (NFKC) and trimmed. The server stores it so; the client measures it so. */

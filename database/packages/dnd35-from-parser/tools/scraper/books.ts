@@ -5,6 +5,8 @@
  * those mappings so every parser can resolve a book slug to its URL component.
  */
 
+const BASE_URL = "https://dndtools.net";
+
 const BOOK_SLUGS: Record<string, string> = {
   srd: "players-handbook-v35--6",
   "complete-warrior": "complete-warrior--61",
@@ -14,8 +16,6 @@ const BOOK_SLUGS: Record<string, string> = {
   "complete-scoundrel": "complete-scoundrel--60",
   dmg: "dungeon-masters-guide-v35--4",
 };
-
-const BASE_URL = "https://dndtools.net";
 
 export function getBookSlug(book: string): string {
   const slug = BOOK_SLUGS[book];

@@ -10,10 +10,10 @@ import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic
 
 import { getEnvironmentName, readEnv } from "@/server/environment.ts";
 
-let initialized = false;
-let meterProvider: MeterProvider | null = null;
-let loggerProvider: LoggerProvider | null = null;
 let hostMetrics: HostMetrics | null = null;
+let initialized = false;
+let loggerProvider: LoggerProvider | null = null;
+let meterProvider: MeterProvider | null = null;
 
 /**
  * Initializes OTLP metrics + logs push to Better Stack via OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_AUTH_TOKEN. No-op if

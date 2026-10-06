@@ -39,9 +39,6 @@ import { InventoryPlacementFields } from "./InventoryPlacementFields.tsx";
 import { SheetSection } from "./SheetSection.tsx";
 import { shownWeaponSet } from "./weaponSets.ts";
 
-type InventoryItems = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>;
-type InventoryEntry = InventoryItems[number];
-
 interface EquipmentSectionProps {
   characterId: string;
   rulesetId: string;
@@ -49,6 +46,9 @@ interface EquipmentSectionProps {
   isCustomRuleset?: boolean;
   encumbrance?: EncumbranceData;
 }
+type InventoryEntry = InventoryItems[number];
+
+type InventoryItems = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>;
 
 /** An item's placement, from its details: its columns and properties' profile (slot, weapon, charges). */
 function placementOf(detail: {

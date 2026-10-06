@@ -19,8 +19,8 @@ import { skillsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-type SkillsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>;
 type Skill = SkillsPaginated["items"][number];
+type SkillsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["skills"]["$get"], 200>;
 
 const SKILLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },

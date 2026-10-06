@@ -13,20 +13,6 @@ import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterModifiersService {
-  async getModifiers(session: Session, characterId: string) {
-    const character = await getEditableCharacter(db, session, characterId);
-
-    const [modifiers, { segmentLabels }] = await Promise.all([
-      Modifiers.findMany(db, {
-        sourceIds: [characterId],
-        sourceType: "characters",
-      }),
-      getTargetPathsWithLabels(character.rulesetId, "modifier"),
-    ]);
-
-    return modifiers.map((m) => ({ ...m, targetLabels: pickTargetLabels([m.target, m.value], segmentLabels) }));
-  }
-
   async createModifier(
     session: Session,
     characterId: string,
@@ -64,6 +50,49 @@ class CharacterModifiersService {
 
       return modifier;
     });
+  }
+
+  async deleteModifier(session: Session, characterId: string, modifierId: string) {
+    return withTransaction(async (tx) => {
+      const character = await getEditableCharacter(tx, session, characterId);
+
+      const existing = await Modifiers.findOne(tx, { id: modifierId });
+      if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters") {
+        throw new NotFoundError("Modifier not found");
+      }
+
+      const rows = await Modifiers.delete(tx, { ids: [modifierId] });
+      const modifier = rows[0];
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: modifierId,
+        targetTable: getTableName(modifiersInCustomization),
+        type: "deleteCharacterModifier",
+        data: {
+          characterName: character.name,
+          target: existing.target,
+          value: existing.value,
+          operator: existing.operator,
+        },
+      });
+
+      return modifier;
+    });
+  }
+
+  async getModifiers(session: Session, characterId: string) {
+    const character = await getEditableCharacter(db, session, characterId);
+
+    const [modifiers, { segmentLabels }] = await Promise.all([
+      Modifiers.findMany(db, {
+        sourceIds: [characterId],
+        sourceType: "characters",
+      }),
+      getTargetPathsWithLabels(character.rulesetId, "modifier"),
+    ]);
+
+    return modifiers.map((m) => ({ ...m, targetLabels: pickTargetLabels([m.target, m.value], segmentLabels) }));
   }
 
   async updateModifier(
@@ -110,35 +139,6 @@ class CharacterModifiersService {
         targetTable: getTableName(modifiersInCustomization),
         type: "updateCharacterModifier",
         data: { characterName: character.name, target: body.target, value: body.value, operator: body.operator },
-      });
-
-      return modifier;
-    });
-  }
-
-  async deleteModifier(session: Session, characterId: string, modifierId: string) {
-    return withTransaction(async (tx) => {
-      const character = await getEditableCharacter(tx, session, characterId);
-
-      const existing = await Modifiers.findOne(tx, { id: modifierId });
-      if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters") {
-        throw new NotFoundError("Modifier not found");
-      }
-
-      const rows = await Modifiers.delete(tx, { ids: [modifierId] });
-      const modifier = rows[0];
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: modifierId,
-        targetTable: getTableName(modifiersInCustomization),
-        type: "deleteCharacterModifier",
-        data: {
-          characterName: character.name,
-          target: existing.target,
-          value: existing.value,
-          operator: existing.operator,
-        },
       });
 
       return modifier;

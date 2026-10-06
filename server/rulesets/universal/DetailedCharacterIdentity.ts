@@ -34,6 +34,16 @@ type DetailedCharacterComprehensiveIdentity = {
   };
 };
 
+const NAVIGATABLE_BACKGROUND_PATHS = [
+  { path: "notes", description: "Public notes", type: "string" as const },
+  { path: "privateNotes", description: "Private notes (GM only)", type: "string" as const },
+];
+
+const NAVIGATABLE_BELIEFS_PATHS = [
+  { path: "deity", description: "Character deity", type: "string" as const },
+  { path: "alignment", description: "e.g., Lawful Good", type: "string" as const },
+];
+
 const NAVIGATABLE_IDENTITY_PATHS = [
   { path: "name", description: "Character name", type: "string" as const },
   { path: "description", description: "Physical description", type: "string" as const },
@@ -43,16 +53,6 @@ const NAVIGATABLE_IDENTITY_PATHS = [
   { path: "weight", description: "Body weight", type: "string" as const },
   { path: "race.name", description: "Race name", type: "string" as const },
   { path: "race.size", description: "Size (e.g., Medium, Small)", type: "string" as const },
-];
-
-const NAVIGATABLE_BELIEFS_PATHS = [
-  { path: "deity", description: "Character deity", type: "string" as const },
-  { path: "alignment", description: "e.g., Lawful Good", type: "string" as const },
-];
-
-const NAVIGATABLE_BACKGROUND_PATHS = [
-  { path: "notes", description: "Public notes", type: "string" as const },
-  { path: "privateNotes", description: "Private notes (GM only)", type: "string" as const },
 ];
 
 const NAVIGATABLE_META_PATHS = [
@@ -138,6 +138,10 @@ export default class DetailedCharacterIdentity {
   protected readonly detailedCharacterIdentity: DetailedCharacterComprehensiveIdentity =
     {} as DetailedCharacterComprehensiveIdentity;
 
+  getIdentity() {
+    return this.detailedCharacterIdentity;
+  }
+
   initialize(character: Character, race: Race, languages: Language[]) {
     const classes = this.characterClasses.getClasses();
     const level = Object.values(classes).reduce((acc, klass) => acc + klass.level, 0);
@@ -165,9 +169,5 @@ export default class DetailedCharacterIdentity {
       level,
       xp: character.xp,
     };
-  }
-
-  getIdentity() {
-    return this.detailedCharacterIdentity;
   }
 }

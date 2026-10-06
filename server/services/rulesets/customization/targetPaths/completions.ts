@@ -79,6 +79,16 @@ export function buildSegmentDescriber(
   };
 }
 
+/** Groups first, then by sort order, then by label. */
+export function compareCompletions(a: PathCompletion, b: PathCompletion) {
+  if (a.kind === "group" && b.kind !== "group") return -1;
+  if (a.kind !== "group" && b.kind === "group") return 1;
+  const orderA = a.sortOrder ?? Infinity;
+  const orderB = b.sortOrder ?? Infinity;
+  if (orderA !== orderB) return orderA - orderB;
+  return a.label.localeCompare(b.label);
+}
+
 /** The categories that have paths and start with what's typed of the first segment. */
 export function getCategoryCompletions(
   generator: TargetPathsInterface,
@@ -188,14 +198,4 @@ export function resolveCompletedPrefix(allPaths: TargetPath[], partialPath: stri
     }
   }
   return pathPrefix;
-}
-
-/** Groups first, then by sort order, then by label. */
-export function compareCompletions(a: PathCompletion, b: PathCompletion) {
-  if (a.kind === "group" && b.kind !== "group") return -1;
-  if (a.kind !== "group" && b.kind === "group") return 1;
-  const orderA = a.sortOrder ?? Infinity;
-  const orderB = b.sortOrder ?? Infinity;
-  if (orderA !== orderB) return orderA - orderB;
-  return a.label.localeCompare(b.label);
 }

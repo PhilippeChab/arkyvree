@@ -1,14 +1,5 @@
 export type RollMethodId = "4d6-drop-lowest" | "3d6-straight" | "standard-array" | "point-buy";
 
-export const ROLL_METHODS: { id: RollMethodId; label: string }[] = [
-  { id: "4d6-drop-lowest", label: "4d6 Drop Lowest" },
-  { id: "3d6-straight", label: "3d6 Straight" },
-  { id: "standard-array", label: "Standard Array" },
-  { id: "point-buy", label: "Point Buy" },
-];
-
-export const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
-
 export const POINT_BUY_COSTS: Record<number, number> = {
   8: 0,
   9: 1,
@@ -24,6 +15,15 @@ export const POINT_BUY_COSTS: Record<number, number> = {
 };
 
 export const POINT_BUY_TOTAL = 25;
+
+export const ROLL_METHODS: { id: RollMethodId; label: string }[] = [
+  { id: "4d6-drop-lowest", label: "4d6 Drop Lowest" },
+  { id: "3d6-straight", label: "3d6 Straight" },
+  { id: "standard-array", label: "Standard Array" },
+  { id: "point-buy", label: "Point Buy" },
+];
+
+export const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
 
 export function rollDie(sides: number): number {
   return Math.floor(Math.random() * sides) + 1;

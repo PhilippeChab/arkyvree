@@ -20,37 +20,6 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ClassesService {
-  async getClass(rulesetId: string, klassId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
-
-      const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      const properties = rulesetData.propertiesByEntity.get(klass.id) ?? [];
-      const { bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId } =
-        rulesetModule.hooks.classes.readClassProperties(properties);
-
-      return { ...klass, bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId };
-    });
-  }
-
-  async getClasses(
-    rulesetId: string,
-    where: {
-      childOnly?: boolean;
-      kind?: string;
-      search?: string;
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-    },
-    pagination: { limit: number; page: number },
-  ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      return await Klasses.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-    });
-  }
-
   async createClass(
     session: Session,
     rulesetId: string,
@@ -98,6 +67,71 @@ class ClassesService {
     return result;
   }
 
+  async deleteClass(session: Session, rulesetId: string, klassId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "klasses", klassId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
+
+        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "klasses", klass);
+
+        // FK CASCADE wipes klass_levels (and their klass_level_feats /
+        // klass_level_powers / klass_level_saves), klass_skills, and any
+        // character_levels referencing this klass when the row is deleted.
+        // The database deletes the class's and its levels' customizations.
+        const rows = await Klasses.delete(tx, { id: targetId });
+        const deletedKlass = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(klassesInRules),
+          type: "deleteKlass",
+          data: { rulesetId, entityName: klass.name },
+        });
+
+        return deletedKlass;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async getClass(rulesetId: string, klassId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
+
+      const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+      const properties = rulesetData.propertiesByEntity.get(klass.id) ?? [];
+      const { bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId } =
+        rulesetModule.hooks.classes.readClassProperties(properties);
+
+      return { ...klass, bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId };
+    });
+  }
+
+  async getClasses(
+    rulesetId: string,
+    where: {
+      childOnly?: boolean;
+      kind?: string;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      return await Klasses.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+    });
+  }
+
   async updateClass(
     session: Session,
     rulesetId: string,
@@ -139,40 +173,6 @@ class ClassesService {
         });
 
         return updatedKlass;
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteClass(session: Session, rulesetId: string, klassId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "klasses", klassId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "klasses", klass);
-
-        // FK CASCADE wipes klass_levels (and their klass_level_feats /
-        // klass_level_powers / klass_level_saves), klass_skills, and any
-        // character_levels referencing this klass when the row is deleted.
-        // The database deletes the class's and its levels' customizations.
-        const rows = await Klasses.delete(tx, { id: targetId });
-        const deletedKlass = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(klassesInRules),
-          type: "deleteKlass",
-          data: { rulesetId, entityName: klass.name },
-        });
-
-        return deletedKlass;
       });
     });
     RulesetCache.invalidate(rulesetId);

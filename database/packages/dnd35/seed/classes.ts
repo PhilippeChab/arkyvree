@@ -31,16 +31,16 @@ const BAB: Record<BabType, (level: number) => number> = {
   poor: (level) => Math.floor(level / 2),
 };
 
-const SAVE: Record<SaveType, (level: number) => number> = {
-  good: (level) => Math.floor(level / 2) + 2,
-  poor: (level) => Math.floor(level / 3),
-};
-
 const CASTER_LEVEL_APTITUDES = {
   divine: ["Bonus Divine Caster Level"],
   arcane: ["Bonus Arcane Caster Level"],
   any: ["Bonus Caster Level"],
   dual: ["Bonus Arcane Caster Level", "Bonus Divine Caster Level"],
+};
+
+const SAVE: Record<SaveType, (level: number) => number> = {
+  good: (level) => Math.floor(level / 2) + 2,
+  poor: (level) => Math.floor(level / 3),
 };
 
 /** What a table (by class level, then spell level) adds at each class level: `delta` more at `spellLevel`. */

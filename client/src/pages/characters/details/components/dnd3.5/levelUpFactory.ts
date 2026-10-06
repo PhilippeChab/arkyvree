@@ -33,22 +33,39 @@ import { LevelUpReviewStep } from "./LevelUpReviewStep.tsx";
 import { LevelUpSkillsStep } from "./LevelUpSkillsStep.tsx";
 import { LevelUpSpellsStep } from "./LevelUpSpellsStep.tsx";
 
-interface LevelUpHpState {
-  selectedClass: SelectedKlass | null;
-  /** The picks' form: the HP field. */
-  control: Control<LevelUpFormData>;
-  hpRolling: boolean;
-  hpSettled: boolean;
-  hpDisplayValue: number | null;
-  triggerHpRoll: (hd: number) => void;
-}
-
-interface LevelUpAttributeState {
+interface AddAttributeState {
   attributeData: AttributesData | undefined;
   isLoadingAttributes: boolean;
   attributesError: Error | null;
-  /** The picks' form: the attribute field. */
-  control: Control<LevelUpFormData>;
+  abilityIncreaseLevels: number[];
+  abilityIncreases: Record<number, string | null>;
+  handleAbilityIncreaseChange: (index: number, abilityId: string) => void;
+  levelDetails: Pick<PreviewLevelDetail, "klassName" | "level">[];
+}
+
+interface AddClassPlanState {
+  classPlan: (SelectedKlass | null)[];
+  slotKeys: number[];
+  handleClassChange: (index: number, klass: SelectedKlass | null) => void;
+  handleAddLevel: () => void;
+  handleQuickAddLevel: (klass: SelectedKlass) => void;
+  handleRemoveLevel: (index: number) => void;
+}
+
+interface AddHpState {
+  hpLevels: Array<{ className: string; hd: number; nextLevel: number }>;
+  hpValues: (number | null)[];
+  handleHpChange: (index: number, value: number | null) => void;
+  handleHpRoll: (index: number) => void;
+  handleHpRollAll: () => void;
+  handleHpMaxAll: () => void;
+}
+
+interface AddReviewState extends LevelReviewState {
+  classPlan: (SelectedKlass | null)[];
+  hpValues: (number | null)[];
+  abilityIncreases: Record<number, string | null>;
+  attributeData: AttributesData | undefined;
 }
 
 /** The feat picker state a level wizard hands the Feats step. */
@@ -73,59 +90,29 @@ interface FeatPickerState {
   control: Control<LevelUpFormData>;
 }
 
+interface LevelUpAttributeState {
+  attributeData: AttributesData | undefined;
+  isLoadingAttributes: boolean;
+  attributesError: Error | null;
+  /** The picks' form: the attribute field. */
+  control: Control<LevelUpFormData>;
+}
+
+interface LevelUpHpState {
+  selectedClass: SelectedKlass | null;
+  /** The picks' form: the HP field. */
+  control: Control<LevelUpFormData>;
+  hpRolling: boolean;
+  hpSettled: boolean;
+  hpDisplayValue: number | null;
+  triggerHpRoll: (hd: number) => void;
+}
+
 interface LevelUpReviewState extends LevelReviewState {
   selectedClass: SelectedKlass | null;
   selectedHP: number | null;
   selectedAttribute: string | null;
   attributeData: AttributesData | undefined;
-}
-
-interface SkillPickerState {
-  skillData: SkillsData | null | undefined;
-  isLoadingSkills: boolean;
-  skillsError: Error | null;
-  /** The points as they fit the slots */
-  skillPointAllocations: Record<string, number>;
-  /** The picks' form: the skill points field, which the step changes from `skillPointAllocations`. */
-  control: Control<LevelUpFormData>;
-  /** Several levels at once (Add Level): each level's class skills and points. */
-  perLevelClassSkillIds?: string[][];
-  perLevelSkillPoints?: number[];
-}
-
-interface AddClassPlanState {
-  classPlan: (SelectedKlass | null)[];
-  slotKeys: number[];
-  handleClassChange: (index: number, klass: SelectedKlass | null) => void;
-  handleAddLevel: () => void;
-  handleQuickAddLevel: (klass: SelectedKlass) => void;
-  handleRemoveLevel: (index: number) => void;
-}
-
-interface AddAttributeState {
-  attributeData: AttributesData | undefined;
-  isLoadingAttributes: boolean;
-  attributesError: Error | null;
-  abilityIncreaseLevels: number[];
-  abilityIncreases: Record<number, string | null>;
-  handleAbilityIncreaseChange: (index: number, abilityId: string) => void;
-  levelDetails: Pick<PreviewLevelDetail, "klassName" | "level">[];
-}
-
-interface AddReviewState extends LevelReviewState {
-  classPlan: (SelectedKlass | null)[];
-  hpValues: (number | null)[];
-  abilityIncreases: Record<number, string | null>;
-  attributeData: AttributesData | undefined;
-}
-
-interface AddHpState {
-  hpLevels: Array<{ className: string; hd: number; nextLevel: number }>;
-  hpValues: (number | null)[];
-  handleHpChange: (index: number, value: number | null) => void;
-  handleHpRoll: (index: number) => void;
-  handleHpRollAll: () => void;
-  handleHpMaxAll: () => void;
 }
 
 /** The spell picker state a level wizard hands the Spells step. */
@@ -162,8 +149,52 @@ interface SectionMap {
   AddReviewStep: ComponentType<AddReviewStepProps>;
 }
 
-export interface LevelUpHpStepProps {
-  wizard: LevelUpHpState;
+interface SkillPickerState {
+  skillData: SkillsData | null | undefined;
+  isLoadingSkills: boolean;
+  skillsError: Error | null;
+  /** The points as they fit the slots */
+  skillPointAllocations: Record<string, number>;
+  /** The picks' form: the skill points field, which the step changes from `skillPointAllocations`. */
+  control: Control<LevelUpFormData>;
+  /** Several levels at once (Add Level): each level's class skills and points. */
+  perLevelClassSkillIds?: string[][];
+  perLevelSkillPoints?: number[];
+}
+
+export interface AddAttributeStepProps {
+  wizard: AddAttributeState;
+  baseRules: BaseRules;
+}
+
+export interface AddClassPlanStepProps {
+  wizard: AddClassPlanState;
+  /** Search-filtered list for the Autocomplete dropdown. */
+  availableKlasses: AvailableKlass[];
+  /** Unfiltered snapshot for the quick-add button row so searching doesn't
+   *  drop the character's existing classes from the "+ X" row. */
+  quickAddKlasses: AvailableKlass[];
+  isLoadingKlasses: boolean;
+  handleKlassListScroll: (event: React.UIEvent<HTMLElement>) => void;
+  setKlassSearch: (search: string) => void;
+}
+
+export interface AddHpStepProps {
+  wizard: AddHpState;
+}
+
+export interface AddReviewStepProps {
+  wizard: AddReviewState;
+}
+
+/** The skills, feats and spells picked, as every level review lists them. */
+export interface LevelReviewState {
+  skillPointAllocations: Record<string, number>;
+  skillData: SkillsData | null | undefined;
+  selectedFeats: LevelUpFormData["selectedFeats"];
+  featData: FeatsData | null | undefined;
+  selectedPowers: LevelUpFormData["selectedPowers"];
+  powerData: PowersData | null | undefined;
 }
 
 export interface LevelUpAttributeStepProps {
@@ -182,14 +213,12 @@ export interface LevelUpFeatsStepProps {
   pendingLevelFeatPicks?: string;
 }
 
-/** The skills, feats and spells picked, as every level review lists them. */
-export interface LevelReviewState {
-  skillPointAllocations: Record<string, number>;
-  skillData: SkillsData | null | undefined;
-  selectedFeats: LevelUpFormData["selectedFeats"];
-  featData: FeatsData | null | undefined;
-  selectedPowers: LevelUpFormData["selectedPowers"];
-  powerData: PowersData | null | undefined;
+export interface LevelUpHpStepProps {
+  wizard: LevelUpHpState;
+}
+
+export interface LevelUpPowersStepProps {
+  wizard: PowerPickerState;
 }
 
 export interface LevelUpReviewStepProps {
@@ -198,35 +227,6 @@ export interface LevelUpReviewStepProps {
 
 export interface LevelUpSkillsStepProps {
   wizard: SkillPickerState;
-}
-
-export interface AddClassPlanStepProps {
-  wizard: AddClassPlanState;
-  /** Search-filtered list for the Autocomplete dropdown. */
-  availableKlasses: AvailableKlass[];
-  /** Unfiltered snapshot for the quick-add button row so searching doesn't
-   *  drop the character's existing classes from the "+ X" row. */
-  quickAddKlasses: AvailableKlass[];
-  isLoadingKlasses: boolean;
-  handleKlassListScroll: (event: React.UIEvent<HTMLElement>) => void;
-  setKlassSearch: (search: string) => void;
-}
-
-export interface AddAttributeStepProps {
-  wizard: AddAttributeState;
-  baseRules: BaseRules;
-}
-
-export interface AddReviewStepProps {
-  wizard: AddReviewState;
-}
-
-export interface AddHpStepProps {
-  wizard: AddHpState;
-}
-
-export interface LevelUpPowersStepProps {
-  wizard: PowerPickerState;
 }
 
 const rulesetSections: Record<BaseRules, SectionMap> = {

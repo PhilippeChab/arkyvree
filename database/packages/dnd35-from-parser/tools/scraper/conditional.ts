@@ -1,14 +1,18 @@
 import { PART_SEPARATOR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 
-/** A word that makes what its sentence grants apply only sometimes: "+2 on saves against poison", "while raging". */
-const CONDITION = /\b(?:against|while|whenever|when|during|versus|if|unless|only|as long as)\b|\bvs\./i;
-
-/** Someone other than the character, whom what the sentence grants goes to: "all allies within 30 feet gain…". */
-const SOMEONE_ELSE = /\b(?:all(?:y|ies)|companions?|cohorts?|familiars?|followers?|mounts?)\b/i;
-
 /** An effect used rather than had: "expend/spend one use of…", "three times per day", "as a swift action", "for 1 hour". */
 const ACTIVATION =
   /\b(?:ex|s)pend\b|\bper day\b|\/day\b|\btimes? a day\b|\bas an? (?:free|swift|immediate|move|standard|full-round) action\b|\bfor (?:\d+|one|a|an) (?:rounds?|minutes?|hours?)\b/i;
+
+/** A word that makes what its sentence grants apply only sometimes: "+2 on saves against poison", "while raging". */
+const CONDITION = /\b(?:against|while|whenever|when|during|versus|if|unless|only|as long as)\b|\bvs\./i;
+
+/**
+ * What's worn, held or carried, which conditions nothing: an item "when worn", a feat's "if you are wearing light
+ * armor and carrying a light load".
+ */
+const EQUIPPED =
+  /\b(?:when|while|if|as long as)\s+(?:(?:it is|you are|they are|she|he|you)\s+)?(?:worn|wears|wearing|placed|donned|held|holds|holding|grasped|carried|carries|carrying|used|activated|wielded|wields|wielding)\b/gi;
 
 /**
  * What narrows a bonus right after it: "Search checks made to notice…", "a bonus that…", "checks related to…", "saves
@@ -17,12 +21,8 @@ const ACTIVATION =
 const NARROWED =
   /^(?:\s+(?:that|to|made|related|involving)\b|\s+for\s+(?:\w+ing\b|(?:\d+(?:d\d+)?|one|a|an)\s+(?:rounds?|minutes?|hours?|days?)\b)|,?\s+(?:(?:when|while|if|against|versus)\b|vs\.?\s))/i;
 
-/**
- * What's worn, held or carried, which conditions nothing: an item "when worn", a feat's "if you are wearing light
- * armor and carrying a light load".
- */
-const EQUIPPED =
-  /\b(?:when|while|if|as long as)\s+(?:(?:it is|you are|they are|she|he|you)\s+)?(?:worn|wears|wearing|placed|donned|held|holds|holding|grasped|carried|carries|carrying|used|activated|wielded|wields|wielding)\b/gi;
+/** Someone other than the character, whom what the sentence grants goes to: "all allies within 30 feet gain…". */
+const SOMEONE_ELSE = /\b(?:all(?:y|ies)|companions?|cohorts?|familiars?|followers?|mounts?)\b/i;
 
 /**
  * What of `text` the bonus from `start` to `end` falls under: its sentence's opening, before any bonus ("While raging,

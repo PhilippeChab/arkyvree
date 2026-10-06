@@ -48,10 +48,6 @@ import {
 } from "@/shared/customization/entities.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
-type TabSection = "properties" | "modifiers" | "requirements";
-
-type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
-
 interface CustomizationViewProps {
   rulesetId: string;
   entityId: string;
@@ -63,6 +59,10 @@ interface CustomizationViewProps {
   /** Still showing the entity a copy was made from, while the copy loads. */
   locked: boolean;
 }
+
+type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
+
+type TabSection = "properties" | "modifiers" | "requirements";
 
 /** Entities with an editor on this page, which can also be deleted from it. */
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
@@ -99,10 +99,6 @@ const TABS: SectionTab<TabSection>[] = [
     ),
   },
 ];
-
-function isEditable(data: CustomizationEntity): data is EditableEntity {
-  return EDITABLE_TYPES.some((type) => type === data.type);
-}
 
 /** Where a modifier's page goes back to: its class's Modifiers tab, or its entity's customization page. */
 function modifierSourcePath(rulesetId: string, sourceType: string, sourceId: string) {
@@ -151,6 +147,10 @@ function describe(
   }
 }
 
+function isEditable(data: CustomizationEntity): data is EditableEntity {
+  return EDITABLE_TYPES.some((type) => type === data.type);
+}
+
 function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "entity">) {
   switch (data.type) {
     case "feats":
@@ -166,11 +166,6 @@ function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "e
     default:
       return data satisfies never;
   }
-}
-
-/** A modifier can only carry requirements. */
-function tabsFor(type: CustomizationPageType) {
-  return type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
 }
 
 async function deleteEntity(data: EditableEntity, id: string, entityId: string) {
@@ -343,6 +338,11 @@ function CustomizationView({
       />
     </EntityDetailLayout>
   );
+}
+
+/** A modifier can only carry requirements. */
+function tabsFor(type: CustomizationPageType) {
+  return type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
 }
 
 export default function CustomizationPage() {

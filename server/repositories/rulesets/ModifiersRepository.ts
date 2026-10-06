@@ -9,22 +9,6 @@ class ModifiersRepository extends CustomizationRepository<typeof modifiersInCust
     super(modifiersInCustomization);
   }
 
-  async findMany(db: Db, where: { sourceIds: string[]; sourceType: string } | { sourceIds: string[] }) {
-    if (!("sourceType" in where) && where.sourceIds.length === 0) return [];
-    return await db.query.modifiersInCustomization.findMany({
-      where: this.branchWhere(
-        [inArray(this.table.sourceId, where.sourceIds)],
-        ["sourceType" in where && eq(this.table.sourceType, where.sourceType), isNull(this.table.deletedAt)],
-      ),
-    });
-  }
-
-  async findOne(db: Db, where: { id: string }) {
-    return await db.query.modifiersInCustomization.findFirst({
-      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
-    });
-  }
-
   // Exception to soft-delete: disposable configuration data — intentional removal
   async delete(db: Db, where: { id: string } | { ids: string[] } | { sourceIds: string[]; sourceType: string }) {
     return await db
@@ -40,6 +24,22 @@ class ModifiersRepository extends CustomizationRepository<typeof modifiersInCust
         ),
       )
       .returning();
+  }
+
+  async findMany(db: Db, where: { sourceIds: string[]; sourceType: string } | { sourceIds: string[] }) {
+    if (!("sourceType" in where) && where.sourceIds.length === 0) return [];
+    return await db.query.modifiersInCustomization.findMany({
+      where: this.branchWhere(
+        [inArray(this.table.sourceId, where.sourceIds)],
+        ["sourceType" in where && eq(this.table.sourceType, where.sourceType), isNull(this.table.deletedAt)],
+      ),
+    });
+  }
+
+  async findOne(db: Db, where: { id: string }) {
+    return await db.query.modifiersInCustomization.findFirst({
+      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
+    });
   }
 }
 

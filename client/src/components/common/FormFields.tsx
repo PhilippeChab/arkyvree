@@ -30,12 +30,6 @@ interface BoundFieldProps<T extends FieldValues> {
   rules?: ControllerProps<T>["rules"];
 }
 
-/** What a preset takes besides the form's field. */
-interface PresetFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
-  autoFocus?: boolean;
-  disabled?: boolean;
-}
-
 /** A text field's own props: the form gives its value, change, error and ref. */
 type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
   Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "inputRef" | "error"> & {
@@ -43,7 +37,11 @@ type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
     number?: boolean;
   };
 
-type SelectOption = string | { value: string; label: ReactNode; disabled?: boolean };
+/** What a preset takes besides the form's field. */
+interface PresetFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
+  autoFocus?: boolean;
+  disabled?: boolean;
+}
 
 interface SelectFieldProps<T extends FieldValues> {
   control: Control<T>;
@@ -63,6 +61,8 @@ interface SelectFieldProps<T extends FieldValues> {
   /** Loads more options as the open menu nears its end (see `createListboxScrollHandler`). */
   onMenuScroll?: UIEventHandler<HTMLElement>;
 }
+
+type SelectOption = string | { value: string; label: ReactNode; disabled?: boolean };
 
 /**
  * A number field's rules: its empty value is NaN, which `required` doesn't count as empty (only `""`), so a required one

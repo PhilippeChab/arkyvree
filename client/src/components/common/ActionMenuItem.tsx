@@ -1,9 +1,6 @@
 import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import type { ElementType } from "react";
 
-/** What an action does, shown by its color (see docs/ui-buttons.md). */
-type Intent = "default" | "destructive" | "caution" | "positive";
-
 interface ActionMenuItemProps {
   icon: ElementType;
   label: string;
@@ -12,6 +9,9 @@ interface ActionMenuItemProps {
   intent?: Intent;
   onClick: () => void;
 }
+
+/** What an action does, shown by its color (see docs/ui-buttons.md). */
+type Intent = "default" | "destructive" | "caution" | "positive";
 
 const INTENT_COLORS = {
   destructive: "error.main",

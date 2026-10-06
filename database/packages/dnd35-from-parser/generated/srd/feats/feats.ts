@@ -14,319 +14,14 @@ import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchoo
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-export const GENERAL_FEATS: FeatSeed[] = [
-  {
-    name: "Acrobatic",
-    description: "You receive a +2 bonus to Jump checks and Tumble checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.jump.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.tumble.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Agile",
-    description: "You receive a +2 bonus to Balance checks and Escape Artist checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.balance.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.escapeartist.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Alertness",
-    description: "You receive a +2 bonus to Listen checks and Spot checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.listen.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.spot.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Animal Affinity",
-    description: "You receive a +2 bonus to Handle Animal checks and Ride checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.handleanimal.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.ride.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Armor Proficiency (Heavy)",
-    description: "Refer to Armor Proficiency (light).",
-    aptitudes: ["General"],
-    requirements: [eq("feats.armorproficiencylight.possessed"), eq("feats.armorproficiencymedium.possessed")],
-  },
-  {
-    name: "Armor Proficiency (Light)",
-    description:
-      "While wearing armor you are proficient with, the armor check penalty only applies to Balance, Climb, Escape Artist, Hide, Jump, Move Silently, Pick Pocket, and Tumble checks.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Armor Proficiency (Medium)",
-    description: "Refer to Armor Proficiency (light).",
-    aptitudes: ["General"],
-    requirements: [eq("feats.armorproficiencylight.possessed")],
-  },
-  {
-    name: "Athletic",
-    description: "You receive a +2 bonus to Climb checks and Swim checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.climb.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.swim.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Augment Summoning",
-    description:
-      "Any creature you call forth using a summon spell receives a +4 enhancement bonus to both Strength and Constitution for as long as the summoning spell persists.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.spellfocusconjuration.possessed")],
-  },
-  {
-    name: "Combat Casting",
-    description:
-      "You receive a +4 bonus to Concentration checks when casting a spell or using a spell-like ability while fighting defensively or while grappled or pinned.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Deceitful",
-    description: "You receive a +2 bonus to Disguise checks and Forgery checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.disguise.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.forgery.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Deft Hands",
-    description: "You receive a +2 bonus to Sleight of Hand checks and Use Rope checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.sleightofhand.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.userope.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Diehard",
-    description:
-      "When your hit points drop to between -1 and -9, you stabilize automatically without needing to roll. Upon reaching negative hit points, you may opt to act as though disabled instead of dying. This choice must be made immediately when you fall to negative hit points, even outside your turn. If you decline, you fall unconscious right away. While using this feat, you may take either a single move action or a single standard action per turn, but not both and never a full-round action. Move actions cause no additional harm, but performing a standard action (or any other strenuous action, including certain free actions like casting a quickened spell) deals 1 point of damage to you upon completion. You die immediately upon reaching -10 hit points.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.endurance.possessed")],
-  },
-  {
-    name: "Diligent",
-    description: "You receive a +2 bonus to Appraise checks and Decipher Script checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.appraise.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.decipherscript.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Endurance",
-    description:
-      "You gain a +4 bonus to the following: Swim checks to resist nonlethal damage, Constitution checks to keep running, Constitution checks to avoid nonlethal damage from forced marches, Constitution checks to hold your breath, Constitution checks to avoid nonlethal damage from starvation or thirst, Fortitude saves to avoid nonlethal damage from extreme temperatures, and Fortitude saves to resist suffocation damage. Additionally, you can sleep in light or medium armor without becoming fatigued.",
-    aptitudes: ["General", "Ranger Class Feature"],
-  },
-  {
-    name: "Eschew Materials",
-    description:
-      "You can cast any spell with a material component costing 1 gp or less without needing that component. Casting still provokes attacks of opportunity as usual. Spells requiring material components worth more than 1 gp still require you to have those components on hand.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Far Shot",
-    description:
-      "When using a projectile weapon such as a bow, your range increment increases by half (multiply by 1.5). When using a thrown weapon, your range increment doubles.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.pointblankshot.possessed")],
-  },
-  {
-    name: "Great Fortitude",
-    description: "You receive a +2 bonus to all Fortitude saving throws.",
-    aptitudes: ["General"],
-    modifiers: [{ target: "saves.fortitude.misc", operator: "add", value: "2", valueType: "number" }],
-  },
-  {
-    name: "Greater Spell Penetration",
-    description:
-      "You receive a +2 bonus to caster level checks (1d20 + caster level) to overcome a creature's spell resistance. This bonus stacks with the bonus from Spell Penetration.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.spellpenetration.possessed")],
-  },
-  {
-    name: "Improved Counterspell",
-    description:
-      "When counterspelling, you may substitute any spell from the same school that is at least one level higher than the spell being countered.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Improved Feint",
-    description: "You can use a Bluff check to feint in combat as a move action instead of a standard action.",
-    aptitudes: ["General"],
-    requirements: [gte("abilities.intelligence.total", 13), eq("feats.combatexpertise.possessed")],
-  },
-  {
-    name: "Improved Turning",
-    description:
-      "Your effective level for turning or rebuking creatures is treated as one level higher than your actual level in the class that grants the ability.",
-    aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
-  },
-  {
-    name: "Investigator",
-    description: "You receive a +2 bonus to Gather Information checks and Search checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.gatherinformation.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.search.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Iron Will",
-    description: "You receive a +2 bonus to all Will saving throws.",
-    aptitudes: ["General"],
-    modifiers: [{ target: "saves.will.misc", operator: "add", value: "2", valueType: "number" }],
-  },
-  {
-    name: "Leadership",
-    description:
-      "You gain the ability to attract loyal companions and devoted followers who serve under you. The specifics of available cohorts and followers are determined by the DM.",
-    aptitudes: ["General"],
-    requirements: [gte("identity.meta.level", 6)],
-  },
-  {
-    name: "Lightning Reflexes",
-    description: "You receive a +2 bonus to all Reflex saving throws.",
-    aptitudes: ["General"],
-    modifiers: [{ target: "saves.reflex.misc", operator: "add", value: "2", valueType: "number" }],
-  },
-  {
-    name: "Magical Aptitude",
-    description: "You receive a +2 bonus to Spellcraft checks and Use Magic Device checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.spellcraft.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.usemagicdevice.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Martial Weapon Proficiency",
-    description:
-      "You make attack rolls with every martial weapon without penalty, as barbarians, fighters, paladins and rangers do. A character who takes the feat chooses one weapon each time: Martial Weapon Proficiency: Longsword, Rapier and so on.",
-    selectable: false,
-    aptitudes: ["General"],
-  },
-  {
-    name: "Mounted Combat",
-    description:
-      "Once per round, when your mount takes a hit in combat, you may make a Ride check as a reaction to negate the blow. If your Ride check result exceeds the opponent's attack roll, the hit is negated. In effect, your Ride check result serves as the mount's AC when it would be higher than the mount's normal AC.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [gte("skills.ride.rank", 1)],
-  },
-  {
-    name: "Natural Spell",
-    description:
-      "You can fulfill the verbal and somatic components of spells while in wild shape form. For instance, while shaped as a hawk, screeches and talon gestures can substitute for normal verbal and somatic components. You may also use material components or focuses in your possession, even if they are melded into your current form. This feat does not allow use of magic items that your current form could not normally use, nor does it grant the ability to speak while wild shaped.",
-    aptitudes: ["General"],
-    requirements: [gte("abilities.wisdom.total", 13), eq("feats.wildshapedruid.possessed")],
-  },
-  {
-    name: "Negotiator",
-    description: "You receive a +2 bonus to Diplomacy checks and Sense Motive checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.diplomacy.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.sensemotive.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Nimble Fingers",
-    description: "You receive a +2 bonus to Disable Device checks and Open Lock checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.disabledevice.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.openlock.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Persuasive",
-    description: "You receive a +2 bonus to Bluff checks and Intimidate checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.bluff.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.intimidate.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Run",
-    description:
-      "While running, you move at five times your normal speed (with medium, light, or no armor and no more than a medium load) or four times your speed (with heavy armor or a heavy load). A running start grants a +4 bonus to Jump checks. You retain your Dexterity bonus to AC while running.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Self-Sufficient",
-    description: "You receive a +2 bonus to Heal checks and Survival checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.heal.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.survival.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Shield Proficiency",
-    description: "You can use a shield while incurring only the standard penalties.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Simple Weapon Proficiency",
-    description: "You make attack rolls with simple weapons without penalty.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Spell Penetration",
-    description:
-      "You receive a +2 bonus to caster level checks (1d20 + caster level) made to overcome a creature's spell resistance.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Stealthy",
-    description: "You receive a +2 bonus to Hide checks and Move Silently checks.",
-    aptitudes: ["General"],
-    modifiers: [
-      { target: "skills.hide.misc", operator: "add", value: "2", valueType: "number" },
-      { target: "skills.movesilently.misc", operator: "add", value: "2", valueType: "number" },
-    ],
-  },
-  {
-    name: "Sunder",
-    description: "Striking at an opponent's weapon does not provoke an attack of opportunity from that opponent.",
-    aptitudes: ["General"],
-    requirements: [gte("abilities.strength.total", 13), eq("feats.powerattack.possessed")],
-  },
-  {
-    name: "Toughness",
-    description: "You gain +3 hit points.",
-    stackable: true,
-    aptitudes: ["General"],
-    modifiers: [{ target: "combat.hp.misc", operator: "add", value: "3", valueType: "number" }],
-  },
-  {
-    name: "Tower Shield Proficiency",
-    description: "You can use a tower shield while incurring only the standard penalties.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.shieldproficiency.possessed")],
-  },
-  {
-    name: "Track",
-    description:
-      "Finding tracks or following them for 1 mile requires a successful Survival check. A new check is needed whenever the trail becomes harder to follow, such as when other tracks cross the trail or when it doubles back and splits. You travel at half normal speed while tracking (or at normal speed with a -5 check penalty, or up to double speed with a -20 penalty). The DC varies based on surface type and conditions. Very Soft Ground (fresh snow, thick dust, wet mud) retains deep, clear footprints. Soft Ground yields to pressure but is firmer, leaving frequent shallow prints. Firm Ground (typical outdoor terrain like lawns, fields, and woods, or very soft or dirty indoor surfaces) may show traces like broken branches or tufts of hair, with only occasional or partial prints. Hard Ground (bare rock, indoor floors, streambeds) holds no prints, only faint traces like scuff marks or displaced pebbles. Various conditions modify the Survival DC. Every three creatures in the tracked group reduce the DC by 1. For mixed-size groups, apply only the modifier for the largest size. On a failed check, you may retry after 1 hour outdoors or 10 minutes indoors.",
-    aptitudes: ["General", "Ranger Class Feature"],
-  },
-];
+export const exoticWeaponProficiency: FeatSeed[] = EXOTIC_WEAPONS.map((w) => ({
+  name: `Exotic Weapon Proficiency: ${w}`,
+  description: `You make attack rolls with the chosen weapon without penalty.`,
+  generated: true,
+  aptitudes: ["General", "Fighter Bonus Feat"],
+  requirements: [gte("combat.bab", 1)],
+  properties: [{ type: "FEAT_FAMILY", value: "Exotic Weapon Proficiency" }],
+}));
 
 export const FIGHTER_FEATS: FeatSeed[] = [
   {
@@ -690,6 +385,378 @@ export const FIGHTER_FEATS: FeatSeed[] = [
   },
 ];
 
+export const GENERAL_FEATS: FeatSeed[] = [
+  {
+    name: "Acrobatic",
+    description: "You receive a +2 bonus to Jump checks and Tumble checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.jump.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.tumble.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Agile",
+    description: "You receive a +2 bonus to Balance checks and Escape Artist checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.balance.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.escapeartist.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Alertness",
+    description: "You receive a +2 bonus to Listen checks and Spot checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.listen.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.spot.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Animal Affinity",
+    description: "You receive a +2 bonus to Handle Animal checks and Ride checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.handleanimal.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.ride.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Armor Proficiency (Heavy)",
+    description: "Refer to Armor Proficiency (light).",
+    aptitudes: ["General"],
+    requirements: [eq("feats.armorproficiencylight.possessed"), eq("feats.armorproficiencymedium.possessed")],
+  },
+  {
+    name: "Armor Proficiency (Light)",
+    description:
+      "While wearing armor you are proficient with, the armor check penalty only applies to Balance, Climb, Escape Artist, Hide, Jump, Move Silently, Pick Pocket, and Tumble checks.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Armor Proficiency (Medium)",
+    description: "Refer to Armor Proficiency (light).",
+    aptitudes: ["General"],
+    requirements: [eq("feats.armorproficiencylight.possessed")],
+  },
+  {
+    name: "Athletic",
+    description: "You receive a +2 bonus to Climb checks and Swim checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.climb.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.swim.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Augment Summoning",
+    description:
+      "Any creature you call forth using a summon spell receives a +4 enhancement bonus to both Strength and Constitution for as long as the summoning spell persists.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.spellfocusconjuration.possessed")],
+  },
+  {
+    name: "Combat Casting",
+    description:
+      "You receive a +4 bonus to Concentration checks when casting a spell or using a spell-like ability while fighting defensively or while grappled or pinned.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Deceitful",
+    description: "You receive a +2 bonus to Disguise checks and Forgery checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.disguise.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.forgery.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Deft Hands",
+    description: "You receive a +2 bonus to Sleight of Hand checks and Use Rope checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.sleightofhand.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.userope.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Diehard",
+    description:
+      "When your hit points drop to between -1 and -9, you stabilize automatically without needing to roll. Upon reaching negative hit points, you may opt to act as though disabled instead of dying. This choice must be made immediately when you fall to negative hit points, even outside your turn. If you decline, you fall unconscious right away. While using this feat, you may take either a single move action or a single standard action per turn, but not both and never a full-round action. Move actions cause no additional harm, but performing a standard action (or any other strenuous action, including certain free actions like casting a quickened spell) deals 1 point of damage to you upon completion. You die immediately upon reaching -10 hit points.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.endurance.possessed")],
+  },
+  {
+    name: "Diligent",
+    description: "You receive a +2 bonus to Appraise checks and Decipher Script checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.appraise.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.decipherscript.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Endurance",
+    description:
+      "You gain a +4 bonus to the following: Swim checks to resist nonlethal damage, Constitution checks to keep running, Constitution checks to avoid nonlethal damage from forced marches, Constitution checks to hold your breath, Constitution checks to avoid nonlethal damage from starvation or thirst, Fortitude saves to avoid nonlethal damage from extreme temperatures, and Fortitude saves to resist suffocation damage. Additionally, you can sleep in light or medium armor without becoming fatigued.",
+    aptitudes: ["General", "Ranger Class Feature"],
+  },
+  {
+    name: "Eschew Materials",
+    description:
+      "You can cast any spell with a material component costing 1 gp or less without needing that component. Casting still provokes attacks of opportunity as usual. Spells requiring material components worth more than 1 gp still require you to have those components on hand.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Far Shot",
+    description:
+      "When using a projectile weapon such as a bow, your range increment increases by half (multiply by 1.5). When using a thrown weapon, your range increment doubles.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.pointblankshot.possessed")],
+  },
+  {
+    name: "Great Fortitude",
+    description: "You receive a +2 bonus to all Fortitude saving throws.",
+    aptitudes: ["General"],
+    modifiers: [{ target: "saves.fortitude.misc", operator: "add", value: "2", valueType: "number" }],
+  },
+  {
+    name: "Greater Spell Penetration",
+    description:
+      "You receive a +2 bonus to caster level checks (1d20 + caster level) to overcome a creature's spell resistance. This bonus stacks with the bonus from Spell Penetration.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.spellpenetration.possessed")],
+  },
+  {
+    name: "Improved Counterspell",
+    description:
+      "When counterspelling, you may substitute any spell from the same school that is at least one level higher than the spell being countered.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Improved Feint",
+    description: "You can use a Bluff check to feint in combat as a move action instead of a standard action.",
+    aptitudes: ["General"],
+    requirements: [gte("abilities.intelligence.total", 13), eq("feats.combatexpertise.possessed")],
+  },
+  {
+    name: "Improved Turning",
+    description:
+      "Your effective level for turning or rebuking creatures is treated as one level higher than your actual level in the class that grants the ability.",
+    aptitudes: ["General"],
+    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+  },
+  {
+    name: "Investigator",
+    description: "You receive a +2 bonus to Gather Information checks and Search checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.gatherinformation.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.search.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Iron Will",
+    description: "You receive a +2 bonus to all Will saving throws.",
+    aptitudes: ["General"],
+    modifiers: [{ target: "saves.will.misc", operator: "add", value: "2", valueType: "number" }],
+  },
+  {
+    name: "Leadership",
+    description:
+      "You gain the ability to attract loyal companions and devoted followers who serve under you. The specifics of available cohorts and followers are determined by the DM.",
+    aptitudes: ["General"],
+    requirements: [gte("identity.meta.level", 6)],
+  },
+  {
+    name: "Lightning Reflexes",
+    description: "You receive a +2 bonus to all Reflex saving throws.",
+    aptitudes: ["General"],
+    modifiers: [{ target: "saves.reflex.misc", operator: "add", value: "2", valueType: "number" }],
+  },
+  {
+    name: "Magical Aptitude",
+    description: "You receive a +2 bonus to Spellcraft checks and Use Magic Device checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.spellcraft.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.usemagicdevice.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Martial Weapon Proficiency",
+    description:
+      "You make attack rolls with every martial weapon without penalty, as barbarians, fighters, paladins and rangers do. A character who takes the feat chooses one weapon each time: Martial Weapon Proficiency: Longsword, Rapier and so on.",
+    selectable: false,
+    aptitudes: ["General"],
+  },
+  {
+    name: "Mounted Combat",
+    description:
+      "Once per round, when your mount takes a hit in combat, you may make a Ride check as a reaction to negate the blow. If your Ride check result exceeds the opponent's attack roll, the hit is negated. In effect, your Ride check result serves as the mount's AC when it would be higher than the mount's normal AC.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [gte("skills.ride.rank", 1)],
+  },
+  {
+    name: "Natural Spell",
+    description:
+      "You can fulfill the verbal and somatic components of spells while in wild shape form. For instance, while shaped as a hawk, screeches and talon gestures can substitute for normal verbal and somatic components. You may also use material components or focuses in your possession, even if they are melded into your current form. This feat does not allow use of magic items that your current form could not normally use, nor does it grant the ability to speak while wild shaped.",
+    aptitudes: ["General"],
+    requirements: [gte("abilities.wisdom.total", 13), eq("feats.wildshapedruid.possessed")],
+  },
+  {
+    name: "Negotiator",
+    description: "You receive a +2 bonus to Diplomacy checks and Sense Motive checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.diplomacy.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.sensemotive.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Nimble Fingers",
+    description: "You receive a +2 bonus to Disable Device checks and Open Lock checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.disabledevice.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.openlock.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Persuasive",
+    description: "You receive a +2 bonus to Bluff checks and Intimidate checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.bluff.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.intimidate.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Run",
+    description:
+      "While running, you move at five times your normal speed (with medium, light, or no armor and no more than a medium load) or four times your speed (with heavy armor or a heavy load). A running start grants a +4 bonus to Jump checks. You retain your Dexterity bonus to AC while running.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Self-Sufficient",
+    description: "You receive a +2 bonus to Heal checks and Survival checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.heal.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.survival.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Shield Proficiency",
+    description: "You can use a shield while incurring only the standard penalties.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Simple Weapon Proficiency",
+    description: "You make attack rolls with simple weapons without penalty.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Spell Penetration",
+    description:
+      "You receive a +2 bonus to caster level checks (1d20 + caster level) made to overcome a creature's spell resistance.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Stealthy",
+    description: "You receive a +2 bonus to Hide checks and Move Silently checks.",
+    aptitudes: ["General"],
+    modifiers: [
+      { target: "skills.hide.misc", operator: "add", value: "2", valueType: "number" },
+      { target: "skills.movesilently.misc", operator: "add", value: "2", valueType: "number" },
+    ],
+  },
+  {
+    name: "Sunder",
+    description: "Striking at an opponent's weapon does not provoke an attack of opportunity from that opponent.",
+    aptitudes: ["General"],
+    requirements: [gte("abilities.strength.total", 13), eq("feats.powerattack.possessed")],
+  },
+  {
+    name: "Toughness",
+    description: "You gain +3 hit points.",
+    stackable: true,
+    aptitudes: ["General"],
+    modifiers: [{ target: "combat.hp.misc", operator: "add", value: "3", valueType: "number" }],
+  },
+  {
+    name: "Tower Shield Proficiency",
+    description: "You can use a tower shield while incurring only the standard penalties.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.shieldproficiency.possessed")],
+  },
+  {
+    name: "Track",
+    description:
+      "Finding tracks or following them for 1 mile requires a successful Survival check. A new check is needed whenever the trail becomes harder to follow, such as when other tracks cross the trail or when it doubles back and splits. You travel at half normal speed while tracking (or at normal speed with a -5 check penalty, or up to double speed with a -20 penalty). The DC varies based on surface type and conditions. Very Soft Ground (fresh snow, thick dust, wet mud) retains deep, clear footprints. Soft Ground yields to pressure but is firmer, leaving frequent shallow prints. Firm Ground (typical outdoor terrain like lawns, fields, and woods, or very soft or dirty indoor surfaces) may show traces like broken branches or tufts of hair, with only occasional or partial prints. Hard Ground (bare rock, indoor floors, streambeds) holds no prints, only faint traces like scuff marks or displaced pebbles. Various conditions modify the Survival DC. Every three creatures in the tracked group reduce the DC by 1. For mixed-size groups, apply only the modifier for the largest size. On a failed check, you may retry after 1 hour outdoors or 10 minutes indoors.",
+    aptitudes: ["General", "Ranger Class Feature"],
+  },
+];
+
+export const greaterSpellFocus: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
+  name: `Greater Spell Focus: ${s}`,
+  description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${s}. This bonus stacks with the bonus granted by Spell Focus.`,
+  generated: true,
+  aptitudes: ["General"],
+  requirements: [eq(feat(`Spell Focus: ${s}`))],
+  modifiers: [
+    { target: `powers.groups.${stripSeparators(s)}.*.dc.misc`, operator: "add", value: "1", valueType: "number" },
+  ],
+  properties: [{ type: "FEAT_FAMILY", value: "Greater Spell Focus" }],
+}));
+
+export const greaterWeaponFocus: FeatSeed[] = ALL_WEAPONS.map((w) => ({
+  name: `Greater Weapon Focus: ${w}`,
+  description: `You gain an additional +1 bonus to attack rolls with the chosen weapon. This bonus stacks with other attack roll bonuses, including the bonus from Weapon Focus.`,
+  generated: true,
+  aptitudes: ["General", "Fighter Bonus Feat"],
+  requirements: [eq(feat(`Weapon Focus: ${w}`)), gte("classes.fighter.level", 8)],
+  modifiers: [
+    { target: `items.weapons.${stripSeparators(w)}.tohit.misc`, operator: "add", value: "1", valueType: "number" },
+  ],
+  properties: [{ type: "FEAT_FAMILY", value: "Greater Weapon Focus" }],
+}));
+
+export const greaterWeaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
+  name: `Greater Weapon Specialization: ${w}`,
+  description: `You gain an additional +2 bonus to damage rolls with the chosen weapon. This bonus stacks with other damage roll bonuses, including the bonus from Weapon Specialization.`,
+  generated: true,
+  aptitudes: ["General", "Fighter Bonus Feat"],
+  requirements: [
+    eq(feat(`Greater Weapon Focus: ${w}`)),
+    eq(feat(`Weapon Focus: ${w}`)),
+    eq(feat(`Weapon Specialization: ${w}`)),
+    gte("classes.fighter.level", 12),
+  ],
+  modifiers: [
+    { target: `items.weapons.${stripSeparators(w)}.damage.misc`, operator: "add", value: "2", valueType: "number" },
+  ],
+  properties: [{ type: "FEAT_FAMILY", value: "Greater Weapon Specialization" }],
+}));
+
+export const improvedCritical: FeatSeed[] = ALL_WEAPONS.map((w) => ({
+  name: `Improved Critical: ${w}`,
+  description: `The threat range of your chosen weapon is doubled. For instance, a longsword normally threatens a critical on 19-20 (two numbers). With this feat applied to longsword, the threat range becomes 17-20 (four numbers).`,
+  generated: true,
+  aptitudes: ["General", "Fighter Bonus Feat"],
+  requirements: [...proficiencyRequirements(w), gte("combat.bab", 8)],
+  modifiers: [
+    {
+      target: `items.weapons.${stripSeparators(w)}.damage.critical.range`,
+      operator: "multiply",
+      value: "2",
+      valueType: "number",
+    },
+  ],
+  properties: [{ type: "FEAT_FAMILY", value: "Improved Critical" }],
+}));
+
 export const ITEM_CREATION_FEATS: FeatSeed[] = [
   {
     name: "Brew Potion",
@@ -823,6 +890,23 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
   },
 ];
 
+export const rapidReload: FeatSeed[] = CROSSBOW_WEAPONS.map((w) => ({
+  name: `Rapid Reload: ${w}`,
+  description: `Reloading your chosen crossbow type becomes a free action (for hand or light crossbows) or a move action (for heavy crossbows). Reloading still provokes an attack of opportunity. If you have this feat for a hand or light crossbow, you can fire it as many times during a full attack as you could with a bow.`,
+  generated: true,
+  aptitudes: ["General", "Fighter Bonus Feat"],
+  properties: [{ type: "FEAT_FAMILY", value: "Rapid Reload" }],
+}));
+
+export const skillFocus: FeatSeed[] = SKILL_NAMES.map((s) => ({
+  name: `Skill Focus: ${s}`,
+  description: `You get a +3 bonus on all ${s} checks.`,
+  generated: true,
+  aptitudes: ["General"],
+  modifiers: [{ target: `skills.${stripSeparators(s)}.misc`, operator: "add", value: "3", valueType: "number" }],
+  properties: [{ type: "FEAT_FAMILY", value: "Skill Focus" }],
+}));
+
 export const SPECIAL_FEATS: FeatSeed[] = [
   {
     name: "Extra Turning",
@@ -841,89 +925,8 @@ export const SPECIAL_FEATS: FeatSeed[] = [
   },
 ];
 
-export const exoticWeaponProficiency: FeatSeed[] = EXOTIC_WEAPONS.map((w) => ({
-  name: `Exotic Weapon Proficiency: ${w}`,
-  description: `You make attack rolls with the chosen weapon without penalty.`,
-  generated: true,
-  aptitudes: ["General", "Fighter Bonus Feat"],
-  requirements: [gte("combat.bab", 1)],
-  properties: [{ type: "FEAT_FAMILY", value: "Exotic Weapon Proficiency" }],
-}));
-
-export const greaterSpellFocus: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
-  name: `Greater Spell Focus: ${s}`,
-  description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${s}. This bonus stacks with the bonus granted by Spell Focus.`,
-  generated: true,
-  aptitudes: ["General"],
-  requirements: [eq(feat(`Spell Focus: ${s}`))],
-  modifiers: [
-    { target: `powers.groups.${stripSeparators(s)}.*.dc.misc`, operator: "add", value: "1", valueType: "number" },
-  ],
-  properties: [{ type: "FEAT_FAMILY", value: "Greater Spell Focus" }],
-}));
-
-export const greaterWeaponFocus: FeatSeed[] = ALL_WEAPONS.map((w) => ({
-  name: `Greater Weapon Focus: ${w}`,
-  description: `You gain an additional +1 bonus to attack rolls with the chosen weapon. This bonus stacks with other attack roll bonuses, including the bonus from Weapon Focus.`,
-  generated: true,
-  aptitudes: ["General", "Fighter Bonus Feat"],
-  requirements: [eq(feat(`Weapon Focus: ${w}`)), gte("classes.fighter.level", 8)],
-  modifiers: [
-    { target: `items.weapons.${stripSeparators(w)}.tohit.misc`, operator: "add", value: "1", valueType: "number" },
-  ],
-  properties: [{ type: "FEAT_FAMILY", value: "Greater Weapon Focus" }],
-}));
-
-export const greaterWeaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
-  name: `Greater Weapon Specialization: ${w}`,
-  description: `You gain an additional +2 bonus to damage rolls with the chosen weapon. This bonus stacks with other damage roll bonuses, including the bonus from Weapon Specialization.`,
-  generated: true,
-  aptitudes: ["General", "Fighter Bonus Feat"],
-  requirements: [
-    eq(feat(`Greater Weapon Focus: ${w}`)),
-    eq(feat(`Weapon Focus: ${w}`)),
-    eq(feat(`Weapon Specialization: ${w}`)),
-    gte("classes.fighter.level", 12),
-  ],
-  modifiers: [
-    { target: `items.weapons.${stripSeparators(w)}.damage.misc`, operator: "add", value: "2", valueType: "number" },
-  ],
-  properties: [{ type: "FEAT_FAMILY", value: "Greater Weapon Specialization" }],
-}));
-
-export const improvedCritical: FeatSeed[] = ALL_WEAPONS.map((w) => ({
-  name: `Improved Critical: ${w}`,
-  description: `The threat range of your chosen weapon is doubled. For instance, a longsword normally threatens a critical on 19-20 (two numbers). With this feat applied to longsword, the threat range becomes 17-20 (four numbers).`,
-  generated: true,
-  aptitudes: ["General", "Fighter Bonus Feat"],
-  requirements: [...proficiencyRequirements(w), gte("combat.bab", 8)],
-  modifiers: [
-    {
-      target: `items.weapons.${stripSeparators(w)}.damage.critical.range`,
-      operator: "multiply",
-      value: "2",
-      valueType: "number",
-    },
-  ],
-  properties: [{ type: "FEAT_FAMILY", value: "Improved Critical" }],
-}));
-
-export const rapidReload: FeatSeed[] = CROSSBOW_WEAPONS.map((w) => ({
-  name: `Rapid Reload: ${w}`,
-  description: `Reloading your chosen crossbow type becomes a free action (for hand or light crossbows) or a move action (for heavy crossbows). Reloading still provokes an attack of opportunity. If you have this feat for a hand or light crossbow, you can fire it as many times during a full attack as you could with a bow.`,
-  generated: true,
-  aptitudes: ["General", "Fighter Bonus Feat"],
-  properties: [{ type: "FEAT_FAMILY", value: "Rapid Reload" }],
-}));
-
-export const skillFocus: FeatSeed[] = SKILL_NAMES.map((s) => ({
-  name: `Skill Focus: ${s}`,
-  description: `You get a +3 bonus on all ${s} checks.`,
-  generated: true,
-  aptitudes: ["General"],
-  modifiers: [{ target: `skills.${stripSeparators(s)}.misc`, operator: "add", value: "3", valueType: "number" }],
-  properties: [{ type: "FEAT_FAMILY", value: "Skill Focus" }],
-}));
+/** A system feat list (`coreSystemFeats`): no reference lists it. */
+export const SPELL_WEAPON_FOCUS_FEATS: FeatSeed[] = spellWeaponFocusFeats;
 
 export const spellFocus: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   name: `Spell Focus: ${s}`,
@@ -936,6 +939,9 @@ export const spellFocus: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   properties: [{ type: "FEAT_FAMILY", value: "Spell Focus" }],
 }));
 
+/** A system feat list (`coreSystemFeats`): no reference lists it. */
+export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = weaponProficiencyFeats;
+
 export const weaponFocus: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Weapon Focus: ${w}`,
   description: `You gain a +1 bonus to all attack rolls made with the chosen weapon.`,
@@ -947,7 +953,6 @@ export const weaponFocus: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   ],
   properties: [{ type: "FEAT_FAMILY", value: "Weapon Focus" }],
 }));
-
 export const weaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Weapon Specialization: ${w}`,
   description: `You gain a +2 bonus to all damage rolls made with the chosen weapon.`,
@@ -959,10 +964,5 @@ export const weaponSpecialization: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   ],
   properties: [{ type: "FEAT_FAMILY", value: "Weapon Specialization" }],
 }));
-
 /** A system feat list (`coreSystemFeats`): no reference lists it. */
 export const WIZARD_SCHOOL_FEATS: FeatSeed[] = wizardSchoolFeats(WIZARD_SCHOOLS);
-/** A system feat list (`coreSystemFeats`): no reference lists it. */
-export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = weaponProficiencyFeats;
-/** A system feat list (`coreSystemFeats`): no reference lists it. */
-export const SPELL_WEAPON_FOCUS_FEATS: FeatSeed[] = spellWeaponFocusFeats;

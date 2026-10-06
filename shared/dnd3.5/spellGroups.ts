@@ -8,17 +8,6 @@ import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-/** A spell a class level picked or granted. */
-interface LevelSpell {
-  id: string;
-  name: string;
-  aptitudeId: string;
-  powerLevel?: number | null;
-  saveName?: string | null;
-  saveEffect?: string | null;
-  description?: string | null;
-}
-
 /** A spell a modifier gives without a pick. */
 interface GivenSpell {
   id: string;
@@ -32,20 +21,27 @@ interface GivenSpell {
   properties: Record<string, string>;
 }
 
-/**
- * Where a feat's tag on the spells of a list it gives slots in or joins to its class's list shows (a cleric's domain,
- * "Fire Domain"; a specialist wizard's school, "Evocation Specialist"): on that list and on the lists of the class whose
- * level gave the feat. `joinsClassList`: whether the list's spells join that class's list, as a domain's do.
- */
-export interface SpellTagLists {
-  aptitudeIds: string[];
-  joinsClassList: boolean;
+/** A spell a class level picked or granted. */
+interface LevelSpell {
+  id: string;
+  name: string;
+  aptitudeId: string;
+  powerLevel?: number | null;
+  saveName?: string | null;
+  saveEffect?: string | null;
+  description?: string | null;
 }
 
-/** A tag a spell row shows. */
-export interface SpellRowTag {
-  name: string;
-  joinsClassList: boolean;
+export interface AptitudeSpells {
+  aptitudeName: string;
+  levels: SpellGroup[];
+}
+
+export interface SpellGroup {
+  aptitudeName: string;
+  level: number;
+  uses: number | null;
+  spells: SpellRow[];
 }
 
 export interface SpellRow {
@@ -59,16 +55,10 @@ export interface SpellRow {
   tags?: SpellRowTag[];
 }
 
-export interface SpellGroup {
-  aptitudeName: string;
-  level: number;
-  uses: number | null;
-  spells: SpellRow[];
-}
-
-export interface AptitudeSpells {
-  aptitudeName: string;
-  levels: SpellGroup[];
+/** A tag a spell row shows. */
+export interface SpellRowTag {
+  name: string;
+  joinsClassList: boolean;
 }
 
 /** What the groups read of a character: its classes' levels, its computed powers, its aptitudes and spell tags. */
@@ -87,6 +77,16 @@ export interface SpellSheet {
   aptitudes?: Record<string, { id: string; name: string }>;
   spellTags?: Record<string, string[]>;
   spellTagLists?: Record<string, SpellTagLists>;
+}
+
+/**
+ * Where a feat's tag on the spells of a list it gives slots in or joins to its class's list shows (a cleric's domain,
+ * "Fire Domain"; a specialist wizard's school, "Evocation Specialist"): on that list and on the lists of the class whose
+ * level gave the feat. `joinsClassList`: whether the list's spells join that class's list, as a domain's do.
+ */
+export interface SpellTagLists {
+  aptitudeIds: string[];
+  joinsClassList: boolean;
 }
 
 function saveOf(saveName: string | null | undefined, saveEffect: string | null | undefined) {

@@ -44,7 +44,11 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
-type CreateCharacterRequest = InferRequestType<typeof rpc.api.characters.$post>["json"];
+type AbilityOption = Pick<RulesetAbility, "id" | "name">;
+
+interface AbilityScoresHandle {
+  rollAll: () => void;
+}
 
 /** What the character is created with, its alignment and gender unpicked ("") until they're chosen. */
 type CreateCharacterFormData = Omit<CreateCharacterRequest, "alignment" | "gender"> & {
@@ -52,11 +56,7 @@ type CreateCharacterFormData = Omit<CreateCharacterRequest, "alignment" | "gende
   gender: CreateCharacterRequest["gender"] | "";
 };
 
-type AbilityOption = Pick<RulesetAbility, "id" | "name">;
-
-interface AbilityScoresHandle {
-  rollAll: () => void;
-}
+type CreateCharacterRequest = InferRequestType<typeof rpc.api.characters.$post>["json"];
 
 function AbilityCard({
   name,
@@ -158,6 +158,20 @@ function PointBuyScores({
   );
 }
 
+/** An ability's score before one is set: 8 to point-buy from, the standard array's in order, else 10. */
+function defaultScore(method: RollMethodId, index: number) {
+  if (method === "point-buy") return 8;
+  if (method === "standard-array") return STANDARD_ARRAY[index] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
+  return 10;
+}
+
+/** Every ability's score: the one set, or its method's default. */
+function scoresOf(abilities: AbilityOption[], values: Record<string, number> | undefined, method: RollMethodId) {
+  return Object.fromEntries(
+    abilities.map((ability, index) => [ability.id, values?.[ability.id] ?? defaultScore(method, index)]),
+  );
+}
+
 function StandardArrayScores({
   abilities,
   abilityValues,
@@ -201,20 +215,6 @@ function StandardArrayScores({
         );
       })}
     </Stack>
-  );
-}
-
-/** An ability's score before one is set: 8 to point-buy from, the standard array's in order, else 10. */
-function defaultScore(method: RollMethodId, index: number) {
-  if (method === "point-buy") return 8;
-  if (method === "standard-array") return STANDARD_ARRAY[index] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
-  return 10;
-}
-
-/** Every ability's score: the one set, or its method's default. */
-function scoresOf(abilities: AbilityOption[], values: Record<string, number> | undefined, method: RollMethodId) {
-  return Object.fromEntries(
-    abilities.map((ability, index) => [ability.id, values?.[ability.id] ?? defaultScore(method, index)]),
   );
 }
 

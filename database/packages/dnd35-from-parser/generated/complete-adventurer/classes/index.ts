@@ -31,6 +31,8 @@ import { VIGILANTE } from "./vigilante.ts";
 import { VIRTUOSO } from "./virtuoso.ts";
 import { WILD_PLAINS_OUTRIDER } from "./wildPlainsOutrider.ts";
 
+export const ALL_BASE_CLASSES: ClassSeed[] = [NINJA, SCOUT, SPELLTHIEF];
+
 export const ALL_CLASSES: ClassSeed[] = [
   ANIMAL_LORD,
   BEASTMASTER,
@@ -61,8 +63,6 @@ export const ALL_CLASSES: ClassSeed[] = [
   VIRTUOSO,
   WILD_PLAINS_OUTRIDER,
 ];
-
-export const ALL_BASE_CLASSES: ClassSeed[] = [NINJA, SCOUT, SPELLTHIEF];
 
 export const ALL_PRESTIGE_CLASSES: ClassSeed[] = [
   ANIMAL_LORD,

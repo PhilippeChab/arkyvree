@@ -32,33 +32,9 @@ export const REQUIREMENT_IMPORTS: ImportTable = [
   ["@/database/packages/dnd35/content/requirements.ts", ["and", "eq", "eqNum", "eqStr", "feat", "gte", "or"]],
 ];
 
-/**
- * The builder the generated code writes `check` with: one that builds that very check from its target and value. A
- * check none builds (another operator, a value that isn't a number's own writing) is written as an object.
- */
-function builderOf(check: RequirementCondition) {
-  // A hand-typed reference can hold a number where a check's value is its text
-  const written = { ...check, value: String(check.value) };
-  return CHECK_BUILDERS.find(({ name, takes }) => {
-    const build: (target: string, value: string | number) => RequirementCondition = BUILDERS[name];
-    return isDeepStrictEqual(
-      build(written.target, takes === "number" ? Number(written.value) : written.value),
-      written,
-    );
-  });
-}
-
 function escapeString(s: string): string {
   // String(): a hand-typed reference can hold a number or a boolean where the seed has text
   return JSON.stringify(String(s)).slice(1, -1);
-}
-
-function indent(text: string, level: number): string {
-  const prefix = "  ".repeat(level);
-  return text
-    .split("\n")
-    .map((line) => (line ? prefix + line : line))
-    .join("\n");
 }
 
 /** `s` as a string literal. */
@@ -75,6 +51,30 @@ function builderCall(
   return `${name}(${quote(target)}, ${takes === "number" ? Number(value) : quote(value)})`;
 }
 
+/**
+ * The builder the generated code writes `check` with: one that builds that very check from its target and value. A
+ * check none builds (another operator, a value that isn't a number's own writing) is written as an object.
+ */
+function builderOf(check: RequirementCondition) {
+  // A hand-typed reference can hold a number where a check's value is its text
+  const written = { ...check, value: String(check.value) };
+  return CHECK_BUILDERS.find(({ name, takes }) => {
+    const build: (target: string, value: string | number) => RequirementCondition = BUILDERS[name];
+    return isDeepStrictEqual(
+      build(written.target, takes === "number" ? Number(written.value) : written.value),
+      written,
+    );
+  });
+}
+
+function indent(text: string, level: number): string {
+  const prefix = "  ".repeat(level);
+  return text
+    .split("\n")
+    .map((line) => (line ? prefix + line : line))
+    .join("\n");
+}
+
 /** A modifier's fields written as code, its target as `target`. */
 function modifierFields(mod: ModifierEffect, target: string): string[] {
   return [
@@ -85,56 +85,14 @@ function modifierFields(mod: ModifierEffect, target: string): string[] {
   ];
 }
 
-/** A `key: [...]` field of `items`, one per line, after `prefix` (its indentation); none when there are no items. */
-export function listField(key: string, items: string[], prefix: string): string[] {
-  return items.length === 0 ? [] : [`${prefix}${key}: [`, ...items.map((item) => `${prefix}  ${item},`), `${prefix}],`];
-}
-
 /** `s` escaped for a template literal: as for a string literal, and its backticks and `${` too. */
 export function escapeTemplate(s: string): string {
   return escapeString(s).replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
 }
 
-export function formatStringArray(items: string[], indentLevel = 1): string {
-  const inner = items.map(quote).join(", ");
-  if (inner.length < 100) return `[${inner}]`;
-  const lines = items.map((s) => indent(`${quote(s)},`, indentLevel + 1));
-  return `[\n${lines.join("\n")}\n${indent("]", indentLevel)}`;
-}
-
-/** An import of `names` from `from`, the names in lint's order (`sort-imports`, which ignores case). */
-export function importLine(names: string[], from: string): string {
-  const sorted = [...names].sort((a, b) => {
-    const [x, y] = [a.toLowerCase(), b.toLowerCase()];
-    return x < y ? -1 : x > y ? 1 : 0;
-  });
-  return `import { ${sorted.join(", ")} } from "${from}";`;
-}
-
-/** The imports of the names a file's code uses (`uses`), from `table`. A name `table` doesn't list throws. */
-export function importLines(uses: Set<string>, table: ImportTable): string[] {
-  const unknown = [...uses].filter((name) => !table.some(([, names]) => names.includes(name)));
-  if (unknown.length > 0) throw new Error(`The generated code uses ${unknown.join(", ")}, which no import provides`);
-  return table.flatMap(([from, names]) => {
-    const used = names.filter((name) => uses.has(name));
-    return used.length > 0 ? [importLine(used, from)] : [];
-  });
-}
-
-/** The import of the requirement builders a file's code uses (`uses`), when it uses some. */
-export function requirementImports(uses: Set<string>): string[] {
-  return importLines(uses, REQUIREMENT_IMPORTS);
-}
-
-/** A modifier written as code: a domain's, a race's or an item's, which has no requirements (only a feat's has). */
-export function stringifyModifier(mod: Modifier): string {
-  if ("requirements" in mod) throw new Error(`${mod.target}: only a feat's modifier has requirements`);
-  return `{ ${modifierFields(mod, quote(mod.target)).join(", ")} }`;
-}
-
-/** A property written as code. */
-export function stringifyProperty({ type, value }: { type: string; value: string }): string {
-  return `{ type: ${quote(type)}, value: ${quote(value)} }`;
+/** A `key: [...]` field of `items`, one per line, after `prefix` (its indentation); none when there are no items. */
+export function listField(key: string, items: string[], prefix: string): string[] {
+  return items.length === 0 ? [] : [`${prefix}${key}: [`, ...items.map((item) => `${prefix}  ${item},`), `${prefix}],`];
 }
 
 /**
@@ -175,6 +133,11 @@ export function stringifyFeatModifier(
   return `{ ${[...modifierFields(mod, target), ...(requirements.length > 0 ? [`requirements: [${requirements.join(", ")}]`] : [])].join(", ")} }`;
 }
 
+/** A property written as code. */
+export function stringifyProperty({ type, value }: { type: string; value: string }): string {
+  return `{ type: ${quote(type)}, value: ${quote(value)} }`;
+}
+
 /** A feat written as code, a list's item: its builders added to `uses` (`stringifyRequirement`). */
 export function featLines(feat: FeatSeed, uses: Set<string>): string[] {
   return [
@@ -198,6 +161,43 @@ export function featLines(feat: FeatSeed, uses: Set<string>): string[] {
     ...listField("properties", (feat.properties ?? []).map(stringifyProperty), "    "),
     `  },`,
   ];
+}
+
+export function formatStringArray(items: string[], indentLevel = 1): string {
+  const inner = items.map(quote).join(", ");
+  if (inner.length < 100) return `[${inner}]`;
+  const lines = items.map((s) => indent(`${quote(s)},`, indentLevel + 1));
+  return `[\n${lines.join("\n")}\n${indent("]", indentLevel)}`;
+}
+
+/** An import of `names` from `from`, the names in lint's order (`sort-imports`, which ignores case). */
+export function importLine(names: string[], from: string): string {
+  const sorted = [...names].sort((a, b) => {
+    const [x, y] = [a.toLowerCase(), b.toLowerCase()];
+    return x < y ? -1 : x > y ? 1 : 0;
+  });
+  return `import { ${sorted.join(", ")} } from "${from}";`;
+}
+
+/** The imports of the names a file's code uses (`uses`), from `table`. A name `table` doesn't list throws. */
+export function importLines(uses: Set<string>, table: ImportTable): string[] {
+  const unknown = [...uses].filter((name) => !table.some(([, names]) => names.includes(name)));
+  if (unknown.length > 0) throw new Error(`The generated code uses ${unknown.join(", ")}, which no import provides`);
+  return table.flatMap(([from, names]) => {
+    const used = names.filter((name) => uses.has(name));
+    return used.length > 0 ? [importLine(used, from)] : [];
+  });
+}
+
+/** The import of the requirement builders a file's code uses (`uses`), when it uses some. */
+export function requirementImports(uses: Set<string>): string[] {
+  return importLines(uses, REQUIREMENT_IMPORTS);
+}
+
+/** A modifier written as code: a domain's, a race's or an item's, which has no requirements (only a feat's has). */
+export function stringifyModifier(mod: Modifier): string {
+  if ("requirements" in mod) throw new Error(`${mod.target}: only a feat's modifier has requirements`);
+  return `{ ${modifierFields(mod, quote(mod.target)).join(", ")} }`;
 }
 
 export function toConstName(name: string): string {

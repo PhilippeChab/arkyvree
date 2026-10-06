@@ -23,8 +23,30 @@
 
 import fs from "node:fs";
 
-import { startsWithVerb } from "./memberOrder.mjs";
 import { repoPath } from "./paths.mjs";
+
+/** A function a field holds: written there, or another one's (`readonly finalizeLevelUp = finalizeLevelUp`). */
+const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "Identifier", "MemberExpression"];
+
+// oxfmt-ignore
+const FUNCTION_VERBS = [
+  // reading and computing
+  "get", "find", "fetch", "load", "read", "list", "count", "build", "compute", "derive", "resolve", "extract",
+  "collect", "pick", "parse", "format", "render", "generate", "project", "describe", "paginate", "scale", "compare",
+  "evaluate", "annotate", "distribute", "merge", "group", "sort", "filter", "map", "split", "strip", "capitalize",
+  "sanitize", "redact", "hash", "sign", "normalize",
+  // writing
+  "create", "add", "insert", "copy", "cow", "seed", "set", "update", "apply", "mark", "link", "repoint", "refresh",
+  "reconcile", "finalize", "publish", "save", "write", "delete", "remove", "purge", "sweep", "clear", "invalidate",
+  "lock", "warm", "memoize", "include",
+  // checking: a yes or no (`is`, `has`, `was`, `can`, `should`), or a throw
+  "is", "has", "was", "can", "should", "check", "assert", "validate", "verify", "ensure",
+  // running
+  "run", "start", "stop", "init", "open", "close", "send", "request", "ping", "wait", "enqueue", "schedule",
+  "instrument", "note", "notify", "limit", "register", "emit",
+  // the shapes: a context (`withTransaction`), a handler (`onShutdown`), a conversion (`toSafeUser`), a constructor
+  "with", "on", "to", "new",
+];
 
 const REPOSITORY = JSON.parse(
   fs.readFileSync(new URL("../server/repositories/methodVerbs.json", import.meta.url), "utf8"),
@@ -69,28 +91,60 @@ const VOCABULARIES = [
   },
 ];
 
-// oxfmt-ignore
-const FUNCTION_VERBS = [
-  // reading and computing
-  "get", "find", "fetch", "load", "read", "list", "count", "build", "compute", "derive", "resolve", "extract",
-  "collect", "pick", "parse", "format", "render", "generate", "project", "describe", "paginate", "scale", "compare",
-  "evaluate", "annotate", "distribute", "merge", "group", "sort", "filter", "map", "split", "strip", "capitalize",
-  "sanitize", "redact", "hash", "sign", "normalize",
-  // writing
-  "create", "add", "insert", "copy", "cow", "seed", "set", "update", "apply", "mark", "link", "repoint", "refresh",
-  "reconcile", "finalize", "publish", "save", "write", "delete", "remove", "purge", "sweep", "clear", "invalidate",
-  "lock", "warm", "memoize", "include",
-  // checking: a yes or no (`is`, `has`, `was`, `can`, `should`), or a throw
-  "is", "has", "was", "can", "should", "check", "assert", "validate", "verify", "ensure",
-  // running
-  "run", "start", "stop", "init", "open", "close", "send", "request", "ping", "wait", "enqueue", "schedule",
-  "instrument", "note", "notify", "limit", "register", "emit",
-  // the shapes: a context (`withTransaction`), a handler (`onShutdown`), a conversion (`toSafeUser`), a constructor
-  "with", "on", "to", "new",
-];
+/** The functions a module exports: declared, or an arrow or function expression a const holds. */
+function exportedFunctions(node) {
+  const declaration = node.declaration;
+  if (declaration?.type === "FunctionDeclaration" && declaration.id) return [declaration.id];
+  if (declaration?.type !== "VariableDeclaration") return [];
+  return declaration.declarations
+    .filter(
+      (d) => d.id.type === "Identifier" && ["ArrowFunctionExpression", "FunctionExpression"].includes(d.init?.type),
+    )
+    .map((d) => d.id);
+}
 
-/** A function a field holds: written there, or another one's (`readonly finalizeLevelUp = finalizeLevelUp`). */
-const FUNCTION_VALUES = ["ArrowFunctionExpression", "FunctionExpression", "Identifier", "MemberExpression"];
+/** Whether `name` starts with the word `verb`: `find` starts `findOne`, not `finder`. */
+export function startsWithVerb(name, verb) {
+  return new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);
+}
+
+function createFunctionNames(context) {
+  const file = repoPath(context.filename);
+  if (!/^(server|shared)\//.test(file) || !/\.tsx?$/.test(file)) return {};
+  const report = (id) => {
+    if (/^[A-Z]/.test(id.name)) return;
+    if (FUNCTION_VERBS.some((verb) => startsWithVerb(id.name, verb))) return;
+    context.report({
+      node: id,
+      message: `An exported function starts with a verb (lint/methodNames.mjs's FUNCTION_VERBS): \`${id.name}\` doesn't.`,
+    });
+  };
+  // The module's own functions, which a later `export { f }` exports by name.
+  const locals = new Set();
+  const listed = [];
+  return {
+    Program(program) {
+      for (const statement of program.body) {
+        for (const id of exportedFunctions({ declaration: statement })) locals.add(id.name);
+      }
+    },
+    ExportNamedDeclaration(node) {
+      for (const id of exportedFunctions(node)) report(id);
+      if (node.source) return;
+      for (const specifier of node.specifiers ?? []) {
+        if (specifier.local?.type === "Identifier" && specifier.exported?.type === "Identifier") {
+          listed.push(specifier);
+        }
+      }
+    },
+    ExportDefaultDeclaration(node) {
+      for (const id of exportedFunctions(node)) report(id);
+    },
+    "Program:exit"() {
+      for (const specifier of listed) if (locals.has(specifier.local.name)) report(specifier.exported);
+    },
+  };
+}
 
 function isMethod(member) {
   return (
@@ -128,56 +182,6 @@ function createMethodNames(context) {
           });
         }
       }
-    },
-  };
-}
-
-/** The functions a module exports: declared, or an arrow or function expression a const holds. */
-function exportedFunctions(node) {
-  const declaration = node.declaration;
-  if (declaration?.type === "FunctionDeclaration" && declaration.id) return [declaration.id];
-  if (declaration?.type !== "VariableDeclaration") return [];
-  return declaration.declarations
-    .filter(
-      (d) => d.id.type === "Identifier" && ["ArrowFunctionExpression", "FunctionExpression"].includes(d.init?.type),
-    )
-    .map((d) => d.id);
-}
-
-function createFunctionNames(context) {
-  const file = repoPath(context.filename);
-  if (!/^(server|shared)\//.test(file) || !/\.tsx?$/.test(file)) return {};
-  const report = (id) => {
-    if (/^[A-Z]/.test(id.name)) return;
-    if (FUNCTION_VERBS.some((verb) => startsWithVerb(id.name, verb))) return;
-    context.report({
-      node: id,
-      message: `An exported function starts with a verb (lint/methodNames.mjs's FUNCTION_VERBS): \`${id.name}\` doesn't.`,
-    });
-  };
-  // The module's own functions, which a later `export { f }` exports by name.
-  const locals = new Set();
-  const listed = [];
-  return {
-    Program(program) {
-      for (const statement of program.body) {
-        for (const id of exportedFunctions({ declaration: statement })) locals.add(id.name);
-      }
-    },
-    ExportNamedDeclaration(node) {
-      for (const id of exportedFunctions(node)) report(id);
-      if (node.source) return;
-      for (const specifier of node.specifiers ?? []) {
-        if (specifier.local?.type === "Identifier" && specifier.exported?.type === "Identifier") {
-          listed.push(specifier);
-        }
-      }
-    },
-    ExportDefaultDeclaration(node) {
-      for (const id of exportedFunctions(node)) report(id);
-    },
-    "Program:exit"() {
-      for (const specifier of listed) if (locals.has(specifier.local.name)) report(specifier.exported);
     },
   };
 }

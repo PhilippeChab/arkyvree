@@ -12,15 +12,15 @@ import methodVerbs from "./methodVerbs.json";
 /** A call to a repository method, with the arguments it runs with. */
 type Call = (args: unknown[]) => unknown;
 
+let lastStateId = 0;
 const READS = new Set(methodVerbs.read);
-const WRITES = new Set(methodVerbs.write);
 
 /**
  * A short id per copy-on-write state, so that a request's reads in two of them (a character's ruleset and another's)
  * never share a cached result.
  */
 const stateIds = new WeakMap<CowData, string>();
-let lastStateId = 0;
+const WRITES = new Set(methodVerbs.write);
 
 function getStateId(cow: CowData): string {
   let id = stateIds.get(cow);

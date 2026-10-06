@@ -9,6 +9,23 @@ import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
 class CampaignInvitesService {
+  /**
+   * The invitee's answer: the invite's status, its notification read,
+   * and the activity the Game Masters are told of.
+   */
+  private async answerInvite(tx: Db, session: Session, invite: Invite, status: "Accepted" | "Rejected") {
+    const [updatedInvite] = await Invites.update(tx, { status }, { id: invite.id });
+    await Notifications.markRead(tx, { recipientId: session.userId, targetId: invite.id });
+    await createActivityWithNotifications(tx, {
+      userId: session.userId,
+      targetId: updatedInvite.id,
+      targetTable: getTableName(invitesInCampaign),
+      type: status === "Accepted" ? "acceptCampaignInvite" : "rejectCampaignInvite",
+      data: { inviteId: invite.id },
+    });
+    return updatedInvite;
+  }
+
   /** The campaign of an invite's player slot, archived or not. */
   private async getInviteCampaign(tx: Db, invite: Invite) {
     const player = await Players.findOne(tx, { id: invite.playerId });
@@ -36,21 +53,17 @@ class CampaignInvitesService {
     return invite;
   }
 
-  /**
-   * The invitee's answer: the invite's status, its notification read,
-   * and the activity the Game Masters are told of.
-   */
-  private async answerInvite(tx: Db, session: Session, invite: Invite, status: "Accepted" | "Rejected") {
-    const [updatedInvite] = await Invites.update(tx, { status }, { id: invite.id });
-    await Notifications.markRead(tx, { recipientId: session.userId, targetId: invite.id });
-    await createActivityWithNotifications(tx, {
-      userId: session.userId,
-      targetId: updatedInvite.id,
-      targetTable: getTableName(invitesInCampaign),
-      type: status === "Accepted" ? "acceptCampaignInvite" : "rejectCampaignInvite",
-      data: { inviteId: invite.id },
+  async acceptInvite(session: Session, inviteId: string) {
+    return await withTransaction(async (tx) => {
+      const invite = await this.getPendingInviteFor(tx, session, inviteId);
+      const campaign = await this.getInviteCampaign(tx, invite);
+      if (campaign.deletedAt) {
+        throw new ForbiddenError("Cannot accept an invite for an archived campaign");
+      }
+
+      await Players.update(tx, { userId: session.userId }, { id: invite.playerId });
+      return await this.answerInvite(tx, session, invite, "Accepted");
     });
-    return updatedInvite;
   }
 
   // Single invite for the current user, any status. Used by the invite-accept
@@ -85,19 +98,6 @@ class CampaignInvitesService {
 
   async getUserInvites(userId: string) {
     return await Invites.findMany(db, { userId }, { limit: 10 }, { campaign: true });
-  }
-
-  async acceptInvite(session: Session, inviteId: string) {
-    return await withTransaction(async (tx) => {
-      const invite = await this.getPendingInviteFor(tx, session, inviteId);
-      const campaign = await this.getInviteCampaign(tx, invite);
-      if (campaign.deletedAt) {
-        throw new ForbiddenError("Cannot accept an invite for an archived campaign");
-      }
-
-      await Players.update(tx, { userId: session.userId }, { id: invite.playerId });
-      return await this.answerInvite(tx, session, invite, "Accepted");
-    });
   }
 
   async rejectInvite(session: Session, inviteId: string) {

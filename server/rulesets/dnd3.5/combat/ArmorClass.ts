@@ -9,6 +9,19 @@ import { ARMOR_MAX_DEX, ARMOR_PROFICIENCY, SHIELD_PROFICIENCY } from "@/shared/d
 /** A character's armor class: its armor and shields, and the Dexterity bonus they leave it. */
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
+    /** Dexterity's bonus to AC, capped by the lowest maximum of the armor, the shield and the load. */
+    private dexterityAc(): number {
+      const armorCaps = [...new Set(Object.values(this.detailedCharacterCombat.armors))].map((armor) => armor.maxdex);
+      const cap = Math.min(...armorCaps, this.shieldMaxDex, this.detailedCharacterCombat.encumbrance.maxdex);
+      const dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
+      return cap === Infinity ? dexterity : Math.min(dexterity, cap);
+    }
+
+    /** The AC the equipped armors or shields give: each counted once, though an item is under several groupings. */
+    private equippedAc(slots: ArmorsData | ShieldsData): number {
+      return [...new Set(Object.values(slots))].reduce((ac, slot) => ac + slot.ac.total, 0);
+    }
+
     /**
      * The armor class: its inputs (the base, natural armor, deflection, dodge, misc, uncanny dodge), which modifiers change, and what's
      * computed when read. The armor's and the shield's AC are the equipped items' and what modifiers add to them (a
@@ -69,19 +82,6 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
           return this.uncannydodge ? this.total : this.total - Math.max(0, this.dexterity) - this.dodge;
         },
       };
-    }
-
-    /** Dexterity's bonus to AC, capped by the lowest maximum of the armor, the shield and the load. */
-    private dexterityAc(): number {
-      const armorCaps = [...new Set(Object.values(this.detailedCharacterCombat.armors))].map((armor) => armor.maxdex);
-      const cap = Math.min(...armorCaps, this.shieldMaxDex, this.detailedCharacterCombat.encumbrance.maxdex);
-      const dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
-      return cap === Infinity ? dexterity : Math.min(dexterity, cap);
-    }
-
-    /** The AC the equipped armors or shields give: each counted once, though an item is under several groupings. */
-    private equippedAc(slots: ArmorsData | ShieldsData): number {
-      return [...new Set(Object.values(slots))].reduce((ac, slot) => ac + slot.ac.total, 0);
     }
 
     /** An armor the character wears: the heaviest one worn (medium and heavy armor slow the character down). */

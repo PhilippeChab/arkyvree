@@ -1,11 +1,14 @@
-type RenamedType = keyof typeof URL_SEGMENTS;
 type RenamedSegment = keyof typeof ENTITY_TYPES;
+type RenamedType = keyof typeof URL_SEGMENTS;
+
+/** The entity type a URL segment names. */
+export type EntityTypeOfSegment<S extends string> = S extends RenamedSegment ? (typeof ENTITY_TYPES)[S] : S;
 
 /** An entity type's URL segment: "class-levels" for klass_levels, "classes" for klasses, the type itself otherwise. */
 export type UrlSegment<T extends string> = T extends RenamedType ? (typeof URL_SEGMENTS)[T] : T;
 
-/** The entity type a URL segment names. */
-export type EntityTypeOfSegment<S extends string> = S extends RenamedSegment ? (typeof ENTITY_TYPES)[S] : S;
+/** The other way: the entity type each renamed segment names. */
+const ENTITY_TYPES = { "class-levels": "klass_levels", classes: "klasses" } as const;
 
 /**
  * An entity type's word in a URL, a page's path or an API route's. The app says "class" where the code says "klass"
@@ -13,9 +16,6 @@ export type EntityTypeOfSegment<S extends string> = S extends RenamedSegment ? (
  * is its own segment.
  */
 const URL_SEGMENTS = { klass_levels: "class-levels", klasses: "classes" } as const;
-
-/** The other way: the entity type each renamed segment names. */
-const ENTITY_TYPES = { "class-levels": "klass_levels", classes: "klasses" } as const;
 
 function isRenamedSegment(segment: string): segment is RenamedSegment {
   return Object.hasOwn(ENTITY_TYPES, segment);

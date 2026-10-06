@@ -13,16 +13,6 @@ import {
   WILD_FEATS,
 } from "./feats.ts";
 
-export const ALL_STANDALONE_FEATS: FeatSeed[] = [
-  ...GENERAL_FEATS,
-  ...WILD_FEATS,
-  ...EPIC_FEATS,
-  ...METAMAGIC_FEATS,
-  ...DIVINE_FEATS,
-  ...FAITH_FEATS,
-  ...ITEM_CREATION_FEATS,
-];
-
 export const ALL_FEATS: FeatSeed[] = [
   ...GENERAL_FEATS,
   ...WILD_FEATS,
@@ -32,6 +22,16 @@ export const ALL_FEATS: FeatSeed[] = [
   ...FAITH_FEATS,
   ...ITEM_CREATION_FEATS,
   ...ALL_CLASS_FEATS,
+];
+
+export const ALL_STANDALONE_FEATS: FeatSeed[] = [
+  ...GENERAL_FEATS,
+  ...WILD_FEATS,
+  ...EPIC_FEATS,
+  ...METAMAGIC_FEATS,
+  ...DIVINE_FEATS,
+  ...FAITH_FEATS,
+  ...ITEM_CREATION_FEATS,
 ];
 
 export {

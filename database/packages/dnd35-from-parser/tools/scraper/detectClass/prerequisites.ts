@@ -32,13 +32,6 @@ const RACE_NAMES: Record<string, string> = {
   halforc: "Half-Orc",
 };
 
-/** Distinguish mechanical special prerequisites (sneak attack, rage, spellcasting, etc.)
- *  from narrative/RP-only ones (deity worship, organization membership, rituals).
- *  Mechanical ones are tracked as unresolved so they show up as TODOs. */
-function isMechanicalPrereq(text: string): boolean {
-  return /animal companion|spell-like|psionic/i.test(text);
-}
-
 /** An "any" feat requirement: "Exotic Weapon Proficiency (any exotic weapon)". */
 function expandAnyFeatRequirement(text: string): RequirementEntry | undefined {
   // "FeatFamily (any category)", or prose like "Spell Focus in two schools of magic" → the leading feat family
@@ -47,23 +40,6 @@ function expandAnyFeatRequirement(text: string): RequirementEntry | undefined {
   const slug = stripSeparators(family.trim());
   // "Spell Focus (two schools of magic)": two of the family's feats
   return /\btwo\s+\w/i.test(text) ? gte(`feats.${slug}.count`, 2) : eq(`feats.${slug}.*.possessed`);
-}
-
-/**
- * A class's feat prerequisites as the scraper split them, mended: a list split inside its parentheses ("Weapon Focus
- * (longbow", "shortbow", "or composite version of either)") is one prerequisite again, and the languages read into
- * the list ("Spell Focus (conjuration) Languages: Celestial", "Infernal") are dropped.
- */
-function featPrerequisites(scraped: string[]): string[] {
-  const feats: string[] = [];
-  for (const entry of scraped) {
-    const open = feats.at(-1);
-    if (open && open.split("(").length > open.split(")").length) feats[feats.length - 1] = `${open}, ${entry}`;
-    else feats.push(entry);
-  }
-  const languages = feats.findIndex((f) => /\bLanguages?:/.test(f));
-  if (languages < 0) return feats;
-  return [...feats.slice(0, languages), feats[languages].replace(/\s*\bLanguages?:.*$/, "")];
 }
 
 /** Normalize abbreviated Craft subtypes from prerequisite text to proper D&D skill names */
@@ -110,6 +86,30 @@ function expandSkillRequirement(name: string, ranks: number): RequirementEntry |
   }
 
   return null;
+}
+
+/**
+ * A class's feat prerequisites as the scraper split them, mended: a list split inside its parentheses ("Weapon Focus
+ * (longbow", "shortbow", "or composite version of either)") is one prerequisite again, and the languages read into
+ * the list ("Spell Focus (conjuration) Languages: Celestial", "Infernal") are dropped.
+ */
+function featPrerequisites(scraped: string[]): string[] {
+  const feats: string[] = [];
+  for (const entry of scraped) {
+    const open = feats.at(-1);
+    if (open && open.split("(").length > open.split(")").length) feats[feats.length - 1] = `${open}, ${entry}`;
+    else feats.push(entry);
+  }
+  const languages = feats.findIndex((f) => /\bLanguages?:/.test(f));
+  if (languages < 0) return feats;
+  return [...feats.slice(0, languages), feats[languages].replace(/\s*\bLanguages?:.*$/, "")];
+}
+
+/** Distinguish mechanical special prerequisites (sneak attack, rage, spellcasting, etc.)
+ *  from narrative/RP-only ones (deity worship, organization membership, rituals).
+ *  Mechanical ones are tracked as unresolved so they show up as TODOs. */
+function isMechanicalPrereq(text: string): boolean {
+  return /animal companion|spell-like|psionic/i.test(text);
 }
 
 /** A compound feat requirement: "Weapon Focus (longbow or shortbow)". */

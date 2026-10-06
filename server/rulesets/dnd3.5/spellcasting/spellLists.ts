@@ -1,15 +1,10 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 
-/** A spell list's slot at a spell level: `aptitudes.<list>.<level>.uses` or `.allowed`. */
-export const SLOT_TARGET = /^aptitudes\.([^.]+)\.\d+\.(?:uses|allowed)$/;
-
 /** A spell list whose spells join the list of the class that gives it, as a cleric's domain does: `aptitudes.<list>.joinsclasslist`. */
 export const JOIN_TARGET = /^aptitudes\.([^.]+)\.joinsclasslist$/;
 
-/** The spell list a modifier gives slots in or joins to its class's list, if it does either. */
-export function listOpenedBy(target: string): string | undefined {
-  return SLOT_TARGET.exec(target)?.[1] ?? JOIN_TARGET.exec(target)?.[1];
-}
+/** A spell list's slot at a spell level: `aptitudes.<list>.<level>.uses` or `.allowed`. */
+export const SLOT_TARGET = /^aptitudes\.([^.]+)\.\d+\.(?:uses|allowed)$/;
 
 /**
  * Each class's spell lists, by its id: those its levels give slots in, a level no character has taken yet included (a
@@ -44,6 +39,11 @@ export function collectClassListIds(
     }
   }
   return ids;
+}
+
+/** The spell list a modifier gives slots in or joins to its class's list, if it does either. */
+export function listOpenedBy(target: string): string | undefined {
+  return SLOT_TARGET.exec(target)?.[1] ?? JOIN_TARGET.exec(target)?.[1];
 }
 
 /**

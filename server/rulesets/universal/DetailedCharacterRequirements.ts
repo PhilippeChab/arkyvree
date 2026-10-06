@@ -4,17 +4,17 @@ import type { Requirement } from "@/shared/relations.ts";
 import { hasValueType, parseLiteralValue } from "./literalValue.ts";
 import { evaluateTemplateExpression, extractTemplateExpression, isTemplateValue } from "./templateExpression.ts";
 
-type Node = {
-  requirement: Requirement;
-  fulfilled: boolean | null;
-  children: Node[];
-};
-
 type DetailedCharacterComprehensiveRequirements = {
   requirements: Requirement[][];
   invalidRequirements: { warning: string; requirement: Requirement }[];
   unmetRequirementGroups: Requirement[][];
   fulfilledRequirementGroups: Requirement[][];
+};
+
+type Node = {
+  requirement: Requirement;
+  fulfilled: boolean | null;
+  children: Node[];
 };
 
 export default class DetailedCharacterRequirements {
@@ -78,40 +78,6 @@ export default class DetailedCharacterRequirements {
     }
 
     return tree;
-  }
-
-  /**
-   * The requirement's value, typed: a template reference resolved against the holders, or the literal coerced to its
-   * value type. Null when it can't be (each reason recorded).
-   */
-  private resolveRequirementValue(requirement: Requirement, holders: Holders): number | string | boolean | null {
-    const { value, valueType } = requirement;
-    if (typeof value === "string" && isTemplateValue(value)) {
-      const expression = extractTemplateExpression(value);
-      if (!expression) {
-        this.warn(requirement, `Invalid template expression: ${value}`);
-        return null;
-      }
-      const resolved = evaluateTemplateExpression(expression, holders, this.targetPaths, (warning) =>
-        this.warn(requirement, warning),
-      );
-      if (resolved === null) return null;
-      // NaN / ±Infinity passes `typeof === "number"` and silently makes
-      // every comparison false, marking the requirement unmet with no
-      // diagnostic. Mirror the modifier-side guard.
-      if (typeof resolved === "number" && !Number.isFinite(resolved)) {
-        this.warn(requirement, `Template resolved to a non-finite number (${resolved})`);
-        return null;
-      }
-      return resolved;
-    }
-    // A condition saved without a value (an emptiness check needs none) compares with the empty literal
-    const literal = parseLiteralValue(value ?? "", valueType);
-    if (literal === undefined) {
-      this.warn(requirement, `Invalid ${valueType} value: ${JSON.stringify(value)}`);
-      return null;
-    }
-    return literal;
   }
 
   /**
@@ -276,9 +242,54 @@ export default class DetailedCharacterRequirements {
     return nodes.every((node) => this.evaluateNode(node));
   }
 
+  /**
+   * The requirement's value, typed: a template reference resolved against the holders, or the literal coerced to its
+   * value type. Null when it can't be (each reason recorded).
+   */
+  private resolveRequirementValue(requirement: Requirement, holders: Holders): number | string | boolean | null {
+    const { value, valueType } = requirement;
+    if (typeof value === "string" && isTemplateValue(value)) {
+      const expression = extractTemplateExpression(value);
+      if (!expression) {
+        this.warn(requirement, `Invalid template expression: ${value}`);
+        return null;
+      }
+      const resolved = evaluateTemplateExpression(expression, holders, this.targetPaths, (warning) =>
+        this.warn(requirement, warning),
+      );
+      if (resolved === null) return null;
+      // NaN / ±Infinity passes `typeof === "number"` and silently makes
+      // every comparison false, marking the requirement unmet with no
+      // diagnostic. Mirror the modifier-side guard.
+      if (typeof resolved === "number" && !Number.isFinite(resolved)) {
+        this.warn(requirement, `Template resolved to a non-finite number (${resolved})`);
+        return null;
+      }
+      return resolved;
+    }
+    // A condition saved without a value (an emptiness check needs none) compares with the empty literal
+    const literal = parseLiteralValue(value ?? "", valueType);
+    if (literal === undefined) {
+      this.warn(requirement, `Invalid ${valueType} value: ${JSON.stringify(value)}`);
+      return null;
+    }
+    return literal;
+  }
+
   /** Records a requirement the engine couldn't evaluate, with why. */
   private warn(requirement: Requirement, warning: string) {
     this.detailedCharacterRequirements.invalidRequirements.push({ warning, requirement });
+  }
+
+  /** Evaluates the groups, each with the item it's of (`itemOf`), which a weapon's own paths (`weapon.wielded`) read. */
+  evaluateRequirements(
+    holders: Holders,
+    requirements: Requirement[][],
+    itemOf: (group: Requirement[]) => string | undefined = () => undefined,
+  ) {
+    for (const group of requirements) {
+      this.evaluateRequirementsGroup(group, holders, itemOf(group));
+    }
   }
 
   getRequirements() {
@@ -294,16 +305,5 @@ export default class DetailedCharacterRequirements {
     return this.targetPaths
       .traversePathInit(requirement.target, holders, { sourceId })
       .some((result) => !result.error && this.evaluateRequirement(requirement, result, holders));
-  }
-
-  /** Evaluates the groups, each with the item it's of (`itemOf`), which a weapon's own paths (`weapon.wielded`) read. */
-  evaluateRequirements(
-    holders: Holders,
-    requirements: Requirement[][],
-    itemOf: (group: Requirement[]) => string | undefined = () => undefined,
-  ) {
-    for (const group of requirements) {
-      this.evaluateRequirementsGroup(group, holders, itemOf(group));
-    }
   }
 }

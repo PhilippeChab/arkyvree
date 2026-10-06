@@ -18,6 +18,43 @@ class CharacterContributorsRepository extends include(
     super(contributorsInCharacter);
   }
 
+  async backfillUserId(db: Db, email: string, userId: string) {
+    return await db
+      .update(this.table)
+      .set({ userId, updatedAt: new Date().toISOString() })
+      .where(
+        and(
+          eq(this.table.email, email),
+          eq(this.table.status, "Pending"),
+          isNull(this.table.userId),
+          isNull(this.table.deletedAt),
+        ),
+      )
+      .returning();
+  }
+
+  async create(
+    db: Db,
+    values: {
+      characterId: string;
+      email: string;
+      role: ContributorRole;
+      invitedBy: string;
+      userId?: string;
+    },
+  ) {
+    return await db
+      .insert(this.table)
+      .values({
+        characterId: values.characterId,
+        email: values.email,
+        role: values.role,
+        invitedBy: values.invitedBy,
+        userId: values.userId,
+      })
+      .returning();
+  }
+
   async findManyWithCharacter(
     db: Db,
     where: { userId: string; status: ContributorStatus },
@@ -138,43 +175,6 @@ class CharacterContributorsRepository extends include(
     });
 
     return contributor?.role ?? null;
-  }
-
-  async create(
-    db: Db,
-    values: {
-      characterId: string;
-      email: string;
-      role: ContributorRole;
-      invitedBy: string;
-      userId?: string;
-    },
-  ) {
-    return await db
-      .insert(this.table)
-      .values({
-        characterId: values.characterId,
-        email: values.email,
-        role: values.role,
-        invitedBy: values.invitedBy,
-        userId: values.userId,
-      })
-      .returning();
-  }
-
-  async backfillUserId(db: Db, email: string, userId: string) {
-    return await db
-      .update(this.table)
-      .set({ userId, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.email, email),
-          eq(this.table.status, "Pending"),
-          isNull(this.table.userId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
   }
 
   async update(db: Db, values: Partial<InferInsertModel<typeof contributorsInCharacter>>, where: { id: string }) {

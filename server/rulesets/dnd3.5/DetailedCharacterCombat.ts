@@ -215,6 +215,10 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, Attacks, 
     return paths;
   }
 
+  getCombat(): DetailedCharacterComprehensiveCombat {
+    return this.detailedCharacterCombat;
+  }
+
   initialize(race: RaceWithPMR, klassLevelProperties: Map<string, { bab: number; skills: number }>) {
     this.raceSize = race.size;
 
@@ -241,10 +245,6 @@ class DetailedCharacterCombat extends include(CombatState, ArmorClass, Attacks, 
       { type: WEAPON_CRITICAL_MULTIPLIER, value: "2" },
       { type: WEAPON_FINESSABLE, value: "true" },
     ]);
-  }
-
-  getCombat(): DetailedCharacterComprehensiveCombat {
-    return this.detailedCharacterCombat;
   }
 
   /** The encumbrance the sheet shows: the encumbrance's own object, so what changes it (a modifier) is what's read. */

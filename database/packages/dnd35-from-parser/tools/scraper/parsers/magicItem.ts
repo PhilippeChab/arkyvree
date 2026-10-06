@@ -5,9 +5,9 @@ import { sectionElements, tagOf } from "@/database/packages/dnd35-from-parser/to
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { MagicItemCategory, MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
 
-type RawMagicItem = MagicItemReference["raw"][number];
-
 type CheerioEl = cheerio.Cheerio<AnyNode>;
+
+type RawMagicItem = MagicItemReference["raw"][number];
 
 function findH4ByText($: cheerio.CheerioAPI, text: string): CheerioEl | null {
   let found: CheerioEl | null = null;
@@ -57,6 +57,30 @@ function parseVariantPrices(metadataText: string): { price: string; variant: str
 }
 
 /**
+ * An item block's entries: one for each price of a variant-priced item, named after its variant ("+1", "Greater"…,
+ * or the variant alone when it contains the item's name: "Greater slaying arrow"), else one.
+ */
+function itemEntries(block: ReturnType<typeof readItemBlock>, category: MagicItemCategory): RawMagicItem[] {
+  const { name, description, metadataText, charges } = block;
+  const entry = (entryName: string): RawMagicItem => ({
+    name: entryName,
+    category,
+    description,
+    metadataText,
+    ...(charges.length > 0 ? { spellCharges: charges } : {}),
+  });
+  const variants = parseVariantPrices(metadataText);
+  if (!variants) return [entry(name)];
+  return variants.map(({ variant }) =>
+    entry(
+      variant.toLowerCase().includes(name.toLowerCase())
+        ? variant
+        : `${name}${variant.startsWith("+") ? " " : ", "}${variant}`,
+    ),
+  );
+}
+
+/**
  * An item's block, after its h5 heading up to the next heading: its description paragraphs, its metadata paragraph
  * (its price…), and a staff's spells with their charges.
  */
@@ -90,30 +114,6 @@ function readItemBlock($: cheerio.CheerioAPI, heading: CheerioEl) {
   // Where the next block starts: the heading ending this one
   const end = (section.at(-1) ?? heading).next();
   return { name: normalizeWs(heading.text()), description: descParts.join(" "), metadataText, charges, end };
-}
-
-/**
- * An item block's entries: one for each price of a variant-priced item, named after its variant ("+1", "Greater"…,
- * or the variant alone when it contains the item's name: "Greater slaying arrow"), else one.
- */
-function itemEntries(block: ReturnType<typeof readItemBlock>, category: MagicItemCategory): RawMagicItem[] {
-  const { name, description, metadataText, charges } = block;
-  const entry = (entryName: string): RawMagicItem => ({
-    name: entryName,
-    category,
-    description,
-    metadataText,
-    ...(charges.length > 0 ? { spellCharges: charges } : {}),
-  });
-  const variants = parseVariantPrices(metadataText);
-  if (!variants) return [entry(name)];
-  return variants.map(({ variant }) =>
-    entry(
-      variant.toLowerCase().includes(name.toLowerCase())
-        ? variant
-        : `${name}${variant.startsWith("+") ? " " : ", "}${variant}`,
-    ),
-  );
 }
 
 /**

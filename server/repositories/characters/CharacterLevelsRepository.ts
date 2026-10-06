@@ -72,6 +72,15 @@ class CharacterLevelsRepository extends include(
     return rows.length > 0;
   }
 
+  async create(db: Db, values: InferInsertModel<typeof levelsInCharacter>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Intentional removal — hard delete
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
+  }
+
   /**
    * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
    * an in-use check.
@@ -138,21 +147,12 @@ class CharacterLevelsRepository extends include(
     });
   }
 
-  async create(db: Db, values: InferInsertModel<typeof levelsInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async update(db: Db, values: Partial<InferInsertModel<typeof levelsInCharacter>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning();
-  }
-
-  // Intentional removal — hard delete
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 }
 

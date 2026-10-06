@@ -52,8 +52,6 @@ export type StoredReference<T extends ReferenceType = ReferenceType> = Pick<
   "_meta" | "raw" | "overrides"
 >;
 
-const STORED_KEYS = new Set(["_meta", "raw", "overrides"]);
-
 const loaded: { [T in ReferenceType]: Map<string, ReferenceByType[T]> } = {
   class: new Map(),
   feat: new Map(),
@@ -130,6 +128,8 @@ const RESOLVERS: { [T in ReferenceType]: (stored: StoredReference<T>) => Referen
   wizardSchool: (stored) => stored,
 };
 
+const STORED_KEYS = new Set(["_meta", "raw", "overrides"]);
+
 /** Freezes a value and everything in it. */
 function deepFreeze<T>(value: T): T {
   if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
@@ -137,15 +137,6 @@ function deepFreeze<T>(value: T): T {
     for (const child of Object.values(value)) deepFreeze(child);
   }
   return value;
-}
-
-/**
- * A reference with what the generator reads derived from it, in the shape a reference file has: keys sorted,
- * no undefined values.
- */
-export function resolveReference<T extends ReferenceType>(type: T, stored: StoredReference<T>): ReferenceByType[T] {
-  const resolve: (stored: StoredReference<T>) => ReferenceByType[T] = RESOLVERS[type];
-  return JSON.parse(stableStringify(resolve(stored)));
 }
 
 /**
@@ -159,6 +150,15 @@ export function readStoredReference<T extends ReferenceType>(path: string, type:
   if (extra.length > 0)
     throw new Error(`${path} stores ${extra.join(", ")}: a reference stores _meta, raw and overrides only`);
   return stored;
+}
+
+/**
+ * A reference with what the generator reads derived from it, in the shape a reference file has: keys sorted,
+ * no undefined values.
+ */
+export function resolveReference<T extends ReferenceType>(type: T, stored: StoredReference<T>): ReferenceByType[T] {
+  const resolve: (stored: StoredReference<T>) => ReferenceByType[T] = RESOLVERS[type];
+  return JSON.parse(stableStringify(resolve(stored)));
 }
 
 /**

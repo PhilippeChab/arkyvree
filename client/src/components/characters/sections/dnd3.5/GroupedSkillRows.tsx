@@ -6,18 +6,18 @@ import { useToggleSet } from "@/client/src/hooks/index.ts";
 
 import { groupSkills } from "./skillGroups.ts";
 
-/** Where a skill's row sits: under its group's header, and hidden while that group is collapsed. */
-interface SkillPlacement {
-  indented: boolean;
-  hidden: boolean;
-}
-
 interface GroupedSkillRowsProps<S> {
   skills: readonly S[];
   /** The table's column count, which a group's header row spans. */
   columns: number;
   /** The skill's keyed row, usually a `SkillRow`. */
   renderSkill: (skill: S, placement: SkillPlacement) => ReactNode;
+}
+
+/** Where a skill's row sits: under its group's header, and hidden while that group is collapsed. */
+interface SkillPlacement {
+  indented: boolean;
+  hidden: boolean;
 }
 
 interface SkillRowProps extends SkillPlacement {

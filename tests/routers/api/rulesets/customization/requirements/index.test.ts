@@ -8,10 +8,10 @@ import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
+const charisma13 = { level: "1", target: "abilities.charisma.total", value: "13", operator: "greater_than_or_equal" };
 const customization = api.api.rulesets[":id"].customization[":entityType"][":entityId"];
 const requirements = customization.requirements;
 const requirement = requirements[":requirementId"];
-const charisma13 = { level: "1", target: "abilities.charisma.total", value: "13", operator: "greater_than_or_equal" };
 
 async function setup() {
   const { id } = await createSeededTestRuleset(SEED_USER_ID);

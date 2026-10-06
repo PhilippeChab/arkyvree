@@ -8,20 +8,20 @@ import { FONT_SIZE, styles } from "./styles.ts";
 
 type DiagnosticColumn = { label: string; width: string; centered?: boolean };
 
-const REQUIREMENT_COLUMNS: DiagnosticColumn[] = [
-  { label: "LEVEL", width: "15%" },
-  { label: "TARGET", width: "35%" },
-  { label: "OPERATOR", width: "15%", centered: true },
-  { label: "VALUE", width: "15%", centered: true },
-  { label: "CHAINING OP", width: "20%", centered: true },
-];
-
 const MODIFIER_COLUMNS: DiagnosticColumn[] = [
   { label: "SOURCE TYPE", width: "20%" },
   { label: "TARGET", width: "35%" },
   { label: "OPERATOR", width: "15%", centered: true },
   { label: "VALUE", width: "15%", centered: true },
   { label: "TYPE", width: "15%", centered: true },
+];
+
+const REQUIREMENT_COLUMNS: DiagnosticColumn[] = [
+  { label: "LEVEL", width: "15%" },
+  { label: "TARGET", width: "35%" },
+  { label: "OPERATOR", width: "15%", centered: true },
+  { label: "VALUE", width: "15%", centered: true },
+  { label: "CHAINING OP", width: "20%", centered: true },
 ];
 
 /** The diagnostics page's counts above a section's tables. */

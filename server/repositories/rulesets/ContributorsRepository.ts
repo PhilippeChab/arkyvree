@@ -16,6 +16,43 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
     super(contributorsInRules);
   }
 
+  async backfillUserId(db: Db, email: string, userId: string) {
+    return await db
+      .update(this.table)
+      .set({ userId, updatedAt: new Date().toISOString() })
+      .where(
+        and(
+          eq(this.table.email, email),
+          eq(this.table.status, "Pending"),
+          isNull(this.table.userId),
+          isNull(this.table.deletedAt),
+        ),
+      )
+      .returning();
+  }
+
+  async create(
+    db: Db,
+    values: {
+      rulesetId: string;
+      email: string;
+      role: ContributorRole;
+      invitedBy: string;
+      userId?: string;
+    },
+  ) {
+    return await db
+      .insert(this.table)
+      .values({
+        rulesetId: values.rulesetId,
+        email: values.email,
+        role: values.role,
+        invitedBy: values.invitedBy,
+        userId: values.userId,
+      })
+      .returning();
+  }
+
   async findMany(db: Db, where: { rulesetId: string; status: ContributorStatus }) {
     return await db.query.contributorsInRules.findMany({
       where: this.where([
@@ -146,43 +183,6 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
     });
 
     return contributor?.role ?? null;
-  }
-
-  async create(
-    db: Db,
-    values: {
-      rulesetId: string;
-      email: string;
-      role: ContributorRole;
-      invitedBy: string;
-      userId?: string;
-    },
-  ) {
-    return await db
-      .insert(this.table)
-      .values({
-        rulesetId: values.rulesetId,
-        email: values.email,
-        role: values.role,
-        invitedBy: values.invitedBy,
-        userId: values.userId,
-      })
-      .returning();
-  }
-
-  async backfillUserId(db: Db, email: string, userId: string) {
-    return await db
-      .update(this.table)
-      .set({ userId, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.email, email),
-          eq(this.table.status, "Pending"),
-          isNull(this.table.userId),
-          isNull(this.table.deletedAt),
-        ),
-      )
-      .returning();
   }
 
   async update(db: Db, values: Partial<InferInsertModel<typeof contributorsInRules>>, where: { id: string }) {

@@ -18,11 +18,11 @@ import { type rpc } from "@/client/src/services/rpc.ts";
 
 import type { ClassSectionProps } from "./types.ts";
 
+type Spell = SpellListPaginated["items"][number];
 type SpellListPaginated = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spell-list"]["$get"],
   200
 >;
-type Spell = SpellListPaginated["items"][number];
 
 const COLUMNS = [
   { key: "name", label: "Name", width: "30%" },

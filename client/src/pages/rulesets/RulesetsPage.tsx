@@ -39,17 +39,6 @@ import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts
 type FilterScope = (typeof SCOPES)[number];
 type SortField = RulesetListFilters["orderBy"];
 
-const SCOPES = [
-  "base",
-  "extensions",
-  "systems",
-  "community",
-  "forked",
-  "campaignAccessible",
-  "starred",
-  "archived",
-] as const;
-
 const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
   { value: undefined, label: "All" },
   { value: "base", label: "Base" },
@@ -63,6 +52,17 @@ const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
 ];
 
 const RULESET_SORT_OPTIONS: SortOption<SortField>[] = [...CREATED_SORTS, ...UPDATED_SORTS];
+
+const SCOPES = [
+  "base",
+  "extensions",
+  "systems",
+  "community",
+  "forked",
+  "campaignAccessible",
+  "starred",
+  "archived",
+] as const;
 
 function RulesetList({ filters }: { filters: RulesetListFilters }) {
   const navigate = useNavigate();

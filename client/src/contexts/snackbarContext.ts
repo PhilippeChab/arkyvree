@@ -2,16 +2,6 @@
 
 import { createContext } from "react";
 
-export interface ToastAction {
-  label: string;
-  onClick: () => void;
-}
-
-export interface ToastOptions {
-  action?: ToastAction;
-  persistent?: boolean;
-}
-
 export interface SnackbarContextType {
   success: (message: string, options?: ToastOptions) => void;
   /**
@@ -21,6 +11,16 @@ export interface SnackbarContextType {
   error: (err: unknown, fallback?: string) => void;
   info: (message: string, options?: ToastOptions) => void;
   warning: (message: string) => void;
+}
+
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
+export interface ToastOptions {
+  action?: ToastAction;
+  persistent?: boolean;
 }
 
 export const SnackbarContext = createContext<SnackbarContextType | undefined>(undefined);

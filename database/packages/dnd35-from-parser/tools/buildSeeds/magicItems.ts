@@ -20,11 +20,11 @@ export type MagicItemSeedSets = {
   staffs: ItemDef[];
 };
 
-/** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
-const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
-
 /** The specific armor and shields, whose text gives what they change of their base's. */
 const ARMOR_CATEGORIES = new Set<MagicItemCategory>(["specificArmor", "specificShield"]);
+
+/** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
+const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
 
 /** A weapon's enhancement bonus, as modifiers of the weapon holding it: its attack's and its damage's. */
 function weaponEnhancementModifiers(description: string): Modifier[] {

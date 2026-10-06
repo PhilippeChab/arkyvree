@@ -6,6 +6,56 @@ import type { MagicItemCategory, MagicItemReference } from "@/database/packages/
 
 type Modifier = { target: string; operator: string; value: string; valueType: string };
 
+const ABILITY_MAP: Record<string, string> = {
+  strength: "abilities.strength.misc",
+  dexterity: "abilities.dexterity.misc",
+  constitution: "abilities.constitution.misc",
+  intelligence: "abilities.intelligence.misc",
+  wisdom: "abilities.wisdom.misc",
+  charisma: "abilities.charisma.misc",
+};
+
+/** Common alternative spellings in SRD descriptions → canonical template name, scoped by category */
+const ALIASES: Partial<Record<MagicItemCategory, Record<string, string>>> = {
+  specificWeapon: {
+    "short sword": "Shortsword",
+  },
+  specificArmor: {
+    chainmail: "Chain Mail",
+    "chain mail": "Chain Mail",
+    "plate armor": "Full Plate",
+  },
+  specificShield: {
+    "heavy shield": "Heavy Steel Shield",
+  },
+};
+
+/** The base armors' template names, longest first. */
+const BASE_ARMOR = [
+  "Studded Leather",
+  "Leather Armor",
+  "Padded Armor",
+  "Chain Shirt",
+  "Hide Armor",
+  "Scale Mail",
+  "Chain Mail",
+  "Breastplate",
+  "Splint Mail",
+  "Banded Mail",
+  "Half-Plate",
+  "Full Plate",
+];
+
+/** The base shields' template names, longest first. */
+const BASE_SHIELDS = [
+  "Light Wooden Shield",
+  "Light Steel Shield",
+  "Heavy Wooden Shield",
+  "Heavy Steel Shield",
+  "Tower Shield",
+  "Buckler",
+];
+
 /** The base weapons' template names, longest first. */
 const BASE_WEAPONS = [
   "Repeating Heavy Crossbow",
@@ -77,45 +127,13 @@ const BASE_WEAPONS = [
   "Sai",
 ];
 
-/** The base armors' template names, longest first. */
-const BASE_ARMOR = [
-  "Studded Leather",
-  "Leather Armor",
-  "Padded Armor",
-  "Chain Shirt",
-  "Hide Armor",
-  "Scale Mail",
-  "Chain Mail",
-  "Breastplate",
-  "Splint Mail",
-  "Banded Mail",
-  "Half-Plate",
-  "Full Plate",
-];
-
-/** The base shields' template names, longest first. */
-const BASE_SHIELDS = [
-  "Light Wooden Shield",
-  "Light Steel Shield",
-  "Heavy Wooden Shield",
-  "Heavy Steel Shield",
-  "Tower Shield",
-  "Buckler",
-];
-
-/** Common alternative spellings in SRD descriptions → canonical template name, scoped by category */
-const ALIASES: Partial<Record<MagicItemCategory, Record<string, string>>> = {
-  specificWeapon: {
-    "short sword": "Shortsword",
-  },
-  specificArmor: {
-    chainmail: "Chain Mail",
-    "chain mail": "Chain Mail",
-    "plate armor": "Full Plate",
-  },
-  specificShield: {
-    "heavy shield": "Heavy Steel Shield",
-  },
+const CATEGORY_SLOT_MAP: Partial<Record<MagicItemCategory, string>> = {
+  ring: "Finger",
+  staff: "Two Handed",
+  rod: "Main Hand",
+  specificArmor: "Torso",
+  specificShield: "Off Hand",
+  specificWeapon: "Main Hand",
 };
 
 const CATEGORY_TYPE_MAP: Record<MagicItemCategory, string> = {
@@ -126,35 +144,6 @@ const CATEGORY_TYPE_MAP: Record<MagicItemCategory, string> = {
   ring: "Ring",
   rod: "Rod",
   staff: "Staff",
-};
-
-const CATEGORY_SLOT_MAP: Partial<Record<MagicItemCategory, string>> = {
-  ring: "Finger",
-  staff: "Two Handed",
-  rod: "Main Hand",
-  specificArmor: "Torso",
-  specificShield: "Off Hand",
-  specificWeapon: "Main Hand",
-};
-
-const WONDROUS_SLOT_PATTERNS: [RegExp, string][] = [
-  [/\b(?:Belt|Girdle)\b/i, "Waist"],
-  [/\b(?:Cloak|Cape|Mantle)\b/i, "Shoulders"],
-  [/\b(?:Helm|Crown|Circlet|Headband|Phylactery|Hat|Goggles|Eyes|Lenses)\b/i, "Head"],
-  [/\b(?:Amulet|Necklace|Periapt|Medallion|Scarab|Brooch)\b/i, "Neck"],
-  [/\b(?:Bracers|Bracelet)\b/i, "Wrists"],
-  [/\b(?:Gauntlets?|Gloves?)\b/i, "Hands"],
-  [/\b(?:Robe|Vest)\b/i, "Torso"],
-  [/\b(?:Boots|Slippers|Sandals)\b/i, "Other"],
-];
-
-const ABILITY_MAP: Record<string, string> = {
-  strength: "abilities.strength.misc",
-  dexterity: "abilities.dexterity.misc",
-  constitution: "abilities.constitution.misc",
-  intelligence: "abilities.intelligence.misc",
-  wisdom: "abilities.wisdom.misc",
-  charisma: "abilities.charisma.misc",
 };
 
 /** Thematic item names → ability score (for items that don't use the ability name directly) */
@@ -209,6 +198,17 @@ const NAME_MODIFIER_PATTERNS: { pattern: RegExp; toModifiers: (match: RegExpMatc
       return [];
     },
   },
+];
+
+const WONDROUS_SLOT_PATTERNS: [RegExp, string][] = [
+  [/\b(?:Belt|Girdle)\b/i, "Waist"],
+  [/\b(?:Cloak|Cape|Mantle)\b/i, "Shoulders"],
+  [/\b(?:Helm|Crown|Circlet|Headband|Phylactery|Hat|Goggles|Eyes|Lenses)\b/i, "Head"],
+  [/\b(?:Amulet|Necklace|Periapt|Medallion|Scarab|Brooch)\b/i, "Neck"],
+  [/\b(?:Bracers|Bracelet)\b/i, "Wrists"],
+  [/\b(?:Gauntlets?|Gloves?)\b/i, "Hands"],
+  [/\b(?:Robe|Vest)\b/i, "Torso"],
+  [/\b(?:Boots|Slippers|Sandals)\b/i, "Other"],
 ];
 
 /** An item's modifiers, from its name and description, and the bonuses it names that no modifier can hold. */

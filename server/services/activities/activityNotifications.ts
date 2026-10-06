@@ -38,17 +38,17 @@ import type { ChangedField } from "@/shared/activity.ts";
 
 type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
 
-/** Ruleset entities' tables, named like their types (abilities raise no activity) */
-const RULESET_ENTITY_TABLES = new Set<string>(RULESET_ENTITY_TYPES.filter((type) => type !== "abilities"));
+const CHARACTER_CONTRIBUTORS_TABLE = getTableName(contributorsInCharacter);
+
+const CONTRIBUTORS_TABLE = getTableName(contributorsInRules);
 
 /** Customization tables whose source entities have a rulesetId */
 const CUSTOMIZATION_TABLES = new Set(["modifiers", "requirements", "properties"]);
-
 const INVITES_TABLE = getTableName(invitesInCampaign);
-const CONTRIBUTORS_TABLE = getTableName(contributorsInRules);
-const CHARACTER_CONTRIBUTORS_TABLE = getTableName(contributorsInCharacter);
-
 const LONG_TEXT_FIELDS = new Set(["description"]);
+
+/** Ruleset entities' tables, named like their types (abilities raise no activity) */
+const RULESET_ENTITY_TABLES = new Set<string>(RULESET_ENTITY_TYPES.filter((type) => type !== "abilities"));
 
 function normalize(v: unknown): string {
   if (typeof v === "number") return String(v);

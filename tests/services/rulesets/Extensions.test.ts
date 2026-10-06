@@ -51,9 +51,9 @@ import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rule
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
-type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
-
 type EntityType = "feats" | "powers";
+
+type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 const firstPage = { limit: 50, page: 1 };
 const ENTITIES = {
   feats: {
@@ -105,9 +105,8 @@ async function createExtension(userId: string | null = null, values: RulesetValu
   });
 }
 
-/** The fork's visible feats of this name. */
-async function featsNamed(rulesetId: string, name: string) {
-  return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
+async function seededRuleset(name: string) {
+  return (await Rulesets.findOne(db, { name }))!;
 }
 
 async function forkBase(session: Session, values: { private?: boolean } = {}) {
@@ -117,10 +116,6 @@ async function forkBase(session: Session, values: { private?: boolean } = {}) {
     private: false,
     ...values,
   });
-}
-
-async function seededRuleset(name: string) {
-  return (await Rulesets.findOne(db, { name }))!;
 }
 
 /** The seeded base, its Complete Warrior extension, and a new user's fork of the base. */
@@ -173,6 +168,11 @@ async function favoredSoulOnMixedFork() {
       firstPage,
     );
   return { ...fork, favoredSoul, list, offer };
+}
+
+/** The fork's visible feats of this name. */
+async function featsNamed(rulesetId: string, name: string) {
+  return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
 }
 
 /** Two system extensions that each copy the base entity and give it an aptitude, a requirement and a modifier; and a fork using both. */

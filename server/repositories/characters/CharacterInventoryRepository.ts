@@ -55,6 +55,17 @@ class CharacterInventoryRepository extends include(
     return rows.length > 0;
   }
 
+  async create(db: Db, values: InferInsertModel<typeof inventoryInCharacter>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Exception to soft-delete: inventory entries are disposable
+  async delete(db: Db, where: { characterId: string; id: string }) {
+    return await db
+      .delete(this.table)
+      .where(and(eq(this.table.characterId, where.characterId), eq(this.table.id, where.id)));
+  }
+
   /**
    * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
    * an in-use check.
@@ -85,10 +96,6 @@ class CharacterInventoryRepository extends include(
     });
   }
 
-  async create(db: Db, values: InferInsertModel<typeof inventoryInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof inventoryInCharacter>>,
@@ -105,13 +112,6 @@ class CharacterInventoryRepository extends include(
         ]),
       )
       .returning();
-  }
-
-  // Exception to soft-delete: inventory entries are disposable
-  async delete(db: Db, where: { characterId: string; id: string }) {
-    return await db
-      .delete(this.table)
-      .where(and(eq(this.table.characterId, where.characterId), eq(this.table.id, where.id)));
   }
 }
 

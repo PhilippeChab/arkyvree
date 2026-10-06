@@ -30,8 +30,8 @@ import { planPackages } from "@/database/packages/runner.ts";
 import { diffContent, LABELLED_COLUMNS, type Query } from "./content.ts";
 import { renderHuman, renderSql } from "./rows.ts";
 
-const referenceConnectionString = process.env.REFERENCE_DATABASE_URL;
 const emitSql = process.argv.includes("--emit-sql");
+const referenceConnectionString = process.env.REFERENCE_DATABASE_URL;
 
 /** A pool client's queries, as the content diff runs them. */
 function queryOf(client: PoolClient): Query {

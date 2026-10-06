@@ -3,11 +3,17 @@ import { isRecord } from "@/shared/isRecord.ts";
 /** Replacements, applied in order. */
 type Replacements = [RegExp, string][];
 
+/** dndtools.net sends a literal ? for an apostrophe: `?s`, `?t`, `s? ` → `'s`, `'t`, `s' `. */
+const APOSTROPHES: Replacements = [
+  [/(\w)\?([stST])\b/g, "$1'$2"],
+  [/(\w)\?(\s)/g, "$1'$2"],
+];
 /** All known source book names — used across multiple sanitization rules */
 const BOOK =
   "(?:Player's Handbook|Dungeon Master's Guide|Monster Manual|Complete Divine|Complete Warrior|Complete Arcane|Complete Adventurer)";
-/** Matches "Book" or "the Book" with optional trailing "book"/"handbook"/"sourcebook" */
-const THE_BOOK = `(?:the )?${BOOK}(?:\\s+(?:book|handbook|sourcebook))?`;
+
+/** Keys whose string values get full sanitization (encoding + book-reference stripping) */
+const DESCRIPTION_KEYS = new Set(["description", "benefit", "normal", "special", "prerequisiteText", "text"]);
 
 /** Smart quotes, dashes, ellipses and non-breaking spaces, as entities or characters, and garbled apostrophes. */
 const ENCODING: Replacements = [
@@ -22,20 +28,6 @@ const ENCODING: Replacements = [
   [/[\u2026]/g, "..."],
   [/\u00A0/g, " "],
   [/\uFFFD/g, "'"], // the replacement character: a garbled apostrophe in the source
-];
-
-/** dndtools.net sends a literal ? for an apostrophe: `?s`, `?t`, `s? ` → `'s`, `'t`, `s' `. */
-const APOSTROPHES: Replacements = [
-  [/(\w)\?([stST])\b/g, "$1'$2"],
-  [/(\w)\?(\s)/g, "$1'$2"],
-];
-
-/** A string's encoding fixes, its lines then joined into one. */
-const TEXT_FIXES: Replacements = [
-  ...ENCODING,
-  ...APOSTROPHES,
-  [/\s*\n\s*/g, " "], // collapse newlines into single space
-  [/  +/g, " "], // collapse multiple spaces
 ];
 
 /** dndtools.net's HTML quirks and typos, and the encoding fixes. */
@@ -54,8 +46,16 @@ const HTML_FIXES: Replacements = [
   ...ENCODING,
 ];
 
-/** Keys whose string values get full sanitization (encoding + book-reference stripping) */
-const DESCRIPTION_KEYS = new Set(["description", "benefit", "normal", "special", "prerequisiteText", "text"]);
+/** A string's encoding fixes, its lines then joined into one. */
+const TEXT_FIXES: Replacements = [
+  ...ENCODING,
+  ...APOSTROPHES,
+  [/\s*\n\s*/g, " "], // collapse newlines into single space
+  [/  +/g, " "], // collapse multiple spaces
+];
+
+/** Matches "Book" or "the Book" with optional trailing "book"/"handbook"/"sourcebook" */
+const THE_BOOK = `(?:the )?${BOOK}(?:\\s+(?:book|handbook|sourcebook))?`;
 
 /** Book abbreviation suffixes found in scraped feat prerequisites (e.g., "Dodge (PH)"). */
 export const BOOK_ABBREV_PATTERN = /\s*\((?:CAd|CAr|CA|CC|CD|CS|CW|DMG|DMG2|ECS|ELH|FR|MIC|MM|PH|PH2|PHB|PHB2|CV)\)/;

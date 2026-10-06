@@ -28,6 +28,29 @@ function detectStackable(description: string): boolean {
   return STACKABLE_PATTERNS.some((p) => p.test(description));
 }
 
+export function stripOrdinalPrefix(name: string): string {
+  return name.replace(ORDINAL_PREFIX, "");
+}
+
+/** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
+export function aggregateOrdinalVariants(
+  featureOccurrences: { name: string; levels: number[] }[],
+): { name: string; levels: number[] }[] {
+  const map = new Map<string, { name: string; levels: Set<number> }>();
+  for (const occ of featureOccurrences) {
+    const base = stripOrdinalPrefix(occ.name);
+    const key = base.toLowerCase();
+    const existing = map.get(key);
+    if (existing) {
+      for (const l of occ.levels) existing.levels.add(l);
+      if (existing.name !== base && /^\d/.test(existing.name)) existing.name = base;
+    } else {
+      map.set(key, { name: base, levels: new Set(occ.levels) });
+    }
+  }
+  return Array.from(map.values()).map(({ name, levels }) => ({ name, levels: [...levels].sort((a, b) => a - b) }));
+}
+
 export function buildFeatureMap<T>(
   features: ClassReference["raw"]["classFeatures"],
   valueFn: (cf: ClassReference["raw"]["classFeatures"][number]) => T,
@@ -41,11 +64,6 @@ export function buildFeatureMap<T>(
     }
   }
   return map;
-}
-
-/** A class feature's name without its ability type ("Rage (Ex)" → "Rage"). */
-export function featureBaseName(name: string): string {
-  return name.replace(/\s*\((Ex|Su|Sp)\)\s*$/, "").trim();
 }
 
 export function normalizeFeatureName(name: string): string {
@@ -77,6 +95,38 @@ export function normalizeFeatureName(name: string): string {
       // Title-case each word for consistent naming (but not after apostrophes)
       .replace(/(?<!['''])\b\w/g, (c) => c.toUpperCase())
   );
+}
+
+export function detectFeatureOccurrences(
+  progression: ClassReference["raw"]["progression"],
+): { name: string; levels: number[] }[] {
+  const map = new Map<string, number[]>();
+
+  for (const row of progression) {
+    for (const special of row.special) {
+      if (!special) continue;
+      // Skip dash/em-dash/replacement characters and lone quotes (means "no feature at this level")
+      if (special.trim().length <= 1 || /^[\u2014\u2013\u2012\u2015\uFFFD'"-]+$/.test(special.trim())) continue;
+      // Skip caster advancement entries — they're not class features
+      if (special.toLowerCase().includes("+1 level of existing")) continue;
+      // Skip bare "spells" entries — handled by spell config, not class features
+      if (special.toLowerCase().trim() === "spells") continue;
+      // Skip "Table:" entries — these are table references, not class features
+      if (special.startsWith("Table:")) continue;
+      const normalized = normalizeFeatureName(special);
+      if (!map.has(normalized)) {
+        map.set(normalized, []);
+      }
+      map.get(normalized)!.push(row.level);
+    }
+  }
+
+  return Array.from(map.entries()).map(([name, levels]) => ({ name, levels }));
+}
+
+/** A class feature's name without its ability type ("Rage (Ex)" → "Rage"). */
+export function featureBaseName(name: string): string {
+  return name.replace(/\s*\((Ex|Su|Sp)\)\s*$/, "").trim();
 }
 
 /**
@@ -112,33 +162,6 @@ export function isScalingFeature(normalizedName: string, progression: ClassRefer
   return false;
 }
 
-export function detectFeatureOccurrences(
-  progression: ClassReference["raw"]["progression"],
-): { name: string; levels: number[] }[] {
-  const map = new Map<string, number[]>();
-
-  for (const row of progression) {
-    for (const special of row.special) {
-      if (!special) continue;
-      // Skip dash/em-dash/replacement characters and lone quotes (means "no feature at this level")
-      if (special.trim().length <= 1 || /^[\u2014\u2013\u2012\u2015\uFFFD'"-]+$/.test(special.trim())) continue;
-      // Skip caster advancement entries — they're not class features
-      if (special.toLowerCase().includes("+1 level of existing")) continue;
-      // Skip bare "spells" entries — handled by spell config, not class features
-      if (special.toLowerCase().trim() === "spells") continue;
-      // Skip "Table:" entries — these are table references, not class features
-      if (special.startsWith("Table:")) continue;
-      const normalized = normalizeFeatureName(special);
-      if (!map.has(normalized)) {
-        map.set(normalized, []);
-      }
-      map.get(normalized)!.push(row.level);
-    }
-  }
-
-  return Array.from(map.entries()).map(([name, levels]) => ({ name, levels }));
-}
-
 export function parsePoolSubOptions(
   description: string,
 ): { intro: string; options: { name: string; description: string; stackable?: true }[] } | undefined {
@@ -169,27 +192,4 @@ export function parsePoolSubOptions(
   }
 
   return { intro, options };
-}
-
-export function stripOrdinalPrefix(name: string): string {
-  return name.replace(ORDINAL_PREFIX, "");
-}
-
-/** Merges "1st Foo" / "2nd Foo" occurrences into one entry with combined levels. */
-export function aggregateOrdinalVariants(
-  featureOccurrences: { name: string; levels: number[] }[],
-): { name: string; levels: number[] }[] {
-  const map = new Map<string, { name: string; levels: Set<number> }>();
-  for (const occ of featureOccurrences) {
-    const base = stripOrdinalPrefix(occ.name);
-    const key = base.toLowerCase();
-    const existing = map.get(key);
-    if (existing) {
-      for (const l of occ.levels) existing.levels.add(l);
-      if (existing.name !== base && /^\d/.test(existing.name)) existing.name = base;
-    } else {
-      map.set(key, { name: base, levels: new Set(occ.levels) });
-    }
-  }
-  return Array.from(map.values()).map(({ name, levels }) => ({ name, levels: [...levels].sort((a, b) => a - b) }));
 }

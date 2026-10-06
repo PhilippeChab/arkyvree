@@ -7,7 +7,28 @@ interface RouteMeta {
   description: string;
 }
 
+const APP_CONFIG = JSON.stringify({
+  googleClientId: readEnv("GOOGLE_CLIENT_ID") || null,
+  sentryDsn: readEnv("SENTRY_CLIENT_DSN") || null,
+  sentryEnvironment: readEnv("NODE_ENV") || null,
+  sentryRelease: readEnv("FLY_MACHINE_VERSION") || null,
+});
+
 const APP_URL = readEnv("APP_URL") || "http://localhost:8000";
+
+/** Cache landing.html template at startup */
+let cachedLanding: string | null = null;
+/** Cache index.html template at startup */
+let cachedTemplate: string | null = null;
+const DEFAULT_DESCRIPTION =
+  "A programmable ruleset engine and character creator for tabletop RPGs. Customize game rules with modifiers, requirements, and properties, then build characters with real-time validation.";
+const DEFAULT_OG_DESCRIPTION =
+  "A programmable ruleset engine and character creator for tabletop RPGs. Customize rules, build characters, and manage campaigns.";
+
+const DEFAULT_OG_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creator";
+
+/** Default values that appear in index.html (used as replacement anchors) */
+const DEFAULT_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creator";
 
 /**
  * Routes that should be crawled and indexed via the SPA shell. Everything else (auth-gated app routes, token-gated
@@ -26,27 +47,6 @@ const INDEXABLE_ROUTE_META: Record<string, RouteMeta> = {
       "Terms of service and privacy policy for Arkyvree, the programmable ruleset engine and character creator for tabletop RPGs.",
   },
 };
-
-/** Default values that appear in index.html (used as replacement anchors) */
-const DEFAULT_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creator";
-const DEFAULT_DESCRIPTION =
-  "A programmable ruleset engine and character creator for tabletop RPGs. Customize game rules with modifiers, requirements, and properties, then build characters with real-time validation.";
-const DEFAULT_OG_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creator";
-const DEFAULT_OG_DESCRIPTION =
-  "A programmable ruleset engine and character creator for tabletop RPGs. Customize rules, build characters, and manage campaigns.";
-
-/** Cache landing.html template at startup */
-let cachedLanding: string | null = null;
-
-/** Cache index.html template at startup */
-let cachedTemplate: string | null = null;
-
-const APP_CONFIG = JSON.stringify({
-  googleClientId: readEnv("GOOGLE_CLIENT_ID") || null,
-  sentryDsn: readEnv("SENTRY_CLIENT_DSN") || null,
-  sentryEnvironment: readEnv("NODE_ENV") || null,
-  sentryRelease: readEnv("FLY_MACHINE_VERSION") || null,
-});
 
 /** Helper function to get MIME type based on file extension */
 function getMimeType(path: string): string {

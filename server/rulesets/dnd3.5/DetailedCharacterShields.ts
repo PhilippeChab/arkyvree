@@ -12,6 +12,9 @@ import {
 import type { Item, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+/** Grouping key (normalized) → shared ShieldSlot reference */
+type ShieldsData = Record<string, ShieldSlot>;
+
 type ShieldSlot = {
   name: string;
   itemId: string;
@@ -21,9 +24,6 @@ type ShieldSlot = {
   checkpenalty: number;
   spellfailure: number;
 };
-
-/** Grouping key (normalized) → shared ShieldSlot reference */
-type ShieldsData = Record<string, ShieldSlot>;
 
 const NAVIGATABLE_SHIELD_PATHS = [
   { path: "ac.bonus", description: "Base AC bonus from shield", type: "number" as const },

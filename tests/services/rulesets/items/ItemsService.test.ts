@@ -9,6 +9,13 @@ import { createTestCharacter } from "@/tests/support/characters.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
+const copiedCustomizations = {
+  modifiers: [{ target: "abilities.strength.misc", requirements: ["combat.bab"] }],
+  properties: ["Cold"],
+  requirements: ["combat.bab"],
+};
+
+const noCustomizations = { modifiers: [], properties: [], requirements: [] };
 const requirement = {
   level: "1",
   target: "combat.bab",
@@ -16,31 +23,6 @@ const requirement = {
   valueType: "number",
   operator: "greater_than_or_equal",
 } as const;
-
-const copiedCustomizations = {
-  modifiers: [{ target: "abilities.strength.misc", requirements: ["combat.bab"] }],
-  properties: ["Cold"],
-  requirements: ["combat.bab"],
-};
-const noCustomizations = { modifiers: [], properties: [], requirements: [] };
-
-/** The customizations an item owns, with each modifier's own requirements. */
-async function customizationsOf(itemId: string) {
-  const modifiers = await Modifiers.findMany(db, { sourceIds: [itemId], sourceType: "items" });
-  return {
-    modifiers: await Promise.all(
-      modifiers.map(async ({ id, target }) => ({
-        id,
-        target,
-        requirements: (await Requirements.findMany(db, { entityIds: [id], entityType: "modifiers" })).map(
-          (r) => r.target,
-        ),
-      })),
-    ),
-    properties: (await Properties.findMany(db, { entityIds: [itemId], entityType: "items" })).map((p) => p.value),
-    requirements: (await Requirements.findMany(db, { entityIds: [itemId], entityType: "items" })).map((r) => r.target),
-  };
-}
 
 /** Gives an item a modifier (with a requirement of its own), a property and a requirement. */
 async function customize(itemId: string) {
@@ -66,6 +48,24 @@ async function createTemplate(session: Parameters<typeof ItemsService.createItem
   });
   await customize(template.id);
   return template;
+}
+
+/** The customizations an item owns, with each modifier's own requirements. */
+async function customizationsOf(itemId: string) {
+  const modifiers = await Modifiers.findMany(db, { sourceIds: [itemId], sourceType: "items" });
+  return {
+    modifiers: await Promise.all(
+      modifiers.map(async ({ id, target }) => ({
+        id,
+        target,
+        requirements: (await Requirements.findMany(db, { entityIds: [id], entityType: "modifiers" })).map(
+          (r) => r.target,
+        ),
+      })),
+    ),
+    properties: (await Properties.findMany(db, { entityIds: [itemId], entityType: "items" })).map((p) => p.value),
+    requirements: (await Requirements.findMany(db, { entityIds: [itemId], entityType: "items" })).map((r) => r.target),
+  };
 }
 
 async function expectTemplateInstance(rulesetId: string, itemId: string, templateId: string) {

@@ -14,13 +14,6 @@ import { makeSession } from "@/tests/support/users.ts";
 
 type CharacterValues = Omit<Parameters<typeof createCharacter>[2], "name" | "xp" | "description">;
 
-/** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
-export type Picks = {
-  skills: Record<string, number>;
-  feats: Record<string, string[]>;
-  powers: Record<string, string[]>;
-};
-
 /** A level's picks by name, with its hit points and ability increase. */
 export type LevelPlan = {
   hp: number;
@@ -28,6 +21,13 @@ export type LevelPlan = {
   skills?: Record<string, number>;
   feats?: Record<string, string[]>;
   powers?: Record<string, string[]>;
+};
+
+/** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
+export type Picks = {
+  skills: Record<string, number>;
+  feats: Record<string, string[]>;
+  powers: Record<string, string[]>;
 };
 
 /** A human druid's first level, with a wolf for animal companion. */
@@ -150,6 +150,13 @@ export const SORCERER_1: LevelPlan = {
   powers: { "Sorcerer Spells": ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Magic Missile", "Shield"] },
 };
 
+/** A first cleric level taken as a second character level: the War and Good domains, and the longsword as war weapon. */
+export const WAR_CLERIC_1: LevelPlan = {
+  hp: 8,
+  skills: { Concentration: 1, Heal: 1, Spellcraft: 1, Diplomacy: 1 },
+  feats: { "Cleric Domain": ["War Domain", "Good Domain"], "War Domain Weapon": ["War Domain Weapon: Longsword"] },
+};
+
 /** An elf wizard's first level: an evoker who gave up illusion and necromancy. */
 export const WIZARD_1: LevelPlan = {
   hp: 4,
@@ -180,13 +187,6 @@ export const WIZARD_1: LevelPlan = {
       "Shield",
     ],
   },
-};
-
-/** A first cleric level taken as a second character level: the War and Good domains, and the longsword as war weapon. */
-export const WAR_CLERIC_1: LevelPlan = {
-  hp: 8,
-  skills: { Concentration: 1, Heal: 1, Spellcraft: 1, Diplomacy: 1 },
-  feats: { "Cleric Domain": ["War Domain", "Good Domain"], "War Domain Weapon": ["War Domain Weapon: Longsword"] },
 };
 
 /** The ids of a plan's picks. */
@@ -285,13 +285,6 @@ async function createMaster(
   return { ctx, masterId, bonded };
 }
 
-/** A paladin with this special mount, picked at the fifth level, which unlocks it. */
-export function createPaladinWithMount(levels = 5, mount = "Heavy Warhorse Special Mount") {
-  return createMaster("mount", "paladin", "Paladin", levels, PALADIN_1, {
-    5: { feats: { "Special Mount Bond": [mount] } },
-  });
-}
-
 /** `plan` with these picks through `aptitude` instead of its own, or none. */
 export function picking(plan: LevelPlan, aptitude: string, feats: string[]): LevelPlan {
   const { [aptitude]: _, ...others } = plan.feats ?? {};
@@ -307,6 +300,13 @@ export function createDruidWithCompanion(levels = 1, companion = "Wolf Animal Co
     levels,
     picking(DRUID_1, "Animal Companion Bond", [companion]),
   );
+}
+
+/** A paladin with this special mount, picked at the fifth level, which unlocks it. */
+export function createPaladinWithMount(levels = 5, mount = "Heavy Warhorse Special Mount") {
+  return createMaster("mount", "paladin", "Paladin", levels, PALADIN_1, {
+    5: { feats: { "Special Mount Bond": [mount] } },
+  });
 }
 
 /** A wizard whose first level, `plan`, picks this familiar. */

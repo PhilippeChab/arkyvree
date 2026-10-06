@@ -25,21 +25,12 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
     return await db.delete(this.table).where(and(this.isDemo(), lt(this.table.expiresAt, before)));
   }
 
-  async findOne(
-    db: Db,
-    where: { id: string } | { emailAddress: string } | { username: string },
-    visibility: Visibility = Visibility.UnarchivedOnly,
-  ) {
-    return await db.query.usersInAccount.findFirst({
-      where: this.branchWhere(
-        [
-          "id" in where && eq(this.table.id, where.id),
-          "emailAddress" in where && eq(this.table.emailAddress, where.emailAddress),
-          "username" in where && eq(this.table.username, where.username),
-        ],
-        [this.visibility(visibility)],
-      ),
-    });
+  async archive(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
   }
 
   async create(
@@ -65,25 +56,34 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
       .returning();
   }
 
+  async delete(db: Db, where: { id: string } | { expiredDemosBefore: string }) {
+    if ("id" in where) return await this.deleteDemo(db, where.id);
+    return await this.deleteExpiredDemos(db, where.expiredDemosBefore);
+  }
+
+  async findOne(
+    db: Db,
+    where: { id: string } | { emailAddress: string } | { username: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    return await db.query.usersInAccount.findFirst({
+      where: this.branchWhere(
+        [
+          "id" in where && eq(this.table.id, where.id),
+          "emailAddress" in where && eq(this.table.emailAddress, where.emailAddress),
+          "username" in where && eq(this.table.username, where.username),
+        ],
+        [this.visibility(visibility)],
+      ),
+    });
+  }
+
   async update(db: Db, values: Partial<InferInsertModel<typeof usersInAccount>>, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
       .returning();
-  }
-
-  async archive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async delete(db: Db, where: { id: string } | { expiredDemosBefore: string }) {
-    if ("id" in where) return await this.deleteDemo(db, where.id);
-    return await this.deleteExpiredDemos(db, where.expiredDemosBefore);
   }
 }
 

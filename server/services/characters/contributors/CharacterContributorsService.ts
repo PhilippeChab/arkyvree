@@ -11,20 +11,6 @@ import type { Session } from "@/shared/relations.ts";
 
 class CharacterContributorsService {
   /**
-   * The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists.
-   */
-  private async getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
-    const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
-    if (!contributor || contributor.userId !== session.userId) {
-      throw new NotFoundError("Contributor invite not found");
-    }
-    if (contributor.status !== "Pending") {
-      throw new ConflictError("Invite is no longer pending");
-    }
-    return contributor;
-  }
-
-  /**
    * The invitee's answer: the invite's status, its notification read,
    * and the activity its character's owner is told of.
    */
@@ -45,6 +31,36 @@ class CharacterContributorsService {
       data: { contributorId: contributor.id, characterId: contributor.characterId, characterName },
     });
     return updated;
+  }
+
+  /**
+   * The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists.
+   */
+  private async getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
+    const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
+    if (!contributor || contributor.userId !== session.userId) {
+      throw new NotFoundError("Contributor invite not found");
+    }
+    if (contributor.status !== "Pending") {
+      throw new ConflictError("Invite is no longer pending");
+    }
+    return contributor;
+  }
+
+  async acceptInvite(session: Session, contributorId: string) {
+    return await withTransaction(async (tx) => {
+      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
+
+      const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
+      if (!character) {
+        throw new NotFoundError("Character not found");
+      }
+      if (character.deletedAt) {
+        throw new ConflictError("This character has been archived and can no longer be edited");
+      }
+
+      return await this.answerInvite(tx, session, contributor, character.name, "Active");
+    });
   }
 
   async getContributors(
@@ -88,22 +104,6 @@ class CharacterContributorsService {
 
   async getUserInvites(userId: string) {
     return await CharacterContributors.findManyWithCharacter(db, { userId, status: "Pending" }, { limit: 10 });
-  }
-
-  async acceptInvite(session: Session, contributorId: string) {
-    return await withTransaction(async (tx) => {
-      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
-
-      const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
-      if (!character) {
-        throw new NotFoundError("Character not found");
-      }
-      if (character.deletedAt) {
-        throw new ConflictError("This character has been archived and can no longer be edited");
-      }
-
-      return await this.answerInvite(tx, session, contributor, character.name, "Active");
-    });
   }
 
   async inviteContributor(session: Session, characterId: string, email: string) {

@@ -2,12 +2,6 @@
 
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 
-export const CORE_RULESET = {
-  name: DND35_RULESET_NAME,
-  description:
-    "The 3.5 System Reference Document is a role-playing game system that allows players to create and control characters in a fantasy world.",
-};
-
 export const ABILITIES = [
   { name: "Strength", description: "Measures physical power and carrying capacity" },
   { name: "Dexterity", description: "Measures agility, reflexes, and balance" },
@@ -15,6 +9,36 @@ export const ABILITIES = [
   { name: "Intelligence", description: "Measures reasoning and memory" },
   { name: "Wisdom", description: "Measures perception and insight" },
   { name: "Charisma", description: "Measures force of personality and leadership" },
+];
+
+export const CORE_RULESET = {
+  name: DND35_RULESET_NAME,
+  description:
+    "The 3.5 System Reference Document is a role-playing game system that allows players to create and control characters in a fantasy world.",
+};
+
+// oxfmt-ignore
+export const LANGUAGES = [
+  { name: "Abyssal", type: "Exotic", description: "The language of demons, full of curses and threats." },
+  { name: "Aquan", type: "Exotic", description: "The language of the sea" },
+  { name: "Auran", type: "Exotic", description: "The language of the sky" },
+  { name: "Celestial", type: "Exotic", description: "The language of angels and other good outsiders, known for its beauty and clarity." },
+  { name: "Common", type: "Common", description: "The most widely spoken language in the world, used for trade and diplomacy." },
+  { name: "Draconic", type: "Exotic", description: "The language of dragons, known for its complex grammar and rich vocabulary." },
+  { name: "Druidic", type: "Exotic", description: "The language of druids" },
+  { name: "Dwarven", type: "Common", description: "The language of dwarves, known for its complex grammar and rich vocabulary for stone and metal." },
+  { name: "Elven", type: "Common", description: "A flowing, melodic language spoken by elves, known for its beauty and precision." },
+  { name: "Giant", type: "Common", description: "A harsh, guttural language spoken by giants and their kin." },
+  { name: "Gnome", type: "Common", description: "A language full of technical terms and complex concepts, reflecting the gnomes' inventive nature." },
+  { name: "Goblin", type: "Common", description: "A crude language spoken by goblins and related creatures." },
+  { name: "Gnoll", type: "Exotic", description: "The language of gnoll" },
+  { name: "Halfling", type: "Common", description: "A simple, practical language spoken by halflings." },
+  { name: "Ignan", type: "Exotic", description: "The language of the Ignan" },
+  { name: "Infernal", type: "Exotic", description: "The language of devils, known for its complex legal terminology." },
+  { name: "Orc", type: "Common", description: "A brutal, aggressive language spoken by orcs and their kin." },
+  { name: "Sylvan", type: "Exotic", description: "The language of fey creatures, known for its musical quality." },
+  { name: "Terran", type: "Exotic", description: "The language of the Terran" },
+  { name: "Undercommon", type: "Exotic", description: "A trade language spoken in the Underdark, derived from Elven." },
 ];
 
 /** The saves, each with the ability it adds. */
@@ -78,28 +102,4 @@ export const SKILLS = [
   { name: "Use Magic Device", description: "Activate magical items that normally you couldn't activate.", ability: "Charisma", impactedByWeight: false, usableWithoutTraining: false },
   { name: "Use Psionic Device", description: "Activate psionic items that you otherwise could not activate, such as dorjes, power stones, and psicrowns.", ability: "Charisma", impactedByWeight: false, usableWithoutTraining: false },
   { name: "Use Rope", description: "Tie knots, bind prisoners, and handle rope in many different situations.", ability: "Dexterity", impactedByWeight: false, usableWithoutTraining: true },
-];
-
-// oxfmt-ignore
-export const LANGUAGES = [
-  { name: "Abyssal", type: "Exotic", description: "The language of demons, full of curses and threats." },
-  { name: "Aquan", type: "Exotic", description: "The language of the sea" },
-  { name: "Auran", type: "Exotic", description: "The language of the sky" },
-  { name: "Celestial", type: "Exotic", description: "The language of angels and other good outsiders, known for its beauty and clarity." },
-  { name: "Common", type: "Common", description: "The most widely spoken language in the world, used for trade and diplomacy." },
-  { name: "Draconic", type: "Exotic", description: "The language of dragons, known for its complex grammar and rich vocabulary." },
-  { name: "Druidic", type: "Exotic", description: "The language of druids" },
-  { name: "Dwarven", type: "Common", description: "The language of dwarves, known for its complex grammar and rich vocabulary for stone and metal." },
-  { name: "Elven", type: "Common", description: "A flowing, melodic language spoken by elves, known for its beauty and precision." },
-  { name: "Giant", type: "Common", description: "A harsh, guttural language spoken by giants and their kin." },
-  { name: "Gnome", type: "Common", description: "A language full of technical terms and complex concepts, reflecting the gnomes' inventive nature." },
-  { name: "Goblin", type: "Common", description: "A crude language spoken by goblins and related creatures." },
-  { name: "Gnoll", type: "Exotic", description: "The language of gnoll" },
-  { name: "Halfling", type: "Common", description: "A simple, practical language spoken by halflings." },
-  { name: "Ignan", type: "Exotic", description: "The language of the Ignan" },
-  { name: "Infernal", type: "Exotic", description: "The language of devils, known for its complex legal terminology." },
-  { name: "Orc", type: "Common", description: "A brutal, aggressive language spoken by orcs and their kin." },
-  { name: "Sylvan", type: "Exotic", description: "The language of fey creatures, known for its musical quality." },
-  { name: "Terran", type: "Exotic", description: "The language of the Terran" },
-  { name: "Undercommon", type: "Exotic", description: "A trade language spoken in the Underdark, derived from Elven." },
 ];

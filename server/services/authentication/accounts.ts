@@ -22,19 +22,6 @@ export function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
 }
 
 /**
- * Conversion cleanup: when a request reaches sign-in / verifyEmail / Google while still carrying a demo cookie,
- * hard-delete the demo user the cookie points at. CASCADE wipes their fork/character/etc. immediately rather than
- * waiting for lazy recycle on the next /api/demo/start.
- */
-export async function purgeDemoSessionUser(tx: Db, sessionId: string | undefined) {
-  if (!sessionId) return;
-  const session = await Sessions.findOne(tx, { id: sessionId });
-  if (!session) return;
-  const user = await Users.findOne(tx, { id: session.userId });
-  if (user?.expiresAt) await Users.delete(tx, { id: user.id });
-}
-
-/**
  * A new session for `user`, with its activity (`signIn`, or `signUp` for a new account): the invites sent to their
  * email before they had an account become theirs.
  */
@@ -60,6 +47,19 @@ export async function openSession(
   await CharacterContributors.backfillUserId(tx, user.emailAddress, user.id);
 
   return session;
+}
+
+/**
+ * Conversion cleanup: when a request reaches sign-in / verifyEmail / Google while still carrying a demo cookie,
+ * hard-delete the demo user the cookie points at. CASCADE wipes their fork/character/etc. immediately rather than
+ * waiting for lazy recycle on the next /api/demo/start.
+ */
+export async function purgeDemoSessionUser(tx: Db, sessionId: string | undefined) {
+  if (!sessionId) return;
+  const session = await Sessions.findOne(tx, { id: sessionId });
+  if (!session) return;
+  const user = await Users.findOne(tx, { id: session.userId });
+  if (user?.expiresAt) await Users.delete(tx, { id: user.id });
 }
 
 /**

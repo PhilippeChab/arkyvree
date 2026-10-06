@@ -10,18 +10,11 @@ import { CONTENT_TABLES, type ContentTable } from "./tables.ts";
 /** Runs a query with positional parameters ($1…) and gives its rows, as pg's client does. */
 export type Query = <R extends Record<string, unknown>>(text: string, params?: unknown[]) => Promise<R[]>;
 
-/** The content tables' references to other entities, compared by what they name: `<ruleset>: <name>`. */
-const REFERENCES: Partial<Record<ContentTable, Record<string, ContentTable>>> = {
-  items: { source_item_id: "items" },
-  klasses: { parent_id: "klasses" },
-  powers: { save_id: "saves" },
-  races: { parent_id: "races" },
-  saves: { ability_id: "abilities" },
-  skills: { primary_ability_id: "abilities" },
-};
-
-/** A ruleset's lists of other rulesets, compared by their names. */
-const RULESET_LISTS = ["ancestor_ruleset_ids", "extension_ruleset_ids"];
+/** Every entity a snapshot can name, as `<ruleset>: <name>`. */
+const ENTITY_LABELS = CONTENT_TABLES.map(
+  (table) =>
+    `select e.id, rs.name || ': ' || e.name as label from rules.${table} e join rules.rulesets rs on rs.id = e.ruleset_id`,
+).join("\n  union all ");
 
 /**
  * The entities of the ruleset `$1` that customizations belong to, each with its type (`t`) and a readable name: the
@@ -51,12 +44,6 @@ const OWNERS = `
               join rules.feats f on f.id = klf.feat_id
              where k.ruleset_id = $1
                and klf.deleted_at is null and kl.deleted_at is null and k.deleted_at is null and f.deleted_at is null`;
-
-/** Every entity a snapshot can name, as `<ruleset>: <name>`. */
-const ENTITY_LABELS = CONTENT_TABLES.map(
-  (table) =>
-    `select e.id, rs.name || ': ' || e.name as label from rules.${table} e join rules.rulesets rs on rs.id = e.ruleset_id`,
-).join("\n  union all ");
 
 /**
  * The tables compared by business key alone, each built from names on both sides: a link by what it joins (an
@@ -286,6 +273,26 @@ const KEYED_TABLES: { table: string; pull: (query: Query, rulesetId: string) => 
   },
 ];
 
+/** The content tables' references to other entities, compared by what they name: `<ruleset>: <name>`. */
+const REFERENCES: Partial<Record<ContentTable, Record<string, ContentTable>>> = {
+  items: { source_item_id: "items" },
+  klasses: { parent_id: "klasses" },
+  powers: { save_id: "saves" },
+  races: { parent_id: "races" },
+  saves: { ability_id: "abilities" },
+  skills: { primary_ability_id: "abilities" },
+};
+
+/** A ruleset's lists of other rulesets, compared by their names. */
+const RULESET_LISTS = ["ancestor_ruleset_ids", "extension_ruleset_ids"];
+
+/** Every table compared, schema-qualified. */
+export const COMPARED_TABLES = [
+  "rules.rulesets",
+  ...CONTENT_TABLES.map((table) => `rules.${table}`),
+  ...KEYED_TABLES.map(({ table }) => table),
+];
+
 /** The columns compared by the names of the rows they reference, which SQL can't set back from a name. */
 export const LABELLED_COLUMNS: Record<string, string[]> = {
   "rules.rulesets": RULESET_LISTS,
@@ -297,13 +304,6 @@ export const UNCOMPARED_TABLES: Record<string, string> = {
   "rules.content_packages": "its versions are compared as the package drift",
   "rules.contributors": "who edits a ruleset is user data, which no seed writes",
 };
-
-/** Every table compared, schema-qualified. */
-export const COMPARED_TABLES = [
-  "rules.rulesets",
-  ...CONTENT_TABLES.map((table) => `rules.${table}`),
-  ...KEYED_TABLES.map(({ table }) => table),
-];
 
 /** A content table's rows in the ruleset, its references as `<ruleset>: <name>`. */
 async function pullContent(query: Query, table: ContentTable, rulesetId: string): Promise<IdentifiedRow[]> {

@@ -43,7 +43,8 @@ type FeatEntry = {
   detected: FeatReference["detected"][string];
   mapped: FeatReference["mapping"][string];
 };
-type TemplateType = NonNullable<FeatEntry["mapped"]["template"]>["type"];
+/** The generated file's code, and the names it uses: what its imports are written from. */
+type FeatFile = { lines: string[]; uses: Set<string> };
 
 /** A template feat's family, which the generated code makes a feat of per item (weapon, skill, school…). */
 type TemplateFamily = {
@@ -57,8 +58,10 @@ type TemplateFamily = {
   description: string;
 };
 
-/** The generated file's code, and the names it uses: what its imports are written from. */
-type FeatFile = { lines: string[]; uses: Set<string> };
+type TemplateType = NonNullable<FeatEntry["mapped"]["template"]>["type"];
+
+/** Each book's template families, read once: every class of the book asks for them. */
+const bookTemplateNamesCache = new Map<string, Set<string>>();
 
 /**
  * The feats no reference lists that the core rules' feat files add, each: its file and export, the content code the
@@ -101,21 +104,6 @@ const CORE_SYSTEM_FEATS: {
   },
 ];
 
-/** A single martial weapon's proficiency feat is for a character without them all. */
-const NOT_MARTIAL_PROFICIENT: RequirementCondition = {
-  target: feat("Martial Weapon Proficiency"),
-  operator: "not_equal",
-  value: "true",
-  valueType: "boolean",
-};
-
-/** Weapon proficiency families expand over their own weapons, the others over every weapon. */
-const WEAPON_LISTS: Record<string, string> = {
-  "Simple Weapon Proficiency": "SIMPLE_WEAPONS",
-  "Martial Weapon Proficiency": "MARTIAL_WEAPONS",
-  "Exotic Weapon Proficiency": "EXOTIC_WEAPONS",
-};
-
 /** Where each name the generated feats use comes from, in the order the imports are written. */
 const IMPORTS: ImportTable = [
   ...REQUIREMENT_IMPORTS,
@@ -140,122 +128,20 @@ const IMPORTS: ImportTable = [
   ["@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts", ["WIZARD_SCHOOLS"]],
 ];
 
-/** Each book's template families, read once: every class of the book asks for them. */
-const bookTemplateNamesCache = new Map<string, Set<string>>();
+/** A single martial weapon's proficiency feat is for a character without them all. */
+const NOT_MARTIAL_PROFICIENT: RequirementCondition = {
+  target: feat("Martial Weapon Proficiency"),
+  operator: "not_equal",
+  value: "true",
+  valueType: "boolean",
+};
 
-/** Ends a template: its feats' family. */
-function closeTemplate({ lines }: FeatFile, familyName: string): void {
-  lines.push(`  properties: [${stringifyProperty({ type: FEAT_FAMILY, value: familyName })}],`);
-  lines.push(`}));`);
-  lines.push("");
-}
-
-/** The system feats of the core rules' feat file `fileName`. */
-function emitSystemFeats(file: FeatFile, fileName: string): void {
-  for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
-    file.lines.push(`/** A system feat list (\`coreSystemFeats\`): no reference lists it. */`);
-    file.lines.push(`export const ${name}: FeatSeed[] = ${code};`);
-    for (const used of uses) file.uses.add(used);
-  }
-  file.lines.push("");
-}
-
-/**
- * A template's modifiers, each target made the item's by `retarget`. A requirement on one throws: its targets would
- * have to be the item's too.
- */
-function emitTemplateModifiers(
-  { lines, uses }: FeatFile,
-  modifiers: ModifierSeed[],
-  retarget: (target: string) => string,
-): void {
-  lines.push(
-    ...listField(
-      "modifiers",
-      modifiers.map((m) => {
-        if (m.requirements?.length) throw new Error(`${m.target}: a template feat's modifier can't have requirements`);
-        const target = retarget(escapeTemplate(m.target));
-        if (target.includes("${stripSeparators(")) uses.add("stripSeparators");
-        return stringifyFeatModifier(m, uses, 2, `\`${target}\``);
-      }),
-      "  ",
-    ),
-  );
-}
-
-/** A template's requirements, when it has some. */
-function emitTemplateRequirements({ lines }: FeatFile, reqLines: string[]): void {
-  if (reqLines.length === 0) return;
-  lines.push(`  requirements: [`, ...reqLines, `  ],`);
-}
-
-/** A feats file's code: its imports, written from the names its code uses, then its code. */
-function featFileCode(file: FeatFile): string {
-  return [
-    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
-    ...importLines(file.uses, IMPORTS),
-    "",
-    ...file.lines,
-  ].join("\n");
-}
-
-/** Having the feat `featName`, or its feat for the item (`variable`) when `perItem`: `eq(feat(...))`. */
-function featRequirement({ uses }: FeatFile, featName: string, perItem: boolean, variable: string): string {
-  uses.add("eq");
-  uses.add("feat");
-  return perItem ? `eq(feat(\`${escapeTemplate(featName)}: \${${variable}}\`))` : `eq(feat(${quote(featName)}))`;
-}
-
-/** The slug of the feat a `feats.<slug>.possessed` check names. */
-function featSlug(req: RequirementCondition): string {
-  return req.target.replace(/^feats\./, "").replace(/\.possessed$/, "");
-}
-
-/**
- * A template's `requirements`, for its item (`variable`): a family it requires (`families`) is that family's feat for
- * the item (Greater Spell Focus requires Spell Focus in its school); any other feat, and any other requirement, as it
- * is. A family checked inside a group has no way to name the item: the template is refused.
- */
-function itemRequirementLines(
-  file: FeatFile,
-  { familyName, featNameMap }: TemplateFamily,
-  requirements: RequirementEntry[],
-  variable: string,
-  families: Set<string>,
-): string[] {
-  const namesFamily = (entry: RequirementEntry): boolean =>
-    "chainingOperator" in entry
-      ? entry.children.some(namesFamily)
-      : entry.target.startsWith("feats.") && families.has(featNameMap[featSlug(entry)] ?? "");
-  const lines: string[] = [];
-  for (const req of requirements) {
-    if (!("chainingOperator" in req) && req.target.startsWith("feats.")) {
-      const featName = featNameMap[featSlug(req)];
-      if (featName) lines.push(`    ${featRequirement(file, featName, families.has(featName), variable)},`);
-    } else if (namesFamily(req)) {
-      throw new Error(`${familyName}: a family it requires inside a group can't be written for each item`);
-    } else {
-      lines.push(`    ${stringifyRequirement(req, file.uses, 2)},`);
-    }
-  }
-  return lines;
-}
-
-/** Starts a template: its feats over `list`, named and described after each item (`variable`). */
-function openTemplate(
-  { lines, uses }: FeatFile,
-  { constName, familyName, aptitudes }: TemplateFamily,
-  list: string,
-  variable: string,
-  description: string,
-): void {
-  uses.add(list);
-  lines.push(`export const ${constName}: FeatSeed[] = ${list}.map((${variable}) => ({`);
-  lines.push(`  name: \`${escapeTemplate(familyName)}: \${${variable}}\`,`);
-  lines.push(`  description: \`${description}\`,`);
-  lines.push(`  generated: true,`);
-  lines.push(`  aptitudes: [${aptitudes.map(quote).join(", ")}],`);
-}
+/** Weapon proficiency families expand over their own weapons, the others over every weapon. */
+const WEAPON_LISTS: Record<string, string> = {
+  "Simple Weapon Proficiency": "SIMPLE_WEAPONS",
+  "Martial Weapon Proficiency": "MARTIAL_WEAPONS",
+  "Exotic Weapon Proficiency": "EXOTIC_WEAPONS",
+};
 
 /**
  * What a feat reference makes: its feats by feat type, and its template families. An epic feat is left out unless an
@@ -322,6 +208,52 @@ function bookTemplateNames(book: string): Set<string> {
   return names;
 }
 
+/** Ends a template: its feats' family. */
+function closeTemplate({ lines }: FeatFile, familyName: string): void {
+  lines.push(`  properties: [${stringifyProperty({ type: FEAT_FAMILY, value: familyName })}],`);
+  lines.push(`}));`);
+  lines.push("");
+}
+
+/**
+ * A template's modifiers, each target made the item's by `retarget`. A requirement on one throws: its targets would
+ * have to be the item's too.
+ */
+function emitTemplateModifiers(
+  { lines, uses }: FeatFile,
+  modifiers: ModifierSeed[],
+  retarget: (target: string) => string,
+): void {
+  lines.push(
+    ...listField(
+      "modifiers",
+      modifiers.map((m) => {
+        if (m.requirements?.length) throw new Error(`${m.target}: a template feat's modifier can't have requirements`);
+        const target = retarget(escapeTemplate(m.target));
+        if (target.includes("${stripSeparators(")) uses.add("stripSeparators");
+        return stringifyFeatModifier(m, uses, 2, `\`${target}\``);
+      }),
+      "  ",
+    ),
+  );
+}
+
+/** Starts a template: its feats over `list`, named and described after each item (`variable`). */
+function openTemplate(
+  { lines, uses }: FeatFile,
+  { constName, familyName, aptitudes }: TemplateFamily,
+  list: string,
+  variable: string,
+  description: string,
+): void {
+  uses.add(list);
+  lines.push(`export const ${constName}: FeatSeed[] = ${list}.map((${variable}) => ({`);
+  lines.push(`  name: \`${escapeTemplate(familyName)}: \${${variable}}\`,`);
+  lines.push(`  description: \`${description}\`,`);
+  lines.push(`  generated: true,`);
+  lines.push(`  aptitudes: [${aptitudes.map(quote).join(", ")}],`);
+}
+
 /** A template's description, each mention of the chosen item made the item (`variable`). */
 function templateDescription({ description, type }: TemplateFamily, variable: string): string {
   const ITEM = "\u0000";
@@ -329,6 +261,65 @@ function templateDescription({ description, type }: TemplateFamily, variable: st
     .split(ITEM)
     .map(escapeTemplate)
     .join(`\${${variable}}`);
+}
+
+/** A weapon family's modifier target, made the item's: a weapon.X path becomes items.weapons.<weapon>.X. */
+function weaponTarget(target: string) {
+  return target.replace(/^weapon\./, "items.weapons.${stripSeparators(w)}.");
+}
+
+function emitCrossbowTemplate(file: FeatFile, family: TemplateFamily): void {
+  openTemplate(file, family, "CROSSBOW_WEAPONS", "w", templateDescription(family, "w"));
+  emitTemplateModifiers(file, family.modifiers, weaponTarget);
+  closeTemplate(file, family.familyName);
+}
+
+/** A template's requirements, when it has some. */
+function emitTemplateRequirements({ lines }: FeatFile, reqLines: string[]): void {
+  if (reqLines.length === 0) return;
+  lines.push(`  requirements: [`, ...reqLines, `  ],`);
+}
+
+/** Having the feat `featName`, or its feat for the item (`variable`) when `perItem`: `eq(feat(...))`. */
+function featRequirement({ uses }: FeatFile, featName: string, perItem: boolean, variable: string): string {
+  uses.add("eq");
+  uses.add("feat");
+  return perItem ? `eq(feat(\`${escapeTemplate(featName)}: \${${variable}}\`))` : `eq(feat(${quote(featName)}))`;
+}
+
+/** The slug of the feat a `feats.<slug>.possessed` check names. */
+function featSlug(req: RequirementCondition): string {
+  return req.target.replace(/^feats\./, "").replace(/\.possessed$/, "");
+}
+
+/**
+ * A template's `requirements`, for its item (`variable`): a family it requires (`families`) is that family's feat for
+ * the item (Greater Spell Focus requires Spell Focus in its school); any other feat, and any other requirement, as it
+ * is. A family checked inside a group has no way to name the item: the template is refused.
+ */
+function itemRequirementLines(
+  file: FeatFile,
+  { familyName, featNameMap }: TemplateFamily,
+  requirements: RequirementEntry[],
+  variable: string,
+  families: Set<string>,
+): string[] {
+  const namesFamily = (entry: RequirementEntry): boolean =>
+    "chainingOperator" in entry
+      ? entry.children.some(namesFamily)
+      : entry.target.startsWith("feats.") && families.has(featNameMap[featSlug(entry)] ?? "");
+  const lines: string[] = [];
+  for (const req of requirements) {
+    if (!("chainingOperator" in req) && req.target.startsWith("feats.")) {
+      const featName = featNameMap[featSlug(req)];
+      if (featName) lines.push(`    ${featRequirement(file, featName, families.has(featName), variable)},`);
+    } else if (namesFamily(req)) {
+      throw new Error(`${familyName}: a family it requires inside a group can't be written for each item`);
+    } else {
+      lines.push(`    ${stringifyRequirement(req, file.uses, 2)},`);
+    }
+  }
+  return lines;
 }
 
 function emitSchoolTemplate(file: FeatFile, family: TemplateFamily, families: Set<string>): void {
@@ -356,15 +347,14 @@ function emitSkillTemplate(file: FeatFile, family: TemplateFamily, families: Set
   closeTemplate(file, family.familyName);
 }
 
-/** A weapon family's modifier target, made the item's: a weapon.X path becomes items.weapons.<weapon>.X. */
-function weaponTarget(target: string) {
-  return target.replace(/^weapon\./, "items.weapons.${stripSeparators(w)}.");
-}
-
-function emitCrossbowTemplate(file: FeatFile, family: TemplateFamily): void {
-  openTemplate(file, family, "CROSSBOW_WEAPONS", "w", templateDescription(family, "w"));
-  emitTemplateModifiers(file, family.modifiers, weaponTarget);
-  closeTemplate(file, family.familyName);
+/** The system feats of the core rules' feat file `fileName`. */
+function emitSystemFeats(file: FeatFile, fileName: string): void {
+  for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
+    file.lines.push(`/** A system feat list (\`coreSystemFeats\`): no reference lists it. */`);
+    file.lines.push(`export const ${name}: FeatSeed[] = ${code};`);
+    for (const used of uses) file.uses.add(used);
+  }
+  file.lines.push("");
 }
 
 function emitWeaponTemplate(file: FeatFile, family: TemplateFamily, families: Set<string>): void {
@@ -414,6 +404,16 @@ function emitTemplate(file: FeatFile, family: TemplateFamily, families: Set<stri
     default:
       return type satisfies never;
   }
+}
+
+/** A feats file's code: its imports, written from the names its code uses, then its code. */
+function featFileCode(file: FeatFile): string {
+  return [
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    ...importLines(file.uses, IMPORTS),
+    "",
+    ...file.lines,
+  ].join("\n");
 }
 
 /**

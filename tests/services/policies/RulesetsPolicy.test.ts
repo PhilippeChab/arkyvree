@@ -11,9 +11,9 @@ import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 type Actor = "Owner" | ContributorRole | "Stranger";
 
-const OWNER = "owner-id";
-const OTHER = "other-id";
 const ACTORS: Actor[] = ["Owner", "Admin", "Editor", "Viewer", "Stranger"];
+const OTHER = "other-id";
+const OWNER = "owner-id";
 
 function rulesetOf(overrides: Partial<Ruleset> = {}): Ruleset {
   const now = new Date().toISOString();

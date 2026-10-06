@@ -13,10 +13,6 @@ export default class DependentCache<T> {
 
   private pending = new Map<string, { promise: Promise<T>; dependencies: ReadonlySet<string> }>();
 
-  isPinned(key: string): boolean {
-    return this.cache.isPinned(key);
-  }
-
   invalidate(dependencyId: string): void {
     // MemoryCache is capped at 200 entries. No unbounded dependency registry,
     // no database lookup, and unrelated cached/in-flight reads stay reusable.
@@ -29,6 +25,10 @@ export default class DependentCache<T> {
   invalidateAll(): void {
     this.cache.invalidateAll();
     this.pending.clear();
+  }
+
+  isPinned(key: string): boolean {
+    return this.cache.isPinned(key);
   }
 
   async getOrFetch(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {

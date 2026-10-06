@@ -14,26 +14,26 @@ const WEAPON_FAMILIARITY: Record<string, string> = {
   "Gnome Hooked Hammer": "Gnome",
 };
 
-export const SIMPLE_WEAPONS = [
-  "Gauntlet",
-  "Unarmed Strike",
-  "Dagger",
-  "Punching Dagger",
-  "Spiked Gauntlet",
-  "Light Mace",
-  "Sickle",
-  "Club",
-  "Heavy Mace",
-  "Morningstar",
-  "Shortspear",
-  "Longspear",
-  "Quarterstaff",
-  "Spear",
-  "Heavy Crossbow",
-  "Light Crossbow",
-  "Dart",
-  "Javelin",
-  "Sling",
+export const EXOTIC_WEAPONS = [
+  "Kama",
+  "Nunchaku",
+  "Sai",
+  "Siangham",
+  "Bastard Sword",
+  "Dwarven Waraxe",
+  "Whip",
+  "Orc Double Axe",
+  "Spiked Chain",
+  "Dire Flail",
+  "Two-Bladed Sword",
+  "Dwarven Urgrosh",
+  "Gnome Hooked Hammer",
+  "Shuriken",
+  "Hand Crossbow",
+  "Repeating Heavy Crossbow",
+  "Repeating Light Crossbow",
+  "Net",
+  "Bolas",
 ];
 
 export const MARTIAL_WEAPONS = [
@@ -69,31 +69,44 @@ export const MARTIAL_WEAPONS = [
   "Composite Longbow",
 ];
 
-export const EXOTIC_WEAPONS = [
-  "Kama",
-  "Nunchaku",
-  "Sai",
-  "Siangham",
-  "Bastard Sword",
-  "Dwarven Waraxe",
-  "Whip",
-  "Orc Double Axe",
-  "Spiked Chain",
-  "Dire Flail",
-  "Two-Bladed Sword",
-  "Dwarven Urgrosh",
-  "Gnome Hooked Hammer",
-  "Shuriken",
-  "Hand Crossbow",
-  "Repeating Heavy Crossbow",
-  "Repeating Light Crossbow",
-  "Net",
-  "Bolas",
+export const SIMPLE_WEAPONS = [
+  "Gauntlet",
+  "Unarmed Strike",
+  "Dagger",
+  "Punching Dagger",
+  "Spiked Gauntlet",
+  "Light Mace",
+  "Sickle",
+  "Club",
+  "Heavy Mace",
+  "Morningstar",
+  "Shortspear",
+  "Longspear",
+  "Quarterstaff",
+  "Spear",
+  "Heavy Crossbow",
+  "Light Crossbow",
+  "Dart",
+  "Javelin",
+  "Sling",
 ];
 
 export const ALL_WEAPONS = [...SIMPLE_WEAPONS, ...MARTIAL_WEAPONS, ...EXOTIC_WEAPONS];
 
 export const CROSSBOW_WEAPONS = ALL_WEAPONS.filter((w) => w.toLowerCase().includes("crossbow"));
+
+/**
+ * Weapon Focus for a kind of spell, a choice the Player's Handbook allows (a ray) and Complete Arcane's Ranged Spell
+ * and Touch Spell Specialization require: in the Weapon Focus family, without a weapon to give the bonus to.
+ */
+export const spellWeaponFocusFeats: FeatSeed[] = ["Ranged Spell", "Touch Spell"].map((spell) => ({
+  name: `Weapon Focus: ${spell}`,
+  description: `You gain a +1 bonus on attack rolls you make with ${spell.toLowerCase()}s.`,
+  generated: true,
+  aptitudes: ["General", "Fighter Bonus Feat"],
+  requirements: [gte("combat.bab", 1)],
+  properties: [{ type: FEAT_FAMILY, value: "Weapon Focus" }],
+}));
 
 /**
  * A proficiency feat per simple and martial weapon. A simple one is what a class's proficiencies grant: a character
@@ -117,19 +130,6 @@ export const weaponProficiencyFeats: FeatSeed[] = [
     properties: [{ type: FEAT_FAMILY, value: "Martial Weapon Proficiency" }],
   })),
 ];
-
-/**
- * Weapon Focus for a kind of spell, a choice the Player's Handbook allows (a ray) and Complete Arcane's Ranged Spell
- * and Touch Spell Specialization require: in the Weapon Focus family, without a weapon to give the bonus to.
- */
-export const spellWeaponFocusFeats: FeatSeed[] = ["Ranged Spell", "Touch Spell"].map((spell) => ({
-  name: `Weapon Focus: ${spell}`,
-  description: `You gain a +1 bonus on attack rolls you make with ${spell.toLowerCase()}s.`,
-  generated: true,
-  aptitudes: ["General", "Fighter Bonus Feat"],
-  requirements: [gte("combat.bab", 1)],
-  properties: [{ type: FEAT_FAMILY, value: "Weapon Focus" }],
-}));
 
 /**
  * Being proficient with an exotic weapon: with it, or with martial weapons when it counts as one, by its wielder's race

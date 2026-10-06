@@ -212,18 +212,6 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       this.syncFeatListSlots(feats, featListIds, isGateMet);
     }
 
-    getBonusKlassLevelAttribution() {
-      return this.bonusKlassLevelAttribution;
-    }
-
-    getBonusKlassLevelModifiers() {
-      return this.bonusKlassLevelModifiers;
-    }
-
-    getBonusKlassLevels() {
-      return this.bonusKlassLevels;
-    }
-
     fetchBonusCasterLevelData(
       rulesetData: CachedRulesetData,
       klassLevels: KlassLevelWithPMR[],
@@ -249,6 +237,18 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         }
       }
       this.attributeBonusLevels(bonusKlassLevels, klassLevels, feats, characterLevels, rulesetKlasses);
+    }
+
+    getBonusKlassLevelAttribution() {
+      return this.bonusKlassLevelAttribution;
+    }
+
+    getBonusKlassLevelModifiers() {
+      return this.bonusKlassLevelModifiers;
+    }
+
+    getBonusKlassLevels() {
+      return this.bonusKlassLevels;
     }
   }
   return WithBonusCasterLevels;

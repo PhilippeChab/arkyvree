@@ -1,42 +1,8 @@
-/** The type of value a target path holds. */
-export type PathValueType = "number" | "string" | "boolean";
-
-export interface TargetPath {
-  path: string;
-  category: string;
-  description: string;
-  groupDescription?: string;
-  valueType: PathValueType;
-  operators: string[];
-  possibleValues?: { value: string; label: string }[];
-  /** When set, a `set` on this path takes only these values: a spell level's slots set to -1 are all known */
-  setValues?: { value: string; label: string }[];
-  /**
-   * A literal value only, never a template: code that has no character to resolve a template with reads it (the
-   * level-up wizard and the class tables count a pool's slots)
-   */
-  literalOnly?: boolean;
-  /** The least number an operator other than a restricted `set` takes: a pool's slots grow, -1 being all known */
-  minValue?: number;
-  sortOrder?: number;
-  /** When set, this path is only available for modifiers on these entity types */
-  allowedEntityTypes?: string[];
-}
-
-export interface PathValidationResult {
-  isValid: boolean;
-  errors: PathError[];
-  suggestions: string[];
-  completions: PathCompletion[];
-  /** A valid path's definition */
-  target?: TargetPath;
-}
-
-export interface PathError {
-  message: string;
-  position: { start: number; end: number };
-  severity: "error" | "warning" | "info";
-  code: string;
+export interface PaginatedCompletions {
+  items: PathCompletion[];
+  page: number;
+  nextPage: number | undefined;
+  segmentLabels: Record<string, string>;
 }
 
 export interface PathCompletion {
@@ -60,11 +26,45 @@ export interface PathCompletion {
   literalOnly?: boolean;
 }
 
-export interface PaginatedCompletions {
-  items: PathCompletion[];
-  page: number;
-  nextPage: number | undefined;
-  segmentLabels: Record<string, string>;
+export interface PathError {
+  message: string;
+  position: { start: number; end: number };
+  severity: "error" | "warning" | "info";
+  code: string;
+}
+
+export interface PathValidationResult {
+  isValid: boolean;
+  errors: PathError[];
+  suggestions: string[];
+  completions: PathCompletion[];
+  /** A valid path's definition */
+  target?: TargetPath;
+}
+
+/** The type of value a target path holds. */
+export type PathValueType = "number" | "string" | "boolean";
+
+export interface TargetPath {
+  path: string;
+  category: string;
+  description: string;
+  groupDescription?: string;
+  valueType: PathValueType;
+  operators: string[];
+  possibleValues?: { value: string; label: string }[];
+  /** When set, a `set` on this path takes only these values: a spell level's slots set to -1 are all known */
+  setValues?: { value: string; label: string }[];
+  /**
+   * A literal value only, never a template: code that has no character to resolve a template with reads it (the
+   * level-up wizard and the class tables count a pool's slots)
+   */
+  literalOnly?: boolean;
+  /** The least number an operator other than a restricted `set` takes: a pool's slots grow, -1 being all known */
+  minValue?: number;
+  sortOrder?: number;
+  /** When set, this path is only available for modifiers on these entity types */
+  allowedEntityTypes?: string[];
 }
 
 /** A path segment as a label ("privateNotes" → "Private Notes"). */

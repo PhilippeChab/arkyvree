@@ -10,15 +10,6 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-/** A tool reads it: its syntax is the tool's */
-const DIRECTIVE =
-  /^\s*(?:(?:eslint|oxlint)-(?:disable|enable)|@ts-|oxfmt-ignore|prettier-ignore|[#@]__PURE__|@vite-ignore|webpack[A-Z]|(?:istanbul|c8|v8) ignore)|^\/ <reference/;
-/** A line of rule characters: `-----`, `═══` */
-const SEPARATOR = /^\s*[-─━=═*#~_]{3,}\s*$/;
-/** A title between rule characters: `── Title ──` */
-const DECORATED = /^\s*[-─━=═~_]{2,}\s*(.*?)\s*[-─━=═~_]{2,}\s*$/;
-/** The formatter's width, which a doc comment wraps to */
-const WIDTH = 120;
 const DECLARATIONS = new Set([
   "FunctionDeclaration",
   "TSDeclareFunction",
@@ -30,32 +21,15 @@ const DECLARATIONS = new Set([
   "TSModuleDeclaration",
   "ExportDefaultDeclaration",
 ]);
-
-/** Whether a top-level statement declares or exports something: what a `/** … *\/` describes. */
-function isDeclaration(statement) {
-  if (statement.type === "ExportNamedDeclaration")
-    return statement.declaration !== null || statement.specifiers.length > 0;
-  return DECLARATIONS.has(statement.type) || statement.type === "ExportAllDeclaration";
-}
-
-/** Whether a comment is a doc comment, `/** … *\/`. */
-function isDoc(comment) {
-  return comment.type === "Block" && comment.value.startsWith("*");
-}
-
-function rangeOf(node) {
-  return node.range ?? [node.start, node.end];
-}
-
-/** Whether a comment is alone on its lines: nothing but spaces before it on its first, after it on its last. */
-function isAlone(text, comment) {
-  const [start, end] = rangeOf(comment);
-  const lineStart = text.lastIndexOf("\n", start - 1) + 1;
-  const lineEnd = text.indexOf("\n", end);
-  return (
-    !/\S/.test(text.slice(lineStart, start)) && !/\S/.test(text.slice(end, lineEnd === -1 ? text.length : lineEnd))
-  );
-}
+/** A title between rule characters: `── Title ──` */
+const DECORATED = /^\s*[-─━=═~_]{2,}\s*(.*?)\s*[-─━=═~_]{2,}\s*$/;
+/** A tool reads it: its syntax is the tool's */
+const DIRECTIVE =
+  /^\s*(?:(?:eslint|oxlint)-(?:disable|enable)|@ts-|oxfmt-ignore|prettier-ignore|[#@]__PURE__|@vite-ignore|webpack[A-Z]|(?:istanbul|c8|v8) ignore)|^\/ <reference/;
+/** A line of rule characters: `-----`, `═══` */
+const SEPARATOR = /^\s*[-─━=═*#~_]{3,}\s*$/;
+/** The formatter's width, which a doc comment wraps to */
+const WIDTH = 120;
 
 /** A comment's words, line by line: a separator's none, a decorated title's title, a block's without its stars. */
 function wordsOf(comment) {
@@ -72,6 +46,32 @@ function wordsOf(comment) {
 /** Whether a stack's words hold `*\/`, which would end the doc comment they'd make. */
 function closesEarly(stack) {
   return stack.some((comment) => wordsOf(comment).some((line) => line.includes("*/")));
+}
+
+function rangeOf(node) {
+  return node.range ?? [node.start, node.end];
+}
+
+/** Whether a comment is alone on its lines: nothing but spaces before it on its first, after it on its last. */
+function isAlone(text, comment) {
+  const [start, end] = rangeOf(comment);
+  const lineStart = text.lastIndexOf("\n", start - 1) + 1;
+  const lineEnd = text.indexOf("\n", end);
+  return (
+    !/\S/.test(text.slice(lineStart, start)) && !/\S/.test(text.slice(end, lineEnd === -1 ? text.length : lineEnd))
+  );
+}
+
+/** Whether a top-level statement declares or exports something: what a `/** … *\/` describes. */
+function isDeclaration(statement) {
+  if (statement.type === "ExportNamedDeclaration")
+    return statement.declaration !== null || statement.specifiers.length > 0;
+  return DECLARATIONS.has(statement.type) || statement.type === "ExportAllDeclaration";
+}
+
+/** Whether a comment is a doc comment, `/** … *\/`. */
+function isDoc(comment) {
+  return comment.type === "Block" && comment.value.startsWith("*");
 }
 
 /**
@@ -106,6 +106,15 @@ function wrap(lines, width) {
   return wrapped;
 }
 
+/** A comment's words as `//` lines at `indent`, wrapped as a doc comment is. */
+function lineComment(comment, indent) {
+  const lines = wrap(
+    wordsOf(comment).map((line) => line.replace(/^ /, "")),
+    WIDTH - indent.length - "// ".length,
+  );
+  return lines.map((line) => (line ? `// ${line}` : "//")).join(`\n${indent}`);
+}
+
 /** A doc comment holding `lines`, at `indent`, wrapped to the formatter's 120 columns. */
 function docComment(lines, indent) {
   const kept = wrap(
@@ -115,15 +124,6 @@ function docComment(lines, indent) {
   while (kept.length && !kept.at(-1).trim()) kept.pop();
   if (kept.length === 1 && indent.length + kept[0].length + "/**  */".length <= WIDTH) return `/** ${kept[0]} */`;
   return ["/**", ...kept.map((line) => (line.trim() ? ` * ${line}` : " *"))].join(`\n${indent}`) + `\n${indent} */`;
-}
-
-/** A comment's words as `//` lines at `indent`, wrapped as a doc comment is. */
-function lineComment(comment, indent) {
-  const lines = wrap(
-    wordsOf(comment).map((line) => line.replace(/^ /, "")),
-    WIDTH - indent.length - "// ".length,
-  );
-  return lines.map((line) => (line ? `// ${line}` : "//")).join(`\n${indent}`);
 }
 
 /** A stack's comments as one doc comment: each comment's words, a blank line between two. */

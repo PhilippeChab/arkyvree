@@ -35,16 +35,6 @@ async function fillPools(wizard: Locator, { skipOptional }: { skipOptional: bool
   throw new Error("The pools never filled up");
 }
 
-/** Clicks `button` to finish the wizard, which must take the levels without warnings. */
-export async function finishWithoutWarnings(wizard: Locator, button = /^Finish All$/) {
-  await wizard.getByRole("button", { name: button }).click();
-  // Taken, the wizard closes; refused, it stays open on its warnings
-  const proceed = wizard.getByRole("button", { name: /^Proceed Anyway$/ });
-  const state = async () => ((await proceed.isVisible()) ? "warnings" : (await wizard.isVisible()) ? "open" : "closed");
-  await expect.poll(state, { timeout: 15_000 }).not.toBe("open");
-  expect(await state()).toBe("closed");
-}
-
 /** Opens the Add Level wizard of the character on the page. */
 export async function openAddLevelWizard(page: Page) {
   await openActionsMenu(page, /^Add Level/);
@@ -68,6 +58,16 @@ export async function planLevels(wizard: Locator, page: Page, plan: [klass: stri
     }
   }
   await wizard.getByRole("button", { name: /^Next$/ }).click();
+}
+
+/** Clicks `button` to finish the wizard, which must take the levels without warnings. */
+export async function finishWithoutWarnings(wizard: Locator, button = /^Finish All$/) {
+  await wizard.getByRole("button", { name: button }).click();
+  // Taken, the wizard closes; refused, it stays open on its warnings
+  const proceed = wizard.getByRole("button", { name: /^Proceed Anyway$/ });
+  const state = async () => ((await proceed.isVisible()) ? "warnings" : (await wizard.isVisible()) ? "open" : "closed");
+  await expect.poll(state, { timeout: 15_000 }).not.toBe("open");
+  expect(await state()).toBe("closed");
 }
 
 /** Walks from the Feats step to the end, filling every required feat pool and every spell pool. Returns the spells picked. */

@@ -31,6 +31,14 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 
 import type { PlayerFormData, PlayerSlot } from "./players.ts";
 
+interface AddPlayerDialogProps {
+  open: boolean;
+  onClose: () => void;
+  form: UseFormReturn<PlayerFormData>;
+  onSubmit: (data: PlayerFormData) => void;
+  isLoading: boolean;
+}
+
 interface CreateCampaignDialogProps {
   open: boolean;
   onClose: () => void;
@@ -47,19 +55,6 @@ interface EditCampaignDialogProps {
   isLoading: boolean;
 }
 
-interface PlayerFieldProps {
-  form: UseFormReturn<PlayerFormData>;
-  isLoading: boolean;
-}
-
-interface AddPlayerDialogProps {
-  open: boolean;
-  onClose: () => void;
-  form: UseFormReturn<PlayerFormData>;
-  onSubmit: (data: PlayerFormData) => void;
-  isLoading: boolean;
-}
-
 interface EditPlayerDialogProps {
   open: boolean;
   onClose: () => void;
@@ -68,6 +63,11 @@ interface EditPlayerDialogProps {
   isLoading: boolean;
   /** The slot being edited, from `getPlayerSlot`. */
   slot: PlayerSlot | null;
+}
+
+interface PlayerFieldProps {
+  form: UseFormReturn<PlayerFormData>;
+  isLoading: boolean;
 }
 
 interface RemovePlayerDialogProps {

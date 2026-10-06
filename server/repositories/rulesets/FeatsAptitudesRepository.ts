@@ -10,6 +10,28 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
     super(featsAptitudesInRules);
   }
 
+  async create(db: Db, values: InferInsertModel<typeof featsAptitudesInRules>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async createMany(db: Db, values: InferInsertModel<typeof featsAptitudesInRules>[]) {
+    if (values.length === 0) return [];
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Exception to soft-delete: disposable configuration data — intentional removal
+  async delete(db: Db, where: { featId: string; aptitudeId?: string } | { aptitudeId: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.branchWhere([
+          "featId" in where && eq(this.table.featId, where.featId),
+          where.aptitudeId !== undefined && eq(this.table.aptitudeId, where.aptitudeId),
+        ]),
+      )
+      .returning();
+  }
+
   async findAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
     if (where.aptitudeIds.length === 0) return [];
     const rows = await db
@@ -32,28 +54,6 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
         aptitudesInRule: true,
       },
     });
-  }
-
-  async create(db: Db, values: InferInsertModel<typeof featsAptitudesInRules>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof featsAptitudesInRules>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { featId: string; aptitudeId?: string } | { aptitudeId: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        this.branchWhere([
-          "featId" in where && eq(this.table.featId, where.featId),
-          where.aptitudeId !== undefined && eq(this.table.aptitudeId, where.aptitudeId),
-        ]),
-      )
-      .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal

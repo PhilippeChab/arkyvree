@@ -40,6 +40,12 @@ const COMPONENT_MAP: Record<string, string> = {
   XP: "XP Cost",
 };
 
+/** Compound component forms used in manual seeds: "M/DF" → "Material/Divine Focus" */
+const COMPOUND_COMPONENT_MAP: Record<string, string> = {
+  "M/DF": "Material/Divine Focus",
+  "F/DF": "Focus/Divine Focus",
+};
+
 const SUBSCHOOL_CANON: Record<string, string> = Object.fromEntries(
   [
     "Calling",
@@ -58,12 +64,6 @@ const SUBSCHOOL_CANON: Record<string, string> = Object.fromEntries(
     "Teleportation",
   ].map((s) => [s.toLowerCase(), s]),
 );
-
-/** Compound component forms used in manual seeds: "M/DF" → "Material/Divine Focus" */
-const COMPOUND_COMPONENT_MAP: Record<string, string> = {
-  "M/DF": "Material/Divine Focus",
-  "F/DF": "Focus/Divine Focus",
-};
 
 /**
  * Build class name → aptitude name mappings by scanning all class reference files.
@@ -110,6 +110,20 @@ function buildClassSpellMaps(): { classMap: Record<string, string>; dualMap: Rec
   return { classMap, dualMap };
 }
 
+function expandComponents(components: string[]): string[] {
+  const result: string[] = [];
+  for (const comp of components) {
+    const compound = COMPOUND_COMPONENT_MAP[comp.trim()];
+    if (compound) {
+      if (!result.includes(compound)) result.push(compound);
+      continue;
+    }
+    const mapped = COMPONENT_MAP[comp.trim()];
+    if (mapped && !result.includes(mapped)) result.push(mapped);
+  }
+  return result;
+}
+
 function getClassSpellMaps() {
   if (!_classSpellMaps) _classSpellMaps = buildClassSpellMaps();
   return _classSpellMaps;
@@ -123,20 +137,6 @@ function getClassAbbrevMap(): Record<string, string> {
 /** Combined class entries that map to multiple aptitudes */
 function getDualClassMap(): Record<string, string[]> {
   return getClassSpellMaps().dualMap;
-}
-
-function expandComponents(components: string[]): string[] {
-  const result: string[] = [];
-  for (const comp of components) {
-    const compound = COMPOUND_COMPONENT_MAP[comp.trim()];
-    if (compound) {
-      if (!result.includes(compound)) result.push(compound);
-      continue;
-    }
-    const mapped = COMPONENT_MAP[comp.trim()];
-    if (mapped && !result.includes(mapped)) result.push(mapped);
-  }
-  return result;
 }
 
 function normalizeDescriptor(value: string): string {

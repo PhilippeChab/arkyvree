@@ -1,13 +1,8 @@
-interface GoogleIdConfiguration {
-  client_id: string;
-  callback: (response: GoogleCredentialResponse) => void;
-  auto_select?: boolean;
-  cancel_on_tap_outside?: boolean;
-}
-
-interface GoogleCredentialResponse {
-  credential: string;
-  select_by: string;
+interface GoogleAccountsId {
+  initialize: (config: GoogleIdConfiguration) => void;
+  renderButton: (parent: HTMLElement, config: GoogleButtonConfiguration) => void;
+  prompt: () => void;
+  disableAutoSelect: () => void;
 }
 
 interface GoogleButtonConfiguration {
@@ -21,11 +16,16 @@ interface GoogleButtonConfiguration {
   locale?: string;
 }
 
-interface GoogleAccountsId {
-  initialize: (config: GoogleIdConfiguration) => void;
-  renderButton: (parent: HTMLElement, config: GoogleButtonConfiguration) => void;
-  prompt: () => void;
-  disableAutoSelect: () => void;
+interface GoogleCredentialResponse {
+  credential: string;
+  select_by: string;
+}
+
+interface GoogleIdConfiguration {
+  client_id: string;
+  callback: (response: GoogleCredentialResponse) => void;
+  auto_select?: boolean;
+  cancel_on_tap_outside?: boolean;
 }
 
 interface Window {

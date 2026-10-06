@@ -44,7 +44,8 @@
     // General
     "no-console": "error",
     "import/no-empty-named-blocks": "error",
-    // Routers, services and repositories in CRUD order (lint/memberOrder.mjs): `bun run lint --fix` sorts them.
+    // Every declaration and method by name, every route by method and path (lint/memberOrder.mjs): `bun run lint --fix`
+    // sorts them.
     "arkyvree/member-order": "error",
     // A public method starts with a verb its layer knows (lint/methodNames.mjs): repositories, services, policies.
     "arkyvree/method-names": "error",

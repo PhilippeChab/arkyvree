@@ -32,6 +32,26 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     return result[0]?.count ?? 0;
   }
 
+  async create(db: Db, values: InferInsertModel<typeof notificationsInAccount>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async createMany(db: Db, values: InferInsertModel<typeof notificationsInAccount>[]) {
+    if (values.length === 0) return [];
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async delete(db: Db, where: { id: string } | { createdBefore: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.branchWhere([
+          "id" in where && eq(this.table.id, where.id),
+          "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
+        ]),
+      );
+  }
+
   async findPage(
     db: Db,
     where: {
@@ -67,15 +87,6 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     });
   }
 
-  async create(db: Db, values: InferInsertModel<typeof notificationsInAccount>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof notificationsInAccount>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
-  }
-
   /** Marks the recipient's notifications read: one (`id`), those about a target (`targetId`), or all but some types. */
   async markRead(
     db: Db,
@@ -99,17 +110,6 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
         ),
       )
       .returning();
-  }
-
-  async delete(db: Db, where: { id: string } | { createdBefore: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        this.branchWhere([
-          "id" in where && eq(this.table.id, where.id),
-          "createdBefore" in where && lt(this.table.createdAt, where.createdBefore),
-        ]),
-      );
   }
 }
 

@@ -12,34 +12,6 @@ import { resolveCustomizationId } from "./resolveCustomizationId.ts";
 import { mergeSiblingData } from "./siblingMerge.ts";
 
 /**
- * The customization `customizationId` of `entityId` once that entity resolved to `resolvedEntityId`: its copy when the
- * entity was copied, or itself, which must still exist.
- */
-async function resolveExistingCustomization(
-  tx: Db,
-  entityId: string,
-  resolvedEntityId: string,
-  kind: CustomizationKind,
-  customizationId: string,
-  customizationIds: Map<string, string>,
-): Promise<string> {
-  const resolvedCustomizationId = resolveCustomizationId(
-    entityId,
-    resolvedEntityId,
-    customizationId,
-    customizationIds,
-    kind,
-  );
-  if (
-    resolvedCustomizationId === customizationId &&
-    !(await withCowContext(undefined, () => CUSTOMIZATION_REPOS[kind].exists(tx, { id: customizationId })))
-  ) {
-    throw new NotFoundError("Customization source no longer exists; refresh the entity");
-  }
-  return resolvedCustomizationId;
-}
-
-/**
  * COW trigger: copies a parent entity to the child fork, including all
  * customizations, relationships, and creates the entity_snapshot record.
  *
@@ -237,6 +209,34 @@ async function cowOwnerForCustomization(
     customizationIds,
   );
   return cowResult.id;
+}
+
+/**
+ * The customization `customizationId` of `entityId` once that entity resolved to `resolvedEntityId`: its copy when the
+ * entity was copied, or itself, which must still exist.
+ */
+async function resolveExistingCustomization(
+  tx: Db,
+  entityId: string,
+  resolvedEntityId: string,
+  kind: CustomizationKind,
+  customizationId: string,
+  customizationIds: Map<string, string>,
+): Promise<string> {
+  const resolvedCustomizationId = resolveCustomizationId(
+    entityId,
+    resolvedEntityId,
+    customizationId,
+    customizationIds,
+    kind,
+  );
+  if (
+    resolvedCustomizationId === customizationId &&
+    !(await withCowContext(undefined, () => CUSTOMIZATION_REPOS[kind].exists(tx, { id: customizationId })))
+  ) {
+    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
+  return resolvedCustomizationId;
 }
 
 /** Resolve a modifier as the owner of requirements: COW its owning entity and map the modifier to its copy. */

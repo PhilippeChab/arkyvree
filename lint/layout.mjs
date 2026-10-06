@@ -14,8 +14,32 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
+const BUILT =
+  "A constant is a value the file writes, never one its own functions build: move the function to a module of its " +
+  "own, or write the value.";
+
+/** An exported type or constant goes after the file's own, in the same section */
+const EXPORTED = 0.5;
+
+const FROM_EXPORT =
+  "A constant the file keeps is built from constants it keeps: export it with the one it reads, or build it where " +
+  "it's used.";
 const FUNCTION_VALUES = new Set(["ArrowFunctionExpression", "FunctionExpression", "ClassExpression"]);
 
+const LOOPS = new Set(["ForStatement", "ForOfStatement", "ForInStatement", "WhileStatement"]);
+
+const MESSAGE =
+  "A file reads in order: its imports, its types, its constants (each the file's own, then its exports), its " +
+  "helpers, then what it's for (its exports, its class, its tests). `oxlint --fix` orders it.";
+
+const MODULE_RUN =
+  "A module (a file that exports) has no step at its top: a script imports it, and runs it in a function it calls " +
+  "last.";
+/** The groups, in a file's order */
+const RANK = { type: 1, constant: 2, helper: 3, main: 4 };
+const STEP =
+  "A file's run (a call, a condition, a loop at its top) comes last: nothing is declared after it. Its steps go below " +
+  "its declarations, or into a function it calls last (a script's `main()`; a test file's setup, a `beforeAll`).";
 const SUITE_CALLS = new Set([
   "describe",
   "test",
@@ -27,56 +51,8 @@ const SUITE_CALLS = new Set([
   "setDefaultTimeout",
 ]);
 
-/** The groups, in a file's order */
-const RANK = { type: 1, constant: 2, helper: 3, main: 4 };
-/** An exported type or constant goes after the file's own, in the same section */
-const EXPORTED = 0.5;
-
 /** What a type position holds: never an order a value needs */
 const TYPE_KEYS = new Set(["typeAnnotation", "returnType", "typeParameters", "typeArguments", "superTypeArguments"]);
-
-const MESSAGE =
-  "A file reads in order: its imports, its types, its constants (each the file's own, then its exports), its " +
-  "helpers, then what it's for (its exports, its class, its tests). `oxlint --fix` orders it.";
-
-const STEP =
-  "A file's run (a call, a condition, a loop at its top) comes last: nothing is declared after it. Its steps go below " +
-  "its declarations, or into a function it calls last (a script's `main()`; a test file's setup, a `beforeAll`).";
-const MODULE_RUN =
-  "A module (a file that exports) has no step at its top: a script imports it, and runs it in a function it calls " +
-  "last.";
-const BUILT =
-  "A constant is a value the file writes, never one its own functions build: move the function to a module of its " +
-  "own, or write the value.";
-const FROM_EXPORT =
-  "A constant the file keeps is built from constants it keeps: export it with the one it reads, or build it where " +
-  "it's used.";
-
-const LOOPS = new Set(["ForStatement", "ForOfStatement", "ForInStatement", "WhileStatement"]);
-
-/**
- * What the order can't settle, so the code changes instead: a script's step that isn't in its run's function, a
- * constant one of the file's own functions builds, a constant the file keeps built from one it exports.
- */
-function findStrays(items) {
-  const strays = [];
-  // A module, which other files import: what it exports, never a run (an empty `export {}` marks a script a module)
-  const exports = items.some(({ statement }) =>
-    statement.type === "ExportNamedDeclaration"
-      ? statement.declaration !== null || statement.specifiers.length > 0
-      : /^Export(Default|All)Declaration$/.test(statement.type),
-  );
-  let afterStep = false;
-  for (const item of items) {
-    if (exports && item.kind === "effect") strays.push([item, MODULE_RUN]);
-    if (afterStep && item.kind !== "effect" && item.kind !== "import") strays.push([item, STEP]);
-    if (item.kind === "effect") afterStep = true;
-    if (item.kind !== "constant") continue;
-    if (item.reads.some((dep) => dep.kind === "helper" || dep.kind === "main")) strays.push([item, BUILT]);
-    else if (!item.exported && item.reads.some((dep) => dep.exported)) strays.push([item, FROM_EXPORT]);
-  }
-  return strays;
-}
 
 /** The nodes around a node, the program first. */
 function ancestorsOf(node) {
@@ -118,30 +94,8 @@ function calleeOf(expression) {
   return node?.type === "Identifier" ? node.name : undefined;
 }
 
-/** Whether a node calls `describe`, `test` or a hook somewhere inside it. */
-function hasSuiteCall(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(hasSuiteCall);
-  if (node.type === "CallExpression" && SUITE_CALLS.has(calleeOf(node))) return true;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && hasSuiteCall(child),
-  );
-}
-
-/** Whether a statement sits right in a `describe`'s callback: not in a test's, nor any deeper. */
-function isInDescribe(statement) {
-  const block = statement.parent;
-  const callback = block?.type === "BlockStatement" ? block.parent : undefined;
-  const call = callback?.parent;
-  return (
-    (callback?.type === "ArrowFunctionExpression" || callback?.type === "FunctionExpression") &&
-    call?.type === "CallExpression" &&
-    calleeOf(call) === "describe"
-  );
-}
-
 /** A top-level statement's declaration: an export's, or itself. */
-function declarationOf(statement) {
+export function declarationOf(statement) {
   return statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
     ? statement.declaration
     : statement;
@@ -155,28 +109,23 @@ function declaredNames(statement) {
   return declaration.id?.name ? [declaration.id.name] : [];
 }
 
-/** The names the functions and blocks around a nested statement declare: what a helper lifted out would lose. */
-function enclosingNames(ancestors, statement) {
-  const names = new Set();
-  for (const node of ancestors) {
-    for (const param of node.params ?? []) for (const n of boundNames(param)) names.add(n);
-  }
-  for (const block of ancestors.filter((a) => a.type === "BlockStatement")) {
-    for (const s of block.body ?? []) {
-      if (s === statement) continue;
-      if (s.type === "VariableDeclaration")
-        for (const d of s.declarations) for (const n of boundNames(d.id)) names.add(n);
-      if (s.type === "FunctionDeclaration" && s.id) names.add(s.id.name);
-    }
-  }
-  return names;
-}
-
 function holdsFunction(node) {
   return (
     node?.type === "FunctionDeclaration" ||
     node?.type === "TSDeclareFunction" ||
     (node?.type === "VariableDeclaration" && node.declarations.some((d) => FUNCTION_VALUES.has(d.init?.type)))
+  );
+}
+
+/** Whether a statement sits right in a `describe`'s callback: not in a test's, nor any deeper. */
+function isInDescribe(statement) {
+  const block = statement.parent;
+  const callback = block?.type === "BlockStatement" ? block.parent : undefined;
+  const call = callback?.parent;
+  return (
+    (callback?.type === "ArrowFunctionExpression" || callback?.type === "FunctionExpression") &&
+    call?.type === "CallExpression" &&
+    calleeOf(call) === "describe"
   );
 }
 
@@ -203,28 +152,21 @@ function describeHelperNames(program) {
   return names;
 }
 
-function holdsOrClass(item) {
-  return holdsFunction(declarationOf(item.statement)) || declarationOf(item.statement)?.type === "ClassDeclaration";
-}
-
-/** What a top-level statement is: an import, a type, a constant, a helper, the file's purpose, or a side effect. */
-function kindOf(statement) {
-  if (statement.type === "ImportDeclaration" || statement.type === "TSImportEqualsDeclaration") return "import";
-  // A directive prologue ("use strict") opens the file, as its imports do
-  if (statement.type === "ExpressionStatement" && statement.directive) return "import";
-  if (statement.type === "ExportAllDeclaration") return "main";
-  if (statement.type === "ExportNamedDeclaration" && !statement.declaration) return "main";
-  if (statement.type === "TSModuleDeclaration") return "type";
-  const declaration = declarationOf(statement);
-  if (declaration?.type === "TSTypeAliasDeclaration" || declaration?.type === "TSInterfaceDeclaration") return "type";
-  if (statement.type === "ExportDefaultDeclaration" || declaration?.type === "ClassDeclaration") return "main";
-  if (declaration?.type === "TSEnumDeclaration") return "constant";
-  if (holdsFunction(declaration)) return statement.type === "ExportNamedDeclaration" ? "main" : "helper";
-  if (declaration?.type === "VariableDeclaration") return "constant";
-  if (statement.type === "ExpressionStatement" && SUITE_CALLS.has(calleeOf(statement.expression))) return "main";
-  // A loop declaring tests (`for (const c of cases) test(…)`) is a test file's purpose too
-  if (LOOPS.has(statement.type) && hasSuiteCall(statement.body)) return "main";
-  return "effect";
+/** The names the functions and blocks around a nested statement declare: what a helper lifted out would lose. */
+function enclosingNames(ancestors, statement) {
+  const names = new Set();
+  for (const node of ancestors) {
+    for (const param of node.params ?? []) for (const n of boundNames(param)) names.add(n);
+  }
+  for (const block of ancestors.filter((a) => a.type === "BlockStatement")) {
+    for (const s of block.body ?? []) {
+      if (s === statement) continue;
+      if (s.type === "VariableDeclaration")
+        for (const d of s.declarations) for (const n of boundNames(d.id)) names.add(n);
+      if (s.type === "FunctionDeclaration" && s.id) names.add(s.id.name);
+    }
+  }
+  return names;
 }
 
 function rangeOf(node) {
@@ -256,6 +198,121 @@ function readNames(node, into = new Set(), types = false) {
     if (child && typeof child === "object") readNames(child, into, types);
   }
   return into;
+}
+
+/** The names a file declares at its top, its imports' included. */
+function topLevelNames(program) {
+  const names = new Set();
+  for (const statement of program.body) {
+    if (statement.type === "ImportDeclaration") for (const spec of statement.specifiers) names.add(spec.local.name);
+    else for (const n of declaredNames(statement)) names.add(n);
+  }
+  return names;
+}
+
+/** A helper in a `describe`: reported, and lifted above the top-level statement holding it when it can be. */
+function checkNested(context, text, statement) {
+  if (!holdsFunction(statement) || !isInDescribe(statement)) return;
+  const ancestors = ancestorsOf(statement);
+  const program = ancestors[0];
+  const top = ancestors[1];
+  const reads = readNames(statement, new Set(), true);
+  const local = enclosingNames(ancestors, statement);
+  // Lifted as it is: it reads nothing its blocks declare, and its name is free at the top and in the other blocks
+  const name = declaredNames(statement)[0];
+  const taken = topLevelNames(program);
+  const twins = describeHelperNames(program).filter((n) => n === name).length;
+  // Its own parameters shadow the blocks' names
+  const fn = statement.type === "VariableDeclaration" ? statement.declarations[0]?.init : statement;
+  const own = new Set((fn?.params ?? []).flatMap((param) => boundNames(param)));
+  const uses = [...local].filter((n) => !own.has(n) && reads.has(n));
+  const liftable = uses.length === 0 && !taken.has(name) && twins === 1;
+  // Why it stays, when it does: what to change before it can move
+  const why = uses.length
+    ? ` It uses ${uses.map((n) => `\`${n}\``).join(", ")} from its block: pass ${uses.length > 1 ? "them" : "it"} in.`
+    : liftable
+      ? ""
+      : ` Its name \`${name}\` is taken at the top or in another block: rename it.`;
+  const [start] = rangeOf(statement);
+  const lineStart = text.lastIndexOf("\n", start - 1) + 1;
+  const indent = start - lineStart;
+  const from = attachedStart(text, lineStart);
+  const end = endOf(text, statement);
+  const lifted = text
+    .slice(from, end)
+    .split("\n")
+    .map((line) => (line.slice(0, indent).trim() === "" ? line.slice(indent) : line))
+    .join("\n");
+  const index = program.body.indexOf(top);
+  const insertAt = index <= 0 ? 0 : endOf(text, program.body[index - 1]);
+  context.report({
+    node: statement,
+    message: `A test file's helpers sit at its top, never in a \`describe\`. \`oxlint --fix\` lifts one there.${why}`,
+    ...(liftable && {
+      fix: (fixer) => [
+        fixer.removeRange([from - 1, end]),
+        fixer.insertTextAfterRange([insertAt, insertAt], index <= 0 ? lifted + "\n\n" : "\n\n" + lifted),
+      ],
+    }),
+  });
+}
+
+/**
+ * What the order can't settle, so the code changes instead: a script's step that isn't in its run's function, a
+ * constant one of the file's own functions builds, a constant the file keeps built from one it exports.
+ */
+function findStrays(items) {
+  const strays = [];
+  // A module, which other files import: what it exports, never a run (an empty `export {}` marks a script a module)
+  const exports = items.some(({ statement }) =>
+    statement.type === "ExportNamedDeclaration"
+      ? statement.declaration !== null || statement.specifiers.length > 0
+      : /^Export(Default|All)Declaration$/.test(statement.type),
+  );
+  let afterStep = false;
+  for (const item of items) {
+    if (exports && item.kind === "effect") strays.push([item, MODULE_RUN]);
+    if (afterStep && item.kind !== "effect" && item.kind !== "import") strays.push([item, STEP]);
+    if (item.kind === "effect") afterStep = true;
+    if (item.kind !== "constant") continue;
+    if (item.reads.some((dep) => dep.kind === "helper" || dep.kind === "main")) strays.push([item, BUILT]);
+    else if (!item.exported && item.reads.some((dep) => dep.exported)) strays.push([item, FROM_EXPORT]);
+  }
+  return strays;
+}
+
+function holdsOrClass(item) {
+  return holdsFunction(declarationOf(item.statement)) || declarationOf(item.statement)?.type === "ClassDeclaration";
+}
+
+/** Whether a node calls `describe`, `test` or a hook somewhere inside it. */
+function hasSuiteCall(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(hasSuiteCall);
+  if (node.type === "CallExpression" && SUITE_CALLS.has(calleeOf(node))) return true;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && hasSuiteCall(child),
+  );
+}
+
+/** What a top-level statement is: an import, a type, a constant, a helper, the file's purpose, or a side effect. */
+function kindOf(statement) {
+  if (statement.type === "ImportDeclaration" || statement.type === "TSImportEqualsDeclaration") return "import";
+  // A directive prologue ("use strict") opens the file, as its imports do
+  if (statement.type === "ExpressionStatement" && statement.directive) return "import";
+  if (statement.type === "ExportAllDeclaration") return "main";
+  if (statement.type === "ExportNamedDeclaration" && !statement.declaration) return "main";
+  if (statement.type === "TSModuleDeclaration") return "type";
+  const declaration = declarationOf(statement);
+  if (declaration?.type === "TSTypeAliasDeclaration" || declaration?.type === "TSInterfaceDeclaration") return "type";
+  if (statement.type === "ExportDefaultDeclaration" || declaration?.type === "ClassDeclaration") return "main";
+  if (declaration?.type === "TSEnumDeclaration") return "constant";
+  if (holdsFunction(declaration)) return statement.type === "ExportNamedDeclaration" ? "main" : "helper";
+  if (declaration?.type === "VariableDeclaration") return "constant";
+  if (statement.type === "ExpressionStatement" && SUITE_CALLS.has(calleeOf(statement.expression))) return "main";
+  // A loop declaring tests (`for (const c of cases) test(…)`) is a test file's purpose too
+  if (LOOPS.has(statement.type) && hasSuiteCall(statement.body)) return "main";
+  return "effect";
 }
 
 /**
@@ -342,7 +399,7 @@ function runsCode(node) {
  * Whether a declaration runs code where it stands: a constant whose value does, a class whose `extends`, decorators,
  * computed keys or static parts do, an `export default` value.
  */
-function runsAtLoad(statement) {
+export function runsAtLoad(statement) {
   const declaration = declarationOf(statement);
   if (declaration?.type === "VariableDeclaration") return runsCode(declaration.declarations);
   if (declaration?.type === "ClassDeclaration") {
@@ -361,63 +418,6 @@ function runsAtLoad(statement) {
   if (statement.type === "ExportDefaultDeclaration" && !declaration.type.endsWith("Declaration"))
     return runsCode(declaration);
   return false;
-}
-
-/** The names a file declares at its top, its imports' included. */
-function topLevelNames(program) {
-  const names = new Set();
-  for (const statement of program.body) {
-    if (statement.type === "ImportDeclaration") for (const spec of statement.specifiers) names.add(spec.local.name);
-    else for (const n of declaredNames(statement)) names.add(n);
-  }
-  return names;
-}
-
-/** A helper in a `describe`: reported, and lifted above the top-level statement holding it when it can be. */
-function checkNested(context, text, statement) {
-  if (!holdsFunction(statement) || !isInDescribe(statement)) return;
-  const ancestors = ancestorsOf(statement);
-  const program = ancestors[0];
-  const top = ancestors[1];
-  const reads = readNames(statement, new Set(), true);
-  const local = enclosingNames(ancestors, statement);
-  // Lifted as it is: it reads nothing its blocks declare, and its name is free at the top and in the other blocks
-  const name = declaredNames(statement)[0];
-  const taken = topLevelNames(program);
-  const twins = describeHelperNames(program).filter((n) => n === name).length;
-  // Its own parameters shadow the blocks' names
-  const fn = statement.type === "VariableDeclaration" ? statement.declarations[0]?.init : statement;
-  const own = new Set((fn?.params ?? []).flatMap((param) => boundNames(param)));
-  const uses = [...local].filter((n) => !own.has(n) && reads.has(n));
-  const liftable = uses.length === 0 && !taken.has(name) && twins === 1;
-  // Why it stays, when it does: what to change before it can move
-  const why = uses.length
-    ? ` It uses ${uses.map((n) => `\`${n}\``).join(", ")} from its block: pass ${uses.length > 1 ? "them" : "it"} in.`
-    : liftable
-      ? ""
-      : ` Its name \`${name}\` is taken at the top or in another block: rename it.`;
-  const [start] = rangeOf(statement);
-  const lineStart = text.lastIndexOf("\n", start - 1) + 1;
-  const indent = start - lineStart;
-  const from = attachedStart(text, lineStart);
-  const end = endOf(text, statement);
-  const lifted = text
-    .slice(from, end)
-    .split("\n")
-    .map((line) => (line.slice(0, indent).trim() === "" ? line.slice(indent) : line))
-    .join("\n");
-  const index = program.body.indexOf(top);
-  const insertAt = index <= 0 ? 0 : endOf(text, program.body[index - 1]);
-  context.report({
-    node: statement,
-    message: `A test file's helpers sit at its top, never in a \`describe\`. \`oxlint --fix\` lifts one there.${why}`,
-    ...(liftable && {
-      fix: (fixer) => [
-        fixer.removeRange([from - 1, end]),
-        fixer.insertTextAfterRange([insertAt, insertAt], index <= 0 ? lifted + "\n\n" : "\n\n" + lifted),
-      ],
-    }),
-  });
 }
 
 function createFileLayout(context) {

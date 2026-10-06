@@ -131,41 +131,6 @@ function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[
   return [...detected.filter((p) => !overrideTargets.has(p.target)), ...overrides];
 }
 
-/** Build a map from pool parent variant names (lowercase) → mapping seedName.
- *  Used to resolve occurrences like "Special Ability" to "Special Abilities (Rogue)". */
-export function buildPoolParentNameMap(
-  mf: ClassReference["mapping"]["features"],
-  className: string,
-  classFeatureAptitude: string,
-): Map<string, string> {
-  const nameMap = new Map<string, string>();
-  // Collect unique aptitude groups
-  const seen = new Set<string>();
-  for (const feat of Object.values(mf)) {
-    if (!feat.aptitude || feat.aptitude === classFeatureAptitude) continue;
-    if (seen.has(feat.aptitude)) continue;
-    seen.add(feat.aptitude);
-    const suffix = feat.aptitude.replace(new RegExp(`^${className}\\s+`, "i"), "");
-    const s = suffix.toLowerCase();
-    // Find the mapping entry whose key matches one of the variants (the pool parent itself)
-    const parentEntry = Object.entries(mf).find(([key]) => matchesWithPluralVariants(key, s));
-    if (!parentEntry) continue;
-    const seedName = parentEntry[1].seedName ?? `${parentEntry[0]} (${className})`;
-    // Map all variants to this seedName
-    for (const variant of pluralVariants(s)) {
-      nameMap.set(variant, seedName);
-    }
-  }
-  return nameMap;
-}
-
-/** Insert an ordinal suffix before the parenthetical class suffix in a feat name. */
-export function insertOrdinalInName(name: string, ordinal: string): string {
-  const match = name.match(/^(.+?)(\s*\(.+\))$/);
-  if (match) return `${match[1]} ${ordinal}${match[2]}`;
-  return `${name} ${ordinal}`;
-}
-
 /**
  * A class's aptitude picks: detected, with the overrides', then split per level where a bonus feat list has one per
  * level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug); and how the split
@@ -187,73 +152,6 @@ export function classAptitudePicks(ref: ClassReference) {
 }
 
 /**
- * A class's level modifiers: its overrides', then those its table's columns give (`overrides.columns`), at each level a
- * column's value changes: a number's rise, or its text.
- */
-export function classModifiers(ref: ClassReference): (ModifierSeed & { level: number })[] {
-  const fromColumns = Object.entries(ref.overrides?.columns ?? {}).flatMap(
-    ([column, { target, operator, requirements }]) => {
-      if (!ref.raw.progression.some((row) => row.columns?.[column] !== undefined)) {
-        throw new Error(`${ref.raw.name}: its table has no "${column}" column`);
-      }
-      let previous = operator === "add" ? "+0" : "";
-      return ref.raw.progression.flatMap((row) => {
-        // A blank cell keeps the value above it
-        const cell = row.columns?.[column] || previous;
-        const rise = cellNumber(cell) - cellNumber(previous);
-        const changed = operator === "add" ? rise !== 0 : cell !== previous;
-        previous = cell;
-        if (!changed) return [];
-        const value = operator === "add" ? String(rise) : cell;
-        const valueType = operator === "add" ? "number" : "string";
-        return [{ level: row.level, target, value, valueType, operator, ...(requirements && { requirements }) }];
-      });
-    },
-  );
-  return [...(ref.overrides?.modifiers ?? []), ...fromColumns];
-}
-
-/** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
-export function classSpells(ref: ClassReference) {
-  const { spells } = ref.mapping;
-  return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
-}
-
-/**
- * The feats a class's domain pool offers (`spells.domainPool`, a divine crusader's): one per domain her book and the
- * core rules have, each joining that domain's list to hers. The domain gives her its spells, not its granted power.
- */
-export function classDomainPickFeats(ref: ClassReference): FeatSeed[] {
-  const pool = classSpells(ref)?.domainPool;
-  if (!pool) return [];
-  const book = ref._meta.book;
-  const domains = [...bookDomainSeeds("srd").seeds, ...(book === "srd" ? [] : bookDomainSeeds(book).seeds)];
-  return domains
-    .map(({ name }) => ({
-      name: `${name} Domain (${ref.raw.name})`,
-      description: `The ${name} domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.`,
-      selectable: true,
-      aptitudes: [pool],
-      modifiers: [
-        {
-          target: `aptitudes.${stripSeparators(name)}domainspells.joinsclasslist`,
-          operator: "set",
-          value: "true",
-          valueType: "boolean",
-        },
-      ],
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-/** The spell lists a class's slots go to (`spells.lists`), or its own, "<Class> Spells": none for a class without slots. */
-export function classSpellLists(ref: ClassReference): string[] {
-  const spells = classSpells(ref);
-  if (!spells) return [];
-  return spells.lists?.map((list) => list.name) ?? [`${ref.raw.name} Spells`];
-}
-
-/**
  * The existing feat a class's feature named `name` grants instead of being a feat of its own: that feat (with or without
  * the class's suffix), or one its description says it gains as a bonus feat.
  */
@@ -269,6 +167,13 @@ export function existingFeatGranted(ref: ClassReference, name: string, descripti
           .find(Boolean)
       : undefined)
   );
+}
+
+/** Insert an ordinal suffix before the parenthetical class suffix in a feat name. */
+export function insertOrdinalInName(name: string, ordinal: string): string {
+  const match = name.match(/^(.+?)(\s*\(.+\))$/);
+  if (match) return `${match[1]} ${ordinal}${match[2]}`;
+  return `${name} ${ordinal}`;
 }
 
 /**
@@ -374,6 +279,101 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
     });
   }
   return feats;
+}
+
+/** Build a map from pool parent variant names (lowercase) → mapping seedName.
+ *  Used to resolve occurrences like "Special Ability" to "Special Abilities (Rogue)". */
+export function buildPoolParentNameMap(
+  mf: ClassReference["mapping"]["features"],
+  className: string,
+  classFeatureAptitude: string,
+): Map<string, string> {
+  const nameMap = new Map<string, string>();
+  // Collect unique aptitude groups
+  const seen = new Set<string>();
+  for (const feat of Object.values(mf)) {
+    if (!feat.aptitude || feat.aptitude === classFeatureAptitude) continue;
+    if (seen.has(feat.aptitude)) continue;
+    seen.add(feat.aptitude);
+    const suffix = feat.aptitude.replace(new RegExp(`^${className}\\s+`, "i"), "");
+    const s = suffix.toLowerCase();
+    // Find the mapping entry whose key matches one of the variants (the pool parent itself)
+    const parentEntry = Object.entries(mf).find(([key]) => matchesWithPluralVariants(key, s));
+    if (!parentEntry) continue;
+    const seedName = parentEntry[1].seedName ?? `${parentEntry[0]} (${className})`;
+    // Map all variants to this seedName
+    for (const variant of pluralVariants(s)) {
+      nameMap.set(variant, seedName);
+    }
+  }
+  return nameMap;
+}
+
+/** A class's spell slots: detected, with the overrides' fields over them. None when it has none (`noSpells` removes them). */
+export function classSpells(ref: ClassReference) {
+  const { spells } = ref.mapping;
+  return spells && ref.overrides?.spells ? { ...spells, ...ref.overrides.spells } : spells;
+}
+
+/**
+ * The feats a class's domain pool offers (`spells.domainPool`, a divine crusader's): one per domain her book and the
+ * core rules have, each joining that domain's list to hers. The domain gives her its spells, not its granted power.
+ */
+export function classDomainPickFeats(ref: ClassReference): FeatSeed[] {
+  const pool = classSpells(ref)?.domainPool;
+  if (!pool) return [];
+  const book = ref._meta.book;
+  const domains = [...bookDomainSeeds("srd").seeds, ...(book === "srd" ? [] : bookDomainSeeds(book).seeds)];
+  return domains
+    .map(({ name }) => ({
+      name: `${name} Domain (${ref.raw.name})`,
+      description: `The ${name} domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.`,
+      selectable: true,
+      aptitudes: [pool],
+      modifiers: [
+        {
+          target: `aptitudes.${stripSeparators(name)}domainspells.joinsclasslist`,
+          operator: "set",
+          value: "true",
+          valueType: "boolean",
+        },
+      ],
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * A class's level modifiers: its overrides', then those its table's columns give (`overrides.columns`), at each level a
+ * column's value changes: a number's rise, or its text.
+ */
+export function classModifiers(ref: ClassReference): (ModifierSeed & { level: number })[] {
+  const fromColumns = Object.entries(ref.overrides?.columns ?? {}).flatMap(
+    ([column, { target, operator, requirements }]) => {
+      if (!ref.raw.progression.some((row) => row.columns?.[column] !== undefined)) {
+        throw new Error(`${ref.raw.name}: its table has no "${column}" column`);
+      }
+      let previous = operator === "add" ? "+0" : "";
+      return ref.raw.progression.flatMap((row) => {
+        // A blank cell keeps the value above it
+        const cell = row.columns?.[column] || previous;
+        const rise = cellNumber(cell) - cellNumber(previous);
+        const changed = operator === "add" ? rise !== 0 : cell !== previous;
+        previous = cell;
+        if (!changed) return [];
+        const value = operator === "add" ? String(rise) : cell;
+        const valueType = operator === "add" ? "number" : "string";
+        return [{ level: row.level, target, value, valueType, operator, ...(requirements && { requirements }) }];
+      });
+    },
+  );
+  return [...(ref.overrides?.modifiers ?? []), ...fromColumns];
+}
+
+/** The spell lists a class's slots go to (`spells.lists`), or its own, "<Class> Spells": none for a class without slots. */
+export function classSpellLists(ref: ClassReference): string[] {
+  const spells = classSpells(ref);
+  if (!spells) return [];
+  return spells.lists?.map((list) => list.name) ?? [`${ref.raw.name} Spells`];
 }
 
 /**

@@ -43,12 +43,6 @@ const NON_PICK_FEATURES: RegExp[] = [
 export const CHOICE_PATTERN =
   /\b(choose|chooses|select|selects|picks?|chosen|drawn from|from the following|from those given|from among)\b/i;
 
-/** Open creature-type pick — selection language near "favored enemy" / "type of creature". */
-function isFavoredEnemyOpenPick(featureName: string, desc: string): boolean {
-  if (!/favored enemy/i.test(featureName) && !/favored enemy/i.test(desc)) return false;
-  return /(?:select|choose|designate|pick)s?\s+[^.]*?(?:type of creature|favored enemy)/i.test(desc);
-}
-
 /** Detect when a class feature references an existing SRD aptitude by name
  *  (e.g. "from the list of fighter bonus feats"). Returns the aptitude target
  *  path or null if no known aptitude is referenced. */
@@ -58,31 +52,10 @@ function detectExistingAptitudeReference(desc: string): string | null {
   return null;
 }
 
-/** Locked-creature-type favored-enemy features — re-routed to the shared variant. */
-export function detectLockedFavoredEnemies(
-  raw: ClassReference["raw"],
-  featureOccurrences: { name: string; levels: number[] }[],
-): { lockedFavoredEnemies?: ClassReference["detected"]["lockedFavoredEnemies"] } {
-  const FE_TEMPLATE = /\+2\s+(?:bonus\s+on\s+)?Bluff,\s*Listen,\s*Sense Motive,\s*Spot,?\s*and\s*Survival\s+checks/i;
-  const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf.description);
-  const results: NonNullable<ClassReference["detected"]["lockedFavoredEnemies"]> = [];
-
-  for (const occ of featureOccurrences) {
-    const desc = lookupWithPluralVariants(descMap, occ.name);
-    if (!desc) continue;
-    const normalized = normalizeWs(desc);
-
-    if (!FE_TEMPLATE.test(normalized)) continue;
-
-    const nameMatch = occ.name.match(/\(([^)]+)\)/);
-    let lockedType = nameMatch ? findCreatureType(nameMatch[1]) : null;
-    if (!lockedType) lockedType = findCreatureType(normalized);
-    if (!lockedType) continue;
-
-    results.push({ featureName: occ.name, levels: occ.levels, creatureType: lockedType });
-  }
-
-  return results.length > 0 ? { lockedFavoredEnemies: results } : {};
+/** Open creature-type pick — selection language near "favored enemy" / "type of creature". */
+function isFavoredEnemyOpenPick(featureName: string, desc: string): boolean {
+  if (!/favored enemy/i.test(featureName) && !/favored enemy/i.test(desc)) return false;
+  return /(?:select|choose|designate|pick)s?\s+[^.]*?(?:type of creature|favored enemy)/i.test(desc);
 }
 
 /** Parse "treated as having the X feat" patterns from a description.
@@ -172,4 +145,31 @@ export function detectAptitudePicks(
     ...(picks.length > 0 ? { aptitudePicks: picks } : {}),
     ...(unresolved.length > 0 ? { unresolvedAptitudePicks: unresolved } : {}),
   };
+}
+
+/** Locked-creature-type favored-enemy features — re-routed to the shared variant. */
+export function detectLockedFavoredEnemies(
+  raw: ClassReference["raw"],
+  featureOccurrences: { name: string; levels: number[] }[],
+): { lockedFavoredEnemies?: ClassReference["detected"]["lockedFavoredEnemies"] } {
+  const FE_TEMPLATE = /\+2\s+(?:bonus\s+on\s+)?Bluff,\s*Listen,\s*Sense Motive,\s*Spot,?\s*and\s*Survival\s+checks/i;
+  const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf.description);
+  const results: NonNullable<ClassReference["detected"]["lockedFavoredEnemies"]> = [];
+
+  for (const occ of featureOccurrences) {
+    const desc = lookupWithPluralVariants(descMap, occ.name);
+    if (!desc) continue;
+    const normalized = normalizeWs(desc);
+
+    if (!FE_TEMPLATE.test(normalized)) continue;
+
+    const nameMatch = occ.name.match(/\(([^)]+)\)/);
+    let lockedType = nameMatch ? findCreatureType(nameMatch[1]) : null;
+    if (!lockedType) lockedType = findCreatureType(normalized);
+    if (!lockedType) continue;
+
+    results.push({ featureName: occ.name, levels: occ.levels, creatureType: lockedType });
+  }
+
+  return results.length > 0 ? { lockedFavoredEnemies: results } : {};
 }

@@ -10,9 +10,8 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 import { DEFAULT_ENTITY_FILTERS, type EntityKind, type EntitySortField } from "./entityFilters.ts";
 
-interface ListFilters {
-  search: string;
-  childOnly: boolean;
+interface AptitudeFilters extends ListFilters {
+  aptitudeId?: string;
 }
 
 interface EntityFilters extends ListFilters {
@@ -21,8 +20,9 @@ interface EntityFilters extends ListFilters {
   orderDir: "asc" | "desc";
 }
 
-interface AptitudeFilters extends ListFilters {
-  aptitudeId?: string;
+interface ListFilters {
+  search: string;
+  childOnly: boolean;
 }
 
 interface PowerFilters extends AptitudeFilters {

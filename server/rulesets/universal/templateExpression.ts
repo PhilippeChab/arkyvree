@@ -19,18 +19,18 @@
 
 import type { Holders, TargetPathsTraverser } from "@/server/rulesets/types.ts";
 
-type Token =
-  | { type: "NUMBER"; value: number }
-  | { type: "IDENT"; value: string }
-  | { type: "PATH"; value: string }
-  | { type: "PUNC"; value: "(" | ")" | "," | "+" | "-" | "*" | "/" };
-
 type AstNode =
   | { type: "number"; value: number }
   | { type: "path"; value: string }
   | { type: "call"; name: string; args: AstNode[] }
   | { type: "binop"; op: "+" | "-" | "*" | "/"; left: AstNode; right: AstNode }
   | { type: "unary"; op: "-"; arg: AstNode };
+
+type Token =
+  | { type: "NUMBER"; value: number }
+  | { type: "IDENT"; value: string }
+  | { type: "PATH"; value: string }
+  | { type: "PUNC"; value: "(" | ")" | "," | "+" | "-" | "*" | "/" };
 
 const FUNCTIONS: Record<string, (...args: number[]) => number> = {
   min: Math.min,
@@ -187,15 +187,6 @@ class Parser {
 }
 
 /**
- * True if the modifier value is a template (wrapped in `{{ }}`) with
- * non-empty inner content. Empty `{{ }}` is treated as a no-op so an
- * unfinished form submission doesn't generate compose-time warnings.
- */
-export function isTemplateValue(value: string): boolean {
-  return value.startsWith("{{") && value.endsWith("}}") && value.slice(2, -2).trim().length > 0;
-}
-
-/**
  * Parse and evaluate a template expression. Returns the resolved value, or
  * `null` if any path fails to resolve (warning sent via onWarning).
  *
@@ -319,4 +310,13 @@ export function extractReferencedPaths(value: string): string[] {
   // No brackets — treat the whole inner as a bare path only if it looks like
   // one. Allow leading `_` to match the tokenizer's IDENT character class.
   return /^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(inner) ? [inner] : [];
+}
+
+/**
+ * True if the modifier value is a template (wrapped in `{{ }}`) with
+ * non-empty inner content. Empty `{{ }}` is treated as a no-op so an
+ * unfinished form submission doesn't generate compose-time warnings.
+ */
+export function isTemplateValue(value: string): boolean {
+  return value.startsWith("{{") && value.endsWith("}}") && value.slice(2, -2).trim().length > 0;
 }
