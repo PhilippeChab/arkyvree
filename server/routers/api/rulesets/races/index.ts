@@ -7,6 +7,8 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
 
+const raceParams = idParam.extend({ raceId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
   .get(
     "/:id/races",
@@ -32,14 +34,10 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get(
-    "/:id/races/:raceId",
-    zValidator("param", z.object({ id: z.string().uuid(), raceId: z.string().uuid() })),
-    async (c) => {
-      const { id, raceId } = c.req.valid("param");
-      return c.json(await RacesService.getRace(id, raceId), 200);
-    },
-  )
+  .get("/:id/races/:raceId", zValidator("param", raceParams), async (c) => {
+    const { id, raceId } = c.req.valid("param");
+    return c.json(await RacesService.getRace(id, raceId), 200);
+  })
   .post(
     "/:id/races",
     zValidator("param", idParam),
@@ -63,7 +61,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/races/:raceId",
-    zValidator("param", z.object({ id: z.string().uuid(), raceId: z.string().uuid() })),
+    zValidator("param", raceParams),
     zValidator(
       "json",
       z.object({
@@ -83,11 +81,7 @@ export default new Hono<SessionContext>()
       return c.json(await RacesService.updateRace(c.var.requestSession, id, raceId, body), 200);
     },
   )
-  .delete(
-    "/:id/races/:raceId",
-    zValidator("param", z.object({ id: z.string().uuid(), raceId: z.string().uuid() })),
-    async (c) => {
-      const { id, raceId } = c.req.valid("param");
-      return c.json(await RacesService.deleteRace(c.var.requestSession, id, raceId), 200);
-    },
-  );
+  .delete("/:id/races/:raceId", zValidator("param", raceParams), async (c) => {
+    const { id, raceId } = c.req.valid("param");
+    return c.json(await RacesService.deleteRace(c.var.requestSession, id, raceId), 200);
+  });

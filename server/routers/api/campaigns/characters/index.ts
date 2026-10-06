@@ -7,6 +7,8 @@ import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dn
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 
+const characterParams = idParam.extend({ characterId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
   .get(
     "/:id/characters",
@@ -35,70 +37,66 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get(
-    "/:id/characters/:characterId",
-    zValidator("param", z.object({ id: z.string().uuid(), characterId: z.string().uuid() })),
-    async (c) => {
-      const { id, characterId } = c.req.valid("param");
-      const data = await CampaignCharactersService.getCharacter(c.var.requestSession, id, characterId);
-      const response = buildFullCharacterResponse(data.character!, data.detailedCharacter!);
-      const redactForViewer = <T extends { identity: { background: { privateNotes?: string } } }>(entry: T): T =>
-        data.canViewPrivateNotes ? entry : redactPrivateNotes(entry, "");
-      const safeResponse = {
-        ...redactForViewer(response),
-        shareToken: data.canEdit ? response.shareToken : null,
-      };
-      // Explicit allowlist: a new full-response field must be considered here.
-      const visibleResponse = data.isPartial
-        ? ({
-            id: safeResponse.id,
-            userId: safeResponse.userId,
-            kind: safeResponse.kind,
-            parentCharacterId: safeResponse.parentCharacterId,
-            name: safeResponse.name,
-            raceId: safeResponse.raceId,
-            rulesetId: safeResponse.rulesetId,
-            rulesetName: safeResponse.rulesetName,
-            baseRules: safeResponse.baseRules,
-            isCustomRuleset: safeResponse.isCustomRuleset,
-            deletedAt: safeResponse.deletedAt,
-            updatedAt: safeResponse.updatedAt,
-            shareToken: null,
-            identity: safeResponse.identity,
-            skillBudget: { available: 0, spent: 0, total: 0 },
-            abilities: {},
-            combat: {},
-            savingThrows: {},
-            classes: {},
-            skills: {},
-            inventory: {},
-            equipment: [],
-            powers: [],
-            virtualFeats: [],
-            virtualPowers: [],
-            aptitudes: {},
-            spellTags: {},
-            spellTagLists: {},
-            requirements: {},
-            modifiers: {},
-            validation: { valid: true, issues: [] },
-          } satisfies Record<keyof typeof response, unknown>)
-        : safeResponse;
+  .get("/:id/characters/:characterId", zValidator("param", characterParams), async (c) => {
+    const { id, characterId } = c.req.valid("param");
+    const data = await CampaignCharactersService.getCharacter(c.var.requestSession, id, characterId);
+    const response = buildFullCharacterResponse(data.character!, data.detailedCharacter!);
+    const redactForViewer = <T extends { identity: { background: { privateNotes?: string } } }>(entry: T): T =>
+      data.canViewPrivateNotes ? entry : redactPrivateNotes(entry, "");
+    const safeResponse = {
+      ...redactForViewer(response),
+      shareToken: data.canEdit ? response.shareToken : null,
+    };
+    // Explicit allowlist: a new full-response field must be considered here.
+    const visibleResponse = data.isPartial
+      ? ({
+          id: safeResponse.id,
+          userId: safeResponse.userId,
+          kind: safeResponse.kind,
+          parentCharacterId: safeResponse.parentCharacterId,
+          name: safeResponse.name,
+          raceId: safeResponse.raceId,
+          rulesetId: safeResponse.rulesetId,
+          rulesetName: safeResponse.rulesetName,
+          baseRules: safeResponse.baseRules,
+          isCustomRuleset: safeResponse.isCustomRuleset,
+          deletedAt: safeResponse.deletedAt,
+          updatedAt: safeResponse.updatedAt,
+          shareToken: null,
+          identity: safeResponse.identity,
+          skillBudget: { available: 0, spent: 0, total: 0 },
+          abilities: {},
+          combat: {},
+          savingThrows: {},
+          classes: {},
+          skills: {},
+          inventory: {},
+          equipment: [],
+          powers: [],
+          virtualFeats: [],
+          virtualPowers: [],
+          aptitudes: {},
+          spellTags: {},
+          spellTagLists: {},
+          requirements: {},
+          modifiers: {},
+          validation: { valid: true, issues: [] },
+        } satisfies Record<keyof typeof response, unknown>)
+      : safeResponse;
 
-      return c.json(
-        {
-          visibility: data.visibility,
-          isOwner: data.isOwner,
-          canEdit: data.canEdit,
-          canDownloadPdf: data.canDownloadPdf,
-          isPartial: data.isPartial,
-          ...visibleResponse,
-          bonded: data.isPartial ? {} : buildBondedMap(data.bondedByKind ?? {}, redactForViewer),
-        },
-        200,
-      );
-    },
-  )
+    return c.json(
+      {
+        visibility: data.visibility,
+        isOwner: data.isOwner,
+        canEdit: data.canEdit,
+        canDownloadPdf: data.canDownloadPdf,
+        isPartial: data.isPartial,
+        ...visibleResponse,
+        bonded: data.isPartial ? {} : buildBondedMap(data.bondedByKind ?? {}, redactForViewer),
+      },
+      200,
+    );
+  })
   .post(
     "/:id/characters",
     zValidator("param", idParam),
@@ -123,7 +121,7 @@ export default new Hono<SessionContext>()
     "/:id/characters/:characterId/pdf",
     denyDemoUser,
     exportRateLimit,
-    zValidator("param", z.object({ id: z.string().uuid(), characterId: z.string().uuid() })),
+    zValidator("param", characterParams),
     async (c) => {
       const { id, characterId } = c.req.valid("param");
       await CampaignCharactersService.enqueuePdf(c.var.requestSession, id, characterId);
@@ -132,7 +130,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/characters/:characterId",
-    zValidator("param", z.object({ id: z.string().uuid(), characterId: z.string().uuid() })),
+    zValidator("param", characterParams),
     zValidator(
       "json",
       z.object({

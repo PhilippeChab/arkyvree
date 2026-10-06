@@ -6,11 +6,13 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
 
+const inviteIdParam = z.object({ inviteId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
   .get("/invites/me", async (c) => {
     return c.json(await CampaignInvitesService.getUserInvites(c.var.requestSession.userId), 200);
   })
-  .get("/invites/:inviteId", zValidator("param", z.object({ inviteId: z.string().uuid() })), async (c) => {
+  .get("/invites/:inviteId", zValidator("param", inviteIdParam), async (c) => {
     const { inviteId } = c.req.valid("param");
     return c.json(await CampaignInvitesService.getInvite(c.var.requestSession, inviteId), 200);
   })
@@ -41,15 +43,15 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .post("/invites/:inviteId/accept", zValidator("param", z.object({ inviteId: z.string().uuid() })), async (c) => {
+  .post("/invites/:inviteId/accept", zValidator("param", inviteIdParam), async (c) => {
     const { inviteId } = c.req.valid("param");
     return c.json(await CampaignInvitesService.acceptInvite(c.var.requestSession, inviteId), 200);
   })
-  .post("/invites/:inviteId/reject", zValidator("param", z.object({ inviteId: z.string().uuid() })), async (c) => {
+  .post("/invites/:inviteId/reject", zValidator("param", inviteIdParam), async (c) => {
     const { inviteId } = c.req.valid("param");
     return c.json(await CampaignInvitesService.rejectInvite(c.var.requestSession, inviteId), 200);
   })
-  .post("/invites/:inviteId/revoke", zValidator("param", z.object({ inviteId: z.string().uuid() })), async (c) => {
+  .post("/invites/:inviteId/revoke", zValidator("param", inviteIdParam), async (c) => {
     const { inviteId } = c.req.valid("param");
 
     return c.json(await CampaignInvitesService.revokeInvite(c.var.requestSession, inviteId), 200);

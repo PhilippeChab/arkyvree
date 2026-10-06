@@ -6,6 +6,8 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { SavesService } from "@/server/services/rulesets/saves/index.ts";
 
+const saveParams = idParam.extend({ saveId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
   .get(
     "/:id/saves",
@@ -27,14 +29,10 @@ export default new Hono<SessionContext>()
       return c.json(await SavesService.getSaves(id, { search, childOnly, orderBy, orderDir }, { limit, page }), 200);
     },
   )
-  .get(
-    "/:id/saves/:saveId",
-    zValidator("param", z.object({ id: z.string().uuid(), saveId: z.string().uuid() })),
-    async (c) => {
-      const { id, saveId } = c.req.valid("param");
-      return c.json(await SavesService.getSave(id, saveId), 200);
-    },
-  )
+  .get("/:id/saves/:saveId", zValidator("param", saveParams), async (c) => {
+    const { id, saveId } = c.req.valid("param");
+    return c.json(await SavesService.getSave(id, saveId), 200);
+  })
   .post(
     "/:id/saves",
     zValidator("param", idParam),
@@ -57,7 +55,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/saves/:saveId",
-    zValidator("param", z.object({ id: z.string().uuid(), saveId: z.string().uuid() })),
+    zValidator("param", saveParams),
     zValidator(
       "json",
       z.object({
@@ -76,11 +74,7 @@ export default new Hono<SessionContext>()
       return c.json(await SavesService.updateSave(c.var.requestSession, id, saveId, body), 200);
     },
   )
-  .delete(
-    "/:id/saves/:saveId",
-    zValidator("param", z.object({ id: z.string().uuid(), saveId: z.string().uuid() })),
-    async (c) => {
-      const { id, saveId } = c.req.valid("param");
-      return c.json(await SavesService.deleteSave(c.var.requestSession, id, saveId), 200);
-    },
-  );
+  .delete("/:id/saves/:saveId", zValidator("param", saveParams), async (c) => {
+    const { id, saveId } = c.req.valid("param");
+    return c.json(await SavesService.deleteSave(c.var.requestSession, id, saveId), 200);
+  });

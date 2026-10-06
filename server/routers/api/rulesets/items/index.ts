@@ -7,6 +7,8 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 
+const itemParams = idParam.extend({ itemId: z.string().uuid() });
+
 const itemBodySchema = z.object({
   name: z.string().min(1),
   description: z
@@ -63,14 +65,10 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get(
-    "/:id/items/:itemId",
-    zValidator("param", z.object({ id: z.string().uuid(), itemId: z.string().uuid() })),
-    async (c) => {
-      const { id, itemId } = c.req.valid("param");
-      return c.json(await ItemsService.getItem(id, itemId), 200);
-    },
-  )
+  .get("/:id/items/:itemId", zValidator("param", itemParams), async (c) => {
+    const { id, itemId } = c.req.valid("param");
+    return c.json(await ItemsService.getItem(id, itemId), 200);
+  })
   .get(
     "/:id/templates",
     zValidator("param", idParam),
@@ -93,7 +91,7 @@ export default new Hono<SessionContext>()
   })
   .post(
     "/:id/items/:itemId/duplicate",
-    zValidator("param", z.object({ id: z.string().uuid(), itemId: z.string().uuid() })),
+    zValidator("param", itemParams),
     zValidator("json", itemBodySchema),
     async (c) => {
       const { id, itemId } = c.req.valid("param");
@@ -103,7 +101,7 @@ export default new Hono<SessionContext>()
   )
   .post(
     "/:id/items/:itemId/variants",
-    zValidator("param", z.object({ id: z.string().uuid(), itemId: z.string().uuid() })),
+    zValidator("param", itemParams),
     zValidator(
       "json",
       z.object({
@@ -127,21 +125,12 @@ export default new Hono<SessionContext>()
       return c.json(await ItemsService.createVariants(c.var.requestSession, id, itemId, variants), 200);
     },
   )
-  .put(
-    "/:id/items/:itemId",
-    zValidator("param", z.object({ id: z.string().uuid(), itemId: z.string().uuid() })),
-    zValidator("json", itemBodySchema),
-    async (c) => {
-      const { id, itemId } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(await ItemsService.updateItem(c.var.requestSession, id, itemId, body), 200);
-    },
-  )
-  .delete(
-    "/:id/items/:itemId",
-    zValidator("param", z.object({ id: z.string().uuid(), itemId: z.string().uuid() })),
-    async (c) => {
-      const { id, itemId } = c.req.valid("param");
-      return c.json(await ItemsService.deleteItem(c.var.requestSession, id, itemId), 200);
-    },
-  );
+  .put("/:id/items/:itemId", zValidator("param", itemParams), zValidator("json", itemBodySchema), async (c) => {
+    const { id, itemId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    return c.json(await ItemsService.updateItem(c.var.requestSession, id, itemId, body), 200);
+  })
+  .delete("/:id/items/:itemId", zValidator("param", itemParams), async (c) => {
+    const { id, itemId } = c.req.valid("param");
+    return c.json(await ItemsService.deleteItem(c.var.requestSession, id, itemId), 200);
+  });

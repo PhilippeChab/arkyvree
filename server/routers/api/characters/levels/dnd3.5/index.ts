@@ -9,7 +9,7 @@ import { CharacterLevelsService } from "@/server/services/characters/levels/inde
 /** A number in the query string. */
 const queryNumber = z.string().pipe(z.coerce.number());
 
-const levelParams = z.object({ characterId: z.string().uuid(), characterLevelId: z.string().uuid() });
+const levelParams = characterIdParam.extend({ characterLevelId: z.string().uuid() });
 
 function isUuid(v: string) {
   return z.string().uuid().safeParse(v).success;

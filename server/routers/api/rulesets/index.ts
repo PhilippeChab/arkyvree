@@ -42,6 +42,58 @@ const authenticatedRulesets = new Hono()
   .route("/", requirements)
   .route("/", properties)
   .route("/", targetRouter)
+  .route("/", extensions)
+  .route("/", changes)
+  .get(
+    "/",
+    zValidator(
+      "query",
+      z.object({
+        scope: z
+          .enum([
+            "base",
+            "forked",
+            "community",
+            "createdByMe",
+            "createdByMePrivate",
+            "archived",
+            "published",
+            "starred",
+            "campaignAccessible",
+            "myDrafts",
+            "extensions",
+            "systems",
+            "contributedTo",
+          ])
+          .optional(),
+        search: z.string().optional(),
+        orderBy: z.enum(["createdAt", "updatedAt"]).optional(),
+        orderDir: z.enum(["asc", "desc"]).optional(),
+        limit,
+        page,
+      }),
+    ),
+    async (c) => {
+      const query = c.req.valid("query");
+      return c.json(
+        await RulesetsService.getRulesets(
+          c.var.requestSession,
+          {
+            scope: query.scope,
+            search: query.search,
+            orderBy: query.orderBy,
+            orderDir: query.orderDir,
+          },
+          { limit: query.limit, page: query.page },
+        ),
+        200,
+      );
+    },
+  )
+  .get("/:id", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+    return c.json(await RulesetsService.getRuleset(c.var.requestSession, id), 200);
+  })
   .post("/:id/archive", zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await RulesetsService.archiveRuleset(c.var.requestSession, id), 200);
@@ -112,58 +164,6 @@ const authenticatedRulesets = new Hono()
     const { id } = c.req.valid("param");
     await RulesetsService.unstarRuleset(c.var.requestSession, id);
     return c.json({ message: "Ruleset unstarred" }, 200);
-  })
-  .route("/", extensions)
-  .route("/", changes)
-  .get(
-    "/",
-    zValidator(
-      "query",
-      z.object({
-        scope: z
-          .enum([
-            "base",
-            "forked",
-            "community",
-            "createdByMe",
-            "createdByMePrivate",
-            "archived",
-            "published",
-            "starred",
-            "campaignAccessible",
-            "myDrafts",
-            "extensions",
-            "systems",
-            "contributedTo",
-          ])
-          .optional(),
-        search: z.string().optional(),
-        orderBy: z.enum(["createdAt", "updatedAt"]).optional(),
-        orderDir: z.enum(["asc", "desc"]).optional(),
-        limit,
-        page,
-      }),
-    ),
-    async (c) => {
-      const query = c.req.valid("query");
-      return c.json(
-        await RulesetsService.getRulesets(
-          c.var.requestSession,
-          {
-            scope: query.scope,
-            search: query.search,
-            orderBy: query.orderBy,
-            orderDir: query.orderDir,
-          },
-          { limit: query.limit, page: query.page },
-        ),
-        200,
-      );
-    },
-  )
-  .get("/:id", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await RulesetsService.getRuleset(c.var.requestSession, id), 200);
   });
 
 export default authenticatedRulesets;

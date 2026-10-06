@@ -6,6 +6,8 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { MechanicsService } from "@/server/services/rulesets/mechanics/index.ts";
 
+const mechanicParams = idParam.extend({ mechanicId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
   .get(
     "/:id/mechanics",
@@ -30,14 +32,10 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get(
-    "/:id/mechanics/:mechanicId",
-    zValidator("param", z.object({ id: z.string().uuid(), mechanicId: z.string().uuid() })),
-    async (c) => {
-      const { id, mechanicId } = c.req.valid("param");
-      return c.json(await MechanicsService.getMechanic(id, mechanicId), 200);
-    },
-  )
+  .get("/:id/mechanics/:mechanicId", zValidator("param", mechanicParams), async (c) => {
+    const { id, mechanicId } = c.req.valid("param");
+    return c.json(await MechanicsService.getMechanic(id, mechanicId), 200);
+  })
   .post(
     "/:id/mechanics",
     zValidator("param", idParam),
@@ -59,7 +57,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/mechanics/:mechanicId",
-    zValidator("param", z.object({ id: z.string().uuid(), mechanicId: z.string().uuid() })),
+    zValidator("param", mechanicParams),
     zValidator(
       "json",
       z.object({
@@ -77,11 +75,7 @@ export default new Hono<SessionContext>()
       return c.json(await MechanicsService.updateMechanic(c.var.requestSession, id, mechanicId, body), 200);
     },
   )
-  .delete(
-    "/:id/mechanics/:mechanicId",
-    zValidator("param", z.object({ id: z.string().uuid(), mechanicId: z.string().uuid() })),
-    async (c) => {
-      const { id, mechanicId } = c.req.valid("param");
-      return c.json(await MechanicsService.deleteMechanic(c.var.requestSession, id, mechanicId), 200);
-    },
-  );
+  .delete("/:id/mechanics/:mechanicId", zValidator("param", mechanicParams), async (c) => {
+    const { id, mechanicId } = c.req.valid("param");
+    return c.json(await MechanicsService.deleteMechanic(c.var.requestSession, id, mechanicId), 200);
+  });

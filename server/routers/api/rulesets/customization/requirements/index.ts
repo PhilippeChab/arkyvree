@@ -9,6 +9,8 @@ import {
 } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 
+const requirementParams = ownerParams.extend({ requirementId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
   .get("/:id/customization/:entityType/:entityId/requirements", zValidator("param", ownerParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
@@ -39,7 +41,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/customization/:entityType/:entityId/requirements/:requirementId",
-    zValidator("param", ownerParams.extend({ requirementId: z.string().uuid() })),
+    zValidator("param", requirementParams),
     zValidator(
       "json",
       z.object({
@@ -70,7 +72,7 @@ export default new Hono<SessionContext>()
   )
   .delete(
     "/:id/customization/:entityType/:entityId/requirements/:requirementId",
-    zValidator("param", ownerParams.extend({ requirementId: z.string().uuid() })),
+    zValidator("param", requirementParams),
     async (c) => {
       const { id, entityType, entityId, requirementId } = c.req.valid("param");
       return c.json(

@@ -86,6 +86,8 @@ const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
       await next();
     }),
   )
+  .route("/", wsRouter)
+  .route("/auth", authenticationRouter)
   .get("/health", async (c) => {
     try {
       await db.execute(sql`SELECT 1`);
@@ -94,8 +96,6 @@ const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
       return c.json({ status: "unhealthy" }, 503);
     }
   })
-  .route("/", wsRouter)
-  .route("/auth", authenticationRouter)
   .use("/api/*", async (c, next) => {
     const notified = await collectNotified(next);
     if (["POST", "PUT", "DELETE"].includes(c.req.method) && c.res.ok) {

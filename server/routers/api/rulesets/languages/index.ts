@@ -6,6 +6,8 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
 
+const languageParams = idParam.extend({ languageId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
   .get(
     "/:id/languages",
@@ -30,14 +32,10 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get(
-    "/:id/languages/:languageId",
-    zValidator("param", z.object({ id: z.string().uuid(), languageId: z.string().uuid() })),
-    async (c) => {
-      const { id, languageId } = c.req.valid("param");
-      return c.json(await LanguagesService.getLanguage(id, languageId), 200);
-    },
-  )
+  .get("/:id/languages/:languageId", zValidator("param", languageParams), async (c) => {
+    const { id, languageId } = c.req.valid("param");
+    return c.json(await LanguagesService.getLanguage(id, languageId), 200);
+  })
   .post(
     "/:id/languages",
     zValidator("param", idParam),
@@ -60,7 +58,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/languages/:languageId",
-    zValidator("param", z.object({ id: z.string().uuid(), languageId: z.string().uuid() })),
+    zValidator("param", languageParams),
     zValidator(
       "json",
       z.object({
@@ -79,11 +77,7 @@ export default new Hono<SessionContext>()
       return c.json(await LanguagesService.updateLanguage(c.var.requestSession, id, languageId, body), 200);
     },
   )
-  .delete(
-    "/:id/languages/:languageId",
-    zValidator("param", z.object({ id: z.string().uuid(), languageId: z.string().uuid() })),
-    async (c) => {
-      const { id, languageId } = c.req.valid("param");
-      return c.json(await LanguagesService.deleteLanguage(c.var.requestSession, id, languageId), 200);
-    },
-  );
+  .delete("/:id/languages/:languageId", zValidator("param", languageParams), async (c) => {
+    const { id, languageId } = c.req.valid("param");
+    return c.json(await LanguagesService.deleteLanguage(c.var.requestSession, id, languageId), 200);
+  });
