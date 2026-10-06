@@ -1,18 +1,9 @@
-import {
-  Box,
-  IconButton,
-  InputAdornment,
-  Menu,
-  MenuItem,
-  Paper,
-  Stack,
-  TextField,
-  Toolbar,
-  Tooltip,
-} from "@mui/material";
+import { Box, IconButton, Menu, MenuItem, Paper, Stack, Toolbar, Tooltip } from "@mui/material";
 import { useState } from "react";
 
-import { FilterIcon, SearchIcon, SortIcon } from "@/client/src/components/icons/index.ts";
+import { FilterIcon, SortIcon } from "@/client/src/components/icons/index.ts";
+
+import { SearchField } from "./SearchField.tsx";
 
 interface SearchBarProps<TFilter extends string = string, TSort extends string = string> {
   searchValue: string;
@@ -90,20 +81,10 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
     <Paper variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
       <Toolbar sx={{ px: 2, py: 1 }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: "center", flexGrow: 1, flexWrap: "wrap" }}>
-          <TextField
-            size="small"
+          <SearchField
             placeholder={searchPlaceholder}
             value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" color="action" />
-                  </InputAdornment>
-                ),
-              },
-            }}
+            onChange={onSearchChange}
             sx={{ width: { xs: "100%", sm: 300 } }}
           />
 

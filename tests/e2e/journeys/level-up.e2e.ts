@@ -64,7 +64,7 @@ test.describe("Level up", () => {
       .locator(".MuiChip-root")
       .filter({ hasText: /^General \d+\/\d+/ })
       .click();
-    await wizard.getByLabel(/^Search General Feats$/).fill("Toughness");
+    await wizard.getByPlaceholder(/^Search General feats/).fill("Toughness");
     // Wait for the search to land, not to pick Toughness off the unfiltered page.
     await expect
       .poll(() => wizard.locator(".MuiList-root .MuiListItemButton-root").count(), { timeout: 10_000 })
@@ -77,7 +77,7 @@ test.describe("Level up", () => {
       .filter({ hasText: /^Fighter Bonus Feat \d+\/\d+/ })
       .click();
     // The pools share their search: the family would hide behind "Toughness".
-    const search = wizard.getByLabel(/^Search Fighter Bonus Feat Feats$/);
+    const search = wizard.getByPlaceholder(/^Search Fighter Bonus Feat feats/);
     await search.fill("");
     await search.fill("Weapon Focus");
     await wizard.getByRole("button", { name: /^Weapon Focus \d+ variants$/ }).click();

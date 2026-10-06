@@ -22,6 +22,7 @@ export { InfoPill } from "./InfoPill.tsx";
 export { ListCard, ListCardGrid, NO_DESCRIPTION } from "./ListCard.tsx";
 export { LoadError } from "./LoadError.tsx";
 export { LoadMoreButton } from "./LoadMoreButton.tsx";
+export { SearchField } from "./SearchField.tsx";
 export { NextPageSpinner } from "./NextPageSpinner.tsx";
 export { Modal } from "./Modal.tsx";
 export { faqTooltip } from "./faqTooltip.tsx";

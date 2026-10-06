@@ -295,18 +295,23 @@ describe("frontend rules", () => {
           "client/src/swatch.tsx": 'import { red } from "@mui/material/colors";\nexport const r = red[500];\n',
           "client/src/painted.tsx": 'export const p = <path fill="#4285F4" />;\n',
           "client/src/anchored.tsx": 'export const a = <a href="#add">Add</a>;\n',
+          "client/src/greyed.ts": 'export const g = { color: "grey.700" };\n',
+          "client/src/paletted.ts": "export const p = theme.palette.grey[600];\n",
           "client/src/counted.tsx": "export const n = `${count}00 points`;\n",
-          "client/src/greyed.tsx": 'export const g = <Chip sx={{ bgcolor: "grey.400", color: "common.white" }} />;\n',
+          "client/src/greyed.tsx":
+            'export const g = <Chip sx={{ bgcolor: "text.secondary", color: "common.white" }} />;\n',
         },
         ["theme-colors"],
       ),
     ).toEqual([
       "theme-colors client/src/bordered.tsx",
       "theme-colors client/src/compound.tsx",
+      "theme-colors client/src/greyed.ts",
       "theme-colors client/src/hex.tsx",
       "theme-colors client/src/named.tsx",
       "theme-colors client/src/oklch.tsx",
       "theme-colors client/src/painted.tsx",
+      "theme-colors client/src/paletted.ts",
       "theme-colors client/src/rgba.tsx",
       "theme-colors client/src/suffixed.tsx",
       "theme-colors client/src/swatch.tsx",
@@ -579,5 +584,21 @@ describe("frontend rules", () => {
       "label-case client/src/menu.tsx",
       "label-case client/src/titled.tsx",
     ]);
+  });
+
+  test("a search box is a SearchField", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/plain.tsx": 'export const p = <TextField placeholder="Search feats..." value={q} />;\n',
+          "client/src/templated.tsx": "export const t = <TextField placeholder={`Search ${pool} spells...`} />;\n",
+          "client/src/named.tsx": 'export const n = <TextField label="Name" placeholder="e.g. Fireball" />;\n',
+          "client/src/shared.tsx":
+            'export const s = <SearchField placeholder="Search feats..." value={q} onChange={setQ} />;\n',
+          "client/src/components/common/SearchField.tsx": 'export const f = <TextField placeholder="Search" />;\n',
+        },
+        ["search-fields"],
+      ),
+    ).toEqual(["search-fields client/src/plain.tsx", "search-fields client/src/templated.tsx"]);
   });
 });

@@ -7,7 +7,6 @@ import {
   ListItemText,
   Skeleton,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -24,6 +23,7 @@ import {
   LoadMoreButton,
   NextPageSpinner,
   NoMatchesState,
+  SearchField,
 } from "@/client/src/components/common/index.ts";
 import { ExpandLessIcon, ExpandMoreIcon, FeatsIcon } from "@/client/src/components/icons/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
@@ -324,11 +324,10 @@ export function LevelUpFeatsStep({
               {/* Add Feat List (Grouped) */}
               {currentPoolFeats.length < (currentPool?.available || 0) && (
                 <Stack sx={{ flex: 1, minHeight: 0 }}>
-                  <TextField
-                    label={`Search ${currentPool?.name} Feats`}
-                    placeholder="Search feats..."
+                  <SearchField
+                    placeholder={`Search ${currentPool?.name} feats...`}
                     value={featSearch}
-                    onChange={(e) => setFeatSearch(e.target.value)}
+                    onChange={setFeatSearch}
                     fullWidth
                     sx={{ mb: 1, flexShrink: 0 }}
                   />

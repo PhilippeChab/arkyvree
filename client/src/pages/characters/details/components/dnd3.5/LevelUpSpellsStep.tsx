@@ -1,15 +1,4 @@
-import {
-  Box,
-  Chip,
-  List,
-  ListItemButton,
-  ListItemText,
-  Skeleton,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Chip, List, ListItemButton, ListItemText, Skeleton, Stack, Tooltip, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
 import {
@@ -18,6 +7,7 @@ import {
   LoadError,
   NextPageSpinner,
   NoMatchesState,
+  SearchField,
 } from "@/client/src/components/common/index.ts";
 import { SpellsIcon } from "@/client/src/components/icons/index.ts";
 
@@ -230,11 +220,10 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
               {/* Add Spell List */}
               {levelPowers.length < poolAvailable && (
                 <Stack sx={{ flex: 1, minHeight: 0 }}>
-                  <TextField
-                    label={`Search ${currentPool?.name}${levelLabel ? ` ${levelLabel}` : ""} Spells`}
-                    placeholder="Search spells..."
+                  <SearchField
+                    placeholder={`Search ${currentPool?.name}${levelLabel ? ` ${levelLabel}` : ""} spells...`}
                     value={powerSearch}
-                    onChange={(e) => setPowerSearch(e.target.value)}
+                    onChange={setPowerSearch}
                     fullWidth
                     sx={{ mb: 1, flexShrink: 0 }}
                   />

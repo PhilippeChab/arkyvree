@@ -55,6 +55,7 @@
  * - `component-defaults`: what the theme sets for every instance (a tooltip's arrow and delay, `Collapse`'s timeout)
  *   isn't set again on one.
  * - `label-case`: a button's, a menu item's and a dialog's words are in Title Case ("Mark All as Read").
+ * - `search-fields`: a search box is a `SearchField`, never a `TextField` of its own.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -448,6 +449,32 @@ function createQueryKeyRule(context) {
   };
 }
 
+function createSearchFields(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/SearchField.tsx") return {};
+  return {
+    JSXAttribute(node) {
+      if (node.name.name !== "placeholder" || elementName(node.parent.parent) !== "TextField") return;
+      const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
+      const text =
+        value?.type === "Literal"
+          ? String(value.value)
+          : value?.type === "TemplateLiteral"
+            ? value.quasis[0].value.cooked
+            : "";
+      if (!/^Search\b/.test(text ?? "")) return;
+      // An `Autocomplete`'s input is a picker's combobox, not a search box
+      for (let p = node.parent; p; p = p.parent) {
+        if (p.type === "JSXAttribute" && p.name.name === "renderInput") return;
+      }
+      context.report({
+        node,
+        message:
+          "A search box is a `SearchField` (`components/common`): its icon, its size, its placeholder as its name.",
+      });
+    },
+  };
+}
+
 function createShape(context) {
   if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
   return {
@@ -488,6 +515,10 @@ function createThemeColors(context) {
     ImportDeclaration(node) {
       if (node.source.value.startsWith("@mui/material/colors")) report(node);
     },
+    MemberExpression(node) {
+      const ofPalette = node.object.type === "MemberExpression" && node.object.property.name === "palette";
+      if (ofPalette && !node.computed && node.property.name === "grey") report(node);
+    },
     Literal(node) {
       if (typeof node.value !== "string") return;
       const attribute = node.parent.type === "JSXAttribute" ? node.parent.name.name : null;
@@ -515,6 +546,8 @@ function createThemeColors(context) {
             ? node.value.quasis.map((quasi) => quasi.value.cooked ?? "")
             : [];
       // A palette token's path (`common.white`) names the theme's color, not CSS's
+      // The grey scale is MUI's raw palette: the theme's neutrals are its text, background and action tokens
+      if (texts.some((text) => /^grey\.\d+$/.test(text))) report(node.value);
       const words = texts.flatMap(
         (text) =>
           text
@@ -1170,4 +1203,5 @@ export default {
   "flex-layout": { meta: { type: "suggestion" }, create: createFlexLayout },
   "component-defaults": { meta: { type: "suggestion" }, create: createComponentDefaults },
   "label-case": { meta: { type: "suggestion" }, create: createLabelCase },
+  "search-fields": { meta: { type: "suggestion" }, create: createSearchFields },
 };

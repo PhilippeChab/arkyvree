@@ -7,14 +7,19 @@ import {
   ListItemText,
   Skeleton,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { BlankState, DiceSpinner, NextPageSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
+import {
+  BlankState,
+  DiceSpinner,
+  NextPageSpinner,
+  NoMatchesState,
+  SearchField,
+} from "@/client/src/components/common/index.ts";
 import { ChevronRightIcon, ClearIcon, FilterIcon, PublicIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
@@ -194,13 +199,7 @@ export function TargetPathBrowser({
       {!disabled && (
         <>
           <Stack direction="row" spacing={0.5} sx={{ position: "relative", alignItems: "center" }}>
-            <TextField
-              size="small"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              fullWidth
-            />
+            <SearchField placeholder="Search..." value={search} onChange={setSearch} fullWidth />
             <Tooltip
               title={
                 searchEverywhere

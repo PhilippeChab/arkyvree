@@ -102,11 +102,7 @@ function getStatusChip(status: RulesetDetail["status"]) {
         size="medium"
         color={color}
         variant="filled"
-        sx={
-          status === "Archived"
-            ? { fontWeight: 600, bgcolor: "grey.400", color: "grey.700", "& .MuiChip-icon": { color: "grey.600" } }
-            : { fontWeight: 600 }
-        }
+        sx={{ fontWeight: 600 }}
       />
     </Tooltip>
   );

@@ -17,7 +17,7 @@ export function InfoPill({ icon: Icon, label, color = "default", tooltip }: Info
       direction="row"
       spacing={0.5}
       sx={(theme) => {
-        const main = color === "default" ? theme.palette.grey[600] : theme.palette[color].main;
+        const main = color === "default" ? theme.palette.text.secondary : theme.palette[color].main;
         return {
           alignItems: "center",
           px: 1,

@@ -314,7 +314,7 @@ export function Layout() {
             borderRight: "none",
             transition: transitionOf(["all"], DURATION.slow, EASING.emphasized),
             overflow: "hidden",
-            bgcolor: (theme) => (theme.palette.mode === "dark" ? "background.paper" : "grey.50"),
+            bgcolor: "background.paper",
             boxShadow: (theme) => `2px 0 8px ${theme.palette.shadow}`,
           },
         }}
@@ -404,13 +404,13 @@ export function Layout() {
                       transform: "translateX(2px)",
                     },
                     "& .MuiListItemIcon-root": {
-                      color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
+                      color: "text.secondary",
                     },
                     "& .MuiListItemText-primary": {
-                      color: (theme) => (theme.palette.mode === "dark" ? "grey.100" : "grey.900"),
+                      color: "text.primary",
                     },
                     "& .MuiListItemText-secondary": {
-                      color: (theme) => (theme.palette.mode === "dark" ? "grey.500" : "grey.600"),
+                      color: "text.secondary",
                     },
                   }}
                   title={!(isMobile || effectiveExpanded) ? item.label : undefined}
@@ -468,7 +468,7 @@ export function Layout() {
                 onClick={() => setSidebarExpanded(!sidebarExpanded)}
                 aria-label={effectiveExpanded ? "Collapse sidebar" : "Expand sidebar"}
                 sx={{
-                  color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
+                  color: "text.secondary",
                   backgroundColor: "action.hover",
                   border: 2,
                   borderColor: "divider",
