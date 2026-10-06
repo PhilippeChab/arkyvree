@@ -1,13 +1,13 @@
 import { matchMutation, MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 
 import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
+import { sessionEnded } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
-/** A 401 signs the session out: the server no longer knows it. */
+/** A session the server no longer knows signs the client out. */
 function handleGlobalError(error: unknown) {
-  if (error instanceof ApiError && error.status === 401) {
+  if (sessionEnded(error)) {
     // Skip when already unauth — re-clearing on every 401 creates a refetch loop.
     if (!useAuthStore.getState().isAuthenticated) return;
     // If the cleared user was a demo, leave a breadcrumb so the post-clear

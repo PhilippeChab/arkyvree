@@ -1,4 +1,4 @@
-import { Alert, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 
 import { attributeName } from "./attributeName.ts";
 import { LevelReview, ReviewGroup } from "./LevelReview.tsx";
@@ -6,9 +6,8 @@ import type { LevelUpReviewStepProps } from "./levelUpFactory.ts";
 
 export function LevelUpReviewStep({ wizard }: LevelUpReviewStepProps) {
   const { selectedClass, selectedHP, selectedAttribute, attributeData } = wizard;
-  if (!selectedClass || !selectedHP) {
-    return <Alert severity="error">Missing required selections.</Alert>;
-  }
+  // The steps before it can't be passed without a class and its HP
+  if (!selectedClass || !selectedHP) return null;
 
   return (
     <LevelReview wizard={wizard}>

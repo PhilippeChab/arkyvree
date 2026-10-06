@@ -24,7 +24,7 @@ import {
   SelectField,
 } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";

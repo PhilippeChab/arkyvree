@@ -165,20 +165,75 @@ describe("frontend rules", () => {
     ).toEqual(["api-calls-in-queries client/src/direct.tsx"]);
   });
 
-  test("a failure to load is a LoadError, whose words are loadFailureMessage's", async () => {
+  test("an error reaches the user one way per kind: an error Alert sits only in LoadError and the auth layout", async () => {
     expect(
       await lintRepo(
         {
           "client/src/written.tsx": 'export const w = <Alert severity="error">Failed to load feats.</Alert>;\n',
           "client/src/worded.tsx":
             'export const x = <Alert severity="error">{loadFailureMessage("Feats", error)}</Alert>;\n',
-          "client/src/other.tsx": 'export const o = <Alert severity="error">Missing required selections.</Alert>;\n',
-          "client/src/info.tsx": 'export const i = <Alert severity="info">Loading feats</Alert>;\n',
+          "client/src/inline.tsx": 'export const i = <AnimatedAlert in severity="error">{error}</AnimatedAlert>;\n',
+          "client/src/info.tsx": 'export const n = <Alert severity="info">Loading feats</Alert>;\n',
           "client/src/components/common/LoadError.tsx":
             'export const l = <Alert severity="error">{loadFailureMessage(what, error)}</Alert>;\n',
+          "client/src/components/auth/AuthLayout.tsx": 'export const a = <Alert severity="error">{error}</Alert>;\n',
         },
-        ["load-errors"],
+        ["error-alerts"],
       ),
-    ).toEqual(["load-errors client/src/worded.tsx", "load-errors client/src/written.tsx"]);
+    ).toEqual([
+      "error-alerts client/src/inline.tsx",
+      "error-alerts client/src/worded.tsx",
+      "error-alerts client/src/written.tsx",
+    ]);
+  });
+
+  test("a date is shown through lib/formatDate.ts, the one place that formats one", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/localized.tsx": "export const d = new Date(at).toLocaleDateString();\n",
+          "client/src/timed.tsx": "export const t = new Date(at).toLocaleTimeString();\n",
+          "client/src/intl.tsx": 'export const f = new Intl.DateTimeFormat("en").format(new Date(at));\n',
+          "client/src/relative.tsx": 'export const r = new Intl.RelativeTimeFormat().format(-1, "day");\n',
+          "client/src/counted.tsx":
+            "export const n = count.toLocaleString() + new Intl.NumberFormat().format(total);\n",
+          "client/src/lib/formatDate.ts":
+            "export function formatDate(date: string) {\n  return new Intl.DateTimeFormat().format(new Date(date));\n}\n",
+        },
+        ["date-formats"],
+      ),
+    ).toEqual([
+      "date-formats client/src/intl.tsx",
+      "date-formats client/src/localized.tsx",
+      "date-formats client/src/relative.tsx",
+      "date-formats client/src/timed.tsx",
+    ]);
+  });
+
+  test("a style is written with sx: no styled(), no stylesheet but the global one, style only passed on", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/styled.tsx": 'export const s = <Box style={{ color: "red" }} />;\n',
+          "client/src/slotted.tsx":
+            'export const t = <TextField slotProps={{ htmlInput: { style: { textAlign: "center" } } }} />;\n',
+          "client/src/passed.tsx": "export const p = <div style={{ ...props.style, flex: 1 }} />;\n",
+          "client/src/themed.tsx": 'export const x = <Box sx={{ color: "red" }} />;\n',
+          "client/src/plain.ts": 'export const style = { color: "red" };\n',
+          "client/src/made.tsx":
+            'import { styled } from "@mui/material/styles";\nexport const M = styled("div")({});\n',
+          "client/src/emotion.tsx": 'import styled from "@emotion/styled";\nexport const E = styled.div({});\n',
+          "client/src/sheet.tsx": 'import "./sheet.css";\nexport const c = 1;\n',
+          "client/src/main.tsx": 'import "./index.css";\nexport const m = 1;\n',
+        },
+        ["sx-styles"],
+      ),
+    ).toEqual([
+      "sx-styles client/src/emotion.tsx",
+      "sx-styles client/src/made.tsx",
+      "sx-styles client/src/sheet.tsx",
+      "sx-styles client/src/slotted.tsx",
+      "sx-styles client/src/styled.tsx",
+    ]);
   });
 });

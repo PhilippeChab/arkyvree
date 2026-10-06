@@ -4,7 +4,7 @@ import { createMiddleware } from "hono/factory";
 
 import { db } from "@/server/database/index.ts";
 import { isProduction } from "@/server/environment.ts";
-import { UnauthorizedError } from "@/server/errors/index.ts";
+import { SessionError } from "@/server/errors/index.ts";
 import { SESSION_TTL_SECONDS, Sessions, Users } from "@/server/repositories/index.ts";
 import type { Session, User } from "@/shared/relations.ts";
 
@@ -26,16 +26,16 @@ export function getSessionCookie(c: Context) {
 
 export default createMiddleware<SessionContext>(async (c, next) => {
   const sessionId = getSessionCookie(c);
-  if (!sessionId) throw new UnauthorizedError("Invalid session");
+  if (!sessionId) throw new SessionError("Invalid session");
 
   const session = await Sessions.findOne(db, { id: sessionId });
-  if (!session) throw new UnauthorizedError("Invalid session");
-  if (new Date(session.expiresAt) < new Date()) throw new UnauthorizedError("Session expired");
+  if (!session) throw new SessionError("Invalid session");
+  if (new Date(session.expiresAt) < new Date()) throw new SessionError("Session expired");
 
   const user = await Users.findOne(db, { id: session.userId });
-  if (!user) throw new UnauthorizedError("Invalid session");
+  if (!user) throw new SessionError("Invalid session");
   if (user.expiresAt && new Date(user.expiresAt) < new Date()) {
-    throw new UnauthorizedError("Session expired");
+    throw new SessionError("Session expired");
   }
 
   c.set(SESSION_CONTEXT_KEY, session);

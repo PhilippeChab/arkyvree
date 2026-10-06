@@ -27,7 +27,7 @@ import {
   type RequirementType,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";

@@ -1,7 +1,7 @@
 import { Box, Button, Card, CardContent, type SxProps, type Theme, Typography } from "@mui/material";
 import type { FormEventHandler, ReactNode } from "react";
 
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, NO_DESCRIPTION } from "@/client/src/components/common/index.ts";
 
 interface EntityDetailsCardProps {
   title: string;
@@ -54,7 +54,7 @@ export function EntityDetailsCard({ title, chips, description, readOnlyBody, edi
           ) : (
             (readOnlyBody ?? (
               <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                {description || "No description provided."}
+                {description || NO_DESCRIPTION}
               </Typography>
             ))
           )}

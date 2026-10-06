@@ -15,6 +15,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
+import { wrongCredential } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { confirmPasswordRules, emailRules, newPasswordRules, usernameRules } from "@/client/src/lib/validation.ts";
 import { DeleteAccountDialog, EmailChangeVerificationDialog } from "@/client/src/pages/profile/components/index.ts";
@@ -156,7 +157,11 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
       snackbar.success(hasPassword ? "Password updated successfully" : "Password set successfully");
     },
-    onError: (error) => snackbar.error(error, hasPassword ? "Failed to update password" : "Failed to set password"),
+    // A wrong current password shows on its field
+    onError: (error) => {
+      if (wrongCredential(error)) passwordForm.setError("currentPassword", { message: error.message });
+      else snackbar.error(error, hasPassword ? "Failed to update password" : "Failed to set password");
+    },
   });
 
   const cancelEmailChangeMutation = useMutation({

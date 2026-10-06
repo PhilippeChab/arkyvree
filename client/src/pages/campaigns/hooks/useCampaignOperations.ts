@@ -33,7 +33,7 @@ export function useCampaignOperations() {
       navigate(`/campaigns/${data.campaign.id}`);
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to create campaign");
     },
   });
 

@@ -1,8 +1,6 @@
-import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon, Spoke as FeatsIcon } from "@mui/icons-material";
 import {
-  Alert,
   Box,
-  Button,
   Chip,
   Collapse,
   List,
@@ -18,10 +16,12 @@ import { useState } from "react";
 import { useController } from "react-hook-form";
 
 import {
+  BlankState,
   CLICKABLE_SX,
   clickableProps,
   DiceSpinner,
   LoadError,
+  LoadMoreButton,
   NoMatchesState,
 } from "@/client/src/components/common/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
@@ -184,15 +184,12 @@ function FeatFamilyExpansion({
           </Tooltip>
         );
       })}
-      {query.hasNextPage && (
-        <Box sx={{ pl: 6, py: 0.5 }}>
-          <Button size="small" onClick={() => query.fetchNextPage()} disabled={query.isFetchingNextPage}>
-            <DiceSpinner size="small" loading={query.isFetchingNextPage}>
-              Load More
-            </DiceSpinner>
-          </Button>
-        </Box>
-      )}
+      <LoadMoreButton
+        size="small"
+        hasNextPage={query.hasNextPage}
+        isFetchingNextPage={query.isFetchingNextPage}
+        onClick={() => query.fetchNextPage()}
+      />
     </>
   );
 }
@@ -236,7 +233,7 @@ export function LevelUpFeatsStep({
   const hasSelectableFeats = aptitudePools.some((pool) => pool.available > 0);
 
   if (!hasSelectableFeats && featData.autoGrantedFeats.length === 0) {
-    return <Alert severity="info">No feats to select at this level.</Alert>;
+    return <BlankState icon={FeatsIcon} title="No feats to select" description="This level gives no feats to pick." />;
   }
 
   return (

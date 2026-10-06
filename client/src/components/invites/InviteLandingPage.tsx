@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { DiceSpinner, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/rpc.ts";
 

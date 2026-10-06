@@ -129,11 +129,13 @@ describe("authentication", () => {
         .update(sessionsInAccount)
         .set({ expiresAt: new Date(Date.now() - 1000).toISOString() })
         .where(eq(sessionsInAccount.id, sessionId));
-      await expectStatus(api.auth.me.$get(), 401);
+      const response = await expectStatus(api.auth.me.$get(), 401);
+      expect(await response.json()).toMatchObject({ error: "SessionError" });
     });
 
     test("requires a session for /me", async () => {
-      await expectStatus(auth.me.$get(), 401);
+      const response = await expectStatus(auth.me.$get(), 401);
+      expect(await response.json()).toMatchObject({ error: "SessionError" });
     });
   });
 
@@ -286,7 +288,9 @@ describe("authentication", () => {
   describe("account deletion", () => {
     test("deletes the account with its password and ends the session", async () => {
       const { api } = await signUpAndVerify("delete");
-      await expectStatus(api.auth["delete-account"].$post({ json: { password: "wrongpassword" } }), 401);
+      // A wrong password isn't the session's: the client shows it on its field, and the user stays signed in.
+      const wrong = await expectStatus(api.auth["delete-account"].$post({ json: { password: "wrongpassword" } }), 401);
+      expect(await wrong.json()).toMatchObject({ error: "UnauthorizedError" });
 
       const response = await api.auth["delete-account"].$post({ json: { password } });
       expect(await expectOk(response)).toEqual({ success: true });

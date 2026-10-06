@@ -17,3 +17,16 @@ export function errorMessage(error: unknown, fallback: string): string {
   if (typeof error === "string") return error || fallback;
   return error instanceof Error && error.message ? error.message : fallback;
 }
+
+/** The session is gone (missing, expired): the server's `SessionError`, which signs the client out. */
+export function sessionEnded(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 401 && error.errorName === "SessionError";
+}
+
+/**
+ * A credential typed into a form is wrong (a password, a code): a 401 the session outlives, which the form shows on its
+ * field.
+ */
+export function wrongCredential(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.status === 401 && error.errorName !== "SessionError";
+}

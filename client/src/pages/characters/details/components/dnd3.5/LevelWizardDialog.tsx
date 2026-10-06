@@ -4,7 +4,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Stack,
   Step,
   StepLabel,
   Stepper,
@@ -12,7 +11,13 @@ import {
 } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { AnimatedAlert, DiceSpinner, Modal, ValidationIssueList } from "@/client/src/components/common/index.ts";
+import {
+  AnimatedAlert,
+  ConfirmDialog,
+  DiceSpinner,
+  Modal,
+  ValidationIssueList,
+} from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 import type { LevelWizard } from "./levelUp/index.ts";
@@ -77,31 +82,6 @@ export function LevelWizardDialog({
     >
       <DialogTitle>{title}</DialogTitle>
       <DialogContent sx={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        {/* Cancel confirm */}
-        <AnimatedAlert
-          in={wizard.showCancelConfirm}
-          severity="warning"
-          action={
-            <Stack direction="row" spacing={1}>
-              <Button size="small" onClick={() => wizard.setShowCancelConfirm(false)}>
-                Keep editing
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                onClick={wizard.handleConfirmCancel}
-                disabled={isSaving}
-              >
-                Discard
-              </Button>
-            </Stack>
-          }
-          sx={{ mb: 2 }}
-        >
-          Discard all level-up progress?
-        </AnimatedAlert>
-
         {/* Validation errors */}
         <AnimatedAlert
           in={wizard.validationErrors.length > 0}
@@ -179,6 +159,16 @@ export function LevelWizardDialog({
           </DiceSpinner>
         </Button>
       </DialogActions>
+      <ConfirmDialog
+        open={wizard.showCancelConfirm}
+        onClose={() => wizard.setShowCancelConfirm(false)}
+        onConfirm={wizard.handleConfirmCancel}
+        isLoading={isSaving}
+        title="Discard Level Up"
+        message="Discard all level-up progress?"
+        confirmLabel="Discard"
+        confirmColor="error"
+      />
     </Modal>
   );
 }

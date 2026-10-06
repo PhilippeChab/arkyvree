@@ -1,10 +1,10 @@
 import { Button, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
 
-import { AnimatedAlert, DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
+import { wrongCredential } from "@/client/src/lib/errorMessage.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
@@ -21,7 +21,6 @@ interface DeleteAccountFormData {
 
 export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccountDialogProps) {
   const snackbar = useSnackbar();
-  const [error, setError] = useState<string | null>(null);
 
   const form = useFormWith<DeleteAccountFormData>({ password: "", confirmText: "" });
   const { control, handleSubmit, watch, reset } = form;
@@ -30,7 +29,6 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
 
   const handleClose = () => {
     reset();
-    setError(null);
     onClose();
   };
 
@@ -47,14 +45,17 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
       useAuthStore.getState().clearSession({ byUser: true });
       snackbar.success("Account deleted successfully");
     },
-    onError: (error) => setError(error.message),
+    // A wrong password shows on its field
+    onError: (error) => {
+      if (wrongCredential(error)) form.setError("password", { message: error.message });
+      else snackbar.error(error, "Failed to delete account");
+    },
   });
 
   const onSubmit = (data: DeleteAccountFormData) => {
     if (hasPassword && !data.password) return;
     if (!hasPassword && data.confirmText !== "DELETE") return;
 
-    setError(null);
     deleteMutation.mutate(hasPassword ? data.password : undefined);
   };
 
@@ -71,10 +72,6 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
             This action is <strong>permanent</strong> and cannot be undone. All your characters, campaign memberships,
             and account data will be removed.
           </Typography>
-
-          <AnimatedAlert in={!!error} severity="error" sx={{ mb: 2 }}>
-            {error}
-          </AnimatedAlert>
 
           {hasPassword ? (
             <FormTextField

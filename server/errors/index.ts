@@ -42,6 +42,17 @@ export class UnauthorizedError extends BaseError {
   }
 }
 
+/**
+ * The request's session is missing, expired or gone: the one 401 that signs the client out. A credential typed into a
+ * form that's wrong (a password, a code) is a plain `UnauthorizedError`.
+ */
+export class SessionError extends UnauthorizedError {
+  constructor(message = "Invalid session", options?: ErrorOptions) {
+    super(message, options);
+    this.name = "SessionError";
+  }
+}
+
 export class ForbiddenError extends BaseError {
   constructor(message = "Forbidden", options?: ErrorOptions) {
     super(message, options);

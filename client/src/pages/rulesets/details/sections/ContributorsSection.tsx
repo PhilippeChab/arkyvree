@@ -5,18 +5,18 @@ import {
   Edit as EditIcon,
   ExitToApp as LeaveIcon,
 } from "@mui/icons-material";
-import { Box, Button, IconButton, Tooltip } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { useState } from "react";
 
 import {
-  BlankState,
   ConfirmDialog,
   DiceSpinner,
   EditDialog,
   LoadError,
   LoadMoreButton,
+  type RowAction,
   SelectField,
 } from "@/client/src/components/common/index.ts";
 import {
@@ -164,67 +164,56 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
           )}
         </Box>
       )}
-      {contributors.length === 0 && !owner ? (
-        <BlankState
-          icon={ContributorsIcon}
-          title="No contributors yet"
-          description={
-            canInvite ? "Invite collaborators to help build this ruleset" : "This ruleset has no contributors"
-          }
-          action={
-            canInvite ? (
-              <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
-                Invite a Contributor
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : (
-        <>
-          <ContributorsTable
-            owner={owner}
-            contributors={contributors}
-            showRoles
-            renderActions={
-              canManageContributors
-                ? (contributor) => {
-                    // Only the owner can change or remove an Admin.
-                    const outranks = isOwner || contributor.role !== "Admin";
-                    return (
-                      <>
-                        {canEditRoles && outranks && contributor.status === "Active" && (
-                          <Tooltip title="Edit role">
-                            <IconButton
-                              size="small"
-                              onClick={() => {
-                                roleForm.reset({ role: contributor.role });
-                                setRoleTargetId(contributor.id);
-                              }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {outranks && (
-                          <Tooltip title="Remove">
-                            <IconButton size="small" color="error" onClick={() => setRemoveTarget(contributor)}>
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </>
-                    );
-                  }
-                : undefined
-            }
-          />
-          <LoadMoreButton
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            onClick={() => fetchNextPage()}
-          />
-        </>
-      )}
+      <ContributorsTable
+        owner={owner}
+        contributors={contributors}
+        showRoles
+        actions={
+          canManageContributors
+            ? (contributor) => {
+                // Only the owner can change or remove an Admin.
+                const outranks = isOwner || contributor.role !== "Admin";
+                const actions: RowAction[] = [];
+                if (canEditRoles && outranks && contributor.status === "Active") {
+                  actions.push({
+                    label: "Edit role",
+                    icon: <EditIcon fontSize="small" />,
+                    onClick: () => {
+                      roleForm.reset({ role: contributor.role });
+                      setRoleTargetId(contributor.id);
+                    },
+                  });
+                }
+                if (outranks) {
+                  actions.push({
+                    label: "Remove",
+                    icon: <DeleteIcon fontSize="small" />,
+                    onClick: () => setRemoveTarget(contributor),
+                    color: "error",
+                  });
+                }
+                return actions;
+              }
+            : undefined
+        }
+        empty={{
+          icon: ContributorsIcon,
+          title: "No contributors yet",
+          description: canInvite
+            ? "Invite collaborators to help build this ruleset"
+            : "This ruleset has no contributors",
+          action: canInvite ? (
+            <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
+              Invite a Contributor
+            </Button>
+          ) : undefined,
+        }}
+      />
+      <LoadMoreButton
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onClick={() => fetchNextPage()}
+      />
 
       <InviteContributorDialog
         open={inviteDialogOpen}

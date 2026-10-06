@@ -16,8 +16,6 @@ import SignIn from "@/client/src/pages/auth/SignIn.tsx";
 import DashboardPage from "@/client/src/pages/dashboard/DashboardPage.tsx";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
-import "./App.css";
-
 const ActivitiesPage = lazy(() => import("@/client/src/pages/activities/ActivitiesPage.tsx"));
 const RulesetContributorInvitePage = lazy(
   () => import("@/client/src/pages/ruleset-contributor-invite/RulesetContributorInvitePage.tsx"),

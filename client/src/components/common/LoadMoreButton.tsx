@@ -7,8 +7,8 @@ interface LoadMoreButtonProps {
   isFetchingNextPage: boolean;
   onClick: () => void;
   label?: string;
-  /** `large` for a page's main list, `medium` for lists inside a section or dialog. */
-  size?: "medium" | "large";
+  /** `large` for a page's main list, `medium` for lists inside a section or dialog, `small` for one nested in another. */
+  size?: "small" | "medium" | "large";
 }
 
 /** Fetches the next page of an infinite query; renders nothing on the last page. */

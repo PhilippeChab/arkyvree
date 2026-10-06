@@ -1,6 +1,7 @@
-import { Alert, Box, Stack, Typography } from "@mui/material";
+import { FitnessCenter as AbilitiesIcon } from "@mui/icons-material";
+import { Box, Stack, Typography } from "@mui/material";
 
-import { DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import { BlankState, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
 
 import { AttributeIncreaseField } from "./AttributeIncreaseField.tsx";
 import type { AddAttributeStepProps } from "./levelUpFactory.ts";
@@ -18,7 +19,13 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
   if (isLoadingAttributes) return <DiceSpinner />;
   if (attributesError) return <LoadError what="Attributes" error={attributesError} />;
   if (!attributeData?.isAvailable || abilityIncreaseLevels.length === 0) {
-    return <Alert severity="info">No attribute increase at these levels.</Alert>;
+    return (
+      <BlankState
+        icon={AbilitiesIcon}
+        title="No attribute increase"
+        description="These levels raise no ability score."
+      />
+    );
   }
 
   return (

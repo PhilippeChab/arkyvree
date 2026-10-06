@@ -7,7 +7,7 @@ import { ApiError, type ApiValidationIssue } from "@/client/src/services/rpc.ts"
  * A save the server can refuse with rules warnings: those show in the form
  * (which can then save anyway, with `force`); any other failure is a toast.
  */
-export function useValidationIssues(fallback?: string) {
+export function useValidationIssues(fallback: string) {
   const snackbar = useSnackbar();
   const [validationErrors, setValidationErrors] = useState<ApiValidationIssue[]>([]);
 

@@ -81,7 +81,9 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
       renderName={(label) =>
         skill.description ? (
           <Tooltip describeChild title={skill.description} enterTouchDelay={0} arrow>
-            <span style={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>{label}</span>
+            <Box component="span" sx={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>
+              {label}
+            </Box>
           </Tooltip>
         ) : (
           label
@@ -252,11 +254,11 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
         <Table size="small" sx={{ minWidth: 420, tableLayout: "fixed" }}>
           <colgroup>
             <col />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 55 }} />
-            <col style={{ width: 55 }} />
-            <col style={{ width: 55 }} />
-            <col style={{ width: 55 }} />
+            <Box component="col" sx={{ width: 80 }} />
+            <Box component="col" sx={{ width: 55 }} />
+            <Box component="col" sx={{ width: 55 }} />
+            <Box component="col" sx={{ width: 55 }} />
+            <Box component="col" sx={{ width: 55 }} />
           </colgroup>
           <TableHead>
             <TableRow>

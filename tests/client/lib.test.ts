@@ -5,10 +5,16 @@ import {
   formatActivityDetails,
   formatActivityType,
   formatNotificationMessage,
-  formatRelativeTime,
 } from "@/client/src/lib/activityFormatters.ts";
 import { getRollFunction, isDiceMethod, POINT_BUY_COSTS, rollDie } from "@/client/src/lib/dice.ts";
-import { accessLost, errorMessage, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import {
+  accessLost,
+  errorMessage,
+  loadFailureMessage,
+  sessionEnded,
+  wrongCredential,
+} from "@/client/src/lib/errorMessage.ts";
+import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCost, formatCount, formatDecimal, formatSigned, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
@@ -83,6 +89,14 @@ describe("An error's message", () => {
       accessLost(status(500)),
       accessLost(new Error()),
     ]).toEqual([true, true, false, false]);
+  });
+
+  test("tells a session that ended from a wrong credential: both are 401s", () => {
+    const ended = new ApiError("Invalid session", 401, "SessionError");
+    const wrong = new ApiError("Current password is incorrect", 401, "UnauthorizedError");
+    const forbidden = new ApiError("Forbidden", 403, "ForbiddenError");
+    expect([ended, wrong, forbidden, new Error()].map(sessionEnded)).toEqual([true, false, false, false]);
+    expect([ended, wrong, forbidden, new Error()].map(wrongCredential)).toEqual([false, true, false, false]);
   });
 });
 

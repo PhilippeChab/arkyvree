@@ -1,18 +1,8 @@
-import {
-  Alert,
-  Box,
-  Chip,
-  List,
-  ListItemButton,
-  ListItemText,
-  Skeleton,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Bolt as PowersIcon } from "@mui/icons-material";
+import { Box, Chip, List, ListItemButton, ListItemText, Skeleton, TextField, Tooltip, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
-import { DiceSpinner, LoadError, NoMatchesState } from "@/client/src/components/common/index.ts";
+import { BlankState, DiceSpinner, LoadError, NoMatchesState } from "@/client/src/components/common/index.ts";
 
 import { type PowerAptitudePool, withoutPick } from "./levelUp/index.ts";
 import type { LevelUpPowersStepProps } from "./levelUpFactory.ts";
@@ -67,7 +57,9 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   );
 
   if (totalPowersToSelect === 0 && autoGrantedFree.length === 0 && autoGrantedNonFree.length === 0) {
-    return <Alert severity="info">No spells to select at this level.</Alert>;
+    return (
+      <BlankState icon={PowersIcon} title="No spells to select" description="This level gives no spells to pick." />
+    );
   }
 
   return (

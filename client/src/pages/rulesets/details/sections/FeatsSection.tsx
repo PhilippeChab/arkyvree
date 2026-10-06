@@ -28,6 +28,9 @@ import {
   NoMatchesState,
   SearchBar,
   SectionContent,
+  TABLE_CONTAINER_LOADING_STYLE,
+  TABLE_CONTAINER_STYLE,
+  TABLE_STYLE,
 } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
 import { useSearchParam, useSearchText, useToggleSet } from "@/client/src/hooks/index.ts";
@@ -41,9 +44,6 @@ import {
   DescriptionCell,
   RulesetSectionTable,
   SectionActions,
-  TABLE_CONTAINER_LOADING_STYLE,
-  TABLE_CONTAINER_STYLE,
-  TABLE_STYLE,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
@@ -301,7 +301,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             <TableHead>
               <TableRow>
                 {GROUPED_COLUMNS.map((col) => (
-                  <TableCell key={col.key} sx={{ width: col.width, fontWeight: 600 }}>
+                  <TableCell key={col.key} sx={{ width: col.width }}>
                     {col.label}
                   </TableCell>
                 ))}
@@ -339,7 +339,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           <TableHead>
             <TableRow>
               {GROUPED_COLUMNS.map((col) => (
-                <TableCell key={col.key} sx={{ width: col.width, fontWeight: 600 }}>
+                <TableCell key={col.key} sx={{ width: col.width }}>
                   {col.label}
                 </TableCell>
               ))}

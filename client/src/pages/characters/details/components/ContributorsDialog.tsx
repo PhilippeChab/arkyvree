@@ -4,30 +4,13 @@ import {
   Delete as DeleteIcon,
   ExitToApp as LeaveIcon,
 } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Button, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  BlankState,
-  ConfirmDialog,
-  DiceSpinner,
-  LoadError,
-  LoadMoreButton,
-  Modal,
-} from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, LoadError, LoadMoreButton, Modal } from "@/client/src/components/common/index.ts";
 import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -138,43 +121,38 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
             </Stack>
 
             <Box sx={{ minHeight: { xs: 280, sm: 360 }, display: "flex", flexDirection: "column" }}>
-              {isLoading ? (
-                <DiceSpinner sx={{ flex: 1 }} />
-              ) : error ? (
+              {error ? (
                 <LoadError what="Contributors" error={error} />
-              ) : contributors.length === 0 && !owner ? (
-                <BlankState
-                  icon={ContributorsIcon}
-                  title="No contributors yet"
-                  description={
-                    canInvite
-                      ? "Invite collaborators to help maintain this character."
-                      : "This character has no other contributors."
-                  }
-                  action={
-                    canInvite ? (
-                      <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setInviteOpen(true)}>
-                        Invite a Contributor
-                      </Button>
-                    ) : undefined
-                  }
-                />
               ) : (
                 <>
                   <ContributorsTable
                     owner={owner}
                     contributors={contributors}
-                    renderActions={
+                    isLoading={isLoading}
+                    actions={
                       isOwner
-                        ? (contributor) => (
-                            <Tooltip title="Remove">
-                              <IconButton size="small" color="error" onClick={() => setRemoveTarget(contributor)}>
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )
+                        ? (contributor) => [
+                            {
+                              label: "Remove",
+                              icon: <DeleteIcon fontSize="small" />,
+                              onClick: () => setRemoveTarget(contributor),
+                              color: "error",
+                            },
+                          ]
                         : undefined
                     }
+                    empty={{
+                      icon: ContributorsIcon,
+                      title: "No contributors yet",
+                      description: canInvite
+                        ? "Invite collaborators to help maintain this character."
+                        : "This character has no other contributors.",
+                      action: canInvite ? (
+                        <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setInviteOpen(true)}>
+                          Invite a Contributor
+                        </Button>
+                      ) : undefined,
+                    }}
                   />
                   <LoadMoreButton
                     hasNextPage={hasNextPage}

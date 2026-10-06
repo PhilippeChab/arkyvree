@@ -1,18 +1,11 @@
-import {
-  Box,
-  Chip,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
-import type { ReactNode } from "react";
+import { Chip, Typography } from "@mui/material";
 
-import { ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX } from "@/client/src/components/common/index.ts";
+import {
+  DataTable,
+  type DataTableColumn,
+  type DataTableEmpty,
+  type RowAction,
+} from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 interface ContributorRow {
@@ -23,14 +16,25 @@ interface ContributorRow {
   user?: { username?: string | null } | null;
 }
 
+/** The owner's row, or a contributor's */
+type TableRow<T> = { id: string; username?: string | null; email: string } & (
+  | { owner: true }
+  | { owner: false; contributor: T }
+);
+
 interface ContributorsTableProps<T extends ContributorRow> {
   owner: { username?: string | null; emailAddress: string } | null;
   contributors: T[];
+  isLoading?: boolean;
   /** Show the Role column (rulesets have roles, characters don't). */
   showRoles?: boolean;
-  /** Row buttons; when omitted there is no Actions column. */
-  renderActions?: (contributor: T) => ReactNode;
+  /** A contributor's row actions; the owner's row has none. */
+  actions?: (contributor: T) => RowAction[];
+  /** What the table shows with no owner and no contributor */
+  empty: DataTableEmpty;
 }
+
+const OWNER_ROW_ID = "owner";
 
 function contributorStatusColor(status: string): "warning" | "success" | "error" | "default" {
   switch (status) {
@@ -60,94 +64,84 @@ function roleColor(role: string): "error" | "primary" | "default" {
 export function ContributorsTable<T extends ContributorRow>({
   owner,
   contributors,
+  isLoading = false,
   showRoles = false,
-  renderActions,
+  actions,
+  empty,
 }: ContributorsTableProps<T>) {
   const isMobile = useIsMobile();
+  const columns: DataTableColumn[] = [
+    { key: "user", label: "User" },
+    { key: "email", label: "Email", hideOnMobile: true },
+    ...(showRoles ? [{ key: "role", label: "Role" }] : []),
+    { key: "status", label: "Status" },
+  ];
+  const rows: TableRow<T>[] = [
+    ...(owner ? [{ id: OWNER_ROW_ID, username: owner.username, email: owner.emailAddress, owner: true as const }] : []),
+    ...contributors.map((contributor) => ({
+      id: contributor.id,
+      username: contributor.user?.username,
+      email: contributor.email,
+      owner: false as const,
+      contributor,
+    })),
+  ];
+  const ownerChip = <Chip label="Owner" size="small" color="primary" variant="filled" />;
 
-  const userCell = (username: string | null | undefined, email: string) => (
-    <TableCell>
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-        {username || "—"}
-      </Typography>
-      {isMobile && (
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          {email}
-        </Typography>
-      )}
-    </TableCell>
-  );
+  function renderCell(row: TableRow<T>, column: string) {
+    switch (column) {
+      case "user":
+        return (
+          <>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {row.username || "—"}
+            </Typography>
+            {isMobile && (
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {row.email}
+              </Typography>
+            )}
+          </>
+        );
+      case "email":
+        return row.email;
+      case "role":
+        if (row.owner) return ownerChip;
+        return (
+          row.contributor.role && (
+            <Chip
+              label={row.contributor.role}
+              size="small"
+              color={roleColor(row.contributor.role)}
+              variant="outlined"
+            />
+          )
+        );
+      default:
+        if (row.owner) {
+          return showRoles ? <Chip label="Active" size="small" color="success" variant="filled" /> : ownerChip;
+        }
+        return (
+          <Chip
+            label={row.contributor.status}
+            size="small"
+            color={contributorStatusColor(row.contributor.status)}
+            variant="filled"
+          />
+        );
+    }
+  }
 
   return (
-    <TableContainer component={Paper} variant="outlined">
-      <Table size={isMobile ? "small" : "medium"}>
-        <TableHead>
-          <TableRow>
-            <TableCell>User</TableCell>
-            {!isMobile && <TableCell>Email</TableCell>}
-            {showRoles && <TableCell>Role</TableCell>}
-            <TableCell>Status</TableCell>
-            {renderActions && <TableCell align="right">Actions</TableCell>}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {owner && (
-            <TableRow>
-              {userCell(owner.username, owner.emailAddress)}
-              {!isMobile && <TableCell>{owner.emailAddress}</TableCell>}
-              {showRoles && (
-                <TableCell>
-                  <Chip label="Owner" size="small" color="primary" variant="filled" />
-                </TableCell>
-              )}
-              <TableCell>
-                {showRoles ? (
-                  <Chip label="Active" size="small" color="success" variant="filled" />
-                ) : (
-                  <Chip label="Owner" size="small" color="primary" variant="filled" />
-                )}
-              </TableCell>
-              {renderActions && <TableCell align="right" />}
-            </TableRow>
-          )}
-          {contributors.map((contributor) => (
-            <TableRow key={contributor.id} sx={ROW_ACTIONS_HOVER_SX}>
-              {userCell(contributor.user?.username, contributor.email)}
-              {!isMobile && <TableCell>{contributor.email}</TableCell>}
-              {showRoles && (
-                <TableCell>
-                  {contributor.role && (
-                    <Chip
-                      label={contributor.role}
-                      size="small"
-                      color={roleColor(contributor.role)}
-                      variant="outlined"
-                    />
-                  )}
-                </TableCell>
-              )}
-              <TableCell>
-                <Chip
-                  label={contributor.status}
-                  size="small"
-                  color={contributorStatusColor(contributor.status)}
-                  variant="filled"
-                />
-              </TableCell>
-              {renderActions && (
-                <TableCell align="right">
-                  <Box
-                    className="row-actions"
-                    sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end", ...ROW_ACTIONS_SX }}
-                  >
-                    {renderActions(contributor)}
-                  </Box>
-                </TableCell>
-              )}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <DataTable<TableRow<T>>
+      rows={rows}
+      isLoading={isLoading}
+      columns={columns}
+      size={isMobile ? "small" : "medium"}
+      minWidth={0}
+      renderCell={renderCell}
+      actions={actions && ((row) => (row.owner ? [] : actions(row.contributor)))}
+      empty={empty}
+    />
   );
 }

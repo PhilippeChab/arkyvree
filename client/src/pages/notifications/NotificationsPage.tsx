@@ -1,41 +1,22 @@
 import { Circle as CircleIcon, Notifications as NotificationsIcon } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Container,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
 import {
-  BlankState,
-  CLICKABLE_SX,
-  clickableProps,
   CREATED_SORTS,
-  DiceSpinner,
+  DataTable,
+  type DataTableColumn,
   type FilterOption,
   LoadError,
   LoadMoreButton,
-  NoMatchesState,
   PageHeader,
   PageTransition,
   SearchBar,
 } from "@/client/src/components/common/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useListParams, useNotificationActions, usePageTitle } from "@/client/src/hooks/index.ts";
-import {
-  formatActivityDetails,
-  formatNotificationMessage,
-  formatRelativeTime,
-} from "@/client/src/lib/activityFormatters.ts";
+import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
+import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -46,6 +27,12 @@ const FILTER_OPTIONS: FilterOption<"unread">[] = [
 ];
 
 const PAGE_SIZE = 10;
+
+const NOTIFICATION_COLUMNS: DataTableColumn[] = [
+  { key: "notification", label: "Notification" },
+  { key: "when", label: "When" },
+  { key: "invite", label: "Actions" },
+];
 
 export default function NotificationsPage() {
   usePageTitle("Notifications");
@@ -114,84 +101,63 @@ export default function NotificationsPage() {
           sortField="createdAt"
         />
 
-        {isLoading ? (
-          <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
-        ) : error ? (
+        {error ? (
           <LoadError what="Notifications" error={error} />
-        ) : notifications.length > 0 ? (
+        ) : (
           <>
-            <TableContainer component={Paper} sx={{ mb: 3, overflowX: "auto" }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>
-                      <strong>Notification</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>When</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Actions</strong>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {notifications.map((notification) => {
-                    const isUnread = !notification.readAt;
-                    const openable = actions.isOpenable(notification);
-
-                    return (
-                      <TableRow
-                        key={notification.id}
-                        {...(openable && clickableProps(() => actions.open(notification)))}
-                        sx={{
-                          "&:hover": openable ? { bgcolor: "action.hover" } : undefined,
-                          ...(openable && CLICKABLE_SX),
-                          ...(isUnread && { bgcolor: "action.selected" }),
-                        }}
-                      >
-                        <TableCell>
-                          <Tooltip
-                            describeChild
-                            title={formatActivityDetails(notification.data) ?? ""}
-                            arrow
-                            enterDelay={300}
-                            slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
-                          >
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                              {isUnread && (
-                                <CircleIcon
-                                  titleAccess="Unread"
-                                  sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }}
-                                />
-                              )}
-                              <Typography variant="body2">
-                                {formatNotificationMessage(notification.type, notification.data)}
-                              </Typography>
-                            </Box>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            {formatRelativeTime(notification.createdAt)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          {actions.isActionable(notification) && (
-                            <InviteActionButtons
-                              onAccept={() => actions.accept(notification)}
-                              onReject={() => actions.reject(notification)}
-                              disabled={actions.isAnswering(notification)}
-                            />
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
+            <DataTable
+              rows={notifications}
+              isLoading={isLoading}
+              columns={NOTIFICATION_COLUMNS}
+              minWidth={0}
+              renderCell={(notification, column) => {
+                if (column === "when") {
+                  return (
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      {formatRelativeTime(notification.createdAt)}
+                    </Typography>
+                  );
+                }
+                if (column === "invite") {
+                  return (
+                    actions.isActionable(notification) && (
+                      <InviteActionButtons
+                        onAccept={() => actions.accept(notification)}
+                        onReject={() => actions.reject(notification)}
+                        disabled={actions.isAnswering(notification)}
+                      />
+                    )
+                  );
+                }
+                return (
+                  <Tooltip
+                    describeChild
+                    title={formatActivityDetails(notification.data) ?? ""}
+                    arrow
+                    enterDelay={300}
+                    slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {!notification.readAt && (
+                        <CircleIcon titleAccess="Unread" sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }} />
+                      )}
+                      <Typography variant="body2">
+                        {formatNotificationMessage(notification.type, notification.data)}
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                );
+              }}
+              onRowClick={(notification) => actions.open(notification)}
+              isRowClickable={(notification) => actions.isOpenable(notification)}
+              rowSx={(notification) => (notification.readAt ? {} : { bgcolor: "action.selected" })}
+              search={search}
+              empty={{
+                icon: NotificationsIcon,
+                title: unreadOnly ? "No unread notifications" : "No notifications yet",
+                description: "Notifications from your campaigns and collaborators will appear here.",
+              }}
+            />
             <LoadMoreButton
               size="large"
               hasNextPage={hasNextPage}
@@ -199,15 +165,6 @@ export default function NotificationsPage() {
               onClick={() => fetchNextPage()}
             />
           </>
-        ) : search ? (
-          <NoMatchesState search={search} sx={{ mt: 4 }} />
-        ) : (
-          <BlankState
-            icon={NotificationsIcon}
-            title={unreadOnly ? "No unread notifications" : "No notifications yet"}
-            description="Notifications from your campaigns and collaborators will appear here."
-            sx={{ mt: 4 }}
-          />
         )}
       </Container>
     </PageTransition>

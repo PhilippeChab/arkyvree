@@ -129,19 +129,17 @@ function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?:
         <TableContainer sx={{ overflowX: "auto" }}>
           <Table size="small">
             <colgroup>
-              <col style={{ width: "40%" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "30%" }} />
-              <col style={{ width: "10%" }} />
+              <Box component="col" sx={{ width: "40%" }} />
+              <Box component="col" sx={{ width: "20%" }} />
+              <Box component="col" sx={{ width: "30%" }} />
+              <Box component="col" sx={{ width: "10%" }} />
             </colgroup>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>School</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Save</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600 }}>
-                  DC
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>School</TableCell>
+                <TableCell>Save</TableCell>
+                <TableCell align="center">DC</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

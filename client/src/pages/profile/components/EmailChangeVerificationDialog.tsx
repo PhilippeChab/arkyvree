@@ -1,12 +1,12 @@
 import { Box, Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { Controller } from "react-hook-form";
 
 import { VerificationCodeInput } from "@/client/src/components/auth/index.ts";
-import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
+import { wrongCredential } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -26,16 +26,12 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const updateUser = useAuthStore((s) => s.updateUser);
-  const [error, setError] = useState<string | null>(null);
-  const [resendSuccess, setResendSuccess] = useState(false);
 
   const form = useFormWith<EmailVerificationFormData>({ digits: EMPTY_VERIFICATION_CODE });
   const digits = form.watch("digits");
 
   const handleClose = () => {
     form.reset();
-    setError(null);
-    setResendSuccess(false);
     onClose();
   };
 
@@ -47,21 +43,23 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
       snackbar.success("Email address updated successfully");
       handleClose();
     },
-    onError: (error) => setError(error.message),
+    // A wrong or expired code shows on its field
+    onError: (error) => {
+      if (wrongCredential(error)) form.setError("digits", { message: error.message });
+      else snackbar.error(error, "Failed to verify email");
+    },
   });
 
   const resendMutation = useMutation({
     mutationFn: () => rpc.auth["resend-email-change"].$post(),
     onSuccess: () => {
-      setResendSuccess(true);
-      setError(null);
+      form.clearErrors("digits");
+      snackbar.success("A new code has been sent to your email.");
     },
-    onError: (error) => setError(error.message),
+    onError: (error) => snackbar.error(error, "Failed to resend code"),
   });
 
   const onSubmit = (data: EmailVerificationFormData) => {
-    setError(null);
-    setResendSuccess(false);
     verifyMutation.mutate(data.digits.join(""));
   };
 
@@ -76,18 +74,12 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
             We sent an 8-digit code to <strong>{pendingEmail}</strong>
           </Typography>
 
-          <AnimatedAlert in={!!error} severity="error" sx={{ mb: 2 }}>
-            {error}
-          </AnimatedAlert>
-
-          <AnimatedAlert in={resendSuccess} severity="success" sx={{ mb: 2 }}>
-            A new code has been sent to your email.
-          </AnimatedAlert>
-
           <Controller
             control={form.control}
             name="digits"
-            render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
+            render={({ field, fieldState }) => (
+              <VerificationCodeInput digits={field.value} onChange={field.onChange} error={fieldState.error?.message} />
+            )}
           />
 
           <Box sx={{ textAlign: "center", mb: 1 }}>

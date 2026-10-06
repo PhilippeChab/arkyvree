@@ -27,6 +27,7 @@ import {
   LoadError,
   LoadMoreButton,
   Modal,
+  NO_DESCRIPTION,
   NoMatchesState,
   ScrollSafeListbox,
   SearchBar,
@@ -121,7 +122,7 @@ function CharacterCard({
       });
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to update visibility");
     },
   });
 
@@ -258,7 +259,7 @@ function CharacterCard({
             overflow: "hidden",
           }}
         >
-          {character.description || "No description available"}
+          {character.description || NO_DESCRIPTION}
         </Typography>
       </Box>
     </StyledCard>
@@ -327,7 +328,7 @@ function LinkCharacterDialog({
       onClose();
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to link character");
     },
   });
 

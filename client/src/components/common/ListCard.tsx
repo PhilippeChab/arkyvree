@@ -18,6 +18,9 @@ interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "childre
   description: string | null | undefined;
 }
 
+/** What a card or a details view shows for an entity without a description. */
+export const NO_DESCRIPTION = "No description provided.";
+
 /** Card of the ruleset, character and campaign grids. */
 export function ListCard({
   avatar,
@@ -73,7 +76,7 @@ export function ListCard({
             minHeight: "6.4em",
           }}
         >
-          {description || "No description provided."}
+          {description || NO_DESCRIPTION}
         </Typography>
       </Box>
     </StyledCard>

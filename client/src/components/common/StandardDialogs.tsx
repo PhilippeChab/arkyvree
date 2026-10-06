@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   DialogActions,
   DialogContent,
@@ -74,9 +75,10 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
           : undefined,
       }}
     >
-      <form
+      <Box
+        component="form"
         onSubmit={form.handleSubmit(onSubmit)}
-        style={fixedHeight ? { display: "flex", flexDirection: "column", flex: 1, minHeight: 0 } : undefined}
+        sx={fixedHeight ? { display: "flex", flexDirection: "column", flex: 1, minHeight: 0 } : undefined}
       >
         <DialogTitle>{title}</DialogTitle>
         <DialogContent
@@ -96,7 +98,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
             </DiceSpinner>
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </FormDialog>
   );
 }

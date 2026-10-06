@@ -23,8 +23,15 @@
  *   a function a query or a mutation runs, which caches, dedupes and reports it. Such a function is named `…Fn`, as
  *   TanStack's `queryFn` and `mutationFn` are, wherever it's handed (`useRulesetSection`'s `createFn`, an editor's
  *   `saveFn`).
- * - `load-errors`: a list, a section or a step that failed to load says so with `LoadError` (`components/common`), in
- *   `loadFailureMessage`'s words: an error `Alert` never writes its own "Failed to load…".
+ * - `date-formats`: a date is shown through `lib/formatDate.ts` (`formatDate`, `formatDateTime`, `formatRelativeTime`),
+ *   in one locale and three forms: no `toLocaleDateString`, `toLocaleTimeString` or `Intl.DateTimeFormat` elsewhere.
+ * - `sx-styles`: a style is written with `sx`, by the theme's scale: never `styled()`, never a stylesheet but the global
+ *   one `main.tsx` loads (`index.css`, the fonts), and `style` only passes on one a component is given
+ *   (`{ ...props.style, … }`, as MUI hands a list option), on an element or in a prop's object (`slotProps`).
+ * - `error-alerts`: an error reaches the user one way per kind: a list, a section or a step that failed to load is a
+ *   `LoadError` (`loadFailureMessage`'s words), a page that can't show is a `PageError`, a failed action is a toast
+ *   (`snackbar.error`, which names what failed), a wrong value is its field's error, and the auth pages show their
+ *   form's error. So an error `Alert` sits only in `LoadError` and the auth pages' layout.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -42,6 +49,18 @@ const FIELD_WRITES = new Set(["setValue", "resetField", "reset"]);
 
 /** The requests an `rpc` endpoint makes. */
 const REQUEST_METHODS = new Set(["$get", "$post", "$put", "$patch", "$delete"]);
+
+/** The ways to write a date that `lib/formatDate.ts` keeps to itself. */
+const DATE_FORMATTERS = new Set(["toLocaleDateString", "toLocaleTimeString"]);
+
+/** The packages that export MUI's `styled` */
+const STYLED_SOURCES = new Set(["@mui/material", "@mui/material/styles", "@mui/system"]);
+
+/** The components that show an error in an `Alert`: a load failure, and the auth pages' form error. */
+const ERROR_ALERT_FILES = new Set([
+  "client/src/components/common/LoadError.tsx",
+  "client/src/components/auth/AuthLayout.tsx",
+]);
 
 /** Whether a JSX element has the attribute `name`. */
 function hasAttribute(node, name) {
@@ -118,28 +137,51 @@ function createClientApis(context) {
   };
 }
 
-function createLoadErrors(context) {
-  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/LoadError.tsx") return {};
+function createDateFormats(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/lib/formatDate.ts") return {};
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "A date is shown through `lib/formatDate.ts` (`formatDate`, `formatDateTime`, `formatRelativeTime`): one " +
+        "locale, three forms.",
+    });
+  return {
+    CallExpression(node) {
+      const callee = node.callee;
+      if (callee.type === "MemberExpression" && !callee.computed && DATE_FORMATTERS.has(callee.property.name)) {
+        report(node);
+      }
+    },
+    NewExpression(node) {
+      const callee = node.callee;
+      const isIntl = callee.type === "MemberExpression" && callee.object.type === "Identifier";
+      if (
+        isIntl &&
+        callee.object.name === "Intl" &&
+        ["DateTimeFormat", "RelativeTimeFormat"].includes(callee.property.name)
+      ) {
+        report(node);
+      }
+    },
+  };
+}
+
+function createErrorAlerts(context) {
+  if (!inClient(context) || ERROR_ALERT_FILES.has(repoPath(context.filename))) return {};
   return {
     JSXElement(node) {
-      if (elementName(node) !== "Alert") return;
+      if (!["Alert", "AnimatedAlert"].includes(elementName(node))) return;
       const severity = node.openingElement.attributes.find(
         (a) => a.type === "JSXAttribute" && a.name.name === "severity",
       );
       if (severity?.value?.type !== "Literal" || severity.value.value !== "error") return;
-      const saysLoad = node.children.some(
-        (child) =>
-          (child.type === "JSXText" && /\bload(ing|ed)?\b/i.test(child.value)) ||
-          (child.type === "JSXExpressionContainer" &&
-            child.expression.type === "CallExpression" &&
-            calleeName(child.expression) === "loadFailureMessage"),
-      );
-      if (!saysLoad) return;
       context.report({
         node,
         message:
-          'A failure to load is a `LoadError` (`components/common`): `<LoadError what="Feats" error={error} />` says ' +
-          "it in `loadFailureMessage`'s words.",
+          "An error reaches the user one way per kind: a load failure is a `LoadError`, a page that can't show a " +
+          "`PageError`, a failed action a toast (`snackbar.error`), a wrong value its field's error: never an error " +
+          "`Alert` of its own.",
       });
     },
   };
@@ -314,6 +356,50 @@ function createDialogConventions(context) {
   };
 }
 
+/** Whether a style object passes on one its component was given: `{ ...props.style, … }`. */
+function passesStyleOn(value) {
+  return (
+    value?.type === "ObjectExpression" &&
+    value.properties.some(
+      (p) =>
+        p.type === "SpreadElement" &&
+        p.argument.type === "MemberExpression" &&
+        !p.argument.computed &&
+        p.argument.property.name === "style",
+    )
+  );
+}
+
+function createSxStyles(context) {
+  if (!inClient(context)) return {};
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "A style is written with `sx`: never `styled()`, no stylesheet but the global one `main.tsx` loads, and " +
+        "`style` only passes on one a component is given (`{ ...props.style }`).",
+    });
+  return {
+    ImportDeclaration(node) {
+      const source = node.source.value;
+      const stylesheet = source.endsWith(".css") && repoPath(context.filename) !== "client/src/main.tsx";
+      const styled = node.specifiers.some((s) => s.type === "ImportSpecifier" && s.imported.name === "styled");
+      if (stylesheet || source === "@emotion/styled" || (STYLED_SOURCES.has(source) && styled)) report(node);
+    },
+    JSXAttribute(node) {
+      if (node.name.type !== "JSXIdentifier" || node.name.name !== "style") return;
+      const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : null;
+      if (!passesStyleOn(value)) report(node);
+    },
+    Property(node) {
+      if (node.key.type !== "Identifier" || node.key.name !== "style" || passesStyleOn(node.value)) return;
+      for (let p = node.parent; p; p = p.parent) {
+        if (p.type === "JSXAttribute") return report(node);
+      }
+    },
+  };
+}
+
 /** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
 function readsWatch(node) {
   if (!node || typeof node !== "object") return false;
@@ -382,5 +468,7 @@ export default {
   "controlled-inputs": { meta: { type: "problem" }, create: createControlledInputs },
   "effect-writes": { meta: { type: "problem" }, create: createEffectWrites },
   "api-calls-in-queries": { meta: { type: "problem" }, create: createApiCallsInQueries },
-  "load-errors": { meta: { type: "suggestion" }, create: createLoadErrors },
+  "error-alerts": { meta: { type: "suggestion" }, create: createErrorAlerts },
+  "sx-styles": { meta: { type: "suggestion" }, create: createSxStyles },
+  "date-formats": { meta: { type: "suggestion" }, create: createDateFormats },
 };

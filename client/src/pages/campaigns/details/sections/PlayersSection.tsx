@@ -9,40 +9,24 @@ import {
   Close as RevokeIcon,
   PersonOff as UnassignedIcon,
 } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Chip,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  BlankState,
   ConfirmDialog,
-  DiceSpinner,
+  DataTable,
+  type DataTableColumn,
   LoadError,
   LoadMoreButton,
-  NoMatchesState,
-  ROW_ACTIONS_HOVER_SX,
-  ROW_ACTIONS_SX,
+  type RowAction,
   SearchBar,
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -71,6 +55,14 @@ const STATUS_CHIPS = {
   pending: { icon: <PendingIcon sx={{ fontSize: 14 }} />, label: "Invite Pending", color: "warning" },
   unassigned: { icon: <UnassignedIcon sx={{ fontSize: 14 }} />, label: "Unassigned", color: "default" },
 } as const satisfies Record<PlayerState, { icon: ReactNode; label: string; color: "warning" | "default" } | null>;
+
+/** The players' columns; each row's actions sit over its last. */
+const PLAYER_COLUMNS: DataTableColumn[] = [
+  { key: "player", label: "Player", width: "25%" },
+  { key: "role", label: "Role", width: "25%" },
+  { key: "status", label: "Status", width: "25%" },
+  { key: "joined", label: "Joined", width: "25%" },
+];
 
 export function PlayersSection({ campaign }: PlayersSectionProps) {
   const queryClient = useQueryClient();
@@ -131,7 +123,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       addForm.reset();
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to add player");
     },
   });
 
@@ -152,7 +144,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       setEditDialogOpen(false);
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to update player");
     },
   });
 
@@ -179,7 +171,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       }
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to remove player");
     },
   });
 
@@ -198,7 +190,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       setSelectedInviteId(null);
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to revoke invitation");
     },
   });
 
@@ -246,6 +238,111 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     removeMutation.mutate(selectedPlayer.id);
   };
 
+  const renderPlayerCell = (player: CampaignPlayer, column: string) => {
+    const slot = getPlayerSlot(player);
+    const isGameMaster = player.role === "Game Master";
+    switch (column) {
+      case "player": {
+        const { name, email } = playerDisplay(player, slot);
+        return (
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {name}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {email}
+            </Typography>
+          </Box>
+        );
+      }
+      case "role":
+        return (
+          <Chip
+            icon={isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />}
+            label={player.role}
+            size="small"
+            color={isGameMaster ? "warning" : "primary"}
+            variant="filled"
+            sx={{ fontWeight: 500 }}
+          />
+        );
+      case "status": {
+        const statusChip = STATUS_CHIPS[slot.state];
+        return statusChip ? (
+          <Chip
+            icon={statusChip.icon}
+            label={statusChip.label}
+            size="small"
+            color={statusChip.color}
+            variant="outlined"
+            sx={{ fontWeight: 500 }}
+          />
+        ) : (
+          <Chip
+            icon={<PlayerIcon sx={{ fontSize: 14 }} />}
+            label="Active"
+            size="small"
+            color="success"
+            variant="outlined"
+            sx={{ fontWeight: 500 }}
+          />
+        );
+      }
+      default:
+        return slot.state === "assigned" ? (
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {formatDate(player.createdAt)}
+          </Typography>
+        ) : (
+          <Typography variant="body2" sx={{ color: "text.disabled" }}>
+            —
+          </Typography>
+        );
+    }
+  };
+
+  // Edit for whoever manages players, revoke a pending invite, remove a player or leave
+  const playerActions = (player: CampaignPlayer): RowAction[] => {
+    const slot = getPlayerSlot(player);
+    const isCurrentUser = player.userId === currentUserId;
+    const pendingInviteId =
+      slot.state === "pending" && canManageInvites && !campaign.deletedAt ? slot.pendingInvite.id : null;
+    const canEditPlayer =
+      (!campaign.deletedAt &&
+        ((canManagePlayers && (player.role !== "Game Master" || slot.state !== "assigned")) || isCurrentUser)) ||
+      pendingInviteId !== null;
+    if (!canEditPlayer) return [];
+    return [
+      ...(canManagePlayers
+        ? [
+            {
+              label: "Edit",
+              icon: <EditIcon fontSize="small" />,
+              onClick: () => handleEditPlayer(player),
+              color: "primary" as const,
+            },
+          ]
+        : []),
+      ...(pendingInviteId
+        ? [
+            {
+              label: "Revoke Invite",
+              icon: <RevokeIcon fontSize="small" />,
+              onClick: () => handleRevokeInvite(pendingInviteId),
+              color: "warning" as const,
+              disabled: revokeInviteMutation.isPending,
+            },
+          ]
+        : []),
+      {
+        label: isCurrentUser ? "Leave" : "Remove",
+        icon: isCurrentUser ? <LeaveIcon fontSize="small" /> : <DeleteIcon fontSize="small" />,
+        onClick: () => handleRemovePlayer(player),
+        color: isCurrentUser ? "warning" : "error",
+      },
+    ];
+  };
+
   return (
     <SectionContent>
       {/* Header */}
@@ -262,187 +359,34 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
           )
         }
       />
-      {/* Loading State */}
-      {playersLoading && <DiceSpinner sx={{ py: 4 }} />}
-      {/* Error State */}
-      {playersError && <LoadError what="Players" error={playersError} sx={{ mb: 3 }} />}
-      {/* Table */}
-      {!playersLoading && !playersError && (
+      {playersError ? (
+        <LoadError what="Players" error={playersError} sx={{ mb: 3 }} />
+      ) : (
         <>
-          {players.length > 0 ? (
-            <>
-              <TableContainer
-                component={Paper}
-                sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflowX: "auto" }}
-              >
-                <Table sx={{ width: "100%" }}>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: "action.hover" }}>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Player</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Role</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Joined</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "10%" }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {players.map((player) => {
-                      const slot = getPlayerSlot(player);
-                      const displayInfo = { ...playerDisplay(player, slot), statusChip: STATUS_CHIPS[slot.state] };
-                      const isGameMaster = player.role === "Game Master";
-                      const isCurrentUser = player.userId === currentUserId;
-                      const canRevokeInvite = slot.state === "pending" && canManageInvites && !campaign.deletedAt;
-                      const canEditPlayer =
-                        (!campaign.deletedAt &&
-                          ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser)) ||
-                        canRevokeInvite;
-
-                      return (
-                        <TableRow
-                          key={player.id}
-                          hover
-                          sx={{
-                            position: "relative",
-                            ...ROW_ACTIONS_HOVER_SX,
-                          }}
-                        >
-                          <TableCell>
-                            <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                {displayInfo.name}
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                                {displayInfo.email}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              icon={
-                                isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />
-                              }
-                              label={player.role}
-                              size="small"
-                              color={isGameMaster ? "warning" : "primary"}
-                              variant="filled"
-                              sx={{ fontWeight: 500 }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {displayInfo.statusChip ? (
-                              <Chip
-                                icon={displayInfo.statusChip.icon}
-                                label={displayInfo.statusChip.label}
-                                size="small"
-                                color={displayInfo.statusChip.color}
-                                variant="outlined"
-                                sx={{ fontWeight: 500 }}
-                              />
-                            ) : (
-                              <Chip
-                                icon={<PlayerIcon sx={{ fontSize: 14 }} />}
-                                label="Active"
-                                size="small"
-                                color="success"
-                                variant="outlined"
-                                sx={{ fontWeight: 500 }}
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {slot.state === "assigned" ? (
-                              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                                {formatDate(player.createdAt)}
-                              </Typography>
-                            ) : (
-                              <Typography variant="body2" sx={{ color: "text.disabled" }}>
-                                —
-                              </Typography>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {canEditPlayer && (
-                              <Box
-                                className="row-actions"
-                                sx={{
-                                  ...ROW_ACTIONS_SX,
-                                  display: "flex",
-                                  gap: 0.5,
-                                }}
-                              >
-                                {canManagePlayers && (
-                                  <Tooltip title="Edit">
-                                    <IconButton
-                                      size="small"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditPlayer(player);
-                                      }}
-                                      sx={{ color: "primary.main" }}
-                                    >
-                                      <EditIcon fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                {slot.state === "pending" && canManageInvites && !campaign.deletedAt && (
-                                  <Tooltip title="Revoke Invite">
-                                    <IconButton
-                                      size="small"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleRevokeInvite(slot.pendingInvite.id);
-                                      }}
-                                      sx={{ color: "warning.main" }}
-                                      disabled={revokeInviteMutation.isPending}
-                                    >
-                                      <RevokeIcon fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                <Tooltip title={isCurrentUser ? "Leave" : "Remove"}>
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleRemovePlayer(player);
-                                    }}
-                                    sx={{ color: isCurrentUser ? "warning.main" : "error.main" }}
-                                  >
-                                    {isCurrentUser ? <LeaveIcon fontSize="small" /> : <DeleteIcon fontSize="small" />}
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              <LoadMoreButton
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                onClick={() => fetchNextPage()}
-              />
-            </>
-          ) : searchQuery ? (
-            <NoMatchesState search={searchQuery} />
-          ) : (
-            <BlankState
-              icon={PlayerIcon}
-              title="No players in this campaign"
-              description="Add players to start your adventure together"
-              action={
+          <DataTable
+            rows={players}
+            isLoading={playersLoading}
+            columns={PLAYER_COLUMNS}
+            renderCell={renderPlayerCell}
+            actions={playerActions}
+            search={searchQuery}
+            empty={{
+              icon: PlayerIcon,
+              title: "No players in this campaign",
+              description: "Add players to start your adventure together",
+              action:
                 canManagePlayers && !campaign.deletedAt ? (
                   <Button variant="outlined" startIcon={<AddIcon />} size="large" onClick={handleAddPlayer}>
                     Add Your First Player
                   </Button>
-                ) : undefined
-              }
-            />
-          )}
+                ) : undefined,
+            }}
+          />
+          <LoadMoreButton
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
         </>
       )}
       {/* Add Player Dialog */}

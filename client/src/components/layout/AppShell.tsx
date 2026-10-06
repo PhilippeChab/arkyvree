@@ -24,7 +24,12 @@ function belowToolbar(toolbar: CSSObject): CSSObject {
 export function AppBrand() {
   return (
     <>
-      <img src="/pwa-192x192.png" alt="" style={{ width: 28, height: 28, marginRight: 8, verticalAlign: "middle" }} />
+      <Box
+        component="img"
+        src="/pwa-192x192.png"
+        alt=""
+        sx={{ width: 28, height: 28, mr: 1, verticalAlign: "middle" }}
+      />
       Arkyvree
     </>
   );

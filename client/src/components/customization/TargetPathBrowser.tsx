@@ -17,7 +17,7 @@ import {
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { BlankState, DiceSpinner, NoMatchesState } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -228,71 +228,74 @@ export function TargetPathBrowser({
               </Box>
             )}
           </Box>
-          <List
-            dense
-            sx={{
-              height: 250,
-              overflowY: "auto",
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-              overscrollBehavior: "contain",
-            }}
-            onScroll={handleScroll}
-          >
-            {completions.map((option) => {
-              const isGroup = option.kind === "group" || option.kind === "category";
-              const isSelected = flatMode
-                ? selectedLeaf?.path === option.path
-                : selectedLeaf?.insertText === option.insertText;
-              const flatBreadcrumb =
-                flatMode && option.path
-                  ? option.path
-                      .split(".")
-                      .map((seg) => segmentLabels[seg] || formatSegment(seg))
-                      .join(" › ")
-                  : null;
-              return (
-                <Tooltip
-                  describeChild
-                  title={option.detail}
-                  placement="right"
-                  enterDelay={400}
-                  arrow
-                  key={option.insertText}
-                >
-                  <ListItemButton selected={isSelected} onClick={() => handleNavigate(option)}>
-                    <ListItemText
-                      primary={
-                        flatBreadcrumb ? (
-                          <Typography variant="body2" sx={{ fontWeight: isSelected ? 600 : 400 }}>
-                            {flatBreadcrumb}
-                          </Typography>
-                        ) : (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                            <Typography variant="body2" sx={{ fontWeight: isGroup || isSelected ? 600 : 400 }}>
-                              {segmentLabels[option.label] || formatSegment(option.label)}
+          {completions.length === 0 && !isLoading ? (
+            debouncedSearch ? (
+              <NoMatchesState search={debouncedSearch} sx={{ height: 250, py: 4 }} />
+            ) : (
+              <BlankState title="Nothing below this path" sx={{ height: 250, py: 4 }} />
+            )
+          ) : (
+            <List
+              dense
+              sx={{
+                height: 250,
+                overflowY: "auto",
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                overscrollBehavior: "contain",
+              }}
+              onScroll={handleScroll}
+            >
+              {completions.map((option) => {
+                const isGroup = option.kind === "group" || option.kind === "category";
+                const isSelected = flatMode
+                  ? selectedLeaf?.path === option.path
+                  : selectedLeaf?.insertText === option.insertText;
+                const flatBreadcrumb =
+                  flatMode && option.path
+                    ? option.path
+                        .split(".")
+                        .map((seg) => segmentLabels[seg] || formatSegment(seg))
+                        .join(" › ")
+                    : null;
+                return (
+                  <Tooltip
+                    describeChild
+                    title={option.detail}
+                    placement="right"
+                    enterDelay={400}
+                    arrow
+                    key={option.insertText}
+                  >
+                    <ListItemButton selected={isSelected} onClick={() => handleNavigate(option)}>
+                      <ListItemText
+                        primary={
+                          flatBreadcrumb ? (
+                            <Typography variant="body2" sx={{ fontWeight: isSelected ? 600 : 400 }}>
+                              {flatBreadcrumb}
                             </Typography>
-                            {isGroup && <ChevronRight sx={{ fontSize: 16, color: "text.secondary" }} />}
-                          </Box>
-                        )
-                      }
-                    />
-                  </ListItemButton>
-                </Tooltip>
-              );
-            })}
-            {completions.length === 0 && !isLoading && (
-              <Typography variant="body2" sx={{ color: "text.secondary", px: 2, py: 1 }}>
-                No results
-              </Typography>
-            )}
-            {isFetchingNextPage && (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
-                <DiceSpinner size="small" />
-              </Box>
-            )}
-          </List>
+                          ) : (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <Typography variant="body2" sx={{ fontWeight: isGroup || isSelected ? 600 : 400 }}>
+                                {segmentLabels[option.label] || formatSegment(option.label)}
+                              </Typography>
+                              {isGroup && <ChevronRight sx={{ fontSize: 16, color: "text.secondary" }} />}
+                            </Box>
+                          )
+                        }
+                      />
+                    </ListItemButton>
+                  </Tooltip>
+                );
+              })}
+              {isFetchingNextPage && (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+                  <DiceSpinner size="small" />
+                </Box>
+              )}
+            </List>
+          )}
         </>
       )}
     </Box>

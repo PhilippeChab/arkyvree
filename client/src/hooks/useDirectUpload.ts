@@ -28,7 +28,7 @@ export function useDetachAttachment(slot: SlotParams) {
     mutationFn: (attachmentId: string) =>
       parseResponse(rpc.api.attachments[":id"].$delete({ param: { id: attachmentId } })),
     onSuccess: () => refreshSlot(queryClient, slot),
-    onError: (error) => snackbar.error(error),
+    onError: (error) => snackbar.error(error, "Failed to remove attachment"),
   });
 }
 
@@ -70,7 +70,7 @@ export function useDirectUpload(slot: SlotParams) {
     },
     onSuccess: () => refreshSlot(queryClient, slot),
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to attach file");
     },
   });
 }

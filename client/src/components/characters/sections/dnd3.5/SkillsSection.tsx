@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { useMemo } from "react";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
@@ -27,15 +27,15 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
             <Table size="small" sx={{ minWidth: 400, tableLayout: "fixed" }}>
               <colgroup>
                 <col />
-                <col style={{ width: 50 }} />
-                <col style={{ width: 50 }} />
-                <col style={{ width: 50 }} />
-                <col style={{ width: 50 }} />
-                <col style={{ width: 50 }} />
+                <Box component="col" sx={{ width: 50 }} />
+                <Box component="col" sx={{ width: 50 }} />
+                <Box component="col" sx={{ width: 50 }} />
+                <Box component="col" sx={{ width: 50 }} />
+                <Box component="col" sx={{ width: 50 }} />
               </colgroup>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Skill</TableCell>
+                  <TableCell>Skill</TableCell>
                   <TableCell align="center" sx={columnHeaderSx}>
                     Rank
                   </TableCell>

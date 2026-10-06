@@ -6,36 +6,19 @@ import {
   Edit as EditIcon,
   Tune as TuneIcon,
 } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Chip,
-  DialogContent,
-  IconButton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Chip, DialogContent, IconButton, Stack, Toolbar, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 
 import {
-  BlankState,
   CreateDialog,
+  DataTable,
+  type DataTableColumn,
   DeleteDialog,
-  DiceSpinner,
   EditDialog,
   FaqHelpIcon,
   Modal,
-  ROW_ACTIONS_HOVER_SX,
-  ROW_ACTIONS_SX,
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_MODIFIER,
@@ -61,6 +44,13 @@ interface CharacterModifiersModalProps {
   characterId: string;
   rulesetId: string;
 }
+
+/** A character's modifiers' columns; each row's actions sit over its last. */
+const MODIFIER_COLUMNS: DataTableColumn[] = [
+  { key: "target", label: "Target", width: "45%" },
+  { key: "operator", label: "Operator", width: "20%" },
+  { key: "value", label: "Value", width: "35%" },
+];
 
 export function CharacterModifiersModal({ open, onClose, characterId, rulesetId }: CharacterModifiersModalProps) {
   const snackbar = useSnackbar();
@@ -104,7 +94,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       setCreateOpen(false);
       invalidate();
     },
-    onError: (error) => snackbar.error(error),
+    onError: (error) => snackbar.error(error, "Failed to create modifier"),
   });
 
   const updateMutation = useMutation({
@@ -122,7 +112,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       setSelectedModifier(null);
       invalidate();
     },
-    onError: (error) => snackbar.error(error),
+    onError: (error) => snackbar.error(error, "Failed to update modifier"),
   });
 
   const deleteMutation = useMutation({
@@ -139,7 +129,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       setSelectedModifier(null);
       invalidate();
     },
-    onError: (error) => snackbar.error(error),
+    onError: (error) => snackbar.error(error, "Failed to delete modifier"),
   });
 
   const handleEdit = (modifier: Modifier) => {
@@ -203,87 +193,52 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         </Toolbar>
 
         <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
-          {isLoading ? (
-            <DiceSpinner sx={{ py: 8 }} />
-          ) : modifiers.length === 0 ? (
-            <BlankState
-              icon={TuneIcon}
-              title="No modifiers"
-              description="Add custom bonuses or overrides to this character."
-            />
-          ) : (
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 600, width: "40%" }}>Target</TableCell>
-                    <TableCell sx={{ fontWeight: 600, width: "15%" }}>Operator</TableCell>
-                    <TableCell sx={{ fontWeight: 600, width: "25%" }}>Value</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600, width: "20%" }} />
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {modifiers.map((mod) => (
-                    <TableRow
-                      key={mod.id}
-                      hover
-                      sx={{
-                        position: "relative",
-                        ...ROW_ACTIONS_HOVER_SX,
-                      }}
-                    >
-                      <TableCell>
-                        <TargetPathBreadcrumbs target={mod.target} targetLabels={mod.targetLabels} />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={MODIFIER_OPERATOR_LABELS[mod.operator] || mod.operator}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {(() => {
-                          const templatePath = extractTemplatePath(mod.value);
-                          if (templatePath) {
-                            return <TargetPathBreadcrumbs target={templatePath} targetLabels={mod.targetLabels} />;
-                          }
-                          return <Typography variant="body2">{mod.value}</Typography>;
-                        })()}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Box
-                          className="row-actions"
-                          sx={{
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            gap: 0.5,
-                            ...ROW_ACTIONS_SX,
-                          }}
-                        >
-                          <IconButton size="small" aria-label="Edit modifier" onClick={() => handleEdit(mod)}>
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" aria-label="Duplicate modifier" onClick={() => handleDuplicate(mod)}>
-                            <ContentCopyIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            aria-label="Delete modifier"
-                            onClick={() => handleDelete(mod)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+          <DataTable
+            rows={modifiers}
+            isLoading={isLoading}
+            columns={MODIFIER_COLUMNS}
+            size="small"
+            minWidth={0}
+            renderCell={(mod, column) => {
+              if (column === "target")
+                return <TargetPathBreadcrumbs target={mod.target} targetLabels={mod.targetLabels} />;
+              if (column === "operator") {
+                return (
+                  <Chip
+                    label={MODIFIER_OPERATOR_LABELS[mod.operator] || mod.operator}
+                    size="small"
+                    color="secondary"
+                    variant="outlined"
+                  />
+                );
+              }
+              const templatePath = extractTemplatePath(mod.value);
+              return templatePath ? (
+                <TargetPathBreadcrumbs target={templatePath} targetLabels={mod.targetLabels} />
+              ) : (
+                <Typography variant="body2">{mod.value}</Typography>
+              );
+            }}
+            actions={(mod) => [
+              { label: "Edit modifier", icon: <EditIcon fontSize="small" />, onClick: () => handleEdit(mod) },
+              {
+                label: "Duplicate modifier",
+                icon: <ContentCopyIcon fontSize="small" />,
+                onClick: () => handleDuplicate(mod),
+              },
+              {
+                label: "Delete modifier",
+                icon: <DeleteIcon fontSize="small" />,
+                onClick: () => handleDelete(mod),
+                color: "error",
+              },
+            ]}
+            empty={{
+              icon: TuneIcon,
+              title: "No modifiers",
+              description: "Add custom bonuses or overrides to this character.",
+            }}
+          />
         </DialogContent>
       </Modal>
       <CreateDialog

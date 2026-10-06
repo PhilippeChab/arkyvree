@@ -77,8 +77,8 @@ A separate flow from auth-route entry:
 
 ```
 Demo user uses app, demo TTL hits server-side (1 hour)
-   Next API call returns 401
-   handleGlobalError (client/src/App.tsx):
+   Next API call returns 401 (SessionError: a wrong credential's 401 never signs out)
+   handleGlobalError (client/src/lib/queryClient.ts):
      user.expiresAt set ⇒ localStorage.setItem(DEMO_EXPIRED_FLAG, "1")
      clearSession()
    React re-renders ⇒ /current-path no longer matches authed Layout
@@ -114,7 +114,8 @@ There's no `BroadcastChannel`-based active sync today. Recovery happens lazily v
 
 | File | Purpose |
 |---|---|
-| `client/src/App.tsx` | `AppRoutes` static tree, `PrivateRoute` guard, `handleGlobalError` 401 handler |
+| `client/src/App.tsx` | `AppRoutes` static tree, `PrivateRoute` guard |
+| `client/src/lib/queryClient.ts` | `handleGlobalError`: a `SessionError` (the session's 401) signs out, or sends a demo to `/demo-expired` |
 | `client/src/components/auth/AuthLayout.tsx` | `AuthLayoutRoute` — demo signOut on entry, real-user redirect |
 | `client/src/components/layout/PublicLayout.tsx` | Public toolbar with auth-aware CTA |
 | `client/src/components/layout/Layout.tsx` | In-app shell, `isDemo` feature gates |

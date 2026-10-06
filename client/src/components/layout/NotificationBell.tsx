@@ -8,11 +8,8 @@ import { useNavigate } from "react-router-dom";
 
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
-import {
-  formatActivityDetails,
-  formatNotificationMessage,
-  formatRelativeTime,
-} from "@/client/src/lib/activityFormatters.ts";
+import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
+import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";

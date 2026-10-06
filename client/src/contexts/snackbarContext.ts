@@ -15,10 +15,13 @@ export interface ToastOptions {
 export interface SnackbarContextType {
   success: (message: string, options?: ToastOptions) => void;
   /**
-   * Show an error toast. Accepts a plain string, an Error (uses `.message`),
-   * or anything else (falls back to `fallback`).
+   * Show an error toast: a message, or what failed (`err`): its message, else `fallback`, which names what failed
+   * ("Failed to save character"), so a failure never goes unsaid.
    */
-  error: (err: unknown, fallback?: string) => void;
+  error: {
+    (message: string): void;
+    (err: unknown, fallback: string): void;
+  };
   info: (message: string, options?: ToastOptions) => void;
   warning: (message: string) => void;
 }

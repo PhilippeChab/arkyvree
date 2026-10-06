@@ -1,4 +1,4 @@
-import { Box, TextField } from "@mui/material";
+import { Box, FormHelperText, TextField } from "@mui/material";
 import { useRef } from "react";
 
 import { VERIFICATION_CODE_LENGTH } from "@/client/src/lib/verificationCode.ts";
@@ -6,13 +6,15 @@ import { VERIFICATION_CODE_LENGTH } from "@/client/src/lib/verificationCode.ts";
 interface VerificationCodeInputProps {
   digits: string[];
   onChange: (digits: string[]) => void;
+  /** Why the code was refused ("Invalid code"), under its boxes */
+  error?: string;
 }
 
 /**
  * One box per digit of an emailed code. Typing advances focus, Backspace on an
  * empty box moves back, and pasting a whole code fills the following boxes.
  */
-export function VerificationCodeInput({ digits, onChange }: VerificationCodeInputProps) {
+export function VerificationCodeInput({ digits, onChange, error }: VerificationCodeInputProps) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const lastIndex = VERIFICATION_CODE_LENGTH - 1;
 
@@ -45,32 +47,37 @@ export function VerificationCodeInput({ digits, onChange }: VerificationCodeInpu
   };
 
   return (
-    <Box sx={{ display: "flex", gap: 1, justifyContent: "center", mb: 3 }}>
-      {digits.map((digit, index) => (
-        <TextField
-          key={index}
-          inputRef={(el) => {
-            inputRefs.current[index] = el;
-          }}
-          value={digit}
-          onChange={(e) => handleChange(index, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(index, e)}
-          sx={{ width: { xs: 36, sm: 44 } }}
-          slotProps={{
-            htmlInput: {
-              maxLength: VERIFICATION_CODE_LENGTH,
-              "aria-label": `Digit ${index + 1}`,
-              style: {
-                textAlign: "center",
-                fontSize: "1.5rem",
-                fontWeight: "bold",
-                padding: "12px 0",
+    <Box sx={{ mb: 3 }}>
+      <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+        {digits.map((digit, index) => (
+          <TextField
+            key={index}
+            inputRef={(el) => {
+              inputRefs.current[index] = el;
+            }}
+            value={digit}
+            onChange={(e) => handleChange(index, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(index, e)}
+            error={!!error}
+            sx={{
+              width: { xs: 36, sm: 44 },
+              "& input": { textAlign: "center", fontSize: "1.5rem", fontWeight: "bold", py: 1.5, px: 0 },
+            }}
+            slotProps={{
+              htmlInput: {
+                maxLength: VERIFICATION_CODE_LENGTH,
+                "aria-label": `Digit ${index + 1}`,
+                inputMode: "numeric",
               },
-              inputMode: "numeric",
-            },
-          }}
-        />
-      ))}
+            }}
+          />
+        ))}
+      </Box>
+      {error && (
+        <FormHelperText error sx={{ textAlign: "center" }}>
+          {error}
+        </FormHelperText>
+      )}
     </Box>
   );
 }

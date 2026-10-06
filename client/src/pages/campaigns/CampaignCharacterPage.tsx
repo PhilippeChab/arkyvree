@@ -4,7 +4,7 @@ import {
   Edit as EditIcon,
   MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
-import { Alert, Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
+import { Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -47,10 +47,11 @@ export default function CampaignCharacterPage() {
     then();
   };
 
+  // The route always has both ids: only a malformed link lacks one
   if (!campaignId || !characterId) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error">Invalid campaign or character ID.</Alert>
+      <Container maxWidth="xl" sx={{ py: 2 }}>
+        <PageError message="Character not found" backLabel="Back to Campaigns" onBack={() => navigate("/campaigns")} />
       </Container>
     );
   }
