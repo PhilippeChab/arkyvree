@@ -233,6 +233,8 @@ function hasIndex(dir) {
 /** Whether a statement exports another module's: from it (`export … from`), or through what the file imports. */
 function reExports(statement, imported) {
   if (statement.type === "ExportAllDeclaration") return true;
+  // `export default x`, of what the file imports, is another module's too
+  if (statement.type === "ExportDefaultDeclaration") return imported.has(statement.declaration.name);
   if (statement.type !== "ExportNamedDeclaration" || statement.declaration) return false;
   return Boolean(statement.source) || statement.specifiers.some((s) => imported.has(s.local.name));
 }

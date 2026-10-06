@@ -24,6 +24,8 @@ describe("architecture rules", () => {
           // A module re-exporting from another, or what it imports
           "server/d.ts": 'export { f } from "./a/f.ts";\n',
           "server/e.ts": 'import { f } from "./a/f.ts";\nexport { f };\nexport const h = f;\n',
+          // A module making what it imports its default export
+          "server/g.ts": 'import f from "./a/f.ts";\nexport default f;\n',
         },
         ["re-exports"],
       ),
@@ -33,6 +35,7 @@ describe("architecture rules", () => {
       "re-exports server/c/index.ts",
       "re-exports server/d.ts",
       "re-exports server/e.ts",
+      "re-exports server/g.ts",
     ]);
   });
 
