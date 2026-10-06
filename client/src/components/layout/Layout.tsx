@@ -168,7 +168,11 @@ export function Layout() {
       Object.fromEntries(
         sidebarItems.map(({ id }) => [
           id,
-          (el: HTMLElement | null) => setSidebarItemEls((prev) => (prev[id] === el ? prev : { ...prev, [id]: el })),
+          // A router Link hands its ref a new callback each render, detaching it (null) first: keep the element,
+          // or each render would set state again
+          (el: HTMLElement | null) => {
+            if (el) setSidebarItemEls((prev) => (prev[id] === el ? prev : { ...prev, [id]: el }));
+          },
         ]),
       ),
     [],
@@ -307,7 +311,7 @@ export function Layout() {
       >
         <Toolbar />
         <Stack sx={{ flex: 1, minHeight: 0, position: "relative" }}>
-          <Stack component={List} disablePadding spacing={1} sx={{ flex: 1, pt: 2, px: 1 }}>
+          <Stack component={List} disablePadding spacing={1} sx={{ flex: 1, pt: 2, px: 1.5 }}>
             {sidebarItems.map((item) => (
               <ListItem key={item.id} disablePadding>
                 <ListItemButton
@@ -329,8 +333,8 @@ export function Layout() {
                     justifyContent: isMobile || effectiveExpanded ? "flex-start" : "center",
                     px: isMobile || effectiveExpanded ? 2 : 1.5,
                     py: 1,
+                    gap: isMobile || effectiveExpanded ? 2 : 0,
                     borderRadius: 3,
-                    mx: 0.5,
                     position: "relative",
                     overflow: "hidden",
                     transition: transitionOf(["all"], DURATION.normal, EASING.emphasized),
@@ -397,7 +401,6 @@ export function Layout() {
                     sx={{
                       minWidth: 0,
                       justifyContent: "center",
-                      mr: isMobile || effectiveExpanded ? 2 : 0,
                       transition: transitionOf(["all"], DURATION.slow, EASING.emphasized),
                       "& .MuiSvgIcon-root": {
                         transition: transitionOf(["transform"]),

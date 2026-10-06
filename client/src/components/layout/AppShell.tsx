@@ -29,15 +29,10 @@ function belowToolbar(toolbar: CSSObject): CSSObject {
 /** Logo and wordmark shown in the app bar. */
 export function AppBrand() {
   return (
-    <>
-      <Box
-        component="img"
-        src="/pwa-192x192.png"
-        alt=""
-        sx={{ width: 28, height: 28, mr: 1, verticalAlign: "middle" }}
-      />
-      Arkyvree
-    </>
+    <Stack component="span" direction="row" spacing={1} sx={{ display: "inline-flex", alignItems: "center" }}>
+      <Box component="img" src="/pwa-192x192.png" alt="" sx={{ width: 28, height: 28 }} />
+      <span>Arkyvree</span>
+    </Stack>
   );
 }
 

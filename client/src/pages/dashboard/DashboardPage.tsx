@@ -230,8 +230,7 @@ export default function DashboardPage() {
               "&:hover": { color: "common.white" },
             }}
           >
-            <HelpIcon fontSize="compact" sx={{ mr: 0.5, verticalAlign: "middle" }} />
-            Help
+            <HelpIcon fontSize="compact" sx={{ verticalAlign: "middle" }} /> Help
           </MuiLink>
         </Stack>
       </Paper>

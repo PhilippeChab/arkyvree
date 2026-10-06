@@ -177,8 +177,8 @@ export function TargetPathBrowser({
       {/* Breadcrumbs */}
       <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", alignItems: "center", minHeight: 32 }}>
         {breadcrumbSegments.map((segment, index) => (
-          <Stack key={index} direction="row" sx={{ alignItems: "center" }}>
-            {index > 0 && <ChevronRightIcon fontSize="compact" sx={{ color: "text.secondary", mx: 0.25 }} />}
+          <Stack key={index} direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            {index > 0 && <ChevronRightIcon fontSize="compact" sx={{ color: "text.secondary" }} />}
             <TagChip
               tag={{
                 label: segmentLabels[segment] || formatSegment(segment),
@@ -189,7 +189,7 @@ export function TargetPathBrowser({
           </Stack>
         ))}
         {breadcrumbSegments.length > 0 && !disabled && (
-          <IconButton size="small" aria-label="Clear path" onClick={handleClear} sx={{ ml: 0.5 }}>
+          <IconButton size="small" aria-label="Clear path" onClick={handleClear}>
             <ClearIcon fontSize="small" />
           </IconButton>
         )}

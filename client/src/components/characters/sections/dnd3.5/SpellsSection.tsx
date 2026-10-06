@@ -78,14 +78,16 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
         sx={{ alignItems: "center", ...CLICKABLE_SX }}
       >
         <ExpandArrow open={open} />
-        <Typography component="h4" variant="subtitle2" sx={{ fontWeight: 600 }}>
-          {label} ({group.spells.length})
+        <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
+          <Typography component="h4" variant="subtitle2" sx={{ fontWeight: 600 }}>
+            {label} ({group.spells.length})
+          </Typography>
           {group.uses != null && (
-            <Typography component="span" variant="body2" sx={{ color: "text.secondary", ml: 1 }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               — {group.uses}/day
             </Typography>
           )}
-        </Typography>
+        </Stack>
       </Stack>
       <Collapse in={open} unmountOnExit>
         <TableContainer sx={{ overflowX: "auto" }}>

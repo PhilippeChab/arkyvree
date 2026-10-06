@@ -81,8 +81,9 @@
  * - `pending-buttons`: a button that starts a request shows it running, its label in a `DiceSpinner`.
  * - `menus`: a menu lists its items alone: an action is an `ActionMenuItem`, one of several to choose a `MenuItem`
  *   marked `selected` (a filter, a sort, a visibility); a panel that opens from a button is a `Popover`.
- * - `spacing`: the gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s), never a
- *   block's own margin (`mt`, `mb`, `my`); a heading's gutter is `gutterBottom`.
+ * - `spacing`: the gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s, a row's its
+ *   `spacing` or a flex component's `gap`), never a block's own margin, on any side; an indent is padding, a heading's
+ *   gutter `gutterBottom`. A margin only aligns (`auto`) or resets (`0`).
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -232,6 +233,22 @@ const LABELLED = new Set(["ActionMenuItem", "Button", "MenuItem"]);
 /** The fields, besides the bound ones, whose `label` names them */
 const LABELLED_FIELDS = new Set(["FormControlLabel", "SwitchField", "TextField"]);
 
+/** The style keys that set a box's margin, on any side */
+const MARGINS = new Set([
+  "m",
+  "margin",
+  "marginBottom",
+  "marginLeft",
+  "marginRight",
+  "marginTop",
+  "mb",
+  "ml",
+  "mr",
+  "mt",
+  "mx",
+  "my",
+]);
+
 /** What a `Menu` holds: its items, and the dividers between them */
 const MENU_CHILDREN = new Set(["ActionMenuItem", "Divider", "MenuItem"]);
 
@@ -340,10 +357,18 @@ const TOP_SPACING = new Set(["marginTop", "mt", "my", "paddingTop", "pt"]);
 /** The props an input takes its value through. */
 const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
 
-/** The style keys that space a block from the ones above and below it */
-const VERTICAL_MARGINS = new Set(["marginBottom", "marginTop", "mb", "mt", "my"]);
+/**
+ * The string a JSX attribute holds, when it's written out (`variant="outlined"`).
+ *
+ * Whether a margin only aligns (`auto`) or resets (`0`), on every side and screen it names
+ */
+function alignsOrResets(value) {
+  if (value.type === "ObjectExpression")
+    return value.properties.every((p) => p.type === "Property" && alignsOrResets(p.value));
+  if (value.type !== "Literal") return false;
+  return value.value === 0 || (typeof value.value === "string" && /^(0|auto)( (0|auto)){0,3}$/.test(value.value));
+}
 
-/** The string a JSX attribute holds, when it's written out (`variant="outlined"`). */
 function attributeText(element, name) {
   const attribute = element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
   if (!attribute) return undefined;
@@ -1226,13 +1251,14 @@ function createSpacing(context) {
   return {
     Property(node) {
       const key = node.key.type === "Identifier" ? node.key.name : null;
-      if (!VERTICAL_MARGINS.has(key) || node.parent.type !== "ObjectExpression" || !sxOwner(node.parent)) return;
-      if (node.value.type === "Literal" && node.value.value === 0) return;
+      if (!MARGINS.has(key) || node.parent.type !== "ObjectExpression" || !sxOwner(node.parent)) return;
+      if (alignsOrResets(node.value)) return;
       context.report({
         node,
         message:
-          "The gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s), never a " +
-          "block's own margin; a heading's gutter is `gutterBottom`.",
+          "The gap between blocks is their `Stack`'s `spacing` (a page's blocks are a `PageBody`'s, a row's its " +
+          "`spacing` or a flex component's `gap`), never a block's own margin; an indent is padding, a heading's " +
+          "gutter `gutterBottom`. A margin only aligns (`auto`) or resets (`0`).",
       });
     },
   };

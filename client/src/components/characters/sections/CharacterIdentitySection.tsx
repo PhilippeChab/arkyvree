@@ -372,7 +372,7 @@ export function CharacterIdentitySection({
             {!partial &&
               (readOnly ? (
                 <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary", mr: 1 }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     Languages:
                   </Typography>
                   {selectedLanguages.length === 0 ? (

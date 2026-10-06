@@ -282,7 +282,6 @@ export function RequirementsSection({
           <Card
             variant="outlined"
             sx={{
-              ml: node.requirement.level.split(".").length > 1 ? { xs: 0, sm: 1 } : 0, // Indent children
               borderLeft: node.requirement.level.split(".").length > 1 ? 3 : 0, // Visual hierarchy
               borderColor: "primary.main",
             }}

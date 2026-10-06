@@ -51,7 +51,6 @@ export function DemoBanner() {
           size="small"
           onClick={goToSignUp}
           sx={{
-            ml: 0.5,
             py: 0,
             px: 1.5,
             minHeight: 26,

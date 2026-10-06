@@ -903,7 +903,7 @@ describe("frontend rules", () => {
     ).toEqual(["menus client/src/action.tsx", "menus client/src/mapped.tsx", "menus client/src/panel.tsx"]);
   });
 
-  test("the gap between blocks is their Stack's spacing, never a margin", async () => {
+  test("the gap between blocks is their Stack's spacing, never a margin on any side; a margin only aligns or resets", async () => {
     expect(
       await lintRepo(
         {
@@ -914,10 +914,19 @@ describe("frontend rules", () => {
             "export const s = (\n  <Stack spacing={3}>\n    <Typography>Title</Typography>\n    <Button>Save</Button>\n  </Stack>\n);\n",
           "client/src/reset.tsx": 'export const r = <Box component="ul" sx={{ mb: 0, mx: "auto", pl: 2 }} />;\n',
           "client/src/nested.tsx": 'export const n = <Box sx={{ "& .MuiTreeItem-content": { py: 0.5 } }} />;\n',
+          "client/src/side.tsx": "export const d = <IconButton sx={{ ml: 0.5 }} />;\n",
+          "client/src/bleed.tsx": "export const e = <TableContainer sx={{ mx: { xs: -2, sm: 0 } }} />;\n",
+          "client/src/centered.tsx": 'export const c = <Box sx={{ margin: "0 auto", mx: { xs: 0, sm: "auto" } }} />;\n',
         },
         ["spacing"],
       ),
-    ).toEqual(["spacing client/src/above.tsx", "spacing client/src/below.tsx", "spacing client/src/both.tsx"]);
+    ).toEqual([
+      "spacing client/src/above.tsx",
+      "spacing client/src/below.tsx",
+      "spacing client/src/bleed.tsx",
+      "spacing client/src/both.tsx",
+      "spacing client/src/side.tsx",
+    ]);
   });
 
   test("a button that starts a request shows it running", async () => {

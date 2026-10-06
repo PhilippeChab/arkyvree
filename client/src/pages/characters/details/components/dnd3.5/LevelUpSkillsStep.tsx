@@ -235,27 +235,29 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
             Auto
           </Button>
         </Stack>
-        <Typography
-          component="p"
-          variant="subtitle2"
-          sx={{
-            color:
-              pointsSpent > skillData.skillPointsToSpend
-                ? "error.main"
-                : pointsSpent === skillData.skillPointsToSpend
-                  ? "success.main"
-                  : "text.secondary",
-          }}
-        >
-          Points Spent: {pointsSpent} / {skillData.skillPointsToSpend}
+        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+          <Typography
+            component="p"
+            variant="subtitle2"
+            sx={{
+              color:
+                pointsSpent > skillData.skillPointsToSpend
+                  ? "error.main"
+                  : pointsSpent === skillData.skillPointsToSpend
+                    ? "success.main"
+                    : "text.secondary",
+            }}
+          >
+            Points Spent: {pointsSpent} / {skillData.skillPointsToSpend}
+          </Typography>
           {pointsRemaining > 0 && (
-            <Box component="span" sx={{ color: "warning.main", ml: 1 }}>
+            <Typography component="p" variant="subtitle2" sx={{ color: "warning.main" }}>
               ({pointsRemaining} remaining)
-            </Box>
+            </Typography>
           )}
-        </Typography>
+        </Stack>
       </Stack>
-      <TableContainer sx={{ overflowX: "auto", mx: { xs: -2, sm: 0 }, width: { xs: "calc(100% + 32px)", sm: "100%" } }}>
+      <TableContainer sx={{ overflowX: "auto" }}>
         <Table size="small" sx={{ minWidth: 420, tableLayout: "fixed" }}>
           <colgroup>
             <col />

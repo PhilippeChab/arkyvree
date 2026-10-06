@@ -59,7 +59,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
             </Box>
 
             {/* AC Breakdown */}
-            <Box sx={{ ml: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+            <Box sx={{ pl: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
               {AC_PARTS.map(([label, part]) => (
                 <Typography key={part} variant="caption" sx={{ color: "text.secondary" }}>
                   {label}: {formatSigned(combat?.ac?.[part])}
@@ -87,7 +87,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
                     <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
                       {displayName}: {formatSigned(total)}
                     </Typography>
-                    <Stack direction="row" spacing={3} sx={{ ml: 2 }}>
+                    <Stack direction="row" spacing={3} sx={{ pl: 2 }}>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         Base: {formatSigned(saveData?.base)}
                       </Typography>

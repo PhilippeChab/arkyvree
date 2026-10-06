@@ -134,7 +134,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                         </Stack>
                       );
                       return (
-                        <ListItem key={key} disablePadding sx={{ pr: showRevert ? 1 : 0 }}>
+                        <ListItem key={key} disablePadding sx={{ pr: showRevert ? 1 : 0, gap: 0.5 }}>
                           {url ? (
                             <ListItemButton component={Link} to={url} target="_blank">
                               {rowContent}
@@ -153,7 +153,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                                   })
                                 }
                                 disabled={revertMutation.isPending}
-                                sx={{ flexShrink: 0, ml: 0.5 }}
+                                sx={{ flexShrink: 0 }}
                               >
                                 <DiceSpinner
                                   size="small"
