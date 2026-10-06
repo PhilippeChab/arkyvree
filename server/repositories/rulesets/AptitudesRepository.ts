@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNotNull, isNull, notInArray } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 
 import { aptitudesInRules, featsAptitudesInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
@@ -49,10 +49,10 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
 
   async findPage(
     db: Db,
-    where: RulesetEntityFilters<{ scope?: "feats" | "spells"; excludeIds?: string[] }>,
+    where: RulesetEntityFilters<{ scope?: "feats" | "spells" }>,
     pagination: { limit: number; page: number },
   ) {
-    const { search, orderBy = "name", orderDir = "asc", scope, excludeIds } = where;
+    const { search, orderBy = "name", orderDir = "asc", scope } = where;
     const searchColumns = [this.table.name, this.table.description];
     const searchConditions = this.fuzzySearch(search, searchColumns);
 
@@ -63,19 +63,11 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
           ? inArray(this.table.id, db.select({ id: powersAptitudesInRules.aptitudeId }).from(powersAptitudesInRules))
           : false;
 
-    const excludeCondition = excludeIds && excludeIds.length > 0 ? notInArray(this.table.id, excludeIds) : false;
-
     const rulesetCondition = this.buildRulesetCondition(db, where);
 
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.aptitudesInRules.findMany({
-        where: this.where([
-          rulesetCondition,
-          isNull(this.table.deletedAt),
-          searchConditions,
-          scopeCondition,
-          excludeCondition,
-        ]),
+        where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions, scopeCondition]),
         orderBy: this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
         limit,
         offset,

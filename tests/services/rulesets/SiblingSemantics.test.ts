@@ -11,11 +11,26 @@ import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedChar
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
+import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+
+/** Every page of a list, by its size and its ids. */
+async function readPages(getPage: (page: number) => Promise<{ items: { id: string }[]; nextPage?: number }>) {
+  const pages: string[][] = [];
+  let page: number | undefined = 1;
+  while (page) {
+    const result = await getPage(page);
+    pages.push(result.items.map((item) => item.id));
+    page = result.nextPage;
+  }
+  return pages;
+}
 
 async function setup(
   configure: (extensionId: string, baseId: string, index: number) => Promise<void>,
@@ -43,6 +58,25 @@ async function setup(
 }
 
 afterEach(() => RulesetCache.invalidateAll());
+
+test("a list leaves out a book's copy that lost to another book's in its query: its pages are full", async () => {
+  const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
+  const staleIds = await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
+    expect(rulesetData.cow.siblingIds.size).toBeGreaterThan(0);
+    return new Set(rulesetData.cow.idResolveMap.keys());
+  });
+  const pagination = (page: number) => ({ limit: 100, page });
+  for (const getPage of [
+    (page: number) => PowersService.getPowers(fork.id, {}, pagination(page)),
+    (page: number) => FeatsService.getFeats(fork.id, {}, pagination(page)),
+    (page: number) => ClassesService.getClasses(fork.id, {}, pagination(page)),
+    (page: number) => AptitudesService.getAptitudes(fork.id, {}, pagination(page)),
+  ]) {
+    const pages = await readPages(getPage);
+    expect(pages.slice(0, -1).every((ids) => ids.length === 100)).toBe(true);
+    expect(pages.flat().filter((id) => staleIds.has(id))).toEqual([]);
+  }
+}, 30_000);
 
 test("editing a shared aptitude preserves references from both extensions", async () => {
   const aptitudeIds: string[] = [];

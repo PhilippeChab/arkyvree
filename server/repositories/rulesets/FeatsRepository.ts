@@ -1,4 +1,4 @@
-import { and, count, eq, getTableColumns, inArray, isNull, notInArray, sql } from "drizzle-orm";
+import { and, count, eq, getTableColumns, inArray, isNull, sql } from "drizzle-orm";
 
 import {
   featsInRules,
@@ -56,7 +56,6 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
       ancestorRulesetIds?: string[];
       childOnly?: boolean;
       ids?: string[];
-      excludeIds?: string[];
       search?: string;
     },
     pagination: { limit: number; page: number },
@@ -64,9 +63,6 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     const { search } = where;
     const searchCondition = this.search(search, [this.table.name]);
     const { limit, offset } = this.paginate(pagination);
-
-    const excludeCondition =
-      where.excludeIds && where.excludeIds.length > 0 ? notInArray(this.table.id, where.excludeIds) : false;
 
     const rulesetCondition = this.buildRulesetCondition(db, where);
     const prop = propertiesInCustomization;
@@ -94,7 +90,6 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
           isNull(this.table.deletedAt),
           searchCondition,
           where.ids !== undefined && inArray(this.table.id, where.ids),
-          excludeCondition,
         ]),
       )
       .groupBy(sql`coalesce(${prop.value}, ${this.table.id}::text)`)

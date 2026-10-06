@@ -39,17 +39,8 @@ class AptitudesService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain, idResolveMap } = rulesetData.cow;
-      // Exclude loser aptitude IDs (and any other id-canonicalize keys) at the
-      // DB level so pagination counts are accurate. idResolveMap is the right
-      // source: includes aptitude name-grouping losers, sibling losers, and
-      // overridden source IDs — all things that shouldn't appear in the list.
-      const excludeIds = sourceChain.length > 0 && !where.childOnly ? [...idResolveMap.keys()] : undefined;
-      return await Aptitudes.findPage(
-        db,
-        { rulesetId, ancestorRulesetIds: sourceChain, excludeIds, ...where },
-        pagination,
-      );
+      const { sourceChain } = rulesetData.cow;
+      return await Aptitudes.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
   }
 

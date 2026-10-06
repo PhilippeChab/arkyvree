@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import {
   assertEntityNameAvailable,
@@ -18,9 +18,9 @@ import type { ServiceHooks } from "@/server/rulesets/hooks/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
-
-import { findRulesetPowers } from "./findRulesetPowers.ts";
 
 interface PowerBody {
   name: string;
@@ -56,6 +56,26 @@ const SPELL_FIELDS = [
 ] as const satisfies (keyof PowerBody)[];
 
 class PowersService {
+  /**
+   * The ids a page of powers is drawn from: those on a class's spell list (none when its levels give slots in none) or
+   * on a list, at a level when one is given, or at a level on any list; every power when none of these is given.
+   */
+  private getListedPowerIds(
+    baseRules: BaseRules,
+    rulesetData: CachedRulesetData,
+    rulesetId: string,
+    where: { aptitudeId?: string; classId?: string; level?: number },
+  ) {
+    if (where.classId !== undefined) {
+      const { sourceChain } = rulesetData.cow;
+      const klass = findScopedEntity(rulesetData.klassesById, where.classId, rulesetId, sourceChain, "Class");
+      const listId = RulesetFactory.fromBaseRules(baseRules).hooks.classLevels.getSpellListId(rulesetData, klass.id);
+      return listId === undefined ? [] : getListPowerIds(rulesetData, { aptitudeId: listId, level: where.level });
+    }
+    if (where.aptitudeId === undefined && where.level == null) return undefined;
+    return getListPowerIds(rulesetData, where);
+  }
+
   /** Replaces a power's aptitude links with these. */
   private async replaceAptitudes(tx: Db, powerId: string, aptitudes: NonNullable<PowerBody["aptitudes"]>) {
     await PowersAptitudes.delete(tx, { powerId });
@@ -133,14 +153,38 @@ class PowersService {
     });
   }
 
+  /** A page of the ruleset's powers, as its composed view has them: all of them, a list's or a class's (at a level). */
   async getPowers(
     rulesetId: string,
-    where: Parameters<typeof findRulesetPowers>[3],
+    where: {
+      childOnly?: boolean;
+      aptitudeId?: string;
+      classId?: string;
+      level?: number;
+      search?: string;
+      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+    },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
-      findRulesetPowers(db, rulesetData, rulesetId, where, pagination),
-    );
+    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+      const { sourceChain } = rulesetData.cow;
+      const { aptitudeId, classId, level, ...filters } = where;
+      const ids = this.getListedPowerIds(ruleset.baseRules, rulesetData, rulesetId, { aptitudeId, classId, level });
+      const result = await Powers.findPage(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, ...filters, ids },
+        pagination,
+      );
+      // Each inherited power's lists as the ruleset composes them: its siblings' links merged in, their ids remapped
+      if (sourceChain.length > 0 && !where.childOnly) {
+        result.items = result.items.map((power) => {
+          const merged = rulesetData.powersById.get(power.id);
+          return merged ? { ...power, powersAptitudesInRules: merged.powersAptitudesInRules } : power;
+        });
+      }
+      return result;
+    });
   }
 
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
