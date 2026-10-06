@@ -122,7 +122,7 @@ describe("rulesetCache", () => {
     expect(second.requirementsByEntity.size).toBe(first.requirementsByEntity.size);
   });
 
-  test("lists an entity's modifiers and properties in the order they were made, a tie by target, type and value", async () => {
+  test("lists an entity's modifiers in the order they were made, a tie by target, and its properties as its stat block shows them", async () => {
     const ruleset = await createTestRuleset(SEED_USER_ID);
     const [feat] = await insertRows(featsInRules, [{ rulesetId: ruleset.id, name: `Ordered ${uniqueId()}` }]);
     // Each inserted out of that order, as a read in the plan's order would return them
@@ -140,8 +140,8 @@ describe("rulesetCache", () => {
       modifier("abilities.dex.score", "2026-01-01T00:00:00Z"),
     ]);
     await insertRows(propertiesInCustomization, [
-      { entityId: feat.id, entityType: "feats", type: "DAMAGE_TYPE", value: "Slashing" },
       { entityId: feat.id, entityType: "feats", type: "DAMAGE_TYPE", value: "Piercing" },
+      { entityId: feat.id, entityType: "feats", type: "DAMAGE_TYPE", value: "Slashing" },
     ]);
 
     const data = await RulesetCache.getData(ruleset);
@@ -149,7 +149,8 @@ describe("rulesetCache", () => {
       "abilities.dex.score",
       "abilities.str.score",
     ]);
-    expect(data.propertiesByEntity.get(feat.id)?.map((p) => p.value)).toEqual(["Piercing", "Slashing"]);
+    // A damage type's options are Slashing, Piercing, Bludgeoning
+    expect(data.propertiesByEntity.get(feat.id)?.map((p) => p.value)).toEqual(["Slashing", "Piercing"]);
   });
 
   test("system-seeded rulesets are pinned; user forks (and orphaned forks) are not", async () => {

@@ -4,6 +4,7 @@ import { buildVirtualEntities } from "@/server/rulesets/dnd3.5/buildCharacterRes
 import type DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import {
+  ENTITY_PROPERTY_TYPES,
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,
@@ -22,20 +23,8 @@ import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-/** The spell properties in a 3.5 stat block's order; the others follow by name. */
-const SPELL_PROPERTY_ORDER = [
-  SPELL_SUBSCHOOL,
-  SPELL_DESCRIPTOR,
-  SPELL_COMPONENT,
-  SPELL_MATERIAL,
-  SPELL_CASTING_TIME,
-  SPELL_RANGE_TYPE,
-  SPELL_TARGET,
-  SPELL_AREA_OF_EFFECT,
-  SPELL_DURATION_TYPE,
-  SPELL_DURATION,
-  SPELL_RESISTANCE,
-];
+/** The spell properties in a 3.5 stat block's order (the property types' registry); the others follow by name. */
+const SPELL_PROPERTY_ORDER = Object.keys(ENTITY_PROPERTY_TYPES.powers ?? {});
 const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 
 /**
