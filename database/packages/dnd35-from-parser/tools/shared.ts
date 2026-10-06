@@ -129,11 +129,6 @@ function detectBondedLevelFormula(description: string, classSlug: string): strin
   return base;
 }
 
-/** Re-export stripSeparators — used as the slug function throughout the tools */
-export { stripSeparators } from "@/shared/text.ts";
-
-export { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-
 /** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
 export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {
   if (!/\(any\)/i.test(name)) return undefined;
@@ -401,3 +396,8 @@ export function validateModifiers<M extends ModifierEffect>(
   }
   return { validated, errors };
 }
+
+/** Re-export stripSeparators — used as the slug function throughout the tools */
+export { stripSeparators } from "@/shared/text.ts";
+
+export { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";

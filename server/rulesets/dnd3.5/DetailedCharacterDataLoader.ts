@@ -76,12 +76,6 @@ export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
   klassCasterTypeMap: Map<string, "Arcane" | "Divine">;
 }
 
-/**
- * PMR types re-exported for the two files that reach in for them (`DetailedCharacter.ts`,
- * `DetailedCharacterSpellcasting.ts`). `Dnd35ProjectedCharacterData` is imported directly from `./types.ts`.
- */
-export type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR };
-
 export default class DetailedCharacterDataLoader {
   constructor(private readonly character: Character) {}
 
@@ -764,3 +758,9 @@ export default class DetailedCharacterDataLoader {
     };
   }
 }
+
+/**
+ * PMR types re-exported for the two files that reach in for them (`DetailedCharacter.ts`,
+ * `DetailedCharacterSpellcasting.ts`). `Dnd35ProjectedCharacterData` is imported directly from `./types.ts`.
+ */
+export type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR };
