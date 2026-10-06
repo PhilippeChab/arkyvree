@@ -72,6 +72,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
       ),
       with: {
         powersAptitudesInRules: {
+          orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
           with: {
             aptitudesInRule: true,
           },
@@ -129,6 +130,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
         orderBy: this.pageOrder(this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir))),
         with: {
           powersAptitudesInRules: {
+            orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
             with: {
               aptitudesInRule: true,
             },

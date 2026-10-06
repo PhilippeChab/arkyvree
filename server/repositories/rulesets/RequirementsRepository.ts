@@ -33,6 +33,7 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
         [inArray(this.table.entityId, where.entityIds)],
         ["entityType" in where && eq(this.table.entityType, where.entityType), isNull(this.table.deletedAt)],
       ),
+      orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.entityId), this.orderBy(this.table.level)],
     });
   }
 

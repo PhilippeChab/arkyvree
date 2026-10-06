@@ -266,6 +266,7 @@ class RulesetsRepository extends include(
         ],
         [isNull(this.table.deletedAt)],
       ),
+      orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.id)],
     });
   }
 

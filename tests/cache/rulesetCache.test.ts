@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
-import { featsInRules, itemsInRules } from "@/drizzle/schema.ts";
+import { featsInRules, itemsInRules, modifiersInCustomization, propertiesInCustomization } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
@@ -120,6 +120,37 @@ describe("rulesetCache", () => {
     expect(second.propertiesByEntity.size).toBe(first.propertiesByEntity.size);
     expect(second.modifiersBySource.size).toBe(first.modifiersBySource.size);
     expect(second.requirementsByEntity.size).toBe(first.requirementsByEntity.size);
+  });
+
+  test("lists an entity's modifiers in the order they were made, a tie by target, and its properties as its stat block shows them", async () => {
+    const ruleset = await createTestRuleset(SEED_USER_ID);
+    const [feat] = await insertRows(featsInRules, [{ rulesetId: ruleset.id, name: `Ordered ${uniqueId()}` }]);
+    // Each inserted out of that order, as a read in the plan's order would return them
+    const modifier = (target: string, createdAt: string) => ({
+      sourceId: feat.id,
+      sourceType: "feats",
+      target,
+      value: "1",
+      valueType: "number",
+      operator: "add",
+      createdAt,
+    });
+    await insertRows(modifiersInCustomization, [
+      modifier("abilities.str.score", "2026-01-02T00:00:00Z"),
+      modifier("abilities.dex.score", "2026-01-01T00:00:00Z"),
+    ]);
+    await insertRows(propertiesInCustomization, [
+      { entityId: feat.id, entityType: "feats", type: "DAMAGE_TYPE", value: "Piercing" },
+      { entityId: feat.id, entityType: "feats", type: "DAMAGE_TYPE", value: "Slashing" },
+    ]);
+
+    const data = await RulesetCache.getData(ruleset);
+    expect(data.modifiersBySource.get(feat.id)?.map((m) => m.target)).toEqual([
+      "abilities.dex.score",
+      "abilities.str.score",
+    ]);
+    // A damage type's options are Slashing, Piercing, Bludgeoning
+    expect(data.propertiesByEntity.get(feat.id)?.map((p) => p.value)).toEqual(["Slashing", "Piercing"]);
   });
 
   test("system-seeded rulesets are pinned; user forks (and orphaned forks) are not", async () => {

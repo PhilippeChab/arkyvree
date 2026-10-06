@@ -35,6 +35,7 @@ import {
   SPELL_DESCRIPTOR,
   SPELL_SCHOOL,
 } from "@/shared/dnd3.5/properties/index.ts";
+import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Character,
@@ -56,7 +57,6 @@ import DetailedCharacterShields from "./DetailedCharacterShields.ts";
 import DetailedCharacterSpellcasting from "./DetailedCharacterSpellcasting.ts";
 import DetailedCharacterWeapons from "./DetailedCharacterWeapons.ts";
 import { Dnd35LevelsHooks } from "./hooks/index.ts";
-import { getStaticPropertyValues } from "./PropertyTypes.ts";
 import TargetPaths from "./TargetPaths.ts";
 import type { Dnd35ProjectedCharacterData } from "./types.ts";
 

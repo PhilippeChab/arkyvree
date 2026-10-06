@@ -32,6 +32,11 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
   async findMany(db: Db, where: { klassLevelIds: string[] }) {
     return await db.query.klassLevelPowersInRules.findMany({
       where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
+      orderBy: [
+        this.orderBy(this.table.createdAt),
+        this.orderBy(this.table.klassLevelId),
+        this.orderBy(this.table.powerId),
+      ],
     });
   }
 }

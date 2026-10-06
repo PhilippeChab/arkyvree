@@ -3,6 +3,7 @@
  * source and property, the classes' levels and their grants, and the slugs modifier targets name entities by.
  */
 
+import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Aptitude,
@@ -36,9 +37,11 @@ export function buildCustomizationIndices(properties: Property[], modifiers: Mod
     if (group) group.push(p.entityId);
     else entityIdsByPropertyLookup.set(key, [p.entityId]);
   }
+  // Each entity's properties as its stat block shows them, whoever reads them
+  const sortedProperties = sortProperties(properties);
   return {
-    propertiesByEntity: Map.groupBy(properties, (p) => p.entityId),
-    propertiesByEntityType: Map.groupBy(properties, (p) => p.entityType),
+    propertiesByEntity: Map.groupBy(sortedProperties, (p) => p.entityId),
+    propertiesByEntityType: Map.groupBy(sortedProperties, (p) => p.entityType),
     modifiersBySource: Map.groupBy(modifiers, (m) => m.sourceId),
     modifiersById: buildById(modifiers),
     requirementsByEntity: Map.groupBy(requirements, (r) => r.entityId),
@@ -60,7 +63,17 @@ export function buildKlassIndices(
   powersById: Map<string, PowerWithAptitudes>,
   skillsById: Map<string, Skill>,
 ) {
-  const { klassLevels, klassSkills, klassLevelFeats, klassLevelPowers, klassLevelSaves } = rows;
+  const { klassLevels, klassLevelSaves } = rows;
+  // A class's skills, and a level's feats and spells, by name: as the books list them
+  const klassSkills = rows.klassSkills.toSorted((a, b) =>
+    (skillsById.get(a.skillId)?.name ?? "").localeCompare(skillsById.get(b.skillId)?.name ?? ""),
+  );
+  const klassLevelFeats = rows.klassLevelFeats.toSorted((a, b) =>
+    (featsById.get(a.featId)?.name ?? "").localeCompare(featsById.get(b.featId)?.name ?? ""),
+  );
+  const klassLevelPowers = rows.klassLevelPowers.toSorted((a, b) =>
+    (powersById.get(a.powerId)?.name ?? "").localeCompare(powersById.get(b.powerId)?.name ?? ""),
+  );
   const klassLevelsByKlassId = Map.groupBy(klassLevels, (kl) => kl.klassId);
   for (const group of klassLevelsByKlassId.values()) group.sort((a, b) => a.level - b.level);
 

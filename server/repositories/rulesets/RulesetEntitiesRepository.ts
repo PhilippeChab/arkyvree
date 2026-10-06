@@ -50,7 +50,8 @@ class RulesetEntitiesRepository {
         );
     });
     const [first, second, ...rest] = subqueries;
-    return await unionAll(first, second, ...rest);
+    // One order, whatever the plan: the name pass meets its groups in it (the union's own columns)
+    return await unionAll(first, second, ...rest).orderBy(sql`entity_type, name, id`);
   }
 }
 

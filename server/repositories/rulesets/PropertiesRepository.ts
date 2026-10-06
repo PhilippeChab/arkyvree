@@ -47,6 +47,12 @@ class PropertiesRepository extends CustomizationRepository<typeof propertiesInCu
         "entityType" in where && eq(this.table.entityType, where.entityType),
         isNull(this.table.deletedAt),
       ]),
+      orderBy: [
+        this.orderBy(this.table.createdAt),
+        this.orderBy(this.table.entityId),
+        this.orderBy(this.table.type),
+        this.orderBy(this.table.value),
+      ],
     });
   }
 

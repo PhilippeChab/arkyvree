@@ -15,9 +15,15 @@ export interface ClassLevelsHooks {
 
   readCurrentValues(properties: { type: string; value: string }[]): { bab: number; skills: number };
 
-  /** The first spell list a class's levels give slots in, by level, by its aptitude's id: none when they give none. */
+  /**
+   * The spell list a class's levels give slots in, by its aptitude's id: the one named for the class when they give
+   * slots in several, else the first by level; none when they give none.
+   */
   getSpellListId(
-    rulesetData: Pick<CachedRulesetData, "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
+    rulesetData: Pick<
+      CachedRulesetData,
+      "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug"
+    >,
     klassId: string,
   ): string | undefined;
 
