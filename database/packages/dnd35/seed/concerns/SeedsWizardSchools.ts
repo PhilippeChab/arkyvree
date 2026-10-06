@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
+import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { powersAptitudesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/server/mixins.ts";

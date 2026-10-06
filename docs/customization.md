@@ -46,10 +46,10 @@ Requirements use a dotted level numbering system for hierarchy:
 
 ### Requirement Builder Helpers
 
-Seed data is written with nested `or()` / `and()` builders from `database/packages/dnd35/content/requirements.ts`:
+Seed data is written with nested `or()` / `and()` builders from `database/packages/dnd35/content/customization/requirements.ts`:
 
 ```ts
-import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 
 // Simple AND (all root-level entries are AND'd together):
 requirements: [
@@ -349,7 +349,7 @@ The character engine computes the **base, permanent character sheet** — no tem
 
 ### Proficiency requirements on weapon feats:
 
-A simple or martial weapon's proficiency is its group's or its own (an OR group); an exotic weapon's is its own, as for the weapon items above. `simple`, `martial` and `exotic` in `database/packages/dnd35/content/proficiencies.ts` build them, and `proficiencyRequirements(weapon)` picks the weapon's.
+A simple or martial weapon's proficiency is its group's or its own (an OR group); an exotic weapon's is its own, as for the weapon items above. `simple`, `martial` and `exotic` in `database/packages/dnd35/content/items/proficiencies.ts` build them, and `proficiencyRequirements(weapon)` picks the weapon's.
 
 ### Item creation feats require caster level (approximated as character level):
 

@@ -20,14 +20,14 @@ import {
 import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
 import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
-import { spellLevelsOf } from "@/database/packages/dnd35/content/spellLevels.ts";
+import { spellLevelsOf } from "@/database/packages/dnd35/content/classes/spellLevels.ts";
 import type {
   AbilityDefinition,
   CoreContent,
   LanguageDefinition,
   SaveDefinition,
   SkillDefinition,
-} from "@/database/packages/dnd35/content/types.ts";
+} from "@/database/packages/dnd35/content/rulesets/types.ts";
 import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/data/bonds/animalCompanions.ts";
 import { FAMILIARS } from "@/database/packages/dnd35/data/bonds/familiars.ts";
 import { SPECIAL_MOUNTS } from "@/database/packages/dnd35/data/bonds/mounts.ts";

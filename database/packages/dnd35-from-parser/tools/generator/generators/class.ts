@@ -25,7 +25,7 @@ import {
   requirableFamilies,
 } from "@/database/packages/dnd35-from-parser/tools/generator/generators/feat.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A class's features and the existing feats it grants, a feature split per level named as `perLevelPicks` splits its pick. */
@@ -322,7 +322,7 @@ export function generateClassSeed(ref: ClassReference): string {
   lines.push("");
   return [
     ...review,
-    `import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    `import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";`,
     ...requirementImports(uses),
     "",
     ...lines,
@@ -337,7 +337,7 @@ export function generateFeatSeeds(ref: ClassReference): string {
     stringifyFeat(feat, aptitude, uses),
   );
   return [
-    `import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";`,
+    `import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";`,
     ...requirementImports(uses),
     "",
     `const APT = ${quote(aptitude)};`,

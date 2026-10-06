@@ -1,12 +1,10 @@
-import { formatWithArticle } from "@/database/packages/dnd35/content/articles.ts";
-import { bonus } from "@/database/packages/dnd35/content/modifiers.ts";
-import type {
-  BondContent,
-  ClassSeed,
-  FeatSeed,
-  Modifier,
-  RaceDefinition,
-} from "@/database/packages/dnd35/content/types.ts";
+import { formatWithArticle } from "@/database/packages/dnd35/content/bonds/articles.ts";
+import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
+import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
+import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
 import { QUADRUPED } from "@/database/packages/dnd35/data/bonds/raceProperties.ts";
 
 const FAMILIAR_APTITUDE = "Familiar Bond";

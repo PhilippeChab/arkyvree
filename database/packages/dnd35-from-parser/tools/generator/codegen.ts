@@ -1,15 +1,15 @@
 import { isDeepStrictEqual } from "node:util";
 
 import { MAX_DESC, normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { eq, eqNum, eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
+import { eq, eqNum, eqStr, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
-  FeatSeed,
   Modifier,
   ModifierEffect,
   ModifierSeed,
   RequirementCondition,
   RequirementEntry,
-} from "@/database/packages/dnd35/content/types.ts";
+} from "@/database/packages/dnd35/content/customization/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
 /** Modules and the names a generated file can import from them, in the order its imports list them. */
 export type ImportTable = [string, string[]][];
@@ -29,7 +29,10 @@ export const MAX_CLASS_DESC = MAX_DESC;
 
 /** The requirement builders a generated file imports. */
 export const REQUIREMENT_IMPORTS: ImportTable = [
-  ["@/database/packages/dnd35/content/requirements.ts", ["and", "eq", "eqNum", "eqStr", "feat", "gte", "or"]],
+  [
+    "@/database/packages/dnd35/content/customization/requirements.ts",
+    ["and", "eq", "eqNum", "eqStr", "feat", "gte", "or"],
+  ],
 ];
 
 /** A check written with its builder: `builder(target, value)`. */

@@ -7,7 +7,7 @@ import {
   validateModifiers,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

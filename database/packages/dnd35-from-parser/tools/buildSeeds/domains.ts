@@ -9,7 +9,9 @@ import { join } from "node:path";
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { REFERENCE_DIR, stripSeparators } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { type DomainReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { type DomainDefinition, type FeatSeed, type ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
+import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import {
   ALL_WEAPONS,
   EXOTIC_WEAPONS,

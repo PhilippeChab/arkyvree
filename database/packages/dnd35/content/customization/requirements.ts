@@ -8,7 +8,7 @@ import type {
   RequirementCondition,
   RequirementEntry,
   RequirementGroup,
-} from "@/database/packages/dnd35/content/types.ts";
+} from "@/database/packages/dnd35/content/customization/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** A check of `target` against `value`, by `operator`, `value` read as `valueType`. */

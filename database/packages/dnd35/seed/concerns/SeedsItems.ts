@@ -1,4 +1,4 @@
-import type { ItemDef } from "@/database/packages/dnd35/content/types.ts";
+import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   itemsInRules,

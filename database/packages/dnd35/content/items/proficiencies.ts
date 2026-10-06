@@ -2,8 +2,8 @@
  * Being proficient with a weapon, an armor or a shield: the requirements an item and a prerequisite are written with.
  */
 
-import { and, eq, eqStr, feat, or } from "@/database/packages/dnd35/content/requirements.ts";
-import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { and, eq, eqStr, feat, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/data/weapons.ts";
 
 /** The exotic weapons "a character can use two-handed as a martial weapon". */

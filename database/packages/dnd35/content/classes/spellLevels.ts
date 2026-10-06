@@ -1,4 +1,4 @@
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 
 /** The class level each spell level opens at, by class. */
 export function buildClassSpellLevels(classes: ClassSeed[]): Record<string, Record<number, number>> {

@@ -1,5 +1,5 @@
-import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
 export const DIVINE_FEATS: FeatSeed[] = [
   {

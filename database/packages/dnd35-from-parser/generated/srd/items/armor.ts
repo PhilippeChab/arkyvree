@@ -4,9 +4,9 @@ import {
   HEAVY_ARMOR_PROF,
   LIGHT_ARMOR_PROF,
   MEDIUM_ARMOR_PROF,
-} from "@/database/packages/dnd35/content/proficiencies.ts";
-import { armorProperties } from "@/database/packages/dnd35/content/properties.ts";
-import type { ItemDef } from "@/database/packages/dnd35/content/types.ts";
+} from "@/database/packages/dnd35/content/items/proficiencies.ts";
+import { armorProperties } from "@/database/packages/dnd35/content/items/properties.ts";
+import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
 
 export const ARMOR: ItemDef[] = [
   {

@@ -1,5 +1,6 @@
-import { gte } from "@/database/packages/dnd35/content/requirements.ts";
-import type { FeatSeed, WizardSchoolDefinition } from "@/database/packages/dnd35/content/types.ts";
+import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
+import type { WizardSchoolDefinition } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
 import { WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 
 const PROHIBITED_SCHOOL = "Prohibited School";

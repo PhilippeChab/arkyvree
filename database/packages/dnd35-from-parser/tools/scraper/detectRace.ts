@@ -9,7 +9,7 @@ import {
   validateModifiers,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 
 const ABILITY_MAP: Record<string, string> = {
   strength: "strength",

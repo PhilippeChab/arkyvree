@@ -1,6 +1,11 @@
 import type { PgTable } from "drizzle-orm/pg-core";
 
-import type { Modifier, ModifierSeed, Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import type {
+  Modifier,
+  ModifierSeed,
+  Property,
+  RequirementEntry,
+} from "@/database/packages/dnd35/content/customization/types.ts";
 import {
   modifiersInCustomization,
   type propertiesInCustomization,

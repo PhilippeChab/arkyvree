@@ -1,10 +1,5 @@
-import type {
-  BabType,
-  ClassSeed,
-  ModifierSeed,
-  RequirementEntry,
-  SaveType,
-} from "@/database/packages/dnd35/content/types.ts";
+import type { BabType, ClassSeed, SaveType } from "@/database/packages/dnd35/content/classes/types.ts";
+import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   klassesInRules,

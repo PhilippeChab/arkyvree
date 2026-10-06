@@ -1,11 +1,8 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import type {
-  BondContent,
-  BookContent,
-  CoreContent,
-  DomainDefinition,
-} from "@/database/packages/dnd35/content/types.ts";
+import type { BondContent } from "@/database/packages/dnd35/content/bonds/types.ts";
+import type { DomainDefinition } from "@/database/packages/dnd35/content/domains/types.ts";
+import type { BookContent, CoreContent } from "@/database/packages/dnd35/content/rulesets/types.ts";
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
 import { BaseSeeder, type SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import { CopiesOnWrite } from "@/database/packages/dnd35/seed/concerns/CopiesOnWrite.ts";

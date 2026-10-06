@@ -1,5 +1,5 @@
-import { eqStr, or } from "@/database/packages/dnd35/content/requirements.ts";
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
+import { eqStr, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 
 export const MONK: ClassSeed = {
   name: "Monk",

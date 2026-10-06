@@ -18,7 +18,7 @@ import {
 import { buildFeatDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
 import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
 import { checkOneOf, REFERENCE_DIR, referenceBooks } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 
 function add(target: string, value: number) {

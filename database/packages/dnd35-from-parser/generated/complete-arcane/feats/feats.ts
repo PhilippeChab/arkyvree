@@ -1,5 +1,5 @@
-import { eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { eq, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 
 export const arcaneDefense: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({

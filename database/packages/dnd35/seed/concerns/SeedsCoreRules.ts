@@ -3,7 +3,7 @@ import type {
   LanguageDefinition,
   SaveDefinition,
   SkillDefinition,
-} from "@/database/packages/dnd35/content/types.ts";
+} from "@/database/packages/dnd35/content/rulesets/types.ts";
 import { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
 import {
   abilitiesInRules,
