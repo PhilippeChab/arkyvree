@@ -1,3 +1,4 @@
+import { buildOverrideMap, buildSourceChain } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Klasses, KlassLevels, Modifiers, Rulesets } from "@/server/repositories/index.ts";
@@ -7,7 +8,6 @@ import { CUSTOMIZATION_REPOS, type CustomizationKind, ENTITY_REPOS, type EntityW
 import { copyEntityCustomizations, copyEntityRelationships } from "./copy.ts";
 import { fetchEntityCustomizations, fetchKlassLevelCustomizations, fetchKlassRelationships } from "./customizations.ts";
 import { type EntityType, hashEntity, type KlassRelationships } from "./hashing.ts";
-import { buildOverrideMap, buildSourceChain } from "./overrideMap.ts";
 import { resolveCustomizationId } from "./resolveCustomizationId.ts";
 import { mergeSiblingData } from "./siblingMerge.ts";
 

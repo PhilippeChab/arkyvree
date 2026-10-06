@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { addClassLevels } from "@/database/seeds/helpers.ts";
+import { addClassLevels } from "@/database/seeds/seedCharacter.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Abilities,
@@ -17,7 +19,6 @@ import {
 } from "@/server/repositories/index.ts";
 import { Dnd35SkillsHooks } from "@/server/rulesets/dnd3.5/hooks/SkillsHooks.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
-import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";

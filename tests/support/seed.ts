@@ -1,6 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { getSeedContext, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
+import { getSeedContext, type SeedContext } from "@/database/seeds/seedContext.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { itemsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";

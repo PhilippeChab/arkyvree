@@ -4,9 +4,10 @@ import { and, eq } from "drizzle-orm";
 
 import { aptitudesInRules, featsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
-import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { deleteSessionCookie, denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
+import { deleteSessionCookie, denyDemoUser, type SessionContext, validate } from "@/server/middlewares/index.ts";
 import {
   DeleteAccountJson,
   SetPasswordJson,
@@ -19,7 +19,7 @@ export default new Hono<SessionContext>()
     await AccountService.completeOnboarding(c.var.requestSession);
     return c.json({ success: true }, 200);
   })
-  .post("/delete-account", denyDemoUser, zValidator("json", DeleteAccountJson), async (c) => {
+  .post("/delete-account", denyDemoUser, validate("json", DeleteAccountJson), async (c) => {
     const body = c.req.valid("json");
     await AccountService.deleteAccount(c.var.requestSession, body.password);
     deleteSessionCookie(c);
@@ -29,22 +29,22 @@ export default new Hono<SessionContext>()
     await AccountService.resendEmailChange(c.var.requestSession);
     return c.json({ success: true }, 200);
   })
-  .post("/set-password", denyDemoUser, zValidator("json", SetPasswordJson), async (c) => {
+  .post("/set-password", denyDemoUser, validate("json", SetPasswordJson), async (c) => {
     const body = c.req.valid("json");
     return c.json(await AccountService.setPassword(c.var.requestSession, body.newPassword), 200);
   })
-  .post("/verify-email-change", denyDemoUser, zValidator("json", VerifyEmailChangeJson), async (c) => {
+  .post("/verify-email-change", denyDemoUser, validate("json", VerifyEmailChangeJson), async (c) => {
     const body = c.req.valid("json");
     return c.json(await AccountService.verifyEmailChange(c.var.requestSession, body.code), 200);
   })
-  .put("/password", denyDemoUser, zValidator("json", UpdatePasswordJson), async (c) => {
+  .put("/password", denyDemoUser, validate("json", UpdatePasswordJson), async (c) => {
     const body = c.req.valid("json");
     return c.json(
       await AccountService.updatePassword(c.var.requestSession, body.currentPassword, body.newPassword),
       200,
     );
   })
-  .put("/profile", denyDemoUser, zValidator("json", UpdateProfileJson), async (c) => {
+  .put("/profile", denyDemoUser, validate("json", UpdateProfileJson), async (c) => {
     const body = c.req.valid("json");
     return c.json(await AccountService.updateProfile(c.var.requestSession, body.username, body.emailAddress), 200);
   });

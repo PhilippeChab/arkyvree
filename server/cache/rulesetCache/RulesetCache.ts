@@ -1,10 +1,10 @@
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { db, withCowContext } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
-import { invalidateAllCowData, invalidateCowData } from "@/server/services/rulesets/cow/index.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
 import { buildRulesetData, type CachedCowData, type CachedRulesetData } from "./compose.ts";
+import { invalidateAllCowData, invalidateCowData } from "./cowData.ts";
 import { fetchRulesetRawData, type RulesetRawData } from "./rawData.ts";
 
 type TargetPathsAndLabels = { paths: TargetPath[]; segmentLabels: Record<string, string> };
@@ -15,7 +15,7 @@ function getRawDataKey(rulesetId: string, campaignId?: string): string {
 }
 
 /**
- * The rulesets' cache, read through `withRulesetScope` (`services/rulesets/cow/`). It holds each ruleset's own rows,
+ * The rulesets' cache, read through `withRulesetScope` (`scope.ts`). It holds each ruleset's own rows,
  * a system ruleset's pinned (every fork reads them), which compose into a ruleset's view on each read, and each
  * ruleset's target paths. It reads committed rows only, through the shared `db`, never a transaction's: a change's
  * uncommitted rows would reach every reader. A change to a ruleset invalidates what it touched (`invalidate`).

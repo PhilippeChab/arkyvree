@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";

@@ -4,15 +4,14 @@
  * - `no-parent-imports`: a file imports another folder's module through `@/` (the repo's root), never `../`.
  *   `oxlint --fix` rewrites one. Not in `lint/`, whose plugins node loads without the alias.
  * - `no-helpers-modules`: a helper is a module named for what it does, never a `helpers` or `utils` grab bag, file or
- *   folder (the server, `shared/`, the client and the tests, whose shared code is `tests/support/`'s topic modules;
- *   the seeders' helpers are their own).
+ *   folder, anywhere (the tests' shared code is `tests/support/`'s topic modules).
  * - `repository-instances`: code uses the repositories' shared instances (`@/server/repositories/index.ts`), which
  *   the request cache wraps; only that file builds one.
  * - `route-conventions`: a route's path params are camelCase (`:modifierId`; `.get`, `.route`, `.on`) and its fixed
  *   segments kebab-case (`/class-levels`; a file's name, `robots.txt`, or `*` too), it answers with its status
  *   (`c.json(body, status)`), its validation
- *   is the app's `zValidator` (`@/server/middlewares/index.ts`, which answers in the API's error envelope), its params
- *   are a named schema (`zValidator("param", featParams)`: from a `validation.ts` when several routers use it,
+ *   is the app's `validate` (`@/server/middlewares/index.ts`, which answers in the API's error envelope), its params
+ *   are a named schema (`validate("param", featParams)`: from a `validation.ts` when several routers use it,
  *   declared at the top of its router otherwise), and it lets an error reach `onError` instead of catching it
  *   (`server/routers/api/`; a `finally` alone is fine).
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
@@ -53,7 +52,6 @@ import { onImports, targetOf } from "./imports.mjs";
 import { startsWithVerb } from "./memberOrder.mjs";
 import { isToolWritten, repoPath, rootOf } from "./paths.mjs";
 
-const HELPER_TREES = ["server/", "shared/", "client/", "tests/"];
 /** A module or folder named for no particular thing: `helpers.ts`, `utils/`. */
 const GRAB_BAG = /(^|\/)(helpers|utils?)(\.tsx?$|\/)/;
 
@@ -155,7 +153,7 @@ function createIncludeOrder(context) {
 
 function createNoHelpersModules(context) {
   const file = repoPath(context.filename);
-  if (!HELPER_TREES.some((t) => file.startsWith(t)) || !GRAB_BAG.test(file)) return {};
+  if (!GRAB_BAG.test(file)) return {};
   return {
     Program(node) {
       context.report({
@@ -519,10 +517,10 @@ function createRouteConventions(context) {
     CallExpression(node) {
       if (!inRouters) return;
       const callee = node.callee;
-      // zValidator("param", featParams): the params a route's path names, by a name, never a schema written there.
+      // validate("param", featParams): the params a route's path names, by a name, never a schema written there.
       if (
         callee.type === "Identifier" &&
-        callee.name === "zValidator" &&
+        callee.name === "validate" &&
         node.arguments[0]?.value === "param" &&
         node.arguments[1]?.type !== "Identifier"
       ) {
@@ -575,7 +573,7 @@ function createRouteConventions(context) {
       if (spec === "@hono/zod-validator" && !file.startsWith("server/middlewares/")) {
         context.report({
           node,
-          message: "Validate with `zValidator` from `@/server/middlewares/index.ts`: it answers in the API's envelope.",
+          message: "Validate with `validate` from `@/server/middlewares/index.ts`: it answers in the API's envelope.",
         });
       }
     }),

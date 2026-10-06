@@ -2,12 +2,12 @@ import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { buildSourceChain } from "@/server/cache/rulesetCache/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { Activities, Feats, Klasses, Races, Rulesets, Skills } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { buildSourceChain } from "@/server/services/rulesets/cow/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 

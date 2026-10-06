@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { addClassLevels, addFeats, SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { addClassLevels, addFeats } from "@/database/seeds/seedCharacter.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";

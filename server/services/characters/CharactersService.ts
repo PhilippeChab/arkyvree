@@ -1,6 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
+import { withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity } from "@/server/cow/index.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";
@@ -21,7 +23,6 @@ import type { CharacterKind, Holders } from "@/server/rulesets/types.ts";
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import { getClassLevelsByCharacter } from "@/server/services/characters/classLevels.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/services/rulesets/cow/index.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Requirement, Session } from "@/shared/relations.ts";

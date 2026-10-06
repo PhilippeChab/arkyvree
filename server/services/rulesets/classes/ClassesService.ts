@@ -2,12 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Klasses } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import {
   assertEntityNameAvailable,
   cowEntityToDelete,
@@ -15,8 +10,13 @@ import {
   findScopedEntity,
   hasCharacterPicks,
   repointTombstoneSnapshot,
-  withRulesetScope,
-} from "@/server/services/rulesets/cow/index.ts";
+} from "@/server/cow/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { Klasses } from "@/server/repositories/index.ts";
+import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
+import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ClassesService {

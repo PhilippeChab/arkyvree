@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { modifierOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { characterIdParam } from "@/server/routers/api/validation.ts";
@@ -10,14 +10,14 @@ import { CharacterModifiersService } from "@/server/services/characters/modifier
 const modifierParams = characterIdParam.extend({ modifierId: z.string().uuid() });
 
 export default new Hono<SessionContext>()
-  .get("/:characterId/modifiers", zValidator("param", characterIdParam), async (c) => {
+  .get("/:characterId/modifiers", validate("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
     return c.json(await CharacterModifiersService.getModifiers(c.var.requestSession, characterId), 200);
   })
   .post(
     "/:characterId/modifiers",
-    zValidator("param", characterIdParam),
-    zValidator(
+    validate("param", characterIdParam),
+    validate(
       "json",
       z.object({
         target: z.string().min(1),
@@ -33,8 +33,8 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:characterId/modifiers/:modifierId",
-    zValidator("param", modifierParams),
-    zValidator(
+    validate("param", modifierParams),
+    validate(
       "json",
       z.object({
         target: z.string().min(1),
@@ -52,7 +52,7 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .delete("/:characterId/modifiers/:modifierId", zValidator("param", modifierParams), async (c) => {
+  .delete("/:characterId/modifiers/:modifierId", validate("param", modifierParams), async (c) => {
     const { characterId, modifierId } = c.req.valid("param");
     return c.json(await CharacterModifiersService.deleteModifier(c.var.requestSession, characterId, modifierId), 200);
   });

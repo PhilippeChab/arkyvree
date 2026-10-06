@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import { cowEntityForCustomization } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
-import { cowEntityForCustomization } from "@/server/services/rulesets/cow/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";

@@ -11,38 +11,44 @@ function lint(files: Record<string, string>, from = ".") {
 setDefaultTimeout(30_000);
 
 describe("architecture rules", () => {
-  test("a layer imports only what's below it: types the exceptions name, cow from the cache and the engine", async () => {
+  test("a layer imports only what's below it, types where a layer names them", async () => {
     expect(
       await lint({
         "server/repositories/A.ts": 'import { x } from "@/server/services/s.ts";\nexport const a = x;\n',
         "server/database/d.ts": 'import type { R } from "@/server/repositories/r.ts";\nexport type D = R;\n',
         "server/services/s.ts": 'import r from "@/server/routers/r.ts";\nexport const x = r;\n',
-        "server/cache/c.ts": 'import { w } from "@/server/services/rulesets/cow/index.ts";\nexport const c = w;\n',
+        "server/cache/c.ts": 'import { w } from "@/server/cow/index.ts";\nexport const c = w;\n',
+        "server/cow/w.ts": 'import { s } from "@/server/services/s.ts";\nexport const w = s;\n',
+        "server/rulesets/e.ts": 'import { w } from "@/server/cow/index.ts";\nexport const e = w;\n',
         "shared/s.ts": 'import type { T } from "@/drizzle/schema.ts";\nexport type S = T;\n',
         "client/src/c.ts": 'import type { App } from "@/server/routers/application.ts";\nexport type C = App;\n',
         "client/src/v.ts": 'import { app } from "@/server/routers/application.ts";\nexport const v = app;\n',
       }),
     ).toEqual([
       "layers client/src/v.ts",
+      "layers server/cache/c.ts",
+      "layers server/cow/w.ts",
       "layers server/database/d.ts",
       "layers server/repositories/A.ts",
       "layers server/services/s.ts",
     ]);
   });
 
-  test("a query is built in a repository, or in the infrastructure that talks to Postgres", async () => {
+  test("a query is built in a repository, or in the database layer", async () => {
     expect(
       await lint({
         "server/services/s.ts": "export const s = (db) => db.select().from(t);\n",
         "server/services/r.ts": "export const r = (tx) => tx.query.users.findMany();\n",
         "server/services/u.ts": 'import { unionAll } from "drizzle-orm/pg-core";\nexport const u = unionAll;\n',
         "server/repositories/Users.ts": "export const ok = (db) => db.select().from(t);\n",
+        "server/database/notify.ts": "export const notify = (db) => db.execute(sql);\n",
         "server/websockets/events.ts": "export const notify = (db) => db.execute(sql);\n",
       }),
     ).toEqual([
       "queries-in-repositories server/services/r.ts",
       "queries-in-repositories server/services/s.ts",
       "queries-in-repositories server/services/u.ts",
+      "queries-in-repositories server/websockets/events.ts",
     ]);
   });
 
@@ -88,7 +94,7 @@ describe("architecture rules", () => {
         "server/middlewares/m.ts": 'import { R } from "@/server/repositories/R.ts";\nexport const m = R;\n',
         "server/rulesets/seed.ts":
           'import { items } from "@/database/packages/dnd35/seed/items.ts";\nexport const s = items;\n',
-        "server/services/s.ts": 'import { SEED } from "@/database/seeds/helpers.ts";\nexport const s = SEED;\n',
+        "server/services/s.ts": 'import { SEED } from "@/database/seeds/users.ts";\nexport const s = SEED;\n',
       }),
     ).toEqual(["layers server/repositories/R.ts", "layers server/services/s.ts"]);
   });

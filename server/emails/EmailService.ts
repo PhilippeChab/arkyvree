@@ -1,6 +1,6 @@
-import { db } from "@/server/database/index.ts";
+import { addJob, db } from "@/server/database/index.ts";
 import { isTest } from "@/server/environment.ts";
-import { addJob, pingWorker } from "@/server/queue.ts";
+import { pingWorker } from "@/server/queue.ts";
 
 import type { EmailJobPayload } from "./templates.ts";
 

@@ -1,12 +1,13 @@
 import { expect, test } from "bun:test";
 
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
-import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";

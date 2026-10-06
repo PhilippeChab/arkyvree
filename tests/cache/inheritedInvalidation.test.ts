@@ -2,9 +2,10 @@ import { afterEach, expect, test } from "bun:test";
 
 import { setCacheEnabled } from "@/server/cache/MemoryCache.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { getOrBuildCowData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import { cowEntity, getOrBuildCowData, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 

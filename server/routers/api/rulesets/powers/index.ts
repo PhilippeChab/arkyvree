@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -44,8 +44,8 @@ const aptitudeLinks = z.array(
 export default new Hono<SessionContext>()
   .get(
     "/:id/powers",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -67,14 +67,14 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get("/:id/powers/:powerId", zValidator("param", powerParams), async (c) => {
+  .get("/:id/powers/:powerId", validate("param", powerParams), async (c) => {
     const { id, powerId } = c.req.valid("param");
     return c.json(await PowersService.getPower(id, powerId), 200);
   })
   .post(
     "/:id/powers",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({ ...powerFields, aptitudes: aptitudeLinks.min(1, "At least one aptitude must be selected") }),
     ),
@@ -86,8 +86,8 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/powers/:powerId",
-    zValidator("param", powerParams),
-    zValidator(
+    validate("param", powerParams),
+    validate(
       "json",
       z.object({ ...powerFields, aptitudes: aptitudeLinks.optional(), updatedAt: z.string().optional() }),
     ),
@@ -97,7 +97,7 @@ export default new Hono<SessionContext>()
       return c.json(await PowersService.updatePower(c.var.requestSession, id, powerId, body), 200);
     },
   )
-  .delete("/:id/powers/:powerId", zValidator("param", powerParams), async (c) => {
+  .delete("/:id/powers/:powerId", validate("param", powerParams), async (c) => {
     const { id, powerId } = c.req.valid("param");
     return c.json(await PowersService.deletePower(c.var.requestSession, id, powerId), 200);
   });

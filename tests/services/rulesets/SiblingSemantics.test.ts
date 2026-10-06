@@ -1,6 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
 
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Abilities, Aptitudes, Feats, FeatsAptitudes, Requirements, Rulesets } from "@/server/repositories/index.ts";
@@ -9,7 +11,6 @@ import DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedChar
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
-import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import type { Requirement } from "@/shared/relations.ts";

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { type SessionContext, zValidator } from "@/server/middlewares/index.ts";
+import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import {
   chainingOperator,
   ownerParams,
@@ -12,14 +12,14 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 const requirementParams = ownerParams.extend({ requirementId: z.string().uuid() });
 
 export default new Hono<SessionContext>()
-  .get("/:id/customization/:entityType/:entityId/requirements", zValidator("param", ownerParams), async (c) => {
+  .get("/:id/customization/:entityType/:entityId/requirements", validate("param", ownerParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
     return c.json(await RequirementsService.getRequirements(id, entityType, entityId), 200);
   })
   .post(
     "/:id/customization/:entityType/:entityId/requirements",
-    zValidator("param", ownerParams),
-    zValidator(
+    validate("param", ownerParams),
+    validate(
       "json",
       z.object({
         level: z.string().min(1),
@@ -41,8 +41,8 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/customization/:entityType/:entityId/requirements/:requirementId",
-    zValidator("param", requirementParams),
-    zValidator(
+    validate("param", requirementParams),
+    validate(
       "json",
       z.object({
         level: z.string().min(1),
@@ -72,7 +72,7 @@ export default new Hono<SessionContext>()
   )
   .delete(
     "/:id/customization/:entityType/:entityId/requirements/:requirementId",
-    zValidator("param", requirementParams),
+    validate("param", requirementParams),
     async (c) => {
       const { id, entityType, entityId, requirementId } = c.req.valid("param");
       return c.json(

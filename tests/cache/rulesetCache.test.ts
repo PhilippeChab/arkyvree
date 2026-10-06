@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { featsInRules, itemsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { getOrBuildCowData, invalidateCowData } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
-import { cowEntity, getOrBuildCowData, invalidateCowData } from "@/server/services/rulesets/cow/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";

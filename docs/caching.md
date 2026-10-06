@@ -14,7 +14,7 @@ The first two are in-memory data stores; the third is an AsyncLocalStorage-backe
 
 ## How services interact with this
 
-Services never call the cache or COW plumbing directly. The single entry point is one of two helpers from `server/services/rulesets/cow/`:
+Services never call the cache or COW plumbing directly. The single entry point is one of two helpers from `server/cache/rulesetCache/`:
 
 ```ts
 // Single-ruleset operation (every CRUD, character-scoped action):
@@ -124,7 +124,7 @@ The cow + rulesetCache modules have two kinds of callers. The split is by owners
 
 ### Consumer API (services + routes)
 
-From `server/services/rulesets/cow/`:
+From `server/cache/rulesetCache/` (the scopes) and `server/cow/` (the copies):
 
 | Symbol                                   | Purpose                                                                                                                                                                         |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -217,7 +217,7 @@ flowchart TD
 
 Roughly: concat arrays from fork+ancestors → drop COW'd ids and sibling ids → apply FK remap → build id-indexed Maps for O(1) lookups.
 
-`siblingIds` / `overrideMap` pick up two flavors of loser in `buildOverrideMap` (`server/services/rulesets/cow/overrideMap.ts`): (1) entity-level COW siblings — multiple extensions COW'd the same base entity; (2) aptitude-name collisions — independently-created copies of the same aptitude name across the chain, typically sibling-shared class spell lists like `Assassin Spells`. Both are treated identically by the compose step: losers dropped from the entities array, FKs remapped to the winner. Base-inherited aptitudes (`General`, `Cleric Domain`, etc.) are not duplicated at seed time (see `docs/packages.md`), so they don't participate.
+`siblingIds` / `overrideMap` pick up two flavors of loser in `buildOverrideMap` (`server/cache/rulesetCache/overrideMap.ts`): (1) entity-level COW siblings — multiple extensions COW'd the same base entity; (2) aptitude-name collisions — independently-created copies of the same aptitude name across the chain, typically sibling-shared class spell lists like `Assassin Spells`. Both are treated identically by the compose step: losers dropped from the entities array, FKs remapped to the winner. Base-inherited aptitudes (`General`, `Cleric Domain`, etc.) are not duplicated at seed time (see `docs/packages.md`), so they don't participate.
 
 ### Pinning
 
@@ -491,7 +491,8 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
 - `server/cache/rulesetCache/` — `RulesetCache` (`RulesetCache.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up), the raw rows' fetch (`rawData.ts`), and the compose step with its sibling merging, FK remap and accessor maps, `cowResolvingMap` included (`compose.ts`)
-- `server/services/rulesets/cow/` — `withRulesetScope` / `withRulesetScopes`, COW data + override map, copy primitives, `resolveOverrides`, invalidation hooks
+- `server/cache/rulesetCache/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), COW data and its invalidation (`cowData.ts`), the override map and `resolveOverrides` (`overrideMap.ts`), the sibling requirements' merge (`siblingRequirements.ts`)
+- `server/cow/` (copy-on-write's write side) — `cowEntity` and the other copies a change makes, the copy primitives
 - `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `getCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve

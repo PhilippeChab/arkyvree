@@ -2,9 +2,9 @@ import { afterEach, expect, test } from "bun:test";
 
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { getOrBuildCowData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import { getOrBuildCowData } from "@/server/services/rulesets/cow/index.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";

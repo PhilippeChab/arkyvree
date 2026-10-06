@@ -1,6 +1,7 @@
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Abilities } from "@/server/repositories/index.ts";
-import { findScopedEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 
 class AbilitiesService {
   async getAbilities(

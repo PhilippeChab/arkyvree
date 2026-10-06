@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { role as campaignRole } from "@/drizzle/schema.ts";
-import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
+import { denyDemoUser, type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirAsc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
 
@@ -11,8 +11,8 @@ const playerParams = idParam.extend({ playerId: z.string().uuid() });
 export default new Hono<SessionContext>()
   .get(
     "/:id/players",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -39,8 +39,8 @@ export default new Hono<SessionContext>()
   .post(
     "/:id/players",
     denyDemoUser,
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         role: z.enum(campaignRole.enumValues),
@@ -55,8 +55,8 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/players/:playerId",
-    zValidator("param", playerParams),
-    zValidator(
+    validate("param", playerParams),
+    validate(
       "json",
       z.object({
         role: z.enum(campaignRole.enumValues),
@@ -69,7 +69,7 @@ export default new Hono<SessionContext>()
       return c.json(await CampaignPlayersService.updatePlayer(c.var.requestSession, id, playerId, role, email), 200);
     },
   )
-  .delete("/:id/players/:playerId", zValidator("param", playerParams), async (c) => {
+  .delete("/:id/players/:playerId", validate("param", playerParams), async (c) => {
     const { id, playerId } = c.req.valid("param");
     return c.json(await CampaignPlayersService.removePlayer(c.var.requestSession, id, playerId), 200);
   });

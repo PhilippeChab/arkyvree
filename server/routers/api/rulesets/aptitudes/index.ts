@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
@@ -11,8 +11,8 @@ const aptitudeParams = idParam.extend({ aptitudeId: z.string().uuid() });
 export default new Hono<SessionContext>()
   .get(
     "/:id/aptitudes",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -33,14 +33,14 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get("/:id/aptitudes/:aptitudeId", zValidator("param", aptitudeParams), async (c) => {
+  .get("/:id/aptitudes/:aptitudeId", validate("param", aptitudeParams), async (c) => {
     const { id, aptitudeId } = c.req.valid("param");
     return c.json(await AptitudesService.getAptitude(id, aptitudeId), 200);
   })
   .post(
     "/:id/aptitudes",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         name: z.string().min(1),
@@ -55,8 +55,8 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/aptitudes/:aptitudeId",
-    zValidator("param", aptitudeParams),
-    zValidator(
+    validate("param", aptitudeParams),
+    validate(
       "json",
       z.object({
         name: z.string().min(1),
@@ -70,7 +70,7 @@ export default new Hono<SessionContext>()
       return c.json(await AptitudesService.updateAptitude(c.var.requestSession, id, aptitudeId, body), 200);
     },
   )
-  .delete("/:id/aptitudes/:aptitudeId", zValidator("param", aptitudeParams), async (c) => {
+  .delete("/:id/aptitudes/:aptitudeId", validate("param", aptitudeParams), async (c) => {
     const { id, aptitudeId } = c.req.valid("param");
     return c.json(await AptitudesService.deleteAptitude(c.var.requestSession, id, aptitudeId), 200);
   });

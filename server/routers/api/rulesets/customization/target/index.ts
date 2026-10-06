@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 
@@ -12,8 +12,8 @@ const targetPaths = new Hono()
    */
   .post(
     "/:id/customization/target/paths/completions",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         partialPath: z.string(),
@@ -51,8 +51,8 @@ const targetPaths = new Hono()
    */
   .post(
     "/:id/customization/target/paths/validate",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         path: z.string(),

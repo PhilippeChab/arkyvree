@@ -2,6 +2,8 @@ import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { NAME_FALLBACK_ENTITY_TYPES } from "@/server/cache/rulesetCache/index.ts";
+import { ENTITY_REPOS, type EntityType } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
@@ -20,7 +22,6 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { ENTITY_REPOS, type EntityType, NAME_FALLBACK_ENTITY_TYPES } from "@/server/services/rulesets/cow/index.ts";
 import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import type { Session } from "@/shared/relations.ts";
 

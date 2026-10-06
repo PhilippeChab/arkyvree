@@ -1,4 +1,5 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db } from "@/server/database/index.ts";
 import type {
   DetailedCharacterInterface,
@@ -28,7 +29,6 @@ import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCh
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import type DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
 import { isTemplateValue } from "@/server/rulesets/universal/templateExpression.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import type {
   Aptitude,
   Campaign,

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { isUuid, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
 import { characterIdParam, page } from "@/server/routers/api/validation.ts";
@@ -63,8 +63,8 @@ const levelQuery = {
 const levels = new Hono<SessionContext>()
   .get(
     "/:characterId/attribute-slots",
-    zValidator("param", characterIdParam),
-    zValidator(
+    validate("param", characterIdParam),
+    validate(
       "query",
       z.object({
         characterLevelId: z.string().uuid().optional(),
@@ -87,8 +87,8 @@ const levels = new Hono<SessionContext>()
   )
   .get(
     "/:characterId/available-classes",
-    zValidator("param", characterIdParam),
-    zValidator(
+    validate("param", characterIdParam),
+    validate(
       "query",
       z.object({
         limit: limitDefaultingTo(10),
@@ -120,8 +120,8 @@ const levels = new Hono<SessionContext>()
   )
   .get(
     "/:characterId/available-feats",
-    zValidator("param", characterIdParam),
-    zValidator(
+    validate("param", characterIdParam),
+    validate(
       "query",
       z.object({
         ...levelQuery,
@@ -162,8 +162,8 @@ const levels = new Hono<SessionContext>()
   )
   .get(
     "/:characterId/available-feats/grouped",
-    zValidator("param", characterIdParam),
-    zValidator(
+    validate("param", characterIdParam),
+    validate(
       "query",
       z.object({
         ...levelQuery,
@@ -202,8 +202,8 @@ const levels = new Hono<SessionContext>()
   )
   .get(
     "/:characterId/available-powers",
-    zValidator("param", characterIdParam),
-    zValidator(
+    validate("param", characterIdParam),
+    validate(
       "query",
       z.object({
         ...levelQuery,
@@ -247,8 +247,8 @@ const levels = new Hono<SessionContext>()
   )
   .get(
     "/:characterId/feat-slots",
-    zValidator("param", characterIdParam),
-    zValidator("query", z.object(levelQuery)),
+    validate("param", characterIdParam),
+    validate("query", z.object(levelQuery)),
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { classId, level, characterLevelId, pendingLevelClassLevelIds } = c.req.valid("query");
@@ -273,8 +273,8 @@ const levels = new Hono<SessionContext>()
   )
   .get(
     "/:characterId/power-slots",
-    zValidator("param", characterIdParam),
-    zValidator("query", z.object(levelQuery)),
+    validate("param", characterIdParam),
+    validate("query", z.object(levelQuery)),
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { classId, level, characterLevelId, pendingLevelClassLevelIds } = c.req.valid("query");
@@ -299,8 +299,8 @@ const levels = new Hono<SessionContext>()
   )
   .get(
     "/:characterId/skill-slots",
-    zValidator("param", characterIdParam),
-    zValidator(
+    validate("param", characterIdParam),
+    validate(
       "query",
       z.object({
         ...levelQuery,
@@ -327,14 +327,14 @@ const levels = new Hono<SessionContext>()
       );
     },
   )
-  .get("/:characterId/:characterLevelId", zValidator("param", levelParams), async (c) => {
+  .get("/:characterId/:characterLevelId", validate("param", levelParams), async (c) => {
     const { characterId, characterLevelId } = c.req.valid("param");
     return c.json(await CharacterLevelsService.getLevel(c.var.requestSession, characterId, characterLevelId), 200);
   })
   .post(
     "/:characterId/finalize",
-    zValidator("param", characterIdParam),
-    zValidator(
+    validate("param", characterIdParam),
+    validate(
       "json",
       z.object({
         levels: z
@@ -373,8 +373,8 @@ const levels = new Hono<SessionContext>()
   )
   .post(
     "/:characterId/preview",
-    zValidator("param", characterIdParam),
-    zValidator(
+    validate("param", characterIdParam),
+    validate(
       "json",
       z.object({
         levels: z
@@ -400,8 +400,8 @@ const levels = new Hono<SessionContext>()
   )
   .put(
     "/:characterId/:characterLevelId",
-    zValidator("param", levelParams),
-    zValidator(
+    validate("param", levelParams),
+    validate(
       "json",
       z.object({
         hp: z.number().int().min(1),
@@ -431,7 +431,7 @@ const levels = new Hono<SessionContext>()
       );
     },
   )
-  .delete("/:characterId", zValidator("param", characterIdParam), async (c) => {
+  .delete("/:characterId", validate("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
     return c.json(await CharacterLevelsService.removeLevel(c.var.requestSession, characterId), 200);
   });

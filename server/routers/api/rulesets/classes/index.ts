@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { classParams } from "@/server/routers/api/rulesets/classes/validation.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
@@ -19,8 +19,8 @@ export default new Hono<SessionContext>()
   .route("/", classSkills)
   .get(
     "/:id/classes",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -41,14 +41,14 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get("/:id/classes/:classId", zValidator("param", classParams), async (c) => {
+  .get("/:id/classes/:classId", validate("param", classParams), async (c) => {
     const { id, classId } = c.req.valid("param");
     return c.json(await ClassesService.getClass(id, classId), 200);
   })
   .post(
     "/:id/classes",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         name: z.string().min(1),
@@ -67,8 +67,8 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/classes/:classId",
-    zValidator("param", classParams),
-    zValidator(
+    validate("param", classParams),
+    validate(
       "json",
       z.object({
         name: z.string().min(1),
@@ -86,7 +86,7 @@ export default new Hono<SessionContext>()
       return c.json(await ClassesService.updateClass(c.var.requestSession, id, classId, body), 200);
     },
   )
-  .delete("/:id/classes/:classId", zValidator("param", classParams), async (c) => {
+  .delete("/:id/classes/:classId", validate("param", classParams), async (c) => {
     const { id, classId } = c.req.valid("param");
     return c.json(await ClassesService.deleteClass(c.var.requestSession, id, classId), 200);
   });

@@ -1,4 +1,5 @@
 import type { CachedCowData, CachedRulesetData } from "@/server/cache/index.ts";
+import { refreshEntityData, resolveOverrides } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db } from "@/server/database/index.ts";
 import {
   Campaigns,
@@ -26,7 +27,6 @@ import type {
   PreloadedRulesetData,
   RaceWithPMR,
 } from "@/server/rulesets/types.ts";
-import { refreshEntityData, resolveOverrides } from "@/server/services/rulesets/cow/index.ts";
 import {
   KLASS_BONUS_SPELL_ABILITY_ID,
   KLASS_CASTER_TYPE,

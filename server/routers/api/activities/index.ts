@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
+import { sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { ActivitiesService } from "@/server/services/activities/index.ts";
 
@@ -11,7 +11,7 @@ const activities = new Hono()
   .use(sessionMiddleware)
   .get(
     "/",
-    zValidator(
+    validate(
       "query",
       z.object({
         limit,
@@ -43,7 +43,7 @@ const activities = new Hono()
     },
   )
   // Resolve activity target to frontend URL
-  .get("/resolve/:targetTable/:targetId", zValidator("param", targetParams), async (c) => {
+  .get("/resolve/:targetTable/:targetId", validate("param", targetParams), async (c) => {
     const { targetTable, targetId } = c.req.valid("param");
 
     const value = await ActivitiesService.getActivityUrl(c.var.requestSession, targetTable, targetId);

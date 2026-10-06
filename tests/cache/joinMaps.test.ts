@@ -9,12 +9,12 @@ import { beforeAll, describe, expect, test } from "bun:test";
 
 import { and, eq, isNull } from "drizzle-orm";
 
-import { type SeedContext } from "@/database/seeds/helpers.ts";
+import { type SeedContext } from "@/database/seeds/seedContext.ts";
 import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { getOrBuildCowData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
-import { getOrBuildCowData } from "@/server/services/rulesets/cow/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 

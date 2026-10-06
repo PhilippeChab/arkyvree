@@ -1,11 +1,12 @@
 import { expect, test } from "bun:test";
 
-import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
+import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntity } from "@/server/cow/index.ts";
 import { type CowData, type IdResolveMap, withCowContext } from "@/server/database/cowContext.ts";
 import { db } from "@/server/database/index.ts";
 import { mapResultIds } from "@/server/repositories/copyOnWriteIds.ts";
 import { Characters, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
-import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 

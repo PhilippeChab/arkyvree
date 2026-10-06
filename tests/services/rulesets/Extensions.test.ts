@@ -10,6 +10,8 @@ import {
   DND35_DMG_NAME,
 } from "@/database/packages/dnd35/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
+import { getOrBuildCowData, invalidateAllCowData } from "@/server/cache/rulesetCache/index.ts";
+import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
@@ -36,7 +38,6 @@ import {
 } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
-import { cowEntity, getOrBuildCowData, invalidateAllCowData } from "@/server/services/rulesets/cow/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";

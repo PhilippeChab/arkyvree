@@ -39,7 +39,7 @@ describe("conventions", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  test("a helper is a module named for what it does, in the app's code and the tests", async () => {
+  test("a helper is a module named for what it does, anywhere", async () => {
     expect(
       await lintRepo(
         {
@@ -56,6 +56,7 @@ describe("conventions", () => {
       ),
     ).toEqual([
       "no-helpers-modules client/src/lib/helpers.tsx",
+      "no-helpers-modules database/seeds/helpers.ts",
       "no-helpers-modules server/services/x/helpers.ts",
       "no-helpers-modules server/utils/format.ts",
       "no-helpers-modules shared/utils.ts",
@@ -75,7 +76,7 @@ describe("conventions", () => {
     ).toEqual(["repository-instances server/services/s.ts"]);
   });
 
-  test("a route's params are camelCase, its fixed segments kebab-case, it validates with the app's zValidator, its params by a named schema, and it doesn't catch", async () => {
+  test("a route's params are camelCase, its fixed segments kebab-case, it validates with the app's validate, its params by a named schema, and it doesn't catch", async () => {
     expect(
       await lintRepo(
         {
@@ -83,7 +84,7 @@ describe("conventions", () => {
           "server/routers/api/params.ts": 'export const r = app.get("/:id/feats/:feat_id", (c) => c);\n',
           "server/routers/api/zod.ts":
             'import { zValidator } from "@hono/zod-validator";\nexport const z = zValidator;\n',
-          "server/middlewares/zValidator.ts":
+          "server/middlewares/validate.ts":
             'import { zValidator } from "@hono/zod-validator";\nexport const z = zValidator;\n',
           "server/routers/api/caught.ts": "export const r = () => {\n  try {\n    f();\n  } catch {}\n};\n",
           "server/routers/static.ts": "export const r = () => {\n  try {\n    f();\n  } catch {}\n};\n",
@@ -100,11 +101,11 @@ describe("conventions", () => {
             'export const r = app.get("/robots.txt", (c) => c).get("/assets/*", (c) => c).get("/:id/class-levels", (c) => c);\n',
           "server/routers/api/reexport.ts": 'export { zValidator } from "@hono/zod-validator";\n',
           "server/routers/api/named.ts":
-            'export const r = app.get("/:id", zValidator("param", idParam), zValidator("json", z.object({})), (c) => c);\n',
+            'export const r = app.get("/:id", validate("param", idParam), validate("json", z.object({})), (c) => c);\n',
           "server/routers/api/inline.ts":
-            'export const r = app.get("/:id", zValidator("param", z.object({ id: z.string() })), (c) => c);\n',
+            'export const r = app.get("/:id", validate("param", z.object({ id: z.string() })), (c) => c);\n',
           "server/routers/api/extended.ts":
-            'export const r = app.get("/:id/:featId", zValidator("param", idParam.extend({ featId: z.string() })), (c) => c);\n',
+            'export const r = app.get("/:id/:featId", validate("param", idParam.extend({ featId: z.string() })), (c) => c);\n',
         },
         ["route-conventions"],
       ),

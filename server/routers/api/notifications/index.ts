@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { sessionMiddleware, zValidator } from "@/server/middlewares/index.ts";
+import { sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { NotificationsService } from "@/server/services/notifications/index.ts";
 
@@ -9,7 +9,7 @@ const notifications = new Hono()
   .use(sessionMiddleware)
   .get(
     "/",
-    zValidator(
+    validate(
       "query",
       z.object({
         limit,
@@ -42,7 +42,7 @@ const notifications = new Hono()
     await NotificationsService.markAllRead(c.var.requestSession);
     return c.json({ success: true }, 200);
   })
-  .post("/:id/read", zValidator("param", idParam), async (c) => {
+  .post("/:id/read", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await NotificationsService.markRead(c.var.requestSession, id), 200);
   });

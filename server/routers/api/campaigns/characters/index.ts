@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { denyDemoUser, exportRateLimit, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
+import { denyDemoUser, exportRateLimit, type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/index.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
@@ -12,8 +12,8 @@ const characterParams = idParam.extend({ characterId: z.string().uuid() });
 export default new Hono<SessionContext>()
   .get(
     "/:id/characters",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -37,7 +37,7 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get("/:id/characters/:characterId", zValidator("param", characterParams), async (c) => {
+  .get("/:id/characters/:characterId", validate("param", characterParams), async (c) => {
     const { id, characterId } = c.req.valid("param");
     const data = await CampaignCharactersService.getCharacter(c.var.requestSession, id, characterId);
     const response = buildFullCharacterResponse(data.character!, data.detailedCharacter!);
@@ -99,8 +99,8 @@ export default new Hono<SessionContext>()
   })
   .post(
     "/:id/characters",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         characterId: z.string().uuid(),
@@ -121,7 +121,7 @@ export default new Hono<SessionContext>()
     "/:id/characters/:characterId/pdf",
     denyDemoUser,
     exportRateLimit,
-    zValidator("param", characterParams),
+    validate("param", characterParams),
     async (c) => {
       const { id, characterId } = c.req.valid("param");
       await CampaignCharactersService.enqueuePdf(c.var.requestSession, id, characterId);
@@ -130,8 +130,8 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/characters/:characterId",
-    zValidator("param", characterParams),
-    zValidator(
+    validate("param", characterParams),
+    validate(
       "json",
       z.object({
         visibility: z.enum(["Private", "Public", "Partial"]),

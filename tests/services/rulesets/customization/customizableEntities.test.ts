@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Items, Klasses, KlassLevels, Modifiers, Powers, Races } from "@/server/repositories/index.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import {
   checkCustomizedEntity,
   getCustomizableEntityName,

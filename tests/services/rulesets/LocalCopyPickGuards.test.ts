@@ -4,10 +4,10 @@ import { and, eq } from "drizzle-orm";
 
 import { languagesInRules, racesInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, CharacterLanguages, Characters } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
-import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";

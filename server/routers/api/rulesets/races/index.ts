@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { sizeType } from "@/drizzle/schema.ts";
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
@@ -12,8 +12,8 @@ const raceParams = idParam.extend({ raceId: z.string().uuid() });
 export default new Hono<SessionContext>()
   .get(
     "/:id/races",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "query",
       z.object({
         limit,
@@ -34,14 +34,14 @@ export default new Hono<SessionContext>()
       );
     },
   )
-  .get("/:id/races/:raceId", zValidator("param", raceParams), async (c) => {
+  .get("/:id/races/:raceId", validate("param", raceParams), async (c) => {
     const { id, raceId } = c.req.valid("param");
     return c.json(await RacesService.getRace(id, raceId), 200);
   })
   .post(
     "/:id/races",
-    zValidator("param", idParam),
-    zValidator(
+    validate("param", idParam),
+    validate(
       "json",
       z.object({
         name: z.string().min(1),
@@ -61,8 +61,8 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/races/:raceId",
-    zValidator("param", raceParams),
-    zValidator(
+    validate("param", raceParams),
+    validate(
       "json",
       z.object({
         name: z.string().min(1),
@@ -81,7 +81,7 @@ export default new Hono<SessionContext>()
       return c.json(await RacesService.updateRace(c.var.requestSession, id, raceId, body), 200);
     },
   )
-  .delete("/:id/races/:raceId", zValidator("param", raceParams), async (c) => {
+  .delete("/:id/races/:raceId", validate("param", raceParams), async (c) => {
     const { id, raceId } = c.req.valid("param");
     return c.json(await RacesService.deleteRace(c.var.requestSession, id, raceId), 200);
   });

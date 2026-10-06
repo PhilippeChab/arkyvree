@@ -2,7 +2,7 @@ import { pdf } from "@react-pdf/renderer";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { zValidator } from "@/server/middlewares/index.ts";
+import { validate } from "@/server/middlewares/index.ts";
 import { buildBondedMap, buildFullCharacterResponse } from "@/server/rulesets/dnd3.5/index.ts";
 import { redactPrivateNotes } from "@/server/rulesets/redactPrivateNotes.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
@@ -11,7 +11,7 @@ const shareTokenParam = z.object({ shareToken: z.string().uuid() });
 
 const shared = new Hono()
   // Get shared character data (public, no auth)
-  .get("/characters/:shareToken", zValidator("param", shareTokenParam), async (c) => {
+  .get("/characters/:shareToken", validate("param", shareTokenParam), async (c) => {
     const { shareToken } = c.req.valid("param");
 
     const { character, detailedCharacter, bondedByKind, portraitUrl } =
@@ -27,7 +27,7 @@ const shared = new Hono()
     );
   })
   // Generate PDF for shared character (public, no auth)
-  .get("/characters/:shareToken/pdf", zValidator("param", shareTokenParam), async (c) => {
+  .get("/characters/:shareToken/pdf", validate("param", shareTokenParam), async (c) => {
     const { shareToken } = c.req.valid("param");
     // Outside the try: a token that finds no character is a 404, not a failed render.
     const { detailedCharacter, CharacterSheetComponent, portraitUrl, kind } =
