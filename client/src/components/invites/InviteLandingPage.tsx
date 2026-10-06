@@ -146,7 +146,7 @@ export function InviteLandingPage({
       Go to Dashboard
     </Button>
   );
-  const stateIcon = <Icon sx={{ fontSize: { xs: 48, sm: 64 }, color: "text.secondary", mb: 2 }} />;
+  const stateIcon = <Icon fontSize="hero" sx={{ color: "text.secondary", mb: 2 }} />;
 
   if (isLoading) {
     return (
@@ -178,7 +178,7 @@ export function InviteLandingPage({
   if (!isAnswering && invite.status === acceptedStatus) {
     return (
       <InviteStateCard
-        icon={<CheckIcon sx={{ fontSize: { xs: 48, sm: 64 }, color: "success.main", mb: 2 }} />}
+        icon={<CheckIcon fontSize="hero" sx={{ color: "success.main", mb: 2 }} />}
         title="Already Accepted"
         action={
           entityId && (

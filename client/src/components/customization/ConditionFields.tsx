@@ -161,7 +161,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
                 title="Compute the value from another path or an expression. Wrap paths in [brackets] and use floor/ceil/min/max plus +-*/ for arithmetic. Examples: [abilities.charisma.modifier], floor([classes.ranger.level] / 2), max(0, [classes.beastmaster.level] + 3)."
                 arrow
               >
-                <HelpIcon sx={{ fontSize: 16, color: "text.secondary", cursor: "help" }} />
+                <HelpIcon fontSize="compact" sx={{ color: "text.secondary", cursor: "help" }} />
               </Tooltip>
             </Box>
           }

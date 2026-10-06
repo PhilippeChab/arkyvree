@@ -237,8 +237,8 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
               />
             ) : step.icon ? (
               <step.icon
+                fontSize={effectiveMode === "dialog" ? "hero" : "large"}
                 sx={{
-                  fontSize: effectiveMode === "dialog" ? 44 : 32,
                   color: "common.white",
                   filter: (theme) => `drop-shadow(0 2px 4px ${alpha(theme.palette.common.black, 0.3)})`,
                 }}
@@ -265,12 +265,11 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         />
 
         <Typography
-          variant="body1"
+          variant={effectiveMode === "popper" ? "body2" : "body1"}
           sx={{
             color: "text.secondary",
             maxWidth: effectiveMode === "dialog" ? 400 : 300,
             lineHeight: 1.7,
-            fontSize: effectiveMode === "popper" ? "0.9rem" : undefined,
           }}
         >
           {step.description.includes("{faq}")
@@ -295,16 +294,16 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
           <Tooltip describeChild title={step.tooltip} arrow placement="top">
             <Box
               sx={{
+                typography: "body2",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 0.5,
                 mt: 2,
                 color: gold,
                 cursor: "help",
-                fontSize: "0.85rem",
               }}
             >
-              <HelpIcon sx={{ fontSize: 18 }} />
+              <HelpIcon fontSize="compact" />
               <Typography variant="caption" sx={{ color: "inherit", fontWeight: 500 }}>
                 Forking & Extensions
               </Typography>

@@ -43,11 +43,11 @@ export function AbilityScoreBox({
       }}
     >
       <Typography
-        variant={compact ? "caption" : "h6"}
+        variant={compact ? "caption" : "body2"}
         sx={{
           fontWeight: 600,
           textTransform: "uppercase",
-          ...(compact ? { lineHeight: 1 } : { fontSize: "0.9rem" }),
+          ...(compact && { lineHeight: 1 }),
         }}
       >
         {label}
@@ -83,7 +83,7 @@ export function AbilityScoreBox({
         </Typography>
 
         {breakdown && (
-          <Box sx={{ fontSize: "0.75rem", textAlign: "center" }}>
+          <Box sx={{ typography: "caption", textAlign: "center" }}>
             {edit ? (
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "center" }}>
                 <IconButton
@@ -93,7 +93,7 @@ export function AbilityScoreBox({
                   disabled={baseValue <= 1}
                   sx={{ p: 0 }}
                 >
-                  <DecrementIcon sx={{ fontSize: 14 }} />
+                  <DecrementIcon fontSize="tiny" />
                 </IconButton>
                 <Typography variant="caption" sx={{ color: "text.secondary", minWidth: 40 }}>
                   Base: {baseValue}
@@ -105,7 +105,7 @@ export function AbilityScoreBox({
                   disabled={baseValue >= 100}
                   sx={{ p: 0 }}
                 >
-                  <AddIcon sx={{ fontSize: 14 }} />
+                  <AddIcon fontSize="tiny" />
                 </IconButton>
               </Stack>
             ) : (

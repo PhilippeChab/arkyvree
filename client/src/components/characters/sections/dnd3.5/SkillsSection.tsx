@@ -9,7 +9,7 @@ import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
 import type { Dnd35SkillsSectionProps } from "./types.ts";
 
 /** The narrow number columns' headers. */
-const columnHeaderSx = { fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
+const columnHeaderSx = { typography: { xs: "caption", sm: "body2" }, fontWeight: 600 };
 
 export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
   const sortedSkills = useMemo(() => Object.values(skills).sort((a, b) => a.name.localeCompare(b.name)), [skills]);

@@ -421,7 +421,6 @@ export function Layout() {
                       mr: isMobile || effectiveExpanded ? 2 : 0,
                       transition: transitionOf(["all"], DURATION.slow, EASING.emphasized),
                       "& .MuiSvgIcon-root": {
-                        fontSize: "1.4rem",
                         transition: transitionOf(["transform"]),
                       },
                     }}
@@ -439,10 +438,10 @@ export function Layout() {
                     }}
                     slotProps={{
                       primary: {
-                        sx: { fontSize: "0.95rem", whiteSpace: "nowrap" },
+                        sx: { whiteSpace: "nowrap" },
                       },
                       secondary: {
-                        sx: { fontSize: "0.75rem", whiteSpace: "nowrap" },
+                        sx: { typography: "caption", whiteSpace: "nowrap" },
                       },
                     }}
                   />

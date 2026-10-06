@@ -2,6 +2,7 @@ import { Box, Button, ThemeProvider, Typography } from "@mui/material";
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 
+import { DiceIcon } from "@/client/src/components/icons/index.ts";
 import { isChunkLoadError, reloadForStaleChunks } from "@/client/src/lib/chunkReload.ts";
 import { Sentry } from "@/client/src/lib/sentry.ts";
 import { createAppTheme } from "@/client/src/theme/appTheme.ts";
@@ -73,15 +74,7 @@ export class ErrorBoundary extends Component<Props, State> {
               bgcolor: "background.default",
             }}
           >
-            <Typography
-              sx={{
-                fontSize: { xs: "4rem", sm: "6rem" },
-                lineHeight: 1,
-                filter: "grayscale(0.3)",
-              }}
-            >
-              &#x1F480;
-            </Typography>
+            <DiceIcon fontSize="hero" sx={{ color: "primary.main" }} />
             <Typography
               variant="h4"
               sx={{ fontFamily: '"Lora Variable", Georgia, serif', color: "primary.main", fontWeight: 600 }}

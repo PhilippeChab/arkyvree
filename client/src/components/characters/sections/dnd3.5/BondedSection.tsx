@@ -53,9 +53,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
 
       <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3 }}>
         <Box sx={{ flex: "0 0 auto" }}>
-          <Typography sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary", typography: "body1" }}>
-            Abilities
-          </Typography>
+          <Typography sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}>Abilities</Typography>
           <Box
             sx={{
               display: "grid",
@@ -73,9 +71,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
 
         <Stack spacing={3} sx={{ flex: 1, minWidth: { md: 260 } }}>
           <Box>
-            <Typography sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary", typography: "body1" }}>
-              Combat &amp; Saves
-            </Typography>
+            <Typography sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}>Combat &amp; Saves</Typography>
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
               <Stack spacing={1.5}>
                 <StatField label="HP" value={combat?.hp?.total ?? 0} />
@@ -93,20 +89,18 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
 
           {featNames.length > 0 && (
             <Box>
-              <Typography sx={{ fontWeight: 600, mb: 1, color: "text.secondary", typography: "body1" }}>
-                Features
-              </Typography>
+              <Typography sx={{ fontWeight: 600, mb: 1, color: "text.secondary" }}>Features</Typography>
               <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75 }}>
                 {featNames.map((n) => (
                   <Box
                     key={n}
                     sx={{
+                      typography: "body2",
                       px: 1,
                       py: 0.25,
                       border: "1px solid",
                       borderColor: "divider",
                       borderRadius: 1,
-                      fontSize: "0.85rem",
                     }}
                   >
                     {n}

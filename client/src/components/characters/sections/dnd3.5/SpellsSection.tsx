@@ -73,10 +73,10 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
               <Chip
                 key={tag.name}
                 label={tag.name}
-                size="small"
                 variant="outlined"
                 color={tag.joinsClassList ? "secondary" : "primary"}
-                sx={{ ml: 0.5, height: 20, fontSize: "0.7rem" }}
+                size="tiny"
+                sx={{ ml: 0.5 }}
               />
             ))}
           </Box>

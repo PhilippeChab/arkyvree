@@ -99,8 +99,8 @@ export function AddClassPlanStep({
               onDelete={() => onRemoveLevel(index)}
               size="medium"
               sx={{
+                typography: "body1",
                 height: 46,
-                fontSize: "1rem",
                 width: "100%",
                 "& .MuiChip-label": { flex: 1, textAlign: "center" },
                 "& .MuiChip-deleteIcon": { position: "absolute", right: 8 },

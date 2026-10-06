@@ -121,13 +121,8 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
                 label={classSkill.skillsInRule.name}
                 variant="outlined"
                 color="primary"
-                deleteIcon={canEdit ? <CloseIcon /> : undefined}
+                deleteIcon={canEdit ? <CloseIcon fontSize="compact" /> : undefined}
                 onDelete={canEdit ? () => handleRemoveSkill(classSkill.skillId) : undefined}
-                sx={{
-                  "& .MuiChip-deleteIcon": {
-                    fontSize: "18px",
-                  },
-                }}
               />
             ))}
           </Box>

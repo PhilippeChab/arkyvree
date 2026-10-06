@@ -118,7 +118,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                   <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                     {entityTypeLabel(entityType, baseRules, true)}
                   </Typography>
-                  <Chip label={items.length} size="small" sx={{ height: 20, fontSize: "0.75rem" }} />
+                  <Chip label={items.length} size="tiny" />
                 </Box>
                 <List dense disablePadding>
                   {items.map((change) => {
@@ -132,10 +132,10 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                         <ListItemText primary={change.name} sx={{ my: 0, flexGrow: 0 }} />
                         <Chip
                           label={change.status}
-                          size="small"
                           color={chipColor}
                           variant="outlined"
-                          sx={{ height: 20, fontSize: "0.7rem", flexShrink: 0 }}
+                          size="tiny"
+                          sx={{ flexShrink: 0 }}
                         />
                       </Box>
                     );

@@ -13,7 +13,7 @@ export function ValidationIssueList({ issues }: ValidationIssueListProps) {
       {issues.map((issue, i) => (
         <li key={i}>
           {issue.entityName && (
-            <Typography component="span" variant="body2" sx={{ fontWeight: "bold" }}>
+            <Typography component="span" variant="body2" sx={{ fontWeight: 700 }}>
               {issue.entityName}
               {issue.entityType ? ` (${issue.entityType})` : ""}
               {": "}

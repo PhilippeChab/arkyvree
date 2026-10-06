@@ -28,8 +28,8 @@ export function GoogleSignInButton({
         disabled={disabled}
         startIcon={<Box component="img" src="/google-logo.svg" alt="" sx={{ width: 18, height: 18 }} />}
         sx={{
+          typography: "body1",
           textTransform: "none",
-          fontSize: "0.938rem",
           fontWeight: 500,
           py: 1.5,
           background: (theme) => theme.palette.background.paper,

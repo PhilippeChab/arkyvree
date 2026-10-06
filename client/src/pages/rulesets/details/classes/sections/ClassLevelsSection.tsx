@@ -90,7 +90,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
                     enterDelay={300}
                     slotProps={{ tooltip: { sx: { maxWidth: 400 } } }}
                   >
-                    <Chip label={label} size="small" variant="outlined" sx={{ fontSize: "0.75rem" }} />
+                    <Chip label={label} size="small" variant="outlined" sx={{ typography: "caption" }} />
                   </Tooltip>
                 );
               })

@@ -41,7 +41,7 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
     >
       {Icon && (
         <Box sx={{ filter: (theme) => `drop-shadow(0 2px 4px ${alpha(theme.palette.secondary.main, 0.25)})` }}>
-          <Icon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2, opacity: 0.5 }} />
+          <Icon fontSize="hero" sx={{ color: "text.secondary", mb: 2, opacity: 0.5 }} />
         </Box>
       )}
       <Typography variant="h6" gutterBottom sx={{ color: "text.secondary" }}>

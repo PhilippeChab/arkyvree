@@ -124,7 +124,7 @@ function RulesetList({ filters }: RulesetListProps) {
               onClick={() => navigate(`/rulesets/${ruleset.id}`)}
               onMouseEnter={prefetch}
               onFocus={prefetch}
-              avatar={<RulesetsIcon sx={{ fontSize: 18 }} />}
+              avatar={<RulesetsIcon fontSize="compact" />}
               title={ruleset.name}
               description={ruleset.description}
               corner={

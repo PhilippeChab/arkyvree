@@ -85,7 +85,7 @@ export function ClassesSection({
                   }
                   variant="outlined"
                   sx={{
-                    fontSize: "0.875rem",
+                    typography: "body2",
                     height: "auto",
                     "& .MuiChip-label": { px: 2, py: 1 },
                   }}

@@ -52,8 +52,8 @@ interface PlayersSectionProps {
 
 const STATUS_CHIPS = {
   assigned: null,
-  pending: { icon: <PendingIcon sx={{ fontSize: 14 }} />, label: "Invite Pending", color: "warning" },
-  unassigned: { icon: <UnassignedIcon sx={{ fontSize: 14 }} />, label: "Unassigned", color: "default" },
+  pending: { icon: <PendingIcon fontSize="tiny" />, label: "Invite Pending", color: "warning" },
+  unassigned: { icon: <UnassignedIcon fontSize="tiny" />, label: "Unassigned", color: "default" },
 } as const satisfies Record<PlayerState, { icon: ReactNode; label: string; color: "warning" | "default" } | null>;
 
 /** The players' columns; each row's actions sit over its last. */
@@ -258,7 +258,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       case "role":
         return (
           <Chip
-            icon={isGameMaster ? <GameMasterIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />}
+            icon={isGameMaster ? <GameMasterIcon fontSize="tiny" /> : <PlayerIcon fontSize="tiny" />}
             label={player.role}
             size="small"
             color={isGameMaster ? "warning" : "primary"}
@@ -279,7 +279,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
           />
         ) : (
           <Chip
-            icon={<PlayerIcon sx={{ fontSize: 14 }} />}
+            icon={<PlayerIcon fontSize="tiny" />}
             label="Active"
             size="small"
             color="success"

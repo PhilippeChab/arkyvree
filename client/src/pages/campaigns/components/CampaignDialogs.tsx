@@ -106,7 +106,7 @@ function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
 function RoleLabel({ icon: Icon, label }: RoleLabelProps) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <Icon sx={{ fontSize: 20 }} />
+      <Icon fontSize="small" />
       {label}
     </Box>
   );

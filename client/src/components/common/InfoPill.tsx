@@ -33,7 +33,7 @@ export function InfoPill({ icon: Icon, label, color = "default", tooltip }: Info
         };
       }}
     >
-      <Icon sx={{ fontSize: 12, flexShrink: 0 }} />
+      <Icon fontSize="tiny" sx={{ flexShrink: 0 }} />
       <Typography variant="caption" noWrap sx={{ color: "inherit", fontWeight: 500 }}>
         {label}
       </Typography>

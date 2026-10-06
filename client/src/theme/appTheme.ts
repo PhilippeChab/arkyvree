@@ -3,6 +3,23 @@ import { createTheme, responsiveFontSizes, type Theme } from "@mui/material/styl
 
 import { DURATION, prefersReducedMotion, transitionOf } from "@/client/src/lib/animations.ts";
 
+declare module "@mui/material/SvgIcon" {
+  /** The icon sizes beyond MUI's small, medium and large: an unread dot, a chip's, an inline one, a page's hero */
+  interface SvgIconPropsSizeOverrides {
+    dot: true;
+    tiny: true;
+    compact: true;
+    hero: true;
+  }
+}
+
+declare module "@mui/material/Chip" {
+  /** A count or a tag beside a title, smaller than MUI's small */
+  interface ChipPropsSizeOverrides {
+    tiny: true;
+  }
+}
+
 declare module "@mui/material/styles" {
   interface Palette {
     /** The color of the app's own shadows (the sidebar's, a banner's): deeper on the dark theme. */
@@ -337,10 +354,26 @@ export function createAppTheme(darkMode: boolean): Theme {
         },
         MuiChip: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               borderRadius: 4,
               border: darkMode ? "1px solid rgba(210, 180, 140, 0.4)" : "1px solid rgba(141, 30, 30, 0.2)",
-            },
+              variants: [{ props: { size: "tiny" }, style: { height: 20, ...theme.typography.caption } }],
+            }),
+          },
+        },
+        MuiSvgIcon: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              variants: [
+                { props: { fontSize: "dot" }, style: { fontSize: 8 } },
+                { props: { fontSize: "tiny" }, style: { fontSize: 14 } },
+                { props: { fontSize: "compact" }, style: { fontSize: 18 } },
+                {
+                  props: { fontSize: "hero" },
+                  style: { fontSize: 48, [theme.breakpoints.up("sm")]: { fontSize: 64 } },
+                },
+              ],
+            }),
           },
         },
         MuiLink: {

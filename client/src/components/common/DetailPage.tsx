@@ -144,7 +144,6 @@ export function SectionTabs<K extends string>({
           "& .MuiTab-root": {
             textTransform: "none",
             fontWeight: 600,
-            fontSize: "0.875rem",
             minHeight: 48,
             borderRadius: 1,
             mx: 0.5,

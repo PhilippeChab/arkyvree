@@ -155,13 +155,13 @@ function CharacterCard({
             <Avatar
               src={portraitUrl ?? undefined}
               sx={{
+                typography: "body1",
                 width: 36,
                 height: 36,
                 border: "2px solid",
                 borderColor: "secondary.main",
                 background: (theme) =>
                   `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
-                fontSize: "1rem",
                 fontWeight: 700,
                 flexShrink: 0,
               }}
@@ -186,7 +186,7 @@ function CharacterCard({
                 }}
               >
                 <span>{character.visibility}</span>
-                <VisibilityIcon sx={{ fontSize: 14 }} />
+                <VisibilityIcon fontSize="tiny" />
               </Stack>
             }
             size="small"
@@ -200,8 +200,8 @@ function CharacterCard({
                 : undefined
             }
             sx={{
+              typography: "caption",
               fontWeight: 500,
-              fontSize: "0.7rem",
               ...(canEditVisibility && { cursor: "pointer" }),
             }}
           />
@@ -397,7 +397,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
             >
               <Typography
                 variant="caption"
-                sx={{ color: "text.secondary", mt: 0.5, cursor: "help", alignSelf: "flex-end", fontSize: "0.7rem" }}
+                sx={{ color: "text.secondary", mt: 0.5, cursor: "help", alignSelf: "flex-end" }}
               >
                 What's this?
               </Typography>

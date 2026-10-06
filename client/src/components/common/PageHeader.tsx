@@ -42,11 +42,7 @@ export function PageHeader({ title, subtitle, action, variant = "hero" }: PageHe
           </Typography>
           {subtitle && (
             <Typography
-              sx={
-                hero
-                  ? { typography: "body1", opacity: 0.9 }
-                  : { typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }
-              }
+              sx={hero ? { opacity: 0.9 } : { typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}
             >
               {subtitle}
             </Typography>

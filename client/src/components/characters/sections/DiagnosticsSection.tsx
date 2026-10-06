@@ -79,7 +79,7 @@ interface SkippedModifierTableProps {
   items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"];
 }
 
-const tableCellSx = { py: 0.5, px: 1, fontSize: "0.8rem" } as const;
+const tableCellSx = { py: 0.5, px: 1 } as const;
 const headerCellSx = { ...tableCellSx, fontWeight: 600 } as const;
 const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
 const summarySx = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
@@ -189,7 +189,7 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
                 </TableCell>
                 <TableCell sx={{ ...tableCellSx, fontWeight: 600 }}>{source}</TableCell>
                 <TableCell sx={tableCellSx} colSpan={4}>
-                  <Chip label={rules.length} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.75rem" }} />
+                  <Chip label={rules.length} size="tiny" variant="outlined" />
                 </TableCell>
               </TableRow>
               <TableRow>

@@ -38,7 +38,7 @@ export function DemoBanner() {
           boxShadow: (theme) => `0 2px 12px ${theme.palette.shadow}`,
         }}
       >
-        <DemoIcon sx={{ fontSize: 18, color: "warning.main" }} />
+        <DemoIcon fontSize="compact" sx={{ color: "warning.main" }} />
         <Typography
           variant="body2"
           sx={{
@@ -56,7 +56,7 @@ export function DemoBanner() {
             py: 0,
             px: 1.5,
             minHeight: 26,
-            fontSize: "0.75rem",
+            typography: "caption",
             fontWeight: 600,
             borderRadius: 4,
             color: (theme) => (theme.palette.mode === "dark" ? "warning.light" : "warning.dark"),

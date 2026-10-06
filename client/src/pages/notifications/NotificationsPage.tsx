@@ -140,7 +140,7 @@ export default function NotificationsPage() {
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       {!notification.readAt && (
-                        <UnreadIcon titleAccess="Unread" sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }} />
+                        <UnreadIcon titleAccess="Unread" fontSize="dot" sx={{ color: "primary.main", flexShrink: 0 }} />
                       )}
                       <Typography variant="body2">
                         {formatNotificationMessage(notification.type, notification.data)}

@@ -128,7 +128,7 @@ export function LevelWizardDialog({
             },
             ...(isMobile && {
               "& .MuiStepLabel-label": {
-                fontSize: "0.65rem",
+                typography: "caption",
               },
             }),
           }}

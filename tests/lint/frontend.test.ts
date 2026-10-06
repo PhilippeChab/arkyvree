@@ -435,4 +435,31 @@ describe("frontend rules", () => {
       "motion client/src/written.tsx",
     ]);
   });
+
+  test("a size is the theme's: text takes a variant, an icon its size, a weight is a number", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/rem.tsx": 'export const r = <Chip sx={{ fontSize: "0.75rem" }} />;\n',
+          "client/src/pixels.tsx": "export const p = <HelpIcon sx={{ fontSize: 18 }} />;\n",
+          "client/src/responsive.tsx": "export const s = <Icon sx={{ fontSize: { xs: 48, sm: 64 } }} />;\n",
+          "client/src/worded.tsx": 'export const w = <Typography sx={{ fontWeight: "bold" }} />;\n',
+          "client/src/fixed.tsx": 'export const f = <Typography sx={{ typography: "body2" }} />;\n',
+          "client/src/variants.tsx":
+            'export const v = <Typography variant="body2" sx={{ fontWeight: 600, typography: { xs: "body1", sm: "h6" } }} />;\n',
+          "client/src/boxed.tsx": 'export const b = <Box sx={{ typography: "caption" }} />;\n',
+          "client/src/sized.tsx": 'export const z = <HelpIcon fontSize="compact" sx={{ fontSize: "inherit" }} />;\n',
+          "client/src/computed.tsx": "export const c = <PhotoIcon sx={{ fontSize: dimension * 0.22 }} />;\n",
+          "client/src/theme/appTheme.ts": 'export const t = { h1: { fontSize: "2.5rem" } };\n',
+        },
+        ["type-scale"],
+      ),
+    ).toEqual([
+      "type-scale client/src/fixed.tsx",
+      "type-scale client/src/pixels.tsx",
+      "type-scale client/src/rem.tsx",
+      "type-scale client/src/responsive.tsx",
+      "type-scale client/src/worded.tsx",
+    ]);
+  });
 });

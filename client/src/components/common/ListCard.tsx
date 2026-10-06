@@ -44,13 +44,13 @@ export function ListCard({
           <Avatar
             src={avatarSrc}
             sx={{
+              typography: "body1",
               width: 36,
               height: 36,
               border: "2px solid",
               borderColor: "secondary.main",
               background: (theme) =>
                 `linear-gradient(135deg, ${theme.palette[avatarTone].light}, ${theme.palette[avatarTone].main})`,
-              fontSize: "1rem",
               fontWeight: 700,
               flexShrink: 0,
             }}

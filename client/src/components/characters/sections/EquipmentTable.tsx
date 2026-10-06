@@ -99,7 +99,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({
                 <TableCell align="center" sx={noWrap}>
                   {formatCost(entry.costGp) ?? "—"}
                 </TableCell>
-                <TableCell sx={{ fontSize: "0.875rem", minWidth: 220 }}>{entry.description || "—"}</TableCell>
+                <TableCell sx={{ minWidth: 220 }}>{entry.description || "—"}</TableCell>
                 {renderActions && <TableCell align="center">{renderActions(entry)}</TableCell>}
               </TableRow>
             ))}

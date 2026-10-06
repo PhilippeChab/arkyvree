@@ -171,7 +171,7 @@ export function TargetPathBrowser({
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5, minHeight: 32 }}>
         {breadcrumbSegments.map((segment, index) => (
           <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
-            {index > 0 && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary", mx: 0.25 }} />}
+            {index > 0 && <ChevronRightIcon fontSize="compact" sx={{ color: "text.secondary", mx: 0.25 }} />}
             <Chip
               label={segmentLabels[segment] || formatSegment(segment)}
               size="small"
@@ -277,7 +277,7 @@ export function TargetPathBrowser({
                               <Typography variant="body2" sx={{ fontWeight: isGroup || isSelected ? 600 : 400 }}>
                                 {segmentLabels[option.label] || formatSegment(option.label)}
                               </Typography>
-                              {isGroup && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
+                              {isGroup && <ChevronRightIcon fontSize="compact" sx={{ color: "text.secondary" }} />}
                             </Box>
                           )
                         }

@@ -62,7 +62,7 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
       >
         <CardActionArea component={Link} to={to} sx={{ height: "100%" }}>
           <CardContent sx={{ textAlign: "center", p: { xs: 2, sm: 4 } }}>
-            <Icon sx={{ fontSize: { xs: 48, sm: 60 }, mb: 2 }} />
+            <Icon fontSize="hero" sx={{ mb: 2 }} />
             <Typography sx={{ typography: { xs: "h4", md: "h2" }, fontWeight: 800, mb: 1, textShadow }}>
               {count}
             </Typography>
@@ -224,12 +224,12 @@ export default function DashboardPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 0.5,
-              fontSize: "0.875rem",
+              typography: "body2",
               position: "relative",
               "&:hover": { color: "common.white" },
             }}
           >
-            <HelpIcon sx={{ fontSize: 18 }} />
+            <HelpIcon fontSize="compact" />
             Help
           </MuiLink>
         </Paper>

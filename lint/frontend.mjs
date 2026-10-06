@@ -44,6 +44,8 @@
  * - `nav-links`: a control that only navigates is a link (`component={Link} to`), never an `onClick` that calls
  *   `navigate`; a card holds content of its own and opens on click. React Router's `Link` is `Link`, MUI's `MuiLink`.
  * - `browser-storage`: what the browser keeps is a store's (`client/src/stores/`, zustand's `persist`).
+ * - `type-scale`: a size is the theme's: text takes a typography variant, an icon its size (`fontSize="tiny"`); a
+ *   font weight is a number, and a `Typography` takes a fixed variant as its `variant`.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -778,6 +780,13 @@ function createControlledInputs(context) {
   };
 }
 
+/** The JSX element a style object is the `sx` of, when it's written right in the attribute. */
+function sxElement(object) {
+  const attribute = object.parent?.parent;
+  if (object.parent?.type !== "JSXExpressionContainer" || attribute?.type !== "JSXAttribute") return null;
+  return attribute.name.name === "sx" ? elementName(attribute.parent.parent) : null;
+}
+
 /** Whether a template literal times something by its own numbers: a literal time, or a time no `DURATION` gives (`${i * 80}ms`). */
 function timesItself(template, sourceCode) {
   const texts = template.quasis.map((quasi) => quasi.value.cooked ?? "");
@@ -811,6 +820,48 @@ function createMotion(context) {
       const value = node.value;
       if (value.type === "Literal" && typeof value.value === "string" && value.value !== "none") report(value);
       if (value.type === "TemplateLiteral" && timesItself(value, context.sourceCode)) report(value);
+    },
+  };
+}
+
+/** Whether a style value is a size written out: `14`, `"0.75rem"`, `{ xs: 48, sm: 64 }` (not `"inherit"`, not computed). */
+function writtenSize(value) {
+  if (value.type === "Literal")
+    return typeof value.value === "number" || (typeof value.value === "string" && value.value !== "inherit");
+  if (value.type === "TemplateLiteral") return value.expressions.length === 0;
+  if (value.type === "ObjectExpression") {
+    return value.properties.length > 0 && value.properties.every((p) => p.type === "Property" && writtenSize(p.value));
+  }
+  return false;
+}
+
+function createTypeScale(context) {
+  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
+  return {
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      if (key === "fontSize" && writtenSize(node.value)) {
+        return context.report({
+          node: node.value,
+          message:
+            'A size is the theme\'s: text takes a typography variant (`variant="caption"`, `typography: "body2"`), ' +
+            'an icon its size (`fontSize="tiny"`, the theme\'s `compact`, `hero`…): never a size written out.',
+        });
+      }
+      if (key === "fontWeight" && node.value.type === "Literal" && typeof node.value.value === "string") {
+        return context.report({
+          node: node.value,
+          message: "A font weight is a number (`fontWeight: 700`), never a word.",
+        });
+      }
+      const fixedVariant = key === "typography" && node.value.type === "Literal";
+      if (fixedVariant && node.parent.type === "ObjectExpression" && sxElement(node.parent) === "Typography") {
+        context.report({
+          node,
+          message:
+            'A `Typography`\'s variant is its `variant`: `sx` takes a responsive one (`{ xs: "body1", sm: "h6" }`).',
+        });
+      }
     },
   };
 }
@@ -860,4 +911,5 @@ export default {
   "nav-links": { meta: { type: "suggestion" }, create: createNavLinks },
   "browser-storage": { meta: { type: "suggestion" }, create: createBrowserStorage },
   motion: { meta: { type: "suggestion" }, create: createMotion },
+  "type-scale": { meta: { type: "suggestion" }, create: createTypeScale },
 };

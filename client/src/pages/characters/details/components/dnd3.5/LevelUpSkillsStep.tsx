@@ -148,7 +148,7 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
 });
 
 /** The narrow number columns' headers. */
-const columnHeaderSx = { whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
+const columnHeaderSx = { typography: { xs: "caption", sm: "body2" }, whiteSpace: "nowrap" };
 
 export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
   const {
