@@ -50,7 +50,7 @@ export function namesOf(ids: Record<string, string>) {
  * What an entity was seeded with, as its content reads: its requirements ("level target operator value") by level,
  * and its modifiers (each with its requirements) and properties ("type value"), sorted.
  */
-export async function customizationsOf(entityId: string) {
+export async function describeCustomizations(entityId: string) {
   const requirementsOf = async (id: string) =>
     (
       await db

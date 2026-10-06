@@ -23,7 +23,6 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
-import { timingStorage } from "@/server/timing.ts";
 import { WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import {
   createSeededTestRuleset,
@@ -33,6 +32,7 @@ import {
   createTestUserAndRuleset,
   getSeedCtx,
   makeSession,
+  measure,
 } from "@/tests/helpers.ts";
 import { createSeedCharacter } from "@/tests/levelFixtures.ts";
 
@@ -366,18 +366,7 @@ describe("an inherited skill's Skill Focus", () => {
   test("is cleaned up from the rules the caller loaded, without another lookup", async () => {
     const { fork } = await seededForkWithClimb();
     await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
-      const timing = {
-        dbTimeMs: 0,
-        queryCount: 0,
-        activeQueries: 0,
-        dbWallStart: 0,
-        slowQueries: [],
-        cacheHits: 0,
-        cacheMisses: 0,
-        dedupHits: 0,
-        dedupMisses: 0,
-      };
-      await timingStorage.run(timing, () =>
+      const { timing } = await measure(() =>
         new Dnd35SkillsHooks().deleteSkillFeat(db, fork.id, rulesetData, "No generated feat"),
       );
       expect(timing).toMatchObject({ queryCount: 0, cacheHits: 0, cacheMisses: 0 });

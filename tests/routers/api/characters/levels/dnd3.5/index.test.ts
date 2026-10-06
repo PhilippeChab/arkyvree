@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import { addClassLevels, addPowers, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { createSeededTestRulesetWithExtensions, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
+import { api, expectOk, expectStatus, guestApi, postCharacter } from "@/tests/api.ts";
+import { createSeededTestRulesetWithExtensions, getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/levelFixtures.ts";
 
 const levels = api.api.characters.levels[":characterId"];
@@ -21,22 +21,7 @@ async function createCharacter(rulesetId?: string) {
     Charisma: 8,
   };
   const abilities = Object.fromEntries(Object.entries(scores).map(([name, score]) => [ctx.abilityMap[name], score]));
-  const character = await expectOk(
-    api.api.characters.$post({
-      json: {
-        rulesetId: rulesetId ?? ctx.rulesetId,
-        raceId: ctx.raceMap.pc["Human"],
-        name: `Level Character ${uniqueId()}`,
-        xp: 0,
-        alignment: "Neutral Good",
-        abilities,
-        age: 25,
-        gender: "Male",
-        height: "180",
-        weight: "80",
-      },
-    }),
-  );
+  const character = await postCharacter({ rulesetId, abilities, alignment: "Neutral Good" });
   return { characterId: character.id, ctx };
 }
 

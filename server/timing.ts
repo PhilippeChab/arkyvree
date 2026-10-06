@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 
 import { Client, Pool } from "pg";
 
-interface TimingStore {
+export interface TimingStore {
   dbTimeMs: number;
   queryCount: number;
   activeQueries: number;
@@ -88,6 +88,21 @@ function wrapPrototypeQuery(proto: { query(...args: unknown[]): unknown }): void
     }
 
     return result;
+  };
+}
+
+/** A request's counters, each at zero: what `timingStorage.run` counts into. */
+export function newTimingStore(): TimingStore {
+  return {
+    dbTimeMs: 0,
+    queryCount: 0,
+    activeQueries: 0,
+    dbWallStart: 0,
+    slowQueries: [],
+    cacheHits: 0,
+    cacheMisses: 0,
+    dedupHits: 0,
+    dedupMisses: 0,
   };
 }
 

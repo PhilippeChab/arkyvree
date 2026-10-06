@@ -1,8 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
-import { aptitudesInRules, featsInRules, itemsInRules } from "@/drizzle/schema.ts";
+import { aptitudesInRules, featsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
@@ -10,7 +10,7 @@ import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/inde
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, findPlainItem, makeSession } from "@/tests/helpers.ts";
 
 async function setup() {
   const session = makeSession();
@@ -52,14 +52,7 @@ test("creating a feat with a renamed override's original name keeps the override
 
 test("bulk item variants with a renamed override's original name keep the override", async () => {
   const { session, fork, baseId } = await setup();
-  const source = (await db.query.itemsInRules.findFirst({
-    where: and(
-      eq(itemsInRules.rulesetId, baseId),
-      eq(itemsInRules.isTemplate, false),
-      isNull(itemsInRules.sourceItemId),
-      eq(itemsInRules.type, "Other"),
-    ),
-  }))!;
+  const source = await findPlainItem(baseId);
   const renamed = await ItemsService.updateItem(session, fork.id, source.id, {
     name: `${source.name} (Local)`,
     description: source.description,

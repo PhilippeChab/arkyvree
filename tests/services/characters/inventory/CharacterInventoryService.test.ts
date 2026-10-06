@@ -13,6 +13,7 @@ import { WEAPON_PROFICIENCY, WEAPON_SIZE } from "@/shared/dnd3.5/properties/inde
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 import {
+  createCharacterAs,
   createSeededTestRuleset,
   createTestRuleset,
   createTestUser,
@@ -130,24 +131,6 @@ async function createItem(
   return item;
 }
 
-/** A human character of the seeded ruleset (or of `values`' ruleset and race). */
-async function createCharacter(session: Session, values: { rulesetId?: string; raceId?: string } = {}) {
-  const { rulesetId, raceMap } = await getSeedCtx();
-  return CharactersService.createCharacter(session, {
-    rulesetId,
-    raceId: raceMap.pc["Human"],
-    name: `Test Character ${uniqueId()}`,
-    xp: 0,
-    alignment: "Lawful Good",
-    abilities: {},
-    age: 25,
-    gender: "Male",
-    height: "6'0\"",
-    weight: "180 lbs",
-    ...values,
-  });
-}
-
 /** A new user's character on their fork of the seeded ruleset, whose items the test makes. */
 async function setup(race?: { size: SizeType }) {
   const { user, session } = await createTestUser();
@@ -156,7 +139,7 @@ async function setup(race?: { size: SizeType }) {
     race &&
     (await Races.create(db, { name: `Test Race ${uniqueId()}`, rulesetId: ruleset.id, baseSpeed: 30, ...race }))[0].id;
   RulesetCache.invalidate(ruleset.id);
-  const character = await createCharacter(
+  const character = await createCharacterAs(
     session,
     raceId ? { rulesetId: ruleset.id, raceId } : { rulesetId: ruleset.id },
   );
@@ -317,12 +300,12 @@ describe("InventoryService", () => {
         await createTestRuleset(user.id, { rulesetId: grandparent.id, ancestorRulesetIds: [grandparent.id] }),
         await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id, grandparent.id] }),
       ]) {
-        const character = await createCharacter(session, { rulesetId: ruleset.id, raceId: race.id });
+        const character = await createCharacterAs(session, { rulesetId: ruleset.id, raceId: race.id });
         expect(await add(session, character.id, inherited.id)).toMatchObject({ itemId: inherited.id });
       }
 
       // A character of the seeded ruleset: the item's ruleset is unrelated to it.
-      const onSeed = await createCharacter(session);
+      const onSeed = await createCharacterAs(session);
       await expect(add(session, onSeed.id, inherited.id)).rejects.toThrow(BadRequestError);
     });
   });

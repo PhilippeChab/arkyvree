@@ -47,11 +47,11 @@ import type { Session } from "@/shared/relations.ts";
 import {
   addCharacterLevel,
   createTestCharacter,
-  createTestKlassLevel,
   createTestRuleset,
   createTestUser,
   getSeedCtx,
   invalidateSeededRuleset,
+  pickFeat,
   uniqueId,
 } from "@/tests/helpers.ts";
 
@@ -176,14 +176,6 @@ async function warriorFeat(name: string) {
   const feat = (await Feats.findOne(db, { name, rulesetId: extension.id }))!;
   const [link] = await FeatsAptitudes.findMany(db, { featId: feat.id });
   return { ...feat, aptitudeId: link.aptitudeId };
-}
-
-/** A character of `rulesetId` who picked the feat. */
-async function pickFeat(userId: string, rulesetId: string, featId: string, aptitudeId: string) {
-  const character = await createTestCharacter(userId, { rulesetId });
-  const { klassLevel } = await createTestKlassLevel(rulesetId);
-  await addCharacterLevel(character.id, klassLevel.id, { feats: [{ featId, aptitudeId }] });
-  return character;
 }
 
 /** The fork's visible feats of this name. */

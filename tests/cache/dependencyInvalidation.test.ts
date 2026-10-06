@@ -6,28 +6,13 @@ import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { getOrBuildCowData } from "@/server/services/rulesets/cow/index.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
-import { timingStorage } from "@/server/timing.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, makeSession, measure } from "@/tests/helpers.ts";
 
 async function setup() {
   const session = makeSession();
   return {
     edited: await createSeededTestRuleset(session.userId),
     unrelated: await createSeededTestRuleset(session.userId),
-  };
-}
-
-function counters() {
-  return {
-    dbTimeMs: 0,
-    queryCount: 0,
-    activeQueries: 0,
-    dbWallStart: 0,
-    slowQueries: [],
-    cacheHits: 0,
-    cacheMisses: 0,
-    dedupHits: 0,
-    dedupMisses: 0,
   };
 }
 
@@ -51,8 +36,7 @@ for (const phase of ["pending", "cached"] as const) {
     if (phase === "cached") await pending;
     RulesetCache.invalidate(edited.id);
     const first = await pending;
-    const timing = counters();
-    const next = await timingStorage.run(timing, read);
+    const { result: next, timing } = await measure(read);
     for (let i = 0; i < first.length; i++) expect(next[i]).toBe(first[i]);
     expect(timing.queryCount).toBe(0);
   });

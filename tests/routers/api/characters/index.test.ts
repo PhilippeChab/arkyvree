@@ -1,31 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/helpers.ts";
+import { api, expectOk, expectStatus, guestApi, postCharacter } from "@/tests/api.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/helpers.ts";
 
 const characters = api.api.characters;
 const character = characters[":id"];
-
-async function createCharacter(name = `Test Character ${uniqueId()}`) {
-  const ctx = await getSeedCtx();
-  const abilities = Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10]));
-  return await expectOk(
-    characters.$post({
-      json: {
-        rulesetId: ctx.rulesetId,
-        raceId: ctx.raceMap.pc["Human"],
-        name,
-        xp: 0,
-        alignment: "True Neutral",
-        abilities,
-        age: 25,
-        gender: "Male",
-        height: "5'10\"",
-        weight: "170 lbs",
-      },
-    }),
-  );
-}
 
 async function languageNames(id: string) {
   return (await expectOk(character.$get({ param: { id } }))).identity.physiology.languages.map((l) => l.name).sort();
@@ -34,7 +13,7 @@ async function languageNames(id: string) {
 describe("characters", () => {
   test("creates, reads, lists and updates a character", async () => {
     const ctx = await getSeedCtx();
-    const created = await createCharacter("Router Character");
+    const created = await postCharacter({ name: "Router Character" });
     expect(created).toMatchObject({
       name: "Router Character",
       rulesetId: ctx.rulesetId,
@@ -68,7 +47,7 @@ describe("characters", () => {
   test("lists the characters not linked to a campaign yet", async () => {
     const { rulesetId } = await getSeedCtx();
     const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Unlinked Campaign", rulesetId } }));
-    const created = await createCharacter();
+    const created = await postCharacter();
     const unlinked = await expectOk(
       characters.unlinked[":campaignId"].$get({ param: { campaignId: campaign.id }, query: {} }),
     );
@@ -84,7 +63,7 @@ describe("characters", () => {
   });
 
   test("archives, unarchives and permanently deletes a character", async () => {
-    const { id } = await createCharacter();
+    const { id } = await postCharacter();
     expect(await expectOk(character.$delete({ param: { id } }))).toEqual({
       message: "Character archived successfully",
     });
@@ -98,12 +77,12 @@ describe("characters", () => {
   });
 
   test("only deletes an archived character permanently", async () => {
-    const { id } = await createCharacter();
+    const { id } = await postCharacter();
     await expectStatus(character.permanent.$delete({ param: { id } }), 404);
   });
 
   test("enqueues a PDF of the character", async () => {
-    const { id } = await createCharacter();
+    const { id } = await postCharacter();
     expect((await characters[":characterId"].pdf.$post({ param: { characterId: id } })).status).toBe(202);
   });
 
@@ -123,7 +102,7 @@ describe("characters", () => {
   describe("abilities", () => {
     test("sets an ability's base score", async () => {
       const { abilityMap } = await getSeedCtx();
-      const { id } = await createCharacter();
+      const { id } = await postCharacter();
       await expectOk(character.abilities.$put({ param: { id }, json: { [abilityMap["Strength"]]: 18 } }));
 
       const detail = await expectOk(character.$get({ param: { id } }));
@@ -132,7 +111,7 @@ describe("characters", () => {
     });
 
     test("returns 404 for an ability the ruleset doesn't have", async () => {
-      const { id } = await createCharacter();
+      const { id } = await postCharacter();
       await expectStatus(character.abilities.$put({ param: { id }, json: { [NIL_UUID]: 15 } }), 404);
     });
   });
@@ -140,7 +119,7 @@ describe("characters", () => {
   describe("languages", () => {
     test("sets, replaces and clears a character's languages", async () => {
       const { langMap } = await getSeedCtx();
-      const { id } = await createCharacter();
+      const { id } = await postCharacter();
 
       await expectOk(
         character.languages.$put({ param: { id }, json: { languageIds: [langMap["Common"], langMap["Draconic"]] } }),
@@ -153,14 +132,14 @@ describe("characters", () => {
     });
 
     test("rejects a language the ruleset doesn't have", async () => {
-      const { id } = await createCharacter();
+      const { id } = await postCharacter();
       await expectStatus(character.languages.$put({ param: { id }, json: { languageIds: [NIL_UUID] } }), 400);
     });
   });
 
   describe("sharing", () => {
     test("shares a character with anyone holding its token, without its private notes", async () => {
-      const { id } = await createCharacter();
+      const { id } = await postCharacter();
       const { shareToken } = await expectOk(character.share.$post({ param: { id } }));
       expect(shareToken).toEqual(expect.any(String));
       expect(await expectOk(character.$get({ param: { id } }))).toMatchObject({ shareToken });
@@ -176,7 +155,7 @@ describe("characters", () => {
     });
 
     test("stops sharing once the token is revoked", async () => {
-      const { id } = await createCharacter();
+      const { id } = await postCharacter();
       const { shareToken } = await expectOk(character.share.$post({ param: { id } }));
       expect(await expectOk(character.share.$delete({ param: { id } }))).toMatchObject({ shareToken: null });
       const shared = guestApi.api.shared.characters[":shareToken"];
@@ -192,7 +171,7 @@ describe("characters", () => {
   });
 
   test("requires a session", async () => {
-    const { id } = await createCharacter();
+    const { id } = await postCharacter();
     await expectStatus(guestApi.api.characters.$get({ query: {} }), 401);
     await expectStatus(guestApi.api.characters[":id"].share.$post({ param: { id } }), 401);
     await expectStatus(guestApi.api.characters[":id"].abilities.$put({ param: { id }, json: {} }), 401);
