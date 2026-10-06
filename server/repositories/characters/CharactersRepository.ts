@@ -245,7 +245,7 @@ class CharactersRepository extends include(
         })
         .from(this.table)
         .where(this.where([accessCondition!, eq(this.table.kind, "pc"), this.visibility(visibility), searchConditions]))
-        .orderBy(this.orderBy(this.table[orderBy], orderDir))
+        .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
         .limit(limit)
         .offset(offset);
       return rows;
@@ -301,7 +301,7 @@ class CharactersRepository extends include(
             this.search(where.search, [charactersInCharacter.name]) || undefined,
           ),
         )
-        .orderBy(this.orderBy(charactersInCharacter.createdAt, "desc"))
+        .orderBy(...this.pageOrder(this.orderBy(charactersInCharacter.createdAt, "desc")))
         .limit(limit)
         .offset(offset);
 

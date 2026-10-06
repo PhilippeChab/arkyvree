@@ -116,7 +116,8 @@ class PlayerCharactersRepository extends include(
         with: {
           charactersInCharacter: true,
         },
-        orderBy: this.orderBy(this.table[orderBy], orderDir),
+        // A link has no id: a character is linked to one campaign at a time
+        orderBy: this.pageOrder(this.orderBy(this.table[orderBy], orderDir), this.table.characterId),
         limit,
         offset,
       });

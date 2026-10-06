@@ -68,7 +68,7 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       return await db.query.aptitudesInRules.findMany({
         where: this.where([rulesetCondition, isNull(this.table.deletedAt), searchConditions, scopeCondition]),
-        orderBy: this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
+        orderBy: this.pageOrder(this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir))),
         limit,
         offset,
       });

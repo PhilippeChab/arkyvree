@@ -115,7 +115,7 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
             limit: 1, // latest invite
           },
         },
-        orderBy: this.orderBy(this.table[orderBy], orderDir),
+        orderBy: this.pageOrder(this.orderBy(this.table[orderBy], orderDir)),
         limit,
         offset,
       });

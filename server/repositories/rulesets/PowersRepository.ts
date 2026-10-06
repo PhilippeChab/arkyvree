@@ -104,7 +104,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
           this.excludeIds(excludePowerIds),
         ]),
       )
-      .orderBy(this.orderBy(powersInRules.name), this.orderBy(powersInRules.id))
+      .orderBy(...this.pageOrder(this.orderBy(powersInRules.name)))
       .limit(limit)
       .offset(offset);
 
@@ -126,7 +126,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
           searchConditions,
           where.ids !== undefined && inArray(this.table.id, where.ids),
         ]),
-        orderBy: this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir)),
+        orderBy: this.pageOrder(this.searchOrderBy(search, searchColumns, this.orderBy(this.table[orderBy], orderDir))),
         with: {
           powersAptitudesInRules: {
             with: {
