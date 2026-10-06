@@ -25,12 +25,6 @@ type PropertiesArray = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$get"],
   200
 >;
-type Property = PropertiesArray[number];
-
-type PropertyFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$post"]
->["json"];
-
 interface PropertiesSectionProps {
   ruleset: RulesetDetail;
   entityType: CustomizableEntityType;
@@ -40,14 +34,20 @@ interface PropertiesSectionProps {
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
 
+type Property = PropertiesArray[number];
+
+type PropertyFormData = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$post"]
+>["json"];
+
+/** A property's form, empty: what the create dialog opens on. */
+const EMPTY_PROPERTY: PropertyFormData = { type: "", value: "", description: "" };
+
 const PROPERTIES_COLUMNS = [
   { key: "type", label: "Type", width: "20%" },
   { key: "value", label: "Value", width: "40%" },
   { key: "description", label: "Description", width: "40%" },
 ];
-
-/** A property's form, empty: what the create dialog opens on. */
-const EMPTY_PROPERTY: PropertyFormData = { type: "", value: "", description: "" };
 
 export function PropertiesSection({
   ruleset,

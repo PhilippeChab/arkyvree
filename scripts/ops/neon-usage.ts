@@ -25,9 +25,9 @@ type Project = {
 };
 
 const API = "https://console.neon.tech/api/v2";
-const csv = process.argv.includes("--csv");
-
 const apiKey = process.env.NEON_API_KEY;
+
+const csv = process.argv.includes("--csv");
 const projectId = process.env.NEON_PROJECT_ID;
 
 function gb(b: number) {

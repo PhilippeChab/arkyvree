@@ -126,7 +126,7 @@ There's no `BroadcastChannel`-based active sync today. Recovery happens lazily v
 | `server/middlewares/session.ts` | Cookie config, session validation middleware |
 | `server/middlewares/denyDemoUser.ts` | Server-side gate for collaboration/profile mutations |
 | `server/services/authentication/AuthenticationService.ts` | `signIn`, `signUp`, `verifyEmail`, `signOut`, `startDemo`, `purgeDemoSessionUser` |
-| `server/routers/authentication/index.ts` | `/auth/*` routes |
+| `server/routers/authentication/index.ts` | `/auth/*` routes: `signedOut/` (sign up, sign in, password reset), mounted before `signedIn/` (`/me`, sign out, the account and linked accounts behind the session middleware) |
 | `server/routers/api/demo/index.ts` | `/api/demo/start` route |
 | `server/routers/api/shared/index.tsx` | `/api/shared/*` public routes (no auth middleware) |
 

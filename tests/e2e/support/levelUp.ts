@@ -35,6 +35,14 @@ async function fillPools(wizard: Locator, { skipOptional }: { skipOptional: bool
   throw new Error("The pools never filled up");
 }
 
+/** Plans `plan`'s levels and walks the whole wizard. Returns the spells picked. */
+export async function addLevels(page: Page, plan: [klass: string, count: number][], ability?: string) {
+  const wizard = await openAddLevelWizard(page);
+  await planLevels(wizard, page, plan);
+  await walkToFeats(wizard, ability);
+  return await walkFromFeats(wizard);
+}
+
 /** Clicks `button` to finish the wizard, which must take the levels without warnings. */
 export async function finishWithoutWarnings(wizard: Locator, button = /^Finish All$/) {
   await wizard.getByRole("button", { name: button }).click();
@@ -94,12 +102,4 @@ export async function walkToFeats(wizard: Locator, ability?: string) {
   await wizard.getByRole("button", { name: /^Auto$/ }).click();
   await wizard.getByRole("button", { name: /^Next$/ }).click();
   await expect(wizard.getByRole("heading", { name: /Select Feats by Aptitude/i })).toBeVisible({ timeout: 15_000 });
-}
-
-/** Plans `plan`'s levels and walks the whole wizard. Returns the spells picked. */
-export async function addLevels(page: Page, plan: [klass: string, count: number][], ability?: string) {
-  const wizard = await openAddLevelWizard(page);
-  await planLevels(wizard, page, plan);
-  await walkToFeats(wizard, ability);
-  return await walkFromFeats(wizard);
 }

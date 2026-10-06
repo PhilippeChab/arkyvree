@@ -23,10 +23,6 @@ import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-/** The spell properties in a 3.5 stat block's order (the property types' registry); the others follow by name. */
-const SPELL_PROPERTY_ORDER = Object.keys(ENTITY_PROPERTY_TYPES.powers ?? {});
-const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
-
 /**
  * Short labels so each spell's property row fits on a single line. A legend is rendered once at the top of the spells
  * section.
@@ -44,6 +40,10 @@ const SPELL_PROPERTY_ABBR: Record<string, { short: string; full: string }> = {
   [SPELL_DURATION]: { short: "Dur", full: "Duration" },
   [SPELL_RESISTANCE]: { short: "SR", full: "Spell Resistance" },
 };
+/** The spell properties in a 3.5 stat block's order (the property types' registry); the others follow by name. */
+const SPELL_PROPERTY_ORDER = Object.keys(ENTITY_PROPERTY_TYPES.powers ?? {});
+
+const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 
 function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.getDetailedCharacterIdentity();

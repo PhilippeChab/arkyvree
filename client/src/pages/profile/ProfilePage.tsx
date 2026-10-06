@@ -22,15 +22,15 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import type { AuthUser } from "@/client/src/stores/authUser.ts";
 
-interface ProfileFormData {
-  username: string;
-  emailAddress: string;
-}
-
 interface PasswordFormData {
   currentPassword: string;
   newPassword: string;
   newPasswordConfirmation: string;
+}
+
+interface ProfileFormData {
+  username: string;
+  emailAddress: string;
 }
 
 function ProfileCard({ title, children, danger = false }: { title: string; children: ReactNode; danger?: boolean }) {

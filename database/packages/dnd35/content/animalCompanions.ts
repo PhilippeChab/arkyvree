@@ -15,29 +15,27 @@ const ANIMAL_COMPANION_APTITUDES = [
   BONDED_RACE_FEATURE_APTITUDE,
 ];
 
-const BONDED_RACE_FEATURE_FEATS: FeatSeed[] = [
-  {
-    name: "Trip",
-    description:
-      "After a successful bite attack, the creature may attempt to trip the target as a free action without making a touch attack and without provoking an attack of opportunity. If the trip attempt fails, the target cannot make a counter-trip in return.",
-    selectable: false,
-    aptitudes: [BONDED_RACE_FEATURE_APTITUDE],
-  },
-  {
-    name: "Poison",
-    description:
-      "A target struck by this creature's bite must succeed on a Fortitude save (DC depends on the creature) or take initial Constitution damage. One minute later the target must save again or take secondary Constitution damage. Consult the SRD entry for the specific creature for the exact DC and damage.",
-    selectable: false,
-    aptitudes: [BONDED_RACE_FEATURE_APTITUDE],
-  },
-  {
-    name: "Disease (Filth Fever)",
-    description:
-      "A target bitten by the creature is exposed to filth fever (disease, injury, Fort DC 12, incubation 1d3 days, damage 1d3 Dex and 1d3 Con).",
-    selectable: false,
-    aptitudes: [BONDED_RACE_FEATURE_APTITUDE],
-  },
-];
+const ANIMAL_COMPANION_CLASS: ClassSeed = {
+  name: "Animal Companion",
+  description:
+    "A creature of the wild bonded to its master. The companion's hit points, base attack bonus, and saving throws are derived from the master; its class progression grants special bonds and abilities as the master grows in power.",
+  hd: 8,
+  levels: 20,
+  skillPoints: 2,
+  kind: "animalcompanion",
+  bab: "medium",
+  saves: { fortitude: "good", reflex: "good", will: "poor" },
+  classSkills: ["Listen", "Spot", "Survival", "Swim"],
+  classFeatureAptitude: ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE,
+  classFeatures: [
+    [1, "Link (Animal Companion)"],
+    [1, "Share Spells (Animal Companion)"],
+    [3, "Evasion (Animal Companion)"],
+    [6, "Devotion (Animal Companion)"],
+    [9, "Multiattack (Animal Companion)"],
+    [15, "Improved Evasion (Animal Companion)"],
+  ],
+};
 
 const ANIMAL_COMPANION_CLASS_FEATURE_FEATS: FeatSeed[] = [
   {
@@ -134,28 +132,6 @@ const ANIMAL_COMPANION_RACE_PICK_FEATS: FeatSeed[] = ANIMAL_COMPANION_RACE_NAMES
     },
   ],
 }));
-
-const ANIMAL_COMPANION_CLASS: ClassSeed = {
-  name: "Animal Companion",
-  description:
-    "A creature of the wild bonded to its master. The companion's hit points, base attack bonus, and saving throws are derived from the master; its class progression grants special bonds and abilities as the master grows in power.",
-  hd: 8,
-  levels: 20,
-  skillPoints: 2,
-  kind: "animalcompanion",
-  bab: "medium",
-  saves: { fortitude: "good", reflex: "good", will: "poor" },
-  classSkills: ["Listen", "Spot", "Survival", "Swim"],
-  classFeatureAptitude: ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE,
-  classFeatures: [
-    [1, "Link (Animal Companion)"],
-    [1, "Share Spells (Animal Companion)"],
-    [3, "Evasion (Animal Companion)"],
-    [6, "Devotion (Animal Companion)"],
-    [9, "Multiattack (Animal Companion)"],
-    [15, "Improved Evasion (Animal Companion)"],
-  ],
-};
 
 const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
   {
@@ -257,6 +233,30 @@ const ANIMAL_COMPANION_RACES: RaceDefinition[] = [
     baseSpeed: 50,
     properties: QUADRUPED,
     modifiers: [grantFeat("trip")],
+  },
+];
+
+const BONDED_RACE_FEATURE_FEATS: FeatSeed[] = [
+  {
+    name: "Trip",
+    description:
+      "After a successful bite attack, the creature may attempt to trip the target as a free action without making a touch attack and without provoking an attack of opportunity. If the trip attempt fails, the target cannot make a counter-trip in return.",
+    selectable: false,
+    aptitudes: [BONDED_RACE_FEATURE_APTITUDE],
+  },
+  {
+    name: "Poison",
+    description:
+      "A target struck by this creature's bite must succeed on a Fortitude save (DC depends on the creature) or take initial Constitution damage. One minute later the target must save again or take secondary Constitution damage. Consult the SRD entry for the specific creature for the exact DC and damage.",
+    selectable: false,
+    aptitudes: [BONDED_RACE_FEATURE_APTITUDE],
+  },
+  {
+    name: "Disease (Filth Fever)",
+    description:
+      "A target bitten by the creature is exposed to filth fever (disease, injury, Fort DC 12, incubation 1d3 days, damage 1d3 Dex and 1d3 Con).",
+    selectable: false,
+    aptitudes: [BONDED_RACE_FEATURE_APTITUDE],
   },
 ];
 

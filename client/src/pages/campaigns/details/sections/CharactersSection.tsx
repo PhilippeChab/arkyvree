@@ -50,27 +50,27 @@ import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/se
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { getInitial } from "@/shared/text.ts";
 
-type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
+type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
+interface CharactersSectionProps {
+  campaign: CampaignDetail;
+}
+
 type UnlinkedCharacter = InferResponseType<
   (typeof rpc.api.characters.unlinked)[":campaignId"]["$get"],
   200
 >["items"][number];
 
-interface CharactersSectionProps {
-  campaign: CampaignDetail;
-}
-
 type Visibility = NonNullable<
   InferRequestType<(typeof rpc.api.campaigns)[":id"]["characters"]["$post"]>["json"]["visibility"]
 >;
-const VISIBILITY_OPTIONS = ["Private", "Public", "Partial"] as const satisfies readonly Visibility[];
-
 const VISIBILITY_DESCRIPTIONS: Record<Visibility, string> = {
   Private: "Only visible to you",
   Public: "Visible to all campaign members",
   Partial: "Limited information visible to others",
 };
+
+const VISIBILITY_OPTIONS = ["Private", "Public", "Partial"] as const satisfies readonly Visibility[];
 
 function CharacterCard({
   character,

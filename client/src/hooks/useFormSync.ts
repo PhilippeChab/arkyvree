@@ -1,12 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { FieldValues, SubmitHandler, UseFormReturn } from "react-hook-form";
 
-interface ServerVersion {
-  key: string | undefined;
-  snapshot: string;
-  updatedAt: string | undefined;
-}
-
 interface FormSyncOptions {
   /**
    * The record the form edits, from the URL: opening another record resets
@@ -21,6 +15,12 @@ interface FormSyncOptions {
   adoptKey?: string;
   /** The record's `updatedAt`, used as the stale-edit token. */
   updatedAt?: string;
+}
+
+interface ServerVersion {
+  key: string | undefined;
+  snapshot: string;
+  updatedAt: string | undefined;
 }
 
 export type FormSync<T extends FieldValues> = ReturnType<typeof useFormSync<T>>;

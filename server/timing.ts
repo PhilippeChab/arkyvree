@@ -16,8 +16,6 @@ export interface TimingStore {
 
 const SLOW_QUERY_THRESHOLD_MS = 200;
 
-let patched = false;
-
 export const timingStorage = new AsyncLocalStorage<TimingStore>();
 
 function isThenable(value: unknown): value is Promise<unknown> {
@@ -95,18 +93,6 @@ export function getTimingStore(): TimingStore | undefined {
   return timingStorage.getStore();
 }
 
-export function instrumentQueries(): void {
-  if (patched) return;
-  patched = true;
-
-  // Pool.prototype.query — for regular (non-transaction) queries via drizzle
-  wrapPrototypeQuery(Pool.prototype);
-
-  // Client.prototype.query — for transaction queries where drizzle
-  // holds a direct client from pool.connect()
-  wrapPrototypeQuery(Client.prototype);
-}
-
 /** A request's counters, each at zero: what `timingStorage.run` counts into. */
 export function newTimingStore(): TimingStore {
   return {
@@ -145,3 +131,22 @@ export function onDedupMiss(): void {
   if (!store) return;
   store.dedupMisses += 1;
 }
+
+/** pg's queries, timed into the request's store: its pool's and client's `query`, patched once however many pools ask. */
+class QueryInstrumentation {
+  private patched = false;
+
+  instrument(): void {
+    if (this.patched) return;
+    this.patched = true;
+
+    // Pool.prototype.query — for regular (non-transaction) queries via drizzle
+    wrapPrototypeQuery(Pool.prototype);
+
+    // Client.prototype.query — for transaction queries where drizzle
+    // holds a direct client from pool.connect()
+    wrapPrototypeQuery(Client.prototype);
+  }
+}
+
+export default new QueryInstrumentation();

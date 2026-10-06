@@ -3,24 +3,19 @@ import { describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
-import { createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
+import { createCustomizableFeat, createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
+const charisma13 = { level: "1", target: "abilities.charisma.total", value: "13", operator: "greater_than_or_equal" };
 const customization = api.api.rulesets[":id"].customization[":entityType"][":entityId"];
 const requirements = customization.requirements;
 const requirement = requirements[":requirementId"];
-const charisma13 = { level: "1", target: "abilities.charisma.total", value: "13", operator: "greater_than_or_equal" };
-
-async function setup() {
-  const { id } = await createSeededTestRuleset(SEED_USER_ID);
-  return { id, entityId: await createEntity(id, "feats") };
-}
 
 describe("rulesets customization requirements", () => {
   test("creates, lists, updates and deletes a feat requirement", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const param = { id, entityType: "feats" as const, entityId };
     expect(await expectOk(requirements.$get({ param }))).toEqual([]);
 
@@ -43,7 +38,7 @@ describe("rulesets customization requirements", () => {
   });
 
   test("creates a chaining requirement without a target", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const created = await expectOk(
       requirements.$post({
         param: { id, entityType: "feats", entityId },
@@ -70,7 +65,7 @@ describe("rulesets customization requirements", () => {
   });
 
   test("adds a requirement to a modifier", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const modifier = await expectOk(
       customization.modifiers.$post({
         param: { id, entityType: "feats", entityId },
@@ -84,7 +79,7 @@ describe("rulesets customization requirements", () => {
   });
 
   test("requires a session", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements.$get({
       param: { id, entityType: "feats", entityId },
     });
@@ -92,7 +87,7 @@ describe("rulesets customization requirements", () => {
   });
 
   test("rejects a value that isn't of its target's type", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const param = { id, entityType: "feats" as const, entityId };
     await expectStatus(requirements.$post({ param, json: { ...charisma13, value: "high" } }), 400);
     const dodge = { level: "1", target: "feats.dodge.possessed", operator: "equal" };
@@ -107,7 +102,7 @@ describe("rulesets customization requirements", () => {
   });
 
   test("rejects a requirement without a level", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     const { level: _level, ...withoutLevel } = charisma13;
     const response = await requirements.$post({
       param: { id, entityType: "feats", entityId },
@@ -117,7 +112,7 @@ describe("rulesets customization requirements", () => {
   });
 
   test("returns 404 for a missing ruleset, entity or requirement", async () => {
-    const { id, entityId } = await setup();
+    const { id, entityId } = await createCustomizableFeat();
     await expectStatus(requirements.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } }), 404);
     await expectStatus(requirements.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } }), 404);
     const param = { id, entityType: "feats" as const, entityId, requirementId: NIL_UUID };

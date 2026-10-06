@@ -1,5 +1,6 @@
 /**
- * Requirement forest model (used by siblingMerge.ts + the matching read-time compose in RulesetComposition.ts)
+ * Requirement forest model (used by EntityCopy's sibling merge + the matching read-time compose in
+ * RulesetComposition.ts)
  *
  * Every entity's requirements form a forest of trees:
  *   - Each top-level entry is a root (no `.` parent prefix).
@@ -15,6 +16,12 @@
 
 import type { Requirement } from "@/shared/relations.ts";
 
+type ReqChainNode = {
+  source: Requirement;
+  kind: "chain";
+  op: string; // "or" | "and"
+  children: ReqNode[];
+};
 type ReqLeafNode = {
   source: Requirement;
   kind: "leaf";
@@ -23,41 +30,9 @@ type ReqLeafNode = {
   value: string;
   valueType: string;
 };
-type ReqChainNode = {
-  source: Requirement;
-  kind: "chain";
-  op: string; // "or" | "and"
-  children: ReqNode[];
-};
 type ReqNode = ReqLeafNode | ReqChainNode;
 
 const MAX_REQ_TREE_DEPTH = 5;
-
-function collectTopLevelStandaloneKeys(forest: ReqNode[]): Set<string> {
-  const keys = new Set<string>();
-  for (const node of forest) {
-    if (node.kind === "leaf") {
-      keys.add(`${node.target}|${node.operator}|${node.value}`);
-    }
-  }
-  return keys;
-}
-
-/** Deduplicate standalone roots only; preserve every condition inside a chain. */
-function dedupAgainstExisting(node: ReqNode, existingKeys: Set<string>): ReqNode | null {
-  if (node.kind === "leaf") {
-    const key = `${node.target}|${node.operator}|${node.value}`;
-    if (existingKeys.has(key)) return null;
-  }
-  // A AND (A OR B) is satisfied whenever A is true. Removing A from the
-  // OR would incorrectly require B; keep nested trees intact.
-  return node;
-}
-
-function parentLevelOf(level: string): string | null {
-  const idx = level.lastIndexOf(".");
-  return idx === -1 ? null : level.slice(0, idx);
-}
 
 /**
  * Build the requirement forest from a flat list of rows for a single entity.
@@ -103,6 +78,32 @@ function buildReqForest(rows: Requirement[]): ReqNode[] {
   });
 
   return topLevelRows.sort((a, b) => a.level.localeCompare(b.level)).map((r) => buildNode(r, 0));
+}
+
+function collectTopLevelStandaloneKeys(forest: ReqNode[]): Set<string> {
+  const keys = new Set<string>();
+  for (const node of forest) {
+    if (node.kind === "leaf") {
+      keys.add(`${node.target}|${node.operator}|${node.value}`);
+    }
+  }
+  return keys;
+}
+
+/** Deduplicate standalone roots only; preserve every condition inside a chain. */
+function dedupAgainstExisting(node: ReqNode, existingKeys: Set<string>): ReqNode | null {
+  if (node.kind === "leaf") {
+    const key = `${node.target}|${node.operator}|${node.value}`;
+    if (existingKeys.has(key)) return null;
+  }
+  // A AND (A OR B) is satisfied whenever A is true. Removing A from the
+  // OR would incorrectly require B; keep nested trees intact.
+  return node;
+}
+
+function parentLevelOf(level: string): string | null {
+  const idx = level.lastIndexOf(".");
+  return idx === -1 ? null : level.slice(0, idx);
 }
 
 /**

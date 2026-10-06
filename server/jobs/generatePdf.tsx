@@ -17,8 +17,8 @@ interface GeneratePdfPayload {
   campaignId?: string;
 }
 
-const ONE_HOUR_MS = 60 * 60 * 1000;
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+const ONE_HOUR_MS = 60 * 60 * 1000;
 
 function sanitizeFileName(name: string): string {
   return name.replace(/[/\\?%*:|"<>]/g, "_").slice(0, 200);

@@ -7,17 +7,6 @@ import { isUuid, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.t
 import { characterIdParam, page } from "@/server/routers/api/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
-/** A number in the query string. */
-const queryNumber = z.string().pipe(z.coerce.number());
-
-const levelParams = characterIdParam.extend({ characterLevelId: z.string().uuid() });
-
-/** Comma-separated ids: what isn't one is dropped. */
-const idList = z
-  .string()
-  .optional()
-  .transform((value) => value?.split(",").filter(isUuid));
-
 /** Comma-separated, one per pending level: its ability increase's id, or anything else (`null`) for none. */
 const abilityIdList = z
   .string()
@@ -38,6 +27,25 @@ const featPicks = z
       .filter((pick) => isUuid(pick.featId) && isUuid(pick.aptitudeId)),
   );
 
+/** Comma-separated ids: what isn't one is dropped. */
+const idList = z
+  .string()
+  .optional()
+  .transform((value) => value?.split(",").filter(isUuid));
+
+const levelParams = characterIdParam.extend({ characterLevelId: z.string().uuid() });
+
+/** A number in the query string. */
+const queryNumber = z.string().pipe(z.coerce.number());
+
+/** The class level a level-up step is for, and the levels planned before it. */
+const levelQuery = {
+  classId: z.string().uuid(),
+  level: queryNumber,
+  characterLevelId: z.string().uuid().optional(),
+  pendingLevelClassLevelIds: idList,
+};
+
 /** Comma-separated `skillId:rank` allocations: what isn't one is dropped. */
 const skillAllocations = z
   .string()
@@ -51,14 +59,6 @@ const skillAllocations = z
       })
       .filter((allocation) => isUuid(allocation.skillId) && !isNaN(allocation.rank)),
   );
-
-/** The class level a level-up step is for, and the levels planned before it. */
-const levelQuery = {
-  classId: z.string().uuid(),
-  level: queryNumber,
-  characterLevelId: z.string().uuid().optional(),
-  pendingLevelClassLevelIds: idList,
-};
 
 export default new Hono<SessionContext>()
   .get(

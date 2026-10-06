@@ -45,11 +45,6 @@ export const HAND_LOCATIONS = ["Main Hand", "Off Hand", "Two Handed"] as const s
 /** How many rings a character can wear. */
 export const MAX_FINGER_ITEMS = 2;
 
-/** Whether `location` is a hand, which a weapon set applies to. */
-export function isHandLocation(location: unknown): location is HandLocation {
-  return isOneOf(location, HAND_LOCATIONS);
-}
-
 /** What keeps `location` (in `weaponSet`, stored from 0, for a hand) from taking an item, if anything does. */
 export function findSlotConflict<T extends EquippedEntry>(
   location: ItemLocation,
@@ -78,4 +73,9 @@ export function findSlotConflict<T extends EquippedEntry>(
   }
 
   return null;
+}
+
+/** Whether `location` is a hand, which a weapon set applies to. */
+export function isHandLocation(location: unknown): location is HandLocation {
+  return isOneOf(location, HAND_LOCATIONS);
 }

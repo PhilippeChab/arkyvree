@@ -31,13 +31,19 @@ interface EntityRepository {
   delete: (db: Db, where: { id: string }) => Promise<unknown>;
 }
 
+export type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
+
 export interface EntityWithId {
   id: string;
   rulesetId: string;
   [key: string]: unknown;
 }
 
-export type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
+export const CUSTOMIZATION_REPOS = {
+  property: Properties,
+  requirement: Requirements,
+  modifier: Modifiers,
+} as const;
 
 export const ENTITY_REPOS: Record<EntityType, EntityRepository> = {
   abilities: Abilities,
@@ -52,9 +58,3 @@ export const ENTITY_REPOS: Record<EntityType, EntityRepository> = {
   aptitudes: Aptitudes,
   mechanics: Mechanics,
 };
-
-export const CUSTOMIZATION_REPOS = {
-  property: Properties,
-  requirement: Requirements,
-  modifier: Modifiers,
-} as const;

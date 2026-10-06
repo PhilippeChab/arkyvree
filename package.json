@@ -14,7 +14,7 @@
     "dev:db:stop": "docker compose down postgres-dev",
     "dev:db:reset": "bun --env-file=.env scripts/db/reset.ts --with-test-data",
     "dev:db:studio": "drizzle-kit studio",
-    "dev:db:pull": "drizzle-kit pull && oxlint --fix drizzle/schema.ts drizzle/relations.ts && oxfmt drizzle/schema.ts drizzle/relations.ts",
+    "dev:db:pull": "drizzle-kit pull && oxlint --fix --fix-suggestions drizzle/schema.ts drizzle/relations.ts && oxfmt drizzle/schema.ts drizzle/relations.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:packages": "bun --env-file=.env scripts/db/apply-packages.ts",

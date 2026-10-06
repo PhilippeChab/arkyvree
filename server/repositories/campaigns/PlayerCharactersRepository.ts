@@ -22,13 +22,19 @@ class PlayerCharactersRepository extends include(
     super(playerCharactersInCampaign);
   }
 
+  async create(db: Db, values: InferInsertModel<typeof playerCharactersInCampaign>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Hard delete — used when intentionally removing a player from a campaign
+  async delete(db: Db, where: { playerId: string }) {
+    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId));
+  }
+
   /**
-   * Returns true if the character is linked to a campaign that is itself live
-   * (campaign not archived AND link not soft-removed AND owning player not
-   * archived). Used by `CharactersPolicy.canHardDelete` so that a character
-   * orphaned by an archived campaign isn't kept un-deletable.
+   * Whether the character is linked in a live campaign: the campaign not archived, the link not removed, its player not
+   * archived. `CharactersPolicy.canHardDelete` reads it, so a character an archived campaign orphaned can be deleted.
    */
-  /** Whether the character is linked in a campaign that isn't archived, by a player who isn't either. */
   async exists(db: Db, where: { characterId: string; campaignArchived: false }): Promise<boolean> {
     const rows = await db
       .select({ id: this.table.characterId })
@@ -124,10 +130,6 @@ class PlayerCharactersRepository extends include(
     });
   }
 
-  async create(db: Db, values: InferInsertModel<typeof playerCharactersInCampaign>) {
-    return await db.insert(this.table).values(values).returning();
-  }
-
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof playerCharactersInCampaign>>,
@@ -144,11 +146,6 @@ class PlayerCharactersRepository extends include(
         ),
       )
       .returning();
-  }
-
-  // Hard delete — used when intentionally removing a player from a campaign
-  async delete(db: Db, where: { playerId: string }) {
-    return await db.delete(this.table).where(eq(this.table.playerId, where.playerId));
   }
 }
 

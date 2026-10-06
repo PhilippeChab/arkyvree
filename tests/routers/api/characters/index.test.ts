@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { postCampaign } from "@/tests/support/campaigns.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
@@ -46,8 +47,7 @@ describe("characters", () => {
   });
 
   test("lists the characters not linked to a campaign yet", async () => {
-    const { rulesetId } = await getSeedCtx();
-    const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Unlinked Campaign", rulesetId } }));
+    const campaign = await postCampaign();
     const created = await postCharacter();
     const unlinked = await expectOk(
       characters.unlinked[":campaignId"].$get({ param: { campaignId: campaign.id }, query: {} }),

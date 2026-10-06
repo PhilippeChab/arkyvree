@@ -13,6 +13,10 @@ class AbilitiesRepository extends RulesetEntityRepository<typeof abilitiesInRule
 
   protected readonly entityType = "abilities";
 
+  async delete(): Promise<never> {
+    throw new Error("Abilities are immutable and cannot be deleted");
+  }
+
   async findMany(db: Db, where: { ids: string[] }) {
     return await db.query.abilitiesInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
@@ -51,10 +55,6 @@ class AbilitiesRepository extends RulesetEntityRepository<typeof abilitiesInRule
 
   async update(): Promise<never> {
     throw new Error("Abilities are immutable and cannot be edited");
-  }
-
-  async delete(): Promise<never> {
-    throw new Error("Abilities are immutable and cannot be deleted");
   }
 }
 

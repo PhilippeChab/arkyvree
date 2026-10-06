@@ -1,14 +1,23 @@
 import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 
-/** A spell list's slot at a spell level: `aptitudes.<list>.<level>.uses` or `.allowed`. */
-export const SLOT_TARGET = /^aptitudes\.([^.]+)\.\d+\.(?:uses|allowed)$/;
-
 /** A spell list whose spells join the list of the class that gives it, as a cleric's domain does: `aptitudes.<list>.joinsclasslist`. */
 export const JOIN_TARGET = /^aptitudes\.([^.]+)\.joinsclasslist$/;
 
-/** The spell list a modifier gives slots in or joins to its class's list, if it does either. */
-export function listOpenedBy(target: string): string | undefined {
-  return SLOT_TARGET.exec(target)?.[1] ?? JOIN_TARGET.exec(target)?.[1];
+/** A spell list's slot at a spell level: `aptitudes.<list>.<level>.uses` or `.allowed`. */
+export const SLOT_TARGET = /^aptitudes\.([^.]+)\.\d+\.(?:uses|allowed)$/;
+
+/** The spell lists the ruleset's class levels give slots in, by aptitude id: each a class's own (`collectClassLists`). */
+export function collectClassListIds(
+  rulesetData: Pick<CachedRulesetData, "klassLevels" | "modifiersBySource" | "aptitudeIdBySlug">,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const lists of collectClassLists(rulesetData).values()) {
+    for (const list of lists) {
+      const id = rulesetData.aptitudeIdBySlug.get(list);
+      if (id) ids.add(id);
+    }
+  }
+  return ids;
 }
 
 /**
@@ -32,20 +41,6 @@ export function collectClassLists({
   return listsByKlassId;
 }
 
-/** The spell lists the ruleset's class levels give slots in, by aptitude id: each a class's own (`collectClassLists`). */
-export function collectClassListIds(
-  rulesetData: Pick<CachedRulesetData, "klassLevels" | "modifiersBySource" | "aptitudeIdBySlug">,
-): Set<string> {
-  const ids = new Set<string>();
-  for (const lists of collectClassLists(rulesetData).values()) {
-    for (const list of lists) {
-      const id = rulesetData.aptitudeIdBySlug.get(list);
-      if (id) ids.add(id);
-    }
-  }
-  return ids;
-}
-
 /**
  * The spell lists a feat brings: those the ruleset's feats give slots in or join to a class's list, and no class gives
  * slots in (a cleric's domains, a specialist wizard's schools; a feat's extra slot in a class's own list leaves it the
@@ -65,4 +60,9 @@ export function collectFeatListIds(
     }
   }
   return ids;
+}
+
+/** The spell list a modifier gives slots in or joins to its class's list, if it does either. */
+export function listOpenedBy(target: string): string | undefined {
+  return SLOT_TARGET.exec(target)?.[1] ?? JOIN_TARGET.exec(target)?.[1];
 }

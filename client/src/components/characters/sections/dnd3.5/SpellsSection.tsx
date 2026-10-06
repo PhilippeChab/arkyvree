@@ -23,6 +23,87 @@ import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow }
 
 import type { Dnd35PowersSectionProps } from "./types.ts";
 
+function CollapsibleClass({ apt, rulesetId }: { apt: AptitudeSpells; rulesetId?: string }) {
+  const [open, setOpen] = useState(false);
+  const totalSpells = apt.levels.reduce((sum, g) => sum + g.spells.length, 0);
+
+  return (
+    <Box sx={{ mb: 3, "&:last-child": { mb: 0 } }}>
+      <Box
+        onClick={() => setOpen((prev) => !prev)}
+        sx={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 0.5, mb: 1 }}
+      >
+        <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${apt.aptitudeName}`} sx={{ p: 0 }}>
+          {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          {apt.aptitudeName} ({totalSpells})
+        </Typography>
+      </Box>
+      <Collapse in={open} timeout="auto" unmountOnExit>
+        <Box sx={{ pl: 1 }}>
+          {apt.levels.map((group) => (
+            <CollapsibleLevel key={group.level} group={group} rulesetId={rulesetId} />
+          ))}
+        </Box>
+      </Collapse>
+    </Box>
+  );
+}
+
+function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?: string }) {
+  const [open, setOpen] = useState(false);
+  const label = group.level === 0 ? "Cantrips" : `Level ${group.level}`;
+
+  return (
+    <Box sx={{ mb: 1, "&:last-child": { mb: 0 } }}>
+      <Box
+        onClick={() => setOpen((prev) => !prev)}
+        sx={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 0.5, mb: 0.5 }}
+      >
+        <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${label} spells`} sx={{ p: 0 }}>
+          {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+        </IconButton>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+          {label} ({group.spells.length})
+          {group.uses != null && (
+            <Typography component="span" variant="body2" sx={{ color: "text.secondary", ml: 1 }}>
+              — {group.uses}/day
+            </Typography>
+          )}
+        </Typography>
+      </Box>
+      <Collapse in={open} timeout="auto" unmountOnExit>
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table size="small">
+            <colgroup>
+              <col style={{ width: "40%" }} />
+              <col style={{ width: "20%" }} />
+              <col style={{ width: "30%" }} />
+              <col style={{ width: "10%" }} />
+            </colgroup>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>School</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Save</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>
+                  DC
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {group.spells.map((spell) => (
+                <SpellRowItem key={spell.name} spell={spell} rulesetId={rulesetId} />
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Collapse>
+    </Box>
+  );
+}
+
 function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: string }) {
   const [open, setOpen] = useState(false);
 
@@ -100,87 +181,6 @@ function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: strin
         </TableCell>
       </TableRow>
     </Fragment>
-  );
-}
-
-function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?: string }) {
-  const [open, setOpen] = useState(false);
-  const label = group.level === 0 ? "Cantrips" : `Level ${group.level}`;
-
-  return (
-    <Box sx={{ mb: 1, "&:last-child": { mb: 0 } }}>
-      <Box
-        onClick={() => setOpen((prev) => !prev)}
-        sx={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 0.5, mb: 0.5 }}
-      >
-        <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${label} spells`} sx={{ p: 0 }}>
-          {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-        </IconButton>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          {label} ({group.spells.length})
-          {group.uses != null && (
-            <Typography component="span" variant="body2" sx={{ color: "text.secondary", ml: 1 }}>
-              — {group.uses}/day
-            </Typography>
-          )}
-        </Typography>
-      </Box>
-      <Collapse in={open} timeout="auto" unmountOnExit>
-        <TableContainer sx={{ overflowX: "auto" }}>
-          <Table size="small">
-            <colgroup>
-              <col style={{ width: "40%" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "30%" }} />
-              <col style={{ width: "10%" }} />
-            </colgroup>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>School</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Save</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600 }}>
-                  DC
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {group.spells.map((spell) => (
-                <SpellRowItem key={spell.name} spell={spell} rulesetId={rulesetId} />
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Collapse>
-    </Box>
-  );
-}
-
-function CollapsibleClass({ apt, rulesetId }: { apt: AptitudeSpells; rulesetId?: string }) {
-  const [open, setOpen] = useState(false);
-  const totalSpells = apt.levels.reduce((sum, g) => sum + g.spells.length, 0);
-
-  return (
-    <Box sx={{ mb: 3, "&:last-child": { mb: 0 } }}>
-      <Box
-        onClick={() => setOpen((prev) => !prev)}
-        sx={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 0.5, mb: 1 }}
-      >
-        <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${apt.aptitudeName}`} sx={{ p: 0 }}>
-          {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-        </IconButton>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          {apt.aptitudeName} ({totalSpells})
-        </Typography>
-      </Box>
-      <Collapse in={open} timeout="auto" unmountOnExit>
-        <Box sx={{ pl: 1 }}>
-          {apt.levels.map((group) => (
-            <CollapsibleLevel key={group.level} group={group} rulesetId={rulesetId} />
-          ))}
-        </Box>
-      </Collapse>
-    </Box>
   );
 }
 

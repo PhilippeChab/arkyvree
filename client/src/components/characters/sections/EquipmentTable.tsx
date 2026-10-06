@@ -18,8 +18,6 @@ import { capitalize } from "@/shared/text.ts";
 
 import { type EncumbranceData, type EquipmentRow, formatSlotDisplay } from "./equipment.ts";
 
-type EquipmentTableRow = Omit<EquipmentRow, "type" | "updatedAt">;
-
 interface EquipmentTableProps<T extends EquipmentTableRow> {
   rows: T[];
   encumbrance?: EncumbranceData;
@@ -28,6 +26,8 @@ interface EquipmentTableProps<T extends EquipmentTableRow> {
   /** The row's actions, when the viewer can change the inventory. */
   renderActions?: (row: T) => ReactNode;
 }
+
+type EquipmentTableRow = Omit<EquipmentRow, "type" | "updatedAt">;
 
 const headerSx = { fontWeight: 600 };
 /** Slots and figures stay on one line; the table scrolls on narrow screens. */

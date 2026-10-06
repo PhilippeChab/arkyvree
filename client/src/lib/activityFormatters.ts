@@ -3,6 +3,22 @@ import { isRecord } from "@/shared/isRecord.ts";
 
 import { getActivityLabelOverrides } from "./rulesetLabels.ts";
 
+const FIELD_LABELS: Record<string, string> = {
+  name: "Name",
+  description: "Description",
+  type: "Type",
+  slot: "Slot",
+  weight: "Weight",
+  costGp: "Cost (gp)",
+  hd: "Hit die",
+  size: "Size",
+  baseSpeed: "Base speed",
+  primaryAbilityId: "Primary ability",
+  abilityId: "Ability",
+  saveEffect: "Save effect",
+  saveId: "Save",
+};
+
 const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, unknown>) => string> = {
   // Campaign invites
   createCampaignInvite: (actor, d) => `${actor} invited you to ${d.campaignName || "a campaign"}`,
@@ -83,26 +99,6 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   pdfFailed: (_actor, d) => `PDF generation failed for ${d.characterName || "your character"}`,
 };
 
-const FIELD_LABELS: Record<string, string> = {
-  name: "Name",
-  description: "Description",
-  type: "Type",
-  slot: "Slot",
-  weight: "Weight",
-  costGp: "Cost (gp)",
-  hd: "Hit die",
-  size: "Size",
-  baseSpeed: "Base speed",
-  primaryAbilityId: "Primary ability",
-  abilityId: "Ability",
-  saveEffect: "Save effect",
-  saveId: "Save",
-};
-
-function isChangedField(value: unknown): value is ChangedField {
-  return isRecord(value) && typeof value.field === "string";
-}
-
 function formatChange(change: ChangedField): string {
   const label = FIELD_LABELS[change.field] ?? change.field;
   if (change.from == null && change.to == null) {
@@ -115,6 +111,10 @@ function formatChange(change: ChangedField): string {
     return `${label} set to ${change.to}`;
   }
   return `${label} cleared`;
+}
+
+function isChangedField(value: unknown): value is ChangedField {
+  return isRecord(value) && typeof value.field === "string";
 }
 
 /** An activity's payload: the fields its type records, or none. */

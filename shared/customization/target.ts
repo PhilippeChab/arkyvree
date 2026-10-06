@@ -1,3 +1,47 @@
+export interface PaginatedCompletions {
+  items: PathCompletion[];
+  page: number;
+  nextPage: number | undefined;
+  segmentLabels: Record<string, string>;
+}
+
+export interface PathCompletion {
+  label: string;
+  detail: string;
+  documentation: string;
+  insertText: string;
+  kind: "category" | "property" | "value" | "operator" | "group";
+  sortOrder?: number;
+  /** Present on leaf completions (kind="property") — full path for this item */
+  path?: string;
+  /** Present on leaf completions — value type of the target */
+  valueType?: PathValueType;
+  /** Present on leaf completions — allowed operators */
+  operators?: string[];
+  /** Present on leaf completions — possible values for enum-like targets */
+  possibleValues?: { value: string; label: string }[];
+  /** Present on leaf completions whose `set` takes only these values */
+  setValues?: { value: string; label: string }[];
+  /** Present on leaf completions that take a literal value only */
+  literalOnly?: boolean;
+}
+
+export interface PathError {
+  message: string;
+  position: { start: number; end: number };
+  severity: "error" | "warning" | "info";
+  code: string;
+}
+
+export interface PathValidationResult {
+  isValid: boolean;
+  errors: PathError[];
+  suggestions: string[];
+  completions: PathCompletion[];
+  /** A valid path's definition */
+  target?: TargetPath;
+}
+
 /** The type of value a target path holds. */
 export type PathValueType = "number" | "string" | "boolean";
 
@@ -23,55 +67,6 @@ export interface TargetPath {
   allowedEntityTypes?: string[];
 }
 
-export interface PathValidationResult {
-  isValid: boolean;
-  errors: PathError[];
-  suggestions: string[];
-  completions: PathCompletion[];
-  /** A valid path's definition */
-  target?: TargetPath;
-}
-
-export interface PathError {
-  message: string;
-  position: { start: number; end: number };
-  severity: "error" | "warning" | "info";
-  code: string;
-}
-
-export interface PathCompletion {
-  label: string;
-  detail: string;
-  documentation: string;
-  insertText: string;
-  kind: "category" | "property" | "value" | "operator" | "group";
-  sortOrder?: number;
-  /** Present on leaf completions (kind="property") — full path for this item */
-  path?: string;
-  /** Present on leaf completions — value type of the target */
-  valueType?: PathValueType;
-  /** Present on leaf completions — allowed operators */
-  operators?: string[];
-  /** Present on leaf completions — possible values for enum-like targets */
-  possibleValues?: { value: string; label: string }[];
-  /** Present on leaf completions whose `set` takes only these values */
-  setValues?: { value: string; label: string }[];
-  /** Present on leaf completions that take a literal value only */
-  literalOnly?: boolean;
-}
-
-export interface PaginatedCompletions {
-  items: PathCompletion[];
-  page: number;
-  nextPage: number | undefined;
-  segmentLabels: Record<string, string>;
-}
-
-/** A path segment as a label ("privateNotes" → "Private Notes"). */
-export function formatSegment(segment: string) {
-  return segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
-}
-
 /** The label of each segment of `paths`: its override, else the segment formatted. */
 export function deriveSegmentLabels(
   paths: { path: string }[],
@@ -84,6 +79,11 @@ export function deriveSegmentLabels(
     }
   }
   return labels;
+}
+
+/** A path segment as a label ("privateNotes" → "Private Notes"). */
+export function formatSegment(segment: string) {
+  return segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
 }
 
 /**

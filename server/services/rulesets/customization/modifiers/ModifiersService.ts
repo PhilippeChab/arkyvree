@@ -3,12 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  copyEntityCustomizations,
-  cowCustomizationForMutation,
-  cowEntityForCustomization,
-  fetchEntityCustomizations,
-} from "@/server/cow/index.ts";
+import { copyEntityCustomizations, fetchEntityCustomizations, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
@@ -65,7 +60,8 @@ class ModifiersService {
           }
         }
 
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
 
         const inferredValueType = await resolvePathValueType(
           rulesetId,
@@ -88,7 +84,7 @@ class ModifiersService {
 
         if (sourceModifierId) {
           const cust = (await fetchEntityCustomizations(tx, [sourceModifierId], "modifiers")).get(sourceModifierId);
-          if (cust) await copyEntityCustomizations(tx, sourceModifierId, modifier.id, "modifiers", cust);
+          if (cust) await copyEntityCustomizations(tx, modifier.id, "modifiers", cust);
         }
 
         await createActivityWithNotifications(tx, {
@@ -105,6 +101,75 @@ class ModifiersService {
     // Modifiers decide target paths too: the slots and joins of a list decide its spell levels and known paths
     RulesetCache.invalidate(rulesetId);
     return result;
+  }
+
+  async createModifier(
+    session: Session,
+    rulesetId: string,
+    entityType: string,
+    entityId: string,
+    body: { target: string; value: string; operator: string },
+  ) {
+    return await this.addEntityModifier(session, rulesetId, entityType, entityId, body);
+  }
+
+  async deleteModifier(session: Session, rulesetId: string, entityType: string, entityId: string, modifierId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
+
+        const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+
+        const modifier = this.findEntityModifier(rulesetData, entityType, effectiveEntityId, modifierId);
+
+        await checkCustomizedEntity(modifier);
+
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await edit.cowCustomization(
+          tx,
+          entityType,
+          effectiveEntityId,
+          "modifier",
+          modifierId,
+        );
+
+        // The database deletes the modifier's requirements with it
+        const rows = await Modifiers.delete(tx, { ids: [resolvedModifierId] });
+        const deletedModifier = rows[0];
+
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: deletedModifier.id,
+          targetTable: getTableName(modifiersInCustomization),
+          type: "deleteModifier",
+          data: {
+            rulesetId,
+            entityName,
+            entityType,
+            target: modifier.target,
+            value: modifier.value,
+            operator: modifier.operator,
+          },
+        });
+
+        return { ...deletedModifier, resolvedEntityId };
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async duplicateModifier(
+    session: Session,
+    rulesetId: string,
+    entityType: string,
+    entityId: string,
+    sourceModifierId: string,
+    body: { target: string; value: string; operator: string },
+  ) {
+    return await this.addEntityModifier(session, rulesetId, entityType, entityId, body, sourceModifierId);
   }
 
   async getModifier(rulesetId: string, entityType: string, entityId: string, modifierId: string) {
@@ -153,27 +218,6 @@ class ModifiersService {
     });
   }
 
-  async createModifier(
-    session: Session,
-    rulesetId: string,
-    entityType: string,
-    entityId: string,
-    body: { target: string; value: string; operator: string },
-  ) {
-    return await this.addEntityModifier(session, rulesetId, entityType, entityId, body);
-  }
-
-  async duplicateModifier(
-    session: Session,
-    rulesetId: string,
-    entityType: string,
-    entityId: string,
-    sourceModifierId: string,
-    body: { target: string; value: string; operator: string },
-  ) {
-    return await this.addEntityModifier(session, rulesetId, entityType, entityId, body, sourceModifierId);
-  }
-
   async updateModifier(
     session: Session,
     rulesetId: string,
@@ -199,9 +243,9 @@ class ModifiersService {
         await checkCustomizedEntity(modifier);
 
         // COW the owning entity if this modifier is inherited
-        const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await cowCustomizationForMutation(
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await edit.cowCustomization(
           tx,
-          rulesetId,
           entityType,
           effectiveEntityId,
           "modifier",
@@ -243,54 +287,6 @@ class ModifiersService {
         });
 
         return { ...updatedModifier, resolvedEntityId };
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteModifier(session: Session, rulesetId: string, entityType: string, entityId: string, modifierId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
-
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-
-        const modifier = this.findEntityModifier(rulesetData, entityType, effectiveEntityId, modifierId);
-
-        await checkCustomizedEntity(modifier);
-
-        const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await cowCustomizationForMutation(
-          tx,
-          rulesetId,
-          entityType,
-          effectiveEntityId,
-          "modifier",
-          modifierId,
-        );
-
-        // The database deletes the modifier's requirements with it
-        const rows = await Modifiers.delete(tx, { ids: [resolvedModifierId] });
-        const deletedModifier = rows[0];
-
-        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: deletedModifier.id,
-          targetTable: getTableName(modifiersInCustomization),
-          type: "deleteModifier",
-          data: {
-            rulesetId,
-            entityName,
-            entityType,
-            target: modifier.target,
-            value: modifier.value,
-            operator: modifier.operator,
-          },
-        });
-
-        return { ...deletedModifier, resolvedEntityId };
       });
     });
     RulesetCache.invalidate(rulesetId);

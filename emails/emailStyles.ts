@@ -4,6 +4,8 @@
 
 import type { CSSProperties } from "react";
 
+export const APP_URL = process.env.APP_URL || "http://localhost:5173";
+
 export const colors = {
   primary: "#8d1e1e",
   text: "#3e2723",
@@ -14,8 +16,6 @@ export const colors = {
 };
 
 export const fontStack = '"Lora", "Georgia", "Times New Roman", serif';
-
-export const APP_URL = process.env.APP_URL || "http://localhost:5173";
 
 export const styles = {
   heading: {

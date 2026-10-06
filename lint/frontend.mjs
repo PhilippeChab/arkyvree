@@ -31,9 +31,6 @@
 
 import { repoPath } from "./paths.mjs";
 
-/** The props an input takes its value through. */
-const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
-
 /** The hooks whose callback is an effect. */
 const EFFECTS = new Set(["useEffect", "useLayoutEffect"]);
 
@@ -43,10 +40,8 @@ const FIELD_WRITES = new Set(["setValue", "resetField", "reset"]);
 /** The requests an `rpc` endpoint makes. */
 const REQUEST_METHODS = new Set(["$get", "$post", "$put", "$patch", "$delete"]);
 
-/** Whether a JSX element has the attribute `name`. */
-function hasAttribute(node, name) {
-  return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
-}
+/** The props an input takes its value through. */
+const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
 
 /** A call's name: `setValue` for `setValue(…)`, `form.setValue(…)` and `field.onChange?.(…)`. */
 function calleeName(node) {
@@ -56,20 +51,39 @@ function calleeName(node) {
   return null;
 }
 
-/** A JSX element's name: `IconButton`, `Dialog`. */
-function elementName(node) {
-  return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
+function createAccessibleIconButtons(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "IconButton") return;
+      if (hasAttribute(node, "aria-label") || hasAttribute(node, "aria-labelledby")) return;
+      // A tooltip names its child, but not with `describeChild`, which makes its title a description.
+      const parent = parentElement(node);
+      if (parent && elementName(parent) === "Tooltip" && !hasAttribute(parent, "describeChild")) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "An icon-only `IconButton` takes an `aria-label`, or a `Tooltip` right around it (not around a `<span>`).",
+      });
+    },
+  };
 }
 
-/** Whether a member chain starts at `rpc`: `rpc.api.rulesets[":id"].$get`. */
-function fromRpc(node) {
-  let object = node;
-  while (object.type === "MemberExpression") object = object.object;
-  return object.type === "Identifier" && object.name === "rpc";
-}
-
-function inClient(context) {
-  return repoPath(context.filename).startsWith("client/src/");
+function createApiCallsInQueries(context) {
+  if (!inClient(context)) return {};
+  return {
+    CallExpression(node) {
+      const callee = node.callee;
+      if (callee.type !== "MemberExpression" || callee.computed || !REQUEST_METHODS.has(callee.property.name)) return;
+      if (!fromRpc(callee) || inQueryFunction(node)) return;
+      context.report({
+        node,
+        message:
+          "The API is called through TanStack Query: make this request in a function a query or a mutation runs, named " +
+          "`…Fn` (a `queryFn`, a `mutationFn`, or a hook's `createFn` that becomes one), never on its own.",
+      });
+    },
+  };
 }
 
 function createClientApis(context) {
@@ -118,217 +132,6 @@ function createClientApis(context) {
   };
 }
 
-function createLoadErrors(context) {
-  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/LoadError.tsx") return {};
-  return {
-    JSXElement(node) {
-      if (elementName(node) !== "Alert") return;
-      const severity = node.openingElement.attributes.find(
-        (a) => a.type === "JSXAttribute" && a.name.name === "severity",
-      );
-      if (severity?.value?.type !== "Literal" || severity.value.value !== "error") return;
-      const saysLoad = node.children.some(
-        (child) =>
-          (child.type === "JSXText" && /\bload(ing|ed)?\b/i.test(child.value)) ||
-          (child.type === "JSXExpressionContainer" &&
-            child.expression.type === "CallExpression" &&
-            calleeName(child.expression) === "loadFailureMessage"),
-      );
-      if (!saysLoad) return;
-      context.report({
-        node,
-        message:
-          'A failure to load is a `LoadError` (`components/common`): `<LoadError what="Feats" error={error} />` says ' +
-          "it in `loadFailureMessage`'s words.",
-      });
-    },
-  };
-}
-
-function createQueryKeyRule(context) {
-  if (!inClient(context) || repoPath(context.filename) === "client/src/lib/queryKeys.ts") return {};
-  return {
-    Property(node) {
-      if (node.key.type !== "Identifier" || node.key.name !== "queryKey" || node.value.type !== "ArrayExpression")
-        return;
-      if (node.value.elements[0]?.type === "SpreadElement") return;
-      context.report({
-        node: node.value,
-        message: "A query key comes from `lib/queryKeys.ts`: spread one first (`[...queryKeys.x.y(id), filter]`).",
-      });
-    },
-  };
-}
-
-/**
- * Whether `node` runs as an effect runs: in its callback (`useEffect(() => …)`, `useLayoutEffect`), not in a function
- * it hands on (a subscription's handler, a timer's callback, which an event calls).
- */
-function inEffect(node) {
-  for (let p = node.parent; p; p = p.parent) {
-    if (p.type === "ArrowFunctionExpression" || p.type === "FunctionExpression" || p.type === "FunctionDeclaration") {
-      const call = p.parent;
-      return call?.type === "CallExpression" && call.arguments[0] === p && EFFECTS.has(calleeName(call));
-    }
-  }
-  return false;
-}
-
-function createEffectWrites(context) {
-  if (!inClient(context)) return {};
-  const syncsForms = repoPath(context.filename) === "client/src/hooks/useFormSync.ts";
-  // A write taken under another name: `const { setValue: setPick } = form`
-  const writes = new Set(FIELD_WRITES);
-  return {
-    Property(node) {
-      if (node.parent.type !== "ObjectPattern" || node.key.type !== "Identifier") return;
-      if (FIELD_WRITES.has(node.key.name) && node.value.type === "Identifier") writes.add(node.value.name);
-    },
-    CallExpression(node) {
-      const name = calleeName(node);
-      if (!name || !inEffect(node)) return;
-      if (writes.has(name) && !syncsForms) {
-        context.report({
-          node,
-          message:
-            "An effect never writes a form's field: write it in the event that causes the change, derive what follows " +
-            "from data as the component renders, and sync a form with the server through `useFormSync`.",
-        });
-      } else if (name === "navigate") {
-        context.report({
-          node,
-          message:
-            "An effect never navigates: a redirect is rendered (`<Navigate to={…} replace />`), and a move the user " +
-            "makes happens in its event.",
-        });
-      } else if (/^on[A-Z]/.test(name) || name === "current") {
-        context.report({
-          node,
-          message:
-            "An effect never calls back its owner (an `on…` prop, a callback a ref holds): call it in the event that " +
-            "causes it, or let the owner derive what it needs.",
-        });
-      }
-    },
-  };
-}
-
-/**
- * Whether `node` is in a function a query or a mutation runs: one a property or a prop named `…Fn` holds (`queryFn`,
- * `mutationFn`, or a hook's or a component's that becomes one, as `useRulesetSection`'s `createFn`).
- */
-function inQueryFunction(node) {
-  for (let p = node.parent; p; p = p.parent) {
-    const name =
-      p.type === "Property" && p.key.type === "Identifier"
-        ? p.key.name
-        : p.type === "JSXAttribute" && p.name.type === "JSXIdentifier"
-          ? p.name.name
-          : null;
-    if (name?.endsWith("Fn")) return true;
-  }
-  return false;
-}
-
-function createApiCallsInQueries(context) {
-  if (!inClient(context)) return {};
-  return {
-    CallExpression(node) {
-      const callee = node.callee;
-      if (callee.type !== "MemberExpression" || callee.computed || !REQUEST_METHODS.has(callee.property.name)) return;
-      if (!fromRpc(callee) || inQueryFunction(node)) return;
-      context.report({
-        node,
-        message:
-          "The API is called through TanStack Query: make this request in a function a query or a mutation runs, named " +
-          "`…Fn` (a `queryFn`, a `mutationFn`, or a hook's `createFn` that becomes one), never on its own.",
-      });
-    },
-  };
-}
-
-/** Whether `node` names one of `names`. */
-function namesOne(node, names) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some((child) => namesOne(child, names));
-  if (node.type === "Identifier" && names.has(node.name)) return true;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && namesOne(child, names),
-  );
-}
-
-/** The nearest JSX element around `node`. */
-function parentElement(node) {
-  for (let p = node.parent; p; p = p.parent) if (p.type === "JSXElement") return p;
-  return null;
-}
-
-function createAccessibleIconButtons(context) {
-  if (!inClient(context)) return {};
-  return {
-    JSXElement(node) {
-      if (elementName(node) !== "IconButton") return;
-      if (hasAttribute(node, "aria-label") || hasAttribute(node, "aria-labelledby")) return;
-      // A tooltip names its child, but not with `describeChild`, which makes its title a description.
-      const parent = parentElement(node);
-      if (parent && elementName(parent) === "Tooltip" && !hasAttribute(parent, "describeChild")) return;
-      context.report({
-        node: node.openingElement,
-        message:
-          "An icon-only `IconButton` takes an `aria-label`, or a `Tooltip` right around it (not around a `<span>`).",
-      });
-    },
-  };
-}
-
-function createDialogConventions(context) {
-  if (!inClient(context)) return {};
-  return {
-    JSXElement(node) {
-      const name = elementName(node);
-      if (name === "Dialog" && !hasAttribute(node, "fullScreen")) {
-        context.report({
-          node: node.openingElement,
-          message: "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.",
-        });
-      }
-      // component="form", or component={"form"}
-      const valueOf = (a) => (a.value?.type === "JSXExpressionContainer" ? a.value.expression.value : a.value?.value);
-      const isForm =
-        name === "form" ||
-        node.openingElement.attributes.some(
-          (a) => a.type === "JSXAttribute" && a.name.name === "component" && valueOf(a) === "form",
-        );
-      if (!isForm) return;
-      for (let p = parentElement(node); p; p = parentElement(p)) {
-        if (elementName(p) === "Modal") {
-          context.report({
-            node: node.openingElement,
-            message:
-              "A form goes in a `FormDialog` (or `CreateDialog` / `EditDialog`), never a `Modal`: it would close and lose a dirty form.",
-          });
-          return;
-        }
-      }
-    },
-  };
-}
-
-/** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
-function readsWatch(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(readsWatch);
-  if (node.type === "CallExpression") {
-    const callee = node.callee;
-    const name =
-      callee.type === "Identifier" ? callee.name : callee.type === "MemberExpression" ? callee.property.name : null;
-    if (name === "watch" || name === "useWatch") return true;
-  }
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsWatch(child),
-  );
-}
-
 function createControlledInputs(context) {
   if (!inClient(context)) return {};
   // What a file reads with `watch`, held in a variable
@@ -372,6 +175,203 @@ function createControlledInputs(context) {
       });
     },
   };
+}
+
+function createDialogConventions(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXElement(node) {
+      const name = elementName(node);
+      if (name === "Dialog" && !hasAttribute(node, "fullScreen")) {
+        context.report({
+          node: node.openingElement,
+          message: "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.",
+        });
+      }
+      // component="form", or component={"form"}
+      const valueOf = (a) => (a.value?.type === "JSXExpressionContainer" ? a.value.expression.value : a.value?.value);
+      const isForm =
+        name === "form" ||
+        node.openingElement.attributes.some(
+          (a) => a.type === "JSXAttribute" && a.name.name === "component" && valueOf(a) === "form",
+        );
+      if (!isForm) return;
+      for (let p = parentElement(node); p; p = parentElement(p)) {
+        if (elementName(p) === "Modal") {
+          context.report({
+            node: node.openingElement,
+            message:
+              "A form goes in a `FormDialog` (or `CreateDialog` / `EditDialog`), never a `Modal`: it would close and lose a dirty form.",
+          });
+          return;
+        }
+      }
+    },
+  };
+}
+
+function createEffectWrites(context) {
+  if (!inClient(context)) return {};
+  const syncsForms = repoPath(context.filename) === "client/src/hooks/useFormSync.ts";
+  // A write taken under another name: `const { setValue: setPick } = form`
+  const writes = new Set(FIELD_WRITES);
+  return {
+    Property(node) {
+      if (node.parent.type !== "ObjectPattern" || node.key.type !== "Identifier") return;
+      if (FIELD_WRITES.has(node.key.name) && node.value.type === "Identifier") writes.add(node.value.name);
+    },
+    CallExpression(node) {
+      const name = calleeName(node);
+      if (!name || !inEffect(node)) return;
+      if (writes.has(name) && !syncsForms) {
+        context.report({
+          node,
+          message:
+            "An effect never writes a form's field: write it in the event that causes the change, derive what follows " +
+            "from data as the component renders, and sync a form with the server through `useFormSync`.",
+        });
+      } else if (name === "navigate") {
+        context.report({
+          node,
+          message:
+            "An effect never navigates: a redirect is rendered (`<Navigate to={…} replace />`), and a move the user " +
+            "makes happens in its event.",
+        });
+      } else if (/^on[A-Z]/.test(name) || name === "current") {
+        context.report({
+          node,
+          message:
+            "An effect never calls back its owner (an `on…` prop, a callback a ref holds): call it in the event that " +
+            "causes it, or let the owner derive what it needs.",
+        });
+      }
+    },
+  };
+}
+
+function createLoadErrors(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/LoadError.tsx") return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "Alert") return;
+      const severity = node.openingElement.attributes.find(
+        (a) => a.type === "JSXAttribute" && a.name.name === "severity",
+      );
+      if (severity?.value?.type !== "Literal" || severity.value.value !== "error") return;
+      const saysLoad = node.children.some(
+        (child) =>
+          (child.type === "JSXText" && /\bload(ing|ed)?\b/i.test(child.value)) ||
+          (child.type === "JSXExpressionContainer" &&
+            child.expression.type === "CallExpression" &&
+            calleeName(child.expression) === "loadFailureMessage"),
+      );
+      if (!saysLoad) return;
+      context.report({
+        node,
+        message:
+          'A failure to load is a `LoadError` (`components/common`): `<LoadError what="Feats" error={error} />` says ' +
+          "it in `loadFailureMessage`'s words.",
+      });
+    },
+  };
+}
+
+function createQueryKeyRule(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/lib/queryKeys.ts") return {};
+  return {
+    Property(node) {
+      if (node.key.type !== "Identifier" || node.key.name !== "queryKey" || node.value.type !== "ArrayExpression")
+        return;
+      if (node.value.elements[0]?.type === "SpreadElement") return;
+      context.report({
+        node: node.value,
+        message: "A query key comes from `lib/queryKeys.ts`: spread one first (`[...queryKeys.x.y(id), filter]`).",
+      });
+    },
+  };
+}
+
+/** A JSX element's name: `IconButton`, `Dialog`. */
+function elementName(node) {
+  return node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null;
+}
+
+/** Whether a member chain starts at `rpc`: `rpc.api.rulesets[":id"].$get`. */
+function fromRpc(node) {
+  let object = node;
+  while (object.type === "MemberExpression") object = object.object;
+  return object.type === "Identifier" && object.name === "rpc";
+}
+
+/** Whether a JSX element has the attribute `name`. */
+function hasAttribute(node, name) {
+  return node.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === name);
+}
+
+function inClient(context) {
+  return repoPath(context.filename).startsWith("client/src/");
+}
+
+/**
+ * Whether `node` runs as an effect runs: in its callback (`useEffect(() => …)`, `useLayoutEffect`), not in a function
+ * it hands on (a subscription's handler, a timer's callback, which an event calls).
+ */
+function inEffect(node) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.type === "ArrowFunctionExpression" || p.type === "FunctionExpression" || p.type === "FunctionDeclaration") {
+      const call = p.parent;
+      return call?.type === "CallExpression" && call.arguments[0] === p && EFFECTS.has(calleeName(call));
+    }
+  }
+  return false;
+}
+
+/**
+ * Whether `node` is in a function a query or a mutation runs: one a property or a prop named `…Fn` holds (`queryFn`,
+ * `mutationFn`, or a hook's or a component's that becomes one, as `useRulesetSection`'s `createFn`).
+ */
+function inQueryFunction(node) {
+  for (let p = node.parent; p; p = p.parent) {
+    const name =
+      p.type === "Property" && p.key.type === "Identifier"
+        ? p.key.name
+        : p.type === "JSXAttribute" && p.name.type === "JSXIdentifier"
+          ? p.name.name
+          : null;
+    if (name?.endsWith("Fn")) return true;
+  }
+  return false;
+}
+
+/** Whether `node` names one of `names`. */
+function namesOne(node, names) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some((child) => namesOne(child, names));
+  if (node.type === "Identifier" && names.has(node.name)) return true;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && namesOne(child, names),
+  );
+}
+
+/** The nearest JSX element around `node`. */
+function parentElement(node) {
+  for (let p = node.parent; p; p = p.parent) if (p.type === "JSXElement") return p;
+  return null;
+}
+
+/** Whether `node` reads a form's values: `watch(…)`, `form.watch(…)`, `useWatch(…)`. */
+function readsWatch(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(readsWatch);
+  if (node.type === "CallExpression") {
+    const callee = node.callee;
+    const name =
+      callee.type === "Identifier" ? callee.name : callee.type === "MemberExpression" ? callee.property.name : null;
+    if (name === "watch" || name === "useWatch") return true;
+  }
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsWatch(child),
+  );
 }
 
 export default {

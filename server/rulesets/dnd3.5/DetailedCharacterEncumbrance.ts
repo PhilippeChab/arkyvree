@@ -135,6 +135,17 @@ export default class DetailedCharacterEncumbrance {
     return "overloaded";
   }
 
+  getEncumberedSpeed(baseSpeed: number): number {
+    if (ENCUMBERED_SPEED[baseSpeed] !== undefined) {
+      return ENCUMBERED_SPEED[baseSpeed];
+    }
+    return Math.floor((baseSpeed * 2) / 3);
+  }
+
+  getEncumbrance(): EncumbranceData {
+    return this.encumbrance;
+  }
+
   initialize(inventory: RawInventoryEntry[], race: RaceWithPMR): void {
     this.raceSize = race.size;
     this.quadruped = race.properties.some((p) => p.type === RACE_QUADRUPED && p.value === "true");
@@ -147,16 +158,5 @@ export default class DetailedCharacterEncumbrance {
     }
 
     this.encumbrance.carriedweight = totalWeight;
-  }
-
-  getEncumberedSpeed(baseSpeed: number): number {
-    if (ENCUMBERED_SPEED[baseSpeed] !== undefined) {
-      return ENCUMBERED_SPEED[baseSpeed];
-    }
-    return Math.floor((baseSpeed * 2) / 3);
-  }
-
-  getEncumbrance(): EncumbranceData {
-    return this.encumbrance;
   }
 }

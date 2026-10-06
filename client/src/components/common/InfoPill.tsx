@@ -1,14 +1,14 @@
 import { alpha, Box, Tooltip, Typography } from "@mui/material";
 import type { ElementType, ReactNode } from "react";
 
-type PillColor = "default" | "info" | "success" | "warning" | "secondary";
-
 interface InfoPillProps {
   icon: ElementType;
   label: ReactNode;
   color?: PillColor;
   tooltip?: ReactNode;
 }
+
+type PillColor = "default" | "info" | "success" | "warning" | "secondary";
 
 /** Small tinted label with an icon, for status and metadata on cards. */
 export function InfoPill({ icon: Icon, label, color = "default", tooltip }: InfoPillProps) {

@@ -3,15 +3,15 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { featsInRules, itemsInRules, modifiersInCustomization, propertiesInCustomization } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
+import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { insertRows } from "@/tests/support/database.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
@@ -19,15 +19,15 @@ function createFork(seedId: string) {
   return createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
 }
 
+async function composeFork(fork: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] }) {
+  return RulesetCache.getData(fork);
+}
+
 async function getRuleset() {
   const c = await getSeedCtx();
   const ruleset = await Rulesets.findOne(db, { id: c.rulesetId });
   if (!ruleset) throw new Error("Seed ruleset not found");
   return ruleset;
-}
-
-async function composeFork(fork: { id: string; extensionRulesetIds: string[]; ancestorRulesetIds: string[] }) {
-  return RulesetCache.getData(fork);
 }
 
 describe("rulesetCache", () => {
@@ -398,10 +398,7 @@ describe("rulesetCache", () => {
         {
           sourceId: baseFeat.id,
           sourceType: "feats",
-          target: "abilities.strength.misc",
-          value: "2",
-          valueType: "number",
-          operator: "add",
+          ...STRENGTH_BONUS,
         },
       ]);
       await Requirements.createMany(db, [
@@ -436,7 +433,7 @@ describe("rulesetCache", () => {
 
       // Fork the seed and COW the feat through the service.
       const fork = await createFork(seed.id);
-      const forkSession = makeSession(SEED_USER_ID);
+      const forkSession = makeSession();
       await FeatsService.updateFeat(forkSession, fork.id, baseFeat.id, {
         name: baseFeat.name,
         description: "COW'd",
@@ -475,7 +472,7 @@ describe("rulesetCache", () => {
       const sampleFeat = sampleFeats[0];
       expect(sampleFeat).toBeDefined();
 
-      const forkSession = makeSession(SEED_USER_ID);
+      const forkSession = makeSession();
       await FeatsService.updateFeat(forkSession, fork.id, sampleFeat.id, {
         name: sampleFeat.name,
         description: "Edited by fork (COW)",
@@ -504,7 +501,7 @@ describe("rulesetCache", () => {
       );
       const sampleFeat = sampleFeats[0];
 
-      const forkSession = makeSession(SEED_USER_ID);
+      const forkSession = makeSession();
       await FeatsService.deleteFeat(forkSession, fork.id, sampleFeat.id);
 
       const forkData = await composeFork(fork);
@@ -551,7 +548,7 @@ describe("rulesetCache", () => {
 
       // Create a modifier on the inherited feat through the service (COWs the
       // feat + invalidates the fork's cache).
-      const forkSession = makeSession(SEED_USER_ID);
+      const forkSession = makeSession();
       await ModifiersService.createModifier(forkSession, fork.id, "feats", sampleFeat.id, {
         target: "abilities.strength.misc",
         value: "2",
@@ -591,8 +588,8 @@ describe("rulesetCache", () => {
         ancestorRulesetIds: [seed.id],
       });
 
-      const cowA = await cowEntity(db, "feats", baseFeat.id, extA.id, [seed.id], []);
-      const cowB = await cowEntity(db, "feats", baseFeat.id, extB.id, [seed.id], []);
+      const cowA = await copyEntity(db, "feats", baseFeat.id, extA.id, [seed.id], []);
+      const cowB = await copyEntity(db, "feats", baseFeat.id, extB.id, [seed.id], []);
 
       // Child fork subscribed to both extensions.
       const child = await createTestRuleset(SEED_USER_ID, {
@@ -647,8 +644,8 @@ describe("rulesetCache", () => {
         ancestorRulesetIds: [seed.id],
       });
 
-      const cowA = await cowEntity(db, "items", baseItem.id, extA.id, [seed.id], []);
-      const cowB = await cowEntity(db, "items", baseItem.id, extB.id, [seed.id], []);
+      const cowA = await copyEntity(db, "items", baseItem.id, extA.id, [seed.id], []);
+      const cowB = await copyEntity(db, "items", baseItem.id, extB.id, [seed.id], []);
 
       const child = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,

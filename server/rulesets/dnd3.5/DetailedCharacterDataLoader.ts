@@ -50,6 +50,9 @@ import type {
 import { readSkillFlags } from "./skillFlags.ts";
 import { collectClassListIds, collectFeatListIds } from "./spellcasting/spellLists.ts";
 
+/** Resolves stored ids through the override map, when there is one. */
+type Resolve = <T extends Record<string, unknown>>(rows: T[]) => T[];
+
 /** Internal bag of rounds 1-3 DB results shared across projected/baseline builds. */
 interface SharedCharacterData {
   ruleset: Ruleset;
@@ -63,9 +66,6 @@ interface SharedCharacterData {
   inventory: Awaited<ReturnType<typeof CharacterInventoryRepository.findMany>>;
   rawCharacterLevels: CharacterLevel[];
 }
-
-/** Resolves stored ids through the override map, when there is one. */
-type Resolve = <T extends Record<string, unknown>>(rows: T[]) => T[];
 
 /** D&D 3.5-specific extension of LoadedCharacterData with spellcasting and skill properties. */
 export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
@@ -84,58 +84,6 @@ export type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR };
 
 export default class DetailedCharacterDataLoader {
   constructor(private readonly character: Character) {}
-
-  /**
-   * Scans modifiers for "set feats.<slug>.possessed = true" targets and returns
-   * the IDs of the possessed feats that aren't already in the character's feat list.
-   */
-  private resolvePossessedFeatIds(
-    modifiers: Modifier[],
-    existingFeatIds: Set<string>,
-    featIdBySlug: Map<string, string>,
-  ): string[] {
-    const ids: string[] = [];
-    const seen = new Set<string>();
-    for (const mod of modifiers) {
-      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
-      const parts = mod.target.split(".");
-      if (parts.length !== 3 || parts[0] !== "feats" || parts[2] !== "possessed") continue;
-      const featId = featIdBySlug.get(parts[1]);
-      if (!featId || existingFeatIds.has(featId) || seen.has(featId)) continue;
-      seen.add(featId);
-      ids.push(featId);
-    }
-    return ids;
-  }
-
-  private resolvePossessedPowers(
-    modifiers: Modifier[],
-    existingPowerIds: Set<string>,
-    powerIdsBySlug: Map<string, string[]>,
-    powersById: Map<string, PowerWithAptitudes>,
-    aptitudeIdBySpellSlug: Map<string, string>,
-  ): { powerId: string; aptitudeId: string }[] {
-    const results: { powerId: string; aptitudeId: string }[] = [];
-    for (const mod of modifiers) {
-      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
-      const parts = mod.target.split(".");
-      // powers.<spellSlug>.<aptSlug>.known
-      if (parts.length !== 4 || parts[0] !== "powers" || parts[3] !== "known") continue;
-      const aptitudeId = aptitudeIdBySpellSlug.get(parts[2]);
-      if (!aptitudeId) continue;
-      const candidateIds = powerIdsBySlug.get(parts[1]);
-      if (!candidateIds) continue;
-      for (const id of candidateIds) {
-        const power = powersById.get(id);
-        if (!power) continue;
-        if (!power.powersAptitudesInRules.some((pa) => pa.aptitudeId === aptitudeId)) continue;
-        if (existingPowerIds.has(power.id)) break;
-        results.push({ powerId: power.id, aptitudeId });
-        break;
-      }
-    }
-    return results;
-  }
 
   /** A character ability's score, with its ability's name. */
   private abilityScore(
@@ -543,6 +491,58 @@ export default class DetailedCharacterDataLoader {
       modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
       requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
     };
+  }
+
+  /**
+   * Scans modifiers for "set feats.<slug>.possessed = true" targets and returns
+   * the IDs of the possessed feats that aren't already in the character's feat list.
+   */
+  private resolvePossessedFeatIds(
+    modifiers: Modifier[],
+    existingFeatIds: Set<string>,
+    featIdBySlug: Map<string, string>,
+  ): string[] {
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    for (const mod of modifiers) {
+      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
+      const parts = mod.target.split(".");
+      if (parts.length !== 3 || parts[0] !== "feats" || parts[2] !== "possessed") continue;
+      const featId = featIdBySlug.get(parts[1]);
+      if (!featId || existingFeatIds.has(featId) || seen.has(featId)) continue;
+      seen.add(featId);
+      ids.push(featId);
+    }
+    return ids;
+  }
+
+  private resolvePossessedPowers(
+    modifiers: Modifier[],
+    existingPowerIds: Set<string>,
+    powerIdsBySlug: Map<string, string[]>,
+    powersById: Map<string, PowerWithAptitudes>,
+    aptitudeIdBySpellSlug: Map<string, string>,
+  ): { powerId: string; aptitudeId: string }[] {
+    const results: { powerId: string; aptitudeId: string }[] = [];
+    for (const mod of modifiers) {
+      if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
+      const parts = mod.target.split(".");
+      // powers.<spellSlug>.<aptSlug>.known
+      if (parts.length !== 4 || parts[0] !== "powers" || parts[3] !== "known") continue;
+      const aptitudeId = aptitudeIdBySpellSlug.get(parts[2]);
+      if (!aptitudeId) continue;
+      const candidateIds = powerIdsBySlug.get(parts[1]);
+      if (!candidateIds) continue;
+      for (const id of candidateIds) {
+        const power = powersById.get(id);
+        if (!power) continue;
+        if (!power.powersAptitudesInRules.some((pa) => pa.aptitudeId === aptitudeId)) continue;
+        if (existingPowerIds.has(power.id)) break;
+        results.push({ powerId: power.id, aptitudeId });
+        break;
+      }
+    }
+    return results;
   }
 
   /** The ruleset's own lists, as the loaded data carries them. */

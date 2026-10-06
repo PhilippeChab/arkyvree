@@ -3,7 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowCustomizationForMutation, cowEntityForCustomization } from "@/server/cow/index.ts";
+import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Requirements } from "@/server/repositories/index.ts";
@@ -35,27 +35,6 @@ class RequirementsService {
     return requirement;
   }
 
-  async getRequirements(rulesetId: string, entityType: string, entityId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const resolvedId = rulesetData.canonicalize(entityId);
-      await getCustomizableEntityName(resolvedId, entityType, rulesetData);
-      // Compose step pre-merges sibling requirements (OR-chain-aware) into the
-      // winner's bucket with entityId remapped. Filter by entityType.
-      const allReqs = rulesetData.requirementsByEntity.get(resolvedId) ?? [];
-      const requirements = allReqs.filter((r) => r.entityType === entityType);
-
-      const { paths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, "requirement");
-      const pathMap = new Map(paths.map((p) => [p.path, p]));
-
-      return requirements.map((r) => {
-        const targetLabels = r.target ? pickTargetLabels([r.target, ...(r.value ? [r.value] : [])], segmentLabels) : {};
-        if (!r.target || !r.value) return { ...r, valueLabel: null, targetLabels };
-        const valueLabel = pathMap.get(r.target)?.possibleValues?.find((pv) => pv.value === r.value)?.label ?? null;
-        return { ...r, valueLabel, targetLabels };
-      });
-    });
-  }
-
   async createRequirement(
     session: Session,
     rulesetId: string,
@@ -77,7 +56,8 @@ class RequirementsService {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
 
         let requirement;
         if (body.target) {
@@ -132,6 +112,81 @@ class RequirementsService {
     return result;
   }
 
+  async deleteRequirement(
+    session: Session,
+    rulesetId: string,
+    entityType: string,
+    entityId: string,
+    requirementId: string,
+  ) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
+
+        const effectiveEntityId = rulesetData.canonicalize(entityId);
+        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+
+        const requirement = this.findEntityRequirement(rulesetData, entityType, effectiveEntityId, requirementId);
+
+        // Before the copy-on-write: the lookup reads the shared db, not tx
+        await checkCustomizedEntity(requirement);
+
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
+          tx,
+          entityType,
+          effectiveEntityId,
+          "requirement",
+          requirementId,
+        );
+
+        const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
+        const deletedRequirement = rows[0];
+
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: deletedRequirement.id,
+          targetTable: getTableName(requirementsInCustomization),
+          type: "deleteRequirement",
+          data: {
+            rulesetId,
+            entityName,
+            entityType,
+            ...(requirement.target
+              ? { target: requirement.target, value: requirement.value, operator: requirement.operator }
+              : {}),
+          },
+        });
+
+        return { ...deletedRequirement, resolvedEntityId };
+      });
+    });
+    RulesetCache.invalidateEntities(rulesetId);
+    return result;
+  }
+
+  async getRequirements(rulesetId: string, entityType: string, entityId: string) {
+    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      const resolvedId = rulesetData.canonicalize(entityId);
+      await getCustomizableEntityName(resolvedId, entityType, rulesetData);
+      // Compose step pre-merges sibling requirements (OR-chain-aware) into the
+      // winner's bucket with entityId remapped. Filter by entityType.
+      const allReqs = rulesetData.requirementsByEntity.get(resolvedId) ?? [];
+      const requirements = allReqs.filter((r) => r.entityType === entityType);
+
+      const { paths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, "requirement");
+      const pathMap = new Map(paths.map((p) => [p.path, p]));
+
+      return requirements.map((r) => {
+        const targetLabels = r.target ? pickTargetLabels([r.target, ...(r.value ? [r.value] : [])], segmentLabels) : {};
+        if (!r.target || !r.value) return { ...r, valueLabel: null, targetLabels };
+        const valueLabel = pathMap.get(r.target)?.possibleValues?.find((pv) => pv.value === r.value)?.label ?? null;
+        return { ...r, valueLabel, targetLabels };
+      });
+    });
+  }
+
   async updateRequirement(
     session: Session,
     rulesetId: string,
@@ -161,9 +216,9 @@ class RequirementsService {
         await checkCustomizedEntity(requirement);
 
         // COW the owning entity if this requirement is inherited
-        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await cowCustomizationForMutation(
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
           tx,
-          rulesetId,
           entityType,
           effectiveEntityId,
           "requirement",
@@ -231,60 +286,6 @@ class RequirementsService {
         });
 
         return { ...updatedRequirement, resolvedEntityId };
-      });
-    });
-    RulesetCache.invalidateEntities(rulesetId);
-    return result;
-  }
-
-  async deleteRequirement(
-    session: Session,
-    rulesetId: string,
-    entityType: string,
-    entityId: string,
-    requirementId: string,
-  ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
-
-        const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-
-        const requirement = this.findEntityRequirement(rulesetData, entityType, effectiveEntityId, requirementId);
-
-        // Before the copy-on-write: the lookup reads the shared db, not tx
-        await checkCustomizedEntity(requirement);
-
-        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await cowCustomizationForMutation(
-          tx,
-          rulesetId,
-          entityType,
-          effectiveEntityId,
-          "requirement",
-          requirementId,
-        );
-
-        const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
-        const deletedRequirement = rows[0];
-
-        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: deletedRequirement.id,
-          targetTable: getTableName(requirementsInCustomization),
-          type: "deleteRequirement",
-          data: {
-            rulesetId,
-            entityName,
-            entityType,
-            ...(requirement.target
-              ? { target: requirement.target, value: requirement.value, operator: requirement.operator }
-              : {}),
-          },
-        });
-
-        return { ...deletedRequirement, resolvedEntityId };
       });
     });
     RulesetCache.invalidateEntities(rulesetId);

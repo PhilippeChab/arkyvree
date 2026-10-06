@@ -24,6 +24,114 @@ import { compareInConstantTime, generateVerificationCode } from "@/server/servic
 import type { Session } from "@/shared/relations.ts";
 
 class AccountService {
+  async cancelEmailChange(session: Session) {
+    return await withTransaction(async (tx) => {
+      const user = await Users.findOne(tx, { id: session.userId });
+      if (!user) throw new InternalError("User not found");
+
+      await Users.update(tx, { pendingEmailAddress: null }, { id: user.id });
+      await EmailVerifications.archive(tx, { userId: user.id });
+
+      await Activities.create(tx, {
+        userId: user.id,
+        targetId: user.id,
+        targetTable: getTableName(usersInAccount),
+        type: "cancelEmailChange",
+      });
+    });
+  }
+
+  async completeOnboarding(session: Session) {
+    await withTransaction(async (tx) => {
+      await Users.update(tx, { onboardingCompletedAt: new Date().toISOString() }, { id: session.userId });
+    });
+  }
+
+  async deleteAccount(session: Session, password: string | undefined) {
+    const userId = session.userId;
+
+    // Password check first — outside the tx so a bad password doesn't
+    // roll back an otherwise-clean state.
+    const user = await Users.findOne(db, { id: userId });
+    if (!user) throw new InternalError("User not found");
+
+    if (user.passwordDigest) {
+      if (!password) {
+        throw new BadRequestError("Password is required");
+      }
+      const { verified } = await verifyPassword(password, user.passwordDigest);
+      if (!verified) {
+        throw new UnauthorizedError("Incorrect password");
+      }
+    }
+
+    return await withTransaction(async (tx) => {
+      // Drop polymorphic attachment rows for the user + their characters so
+      // the sweep can reclaim S3 objects. archive() leaves rows in place, so
+      // without this the avatar + every portrait leak forever.
+      const characterIds = await Characters.findIds(tx, { userIds: [userId] });
+      await purgeAttachmentsForRecords(tx, "User", [userId]);
+      await purgeAttachmentsForRecords(tx, "Character", characterIds);
+
+      await Rulesets.orphan(tx, { userId });
+      await Characters.archive(tx, { userId });
+      await Players.archive(tx, { userId });
+      await Invites.archive(tx, { userId });
+      await StarredRulesets.archive(tx, { userId });
+      await Sessions.archive(tx, { userId });
+      await EmailVerifications.archive(tx, { userId });
+      await PasswordResets.archive(tx, { userId });
+      await OauthAccounts.archive(tx, { userId });
+
+      await Users.archive(tx, { id: userId });
+
+      await Activities.create(tx, {
+        userId,
+        targetId: userId,
+        targetTable: getTableName(usersInAccount),
+        type: "deleteAccount",
+      });
+
+      return { success: true };
+    });
+  }
+
+  async resendEmailChange(session: Session) {
+    const { code, pendingEmailAddress } = await withTransaction(async (tx) => {
+      const user = await Users.findOne(tx, { id: session.userId });
+      if (!user) throw new InternalError("User not found");
+
+      if (!user.pendingEmailAddress) {
+        throw new BadRequestError("No pending email change");
+      }
+
+      const existing = await EmailVerifications.findOne(tx, { userId: user.id });
+      if (existing) {
+        const elapsed = Date.now() - new Date(existing.createdAt).getTime();
+        if (elapsed < 5 * 60 * 1000) {
+          throw new BadRequestError("Please wait before requesting a new code");
+        }
+      }
+
+      await EmailVerifications.archive(tx, { userId: user.id });
+
+      const code = generateVerificationCode();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+      await EmailVerifications.create(tx, { userId: user.id, code, expiresAt });
+
+      return { code, pendingEmailAddress: user.pendingEmailAddress };
+    });
+
+    await emailService.send({
+      to: pendingEmailAddress,
+      subject: "Confirm your new email",
+      template: EmailTemplate.EmailChangeVerification,
+      props: { code },
+    });
+
+    return { success: true };
+  }
+
   async setPassword(session: Session, newPassword: string) {
     return await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
@@ -150,114 +258,6 @@ class AccountService {
     }
 
     return safeUser;
-  }
-
-  async deleteAccount(session: Session, password: string | undefined) {
-    const userId = session.userId;
-
-    // Password check first — outside the tx so a bad password doesn't
-    // roll back an otherwise-clean state.
-    const user = await Users.findOne(db, { id: userId });
-    if (!user) throw new InternalError("User not found");
-
-    if (user.passwordDigest) {
-      if (!password) {
-        throw new BadRequestError("Password is required");
-      }
-      const { verified } = await verifyPassword(password, user.passwordDigest);
-      if (!verified) {
-        throw new UnauthorizedError("Incorrect password");
-      }
-    }
-
-    return await withTransaction(async (tx) => {
-      // Drop polymorphic attachment rows for the user + their characters so
-      // the sweep can reclaim S3 objects. archive() leaves rows in place, so
-      // without this the avatar + every portrait leak forever.
-      const characterIds = await Characters.findIds(tx, { userIds: [userId] });
-      await purgeAttachmentsForRecords(tx, "User", [userId]);
-      await purgeAttachmentsForRecords(tx, "Character", characterIds);
-
-      await Rulesets.orphan(tx, { userId });
-      await Characters.archive(tx, { userId });
-      await Players.archive(tx, { userId });
-      await Invites.archive(tx, { userId });
-      await StarredRulesets.archive(tx, { userId });
-      await Sessions.archive(tx, { userId });
-      await EmailVerifications.archive(tx, { userId });
-      await PasswordResets.archive(tx, { userId });
-      await OauthAccounts.archive(tx, { userId });
-
-      await Users.archive(tx, { id: userId });
-
-      await Activities.create(tx, {
-        userId,
-        targetId: userId,
-        targetTable: getTableName(usersInAccount),
-        type: "deleteAccount",
-      });
-
-      return { success: true };
-    });
-  }
-
-  async cancelEmailChange(session: Session) {
-    return await withTransaction(async (tx) => {
-      const user = await Users.findOne(tx, { id: session.userId });
-      if (!user) throw new InternalError("User not found");
-
-      await Users.update(tx, { pendingEmailAddress: null }, { id: user.id });
-      await EmailVerifications.archive(tx, { userId: user.id });
-
-      await Activities.create(tx, {
-        userId: user.id,
-        targetId: user.id,
-        targetTable: getTableName(usersInAccount),
-        type: "cancelEmailChange",
-      });
-    });
-  }
-
-  async completeOnboarding(session: Session) {
-    await withTransaction(async (tx) => {
-      await Users.update(tx, { onboardingCompletedAt: new Date().toISOString() }, { id: session.userId });
-    });
-  }
-
-  async resendEmailChange(session: Session) {
-    const { code, pendingEmailAddress } = await withTransaction(async (tx) => {
-      const user = await Users.findOne(tx, { id: session.userId });
-      if (!user) throw new InternalError("User not found");
-
-      if (!user.pendingEmailAddress) {
-        throw new BadRequestError("No pending email change");
-      }
-
-      const existing = await EmailVerifications.findOne(tx, { userId: user.id });
-      if (existing) {
-        const elapsed = Date.now() - new Date(existing.createdAt).getTime();
-        if (elapsed < 5 * 60 * 1000) {
-          throw new BadRequestError("Please wait before requesting a new code");
-        }
-      }
-
-      await EmailVerifications.archive(tx, { userId: user.id });
-
-      const code = generateVerificationCode();
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-      await EmailVerifications.create(tx, { userId: user.id, code, expiresAt });
-
-      return { code, pendingEmailAddress: user.pendingEmailAddress };
-    });
-
-    await emailService.send({
-      to: pendingEmailAddress,
-      subject: "Confirm your new email",
-      template: EmailTemplate.EmailChangeVerification,
-      props: { code },
-    });
-
-    return { success: true };
   }
 
   async verifyEmailChange(session: Session, code: string) {

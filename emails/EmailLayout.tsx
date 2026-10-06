@@ -8,6 +8,12 @@ interface EmailLayoutProps {
   children: ReactNode;
 }
 
+const accentBar: CSSProperties = {
+  border: "none",
+  borderTop: `3px solid ${colors.primary}`,
+  margin: "24px 0 0",
+};
+
 const body: CSSProperties = {
   backgroundColor: colors.parchment,
   fontFamily: fontStack,
@@ -22,6 +28,22 @@ const container: CSSProperties = {
   borderRadius: "8px",
   overflow: "hidden",
   boxShadow: "0 1px 3px rgba(62, 39, 35, 0.12)",
+};
+
+const divider: CSSProperties = {
+  border: "none",
+  borderTop: `1px solid ${colors.divider}`,
+  margin: "24px 48px 0",
+};
+
+const footer: CSSProperties = {
+  color: colors.textMuted,
+  fontFamily: fontStack,
+  fontSize: "13px",
+  lineHeight: "20px",
+  textAlign: "center",
+  padding: "16px 48px 36px",
+  margin: 0,
 };
 
 const header: CSSProperties = {
@@ -42,28 +64,6 @@ const wordmark: CSSProperties = {
   letterSpacing: "0.02em",
   margin: "12px 0 0",
   textAlign: "center",
-};
-
-const accentBar: CSSProperties = {
-  border: "none",
-  borderTop: `3px solid ${colors.primary}`,
-  margin: "24px 0 0",
-};
-
-const divider: CSSProperties = {
-  border: "none",
-  borderTop: `1px solid ${colors.divider}`,
-  margin: "24px 48px 0",
-};
-
-const footer: CSSProperties = {
-  color: colors.textMuted,
-  fontFamily: fontStack,
-  fontSize: "13px",
-  lineHeight: "20px",
-  textAlign: "center",
-  padding: "16px 48px 36px",
-  margin: 0,
 };
 
 export function EmailLayout({ preview, children }: EmailLayoutProps) {

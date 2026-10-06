@@ -32,13 +32,11 @@ import {
   CharacterLevels,
   Characters,
   Feats,
-  Items,
   Klasses,
   Modifiers,
   Properties,
   Races,
   Requirements,
-  Rulesets,
 } from "@/server/repositories/index.ts";
 import { buildFullCharacterResponse, buildVirtualEntities } from "@/server/rulesets/dnd3.5/buildCharacterResponse.ts";
 import type { WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
@@ -77,9 +75,10 @@ import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
 import { insertRows } from "@/tests/support/database.ts";
+import { createTestItem } from "@/tests/support/items.ts";
 import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
-import { findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 type Carried = {
@@ -152,54 +151,47 @@ function weaponSet(detailed: Detailed, set = "0") {
   return detailed.getDetailedCharacterCombat().getCombat().weaponsets[set];
 }
 
-async function build(character: Character) {
-  const detailed = new DetailedCharacter(character);
-  await detailed.build();
-  return detailed;
-}
-
-async function buildSeeded(name: string) {
-  return build(await findSeededCharacter(name));
-}
-
-/** A new item of the seeded ruleset, with these properties. */
-async function createItem(
-  values: { name: string; type: string; slot: ItemLocation; sourceItemId?: string; isTemplate?: boolean },
-  properties: Record<string, string> = {},
-) {
-  const { rulesetId } = await getSeedCtx();
-  const [item] = await Items.create(db, { ...values, rulesetId });
-  const entries = Object.entries(properties);
-  if (entries.length > 0)
-    await Properties.createMany(
-      db,
-      entries.map(([type, value]) => ({ entityId: item.id, entityType: "items", type, value })),
-    );
-  invalidateSeededRuleset(rulesetId);
-  return item;
-}
-
-/** A new wondrous item of the seeded ruleset, worn at `slot`, that raises an ability by `bonus`. */
-async function createAbilityItem(ability: string, bonus: number, slot: ItemLocation) {
-  const item = await createItem({ name: `${ability} +${bonus}`, type: "Wondrous Item", slot });
-  await Modifiers.create(db, {
-    sourceId: item.id,
-    sourceType: "items",
-    target: `abilities.${ability}.misc`,
-    value: String(bonus),
-    valueType: "number",
-    operator: "add",
-  });
-  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
-  return item;
-}
-
 /** The seeded character, now a halfling. */
 async function asHalfling(name: string) {
   const character = await findSeededCharacter(name);
   const halfling = (await Races.findOne(db, { name: "Halfling", rulesetId: character.rulesetId }))!;
   await db.update(charactersInCharacter).set({ raceId: halfling.id }).where(eq(charactersInCharacter.id, character.id));
   return { ...character, raceId: halfling.id };
+}
+
+async function build(character: Character) {
+  const detailed = new DetailedCharacter(character);
+  await detailed.build();
+  return detailed;
+}
+
+/** The seeded character, carrying only these items. */
+async function buildCarrying(name: string, carried: Carried[] = []) {
+  const character = await findSeededCharacter(name);
+  await carry(character, carried);
+  return build(character);
+}
+
+/** A ranger 6 with Two-Weapon Fighting and its improved feat, through the combat style: STR 14, DEX 16, BAB +6. */
+async function buildRanger(carried: Carried[]) {
+  const ctx = await getSeedCtx();
+  const characterId = await seedHuman(
+    "Two-Weapon Ranger",
+    { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 10, Wisdom: 12, Charisma: 8 },
+    { xp: 15000 },
+  );
+  const levels = await addClassLevels(db, ctx, characterId, "Ranger", [1, 2, 3, 4, 5, 6], [8, 5, 5, 5, 5, 5]);
+  await addFeats(db, ctx, levels, [
+    { levelIndex: 1, featName: "Two-Weapon Fighting", aptitude: "Ranger Combat Style (2nd)" },
+    { levelIndex: 5, featName: "Improved Two-Weapon Fighting", aptitude: "Ranger Improved Combat Style (6th)" },
+  ]);
+  const character = (await Characters.findOne(db, { id: characterId }))!;
+  await carry(character, carried);
+  return build(character);
+}
+
+async function buildSeeded(name: string) {
+  return build(await findSeededCharacter(name));
 }
 
 /** Replaces the character's inventory: seeded items by name, or item ids. */
@@ -218,17 +210,48 @@ async function carry(character: Character, carried: Carried[]) {
   );
 }
 
-/** The seeded character, carrying only these items. */
-async function buildCarrying(name: string, carried: Carried[] = []) {
-  const character = await findSeededCharacter(name);
-  await carry(character, carried);
-  return build(character);
+/** A new wondrous item of the seeded ruleset, worn at `slot`, that raises an ability by `bonus`. */
+async function createAbilityItem(ability: string, bonus: number, slot: ItemLocation) {
+  const item = await createTestItem({ name: `${ability} +${bonus}`, type: "Wondrous Item", slot });
+  await Modifiers.create(db, {
+    sourceId: item.id,
+    sourceType: "items",
+    target: `abilities.${ability}.misc`,
+    value: String(bonus),
+    valueType: "number",
+    operator: "add",
+  });
+  invalidateSeededRuleset((await getSeedCtx()).rulesetId);
+  return item;
+}
+
+/** A character of a fork with Complete Divine, with these modifiers of its own (`[target, value, valueType]`). */
+async function divineCharacter(
+  name: string,
+  abilities: Record<string, number>,
+  granted: [string, string, string][],
+  alignment?: "Neutral Good" | "Chaotic Neutral",
+) {
+  const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
+  const characterId = await seedHuman(name, abilities, { rulesetId: fork.id, alignment });
+  for (const [target, value, valueType] of granted) {
+    const operator = valueType === "boolean" ? "set" : "add";
+    await Modifiers.create(db, {
+      sourceId: characterId,
+      sourceType: "characters",
+      target,
+      value,
+      valueType,
+      operator,
+    });
+  }
+  return characterId;
 }
 
 /** A fork of the seeded ruleset that uses these extensions. */
 async function forkWith(...extensionNames: string[]) {
   const { rulesetId } = await getSeedCtx();
-  const extensions = await Promise.all(extensionNames.map(async (name) => (await Rulesets.findOne(db, { name }))!.id));
+  const extensions = await Promise.all(extensionNames.map(async (name) => (await findSeededRuleset(name)).id));
   const fork = await createTestRuleset(SEED_USER_ID, {
     rulesetId,
     ancestorRulesetIds: [rulesetId],
@@ -244,7 +267,7 @@ async function met(name: string, target: string, check?: Parameters<typeof requi
 
 /** A composite longbow of the seeded ruleset made for this Strength bonus. */
 async function mightyBow(rating: number) {
-  return createItem(
+  return createTestItem(
     {
       name: `Composite Longbow (+${rating} Str)`,
       type: "Weapon",
@@ -289,7 +312,7 @@ async function raceModifier(
 
 /** An item that requires `target` (equal true, or this check), with +2 to hit for the hand holding it. */
 async function requiringWithBonus(
-  item: Awaited<ReturnType<typeof createItem>>,
+  item: Awaited<ReturnType<typeof createTestItem>>,
   target: string,
   check: Pick<Requirement, "operator" | "value" | "valueType"> = {
     operator: "equal",
@@ -331,47 +354,6 @@ async function seedHuman(
     languages: ["Common"],
     rulesetId: values.rulesetId,
   });
-}
-
-/** A ranger 6 with Two-Weapon Fighting and its improved feat, through the combat style: STR 14, DEX 16, BAB +6. */
-async function buildRanger(carried: Carried[]) {
-  const ctx = await getSeedCtx();
-  const characterId = await seedHuman(
-    "Two-Weapon Ranger",
-    { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 10, Wisdom: 12, Charisma: 8 },
-    { xp: 15000 },
-  );
-  const levels = await addClassLevels(db, ctx, characterId, "Ranger", [1, 2, 3, 4, 5, 6], [8, 5, 5, 5, 5, 5]);
-  await addFeats(db, ctx, levels, [
-    { levelIndex: 1, featName: "Two-Weapon Fighting", aptitude: "Ranger Combat Style (2nd)" },
-    { levelIndex: 5, featName: "Improved Two-Weapon Fighting", aptitude: "Ranger Improved Combat Style (6th)" },
-  ]);
-  const character = (await Characters.findOne(db, { id: characterId }))!;
-  await carry(character, carried);
-  return build(character);
-}
-
-/** A character of a fork with Complete Divine, with these modifiers of its own (`[target, value, valueType]`). */
-async function divineCharacter(
-  name: string,
-  abilities: Record<string, number>,
-  granted: [string, string, string][],
-  alignment?: "Neutral Good" | "Chaotic Neutral",
-) {
-  const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
-  const characterId = await seedHuman(name, abilities, { rulesetId: fork.id, alignment });
-  for (const [target, value, valueType] of granted) {
-    const operator = valueType === "boolean" ? "set" : "add";
-    await Modifiers.create(db, {
-      sourceId: characterId,
-      sourceType: "characters",
-      target,
-      value,
-      valueType,
-      operator,
-    });
-  }
-  return characterId;
 }
 
 /** A new wizard 1 whose Toughness grants Magic Missile, which gets `requirement` of its own when given. */
@@ -430,7 +412,7 @@ async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
   const bjorn = await findSeededCharacter("Bjorn Ironhand");
   const fork = await forkWith(DND35_COMPLETE_WARRIOR_NAME);
   await db.update(charactersInCharacter).set({ rulesetId: fork.id }).where(eq(charactersInCharacter.id, bjorn.id));
-  const extension = (await Rulesets.findOne(db, { name: DND35_COMPLETE_WARRIOR_NAME }))!;
+  const extension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
   const uncannyBlow = (await Feats.findOne(db, {
     name: "Uncanny Blow (Exotic Weapon Master Exotic Weapon Stunt)",
     rulesetId: extension.id,
@@ -658,7 +640,7 @@ describe("DetailedCharacter", () => {
     });
 
     test("group a weapon under its type, not its name", async () => {
-      const variant = await createItem(
+      const variant = await createTestItem(
         { name: "Longsword +1", type: "Weapon", slot: "Main Hand" },
         {
           [WEAPON_PROFICIENCY]: "Martial",
@@ -681,7 +663,7 @@ describe("DetailedCharacter", () => {
     });
 
     test("apply a weapon's own bonus to the hand that holds it, not the other", async () => {
-      const blade = await createItem(
+      const blade = await createTestItem(
         { name: "Keen Blade", type: "Weapon", slot: "Main Hand" },
         {
           [WEAPON_PROFICIENCY]: "Martial",
@@ -865,7 +847,7 @@ describe("DetailedCharacter", () => {
 
     test("read whether a weapon is ranged and how strength adds to its damage off its properties, not its family", async () => {
       const weapon = (name: string, family: string, properties: Record<string, string> = {}) =>
-        createItem(
+        createTestItem(
           { name, type: "Weapon", slot: "Main Hand" },
           {
             [WEAPON_PROFICIENCY]: "Simple",
@@ -944,7 +926,7 @@ describe("DetailedCharacter", () => {
       test("take a carried shield's armor check penalty, keeping strength once that's better", async () => {
         // An elf rogue: STR 10 (+0), DEX 20 (+5), proficient with shields through a charm; a heavy steel shield costs 2,
         // a tower shield 10.
-        const charm = await createItem({ name: "Shield Charm", type: "Wondrous Item", slot: "Neck" });
+        const charm = await createTestItem({ name: "Shield Charm", type: "Wondrous Item", slot: "Neck" });
         for (const feat of ["shieldproficiency", "towershieldproficiency"]) {
           await Modifiers.create(db, {
             sourceId: charm.id,
@@ -1209,7 +1191,7 @@ describe("DetailedCharacter", () => {
       test("reads the hand holding a weapon in its own modifiers' requirements too", async () => {
         // A battleaxe whose +1 to hit is only for the main hand
         const { itemMap, rulesetId } = await getSeedCtx();
-        const sword = await createItem({
+        const sword = await createTestItem({
           name: "Main-Hand Axe",
           type: "Weapon",
           slot: "Main Hand",
@@ -1309,7 +1291,7 @@ describe("DetailedCharacter", () => {
 
       test("costs a base weapon the character isn't proficient with 4 to hit, and nothing else", async () => {
         const blade = await requiringWithBonus(
-          await createItem(
+          await createTestItem(
             { name: "Base Blade", type: "Weapon", slot: "Main Hand", isTemplate: true },
             { [WEAPON_PROFICIENCY]: "Martial", [WEAPON_BASE_DAMAGE]: "1d8", [WEAPON_TYPE]: "Longsword" },
           ),
@@ -1324,7 +1306,7 @@ describe("DetailedCharacter", () => {
 
       test("counts a base weapon whose proficiency names nothing as one the character isn't proficient with", async () => {
         const blade = await requiringWithBonus(
-          await createItem(
+          await createTestItem(
             { name: "Lost Blade", type: "Weapon", slot: "Main Hand", isTemplate: true },
             { [WEAPON_PROFICIENCY]: "Martial", [WEAPON_BASE_DAMAGE]: "1d8", [WEAPON_TYPE]: "Longsword" },
           ),
@@ -1338,7 +1320,7 @@ describe("DetailedCharacter", () => {
 
       test("never costs a plain weapon, neither a template nor made from one: its requirements are its own", async () => {
         const blade = await requiringWithBonus(
-          await createItem(
+          await createTestItem(
             { name: "Plain Blade", type: "Weapon", slot: "Main Hand" },
             { [WEAPON_PROFICIENCY]: "Martial", [WEAPON_BASE_DAMAGE]: "1d8", [WEAPON_TYPE]: "Longsword" },
           ),
@@ -1354,7 +1336,7 @@ describe("DetailedCharacter", () => {
       test("costs a weapon nothing for another requirement unmet, which turns its own bonuses off", async () => {
         const { itemMap } = await getSeedCtx();
         const blade = await requiringWithBonus(
-          await createItem({
+          await createTestItem({
             name: "Giant's Blade",
             type: "Weapon",
             slot: "Main Hand",
@@ -1494,7 +1476,7 @@ describe("DetailedCharacter", () => {
       const fork = await forkWith(DND35_DMG_NAME);
       const duelist = (await Klasses.findOne(db, {
         name: "Duelist",
-        rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id,
+        rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
       const dodgeAt = async (intelligence: number, duelistLevels: number) => {
         const characterId = await seedHuman(
@@ -1590,7 +1572,7 @@ describe("DetailedCharacter", () => {
 
     test("reads the armor properties of an item made from a template", async () => {
       const { itemMap } = await getSeedCtx();
-      const derived = await createItem({
+      const derived = await createTestItem({
         name: "Full Plate +1",
         type: "Armor",
         slot: "Torso",
@@ -1608,7 +1590,7 @@ describe("DetailedCharacter", () => {
     });
 
     test("lowers a masterwork armor or shield's check penalty by 1", async () => {
-      const armor = await createItem(
+      const armor = await createTestItem(
         { name: "Chain Mail (Masterwork)", type: "Armor", slot: "Torso" },
         {
           [ARMOR_PROFICIENCY]: "Heavy",
@@ -1620,7 +1602,7 @@ describe("DetailedCharacter", () => {
           [ITEM_MASTERWORK]: "true",
         },
       );
-      const shield = await createItem(
+      const shield = await createTestItem(
         { name: "Heavy Steel Shield (Masterwork)", type: "Shield", slot: "Off Hand" },
         {
           [SHIELD_PROFICIENCY]: "Heavy",
@@ -1728,7 +1710,7 @@ describe("DetailedCharacter", () => {
         await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
         const klass = (await Klasses.findOne(db, {
           name: className,
-          rulesetId: (await Rulesets.findOne(db, { name: book }))!.id,
+          rulesetId: (await findSeededRuleset(book)).id,
         }))!;
         for (let level = 1; level <= levels; level++) {
           await addCharacterLevel(characterId, (await findKlassLevel(klass.id, level))!.id);
@@ -2063,7 +2045,7 @@ describe("DetailedCharacter", () => {
     test("keep what a class grants once the character's ruleset copies the class", async () => {
       // Editing an inherited class in a fork copies it there (copy-on-write): the character's levels then read the
       // copy's, whose grants a lookup by the levels' stored class levels never reached
-      const dmgId = (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id;
+      const dmgId = (await findSeededRuleset(DND35_DMG_NAME)).id;
       const fork = await forkWith(DND35_DMG_NAME);
       const characterId = await seedHuman(
         "Archmage Candidate",
@@ -2105,7 +2087,7 @@ describe("DetailedCharacter", () => {
       const fork = await forkWith(DND35_COMPLETE_ADVENTURER_NAME);
       const scores = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 10, Charisma: 10 };
       const characterId = await seedHuman("Spellthief", scores, { rulesetId: fork.id });
-      const adventurerId = (await Rulesets.findOne(db, { name: DND35_COMPLETE_ADVENTURER_NAME }))!.id;
+      const adventurerId = (await findSeededRuleset(DND35_COMPLETE_ADVENTURER_NAME)).id;
       const spellthief = (await Klasses.findOne(db, { name: "Spellthief", rulesetId: adventurerId }))!;
       for (let level = 1; level <= 6; level++) {
         await addCharacterLevel(characterId, (await findKlassLevel(spellthief.id, level))!.id);
@@ -2312,7 +2294,7 @@ describe("DetailedCharacter", () => {
         // Cleric 7 / Stormlord 5: the weather domain's fifth and sixth levels open.
         const ctx = await getSeedCtx();
         const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
-        const extension = (await Rulesets.findOne(db, { name: DND35_COMPLETE_DIVINE_NAME }))!;
+        const extension = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
         const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
         const characterId = await seedHuman(
           "Storm Cleric",
@@ -2368,7 +2350,7 @@ describe("DetailedCharacter", () => {
         // Cleric 7 / stormlord 5, chaotic neutral, casts as a cleric 12: a homebrew domain's sixth level opens; its fifth,
         // for a lawful neutral cleric only, doesn't
         const ctx = await getSeedCtx();
-        const extension = (await Rulesets.findOne(db, { name: DND35_COMPLETE_DIVINE_NAME }))!;
+        const extension = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
         const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
         const [order] = await insertRows(aptitudesInRules, [{ name: "Order Prayers", rulesetId: fork.id }]);
         const [fifth, sixth] = await insertRows(powersInRules, [
@@ -2740,7 +2722,7 @@ describe("DetailedCharacter", () => {
         await addFeats(db, ctx, wizardLevels, [
           { levelIndex: 0, featName: "Evocation Specialist", aptitude: "Wizard Specialization" },
         ]);
-        const dmg = (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!;
+        const dmg = await findSeededRuleset(DND35_DMG_NAME);
         const loremaster = (await Klasses.findOne(db, { name: "Loremaster", rulesetId: dmg.id }))!;
         const advance = {
           featId: ctx.featMap["Advance Wizard Spellcasting"],
@@ -2977,7 +2959,7 @@ describe("DetailedCharacter", () => {
         ]);
         const thaumaturgist = (await Klasses.findOne(db, {
           name: "Thaumaturgist",
-          rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id,
+          rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
         }))!;
         const firstLevel = (await findKlassLevel(thaumaturgist.id, 1))!;
 
@@ -3175,7 +3157,7 @@ describe("DetailedCharacter", () => {
       await addClassLevels(db, ctx, characterId, "Sorcerer", [1], [4]);
       const dragonDisciple = (await Klasses.findOne(db, {
         name: "Dragon Disciple",
-        rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id,
+        rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
       const strength = async () => {
         const { misc, total } = (await build((await Characters.findOne(db, { id: characterId }))!))
@@ -3265,7 +3247,7 @@ describe("DetailedCharacter", () => {
       await addClassLevels(db, ctx, characterId, "Rogue", [1, 2, 3], [6, 4, 4]);
       const assassin = (await Klasses.findOne(db, {
         name: "Assassin",
-        rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id,
+        rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
       await addCharacterLevel(characterId, (await findKlassLevel(assassin.id, 1))!.id);
       const detailed = await build((await Characters.findOne(db, { id: characterId }))!);

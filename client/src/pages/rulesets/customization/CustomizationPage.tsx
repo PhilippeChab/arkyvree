@@ -48,10 +48,6 @@ import {
 } from "@/shared/customization/entities.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
-type TabSection = "properties" | "modifiers" | "requirements";
-
-type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
-
 interface CustomizationViewProps {
   rulesetId: string;
   entityId: string;
@@ -63,6 +59,10 @@ interface CustomizationViewProps {
   /** Still showing the entity a copy was made from, while the copy loads. */
   locked: boolean;
 }
+
+type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
+
+type TabSection = "properties" | "modifiers" | "requirements";
 
 /** Entities with an editor on this page, which can also be deleted from it. */
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
@@ -99,104 +99,6 @@ const TABS: SectionTab<TabSection>[] = [
     ),
   },
 ];
-
-function isEditable(data: CustomizationEntity): data is EditableEntity {
-  return EDITABLE_TYPES.some((type) => type === data.type);
-}
-
-/** Where a modifier's page goes back to: its class's Modifiers tab, or its entity's customization page. */
-function modifierSourcePath(rulesetId: string, sourceType: string, sourceId: string) {
-  if (sourceType === "klasses") return `/rulesets/${rulesetId}/classes/${sourceId}/modifiers`;
-  const path = isOneOf(sourceType, CUSTOMIZATION_PAGE_TYPES)
-    ? buildCustomizationPath(sourceType, sourceId)
-    : `${sourceType}/${sourceId}/customization`;
-  return `/rulesets/${rulesetId}/${path}`;
-}
-
-/** What surrounds the editor: the header and where Back goes. */
-function describe(
-  data: CustomizationEntity,
-  rulesetId: string,
-): {
-  title: string;
-  pageTitle: string;
-  subtitle?: ReactNode;
-  backPath?: string;
-} {
-  switch (data.type) {
-    case "modifiers": {
-      const modifier = data.entity;
-      return {
-        title: modifier.sourceName,
-        pageTitle: `${modifier.target} ${modifier.operator} ${modifier.value}`,
-        subtitle: (
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
-            <TargetPathBreadcrumbs target={modifier.target} targetLabels={modifier.targetLabels} />
-            <Typography sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}>
-              {MODIFIER_OPERATOR_LABELS[modifier.operator]} {modifier.value}
-            </Typography>
-          </Box>
-        ),
-        backPath: modifierSourcePath(rulesetId, modifier.sourceType, modifier.sourceId),
-      };
-    }
-    case "klass_levels":
-      return {
-        title: `${data.entity.name} Level ${data.entity.level}`,
-        pageTitle: `${data.entity.name} Level ${data.entity.level}`,
-        backPath: `/rulesets/${rulesetId}/classes/${data.entity.klassId}/levels`,
-      };
-    default:
-      return { title: data.entity.name, pageTitle: data.entity.name };
-  }
-}
-
-function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "entity">) {
-  switch (data.type) {
-    case "feats":
-      return <FeatEditor {...props} entity={data.entity} />;
-    case "races":
-      return <RaceEditor {...props} entity={data.entity} />;
-    case "items":
-      return <ItemEditor {...props} entity={data.entity} />;
-    case "powers":
-      return <SpellEditor {...props} entity={data.entity} />;
-    case "klass_levels":
-      return <ClassLevelEditor {...props} entity={data.entity} />;
-    default:
-      return data satisfies never;
-  }
-}
-
-/** A modifier can only carry requirements. */
-function tabsFor(type: CustomizationPageType) {
-  return type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
-}
-
-async function deleteEntity(data: EditableEntity, id: string, entityId: string) {
-  const api = rpc.api.rulesets[":id"];
-  switch (data.type) {
-    case "feats":
-      await api.feats[":featId"].$delete({ param: { id, featId: entityId } });
-      return;
-    case "races":
-      await api.races[":raceId"].$delete({ param: { id, raceId: entityId } });
-      return;
-    case "items":
-      await api.items[":itemId"].$delete({ param: { id, itemId: entityId } });
-      return;
-    case "powers":
-      await api.powers[":powerId"].$delete({ param: { id, powerId: entityId } });
-      return;
-    case "klass_levels":
-      await api.classes[":classId"].levels[":levelId"].$delete({
-        param: { id, classId: data.entity.klassId, levelId: entityId },
-      });
-      return;
-    default:
-      return data satisfies never;
-  }
-}
 
 function CustomizationView({
   rulesetId,
@@ -343,6 +245,104 @@ function CustomizationView({
       />
     </EntityDetailLayout>
   );
+}
+
+/** What surrounds the editor: the header and where Back goes. */
+function describe(
+  data: CustomizationEntity,
+  rulesetId: string,
+): {
+  title: string;
+  pageTitle: string;
+  subtitle?: ReactNode;
+  backPath?: string;
+} {
+  switch (data.type) {
+    case "modifiers": {
+      const modifier = data.entity;
+      return {
+        title: modifier.sourceName,
+        pageTitle: `${modifier.target} ${modifier.operator} ${modifier.value}`,
+        subtitle: (
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+            <TargetPathBreadcrumbs target={modifier.target} targetLabels={modifier.targetLabels} />
+            <Typography sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}>
+              {MODIFIER_OPERATOR_LABELS[modifier.operator]} {modifier.value}
+            </Typography>
+          </Box>
+        ),
+        backPath: modifierSourcePath(rulesetId, modifier.sourceType, modifier.sourceId),
+      };
+    }
+    case "klass_levels":
+      return {
+        title: `${data.entity.name} Level ${data.entity.level}`,
+        pageTitle: `${data.entity.name} Level ${data.entity.level}`,
+        backPath: `/rulesets/${rulesetId}/classes/${data.entity.klassId}/levels`,
+      };
+    default:
+      return { title: data.entity.name, pageTitle: data.entity.name };
+  }
+}
+
+function isEditable(data: CustomizationEntity): data is EditableEntity {
+  return EDITABLE_TYPES.some((type) => type === data.type);
+}
+
+/** Where a modifier's page goes back to: its class's Modifiers tab, or its entity's customization page. */
+function modifierSourcePath(rulesetId: string, sourceType: string, sourceId: string) {
+  if (sourceType === "klasses") return `/rulesets/${rulesetId}/classes/${sourceId}/modifiers`;
+  const path = isOneOf(sourceType, CUSTOMIZATION_PAGE_TYPES)
+    ? buildCustomizationPath(sourceType, sourceId)
+    : `${sourceType}/${sourceId}/customization`;
+  return `/rulesets/${rulesetId}/${path}`;
+}
+
+function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "entity">) {
+  switch (data.type) {
+    case "feats":
+      return <FeatEditor {...props} entity={data.entity} />;
+    case "races":
+      return <RaceEditor {...props} entity={data.entity} />;
+    case "items":
+      return <ItemEditor {...props} entity={data.entity} />;
+    case "powers":
+      return <SpellEditor {...props} entity={data.entity} />;
+    case "klass_levels":
+      return <ClassLevelEditor {...props} entity={data.entity} />;
+    default:
+      return data satisfies never;
+  }
+}
+
+/** A modifier can only carry requirements. */
+function tabsFor(type: CustomizationPageType) {
+  return type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
+}
+
+async function deleteEntity(data: EditableEntity, id: string, entityId: string) {
+  const api = rpc.api.rulesets[":id"];
+  switch (data.type) {
+    case "feats":
+      await api.feats[":featId"].$delete({ param: { id, featId: entityId } });
+      return;
+    case "races":
+      await api.races[":raceId"].$delete({ param: { id, raceId: entityId } });
+      return;
+    case "items":
+      await api.items[":itemId"].$delete({ param: { id, itemId: entityId } });
+      return;
+    case "powers":
+      await api.powers[":powerId"].$delete({ param: { id, powerId: entityId } });
+      return;
+    case "klass_levels":
+      await api.classes[":classId"].levels[":levelId"].$delete({
+        param: { id, classId: data.entity.klassId, levelId: entityId },
+      });
+      return;
+    default:
+      return data satisfies never;
+  }
 }
 
 export default function CustomizationPage() {

@@ -1,6 +1,94 @@
 import { eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 
+export const BARDIC_FEATS: FeatSeed[] = [
+  {
+    name: "Chant of Fortitude",
+    description:
+      "You can expend one daily use of your bardic music ability as an immediate action to provide all allies (including yourself) the benefit of the Diehard feat until the end of your next turn. You can use this feat multiple times consecutively to keep yourself and your allies conscious. Even while this feat is active, you or your allies die if reduced to -10 hit points or lower. This feat does not function in an area of magical silence.",
+    aptitudes: ["General"],
+    requirements: [
+      eq("feats.bardicmusic.*.possessed"),
+      gte("skills.concentration.rank", 9),
+      gte("skills.perform.rank", 9),
+    ],
+  },
+  {
+    name: "Ironskin Chant",
+    description:
+      "As a swift action that does not provoke attacks of opportunity, you can expend one daily use of your bardic music ability to provide damage reduction of 5/-- to yourself or to one ally within 30 feet who can hear you until the start of your next turn. This feat does not function in an area of magical silence.",
+    aptitudes: ["General"],
+    requirements: [
+      eq("feats.bardicmusic.*.possessed"),
+      gte("skills.concentration.rank", 12),
+      gte("skills.perform.rank", 12),
+    ],
+  },
+  {
+    name: "Lyric Spell",
+    description:
+      "You can expend daily uses of your bardic music to cast any arcane spell that you know and can cast spontaneously. You must still use an action to cast the spell (following the normal rules for casting time), but using the Lyric Spell feat counts as part of the spellcasting action. Casting a spell requires one use of your bardic music ability, plus one additional use per level of the spell. For example, casting a 3rd-level spell requires four daily uses of your bardic music ability.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.bardicmusic.*.possessed"), gte("skills.perform.rank", 9)],
+  },
+];
+
+export const FIGHTER_FEATS: FeatSeed[] = [
+  {
+    name: "Brutal Throw",
+    description:
+      "You can add your Strength modifier (instead of your Dexterity modifier) to attack rolls with thrown weapons.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+  },
+  {
+    name: "Combat Intuition",
+    description:
+      "As a free action, you can use Sense Motive to assess the challenge presented by a single opponent in relationship to your own level/Hit Dice. You gain a +4 bonus on such checks and narrow the result to a single category. In addition, whenever you make a melee attack against a creature that you made a melee attack against during the previous round, you gain a +1 insight bonus on your melee attack rolls against that creature.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [gte("combat.bab", 5), gte("skills.sensemotive.rank", 4)],
+  },
+  {
+    name: "Dual Strike",
+    description:
+      "As a standard action, you can make a melee attack with your primary weapon and your off-hand weapon. Both attacks use the same attack roll to determine success, using the worse of the two weapons' attack modifiers. If you are using a one-handed or light weapon in your primary hand and a light weapon in your off hand, you take a -4 penalty on this attack roll; otherwise you take a -10 penalty. Each weapon deals its normal damage. Damage reduction and other resistances apply separately against each weapon attack.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [eq("feats.improvedtwoweaponfighting.possessed"), eq("feats.twoweaponfighting.possessed")],
+  },
+  {
+    name: "Goad",
+    description:
+      "As a move action, you can goad an opponent that threatens you, has line of sight to you, can hear you, and has an Intelligence of 3 or higher. (The goad is a mind-affecting ability.) When the goaded opponent starts its next turn, if it threatens you and has line of sight to you, it must make a Will saving throw (DC 10 + 1/2 your character level + your Cha modifier). If the opponent fails its save, you are the only creature it can make melee attacks against during this turn. (If it kills you, knocks you unconscious, loses sight of you, or otherwise is unable to make melee attacks against you, it may make any remaining melee attacks against other foes, as normal.) A goaded creature can still cast spells, make ranged attacks, move, or perform other actions normally. The use of this feat restricts only melee attacks.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [gte("combat.bab", 1), gte("abilities.charisma.total", 13)],
+  },
+  {
+    name: "Improved Diversion",
+    description:
+      "You can use Bluff to create a diversion to hide as a move action. You gain a +4 bonus on Bluff checks made for this purpose.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [gte("skills.bluff.rank", 4)],
+  },
+  {
+    name: "Oversized Two-Weapon Fighting",
+    description:
+      "When wielding a one-handed weapon in your off hand, you take penalties for fighting with two weapons as if you were wielding a light weapon in your off hand.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [gte("abilities.strength.total", 13), eq("feats.twoweaponfighting.possessed")],
+    properties: [{ type: "FEAT_OVERSIZED_TWO_WEAPON_FIGHTING", value: "true" }],
+  },
+  {
+    name: "Power Throw",
+    description:
+      "On your turn, before making any attack rolls, you can choose to subtract a number from all thrown weapon attack rolls and add the same number to all thrown weapon damage rolls. This number may not exceed your base attack bonus. The penalty on attack rolls and the bonus on damage rolls applies until your next turn.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [
+      gte("abilities.strength.total", 13),
+      eq("feats.brutalthrow.possessed"),
+      eq("feats.powerattack.possessed"),
+    ],
+  },
+];
+
 export const GENERAL_FEATS: FeatSeed[] = [
   {
     name: "Appraise Magic Value",
@@ -316,93 +404,5 @@ export const WILD_FEATS: FeatSeed[] = [
     description:
       "You can expend one daily use of wild shape to gain the scent ability for 1 hour per Hit Die. While this benefit is in effect, you can detect opponents within 30 feet by sense of smell. In addition, if you have the Track feat, you can track creatures by scent. You retain this benefit regardless of what form you are in.",
     aptitudes: ["General"],
-  },
-];
-
-export const FIGHTER_FEATS: FeatSeed[] = [
-  {
-    name: "Brutal Throw",
-    description:
-      "You can add your Strength modifier (instead of your Dexterity modifier) to attack rolls with thrown weapons.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-  },
-  {
-    name: "Combat Intuition",
-    description:
-      "As a free action, you can use Sense Motive to assess the challenge presented by a single opponent in relationship to your own level/Hit Dice. You gain a +4 bonus on such checks and narrow the result to a single category. In addition, whenever you make a melee attack against a creature that you made a melee attack against during the previous round, you gain a +1 insight bonus on your melee attack rolls against that creature.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [gte("combat.bab", 5), gte("skills.sensemotive.rank", 4)],
-  },
-  {
-    name: "Dual Strike",
-    description:
-      "As a standard action, you can make a melee attack with your primary weapon and your off-hand weapon. Both attacks use the same attack roll to determine success, using the worse of the two weapons' attack modifiers. If you are using a one-handed or light weapon in your primary hand and a light weapon in your off hand, you take a -4 penalty on this attack roll; otherwise you take a -10 penalty. Each weapon deals its normal damage. Damage reduction and other resistances apply separately against each weapon attack.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [eq("feats.improvedtwoweaponfighting.possessed"), eq("feats.twoweaponfighting.possessed")],
-  },
-  {
-    name: "Goad",
-    description:
-      "As a move action, you can goad an opponent that threatens you, has line of sight to you, can hear you, and has an Intelligence of 3 or higher. (The goad is a mind-affecting ability.) When the goaded opponent starts its next turn, if it threatens you and has line of sight to you, it must make a Will saving throw (DC 10 + 1/2 your character level + your Cha modifier). If the opponent fails its save, you are the only creature it can make melee attacks against during this turn. (If it kills you, knocks you unconscious, loses sight of you, or otherwise is unable to make melee attacks against you, it may make any remaining melee attacks against other foes, as normal.) A goaded creature can still cast spells, make ranged attacks, move, or perform other actions normally. The use of this feat restricts only melee attacks.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [gte("combat.bab", 1), gte("abilities.charisma.total", 13)],
-  },
-  {
-    name: "Improved Diversion",
-    description:
-      "You can use Bluff to create a diversion to hide as a move action. You gain a +4 bonus on Bluff checks made for this purpose.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [gte("skills.bluff.rank", 4)],
-  },
-  {
-    name: "Oversized Two-Weapon Fighting",
-    description:
-      "When wielding a one-handed weapon in your off hand, you take penalties for fighting with two weapons as if you were wielding a light weapon in your off hand.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [gte("abilities.strength.total", 13), eq("feats.twoweaponfighting.possessed")],
-    properties: [{ type: "FEAT_OVERSIZED_TWO_WEAPON_FIGHTING", value: "true" }],
-  },
-  {
-    name: "Power Throw",
-    description:
-      "On your turn, before making any attack rolls, you can choose to subtract a number from all thrown weapon attack rolls and add the same number to all thrown weapon damage rolls. This number may not exceed your base attack bonus. The penalty on attack rolls and the bonus on damage rolls applies until your next turn.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [
-      gte("abilities.strength.total", 13),
-      eq("feats.brutalthrow.possessed"),
-      eq("feats.powerattack.possessed"),
-    ],
-  },
-];
-
-export const BARDIC_FEATS: FeatSeed[] = [
-  {
-    name: "Chant of Fortitude",
-    description:
-      "You can expend one daily use of your bardic music ability as an immediate action to provide all allies (including yourself) the benefit of the Diehard feat until the end of your next turn. You can use this feat multiple times consecutively to keep yourself and your allies conscious. Even while this feat is active, you or your allies die if reduced to -10 hit points or lower. This feat does not function in an area of magical silence.",
-    aptitudes: ["General"],
-    requirements: [
-      eq("feats.bardicmusic.*.possessed"),
-      gte("skills.concentration.rank", 9),
-      gte("skills.perform.rank", 9),
-    ],
-  },
-  {
-    name: "Ironskin Chant",
-    description:
-      "As a swift action that does not provoke attacks of opportunity, you can expend one daily use of your bardic music ability to provide damage reduction of 5/-- to yourself or to one ally within 30 feet who can hear you until the start of your next turn. This feat does not function in an area of magical silence.",
-    aptitudes: ["General"],
-    requirements: [
-      eq("feats.bardicmusic.*.possessed"),
-      gte("skills.concentration.rank", 12),
-      gte("skills.perform.rank", 12),
-    ],
-  },
-  {
-    name: "Lyric Spell",
-    description:
-      "You can expend daily uses of your bardic music to cast any arcane spell that you know and can cast spontaneously. You must still use an action to cast the spell (following the normal rules for casting time), but using the Lyric Spell feat counts as part of the spellcasting action. Casting a spell requires one use of your bardic music ability, plus one additional use per level of the spell. For example, casting a 3rd-level spell requires four daily uses of your bardic music ability.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.bardicmusic.*.possessed"), gte("skills.perform.rank", 9)],
   },
 ];

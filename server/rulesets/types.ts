@@ -46,22 +46,36 @@ type ProjectedFeat = Feat & {
   requirements: Requirement[];
 };
 
-export interface PreloadedRulesetData {
-  ruleset: Ruleset;
-  cowData: CowData;
-  rulesetData: CachedRulesetData;
+export type CharacterKind = (typeof CHARACTER_KINDS_DND35)[number];
+
+export interface DetailedCharacterInterface {
+  preload(): Promise<PreloadedCharacterData>;
+  build(
+    database?: Db,
+    projectedData?: unknown,
+    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
+  ): Promise<void>;
+  validate(): ValidationResult;
+  formatRequirements(requirements: Requirement[]): string;
+  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean;
+  getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[];
+  getRuleset(): Ruleset | undefined;
+  getPlayer(): Player | undefined;
+  getCampaign(): Campaign | undefined;
+  getDetailedCharacterAbilities(): DetailedCharacterAbilities;
+  getDetailedCharacterAptitudes(): DetailedCharacterAptitudes;
+  getDetailedCharacterIdentity(): DetailedCharacterIdentity;
+  getVirtuallyPossessedFeatIds(): string[];
+  getVirtuallyPossessedPowerIds(): string[];
 }
 
-export type RaceWithPMR = Race & {
-  properties: Property[];
-  modifiers: Modifier[];
-  requirements: Requirement[];
-};
-
-export type KlassLevelWithPMR = KlassLevel & {
-  properties: Property[];
-  modifiers: Modifier[];
-  requirements: Requirement[];
+export type DetailedCharacterWithSheet = {
+  detailedCharacter: DetailedCharacterInterface;
+  CharacterSheetComponent: FC<{
+    detailedCharacter: DetailedCharacterInterface;
+    kind?: CharacterKind;
+    portraitUrl?: string | null;
+  }>;
 };
 
 /**
@@ -82,30 +96,13 @@ export type FeatWithPMR = Feat & {
   requirements: Requirement[];
 };
 
-export type SkillWithRank = Skill & {
-  klassLevelId: string;
-  characterLevelId: string;
-  rank: number;
-};
-
 /**
- * Same shape rule as FeatWithPMR. `virtual: true` powers are spells granted
- * by `set powers.<slug>.<apt>.known = true` modifiers; their klass/character
- * level IDs are empty strings so per-level scans skip them. Pool accounting
- * relies on `virtual` (or `free`, for klass-granted powers).
+ * A character component holder (abilities, skills, combat, etc.): a class instance whose getters the target paths call
+ * by name (`readHolder`).
  */
-export type PowerWithPMR = Power & {
-  klassLevelId: string;
-  characterLevelId: string;
-  aptitudeId: string;
-  free?: boolean;
-  virtual?: boolean;
-  saveName: string | null;
-  powerLevel: number | null;
-  properties: Property[];
-  modifiers: Modifier[];
-  requirements: Requirement[];
-};
+export type Holder = object;
+
+export type Holders = Record<string, Holder>;
 
 export type InventoryEntry = CharacterInventory & {
   item: Item & {
@@ -117,6 +114,29 @@ export type InventoryEntry = CharacterInventory & {
     requirements: Requirement[];
   };
 };
+
+export type KlassLevelWithPMR = KlassLevel & {
+  properties: Property[];
+  modifiers: Modifier[];
+  requirements: Requirement[];
+};
+
+/**
+ * Generic level-up projector surface — only operations that apply to every
+ * level-based RPG.
+ *
+ * Ruleset-specific methods (skill budgets, spell schools, skill-points-per-
+ * level, class-skill enrichment, …) live on per-ruleset extensions, e.g.
+ * `Dnd35LevelUpProjector` in `server/rulesets/dnd3.5/types.ts`.
+ */
+export interface LevelUpProjector {
+  /** Evaluate whether candidate klass levels' requirements are met against
+   *  a projected character state (including in-flight batch levels). */
+  evaluateClassAvailability(
+    candidates: { klassName: string; klassLevel: KlassLevel; requirementGroups: Requirement[][] }[],
+    projectedCharacterLevel: CharacterLevel,
+  ): Promise<Map<string, boolean>>;
+}
 
 /** Base result of character data loading. Rulesets extend with specific fields. */
 export interface LoadedCharacterData {
@@ -155,6 +175,25 @@ export interface LoadedCharacterData {
 }
 
 /**
+ * Same shape rule as FeatWithPMR. `virtual: true` powers are spells granted
+ * by `set powers.<slug>.<apt>.known = true` modifiers; their klass/character
+ * level IDs are empty strings so per-level scans skip them. Pool accounting
+ * relies on `virtual` (or `free`, for klass-granted powers).
+ */
+export type PowerWithPMR = Power & {
+  klassLevelId: string;
+  characterLevelId: string;
+  aptitudeId: string;
+  free?: boolean;
+  virtual?: boolean;
+  saveName: string | null;
+  powerLevel: number | null;
+  properties: Property[];
+  modifiers: Modifier[];
+  requirements: Requirement[];
+};
+
+/**
  * Shared character data, the loader's `loadSharedData`.
  * Returned by `detailedCharacter.preload()` and accepted by `build()` to avoid
  * duplicate DB queries when building the same character with different projections.
@@ -164,36 +203,11 @@ export interface PreloadedCharacterData extends PreloadedRulesetData {
   _shared: unknown;
 }
 
-/**
- * A character component holder (abilities, skills, combat, etc.): a class instance whose getters the target paths call
- * by name (`readHolder`).
- */
-export type Holder = object;
-
-export type Holders = Record<string, Holder>;
-
-export type TraversePathResult = {
-  holder: Holder | null;
-  object: unknown;
-  data: unknown;
-  key: string;
-  resolvedPath: string | null;
-  error: string | null;
-};
-
-export interface TargetPathsTraverser {
-  /** Whether a target reads its source itself (a weapon's own paths: the place its item is held), not the sheet. */
-  readsSource(target: string): boolean;
-  traversePathInit(target: string, holders: Holders, context?: { sourceId?: string }): TraversePathResult[];
+export interface PreloadedRulesetData {
+  ruleset: Ruleset;
+  cowData: CowData;
+  rulesetData: CachedRulesetData;
 }
-
-export type RequirementIssue = {
-  category: "requirements";
-  message: string;
-  entityName?: string;
-  entityType?: string;
-  requirementTree?: string;
-};
 
 /**
  * Generic projected character data for requirement evaluation. Only carries
@@ -209,69 +223,24 @@ export interface ProjectedCharacterData {
   givenFeats?: ProjectedFeat[];
 }
 
-export interface DetailedCharacterInterface {
-  preload(): Promise<PreloadedCharacterData>;
-  build(
-    database?: Db,
-    projectedData?: unknown,
-    preloaded?: PreloadedCharacterData | PreloadedRulesetData,
-  ): Promise<void>;
-  validate(): ValidationResult;
-  formatRequirements(requirements: Requirement[]): string;
-  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean;
-  getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[];
-  getRuleset(): Ruleset | undefined;
-  getPlayer(): Player | undefined;
-  getCampaign(): Campaign | undefined;
-  getDetailedCharacterAbilities(): DetailedCharacterAbilities;
-  getDetailedCharacterAptitudes(): DetailedCharacterAptitudes;
-  getDetailedCharacterIdentity(): DetailedCharacterIdentity;
-  getVirtuallyPossessedFeatIds(): string[];
-  getVirtuallyPossessedPowerIds(): string[];
-}
-
-/**
- * Generic level-up projector surface — only operations that apply to every
- * level-based RPG.
- *
- * Ruleset-specific methods (skill budgets, spell schools, skill-points-per-
- * level, class-skill enrichment, …) live on per-ruleset extensions, e.g.
- * `Dnd35LevelUpProjector` in `server/rulesets/dnd3.5/types.ts`.
- */
-export interface LevelUpProjector {
-  /** Evaluate whether candidate klass levels' requirements are met against
-   *  a projected character state (including in-flight batch levels). */
-  evaluateClassAvailability(
-    candidates: { klassName: string; klassLevel: KlassLevel; requirementGroups: Requirement[][] }[],
-    projectedCharacterLevel: CharacterLevel,
-  ): Promise<Map<string, boolean>>;
-}
-
-export interface TargetPathsInterface extends TargetPathsTraverser {
-  getTargetPathsAndLabels(
-    rulesetData: CachedRulesetData,
-    kind: "modifier" | "requirement",
-  ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>;
-  getCategories(): string[];
-  getCategoryDescriptions(): Record<string, string>;
-  getPathDescriptions(): Record<string, string>;
-  getGroupDescriptionTemplates(): Record<string, string>;
-}
-
 export interface PropertyTypesProvider {
   getStaticPropertyTypes(entityType?: PropertyEntityType): Record<string, string>;
   getStaticPropertyValues(type: string): string[] | null;
 }
 
-export type DetailedCharacterWithSheet = {
-  detailedCharacter: DetailedCharacterInterface;
-  CharacterSheetComponent: FC<{
-    detailedCharacter: DetailedCharacterInterface;
-    kind?: CharacterKind;
-    portraitUrl?: string | null;
-  }>;
+export type RaceWithPMR = Race & {
+  properties: Property[];
+  modifiers: Modifier[];
+  requirements: Requirement[];
 };
-export type CharacterKind = (typeof CHARACTER_KINDS_DND35)[number];
+
+export type RequirementIssue = {
+  category: "requirements";
+  message: string;
+  entityName?: string;
+  entityType?: string;
+  requirementTree?: string;
+};
 
 export interface RulesetModule {
   hooks: ServiceHooks;
@@ -288,5 +257,36 @@ export interface RulesetModule {
   createTargetPaths(): TargetPathsInterface;
   createPropertyTypes(): PropertyTypesProvider;
 }
+
+export type SkillWithRank = Skill & {
+  klassLevelId: string;
+  characterLevelId: string;
+  rank: number;
+};
+
+export interface TargetPathsInterface extends TargetPathsTraverser {
+  getTargetPathsAndLabels(
+    rulesetData: CachedRulesetData,
+    kind: "modifier" | "requirement",
+  ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>;
+  getCategories(): string[];
+  getCategoryDescriptions(): Record<string, string>;
+  getPathDescriptions(): Record<string, string>;
+  getGroupDescriptionTemplates(): Record<string, string>;
+}
+export interface TargetPathsTraverser {
+  /** Whether a target reads its source itself (a weapon's own paths: the place its item is held), not the sheet. */
+  readsSource(target: string): boolean;
+  traversePathInit(target: string, holders: Holders, context?: { sourceId?: string }): TraversePathResult[];
+}
+
+export type TraversePathResult = {
+  holder: Holder | null;
+  object: unknown;
+  data: unknown;
+  key: string;
+  resolvedPath: string | null;
+  error: string | null;
+};
 
 const CHARACTER_KINDS_DND35 = ["pc", "familiar", "animalcompanion", "mount"] as const;

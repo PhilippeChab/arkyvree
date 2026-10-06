@@ -4,11 +4,7 @@ import type { FeatWithPMR, KlassLevelWithPMR } from "@/server/rulesets/dnd3.5/De
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import { SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { Holders } from "@/server/rulesets/types.ts";
-import {
-  ALLOWED_ALL,
-  type AptitudeLevelData,
-  clearAllKnown,
-} from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
+import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -183,7 +179,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
             listLevel.uses += given.uses;
             listLevel.allowed = given.allowed;
           } else if (!casts && listLevel.allowed !== 0) {
-            clearAllKnown(listLevel);
+            this.aptitudes.clearAllKnown(listLevel);
             listLevel.uses = 0;
           }
         }
@@ -212,18 +208,6 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       this.syncFeatListSlots(feats, featListIds, isGateMet);
     }
 
-    getBonusKlassLevelAttribution() {
-      return this.bonusKlassLevelAttribution;
-    }
-
-    getBonusKlassLevelModifiers() {
-      return this.bonusKlassLevelModifiers;
-    }
-
-    getBonusKlassLevels() {
-      return this.bonusKlassLevels;
-    }
-
     fetchBonusCasterLevelData(
       rulesetData: CachedRulesetData,
       klassLevels: KlassLevelWithPMR[],
@@ -249,6 +233,18 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         }
       }
       this.attributeBonusLevels(bonusKlassLevels, klassLevels, feats, characterLevels, rulesetKlasses);
+    }
+
+    getBonusKlassLevelAttribution() {
+      return this.bonusKlassLevelAttribution;
+    }
+
+    getBonusKlassLevelModifiers() {
+      return this.bonusKlassLevelModifiers;
+    }
+
+    getBonusKlassLevels() {
+      return this.bonusKlassLevels;
     }
   }
   return WithBonusCasterLevels;

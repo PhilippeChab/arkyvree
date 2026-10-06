@@ -4,8 +4,8 @@ import { ALL_CLASSES as DMG_CLASSES } from "@/database/packages/dnd35-from-parse
 import { ALL_CLASSES as SRD_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
 import { buildClassSpellLevels } from "@/database/packages/dnd35/seed/classes.ts";
 
-const srd = buildClassSpellLevels(SRD_CLASSES);
 const dmg = buildClassSpellLevels(DMG_CLASSES);
+const srd = buildClassSpellLevels(SRD_CLASSES);
 
 // The class level each spell level opens at. Classes without cantrips start at spell level 1.
 test.each([

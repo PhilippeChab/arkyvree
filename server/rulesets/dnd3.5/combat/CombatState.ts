@@ -7,93 +7,6 @@ import type DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedChara
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterClasses from "@/server/rulesets/universal/DetailedCharacterClasses.ts";
 
-/** A natural attack's kind: a primary one at its full attack bonus, a secondary one lower. */
-export type NaturalAttackKind = "primary" | "secondary";
-
-export type WeaponSlot = {
-  name: string;
-  itemId: string | null;
-  /** The inventory entry holding it: an item held in two places (a dagger in each hand) is two entries. */
-  entryId: string | null;
-  /**
-   * A natural attack's kind, null for a weapon: a primary one adds its whole Strength bonus to damage (one and a half
-   * for a creature's only attack), a secondary one takes `combat.naturalattacks.secondarypenalty` to attack and adds half. Either
-   * attacks once a round, whatever the base attack bonus.
-   */
-  natural: NaturalAttackKind | null;
-  proficient: boolean;
-  finessable: boolean;
-  /** A light weapon (the table's Tiny and Small): no extra Strength in two hands, lighter two-weapon penalties off hand. */
-  light: boolean;
-  /** A ranged weapon (thrown or projectile, not used in melee), which attacks with Dexterity. */
-  ranged: boolean;
-  range: number;
-  reach: number;
-  /** How it's held: `mainhand`, `offhand` or `twohanded`, one value per inventory entry */
-  wielded: string;
-  tohit: {
-    readonly strength: number;
-    magic: number;
-    misc: number;
-    readonly size: number;
-    /**
-     * What the gear costs its attacks: the check penalty of the armor and shields worn without proficiency, a tower
-     * shield's −2, and its own penalty in one hand (a crossbow's)
-     */
-    readonly gearpenalty: number;
-    /**
-     * Its attacks: these parts, and what only some weapons take, read where it's written: a secondary natural attack's
-     * `combat.naturalattacks.secondarypenalty`, a thrown weapon's or a sling's `combat.throwing.tohit`
-     */
-    readonly total: number[];
-  };
-  /** A melee weapon's attack when thrown, if it has a range increment: with Dexterity, as every ranged attack. */
-  readonly thrown: { dexterity: number; total: number[] } | null;
-  /**
-   * Its attacks when its set holds an equipped weapon in each hand, or when it's a double weapon held in two hands: its
-   * own and its thrown ones (if it has those), with two-weapon fighting's penalties, the off hand's as many as
-   * `combat.twoweapon.offhandattacks`; a double weapon's main end's damage too, with its whole Strength bonus, not one
-   * and a half.
-   */
-  readonly twoweapon: { total: number[]; thrown: number[] | null; damage?: string } | null;
-  /**
-   * A double weapon's other end, held in two hands: its attacks as a light off-hand weapon's, and its damage, its dice
-   * with half the Strength bonus.
-   */
-  readonly offend: { total: number[]; damage: string } | null;
-  damage: {
-    base: string;
-    readonly strength: number;
-    magic: number;
-    misc: number;
-    others: string[];
-    readonly total: string;
-    types: string[];
-    strmultiplier: number | null;
-    critical: {
-      range: number;
-      multiplier: number;
-    };
-  };
-};
-
-export type WeaponSet = {
-  mainhand: WeaponSlot | null;
-  offhand: WeaponSlot | null;
-  twohanded: WeaponSlot | null;
-};
-
-/** How a weapon's attack and damage follow the character's abilities, which its totals are recomputed from. */
-export type WeaponAbilities = {
-  /** The ability it attacks with: Dexterity for a ranged weapon, Strength for a melee one (SRD). */
-  attack: "Strength" | "Dexterity";
-  /** Whether a Weapon Finesse feat lets it attack with Dexterity instead, when that's better. */
-  finesse: boolean;
-  /** Its Mighty rating (0 without), when Strength adds to its damage up to it (a bow's "Rating"); null otherwise. */
-  strengthRating: number | null;
-  /** Whether it takes a penalty to attack below that rating: a composite bow's, which has a WEAPON_MIGHTY, not a plain bow's. */
-  ratingRequired: boolean;
-};
 export type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 
 export type DetailedCharacterComprehensiveCombat = {
@@ -162,6 +75,96 @@ export type DetailedCharacterComprehensiveCombat = {
   shields: ShieldsData;
 };
 
+/** A natural attack's kind: a primary one at its full attack bonus, a secondary one lower. */
+export type NaturalAttackKind = "primary" | "secondary";
+
+/** How a weapon's attack and damage follow the character's abilities, which its totals are recomputed from. */
+export type WeaponAbilities = {
+  /** The ability it attacks with: Dexterity for a ranged weapon, Strength for a melee one (SRD). */
+  attack: "Strength" | "Dexterity";
+  /** Whether a Weapon Finesse feat lets it attack with Dexterity instead, when that's better. */
+  finesse: boolean;
+  /** Its Mighty rating (0 without), when Strength adds to its damage up to it (a bow's "Rating"); null otherwise. */
+  strengthRating: number | null;
+  /** Whether it takes a penalty to attack below that rating: a composite bow's, which has a WEAPON_MIGHTY, not a plain bow's. */
+  ratingRequired: boolean;
+};
+export type WeaponSet = {
+  mainhand: WeaponSlot | null;
+  offhand: WeaponSlot | null;
+  twohanded: WeaponSlot | null;
+};
+
+export type WeaponSlot = {
+  name: string;
+  itemId: string | null;
+  /** The inventory entry holding it: an item held in two places (a dagger in each hand) is two entries. */
+  entryId: string | null;
+  /**
+   * A natural attack's kind, null for a weapon: a primary one adds its whole Strength bonus to damage (one and a half
+   * for a creature's only attack), a secondary one takes `combat.naturalattacks.secondarypenalty` to attack and adds half. Either
+   * attacks once a round, whatever the base attack bonus.
+   */
+  natural: NaturalAttackKind | null;
+  proficient: boolean;
+  finessable: boolean;
+  /** A light weapon (the table's Tiny and Small): no extra Strength in two hands, lighter two-weapon penalties off hand. */
+  light: boolean;
+  /** A ranged weapon (thrown or projectile, not used in melee), which attacks with Dexterity. */
+  ranged: boolean;
+  range: number;
+  reach: number;
+  /** How it's held: `mainhand`, `offhand` or `twohanded`, one value per inventory entry */
+  wielded: string;
+  tohit: {
+    readonly strength: number;
+    magic: number;
+    misc: number;
+    readonly size: number;
+    /**
+     * What the gear costs its attacks: the check penalty of the armor and shields worn without proficiency, a tower
+     * shield's −2, and its own penalty in one hand (a crossbow's)
+     */
+    readonly gearpenalty: number;
+    /**
+     * Its attacks: these parts, and what only some weapons take, read where it's written: a secondary natural attack's
+     * `combat.naturalattacks.secondarypenalty`, a thrown weapon's or a sling's `combat.throwing.tohit`
+     */
+    readonly total: number[];
+  };
+  /** A melee weapon's attack when thrown, if it has a range increment: with Dexterity, as every ranged attack. */
+  readonly thrown: { dexterity: number; total: number[] } | null;
+  /**
+   * Its attacks when its set holds an equipped weapon in each hand, or when it's a double weapon held in two hands: its
+   * own and its thrown ones (if it has those), with two-weapon fighting's penalties, the off hand's as many as
+   * `combat.twoweapon.offhandattacks`; a double weapon's main end's damage too, with its whole Strength bonus, not one
+   * and a half.
+   */
+  readonly twoweapon: { total: number[]; thrown: number[] | null; damage?: string } | null;
+  /**
+   * A double weapon's other end, held in two hands: its attacks as a light off-hand weapon's, and its damage, its dice
+   * with half the Strength bonus.
+   */
+  readonly offend: { total: number[]; damage: string } | null;
+  damage: {
+    base: string;
+    readonly strength: number;
+    magic: number;
+    misc: number;
+    others: string[];
+    readonly total: string;
+    types: string[];
+    strmultiplier: number | null;
+    critical: {
+      range: number;
+      multiplier: number;
+    };
+  };
+};
+
+/** The category of the armor a character wears, lightest first: none, or the armor's proficiency category. */
+export const ARMOR_CATEGORIES = ["none", "light", "medium", "heavy"] as const;
+
 /** A weapon slot's label, as an item's location names it, to its place in the weapon set. */
 export const SLOT_MAP: Record<string, keyof WeaponSet> = {
   "Main Hand": "mainhand",
@@ -171,9 +174,6 @@ export const SLOT_MAP: Record<string, keyof WeaponSet> = {
 
 /** How a weapon is held, as a path's values: its place in the set, labelled as an item's location names it. */
 export const WIELDED_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
-
-/** The category of the armor a character wears, lightest first: none, or the armor's proficiency category. */
-export const ARMOR_CATEGORIES = ["none", "light", "medium", "heavy"] as const;
 
 /** What a character's combat sheet holds, which its concerns (armor class, hit points, attacks…) compute. */
 export default abstract class CombatState {

@@ -184,6 +184,15 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     modifierOwner: Map<string, { name: string; type: string }>;
   };
 
+  protected applyLoadedData(data: Dnd35LoadedCharacterData) {
+    super.applyLoadedData(data);
+    this.skillPointAbilityId = data.skillPointAbilityId;
+    this.skillProperties = data.skillProperties;
+    this.klassLevelProperties = data.klassLevelProperties;
+    this.klassBonusSpellAbilityMap = data.klassBonusSpellAbilityMap;
+    this.klassCasterTypeMap = data.klassCasterTypeMap;
+  }
+
   protected buildHolders(): Holders {
     return {
       abilities: this.detailedCharacterAbilities,
@@ -204,18 +213,13 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     };
   }
 
-  protected applyLoadedData(data: Dnd35LoadedCharacterData) {
-    super.applyLoadedData(data);
-    this.skillPointAbilityId = data.skillPointAbilityId;
-    this.skillProperties = data.skillProperties;
-    this.klassLevelProperties = data.klassLevelProperties;
-    this.klassBonusSpellAbilityMap = data.klassBonusSpellAbilityMap;
-    this.klassCasterTypeMap = data.klassCasterTypeMap;
-  }
-
   /** The general feats the character has at its total level (`Dnd35LevelsHooks.countGeneralFeats`). */
   protected countGeneralFeats(totalLevel: number): number {
     return Dnd35LevelsHooks.countGeneralFeats(totalLevel);
+  }
+
+  protected createDataLoader(): DataLoader {
+    return new DetailedCharacterDataLoader(this.character);
   }
 
   private getDiagnosticsIndex() {
@@ -294,10 +298,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
         ) &&
         (this.detailedCharacterFeats.getFeat(feat.name)?.possessed ?? false),
     );
-  }
-
-  protected createDataLoader(): DataLoader {
-    return new DetailedCharacterDataLoader(this.character);
   }
 
   protected normalizeData(): void {
@@ -441,6 +441,18 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     );
   }
 
+  evaluateWithProjectedLevel(
+    klassName: string,
+    klassLevel: KlassLevel,
+    characterLevel: CharacterLevel,
+    requirementGroups: Requirement[][],
+  ): boolean {
+    this.detailedCharacterClasses.addProjectedLevel(klassName, klassLevel, characterLevel);
+    const result = this.areRequirementsMet(requirementGroups);
+    this.detailedCharacterClasses.removeProjectedLevel(klassName);
+    return result;
+  }
+
   getDetailedCharacterArmors() {
     return this.detailedCharacterArmors;
   }
@@ -477,16 +489,16 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     return this.detailedCharacterWeapons;
   }
 
+  getSpellcasting(): { arcane: number; divine: number } {
+    return this.detailedCharacterSpellcasting.getSpellcasting();
+  }
+
   getSpellTagLists() {
     return this.detailedCharacterSpellcasting.getSpellTagLists();
   }
 
   getSpellTags() {
     return this.detailedCharacterSpellcasting.getSpellTags();
-  }
-
-  getSpellcasting(): { arcane: number; divine: number } {
-    return this.detailedCharacterSpellcasting.getSpellcasting();
   }
 
   getVirtuallyPossessedPowerIds() {
@@ -600,18 +612,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       ...baseResult.issues.slice(aptitudeEndIndex),
     ];
     return { valid: issues.length === 0, issues };
-  }
-
-  evaluateWithProjectedLevel(
-    klassName: string,
-    klassLevel: KlassLevel,
-    characterLevel: CharacterLevel,
-    requirementGroups: Requirement[][],
-  ): boolean {
-    this.detailedCharacterClasses.addProjectedLevel(klassName, klassLevel, characterLevel);
-    const result = this.areRequirementsMet(requirementGroups);
-    this.detailedCharacterClasses.removeProjectedLevel(klassName);
-    return result;
   }
 
   async build(

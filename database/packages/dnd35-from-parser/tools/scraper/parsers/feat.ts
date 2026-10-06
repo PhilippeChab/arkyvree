@@ -27,10 +27,6 @@ import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/
 
 const KNOWN_LABELS = new Set(["prerequisite", "prerequisites", "benefit", "benefits", "normal", "special"]);
 
-function isKnownLabel(text: string): boolean {
-  return KNOWN_LABELS.has(text.toLowerCase());
-}
-
 /**
  * A feat's categories, in their order: the links in the brackets after its heading
  * (`[<a href="/feats/categories/…">Fighter Bonus Feat</a>, <a …>General</a>]`).
@@ -46,6 +42,10 @@ function featCategories($: cheerio.CheerioAPI, heading: cheerio.Cheerio<AnyNode>
   }
   const bracket = after.match(/\[([^\]]*)\]/)?.[1] ?? "";
   return [...bracket.matchAll(/<a[^>]*href="\/feats\/categories\/[^"]+"[^>]*>([^<]+)<\/a>/gi)].map((m) => m[1].trim());
+}
+
+function isKnownLabel(text: string): boolean {
+  return KNOWN_LABELS.has(text.toLowerCase());
 }
 
 function normalizeFeatType(raw: string): string {

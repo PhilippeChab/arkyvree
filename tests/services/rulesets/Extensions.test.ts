@@ -11,7 +11,6 @@ import {
 } from "@/database/packages/dnd35/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
@@ -47,13 +46,13 @@ import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel, pickFeat } from "@/tests/support/levels.ts";
-import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
-import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { copyEntity, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
-type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
-
 type EntityType = "feats" | "powers";
+
+type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
 const firstPage = { limit: 50, page: 1 };
 const ENTITIES = {
   feats: {
@@ -105,55 +104,13 @@ async function createExtension(userId: string | null = null, values: RulesetValu
   });
 }
 
-/** The fork's visible feats of this name. */
-async function featsNamed(rulesetId: string, name: string) {
-  return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
-}
-
-async function forkBase(session: Session, values: { private?: boolean } = {}) {
-  const { rulesetId } = await getSeedCtx();
-  return await RulesetsService.forkRuleset(session, rulesetId, {
-    name: `Fork ${uniqueId()}`,
-    private: false,
-    ...values,
-  });
-}
-
-async function seededRuleset(name: string) {
-  return (await Rulesets.findOne(db, { name }))!;
-}
-
-/** The seeded base, its Complete Warrior extension, and a new user's fork of the base. */
-async function setupFork() {
-  const { user, session } = await createTestUser();
-  const { rulesetId } = await getSeedCtx();
-  const base = (await Rulesets.findOne(db, { id: rulesetId }))!;
-  const extension = await seededRuleset(DND35_COMPLETE_WARRIOR_NAME);
-  const draft = await forkBase(session);
-  return { user, session, base, extension, draft };
-}
-
-/** A new user's fork of the base taking these books, in this order, and a character of theirs on it. */
-async function forkTaking(...books: string[]) {
-  const { user, session, draft } = await setupFork();
-  for (const book of books) {
-    await RulesetExtensionsService.subscribeExtension(session, draft.id, [(await seededRuleset(book)).id]);
-  }
-  const { abilityMap } = await getSeedCtx();
-  const character = await createTestCharacter(user.id, { rulesetId: draft.id });
-  await db
-    .insert(characterAbilitiesInCharacter)
-    .values(Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })));
-  return { session, draft, character };
-}
-
 /**
  * A favored soul's first level on a fork taking the DMG, Complete Warrior and Complete Divine, in that order: the
  * favored soul's list, as its level-up offers it, composes as Complete Warrior's copy.
  */
 async function favoredSoulOnMixedFork() {
   const fork = await forkTaking(DND35_DMG_NAME, DND35_COMPLETE_WARRIOR_NAME, DND35_COMPLETE_DIVINE_NAME);
-  const divine = await seededRuleset(DND35_COMPLETE_DIVINE_NAME);
+  const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
   const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", rulesetId: divine.id }))!;
   const { aptitudePools } = await CharacterLevelsService.getPowerSlots(
     fork.session,
@@ -175,6 +132,44 @@ async function favoredSoulOnMixedFork() {
   return { ...fork, favoredSoul, list, offer };
 }
 
+/** The fork's visible feats of this name. */
+async function featsNamed(rulesetId: string, name: string) {
+  return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
+}
+
+async function forkBase(session: Session, values: { private?: boolean } = {}) {
+  const { rulesetId } = await getSeedCtx();
+  return await RulesetsService.forkRuleset(session, rulesetId, {
+    name: `Fork ${uniqueId()}`,
+    private: false,
+    ...values,
+  });
+}
+
+/** A new user's fork of the base taking these books, in this order, and a character of theirs on it. */
+async function forkTaking(...books: string[]) {
+  const { user, session, draft } = await setupFork();
+  for (const book of books) {
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [(await findSeededRuleset(book)).id]);
+  }
+  const { abilityMap } = await getSeedCtx();
+  const character = await createTestCharacter(user.id, { rulesetId: draft.id });
+  await db
+    .insert(characterAbilitiesInCharacter)
+    .values(Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })));
+  return { session, draft, character };
+}
+
+/** The seeded base, its Complete Warrior extension, and a new user's fork of the base. */
+async function setupFork() {
+  const { user, session } = await createTestUser();
+  const { rulesetId } = await getSeedCtx();
+  const base = (await Rulesets.findOne(db, { id: rulesetId }))!;
+  const extension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+  const draft = await forkBase(session);
+  return { user, session, base, extension, draft };
+}
+
 /** Two system extensions that each copy the base entity and give it an aptitude, a requirement and a modifier; and a fork using both. */
 async function setupSiblings(entityType: EntityType) {
   const entity = ENTITIES[entityType];
@@ -185,7 +180,7 @@ async function setupSiblings(entityType: EntityType) {
   const extensions = [];
   for (const ability of ["strength", "wisdom"]) {
     const extension = await createExtension();
-    const copyId = (await cowEntity(db, entityType, baseId, extension.id, extension.ancestorRulesetIds, []))
+    const copyId = (await copyEntity(db, entityType, baseId, extension.id, extension.ancestorRulesetIds, []))
       .id as string;
     const [aptitude] = await Aptitudes.create(db, {
       name: `${ability} aptitude ${uniqueId()}`,
@@ -224,7 +219,7 @@ async function setupSiblings(entityType: EntityType) {
 
 /** A seeded Complete Warrior feat, with the aptitude it's picked through. */
 async function warriorFeat(name: string) {
-  const extension = await seededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+  const extension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
   const feat = (await Feats.findOne(db, { name, rulesetId: extension.id }))!;
   const [link] = await FeatsAptitudes.findMany(db, { featId: feat.id });
   return { ...feat, aptitudeId: link.aptitudeId };
@@ -396,7 +391,7 @@ describe("subscribing to an extension", () => {
         await Aptitudes.create(db, { name: "Shared Aptitude", rulesetId: id });
       }
       // A copy of a base feat has the base feat's name.
-      await cowEntity(db, "feats", featMap["Toughness"], c.id, c.ancestorRulesetIds, []);
+      await copyEntity(db, "feats", featMap["Toughness"], c.id, c.ancestorRulesetIds, []);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id, c.id]);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [d.id]);
 
@@ -435,8 +430,8 @@ describe("subscribing to an extension", () => {
       const { featMap } = await getSeedCtx();
       const toughness = featMap["Toughness"];
       const [a, b] = [await createExtension(user.id), await createExtension(user.id)];
-      const extensionCopy = (await cowEntity(db, "feats", toughness, a.id, a.ancestorRulesetIds, [])).id as string;
-      await cowEntity(db, "feats", toughness, b.id, b.ancestorRulesetIds, []);
+      const extensionCopy = (await copyEntity(db, "feats", toughness, a.id, a.ancestorRulesetIds, [])).id as string;
+      await copyEntity(db, "feats", toughness, b.id, b.ancestorRulesetIds, []);
       await Modifiers.create(db, {
         sourceType: "feats",
         sourceId: extensionCopy,
@@ -464,7 +459,7 @@ describe("subscribing to an extension", () => {
       const { featMap } = await getSeedCtx();
       const [a, b] = [await createExtension(user.id), await createExtension(user.id)];
       for (const extension of [a, b])
-        await cowEntity(db, "feats", featMap["Toughness"], extension.id, extension.ancestorRulesetIds, []);
+        await copyEntity(db, "feats", featMap["Toughness"], extension.id, extension.ancestorRulesetIds, []);
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id]);
       await FeatsService.updateFeat(session, draft.id, featMap["Toughness"], {
         name: "Toughness",
@@ -559,7 +554,7 @@ describe("unsubscribing from an extension", () => {
     ] as const;
 
     for (const [type, id] of [...fromBase, ...fromExtension])
-      await cowEntity(db, type, id, draft.id, draft.ancestorRulesetIds, [extension.id]);
+      await copyEntity(db, type, id, draft.id, draft.ancestorRulesetIds, [extension.id]);
     const copies = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
     const ofBase = copies.filter((copy) => fromBase.some(([, id]) => copy.sourceEntityId === id));
     expect(new Set(ofBase.map((copy) => copy.entityType))).toEqual(new Set(fromBase.map(([type]) => type)));
@@ -627,7 +622,10 @@ describe("an extension's content in a fork", () => {
   ])("lists Complete Adventurer's spells on %s once the fork takes both books", async (_, book, list, spell) => {
     const { session } = await createTestUser();
     const draft = await forkBase(session);
-    const [owner, adventurer] = [await seededRuleset(book), await seededRuleset(DND35_COMPLETE_ADVENTURER_NAME)];
+    const [owner, adventurer] = [
+      await findSeededRuleset(book),
+      await findSeededRuleset(DND35_COMPLETE_ADVENTURER_NAME),
+    ];
     const aptitude = (await Aptitudes.findOne(db, { name: list, rulesetId: owner.id }))!;
     const spellsOnList = async () =>
       (await PowersService.getPowers(draft.id, { aptitudeId: aptitude.id }, { limit: 1000, page: 1 })).items.map(
@@ -652,7 +650,7 @@ describe("an extension's content in a fork", () => {
     // With Complete Adventurer before Complete Warrior, Combat Casting composes as Complete Adventurer's copy, while
     // Complete Warrior's puts it on the hexblade's bonus feats
     const { session, draft, character } = await forkTaking(DND35_COMPLETE_ADVENTURER_NAME, DND35_COMPLETE_WARRIOR_NAME);
-    const warrior = await seededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+    const warrior = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
     const hexblade = (await Klasses.findOne(db, { name: "Hexblade", rulesetId: warrior.id }))!;
     const list = (await Aptitudes.findOne(db, { name: "Hexblade Bonus Feat", rulesetId: warrior.id }))!;
     const search = "Combat Casting";
@@ -676,7 +674,7 @@ describe("an extension's content in a fork", () => {
   test("gives a spell picked on a list another book's copy composes its level there", async () => {
     // Complete Divine's rows link Bane and Bless Water to its own list; Bless Water composes as Complete Warrior's copy
     const { character, favoredSoul, list, offer } = await favoredSoulOnMixedFork();
-    const warrior = await seededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+    const warrior = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
     expect(list.id).toBe((await Aptitudes.findOne(db, { name: "Favored Soul Spells", rulesetId: warrior.id }))!.id);
 
     // Bane as the level-up offers it, and Bless Water as the fork composes it, on the composed list
@@ -760,8 +758,8 @@ describe("an extension's content in a fork", () => {
     const { user, session, draft } = await setupFork();
     const { abilityMap, aptMap, featMap, klassMap } = await getSeedCtx();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [
-      (await seededRuleset(DND35_DMG_NAME)).id,
-      (await seededRuleset(DND35_COMPLETE_DIVINE_NAME)).id,
+      (await findSeededRuleset(DND35_DMG_NAME)).id,
+      (await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME)).id,
     ]);
     const character = await createTestCharacter(user.id, { rulesetId: draft.id, xp: 21000 });
     await db

@@ -9,6 +9,23 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
     super(requirementsInCustomization);
   }
 
+  // Exception to soft-delete: disposable configuration data — intentional removal
+  async delete(db: Db, where: { id: string } | { ids: string[] } | { entityIds: string[]; entityType: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.branchWhere(
+          [
+            "id" in where && eq(this.table.id, where.id),
+            "ids" in where && inArray(this.table.id, where.ids),
+            "entityIds" in where && inArray(this.table.entityId, where.entityIds),
+          ],
+          ["entityType" in where && eq(this.table.entityType, where.entityType)],
+        ),
+      )
+      .returning();
+  }
+
   async findMany(db: Db, where: { entityIds: string[]; entityType: string } | { entityIds: string[] }) {
     if (!("entityType" in where) && where.entityIds.length === 0) return [];
     return await db.query.requirementsInCustomization.findMany({
@@ -31,23 +48,6 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
         ],
       ),
     });
-  }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { id: string } | { ids: string[] } | { entityIds: string[]; entityType: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        this.branchWhere(
-          [
-            "id" in where && eq(this.table.id, where.id),
-            "ids" in where && inArray(this.table.id, where.ids),
-            "entityIds" in where && inArray(this.table.entityId, where.entityIds),
-          ],
-          ["entityType" in where && eq(this.table.entityType, where.entityType)],
-        ),
-      )
-      .returning();
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal

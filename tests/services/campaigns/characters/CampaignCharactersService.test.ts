@@ -15,12 +15,12 @@ import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 type Visibility = "Private" | "Public" | "Partial";
 
-function list(userId: string, campaignId: string, pagination = { limit: 10, page: 1 }) {
-  return CampaignCharactersService.getCharacters(makeSession(userId), campaignId, {}, pagination);
-}
-
 function link(userId: string, campaignId: string, characterId: string, visibility: Visibility = "Public") {
   return CampaignCharactersService.linkCharacter(makeSession(userId), campaignId, characterId, visibility);
+}
+
+function list(userId: string, campaignId: string, pagination = { limit: 10, page: 1 }) {
+  return CampaignCharactersService.getCharacters(makeSession(userId), campaignId, {}, pagination);
 }
 
 /** Gives the character the seeded class levels, as `[class, level]` pairs. */

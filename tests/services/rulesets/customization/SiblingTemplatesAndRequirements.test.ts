@@ -2,7 +2,6 @@ import { afterEach, expect, test } from "bun:test";
 
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
@@ -11,7 +10,7 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { api, expectStatus } from "@/tests/support/api.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 async function setup(
@@ -29,7 +28,7 @@ async function setup(
   const extensionIds: string[] = [];
   for (let i = 0; i < extensionCount; i++) {
     const extension = await createSeededTestRuleset(session.userId);
-    const copy = await cowEntity(db, entityType, source.id, extension.id, extension.ancestorRulesetIds, []);
+    const copy = await copyEntity(db, entityType, source.id, extension.id, extension.ancestorRulesetIds, []);
     copies.push(copy.id);
     extensionIds.push(extension.id);
     if (configure) {

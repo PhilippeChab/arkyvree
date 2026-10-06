@@ -73,6 +73,106 @@ import {
   WEAPON_TYPE,
 } from "./weapon.ts";
 
+const ARMOR_TYPE_NAMES = [
+  "Banded Mail",
+  "Breastplate",
+  "Chain Mail",
+  "Chain Shirt",
+  "Full Plate",
+  "Half-Plate",
+  "Hide Armor",
+  "Leather Armor",
+  "Padded Armor",
+  "Scale Mail",
+  "Splint Mail",
+  "Studded Leather",
+];
+
+const FEAT_PROPERTY_TYPES: Record<string, string> = {
+  [FEAT_FAMILY]: "Feat family grouping (Weapon Focus, Spell Focus, etc.)",
+  [FEAT_WEAPON_FINESSE]:
+    "Whether the feat lets its owner attack with Dexterity with a finessable weapon (Weapon Finesse)",
+  [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING]:
+    "Whether the feat makes a one-handed off-hand weapon count as light in two-weapon fighting (Oversized Two-Weapon Fighting)",
+  [WIZARD_PROHIBITED_SCHOOL]: "School of magic prohibited by wizard specialization",
+};
+
+const ITEM_PROPERTY_TYPES: Record<string, string> = {
+  [WEAPON_PROFICIENCY]: "Weapon proficiency classification (Simple, Martial, Exotic)",
+  [WEAPON_FAMILY]: "Weapon family grouping (Sword, Axe, Bow, etc.)",
+  [WEAPON_BASE_DAMAGE]: "Base damage dice for weapons",
+  [WEAPON_CRITICAL_RANGE]: "Critical threat count (1 = 20, 2 = 19-20, 3 = 18-20, etc.)",
+  [WEAPON_CRITICAL_MULTIPLIER]: "Critical hit damage multiplier",
+  [WEAPON_STRENGTH_DAMAGE]: "Strength to damage: Slot (the hand's share; default), Rating (bows: up to Mighty), None",
+  [WEAPON_MIGHTY]:
+    "A composite bow's Strength rating: the most Strength bonus it adds to damage; below it, -2 to attack",
+  [WEAPON_DOUBLE_DAMAGE]: "A double weapon's other end's damage dice: in two hands, it fights as two weapons",
+  [WEAPON_ONE_HAND_TRAINING]:
+    "Whether it's too large for one hand without training (a bastard sword): there, only its proficiency lets it be used",
+  [WEAPON_ONE_HANDED_PENALTY]:
+    "Penalty to attack in one hand, when it takes two to load: a crossbow's (-2 light, -4 heavy; absent = none)",
+  [WEAPON_RANGE]: "Range increment in feet: a ranged weapon's, or a thrown melee weapon's (0 or absent = none)",
+  [WEAPON_RANGED]: "Whether it's a ranged weapon (thrown or projectile, not used in melee): its attacks use Dexterity",
+  [WEAPON_REACH]: "Melee reach in feet (0 or absent = 5 ft.)",
+  [WEAPON_SIZE]:
+    "The weapon's effort, as the table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed",
+  [ARMOR_PROFICIENCY]: "Armor proficiency classification (Light, Medium, Heavy)",
+  [ARMOR_TYPE]: "Base armor type for feat/modifier targeting (e.g. Leather Armor, Full Plate)",
+  [ARMOR_MAX_DEX]: "Maximum dexterity bonus allowed",
+  [ARMOR_AC_BONUS]: "Armor class bonus from armor",
+  [ARMOR_CHECK_PENALTY]: "Penalty to Str/Dex-based skill checks",
+  [ITEM_SPELL_FAILURE]: "Arcane spell failure chance percentage",
+  [SHIELD_PROFICIENCY]: "Shield proficiency classification (Light, Heavy, Tower)",
+  [SHIELD_TYPE]: "Base shield type for feat/modifier targeting (e.g. Buckler, Tower Shield)",
+  [SHIELD_AC_BONUS]: "Armor class bonus from shield",
+  [DAMAGE_TYPE]: "Type of damage dealt",
+  [ITEM_MADE_OF]: "Material composition",
+  [ITEM_HAS_CHARGES]: "Default number of charges for this item",
+  [ITEM_MASTERWORK]: "Whether this item is masterwork quality (reduces armor check penalty by 1)",
+  [WEAPON_FINESSABLE]:
+    "Whether a feat with FEAT_WEAPON_FINESSE (Weapon Finesse) lets this weapon attack with Dexterity",
+  [WEAPON_TYPE]: "Base weapon type for feat/modifier targeting (e.g. Longsword, Shortsword)",
+  [MAGIC_AURA]: "Magic aura strength and school (e.g. Moderate transmutation)",
+  [MAGIC_CASTER_LEVEL]: "Caster level required to create this magic item",
+};
+
+const KLASS_LEVEL_PROPERTY_TYPES: Record<string, string> = {
+  [KLASS_LEVEL_BAB]: "Base attack bonus at this class level",
+  [KLASS_LEVEL_SKILL_POINTS]: "Skill points gained per level",
+};
+
+const KLASS_PROPERTY_TYPES: Record<string, string> = {
+  [KLASS_BONUS_SPELL_ABILITY_ID]: "Ability score used for bonus spells per day",
+  [KLASS_CASTER_TYPE]: "Whether this class casts arcane or divine spells",
+};
+
+/** A spell's property types, in the order a 3.5 stat block shows them. */
+const POWER_PROPERTY_TYPES: Record<string, string> = {
+  [SPELL_SCHOOL]: "Spell school (Abjuration, Conjuration, etc.)",
+  [SPELL_SUBSCHOOL]: "Spell subschool (Calling, Charm, Creation, etc.)",
+  [SPELL_DESCRIPTOR]: "Spell descriptor (Fire, Cold, Mind-Affecting, etc.)",
+  [SPELL_LEVEL]: 'Spell level for a class (e.g., "Wizard 3", "Cleric 2")',
+  [SPELL_COMPONENT]: "Required component (Verbal, Somatic, Material, Focus, Divine Focus, XP Cost)",
+  [SPELL_MATERIAL]: "Material component description",
+  [SPELL_CASTING_TIME]: 'Time to cast (e.g., "1 standard action", "1 round")',
+  [SPELL_RANGE_TYPE]: "Range category (Personal, Touch, Close, Medium, Long, Unlimited)",
+  [SPELL_TARGET]: 'Valid targets (e.g., "One creature", "You")',
+  [SPELL_AREA_OF_EFFECT]: 'Area of effect (e.g., "20-ft. radius", "Cone")',
+  [SPELL_DURATION_TYPE]: "Duration category (Instantaneous, Concentration, Sustained, Permanent, etc.)",
+  [SPELL_DURATION]: 'Duration description (e.g., "1 round/level", "Instantaneous")',
+  [SPELL_SAVING_THROW]: "Saving throw type and effect (None, Fortitude negates, Reflex half, etc.)",
+  [SPELL_RESISTANCE]: "Whether spell resistance applies (Yes/No)",
+};
+
+const SHIELD_TYPE_NAMES = [
+  "Buckler",
+  "Heavy Steel Shield",
+  "Heavy Wooden Shield",
+  "Light Steel Shield",
+  "Light Wooden Shield",
+  "Tower Shield",
+];
+
 /** Static autocomplete hints for property value dropdowns */
 const WEAPON_TYPE_NAMES = [
   "Bastard Sword",
@@ -144,122 +244,6 @@ const WEAPON_TYPE_NAMES = [
   "Whip",
 ];
 
-const ARMOR_TYPE_NAMES = [
-  "Banded Mail",
-  "Breastplate",
-  "Chain Mail",
-  "Chain Shirt",
-  "Full Plate",
-  "Half-Plate",
-  "Hide Armor",
-  "Leather Armor",
-  "Padded Armor",
-  "Scale Mail",
-  "Splint Mail",
-  "Studded Leather",
-];
-
-const SHIELD_TYPE_NAMES = [
-  "Buckler",
-  "Heavy Steel Shield",
-  "Heavy Wooden Shield",
-  "Light Steel Shield",
-  "Light Wooden Shield",
-  "Tower Shield",
-];
-
-const ITEM_PROPERTY_TYPES: Record<string, string> = {
-  [WEAPON_PROFICIENCY]: "Weapon proficiency classification (Simple, Martial, Exotic)",
-  [WEAPON_FAMILY]: "Weapon family grouping (Sword, Axe, Bow, etc.)",
-  [WEAPON_BASE_DAMAGE]: "Base damage dice for weapons",
-  [WEAPON_CRITICAL_RANGE]: "Critical threat count (1 = 20, 2 = 19-20, 3 = 18-20, etc.)",
-  [WEAPON_CRITICAL_MULTIPLIER]: "Critical hit damage multiplier",
-  [WEAPON_STRENGTH_DAMAGE]: "Strength to damage: Slot (the hand's share; default), Rating (bows: up to Mighty), None",
-  [WEAPON_MIGHTY]:
-    "A composite bow's Strength rating: the most Strength bonus it adds to damage; below it, -2 to attack",
-  [WEAPON_DOUBLE_DAMAGE]: "A double weapon's other end's damage dice: in two hands, it fights as two weapons",
-  [WEAPON_ONE_HAND_TRAINING]:
-    "Whether it's too large for one hand without training (a bastard sword): there, only its proficiency lets it be used",
-  [WEAPON_ONE_HANDED_PENALTY]:
-    "Penalty to attack in one hand, when it takes two to load: a crossbow's (-2 light, -4 heavy; absent = none)",
-  [WEAPON_RANGE]: "Range increment in feet: a ranged weapon's, or a thrown melee weapon's (0 or absent = none)",
-  [WEAPON_RANGED]: "Whether it's a ranged weapon (thrown or projectile, not used in melee): its attacks use Dexterity",
-  [WEAPON_REACH]: "Melee reach in feet (0 or absent = 5 ft.)",
-  [WEAPON_SIZE]:
-    "The weapon's effort, as the table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed",
-  [ARMOR_PROFICIENCY]: "Armor proficiency classification (Light, Medium, Heavy)",
-  [ARMOR_TYPE]: "Base armor type for feat/modifier targeting (e.g. Leather Armor, Full Plate)",
-  [ARMOR_MAX_DEX]: "Maximum dexterity bonus allowed",
-  [ARMOR_AC_BONUS]: "Armor class bonus from armor",
-  [ARMOR_CHECK_PENALTY]: "Penalty to Str/Dex-based skill checks",
-  [ITEM_SPELL_FAILURE]: "Arcane spell failure chance percentage",
-  [SHIELD_PROFICIENCY]: "Shield proficiency classification (Light, Heavy, Tower)",
-  [SHIELD_TYPE]: "Base shield type for feat/modifier targeting (e.g. Buckler, Tower Shield)",
-  [SHIELD_AC_BONUS]: "Armor class bonus from shield",
-  [DAMAGE_TYPE]: "Type of damage dealt",
-  [ITEM_MADE_OF]: "Material composition",
-  [ITEM_HAS_CHARGES]: "Default number of charges for this item",
-  [ITEM_MASTERWORK]: "Whether this item is masterwork quality (reduces armor check penalty by 1)",
-  [WEAPON_FINESSABLE]:
-    "Whether a feat with FEAT_WEAPON_FINESSE (Weapon Finesse) lets this weapon attack with Dexterity",
-  [WEAPON_TYPE]: "Base weapon type for feat/modifier targeting (e.g. Longsword, Shortsword)",
-  [MAGIC_AURA]: "Magic aura strength and school (e.g. Moderate transmutation)",
-  [MAGIC_CASTER_LEVEL]: "Caster level required to create this magic item",
-};
-
-const RULESET_PROPERTY_TYPES: Record<string, string> = {
-  [RULESET_SKILL_POINT_ABILITY_ID]: "Ability used for skill point calculation",
-};
-
-const SKILL_PROPERTY_TYPES: Record<string, string> = {
-  [SKILL_IMPACTED_BY_WEIGHT]: "Whether the skill is impacted by armor check penalty",
-  [SKILL_CHECK_PENALTY_MULTIPLIER]: "How many times over the skill takes the armor check penalty (2 for Swim)",
-  [SKILL_USABLE_WITHOUT_TRAINING]: "Whether the skill can be used without training",
-};
-
-const KLASS_LEVEL_PROPERTY_TYPES: Record<string, string> = {
-  [KLASS_LEVEL_BAB]: "Base attack bonus at this class level",
-  [KLASS_LEVEL_SKILL_POINTS]: "Skill points gained per level",
-};
-
-const RACE_PROPERTY_TYPES: Record<string, string> = {
-  [RACE_SPEED_IGNORES_ENCUMBRANCE]:
-    "Whether the race keeps its speed in medium or heavy armor and under a medium or heavy load (the dwarf)",
-  [RACE_QUADRUPED]: "Whether the race walks on four legs, which carries more: x1 1/2 when Medium, x3 when Large (SRD)",
-};
-
-const KLASS_PROPERTY_TYPES: Record<string, string> = {
-  [KLASS_BONUS_SPELL_ABILITY_ID]: "Ability score used for bonus spells per day",
-  [KLASS_CASTER_TYPE]: "Whether this class casts arcane or divine spells",
-};
-
-const FEAT_PROPERTY_TYPES: Record<string, string> = {
-  [FEAT_FAMILY]: "Feat family grouping (Weapon Focus, Spell Focus, etc.)",
-  [FEAT_WEAPON_FINESSE]:
-    "Whether the feat lets its owner attack with Dexterity with a finessable weapon (Weapon Finesse)",
-  [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING]:
-    "Whether the feat makes a one-handed off-hand weapon count as light in two-weapon fighting (Oversized Two-Weapon Fighting)",
-  [WIZARD_PROHIBITED_SCHOOL]: "School of magic prohibited by wizard specialization",
-};
-
-/** A spell's property types, in the order a 3.5 stat block shows them. */
-const POWER_PROPERTY_TYPES: Record<string, string> = {
-  [SPELL_SCHOOL]: "Spell school (Abjuration, Conjuration, etc.)",
-  [SPELL_SUBSCHOOL]: "Spell subschool (Calling, Charm, Creation, etc.)",
-  [SPELL_DESCRIPTOR]: "Spell descriptor (Fire, Cold, Mind-Affecting, etc.)",
-  [SPELL_LEVEL]: 'Spell level for a class (e.g., "Wizard 3", "Cleric 2")',
-  [SPELL_COMPONENT]: "Required component (Verbal, Somatic, Material, Focus, Divine Focus, XP Cost)",
-  [SPELL_MATERIAL]: "Material component description",
-  [SPELL_CASTING_TIME]: 'Time to cast (e.g., "1 standard action", "1 round")',
-  [SPELL_RANGE_TYPE]: "Range category (Personal, Touch, Close, Medium, Long, Unlimited)",
-  [SPELL_TARGET]: 'Valid targets (e.g., "One creature", "You")',
-  [SPELL_AREA_OF_EFFECT]: 'Area of effect (e.g., "20-ft. radius", "Cone")',
-  [SPELL_DURATION_TYPE]: "Duration category (Instantaneous, Concentration, Sustained, Permanent, etc.)",
-  [SPELL_DURATION]: 'Duration description (e.g., "1 round/level", "Instantaneous")',
-  [SPELL_SAVING_THROW]: "Saving throw type and effect (None, Fortitude negates, Reflex half, etc.)",
-  [SPELL_RESISTANCE]: "Whether spell resistance applies (Yes/No)",
-};
-
 const PROPERTY_VALUES: Record<string, string[]> = {
   [WEAPON_PROFICIENCY]: ["Simple", "Martial", "Exotic"],
   [WEAPON_FAMILY]: [
@@ -310,6 +294,22 @@ const PROPERTY_VALUES: Record<string, string[]> = {
   [FEAT_FAMILY]: [...FEAT_FAMILIES],
   [RACE_SPEED_IGNORES_ENCUMBRANCE]: ["true", "false"],
   [RACE_QUADRUPED]: ["true", "false"],
+};
+
+const RACE_PROPERTY_TYPES: Record<string, string> = {
+  [RACE_SPEED_IGNORES_ENCUMBRANCE]:
+    "Whether the race keeps its speed in medium or heavy armor and under a medium or heavy load (the dwarf)",
+  [RACE_QUADRUPED]: "Whether the race walks on four legs, which carries more: x1 1/2 when Medium, x3 when Large (SRD)",
+};
+
+const RULESET_PROPERTY_TYPES: Record<string, string> = {
+  [RULESET_SKILL_POINT_ABILITY_ID]: "Ability used for skill point calculation",
+};
+
+const SKILL_PROPERTY_TYPES: Record<string, string> = {
+  [SKILL_IMPACTED_BY_WEIGHT]: "Whether the skill is impacted by armor check penalty",
+  [SKILL_CHECK_PENALTY_MULTIPLIER]: "How many times over the skill takes the armor check penalty (2 for Swim)",
+  [SKILL_USABLE_WITHOUT_TRAINING]: "Whether the skill can be used without training",
 };
 
 export const ENTITY_PROPERTY_TYPES: Partial<Record<PropertyEntityType, Record<string, string>>> = {

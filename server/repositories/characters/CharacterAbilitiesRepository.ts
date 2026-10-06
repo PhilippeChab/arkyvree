@@ -15,15 +15,15 @@ class CharacterAbilitiesRepository extends include(
     super(characterAbilitiesInCharacter);
   }
 
+  async createMany(db: Db, values: InferInsertModel<typeof characterAbilitiesInCharacter>[]) {
+    if (values.length === 0) return [];
+    return await db.insert(this.table).values(values).returning();
+  }
+
   async findMany(db: Db, where: { characterId: string }) {
     return await db.query.characterAbilitiesInCharacter.findMany({
       where: and(eq(this.table.characterId, where.characterId), isNull(this.table.deletedAt)),
     });
-  }
-
-  async createMany(db: Db, values: InferInsertModel<typeof characterAbilitiesInCharacter>[]) {
-    if (values.length === 0) return [];
-    return await db.insert(this.table).values(values).returning();
   }
 
   async update(

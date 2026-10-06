@@ -142,11 +142,11 @@ The child's own entities are always included. Ancestor entities are included onl
 
 ### COW for Complex Entities
 
-`cowEntity` must run inside the mutation transaction. It takes a transaction-scoped advisory lock for the target ruleset/source entity pair before reading the snapshot. Concurrent first edits then reuse the committed copy instead of racing to insert duplicate entities. The snapshot read is a separate statement so PostgreSQL's default READ COMMITTED isolation sees the preceding writer's commit after waiting. Commit and rollback release the lock automatically. This adds one query to COW writes; reads and edits to already-local entities do not acquire this lock, and different fork/source pairs can copy independently.
+`EntityCopy.create` must run inside the mutation transaction. It takes a transaction-scoped advisory lock for the target ruleset/source entity pair before reading the snapshot. Concurrent first edits then reuse the committed copy instead of racing to insert duplicate entities. The snapshot read is a separate statement so PostgreSQL's default READ COMMITTED isolation sees the preceding writer's commit after waiting. Commit and rollback release the lock automatically. This adds one query to COW writes; reads and edits to already-local entities do not acquire this lock, and different fork/source pairs can copy independently.
 
 - **Standard entities** (feats, powers, items, races, skills, etc.): COW copies the entity and all customizations
 - **Classes**: COW copies the entire class including all levels and their customizations/relationships
-- **Customizations on inherited entities**: `cowEntityForCustomization` traces the modifier/property/requirement back to its owning entity, COWs that entity, then resolves the customization through IDs recorded at copy time, including sibling contributions
+- **Customizations on inherited entities**: `RulesetEdit.cowOwner` / `cowCustomization` trace the modifier/property/requirement back to its owning entity, COWs that entity, then resolves the customization through IDs recorded at copy time, including sibling contributions
 
 ### Override Map
 
@@ -165,11 +165,11 @@ The child's own entities are always included. Ancestor entities are included onl
 ### Names of new entities
 
 Every entity create (and bulk item variants) checks the name with
-`assertEntityNameAvailable` / `assertAncestorNamesHidden` against the fork's
+`RulesetEdit.assertNameAvailable` / `assertAncestorNamesHidden` against the fork's
 composed view. A local entity, or an inherited one that is still visible, with
 the same name blocks it. Inherited entities hidden by an override
 (`cow.isHidden`: overridden, or a sibling loser) do not. If a hidden ancestor's local
-copy was deleted, its snapshot is a tombstone, and `repointTombstoneSnapshot`
+copy was deleted, its snapshot is a tombstone, and `RulesetEdit.repointTombstone`
 moves it to the new entity. A live local copy keeps its snapshot even after a
 rename, so picks of the source keep resolving to that copy.
 
@@ -208,7 +208,7 @@ User's Fork (subscribed to A, then B)
    - **Properties**: sibling properties are appended with `entityId` remapped to the winner, deduped on `type|value`.
    - Consumers: `FeatsService`, `PowersService`, `ModifiersService`, `RequirementsService`, and `DetailedCharacter` all just read from `rulesetData.*` without any sibling-specific code.
 
-4. **COW merging** (`cowEntity`): When a user COWs the winner entity, `mergeSiblingData()` copies unique requirements, modifiers, properties, and aptitude links from all siblings into the new local copy. The child's copy contains the full merged result. See below.
+4. **COW merging** (`EntityCopy`): When a user COWs the winner entity, its sibling merge copies unique requirements, modifiers, properties, and aptitude links from all siblings into the new local copy. The child's copy contains the full merged result. See below.
 
 **Key rule**: A local (child fork) COW always wins completely — no sibling merging. The sibling map only applies to extension-vs-extension COW conflicts. If the user's own fork has COW'd a base entity, that fork's copy is authoritative and extension copies are ignored.
 
@@ -219,7 +219,7 @@ normal merged view of the currently subscribed extensions. Hidden sibling IDs
 still resolve to the local copy; deleting that copy leaves the whole entity hidden
 until the override is restored.
 
-`cowEntity` requires both the source chain and `extensionRulesetIds`. Every edit path passes the current ruleset’s extensions, including entity edits, class-skill changes, and class-level changes, so the local copy contains all visible sibling customizations before read-time merging stops.
+`EntityCopy` requires both the source chain and `extensionRulesetIds` (`RulesetEdit` passes the ruleset's). Every edit path passes the current ruleset’s extensions, including entity edits, class-skill changes, and class-level changes, so the local copy contains all visible sibling customizations before read-time merging stops.
 
 ### Aptitudes and the Sibling Map
 
@@ -236,10 +236,10 @@ When a user modifies an entity that is the merged result of multiple extension C
 Before COW (runtime view):
   User sees one "Power Attack" merged from A (winner) + B (sibling)
 
-User edits Power Attack → cowEntity triggers:
+User edits Power Attack → EntityCopy.create:
   1. Copies the winner (A's Power Attack) + all its customizations
   2. Detects siblings via its CowData (getSiblings) → finds B's Power Attack
-  3. Calls mergeSiblingData() to bake sibling data into the new local copy
+  3. Merges the siblings' data into the new local copy
   4. User's local copy now contains the full merged result
 
 After COW:
@@ -247,7 +247,7 @@ After COW:
   The sibling pairing no longer applies — local fork wins completely
 ```
 
-`mergeSiblingData()` merges four types of customizations, using the same rules as the read-time merge above:
+The sibling merge (`EntityCopy`'s `mergeSiblings`) merges four types of customizations, using the same rules as the read-time merge above:
 
 | Type | Merge strategy | Deduplication key |
 |---|---|---|
@@ -340,7 +340,7 @@ entityId, rulesetId)` and is reused by every entity-delete service and
 
 ## Entity Services Pattern
 
-Every entity service works in the ruleset's scope (`withRulesetScope`): reads come from its composed view, and writes to an inherited entity go to the fork's copy, made on its first edit (`server/cow/cowEntity.ts`):
+Every entity service works in the ruleset's scope (`withRulesetScope`): reads come from its composed view, and writes to an inherited entity go to the fork's copy, made on its first edit (`RulesetEdit`, `EntityCopy`: `server/cow/`):
 
 ```ts
 // Read (list): the repository reads the ruleset and its source chain
@@ -352,15 +352,16 @@ return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
 const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
 
 // Update: the fork's own entity, or the copy of an inherited one (whose updatedAt isn't the client's)
-const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "saves", save);
+const edit = new RulesetEdit(ruleset, rulesetData.cow);
+const { id: targetId, copied } = await edit.cowToEdit(tx, "saves", save);
 await Saves.update(tx, data, { id: targetId, expectedUpdatedAt: copied ? undefined : body.updatedAt });
 
 // Delete: the same, and the fork's own entity is locked first
-const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "saves", save);
+const targetId = await edit.cowToDelete(tx, "saves", save);
 await Saves.delete(tx, { id: targetId });
 ```
 
-A create checks the name against the composed view first (`assertEntityNameAvailable`), and points a tombstone it hides at the new entity (`repointTombstoneSnapshot`).
+A create checks the name against the composed view first (`edit.assertNameAvailable`), and points a tombstone it hides at the new entity (`edit.repointTombstone`).
 
 ## Legal
 
@@ -622,7 +623,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | File | Purpose |
 |---|---|
 | `server/cache/rulesetCache/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `CowDataBuilder` (the overrides and sibling pairs), `RulesetCache.getCowData`: copy-on-write's read side. `CowData` itself (`server/database/CowData.ts`) is what a scope resolves ids through. |
-| `server/cow/` | `cowEntity`, `cowEntityForCustomization`: copy-on-write's write side. `mergeSiblingData` (`siblingMerge.ts`) runs on the COW write path to bake sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache/RulesetComposition.ts`). |
+| `server/cow/` | `RulesetEdit` (the rows a change writes) and `EntityCopy` (a copy of an inherited entity): copy-on-write's write side. `EntityCopy` merges sibling data into newly COW'd local copies. Sibling read-time merging lives in the cache compose step (`server/cache/rulesetCache/RulesetComposition.ts`). |
 | `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
 | `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getExtensions` |
 | `server/services/rulesets/changes/RulesetChangesService.ts` | `getChanges`, `revertOverride` |

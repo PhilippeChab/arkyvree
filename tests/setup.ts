@@ -10,20 +10,20 @@ import type { NodePgClient } from "drizzle-orm/node-postgres";
 import type { PoolClient } from "pg";
 
 import { createTestDbFromClient, createTestPool, setTestDb } from "@/server/database/test.ts";
-import { setStorageForTest } from "@/server/storage/s3.ts";
+import ObjectStorage from "@/server/storage/s3.ts";
 import { forgetSeededRulesetWrites } from "@/tests/support/rulesets.ts";
 import { fakeStorage } from "@/tests/support/storage.ts";
 
-const testPool = createTestPool();
-let testClient: PoolClient | null = null;
 let endTest: (() => void) | null = null;
+let testClient: PoolClient | null = null;
+const testPool = createTestPool();
+let testStarted = false;
 let testTransaction: Promise<void> | null = null;
 let transactionFailure: Error | undefined;
-let testStarted = false;
 
 beforeEach(async () => {
   // Never reach real storage. A test can swap in its own fake for itself.
-  setStorageForTest(fakeStorage());
+  ObjectStorage.setForTest(fakeStorage());
 
   // The test's database is a transaction held open until it ends, then rolled back: a transaction the code under
   // test opens in it is a savepoint, which never commits the test's rows.

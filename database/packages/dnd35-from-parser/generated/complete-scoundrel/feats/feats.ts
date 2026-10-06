@@ -2,6 +2,405 @@ import { eq, eqStr, gte, or } from "@/database/packages/dnd35/content/requiremen
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { ALL_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
 
+export const AMBUSH_FEATS: FeatSeed[] = [
+  {
+    name: "Concussion Attack",
+    description:
+      "Your successful sneak attack imposes a 2 penalty on the target's Intelligence and Wisdom checks, as well as on any Intelligence and Wisdom-based skill checks, for 10 rounds. If you use this feat a second time on a target before 10 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 2d6.",
+    aptitudes: ["General"],
+    requirements: [gte("feats.sneakattack.count", 3)],
+  },
+  {
+    name: "Deafening Strike",
+    description:
+      "Your successful sneak attack causes the target to be deafened for 3 rounds. If you use this feat a second time on a target before 3 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 3d6.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Eldritch Erosion",
+    description:
+      "Your successful sneak attack reduces your target's spell resistance and power resistance by 5 (minimum 0) for 10 rounds. If you use this feat a second time on a target before the ten rounds have elapsed, the effect of the first expires. using this reduces your sneak attack damage by 4d6",
+    aptitudes: ["General"],
+    requirements: [gte("skills.knowledgearcana.rank", 1), gte("feats.sneakattack.count", 4)],
+  },
+  {
+    name: "Impeding Attack",
+    description:
+      "Your successful sneak attack imposes a -2 penalty on the target's Strength and Dexterity checks, as well as on any Strength- and Dexterity-based skill checks, for 10 rounds. If you use this feat a second time on a target before 10 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 3d6.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Merciful Strike",
+    description:
+      "Your successful sneak attack deals nonlethal damage. When using this feat, you can ignore the usual -4 penalty on attack rolls for attempting to deal nonlethal damage with a lethal weapon. Using this feat reduces your sneak attack damage by 1d6.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Mind Drain",
+    description:
+      "Your successful sneak attack drains power points from your target equal to its manifester level (minimum 1). If this attack reduces your target to 0 power points, the opponent also loses any psionic focus. A target that has no power points when you make the sneak attack is not affected by this feat. You can't use this feat on the same target more than once per round. Using this feat reduces your sneak attack damage by 1d6.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Persistent Attacker",
+    description:
+      "If your sneak attack hits, your first attack against that creature on your next turn is also considered a sneak attack even if it wouldn't normally qualify. Using this feat reduces your first sneak attack's damage by 4d6. The resulting second sneak attack deals its full extra damage.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Throat Punch",
+    description:
+      "Your successful sneak attack delivered with an unarmed strike temporarily hinders the target's ability to speak. For the next 3 rounds, the target takes a -5 penalty on any skill check requiring speech and has a 50% chance of failure when casting a spell with a verbal component or activating a magic item with a command word. Multiple uses of this feat don't increase the duration beyond 3 rounds. Using this feat reduces your sneak attack damage by 2d6.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.improvedunarmedstrike.possessed"), gte("feats.sneakattack.count", 3)],
+  },
+];
+
+export const BARDIC_FEATS: FeatSeed[] = [
+  {
+    name: "Chant of the Long Road",
+    description:
+      "As a standard action, you can expend one daily use of your bardic music ability to allow yourself and all allies within 60 feet to avoid taking nonlethal damage for hustling (PH 164). This requires 1 minute of performance, and the effect lasts for 1 hour.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Chord of Distraction",
+    description:
+      "As an immediate action, you can expend three daily uses of your bardic music ability to distract an opponent. The target must be within 30 feet of you and able to hear or see you. Make a Perform check, opposed by the target's Sense Motive check (modified as if you were using Bluff to feint in combat). If you succeed, that opponent is rendered flat-footed against an ally of your choice. The effect lasts until that opponent is attacked or until the start of your next turn, whichever comes first.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.bardicmusic.*.possessed"), gte("skills.perform.rank", 9)],
+  },
+  {
+    name: "Epic of the Lost King",
+    description:
+      "As a move action, you can expend one daily use of your bardic music ability to remove fatigue from up to three allies (including yourself) within 30 feet. If you spend three daily uses of bardic music, you can remove exhaustion from your allies instead.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Sound of Silence",
+    description:
+      "As a standard action, you can expend two daily uses of your bardic music ability to deafen a single target for 3 rounds. A successful Will save (using your Perform check result as the DC) negates the effect. The target must be within 30 feet of you and be able to hear you.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.bardicmusic.*.possessed"), gte("skills.perform.rank", 9)],
+  },
+  {
+    name: "Warning Shout",
+    description:
+      "As an immediate action, you can expend two daily uses of your bardic music ability to grant a single ally (other than yourself) a +5 morale bonus on her next Reflex save and evasion the monk class feature, PH 41). The ally must be within 30 feet of you and able to see or hear you. The effect lasts until the target rolls a Reflex save or until the start of your turn, whichever comes first.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.bardicmusic.*.possessed"), eq("feats.evasion.*.possessed"), gte("skills.perform.rank", 9)],
+  },
+];
+
+export const disembowelingStrike: FeatSeed[] = ALL_WEAPONS.map((w) => ({
+  name: `Disemboweling Strike: ${w}`,
+  description: `Your successful sneak attack with a slashing weapon for which you have ${w} Focus deals 1d4 points of Constitution damage in addition to its normal damage. You can't use this feat against the same target more than once per day. Using this feat reduces your sneak attack damage by 4d6.`,
+  generated: true,
+  aptitudes: ["General"],
+  properties: [{ type: "FEAT_FAMILY", value: "Disemboweling Strike" }],
+}));
+
+export const FIGHTER_FEATS: FeatSeed[] = [
+  {
+    name: "Daring Warrior",
+    description:
+      "Your fighter and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 6th-level fighter/5th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your fighter and swashbuckler levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [eq("feats.weaponspecialization.*.possessed"), eq("feats.grace.*.possessed")],
+  },
+  {
+    name: "Martial Stalker",
+    description:
+      "Your fighter and ninja levels stack for the purpose of determining the size of your ki pool, as well as your AC bonus. For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja). Your fighter and ninja levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+  },
+];
+
+export const GENERAL_FEATS: FeatSeed[] = [
+  {
+    name: "Ascetic Stalker",
+    description:
+      "Your monk and ninja levels stack for the purpose of determining the size of your ki pool. For example, a 4th-level monk/2nd-level ninja with this feat could use her ki powers a number of times equal to 3 (half the sum of her monk and ninja levels) + her Wisdom bonus (if any). Your monk and ninja levels also stack for the purpose of determining your unarmed strike damage, as well as your ki strike class feature. For example, a 4th-level monk/6th-level ninja would deal 1d10 points of damage with her unarmed strike, and her unarmed strike would overcome damage reduction as a lawful magic weapon (as if she were a 10th-level monk). In addition, you can multiclass freely between the monk and ninja classes. You must still remain lawful in order to continue advancing as a monk. You still face the normal XP penalties for having multiple classes more than one level apart.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.kipower.*.possessed")],
+  },
+  {
+    name: "Cool Head (CS)",
+    description:
+      "You immediately learn up to two mental skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on mental skill tricks.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Daredevil Athlete",
+    description:
+      "Three times per day, you can use an immediate action to gain a +5 competence bonus on a single Balance, Climb, Escape Artist, Jump, Ride, Swim, or Tumble check",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Daring Outlaw",
+    description:
+      "Your rogue and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 7th-level rogue/4th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your rogue and swashbuckler levels also stack for the purpose of determining your sneak attack bonus damage. For example, a 7th-level rogue/4th-level swashbuckler would deal an extra 6d6 points of damage with her sneak attack, as if she were an 11th-level rogue.",
+    aptitudes: ["General"],
+    requirements: [gte("feats.sneakattack.count", 2), eq("feats.grace.*.possessed")],
+  },
+  {
+    name: "Deadly Defense",
+    description:
+      "When fighting defensively, you deal an extra 1d6 points of damage with any light weapon or with any weapon to which the Weapon Finesse feat applies (such as a rapier, spiked chain, or whip). This feat's benefit applies only when you are unarmored or wearing light armor and not using a shield.",
+    aptitudes: ["General", "Fighter Bonus Feat"],
+  },
+  {
+    name: "Enduring Ki",
+    description:
+      "By spending an extra daily use of your ki power when you activate it, the chosen effect lasts for an additional round (ki power is a class feature of the ninja; see the sidebar for details). You also gain one extra daily use of your ki power.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Expanded Ki Pool",
+    description:
+      "You gain three extra daily uses of your ki power (ki power is a class feature of the ninja; see the sidebar for details).",
+    aptitudes: ["General"],
+    requirements: [eq("feats.kipower.*.possessed")],
+  },
+  {
+    name: "Freerunner",
+    description:
+      "You immediately learn up to two movement skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on movement skill tricks.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Improved Familiar",
+    description:
+      "When you choose a familiar, the creatures on the table below are also available. You can choose a familiar with an alignment up to one step away on each of the alignment axes (lawful through chaotic,good through evil). For example, a chaotic good spellcaster could acquire a neutral familiar. A lawful neutral spellcaster could acquire a neutral good familiar. Except as noted here, improved familiars otherwise use the normal rules for familiars (PH 52). Arcane Familiar Alignment Caster Level Monstrous centipede, Small N 2nd Badger N 3rd Monstrous scorpion, Small N 3rd Viper, Medium N 3rd Monstrous spider, Small N 4th Vargouille* NE 6th Mephit, any N 7th * Vargouilles summoned as familiars do not possess the kiss supernatural ability.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.summonfamiliar.*.possessed")],
+  },
+  {
+    name: "Improved Skirmish",
+    description:
+      "If you move at least 20 feet away from where you were at the start of your turn, your skirmish damage increases by 2d6 and your competence bonus to AC from skirmish improves by 2.",
+    aptitudes: ["General"],
+    requirements: [gte("feats.skirmish.count", 2)],
+  },
+  {
+    name: "Master Spellthief",
+    description:
+      "Your spellthief levels stack with levels of other arcane spellcaster classes (that is, levels of any class that grants arcane spellcasting other than the spellthief) for the purpose of determining what level of spell you can steal. For example, a 4th-level spellthief/4th-level wizard could steal spells of up to 4th level, as if he were an 8th-level spellthief. Your spellthief and arcane spellcaster levels also stack when determining your caster level for all arcane spells. The character described above would have a caster level of 8th for both his spellthief spells and his wizard spells. In addition, you do not incur a chance of arcane spell failure for arcane spells cast or stolen from other classes, but only if you are wearing light armor. You incur the normal arcane spell failure chance when wearing medium or heavy armor or when using a shield.",
+    aptitudes: ["General"],
+    requirements: [gte("spellcasting.arcane", 2)],
+  },
+  {
+    name: "Poison Expert",
+    description:
+      "Choose a type of poison (contact, ingested, inhaled, or injury). The DC to resist both the initial and secondary damage of poisons of this type that you create and use increases by 1. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
+    stackable: true,
+    aptitudes: ["General"],
+    requirements: [eq("feats.poisonuse.*.possessed"), gte("skills.craft.rank", 4)],
+  },
+  {
+    name: "Poison Master",
+    description:
+      "Choose a type of poison (contact, ingested, inhaled, or injury) for which you have selected the Poison Expert feat. The initial and secondary damage dealt by poisons of this type that you create and use increases by 1 point per die of damage (or by 1 point, if it deals a fixed amount of damage). For example, lich dust used by a character with Poison Master (ingested) would deal initial damage of 2d6+2 Str and secondary damage of 1d6+1 Con plus 1d6+1 Str. If a poison doesn't deal damage, this feat has no effect. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
+    stackable: true,
+    aptitudes: ["General"],
+    requirements: [eq("feats.poisonexpert.possessed"), eq("feats.poisonuse.*.possessed"), gte("skills.craft.rank", 8)],
+  },
+  {
+    name: "Psithief",
+    description:
+      "You can use your steal spell ability to siphon psionic energy instead of spell energy. Instead of stealing a spell, you can choose to steal a number of power points equal twice to the maximum level of spell you can steal minus 1 (up to a maximum value equal to the manifester level of the creature struck). For example, a 4th-level spellthief/1st-level psychic warrior could steal up to 3 power points; if he used this ability against a 2nd-level psion he could steal only 2 power points, since that is the target's manifester level. You can use the stolen power points only to manifest a psionic power you already know. You must use these power points within 1 hour of stealing them; otherwise, the extra psionic energy fades harmlessly away. This feat otherwise follows the rules for the steal spell class feature. In addition, Knowledge (psionics) and Psicraft are spellthief class skills for you. These skills appear on of Expanded Psionics Handbook.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Savvy Rogue",
+    description:
+      'Based on the rogue special abilities you have (PH 50), you gain one or more additional special benefits as described below. You gain the benefits for all the special abilities you have, even those you gain after selecting this feat. Crippling Strike: You can deal Strength damage even to a target that is immune to extra damage from sneak attacks. Defensive Roll: You can use this ability three times per day, rather than once per day. Improved Evasion: You gain a +2 competence bonus on Reflex saves. Opportunist: You can use the opportunist ability as many times per round as you can make attacks of opportunity, but no more than once per creature per round. Each use of the opportunist ability counts as an attack of opportunity. Skill Mastery: When taking 10 with a skill to which you have assigned skill mastery, you can treat the die roll as a 12 instead of as a 10. (In effect, you\'re "taking 12.") Slippery Mind: You gain a +2 competence bonus on the extra save granted by slippery mind.',
+    aptitudes: ["General"],
+    requirements: [gte("classes.rogue.level", 10)],
+  },
+  {
+    name: "Sure Hand",
+    description:
+      "You immediately learn up to two manipulation skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on manipulation skill tricks.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Sweet Talker",
+    description:
+      "You immediately learn up to two interaction skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on interaction skill tricks.",
+    aptitudes: ["General"],
+  },
+  {
+    name: "Swift Ambusher",
+    description:
+      "Your rogue and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/7th-level rogue would deal an extra 3d6 points of damage and gain a +3 competence bonus to AC when skirmishing, as if she were an 11th-level scout. In addition, you can qualify for ambush feats as if your sneak attack bonus damage were the sum of your skirmish damage and sneak attack bonus damage. You cannot sacrifice skirmish extra damage to use those feats, however.",
+    aptitudes: ["General"],
+    requirements: [gte("feats.sneakattack.count", 1), gte("feats.skirmish.count", 1)],
+  },
+  {
+    name: "Swift Hunter",
+    description:
+      "Your ranger and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/1st-level ranger would deal an extra 2d6 points of damage and gain a +1 competence bonus to AC when skirmishing, as if she were a 5th-level scout. Your ranger and scout levels also stack for the purpose of determining when you select additional favored enemies, as well as the total bonus granted against your favored enemies. For example, a 4th-level scout/1st-level ranger would have two favored enemies and could allocate an extra +2 bonus against one of those favored enemies, as if she were a 5th-level ranger. In addition, your skirmish extra damage applies against any creature you have selected as a favored enemy, even if it is normally immune to extra damage from critical hits or skirmish attacks.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.favoredenemy.*.possessed"), gte("feats.skirmish.count", 1)],
+  },
+];
+
+export const headShot: FeatSeed[] = ALL_WEAPONS.map((w) => ({
+  name: `Head Shot: ${w}`,
+  description: `Your successful sneak attack with a bludgeoning weapon for which you have ${w} Focus leaves your foe confused for 1 round. A successful Will save (DC 10 + the number of extra damage dice normally dealt by your sneak attack + your Dex modifier) negates this effect. If you use this feat a second time on a target before 1 round has elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 5d6.`,
+  generated: true,
+  aptitudes: ["General"],
+  properties: [{ type: "FEAT_FAMILY", value: "Head Shot" }],
+}));
+
+export const LUCK_FEATS: FeatSeed[] = [
+  {
+    name: "Advantageous Avoidance",
+    description:
+      "You can expend one luck reroll as an immediate action to force a foe to reroll a critical hit confirmation roll made when attacking you. You can expend two luck rerolls as an immediate action to force a foe to reroll an attack roll made against you. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Better Lucky than Good",
+    description:
+      "If you roll a natural 1 when making an attack roll, you can expend one luck reroll as a swift action to instead treat the roll as a natural 20. You can use this feat once per day. You gain one luck reroll per day",
+    aptitudes: ["General"],
+    requirements: [gte("identity.meta.level", 6), gte("feats.luck.count", 2)],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Dumb Luck",
+    description:
+      "If you roll a natural 1 when making a saving throw, you can expend one luck reroll as an immediate action to instead trear the roll as a natural 20.You can use this feat once per day.You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    requirements: [gte("identity.meta.level", 6), gte("feats.luck.count", 2)],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Fortuitous Strike",
+    description:
+      "You can expend one luck reroll as a swift action to reroll a weapon damage roll. You can expend two luck rerolls as a swift action to reroll an attack roll. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Good Karma",
+    description:
+      "You can expend one luck reroll as an immediate action to redirect an attack made against an adjacent ally so that it is made against you instead. You must be within reach of the attacker (if a melee attack) or within range of the attack (if a ranged attack) in order to use this ability. The attack roll result remains the same, but it is against your AC, rather than that of your ally. If the redirected attack hits you, you take an extra 50% damage from it. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Healer's Luck",
+    description:
+      "You can expend one luck reroll as a swift action to reroll the number of points of damage healed by a conjuration (healing) spell you have just cast on your current turn. You gain one luck reroll per day",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Lucky Break",
+    description:
+      "You can expend one luck reroll as a swift action to reroll a Strength check made to break an item or burst open a door. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Lucky Catch",
+    description:
+      "You can expend one luck reroll as an immediate action to reroll a Balance, Climb, or Jump check. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Lucky Fingers",
+    description:
+      "You can expend one luck reroll as an immediate action to reroll a Disable Device, Open Lock, or Sleight of Hand check. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Lucky Start",
+    description: "You can expend one luck reroll to reroll an initiative check. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Magical Fortune",
+    description:
+      "You can expend one luck reroll as a swift action to reroll the damage dealt by a spell you have just cast. You can expend two luck rerolls as a swift action to reroll a caster level check. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Make Your Own Luck",
+    description:
+      "You can expend one luck reroll as an immediate action to reroll a skill check, as long as you have at least 1 rank in that skill. You gain one luck reroll per day",
+    aptitudes: ["General"],
+    requirements: [gte("identity.meta.level", 6), eq("feats.luck.*.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Miser's Fortune",
+    description:
+      "Whenever an opponent makes a sunder attack or Strength check to damage an object within 30 feet of you, you can expend one luck reroll as an immediate action to force that opponent to reroll.In addition, as long as you still have one luck reroll remaining for the day, items in your possession receive a +5 luck bonus on saving throws.You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Psychic Luck",
+    description:
+      "You can expend one luck reroll as a swift action to reroll the damage dealt by a psionic power you have just manifested. You can expend two luck rerolls as a swift action to reroll a manifester level check. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Sly Fortune",
+    description:
+      "You can expend one luck reroll as an immediate action to reroll a Hide, Move Silently, or Tumble check. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Survivor's Luck",
+    description:
+      "You can expend one luck reroll as an immediate action to reroll a saving throw you just failed. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Tempting Fate",
+    description:
+      "You can expend a luck reroll to reroll a stabilization check. In addition, once per day, whenever you have at least 1 hit point remaining and would be dealt enough damage to kill you, you can expend one luck reroll as an immediate action to take only enough damage to reduce you to -9 hit points. You automatically stabilize. You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    requirements: [gte("identity.meta.level", 6), eq("feats.luck.*.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Third Time's the Charm",
+    description:
+      "You can expend one luck reroll as an immediate action to use the granted power of the Luck domain an additional time per day. You can only use this benefit immediately after using the Luck domain's granted power (in effect, this feat gives you a third chance to succeed on the roll). You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Unbelievable Luck",
+    description:
+      "As long as you have at least one luck reroll remaining for the day, you gain a +2 luck bonus on whichever of your saves has the lowest base bonus. If two or more of your saves tie for the lowest base bonus, choose when you select this feat which save it applies to. If your base save bonuses later change so that the chosen save no longer has the lowest base bonus, the luck bonus from this feat immediately applies to the save that now has the lowest base bonus. You gain two luck rerolls per day.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.luck.*.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+  {
+    name: "Victor's Luck",
+    description:
+      "You can expend one luck reroll as a swift action to reroll a critical threat confirmation roll.You gain one luck reroll per day.",
+    aptitudes: ["General"],
+    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
+  },
+];
+
 export const SKILL_TRICK_FEATS: FeatSeed[] = [
   {
     name: "Acrobatic Backstab",
@@ -326,402 +725,3 @@ export const SKILL_TRICK_FEATS: FeatSeed[] = [
     requirements: [gte("skills.userope.rank", 5)],
   },
 ];
-
-export const LUCK_FEATS: FeatSeed[] = [
-  {
-    name: "Advantageous Avoidance",
-    description:
-      "You can expend one luck reroll as an immediate action to force a foe to reroll a critical hit confirmation roll made when attacking you. You can expend two luck rerolls as an immediate action to force a foe to reroll an attack roll made against you. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Better Lucky than Good",
-    description:
-      "If you roll a natural 1 when making an attack roll, you can expend one luck reroll as a swift action to instead treat the roll as a natural 20. You can use this feat once per day. You gain one luck reroll per day",
-    aptitudes: ["General"],
-    requirements: [gte("identity.meta.level", 6), gte("feats.luck.count", 2)],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Dumb Luck",
-    description:
-      "If you roll a natural 1 when making a saving throw, you can expend one luck reroll as an immediate action to instead trear the roll as a natural 20.You can use this feat once per day.You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    requirements: [gte("identity.meta.level", 6), gte("feats.luck.count", 2)],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Fortuitous Strike",
-    description:
-      "You can expend one luck reroll as a swift action to reroll a weapon damage roll. You can expend two luck rerolls as a swift action to reroll an attack roll. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Good Karma",
-    description:
-      "You can expend one luck reroll as an immediate action to redirect an attack made against an adjacent ally so that it is made against you instead. You must be within reach of the attacker (if a melee attack) or within range of the attack (if a ranged attack) in order to use this ability. The attack roll result remains the same, but it is against your AC, rather than that of your ally. If the redirected attack hits you, you take an extra 50% damage from it. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Healer's Luck",
-    description:
-      "You can expend one luck reroll as a swift action to reroll the number of points of damage healed by a conjuration (healing) spell you have just cast on your current turn. You gain one luck reroll per day",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Lucky Break",
-    description:
-      "You can expend one luck reroll as a swift action to reroll a Strength check made to break an item or burst open a door. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Lucky Catch",
-    description:
-      "You can expend one luck reroll as an immediate action to reroll a Balance, Climb, or Jump check. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Lucky Fingers",
-    description:
-      "You can expend one luck reroll as an immediate action to reroll a Disable Device, Open Lock, or Sleight of Hand check. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Lucky Start",
-    description: "You can expend one luck reroll to reroll an initiative check. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Magical Fortune",
-    description:
-      "You can expend one luck reroll as a swift action to reroll the damage dealt by a spell you have just cast. You can expend two luck rerolls as a swift action to reroll a caster level check. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Make Your Own Luck",
-    description:
-      "You can expend one luck reroll as an immediate action to reroll a skill check, as long as you have at least 1 rank in that skill. You gain one luck reroll per day",
-    aptitudes: ["General"],
-    requirements: [gte("identity.meta.level", 6), eq("feats.luck.*.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Miser's Fortune",
-    description:
-      "Whenever an opponent makes a sunder attack or Strength check to damage an object within 30 feet of you, you can expend one luck reroll as an immediate action to force that opponent to reroll.In addition, as long as you still have one luck reroll remaining for the day, items in your possession receive a +5 luck bonus on saving throws.You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Psychic Luck",
-    description:
-      "You can expend one luck reroll as a swift action to reroll the damage dealt by a psionic power you have just manifested. You can expend two luck rerolls as a swift action to reroll a manifester level check. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Sly Fortune",
-    description:
-      "You can expend one luck reroll as an immediate action to reroll a Hide, Move Silently, or Tumble check. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Survivor's Luck",
-    description:
-      "You can expend one luck reroll as an immediate action to reroll a saving throw you just failed. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Tempting Fate",
-    description:
-      "You can expend a luck reroll to reroll a stabilization check. In addition, once per day, whenever you have at least 1 hit point remaining and would be dealt enough damage to kill you, you can expend one luck reroll as an immediate action to take only enough damage to reduce you to -9 hit points. You automatically stabilize. You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    requirements: [gte("identity.meta.level", 6), eq("feats.luck.*.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Third Time's the Charm",
-    description:
-      "You can expend one luck reroll as an immediate action to use the granted power of the Luck domain an additional time per day. You can only use this benefit immediately after using the Luck domain's granted power (in effect, this feat gives you a third chance to succeed on the roll). You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Unbelievable Luck",
-    description:
-      "As long as you have at least one luck reroll remaining for the day, you gain a +2 luck bonus on whichever of your saves has the lowest base bonus. If two or more of your saves tie for the lowest base bonus, choose when you select this feat which save it applies to. If your base save bonuses later change so that the chosen save no longer has the lowest base bonus, the luck bonus from this feat immediately applies to the save that now has the lowest base bonus. You gain two luck rerolls per day.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.luck.*.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-  {
-    name: "Victor's Luck",
-    description:
-      "You can expend one luck reroll as a swift action to reroll a critical threat confirmation roll.You gain one luck reroll per day.",
-    aptitudes: ["General"],
-    properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
-  },
-];
-
-export const GENERAL_FEATS: FeatSeed[] = [
-  {
-    name: "Ascetic Stalker",
-    description:
-      "Your monk and ninja levels stack for the purpose of determining the size of your ki pool. For example, a 4th-level monk/2nd-level ninja with this feat could use her ki powers a number of times equal to 3 (half the sum of her monk and ninja levels) + her Wisdom bonus (if any). Your monk and ninja levels also stack for the purpose of determining your unarmed strike damage, as well as your ki strike class feature. For example, a 4th-level monk/6th-level ninja would deal 1d10 points of damage with her unarmed strike, and her unarmed strike would overcome damage reduction as a lawful magic weapon (as if she were a 10th-level monk). In addition, you can multiclass freely between the monk and ninja classes. You must still remain lawful in order to continue advancing as a monk. You still face the normal XP penalties for having multiple classes more than one level apart.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.kipower.*.possessed")],
-  },
-  {
-    name: "Cool Head (CS)",
-    description:
-      "You immediately learn up to two mental skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on mental skill tricks.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Daredevil Athlete",
-    description:
-      "Three times per day, you can use an immediate action to gain a +5 competence bonus on a single Balance, Climb, Escape Artist, Jump, Ride, Swim, or Tumble check",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Daring Outlaw",
-    description:
-      "Your rogue and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 7th-level rogue/4th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your rogue and swashbuckler levels also stack for the purpose of determining your sneak attack bonus damage. For example, a 7th-level rogue/4th-level swashbuckler would deal an extra 6d6 points of damage with her sneak attack, as if she were an 11th-level rogue.",
-    aptitudes: ["General"],
-    requirements: [gte("feats.sneakattack.count", 2), eq("feats.grace.*.possessed")],
-  },
-  {
-    name: "Deadly Defense",
-    description:
-      "When fighting defensively, you deal an extra 1d6 points of damage with any light weapon or with any weapon to which the Weapon Finesse feat applies (such as a rapier, spiked chain, or whip). This feat's benefit applies only when you are unarmored or wearing light armor and not using a shield.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-  },
-  {
-    name: "Enduring Ki",
-    description:
-      "By spending an extra daily use of your ki power when you activate it, the chosen effect lasts for an additional round (ki power is a class feature of the ninja; see the sidebar for details). You also gain one extra daily use of your ki power.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Expanded Ki Pool",
-    description:
-      "You gain three extra daily uses of your ki power (ki power is a class feature of the ninja; see the sidebar for details).",
-    aptitudes: ["General"],
-    requirements: [eq("feats.kipower.*.possessed")],
-  },
-  {
-    name: "Freerunner",
-    description:
-      "You immediately learn up to two movement skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on movement skill tricks.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Improved Familiar",
-    description:
-      "When you choose a familiar, the creatures on the table below are also available. You can choose a familiar with an alignment up to one step away on each of the alignment axes (lawful through chaotic,good through evil). For example, a chaotic good spellcaster could acquire a neutral familiar. A lawful neutral spellcaster could acquire a neutral good familiar. Except as noted here, improved familiars otherwise use the normal rules for familiars (PH 52). Arcane Familiar Alignment Caster Level Monstrous centipede, Small N 2nd Badger N 3rd Monstrous scorpion, Small N 3rd Viper, Medium N 3rd Monstrous spider, Small N 4th Vargouille* NE 6th Mephit, any N 7th * Vargouilles summoned as familiars do not possess the kiss supernatural ability.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.summonfamiliar.*.possessed")],
-  },
-  {
-    name: "Improved Skirmish",
-    description:
-      "If you move at least 20 feet away from where you were at the start of your turn, your skirmish damage increases by 2d6 and your competence bonus to AC from skirmish improves by 2.",
-    aptitudes: ["General"],
-    requirements: [gte("feats.skirmish.count", 2)],
-  },
-  {
-    name: "Master Spellthief",
-    description:
-      "Your spellthief levels stack with levels of other arcane spellcaster classes (that is, levels of any class that grants arcane spellcasting other than the spellthief) for the purpose of determining what level of spell you can steal. For example, a 4th-level spellthief/4th-level wizard could steal spells of up to 4th level, as if he were an 8th-level spellthief. Your spellthief and arcane spellcaster levels also stack when determining your caster level for all arcane spells. The character described above would have a caster level of 8th for both his spellthief spells and his wizard spells. In addition, you do not incur a chance of arcane spell failure for arcane spells cast or stolen from other classes, but only if you are wearing light armor. You incur the normal arcane spell failure chance when wearing medium or heavy armor or when using a shield.",
-    aptitudes: ["General"],
-    requirements: [gte("spellcasting.arcane", 2)],
-  },
-  {
-    name: "Poison Expert",
-    description:
-      "Choose a type of poison (contact, ingested, inhaled, or injury). The DC to resist both the initial and secondary damage of poisons of this type that you create and use increases by 1. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
-    stackable: true,
-    aptitudes: ["General"],
-    requirements: [eq("feats.poisonuse.*.possessed"), gte("skills.craft.rank", 4)],
-  },
-  {
-    name: "Poison Master",
-    description:
-      "Choose a type of poison (contact, ingested, inhaled, or injury) for which you have selected the Poison Expert feat. The initial and secondary damage dealt by poisons of this type that you create and use increases by 1 point per die of damage (or by 1 point, if it deals a fixed amount of damage). For example, lich dust used by a character with Poison Master (ingested) would deal initial damage of 2d6+2 Str and secondary damage of 1d6+1 Con plus 1d6+1 Str. If a poison doesn't deal damage, this feat has no effect. This feat has no effect on poisons used by other creatures, even if you craft those poisons. It also has no effect on natural poisons (those exuded from a creature's body).",
-    stackable: true,
-    aptitudes: ["General"],
-    requirements: [eq("feats.poisonexpert.possessed"), eq("feats.poisonuse.*.possessed"), gte("skills.craft.rank", 8)],
-  },
-  {
-    name: "Psithief",
-    description:
-      "You can use your steal spell ability to siphon psionic energy instead of spell energy. Instead of stealing a spell, you can choose to steal a number of power points equal twice to the maximum level of spell you can steal minus 1 (up to a maximum value equal to the manifester level of the creature struck). For example, a 4th-level spellthief/1st-level psychic warrior could steal up to 3 power points; if he used this ability against a 2nd-level psion he could steal only 2 power points, since that is the target's manifester level. You can use the stolen power points only to manifest a psionic power you already know. You must use these power points within 1 hour of stealing them; otherwise, the extra psionic energy fades harmlessly away. This feat otherwise follows the rules for the steal spell class feature. In addition, Knowledge (psionics) and Psicraft are spellthief class skills for you. These skills appear on of Expanded Psionics Handbook.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Savvy Rogue",
-    description:
-      'Based on the rogue special abilities you have (PH 50), you gain one or more additional special benefits as described below. You gain the benefits for all the special abilities you have, even those you gain after selecting this feat. Crippling Strike: You can deal Strength damage even to a target that is immune to extra damage from sneak attacks. Defensive Roll: You can use this ability three times per day, rather than once per day. Improved Evasion: You gain a +2 competence bonus on Reflex saves. Opportunist: You can use the opportunist ability as many times per round as you can make attacks of opportunity, but no more than once per creature per round. Each use of the opportunist ability counts as an attack of opportunity. Skill Mastery: When taking 10 with a skill to which you have assigned skill mastery, you can treat the die roll as a 12 instead of as a 10. (In effect, you\'re "taking 12.") Slippery Mind: You gain a +2 competence bonus on the extra save granted by slippery mind.',
-    aptitudes: ["General"],
-    requirements: [gte("classes.rogue.level", 10)],
-  },
-  {
-    name: "Sure Hand",
-    description:
-      "You immediately learn up to two manipulation skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on manipulation skill tricks.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Sweet Talker",
-    description:
-      "You immediately learn up to two interaction skill tricks at no cost, and your limit on skill tricks known increases by one. See for details on interaction skill tricks.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Swift Ambusher",
-    description:
-      "Your rogue and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/7th-level rogue would deal an extra 3d6 points of damage and gain a +3 competence bonus to AC when skirmishing, as if she were an 11th-level scout. In addition, you can qualify for ambush feats as if your sneak attack bonus damage were the sum of your skirmish damage and sneak attack bonus damage. You cannot sacrifice skirmish extra damage to use those feats, however.",
-    aptitudes: ["General"],
-    requirements: [gte("feats.sneakattack.count", 1), gte("feats.skirmish.count", 1)],
-  },
-  {
-    name: "Swift Hunter",
-    description:
-      "Your ranger and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing. For example, a 4th-level scout/1st-level ranger would deal an extra 2d6 points of damage and gain a +1 competence bonus to AC when skirmishing, as if she were a 5th-level scout. Your ranger and scout levels also stack for the purpose of determining when you select additional favored enemies, as well as the total bonus granted against your favored enemies. For example, a 4th-level scout/1st-level ranger would have two favored enemies and could allocate an extra +2 bonus against one of those favored enemies, as if she were a 5th-level ranger. In addition, your skirmish extra damage applies against any creature you have selected as a favored enemy, even if it is normally immune to extra damage from critical hits or skirmish attacks.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.favoredenemy.*.possessed"), gte("feats.skirmish.count", 1)],
-  },
-];
-
-export const BARDIC_FEATS: FeatSeed[] = [
-  {
-    name: "Chant of the Long Road",
-    description:
-      "As a standard action, you can expend one daily use of your bardic music ability to allow yourself and all allies within 60 feet to avoid taking nonlethal damage for hustling (PH 164). This requires 1 minute of performance, and the effect lasts for 1 hour.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Chord of Distraction",
-    description:
-      "As an immediate action, you can expend three daily uses of your bardic music ability to distract an opponent. The target must be within 30 feet of you and able to hear or see you. Make a Perform check, opposed by the target's Sense Motive check (modified as if you were using Bluff to feint in combat). If you succeed, that opponent is rendered flat-footed against an ally of your choice. The effect lasts until that opponent is attacked or until the start of your next turn, whichever comes first.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.bardicmusic.*.possessed"), gte("skills.perform.rank", 9)],
-  },
-  {
-    name: "Epic of the Lost King",
-    description:
-      "As a move action, you can expend one daily use of your bardic music ability to remove fatigue from up to three allies (including yourself) within 30 feet. If you spend three daily uses of bardic music, you can remove exhaustion from your allies instead.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Sound of Silence",
-    description:
-      "As a standard action, you can expend two daily uses of your bardic music ability to deafen a single target for 3 rounds. A successful Will save (using your Perform check result as the DC) negates the effect. The target must be within 30 feet of you and be able to hear you.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.bardicmusic.*.possessed"), gte("skills.perform.rank", 9)],
-  },
-  {
-    name: "Warning Shout",
-    description:
-      "As an immediate action, you can expend two daily uses of your bardic music ability to grant a single ally (other than yourself) a +5 morale bonus on her next Reflex save and evasion the monk class feature, PH 41). The ally must be within 30 feet of you and able to see or hear you. The effect lasts until the target rolls a Reflex save or until the start of your turn, whichever comes first.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.bardicmusic.*.possessed"), eq("feats.evasion.*.possessed"), gte("skills.perform.rank", 9)],
-  },
-];
-
-export const AMBUSH_FEATS: FeatSeed[] = [
-  {
-    name: "Concussion Attack",
-    description:
-      "Your successful sneak attack imposes a 2 penalty on the target's Intelligence and Wisdom checks, as well as on any Intelligence and Wisdom-based skill checks, for 10 rounds. If you use this feat a second time on a target before 10 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 2d6.",
-    aptitudes: ["General"],
-    requirements: [gte("feats.sneakattack.count", 3)],
-  },
-  {
-    name: "Deafening Strike",
-    description:
-      "Your successful sneak attack causes the target to be deafened for 3 rounds. If you use this feat a second time on a target before 3 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 3d6.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Eldritch Erosion",
-    description:
-      "Your successful sneak attack reduces your target's spell resistance and power resistance by 5 (minimum 0) for 10 rounds. If you use this feat a second time on a target before the ten rounds have elapsed, the effect of the first expires. using this reduces your sneak attack damage by 4d6",
-    aptitudes: ["General"],
-    requirements: [gte("skills.knowledgearcana.rank", 1), gte("feats.sneakattack.count", 4)],
-  },
-  {
-    name: "Impeding Attack",
-    description:
-      "Your successful sneak attack imposes a -2 penalty on the target's Strength and Dexterity checks, as well as on any Strength- and Dexterity-based skill checks, for 10 rounds. If you use this feat a second time on a target before 10 rounds have elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 3d6.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Merciful Strike",
-    description:
-      "Your successful sneak attack deals nonlethal damage. When using this feat, you can ignore the usual -4 penalty on attack rolls for attempting to deal nonlethal damage with a lethal weapon. Using this feat reduces your sneak attack damage by 1d6.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Mind Drain",
-    description:
-      "Your successful sneak attack drains power points from your target equal to its manifester level (minimum 1). If this attack reduces your target to 0 power points, the opponent also loses any psionic focus. A target that has no power points when you make the sneak attack is not affected by this feat. You can't use this feat on the same target more than once per round. Using this feat reduces your sneak attack damage by 1d6.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Persistent Attacker",
-    description:
-      "If your sneak attack hits, your first attack against that creature on your next turn is also considered a sneak attack even if it wouldn't normally qualify. Using this feat reduces your first sneak attack's damage by 4d6. The resulting second sneak attack deals its full extra damage.",
-    aptitudes: ["General"],
-  },
-  {
-    name: "Throat Punch",
-    description:
-      "Your successful sneak attack delivered with an unarmed strike temporarily hinders the target's ability to speak. For the next 3 rounds, the target takes a -5 penalty on any skill check requiring speech and has a 50% chance of failure when casting a spell with a verbal component or activating a magic item with a command word. Multiple uses of this feat don't increase the duration beyond 3 rounds. Using this feat reduces your sneak attack damage by 2d6.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.improvedunarmedstrike.possessed"), gte("feats.sneakattack.count", 3)],
-  },
-];
-
-export const FIGHTER_FEATS: FeatSeed[] = [
-  {
-    name: "Daring Warrior",
-    description:
-      "Your fighter and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 6th-level fighter/5th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your fighter and swashbuckler levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-    requirements: [eq("feats.weaponspecialization.*.possessed"), eq("feats.grace.*.possessed")],
-  },
-  {
-    name: "Martial Stalker",
-    description:
-      "Your fighter and ninja levels stack for the purpose of determining the size of your ki pool, as well as your AC bonus. For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja). Your fighter and ninja levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
-  },
-];
-
-export const disembowelingStrike: FeatSeed[] = ALL_WEAPONS.map((w) => ({
-  name: `Disemboweling Strike: ${w}`,
-  description: `Your successful sneak attack with a slashing weapon for which you have ${w} Focus deals 1d4 points of Constitution damage in addition to its normal damage. You can't use this feat against the same target more than once per day. Using this feat reduces your sneak attack damage by 4d6.`,
-  generated: true,
-  aptitudes: ["General"],
-  properties: [{ type: "FEAT_FAMILY", value: "Disemboweling Strike" }],
-}));
-
-export const headShot: FeatSeed[] = ALL_WEAPONS.map((w) => ({
-  name: `Head Shot: ${w}`,
-  description: `Your successful sneak attack with a bludgeoning weapon for which you have ${w} Focus leaves your foe confused for 1 round. A successful Will save (DC 10 + the number of extra damage dice normally dealt by your sneak attack + your Dex modifier) negates this effect. If you use this feat a second time on a target before 1 round has elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 5d6.`,
-  generated: true,
-  aptitudes: ["General"],
-  properties: [{ type: "FEAT_FAMILY", value: "Head Shot" }],
-}));

@@ -28,24 +28,6 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
     ];
   }
 
-  getSpellListIds(
-    rulesetData: Pick<
-      CachedRulesetData,
-      "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug"
-    >,
-    klassId: string,
-  ): string[] {
-    const klassLevels = rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
-    const lists = [
-      ...(collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klassId) ?? []),
-    ];
-    // A class casting from one of several lists (a pious templar's own, or its blackguard one) opens on its own
-    const own = `${stripSeparators(rulesetData.klassesById.get(klassId)?.name ?? "")}spells`;
-    return [...lists.filter((list) => list === own), ...lists.filter((list) => list !== own)].flatMap(
-      (list) => rulesetData.aptitudeIdBySlug.get(list) ?? [],
-    );
-  }
-
   enrichWithFeatPools<T extends { id: string; level: number }>(
     levels: T[],
     modifiers: { sourceId: string; target: string; value: string; operator: string }[],
@@ -216,6 +198,24 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
       ...level,
       spellsPerDay: resultMap.get(level.id) ?? {},
     }));
+  }
+
+  getSpellListIds(
+    rulesetData: Pick<
+      CachedRulesetData,
+      "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug"
+    >,
+    klassId: string,
+  ): string[] {
+    const klassLevels = rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
+    const lists = [
+      ...(collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klassId) ?? []),
+    ];
+    // A class casting from one of several lists (a pious templar's own, or its blackguard one) opens on its own
+    const own = `${stripSeparators(rulesetData.klassesById.get(klassId)?.name ?? "")}spells`;
+    return [...lists.filter((list) => list === own), ...lists.filter((list) => list !== own)].flatMap(
+      (list) => rulesetData.aptitudeIdBySlug.get(list) ?? [],
+    );
   }
 
   readCurrentValues(properties: { type: string; value: string }[]): { bab: number; skills: number } {

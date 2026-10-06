@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { eq } from "drizzle-orm";
 
-import { aptitudesInRules, klassLevelPowersInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
+import { klassLevelPowersInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
@@ -16,6 +16,9 @@ import { createSeededTestRuleset, createTestRuleset, createTestUserAndRuleset } 
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
+/** The aptitudes of the test's ruleset. */
+const APTITUDES = ["Wizard", "Cleric", "Druid"];
+
 function sorted(links: { aptitudeId: string; level: number | null }[]) {
   return [...links].sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
 }
@@ -27,16 +30,6 @@ async function linkedAptitudes(powerId: string) {
     .sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
 }
 
-/** A new user's empty ruleset with three aptitudes. */
-async function setup() {
-  const { user, session, ruleset } = await createTestUserAndRuleset();
-  const aptitudes = await insertRows(
-    aptitudesInRules,
-    ["Wizard", "Cleric", "Druid"].map((name) => ({ name, rulesetId: ruleset.id })),
-  );
-  return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
-}
-
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts,
 // and the spell properties a power generates in GeneratedFeats.test.ts.
 describe("PowersService", () => {
@@ -46,7 +39,7 @@ describe("PowersService", () => {
         session,
         ruleset,
         aptitudeIds: [wizard, cleric, druid],
-      } = await setup();
+      } = await createTestUserAndRuleset(APTITUDES);
       const power = await PowersService.createPower(session, ruleset.id, {
         name: "Fireball",
         aptitudes: [{ id: wizard, level: 3 }, { id: cleric }],
@@ -104,7 +97,7 @@ describe("PowersService", () => {
     });
 
     test("refuses a new power without an aptitude", async () => {
-      const { session, ruleset } = await setup();
+      const { session, ruleset } = await createTestUserAndRuleset(APTITUDES);
       await expect(
         PowersService.createPower(session, ruleset.id, { name: "Orphan Spell", aptitudes: [] }),
       ).rejects.toThrow(BadRequestError);
@@ -115,7 +108,7 @@ describe("PowersService", () => {
         session,
         ruleset,
         aptitudeIds: [wizard, feats],
-      } = await setup();
+      } = await createTestUserAndRuleset(APTITUDES);
       await FeatsService.createFeat(session, ruleset.id, { name: "Power Attack", aptitudeIds: [feats] });
       await expect(
         PowersService.createPower(session, ruleset.id, { name: "Feat Spell", aptitudes: [{ id: feats }] }),
@@ -139,7 +132,7 @@ describe("PowersService", () => {
         session,
         ruleset: parent,
         aptitudeIds: [wizard, cleric],
-      } = await setup();
+      } = await createTestUserAndRuleset(APTITUDES);
       const source = await PowersService.createPower(session, parent.id, {
         name: "Fireball",
         aptitudes: [{ id: wizard, level: 3 }],
@@ -164,7 +157,7 @@ describe("PowersService", () => {
       session,
       ruleset,
       aptitudeIds: [wizard],
-    } = await setup();
+    } = await createTestUserAndRuleset(APTITUDES);
     const power = await PowersService.createPower(session, ruleset.id, {
       name: "Fireball",
       aptitudes: [{ id: wizard }],
@@ -189,7 +182,7 @@ describe("PowersService", () => {
       session,
       ruleset,
       aptitudeIds: [wizard],
-    } = await setup();
+    } = await createTestUserAndRuleset(APTITUDES);
     const power = await PowersService.createPower(session, ruleset.id, {
       name: "Doomed Spell",
       aptitudes: [{ id: wizard }],
@@ -211,7 +204,7 @@ describe("PowersService", () => {
       session,
       ruleset: extension,
       aptitudeIds: [wizard],
-    } = await setup();
+    } = await createTestUserAndRuleset(APTITUDES);
     const power = await PowersService.createPower(session, extension.id, {
       name: "Extension Spell",
       aptitudes: [{ id: wizard }],

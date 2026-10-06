@@ -6,12 +6,6 @@
  * literal-value editing.
  */
 
-export function isTemplateValue(value: string): boolean {
-  // Require non-whitespace inner content so `{{ }}` and `{{   }}` are
-  // treated as literals (matches the server's check).
-  return /^\{\{\s*\S[\s\S]*?\s*\}\}$/.test(value ?? "");
-}
-
 /**
  * Extract the inner expression of a template value, then strip a single
  * outer pair of brackets `[ ... ]` if present. Returns null for
@@ -39,4 +33,10 @@ export function extractTemplatePath(value: string): string | null {
   // operators, function calls, brackets, etc.
   if (!/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(candidate)) return null;
   return candidate;
+}
+
+export function isTemplateValue(value: string): boolean {
+  // Require non-whitespace inner content so `{{ }}` and `{{   }}` are
+  // treated as literals (matches the server's check).
+  return /^\{\{\s*\S[\s\S]*?\s*\}\}$/.test(value ?? "");
 }

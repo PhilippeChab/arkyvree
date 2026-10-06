@@ -7,6 +7,28 @@ const SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE = "Special Mount Class Feature";
 
 const SPECIAL_MOUNT_APTITUDES = [SPECIAL_MOUNT_APTITUDE, SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE];
 
+const SPECIAL_MOUNT_CLASS: ClassSeed = {
+  name: "Special Mount",
+  description:
+    "A paladin's special mount, a magical beast bonded to its master at 5th level. The mount's hit points, base attack bonus, and saving throws scale from total Hit Dice; the master's paladin level drives its bonus HD, natural armor, strength, and intelligence progression.",
+  hd: 8,
+  levels: 20,
+  skillPoints: 2,
+  kind: "mount",
+  bab: "medium",
+  saves: { fortitude: "good", reflex: "good", will: "poor" },
+  classSkills: ["Listen", "Spot", "Survival", "Swim"],
+  classFeatureAptitude: SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE,
+  classFeatures: [
+    [5, "Empathic Link (Special Mount)"],
+    [5, "Share Spells (Special Mount)"],
+    [5, "Share Saving Throws (Special Mount)"],
+    [5, "Improved Evasion (Special Mount)"],
+    [11, "Command (Special Mount)"],
+    [15, "Spell Resistance (Special Mount)"],
+  ],
+};
+
 const SPECIAL_MOUNT_CLASS_FEATURE_FEATS: FeatSeed[] = [
   {
     name: "Empathic Link (Special Mount)",
@@ -87,28 +109,6 @@ const SPECIAL_MOUNT_RACES: RaceDefinition[] = [
     properties: QUADRUPED,
   },
 ];
-
-const SPECIAL_MOUNT_CLASS: ClassSeed = {
-  name: "Special Mount",
-  description:
-    "A paladin's special mount, a magical beast bonded to its master at 5th level. The mount's hit points, base attack bonus, and saving throws scale from total Hit Dice; the master's paladin level drives its bonus HD, natural armor, strength, and intelligence progression.",
-  hd: 8,
-  levels: 20,
-  skillPoints: 2,
-  kind: "mount",
-  bab: "medium",
-  saves: { fortitude: "good", reflex: "good", will: "poor" },
-  classSkills: ["Listen", "Spot", "Survival", "Swim"],
-  classFeatureAptitude: SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE,
-  classFeatures: [
-    [5, "Empathic Link (Special Mount)"],
-    [5, "Share Spells (Special Mount)"],
-    [5, "Share Saving Throws (Special Mount)"],
-    [5, "Improved Evasion (Special Mount)"],
-    [11, "Command (Special Mount)"],
-    [15, "Spell Resistance (Special Mount)"],
-  ],
-};
 
 export const SPECIAL_MOUNTS: BondContent = {
   kind: "mount",

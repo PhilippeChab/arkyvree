@@ -14,8 +14,8 @@ import type { Modifier } from "@/database/packages/dnd35/content/types.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-const STRENGTH: Modifier = { target: "abilities.strength.misc", operator: "add", value: "2", valueType: "number" };
 const DEXTERITY: Modifier = { target: "abilities.dexterity.misc", operator: "add", value: "2", valueType: "number" };
+const STRENGTH: Modifier = { target: "abilities.strength.misc", operator: "add", value: "2", valueType: "number" };
 
 describe("Detected modifiers", () => {
   test("are each entry's, with its errors and unresolved text only when it has some", () => {

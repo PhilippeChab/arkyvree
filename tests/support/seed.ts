@@ -5,7 +5,7 @@ import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { itemsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Characters } from "@/server/repositories/index.ts";
+import { Characters, Rulesets } from "@/server/repositories/index.ts";
 
 let seedContext: Promise<SeedContext> | undefined;
 
@@ -47,4 +47,11 @@ export async function findSeededCharacter(name: string) {
   const character = items.find((c) => c.name === name);
   if (!character) throw new Error(`Seeded character ${name} not found`);
   return character;
+}
+
+/** A seeded ruleset, by its name. */
+export async function findSeededRuleset(name: string) {
+  const ruleset = await Rulesets.findOne(db, { name });
+  if (!ruleset) throw new Error(`Seeded ruleset ${name} not found`);
+  return ruleset;
 }

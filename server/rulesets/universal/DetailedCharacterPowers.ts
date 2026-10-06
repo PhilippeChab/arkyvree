@@ -5,21 +5,6 @@ import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude, type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type PowerEntry = {
-  power: Power;
-  /**
-   * Each property type's values, in its options' order: a list, which a requirement's `contains` asks one of and a
-   * modifier adds a value to or takes one from. A sheet lists them joined (`getFlatPowers`).
-   */
-  properties: Record<string, string[]>;
-  /** Its DC as each of the character's classes casts it, by the class's aptitude slug. */
-  dc?: PowerDcsByClass;
-};
-
-/** A grouping's spells, each with its DC as each class casts it */
-type PowerGroupEntry = Record<string, Record<string, { dc: PowerDc }>>;
-type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
-
 /**
  * Spell known entries ({ [aptSlug]: { known } }) are bolted onto PowerEntry objects and onto standalone entries for
  * spells the character doesn't have. The traversal system navigates these via dot paths (e.g.
@@ -32,6 +17,21 @@ type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
 type DetailedCharacterComprehensivePowers = {
   [key: string]: PowerEntry | PowerGroupEntry | Record<string, { known: boolean }> | PowerGroupsNamespace;
 };
+
+type PowerEntry = {
+  power: Power;
+  /**
+   * Each property type's values, in its options' order: a list, which a requirement's `contains` asks one of and a
+   * modifier adds a value to or takes one from. A sheet lists them joined (`getFlatPowers`).
+   */
+  properties: Record<string, string[]>;
+  /** Its DC as each of the character's classes casts it, by the class's aptitude slug. */
+  dc?: PowerDcsByClass;
+};
+/** A grouping's spells, each with its DC as each class casts it */
+type PowerGroupEntry = Record<string, Record<string, { dc: PowerDc }>>;
+
+type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
 
 export default class DetailedCharacterPowers {
   /** `propertyValues`: a property type's options in their order (the ruleset's), which a spell lists its values in. */
@@ -100,6 +100,41 @@ export default class DetailedCharacterPowers {
 
   private readonly detailedCharacterPowers: DetailedCharacterComprehensivePowers = {};
 
+  addPowerEntries(powers: (Power & { properties: Property[] })[]) {
+    for (const power of powers) {
+      const propertiesMap = groupPropertyValues(power.properties, this.propertyValues);
+
+      // A spell already listed keeps what's on its entry: its known flags and its DCs by class
+      const slug = stripSeparators(power.name);
+      this.detailedCharacterPowers[slug] = { ...this.detailedCharacterPowers[slug], power, properties: propertiesMap };
+    }
+  }
+
+  /** The spells as a sheet lists them: each property type's values joined, those modifiers add included. */
+  getFlatPowers(): Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> {
+    const result: Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> = {};
+    for (const [key, value] of Object.entries(this.detailedCharacterPowers)) {
+      if ("power" in value) {
+        const entry = value as PowerEntry;
+        result[key] = { ...entry, properties: formatPropertyValues(entry.properties, this.propertyValues) };
+      }
+    }
+    return result;
+  }
+
+  getPower(name: string) {
+    return this.detailedCharacterPowers[stripSeparators(name)] as PowerEntry | undefined;
+  }
+
+  getPowers() {
+    return this.detailedCharacterPowers;
+  }
+
+  getSpellEntry(spellSlug: string, aptitudeSlug: string): { known: boolean } | undefined {
+    const entry = this.detailedCharacterPowers[spellSlug] as Record<string, { known: boolean }> | undefined;
+    return entry?.[aptitudeSlug];
+  }
+
   /** `featListIds`: the lists a feat brings (a domain's, a specialist's school), whose spells it gives, never known. */
   initialize(
     powers: (Power & { properties: Property[]; aptitudeId: string; powerLevel: number | null })[],
@@ -141,41 +176,6 @@ export default class DetailedCharacterPowers {
       if (spellEntry?.[aptSlug]) {
         spellEntry[aptSlug].known = true;
       }
-    }
-  }
-
-  /** The spells as a sheet lists them: each property type's values joined, those modifiers add included. */
-  getFlatPowers(): Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> {
-    const result: Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> = {};
-    for (const [key, value] of Object.entries(this.detailedCharacterPowers)) {
-      if ("power" in value) {
-        const entry = value as PowerEntry;
-        result[key] = { ...entry, properties: formatPropertyValues(entry.properties, this.propertyValues) };
-      }
-    }
-    return result;
-  }
-
-  getPower(name: string) {
-    return this.detailedCharacterPowers[stripSeparators(name)] as PowerEntry | undefined;
-  }
-
-  getPowers() {
-    return this.detailedCharacterPowers;
-  }
-
-  getSpellEntry(spellSlug: string, aptitudeSlug: string): { known: boolean } | undefined {
-    const entry = this.detailedCharacterPowers[spellSlug] as Record<string, { known: boolean }> | undefined;
-    return entry?.[aptitudeSlug];
-  }
-
-  addPowerEntries(powers: (Power & { properties: Property[] })[]) {
-    for (const power of powers) {
-      const propertiesMap = groupPropertyValues(power.properties, this.propertyValues);
-
-      // A spell already listed keeps what's on its entry: its known flags and its DCs by class
-      const slug = stripSeparators(power.name);
-      this.detailedCharacterPowers[slug] = { ...this.detailedCharacterPowers[slug], power, properties: propertiesMap };
     }
   }
 

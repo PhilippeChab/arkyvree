@@ -8,6 +8,8 @@ interface TemplateExpressionToolbarProps {
   disabled?: boolean;
 }
 
+const FUNCTIONS = ["floor", "ceil", "min", "max", "abs"];
+
 /** Operator display chars → expression chars (we render math symbols but save ASCII). */
 const OPERATORS: { display: string; insert: string }[] = [
   { display: "+", insert: "+" },
@@ -15,8 +17,6 @@ const OPERATORS: { display: string; insert: string }[] = [
   { display: "×", insert: "*" },
   { display: "÷", insert: "/" },
 ];
-
-const FUNCTIONS = ["floor", "ceil", "min", "max", "abs"];
 
 /**
  * Inline operator + function toolbar that drives a sibling

@@ -10,18 +10,24 @@ import { isRecord } from "@/shared/isRecord.ts";
 
 import { isNavigableTarget, useOpenActivityTarget } from "./useOpenActivityTarget.ts";
 
-type NotificationItem = InferResponseType<typeof rpc.api.notifications.$get, 200>["items"][number];
-/** Fields the actions use; the bell's unread-summary items carry them too. */
-type NotificationLike = Pick<NotificationItem, "id" | "type" | "targetTable" | "targetId" | "data" | "readAt">;
-
-type NotificationData = Record<string, string | undefined>;
-
-type InviteType = keyof typeof INVITES;
-
 interface InviteAnswer {
   notification: NotificationLike;
   type: InviteType;
 }
+type InviteType = keyof typeof INVITES;
+
+type NotificationData = Record<string, string | undefined>;
+
+type NotificationItem = InferResponseType<typeof rpc.api.notifications.$get, 200>["items"][number];
+
+/** Fields the actions use; the bell's unread-summary items carry them too. */
+type NotificationLike = Pick<NotificationItem, "id" | "type" | "targetTable" | "targetId" | "data" | "readAt">;
+
+/**
+ * Shared by accept and reject, so every notification surface can tell which invites are being answered, whichever
+ * surface the click came from.
+ */
+const ANSWER_INVITE_KEY = ["notifications", "answerInvite"] as const;
 
 /**
  * Notification types that are invitations, answered in place with Accept /
@@ -50,12 +56,6 @@ const INVITES = {
     path: (d: NotificationData) => (d.characterId ? `/characters/${d.characterId}` : "/characters"),
   },
 } as const;
-
-/**
- * Shared by accept and reject, so every notification surface can tell which invites are being answered, whichever
- * surface the click came from.
- */
-const ANSWER_INVITE_KEY = ["notifications", "answerInvite"] as const;
 
 function isInviteType(type: string): type is InviteType {
   return type in INVITES;

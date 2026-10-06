@@ -2,6 +2,26 @@ import { eq, feat, gte, or } from "@/database/packages/dnd35/content/requirement
 import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 
+export const arcaneDefense: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
+  name: `Arcane Defense: ${s}`,
+  description: `You get a +3 bonus on your saving throws against spells from the chosen school.`,
+  generated: true,
+  aptitudes: ["General"],
+  requirements: [eq(feat(`Spell Focus: ${s}`))],
+  properties: [{ type: "FEAT_FAMILY", value: "Arcane Defense" }],
+}));
+
+export const DRACONIC_FEATS: FeatSeed[] = [
+  {
+    name: "Draconic Breath",
+    description:
+      "As a standard action, you can change arcane spell energy into a breath weapon of your draconic heritage energy type. The breath weapon is a 30-foot cone (fire or cold) or a 60-foot line (acid or electricity) that deals 2d6 points of damage per level of the spell that you expended to create the effect. Any creature in the area can make a Reflex save (DC 10 + level of the spell used + your Cha modifier) for half damage. This is a supernatural ability.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.draconicheritage.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
+  },
+];
+
 export const GENERAL_FEATS: FeatSeed[] = [
   {
     name: "Arcane mastery",
@@ -239,6 +259,83 @@ export const GENERAL_FEATS: FeatSeed[] = [
   },
 ];
 
+export const HERITAGE_FEATS: FeatSeed[] = [
+  {
+    name: "Draconic Claw",
+    description:
+      "You gain claws. You can make a natural attack with your claw, dealing damage based on your size (Small 1d4, Medium 1d6, Large 1d8). In any round when you cast a spell with a casting time of 1 standard action, you can make a single claw attack as a swift action against an opponent you threaten",
+    aptitudes: ["General"],
+    requirements: [eq("feats.draconicheritage.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
+  },
+  {
+    name: "Draconic Flight",
+    description:
+      "After you cast an arcane spell with a casting time of 1 standard action, you gain a fl y speed equal to 10 feet per level of the spell you just cast for the remainder of your turn",
+    aptitudes: ["General"],
+    requirements: [eq("feats.draconicheritage.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
+  },
+  {
+    name: "Draconic Heritage",
+    description:
+      "Choose one dragon from the Draconic Heritage list below and gain the indicated skill as a class skill. This is your draconic heritage, which cannot be changed once the feat has been taken. Half-dragons must choose the same dragon kind as their dragon parent. In addition, you gain a bonus on saving throws against sleep and paralysis, as well as spells and abilities with the energy type of your Draconic Heritage. This bonus is equal to the number of draconic feats you have. Draconic Heritage. Dragon -- Energy ----- Skill. Black -----Acid ---------Hide. Blue ------Electricity --- Listen. Green ----Acid -------- Move Silently. Red ------ Fire --------- Intimidate. White ---- Cold -------- Balance. Brass ---- Fire -------- Gather Information. Bronze -- Electricity -- Survival. Copper -- Acid -------- Hide. Gold ----- Fire --------- Heal. Silver ---- Cold -------- Disguise.",
+    aptitudes: ["General"],
+    requirements: [gte("classes.sorcerer.level", 1)],
+    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
+  },
+  {
+    name: "Draconic Legacy",
+    description:
+      "Based on your draconic heritage, add the following spells to your list of spells known. Each spell is added at the level that a spellcaster would normally gain it unless otherwise indicated. Draconic Legacy Dragon Kind Spells Known Black Charm animal (snakes and lizards only), deeper darkness, insect plague. Blue --- Major image, mirage arcane, ventriloquism. Green - Charm person, dominate person, plant growth. Red ---- Detect secret doors, suggestion, true seeing. White -- Obscuring mist, sleet storm, wall of ice (5th level). Brass - Control winds, endure elements, tongues Bronze Control water (5th level), speak with animals, water breathing. Copper - Silent image, stone shape, wall of stone Gold Bless, daylight, dispel evil. Silver -- Air walk (5th level), feather fall, wind wall.",
+    aptitudes: ["General"],
+    requirements: [gte("feats.draconic.count", 4)],
+    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
+  },
+  {
+    name: "Draconic Power",
+    description:
+      "Your caster level increases by 1, and you add 1 to the save DC of all arcane spells with the energy descriptor of the same energy type as determined by your draconic heritage.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.draconicheritage.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
+  },
+  {
+    name: "Draconic Presence",
+    description:
+      "Whenever you cast an arcane spell, all opponents within 10 feet of you who have fewer Hit Dice than you become shaken for a number of rounds equal to the level of the spell you cast. The effect is negated by a Will save (DC 10 + level of the spell cast + your Cha modifier). A successful save indicates that the opponent is immune to your draconic presence for 24 hours. This ability does not affect creatures with an Intelligence of 3 or lower or creatures that are already shaken, nor does it have any effect on dragons.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.draconicheritage.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
+  },
+  {
+    name: "Draconic Resistance",
+    description:
+      "You gain resistance to the energy type of your draconic heritage equal to three times the number of draconic feats you currently have (including draconic feats you take after gaining this feat).",
+    aptitudes: ["General"],
+    requirements: [eq("feats.draconicheritage.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
+  },
+  {
+    name: "Draconic Skin",
+    description: "Your natural armor increases by 1.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.draconicheritage.possessed")],
+    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
+  },
+];
+
+export const ITEM_CREATION_FEATS: FeatSeed[] = [
+  {
+    name: "Craft Contingent Spell",
+    description:
+      "You can make contingent any spell that you know. Crafting a contingent spell takes one day for each 1,000 gp in its base price (spell level Ã- caster level Ã- 100 gp). To craft a contingent spell, you must spend 1/25 of this base price in XP and use up raw materials costing one-half the base price. Some spells incur extra costs in material components or XP (as noted in their descriptions), which must be paid when the contingent spell is created. See Contingent Spells, for more information.",
+    aptitudes: ["General", "Wizard Bonus Feat"],
+    requirements: [or(gte("spellcasting.arcane", 11), gte("spellcasting.divine", 11))],
+    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
+  },
+];
+
 export const METAMAGIC_FEATS: FeatSeed[] = [
   {
     name: "Black Lore of Moil",
@@ -446,100 +543,3 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
   },
 ];
-
-export const ITEM_CREATION_FEATS: FeatSeed[] = [
-  {
-    name: "Craft Contingent Spell",
-    description:
-      "You can make contingent any spell that you know. Crafting a contingent spell takes one day for each 1,000 gp in its base price (spell level Ã- caster level Ã- 100 gp). To craft a contingent spell, you must spend 1/25 of this base price in XP and use up raw materials costing one-half the base price. Some spells incur extra costs in material components or XP (as noted in their descriptions), which must be paid when the contingent spell is created. See Contingent Spells, for more information.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [or(gte("spellcasting.arcane", 11), gte("spellcasting.divine", 11))],
-    properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
-  },
-];
-
-export const DRACONIC_FEATS: FeatSeed[] = [
-  {
-    name: "Draconic Breath",
-    description:
-      "As a standard action, you can change arcane spell energy into a breath weapon of your draconic heritage energy type. The breath weapon is a 30-foot cone (fire or cold) or a 60-foot line (acid or electricity) that deals 2d6 points of damage per level of the spell that you expended to create the effect. Any creature in the area can make a Reflex save (DC 10 + level of the spell used + your Cha modifier) for half damage. This is a supernatural ability.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.draconicheritage.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
-  },
-];
-
-export const HERITAGE_FEATS: FeatSeed[] = [
-  {
-    name: "Draconic Claw",
-    description:
-      "You gain claws. You can make a natural attack with your claw, dealing damage based on your size (Small 1d4, Medium 1d6, Large 1d8). In any round when you cast a spell with a casting time of 1 standard action, you can make a single claw attack as a swift action against an opponent you threaten",
-    aptitudes: ["General"],
-    requirements: [eq("feats.draconicheritage.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
-  },
-  {
-    name: "Draconic Flight",
-    description:
-      "After you cast an arcane spell with a casting time of 1 standard action, you gain a fl y speed equal to 10 feet per level of the spell you just cast for the remainder of your turn",
-    aptitudes: ["General"],
-    requirements: [eq("feats.draconicheritage.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
-  },
-  {
-    name: "Draconic Heritage",
-    description:
-      "Choose one dragon from the Draconic Heritage list below and gain the indicated skill as a class skill. This is your draconic heritage, which cannot be changed once the feat has been taken. Half-dragons must choose the same dragon kind as their dragon parent. In addition, you gain a bonus on saving throws against sleep and paralysis, as well as spells and abilities with the energy type of your Draconic Heritage. This bonus is equal to the number of draconic feats you have. Draconic Heritage. Dragon -- Energy ----- Skill. Black -----Acid ---------Hide. Blue ------Electricity --- Listen. Green ----Acid -------- Move Silently. Red ------ Fire --------- Intimidate. White ---- Cold -------- Balance. Brass ---- Fire -------- Gather Information. Bronze -- Electricity -- Survival. Copper -- Acid -------- Hide. Gold ----- Fire --------- Heal. Silver ---- Cold -------- Disguise.",
-    aptitudes: ["General"],
-    requirements: [gte("classes.sorcerer.level", 1)],
-    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
-  },
-  {
-    name: "Draconic Legacy",
-    description:
-      "Based on your draconic heritage, add the following spells to your list of spells known. Each spell is added at the level that a spellcaster would normally gain it unless otherwise indicated. Draconic Legacy Dragon Kind Spells Known Black Charm animal (snakes and lizards only), deeper darkness, insect plague. Blue --- Major image, mirage arcane, ventriloquism. Green - Charm person, dominate person, plant growth. Red ---- Detect secret doors, suggestion, true seeing. White -- Obscuring mist, sleet storm, wall of ice (5th level). Brass - Control winds, endure elements, tongues Bronze Control water (5th level), speak with animals, water breathing. Copper - Silent image, stone shape, wall of stone Gold Bless, daylight, dispel evil. Silver -- Air walk (5th level), feather fall, wind wall.",
-    aptitudes: ["General"],
-    requirements: [gte("feats.draconic.count", 4)],
-    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
-  },
-  {
-    name: "Draconic Power",
-    description:
-      "Your caster level increases by 1, and you add 1 to the save DC of all arcane spells with the energy descriptor of the same energy type as determined by your draconic heritage.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.draconicheritage.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
-  },
-  {
-    name: "Draconic Presence",
-    description:
-      "Whenever you cast an arcane spell, all opponents within 10 feet of you who have fewer Hit Dice than you become shaken for a number of rounds equal to the level of the spell you cast. The effect is negated by a Will save (DC 10 + level of the spell cast + your Cha modifier). A successful save indicates that the opponent is immune to your draconic presence for 24 hours. This ability does not affect creatures with an Intelligence of 3 or lower or creatures that are already shaken, nor does it have any effect on dragons.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.draconicheritage.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
-  },
-  {
-    name: "Draconic Resistance",
-    description:
-      "You gain resistance to the energy type of your draconic heritage equal to three times the number of draconic feats you currently have (including draconic feats you take after gaining this feat).",
-    aptitudes: ["General"],
-    requirements: [eq("feats.draconicheritage.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
-  },
-  {
-    name: "Draconic Skin",
-    description: "Your natural armor increases by 1.",
-    aptitudes: ["General"],
-    requirements: [eq("feats.draconicheritage.possessed")],
-    properties: [{ type: "FEAT_FAMILY", value: "Draconic" }],
-  },
-];
-
-export const arcaneDefense: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
-  name: `Arcane Defense: ${s}`,
-  description: `You get a +3 bonus on your saving throws against spells from the chosen school.`,
-  generated: true,
-  aptitudes: ["General"],
-  requirements: [eq(feat(`Spell Focus: ${s}`))],
-  properties: [{ type: "FEAT_FAMILY", value: "Arcane Defense" }],
-}));

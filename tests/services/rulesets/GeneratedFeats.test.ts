@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { addClassLevels } from "@/database/seeds/seedCharacter.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Abilities,
@@ -28,6 +27,7 @@ import { WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createSeedCharacter } from "@/tests/support/levelFixtures.ts";
 import {
+  copyEntity,
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
@@ -58,10 +58,6 @@ function spell(aptitudeId: string, name: string, school?: string, fields: Record
   };
 }
 
-async function findFeat(rulesetId: string, name: string) {
-  return (await Feats.findOne(db, { rulesetId, name }))!;
-}
-
 /** A ruleset of its own with Strength, a spell list and, unless left out, the General aptitude generated feats go in. */
 async function bareRuleset({ general = true } = {}) {
   const { session, ruleset } = await createTestUserAndRuleset();
@@ -80,6 +76,10 @@ async function featNames(rulesetId: string, search?: string) {
     .map((feat) => feat.name)
     .filter((name) => !search || name === search)
     .sort();
+}
+
+async function findFeat(rulesetId: string, name: string) {
+  return (await Feats.findOne(db, { rulesetId, name }))!;
 }
 
 async function forkWithExtensions() {
@@ -326,7 +326,7 @@ describe("an inherited skill's Skill Focus", () => {
       { characterLevelId: levelId, aptitudeId: ctx.aptMap.General, featId: feat.id },
     ]);
     const copy =
-      picked === "inherited" ? undefined : await cowEntity(db, "feats", feat.id, fork.id, fork.ancestorRulesetIds, []);
+      picked === "inherited" ? undefined : await copyEntity(db, "feats", feat.id, fork.id, fork.ancestorRulesetIds, []);
 
     const mutation =
       operation === "delete"
@@ -366,9 +366,9 @@ describe("an inherited skill's Skill Focus", () => {
 
   test("is cleaned up from the rules the caller loaded, without another lookup", async () => {
     const { fork } = await seededForkWithClimb();
-    await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
+    await withRulesetScope(db, fork.id, async ({ ruleset, rulesetData }) => {
       const { timing } = await measure(() =>
-        new Dnd35SkillsHooks().deleteSkillFeat(db, fork.id, rulesetData, "No generated feat"),
+        new Dnd35SkillsHooks().deleteSkillFeat(db, ruleset, rulesetData, "No generated feat"),
       );
       expect(timing).toMatchObject({ queryCount: 0, cacheHits: 0, cacheMisses: 0 });
     });

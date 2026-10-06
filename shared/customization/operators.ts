@@ -1,5 +1,9 @@
 /** Shared application definitions, checked against the migrated database by tests. */
 
+export const CHAINING_OPERATORS = ["and", "or"] as const;
+
+export const MODIFIER_OPERATORS = ["add", "subtract", "multiply", "divide", "set"] as const;
+
 /** The requirement operators that compare a number: what a numeric target path offers a requirement. */
 export const NUMERIC_REQUIREMENT_OPERATORS = [
   "equal",
@@ -9,7 +13,6 @@ export const NUMERIC_REQUIREMENT_OPERATORS = [
   "greater_than_or_equal",
   "less_than_or_equal",
 ] as const;
-
 export const REQUIREMENT_OPERATORS = [
   ...NUMERIC_REQUIREMENT_OPERATORS,
   "contains",
@@ -21,9 +24,6 @@ export const REQUIREMENT_OPERATORS = [
   "is_empty",
   "not_empty",
 ] as const;
-
-export const MODIFIER_OPERATORS = ["add", "subtract", "multiply", "divide", "set"] as const;
-export const CHAINING_OPERATORS = ["and", "or"] as const;
 
 /** The operators a numeric target path offers a modifier, or a requirement. */
 export function getNumericOperators(kind: "modifier" | "requirement"): string[] {

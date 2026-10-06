@@ -1,16 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { skillsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertEntityNameAvailable,
-  cowEntityToDelete,
-  cowEntityToEdit,
-  findScopedEntity,
-  hasCharacterPicks,
-  repointTombstoneSnapshot,
-} from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Skills } from "@/server/repositories/index.ts";
@@ -21,6 +14,96 @@ import type { Property, Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 class SkillsService {
+  async createSkill(
+    session: Session,
+    rulesetId: string,
+    body: {
+      name: string;
+      description?: string | null;
+      primaryAbilityId: string;
+      impactedByWeight: boolean;
+      checkPenaltyMultiplier: number;
+      usableWithoutTraining: boolean;
+    },
+  ) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+
+        if (stripSeparators(body.name) === "budget") {
+          throw new BadRequestError('"Budget" is a reserved skill name');
+        }
+
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "skills", body.name);
+
+        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+
+        const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, ...skillData } = body;
+        const flags = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
+        const rows = await Skills.create(tx, { ...skillData, rulesetId });
+        const skill = rows[0];
+
+        if (tombstoneAncestorId) {
+          await edit.repointTombstone(tx, "skills", tombstoneAncestorId, skill.id);
+        }
+
+        const storedFlags = await hooks.skills.syncProperties(tx, skill.id, flags);
+        await hooks.skills.generateSkillFeat(tx, rulesetId, sourceChain, body.name);
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: skill.id,
+          targetTable: getTableName(skillsInRules),
+          type: "createSkill",
+          data: { entityName: skill.name },
+        });
+
+        return { ...skill, ...storedFlags };
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
+  async deleteSkill(session: Session, rulesetId: string, skillId: string) {
+    const result = await withTransaction(async (tx) => {
+      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        const { sourceChain } = rulesetData.cow;
+
+        const inUse = await hasCharacterPicks(tx, "skills", skillId, rulesetId);
+        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+
+        const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
+
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "skills", skill);
+
+        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        await hooks.skills.deleteSkillFeat(tx, ruleset, rulesetData, skill.name);
+
+        // FK CASCADE on klass_skills.skill_id wipes those join rows.
+        // The database deletes its customizations with it.
+        const rows = await Skills.delete(tx, { id: targetId });
+        const deletedSkill = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId,
+          targetTable: getTableName(skillsInRules),
+          type: "deleteSkill",
+          data: { rulesetId, entityName: skill.name },
+        });
+
+        return deletedSkill;
+      });
+    });
+    RulesetCache.invalidate(rulesetId);
+    return result;
+  }
+
   async getSkill(rulesetId: string, skillId: string) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
@@ -63,65 +146,6 @@ class SkillsService {
     });
   }
 
-  async createSkill(
-    session: Session,
-    rulesetId: string,
-    body: {
-      name: string;
-      description?: string | null;
-      primaryAbilityId: string;
-      impactedByWeight: boolean;
-      checkPenaltyMultiplier: number;
-      usableWithoutTraining: boolean;
-    },
-  ) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-        if (stripSeparators(body.name) === "budget") {
-          throw new BadRequestError('"Budget" is a reserved skill name');
-        }
-
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "skills",
-          body.name,
-        );
-
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-
-        const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, ...skillData } = body;
-        const flags = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
-        const rows = await Skills.create(tx, { ...skillData, rulesetId });
-        const skill = rows[0];
-
-        if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "skills", tombstoneAncestorId, skill.id);
-        }
-
-        const storedFlags = await hooks.skills.syncProperties(tx, skill.id, flags);
-        await hooks.skills.generateSkillFeat(tx, rulesetId, sourceChain, body.name);
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: skill.id,
-          targetTable: getTableName(skillsInRules),
-          type: "createSkill",
-          data: { entityName: skill.name },
-        });
-
-        return { ...skill, ...storedFlags };
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
   async updateSkill(
     session: Session,
     rulesetId: string,
@@ -148,7 +172,8 @@ class SkillsService {
           throw new BadRequestError('"Budget" is a reserved skill name');
         }
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "skills", skill);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "skills", skill);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
@@ -163,7 +188,7 @@ class SkillsService {
         const storedFlags = await hooks.skills.syncProperties(tx, targetId, flags);
 
         if (skill.name !== body.name) {
-          await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);
+          await hooks.skills.deleteSkillFeat(tx, ruleset, rulesetData, skill.name);
           await hooks.skills.generateSkillFeat(tx, rulesetId, sourceChain, body.name);
         }
 
@@ -179,41 +204,6 @@ class SkillsService {
         });
 
         return { ...updatedSkill, ...storedFlags };
-      });
-    });
-    RulesetCache.invalidate(rulesetId);
-    return result;
-  }
-
-  async deleteSkill(session: Session, rulesetId: string, skillId: string) {
-    const result = await withTransaction(async (tx) => {
-      return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
-        const inUse = await hasCharacterPicks(tx, "skills", skillId, rulesetId);
-        (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-        const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
-
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "skills", skill);
-
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-        await hooks.skills.deleteSkillFeat(tx, rulesetId, rulesetData, skill.name);
-
-        // FK CASCADE on klass_skills.skill_id wipes those join rows.
-        // The database deletes its customizations with it.
-        const rows = await Skills.delete(tx, { id: targetId });
-        const deletedSkill = rows[0];
-
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId,
-          targetTable: getTableName(skillsInRules),
-          type: "deleteSkill",
-          data: { rulesetId, entityName: skill.name },
-        });
-
-        return deletedSkill;
       });
     });
     RulesetCache.invalidate(rulesetId);

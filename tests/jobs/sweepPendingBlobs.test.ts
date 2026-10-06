@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { sweepPendingBlobs } from "@/server/jobs/sweepPendingBlobs.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
-import { setStorageForTest } from "@/server/storage/s3.ts";
+import ObjectStorage from "@/server/storage/s3.ts";
 import { fakeStorage } from "@/tests/support/storage.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -30,7 +30,7 @@ describe("sweepPendingBlobs", () => {
 
   beforeEach(() => {
     deleted = [];
-    setStorageForTest(
+    ObjectStorage.setForTest(
       fakeStorage({
         async deleteObject(key) {
           deleted.push(key);
@@ -71,7 +71,7 @@ describe("sweepPendingBlobs", () => {
   });
 
   test("keeps the row when the S3 delete fails, so the next sweep retries", async () => {
-    setStorageForTest(
+    ObjectStorage.setForTest(
       fakeStorage({
         async deleteObject() {
           throw new Error("simulated S3 failure");

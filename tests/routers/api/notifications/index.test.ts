@@ -1,23 +1,17 @@
 import { describe, expect, test } from "bun:test";
 
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { postCampaignInvite } from "@/tests/support/campaigns.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 
 /**
  * A new user invited to a campaign of the seeded user's, which gives them an
  * invite notification. Once they accept, the seeded user is notified too.
  */
 async function invite() {
-  const { rulesetId } = await getSeedCtx();
   const invitee = await createSignedInUser("notified");
-  const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Notifying Campaign", rulesetId } }));
-  const added = await expectOk(
-    api.api.campaigns[":id"].players.$post({
-      param: { id: campaign.id },
-      json: { email: invitee.user.emailAddress, role: "Player Character" },
-    }),
-  );
-  return { notifications: invitee.api.api.notifications, invitee, inviteId: added.invite!.id };
+  const { invite } = await postCampaignInvite(invitee.user.emailAddress);
+  return { notifications: invitee.api.api.notifications, invitee, inviteId: invite.id };
 }
 
 describe("notifications", () => {
@@ -37,16 +31,9 @@ describe("notifications", () => {
     const { notifications, invitee, inviteId } = await invite();
     const { api: ownerApi } = await createSignedInUser("owner");
     // A notification that needs no answer: the owner of another campaign sees the invitee join it.
-    const { rulesetId } = await getSeedCtx();
-    const { campaign } = await expectOk(ownerApi.api.campaigns.$post({ json: { name: "Joined Campaign", rulesetId } }));
-    const joined = await expectOk(
-      ownerApi.api.campaigns[":id"].players.$post({
-        param: { id: campaign.id },
-        json: { email: invitee.user.emailAddress, role: "Player Character" },
-      }),
-    );
+    const joined = await postCampaignInvite(invitee.user.emailAddress, ownerApi);
     await expectOk(
-      invitee.api.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: joined.invite!.id } }),
+      invitee.api.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: joined.invite.id } }),
     );
 
     const ownerNotifications = ownerApi.api.notifications;

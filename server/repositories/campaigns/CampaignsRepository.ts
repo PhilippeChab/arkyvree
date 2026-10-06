@@ -13,6 +13,14 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
     super(campaignsInCampaign);
   }
 
+  async archive(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning();
+  }
+
   async count(db: Db, where: { userId: string }) {
     const [result] = await db
       .select({ count: count() })
@@ -27,6 +35,15 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
       );
 
     return result.count;
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof campaignsInCampaign>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  /** Hard delete — only callable on archived rows; gated by CampaignsPolicy.canHardDelete. */
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 
   async findOne(db: Db, where: { id: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
@@ -116,8 +133,12 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
     return this.paginated(rows, pagination);
   }
 
-  async create(db: Db, values: InferInsertModel<typeof campaignsInCampaign>) {
-    return await db.insert(this.table).values(values).returning();
+  async unarchive(db: Db, where: { id: string }) {
+    return await db
+      .update(this.table)
+      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
+      .returning();
   }
 
   async update(db: Db, values: Partial<InferInsertModel<typeof campaignsInCampaign>>, where: { id: string }) {
@@ -125,27 +146,6 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  async archive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
-      .returning();
-  }
-
-  /** Hard delete — only callable on archived rows; gated by CampaignsPolicy.canHardDelete. */
-  async delete(db: Db, where: { id: string }) {
-    return await db.delete(this.table).where(eq(this.table.id, where.id));
-  }
-
-  async unarchive(db: Db, where: { id: string }) {
-    return await db
-      .update(this.table)
-      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
       .returning();
   }
 }

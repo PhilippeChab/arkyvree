@@ -49,14 +49,14 @@ const DAMAGE_PROGRESSION = [
   "4d8",
 ];
 
+/** A natural attack's proficiency: its damage dice are the creature's own, from its stat block, already at its size. */
+const NATURAL_PROFICIENCY = "Natural";
+
 /**
  * The share of its Strength bonus a weapon adds to damage in each slot: all of it, half, or one and a half (a light
  * weapon's all of it in two hands).
  */
 const SLOT_STRENGTH_MULTIPLIERS: Record<string, number> = { "Main Hand": 1, "Off Hand": 0.5, "Two Handed": 1.5 };
-
-/** A natural attack's proficiency: its damage dice are the creature's own, from its stat block, already at its size. */
-const NATURAL_PROFICIENCY = "Natural";
 
 function adjustDamageForSize(baseDamage: string, size: string): string {
   const step = SIZE_STEPS[size] ?? 0;
@@ -106,41 +106,6 @@ function iterativeAttacks(bab: number): number[] {
 /** A character's attacks: its base attack bonus, grapple, and each weapon's to-hit and damage. */
 export function Attacks<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithAttacks extends Base {
-    protected initializeBaseAttackBonus(
-      classes: ReturnType<DetailedCharacterClasses["getClasses"]>,
-      klassLevelProperties: Map<string, { bab: number; skills: number }>,
-    ): void {
-      const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
-        const lastLevel = klass.levels.at(-1);
-        if (!lastLevel) return acc;
-        return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
-      }, 0);
-
-      this.detailedCharacterCombat.bab = baseAttackBonusFromClasses;
-    }
-
-    /** The grapple: misc is an input; the base attack bonus's, Strength's and the size's parts and the total are read. */
-    protected initializeGrapple(): void {
-      const combat = this.detailedCharacterCombat;
-      const strength = () => this.characterAbilities.getAbilityModifier("Strength");
-      const size = () => SIZE_GRAPPLE_MOD[this.raceSize] ?? 0;
-      combat.grapple = {
-        get bab() {
-          return combat.bab;
-        },
-        get strength() {
-          return strength();
-        },
-        get size() {
-          return size();
-        },
-        misc: 0,
-        get total() {
-          return this.bab + this.strength + this.size + this.misc;
-        },
-      };
-    }
-
     /**
      * How a weapon's attack and damage follow the abilities: the SRD's attack rolls, Strength on a melee weapon's and
      * Dexterity on a ranged weapon's, and a bow's Strength rating (its WEAPON_MIGHTY) when Strength adds to its damage
@@ -194,6 +159,41 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const gear = new Set([...Object.values(armors), ...Object.values(shields)]);
       const unproficient = [...gear].reduce((penalty, item) => penalty + (item.proficient ? 0 : item.checkpenalty), 0);
       return unproficient + (this.towerShield ? CONSTANTS.TOWER_SHIELD_PENALTY : 0);
+    }
+
+    protected initializeBaseAttackBonus(
+      classes: ReturnType<DetailedCharacterClasses["getClasses"]>,
+      klassLevelProperties: Map<string, { bab: number; skills: number }>,
+    ): void {
+      const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
+        const lastLevel = klass.levels.at(-1);
+        if (!lastLevel) return acc;
+        return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
+      }, 0);
+
+      this.detailedCharacterCombat.bab = baseAttackBonusFromClasses;
+    }
+
+    /** The grapple: misc is an input; the base attack bonus's, Strength's and the size's parts and the total are read. */
+    protected initializeGrapple(): void {
+      const combat = this.detailedCharacterCombat;
+      const strength = () => this.characterAbilities.getAbilityModifier("Strength");
+      const size = () => SIZE_GRAPPLE_MOD[this.raceSize] ?? 0;
+      combat.grapple = {
+        get bab() {
+          return combat.bab;
+        },
+        get strength() {
+          return strength();
+        },
+        get size() {
+          return size();
+        },
+        misc: 0,
+        get total() {
+          return this.bab + this.strength + this.size + this.misc;
+        },
+      };
     }
 
     /**
@@ -321,48 +321,6 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       };
     }
 
-    /** Lets a one-handed off-hand weapon count as light, for a feat with FEAT_OVERSIZED_TWO_WEAPON_FIGHTING. */
-    applyOversizedTwoWeaponFighting(hasOversized: boolean): void {
-      this.oversizedOffHand = hasOversized;
-    }
-
-    /**
-     * Costs each weapon the character isn't proficient with the non-proficiency penalty, 4 to hit and nothing else, by
-     * the entry holding it (a bastard sword can be proficient in two hands, not in one), and marks the armor and shields
-     * it isn't proficient with, whose check penalty every attack takes.
-     */
-    applyProficiencyPenalties(unproficient: { id: string; itemId: string }[]) {
-      const { weaponsets, armors, shields } = this.detailedCharacterCombat;
-      const entryIds = new Set(unproficient.map((entry) => entry.id));
-      const itemIds = new Set(unproficient.map((entry) => entry.itemId));
-      for (const weaponSet of Object.values(weaponsets)) {
-        for (const slotKey of WEAPON_SET_SLOTS) {
-          const weapon = weaponSet[slotKey];
-          if (!weapon?.entryId || !entryIds.has(weapon.entryId)) continue;
-
-          weapon.proficient = false;
-          weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
-        }
-      }
-      for (const gear of [...Object.values(armors), ...Object.values(shields)]) {
-        if (itemIds.has(gear.itemId)) gear.proficient = false;
-      }
-    }
-
-    /** Lets each finessable weapon that attacks with Strength attack with Dexterity, for a feat with FEAT_WEAPON_FINESSE. */
-    applyWeaponFinesse(hasFinesse: boolean): void {
-      if (!hasFinesse) return;
-
-      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
-        for (const slotKey of WEAPON_SET_SLOTS) {
-          const weapon = weaponSet[slotKey];
-          if (!weapon?.finessable) continue;
-          const abilities = this.weaponAbilities.get(weapon);
-          if (abilities?.attack === "Strength") abilities.finesse = true;
-        }
-      }
-    }
-
     /**
      * A weapon in a hand of a set. Its inputs (the magic and misc bonuses, the dice, the hand's Strength share, the
      * critical) are what modifiers change; what comes from the abilities, the size, the gear and the set is computed
@@ -464,6 +422,48 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       if (otherDice) this.doubleWeapons.set(weapon, otherDice);
       this.detailedCharacterCombat.weaponsets[setKey][slotKey] = weapon;
       return weapon;
+    }
+
+    /** Lets a one-handed off-hand weapon count as light, for a feat with FEAT_OVERSIZED_TWO_WEAPON_FIGHTING. */
+    applyOversizedTwoWeaponFighting(hasOversized: boolean): void {
+      this.oversizedOffHand = hasOversized;
+    }
+
+    /**
+     * Costs each weapon the character isn't proficient with the non-proficiency penalty, 4 to hit and nothing else, by
+     * the entry holding it (a bastard sword can be proficient in two hands, not in one), and marks the armor and shields
+     * it isn't proficient with, whose check penalty every attack takes.
+     */
+    applyProficiencyPenalties(unproficient: { id: string; itemId: string }[]) {
+      const { weaponsets, armors, shields } = this.detailedCharacterCombat;
+      const entryIds = new Set(unproficient.map((entry) => entry.id));
+      const itemIds = new Set(unproficient.map((entry) => entry.itemId));
+      for (const weaponSet of Object.values(weaponsets)) {
+        for (const slotKey of WEAPON_SET_SLOTS) {
+          const weapon = weaponSet[slotKey];
+          if (!weapon?.entryId || !entryIds.has(weapon.entryId)) continue;
+
+          weapon.proficient = false;
+          weapon.tohit.misc += CONSTANTS.NONPROFICIENCY_PENALTY;
+        }
+      }
+      for (const gear of [...Object.values(armors), ...Object.values(shields)]) {
+        if (itemIds.has(gear.itemId)) gear.proficient = false;
+      }
+    }
+
+    /** Lets each finessable weapon that attacks with Strength attack with Dexterity, for a feat with FEAT_WEAPON_FINESSE. */
+    applyWeaponFinesse(hasFinesse: boolean): void {
+      if (!hasFinesse) return;
+
+      for (const weaponSet of Object.values(this.detailedCharacterCombat.weaponsets)) {
+        for (const slotKey of WEAPON_SET_SLOTS) {
+          const weapon = weaponSet[slotKey];
+          if (!weapon?.finessable) continue;
+          const abilities = this.weaponAbilities.get(weapon);
+          if (abilities?.attack === "Strength") abilities.finesse = true;
+        }
+      }
     }
 
     /**
