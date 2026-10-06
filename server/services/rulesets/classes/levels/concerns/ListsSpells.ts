@@ -54,6 +54,6 @@ export function ListsSpells<B extends Constructor>(Base: B) {
         });
       });
     }
-}
+  }
   return ListingSpells;
 }
