@@ -3,7 +3,7 @@
  * the key its section reads.
  */
 
-import { infiniteQueryOptions, type QueryClient, queryOptions } from "@tanstack/react-query";
+import { type QueryClient, queryOptions } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -58,18 +58,12 @@ export function classSkillsQuery(rulesetId: string, classId: string) {
   });
 }
 
-export function classSpellListQuery(rulesetId: string, classId: string, level: number, search: string) {
-  return infiniteQueryOptions({
-    queryKey: queryKeys.rulesets.classSpellList(rulesetId, classId, level, search),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].classes[":classId"]["spell-list"].$get({
-          ...classParam(rulesetId, classId),
-          query: { page: pageParam.toString(), limit: "20", level: level.toString(), search: search || undefined },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+/** The spell lists a class casts from, its own first: the spell list tab's picker. */
+export function classSpellListsQuery(rulesetId: string, classId: string) {
+  return queryOptions({
+    queryKey: queryKeys.rulesets.classSpellLists(rulesetId, classId),
+    queryFn: () =>
+      parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spell-lists"].$get(classParam(rulesetId, classId))),
   });
 }
 
@@ -108,7 +102,7 @@ export function prefetchClassSection(
     case "spells":
       return queryClient.prefetchQuery(classSpellsQuery(rulesetId, classId));
     case "spell-list":
-      return queryClient.prefetchInfiniteQuery(classSpellListQuery(rulesetId, classId, 0, ""));
+      return queryClient.prefetchQuery(classSpellListsQuery(rulesetId, classId));
     // The customization tabs read their rows through their sections, as every entity's customization page does
     case "properties":
     case "modifiers":

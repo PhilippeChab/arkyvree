@@ -1,6 +1,6 @@
 import { Bolt as SpellListIcon } from "@mui/icons-material";
-import { Box } from "@mui/material";
-import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import { Box, MenuItem, TextField } from "@mui/material";
+import { keepPreviousData, skipToken, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 
@@ -12,17 +12,14 @@ import {
   RulesetSectionTable,
   SpellLevelFilter,
 } from "@/client/src/pages/rulesets/components/index.ts";
-import { classSpellListQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { classSpellListsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { type rpc } from "@/client/src/services/rpc.ts";
 
 import type { ClassSectionProps } from "./types.ts";
 
-type Spell = SpellListPaginated["items"][number];
-type SpellListPaginated = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["spell-list"]["$get"],
-  200
->;
+type Spell = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>["items"][number];
 
 const COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
@@ -32,15 +29,23 @@ const COLUMNS = [
 export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
   const [selectedLevel, setSelectedLevel] = useState<number>(0);
+  const [chosenListId, setChosenListId] = useState<string>();
   const [searchText, setSearchText] = useState("");
   const search = useDebouncedValue(searchText);
 
+  const { data: lists = [], isLoading: isLoadingLists } = useQuery(classSpellListsQuery(rulesetId, classId));
+  // The class's own list opens first; one it casts from too (a pious templar's blackguard list) is picked
+  const listId = lists.some((list) => list.id === chosenListId) ? chosenListId : lists[0]?.id;
+
+  const spellsQuery = powersQuery(rulesetId, { search, childOnly: false, aptitudeId: listId, level: selectedLevel });
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    ...classSpellListQuery(rulesetId, classId, selectedLevel, search),
-    placeholderData: keepPreviousData,
+    ...spellsQuery,
+    queryFn: listId === undefined ? skipToken : spellsQuery.queryFn,
+    placeholderData: listId === undefined ? undefined : keepPreviousData,
   });
 
-  const spells = pageItems(data);
+  // Without a list the key is the ruleset's own "all lists" one, whose cached spells aren't this class's
+  const spells = listId === undefined ? [] : pageItems(data);
 
   const handleRowClick = (spell: Spell) => {
     openEntity(`powers/${spell.id}/customization`);
@@ -63,19 +68,45 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
         searchValue={searchText}
         onSearchChange={setSearchText}
         searchPlaceholder="Search spells..."
-        filters={<SpellLevelFilter value={selectedLevel} onChange={(level) => setSelectedLevel(Number(level))} />}
+        filters={
+          <>
+            {lists.length > 1 && (
+              <Box sx={{ width: { xs: "100%", sm: 200 } }}>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Spell list"
+                  value={listId ?? ""}
+                  onChange={(e) => setChosenListId(e.target.value)}
+                >
+                  {lists.map((list) => (
+                    <MenuItem key={list.id} value={list.id}>
+                      {list.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+            )}
+            <SpellLevelFilter value={selectedLevel} onChange={(level) => setSelectedLevel(Number(level))} />
+          </>
+        }
       />
 
       <RulesetSectionTable
         data={spells}
         search={search}
-        isLoading={isLoading}
+        isLoading={isLoadingLists || isLoading}
         columns={COLUMNS}
         onRowClick={handleRowClick}
         renderCell={renderCell}
         emptyIcon={SpellListIcon}
         emptyTitle="No spells"
-        emptyDescription="No spells found for this class at the selected level."
+        emptyDescription={
+          lists.length === 0 && !isLoadingLists
+            ? "This class has no spell list of its own."
+            : "No spells found for this class at the selected level."
+        }
       />
 
       <LoadMoreButton
