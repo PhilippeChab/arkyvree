@@ -66,7 +66,7 @@
  * - `button-intents`: a button is styled by its intent, as `docs/ui-buttons.md` sets it: the verb its label starts with
  *   (Delete, Archive, Publish, Cancel…) picks its variant and color.
  * - `headings`: a `Typography` sized as a heading (`variant="h6"`, `typography: { xs: "h6" }`) declares its element
- *   (`component="h2"`, `"p"`), so the page's outline is a hierarchy.
+ *   (`component="h2"`, `"p"`), so the page's outline is a hierarchy; a heading's gutter, the space to its own text, is `gutterBottom`.
  * - `toast-wording`: a toast is a phrase ("Ruleset archived"), no final period, "!" or "successfully"; an error's
  *   fallback names what failed ("Failed to remove item").
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
@@ -87,6 +87,9 @@ import { repoPath } from "./paths.mjs";
 
 /** The border shorthands, which the theme writes from a width (`border: 1` is `1px solid`) */
 const BORDER_SIDES = new Set(["border", "borderBottom", "borderLeft", "borderRight", "borderTop"]);
+
+/** The style keys that space a box from what's under it */
+const BOTTOM_SPACING = new Set(["marginBottom", "mb"]);
 
 /** The fields bound to a form's (`components/common/FormFields.tsx`) */
 const BOUND_FIELDS = new Set([
@@ -915,10 +918,18 @@ function createHeadings(context) {
     JSXElement(node) {
       if (elementName(node) !== "Typography") return;
       const attributes = node.openingElement.attributes.filter((a) => a.type === "JSXAttribute");
-      if (attributes.some((a) => a.name.name === "component")) return;
       const variant = attributes.find((a) => a.name.name === "variant")?.value;
       const sx = attributes.find((a) => a.name.name === "sx")?.value;
       const sxObject = sx?.type === "JSXExpressionContainer" ? sx.expression : null;
+      const titled = variant?.type === "Literal" && /^(h[1-6]|subtitle[12])$/.test(variant.value);
+      const gutter = sxNumber(node, BOTTOM_SPACING);
+      if ((titled || headingVariants(sxObject).length > 0) && gutter !== null && gutter < 2) {
+        context.report({
+          node: node.openingElement,
+          message: "A heading's gutter, the space to its own text, is `gutterBottom`: the same under every one.",
+        });
+      }
+      if (attributes.some((a) => a.name.name === "component")) return;
       const looksLikeHeading =
         (variant?.type === "Literal" && /^h[1-6]$/.test(variant.value)) || headingVariants(sxObject).length > 0;
       if (!looksLikeHeading) return;
@@ -1570,6 +1581,17 @@ function sxElement(object) {
   const attribute = container?.parent;
   if (container?.type !== "JSXExpressionContainer" || attribute?.type !== "JSXAttribute") return null;
   return attribute.name.name === "sx" ? elementName(attribute.parent.parent) : null;
+}
+
+/** The number an element's own `sx`, written as an object, gives one of `keys` (`mb: 1`), when it's written out. */
+function sxNumber(element, keys) {
+  const attribute = element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === "sx");
+  const value = attribute?.value?.type === "JSXExpressionContainer" ? attribute.value.expression : null;
+  if (value?.type !== "ObjectExpression") return null;
+  const property = value.properties.find(
+    (p) => p.type === "Property" && p.key.type === "Identifier" && keys.has(p.key.name),
+  );
+  return property?.value.type === "Literal" && typeof property.value.value === "number" ? property.value.value : null;
 }
 
 /**

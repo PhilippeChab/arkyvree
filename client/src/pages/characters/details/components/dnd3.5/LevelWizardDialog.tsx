@@ -99,7 +99,7 @@ export function LevelWizardDialog({
               "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 },
             }}
           >
-            <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+            <Typography variant="subtitle2" gutterBottom>
               Validation warnings
             </Typography>
             <ValidationIssueList issues={wizard.validationErrors} />

@@ -288,7 +288,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             {/* Validation Issues */}
             {validation.issues.length > 0 && (
               <div>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
                   Issues
                 </Typography>
                 {validation.issues.map((issue, i) => (

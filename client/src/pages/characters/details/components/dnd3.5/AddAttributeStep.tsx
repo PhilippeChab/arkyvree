@@ -30,7 +30,7 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
 
         return (
           <Box key={index}>
-            <Typography component="h3" variant="h6" sx={{ mb: 0.25 }}>
+            <Typography component="h3" variant="h6" gutterBottom>
               {detail ? `${detail.klassName} Level ${detail.level}` : `Level ${index + 1}`}
             </Typography>
             <AttributeIncreaseField

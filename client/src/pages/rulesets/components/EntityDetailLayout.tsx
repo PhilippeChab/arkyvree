@@ -93,7 +93,7 @@ export function EntityDetailLayout({
             px: { xs: 5, sm: 8 },
           }}
         >
-          <Typography component="h1" sx={{ fontWeight: 600, mb: 0.5, typography: { xs: "h5", md: "h4" } }}>
+          <Typography component="h1" gutterBottom sx={{ fontWeight: 600, typography: { xs: "h5", md: "h4" } }}>
             {entityName}
           </Typography>
           <Typography component="div" variant="body2" sx={{ color: "text.secondary" }}>

@@ -37,7 +37,11 @@ export function PageHeader({ title, subtitle, action, variant = "hero" }: PageHe
         sx={{ justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" } }}
       >
         <Box>
-          <Typography component="h1" sx={{ typography: { xs: "h4", md: "h3" }, fontWeight: hero ? 800 : 700, mb: 1 }}>
+          <Typography
+            component="h1"
+            gutterBottom
+            sx={{ typography: { xs: "h4", md: "h3" }, fontWeight: hero ? 800 : 700 }}
+          >
             {title}
           </Typography>
           {subtitle && (

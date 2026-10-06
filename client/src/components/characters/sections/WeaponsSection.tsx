@@ -37,7 +37,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
 
           return (
             <TableContainer key={setIndex} sx={{ mb: 2, overflowX: "auto" }}>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: "text.secondary" }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
                 Set {shownWeaponSet(Number(setIndex))}
               </Typography>
               <Table size="small" sx={{ minWidth: 600 }}>

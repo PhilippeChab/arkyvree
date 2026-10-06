@@ -182,7 +182,6 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
               rows={modifiers}
               isLoading={isLoading}
               columns={MODIFIER_COLUMNS}
-              size="small"
               minWidth={0}
               renderCell={(mod, column) => {
                 if (column === "target")

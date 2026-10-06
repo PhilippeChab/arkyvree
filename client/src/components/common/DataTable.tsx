@@ -41,7 +41,6 @@ interface DataTableProps<T extends { id: string }> {
   /** What an empty table shows; a search that found nothing says so instead */
   empty: DataTableEmpty;
   search?: string;
-  size?: "small" | "medium";
   /** The narrowest the table lays out at: it scrolls sideways below it */
   minWidth?: number;
 }
@@ -132,11 +131,12 @@ export function DataTable<T extends { id: string }>({
   rowSx,
   empty,
   search,
-  size = "medium",
   minWidth = 600,
 }: DataTableProps<T>) {
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isMobile = useIsMobile();
+  // Dense on a phone
+  const size = isMobile ? "small" : "medium";
   const staggerOffset = useStaggerOffset(rows);
   const visibleColumns = useMemo(
     () => (isMobile ? columns.filter((c) => !c.hideOnMobile) : columns),

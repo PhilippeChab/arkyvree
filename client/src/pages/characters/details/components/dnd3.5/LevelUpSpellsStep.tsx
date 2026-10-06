@@ -76,7 +76,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
 
         {autoGrantedFree.length > 0 && (
           <Box sx={{ mb: 1 }}>
-            <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
+            <Typography variant="subtitle1" gutterBottom>
               Auto-Granted Class Abilities
             </Typography>
             <List dense>
@@ -89,7 +89,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
 
         {autoGrantedNonFree.length > 0 && (
           <Box sx={{ mb: 1 }}>
-            <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
+            <Typography variant="subtitle1" gutterBottom>
               Auto-Granted Spells
             </Typography>
             <List dense>
@@ -102,7 +102,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
 
         {totalPowersToSelect > 0 && (
           <>
-            <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
+            <Typography variant="subtitle1" gutterBottom>
               Choose an aptitude to select spells from:
             </Typography>
             <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
@@ -184,7 +184,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
             <Stack sx={{ mt: 3, flex: 1, minHeight: 0 }}>
               {/* Selected Spells (always reserve space) */}
               <Box sx={{ flexShrink: 0, mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" gutterBottom>
                   Selected {currentPool?.name}
                   {levelLabel ? ` ${levelLabel}` : ""} Spells ({levelPowers.length}/{poolAvailable}):
                 </Typography>

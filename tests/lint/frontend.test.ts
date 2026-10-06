@@ -714,7 +714,7 @@ describe("frontend rules", () => {
     ]);
   });
 
-  test("a Typography sized as a heading declares its element", async () => {
+  test("a Typography sized as a heading declares its element, and its gutter is gutterBottom", async () => {
     expect(
       await lintRepo(
         {
@@ -725,10 +725,20 @@ describe("frontend rules", () => {
             'export const d = <Typography component="h2" variant="h6">Diagnostics</Typography>;\n',
           "client/src/text.tsx":
             'export const t = <Typography variant="body2" sx={{ typography: "caption" }}>Note</Typography>;\n',
+          "client/src/guttered.tsx":
+            'export const g = <Typography component="h3" variant="subtitle2" sx={{ mb: 1 }}>Skills</Typography>;\n',
+          "client/src/gapped.tsx":
+            'export const p = <Typography component="h2" variant="h5" sx={{ mb: 3 }}>Players</Typography>;\n',
+          "client/src/bottomed.tsx":
+            'export const b = <Typography component="h3" variant="h6" gutterBottom>Skills</Typography>;\n',
         },
         ["headings"],
       ),
-    ).toEqual(["headings client/src/styled.tsx", "headings client/src/variant.tsx"]);
+    ).toEqual([
+      "headings client/src/guttered.tsx",
+      "headings client/src/styled.tsx",
+      "headings client/src/variant.tsx",
+    ]);
   });
 
   test("a toast is a phrase, and an error's fallback names what failed", async () => {

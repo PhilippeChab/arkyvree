@@ -251,7 +251,7 @@ export function LevelUpFeatsStep({
 
         {aptitudePools.some((pool) => pool.available > 0) && (
           <>
-            <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
+            <Typography variant="subtitle1" gutterBottom>
               Choose an aptitude to select feats from:
             </Typography>
             <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
@@ -291,7 +291,7 @@ export function LevelUpFeatsStep({
             <Stack sx={{ mt: 3, flex: 1, minHeight: 0 }}>
               {/* Selected Feats (always reserve space) */}
               <Box sx={{ flexShrink: 0, mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" gutterBottom>
                   Selected {currentPool?.name} Feats ({currentPoolFeats.length}/{currentPool?.available || 0}):
                 </Typography>
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>

@@ -123,7 +123,6 @@ export function ContributorsTable<T extends ContributorRow>({
       rows={rows}
       isLoading={isLoading}
       columns={columns}
-      size={isMobile ? "small" : "medium"}
       minWidth={0}
       renderCell={renderCell}
       actions={actions && ((row) => (row.owner ? [] : actions(row.contributor)))}

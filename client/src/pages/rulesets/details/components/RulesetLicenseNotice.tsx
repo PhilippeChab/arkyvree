@@ -39,7 +39,7 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
         <DialogContent>
           <Stack spacing={3}>
             <Box>
-              <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+              <Typography component="h3" variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
                 {name}
               </Typography>
               <DialogContentText>

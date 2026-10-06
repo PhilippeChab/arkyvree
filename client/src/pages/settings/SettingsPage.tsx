@@ -23,7 +23,7 @@ export default function SettingsPage() {
 
         <Card>
           <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-            <Typography component="h2" sx={{ fontWeight: 700, mb: 1, typography: { xs: "h6", sm: "h5" } }}>
+            <Typography component="h2" gutterBottom sx={{ fontWeight: 700, typography: { xs: "h6", sm: "h5" } }}>
               Theme
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
