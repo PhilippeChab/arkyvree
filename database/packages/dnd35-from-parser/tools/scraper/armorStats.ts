@@ -1,4 +1,4 @@
-import type { Property } from "@/database/packages/dnd35/content/types.ts";
+import type { Property } from "@/database/packages/dnd35/content/customization/types.ts";
 import {
   ARMOR_CHECK_PENALTY,
   ARMOR_MAX_DEX,

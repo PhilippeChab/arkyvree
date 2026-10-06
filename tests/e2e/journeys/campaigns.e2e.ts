@@ -1,4 +1,6 @@
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { expect } from "@playwright/test";
+
+import { test } from "@/tests/e2e/fixtures.ts";
 import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
 import { createCharacter } from "@/tests/e2e/support/characters.ts";
 import { apiResponse, filterList, openActionsMenu } from "@/tests/e2e/support/page.ts";

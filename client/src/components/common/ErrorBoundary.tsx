@@ -1,10 +1,10 @@
 import { Button, Stack, ThemeProvider, Typography } from "@mui/material";
+import * as Sentry from "@sentry/react";
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 
 import { DiceIcon } from "@/client/src/components/icons/index.ts";
 import { isChunkLoadError, reloadForStaleChunks } from "@/client/src/lib/chunkReload.ts";
-import { Sentry } from "@/client/src/lib/sentry.ts";
 import { createAppTheme } from "@/client/src/theme/appTheme.ts";
 
 interface Props {

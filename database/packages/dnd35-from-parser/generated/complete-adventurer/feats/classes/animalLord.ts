@@ -1,5 +1,5 @@
-import { eq } from "@/database/packages/dnd35/content/requirements.ts";
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import { eq } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
 const APT = "Animal Lord Class Feature";
 

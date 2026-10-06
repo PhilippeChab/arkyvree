@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 
 import { ALL_CLASSES as DMG_CLASSES } from "@/database/packages/dnd35-from-parser/generated/dmg/classes/index.ts";
 import { ALL_CLASSES as SRD_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
-import { buildClassSpellLevels } from "@/database/packages/dnd35/seed/classes.ts";
+import { buildClassSpellLevels } from "@/database/packages/dnd35/content/classes/spellLevels.ts";
 
 const dmg = buildClassSpellLevels(DMG_CLASSES);
 const srd = buildClassSpellLevels(SRD_CLASSES);

@@ -1,7 +1,7 @@
 /** An item reference's seeds: its ItemDef[], by category. */
 
 import { type ItemReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { type ItemDef } from "@/database/packages/dnd35/content/types.ts";
+import type { ItemDef } from "@/database/packages/dnd35/content/items/types.ts";
 
 export type ItemSeedSets = {
   simpleWeapons: ItemDef[];

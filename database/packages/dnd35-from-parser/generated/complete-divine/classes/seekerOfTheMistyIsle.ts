@@ -3,8 +3,8 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { eqStr, gte } from "@/database/packages/dnd35/content/requirements.ts";
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
+import { eqStr, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 
 export const SEEKER_OF_THE_MISTY_ISLE: ClassSeed = {
   name: "Seeker of the Misty Isle",

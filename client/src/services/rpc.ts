@@ -1,6 +1,5 @@
 import { hc } from "hono/client";
 
-import { ApiError, type ApiValidationIssue } from "@/client/src/services/apiError.ts";
 import { apiFetch } from "@/client/src/services/apiFetch.ts";
 import type { Application } from "@/server/routers/application.ts";
 
@@ -17,12 +16,3 @@ const _rpc = hc<Application>("");
 const host = document.location.origin;
 
 export const rpc: RPC = hc<Application>(`${host}/`, { fetch: apiFetch });
-
-export { ApiError, type ApiValidationIssue };
-
-/**
- * Parse an RPC response as its success body type. Non-2xx responses never
- * reach callers — `apiFetch` has already thrown `ApiError` — so there is
- * no `response.ok` check to write: `queryFn: () => parseResponse(rpc.api.x.$get())`.
- */
-export { parseResponse } from "hono/client";

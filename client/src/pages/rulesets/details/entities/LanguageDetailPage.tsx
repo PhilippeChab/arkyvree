@@ -1,3 +1,4 @@
+import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
 import { TagChip } from "@/client/src/components/common/index.ts";
@@ -6,7 +7,7 @@ import {
   type LanguageFormData,
   LanguageFormFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import { languageQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";

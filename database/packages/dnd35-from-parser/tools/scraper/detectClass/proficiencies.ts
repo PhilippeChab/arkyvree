@@ -1,7 +1,7 @@
 /** Detects the weapon and armor proficiencies a class grants. */
 
-import { type ModifierSeed } from "@/database/packages/dnd35/content/types.ts";
-import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/content/weapons.ts";
+import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
+import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/data/weapons.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** Aliases for description text → canonical weapon names */

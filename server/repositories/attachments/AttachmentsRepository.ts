@@ -65,7 +65,7 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
         ),
       )
       .limit(1);
-    return rows[0] ?? null;
+    return rows[0];
   }
 }
 

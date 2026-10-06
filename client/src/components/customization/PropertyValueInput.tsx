@@ -1,7 +1,8 @@
 import { TextField } from "@mui/material";
+import { parseResponse } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
 

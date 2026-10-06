@@ -1,7 +1,8 @@
 /**
- * `function-length`: a function in the server or `shared/` holds at most 80 of its own lines (blank and comment lines
- * aside, its nested functions' lines counted where they're written), so a long one splits into named steps. A concern's
- * wrapper (`function X<B extends Constructor>(Base)`) counts nothing: its class's methods count each.
+ * `function-length`: a function in the server, `shared/` or `database/` holds at most 80 of its own lines (blank and
+ * comment lines aside, its nested functions' lines counted where they're written), so a long one splits into named
+ * steps. A concern's wrapper (`function X<B extends Constructor>(Base)`) counts nothing: its class's methods count
+ * each.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -14,7 +15,9 @@ export const MAX_OWN_LINES = 80;
 
 function createFunctionLength(context) {
   const file = repoPath(context.filename);
-  if (!/^(server|shared)\//.test(file) || !file.endsWith(".ts")) return {};
+  // The parser's tools join once their long functions are split into steps
+  const pending = file.startsWith("database/packages/dnd35-from-parser/");
+  if (!/^(server|shared|database)\//.test(file) || pending || !file.endsWith(".ts")) return {};
   const text = context.sourceCode.text;
   const lines = text.split("\n");
   const lineStarts = [0];

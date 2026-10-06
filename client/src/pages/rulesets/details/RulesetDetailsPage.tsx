@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
@@ -72,7 +73,7 @@ import {
   UnsubscribeExtensionDialog,
 } from "@/client/src/pages/rulesets/details/components/index.ts";
 import { useRulesetOperations, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import { getSections, type RulesetSectionProps } from "./sectionFactory.ts";

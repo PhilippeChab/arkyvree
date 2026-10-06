@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 
-import type { ApiValidationIssue } from "@/client/src/services/rpc.ts";
+import type { ApiValidationIssue } from "@/client/src/services/apiError.ts";
 
 interface ValidationIssueListProps {
   issues: ApiValidationIssue[];

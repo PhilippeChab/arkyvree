@@ -1,8 +1,9 @@
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 
 interface SlotParams {

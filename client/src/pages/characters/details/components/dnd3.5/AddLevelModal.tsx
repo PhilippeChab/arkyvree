@@ -1,10 +1,11 @@
 import { keepPreviousData } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useEffect, useMemo, useState } from "react";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import { addStepContent, addStepLabels, type BaseRules, useAddLevelWizard } from "./levelUp/index.ts";
 import { LevelWizardDialog } from "./LevelWizardDialog.tsx";

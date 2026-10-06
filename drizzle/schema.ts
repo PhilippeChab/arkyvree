@@ -644,7 +644,6 @@ export const entitySnapshotsInRules = rules.table(
     entityType: text("entity_type").notNull(),
     sourceEntityId: uuid("source_entity_id").notNull(),
     forkedEntityId: uuid("forked_entity_id").notNull(),
-    contentHash: text("content_hash").notNull(),
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [

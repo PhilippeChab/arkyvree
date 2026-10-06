@@ -39,7 +39,7 @@ class PropertiesRepository extends CustomizationRepository<typeof propertiesInCu
       | { entityIds: string[]; entityType: string; type: string }
       | { entityIds: string[] },
   ) {
-    if (!("entityType" in where) && where.entityIds.length === 0) return [];
+    if (where.entityIds.length === 0) return [];
     return await db.query.propertiesInCustomization.findMany({
       where: this.where([
         "type" in where && eq(this.table.type, where.type),

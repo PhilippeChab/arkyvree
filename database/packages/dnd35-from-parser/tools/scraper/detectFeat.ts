@@ -2,6 +2,7 @@ import {
   loadBonusFeatAptitudes,
   loadBonusFeatClassLevels,
 } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/feats.ts";
+import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import { parseAlignmentRequirement } from "@/database/packages/dnd35-from-parser/tools/scraper/alignment.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
 import { familyOptions, featWithoutChoice } from "@/database/packages/dnd35-from-parser/tools/scraper/featOptions.ts";
@@ -12,7 +13,6 @@ import {
 import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
 import {
   anySkillRequirement,
-  BOOK_ABBREV_PATTERN,
   type ModifierDetection,
   NUMBER_WORDS,
   SAVE_MAP,
@@ -20,8 +20,8 @@ import {
   validateModifiers,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { and, eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";

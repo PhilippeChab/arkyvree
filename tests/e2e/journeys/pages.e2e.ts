@@ -5,9 +5,10 @@
  */
 
 import type { Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { test } from "@/tests/e2e/fixtures.ts";
 import { apiOf } from "@/tests/e2e/support/api.ts";
 import { createCampaign } from "@/tests/e2e/support/campaigns.ts";
 import { createCharacter } from "@/tests/e2e/support/characters.ts";

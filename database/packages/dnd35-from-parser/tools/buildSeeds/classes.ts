@@ -14,7 +14,6 @@ import {
   normalizeDescription,
   pluralVariants,
   stripClassSuffix,
-  stripSeparators,
 } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import {
   type AptitudePick,
@@ -23,11 +22,13 @@ import {
   type InheritedSpellList,
   type SpellReference,
 } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { FAVORED_ENEMY_FAMILY } from "@/database/packages/dnd35/content/creatureTypes.ts";
-import { feat, gte } from "@/database/packages/dnd35/content/requirements.ts";
-import { type FeatSeed, type ModifierSeed, type RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { feat, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
+import { FAVORED_ENEMY_FAMILY } from "@/database/packages/dnd35/data/feats/favoredEnemy.ts";
 import { CLASS_FEATURE_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 type PerLevelExpansion = { newTarget: string; levels: number[]; ordinal: string };
 

@@ -13,6 +13,7 @@ class SavesRepository extends RulesetEntityRepository<typeof savesInRules> {
   protected readonly entityType = "saves";
 
   async findMany(db: Db, where: { ids: string[] }) {
+    if (where.ids.length === 0) return [];
     return await db.query.savesInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
       orderBy: [this.orderBy(this.table.name)],

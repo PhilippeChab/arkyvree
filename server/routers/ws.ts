@@ -1,10 +1,11 @@
 import { Hono } from "hono";
+import { upgradeWebSocket } from "hono/bun";
 import { getCookie } from "hono/cookie";
 
 import { db } from "@/server/database/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/index.ts";
 import { Sessions, Users } from "@/server/repositories/index.ts";
-import { BUILD_ID, Connections, upgradeWebSocket } from "@/server/websockets/index.ts";
+import { BUILD_ID, Connections } from "@/server/websockets/index.ts";
 
 export default new Hono().get(
   "/ws",

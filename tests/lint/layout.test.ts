@@ -53,6 +53,8 @@ describe("file layout", () => {
             "  return 1;",
             "}",
           ),
+          // A default export's value above an exported function: it goes last, with the export lists
+          "server/a/default.ts": lines("export default make(f);", "export function f() {", "  return 1;", "}"),
           // A test file's helper in a `describe`
           "tests/a.test.ts": lines('describe("a", () => {', "  function h() {}", '  test("t", h);', "});"),
         },
@@ -64,12 +66,30 @@ describe("file layout", () => {
       "file-layout scripts/run.ts",
       "file-layout scripts/run.ts",
       "file-layout server/a/built.ts",
+      "file-layout server/a/default.ts",
       "file-layout server/a/fromExport.ts",
       "file-layout server/a/runs.ts",
       "file-layout server/a/type.ts",
       "file-layout shared/constant.ts",
       "file-layout tests/a.test.ts",
     ]);
+  });
+
+  test("--fix leaves an overloaded default export's signatures with its body", async () => {
+    const source = lines(
+      "export default function f(a: string): string;",
+      "export default function f(a: number): number;",
+      "export default function f(a: unknown) {",
+      "  return a;",
+      "}",
+      "",
+      "export function g() {",
+      "  return 1;",
+      "}",
+    );
+    expect(await fixRepo({ "server/a.ts": source }, ["file-layout", "member-order"], 2)).toEqual({
+      "server/a.ts": source,
+    });
   });
 
   test("--fix puts a file's own types and constants before its exported ones, a constant below one it reads", async () => {

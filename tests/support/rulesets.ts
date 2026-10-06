@@ -1,12 +1,12 @@
 import { eq, type InferInsertModel } from "drizzle-orm";
 
-import { coreRulesetId } from "@/database/packages/dnd35/seed/context.ts";
+import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { EntityCopy, type EntityType, RulesetEdit } from "@/server/cow/index.ts";
+import { EntityCopy, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db } from "@/server/database/index.ts";
-import { Properties, Rulesets } from "@/server/repositories/index.ts";
+import { Properties, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
 import { api, expectOk } from "@/tests/support/api.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
@@ -36,7 +36,7 @@ export function invalidateSeededRuleset(rulesetId: string) {
  */
 export async function copyEntity(
   database: Db,
-  entityType: EntityType,
+  entityType: RulesetEntityType,
   entityId: string,
   rulesetId: string,
   sourceChain: string[],
@@ -66,7 +66,7 @@ export async function createSeededTestRuleset(
     status?: "Draft" | "Published" | "Archived";
   } = {},
 ) {
-  const coreId = await coreRulesetId(db, "A seeded test ruleset");
+  const coreId = await RulesetSeeder.findCoreRulesetId(db, "A seeded test ruleset");
 
   const ruleset = await createTestRuleset(userId, {
     rulesetId: coreId,

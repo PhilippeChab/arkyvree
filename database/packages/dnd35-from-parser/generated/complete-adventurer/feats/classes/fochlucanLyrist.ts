@@ -1,4 +1,4 @@
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
 const APT = "Fochlucan Lyrist Class Feature";
 

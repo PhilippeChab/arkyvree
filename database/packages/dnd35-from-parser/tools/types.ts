@@ -4,7 +4,12 @@
  * itself holds only `StoredReference` (tools/references.ts).
  */
 
-import type { Modifier, ModifierSeed, Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import type {
+  Modifier,
+  ModifierSeed,
+  Property,
+  RequirementEntry,
+} from "@/database/packages/dnd35/content/customization/types.ts";
 
 /** A class feature's fields a mapping derives and an override sets. */
 type ClassFeatureFields = {

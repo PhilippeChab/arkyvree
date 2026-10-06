@@ -118,7 +118,7 @@ Extensions come first so their entities are visible. Repositories receive this a
 
 Inherited entities are read-only. When a user edits or deletes one:
 
-1. **Snapshot** — an `entity_snapshots` row is created: `{ rulesetId, entityType, sourceEntityId, forkedEntityId, contentHash }`
+1. **Snapshot** — an `entity_snapshots` row is created: `{ rulesetId, entityType, sourceEntityId, forkedEntityId }`
 2. **Local copy** — the entity + all customizations (modifiers, properties, requirements) + relationships are duplicated into the child ruleset
 3. **Modification** — the local copy is updated or deleted (for deletes)
 4. **Query exclusion** — the repository SQL excludes the original from ancestor results when a snapshot exists
@@ -160,7 +160,6 @@ The child's own entities are always included. Ancestor entities are included onl
 |---|---|
 | `sourceEntityId` | Original ancestor entity ID |
 | `forkedEntityId` | Child's local COW copy ID |
-| `contentHash` | Baseline hash of entity + customizations at COW time |
 
 ### Names of new entities
 
@@ -197,15 +196,15 @@ User's Fork (subscribed to A, then B)
 
 **How it works:**
 
-1. `CowDataBuilder` detects when multiple extension snapshots share the same `sourceEntityId`. It pairs the winner's `forkedEntityId` with the sibling `forkedEntityId`s (`CowData.getSiblings(winnerId)`, `getWinner(loserId)`). Feats and powers that several rulesets in the source chain define natively under the same name (reprints, `NAME_FALLBACK_ENTITY_TYPES`) are paired the same way, closest ruleset first.
+1. `CowDataBuilder` detects when multiple extension snapshots share the same `sourceEntityId`. It pairs the winner's `forkedEntityId` with the sibling `forkedEntityId`s (`CowData.getSiblings(winnerId)`, `getWinner(loserId)`). Feats and powers that several rulesets in the source chain define natively under the same name (reprints, `NAME_FALLBACK_ENTITY_TYPES`) are paired the same way, closest ruleset first. A winner's siblings are listed in the order they were paired (the snapshot pass's, then the name pass's), each once, under the winner it resolves to: the order both merges below take them in.
 
 2. **Entity list filtering**: Sibling entities are left out of every ruleset entity's list in its query (only the winner is returned), so the user never sees duplicate feats and a page keeps its size: `ScopesToRuleset.buildRulesetCondition` reads the scope's `siblingIds` (`withRulesetScope`'s copy-on-write context) and excludes them from the inherited rows. A list read outside a scope, or inside `withCowContext(undefined, …)`, sees them.
 
-3. **Read-time merging** (built into the cache compose step, `RulesetComposition` in `server/cache/rulesetCache/RulesetComposition.ts`): `RulesetCache.getData` folds sibling contributions into the winner's buckets before services see them. Consumers read `rulesetData.featsById` / `rulesetData.powersById` / `rulesetData.modifiersBySource` / `rulesetData.requirementsByEntity` / `rulesetData.propertiesByEntity` and get pre-merged rows — no sibling helpers needed at call sites.
-   - **Aptitudes**: sibling `feats_aptitudes` / `powers_aptitudes` are merged into the winner's inline array, deduped by resolved `aptitudeId` after FK remap.
-   - **Requirements**: sibling requirement trees are appended at the top level (so they are ANDed with the winner's) with `entityId` remapped: a chain gets the next free integer level and a standalone keeps its level, suffixed on collision. Duplicate top-level standalone conditions are deduplicated on `target|operator|value`; conditions inside AND/OR chains are preserved to keep their boolean meaning, so two identical chains both remain. Display and copying share the same merge function (`mergeSiblingRequirements`). Display preserves each source row's UUID, and COW records its new copied UUID so edits target the exact requirement.
-   - **Modifiers**: sibling modifiers are appended with `sourceId` remapped to the winner, deduped on `target|value|operator|valueType`. Dropped modifiers have their requirements dropped too.
-   - **Properties**: sibling properties are appended with `entityId` remapped to the winner, deduped on `type|value`.
+3. **Read-time merging** (built into the cache compose step, `RulesetComposition` in `server/cache/rulesetCache/RulesetComposition.ts`): `RulesetCache.getData` folds sibling contributions into the winner's buckets before services see them. Consumers read `rulesetData.featsById` / `rulesetData.powersById` / `rulesetData.modifiersBySource` / `rulesetData.requirementsByEntity` / `rulesetData.propertiesByEntity` and get pre-merged rows — no sibling helpers needed at call sites. The rules are one module, `server/cache/rulesetCache/siblingMerge.ts`, which `EntityCopy` writes by too: each takes the winner's own rows and each sibling's, in `getSiblings` order, and returns the siblings' rows the winner takes. Of two equal rows (by the kind's key), the winner's, then the earlier sibling's, is kept: its requirements, its description, its level.
+   - **Aptitudes** (`mergeSiblingAptitudeLinks`): sibling `feats_aptitudes` / `powers_aptitudes` are merged into the winner's inline array, deduped by resolved `aptitudeId` after FK remap.
+   - **Requirements** (`mergeSiblingRequirements`): sibling requirement trees are appended at the top level (so they are ANDed with the winner's) with `entityId` remapped: a chain gets the next free integer level and a standalone keeps its level, suffixed on collision. Duplicate top-level standalone conditions are deduplicated on `target|operator|value`; conditions inside AND/OR chains are preserved to keep their boolean meaning, so two identical chains both remain. Display preserves each source row's UUID, and COW records its new copied UUID so edits target the exact requirement.
+   - **Modifiers** (`mergeSiblingModifiers`): sibling modifiers are appended with `sourceId` remapped to the winner, deduped on `target|value|operator|valueType`. Dropped modifiers have their requirements dropped too.
+   - **Properties** (`mergeSiblingProperties`): sibling properties are appended with `entityId` remapped to the winner, deduped on `type|value`.
    - Consumers: `FeatsService`, `PowersService`, `ModifiersService`, `RequirementsService`, and `DetailedCharacter` all just read from `rulesetData.*` without any sibling-specific code.
 
 4. **COW merging** (`EntityCopy`): When a user COWs the winner entity, its sibling merge copies unique requirements, modifiers, properties, and aptitude links from all siblings into the new local copy. The child's copy contains the full merged result. See below.
@@ -247,16 +246,16 @@ After COW:
   The sibling pairing no longer applies — local fork wins completely
 ```
 
-The sibling merge (`EntityCopy`'s `mergeSiblings`) merges four types of customizations, using the same rules as the read-time merge above:
+The sibling merge (`EntityCopy`'s `mergeSiblings`) merges four types of customizations by the read-time merge's rules (`siblingMerge.ts`), against the winner's rows it just copied, so the copy holds what the view showed (`tests/services/rulesets/SiblingSemantics.test.ts` copies every winner of a fork of every extension and compares):
 
 | Type | Merge strategy | Deduplication key |
 |---|---|---|
 | **Requirements** | `mergeSiblingRequirements`: appends each sibling tree at a fresh top-level position (ANDed), chains kept intact | top-level standalone `target + operator + value` |
-| **Modifiers** | Inserts sibling modifiers (with their own requirements) | `target + value + operator + valueType` |
-| **Properties** | Inserts sibling properties | `type + value` |
-| **Aptitude links** | Inserts sibling `feats_aptitudes` / `powers_aptitudes` rows | `aptitudeId` |
+| **Modifiers** | `mergeSiblingModifiers`: inserts sibling modifiers (with their own requirements) | `target + value + operator + valueType` |
+| **Properties** | `mergeSiblingProperties`: inserts sibling properties | `type + value` |
+| **Aptitude links** | `mergeSiblingAptitudeLinks`: inserts sibling `feats_aptitudes` / `powers_aptitudes` rows, on the aptitude the copy's `CowData` resolves each to, as the copy's own links | resolved `aptitudeId` |
 
-Each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later unsubscribe from one of the extensions, their fork retains the full merged data since it's baked into their own copy.
+The customizations are copied whole, as the winner's own (`copyEntityCustomizations`), and each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later unsubscribe from one of the extensions, their fork retains the full merged data since it's baked into their own copy.
 
 ## Extensions
 
@@ -637,6 +636,6 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/rulesets/hooks/*.ts` | Universal hook interfaces (`LevelsHooks`, `ClassesHooks`, …) |
 | `server/rulesets/dnd3.5/*.ts` | 3.5 implementation (DetailedCharacter, LevelUpProjector, TargetPaths, hooks, properties, buildCharacterResponse) |
 | `server/rulesets/dnd3.5/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
-| `database/packages/dnd35/seed/cow.ts` | Seed-time COW: copies the core feats and spells an extension changes |
+| `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` | Seed-time COW: copies the core feats and spells an extension changes |
 | `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
 | `tests/services/rulesets/Sibling*.test.ts`, `tests/services/rulesets/customization/Sibling*.test.ts`, `tests/cache/aptitudeDedup.test.ts` | Siblings: what the composed view shows, edits and customization writes on a sibling-merged entity, aptitude deduplication |

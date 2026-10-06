@@ -1,5 +1,6 @@
 import { Box, Stack } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useState } from "react";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
@@ -7,7 +8,7 @@ import { BlankState, ConfirmDialog } from "@/client/src/components/common/index.
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { useUserPreferencesStore } from "@/client/src/stores/userPreferencesStore.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 

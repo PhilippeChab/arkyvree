@@ -1,5 +1,5 @@
-import { eqStr, or } from "@/database/packages/dnd35/content/requirements.ts";
-import type { RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { eqStr, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 
 /** A prerequisite's alignment ("Any nonevil", "Lawful neutral"), as a check of the character's. */
 export function parseAlignmentRequirement(text: string): RequirementEntry | undefined {

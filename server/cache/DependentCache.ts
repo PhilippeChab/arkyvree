@@ -9,9 +9,9 @@ interface Loaded<T> {
 
 /** Bounded cached entries plus in-flight reads, invalidated by dependency ID. */
 export default class DependentCache<T> {
-  private cache = new MemoryCache<{ data: T; dependencies: ReadonlySet<string> }>();
+  private readonly cache = new MemoryCache<{ data: T; dependencies: ReadonlySet<string> }>();
 
-  private pending = new Map<string, { promise: Promise<T>; dependencies: ReadonlySet<string> }>();
+  private readonly pending = new Map<string, { promise: Promise<T>; dependencies: ReadonlySet<string> }>();
 
   invalidate(dependencyId: string): void {
     // MemoryCache is capped at 200 entries. No unbounded dependency registry,

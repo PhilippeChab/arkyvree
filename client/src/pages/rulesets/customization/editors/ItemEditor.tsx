@@ -1,3 +1,5 @@
+import { parseResponse } from "hono/client";
+
 import { TagChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
@@ -11,7 +13,7 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Item } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./types.ts";
 import { useEditorSave } from "./useEditorSave.ts";

@@ -2,7 +2,7 @@
 
 import { checkedValue, checkOneOf } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
 import { type RaceReference } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { type RaceDefinition } from "@/database/packages/dnd35/content/types.ts";
+import type { RaceDefinition } from "@/database/packages/dnd35/content/races/types.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 
 export function buildRaceSeeds(ref: RaceReference): RaceDefinition[] {

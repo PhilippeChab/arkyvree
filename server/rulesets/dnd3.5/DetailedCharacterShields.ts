@@ -41,8 +41,6 @@ const SEGMENT_LABELS: Record<string, string> = {
 
 const SHIELD_GROUPING_PROPERTIES = [SHIELD_TYPE] as const;
 
-export type { ShieldsData };
-
 export default class DetailedCharacterShields {
   constructor(private readonly characterCombat: DetailedCharacterCombat) {}
 
@@ -120,3 +118,5 @@ export default class DetailedCharacterShields {
     this.characterCombat.addShield(properties);
   }
 }
+
+export type { ShieldsData };

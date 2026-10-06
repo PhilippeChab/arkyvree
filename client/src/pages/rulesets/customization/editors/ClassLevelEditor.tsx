@@ -1,4 +1,5 @@
 import { Stack, Typography } from "@mui/material";
+import { parseResponse } from "hono/client";
 import { useController } from "react-hook-form";
 
 import { TagChip } from "@/client/src/components/common/index.ts";
@@ -14,7 +15,7 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { ClassLevel } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./types.ts";
 import { useEditorSave } from "./useEditorSave.ts";

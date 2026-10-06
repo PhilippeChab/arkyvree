@@ -30,20 +30,24 @@ database/packages/
     ├── index.ts          # The core rules package
     ├── names.ts          # Ruleset display names
     ├── extensions/       # One file per extension package
-    ├── content/          # What the data is written with, and the hand-written data
-    │   ├── types.ts          # FeatSeed, ClassSeed, SpellSeed, BookContent…
-    │   ├── requirements.ts   # Requirement builders: eq(), gte(), or(), feat()…
-    │   ├── items.ts          # Weapon/armor/shield properties and proficiency requirements
-    │   ├── weapons.ts        # The weapons by proficiency, their proficiency requirements and feats
-    │   ├── wizardSchools.ts  # The wizard's school feats
-    │   ├── skills.ts, creatureTypes.ts
-    │   ├── core.ts           # The core ruleset, abilities, saves, skills, languages
-    │   └── familiars.ts, animalCompanions.ts, mounts.ts, deitysWeapon.ts
+    ├── content/          # What the data is written with: a folder per kind of content, its types and builders
+    │   ├── customization/    # Requirement, modifier and property types; eq(), gte(), or(), feat(), bonus()…
+    │   ├── items/            # ItemDef; weapon, armor and shield properties and proficiencies (simple(), martial()…)
+    │   ├── classes/          # ClassSeed; the class level each of a class's spell levels opens at
+    │   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceDefinition; DomainDefinition
+    │   ├── wizardSchools/    # WizardSchoolDefinition; the wizard's school feats
+    │   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
+    │   ├── abilities/, saves/, skills/, languages/   # The core rules' own: AbilityDefinition, SaveDefinition…
+    │   └── rulesets/         # CoreContent, BookContent: what a ruleset is seeded with
+    ├── data/             # The hand-written data
+    │   ├── core.ts           # The core ruleset, its abilities, saves, skills, languages, and CORE: all it's seeded with
+    │   ├── skills.ts, weapons.ts, creatureTypes.ts, templateItems.ts
+    │   ├── bonds/            # Familiars, animal companions, special mounts
+    │   └── feats/            # Favored enemy, deity's weapon, the weapon feats
     └── seed/             # What writes it to the database
-        ├── context.ts        # SeedContext: the ruleset and the ids of the rows its content names
-        ├── core.ts           # seedCore: the core rules
-        ├── extension.ts      # seedExtension: an extension's book
-        └── feats.ts, powers.ts, classes.ts, domains.ts, items.ts, races.ts, bonds.ts, cow.ts, …
+        ├── BaseSeeder.ts     # A seeder's core: its database, its context (SeedContext), the rows and inserts every step shares
+        ├── RulesetSeeder.ts  # createCore, createExtension; seedCore, seedBook: the steps made of steps
+        ├── concerns/         # A step per kind of row: SeedsFeats, SeedsClasses, CopiesOnWrite…
 
 database/packages/dnd35-from-parser/
 ├── reference/            # Scraped JSON (raw + overrides)
@@ -53,11 +57,22 @@ database/packages/dnd35-from-parser/
 └── tools/                # Scraper, generator, validate, overrides
 ```
 
-`content/` never touches the database: the generated data, the parser and the seeds all import it. `generated/` holds only what the generator writes; hand-written content goes in `content/`.
+`content/` and `data/` never touch the database: the generated data, the parser and the seeds import them. `generated/` holds only what the generator writes; hand-written content goes in `data/`, what content is written with in `content/`.
 
 ## How seeds work
 
-A seed step takes a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. `seedCore` creates the core ruleset and seeds it step by step; the dev seeds (`database/seeds`) and the tests load the same context for the seeded ruleset (`loadSeedContext`).
+A `RulesetSeeder` seeds a ruleset step by step: a step that writes one kind of row is a concern (`seed/concerns/`), and the steps made of others (`seedCore`, `seedBook`, `seedBond`, `seedDomains`) are the class's own. It holds a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. It holds no content: the core rules' package creates the core ruleset and seeds it with `CORE` (`data/core.ts`):
+
+```ts
+seeds: [
+  async (db) => {
+    const seeder = await RulesetSeeder.createCore(db, CORE_RULESET);
+    await seeder.seedCore(CORE);
+  },
+],
+```
+
+The dev seeds (`database/seeds`) and the tests load the same context for the seeded ruleset (`RulesetSeeder.loadContext`).
 
 An extension is a package file that seeds its book:
 
@@ -66,11 +81,16 @@ const dnd35Dmg: ContentPackage = {
   name: "dnd35-dmg",
   type: "extension",
   seedsVersion: 16,
-  seeds: [(db) => seedExtension(db, { name: DND35_DMG_NAME, description: "…" }, BOOK)],
+  seeds: [
+    async (db) => {
+      const seeder = await RulesetSeeder.createExtension(db, { name: DND35_DMG_NAME, description: "…" });
+      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
+    },
+  ],
 };
 ```
 
-`BOOK` (`generated/<book>/index.ts`) is the book's content as the generator wrote it. `seedExtension` creates the extension ruleset, loads the core's context, adds the aptitudes the core lacks, seeds the feats, spells, domains and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are added to `BOOK` in its package file (Complete Divine adds `DEITYS_WEAPON_FEATS`).
+`BOOK` (`generated/<book>/index.ts`) is the book's content as the generator wrote it. `RulesetSeeder.createExtension` creates the extension ruleset with the core's context; `seedBook` adds the aptitudes the core lacks, seeds the feats, spells, domains (whose spell levels open at the core cleric's) and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are added to `BOOK` in its package file (Complete Divine adds `DEITYS_WEAPON_FEATS`).
 
 ### Adding an extension
 
@@ -91,7 +111,12 @@ const dnd35Dmg: ContentPackage = {
   name: "dnd35-dmg",
   type: "extension",
   seedsVersion: 16,
-  seeds: [(db) => seedExtension(db, { name: DND35_DMG_NAME, description: "…" }, BOOK)],
+  seeds: [
+    async (db) => {
+      const seeder = await RulesetSeeder.createExtension(db, { name: DND35_DMG_NAME, description: "…" });
+      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
+    },
+  ],
   updates: {
     17: addTheMissingFeat,
   },
@@ -119,11 +144,11 @@ What the generator reads is derived from the two each time a reference is loaded
 
 ## COW-ing core entities into extensions
 
-When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `seed/cow.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes.
+When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `seed/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes.
 
 ### Aptitude ownership rules
 
-Aptitudes are named pools with no per-ruleset content of their own — just a `name`. So the seed only creates an aptitude row in the ruleset that *introduces* the name. `seedExtension` splits the book's aptitudes into:
+Aptitudes are named pools with no per-ruleset content of their own — just a `name`. So the seed only creates an aptitude row in the ruleset that *introduces* the name. `seedBook` splits the book's aptitudes into:
 
 - **Already in the core** (e.g. `General`, `Fighter Bonus Feat`, `Cleric Domain`) — skipped; the extension references the core's row. Same pattern a user fork uses when adding a new feat tagged `General`.
 - **Not in the core** — inserted as a new row in the extension. Covers both extension-private names (e.g. `Ronin Bonus Feat`) and sibling-shared class spell lists (e.g. `Assassin Spells`, which multiple extensions independently create because siblings can't FK to each other: a book copies each list of another book its spells are on, a class's by their level line or one drawing on others' lists, `Sublime Chord Spells`).
@@ -148,7 +173,7 @@ bun db:packages    # Apply all registered packages
 
 ### Do
 
-- Use the scraper and generator for new content; hand-write only what no page provides, in `content/`
+- Use the scraper and generator for new content; hand-write only what no page provides, in `data/`
 - Correct scraped content in `overrides`, the only hand-edited part of a reference file
 - Make update functions idempotent (upserts, guard clauses) so retries are safe
 - Use display name constants from `names.ts` to query rulesets

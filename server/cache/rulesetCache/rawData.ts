@@ -108,22 +108,16 @@ async function fetchCustomizations(rulesetId: string, entities: RawEntities, kla
   ];
   const propertyEntityIds = [...customizationEntityIds, rulesetId];
   const [properties, modifiers, klassLevelFeats, klassLevelPowers, klassLevelSaves] = await Promise.all([
-    propertyEntityIds.length > 0
-      ? Properties.findMany(db, { entityIds: propertyEntityIds })
-      : Promise.resolve<Property[]>([]),
-    customizationEntityIds.length > 0
-      ? Modifiers.findMany(db, { sourceIds: customizationEntityIds })
-      : Promise.resolve<Modifier[]>([]),
-    klassLevelIds.length > 0 ? KlassLevelFeats.findMany(db, { klassLevelIds }) : Promise.resolve<KlassLevelFeat[]>([]),
-    klassLevelIds.length > 0
-      ? KlassLevelPowers.findMany(db, { klassLevelIds })
-      : Promise.resolve<KlassLevelPower[]>([]),
-    klassLevelIds.length > 0 ? KlassLevelSaves.findMany(db, { klassLevelIds }) : Promise.resolve<KlassLevelSave[]>([]),
+    Properties.findMany(db, { entityIds: propertyEntityIds }),
+    Modifiers.findMany(db, { sourceIds: customizationEntityIds }),
+    KlassLevelFeats.findMany(db, { klassLevelIds }),
+    KlassLevelPowers.findMany(db, { klassLevelIds }),
+    KlassLevelSaves.findMany(db, { klassLevelIds }),
   ]);
 
-  const requirementEntityIds = [...customizationEntityIds, ...modifiers.map((m) => m.id)];
-  const requirements =
-    requirementEntityIds.length > 0 ? await Requirements.findMany(db, { entityIds: requirementEntityIds }) : [];
+  const requirements = await Requirements.findMany(db, {
+    entityIds: [...customizationEntityIds, ...modifiers.map((m) => m.id)],
+  });
   return { properties, modifiers, klassLevelFeats, klassLevelPowers, klassLevelSaves, requirements };
 }
 
@@ -161,11 +155,9 @@ export async function fetchRulesetRawData(
   // they need klass-level IDs to pick up properties/modifiers/requirements attached to class-level rows.
   const klassIds = klasses.map((k) => k.id);
   const [klassLevels, klassSkills, leveledAptitudeIds] = await Promise.all([
-    klassIds.length > 0 ? KlassLevels.findMany(db, { klassIds }) : Promise.resolve<KlassLevel[]>([]),
-    klassIds.length > 0 ? KlassSkills.findMany(db, { klassIds }) : Promise.resolve<KlassSkill[]>([]),
-    aptitudes.length > 0
-      ? Aptitudes.findLeveledIds(db, { aptitudeIds: aptitudes.map((a) => a.id) })
-      : Promise.resolve(new Set<string>()),
+    KlassLevels.findMany(db, { klassIds }),
+    KlassSkills.findMany(db, { klassIds }),
+    Aptitudes.findLeveledIds(db, { aptitudeIds: aptitudes.map((a) => a.id) }),
   ]);
   const customizations = await fetchCustomizations(
     rulesetId,

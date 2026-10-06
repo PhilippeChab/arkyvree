@@ -6,7 +6,7 @@
  * - no mocks: a test runs the real code on the seeded test database (`mock`, `spyOn`, `jest` from `bun:test`, named
  *   or through a namespace);
  * - an e2e test selects by role and accessible name, never by test id (the production build strips MUI's), and takes
- *   `test` / `expect` from `tests/e2e/fixtures.ts`, which every journey's users come from.
+ *   `test` from `tests/e2e/fixtures.ts`, which every journey's users come from (`expect` from Playwright's).
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -52,10 +52,13 @@ function createTestConventions(context) {
           isE2e &&
           file.endsWith(".e2e.ts") &&
           source === "@playwright/test" &&
-          ["test", "expect"].includes(s.imported.name) &&
+          s.imported.name === "test" &&
           node.importKind !== "type"
         ) {
-          context.report({ node: s, message: "An e2e test takes `test` and `expect` from `tests/e2e/fixtures.ts`." });
+          context.report({
+            node: s,
+            message: "An e2e test takes `test` from `tests/e2e/fixtures.ts`, which every journey's users come from.",
+          });
         }
       }
     },

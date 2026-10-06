@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import type { UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { nameRules } from "@/client/src/lib/validation.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { ITEM_TYPE_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 

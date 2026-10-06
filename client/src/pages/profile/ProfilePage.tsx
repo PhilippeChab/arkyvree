@@ -1,5 +1,6 @@
 import { Alert, Box, Button, Card, CardContent, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { type ReactNode, useState } from "react";
 
 import { GoogleSignInButton } from "@/client/src/components/auth/index.ts";
@@ -20,7 +21,7 @@ import { loadFailureMessage, wrongCredential } from "@/client/src/lib/errorMessa
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { confirmPasswordRules, emailRules, newPasswordRules, usernameRules } from "@/client/src/lib/validation.ts";
 import { DeleteAccountDialog, EmailChangeVerificationDialog } from "@/client/src/pages/profile/components/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import type { AuthUser } from "@/client/src/stores/authUser.ts";
 

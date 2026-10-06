@@ -1,5 +1,4 @@
-import type { RulesetData } from "@/server/cache/index.ts";
-import { refreshEntityData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type CowData, db, type Db } from "@/server/database/index.ts";
 import {
   Campaigns,
@@ -47,6 +46,7 @@ import type {
   Ruleset,
 } from "@/shared/relations.ts";
 
+import { refreshEntityData } from "./refreshEntityData.ts";
 import { readSkillFlags } from "./skillFlags.ts";
 import { collectClassListIds, collectFeatListIds } from "./spellcasting/spellLists.ts";
 
@@ -75,12 +75,6 @@ export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
   klassBonusSpellAbilityMap: Map<string, string>;
   klassCasterTypeMap: Map<string, "Arcane" | "Divine">;
 }
-
-/**
- * PMR types re-exported for the two files that reach in for them (`DetailedCharacter.ts`,
- * `DetailedCharacterSpellcasting.ts`). `Dnd35ProjectedCharacterData` is imported directly from `./types.ts`.
- */
-export type { FeatWithPMR, KlassLevelWithPMR, PowerWithPMR };
 
 export default class DetailedCharacterDataLoader {
   constructor(private readonly character: Character) {}
@@ -261,16 +255,20 @@ export default class DetailedCharacterDataLoader {
     allCharacterLevels: CharacterLevel[],
     resolve: Resolve,
   ) {
-    const compose = <T extends Record<string, unknown> & { id: string; aptitudeId: string }>(rows: T[]) =>
-      refreshEntityData(resolve(rows), rulesetData.powers, ["name", "description"]).map((power) => ({
-        ...power,
-        powerLevel:
-          rulesetData.powersById
-            .get(power.id)
-            ?.powersAptitudesInRules.find((link) => link.aptitudeId === power.aptitudeId)?.level ?? null,
-      }));
-    const pickedPowers = compose(picks.pickedPowers);
-    const givenPowers = compose(picks.givenPowers);
+    const withLevel = <T extends { id: string; aptitudeId: string }>(power: T) => ({
+      ...power,
+      powerLevel:
+        rulesetData.powersById
+          .get(power.id)
+          ?.powersAptitudesInRules.find((link) => link.aptitudeId === power.aptitudeId)?.level ?? null,
+    });
+    const pickedPowers = refreshEntityData(resolve(picks.pickedPowers), rulesetData.powers, [
+      "name",
+      "description",
+    ]).map(withLevel);
+    const givenPowers = refreshEntityData(resolve(picks.givenPowers), rulesetData.powers, ["name", "description"]).map(
+      withLevel,
+    );
 
     const characterLevelIdSet = new Set(allCharacterLevels.map((l) => l.id));
     const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(
@@ -601,10 +599,9 @@ export default class DetailedCharacterDataLoader {
     // Round 6: Requirements — cache covers ruleset modifiers (including those on virtually possessed feats/powers,
     // since the unified `feats` and `powers` arrays pull from `rulesetData.modifiersBySource`). Only
     // character-direct modifiers can have requirements the cache misses.
-    const extraRequirements =
-      characterSourcedModifiers.length > 0
-        ? await Requirements.findMany(database, { entityIds: characterSourcedModifiers.map((m) => m.id) })
-        : [];
+    const extraRequirements = await Requirements.findMany(database, {
+      entityIds: characterSourcedModifiers.map((m) => m.id),
+    });
     return { characterSourcedModifiers, baseModifiers, extraRequirements };
   }
 

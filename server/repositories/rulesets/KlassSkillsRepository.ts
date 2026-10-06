@@ -33,6 +33,7 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules> {
   }
 
   async findMany(db: Db, where: { klassIds: string[] }) {
+    if (where.klassIds.length === 0) return [];
     return await db.query.klassSkillsInRules.findMany({
       where: and(inArray(this.table.klassId, where.klassIds), isNull(this.table.deletedAt)),
       orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.klassId), this.orderBy(this.table.skillId)],

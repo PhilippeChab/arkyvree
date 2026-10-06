@@ -1,5 +1,6 @@
 import { alpha, Button, Container, Stack, Tooltip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 
 import {
   CREATED_SORTS,
@@ -20,7 +21,7 @@ import { formatActivityDetails, formatNotificationMessage } from "@/client/src/l
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 const FILTER_OPTIONS: FilterOption<"unread">[] = [
   { value: undefined, label: "All" },

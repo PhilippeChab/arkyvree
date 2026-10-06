@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { test } from "@/tests/e2e/fixtures.ts";
 import { apiResponse, openActionsMenu, uniqueName } from "@/tests/e2e/support/page.ts";
 import {
   forkCoreRuleset,

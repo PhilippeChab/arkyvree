@@ -8,14 +8,14 @@ import { join } from "node:path";
 import type { ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 import type { DetectedModifiers } from "@/database/packages/dnd35-from-parser/tools/types.ts";
-import { gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
+import { gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   Modifier,
   ModifierEffect,
   ModifierSeed,
   RequirementEntry,
-} from "@/database/packages/dnd35/content/types.ts";
+} from "@/database/packages/dnd35/content/customization/types.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -128,11 +128,6 @@ function detectBondedLevelFormula(description: string, classSlug: string): strin
 
   return base;
 }
-
-/** Re-export stripSeparators — used as the slug function throughout the tools */
-export { stripSeparators } from "@/shared/text.ts";
-
-export { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
 
 /** `ranks` in any skill "X (any)" names ("Knowledge (any)": any Knowledge skill), or none when it names no skill. */
 export function anySkillRequirement(name: string, ranks: number): RequirementEntry | undefined {

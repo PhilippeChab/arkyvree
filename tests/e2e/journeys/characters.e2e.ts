@@ -1,8 +1,9 @@
 import { statSync } from "node:fs";
 
 import type { Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { test } from "@/tests/e2e/fixtures.ts";
 import { createCharacter } from "@/tests/e2e/support/characters.ts";
 import { apiResponse, filterList, openActionsMenu, selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
 import { fillStrengthModifier } from "@/tests/e2e/support/rulesets.ts";

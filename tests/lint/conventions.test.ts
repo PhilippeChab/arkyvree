@@ -54,11 +54,11 @@ describe("conventions", () => {
     ]);
   });
 
-  test("only the repositories' index builds a repository", async () => {
+  test("only the repositories' instances module builds a repository", async () => {
     expect(
       await lintRepo(
         {
-          "server/repositories/index.ts": "export const Feats = new FeatsRepository();\n",
+          "server/repositories/instances.ts": "export const Feats = new FeatsRepository();\n",
           "server/services/s.ts": "export const feats = new FeatsRepository();\n",
         },
         ["repository-instances"],
@@ -259,6 +259,105 @@ describe("conventions", () => {
       "writes-in-transactions server/jobs/many.ts",
       "writes-in-transactions server/services/db.ts",
       "writes-in-transactions server/services/lock.ts",
+    ]);
+  });
+
+  test("an empty list is checked in its repository's read, which answers it without a query, never by a caller", async () => {
+    const reading = (body: string) =>
+      lines(
+        'import { Feats, Rulesets } from "@/server/repositories/index.ts";',
+        `export async function f(db: Db, ids: string[], rows: R[]) {`,
+        body,
+        "}",
+      );
+    const repository = (body: string) =>
+      lines("export class XRepository {", "  async findMany(db: Db, where: { ids: string[] }) {", body, "  }", "}");
+    expect(
+      await lintRepo(
+        {
+          "server/services/ternary.ts": reading("  return ids.length > 0 ? await Feats.findMany(db, { ids }) : [];"),
+          "server/services/resolved.ts": reading(
+            "  return ids.length === 0 ? Promise.resolve([]) : Feats.findMany(db, { ids: ids.map(canonical) });",
+          ),
+          "server/services/early.ts": reading(
+            "  if (!ids.length) return [];\n  return await Feats.findMany(db, { ids });",
+          ),
+          "server/services/block.ts": reading(
+            "  if (ids.length > 0) {\n    await Feats.findPicks(db, { characterLevelIds: ids });\n  }",
+          ),
+          "server/services/plain.ts": reading("  return await Feats.findMany(db, { ids });"),
+          "server/services/write.ts": reading(
+            "  if (rows.length === 0) return [];\n  return await Feats.createMany(tx, rows);",
+          ),
+          "server/services/other.ts": reading("  return ids.length > 0 ? describe(ids) : [];"),
+          "server/services/key.ts": reading(
+            "  if (ids.length === 0) return [];\n  return await Feats.findMany(db, { ids: otherIds });",
+          ),
+          "server/services/member.ts": reading(
+            "  if (ids.length === 0) return [];\n  return await Feats.findMany(db, { ids: other.ids });",
+          ),
+          "server/services/more.ts": reading(
+            "  if (ids.length === 0) return [];\n  const ruleset = await Rulesets.findOne(db, { id });\n  return await Feats.findMany(db, { ids });",
+          ),
+          "server/repositories/unchecked.ts": repository(
+            "    return await db.select().from(t).where(and(inArray(t.id, where.ids), isNull(t.deletedAt)));",
+          ),
+          "server/repositories/checked.ts": repository(
+            "    if (where.ids.length === 0) return [];\n    return await db.select().from(t).where(inArray(t.id, where.ids));",
+          ),
+          "server/repositories/optional.ts": repository(
+            "    return await db.select().from(t).where(or(eq(t.own, true), inArray(t.id, where.ids)));",
+          ),
+        },
+        ["empty-list-reads"],
+      ),
+    ).toEqual([
+      "empty-list-reads server/repositories/unchecked.ts",
+      "empty-list-reads server/services/block.ts",
+      "empty-list-reads server/services/early.ts",
+      "empty-list-reads server/services/resolved.ts",
+      "empty-list-reads server/services/ternary.ts",
+    ]);
+  });
+
+  test("a repository read says it found nothing with undefined, never null", async () => {
+    const repository = (method: string) => lines("export class XRepository {", method, "}");
+    expect(
+      await lintRepo(
+        {
+          "server/repositories/fallback.ts": repository(
+            "  async findRole(db: Db, where: W) {\n    const row = await db.query.x.findFirst({ where });\n    return row?.role ?? null;\n  }",
+          ),
+          "server/repositories/first.ts": repository(
+            "  async findOneWithBlob(db: Db, where: W) {\n    const rows = await db.select().from(t);\n    return rows[0] || null;\n  }",
+          ),
+          "server/repositories/literal.ts": repository(
+            "  async findOne(db: Db, where: W) {\n    if (!where.id) return null;\n    return await db.query.x.findFirst({ where });\n  }",
+          ),
+          "server/repositories/typed.ts": repository(
+            "  async findName(db: Db, where: W): Promise<string | null> {\n    return (await db.query.x.findFirst({ where }))?.name;\n  }",
+          ),
+          "server/repositories/nullable.ts": repository(
+            "  async findDescription(db: Db, where: W): Promise<string | null | undefined> {\n    return (await db.query.x.findFirst({ where }))?.description;\n  }",
+          ),
+          "server/repositories/plain.ts": repository(
+            "  async findOne(db: Db, where: W) {\n    const [row] = await db.select().from(t);\n    return row;\n  }",
+          ),
+          "server/repositories/column.ts": repository(
+            "  async findMany(db: Db, where: W): Promise<{ description: string | null }[]> {\n    const rows = await db.select().from(t);\n    return rows.map((row) => ({ description: row.description ?? null }));\n  }",
+          ),
+          "server/repositories/write.ts": repository(
+            "  async update(db: Db, values: V, where: W) {\n    const [row] = await db.update(t).set(values).returning();\n    return row ?? null;\n  }",
+          ),
+          "server/services/service.ts": "export function f(row?: R) {\n  return row ?? null;\n}\n",
+        },
+        ["no-null-reads"],
+      ),
+    ).toEqual([
+      "no-null-reads server/repositories/fallback.ts",
+      "no-null-reads server/repositories/first.ts",
+      "no-null-reads server/repositories/literal.ts",
+      "no-null-reads server/repositories/typed.ts",
     ]);
   });
 

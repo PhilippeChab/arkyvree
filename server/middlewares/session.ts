@@ -20,8 +20,22 @@ const USER_CONTEXT_KEY = "requestUser";
 
 export const SESSION_COOKIE_NAME = "session-id";
 
+export function deleteSessionCookie(c: Context) {
+  deleteCookie(c, SESSION_COOKIE_NAME);
+}
+
 export function getSessionCookie(c: Context) {
   return getCookie(c, SESSION_COOKIE_NAME);
+}
+
+export function setSessionCookie(c: Context, sessionId: string) {
+  setCookie(c, SESSION_COOKIE_NAME, sessionId, {
+    httpOnly: true,
+    secure: isProduction(),
+    sameSite: "Strict",
+    path: "/",
+    maxAge: SESSION_TTL_SECONDS,
+  });
 }
 
 export default createMiddleware<SessionContext>(async (c, next) => {
@@ -43,17 +57,3 @@ export default createMiddleware<SessionContext>(async (c, next) => {
 
   await next();
 });
-
-export function deleteSessionCookie(c: Context) {
-  deleteCookie(c, SESSION_COOKIE_NAME);
-}
-
-export function setSessionCookie(c: Context, sessionId: string) {
-  setCookie(c, SESSION_COOKIE_NAME, sessionId, {
-    httpOnly: true,
-    secure: isProduction(),
-    sameSite: "Strict",
-    path: "/",
-    maxAge: SESSION_TTL_SECONDS,
-  });
-}

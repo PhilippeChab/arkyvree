@@ -1,5 +1,6 @@
 import { Typography } from "@mui/material";
 import type { InferRequestType, InferResponseType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { Controller } from "react-hook-form";
 
 import {
@@ -15,7 +16,7 @@ import { PropertiesIcon } from "@/client/src/components/icons/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 

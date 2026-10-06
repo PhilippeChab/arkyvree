@@ -1,10 +1,12 @@
+import { parseResponse } from "hono/client";
+
 import { TagChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard, raceSizeTag } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Race } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./types.ts";
 import { useEditorSave } from "./useEditorSave.ts";

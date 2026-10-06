@@ -140,7 +140,7 @@ From `server/cache/rulesetCache/` (the scopes) and `server/cow/` (the copies):
 
 For lineage checks (entity-belongs-to-sourceChain), `findScopedEntity`. For id canonicalization (pre-COW → post-COW) use `rulesetData.canonicalize(id)`. Sibling merging (aptitude links, modifiers, properties, requirements) is pre-baked into `rulesetData` by the compose step, so consumers only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
 
-From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cache/index.ts`): `RulesetCache`, the class that holds the cache (`RulesetCache.ts`), and the types of what it holds.
+From `server/cache/rulesetCache/index.ts`: `RulesetCache`, the class that holds the cache (`RulesetCache.ts`), and the types of what it holds.
 
 | Symbol                                       | Purpose                                                                                               |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
@@ -156,12 +156,12 @@ From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cac
 
 Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`, `RulesetChangesService` (reverts) and the ruleset implementation layer (`DetailedCharacterDataLoader`, `TargetPaths`, `LevelUpProjector`, `TargetPathsService`). Regular services don't reach for these — they go through `withRulesetScope`.
 
-- **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `EntityCopy` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateItem` / `createVariants` and `ModifiersService.duplicateModifier`. `EntityCopy` also copies the entity's relationships and class levels and merges its siblings (its private methods), with `fetchKlassRelationships` and `fetchKlassLevelCustomizations`, which `cow/index.ts` doesn't export.
+- **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `EntityCopy` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateItem` / `createVariants` and `ModifiersService.duplicateModifier`. `EntityCopy` also copies the entity's relationships and class levels and merges its siblings (its private methods).
 - **Extensions** (`RulesetExtensionsService`): `NAME_FALLBACK_ENTITY_TYPES` tells `subscribeExtension`'s name-clash check which types merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `EntityCopy` copies an entity on its first edit.
 - **Copy-on-write data**: `CowDataBuilder` (`cache/rulesetCache/CowDataBuilder.ts`) builds a `CowData`, for copy-on-write only: its read side (`CowDataBuilder.build`, which `RulesetCache.getCowData` caches) and its write side (`CowDataBuilder.buildForCopy`, which `EntityCopy` remaps a copy's references and merges its siblings by).
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`RulesetCache.getCowData`, `EntityCopy`) and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `RulesetCache.getData`, which gets its `CowData` (`RulesetCache.getCowData`); `RulesetCache.invalidate*` drop it with the rest.
-- **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `CowData.resolveRows`.
+- **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `CowData.resolveRows`, then the engine's `refreshEntityData` (`rulesets/dnd3.5/refreshEntityData.ts`) takes the view's fields (a name, a description) for the row the id now names.
 - **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `RulesetCache.getRawData`, `RulesetCache.isRawDataPinned`.
 - **AsyncLocalStorage wiring**: `withCowContext`, `getCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy, `idMatches` (`ResolvesCopies`) and a ruleset entity list's sibling losers (`ScopesToRuleset`).
 
@@ -228,7 +228,7 @@ System-owned rulesets (`rulesets.system = true`) get `cache.pin(key)` on first f
 
 The underlying `MemoryCache` capacity is 200 entries. With ~30 system-owned rulesets pinned, 170 slots remain for the user-fork working set.
 
-Safety: if everything in the cache is pinned and you try to insert a non-pinned entry, `set()` bails rather than growing past `maxSize`.
+Safety: if everything in the cache is pinned and you try to insert a non-pinned entry, `set()` bails rather than growing past `MAX_ENTRIES`.
 
 ### Warm-up
 
@@ -394,7 +394,7 @@ Both the ruleset raw-tier cache and the target-paths cache use `MemoryCache<T>`:
 
 ```mermaid
 flowchart LR
-    Set[set key, value] --> Cap{size >= maxSize<br/>AND new key?}
+    Set[set key, value] --> Cap{size >= MAX_ENTRIES<br/>AND new key?}
     Cap -->|yes| Evict[evictOldest<br/>skip pinned]
     Evict -->|all pinned| Bail[bail, don't insert]
     Evict -->|evicted one| Insert
@@ -494,7 +494,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
 - `server/cache/rulesetCache/` — `RulesetCache` (`RulesetCache.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up), the raw rows' fetch (`rawData.ts`), the compose step with its sibling merging and FK remap (`RulesetComposition.ts`), and the view it builds, whose lookup indices and resolving maps are built on first read (`RulesetData.ts`)
-- `server/cache/rulesetCache/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), the COW data's build (`CowDataBuilder.ts`; `RulesetCache` caches and invalidates it), the sibling requirements' merge (`siblingRequirements.ts`)
+- `server/cache/rulesetCache/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), the COW data's build (`CowDataBuilder.ts`; `RulesetCache` caches and invalidates it), the sibling merge's rules, which the compose step and a copy share (`siblingMerge.ts`), and the list the compose step gathers a merge's rows in (`SiblingRows.ts`)
 - `server/cow/` (copy-on-write's write side) — `RulesetEdit` (the rows a change writes, names a create takes), `EntityCopy` (a copy of an inherited entity), the copy primitives (`copyCustomizations.ts`)
 - `server/database/CowData.ts` — a ruleset's copy-on-write state: what an id resolves to, and whether it's overridden or a sibling loser
 - `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `getCowContext` (infrastructure)

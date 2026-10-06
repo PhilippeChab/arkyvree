@@ -1,5 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -45,7 +46,7 @@ import {
 } from "@/client/src/pages/campaigns/components/index.ts";
 import { campaignPlayersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 

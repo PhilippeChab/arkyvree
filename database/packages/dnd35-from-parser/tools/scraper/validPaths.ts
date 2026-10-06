@@ -3,7 +3,7 @@
  * abilities, saves and skills.
  */
 
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
 import DetailedCharacterCombat from "@/server/rulesets/dnd3.5/DetailedCharacterCombat.ts";
 import DetailedCharacterSkills from "@/server/rulesets/dnd3.5/DetailedCharacterSkills.ts";
 import DetailedCharacterWeapons from "@/server/rulesets/dnd3.5/DetailedCharacterWeapons.ts";

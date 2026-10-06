@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { test } from "@/tests/e2e/fixtures.ts";
 import { visitCoreRulesetList } from "@/tests/e2e/support/rulesets.ts";
 import { openContext } from "@/tests/e2e/support/signIn.ts";
 

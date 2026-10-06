@@ -45,8 +45,6 @@ const SEGMENT_LABELS: Record<string, string> = {
   maxdex: "Maximum Dexterity",
 };
 
-export type { ArmorsData };
-
 export default class DetailedCharacterArmors {
   constructor(private readonly characterCombat: DetailedCharacterCombat) {}
 
@@ -126,3 +124,5 @@ export default class DetailedCharacterArmors {
     this.characterCombat.addArmor(properties);
   }
 }
+
+export type { ArmorsData };

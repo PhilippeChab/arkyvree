@@ -1,3 +1,4 @@
+import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
 import { TagChip } from "@/client/src/components/common/index.ts";
@@ -8,7 +9,7 @@ import {
   SkillFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { abilityTag, TRAINED_ONLY } from "@/client/src/pages/rulesets/components/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import { skillQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";

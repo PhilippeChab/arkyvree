@@ -1,8 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 export function useStartDemo(redirectTo: string = "/dashboard") {

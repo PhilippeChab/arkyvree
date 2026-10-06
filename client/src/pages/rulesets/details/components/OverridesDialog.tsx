@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { Link } from "react-router-dom";
 
 import { BlankState, DiceSpinner, Modal, TagChip } from "@/client/src/components/common/index.ts";
@@ -24,7 +25,7 @@ import { CompareIcon, RestoreIcon } from "@/client/src/components/icons/index.ts
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";

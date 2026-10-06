@@ -26,8 +26,12 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/generator/generators/feat.ts";
 import { loadReference } from "@/database/packages/dnd35-from-parser/tools/references.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/shared.ts";
-import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import type { Modifier, RequirementCondition, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
+import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type {
+  Modifier,
+  RequirementCondition,
+  RequirementEntry,
+} from "@/database/packages/dnd35/content/customization/types.ts";
 
 function check(operator: string, valueType: string, value: string): RequirementCondition {
   return {
@@ -88,7 +92,7 @@ describe("A generated requirement check", () => {
     stringifyRequirement(and(or(eq(feat("Dodge")), gte("combat.bab", 4)), check("not_equal", "number", "13")), uses);
     expect([...uses].sort()).toEqual(["and", "eq", "gte", "or"]);
     expect(requirementImports(uses)).toEqual([
-      `import { and, eq, gte, or } from "@/database/packages/dnd35/content/requirements.ts";`,
+      `import { and, eq, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";`,
     ]);
     expect(requirementImports(new Set())).toEqual([]);
   });
@@ -155,7 +159,7 @@ describe("A generated requirement check", () => {
     const generated = generateFeatSeeds(ref);
     expect(generated).toContain(`requirements: [eqNum("abilities.strength.score", 13)]`);
     expect(generated).toMatch(
-      /^import \{[^}]*\beqNum\b[^}]*\} from "@\/database\/packages\/dnd35\/content\/requirements\.ts";$/m,
+      /^import \{[^}]*\beqNum\b[^}]*\} from "@\/database\/packages\/dnd35\/content\/customization\/requirements\.ts";$/m,
     );
   });
 });

@@ -4,9 +4,10 @@
  */
 
 import { infiniteQueryOptions, type QueryClient, queryOptions } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 import { DEFAULT_ENTITY_FILTERS, type EntityKind, type EntitySortField } from "./entityFilters.ts";
 

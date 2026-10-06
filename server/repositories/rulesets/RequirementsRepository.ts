@@ -27,7 +27,7 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
   }
 
   async findMany(db: Db, where: { entityIds: string[]; entityType: string } | { entityIds: string[] }) {
-    if (!("entityType" in where) && where.entityIds.length === 0) return [];
+    if (where.entityIds.length === 0) return [];
     return await db.query.requirementsInCustomization.findMany({
       where: this.branchWhere(
         [inArray(this.table.entityId, where.entityIds)],

@@ -1,4 +1,6 @@
-import { expect, test } from "@/tests/e2e/fixtures.ts";
+import { expect } from "@playwright/test";
+
+import { test } from "@/tests/e2e/fixtures.ts";
 import { answerInvite, inviteContributor, openContributors } from "@/tests/e2e/support/contributors.ts";
 import { apiResponse, uniqueName } from "@/tests/e2e/support/page.ts";
 import { forkCoreRuleset, openRace, renameEntity } from "@/tests/e2e/support/rulesets.ts";

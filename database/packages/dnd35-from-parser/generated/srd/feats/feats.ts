@@ -1,16 +1,11 @@
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
-import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
-import { SKILL_NAMES } from "@/database/packages/dnd35/content/skills.ts";
-import type { FeatSeed } from "@/database/packages/dnd35/content/types.ts";
-import {
-  ALL_WEAPONS,
-  CROSSBOW_WEAPONS,
-  EXOTIC_WEAPONS,
-  proficiencyRequirements,
-  spellWeaponFocusFeats,
-  weaponProficiencyFeats,
-} from "@/database/packages/dnd35/content/weapons.ts";
-import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools.ts";
+import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
+import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
+import { proficiencyRequirements } from "@/database/packages/dnd35/content/items/proficiencies.ts";
+import { wizardSchoolFeats } from "@/database/packages/dnd35/content/wizardSchools/schoolFeats.ts";
+import { spellWeaponFocusFeats, weaponProficiencyFeats } from "@/database/packages/dnd35/data/feats/weapons.ts";
+import { SKILL_NAMES } from "@/database/packages/dnd35/data/skills.ts";
+import { ALL_WEAPONS, CROSSBOW_WEAPONS, EXOTIC_WEAPONS } from "@/database/packages/dnd35/data/weapons.ts";
 import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

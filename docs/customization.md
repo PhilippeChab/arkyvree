@@ -46,10 +46,10 @@ Requirements use a dotted level numbering system for hierarchy:
 
 ### Requirement Builder Helpers
 
-Seed data is written with nested `or()` / `and()` builders from `database/packages/dnd35/content/requirements.ts`:
+Seed data is written with nested `or()` / `and()` builders from `database/packages/dnd35/content/customization/requirements.ts`:
 
 ```ts
-import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/requirements.ts";
+import { and, eq, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 
 // Simple AND (all root-level entries are AND'd together):
 requirements: [
@@ -78,7 +78,7 @@ requirements: [
 ]
 ```
 
-`requirementRows()` in `database/packages/dnd35/seed/customization.ts` walks the tree and assigns hierarchical levels:
+`requirementRows()` in `database/packages/dnd35/seed/BaseSeeder.ts` walks the tree and assigns hierarchical levels:
 - Root entries: `"1"`, `"2"`, `"3"`
 - Children: `"1.1"`, `"1.2"`, nested: `"1.1.1"`, `"1.1.2"`
 
@@ -276,7 +276,7 @@ and its customizations, then creates the replacement in the same transaction.
 
 Properties the engine reads off a race (`combat/InitiativeAndSpeed.ts`, `DetailedCharacterEncumbrance.ts`), seeded where the SRD says so:
 - `RACE_SPEED_IGNORES_ENCUMBRANCE` — the race keeps its speed in medium or heavy armor and under a medium or heavy load. The dwarf has it, through the parser's override (`reference/srd/races.json`).
-- `RACE_QUADRUPED` — the race walks on four legs, so it carries more for its size: ×¼ Fine to ×24 Colossal (×1½ Medium, ×3 Large) instead of a biped's ×⅛ to ×16. The four-legged familiars, animal companions and special mounts have it (`content/raceProperties.ts`); birds, bats and snakes don't.
+- `RACE_QUADRUPED` — the race walks on four legs, so it carries more for its size: ×¼ Fine to ×24 Colossal (×1½ Medium, ×3 Large) instead of a biped's ×⅛ to ×16. The four-legged familiars, animal companions and special mounts have it (`data/bonds/raceProperties.ts`); birds, bats and snakes don't.
 
 ### Spells / Powers
 
@@ -349,7 +349,7 @@ The character engine computes the **base, permanent character sheet** — no tem
 
 ### Proficiency requirements on weapon feats:
 
-A simple or martial weapon's proficiency is its group's or its own (an OR group); an exotic weapon's is its own, as for the weapon items above. `simple`, `martial` and `exotic` in `database/packages/dnd35/content/weapons.ts` build them, and `proficiencyRequirements(weapon)` picks the weapon's.
+A simple or martial weapon's proficiency is its group's or its own (an OR group); an exotic weapon's is its own, as for the weapon items above. `simple`, `martial` and `exotic` in `database/packages/dnd35/content/items/proficiencies.ts` build them, and `proficiencyRequirements(weapon)` picks the weapon's.
 
 ### Item creation feats require caster level (approximated as character level):
 
@@ -357,7 +357,7 @@ Item creation feats use `identity.meta.level` (character level) for their caster
 
 ### Caster level advancement:
 
-Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `database/packages/dnd35/seed/classes.ts` for implementation. The class levels a bonus caster level reaches apply their spell slots each while its own requirements hold.
+Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `database/packages/dnd35/seed/concerns/SeedsClasses.ts` for implementation. The class levels a bonus caster level reaches apply their spell slots each while its own requirements hold.
 
 ### A class's spell lists:
 

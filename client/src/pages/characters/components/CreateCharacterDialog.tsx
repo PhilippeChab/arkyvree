@@ -1,6 +1,7 @@
 import { IconButton, MenuItem, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { keepPreviousData, skipToken, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -42,7 +43,7 @@ import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { nameRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 

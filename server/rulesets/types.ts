@@ -1,6 +1,6 @@
 import type { FC } from "react";
 
-import type { RulesetData } from "@/server/cache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { CowData, Db } from "@/server/database/index.ts";
 import type { ValidationResult } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";

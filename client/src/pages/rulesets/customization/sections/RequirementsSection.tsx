@@ -2,6 +2,7 @@ import { Alert, Card, CardContent, IconButton, Stack, Typography } from "@mui/ma
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import type { InferResponseType } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useCallback, useMemo, useState } from "react";
 
 import {
@@ -32,7 +33,7 @@ import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/requirementTree.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";

@@ -3,8 +3,8 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { gte } from "@/database/packages/dnd35/content/requirements.ts";
-import type { ClassSeed } from "@/database/packages/dnd35/content/types.ts";
+import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
+import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 
 export const MASTER_OF_THE_UNSEEN_HAND: ClassSeed = {
   name: "Master of the Unseen Hand",

@@ -1,5 +1,6 @@
 import { Container, IconButton, Paper, Stack, Typography } from "@mui/material";
 import { skipToken, useQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
 import { CharacterDetailSkeleton, CharacterSheetBody, downloadPdf } from "@/client/src/components/characters/index.ts";
@@ -9,7 +10,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 export default function SharedCharacterPage() {
   const { shareToken = "" } = useParams<{ shareToken: string }>();

@@ -1,5 +1,6 @@
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { Link } from "react-router-dom";
 
 import { BlankState, CLICKABLE_SX, clickableProps, DiceSpinner } from "@/client/src/components/common/index.ts";
@@ -10,7 +11,7 @@ import { formatActivityDetails, formatNotificationMessage } from "@/client/src/l
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 
 export function RecentNotificationsCard() {
   const actions = useNotificationActions();

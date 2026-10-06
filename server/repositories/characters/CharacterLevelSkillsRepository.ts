@@ -30,6 +30,7 @@ class CharacterLevelSkillsRepository extends LevelPicksRepository<typeof levelSk
 
   /** The picks of these character levels, by the picked entity's name, ties broken to a fixed order. */
   async findMany(db: Db, where: { characterLevelIds: string[] }) {
+    if (where.characterLevelIds.length === 0) return [];
     return await db
       .select(getTableColumns(this.table))
       .from(this.table)
