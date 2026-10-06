@@ -1,4 +1,5 @@
 import type { Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/types.ts";
+import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/customization/requirementTree.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
 import { hasValueType, parseLiteralValue } from "./literalValue.ts";
@@ -11,12 +12,6 @@ type DetailedCharacterComprehensiveRequirements = {
   fulfilledRequirementGroups: Requirement[][];
 };
 
-type Node = {
-  requirement: Requirement;
-  fulfilled: boolean | null;
-  children: Node[];
-};
-
 export default class DetailedCharacterRequirements {
   constructor(private readonly targetPaths: TargetPathsTraverser) {}
 
@@ -26,59 +21,6 @@ export default class DetailedCharacterRequirements {
     unmetRequirementGroups: [],
     fulfilledRequirementGroups: [],
   };
-
-  private buildTree(nodes: Node[]): Node[] {
-    if (nodes.length === 0) return [];
-
-    // Sort nodes by level to ensure proper hierarchy
-    const sortedNodes = nodes.sort((a, b) => {
-      const aLevel = parseFloat(a.requirement.level);
-      const bLevel = parseFloat(b.requirement.level);
-      return aLevel - bLevel;
-    });
-
-    const tree: Node[] = [];
-    const nodeMap = new Map<string, Node>();
-
-    // First pass: Create a map of all nodes by their level
-    for (const node of sortedNodes) {
-      nodeMap.set(node.requirement.level, node);
-    }
-
-    // Second pass: Build the hierarchy
-    for (const node of sortedNodes) {
-      const level = node.requirement.level;
-      const levelParts = level.split(".");
-
-      if (levelParts.length === 1) {
-        // Root level node (e.g., "1", "2", "3")
-        tree.push(node);
-      } else {
-        // Child node (e.g., "1.1", "1.2", "1.2.1")
-        const parentLevel = levelParts.slice(0, -1).join(".");
-        const parentNode = nodeMap.get(parentLevel);
-
-        if (parentNode) {
-          // Validate: only chaining operator nodes can have children
-          if (!parentNode.requirement.chainingOperator) {
-            this.detailedCharacterRequirements.invalidRequirements.push({
-              warning: `Condition node at level ${parentNode.requirement.level} cannot have children. Child level ${level} discarded.`,
-              requirement: node.requirement,
-            });
-            // Discard this node - don't add it anywhere
-          } else {
-            parentNode.children.push(node);
-          }
-        } else {
-          // If parent doesn't exist, add to root level
-          // This handles cases where the hierarchy might be incomplete
-          tree.push(node);
-        }
-      }
-    }
-
-    return tree;
-  }
 
   /**
    * Whether the character's `data` meets the requirement's operator against its typed value. The caller made sure the
@@ -140,7 +82,8 @@ export default class DetailedCharacterRequirements {
     }
   }
 
-  private evaluateNode(node: Node): boolean {
+  /** A tree's node: a group by its operator over its children, a condition by whether it was met (`fulfilled`). */
+  private evaluateNode(node: RequirementNode<Requirement>, fulfilled: ReadonlyMap<Requirement, boolean>): boolean {
     // If this is a chaining operator node
     if (node.requirement.chainingOperator) {
       if (node.children.length === 0) {
@@ -151,17 +94,15 @@ export default class DetailedCharacterRequirements {
       // Apply the chaining operator to children
       switch (node.requirement.chainingOperator) {
         case "and":
-          return node.children.every((child) => this.evaluateNode(child));
+          return node.children.every((child) => this.evaluateNode(child, fulfilled));
         case "or":
-          return node.children.some((child) => this.evaluateNode(child));
+          return node.children.some((child) => this.evaluateNode(child, fulfilled));
         default:
           return false;
       }
     } else {
-      // This is a condition node, fulfilled should always be boolean (not null)
-      // After validation, condition nodes should never have children
-      const fulfilled = node.fulfilled!;
-      return fulfilled;
+      // A condition node, which the tree gives no children
+      return fulfilled.get(node.requirement) ?? false;
     }
   }
 
@@ -186,15 +127,13 @@ export default class DetailedCharacterRequirements {
   }
 
   private evaluateRequirementsGroup(requirements: Requirement[], holders: Holders, sourceId: string | undefined) {
-    const nodes: Node[] = [];
+    // The rows the tree holds: every group, and each condition that could be evaluated, with whether it was met
+    const evaluated: Requirement[] = [];
+    const fulfilled = new Map<Requirement, boolean>();
 
     for (const requirement of requirements) {
       if (requirement.chainingOperator !== null) {
-        nodes.push({
-          requirement,
-          fulfilled: null,
-          children: [],
-        });
+        evaluated.push(requirement);
       } else if (requirement.target) {
         const results = this.targetPaths.traversePathInit(requirement.target, holders, { sourceId });
         const validResults: TraversePathResult[] = [];
@@ -213,33 +152,32 @@ export default class DetailedCharacterRequirements {
         // A path that names nothing gave errors: the requirement is invalid, not unmet. One that resolves is met
         // when any of what it reaches satisfies it (a wildcard reaches several), so unmet when it reaches nothing
         if (validResults.length > 0 || results.length === 0) {
-          const fulfilled = validResults.some((result) => this.evaluateRequirement(requirement, result, holders));
-
-          nodes.push({
+          evaluated.push(requirement);
+          fulfilled.set(
             requirement,
-            fulfilled,
-            children: [],
-          });
+            validResults.some((result) => this.evaluateRequirement(requirement, result, holders)),
+          );
         }
       }
     }
 
-    const tree = this.buildTree(nodes);
+    const tree = RequirementTree.fromRows(evaluated);
+    // A row under a condition, which groups nothing, is left out
+    for (const requirement of tree.detached) {
+      this.detailedCharacterRequirements.invalidRequirements.push({
+        warning: `Condition node at level ${getParentLevel(requirement.level)} cannot have children. Child level ${requirement.level} discarded.`,
+        requirement,
+      });
+    }
 
-    // Process the tree to determine overall fulfillment
-    const isGroupFulfilled = this.evaluateTree(tree);
+    // The top-level rows are AND'd: the group is met when each of them is
+    const isGroupFulfilled = tree.roots.every((node) => this.evaluateNode(node, fulfilled));
 
     if (isGroupFulfilled) {
       this.detailedCharacterRequirements.fulfilledRequirementGroups.push(requirements);
     } else {
       this.detailedCharacterRequirements.unmetRequirementGroups.push(requirements);
     }
-  }
-
-  private evaluateTree(nodes: Node[]): boolean {
-    if (nodes.length === 0) return true;
-
-    return nodes.every((node) => this.evaluateNode(node));
   }
 
   /**

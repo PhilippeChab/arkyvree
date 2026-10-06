@@ -33,6 +33,7 @@ import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
+import RequirementTree, { type RequirementNode } from "@/shared/customization/requirementTree.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { SectionAddButton } from "./SectionAddButton.tsx";
@@ -53,13 +54,8 @@ interface RequirementsSectionProps {
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
 }
 
-/** Tree node interface for hierarchical requirements */
-interface RequirementTreeNode {
-  id: string;
-  level: string;
-  requirement: Requirement;
-  children: RequirementTreeNode[];
-}
+/** A requirement in the tree the section shows, with the requirements it groups. */
+type RequirementTreeNode = RequirementNode<Requirement>;
 
 function PublishedWarning() {
   return (
@@ -209,66 +205,11 @@ export function RequirementsSection({
     [requirements],
   );
 
-  // Build tree structure from flat requirements array
-  const requirementsTree = useMemo(() => {
+  // The requirements' tree, and after it a requirement under a condition (which groups nothing), so it can be fixed
+  const requirementsTree = useMemo((): RequirementTreeNode[] => {
     if (!requirements) return [];
-
-    // Sort requirements by level to ensure proper hierarchy
-    const sortedRequirements = [...requirements].sort((a, b) => {
-      const aLevel = parseFloat(a.level);
-      const bLevel = parseFloat(b.level);
-      return aLevel - bLevel;
-    });
-
-    const treeNodes: RequirementTreeNode[] = [];
-    const nodeMap = new Map<string, RequirementTreeNode>();
-
-    // Create nodes for all requirements
-    for (const requirement of sortedRequirements) {
-      const node: RequirementTreeNode = {
-        id: requirement.id,
-        level: requirement.level,
-        requirement,
-        children: [],
-      };
-      nodeMap.set(requirement.level, node);
-    }
-
-    // Build hierarchy based on level numbering
-    for (const requirement of sortedRequirements) {
-      const node = nodeMap.get(requirement.level);
-      if (!node) continue;
-      const levelParts = requirement.level.split(".");
-
-      // Determine if this is a root node
-      // Root nodes: "1", "2", "1.0", "2.0" etc (major version changes)
-      const isRootNode = levelParts.length === 1 || (levelParts.length === 2 && levelParts[1] === "0");
-
-      if (isRootNode) {
-        // Root level (e.g., "1", "2", "1.0", "2.0")
-        treeNodes.push(node);
-      } else {
-        // Child level - find the immediate parent
-        // For "1.2.1", parent is "1.2"
-        // For "1.2", parent is "1" (or "1.0")
-        const parentLevel = levelParts.slice(0, -1).join(".");
-        let parentNode = nodeMap.get(parentLevel);
-
-        // If parent not found and we're looking for something like "1", try "1.0"
-        if (!parentNode && levelParts.length === 2) {
-          parentNode = nodeMap.get(`${levelParts[0]}.0`);
-        }
-
-        if (parentNode) {
-          parentNode.children.push(node);
-        } else {
-          // If parent doesn't exist, treat as root
-          treeNodes.push(node);
-        }
-      }
-    }
-
-    return treeNodes;
+    const tree = RequirementTree.fromRows(requirements);
+    return [...tree.roots, ...tree.detached.map((requirement) => ({ requirement, children: [] }))];
   }, [requirements]);
 
   const parentIds = useMemo(() => {
@@ -277,7 +218,7 @@ export function RequirementsSection({
     const collectParentIds = (nodes: RequirementTreeNode[]) => {
       for (const node of nodes) {
         if (node.children.length > 0) {
-          expandedIds.push(node.id);
+          expandedIds.push(node.requirement.id);
           collectParentIds(node.children);
         }
       }
@@ -334,16 +275,16 @@ export function RequirementsSection({
 
     return (
       <TreeItem
-        key={node.id}
-        itemId={node.id}
+        key={node.requirement.id}
+        itemId={node.requirement.id}
         label={
           <Card
             variant="outlined"
             sx={{
               my: 0.5,
               mx: 0,
-              ml: node.level.split(".").length > 1 ? { xs: 0, sm: 1 } : 0, // Indent children
-              borderLeft: node.level.split(".").length > 1 ? "3px solid" : "none", // Visual hierarchy
+              ml: node.requirement.level.split(".").length > 1 ? { xs: 0, sm: 1 } : 0, // Indent children
+              borderLeft: node.requirement.level.split(".").length > 1 ? "3px solid" : "none", // Visual hierarchy
               borderColor: "primary.main",
             }}
           >
@@ -405,7 +346,7 @@ export function RequirementsSection({
                       aria-label="Add child requirement"
                       onClick={(e) => {
                         e.stopPropagation();
-                        openCreate(node.level);
+                        openCreate(node.requirement.level);
                       }}
                     >
                       <AddIcon fontSize="small" />
