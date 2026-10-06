@@ -1,4 +1,4 @@
-import { Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
+import { Container, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -7,7 +7,6 @@ import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/compon
 import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
 import { BackIcon, DownloadIcon, EditIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
-import { DURATION } from "@/client/src/lib/animations.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
@@ -52,13 +51,7 @@ export default function CampaignCharacterPage() {
   }
 
   if (isLoading) {
-    return (
-      <Fade in timeout={DURATION.slow}>
-        <div>
-          <CharacterDetailSkeleton />
-        </div>
-      </Fade>
-    );
+    return <CharacterDetailSkeleton />;
   }
 
   // A passing refetch failure keeps the loaded sheet; a revoked visibility or unlink hides it.

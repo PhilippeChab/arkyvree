@@ -85,9 +85,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
                     describeChild
                     key={feat.id}
                     title={feat.description || ""}
-                    arrow
                     placement="top"
-                    enterDelay={300}
                     slotProps={{ tooltip: { sx: { maxWidth: 400 } } }}
                   >
                     <Chip label={label} size="small" variant="outlined" sx={{ typography: "caption" }} />

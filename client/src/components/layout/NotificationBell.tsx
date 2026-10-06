@@ -128,8 +128,6 @@ export function NotificationBell() {
                   describeChild
                   key={notification.id}
                   title={formatActivityDetails(notification.data) ?? ""}
-                  arrow
-                  enterDelay={300}
                   placement="left"
                   slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
                 >

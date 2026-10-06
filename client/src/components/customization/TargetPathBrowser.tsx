@@ -207,7 +207,6 @@ export function TargetPathBrowser({
                   ? "Searching everywhere — click to limit to this level"
                   : "Searching this level only — click to search everywhere"
               }
-              arrow
             >
               <IconButton
                 size="small"
@@ -258,14 +257,7 @@ export function TargetPathBrowser({
                         .join(" › ")
                     : null;
                 return (
-                  <Tooltip
-                    describeChild
-                    title={option.detail}
-                    placement="right"
-                    enterDelay={400}
-                    arrow
-                    key={option.insertText}
-                  >
+                  <Tooltip describeChild title={option.detail} placement="right" key={option.insertText}>
                     <ListItemButton selected={isSelected} onClick={() => handleNavigate(option)}>
                       <ListItemText
                         primary={

@@ -212,8 +212,6 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                               : ""
                           }
                           placement="right"
-                          enterDelay={300}
-                          arrow
                         >
                           <Chip
                             label={power.name}
@@ -247,14 +245,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                   ) : (
                     <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }} onScroll={handlePowersScroll}>
                       {pickablePowers.map((power) => (
-                        <Tooltip
-                          describeChild
-                          key={power.id}
-                          title={power.description ?? ""}
-                          placement="right"
-                          enterDelay={300}
-                          arrow
-                        >
+                        <Tooltip describeChild key={power.id} title={power.description ?? ""} placement="right">
                           <span>
                             <ListItemButton
                               disabled={!power.eligible}

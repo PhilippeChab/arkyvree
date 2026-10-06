@@ -93,8 +93,6 @@ export default function ActivitiesPage() {
                   <Tooltip
                     describeChild
                     title={formatActivityDetails(activity.data) ?? ""}
-                    arrow
-                    enterDelay={300}
                     slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
                   >
                     <Chip

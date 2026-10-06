@@ -106,12 +106,12 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
       </DialogTitle>
       <DialogContent sx={{ maxHeight: "60vh" }}>
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}
-        <Collapse in={!isLoading && !!changes && changes.length === 0} timeout={250} unmountOnExit>
+        <Collapse in={!isLoading && !!changes && changes.length === 0} unmountOnExit>
           <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
             No local changes
           </Typography>
         </Collapse>
-        <Collapse in={!isLoading && !!changes && changes.length > 0} timeout={300} unmountOnExit>
+        <Collapse in={!isLoading && !!changes && changes.length > 0} unmountOnExit>
           <Stack spacing={2} sx={{ pt: 1 }}>
             {[...grouped.entries()].map(([entityType, items]) => (
               <Paper key={entityType} variant="outlined" sx={{ overflow: "hidden" }}>

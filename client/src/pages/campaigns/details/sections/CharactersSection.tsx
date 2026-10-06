@@ -393,7 +393,6 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
             <Tooltip
               describeChild
               title={faqTooltip("Controls how much of your character sheet other campaign members can see.")}
-              arrow
             >
               <Typography
                 variant="caption"

@@ -290,7 +290,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         </Typography>
 
         {step.tooltip && (
-          <Tooltip describeChild title={step.tooltip} arrow placement="top">
+          <Tooltip describeChild title={step.tooltip} placement="top">
             <Stack
               direction="row"
               spacing={0.5}

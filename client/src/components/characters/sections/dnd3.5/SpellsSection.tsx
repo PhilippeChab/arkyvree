@@ -88,7 +88,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
       </TableRow>
       <TableRow>
         <TableCell colSpan={4} sx={{ py: 0, borderBottom: open ? undefined : "none" }}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
+          <Collapse in={open} unmountOnExit>
             <Box sx={{ py: 1.5, px: 1 }}>
               {detailProps.length > 0 && (
                 <Box
@@ -143,7 +143,7 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
           )}
         </Typography>
       </Stack>
-      <Collapse in={open} timeout="auto" unmountOnExit>
+      <Collapse in={open} unmountOnExit>
         <TableContainer sx={{ overflowX: "auto" }}>
           <Table size="small">
             <colgroup>
@@ -191,7 +191,7 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
           {apt.aptitudeName} ({totalSpells})
         </Typography>
       </Stack>
-      <Collapse in={open} timeout="auto" unmountOnExit>
+      <Collapse in={open} unmountOnExit>
         <Box sx={{ pl: 1 }}>
           {apt.levels.map((group) => (
             <CollapsibleLevel key={group.level} group={group} rulesetId={rulesetId} />

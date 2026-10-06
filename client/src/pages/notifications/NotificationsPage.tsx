@@ -134,8 +134,6 @@ export default function NotificationsPage() {
                   <Tooltip
                     describeChild
                     title={formatActivityDetails(notification.data) ?? ""}
-                    arrow
-                    enterDelay={300}
                     slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
                   >
                     <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>

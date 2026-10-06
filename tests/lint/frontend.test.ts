@@ -416,6 +416,7 @@ describe("frontend rules", () => {
           "client/src/computed.tsx":
             "export const k = <Box sx={{ animation: `${fadeInUp} ${DURATION.slow}ms ${i * 80}ms` }} />;\n",
           "client/src/framed.tsx": 'export const f = { "@keyframes spin": { to: { rotate: "1turn" } } };\n',
+          "client/src/faded.tsx": 'import { Fade } from "@mui/material";\nexport const f = Fade;\n',
           "client/src/spun.tsx":
             'import { keyframes } from "@mui/material";\nexport const s = keyframes`to { opacity: 1; }`;\n',
           "client/src/tokened.tsx":
@@ -429,6 +430,7 @@ describe("frontend rules", () => {
     ).toEqual([
       "motion client/src/computed.tsx",
       "motion client/src/curved.ts",
+      "motion client/src/faded.tsx",
       "motion client/src/framed.tsx",
       "motion client/src/spun.tsx",
       "motion client/src/templated.tsx",
@@ -469,6 +471,7 @@ describe("frontend rules", () => {
         {
           "client/src/pixels.tsx": 'export const p = <Box sx={{ borderRadius: "8px 8px 0 0" }} />;\n',
           "client/src/layered.tsx": "export const l = <Box sx={{ zIndex: 1300 }} />;\n",
+          "client/src/spaced.tsx": 'export const s = <Box sx={{ mt: "16px" }} />;\n',
           "client/src/units.tsx":
             "export const u = <Box sx={{ borderRadius: 1, borderBottomLeftRadius: 0, zIndex: 1, top: 0 }} />;\n",
           "client/src/round.tsx":
@@ -476,7 +479,7 @@ describe("frontend rules", () => {
         },
         ["shape"],
       ),
-    ).toEqual(["shape client/src/layered.tsx", "shape client/src/pixels.tsx"]);
+    ).toEqual(["shape client/src/layered.tsx", "shape client/src/pixels.tsx", "shape client/src/spaced.tsx"]);
   });
 
   test("a border is the theme's shorthand, and a surface takes its elevation and outline as props", async () => {
@@ -531,6 +534,26 @@ describe("frontend rules", () => {
       "flex-layout client/src/called.tsx",
       "flex-layout client/src/gapped.tsx",
       "flex-layout client/src/turned.tsx",
+    ]);
+  });
+
+  test("what the theme sets for every instance isn't set again on one", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/arrowed.tsx": 'export const a = <Tooltip title="x" arrow><span /></Tooltip>;\n',
+          "client/src/delayed.tsx": 'export const d = <Tooltip title="x" enterDelay={400}><span /></Tooltip>;\n',
+          "client/src/timed.tsx": 'export const t = <Collapse in={open} timeout="auto" />;\n',
+          "client/src/placed.tsx":
+            'export const p = <Tooltip title="x" placement="right" describeChild><span /></Tooltip>;\n',
+          "client/src/opened.tsx": "export const o = <Collapse in={open} unmountOnExit />;\n",
+        },
+        ["component-defaults"],
+      ),
+    ).toEqual([
+      "component-defaults client/src/arrowed.tsx",
+      "component-defaults client/src/delayed.tsx",
+      "component-defaults client/src/timed.tsx",
     ]);
   });
 });

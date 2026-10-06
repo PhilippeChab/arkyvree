@@ -55,7 +55,7 @@ function FeatRow({ name, label, description, extra }: FeatRowProps) {
         {description || "—"}
       </Typography>
       {hasExtra && (
-        <Collapse in={open} timeout="auto" unmountOnExit>
+        <Collapse in={open} unmountOnExit>
           {extra}
         </Collapse>
       )}
@@ -85,7 +85,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
           {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
         </IconButton>
       </Stack>
-      <Collapse in={open} timeout="auto" unmountOnExit>
+      <Collapse in={open} unmountOnExit>
         <Stack spacing={3}>
           {feats.map((feat) => {
             const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;

@@ -361,6 +361,9 @@ export function createAppTheme(darkMode: boolean): Theme {
             }),
           },
         },
+        MuiCollapse: {
+          defaultProps: { timeout: "auto" },
+        },
         MuiStack: {
           // `spacing` is a gap, so wrapped children keep it too
           defaultProps: { useFlexGap: true },
@@ -405,6 +408,7 @@ export function createAppTheme(darkMode: boolean): Theme {
           },
         },
         MuiTooltip: {
+          defaultProps: { arrow: true, enterDelay: 300 },
           styleOverrides: {
             tooltip: {
               fontSize: "0.85rem",

@@ -147,12 +147,7 @@ export function AttachmentField({
             isAvatar ? (
               <Avatar src={url} sx={{ width: dimension, height: dimension }} />
             ) : (
-              <Box
-                component="img"
-                src={url}
-                alt={label ?? name}
-                sx={{ width: dimension, height: dimension, objectFit: "cover", display: "block" }}
-              />
+              <Avatar variant="square" src={url} alt={label ?? name} sx={{ width: dimension, height: dimension }} />
             )
           ) : (
             <Stack

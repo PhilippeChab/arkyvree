@@ -137,8 +137,6 @@ export function AddClassPlanStep({
                       !option.eligible && option.requirementTree ? option.requirementTree : (option.description ?? "")
                     }
                     placement="right"
-                    enterDelay={300}
-                    arrow
                     slotProps={{
                       tooltip: {
                         sx:

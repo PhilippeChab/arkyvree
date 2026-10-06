@@ -52,6 +52,8 @@
  *   `Paper` or `Card` takes its elevation and its outline as props (`elevation`, `variant="outlined"`).
  * - `flex-layout`: a flex container is a `Stack`, its `direction` and `spacing` props (`useFlexGap`, the theme's
  *   default, makes `spacing` a gap), never a `Box` with a flex `display`.
+ * - `component-defaults`: what the theme sets for every instance (a tooltip's arrow and delay, `Collapse`'s timeout)
+ *   isn't set again on one.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -182,6 +184,41 @@ const MOTION_LITERAL = /\d(?:\.\d+)?m?s\b|\b(?:ease(?:-in|-out|-in-out)?|linear|
 /** The border shorthands, which the theme writes from a width (`border: 1` is `1px solid`) */
 const BORDER_SIDES = new Set(["border", "borderBottom", "borderLeft", "borderRight", "borderTop"]);
 
+/** The props the theme sets for every instance of a component (`MuiTooltip`'s and `MuiCollapse`'s `defaultProps`) */
+const THEME_DEFAULTS = { Collapse: new Set(["timeout"]), Tooltip: new Set(["arrow", "enterDelay", "enterNextDelay"]) };
+
+/** MUI's transitions a component never runs itself: a page fades in with `PageTransition`, a block opens with `Collapse` */
+const MUI_TRANSITIONS = new Set(["Fade", "Grow", "Slide", "Zoom"]);
+
+/** The theme-spaced style keys, which take its units (`mt: 2`), never pixels */
+const SPACING_KEYS = new Set([
+  "gap",
+  "m",
+  "mb",
+  "ml",
+  "mr",
+  "mt",
+  "mx",
+  "my",
+  "p",
+  "pb",
+  "pl",
+  "pr",
+  "pt",
+  "px",
+  "py",
+  "margin",
+  "marginBottom",
+  "marginLeft",
+  "marginRight",
+  "marginTop",
+  "padding",
+  "paddingBottom",
+  "paddingLeft",
+  "paddingRight",
+  "paddingTop",
+]);
+
 /** `Intl`'s date formatters */
 const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
 
@@ -310,6 +347,20 @@ function createClientApis(context) {
   };
 }
 
+function createComponentDefaults(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXAttribute(node) {
+      const element = elementName(node.parent.parent);
+      if (!THEME_DEFAULTS[element]?.has(node.name.name)) return;
+      context.report({
+        node,
+        message: `A \`${element}\`'s \`${node.name.name}\` is the theme's default, the same for every one: never set here.`,
+      });
+    },
+  };
+}
+
 function createDateFormats(context) {
   if (!inClient(context) || repoPath(context.filename) === "client/src/lib/formatDate.ts") return {};
   const report = (node) =>
@@ -383,6 +434,9 @@ function createShape(context) {
             'A corner is the theme\'s: `borderRadius` in its units (`1` is `shape.borderRadius`), a circle `"50%"`, ' +
             "and one corner `0` beside it (`borderBottomLeftRadius: 0`).",
         });
+      }
+      if (SPACING_KEYS.has(key) && typeof value === "string" && /\dpx\b/.test(value)) {
+        context.report({ node: node.value, message: "Spacing is in the theme's units (`mt: 2`), never pixels." });
       }
       if (key === "zIndex" && typeof value === "number" && value > 1) {
         context.report({
@@ -945,6 +999,9 @@ function createMotion(context) {
   return {
     ImportSpecifier(node) {
       if (node.imported.name === "keyframes") report(node);
+      const inTheme = repoPath(context.filename).startsWith("client/src/theme/");
+      if (MUI_TRANSITIONS.has(node.imported.name) && node.parent.source.value === "@mui/material" && !inTheme)
+        report(node);
     },
     Literal(node) {
       if (typeof node.value === "string" && node.value.includes("cubic-bezier(")) report(node);
@@ -1051,4 +1108,5 @@ export default {
   shape: { meta: { type: "suggestion" }, create: createShape },
   borders: { meta: { type: "suggestion" }, create: createBorders },
   "flex-layout": { meta: { type: "suggestion" }, create: createFlexLayout },
+  "component-defaults": { meta: { type: "suggestion" }, create: createComponentDefaults },
 };

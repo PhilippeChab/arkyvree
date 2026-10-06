@@ -80,7 +80,7 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
       hidden={hidden}
       renderName={(label) =>
         skill.description ? (
-          <Tooltip describeChild title={skill.description} enterTouchDelay={0} arrow>
+          <Tooltip describeChild title={skill.description} enterTouchDelay={0}>
             <Box
               component="span"
               sx={{ borderBottom: 1, borderBottomStyle: "dashed", borderColor: "currentColor", cursor: "help" }}

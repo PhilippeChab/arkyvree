@@ -1,4 +1,4 @@
-import { Alert, Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
+import { Alert, Container, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -26,7 +26,6 @@ import {
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
-import { DURATION } from "@/client/src/lib/animations.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
@@ -144,13 +143,7 @@ export default function CharacterDetailsPage() {
   });
 
   if (isLoading) {
-    return (
-      <Fade in timeout={DURATION.slow}>
-        <div>
-          <CharacterDetailSkeleton />
-        </div>
-      </Fade>
-    );
+    return <CharacterDetailSkeleton />;
   }
 
   // A failed background refetch keeps the loaded page (and any edits in progress) on screen.

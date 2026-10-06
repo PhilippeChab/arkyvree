@@ -183,7 +183,7 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <DiceSpinner size="large" sx={{ minHeight: 400 }} />
+        <DiceSpinner sx={{ minHeight: 400 }} />
       </Container>
     );
   }

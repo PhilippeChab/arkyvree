@@ -152,8 +152,6 @@ function FeatFamilyExpansion({
             key={feat.id}
             title={!feat.eligible && feat.requirementTree ? feat.requirementTree : (feat.description ?? "")}
             placement="right"
-            enterDelay={300}
-            arrow
             slotProps={{
               tooltip: {
                 sx:
@@ -310,8 +308,6 @@ export function LevelUpFeatsStep({
                               : ""
                           }
                           placement="right"
-                          enterDelay={300}
-                          arrow
                         >
                           <Chip
                             label={feat.name}
@@ -394,8 +390,6 @@ export function LevelUpFeatsStep({
                               !row.eligible && "requirementTree" in row ? String(row.requirementTree) : row.description
                             }
                             placement="right"
-                            enterDelay={300}
-                            arrow
                             slotProps={{
                               tooltip: {
                                 sx:

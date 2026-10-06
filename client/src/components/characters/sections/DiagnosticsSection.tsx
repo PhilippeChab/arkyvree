@@ -194,7 +194,7 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
               </TableRow>
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 0, borderBottom: isOpen ? undefined : "none" }}>
-                  <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                  <Collapse in={isOpen} unmountOnExit>
                     <Table size="small">
                       <TableBody>
                         {rules.map((cells, i) => (
