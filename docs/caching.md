@@ -476,7 +476,7 @@ sequenceDiagram
 1. Add the entity's type + an array field to `RulesetRawData` in `server/cache/rulesetCache/rawData.ts`.
 2. Fetch it in the appropriate round of `fetchRulesetRawData` (rounds gate on dependencies — klass-level fetches need `klasses` first, customizations need all entity IDs).
 3. Add the composed array to `CachedRulesetData`.
-4. Extend the compose step: concat across chain → filter `isExcluded(id)` → `cow.resolveRows` if it has FKs.
+4. Extend the compose step (`RulesetComposition`): concat across chain without the hidden rows (`this.composeRows`, which filters `cow.isHidden(id)`) → `cow.resolveRows` if it has FKs.
 5. Build a `<entity>ById` Map alongside (`buildById(resolvedX)`, like `featsById`) **and** wrap it with `this.resolvingIds(map)` in `RulesetComposition.build` before returning so `.get` auto-resolves stored pre-COW ids.
 6. If callers need a filter like "X by Y", build that index in the compose step too and wrap it the same way.
 7. If the entity carries inline join arrays (like `powersAptitudesInRules`), remap the nested ids in the compose step too — `CowData.resolveRows` only touches top-level fields.
