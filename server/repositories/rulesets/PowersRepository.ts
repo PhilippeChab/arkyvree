@@ -55,6 +55,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
   }
 
   async findMany(db: Db, where: { ids: string[] }) {
+    if (where.ids.length === 0) return [];
     return await db.query.powersInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
       orderBy: [this.orderBy(this.table.name)],
@@ -113,6 +114,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
   }
 
   async findPage(db: Db, where: RulesetEntityFilters<{ ids?: string[] }>, pagination: { limit: number; page: number }) {
+    if (where.ids !== undefined && where.ids.length === 0) return this.paginated([], pagination);
     const { search, orderBy = "name", orderDir = "asc" } = where;
     const searchColumns = [this.table.name, this.table.description];
     const searchConditions = this.fuzzySearch(search, searchColumns);
@@ -145,6 +147,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
 
   /** The picks of these character levels, by the picked entity's name, ties broken to a fixed order. */
   async findPicks(db: Db, where: { characterLevelIds: string[] }) {
+    if (where.characterLevelIds.length === 0) return [];
     return await db
       .select({
         ...getTableColumns(powersInRules),

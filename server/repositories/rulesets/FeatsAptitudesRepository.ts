@@ -42,6 +42,7 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
   }
 
   async findMany(db: Db, where: { featIds: string[] } | { featId: string }) {
+    if ("featIds" in where && where.featIds.length === 0) return [];
     return await db.query.featsAptitudesInRules.findMany({
       where: this.branchWhere(
         [

@@ -27,6 +27,13 @@
  *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
  *   rest of its request, and a lock holds until its transaction ends. A transaction's queries run one at a time, on its
  *   one connection: never in a `Promise.all` (`tx`, or a handle the function is given, which may be a transaction).
+ * - `empty-list-reads`: an empty list never reaches the database, and is checked in one place: the repository. A read
+ *   method filtering on a list of `where` (`inArray(column, where.ids)`, outside an `or`) answers an empty one without a
+ *   query (`if (where.ids.length === 0) return [];` first), and its callers read without checking: no
+ *   `ids.length > 0 ? Repo.findMany(db, { ids }) : []`, no `if (!ids.length) return []` before reads of `ids` alone. A
+ *   check that skips other queries too (a write, a read of something else) is the caller's to keep: an insert of no rows
+ *   throws, and a read of something else would run for nothing. The rule sees a repository's calls only: a check that
+ *   skips a helper, whose queries it can't see, is left to review.
  * - `no-disable-comments`: no comment turns a lint rule off (`oxlint-disable…`, `eslint-disable…`): a case a rule gets
  *   wrong changes the rule, its options or its definition, never one line.
  * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
@@ -73,6 +80,8 @@ const INPUT_VARIABLES = { json: "body", query: "query" };
 const METHOD_VERBS = JSON.parse(
   fs.readFileSync(new URL("../server/repositories/methodVerbs.json", import.meta.url), "utf8"),
 );
+
+const READ_VERBS = METHOD_VERBS.read;
 
 const ROUTE_METHODS = new Set(["get", "post", "put", "patch", "delete", "route"]);
 
@@ -243,6 +252,101 @@ function createConcernShape(context) {
           }
         }
       }
+    },
+  };
+}
+
+function createEmptyListReads(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("server/")) return {};
+  const text = context.sourceCode.text;
+  const textOf = (node) => text.slice(...(node.range ?? [node.start, node.end]));
+  if (file.startsWith("server/repositories/")) {
+    return {
+      MethodDefinition(node) {
+        const name = node.key.name;
+        const body = node.value.body;
+        if (!body || node.accessibility === "private" || !READ_VERBS.some((verb) => startsWithVerb(name, verb))) return;
+        // The lists of `where` the read filters on: `inArray(column, where.ids)`, outside an `or` or a `not`
+        const lists = new Set();
+        for (const call of callsIn(body)) {
+          if (call.callee.type !== "Identifier" || call.callee.name !== "inArray") continue;
+          const list = call.arguments[1];
+          if (list?.type !== "MemberExpression" || list.object.type !== "Identifier" || list.object.name !== "where") {
+            continue;
+          }
+          if (!isUnderCall(call, body, ["or", "not"])) lists.add(textOf(list));
+        }
+        const guarded = new Set();
+        for (const statement of body.body) {
+          const test = statement.type === "IfStatement" ? emptinessTest(statement.test) : undefined;
+          if (test?.whenEmpty && returnedBy(statement.consequent)) guarded.add(textOf(test.list));
+        }
+        for (const list of lists) {
+          if (guarded.has(list)) continue;
+          context.report({
+            node: node.key,
+            message: `\`${name}\` reads the list \`${list}\`: it answers an empty one without a query (\`if (${list}.length === 0) return …;\` first), so that no caller checks it.`,
+          });
+        }
+      },
+    };
+  }
+  // The repositories' shared instances this file imports.
+  const repositories = new Set();
+  // Whether `node` uses `list` as a value (`{ ids }`, `{ entityIds: ids.map(…) }`), not as a property's key
+  const uses = (node, list) => {
+    if ((node.type === "Identifier" || node.type === "MemberExpression") && textOf(node) === list) return true;
+    return Object.entries(node).some(([key, value]) => {
+      if (key === "parent" || (key === "key" && node.type === "Property" && !node.computed)) return false;
+      if (key === "property" && node.type === "MemberExpression" && !node.computed) return false;
+      return (Array.isArray(value) ? value : [value]).some(
+        (child) => typeof child?.type === "string" && uses(child, list),
+      );
+    });
+  };
+  // Whether every repository call in `nodes` reads `list`, and there is one: what a check of `list` alone skips
+  const readsOnly = (nodes, list) => {
+    const calls = nodes
+      .flatMap((node) => [...callsIn(node)])
+      .filter((call) => call.callee.type === "MemberExpression" && repositories.has(call.callee.object.name));
+    const readsList = (call) =>
+      READ_VERBS.some((verb) => startsWithVerb(call.callee.property.name, verb)) &&
+      call.arguments.slice(1).some((argument) => uses(argument, list));
+    return calls.length > 0 && calls.every(readsList);
+  };
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "A read takes an empty list as it is: its repository answers an empty one without a query. Read it without checking here (only a write skips an empty list: an insert of no rows throws).",
+    });
+  return {
+    ImportDeclaration(node) {
+      if (!String(node.source.value).startsWith("@/server/repositories/")) return;
+      for (const specifier of node.specifiers) {
+        if (specifier.type === "ImportSpecifier") repositories.add(specifier.local.name);
+      }
+    },
+    ConditionalExpression(node) {
+      const test = emptinessTest(node.test);
+      if (!test) return;
+      const [skipped, read] = test.whenEmpty ? [node.consequent, node.alternate] : [node.alternate, node.consequent];
+      if (isEmptyValue(skipped) && readsOnly([read], textOf(test.list))) report(node);
+    },
+    IfStatement(node) {
+      const test = emptinessTest(node.test);
+      if (!test || node.alternate) return;
+      const list = textOf(test.list);
+      if (test.whenEmpty) {
+        // `if (!ids.length) return [];`, then reads of `ids`
+        const returned = returnedBy(node.consequent);
+        if (!returned || !isEmptyValue(returned.argument) || node.parent.type !== "BlockStatement") return;
+        if (readsOnly(node.parent.body.slice(node.parent.body.indexOf(node) + 1), list)) report(node);
+        return;
+      }
+      // `if (ids.length > 0) { …a read of ids… }`
+      if (readsOnly([node.consequent], list)) report(node);
     },
   };
 }
@@ -688,6 +792,29 @@ function declarationText(text, statement, declarator) {
   };
 }
 
+/**
+ * What a test of a list's emptiness checks (`ids.length > 0`, `!ids.length`, `"ids" in where && where.ids.length ===
+ * 0`): the list, and whether the test holds when it's empty.
+ */
+function emptinessTest(node) {
+  if (node.type === "LogicalExpression" && node.operator === "&&") return emptinessTest(node.right);
+  if (node.type === "UnaryExpression" && node.operator === "!") {
+    const inner = lengthOf(node.argument);
+    return inner && { list: inner, whenEmpty: true };
+  }
+  if (node.type === "MemberExpression") {
+    const list = lengthOf(node);
+    return list && { list, whenEmpty: false };
+  }
+  if (node.type !== "BinaryExpression" || node.right.type !== "Literal") return undefined;
+  const list = lengthOf(node.left);
+  if (!list) return undefined;
+  const test = `${node.operator} ${node.right.value}`;
+  if (["> 0", "!== 0", "!= 0", ">= 1"].includes(test)) return { list, whenEmpty: false };
+  if (["=== 0", "== 0", "< 1"].includes(test)) return { list, whenEmpty: true };
+  return undefined;
+}
+
 /** The function `node` sits in. */
 function enclosingFunction(node) {
   let current = node.parent;
@@ -714,6 +841,19 @@ function isConcern(fn) {
   );
 }
 
+/** Whether `node` is an empty value a skipped read stands in for: `[]`, `new Map()`, `Promise.resolve([])`, `false`… */
+function isEmptyValue(node) {
+  if (!node) return true;
+  if (node.type === "ArrayExpression") return node.elements.length === 0;
+  if (node.type === "NewExpression") return node.arguments.length === 0;
+  if (node.type === "Literal") return node.value === false || node.value === 0 || node.value === null;
+  if (node.type === "Identifier") return node.name === "undefined";
+  if (node.type === "AwaitExpression") return isEmptyValue(node.argument);
+  const callee = node.type === "CallExpression" ? node.callee : undefined;
+  const isResolve = callee?.type === "MemberExpression" && callee.object.name === "Promise";
+  return isResolve && callee.property.name === "resolve" && isEmptyValue(node.arguments[0]);
+}
+
 /** Whether `node` chains a router's routes on its `new Hono()`. */
 function isHonoChain(node) {
   let current = node;
@@ -735,6 +875,26 @@ function isParameterOf(node, name) {
 function isSessionType(type) {
   if (type?.type === "TSUnionType") return type.types.some(isSessionType);
   return type?.type === "TSTypeReference" && type.typeName.type === "Identifier" && type.typeName.name === "Session";
+}
+
+/** Whether `node` sits in a call to one of `names` (`or(…)`, `not(…)`) below `root`. */
+function isUnderCall(node, root, names) {
+  for (let current = node.parent; current && current !== root; current = current.parent) {
+    if (
+      current.type === "CallExpression" &&
+      current.callee.type === "Identifier" &&
+      names.includes(current.callee.name)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** The list whose `.length` `node` reads, as a node: `ids` in `ids.length`, `where.ids` in `where.ids.length`. */
+function lengthOf(node) {
+  const isLength = node?.type === "MemberExpression" && !node.computed && node.property.name === "length";
+  return isLength ? node.object : undefined;
 }
 
 /**
@@ -802,6 +962,12 @@ function readsWhole(node, name) {
   );
 }
 
+/** The statement a guard `return`s with, alone: `return [];` or `{ return []; }`. */
+function returnedBy(statement) {
+  if (statement.type === "BlockStatement" && statement.body.length === 1) return returnedBy(statement.body[0]);
+  return statement.type === "ReturnStatement" ? statement : undefined;
+}
+
 /** A `c.req.valid(target)` call's target, if `node` is one. */
 function validTargetOf(node) {
   const callee = node?.type === "CallExpression" ? node.callee : null;
@@ -820,6 +986,7 @@ export default {
   environment: { meta: { type: "problem" }, create: createEnvironment },
   "no-disable-comments": { meta: { type: "problem" }, create: createNoDisableComments },
   "writes-in-transactions": { meta: { type: "problem" }, create: createWritesInTransactions },
+  "empty-list-reads": { meta: { type: "suggestion" }, create: createEmptyListReads },
   "order-through-repository": { meta: { type: "suggestion" }, create: createOrderThroughRepository },
   "shared-runtime": { meta: { type: "problem" }, create: createSharedRuntime },
   "session-param": { meta: { type: "suggestion" }, create: createSessionParam },

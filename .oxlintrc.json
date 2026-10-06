@@ -68,6 +68,7 @@
     "arkyvree/environment": "error",
     "arkyvree/no-disable-comments": "error",
     "arkyvree/writes-in-transactions": "error",
+    "arkyvree/empty-list-reads": "error",
     "arkyvree/test-placement": "error",
     "arkyvree/concern-shape": "error",
     "arkyvree/comment-style": "error",

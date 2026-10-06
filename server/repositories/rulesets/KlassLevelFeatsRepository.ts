@@ -34,6 +34,7 @@ class KlassLevelFeatsRepository extends BaseRepository<typeof klassLevelFeatsInR
   }
 
   async findMany(db: Db, where: { klassLevelIds: string[] }) {
+    if (where.klassLevelIds.length === 0) return [];
     return await db.query.klassLevelFeatsInRules.findMany({
       where: and(inArray(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)),
       orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.id)],

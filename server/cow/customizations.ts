@@ -45,15 +45,14 @@ export async function fetchEntityCustomizations(
   entityType: string,
   sourceType?: string,
 ): Promise<Map<string, EntityCustomizations>> {
-  if (entityIds.length === 0) return new Map();
-
   const modifiers = sourceType ? await Modifiers.findMany(tx, { sourceIds: entityIds, sourceType }) : [];
   const properties = await Properties.findMany(tx, { entityIds, entityType });
   const requirements = await Requirements.findMany(tx, { entityIds, entityType });
 
-  const modifierIds = modifiers.map((m) => m.id);
-  const modifierRequirements =
-    modifierIds.length > 0 ? await Requirements.findMany(tx, { entityIds: modifierIds, entityType: "modifiers" }) : [];
+  const modifierRequirements = await Requirements.findMany(tx, {
+    entityIds: modifiers.map((m) => m.id),
+    entityType: "modifiers",
+  });
 
   return buildCustomizationsMap(entityIds, modifiers, properties, requirements, modifierRequirements);
 }

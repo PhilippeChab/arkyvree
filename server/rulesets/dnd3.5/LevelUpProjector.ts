@@ -104,23 +104,21 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
 
     const prohibitedSchools = new Set<string>(clientExcludeSchools);
 
-    if (characterLevels.length > 0) {
-      // Called inside withRulesetScope: Feats.findPicks and
-      // Feats.findGrants auto-apply resolveRowOverrides via the repo
-      // Proxy, so feat.id is already post-COW. propertiesByEntity.get also
-      // auto-resolves on the way in.
-      const characterLevelIds = characterLevels.map((level) => level.id);
-      const pickedFeats = await Feats.findPicks(tx, { characterLevelIds });
-      const givenFeats = await Feats.findGrants(tx, { levels: characterLevels });
-      const allFeatIds = [...new Set([...pickedFeats, ...givenFeats].map((f) => f.id))];
+    // Called inside withRulesetScope: Feats.findPicks and
+    // Feats.findGrants auto-apply resolveRowOverrides via the repo
+    // Proxy, so feat.id is already post-COW. propertiesByEntity.get also
+    // auto-resolves on the way in.
+    const characterLevelIds = characterLevels.map((level) => level.id);
+    const pickedFeats = await Feats.findPicks(tx, { characterLevelIds });
+    const givenFeats = await Feats.findGrants(tx, { levels: characterLevels });
+    const allFeatIds = [...new Set([...pickedFeats, ...givenFeats].map((f) => f.id))];
 
-      for (const featId of allFeatIds) {
-        const props = rulesetData.propertiesByEntity.get(featId);
-        if (!props) continue;
-        for (const p of props) {
-          if (p.entityType === "feats" && p.type === WIZARD_PROHIBITED_SCHOOL) {
-            prohibitedSchools.add(p.value);
-          }
+    for (const featId of allFeatIds) {
+      const props = rulesetData.propertiesByEntity.get(featId);
+      if (!props) continue;
+      for (const p of props) {
+        if (p.entityType === "feats" && p.type === WIZARD_PROHIBITED_SCHOOL) {
+          prohibitedSchools.add(p.value);
         }
       }
     }
