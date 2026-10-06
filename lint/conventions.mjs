@@ -9,11 +9,14 @@
  *   the request cache wraps; only that file builds one.
  * - `route-conventions`: a route's path params are camelCase (`:modifierId`; `.get`, `.route`, `.on`) and its fixed
  *   segments kebab-case (`/class-levels`; a file's name, `robots.txt`, or `*` too), it answers with its status
- *   (`c.json(body, status)`), its validation
- *   is the app's `validate` (`@/server/middlewares/index.ts`, which answers in the API's error envelope), its params
- *   are a named schema (`validate("param", featParams)`: from a `validation.ts` when several routers use it,
- *   declared at the top of its router otherwise), and it lets an error reach `onError` instead of catching it
- *   (`server/routers/api/`; a `finally` alone is fine).
+ *   (`c.json(body, status)`), its validation is the app's `validate` (`@/server/middlewares/index.ts`, which answers in
+ *   the API's error envelope), its params are a named schema (`validate("param", featParams)`: from a `validation.ts`
+ *   when several routers use it, declared at the top of its router otherwise), its body and query are written in it
+ *   (or at its router's top, as `itemBody`, when several of its routes take one, as it is or derived), its handler
+ *   reads its input into a const and destructures what it reads of it (`body` or `query` when it reads one whole), a
+ *   router is its module's export (`export default new Hono()…`) and names a schema for what it validates (never
+ *   `…Schema`), and it lets an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone
+ *   is fine).
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
  *   drizzle's `asc` / `desc`.
  * - `shared-runtime`: `shared/` runs in the client too, so it uses neither Bun's APIs (`bun`, the `Bun` global) nor
@@ -59,6 +62,10 @@ const ROUTE_METHODS = new Set(["get", "post", "put", "patch", "delete", "route"]
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
 /** kebab-case, a file's name (`sitemap.xml`) or a wildcard */
 const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
+/** A route's whole input, named for its target when it's named: `featParams`, `itemBody`, a query's `…Query`. */
+const INPUT_NAMES = { param: /Params?$/, json: /Body$/, query: /Query$/ };
+/** The variable a handler reads a whole input into: it destructures params, and an input it reads field by field. */
+const INPUT_VARIABLES = { json: "body", query: "query" };
 
 const METHOD_VERBS = JSON.parse(
   fs.readFileSync(new URL("../server/repositories/methodVerbs.json", import.meta.url), "utf8"),
@@ -91,6 +98,15 @@ function isConcern(fn) {
     fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
     fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
   );
+}
+
+/** Whether `node` chains a router's routes on its `new Hono()`. */
+function isHonoChain(node) {
+  let current = node;
+  while (current?.type === "CallExpression" && current.callee.type === "MemberExpression") {
+    current = current.callee.object;
+  }
+  return current?.type === "NewExpression" && current.callee.type === "Identifier" && current.callee.name === "Hono";
 }
 
 /** Whether a type is `Session`, or a union with it (`Session | null`). */
@@ -282,6 +298,93 @@ function* callsIn(node) {
   }
 }
 
+/** What a call or member chain starts from: `itemBody` in `itemBody.partial()`, `z` in `z.object({…})`. */
+function chainRootOf(node) {
+  let current = node;
+  while (current?.type === "CallExpression" || current?.type === "MemberExpression") {
+    current = current.type === "CallExpression" ? current.callee : current.object;
+  }
+  return current;
+}
+
+/**
+ * A body or query schema given by name: the router's own, which several of its routes take, as it is or derived
+ * (`itemBody.partial()`).
+ */
+function checkNamedInputs(context, named, constants) {
+  for (const [name, { bare, derived, targets }] of named) {
+    const misnamed = [...targets].find((target) => !INPUT_NAMES[target].test(name));
+    if (constants.has(name) && derived.length > 0 && misnamed) {
+      context.report({
+        node: derived[0],
+        message: `A route's ${misnamed} schema is named for what it validates (\`itemBody\`, a query's \`…Query\`): \`${name}\` isn't.`,
+      });
+    }
+    const reported = !constants.has(name) ? bare : bare.length + derived.length > 1 ? [] : [...bare, ...derived];
+    for (const node of reported) {
+      context.report({
+        node,
+        message: `A route's body or query is written in the route; \`${name}\` is declared at the router's top only when several of its routes take it.`,
+      });
+    }
+  }
+}
+
+/** A router's top-level constants: a router is its module's export, and a schema is named for what it validates. */
+function checkRouterTop(context, program, constants) {
+  for (const statement of program.body) {
+    if (statement.type === "ExportDefaultDeclaration" && statement.declaration.type === "Identifier") {
+      context.report({ node: statement, message: "A router is its module's export: `export default new Hono()…`." });
+    }
+    const exported = statement.type === "ExportNamedDeclaration";
+    const declaration = exported ? statement.declaration : statement;
+    if (declaration?.type !== "VariableDeclaration") continue;
+    for (const declarator of declaration.declarations) {
+      if (declarator.id.type !== "Identifier") continue;
+      constants.add(declarator.id.name);
+      if (!exported && isHonoChain(declarator.init)) {
+        context.report({ node: declarator, message: "A router is its module's export: `export default new Hono()…`." });
+      } else if (declarator.id.name.endsWith("Schema")) {
+        context.report({
+          node: declarator.id,
+          message:
+            "A router's schema is named for what it validates (`featParams`, `itemBody`, `hitDie`), not `…Schema`.",
+        });
+      }
+    }
+  }
+}
+
+/**
+ * A route's validated input: its params by a named schema, its body and query written in it or, when several of the
+ * router's routes take one, at the router's top (`itemBody`). `named` collects the names given for a body or a query.
+ */
+function checkValidation(context, node, named) {
+  const [target, schema] = node.arguments;
+  const pattern = INPUT_NAMES[target?.value];
+  if (!pattern) return;
+  if (target.value === "param" && schema?.type !== "Identifier") {
+    context.report({
+      node: schema,
+      message:
+        "A route's params are a named schema (`idParam`, `featParams`): from a `validation.ts` when several " +
+        "routers use it, declared at the top of the router otherwise.",
+    });
+  } else if (schema?.type === "Identifier" && !pattern.test(schema.name)) {
+    context.report({
+      node: schema,
+      message: `A route's ${target.value} schema is named for what it validates (\`featParams\`, \`idParam\`, \`itemBody\`, a query's \`…Query\`): \`${schema.name}\` isn't.`,
+    });
+  } else if (target.value !== "param") {
+    const root = schema?.type === "Identifier" ? schema : chainRootOf(schema);
+    if (root?.type !== "Identifier") return;
+    if (!named.has(root.name)) named.set(root.name, { bare: [], derived: [], targets: new Set() });
+    const uses = named.get(root.name);
+    uses[root === schema ? "bare" : "derived"].push(root);
+    uses.targets.add(target.value);
+  }
+}
+
 /** A const's arrow or function expression written as the function declaration it is. */
 function declarationText(text, statement, declarator) {
   const fn = declarator.init;
@@ -317,6 +420,13 @@ function declarationText(text, statement, declarator) {
     range: [start, end],
     text: `${exported}${fn.async ? "async " : ""}function ${name}${typeParameters}${head} ${body}`,
   };
+}
+
+/** The function `node` sits in. */
+function enclosingFunction(node) {
+  let current = node.parent;
+  while (current && !/Function(Expression|Declaration)$/.test(current.type)) current = current.parent;
+  return current;
 }
 
 /**
@@ -505,32 +615,138 @@ function pathOf(node) {
   return null;
 }
 
+/** Whether a function's body reads `this`, which a declaration would rebind. */
+function readsThis(node) {
+  if (!node || typeof node !== "object") return false;
+  if (Array.isArray(node)) return node.some(readsThis);
+  if (node.type === "ThisExpression") return true;
+  if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") return false;
+  return Object.entries(node).some(
+    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsThis(child),
+  );
+}
+
+function createFunctionDeclarations(context) {
+  const text = context.sourceCode.text;
+  return {
+    Program(program) {
+      for (const statement of program.body) {
+        const declaration = statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;
+        if (declaration?.type !== "VariableDeclaration") continue;
+        if (declaration.declarations.length !== 1) continue;
+        const [declarator] = declaration.declarations;
+        const fn = declarator.init;
+        if (fn?.type !== "ArrowFunctionExpression" && fn?.type !== "FunctionExpression") continue;
+        if (declarator.id.type !== "Identifier") continue;
+        // The fix declares what it can as it is: not a function a type annotates (its parameters take their types from
+        // it, which a declaration writes out), one a `let` reassigns, or an arrow reading `this`
+        const fixable =
+          declaration.kind === "const" &&
+          !declarator.id.typeAnnotation &&
+          !(fn.type === "ArrowFunctionExpression" && readsThis(fn.body));
+        context.report({
+          node: declarator.id,
+          message:
+            "A file's own function is a `function` declaration, never a variable holding an arrow: an arrow is for a " +
+            "callback. `oxlint --fix` declares one (a typed one's parameters are typed by hand).",
+          ...(fixable && {
+            fix: (fixer) => {
+              const { range, text: replacement } = declarationText(text, statement, declarator);
+              return fixer.replaceTextRange(range, replacement);
+            },
+          }),
+        });
+      }
+    },
+  };
+}
+
+/** Whether `node`'s subtree reads the variable `name` whole (passes, spreads or returns it), not only its fields. */
+function readsWhole(node, name) {
+  if (node.type === "Identifier" && node.name === name) {
+    const parent = node.parent;
+    if (parent?.type === "VariableDeclarator" && (parent.id === node || parent.id.type === "ObjectPattern"))
+      return false;
+    if (parent?.type === "MemberExpression" && !parent.computed) return false;
+    return !(parent?.type === "Property" && parent.key === node && !parent.shorthand);
+  }
+  return Object.entries(node).some(
+    ([key, value]) =>
+      key !== "parent" &&
+      (Array.isArray(value) ? value : [value]).some(
+        (child) => typeof child?.type === "string" && readsWhole(child, name),
+      ),
+  );
+}
+
+/** A `c.req.valid(target)` call's target, if `node` is one. */
+function validTargetOf(node) {
+  const callee = node?.type === "CallExpression" ? node.callee : null;
+  if (callee?.type !== "MemberExpression" || callee.property.name !== "valid") return null;
+  const request = callee.object;
+  if (request.type !== "MemberExpression" || request.property.name !== "req" || request.object.name !== "c")
+    return null;
+  return node.arguments[0]?.value ?? null;
+}
+
+/** A handler's read of its validated input: `const { id } = c.req.valid("param")`, `body` or `query` when it's whole. */
+function checkInputRead(context, declarator) {
+  const target = validTargetOf(declarator.init);
+  if (!target || declarator.id.type === "ObjectPattern") return;
+  const variable = INPUT_VARIABLES[target];
+  if (!variable) {
+    context.report({
+      node: declarator,
+      message: `A route destructures its ${target}: \`const { id } = c.req.valid("${target}")\`.`,
+    });
+  } else if (declarator.id.type === "Identifier" && declarator.id.name !== variable) {
+    context.report({ node: declarator.id, message: `A route reads its whole ${target} as \`${variable}\`.` });
+  } else if (
+    declarator.id.type === "Identifier" &&
+    !readsWhole(enclosingFunction(declarator) ?? declarator, variable)
+  ) {
+    context.report({
+      node: declarator.id,
+      message: `A route that reads its ${target}'s fields destructures them: \`const { name } = c.req.valid("${target}")\`.`,
+    });
+  }
+}
+
 function createRouteConventions(context) {
   const file = repoPath(context.filename);
   if (!file.startsWith("server/")) return {};
   const inRouters = file.startsWith("server/routers/");
   const inApi = file.startsWith("server/routers/api/");
+  const constants = new Set();
+  const named = new Map();
   return {
+    Program(program) {
+      if (inRouters) checkRouterTop(context, program, constants);
+    },
+    "Program:exit"() {
+      checkNamedInputs(context, named, constants);
+    },
+    VariableDeclarator(node) {
+      if (inRouters) checkInputRead(context, node);
+    },
     // .get("/:id/feats/:featId", …)
     CallExpression(node) {
       if (!inRouters) return;
       const callee = node.callee;
-      // validate("param", featParams): the params a route's path names, by a name, never a schema written there.
-      if (
-        callee.type === "Identifier" &&
-        callee.name === "validate" &&
-        node.arguments[0]?.value === "param" &&
-        node.arguments[1]?.type !== "Identifier"
-      ) {
-        context.report({
-          node: node.arguments[1],
-          message:
-            "A route's params are a named schema (`idParam`, `featParams`): from a `validation.ts` when several " +
-            "routers use it, declared at the top of the router otherwise.",
-        });
+      // validate("param", featParams), validate("json", z.object(…)): a route's input, and the name it's given.
+      if (callee.type === "Identifier" && callee.name === "validate") {
+        checkValidation(context, node, named);
         return;
       }
       if (callee.type !== "MemberExpression") return;
+      // S.get(c.req.valid("param")): a handler reads its input into a const, where the rule sees how it's read
+      if (validTargetOf(node) && node.parent?.type !== "VariableDeclarator") {
+        context.report({
+          node,
+          message: 'A route reads its input into a const: `const { id } = c.req.valid("param")`.',
+        });
+        return;
+      }
       // c.json(body) → c.json(body, 200): a route says its status, which its types list.
       if (
         callee.object.type === "Identifier" &&
@@ -575,52 +791,6 @@ function createRouteConventions(context) {
         });
       }
     }),
-  };
-}
-
-/** Whether a function's body reads `this`, which a declaration would rebind. */
-function readsThis(node) {
-  if (!node || typeof node !== "object") return false;
-  if (Array.isArray(node)) return node.some(readsThis);
-  if (node.type === "ThisExpression") return true;
-  if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") return false;
-  return Object.entries(node).some(
-    ([key, child]) => key !== "parent" && child && typeof child === "object" && readsThis(child),
-  );
-}
-
-function createFunctionDeclarations(context) {
-  const text = context.sourceCode.text;
-  return {
-    Program(program) {
-      for (const statement of program.body) {
-        const declaration = statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;
-        if (declaration?.type !== "VariableDeclaration") continue;
-        if (declaration.declarations.length !== 1) continue;
-        const [declarator] = declaration.declarations;
-        const fn = declarator.init;
-        if (fn?.type !== "ArrowFunctionExpression" && fn?.type !== "FunctionExpression") continue;
-        if (declarator.id.type !== "Identifier") continue;
-        // The fix declares what it can as it is: not a function a type annotates (its parameters take their types from
-        // it, which a declaration writes out), one a `let` reassigns, or an arrow reading `this`
-        const fixable =
-          declaration.kind === "const" &&
-          !declarator.id.typeAnnotation &&
-          !(fn.type === "ArrowFunctionExpression" && readsThis(fn.body));
-        context.report({
-          node: declarator.id,
-          message:
-            "A file's own function is a `function` declaration, never a variable holding an arrow: an arrow is for a " +
-            "callback. `oxlint --fix` declares one (a typed one's parameters are typed by hand).",
-          ...(fixable && {
-            fix: (fixer) => {
-              const { range, text: replacement } = declarationText(text, statement, declarator);
-              return fixer.replaceTextRange(range, replacement);
-            },
-          }),
-        });
-      }
-    },
   };
 }
 

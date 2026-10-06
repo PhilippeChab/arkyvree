@@ -60,7 +60,7 @@ const levelQuery = {
   pendingLevelClassLevelIds: idList,
 };
 
-const levels = new Hono<SessionContext>()
+export default new Hono<SessionContext>()
   .get(
     "/:characterId/attribute-slots",
     validate("param", characterIdParam),
@@ -137,24 +137,37 @@ const levels = new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const query = c.req.valid("query");
+      const {
+        aptitudeId,
+        classId,
+        level,
+        search,
+        family,
+        selectedFeatPicks,
+        pendingLevelFeatPicks,
+        limit,
+        page,
+        characterLevelId,
+        pendingLevelClassLevelIds,
+        pendingLevelAbilityIds,
+      } = c.req.valid("query");
       return c.json(
         await CharacterLevelsService.getAvailableFeats(
           c.var.requestSession,
           characterId,
-          query.aptitudeId,
-          query.classId,
-          query.level,
+          aptitudeId,
+          classId,
+          level,
           {
-            search: query.search,
-            family: query.family,
-            selectedFeatPicks: query.selectedFeatPicks,
-            pendingLevelFeatPicks: query.pendingLevelFeatPicks,
+            search,
+            family,
+            selectedFeatPicks,
+            pendingLevelFeatPicks,
           },
-          { limit: query.limit, page: query.page },
-          query.characterLevelId,
-          query.pendingLevelClassLevelIds,
-          query.pendingLevelAbilityIds,
+          { limit, page },
+          characterLevelId,
+          pendingLevelClassLevelIds,
+          pendingLevelAbilityIds,
         ),
         200,
       );
@@ -178,23 +191,35 @@ const levels = new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const query = c.req.valid("query");
+      const {
+        aptitudeId,
+        classId,
+        level,
+        search,
+        selectedFeatPicks,
+        pendingLevelFeatPicks,
+        limit,
+        page,
+        characterLevelId,
+        pendingLevelClassLevelIds,
+        pendingLevelAbilityIds,
+      } = c.req.valid("query");
       return c.json(
         await CharacterLevelsService.getAvailableFeatsGrouped(
           c.var.requestSession,
           characterId,
-          query.aptitudeId,
-          query.classId,
-          query.level,
+          aptitudeId,
+          classId,
+          level,
           {
-            search: query.search,
-            selectedFeatPicks: query.selectedFeatPicks,
-            pendingLevelFeatPicks: query.pendingLevelFeatPicks,
+            search,
+            selectedFeatPicks,
+            pendingLevelFeatPicks,
           },
-          { limit: query.limit, page: query.page },
-          query.characterLevelId,
-          query.pendingLevelClassLevelIds,
-          query.pendingLevelAbilityIds,
+          { limit, page },
+          characterLevelId,
+          pendingLevelClassLevelIds,
+          pendingLevelAbilityIds,
         ),
         200,
       );
@@ -222,24 +247,37 @@ const levels = new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const query = c.req.valid("query");
+      const {
+        aptitudeId,
+        classId,
+        level,
+        powerLevel,
+        search,
+        excludeSchools,
+        selectedFeatPicks,
+        pendingLevelFeatPicks,
+        limit,
+        page,
+        characterLevelId,
+        pendingLevelClassLevelIds,
+      } = c.req.valid("query");
       return c.json(
         await CharacterLevelsService.getAvailablePowers(
           c.var.requestSession,
           characterId,
-          query.aptitudeId,
-          query.classId,
-          query.level,
+          aptitudeId,
+          classId,
+          level,
           {
-            powerLevel: query.powerLevel,
-            search: query.search,
-            excludeSchools: query.excludeSchools,
-            selectedFeatPicks: query.selectedFeatPicks,
-            pendingLevelFeatPicks: query.pendingLevelFeatPicks,
+            powerLevel,
+            search,
+            excludeSchools,
+            selectedFeatPicks,
+            pendingLevelFeatPicks,
           },
-          { limit: query.limit, page: query.page },
-          query.characterLevelId,
-          query.pendingLevelClassLevelIds,
+          { limit, page },
+          characterLevelId,
+          pendingLevelClassLevelIds,
         ),
         200,
       );
@@ -435,5 +473,3 @@ const levels = new Hono<SessionContext>()
     const { characterId } = c.req.valid("param");
     return c.json(await CharacterLevelsService.removeLevel(c.var.requestSession, characterId), 200);
   });
-
-export default levels;

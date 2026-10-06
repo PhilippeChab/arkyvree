@@ -1,9 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import { toJson } from "@/server/errors/index.ts";
-import { sanitizeText } from "@/server/routers/api/sanitize.ts";
 import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
-import { sanitizedEmail } from "@/server/routers/api/validation.ts";
+import { sanitizedEmail, sanitizedText } from "@/server/routers/api/validation.ts";
 import { application } from "@/server/routers/application.ts";
 import { api, expectOk, expectStatus, SEED_SESSION_ID } from "@/tests/support/api.ts";
 
@@ -99,9 +98,14 @@ test("an unexpected error answers 500 with the standard envelope, keeping its me
 
 describe("Text from a request", () => {
   test("is stored trimmed and Unicode-normalized, an email address lowercased too", () => {
-    expect(sanitizeText("  ﬁre\u00A0ball  ")).toBe("fire ball");
     expect(sanitizedEmail.parse("Elara@Example.COM")).toBe("elara@example.com");
     expect(sanitizedEmail.safeParse("not-an-email").success).toBe(false);
+  });
+
+  test("is checked once it's sanitized", () => {
+    expect(sanitizedEmail.parse("  Elara@Example.COM ")).toBe("elara@example.com");
+    expect(sanitizedText.min(3).safeParse("  ab  ").success).toBe(false);
+    expect(sanitizedText.min(3).parse("  abc  ")).toBe("abc");
   });
 });
 

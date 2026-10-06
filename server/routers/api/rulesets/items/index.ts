@@ -9,7 +9,7 @@ import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 
 const itemParams = idParam.extend({ itemId: z.string().uuid() });
 
-const itemBodySchema = z.object({
+const itemBody = z.object({
   name: z.string().min(1),
   description: z
     .string()
@@ -84,12 +84,12 @@ export default new Hono<SessionContext>()
       return c.json(await ItemsService.getTemplates(id, type), 200);
     },
   )
-  .post("/:id/items", validate("param", idParam), validate("json", itemBodySchema), async (c) => {
+  .post("/:id/items", validate("param", idParam), validate("json", itemBody), async (c) => {
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
     return c.json(await ItemsService.createItem(c.var.requestSession, id, body), 200);
   })
-  .post("/:id/items/:itemId/duplicate", validate("param", itemParams), validate("json", itemBodySchema), async (c) => {
+  .post("/:id/items/:itemId/duplicate", validate("param", itemParams), validate("json", itemBody), async (c) => {
     const { id, itemId } = c.req.valid("param");
     const body = c.req.valid("json");
     return c.json(await ItemsService.duplicateItem(c.var.requestSession, id, itemId, body), 200);
@@ -120,7 +120,7 @@ export default new Hono<SessionContext>()
       return c.json(await ItemsService.createVariants(c.var.requestSession, id, itemId, variants), 200);
     },
   )
-  .put("/:id/items/:itemId", validate("param", itemParams), validate("json", itemBodySchema), async (c) => {
+  .put("/:id/items/:itemId", validate("param", itemParams), validate("json", itemBody), async (c) => {
     const { id, itemId } = c.req.valid("param");
     const body = c.req.valid("json");
     return c.json(await ItemsService.updateItem(c.var.requestSession, id, itemId, body), 200);

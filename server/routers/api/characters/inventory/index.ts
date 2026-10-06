@@ -9,7 +9,7 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 
 const entryParams = characterIdParam.extend({ entryId: z.string().uuid() });
 
-const inventory = new Hono<SessionContext>()
+export default new Hono<SessionContext>()
   .get("/:characterId", validate("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
     return c.json(await CharacterInventoryService.getInventory(c.var.requestSession, characterId), 200);
@@ -93,5 +93,3 @@ const inventory = new Hono<SessionContext>()
     const { characterId, entryId } = c.req.valid("param");
     return c.json(await CharacterInventoryService.removeItem(c.var.requestSession, characterId, entryId), 200);
   });
-
-export default inventory;
