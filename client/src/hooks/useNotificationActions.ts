@@ -30,22 +30,22 @@ interface InviteAnswer {
 const INVITES = {
   createCampaignInvite: {
     label: "Campaign invite",
-    accept: (id: string) => rpc.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: id } }),
-    reject: (id: string) => rpc.api.campaigns.invites[":inviteId"].reject.$post({ param: { inviteId: id } }),
+    acceptFn: (id: string) => rpc.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: id } }),
+    rejectFn: (id: string) => rpc.api.campaigns.invites[":inviteId"].reject.$post({ param: { inviteId: id } }),
     listKey: queryKeys.campaigns.lists,
     path: (d: NotificationData) => (d.campaignId ? `/campaigns/${d.campaignId}` : "/campaigns"),
   },
   inviteContributor: {
     label: "Contributor invite",
-    accept: (id: string) => rpc.api.rulesets.contributors.invites[":id"].accept.$post({ param: { id } }),
-    reject: (id: string) => rpc.api.rulesets.contributors.invites[":id"].reject.$post({ param: { id } }),
+    acceptFn: (id: string) => rpc.api.rulesets.contributors.invites[":id"].accept.$post({ param: { id } }),
+    rejectFn: (id: string) => rpc.api.rulesets.contributors.invites[":id"].reject.$post({ param: { id } }),
     listKey: queryKeys.rulesets.lists,
     path: (d: NotificationData) => (d.rulesetId ? `/rulesets/${d.rulesetId}` : "/rulesets"),
   },
   inviteCharacterContributor: {
     label: "Contributor invite",
-    accept: (id: string) => rpc.api.characters.contributors.invites[":id"].accept.$post({ param: { id } }),
-    reject: (id: string) => rpc.api.characters.contributors.invites[":id"].reject.$post({ param: { id } }),
+    acceptFn: (id: string) => rpc.api.characters.contributors.invites[":id"].accept.$post({ param: { id } }),
+    rejectFn: (id: string) => rpc.api.characters.contributors.invites[":id"].reject.$post({ param: { id } }),
     listKey: queryKeys.characters.lists,
     path: (d: NotificationData) => (d.characterId ? `/characters/${d.characterId}` : "/characters"),
   },
@@ -83,17 +83,12 @@ export function useNotificationActions() {
 
   const invalidateNotifications = () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 
-  // Best-effort: failing to mark read must not block what the user clicked.
-  // Refetch either way to show the current state.
-  const markRead = async (notificationId: string) => {
-    try {
-      await rpc.api.notifications[":id"].read.$post({ param: { id: notificationId } });
-    } catch {
-      // Already read, or gone.
-    } finally {
-      void invalidateNotifications();
-    }
-  };
+  // Best-effort: failing to mark read (already read, or gone) must not block what the user clicked. Refetch either way
+  // to show the current state.
+  const markRead = useMutation({
+    mutationFn: (notificationId: string) => rpc.api.notifications[":id"].read.$post({ param: { id: notificationId } }),
+    onSettled: invalidateNotifications,
+  });
 
   const markAllRead = useMutation({
     mutationFn: () => rpc.api.notifications["read-all"].$post(),
@@ -105,7 +100,7 @@ export function useNotificationActions() {
     if (error instanceof ApiError && error.status === 409) {
       snackbar.warning("This invitation is no longer pending");
       // Answered or revoked elsewhere: stop offering it.
-      void markRead(notification.id);
+      markRead.mutate(notification.id);
     } else {
       // Still pending: keep Accept / Reject so the user can retry.
       snackbar.error(error, "Failed to process invitation");
@@ -115,7 +110,7 @@ export function useNotificationActions() {
   const acceptMutation = useMutation({
     mutationKey: ANSWER_INVITE_KEY,
     mutationFn: async ({ notification, type }: InviteAnswer) => {
-      await INVITES[type].accept(notification.targetId);
+      await INVITES[type].acceptFn(notification.targetId);
     },
     // Answering marks the invite's notification read server-side.
     onSuccess: (_, { type }) => {
@@ -129,7 +124,7 @@ export function useNotificationActions() {
   const rejectMutation = useMutation({
     mutationKey: ANSWER_INVITE_KEY,
     mutationFn: async ({ notification, type }: InviteAnswer) => {
-      await INVITES[type].reject(notification.targetId);
+      await INVITES[type].rejectFn(notification.targetId);
     },
     onSuccess: (_, { type }) => {
       snackbar.success(`${INVITES[type].label} rejected`);
@@ -157,33 +152,39 @@ export function useNotificationActions() {
   const isOpenable = (n: NotificationLike) =>
     !isActionable(n) && (isDownloadable(n) || isNavigableTarget(n.targetTable) || !n.readAt);
 
-  const downloadExport = async (n: NotificationLike) => {
-    void markRead(n.id);
-    const { exportId, fileName } = notificationData(n);
-    if (!exportId) {
-      snackbar.error("Download link is no longer available");
-      return;
-    }
-    try {
+  const download = useMutation({
+    mutationFn: async ({ exportId }: { exportId: string; fileName: string }) => {
       const response = await rpc.api.exports[":id"].download.$get({ param: { id: exportId } });
-      saveBlob(await response.blob(), fileName || "export.pdf");
-    } catch (error) {
+      return response.blob();
+    },
+    onSuccess: (blob, { fileName }) => saveBlob(blob, fileName),
+    onError: (error) => {
       if (error instanceof ApiError && error.status === 404) {
         snackbar.warning("This export has expired. Please generate a new one.");
       } else {
         snackbar.error(error, "Failed to download export");
       }
+    },
+  });
+
+  const downloadExport = (n: NotificationLike) => {
+    markRead.mutate(n.id);
+    const { exportId, fileName } = notificationData(n);
+    if (!exportId) {
+      snackbar.error("Download link is no longer available");
+      return;
     }
+    download.mutate({ exportId, fileName: fileName || "export.pdf" });
   };
 
   /** Download a ready export, or open the entity the notification is about. */
   const open = (n: NotificationLike) => {
     if (isDownloadable(n)) {
-      void downloadExport(n);
+      downloadExport(n);
       return;
     }
-    if (!n.readAt) void markRead(n.id);
-    if (isNavigableTarget(n.targetTable)) void openTarget(n.targetTable, n.targetId);
+    if (!n.readAt) markRead.mutate(n.id);
+    if (isNavigableTarget(n.targetTable)) openTarget(n.targetTable, n.targetId);
   };
 
   const accept = (n: NotificationLike, onAccepted: (path: string) => void = navigate) => {

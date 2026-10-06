@@ -1,6 +1,7 @@
-import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
+import { matchMutation, MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 
 import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
+import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
@@ -37,8 +38,11 @@ export function createQueryClient() {
     queryCache: new QueryCache({
       onError: (error) => handleGlobalError(error),
     }),
+    // An auth request handles its own 401: a wrong password, a session already gone at sign-out
     mutationCache: new MutationCache({
-      onError: (error) => handleGlobalError(error),
+      onError: (error, _variables, _context, mutation) => {
+        if (!matchMutation({ mutationKey: queryKeys.auth.requests }, mutation)) handleGlobalError(error);
+      },
     }),
   });
 

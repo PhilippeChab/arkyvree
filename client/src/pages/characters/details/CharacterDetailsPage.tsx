@@ -13,7 +13,7 @@ import {
 } from "@mui/icons-material";
 import { Alert, Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
@@ -50,7 +50,8 @@ export default function CharacterDetailsPage() {
   const [isConfirmOpen, setConfirmOpen] = useState(false);
   const [isArchiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [isHardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
-  const [isAddLevelOpen, setAddLevelOpen] = useState(false);
+  // A new character arrives with the Add Level wizard open (`openLevelUp`)
+  const [isAddLevelOpen, setAddLevelOpen] = useState(() => location.state?.openLevelUp === true);
   const [editingLevel, setEditingLevel] = useState<EditingLevel | null>(null);
   const [isShareOpen, setShareOpen] = useState(false);
   const [isContributorsOpen, setContributorsOpen] = useState(false);
@@ -74,17 +75,12 @@ export default function CharacterDetailsPage() {
 
   usePageTitle(character?.identity?.physiology?.name);
 
-  // A new character opens the Add Level wizard once: the character refetching (a rename, say) before the navigation
-  // state clears mustn't open it again after it was closed.
-  const openedLevelUp = useRef(false);
-  useEffect(() => {
-    const characterIsBonded = character && "kind" in character && character.kind !== "pc";
-    if (location.state?.openLevelUp && character && !characterIsBonded && !openedLevelUp.current) {
-      openedLevelUp.current = true;
-      setAddLevelOpen(true);
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location.state, character, navigate, location.pathname]);
+  // Closing the wizard a new character arrived with clears that from its history entry: a reload or a Back doesn't
+  // open it again
+  const closeAddLevel = () => {
+    setAddLevelOpen(false);
+    if (location.state?.openLevelUp) navigate(location.pathname, { replace: true, state: {} });
+  };
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -366,7 +362,7 @@ export default function CharacterDetailsPage() {
         {isAddLevelOpen && (
           <AddLevelModal
             open
-            onClose={() => setAddLevelOpen(false)}
+            onClose={closeAddLevel}
             characterId={id}
             baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
           />

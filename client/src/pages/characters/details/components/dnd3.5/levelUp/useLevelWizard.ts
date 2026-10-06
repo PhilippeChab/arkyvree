@@ -1,5 +1,5 @@
 import { skipToken, useMutation, useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rollDie } from "@/client/src/lib/dice.ts";
@@ -7,8 +7,9 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
+import { featPickString, fitFeats, openPoolOf } from "./fitPicks.ts";
 import type { BaseRules, LevelUpFormData } from "./levelUpTypes.ts";
-import { pickIds, useAdjustedFeatPools, useLevelWizardBase } from "./useLevelWizardBase.ts";
+import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
 interface UseLevelWizardParams {
   open: boolean;
@@ -16,7 +17,6 @@ interface UseLevelWizardParams {
   characterId: string;
   baseRules: BaseRules;
   editingLevelId: string;
-  onReset?: () => void;
 }
 
 export type LevelWizard = ReturnType<typeof useLevelWizard>;
@@ -32,28 +32,20 @@ export const editStepLabels = [
   "Review Changes",
 ];
 
-export function useLevelWizard({
-  open,
-  onClose,
-  characterId,
-  baseRules,
-  editingLevelId,
-  onReset,
-}: UseLevelWizardParams) {
+export function useLevelWizard({ open, onClose, characterId, baseRules, editingLevelId }: UseLevelWizardParams) {
   const base = useLevelWizardBase(characterId);
   const {
     handleSubmit,
     getValues,
     setValue,
     watch,
+    picked,
     activeStep,
     setActiveStep,
-    selectedAptitude,
     selectedPowerAptitude,
     selectedPowerLevel,
     debouncedFeatSearch,
     debouncedPowerSearch,
-    allSelectedFeatPickString,
     resetPicks,
     refreshAfterSave,
     handleSaveError,
@@ -140,6 +132,14 @@ export function useLevelWizard({
       open && levelQuery ? () => parseResponse(levels["feat-slots"].$get({ param, query: levelQuery })) : skipToken,
   });
 
+  // The feats, fitted to the level's slots
+  const { feats: selectedFeats, pools: adjustedFeatPools } = useMemo(
+    () => fitFeats(picked.feats, featData?.aptitudePools),
+    [picked.feats, featData],
+  );
+  const selectedAptitude = openPoolOf(base.selectedAptitude, adjustedFeatPools);
+  const allSelectedFeatPickString = useMemo(() => featPickString(selectedFeats), [selectedFeats]);
+
   // Grouped available feats
   const {
     items: groupedFeats,
@@ -224,17 +224,10 @@ export function useLevelWizard({
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
-  const adjustedFeatPools = useAdjustedFeatPools(featData?.aptitudePools, base);
-
-  const resetWizard = useCallback(() => {
-    onReset?.();
-    resetPicks();
-  }, [onReset, resetPicks]);
-
   const finalizeMutation = useMutation({
     mutationFn: async ({ data, force = false }: { data: LevelUpFormData; force?: boolean }) => {
       if (!data.selectedHP) throw new Error("HP not selected");
-      // The level's feat and power slots fill its saved picks in: saving before them would erase the picks
+      // The picks are saved as the level's slots fit them, which must have loaded
       if (!featData || !powerData) throw new Error("The level hasn't finished loading");
       return parseResponse(
         rpc.api.characters.levels[":characterId"][":characterLevelId"]["$put"]({
@@ -243,7 +236,7 @@ export function useLevelWizard({
             hp: data.selectedHP,
             abilityId: data.selectedAttribute,
             skills: data.skillPointAllocations,
-            feats: pickIds(data.selectedFeats),
+            feats: pickIds(fitFeats(data.selectedFeats, featData.aptitudePools).feats),
             powers: pickIds(data.selectedPowers),
             force,
           },
@@ -252,7 +245,7 @@ export function useLevelWizard({
     },
     onSuccess: async () => {
       await refreshAfterSave();
-      resetWizard();
+      resetPicks();
       onClose();
     },
     onError: handleSaveError,
@@ -278,9 +271,9 @@ export function useLevelWizard({
   }, [setShowCancelConfirm]);
 
   const handleConfirmCancel = useCallback(() => {
-    resetWizard();
+    resetPicks();
     onClose();
-  }, [resetWizard, onClose]);
+  }, [resetPicks, onClose]);
 
   // HP roll trigger
   const triggerHpRoll = useCallback(
@@ -312,6 +305,11 @@ export function useLevelWizard({
 
   return {
     ...base,
+    selectedFeats,
+    selectedPowers: picked.powers,
+    skillPointAllocations: picked.skillPoints,
+    selectedAptitude,
+    allSelectedFeatPickString,
     selectedClass,
     selectedHP,
     selectedAttribute,

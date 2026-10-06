@@ -24,7 +24,7 @@ import skills from "@/server/routers/api/rulesets/skills/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 
-const authenticatedRulesets = new Hono()
+export default new Hono()
   .use(sessionMiddleware)
   .route("/", contributorsRouter)
   .route("/", abilities)
@@ -74,17 +74,17 @@ const authenticatedRulesets = new Hono()
       }),
     ),
     async (c) => {
-      const query = c.req.valid("query");
+      const { scope, search, orderBy, orderDir, limit, page } = c.req.valid("query");
       return c.json(
         await RulesetsService.getRulesets(
           c.var.requestSession,
           {
-            scope: query.scope,
-            search: query.search,
-            orderBy: query.orderBy,
-            orderDir: query.orderDir,
+            scope,
+            search,
+            orderBy,
+            orderDir,
           },
-          { limit: query.limit, page: query.page },
+          { limit, page },
         ),
         200,
       );
@@ -165,5 +165,3 @@ const authenticatedRulesets = new Hono()
     await RulesetsService.unstarRuleset(c.var.requestSession, id);
     return c.json({ message: "Ruleset unstarred" }, 200);
   });
-
-export default authenticatedRulesets;

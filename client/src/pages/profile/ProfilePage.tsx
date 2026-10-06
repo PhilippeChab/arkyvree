@@ -16,7 +16,7 @@ import {
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { confirmPasswordRules, emailRules, newPasswordRules } from "@/client/src/lib/validation.ts";
+import { confirmPasswordRules, emailRules, newPasswordRules, usernameRules } from "@/client/src/lib/validation.ts";
 import { DeleteAccountDialog, EmailChangeVerificationDialog } from "@/client/src/pages/profile/components/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -83,15 +83,15 @@ export default function ProfilePage() {
 
   const isGoogleLinked = linkedAccounts?.some((a) => a.provider === "google") ?? false;
 
-  const { overlayRef, isAvailable: isGoogleAvailable } = useGoogleSignIn(async (idToken) => {
-    try {
-      await rpc.auth["link-google"].$post({ json: { idToken } });
+  const linkGoogle = useMutation({
+    mutationFn: (idToken: string) => rpc.auth["link-google"].$post({ json: { idToken } }),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.linkedAccounts });
       snackbar.success("Google account linked");
-    } catch (error) {
-      snackbar.error(error, "Failed to link Google account");
-    }
+    },
+    onError: (error) => snackbar.error(error, "Failed to link Google account"),
   });
+  const { overlayRef, isAvailable: isGoogleAvailable } = useGoogleSignIn((idToken) => linkGoogle.mutate(idToken));
 
   const unlinkOauthMutation = useMutation({
     mutationFn: (provider: string) => rpc.auth["unlink-oauth"].$post({ json: { provider } }),
@@ -233,10 +233,7 @@ export default function ProfilePage() {
                 <FormTextField
                   control={profileForm.control}
                   name="username"
-                  rules={{
-                    minLength: { value: 3, message: "Username must be at least 3 characters" },
-                    maxLength: { value: 50, message: "Username must be at most 50 characters" },
-                  }}
+                  rules={usernameRules}
                   label="Username"
                   variant="outlined"
                   fullWidth

@@ -1,6 +1,5 @@
 import { Circle as CircleIcon, Notifications as NotificationsIcon } from "@mui/icons-material";
 import {
-  Alert,
   Box,
   Button,
   Container,
@@ -23,6 +22,7 @@ import {
   CREATED_SORTS,
   DiceSpinner,
   type FilterOption,
+  LoadError,
   LoadMoreButton,
   NoMatchesState,
   PageHeader,
@@ -117,7 +117,7 @@ export default function NotificationsPage() {
         {isLoading ? (
           <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
         ) : error ? (
-          <Alert severity="error">Failed to load notifications.</Alert>
+          <LoadError what="Notifications" error={error} />
         ) : notifications.length > 0 ? (
           <>
             <TableContainer component={Paper} sx={{ mb: 3, overflowX: "auto" }}>

@@ -5,7 +5,7 @@ import { validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 
-const targetPaths = new Hono()
+export default new Hono()
   /**
    * POST /api/rulesets/:id/customization/target/paths/completions
    * Get paginated completion suggestions for a partial path
@@ -57,13 +57,12 @@ const targetPaths = new Hono()
       z.object({
         path: z.string(),
         kind: z.enum(["modifier", "requirement"]),
+        entityType: z.string().optional(),
       }),
     ),
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
-      const { path, kind } = c.req.valid("json");
-      return c.json(await TargetPathsService.validatePath(rulesetId, path, kind), 200);
+      const { path, kind, entityType } = c.req.valid("json");
+      return c.json(await TargetPathsService.validatePath(rulesetId, path, kind, entityType), 200);
     },
   );
-
-export default targetPaths;

@@ -52,7 +52,7 @@ export function SpellEditor({
     onSaved,
     listKey: queryKeys.rulesets.section(rulesetId, "powers"),
     label: "Spell",
-    save: (data: SpellFormData) =>
+    saveFn: (data: SpellFormData) =>
       parseResponse(
         rpc.api.rulesets[":id"].powers[":powerId"].$put({
           param: { id: rulesetId, powerId: entityId },

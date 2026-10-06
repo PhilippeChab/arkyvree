@@ -2,13 +2,18 @@ import { describe, expect, test } from "bun:test";
 
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { capitalize, getInitial, stripSeparators } from "@/shared/text.ts";
+import { capitalize, getInitial, sanitizeEmail, sanitizeText, stripSeparators } from "@/shared/text.ts";
 
 describe("Text", () => {
   test("is capitalized by its first letter only", () => {
     expect(capitalize("medium load")).toBe("Medium load");
     expect(capitalize("iOS")).toBe("IOS");
     expect(capitalize("")).toBe("");
+  });
+
+  test("is stored trimmed and Unicode-normalized, an email address lowercased too", () => {
+    expect(sanitizeText("  ﬁre\u00A0ball  ")).toBe("fire ball");
+    expect(sanitizeEmail(" Elara@Example.COM ")).toBe("elara@example.com");
   });
 
   test("gives a name's initial for an avatar", () => {

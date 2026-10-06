@@ -5,19 +5,17 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { AuthPage, AuthSubmitButton, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
-import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { confirmPasswordRules, emailRules, newPasswordRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 type SignUpFormData = InferRequestType<(typeof rpc.auth)["sign-up"]["$post"]>["json"];
 
 export default function SignUp() {
   usePageTitle("Sign Up");
-  const signUp = useAuthStore((s) => s.signUp);
-  const isLoading = useAuthStore((s) => s.isLoading);
+  const auth = useAuthRequests();
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -29,14 +27,12 @@ export default function SignUp() {
     passwordConfirmation: "",
   });
 
-  const onSubmit = async (data: SignUpFormData) => {
-    try {
-      setError(null);
-      await signUp(data.emailAddress, data.password, data.passwordConfirmation);
-      navigate("/verify-email", { state: { redirect } });
-    } catch (error) {
-      setError(errorMessage(error, "Failed to sign up"));
-    }
+  const onSubmit = (data: SignUpFormData) => {
+    setError(null);
+    auth.signUp.mutate(data, {
+      onSuccess: () => navigate("/verify-email", { state: { redirect } }),
+      onError: (error) => setError(errorMessage(error, "Failed to sign up")),
+    });
   };
 
   return (
@@ -60,12 +56,11 @@ export default function SignUp() {
           autoComplete="new-password"
         />
 
-        <AuthSubmitButton loading={isLoading}>Sign Up</AuthSubmitButton>
+        <AuthSubmitButton loading={auth.pending}>Sign Up</AuthSubmitButton>
       </form>
       <GoogleSignInSection
         label="Sign up with Google"
-        disabled={isLoading}
-        onSuccess={() => navigate(redirect ?? "/dashboard")}
+        disabled={auth.pending}
         onError={(error) => setError(errorMessage(error, "Failed to sign up with Google"))}
       />
       <Box sx={{ mt: 2, textAlign: "center" }}>

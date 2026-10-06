@@ -28,6 +28,8 @@ export interface PathValidationResult {
   errors: PathError[];
   suggestions: string[];
   completions: PathCompletion[];
+  /** A valid path's definition */
+  target?: TargetPath;
 }
 
 export interface PathError {

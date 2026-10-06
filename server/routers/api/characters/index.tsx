@@ -19,7 +19,7 @@ import sharing from "./sharing/index.ts";
 
 const campaignIdParam = z.object({ campaignId: z.string().uuid() });
 
-const characters = new Hono()
+export default new Hono()
   .use(sessionMiddleware)
   .route("/", contributors)
   .route("/levels", levels)
@@ -41,20 +41,19 @@ const characters = new Hono()
       }),
     ),
     async (c) => {
-      const query = c.req.valid("query");
-
+      const { visibility, search, orderBy, orderDir, accessRole, limit, page } = c.req.valid("query");
       // Use the service to get character list with session for activity logging
       return c.json(
         await CharactersService.getCharacters(
           c.var.requestSession,
           {
-            visibility: query.visibility,
-            search: query.search,
-            orderBy: query.orderBy,
-            orderDir: query.orderDir,
-            accessRole: query.accessRole,
+            visibility,
+            search,
+            orderBy,
+            orderDir,
+            accessRole,
           },
-          { limit: query.limit, page: query.page },
+          { limit, page },
         ),
         200,
       );
@@ -96,14 +95,9 @@ const characters = new Hono()
     ),
     async (c) => {
       const { campaignId } = c.req.valid("param");
-      const query = c.req.valid("query");
+      const { search, limit, page } = c.req.valid("query");
       return c.json(
-        await CharactersService.getUnlinkedCharacters(
-          c.var.requestSession,
-          campaignId,
-          { search: query.search },
-          { limit: query.limit, page: query.page },
-        ),
+        await CharactersService.getUnlinkedCharacters(c.var.requestSession, campaignId, { search }, { limit, page }),
         200,
       );
     },
@@ -162,10 +156,10 @@ const characters = new Hono()
       }),
     ),
     async (c) => {
-      const characterData = c.req.valid("json");
+      const body = c.req.valid("json");
 
       // Use the service to create character with session for activity logging
-      return c.json(await CharactersService.createCharacter(c.var.requestSession, characterData), 201);
+      return c.json(await CharactersService.createCharacter(c.var.requestSession, body), 201);
     },
   )
   // Enqueue async PDF generation
@@ -215,10 +209,10 @@ const characters = new Hono()
     ),
     async (c) => {
       const { id } = c.req.valid("param");
-      const updateData = c.req.valid("json");
+      const body = c.req.valid("json");
 
       // Use the service to update character with session for activity logging
-      return c.json(await CharactersService.updateCharacter(c.var.requestSession, id, updateData), 200);
+      return c.json(await CharactersService.updateCharacter(c.var.requestSession, id, body), 200);
     },
   )
   .put(
@@ -227,9 +221,9 @@ const characters = new Hono()
     validate("json", z.record(z.string().uuid(), z.number().int().min(1).max(100))),
     async (c) => {
       const { id } = c.req.valid("param");
-      const abilities = c.req.valid("json");
+      const body = c.req.valid("json");
 
-      await CharactersService.updateAbilities(c.var.requestSession, id, abilities);
+      await CharactersService.updateAbilities(c.var.requestSession, id, body);
       return c.json({ success: true }, 200);
     },
   )
@@ -258,5 +252,3 @@ const characters = new Hono()
     await CharactersService.hardDeleteCharacter(c.var.requestSession, id);
     return c.json({ message: "Character permanently deleted" }, 200);
   });
-
-export default characters;

@@ -9,6 +9,7 @@ import { Layout, PublicLayout } from "@/client/src/components/layout/index.ts";
 import { CustomThemeProvider } from "@/client/src/contexts/ThemeContext.tsx";
 import { SnackbarProvider } from "@/client/src/contexts/ToastContext.tsx";
 import { WebSocketProvider } from "@/client/src/contexts/WebSocketContext.tsx";
+import { checkSession } from "@/client/src/hooks/index.ts";
 import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
 import { createQueryClient } from "@/client/src/lib/queryClient.ts";
 import SignIn from "@/client/src/pages/auth/SignIn.tsx";
@@ -63,12 +64,12 @@ let authProbe: Promise<void> | null = null;
 
 function PrivateRoute() {
   const location = useLocation();
-  const checkAuth = useAuthStore((s) => s.checkAuth);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const signedOutByUser = useAuthStore((s) => s.signedOutByUser);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (!authProbe) authProbe = checkAuth();
+    authProbe ??= checkSession(queryClient);
     let cancelled = false;
     void authProbe.finally(() => {
       if (!cancelled) setChecked(true);
@@ -76,7 +77,7 @@ function PrivateRoute() {
     return () => {
       cancelled = true;
     };
-  }, [checkAuth]);
+  }, []);
 
   if (!checked && !isAuthenticated) return null;
   if (isAuthenticated) return <Outlet />;
@@ -92,8 +93,9 @@ function PrivateRoute() {
   }
   if (demoExpired) return <Navigate to="/demo-expired" replace />;
 
+  // Back to the page once signed in, unless the user signed out of it
   const target = location.pathname + location.search;
-  const redirectParam = target !== "/" ? `?redirect=${encodeURIComponent(target)}` : "";
+  const redirectParam = target !== "/" && !signedOutByUser ? `?redirect=${encodeURIComponent(target)}` : "";
   return <Navigate to={`/sign-in${redirectParam}`} replace />;
 }
 

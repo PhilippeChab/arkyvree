@@ -21,11 +21,8 @@ export default new Hono<SessionContext>()
     ),
     async (c) => {
       const { id } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(
-        await RulesetExtensionsService.subscribeExtension(c.var.requestSession, id, body.extensionIds),
-        200,
-      );
+      const { extensionIds } = c.req.valid("json");
+      return c.json(await RulesetExtensionsService.subscribeExtension(c.var.requestSession, id, extensionIds), 200);
     },
   )
   .post(
@@ -39,10 +36,7 @@ export default new Hono<SessionContext>()
     ),
     async (c) => {
       const { id } = c.req.valid("param");
-      const body = c.req.valid("json");
-      return c.json(
-        await RulesetExtensionsService.unsubscribeExtension(c.var.requestSession, id, body.extensionId),
-        200,
-      );
+      const { extensionId } = c.req.valid("json");
+      return c.json(await RulesetExtensionsService.unsubscribeExtension(c.var.requestSession, id, extensionId), 200);
     },
   );

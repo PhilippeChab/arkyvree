@@ -49,14 +49,14 @@ The demo and the auth flow are mutually exclusive states. A demo user landing on
 ```
 Demo user → /sign-in (or /sign-up, /verify-email, /forgot-password, /reset-password, /demo-expired)
    AuthLayoutRoute mounts
-   useEffect: isDemo === true ⇒ signOut()
+   useEffect: isDemo === true ⇒ the sign-out mutation (useAuthRequests)
      POST /auth/sign-out
      Server: user.expiresAt set ⇒ Users.delete (CASCADE wipes characters,
        campaigns, forks, attachments) inside withTransaction
      Server: clears session cookie
      Client store: user=null, isAuthenticated=false
-     React Query cache cleared (App.tsx authStore.subscribe → queryClient.clear())
-   On signOut failure (401, network): clearSession() fallback locally
+     React Query cache cleared (createQueryClient's authStore.subscribe → queryClient.clear())
+   On sign-out failure (401, network): still signed out locally (the mutation's onSettled clears the session)
    Re-render: !isAuthenticated ⇒ render <Outlet/> ⇒ auth form
 ```
 
@@ -118,7 +118,8 @@ There's no `BroadcastChannel`-based active sync today. Recovery happens lazily v
 | `client/src/components/auth/AuthLayout.tsx` | `AuthLayoutRoute` — demo signOut on entry, real-user redirect |
 | `client/src/components/layout/PublicLayout.tsx` | Public toolbar with auth-aware CTA |
 | `client/src/components/layout/Layout.tsx` | In-app shell, `isDemo` feature gates |
-| `client/src/stores/authStore.ts` | Zustand store + persist; `signOut`, `clearSession`, `checkAuth` |
+| `client/src/stores/authStore.ts` | Zustand store + persist: who is signed in, the emails waiting for a code; `clearSession`, `updateUser` |
+| `client/src/hooks/useAuthRequests.ts` | The auth requests as mutations the store follows (sign in / up / out, verify, reset), their shared `pending`, and `checkSession` (the `PrivateRoute` probe, a `fetchQuery` of `/auth/me`) |
 | `client/src/lib/demo.ts` | `DEMO_EXPIRED_FLAG` constant |
 | `client/src/pages/demo-expired/DemoExpiredPage.tsx` | Post-expiry messaging; clears flag on mount |
 | `client/src/hooks/useStartDemo.ts` | POSTs `/api/demo/start`, navigates to `/dashboard` |

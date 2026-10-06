@@ -5,6 +5,11 @@ import path from "node:path";
 
 import { lintRepo, runOxlint } from "./lintRepo.ts";
 
+/** A router file whose one route's handler is `handler`. */
+function routeReading(handler: string) {
+  return `export const r = app.post("/:id", validate("param", idParam), (c) => {\n${handler}\n});\n`;
+}
+
 // Each test runs oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);
 
@@ -122,6 +127,68 @@ describe("conventions", () => {
       "route-conventions server/routers/api/sub.ts",
       "route-conventions server/routers/api/template.ts",
       "route-conventions server/routers/api/zod.ts",
+    ]);
+  });
+
+  test("a route's body and query are written in it, its handler destructures what it reads, and a router is its module's export", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/routers/api/inline.ts": 'export const r = app.post("/", validate("json", z.object({})), (c) => c);\n',
+          "server/routers/api/shared.ts":
+            'const itemBody = z.object({});\nexport const r = app.post("/", validate("json", itemBody), (c) => c).put("/", validate("json", itemBody), (c) => c);\n',
+          "server/routers/api/once.ts":
+            'const itemBody = z.object({});\nexport const r = app.post("/", validate("json", itemBody), (c) => c);\n',
+          "server/routers/api/imported.ts":
+            'import { itemBody } from "./x.ts";\nexport const r = app.post("/", validate("json", itemBody), (c) => c).put("/", validate("json", itemBody), (c) => c);\n',
+          "server/routers/api/misnamed.ts":
+            'import { featId } from "./x.ts";\nexport const r = app.get("/:featId", validate("param", featId), (c) => c);\n',
+          "server/routers/api/suffix.ts": "const hdSchema = z.number();\nexport const r = hdSchema;\n",
+          "server/routers/api/destructured.ts": routeReading(
+            '  const { id } = c.req.valid("param");\n  const { name } = c.req.valid("json");\n  return S.f(id, name);',
+          ),
+          "server/routers/api/whole.ts": routeReading(
+            '  const { id } = c.req.valid("param");\n  const body = c.req.valid("json");\n  return S.f(id, { ...body });',
+          ),
+          "server/routers/api/params.ts": routeReading(
+            '  const params = c.req.valid("param");\n  return S.f(params.id);',
+          ),
+          "server/routers/api/data.ts": routeReading('  const data = c.req.valid("json");\n  return S.f(data);'),
+          "server/routers/api/fields.ts": routeReading(
+            '  const query = c.req.valid("query");\n  return S.f(query.search, query.page);',
+          ),
+          "server/routers/api/derived.ts":
+            'const itemBody = z.object({});\nexport const r = app.post("/", validate("json", itemBody), (c) => c).put("/", validate("json", itemBody.partial()), (c) => c);\n',
+          "server/routers/api/derivedMisnamed.ts":
+            'const base = z.object({});\nexport const r = app.post("/", validate("json", base.extend({})), (c) => c).put("/", validate("json", base.partial()), (c) => c);\n',
+          "server/routers/api/derivedOnce.ts":
+            'const itemBody = z.object({});\nexport const r = app.put("/", validate("json", itemBody.partial()), (c) => c);\n',
+          "server/routers/api/declared.ts":
+            'async function create(c) {\n  const body = c.req.valid("json");\n  return c.json(await S.create(body), 200);\n}\nexport const r = app.post("/", validate("json", z.object({})), create);\n',
+          "server/routers/api/destructuredLater.ts": routeReading(
+            '  const body = c.req.valid("json");\n  const { name } = body;\n  return S.f(name);',
+          ),
+          "server/routers/api/inlineRead.ts": routeReading('  return S.f(c.req.valid("param"));'),
+          "server/routers/api/exported.ts": 'export default new Hono().get("/", (c) => c);\n',
+          "server/routers/api/named.ts": 'const r = new Hono().get("/", (c) => c);\nexport default r;\n',
+        },
+        ["route-conventions"],
+      ),
+    ).toEqual([
+      "route-conventions server/routers/api/data.ts",
+      "route-conventions server/routers/api/derivedMisnamed.ts",
+      "route-conventions server/routers/api/derivedOnce.ts",
+      "route-conventions server/routers/api/destructuredLater.ts",
+      "route-conventions server/routers/api/fields.ts",
+      "route-conventions server/routers/api/imported.ts",
+      "route-conventions server/routers/api/imported.ts",
+      "route-conventions server/routers/api/inlineRead.ts",
+      "route-conventions server/routers/api/misnamed.ts",
+      "route-conventions server/routers/api/named.ts",
+      "route-conventions server/routers/api/named.ts",
+      "route-conventions server/routers/api/once.ts",
+      "route-conventions server/routers/api/params.ts",
+      "route-conventions server/routers/api/suffix.ts",
     ]);
   });
 

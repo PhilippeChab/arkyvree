@@ -1,5 +1,5 @@
 import { Archive as ArchiveIcon, Group as GroupIcon, Shield as ShieldIcon } from "@mui/icons-material";
-import { Alert, Button, Chip, Container } from "@mui/material";
+import { Button, Chip, Container } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ import {
   type FilterOption,
   ListCard,
   ListCardGrid,
+  LoadError,
   LoadMoreButton,
   NAME_SORTS,
   NoMatchesState,
@@ -101,7 +102,7 @@ export default function CharactersPage() {
         {isLoading ? (
           <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
         ) : error ? (
-          <Alert severity="error">Failed to load characters.</Alert>
+          <LoadError what="Characters" error={error} />
         ) : characters.length > 0 ? (
           <>
             <ListCardGrid>

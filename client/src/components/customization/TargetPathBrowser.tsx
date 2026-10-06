@@ -15,7 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
@@ -25,6 +25,8 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { formatSegment, type PathCompletion } from "@/shared/customization/target.ts";
 
+import { type PathInfo, toPathInfo } from "./useTargetPath.ts";
+
 interface TargetPathBrowserProps {
   rulesetId: string;
   kind: "modifier" | "requirement";
@@ -32,8 +34,15 @@ interface TargetPathBrowserProps {
   segments: string[];
   isComplete: boolean;
   disabled?: boolean;
-  onChange: (value: string) => void;
-  onSelectedCompletion?: (completion: PathCompletion | null) => void;
+  /** The new path, and what it takes when it's a leaf picked from the list. */
+  onChange: (value: string, picked?: PathInfo) => void;
+}
+
+/** A leaf's path and what it takes, which its completion carries; none for a group. */
+function pickedOf(option: PathCompletion) {
+  const { path, valueType, operators } = option;
+  if (option.kind !== "property" || !path || !valueType || !operators) return undefined;
+  return toPathInfo({ ...option, path, valueType, operators });
 }
 
 export function TargetPathBrowser({
@@ -44,7 +53,6 @@ export function TargetPathBrowser({
   isComplete,
   disabled,
   onChange,
-  onSelectedCompletion,
 }: TargetPathBrowserProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
@@ -129,15 +137,12 @@ export function TargetPathBrowser({
     return completions.find((c) => c.insertText === lastSegment && c.path) ?? null;
   }, [flatMode, fullPath, lastSegment, completions]);
 
-  // Report the selected leaf completion to the parent (for path info)
-  useEffect(() => {
-    if (!onSelectedCompletion) return;
-    onSelectedCompletion(selectedLeaf);
-  }, [selectedLeaf, onSelectedCompletion]);
-
   const handleNavigate = (option: PathCompletion) => {
     setSearch("");
-    if (flatMode && option.path) {
+    const picked = pickedOf(option);
+    if (picked) {
+      onChange(picked.path, picked);
+    } else if (flatMode && option.path) {
       // Flat search results carry the full path in `path` and the inserted
       // value is also the full path — replace the current path entirely
       // rather than appending.

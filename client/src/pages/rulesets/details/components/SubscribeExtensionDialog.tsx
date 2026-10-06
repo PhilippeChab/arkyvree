@@ -13,7 +13,7 @@ import {
 import { useMemo, useState } from "react";
 
 import { DiceSpinner, Modal, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, useListboxQuery, useOnChange } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 import type { RulesetListItem } from "@/client/src/lib/queries.ts";
 
@@ -27,52 +27,30 @@ interface SubscribeExtensionDialogProps {
   subscribedExtensionIds: string[];
 }
 
-export function SubscribeExtensionDialog({
-  open,
+/** The dialog's content: its selection and search are its own, so each opening starts with none (MUI unmounts it). */
+function SubscribeExtensionForm({
   onClose,
   onConfirm,
   isLoading,
   subscribedExtensionIds,
-}: SubscribeExtensionDialogProps) {
+}: Omit<SubscribeExtensionDialogProps, "open">) {
   const [selected, setSelected] = useState<ExtensionRuleset[]>([]);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
-
-  // Closing the dialog clears its selection and search
-  useOnChange(open, (isOpen) => {
-    if (isOpen) return;
-    setSelected([]);
-    setSearch("");
-  });
 
   const {
     items: extensions,
     isLoading: isLoadingExtensions,
     onScroll,
-  } = useListboxQuery({
-    ...rulesetPickerQuery("extensions", debouncedSearch),
-    enabled: open,
-  });
+  } = useListboxQuery(rulesetPickerQuery("extensions", debouncedSearch));
 
   const options = useMemo(
     () => extensions.filter((ext) => !subscribedExtensionIds.includes(ext.id)),
     [extensions, subscribedExtensionIds],
   );
 
-  const handleClose = () => {
-    if (isLoading) return;
-    setSelected([]);
-    setSearch("");
-    onClose();
-  };
-
   return (
-    <Modal
-      open={open}
-      onClose={handleClose}
-      maxWidth="md"
-      slotProps={{ paper: { sx: { minHeight: { xs: undefined, sm: 600 } } } }}
-    >
+    <>
       <DialogTitle>Subscribe to Extensions</DialogTitle>
       <DialogContent>
         <Stack spacing={2}>
@@ -113,7 +91,7 @@ export function SubscribeExtensionDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose} disabled={isLoading} variant="outlined" color="inherit">
+        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
           Cancel
         </Button>
         <Button
@@ -128,6 +106,23 @@ export function SubscribeExtensionDialog({
           >{`Subscribe${selected.length > 1 ? ` (${selected.length})` : ""}`}</DiceSpinner>
         </Button>
       </DialogActions>
+    </>
+  );
+}
+
+export function SubscribeExtensionDialog({ open, onClose, isLoading, ...form }: SubscribeExtensionDialogProps) {
+  const handleClose = () => {
+    if (!isLoading) onClose();
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      slotProps={{ paper: { sx: { minHeight: { xs: undefined, sm: 600 } } } }}
+    >
+      <SubscribeExtensionForm onClose={handleClose} isLoading={isLoading} {...form} />
     </Modal>
   );
 }

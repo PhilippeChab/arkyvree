@@ -204,6 +204,20 @@ function StandardArrayScores({
   );
 }
 
+/** An ability's score before one is set: 8 to point-buy from, the standard array's in order, else 10. */
+function defaultScore(method: RollMethodId, index: number) {
+  if (method === "point-buy") return 8;
+  if (method === "standard-array") return STANDARD_ARRAY[index] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
+  return 10;
+}
+
+/** Every ability's score: the one set, or its method's default. */
+function scoresOf(abilities: AbilityOption[], values: Record<string, number> | undefined, method: RollMethodId) {
+  return Object.fromEntries(
+    abilities.map((ability, index) => [ability.id, values?.[ability.id] ?? defaultScore(method, index)]),
+  );
+}
+
 function AbilityScoresSection({
   ref,
   abilities,
@@ -218,8 +232,9 @@ function AbilityScoresSection({
   method: RollMethodId;
 }) {
   const {
-    field: { value: abilityValues, onChange },
+    field: { value, onChange },
   } = useController({ control, name: "abilities" });
+  const abilityValues = scoresOf(abilities, value, method);
   const [rolling, setRolling] = useState(false);
   const [rollingValues, setRollingValues] = useState<Record<string, number>>({});
   const [settledIds, setSettledIds] = useState<Set<string>>(new Set());
@@ -305,8 +320,8 @@ function AbilityScoresSection({
       {abilities.map((ability) => {
         const isSettled = settledIds.has(ability.id);
         const displayValue = rolling
-          ? (rollingValues[ability.id] ?? abilityValues?.[ability.id] ?? 10)
-          : (abilityValues?.[ability.id] ?? 10);
+          ? (rollingValues[ability.id] ?? abilityValues[ability.id])
+          : abilityValues[ability.id];
 
         return (
           <AbilityCard
@@ -441,18 +456,16 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
     placeholderData: keepPreviousData,
   });
 
-  // Clear the race once the list for the current ruleset, alignment and gender
-  // has loaded without it, or with it ineligible. While a new list loads, the
-  // previous one is still shown, and a failed load says nothing either way.
+  // A race the list for the current ruleset, alignment and gender doesn't offer, once it has loaded, is refused, and
+  // the field says why. While a new list loads, the previous one is still shown, and a failed load says nothing.
   const selectedRaceId = watch("raceId");
   const racesSettled = !!selectedRulesetId && !isRacesPending && !isRacesPlaceholder && !isRacesError;
-  useEffect(() => {
-    if (!selectedRaceId || !racesSettled) return;
-    const selectedRace = races.find((r) => r.id === selectedRaceId);
-    if (!selectedRace || !selectedRace.eligible) {
-      setValue("raceId", "");
-    }
-  }, [races, racesSettled, selectedRaceId, setValue]);
+  const raceIssue = (raceId: string) => {
+    if (!raceId || !racesSettled) return undefined;
+    const race = races.find((r) => r.id === raceId);
+    if (!race) return "Not in this ruleset: pick another";
+    return race.eligible ? undefined : "Not open to this alignment or gender: pick another";
+  };
 
   const { data: abilityItems } = useRulesetAbilities(selectedRulesetId || undefined);
   const baseRules = selectedRuleset?.baseRules;
@@ -461,27 +474,6 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
     if (!baseRules) return items;
     return sortAbilities(items, baseRules, (a) => a.name);
   }, [abilityItems, baseRules]);
-
-  // Set default ability scores based on roll method
-  useEffect(() => {
-    if (rulesetAbilities.length > 0) {
-      const defaults: Record<string, number> = {};
-      if (rollMethod === "point-buy") {
-        for (const ability of rulesetAbilities) {
-          defaults[ability.id] = 8;
-        }
-      } else if (rollMethod === "standard-array") {
-        for (const [i, ability] of rulesetAbilities.entries()) {
-          defaults[ability.id] = STANDARD_ARRAY[i] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
-        }
-      } else {
-        for (const ability of rulesetAbilities) {
-          defaults[ability.id] = 10;
-        }
-      }
-      setValue("abilities", defaults);
-    }
-  }, [rulesetAbilities, rollMethod, setValue]);
 
   const handleRulesetsScroll = createListboxScrollHandler([
     {
@@ -534,9 +526,11 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
     },
   });
 
-  // The alignment and gender are required: a submit always has them
+  // The alignment and gender are required: a submit always has them. The scores not set yet are their method's defaults
   const onSubmit = ({ alignment, gender, ...data }: CreateCharacterFormData) => {
-    if (alignment && gender) createCharacterMutation.mutate({ ...data, alignment, gender });
+    if (!alignment || !gender) return;
+    const abilities = scoresOf(rulesetAbilities, data.abilities, rollMethod);
+    createCharacterMutation.mutate({ ...data, alignment, gender, abilities });
   };
 
   return (
@@ -574,9 +568,11 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
             <RulesetPicker
               rulesets={rulesets}
               value={selectedRuleset}
+              // Another ruleset's abilities start from their defaults
               onChange={(ruleset) => {
                 setSelectedRuleset(ruleset);
                 field.onChange(ruleset?.id ?? "");
+                setValue("abilities", {});
                 if (!ruleset) setValue("raceId", "");
               }}
               onSearch={setRulesetSearch}
@@ -592,7 +588,11 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
           control={control}
           name="raceId"
           label="Race"
-          rules={{ required: "Race is required" }}
+          rules={{
+            required: "Race is required",
+            validate: (raceId) => (typeof raceId === "string" && raceIssue(raceId)) || true,
+          }}
+          helperText={raceIssue(selectedRaceId)}
           options={races.map((race) => ({ value: race.id, label: race.name, disabled: !race.eligible }))}
           disabled={!selectedRulesetId}
           onMenuScroll={handleRacesScroll}
@@ -624,8 +624,11 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
           label="Method"
           value={rollMethod}
           onChange={(e) => {
+            // Another method's scores start from its defaults
             const method = ROLL_METHODS.find((m) => m.id === e.target.value);
-            if (method) setRollMethod(method.id);
+            if (!method) return;
+            setRollMethod(method.id);
+            setValue("abilities", {});
           }}
           size="small"
           sx={{ minWidth: 200 }}
@@ -649,8 +652,8 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
         )}
         {rollMethod === "point-buy" &&
           (() => {
-            const abilities = watch("abilities");
-            const spent = rulesetAbilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[abilities?.[a.id] ?? 8] ?? 0), 0);
+            const scores = scoresOf(rulesetAbilities, watch("abilities"), rollMethod);
+            const spent = rulesetAbilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[scores[a.id]] ?? 0), 0);
             const remaining = POINT_BUY_TOTAL - spent;
             return (
               <Chip

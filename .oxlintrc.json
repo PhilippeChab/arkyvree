@@ -29,7 +29,6 @@
     // React
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "error",
-    "react/only-export-components": ["error", { "allowConstantExport": true }],
     // React Compiler rules. The compiler isn't enabled, so APIs it can't memoize (react-hook-form's watch()) are fine.
     // State a prop drives is reset in the render that sees it change (`useOnChange`), never by an effect.
     "react/incompatible-library": "off",
@@ -81,6 +80,9 @@
     "arkyvree/query-keys": "error",
     "arkyvree/client-apis": "error",
     "arkyvree/controlled-inputs": "error",
+    "arkyvree/effect-writes": "error",
+    "arkyvree/api-calls-in-queries": "error",
+    "arkyvree/load-errors": "error",
     "arkyvree/test-conventions": "error",
     // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
     "arkyvree/function-length": "error",
@@ -167,6 +169,13 @@
       "rules": {
         "no-use-before-define": "off",
         "sort-imports": "off"
+      }
+    },
+    // Fast Refresh reloads the client's components as they're edited: a module of them exports components only
+    {
+      "files": ["client/**/*.{ts,tsx}"],
+      "rules": {
+        "react/only-export-components": ["error", { "allowConstantExport": true }]
       }
     },
     // Server/scripts/tests/database: allow console
