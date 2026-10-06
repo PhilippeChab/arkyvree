@@ -1,6 +1,6 @@
 /**
- * `comment-style`: comments are written one way. A top-level declaration's description is a `/** … *\/` right above it,
- * and a file may open with one describing the file. In code, a comment is `//`, right above or at the end of the line
+ * `comment-style`: comments are written one way. A declaration's description (a member's too) is one `/** … *\/` right
+ * above it, and a file may open with one describing the file. In code, a comment is `//`, right above or at the end of the line
  * it explains. Nothing else: no comment set apart from what it describes at a file's top (a heading, a banner, an
  * orphan), no separator line (`// -----`, `// ── … ──`), no `/* … *\/`. A tool's directive keeps the tool's syntax (`//
  * oxfmt-ignore`, a disable comment, `@ts-expect-error`), and so does a JSX comment (`{/* … *\/}`), JSX's only kind.
@@ -71,10 +71,16 @@ function createCommentStyle(context) {
       const topLevel = comments.filter((comment) => !inside(comment) && !trailing(comment));
       const isHeading = (comment) =>
         comment.type === "Line" && (SEPARATOR.test(comment.value) || DECORATED.test(comment.value));
-      // In code: a separator goes, a decorated title is plain words, a block is `//`
-      for (const comment of comments) {
+      // In code: a separator goes, a decorated title is plain words, a block is `//`, and a member's description is one
+      // `/** … */`: a doc right on another describes nothing
+      for (const [index, comment] of comments.entries()) {
         const [s, e] = rangeOf(comment);
         if (topLevel.includes(comment)) continue;
+        const following = comments[index + 1];
+        if (isDoc(comment) && following && isDoc(following) && isAdjacent(e, rangeOf(following)[0])) {
+          context.report({ node: comment, message: "A declaration's description is one `/** … */` right above it." });
+          continue;
+        }
         if (comment.type === "Line" && SEPARATOR.test(comment.value)) {
           const lineStart = text.lastIndexOf("\n", s - 1) + 1;
           context.report({

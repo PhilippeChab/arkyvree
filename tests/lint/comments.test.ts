@@ -92,6 +92,24 @@ describe("comment style", () => {
     expect((await fixRepo({ "server/c.ts": source }, ["comment-style"], 3))["server/c.ts"]).toBe(source);
   });
 
+  test("a member's description is one `/** … */` too: a doc stacked on another is reported", async () => {
+    const source = lines(
+      "export class C {",
+      "  /** What the method does. */",
+      "  /** And again, in other words. */",
+      "  m() {",
+      "    return 1;",
+      "  }",
+      "",
+      "  /** Described once. */",
+      "  n() {",
+      "    return 2;",
+      "  }",
+      "}",
+    );
+    expect(await lintRepo({ "server/c.ts": source }, ["comment-style"])).toEqual(["comment-style server/c.ts"]);
+  });
+
   test("--fix leaves what a doc can't hold, and the comments a tool reads", async () => {
     const source = lines(
       "// Matches every file under src/**/*.ts",

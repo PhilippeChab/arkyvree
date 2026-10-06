@@ -12,9 +12,9 @@ interface MemoryCacheOptions {
   sweepInterval?: number;
 }
 
-const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const DEFAULT_SWEEP_INTERVAL_MS = 60 * 1000; // 1 minute
 const DEFAULT_MAX_SIZE = 200;
+const DEFAULT_SWEEP_INTERVAL_MS = 60 * 1000; // 1 minute
+const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export default class MemoryCache<T> {
   constructor(options: MemoryCacheOptions | number = {}) {
@@ -109,27 +109,6 @@ export default class MemoryCache<T> {
     return entry.value;
   }
 
-  isPinned(key: string): boolean {
-    return this.pinned.has(key);
-  }
-
-  set(key: string, value: T, ttl?: number): void {
-    if (!MemoryCache.enabled) return;
-    // If at capacity and this is a new key, evict the oldest unpinned entry.
-    // If eviction fails (everything is pinned), skip the insert to prevent
-    // unbounded growth past maxSize.
-    if (!this.store.has(key) && this.store.size >= this.maxSize) {
-      const sizeBefore = this.store.size;
-      this.evictOldest();
-      if (this.store.size === sizeBefore) return;
-    }
-
-    this.store.set(key, {
-      value,
-      expiresAt: Date.now() + (ttl ?? this.defaultTtl),
-    });
-  }
-
   invalidate(key: string): void {
     this.store.delete(key);
     this.pinned.delete(key);
@@ -155,8 +134,29 @@ export default class MemoryCache<T> {
     }
   }
 
+  isPinned(key: string): boolean {
+    return this.pinned.has(key);
+  }
+
   pin(key: string): void {
     this.pinned.add(key);
+  }
+
+  set(key: string, value: T, ttl?: number): void {
+    if (!MemoryCache.enabled) return;
+    // If at capacity and this is a new key, evict the oldest unpinned entry.
+    // If eviction fails (everything is pinned), skip the insert to prevent
+    // unbounded growth past maxSize.
+    if (!this.store.has(key) && this.store.size >= this.maxSize) {
+      const sizeBefore = this.store.size;
+      this.evictOldest();
+      if (this.store.size === sizeBefore) return;
+    }
+
+    this.store.set(key, {
+      value,
+      expiresAt: Date.now() + (ttl ?? this.defaultTtl),
+    });
   }
 
   unpin(key: string): void {

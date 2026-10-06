@@ -11,15 +11,13 @@ import type { Session } from "@/shared/relations.ts";
 import { canAnySessionRead } from "./readers.ts";
 import { getPublicUrl } from "./records.ts";
 
-type OwnershipChecker = (session: Session, recordId: string) => Promise<boolean>;
-type UploadPolicy = { maxBytes: number; contentTypes: string[] };
 type AttachableConfig = {
   isOwner: OwnershipChecker;
   isReader: OwnershipChecker;
   policy: UploadPolicy;
   names: readonly string[];
 };
-
+type OwnershipChecker = (session: Session, recordId: string) => Promise<boolean>;
 interface SignedTokenPayload {
   blobId: string;
   recordType: string;
@@ -28,12 +26,12 @@ interface SignedTokenPayload {
   iat: number;
 }
 
+type UploadPolicy = { maxBytes: number; contentTypes: string[] };
+
 const imagePolicy: UploadPolicy = {
   maxBytes: MAX_UPLOAD_BYTES,
   contentTypes: [...ALLOWED_IMAGE_TYPES],
 };
-
-const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** The records that take attachments: who may attach to one and read them, what they take, under which names. */
 const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
@@ -68,7 +66,26 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
   ],
 ]);
 
+const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
 class AttachmentsService {
+  private assertValidName(recordType: string, name: string): void {
+    const { names } = this.getAttachableConfig(recordType);
+    if (!names.includes(name)) {
+      throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
+    }
+  }
+
+  private assertWithinPolicy(recordType: string, byteSize: number, contentType: string): void {
+    const { policy } = this.getAttachableConfig(recordType);
+    if (byteSize > policy.maxBytes) {
+      throw new BadRequestError(`File exceeds maximum size of ${policy.maxBytes} bytes`);
+    }
+    if (!policy.contentTypes.includes(contentType)) {
+      throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
+    }
+  }
+
   private buildKey(blobId: string, filename: string): string {
     const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
     return `blobs/${blobId}/${safe}`;
@@ -90,23 +107,6 @@ class AttachmentsService {
     if (typeof err !== "object" || err === null) return false;
     const e = err as { code?: string; cause?: { code?: string } };
     return e.code === "23505" || e.cause?.code === "23505";
-  }
-
-  private assertValidName(recordType: string, name: string): void {
-    const { names } = this.getAttachableConfig(recordType);
-    if (!names.includes(name)) {
-      throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
-    }
-  }
-
-  private assertWithinPolicy(recordType: string, byteSize: number, contentType: string): void {
-    const { policy } = this.getAttachableConfig(recordType);
-    if (byteSize > policy.maxBytes) {
-      throw new BadRequestError(`File exceeds maximum size of ${policy.maxBytes} bytes`);
-    }
-    if (!policy.contentTypes.includes(contentType)) {
-      throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
-    }
   }
 
   private signToken(payload: Omit<SignedTokenPayload, "iat">): string {
@@ -140,6 +140,20 @@ class AttachmentsService {
     return payload;
   }
 
+  private async assertCanAttach(session: Session, recordType: string, recordId: string): Promise<void> {
+    const config = this.getAttachableConfig(recordType);
+    if (!(await config.isOwner(session, recordId))) {
+      throw new ForbiddenError("Not authorized to attach to this record");
+    }
+  }
+
+  private async assertCanRead(session: Session, recordType: string, recordId: string): Promise<void> {
+    const config = this.getAttachableConfig(recordType);
+    if (!(await config.isReader(session, recordId))) {
+      throw new ForbiddenError("Not authorized to view this attachment");
+    }
+  }
+
   private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
     const refs = await Attachments.findMany(tx, { blobIds: [blobId] });
     if (refs.length > 0) return null;
@@ -156,79 +170,6 @@ class AttachmentsService {
     } catch (err) {
       console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
     }
-  }
-
-  private async assertCanAttach(session: Session, recordType: string, recordId: string): Promise<void> {
-    const config = this.getAttachableConfig(recordType);
-    if (!(await config.isOwner(session, recordId))) {
-      throw new ForbiddenError("Not authorized to attach to this record");
-    }
-  }
-
-  private async assertCanRead(session: Session, recordType: string, recordId: string): Promise<void> {
-    const config = this.getAttachableConfig(recordType);
-    if (!(await config.isReader(session, recordId))) {
-      throw new ForbiddenError("Not authorized to view this attachment");
-    }
-  }
-
-  async getAttachment(session: Session, params: { recordType: string; recordId: string; name: string }) {
-    await this.assertCanRead(session, params.recordType, params.recordId);
-    const row = await Attachments.findOneWithBlob(db, {
-      recordType: params.recordType,
-      recordId: params.recordId,
-      name: params.name,
-    });
-    if (!row) return null;
-    return { id: row.id, url: getPublicUrl(row) };
-  }
-
-  async createDirectUpload(
-    session: Session,
-    params: {
-      recordType: string;
-      recordId: string;
-      name: string;
-      filename: string;
-      contentType: string;
-      byteSize: number;
-    },
-  ) {
-    await this.assertCanAttach(session, params.recordType, params.recordId);
-    this.assertValidName(params.recordType, params.name);
-    this.assertWithinPolicy(params.recordType, params.byteSize, params.contentType);
-
-    const blobId = randomUUID();
-    const key = this.buildKey(blobId, params.filename);
-
-    const blob = await withTransaction(async (tx: Db) => {
-      const rows = await Blobs.create(tx, {
-        id: blobId,
-        key,
-        filename: params.filename,
-        contentType: params.contentType,
-        byteSize: params.byteSize,
-      });
-      const row = rows[0];
-      if (!row) throw new InternalError("Failed to create blob");
-      return row;
-    });
-
-    const presignedUrl = ObjectStorage.get().presignPut(key, {
-      contentType: params.contentType,
-    });
-    const signedId = this.signToken({
-      blobId: blob.id,
-      recordType: params.recordType,
-      recordId: params.recordId,
-      name: params.name,
-    });
-
-    return {
-      signedId,
-      presignedUrl,
-      headers: { "Content-Type": params.contentType },
-    };
   }
 
   async attach(session: Session, signedId: string) {
@@ -300,6 +241,54 @@ class AttachmentsService {
     return { attachment: result.attachment, blob: result.blob };
   }
 
+  async createDirectUpload(
+    session: Session,
+    params: {
+      recordType: string;
+      recordId: string;
+      name: string;
+      filename: string;
+      contentType: string;
+      byteSize: number;
+    },
+  ) {
+    await this.assertCanAttach(session, params.recordType, params.recordId);
+    this.assertValidName(params.recordType, params.name);
+    this.assertWithinPolicy(params.recordType, params.byteSize, params.contentType);
+
+    const blobId = randomUUID();
+    const key = this.buildKey(blobId, params.filename);
+
+    const blob = await withTransaction(async (tx: Db) => {
+      const rows = await Blobs.create(tx, {
+        id: blobId,
+        key,
+        filename: params.filename,
+        contentType: params.contentType,
+        byteSize: params.byteSize,
+      });
+      const row = rows[0];
+      if (!row) throw new InternalError("Failed to create blob");
+      return row;
+    });
+
+    const presignedUrl = ObjectStorage.get().presignPut(key, {
+      contentType: params.contentType,
+    });
+    const signedId = this.signToken({
+      blobId: blob.id,
+      recordType: params.recordType,
+      recordId: params.recordId,
+      name: params.name,
+    });
+
+    return {
+      signedId,
+      presignedUrl,
+      headers: { "Content-Type": params.contentType },
+    };
+  }
+
   async detach(session: Session, attachmentId: string) {
     const result = await withTransaction(async (tx: Db) => {
       const attachment = await Attachments.findOne(tx, { id: attachmentId });
@@ -313,6 +302,17 @@ class AttachmentsService {
 
     await this.purgeOrphan(result.orphan);
     return { id: result.id };
+  }
+
+  async getAttachment(session: Session, params: { recordType: string; recordId: string; name: string }) {
+    await this.assertCanRead(session, params.recordType, params.recordId);
+    const row = await Attachments.findOneWithBlob(db, {
+      recordType: params.recordType,
+      recordId: params.recordId,
+      name: params.name,
+    });
+    if (!row) return null;
+    return { id: row.id, url: getPublicUrl(row) };
   }
 }
 
