@@ -149,6 +149,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                     }}
                   />
                   <LoadMoreButton
+                    size="small"
                     hasNextPage={hasNextPage}
                     isFetchingNextPage={isFetchingNextPage}
                     onClick={() => fetchNextPage()}

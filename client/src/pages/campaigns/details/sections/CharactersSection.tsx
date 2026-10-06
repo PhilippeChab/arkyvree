@@ -420,7 +420,6 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
                 ))}
               </Box>
               <LoadMoreButton
-                size="large"
                 label="Load More Characters"
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
