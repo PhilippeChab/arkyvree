@@ -1,14 +1,15 @@
 import { Alert, Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
 
 import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useIsMobile, useStartDemo } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
-import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import { brandGold, brandGoldTint } from "@/client/src/theme/brandGold.ts";
 
 interface AuthPageProps {
   children: ReactNode;
@@ -96,9 +97,7 @@ function DesktopBranding() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: darkMode
-          ? "linear-gradient(160deg, #3d2020 0%, #2a1515 50%, #1a0f0f 100%)"
-          : "linear-gradient(160deg, #8d1e1e 0%, #6b1717 50%, #4a1010 100%)",
+        background: `linear-gradient(160deg, ${theme.palette.backdrop.top} 0%, ${theme.palette.backdrop.middle} 50%, ${theme.palette.backdrop.bottom} 100%)`,
         overflow: "hidden",
         py: 6,
         px: 4,
@@ -164,10 +163,10 @@ function DesktopBranding() {
         variant="h3"
         sx={{
           mt: 3,
-          color: "#fff",
+          color: "common.white",
           fontWeight: 700,
           letterSpacing: "0.04em",
-          textShadow: "0 2px 4px rgba(0,0,0,0.4)",
+          textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.4)}`,
           textAlign: "center",
           position: "relative",
           ...stagger(1),
@@ -194,7 +193,7 @@ function DesktopBranding() {
         variant="subtitle1"
         sx={{
           mt: 2,
-          color: "rgba(255,255,255,0.7)",
+          color: alpha(theme.palette.common.white, 0.7),
           fontStyle: "italic",
           textAlign: "center",
           position: "relative",
@@ -210,7 +209,6 @@ function DesktopBranding() {
 /** The branding on a small screen, above the page, which the layout route renders once. */
 function MobileBranding() {
   const theme = useTheme();
-  const darkMode = theme.palette.mode === "dark";
 
   return (
     <Box
@@ -220,9 +218,7 @@ function MobileBranding() {
         gap: 2,
         px: 2,
         py: 2.5,
-        background: darkMode
-          ? "linear-gradient(135deg, #3d2020, #2a1515)"
-          : "linear-gradient(135deg, #8d1e1e, #6b1717)",
+        background: `linear-gradient(135deg, ${theme.palette.backdrop.top}, ${theme.palette.backdrop.middle})`,
         borderRadius: "8px 8px 0 0",
       }}
     >
@@ -236,16 +232,16 @@ function MobileBranding() {
         <Typography
           variant="h5"
           sx={{
-            color: "#fff",
+            color: "common.white",
             fontWeight: 700,
             letterSpacing: "0.03em",
-            textShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            textShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.3)}`,
             lineHeight: 1.2,
           }}
         >
           Arkyvree
         </Typography>
-        <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.6)", fontStyle: "italic" }}>
+        <Typography variant="body2" sx={{ color: alpha(theme.palette.common.white, 0.6), fontStyle: "italic" }}>
           A programmable engine for tabletop rulesets
         </Typography>
       </Box>

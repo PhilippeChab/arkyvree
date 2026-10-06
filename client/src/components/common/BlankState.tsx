@@ -1,6 +1,7 @@
 import { SearchOff as SearchOffIcon } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import type { ElementType, ReactNode } from "react";
 
 import { DURATION, EASING, fadeIn, prefersReducedMotion } from "@/client/src/lib/animations.ts";
@@ -11,6 +12,11 @@ interface BlankStateProps {
   title: string;
   description?: string;
   action?: ReactNode;
+  sx?: SxProps<Theme>;
+}
+
+interface NoMatchesStateProps {
+  search: string;
   sx?: SxProps<Theme>;
 }
 
@@ -34,7 +40,7 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
       ]}
     >
       {Icon && (
-        <Box sx={{ filter: (theme) => `drop-shadow(0 2px 4px ${theme.palette.secondary.main}40)` }}>
+        <Box sx={{ filter: (theme) => `drop-shadow(0 2px 4px ${alpha(theme.palette.secondary.main, 0.25)})` }}>
           <Icon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", mb: 2, opacity: 0.5 }} />
         </Box>
       )}
@@ -53,7 +59,7 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
 }
 
 /** A search that found nothing, told apart from a list that has nothing yet. */
-export function NoMatchesState({ search, sx }: { search: string; sx?: SxProps<Theme> }) {
+export function NoMatchesState({ search, sx }: NoMatchesStateProps) {
   return (
     <BlankState
       icon={SearchOffIcon}

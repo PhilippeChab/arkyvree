@@ -3,6 +3,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import { Avatar, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useRef, useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -123,7 +124,7 @@ export function AttachmentField({
             bgcolor: url ? "transparent" : "action.hover",
             border: showRing ? "4px solid" : canUpload ? "2px dashed" : "2px solid",
             borderColor: showRing ? "background.paper" : dragOver ? "primary.main" : url ? "transparent" : "divider",
-            boxShadow: showRing ? "0 6px 24px rgba(0,0,0,0.18)" : "none",
+            boxShadow: (theme) => (showRing ? `0 6px 24px ${alpha(theme.palette.common.black, 0.18)}` : "none"),
             transition: "border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease",
             transform: dragOver ? "scale(1.02)" : "none",
             outline: "none",
@@ -199,7 +200,7 @@ export function AttachmentField({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                bgcolor: "rgba(0,0,0,0.55)",
+                bgcolor: (theme) => alpha(theme.palette.common.black, 0.55),
                 color: "common.white",
                 cursor: "pointer",
                 gap: 0.75,
@@ -222,7 +223,7 @@ export function AttachmentField({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                bgcolor: "rgba(0,0,0,0.5)",
+                bgcolor: (theme) => alpha(theme.palette.common.black, 0.5),
               }}
             >
               <DiceSpinner size={dimension < 80 ? "small" : dimension < 160 ? "medium" : "large"} />

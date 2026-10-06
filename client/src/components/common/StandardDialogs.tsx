@@ -33,6 +33,8 @@ type StandardFormDialogProps<T extends FieldValues> = Omit<FormActionDialogProps
   submitLabel?: string;
 };
 
+type DeleteDialogProps = Omit<ConfirmDialogProps, "confirmColor">;
+
 export interface ConfirmDialogProps {
   open: boolean;
   onClose: () => void;
@@ -147,7 +149,7 @@ export function CreateDialog<T extends FieldValues = FieldValues>(props: Standar
   return <FormActionDialog submitLabel="Create" {...props} />;
 }
 
-export function DeleteDialog(props: Omit<ConfirmDialogProps, "confirmColor">) {
+export function DeleteDialog(props: DeleteDialogProps) {
   return <ConfirmDialog confirmLabel="Delete" {...props} confirmColor="error" />;
 }
 

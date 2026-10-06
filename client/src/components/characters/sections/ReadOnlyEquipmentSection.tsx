@@ -4,13 +4,12 @@ import type { EncumbranceData, EquipmentRow } from "./equipment.ts";
 import { EquipmentTable } from "./EquipmentTable.tsx";
 import { SheetSection } from "./SheetSection.tsx";
 
-export function ReadOnlyEquipmentSection({
-  equipment,
-  encumbrance,
-}: {
+interface ReadOnlyEquipmentSectionProps {
   equipment: EquipmentRow[];
   encumbrance?: EncumbranceData;
-}) {
+}
+
+export function ReadOnlyEquipmentSection({ equipment, encumbrance }: ReadOnlyEquipmentSectionProps) {
   return (
     <SheetSection title="Equipment & Inventory">
       {equipment.length > 0 ? (

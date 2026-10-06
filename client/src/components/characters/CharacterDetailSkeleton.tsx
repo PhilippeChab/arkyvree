@@ -3,7 +3,12 @@ import { Box, Container, Paper, Skeleton, Stack, Typography } from "@mui/materia
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { EASING, fadeInUpSx, prefersReducedMotion, pulse } from "@/client/src/lib/animations.ts";
 
-function Section({ index, children }: { index: number; children: React.ReactNode }) {
+interface SectionProps {
+  index: number;
+  children: React.ReactNode;
+}
+
+function Section({ index, children }: SectionProps) {
   return <Paper sx={{ p: { xs: 2, sm: 3 }, ...fadeInUpSx(index) }}>{children}</Paper>;
 }
 

@@ -8,12 +8,16 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { useDirtyFormsStore } from "@/client/src/stores/dirtyFormsStore.ts";
 
+interface WebSocketProviderProps {
+  children: ReactNode;
+}
+
 const EVENT_INVALIDATION_MAP: Record<string, readonly (readonly string[])[]> = {
   "activities:updated": [queryKeys.activities.all, queryKeys.dashboard.stats],
   "notifications:updated": [queryKeys.notifications.all, queryKeys.activities.all, queryKeys.dashboard.stats],
 };
 
-export function WebSocketProvider({ children }: { children: ReactNode }) {
+export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const queryClient = useQueryClient();

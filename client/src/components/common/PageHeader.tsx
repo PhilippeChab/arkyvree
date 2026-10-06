@@ -1,4 +1,5 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import type { ReactNode } from "react";
 
 interface PageHeaderProps {
@@ -27,7 +28,7 @@ export function PageHeader({ title, subtitle, action, variant = "hero" }: PageHe
         background: (theme) =>
           hero
             ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
-            : `linear-gradient(135deg, ${theme.palette.primary.main}15, ${theme.palette.primary.dark}15)`,
+            : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, ${alpha(theme.palette.primary.dark, 0.08)})`,
       }}
     >
       <Stack

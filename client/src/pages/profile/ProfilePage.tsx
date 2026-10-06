@@ -34,7 +34,13 @@ interface PasswordFormData {
   newPasswordConfirmation: string;
 }
 
-function ProfileCard({ title, children, danger = false }: { title: string; children: ReactNode; danger?: boolean }) {
+interface ProfileCardProps {
+  title: string;
+  children: ReactNode;
+  danger?: boolean;
+}
+
+function ProfileCard({ title, children, danger = false }: ProfileCardProps) {
   return (
     <Card sx={{ mb: 3, ...(danger && { borderColor: "error.main", borderWidth: 1, borderStyle: "solid" }) }}>
       <CardContent sx={{ p: { xs: 2, sm: 4 } }}>

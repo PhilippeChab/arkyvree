@@ -1,8 +1,11 @@
 import { Add as AddIcon } from "@mui/icons-material";
 import { Button, type ButtonProps } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+
+type PageActionButtonProps = Omit<ButtonProps, "variant" | "size">;
 
 /** The primary create action on a list page, in its header and in its empty state. */
-export function PageActionButton({ children, sx, ...props }: Omit<ButtonProps, "variant" | "size">) {
+export function PageActionButton({ children, sx, ...props }: PageActionButtonProps) {
   return (
     <Button
       variant="contained"
@@ -14,7 +17,7 @@ export function PageActionButton({ children, sx, ...props }: Omit<ButtonProps, "
           px: 3,
           py: 1.5,
           borderRadius: 2,
-          boxShadow: (theme) => `0 4px 14px 0 ${theme.palette.primary.main}40`,
+          boxShadow: (theme) => `0 4px 14px 0 ${alpha(theme.palette.primary.main, 0.25)}`,
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}

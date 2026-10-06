@@ -23,7 +23,22 @@ import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow }
 
 import type { Dnd35PowersSectionProps } from "./types.ts";
 
-function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: string }) {
+interface SpellRowItemProps {
+  spell: SpellRow;
+  rulesetId?: string;
+}
+
+interface CollapsibleLevelProps {
+  group: SpellGroup;
+  rulesetId?: string;
+}
+
+interface CollapsibleClassProps {
+  apt: AptitudeSpells;
+  rulesetId?: string;
+}
+
+function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
   const [open, setOpen] = useState(false);
 
   const detailProps = Object.entries(spell.properties).filter(([key]) => key !== SPELL_SCHOOL);
@@ -103,7 +118,7 @@ function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: strin
   );
 }
 
-function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?: string }) {
+function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
   const [open, setOpen] = useState(false);
   const label = group.level === 0 ? "Cantrips" : `Level ${group.level}`;
 
@@ -154,7 +169,7 @@ function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?:
   );
 }
 
-function CollapsibleClass({ apt, rulesetId }: { apt: AptitudeSpells; rulesetId?: string }) {
+function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
   const [open, setOpen] = useState(false);
   const totalSpells = apt.levels.reduce((sum, g) => sum + g.spells.length, 0);
 

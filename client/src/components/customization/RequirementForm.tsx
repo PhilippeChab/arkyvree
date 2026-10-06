@@ -15,6 +15,8 @@ interface RequirementFormProps {
   mode: "create" | "edit";
 }
 
+type RequirementConditionFieldsProps = Pick<RequirementFormProps, "form" | "rulesetId" | "mode">;
+
 export type RequirementFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"]["$post"]
 >["json"];
@@ -28,11 +30,7 @@ const CHAINING_OPERATORS = [
 ];
 
 /** A condition's fields, bound while the requirement is a condition (a chaining node drops them). */
-function RequirementConditionFields({
-  form,
-  rulesetId,
-  mode,
-}: Pick<RequirementFormProps, "form" | "rulesetId" | "mode">) {
+function RequirementConditionFields({ form, rulesetId, mode }: RequirementConditionFieldsProps) {
   const target = useController({ control: form.control, name: "target" });
   const operator = useController({ control: form.control, name: "operator" });
   const value = useController({ control: form.control, name: "value" });

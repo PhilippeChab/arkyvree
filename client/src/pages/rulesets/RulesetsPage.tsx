@@ -39,6 +39,10 @@ import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts
 type FilterScope = (typeof SCOPES)[number];
 type SortField = RulesetListFilters["orderBy"];
 
+interface RulesetListProps {
+  filters: RulesetListFilters;
+}
+
 const SCOPES = [
   "base",
   "extensions",
@@ -64,7 +68,7 @@ const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
 
 const RULESET_SORT_OPTIONS: SortOption<SortField>[] = [...CREATED_SORTS, ...UPDATED_SORTS];
 
-function RulesetList({ filters }: { filters: RulesetListFilters }) {
+function RulesetList({ filters }: RulesetListProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toggleStar = useToggleRulesetStar();

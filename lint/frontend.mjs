@@ -34,6 +34,12 @@
  *   (`snackbar.error`, which names what failed), a wrong value is its field's error, and the auth pages show their
  *   form's error. So an error `Alert` sits only in `LoadError`, the auth pages' layout and the toast, and every other
  *   `Alert` writes out its `severity` and `color`, so the rule can read them.
+ * - `theme-colors`: a color is the theme's (`client/src/theme/`): elsewhere it's a palette token (`"text.secondary"`,
+ *   `theme.palette.shadow`), translucent through `alpha()`. No hex, `rgb()` or `hsl()` literal, no CSS color name
+ *   (`"white"`), and no hex alpha appended to a color (`${theme.palette.primary.main}40`).
+ * - `component-props`: a component's props are one named type, its own (`interface XProps`, `type XProps = Omit<…>`)
+ *   or one its family shares (`RulesetSectionProps`, `EditorProps<Feat>`), never written in place: an object type, an
+ *   intersection, `Omit<…>` / `Pick<…>` / `ComponentProps<…>`.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -63,6 +69,66 @@ const ERROR_ALERT_FILES = new Set([
   "client/src/components/common/LoadError.tsx",
   "client/src/components/auth/AuthLayout.tsx",
   "client/src/contexts/ToastContext.tsx",
+]);
+
+/** A color written out: a hex color, or an `rgb()` / `hsl()` of numbers (`rgba(var(--…))` reads the theme's) */
+const COLOR_LITERAL = /(?<![\w&])#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})\b|\b(?:rgba?|hsla?)\(\s*[\d.]/i;
+
+/** A hex alpha appended to a color: the text that follows `${color}` in `${color}40` */
+const HEX_ALPHA_SUFFIX = /^[0-9a-f]{2}(?![\w])/i;
+
+/** The style properties that take a color */
+const COLOR_PROPERTIES = new Set([
+  "background",
+  "backgroundColor",
+  "bgcolor",
+  "border",
+  "borderBottom",
+  "borderColor",
+  "borderLeft",
+  "borderRight",
+  "borderTop",
+  "caretColor",
+  "color",
+  "fill",
+  "outlineColor",
+  "stroke",
+  "textDecorationColor",
+]);
+
+/** CSS's color names, which a style never writes: the theme names its colors (`common.white`) */
+// oxfmt-ignore
+const CSS_COLOR_NAMES = new Set([
+  "aliceblue", "antiquewhite", "aqua", "aquamarine", "azure", "beige", "bisque", "black", "blanchedalmond", "blue",
+  "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "cornsilk",
+  "crimson", "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray", "darkgreen", "darkgrey", "darkkhaki",
+  "darkmagenta", "darkolivegreen", "darkorange", "darkorchid", "darkred", "darksalmon", "darkseagreen",
+  "darkslateblue", "darkslategray", "darkslategrey", "darkturquoise", "darkviolet", "deeppink", "deepskyblue",
+  "dimgray", "dimgrey", "dodgerblue", "firebrick", "floralwhite", "forestgreen", "fuchsia", "gainsboro", "ghostwhite",
+  "gold", "goldenrod", "gray", "green", "greenyellow", "grey", "honeydew", "hotpink", "indianred", "indigo", "ivory",
+  "khaki", "lavender", "lavenderblush", "lawngreen", "lemonchiffon", "lightblue", "lightcoral", "lightcyan",
+  "lightgoldenrodyellow", "lightgray", "lightgreen", "lightgrey", "lightpink", "lightsalmon", "lightseagreen",
+  "lightskyblue", "lightslategray", "lightslategrey", "lightsteelblue", "lightyellow", "lime", "limegreen", "linen",
+  "magenta", "maroon", "mediumaquamarine", "mediumblue", "mediumorchid", "mediumpurple", "mediumseagreen",
+  "mediumslateblue", "mediumspringgreen", "mediumturquoise", "mediumvioletred", "midnightblue", "mintcream",
+  "mistyrose", "moccasin", "navajowhite", "navy", "oldlace", "olive", "olivedrab", "orange", "orangered", "orchid",
+  "palegoldenrod", "palegreen", "paleturquoise", "palevioletred", "papayawhip", "peachpuff", "peru", "pink", "plum",
+  "powderblue", "purple", "rebeccapurple", "red", "rosybrown", "royalblue", "saddlebrown", "salmon", "sandybrown",
+  "seagreen", "seashell", "sienna", "silver", "skyblue", "slateblue", "slategray", "slategrey", "snow", "springgreen",
+  "steelblue", "tan", "teal", "thistle", "tomato", "turquoise", "violet", "wheat", "white", "whitesmoke", "yellow",
+  "yellowgreen",
+]);
+
+/** TypeScript's and React's type builders: a props type built with one in a component's signature is written in place */
+const IN_PLACE_TYPES = new Set([
+  "ComponentProps",
+  "ComponentPropsWithRef",
+  "ComponentPropsWithoutRef",
+  "Omit",
+  "Partial",
+  "Pick",
+  "Readonly",
+  "Required",
 ]);
 
 /** `Intl`'s date formatters */
@@ -213,6 +279,33 @@ function createQueryKeyRule(context) {
         node: node.value,
         message: "A query key comes from `lib/queryKeys.ts`: spread one first (`[...queryKeys.x.y(id), filter]`).",
       });
+    },
+  };
+}
+
+function createThemeColors(context) {
+  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        'A color is the theme\'s (`client/src/theme/`): use a palette token (`"text.secondary"`, ' +
+        "`theme.palette.shadow`), translucent through `alpha()`, never a color written out or a hex alpha appended.",
+    });
+  return {
+    Literal(node) {
+      if (typeof node.value === "string" && COLOR_LITERAL.test(node.value)) report(node);
+    },
+    TemplateLiteral(node) {
+      if (node.quasis.some((quasi) => COLOR_LITERAL.test(quasi.value.cooked ?? ""))) return report(node);
+      if (node.quasis.slice(1).some((quasi) => HEX_ALPHA_SUFFIX.test(quasi.value.cooked ?? ""))) report(node);
+    },
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      const value = node.value.type === "Literal" ? node.value.value : null;
+      if (COLOR_PROPERTIES.has(key) && typeof value === "string" && CSS_COLOR_NAMES.has(value.toLowerCase())) {
+        report(node.value);
+      }
     },
   };
 }
@@ -440,6 +533,28 @@ function readsWatch(node) {
   );
 }
 
+/** The name a type reference names: `Omit` in `Omit<…>`, `ComponentProps` in `React.ComponentProps<…>`. */
+function referenceName(typeName) {
+  return typeName.type === "TSQualifiedName" ? typeName.right.name : typeName.name;
+}
+
+function createComponentProps(context) {
+  if (!inClient(context)) return {};
+  return {
+    FunctionDeclaration(node) {
+      if (!/^[A-Z]/.test(node.id?.name ?? "")) return;
+      const type = node.params[0]?.typeAnnotation?.typeAnnotation;
+      if (!type || (type.type === "TSTypeReference" && !IN_PLACE_TYPES.has(referenceName(type.typeName)))) return;
+      context.report({
+        node: type,
+        message:
+          "A component's props are one named type: its own (`interface XProps`, `type XProps = Omit<…>`) or one its " +
+          "family shares (`RulesetSectionProps`), never written in place.",
+      });
+    },
+  };
+}
+
 /** Whether `name`, spread at `node`, is a form's field taken whole: bound by the nearest function or declaration that binds it. */
 function spreadsWholeField(node, name) {
   for (let scope = node.parent; scope; scope = scope.parent) {
@@ -554,4 +669,6 @@ export default {
   "error-alerts": { meta: { type: "suggestion" }, create: createErrorAlerts },
   "sx-styles": { meta: { type: "suggestion" }, create: createSxStyles },
   "date-formats": { meta: { type: "suggestion" }, create: createDateFormats },
+  "theme-colors": { meta: { type: "suggestion" }, create: createThemeColors },
+  "component-props": { meta: { type: "suggestion" }, create: createComponentProps },
 };

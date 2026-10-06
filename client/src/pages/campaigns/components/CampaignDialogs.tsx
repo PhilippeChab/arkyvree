@@ -80,6 +80,11 @@ interface RemovePlayerDialogProps {
   slot: PlayerSlot | null;
 }
 
+interface RoleLabelProps {
+  icon: ElementType;
+  label: string;
+}
+
 export type CreateCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)["$post"]>["json"];
 
 export type EditCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)[":id"]["$put"]>["json"];
@@ -98,7 +103,7 @@ function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
   );
 }
 
-function RoleLabel({ icon: Icon, label }: { icon: ElementType; label: string }) {
+function RoleLabel({ icon: Icon, label }: RoleLabelProps) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
       <Icon sx={{ fontSize: 20 }} />

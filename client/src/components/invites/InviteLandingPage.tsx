@@ -45,17 +45,14 @@ interface InviteLandingPageProps {
   invalidateOnAccept: readonly unknown[];
 }
 
-function InviteStateCard({
-  icon,
-  title,
-  children,
-  action,
-}: {
+interface InviteStateCardProps {
   icon: ReactNode;
   title: string;
   children: ReactNode;
   action: ReactNode;
-}) {
+}
+
+function InviteStateCard({ icon, title, children, action }: InviteStateCardProps) {
   return (
     <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
       <Card>

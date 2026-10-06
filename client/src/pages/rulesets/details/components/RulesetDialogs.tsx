@@ -65,20 +65,24 @@ interface UnsubscribeExtensionDialogProps {
   extensionName: string;
 }
 
+interface PrivacyToggleProps {
+  value: boolean;
+  onChange: (isPrivate: boolean) => void;
+  disabled: boolean;
+}
+
+interface RulesetKindToggleProps {
+  value: PublishKind;
+  onChange: (kind: PublishKind) => void;
+  disabled: boolean;
+}
+
 export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["$put"]>["json"];
 
 export type ForkRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["fork"]["$post"]>["json"];
 
 /** Public / Private choice; the selected option can't be toggled off. */
-function PrivacyToggle({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: boolean;
-  onChange: (isPrivate: boolean) => void;
-  disabled: boolean;
-}) {
+function PrivacyToggle({ value, onChange, disabled }: PrivacyToggleProps) {
   return (
     <Box>
       <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
@@ -109,15 +113,7 @@ function PrivacyToggle({
 }
 
 /** Ruleset / Extension choice made when publishing; the selected option can't be toggled off. */
-function RulesetKindToggle({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: PublishKind;
-  onChange: (kind: PublishKind) => void;
-  disabled: boolean;
-}) {
+function RulesetKindToggle({ value, onChange, disabled }: RulesetKindToggleProps) {
   return (
     <Box>
       <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>

@@ -34,13 +34,27 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { type AptitudePool, type FeatsData, type SelectedFeat, withoutPick } from "./levelUp/index.ts";
 import type { LevelUpFeatsStepProps } from "./levelUpFactory.ts";
 
-function AutoGrantedFeats({
-  feats,
-  defaultCollapsed,
-}: {
+interface AutoGrantedFeatsProps {
   feats: FeatsData["autoGrantedFeats"];
   defaultCollapsed: boolean;
-}) {
+}
+
+interface FeatFamilyExpansionProps {
+  characterId: string;
+  aptitudeId: string;
+  klassId: string;
+  klassLevel: number;
+  family: string;
+  editingLevelId?: string;
+  allSelectedFeatPickString?: string;
+  pendingLevelKlassLevelIds?: string;
+  pendingLevelFeatPicks?: string;
+  selectedAptitude: string;
+  selectedFeats: Record<string, SelectedFeat[]>;
+  onSelectedFeatsChange: (value: Record<string, SelectedFeat[]>) => void;
+}
+
+function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {
   const [open, setOpen] = useState(!defaultCollapsed);
   return (
     <Box sx={{ mb: 1 }}>
@@ -78,20 +92,7 @@ function FeatFamilyExpansion({
   selectedAptitude,
   selectedFeats,
   onSelectedFeatsChange,
-}: {
-  characterId: string;
-  aptitudeId: string;
-  klassId: string;
-  klassLevel: number;
-  family: string;
-  editingLevelId?: string;
-  allSelectedFeatPickString?: string;
-  pendingLevelKlassLevelIds?: string;
-  pendingLevelFeatPicks?: string;
-  selectedAptitude: string;
-  selectedFeats: Record<string, SelectedFeat[]>;
-  onSelectedFeatsChange: (value: Record<string, SelectedFeat[]>) => void;
-}) {
+}: FeatFamilyExpansionProps) {
   const query = useInfiniteQuery({
     queryKey: queryKeys.characters.levelUp.availableFeatFamily(
       characterId,

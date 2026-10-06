@@ -45,6 +45,10 @@ interface DataTableProps<T extends { id: string }> {
   minWidth?: number;
 }
 
+interface RowActionsProps {
+  actions: RowAction[];
+}
+
 export interface DataTableColumn {
   key: string;
   label: string;
@@ -71,7 +75,7 @@ export interface DataTableEmpty {
 }
 
 /** A row's actions, laid over its last cell. */
-function RowActions({ actions }: { actions: RowAction[] }) {
+function RowActions({ actions }: RowActionsProps) {
   return (
     <Box
       className="row-actions"

@@ -64,6 +64,30 @@ interface SelectFieldProps<T extends FieldValues> {
   onMenuScroll?: UIEventHandler<HTMLElement>;
 }
 
+interface DescriptionFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
+  rows?: number;
+  placeholder?: string;
+}
+
+interface EmailFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
+  label?: string;
+}
+
+interface NameFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
+  label?: string;
+  helperText?: string;
+}
+
+interface PasswordFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
+  label: string;
+  autoComplete: "current-password" | "new-password";
+}
+
+interface SwitchFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
+  label: string;
+  onChange?: (checked: boolean) => void;
+}
+
 /**
  * A number field's rules: its empty value is NaN, which `required` doesn't count as empty (only `""`), so a required one
  * checks it too.
@@ -108,11 +132,7 @@ export function FormTextField<T extends FieldValues>({
 }
 
 /** An entity's description: several lines, resizable. */
-export function DescriptionField<T extends FieldValues>({
-  rows = 3,
-  placeholder,
-  ...field
-}: PresetFieldProps<T> & { rows?: number; placeholder?: string }) {
+export function DescriptionField<T extends FieldValues>({ rows = 3, placeholder, ...field }: DescriptionFieldProps<T>) {
   return (
     <FormTextField
       {...field}
@@ -127,10 +147,7 @@ export function DescriptionField<T extends FieldValues>({
 }
 
 /** An email address, validated by `emailRules`. */
-export function EmailField<T extends FieldValues>({
-  label = "Email",
-  ...field
-}: PresetFieldProps<T> & { label?: string }) {
+export function EmailField<T extends FieldValues>({ label = "Email", ...field }: EmailFieldProps<T>) {
   return (
     <FormTextField
       {...field}
@@ -145,20 +162,12 @@ export function EmailField<T extends FieldValues>({
 }
 
 /** An entity's name, validated by `nameRules`. */
-export function NameField<T extends FieldValues>({
-  label = "Name",
-  helperText,
-  ...field
-}: PresetFieldProps<T> & { label?: string; helperText?: string }) {
+export function NameField<T extends FieldValues>({ label = "Name", helperText, ...field }: NameFieldProps<T>) {
   return <FormTextField {...field} label={label} helperText={helperText} fullWidth />;
 }
 
 /** A password: `autoComplete` tells password managers whether to fill the saved one or suggest a new one. */
-export function PasswordField<T extends FieldValues>({
-  label,
-  autoComplete,
-  ...field
-}: PresetFieldProps<T> & { label: string; autoComplete: "current-password" | "new-password" }) {
+export function PasswordField<T extends FieldValues>({ label, autoComplete, ...field }: PasswordFieldProps<T>) {
   return (
     <FormTextField
       {...field}
@@ -228,13 +237,7 @@ export function SelectField<T extends FieldValues>({
 }
 
 /** A labeled switch bound to a form's boolean field. `onChange` follows the field's own change, for what it changes too. */
-export function SwitchField<T extends FieldValues>({
-  control,
-  name,
-  rules,
-  label,
-  onChange,
-}: BoundFieldProps<T> & { label: string; onChange?: (checked: boolean) => void }) {
+export function SwitchField<T extends FieldValues>({ control, name, rules, label, onChange }: SwitchFieldProps<T>) {
   const {
     field: { ref, value, onChange: change, ...field },
   } = useController({ control, name, rules });

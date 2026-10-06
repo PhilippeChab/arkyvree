@@ -18,7 +18,7 @@ Apply the matrix even when the destructive action fires directly with no confirm
 
 ## How this works in the theme
 
-`client/src/contexts/ThemeContext.tsx` makes contained buttons palette-aware: the override switches on `ownerState.color` so `color="error"` actually renders red, `color="success"` green, `color="warning"` orange. The default branch keeps the project's gold gradient. Don't try to bypass this with `sx={{ background: … }}` on the Button — go through the `color` prop so theming stays consistent in light and dark mode.
+`client/src/theme/appTheme.ts` makes contained buttons palette-aware: the override switches on `ownerState.color` so `color="error"` actually renders red, `color="success"` green, `color="warning"` orange. The default branch keeps the project's gold gradient. Don't try to bypass this with `sx={{ background: … }}` on the Button — go through the `color` prop so theming stays consistent in light and dark mode.
 
 `outlined` is a special case: it preserves the tan/red theme treatment for `primary` (the default) and renders a neutral border-on-text-color treatment for `color="inherit"` (used for Cancel). Other `color` values fall through to MUI's default outlined palette.
 

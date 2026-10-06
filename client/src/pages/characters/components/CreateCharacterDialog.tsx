@@ -58,6 +58,42 @@ interface AbilityScoresHandle {
   rollAll: () => void;
 }
 
+interface AbilityCardProps {
+  name: string;
+  score: number;
+  onIncrease: () => void;
+  onDecrease: () => void;
+  canIncrease: boolean;
+  canDecrease: boolean;
+  bottomInfo: string;
+  isSettled?: boolean;
+}
+
+interface PointBuyScoresProps {
+  abilities: AbilityOption[];
+  abilityValues: Record<string, number> | undefined;
+  onChange: (scores: Record<string, number>) => void;
+}
+
+interface StandardArrayScoresProps {
+  abilities: AbilityOption[];
+  abilityValues: Record<string, number> | undefined;
+  onChange: (scores: Record<string, number>) => void;
+}
+
+interface AbilityScoresSectionProps {
+  ref: Ref<AbilityScoresHandle>;
+  abilities: AbilityOption[];
+  control: Control<CreateCharacterFormData>;
+  onRollingChange: (rolling: boolean) => void;
+  method: RollMethodId;
+}
+
+interface CreateCharacterDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
 function AbilityCard({
   name,
   score,
@@ -67,16 +103,7 @@ function AbilityCard({
   canDecrease,
   bottomInfo,
   isSettled,
-}: {
-  name: string;
-  score: number;
-  onIncrease: () => void;
-  onDecrease: () => void;
-  canIncrease: boolean;
-  canDecrease: boolean;
-  bottomInfo: string;
-  isSettled?: boolean;
-}) {
+}: AbilityCardProps) {
   return (
     <Paper
       variant="outlined"
@@ -116,15 +143,7 @@ function AbilityCard({
   );
 }
 
-function PointBuyScores({
-  abilities,
-  abilityValues,
-  onChange,
-}: {
-  abilities: AbilityOption[];
-  abilityValues: Record<string, number> | undefined;
-  onChange: (scores: Record<string, number>) => void;
-}) {
+function PointBuyScores({ abilities, abilityValues, onChange }: PointBuyScoresProps) {
   const pointsSpent = useMemo(() => {
     if (!abilityValues) return 0;
     return abilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[abilityValues[a.id] ?? 8] ?? 0), 0);
@@ -158,15 +177,7 @@ function PointBuyScores({
   );
 }
 
-function StandardArrayScores({
-  abilities,
-  abilityValues,
-  onChange,
-}: {
-  abilities: AbilityOption[];
-  abilityValues: Record<string, number> | undefined;
-  onChange: (scores: Record<string, number>) => void;
-}) {
+function StandardArrayScores({ abilities, abilityValues, onChange }: StandardArrayScoresProps) {
   // A score already given to another ability swaps with this one's
   const handleChange = (abilityId: string, newValue: number) => {
     if (!abilityValues) return;
@@ -218,19 +229,7 @@ function scoresOf(abilities: AbilityOption[], values: Record<string, number> | u
   );
 }
 
-function AbilityScoresSection({
-  ref,
-  abilities,
-  control,
-  onRollingChange,
-  method,
-}: {
-  ref: Ref<AbilityScoresHandle>;
-  abilities: AbilityOption[];
-  control: Control<CreateCharacterFormData>;
-  onRollingChange: (rolling: boolean) => void;
-  method: RollMethodId;
-}) {
+function AbilityScoresSection({ ref, abilities, control, onRollingChange, method }: AbilityScoresSectionProps) {
   const {
     field: { value, onChange },
   } = useController({ control, name: "abilities" });
@@ -341,7 +340,7 @@ function AbilityScoresSection({
   );
 }
 
-export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();

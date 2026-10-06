@@ -27,13 +27,15 @@ interface SubscribeExtensionDialogProps {
   subscribedExtensionIds: string[];
 }
 
+type SubscribeExtensionFormProps = Omit<SubscribeExtensionDialogProps, "open">;
+
 /** The dialog's content: its selection and search are its own, so each opening starts with none (MUI unmounts it). */
 function SubscribeExtensionForm({
   onClose,
   onConfirm,
   isLoading,
   subscribedExtensionIds,
-}: Omit<SubscribeExtensionDialogProps, "open">) {
+}: SubscribeExtensionFormProps) {
   const [selected, setSelected] = useState<ExtensionRuleset[]>([]);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);

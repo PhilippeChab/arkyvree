@@ -5,9 +5,13 @@ import { DescriptionField, FormTextField, NameField } from "@/client/src/compone
 import { nameRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
+interface LanguageFormFieldsProps {
+  form: UseFormReturn<LanguageFormData>;
+}
+
 export type LanguageFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["languages"]["$post"]>["json"];
 
-export function LanguageFormFields({ form }: { form: UseFormReturn<LanguageFormData> }) {
+export function LanguageFormFields({ form }: LanguageFormFieldsProps) {
   return (
     <>
       <NameField control={form.control} name="name" rules={nameRules} />

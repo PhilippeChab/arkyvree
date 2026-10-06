@@ -18,6 +18,10 @@ interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "childre
   description: string | null | undefined;
 }
 
+interface ListCardGridProps {
+  children: ReactNode;
+}
+
 /** What a card or a details view shows for an entity without a description. */
 export const NO_DESCRIPTION = "No description provided.";
 
@@ -84,7 +88,7 @@ export function ListCard({
 }
 
 /** Responsive grid the list cards sit in. */
-export function ListCardGrid({ children }: { children: ReactNode }) {
+export function ListCardGrid({ children }: ListCardGridProps) {
   return (
     <Box
       sx={{

@@ -85,6 +85,8 @@
     "arkyvree/error-alerts": "error",
     "arkyvree/date-formats": "error",
     "arkyvree/sx-styles": "error",
+    "arkyvree/theme-colors": "error",
+    "arkyvree/component-props": "error",
     "arkyvree/test-conventions": "error",
     // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
     "arkyvree/function-length": "error",

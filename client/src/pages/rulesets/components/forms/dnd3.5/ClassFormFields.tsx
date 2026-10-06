@@ -7,9 +7,13 @@ import { nameRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 
+interface ClassFormFieldsProps {
+  form: UseFormReturn<ClassFormData>;
+}
+
 export type ClassFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["classes"]["$post"]>["json"];
 
-export function ClassFormFields({ form }: { form: UseFormReturn<ClassFormData> }) {
+export function ClassFormFields({ form }: ClassFormFieldsProps) {
   return (
     <>
       <NameField control={form.control} name="name" rules={nameRules} />

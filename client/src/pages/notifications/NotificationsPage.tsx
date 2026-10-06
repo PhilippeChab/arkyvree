@@ -1,5 +1,6 @@
 import { Circle as CircleIcon, Notifications as NotificationsIcon } from "@mui/icons-material";
 import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
 import {
@@ -79,8 +80,8 @@ export default function NotificationsPage() {
               disabled={actions.markAllRead.isPending}
               sx={{
                 color: "common.white",
-                borderColor: "rgba(255,255,255,0.5)",
-                "&:hover": { borderColor: "common.white", bgcolor: "rgba(255,255,255,0.1)" },
+                borderColor: (theme) => alpha(theme.palette.common.white, 0.5),
+                "&:hover": { borderColor: "common.white", bgcolor: (theme) => alpha(theme.palette.common.white, 0.1) },
                 px: 3,
                 py: 1.5,
                 borderRadius: 2,

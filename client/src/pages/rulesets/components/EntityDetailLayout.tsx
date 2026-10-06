@@ -21,6 +21,8 @@ interface EntityDetailLayoutProps {
   children: ReactNode;
 }
 
+type EntityPageErrorProps = ComponentProps<typeof PageError>;
+
 /** An entity page's column: centered, up to 1200px. */
 const PAGE_SX = { maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } } as const;
 
@@ -149,7 +151,7 @@ export function EntityDetailLayout({
 }
 
 /** An entity page that couldn't load its entity, in the page's column. */
-export function EntityPageError(props: ComponentProps<typeof PageError>) {
+export function EntityPageError(props: EntityPageErrorProps) {
   return (
     <Box sx={PAGE_SX}>
       <PageError {...props} />

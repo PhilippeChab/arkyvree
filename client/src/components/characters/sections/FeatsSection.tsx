@@ -17,17 +17,19 @@ interface FeatsSectionProps {
   renderFeatExtra?: (feat: Feat) => React.ReactNode;
 }
 
-function FeatRow({
-  name,
-  label,
-  description,
-  extra,
-}: {
+interface FeatRowProps {
   name: React.ReactNode;
   label: string;
   description?: string | null;
   extra?: React.ReactNode;
-}) {
+}
+
+interface GrantedFeatsSectionProps {
+  feats: NonNullable<FeatsSectionProps["virtualFeats"]>;
+  rulesetId?: string;
+}
+
+function FeatRow({ name, label, description, extra }: FeatRowProps) {
   const [open, setOpen] = useState(false);
   const hasExtra = extra != null && extra !== false;
 
@@ -61,13 +63,7 @@ function FeatRow({
   );
 }
 
-function GrantedFeatsSection({
-  feats,
-  rulesetId,
-}: {
-  feats: NonNullable<FeatsSectionProps["virtualFeats"]>;
-  rulesetId?: string;
-}) {
+function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
   const [open, setOpen] = useState(false);
 
   return (

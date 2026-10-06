@@ -1,4 +1,5 @@
 import { Card, type CardProps } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { type ReactNode } from "react";
 
 import { fadeInUpSx, prefersReducedMotion } from "@/client/src/lib/animations.ts";
@@ -48,8 +49,8 @@ export function StyledCard({
               borderColor: isArchived ? "warning.main" : "secondary.main",
               boxShadow: (theme) =>
                 isArchived
-                  ? `0 8px 24px ${theme.palette.warning.main}20`
-                  : `0 4px 16px ${theme.palette.secondary.main}25, 0 8px 32px ${theme.palette.secondary.main}15`,
+                  ? `0 8px 24px ${alpha(theme.palette.warning.main, 0.13)}`
+                  : `0 4px 16px ${alpha(theme.palette.secondary.main, 0.15)}, 0 8px 32px ${alpha(theme.palette.secondary.main, 0.08)}`,
               transform: "translateY(-4px)",
               opacity: 1,
             }

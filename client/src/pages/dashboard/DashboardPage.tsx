@@ -5,6 +5,7 @@ import {
   MenuBook as RulesetIcon,
 } from "@mui/icons-material";
 import { Box, Card, CardActionArea, CardContent, Container, Link, Paper, type Theme, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import type { ElementType } from "react";
 import { useNavigate } from "react-router-dom";
@@ -12,10 +13,10 @@ import { useNavigate } from "react-router-dom";
 import { DiceSpinner, GoldDivider, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
-import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { dashboardStatsQuery } from "@/client/src/lib/queries.ts";
 import { RecentNotificationsCard } from "@/client/src/pages/dashboard/components/index.ts";
+import { brandGoldTint } from "@/client/src/theme/brandGold.ts";
 
 interface StatCardProps {
   icon: ElementType;
@@ -28,7 +29,10 @@ interface StatCardProps {
   animationIndex: number;
 }
 
-const textShadow = "0px 2px 4px rgba(0,0,0,0.3)";
+/** A stat card's text, raised off its gradient. */
+function textShadow(theme: Theme) {
+  return `0px 2px 4px ${alpha(theme.palette.common.black, 0.3)}`;
+}
 
 function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animationIndex }: StatCardProps) {
   return (
@@ -38,14 +42,14 @@ function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animatio
           height: "100%",
           background: (theme) => {
             const [from, to] = colors(theme);
-            return `linear-gradient(135deg, ${from}80 0%, ${to} 100%)`;
+            return `linear-gradient(135deg, ${alpha(from, 0.5)} 0%, ${to} 100%)`;
           },
           color: "common.white",
-          border: (theme) => `1px solid ${colors(theme)[1]}60`,
+          border: (theme) => `1px solid ${alpha(colors(theme)[1], 0.38)}`,
           transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
           "&:hover": {
             transform: "translateY(-8px)",
-            boxShadow: (theme) => `0px 8px 24px ${colors(theme)[1]}60`,
+            boxShadow: (theme) => `0px 8px 24px ${alpha(colors(theme)[1], 0.38)}`,
           },
           ...fadeInUpSx(animationIndex),
         }}
@@ -99,7 +103,7 @@ export default function DashboardPage() {
           sx={{
             background: (theme) =>
               `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            color: "white",
+            color: "common.white",
             p: { xs: 3, sm: 4 },
             borderRadius: 4,
             mb: 4,
@@ -113,7 +117,8 @@ export default function DashboardPage() {
               transform: "translate(-50%, -50%)",
               width: "120%",
               height: "120%",
-              background: "radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%)",
+              background: (theme) =>
+                `radial-gradient(circle, ${alpha(theme.palette.common.white, 0.08)} 0%, transparent 60%)`,
               pointerEvents: "none",
             },
           }}
@@ -127,8 +132,8 @@ export default function DashboardPage() {
               left: 16,
               width: 40,
               height: 40,
-              borderTop: "2px solid rgba(255,255,255,0.3)",
-              borderLeft: "2px solid rgba(255,255,255,0.3)",
+              borderTop: (theme) => `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
+              borderLeft: (theme) => `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
               borderTopLeftRadius: 4,
               pointerEvents: "none",
             }}
@@ -142,8 +147,8 @@ export default function DashboardPage() {
               right: 16,
               width: 40,
               height: 40,
-              borderBottom: "2px solid rgba(255,255,255,0.3)",
-              borderRight: "2px solid rgba(255,255,255,0.3)",
+              borderBottom: (theme) => `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
+              borderRight: (theme) => `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
               borderBottomRightRadius: 4,
               pointerEvents: "none",
             }}
@@ -187,7 +192,7 @@ export default function DashboardPage() {
               sx={{
                 typography: { xs: "h4", md: "h2" },
                 fontWeight: 800,
-                textShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                textShadow: (theme) => `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`,
               }}
             >
               Welcome to Arkyvree
@@ -198,7 +203,7 @@ export default function DashboardPage() {
               opacity: 0.9,
               mb: 3,
               typography: { xs: "body1", sm: "h5" },
-              textShadow: "0 1px 4px rgba(0,0,0,0.2)",
+              textShadow: (theme) => `0 1px 4px ${alpha(theme.palette.common.black, 0.2)}`,
               position: "relative",
             }}
           >
@@ -209,14 +214,14 @@ export default function DashboardPage() {
             target="_blank"
             rel="noopener noreferrer"
             sx={{
-              color: "rgba(255,255,255,0.8)",
-              textDecorationColor: "rgba(255,255,255,0.4)",
+              color: (theme) => alpha(theme.palette.common.white, 0.8),
+              textDecorationColor: (theme) => alpha(theme.palette.common.white, 0.4),
               display: "inline-flex",
               alignItems: "center",
               gap: 0.5,
               fontSize: "0.875rem",
               position: "relative",
-              "&:hover": { color: "white" },
+              "&:hover": { color: "common.white" },
             }}
           >
             <FaqIcon sx={{ fontSize: 18 }} />

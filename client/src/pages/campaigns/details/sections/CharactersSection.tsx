@@ -65,6 +65,22 @@ interface CharactersSectionProps {
 type Visibility = NonNullable<
   InferRequestType<(typeof rpc.api.campaigns)[":id"]["characters"]["$post"]>["json"]["visibility"]
 >;
+
+interface CharacterCardProps {
+  character: CampaignCharacter;
+  campaignId: string;
+  isArchived: boolean;
+  animationIndex: number;
+  animationOffset: number;
+  portraitUrl: string | null;
+}
+
+interface LinkCharacterDialogProps {
+  open: boolean;
+  onClose: () => void;
+  campaignId: string;
+}
+
 const VISIBILITY_OPTIONS = ["Private", "Public", "Partial"] as const satisfies readonly Visibility[];
 
 const VISIBILITY_DESCRIPTIONS: Record<Visibility, string> = {
@@ -80,14 +96,7 @@ function CharacterCard({
   animationIndex,
   animationOffset,
   portraitUrl,
-}: {
-  character: CampaignCharacter;
-  campaignId: string;
-  isArchived: boolean;
-  animationIndex: number;
-  animationOffset: number;
-  portraitUrl: string | null;
-}) {
+}: CharacterCardProps) {
   const navigate = useNavigate();
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
@@ -266,15 +275,7 @@ function CharacterCard({
   );
 }
 
-function LinkCharacterDialog({
-  open,
-  onClose,
-  campaignId,
-}: {
-  open: boolean;
-  onClose: () => void;
-  campaignId: string;
-}) {
+function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogProps) {
   const queryClient = useQueryClient();
   const [selectedCharacter, setSelectedCharacter] = useState<UnlinkedCharacter | null>(null);
   const [characterSearch, setCharacterSearch] = useState("");

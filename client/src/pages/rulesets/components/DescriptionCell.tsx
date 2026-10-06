@@ -1,7 +1,11 @@
 import { Typography } from "@mui/material";
 
+interface DescriptionCellProps {
+  text: string | null | undefined;
+}
+
 /** A section table's description column: secondary text clamped to two lines. */
-export function DescriptionCell({ text }: { text: string | null | undefined }) {
+export function DescriptionCell({ text }: DescriptionCellProps) {
   return (
     <Typography
       variant="body2"

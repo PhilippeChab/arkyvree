@@ -3,7 +3,7 @@ import { Box, Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 import { useDemoTimeRemaining } from "@/client/src/hooks/index.ts";
-import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
+import { brandGoldTint } from "@/client/src/theme/brandGold.ts";
 
 export function DemoBanner() {
   const navigate = useNavigate();
@@ -35,8 +35,7 @@ export function DemoBanner() {
           border: "1px solid",
           borderColor: (theme) => brandGoldTint(theme.palette.mode === "dark", 0.3),
           backdropFilter: "blur(12px)",
-          boxShadow: (theme) =>
-            theme.palette.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.3)" : "0 2px 12px rgba(0,0,0,0.08)",
+          boxShadow: (theme) => `0 2px 12px ${theme.palette.shadow}`,
         }}
       >
         <ScienceIcon sx={{ fontSize: 18, color: "warning.main" }} />

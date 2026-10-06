@@ -32,6 +32,12 @@ interface GivenSpell {
   properties: Record<string, string>;
 }
 
+/** A tag a spell row shows. */
+interface SpellRowTag {
+  name: string;
+  joinsClassList: boolean;
+}
+
 /**
  * Where a feat's tag on the spells of a list it gives slots in or joins to its class's list shows (a cleric's domain,
  * "Fire Domain"; a specialist wizard's school, "Evocation Specialist"): on that list and on the lists of the class whose
@@ -39,12 +45,6 @@ interface GivenSpell {
  */
 export interface SpellTagLists {
   aptitudeIds: string[];
-  joinsClassList: boolean;
-}
-
-/** A tag a spell row shows. */
-export interface SpellRowTag {
-  name: string;
   joinsClassList: boolean;
 }
 

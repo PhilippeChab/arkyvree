@@ -56,6 +56,15 @@ interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends Fie
   renderChips?: (entity: TEntity) => ReactNode;
 }
 
+type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
+  RulesetEntityDetailProps<TEntity, TForm, TKey>,
+  "rulesetId" | "entityId" | "section" | "label" | "query"
+> & {
+  editing: EntityEditing<TEntity, TForm>;
+  entity: TEntity;
+  chips: ReactNode;
+};
+
 /** Refetches the section that lists the entity. */
 function invalidateSection(queryClient: QueryClient, rulesetId: string, section: string) {
   return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
@@ -71,11 +80,7 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
   editing,
   entity,
   chips,
-}: Pick<RulesetEntityDetailProps<TEntity, TForm, TKey>, "rulesetId" | "entityId" | "section" | "label" | "query"> & {
-  editing: EntityEditing<TEntity, TForm>;
-  entity: TEntity;
-  chips: ReactNode;
-}) {
+}: EditableDetailsProps<TEntity, TForm, TKey>) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();

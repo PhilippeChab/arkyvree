@@ -6,8 +6,12 @@ interface AptitudeLink {
   aptitudesInRule?: { name: string } | null;
 }
 
+interface AptitudeChipsCellProps {
+  links: AptitudeLink[] | null | undefined;
+}
+
 /** A section table's aptitudes column: a chip per aptitude, or a dash. */
-export function AptitudeChipsCell({ links }: { links: AptitudeLink[] | null | undefined }) {
+export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
   if (!links?.length) {
     return (
       <Typography variant="body2" sx={{ color: "text.secondary" }}>

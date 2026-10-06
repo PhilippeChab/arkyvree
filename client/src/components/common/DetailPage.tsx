@@ -23,6 +23,10 @@ interface SectionTabsProps<K extends string> {
   "aria-label": string;
 }
 
+interface SectionContentProps {
+  children: ReactNode;
+}
+
 export interface SectionTab<K extends string> {
   key: K;
   label: ReactNode;
@@ -81,7 +85,7 @@ export function DetailPageHeader({
 }
 
 /** A detail page tab's content: the page's centered column, up to 1200px. */
-export function SectionContent({ children }: { children: ReactNode }) {
+export function SectionContent({ children }: SectionContentProps) {
   return <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>{children}</Box>;
 }
 

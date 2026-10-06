@@ -32,6 +32,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -39,7 +40,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ActionMenuItem } from "@/client/src/components/common/index.ts";
 import { Onboarding } from "@/client/src/components/onboarding/index.ts";
 import { useAttachment, useAuthRequests, useDemoTimeRemaining, useIsMobile } from "@/client/src/hooks/index.ts";
-import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import {
   campaignListQuery,
@@ -49,6 +49,7 @@ import {
 } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import { brandGold, brandGoldTint } from "@/client/src/theme/brandGold.ts";
 
 import { AppBrand, AppMain } from "./AppShell.tsx";
 import { DemoBanner } from "./DemoBanner.tsx";
@@ -312,8 +313,7 @@ export function Layout() {
             transition: "all 0.35s cubic-bezier(0.2, 0, 0, 1)",
             overflow: "hidden",
             bgcolor: (theme) => (theme.palette.mode === "dark" ? "background.paper" : "grey.50"),
-            boxShadow: (theme) =>
-              theme.palette.mode === "dark" ? "2px 0 8px rgba(0,0,0,0.3)" : "2px 0 8px rgba(0,0,0,0.08)",
+            boxShadow: (theme) => `2px 0 8px ${theme.palette.shadow}`,
           },
         }}
         variant={isMobile ? "temporary" : "permanent"}
@@ -361,14 +361,15 @@ export function Layout() {
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      background: "linear-gradient(135deg, transparent, rgba(255,255,255,0.1))",
+                      background: (theme) =>
+                        `linear-gradient(135deg, transparent, ${alpha(theme.palette.common.white, 0.1)})`,
                       opacity: 0,
                       transition: "opacity 0.25s ease",
                     },
                     "&.Mui-selected": {
                       backgroundColor: "primary.main",
-                      color: "white",
-                      boxShadow: (theme) => `0 4px 12px ${theme.palette.primary.main}40`,
+                      color: "common.white",
+                      boxShadow: (theme) => `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
                       "&::before": {
                         opacity: 1,
                       },
@@ -386,19 +387,18 @@ export function Layout() {
                         backgroundColor: "primary.dark",
                       },
                       "& .MuiListItemIcon-root": {
-                        color: "white",
+                        color: "common.white",
                       },
                       "& .MuiListItemText-primary": {
                         fontWeight: 600,
-                        color: "white",
+                        color: "common.white",
                       },
                       "& .MuiListItemText-secondary": {
-                        color: "rgba(255,255,255,0.8)",
+                        color: (theme) => alpha(theme.palette.common.white, 0.8),
                       },
                     },
                     "&:hover": {
-                      backgroundColor: (theme) =>
-                        theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
+                      backgroundColor: "action.hover",
                       transform: "translateX(2px)",
                     },
                     "& .MuiListItemIcon-root": {
@@ -468,15 +468,12 @@ export function Layout() {
                 aria-label={effectiveExpanded ? "Collapse sidebar" : "Expand sidebar"}
                 sx={{
                   color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+                  backgroundColor: "action.hover",
                   border: "2px solid",
-                  borderColor: (theme) =>
-                    theme.palette.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
+                  borderColor: "divider",
                   transition: "all 0.25s cubic-bezier(0.2, 0, 0, 1)",
                   "&:hover": {
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
+                    backgroundColor: "action.focus",
                     borderColor: "primary.main",
                     color: "primary.main",
                     transform: "scale(1.1)",

@@ -40,13 +40,52 @@ interface RuleGroup {
   rules: RuleCells[];
 }
 
+interface DiagnosticsGroupProps {
+  label: string;
+  count: number;
+  children: ReactNode;
+}
+
+interface HeaderRowProps {
+  labels: string[];
+}
+
+interface InvalidRequirementTableProps {
+  items: DiagnosticsSectionProps["requirements"]["invalidRequirements"];
+}
+
+interface RuleCellsRowProps {
+  cells: RuleCells;
+}
+
+interface GroupedRuleTableProps {
+  label: string;
+  count: number;
+  lastColumn: string;
+  groups: RuleGroup[];
+}
+
+interface ModifierTableProps {
+  modifiers: Modifier[];
+  label: string;
+}
+
+interface RequirementTableProps {
+  groups: RequirementGroup[];
+  label: string;
+}
+
+interface SkippedModifierTableProps {
+  items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"];
+}
+
 const tableCellSx = { py: 0.5, px: 1, fontSize: "0.8rem" } as const;
 const headerCellSx = { ...tableCellSx, fontWeight: 600 } as const;
 const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
 const summarySx = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
-function DiagnosticsGroup({ label, count, children }: { label: string; count: number; children: ReactNode }) {
+function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
   if (count === 0) return null;
   return (
     <Accordion disableGutters sx={accordionSx}>
@@ -64,7 +103,7 @@ function DiagnosticsGroup({ label, count, children }: { label: string; count: nu
   );
 }
 
-function HeaderRow({ labels }: { labels: string[] }) {
+function HeaderRow({ labels }: HeaderRowProps) {
   return (
     <TableHead>
       <TableRow>
@@ -78,7 +117,7 @@ function HeaderRow({ labels }: { labels: string[] }) {
   );
 }
 
-function InvalidRequirementTable({ items }: { items: DiagnosticsSectionProps["requirements"]["invalidRequirements"] }) {
+function InvalidRequirementTable({ items }: InvalidRequirementTableProps) {
   return (
     <DiagnosticsGroup label="Invalid" count={items.length}>
       <HeaderRow labels={["Source", "Level", "Target", "Warning"]} />
@@ -96,7 +135,7 @@ function InvalidRequirementTable({ items }: { items: DiagnosticsSectionProps["re
   );
 }
 
-function RuleCellsRow({ cells }: { cells: RuleCells }) {
+function RuleCellsRow({ cells }: RuleCellsRowProps) {
   const [target, ...rest] = cells;
   return (
     <>
@@ -111,17 +150,7 @@ function RuleCellsRow({ cells }: { cells: RuleCells }) {
 }
 
 /** Rules by source: a source with one rule is a row, one with several expands to list them. */
-function GroupedRuleTable({
-  label,
-  count,
-  lastColumn,
-  groups,
-}: {
-  label: string;
-  count: number;
-  lastColumn: string;
-  groups: RuleGroup[];
-}) {
+function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTableProps) {
   const [expanded, toggle] = useToggleSet();
 
   return (
@@ -187,7 +216,7 @@ function GroupedRuleTable({
   );
 }
 
-function ModifierTable({ modifiers, label }: { modifiers: Modifier[]; label: string }) {
+function ModifierTable({ modifiers, label }: ModifierTableProps) {
   const groups = useMemo(() => {
     const bySource = new Map<string, RuleCells[]>();
     for (const mod of modifiers) {
@@ -203,7 +232,7 @@ function ModifierTable({ modifiers, label }: { modifiers: Modifier[]; label: str
   return <GroupedRuleTable label={label} count={modifiers.length} lastColumn="Type" groups={groups} />;
 }
 
-function RequirementTable({ groups, label }: { groups: RequirementGroup[]; label: string }) {
+function RequirementTable({ groups, label }: RequirementTableProps) {
   return (
     <GroupedRuleTable
       label={label}
@@ -223,7 +252,7 @@ function RequirementTable({ groups, label }: { groups: RequirementGroup[]; label
   );
 }
 
-function SkippedModifierTable({ items }: { items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"] }) {
+function SkippedModifierTable({ items }: SkippedModifierTableProps) {
   return (
     <DiagnosticsGroup label="Skipped" count={items.length}>
       <HeaderRow labels={["Source Type", "Target", "Warning"]} />

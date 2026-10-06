@@ -19,13 +19,14 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import type { Instance } from "@popperjs/core";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Modal } from "@/client/src/components/common/index.ts";
 import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
-import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { brandGold, brandGoldTint } from "@/client/src/theme/brandGold.ts";
 
 interface OnboardingStep {
   icon: SvgIconComponent | null;
@@ -43,6 +44,12 @@ interface OnboardingProps {
   onStepChange: (step: number) => void;
   anchorEl: HTMLElement | null;
   isMobile: boolean;
+}
+
+interface OnboardingPopperProps {
+  anchorEl: HTMLElement;
+  onClose: () => void;
+  children: ReactNode;
 }
 
 const SIDEBAR_TRANSITION_MS = 380;
@@ -88,15 +95,7 @@ const steps: OnboardingStep[] = [
  * The steps beside the sidebar, shown once its expansion, which entering popper mode starts, has finished: it mounts as
  * the mode starts, so each entry waits for its transition. Between steps it moves to the new anchor.
  */
-function OnboardingPopper({
-  anchorEl,
-  onClose,
-  children,
-}: {
-  anchorEl: HTMLElement;
-  onClose: () => void;
-  children: ReactNode;
-}) {
+function OnboardingPopper({ anchorEl, onClose, children }: OnboardingPopperProps) {
   const popperRef = useRef<Instance>(null);
   const [entered, setEntered] = useState(false);
 
@@ -134,7 +133,7 @@ function OnboardingPopper({
               borderTop: "8px solid transparent",
               borderBottom: "8px solid transparent",
               borderRight: (t) => `8px solid ${t.palette.background.paper}`,
-              filter: "drop-shadow(-2px 0 2px rgba(0,0,0,0.1))",
+              filter: (theme) => `drop-shadow(-2px 0 2px ${alpha(theme.palette.common.black, 0.1)})`,
             }}
           />
           {children}
@@ -246,8 +245,8 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
               <step.icon
                 sx={{
                   fontSize: effectiveMode === "dialog" ? 44 : 32,
-                  color: "white",
-                  filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+                  color: "common.white",
+                  filter: (theme) => `drop-shadow(0 2px 4px ${alpha(theme.palette.common.black, 0.3)})`,
                 }}
               />
             ) : null}

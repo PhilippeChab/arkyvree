@@ -28,21 +28,22 @@ interface SpellFormFieldsProps {
   knownAptitudes?: Aptitude[];
 }
 
-/** A select's first choice, for a spell without one: the API stores it as "". */
-const NONE = { value: "", label: "None" };
-
-/** A free-text list with suggestions, shown as chips. */
-function TagsField({
-  form,
-  name,
-  label,
-  options,
-}: {
+interface TagsFieldProps {
   form: UseFormReturn<SpellFormData>;
   name: "descriptors" | "components";
   label: string;
   options: readonly string[];
-}) {
+}
+
+interface SpellPropertyFieldsProps {
+  form: UseFormReturn<SpellFormData>;
+}
+
+/** A select's first choice, for a spell without one: the API stores it as "". */
+const NONE = { value: "", label: "None" };
+
+/** A free-text list with suggestions, shown as chips. */
+function TagsField({ form, name, label, options }: TagsFieldProps) {
   return (
     <Controller
       name={name}
@@ -67,7 +68,7 @@ function TagsField({
   );
 }
 
-function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
+function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
   return (
     <>
       <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>

@@ -16,6 +16,10 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.$get, 200>["items"][number];
 
+interface NotificationSummaryProps {
+  notification: UnreadNotification;
+}
+
 const bellShake = keyframes`
   0%, 100% { transform: rotate(0deg); }
   15% { transform: rotate(14deg); }
@@ -25,7 +29,7 @@ const bellShake = keyframes`
   75% { transform: rotate(4deg); }
 `;
 
-function NotificationSummary({ notification }: { notification: UnreadNotification }) {
+function NotificationSummary({ notification }: NotificationSummaryProps) {
   return (
     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 1, width: "100%" }}>
       <Typography variant="body2">{formatNotificationMessage(notification.type, notification.data)}</Typography>

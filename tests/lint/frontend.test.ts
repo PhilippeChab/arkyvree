@@ -274,4 +274,59 @@ describe("frontend rules", () => {
       "sx-styles client/src/styled.tsx",
     ]);
   });
+
+  test("a color is the theme's: a palette token, translucent through alpha(), never written out", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/hex.tsx": 'export const h = <Box sx={{ color: "#fff" }} />;\n',
+          "client/src/rgba.tsx": 'export const r = <Box sx={{ boxShadow: "0 2px 4px rgba(0,0,0,0.3)" }} />;\n',
+          "client/src/bordered.tsx": "export const b = <Box sx={{ border: `1px solid #c0c0c0` }} />;\n",
+          "client/src/named.tsx": 'export const n = <Box sx={{ color: "white" }} />;\n',
+          "client/src/suffixed.tsx":
+            "export const s = <Box sx={{ boxShadow: (t) => `0 4px ${t.palette.primary.main}40` }} />;\n",
+          "client/src/tokens.tsx":
+            'export const t = <Box sx={{ color: "common.white", bgcolor: (t) => alpha(t.palette.common.black, 0.5) }} />;\n',
+          "client/src/channel.ts": 'export const c = "0 0 0 3px rgba(var(--mui-palette-primary-mainChannel) / 0.4)";\n',
+          "client/src/words.tsx": 'export const w = <Chip label="white" href="#top" sx={{ width: `${size}px` }} />;\n',
+          "client/src/theme/palette.ts": 'export const p = { main: "#8d1e1e", shadow: "rgba(0, 0, 0, 0.3)" };\n',
+        },
+        ["theme-colors"],
+      ),
+    ).toEqual([
+      "theme-colors client/src/bordered.tsx",
+      "theme-colors client/src/hex.tsx",
+      "theme-colors client/src/named.tsx",
+      "theme-colors client/src/rgba.tsx",
+      "theme-colors client/src/suffixed.tsx",
+    ]);
+  });
+
+  test("a component's props are one named type, never written in place", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/literal.tsx": "export function Literal({ label }: { label: string }) {\n  return label;\n}\n",
+          "client/src/joined.tsx":
+            "export function Joined({ label }: BaseProps & { label: string }) {\n  return label;\n}\n",
+          "client/src/omitted.tsx":
+            'export function Omitted(props: Omit<ButtonProps, "size">) {\n  return props.children;\n}\n',
+          "client/src/qualified.tsx":
+            "export function Qualified(props: React.ComponentProps<typeof Box>) {\n  return props.children;\n}\n",
+          "client/src/own.tsx":
+            "interface OwnProps {\n  label: string;\n}\n\nexport function Own({ label }: OwnProps) {\n  return label;\n}\n",
+          "client/src/shared.tsx":
+            "export function FeatsSection({ ruleset }: RulesetSectionProps) {\n  return ruleset.name;\n}\n",
+          "client/src/helper.tsx": "export function labelOf({ label }: { label: string }) {\n  return label;\n}\n",
+          "client/src/bare.tsx": "export function Bare() {\n  return null;\n}\n",
+        },
+        ["component-props"],
+      ),
+    ).toEqual([
+      "component-props client/src/joined.tsx",
+      "component-props client/src/literal.tsx",
+      "component-props client/src/omitted.tsx",
+      "component-props client/src/qualified.tsx",
+    ]);
+  });
 });
