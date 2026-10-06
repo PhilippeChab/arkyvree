@@ -120,7 +120,8 @@ export function AttachmentField({
             overflow: "hidden",
             cursor: interactive && !url ? "pointer" : "default",
             bgcolor: url ? "transparent" : "action.hover",
-            border: showRing ? "4px solid" : canUpload ? "2px dashed" : "2px solid",
+            border: showRing ? 4 : 2,
+            borderStyle: canUpload && !showRing ? "dashed" : "solid",
             borderColor: showRing ? "background.paper" : dragOver ? "primary.main" : url ? "transparent" : "divider",
             boxShadow: (theme) => (showRing ? `0 6px 24px ${alpha(theme.palette.common.black, 0.18)}` : "none"),
             transition: transitionOf(["border-color", "transform", "box-shadow"], DURATION.fast),
@@ -246,7 +247,7 @@ export function AttachmentField({
                 bgcolor: "primary.main",
                 color: "primary.contrastText",
                 boxShadow: 2,
-                border: "3px solid",
+                border: 3,
                 borderColor: "background.paper",
                 "&:hover": { bgcolor: "primary.dark" },
               }}
@@ -271,7 +272,7 @@ export function AttachmentField({
                 bgcolor: "background.paper",
                 color: "text.secondary",
                 boxShadow: 2,
-                border: "3px solid",
+                border: 3,
                 borderColor: "background.paper",
                 "&:hover": { bgcolor: "error.main", color: "error.contrastText" },
               }}

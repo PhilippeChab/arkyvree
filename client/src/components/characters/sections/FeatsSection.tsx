@@ -34,7 +34,7 @@ function FeatRow({ name, label, description, extra }: FeatRowProps) {
   const hasExtra = extra != null && extra !== false;
 
   return (
-    <Box sx={{ borderLeft: "4px solid", borderColor: "primary.main", pl: 2 }}>
+    <Box sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
       <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}>
         <Typography sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}>
           {name}
@@ -89,7 +89,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
           {feats.map((feat) => {
             const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
             return (
-              <Box key={feat.id} sx={{ borderLeft: "4px solid", borderColor: "primary.main", pl: 2 }}>
+              <Box key={feat.id} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2 }}>
                 <Typography sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}>
                   {featLink ? (
                     <MuiLink

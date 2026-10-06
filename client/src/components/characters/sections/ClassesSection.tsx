@@ -101,7 +101,7 @@ export function ClassesSection({
                   width: "100%",
                   boxShadow: "none",
                   "&::before": { display: "none" },
-                  border: "1px solid",
+                  border: 1,
                   borderColor: "divider",
                   // Over MUI's first and last panel corners
                   "&, &:first-of-type, &:last-of-type": { borderRadius: 1 },

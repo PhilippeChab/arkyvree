@@ -23,9 +23,7 @@ interface EntityDetailsCardProps {
 /** Card at the top of a ruleset entity page: its edit form, or its description. */
 export function EntityDetailsCard({ title, chips, description, readOnlyBody, edit, sx }: EntityDetailsCardProps) {
   return (
-    <Card
-      sx={[{ boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }, ...(Array.isArray(sx) ? sx : [sx])]}
-    >
+    <Card sx={[{ borderRadius: 2 }, ...(Array.isArray(sx) ? sx : [sx])]}>
       <CardContent sx={{ p: 0 }}>
         <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
           <Box

@@ -458,7 +458,7 @@ export function Layout() {
                 pt: 3,
                 display: "flex",
                 justifyContent: "center",
-                borderTop: "1px solid",
+                borderTop: 1,
                 borderColor: "divider",
                 bgcolor: (theme) => (theme.palette.mode === "dark" ? "background.default" : "background.paper"),
               }}
@@ -469,7 +469,7 @@ export function Layout() {
                 sx={{
                   color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
                   backgroundColor: "action.hover",
-                  border: "2px solid",
+                  border: 2,
                   borderColor: "divider",
                   transition: transitionOf(["all"], DURATION.normal, EASING.emphasized),
                   "&:hover": {

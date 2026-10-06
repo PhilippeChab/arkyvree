@@ -34,7 +34,8 @@ export function GoogleSignInButton({
           py: 1.5,
           background: (theme) => theme.palette.background.paper,
           color: (theme) => theme.palette.text.secondary,
-          border: (theme) => `1px solid ${theme.palette.divider}`,
+          border: 1,
+          borderColor: "divider",
           boxShadow: "none",
           textShadow: "none",
         }}

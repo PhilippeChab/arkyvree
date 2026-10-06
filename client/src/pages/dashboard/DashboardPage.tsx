@@ -51,7 +51,7 @@ function StatCard({ icon: Icon, count, label, tagline, to, colors, animationInde
             return `linear-gradient(135deg, ${alpha(from, 0.5)} 0%, ${to} 100%)`;
           },
           color: "common.white",
-          border: (theme) => `1px solid ${alpha(colors(theme)[1], 0.38)}`,
+          borderColor: (theme) => alpha(colors(theme)[1], 0.38),
           transition: transitionOf(["transform", "box-shadow"], DURATION.fast),
           "&:hover": {
             transform: "translateY(-8px)",
@@ -137,8 +137,9 @@ export default function DashboardPage() {
               left: 16,
               width: 40,
               height: 40,
-              borderTop: (theme) => `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
-              borderLeft: (theme) => `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
+              borderTop: 2,
+              borderLeft: 2,
+              borderColor: (theme) => alpha(theme.palette.common.white, 0.3),
               borderTopLeftRadius: 4,
               pointerEvents: "none",
             }}
@@ -152,8 +153,9 @@ export default function DashboardPage() {
               right: 16,
               width: 40,
               height: 40,
-              borderBottom: (theme) => `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
-              borderRight: (theme) => `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
+              borderBottom: 2,
+              borderRight: 2,
+              borderColor: (theme) => alpha(theme.palette.common.white, 0.3),
               borderBottomRightRadius: 4,
               pointerEvents: "none",
             }}

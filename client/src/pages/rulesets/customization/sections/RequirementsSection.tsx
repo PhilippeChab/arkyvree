@@ -343,7 +343,7 @@ export function RequirementsSection({
               my: 0.5,
               mx: 0,
               ml: node.level.split(".").length > 1 ? { xs: 0, sm: 1 } : 0, // Indent children
-              borderLeft: node.level.split(".").length > 1 ? "3px solid" : "none", // Visual hierarchy
+              borderLeft: node.level.split(".").length > 1 ? 3 : 0, // Visual hierarchy
               borderColor: "primary.main",
             }}
           >

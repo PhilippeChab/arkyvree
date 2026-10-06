@@ -32,7 +32,7 @@ export function DemoBanner() {
           borderRadius: 6,
           // The bright gold on both themes: the pill reads as a highlight.
           bgcolor: (theme) => brandGoldTint(true, theme.palette.mode === "dark" ? 0.12 : 0.15),
-          border: "1px solid",
+          border: 1,
           borderColor: (theme) => brandGoldTint(theme.palette.mode === "dark", 0.3),
           backdropFilter: "blur(12px)",
           boxShadow: (theme) => `0 2px 12px ${theme.palette.shadow}`,

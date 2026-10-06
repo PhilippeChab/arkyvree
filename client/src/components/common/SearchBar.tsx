@@ -87,7 +87,7 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
   };
 
   return (
-    <Paper elevation={0} sx={{ mb: 3, border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
+    <Paper variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
       <Toolbar sx={{ px: 2, py: 1 }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: "center", flexGrow: 1, flexWrap: "wrap", gap: 1 }}>
           <TextField

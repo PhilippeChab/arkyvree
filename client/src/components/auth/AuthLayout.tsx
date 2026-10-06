@@ -111,8 +111,9 @@ function DesktopBranding() {
           left: 16,
           width: 40,
           height: 40,
-          borderTop: `2px solid ${gold}`,
-          borderLeft: `2px solid ${gold}`,
+          borderTop: 2,
+          borderLeft: 2,
+          borderColor: gold,
           opacity: 0.3,
           borderTopLeftRadius: 4,
         }}
@@ -125,8 +126,9 @@ function DesktopBranding() {
           right: 16,
           width: 40,
           height: 40,
-          borderBottom: `2px solid ${gold}`,
-          borderRight: `2px solid ${gold}`,
+          borderBottom: 2,
+          borderRight: 2,
+          borderColor: gold,
           opacity: 0.3,
           borderBottomRightRadius: 4,
         }}

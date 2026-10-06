@@ -47,7 +47,7 @@ export function ListCard({
               typography: "body1",
               width: 36,
               height: 36,
-              border: "2px solid",
+              border: 2,
               borderColor: "secondary.main",
               background: (theme) =>
                 `linear-gradient(135deg, ${theme.palette[avatarTone].light}, ${theme.palette[avatarTone].main})`,

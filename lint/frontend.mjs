@@ -48,6 +48,8 @@
  *   font weight is a number, and a `Typography` takes a fixed variant as its `variant`.
  * - `shape`: a corner is in the theme's units (`borderRadius: 1`) or a circle (`"50%"`), and a layer above the page is
  *   the theme's (`theme.zIndex`); a `zIndex` number orders siblings only (`0`, `1`).
+ * - `borders`: a border is the theme's shorthand (`border: 1`), its color `borderColor`, its style `borderStyle`; a
+ *   `Paper` or `Card` takes its elevation and its outline as props (`elevation`, `variant="outlined"`).
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -174,6 +176,9 @@ const MOTION_PROPERTIES = new Set([
 
 /** A time or an easing written out: `200ms`, `0.3s`, `ease-in-out`, `cubic-bezier(…)` */
 const MOTION_LITERAL = /\d(?:\.\d+)?m?s\b|\b(?:ease(?:-in|-out|-in-out)?|linear|steps)\b|cubic-bezier\(/;
+
+/** The border shorthands, which the theme writes from a width (`border: 1` is `1px solid`) */
+const BORDER_SIDES = new Set(["border", "borderBottom", "borderLeft", "borderRight", "borderTop"]);
 
 /** `Intl`'s date formatters */
 const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
@@ -806,11 +811,59 @@ function createControlledInputs(context) {
   };
 }
 
-/** The JSX element a style object is the `sx` of, when it's written right in the attribute. */
+/** The values a style property takes: the branches of a condition (`showRing ? 4 : 2`) and what a theme callback returns. */
+function styleValues(value) {
+  if (value.type === "ConditionalExpression")
+    return [...styleValues(value.consequent), ...styleValues(value.alternate)];
+  if (value.type === "ArrowFunctionExpression" && value.body.type !== "BlockStatement") return styleValues(value.body);
+  return [value];
+}
+
+/** The JSX element a style object is the `sx` of, written right in the attribute (`sx={{…}}`, `sx={[{…}, sx]}`). */
 function sxElement(object) {
-  const attribute = object.parent?.parent;
-  if (object.parent?.type !== "JSXExpressionContainer" || attribute?.type !== "JSXAttribute") return null;
+  const container = object.parent?.type === "ArrayExpression" ? object.parent.parent : object.parent;
+  const attribute = container?.parent;
+  if (container?.type !== "JSXExpressionContainer" || attribute?.type !== "JSXAttribute") return null;
   return attribute.name.name === "sx" ? elementName(attribute.parent.parent) : null;
+}
+
+function createBorders(context) {
+  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/theme/")) return {};
+  return {
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      if (BORDER_SIDES.has(key)) {
+        const written = styleValues(node.value).some(
+          (value) =>
+            (value.type === "Literal" && typeof value.value === "string" && value.value !== "none") ||
+            value.type === "TemplateLiteral",
+        );
+        if (written) {
+          context.report({
+            node: node.value,
+            message:
+              "A border is the theme's shorthand: a width (`border: 1`, `borderLeft: 3`), its color in `borderColor`, " +
+              'its style in `borderStyle`: never `"1px solid …"`.',
+          });
+        }
+      }
+      const surface = node.parent.type === "ObjectExpression" ? sxElement(node.parent) : null;
+      if (surface !== "Paper" && surface !== "Card") return;
+      if (key === "boxShadow" && node.value.type === "Literal" && typeof node.value.value === "number") {
+        context.report({
+          node,
+          message: "A `Paper` or a `Card` takes its elevation as `elevation`, never `sx` `boxShadow`.",
+        });
+      }
+      if (key === "border") {
+        context.report({
+          node,
+          message:
+            'A `Paper` or a `Card` is outlined by `variant="outlined"` (or the theme\'s card), never an `sx` border.',
+        });
+      }
+    },
+  };
 }
 
 /** Whether a template literal times something by its own numbers: a literal time, or a time no `DURATION` gives (`${i * 80}ms`). */
@@ -939,4 +992,5 @@ export default {
   motion: { meta: { type: "suggestion" }, create: createMotion },
   "type-scale": { meta: { type: "suggestion" }, create: createTypeScale },
   shape: { meta: { type: "suggestion" }, create: createShape },
+  borders: { meta: { type: "suggestion" }, create: createBorders },
 };

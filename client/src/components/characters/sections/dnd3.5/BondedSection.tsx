@@ -98,7 +98,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
                       typography: "body2",
                       px: 1,
                       py: 0.25,
-                      border: "1px solid",
+                      border: 1,
                       borderColor: "divider",
                       borderRadius: 1,
                     }}

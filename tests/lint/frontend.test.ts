@@ -478,4 +478,31 @@ describe("frontend rules", () => {
       ),
     ).toEqual(["shape client/src/layered.tsx", "shape client/src/pixels.tsx"]);
   });
+
+  test("a border is the theme's shorthand, and a surface takes its elevation and outline as props", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/stringed.tsx": 'export const s = <Box sx={{ border: "1px solid", borderColor: "divider" }} />;\n',
+          "client/src/branched.tsx": 'export const b = <Box sx={{ border: ring ? "4px solid" : 2 }} />;\n',
+          "client/src/templated.tsx":
+            "export const t = <Box sx={{ borderTop: (t) => `2px solid ${t.palette.divider}` }} />;\n",
+          "client/src/shadowed.tsx": "export const p = <Paper sx={{ p: 2, boxShadow: 1 }} />;\n",
+          "client/src/outlined.tsx": 'export const o = <Card sx={[{ border: 1, borderColor: "divider" }, sx]} />;\n',
+          "client/src/widths.tsx":
+            'export const w = <Box sx={{ border: 1, borderLeft: ring ? 3 : 0, borderStyle: "dashed", borderColor: "divider", boxShadow: 2 }} />;\n',
+          "client/src/props.tsx":
+            'export const q = <Paper variant="outlined" elevation={0} sx={{ borderRadius: 2, borderColor: "warning.light" }} />;\n',
+          "client/src/none.tsx": 'export const n = <Box sx={{ borderBottom: open ? "none" : 1 }} />;\n',
+        },
+        ["borders"],
+      ),
+    ).toEqual([
+      "borders client/src/branched.tsx",
+      "borders client/src/outlined.tsx",
+      "borders client/src/shadowed.tsx",
+      "borders client/src/stringed.tsx",
+      "borders client/src/templated.tsx",
+    ]);
+  });
 });

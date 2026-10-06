@@ -113,7 +113,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
           }
         />
       ) : (
-        <Paper sx={{ p: 2, boxShadow: 1, borderRadius: 2 }}>
+        <Paper sx={{ p: 2, borderRadius: 2 }}>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
             {classSkills.map((classSkill) => (
               <Chip

@@ -28,13 +28,12 @@ export function StyledCard({
   const animationSx = animationIndex != null ? fadeInUpSx(animationIndex, animationOffset) : undefined;
   return (
     <Card
-      elevation={0}
+      variant="outlined"
       {...(onClick && clickableProps(onClick))}
       sx={{
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        border: "1px solid",
         borderColor: isArchived ? "warning.light" : "divider",
         borderRadius: 3,
         overflow: "hidden",

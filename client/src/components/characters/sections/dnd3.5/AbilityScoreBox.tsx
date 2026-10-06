@@ -68,7 +68,7 @@ export function AbilityScoreBox({
           sx={{
             fontWeight: 600,
             color: modifier >= 0 ? "success.main" : "error.main",
-            border: "1px solid",
+            border: 1,
             borderColor: "divider",
             borderRadius: 1,
             py: compact ? 0.25 : 0.5,

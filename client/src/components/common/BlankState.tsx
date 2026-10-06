@@ -28,7 +28,8 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
           textAlign: "center",
           py: { xs: 4, sm: 8 },
           px: { xs: 2, sm: 4 },
-          border: "2px dashed",
+          border: 2,
+          borderStyle: "dashed",
           borderColor: "secondary.main",
           borderRadius: 2,
           background: (theme) =>

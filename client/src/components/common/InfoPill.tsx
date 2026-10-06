@@ -25,7 +25,7 @@ export function InfoPill({ icon: Icon, label, color = "default", tooltip }: Info
           borderRadius: 1,
           minWidth: 0,
           bgcolor: alpha(main, theme.palette.mode === "dark" ? 0.25 : 0.1),
-          border: "1px solid",
+          border: 1,
           borderColor: alpha(main, 0.4),
           color:
             color === "default" ? "text.secondary" : theme.palette.mode === "dark" ? `${color}.light` : `${color}.dark`,

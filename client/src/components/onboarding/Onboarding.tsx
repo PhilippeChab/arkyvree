@@ -124,9 +124,11 @@ function OnboardingPopper({ anchorEl, onClose, children }: OnboardingPopperProps
               top: 20,
               width: 0,
               height: 0,
-              borderTop: "8px solid transparent",
-              borderBottom: "8px solid transparent",
-              borderRight: (t) => `8px solid ${t.palette.background.paper}`,
+              borderTop: 8,
+              borderBottom: 8,
+              borderRight: 8,
+              borderColor: "transparent",
+              borderRightColor: "background.paper",
               filter: (theme) => `drop-shadow(-2px 0 2px ${alpha(theme.palette.common.black, 0.1)})`,
             }}
           />
