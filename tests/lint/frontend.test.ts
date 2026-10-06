@@ -662,4 +662,21 @@ describe("frontend rules", () => {
       "toast-wording client/src/success.ts",
     ]);
   });
+
+  test("a confirmation asks Are you sure you want to, and a deletion says it can't be undone", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/stated.tsx": 'export const s = <ConfirmDialog message="Discard all level-up progress?" />;\n',
+          "client/src/undone.tsx":
+            'export const u = <DeleteDialog message="Are you sure you want to delete this modifier?" />;\n',
+          "client/src/asked.tsx":
+            'export const a = <><ConfirmDialog message="Are you sure you want to archive this ruleset? You can restore it later." /><DeleteDialog message={`Are you sure you want to delete this ${label}? This action cannot be undone.`} /></>;\n',
+          "client/src/composed.tsx":
+            "export const c = <ConfirmDialog message={<>Remove <strong>{name}</strong>?</>} />;\n",
+        },
+        ["confirm-wording"],
+      ),
+    ).toEqual(["confirm-wording client/src/stated.tsx", "confirm-wording client/src/undone.tsx"]);
+  });
 });

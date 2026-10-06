@@ -1,6 +1,6 @@
 import { useController, type UseFormReturn } from "react-hook-form";
 
-import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, CreateDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { allLevelSaves, ClassLevelFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
@@ -88,8 +88,9 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
 
 export function RemoveSkillDialog(props: ConfirmActionProps) {
   return (
-    <DeleteDialog
+    <ConfirmDialog
       {...props}
+      confirmColor="error"
       title="Remove Skill"
       message="Are you sure you want to remove this skill from the class?"
       confirmLabel="Remove"

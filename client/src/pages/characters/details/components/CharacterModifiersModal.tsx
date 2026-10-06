@@ -274,7 +274,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         }}
         onConfirm={() => selectedModifier && deleteMutation.mutate(selectedModifier.id)}
         title="Delete Modifier"
-        message="Are you sure you want to delete this modifier?"
+        message="Are you sure you want to delete this modifier? This action cannot be undone."
         isLoading={deleteMutation.isPending}
       />
     </>

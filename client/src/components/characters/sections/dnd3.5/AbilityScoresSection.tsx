@@ -108,7 +108,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
         open={pendingChange !== null}
         onClose={() => setPendingChange(null)}
         title="Decrease Ability Score"
-        message="Changing ability scores may break character prerequisites."
+        message="Are you sure you want to decrease this ability score? It may break the character's prerequisites."
         confirmLabel="Decrease"
         onConfirm={() => {
           if (pendingChange) {

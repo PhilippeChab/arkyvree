@@ -166,7 +166,7 @@ export function LevelWizardDialog({
         onConfirm={wizard.handleConfirmCancel}
         isLoading={isSaving}
         title="Discard Level Up"
-        message="Discard all level-up progress?"
+        message="Are you sure you want to discard your level-up progress? This action cannot be undone."
         confirmLabel="Discard"
         confirmColor="error"
       />

@@ -67,7 +67,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         onConfirm={() => window.location.reload()}
         isLoading={false}
         title="Refresh Arkyvree"
-        message="You have unsaved changes that will be lost. Refresh anyway?"
+        message="Are you sure you want to refresh? Your unsaved changes will be lost."
         confirmLabel="Refresh"
         confirmColor="warning"
       />

@@ -315,7 +315,7 @@ export default function CharacterDetailsPage() {
           onClose={() => setHardDeleteConfirmOpen(false)}
           onConfirm={() => hardDeleteMutation.mutate()}
           title="Delete Permanently"
-          message="This will permanently delete this character and all of its levels, abilities, inventory, attachments, and customizations. This cannot be undone."
+          message="Are you sure you want to delete this character permanently? Its levels, abilities, inventory, attachments and customizations go with it. This action cannot be undone."
           isLoading={hardDeleteMutation.isPending}
           confirmLabel="Delete Permanently"
         />

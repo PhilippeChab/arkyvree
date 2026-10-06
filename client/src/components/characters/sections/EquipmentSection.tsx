@@ -8,8 +8,8 @@ import { Link } from "react-router-dom";
 import {
   AnimatedAlert,
   BlankState,
+  ConfirmDialog,
   CreateDialog,
-  DeleteDialog,
   DiceSpinner,
   EditDialog,
   ScrollSafeListbox,
@@ -500,7 +500,8 @@ export function EquipmentSection({
         <InventoryPlacementFields form={editForm} profile={editProfile} />
       </EditDialog>
       {/* Remove Confirmation */}
-      <DeleteDialog
+      <ConfirmDialog
+        confirmColor="error"
         open={deleteDialogOpen}
         onClose={() => {
           setDeleteDialogOpen(false);

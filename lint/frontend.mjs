@@ -62,6 +62,8 @@
  *   (`component="h2"`, `"p"`), so the page's outline is a hierarchy.
  * - `toast-wording`: a toast is a phrase ("Ruleset archived"), no final period, "!" or "successfully"; an error's
  *   fallback names what failed ("Failed to remove item").
+ * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
+ *   "This action cannot be undone."
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -448,6 +450,34 @@ function createComponentDefaults(context) {
       context.report({
         node,
         message: `A \`${element}\`'s \`${node.name.name}\` is the theme's default, the same for every one: never set here.`,
+      });
+    },
+  };
+}
+
+function createConfirmWording(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXAttribute(node) {
+      if (node.name.name !== "message") return;
+      const element = elementName(node.parent.parent);
+      if (element !== "ConfirmDialog" && element !== "DeleteDialog") return;
+      const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
+      const text =
+        value?.type === "Literal" && typeof value.value === "string"
+          ? value.value
+          : value?.type === "TemplateLiteral"
+            ? value.quasis.map((quasi) => quasi.value.cooked).join("…")
+            : null;
+      if (text === null) return;
+      const asks = /^Are you sure you want to [^?]+\?/.test(text);
+      const final = element !== "DeleteDialog" || text.endsWith("This action cannot be undone.");
+      if (asks && final) return;
+      context.report({
+        node,
+        message:
+          'A confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends "This action ' +
+          'cannot be undone."',
       });
     },
   };
@@ -1332,4 +1362,5 @@ export default {
   "button-intents": { meta: { type: "suggestion" }, create: createButtonIntents },
   headings: { meta: { type: "suggestion" }, create: createHeadings },
   "toast-wording": { meta: { type: "suggestion" }, create: createToastWording },
+  "confirm-wording": { meta: { type: "suggestion" }, create: createConfirmWording },
 };
