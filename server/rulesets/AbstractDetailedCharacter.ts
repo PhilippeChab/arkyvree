@@ -29,6 +29,7 @@ import type DetailedCharacterPowers from "@/server/rulesets/universal/DetailedCh
 import DetailedCharacterRequirements from "@/server/rulesets/universal/DetailedCharacterRequirements.ts";
 import type DetailedCharacterSavingThrows from "@/server/rulesets/universal/DetailedCharacterSavingThrows.ts";
 import { isTemplateValue } from "@/server/rulesets/universal/templateExpression.ts";
+import RequirementTree, { type RequirementNode } from "@/shared/customization/requirementTree.ts";
 import type {
   Aptitude,
   Campaign,
@@ -419,37 +420,15 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   }
 
   formatRequirements(requirements: Requirement[]): string {
-    type TreeNode = { requirement: Requirement; children: TreeNode[] };
-
-    const nodeMap = new Map<string, TreeNode>();
-    const sorted = [...requirements].sort((a, b) => parseFloat(a.level) - parseFloat(b.level));
-
-    for (const req of sorted) {
-      nodeMap.set(req.level, { requirement: req, children: [] });
-    }
-
-    const roots: TreeNode[] = [];
-    for (const req of sorted) {
-      const parts = req.level.split(".");
-      if (parts.length === 1) {
-        roots.push(nodeMap.get(req.level)!);
-      } else {
-        const parentLevel = parts.slice(0, -1).join(".");
-        const parent = nodeMap.get(parentLevel);
-        if (parent) {
-          parent.children.push(nodeMap.get(req.level)!);
-        } else {
-          roots.push(nodeMap.get(req.level)!);
-        }
-      }
-    }
+    // A row under a condition, which groups nothing, isn't printed
+    const { roots } = RequirementTree.fromRows(requirements);
 
     // Each condition evaluated as the requirements are, templates and every operator included
     const conditions = new DetailedCharacterRequirements(this.targetPaths);
     const isLeafMet = (req: Requirement) =>
       !!this.holders && conditions.isConditionMet(req, this.holders, this.itemOf([req]));
 
-    const formatNode = (node: TreeNode, indent: string): string => {
+    const formatNode = (node: RequirementNode<Requirement>, indent: string): string => {
       const req = node.requirement;
       if (req.chainingOperator) {
         const label = `(${req.chainingOperator.toUpperCase()})`;

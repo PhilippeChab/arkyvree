@@ -471,6 +471,28 @@ describe("InventoryService", () => {
       });
     });
 
+    test("checks a variant's own requirements beside its template's, each starting at level 1", async () => {
+      const { session, character, newItem } = await setup();
+      const template = await newItem({ type: "Armor", isTemplate: true });
+      const variant = await newItem({ type: "Armor", sourceItemId: template.id });
+      const strengthAtLeast = (entityId: string, value: string) =>
+        Requirements.create(db, {
+          entityId,
+          entityType: "items",
+          level: "1",
+          target: "abilities.strength.misc",
+          value,
+          valueType: "number",
+          operator: "greater_than_or_equal",
+        });
+      // The template's met, the variant's own unmet: the variant can't be worn
+      await strengthAtLeast(template.id, "0");
+      await strengthAtLeast(variant.id, "30");
+      RulesetCache.invalidate(character.rulesetId);
+
+      await expect(add(session, character.id, variant.id, equipped("Torso"))).rejects.toThrow(BadRequestError);
+    });
+
     test("refuses an item whose requirements the character doesn't meet, unless forced", async () => {
       const { session, character, newItem } = await setup();
       const armor = await newItem({ type: "Armor" });
