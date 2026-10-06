@@ -10,58 +10,66 @@ import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic
 
 import { getEnvironmentName, readEnv } from "@/server/environment.ts";
 
-let hostMetrics: HostMetrics | null = null;
-let initialized = false;
-let loggerProvider: LoggerProvider | null = null;
-let meterProvider: MeterProvider | null = null;
+/** OpenTelemetry's metrics and logs, pushed to Better Stack: its providers, kept to drain them on shutdown. */
+class Telemetry {
+  private initialized = false;
 
-/**
- * Initializes OTLP metrics + logs push to Better Stack via OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_AUTH_TOKEN. No-op if
- * either unset.
- *
- * Traces deliberately omitted: Bun's runtime currently doesn't reliably export spans (oven-sh/bun#3775,
- * oven-sh/bun#26536). @hono/otel still runs with disableTracing=true so its HTTP request-duration histogram + active
- * requests counter are recorded — we just skip span creation.
- */
-export function initOtel(component: "web" | "worker") {
-  if (initialized) return;
-  const token = readEnv("OTEL_AUTH_TOKEN");
-  if (!readEnv("OTEL_EXPORTER_OTLP_ENDPOINT") || !token) return;
+  private meterProvider: MeterProvider | null = null;
 
-  const headers = { Authorization: `Bearer ${token}` };
-  const resource = resourceFromAttributes({
-    [ATTR_SERVICE_NAME]: `arkyvree-${component}`,
-    [ATTR_SERVICE_VERSION]: readEnv("FLY_MACHINE_VERSION") || "dev",
-    "deployment.environment": getEnvironmentName(),
-  });
+  private loggerProvider: LoggerProvider | null = null;
 
-  meterProvider = new MeterProvider({
-    resource,
-    readers: [
-      new PeriodicExportingMetricReader({
-        exporter: new OTLPMetricExporter({ headers }),
-        exportIntervalMillis: 60_000,
-      }),
-    ],
-  });
-  metrics.setGlobalMeterProvider(meterProvider);
+  private hostMetrics: HostMetrics | null = null;
 
-  hostMetrics = new HostMetrics({
-    name: `arkyvree-${component}-host`,
-    meterProvider,
-  });
-  hostMetrics.start();
+  /**
+   * Initializes OTLP metrics + logs push to Better Stack via OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_AUTH_TOKEN. No-op if
+   * either unset.
+   *
+   * Traces deliberately omitted: Bun's runtime currently doesn't reliably export spans (oven-sh/bun#3775,
+   * oven-sh/bun#26536). @hono/otel still runs with disableTracing=true so its HTTP request-duration histogram + active
+   * requests counter are recorded — we just skip span creation.
+   */
+  init(component: "web" | "worker") {
+    if (this.initialized) return;
+    const token = readEnv("OTEL_AUTH_TOKEN");
+    if (!readEnv("OTEL_EXPORTER_OTLP_ENDPOINT") || !token) return;
 
-  loggerProvider = new LoggerProvider({
-    resource,
-    processors: [new BatchLogRecordProcessor({ exporter: new OTLPLogExporter({ headers }) })],
-  });
-  logs.setGlobalLoggerProvider(loggerProvider);
+    const headers = { Authorization: `Bearer ${token}` };
+    const resource = resourceFromAttributes({
+      [ATTR_SERVICE_NAME]: `arkyvree-${component}`,
+      [ATTR_SERVICE_VERSION]: readEnv("FLY_MACHINE_VERSION") || "dev",
+      "deployment.environment": getEnvironmentName(),
+    });
 
-  initialized = true;
+    this.meterProvider = new MeterProvider({
+      resource,
+      readers: [
+        new PeriodicExportingMetricReader({
+          exporter: new OTLPMetricExporter({ headers }),
+          exportIntervalMillis: 60_000,
+        }),
+      ],
+    });
+    metrics.setGlobalMeterProvider(this.meterProvider);
+
+    this.hostMetrics = new HostMetrics({
+      name: `arkyvree-${component}-host`,
+      meterProvider: this.meterProvider,
+    });
+    this.hostMetrics.start();
+
+    this.loggerProvider = new LoggerProvider({
+      resource,
+      processors: [new BatchLogRecordProcessor({ exporter: new OTLPLogExporter({ headers }) })],
+    });
+    logs.setGlobalLoggerProvider(this.loggerProvider);
+
+    this.initialized = true;
+  }
+
+  /** Drains in-flight metric/log batches before process exit. */
+  async stop(): Promise<void> {
+    await Promise.allSettled([this.meterProvider?.shutdown(), this.loggerProvider?.shutdown()]);
+  }
 }
 
-/** Drains in-flight metric/log batches before process exit. */
-export async function stopOtel(): Promise<void> {
-  await Promise.allSettled([meterProvider?.shutdown(), loggerProvider?.shutdown()]);
-}
+export default new Telemetry();

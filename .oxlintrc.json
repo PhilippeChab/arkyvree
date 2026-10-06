@@ -87,6 +87,7 @@
     "arkyvree/test-conventions": "error",
     // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
     "arkyvree/function-length": "error",
+    "arkyvree/module-state": "error",
     // A value sits above what reads it as the file loads. Functions are left out (hoisted, they go by name:
     // member-order), and so are classes (a repository's instance class follows it) and a variable read inside a
     // function, which runs once the file has loaded: drizzle's tables point their foreign keys both ways.

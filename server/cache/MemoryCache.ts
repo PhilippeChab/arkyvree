@@ -16,16 +16,6 @@ const DEFAULT_MAX_SIZE = 200;
 const DEFAULT_SWEEP_INTERVAL_MS = 60 * 1000; // 1 minute
 const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-let globalCacheEnabled = readEnv("DISABLE_CACHE") !== "true";
-
-export function isCacheEnabled(): boolean {
-  return globalCacheEnabled;
-}
-
-export function setCacheEnabled(enabled: boolean): void {
-  globalCacheEnabled = enabled;
-}
-
 export default class MemoryCache<T> {
   constructor(options: MemoryCacheOptions | number = {}) {
     // Support legacy signature: new MemoryCache(ttlMs)
@@ -44,6 +34,19 @@ export default class MemoryCache<T> {
     if (typeof this.sweepTimer === "object" && "unref" in this.sweepTimer) {
       this.sweepTimer.unref();
     }
+  }
+
+  /** Whether every cache keeps what it's given: off with DISABLE_CACHE, and in the worker (`setEnabled`). */
+  private static enabled = readEnv("DISABLE_CACHE") !== "true";
+
+  /** Whether every cache keeps what it's given. */
+  static isEnabled(): boolean {
+    return MemoryCache.enabled;
+  }
+
+  /** Turns every cache on or off: the worker reads committed rows each time, the tests compare both. */
+  static setEnabled(enabled: boolean): void {
+    MemoryCache.enabled = enabled;
   }
 
   private store = new Map<string, CacheEntry<T>>();
@@ -85,7 +88,7 @@ export default class MemoryCache<T> {
   }
 
   get(key: string): T | undefined {
-    if (!globalCacheEnabled) {
+    if (!MemoryCache.enabled) {
       onCacheMiss();
       return undefined;
     }
@@ -140,7 +143,7 @@ export default class MemoryCache<T> {
   }
 
   set(key: string, value: T, ttl?: number): void {
-    if (!globalCacheEnabled) return;
+    if (!MemoryCache.enabled) return;
     // If at capacity and this is a new key, evict the oldest unpinned entry.
     // If eviction fails (everything is pinned), skip the insert to prevent
     // unbounded growth past maxSize.

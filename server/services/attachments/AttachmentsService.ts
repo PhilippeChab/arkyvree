@@ -4,7 +4,7 @@ import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
-import { getStorage } from "@/server/storage/s3.ts";
+import ObjectStorage from "@/server/storage/s3.ts";
 import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -165,7 +165,7 @@ class AttachmentsService {
   private async purgeOrphan(orphan: { id: string; key: string } | null): Promise<void> {
     if (!orphan) return;
     try {
-      await getStorage().deleteObject(orphan.key);
+      await ObjectStorage.get().deleteObject(orphan.key);
       await withTransaction((tx) => Blobs.delete(tx, { id: orphan.id }));
     } catch (err) {
       console.warn(`[attachments] S3 cleanup failed for ${orphan.key}: ${err instanceof Error ? err.message : err}`);
@@ -188,7 +188,7 @@ class AttachmentsService {
     if (!preBlob) throw new NotFoundError("Blob not found");
     if (preBlob.attachedAt) throw new ConflictError("Blob is already attached");
 
-    const stats = await getStorage().objectStats(preBlob.key);
+    const stats = await ObjectStorage.get().objectStats(preBlob.key);
     if (!stats) throw new BadRequestError("Upload not found at expected key");
     if (stats.size !== preBlob.byteSize) {
       throw new BadRequestError(`Upload size ${stats.size} does not match declared byteSize ${preBlob.byteSize}`);
@@ -272,7 +272,7 @@ class AttachmentsService {
       return row;
     });
 
-    const presignedUrl = getStorage().presignPut(key, {
+    const presignedUrl = ObjectStorage.get().presignPut(key, {
       contentType: params.contentType,
     });
     const signedId = this.signToken({

@@ -31,7 +31,6 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
   }
 
   /** Whether the user plays in a live campaign on the ruleset: what lets a member create on a private ruleset. */
-  /** Whether the user plays in a campaign on the ruleset. */
   async exists(db: Db, where: { userId: string; rulesetId: string }) {
     const [row] = await db
       .select({ one: sql`1` })
