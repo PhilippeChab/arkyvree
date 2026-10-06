@@ -51,12 +51,10 @@ async function getExcludeNonStackableFeatIds(
   excludeFeatIds.push(...selectedNonStackableFeatIds);
 
   const virtualFeatIds = detailedCharacter.getVirtuallyPossessedFeatIds();
-  if (virtualFeatIds.length > 0) {
-    const virtualFeats = await Feats.findMany(database, { ids: virtualFeatIds });
-    for (const feat of virtualFeats) {
-      if (!feat.stackable) {
-        excludeFeatIds.push(feat.id);
-      }
+  const virtualFeats = await Feats.findMany(database, { ids: virtualFeatIds });
+  for (const feat of virtualFeats) {
+    if (!feat.stackable) {
+      excludeFeatIds.push(feat.id);
     }
   }
 

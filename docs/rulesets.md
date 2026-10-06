@@ -118,7 +118,7 @@ Extensions come first so their entities are visible. Repositories receive this a
 
 Inherited entities are read-only. When a user edits or deletes one:
 
-1. **Snapshot** — an `entity_snapshots` row is created: `{ rulesetId, entityType, sourceEntityId, forkedEntityId, contentHash }`
+1. **Snapshot** — an `entity_snapshots` row is created: `{ rulesetId, entityType, sourceEntityId, forkedEntityId }`
 2. **Local copy** — the entity + all customizations (modifiers, properties, requirements) + relationships are duplicated into the child ruleset
 3. **Modification** — the local copy is updated or deleted (for deletes)
 4. **Query exclusion** — the repository SQL excludes the original from ancestor results when a snapshot exists
@@ -160,7 +160,6 @@ The child's own entities are always included. Ancestor entities are included onl
 |---|---|
 | `sourceEntityId` | Original ancestor entity ID |
 | `forkedEntityId` | Child's local COW copy ID |
-| `contentHash` | Baseline hash of entity + customizations at COW time |
 
 ### Names of new entities
 

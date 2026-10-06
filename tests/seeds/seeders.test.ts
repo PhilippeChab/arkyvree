@@ -713,12 +713,7 @@ describe("Seeding", () => {
         .where(eq(entitySnapshotsInRules.rulesetId, ctx.rulesetId));
       expect(
         snapshots
-          .map(({ entityType, sourceEntityId, forkedEntityId, contentHash }) => ({
-            entityType,
-            sourceEntityId,
-            forkedEntityId,
-            contentHash,
-          }))
+          .map(({ entityType, sourceEntityId, forkedEntityId }) => ({ entityType, sourceEntityId, forkedEntityId }))
           .sort((a, b) => a.sourceEntityId.localeCompare(b.sourceEntityId)),
       ).toEqual(
         ["Test Grouped", "Test Single", "Test Open"]
@@ -726,7 +721,6 @@ describe("Seeding", () => {
             entityType: "feats",
             sourceEntityId: original[name],
             forkedEntityId: ctx.featMap[name],
-            contentHash: "seed",
           }))
           .sort((a, b) => a.sourceEntityId.localeCompare(b.sourceEntityId)),
       );
@@ -812,7 +806,6 @@ describe("Seeding", () => {
           entityType: "powers",
           sourceEntityId: core.powerMap["Test Bolt"],
           forkedEntityId: boltId,
-          contentHash: "seed",
         },
       ]);
       expect(await spellListsOf(ctx, core.powerMap["Test Bolt"])).toEqual(["Test Source 3", "Wizard Spells 3"]);

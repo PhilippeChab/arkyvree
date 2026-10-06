@@ -16,18 +16,13 @@ import {
   KlassLevelSaves,
   KlassSkills,
   PowersAptitudes,
+  type RulesetEntityType,
 } from "@/server/repositories/index.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
-import { ENTITY_REPOS, type EntityWithId } from "./constants.ts";
 import { copyEntityCustomizations } from "./copyCustomizations.ts";
-import {
-  fetchEntityCustomizations,
-  fetchKlassLevelCustomizations,
-  fetchKlassRelationships,
-  fetchSiblingCustomizations,
-} from "./customizations.ts";
-import { type EntityCustomizations, type EntityType, hashEntity, type KlassRelationships } from "./hashing.ts";
+import { type EntityCustomizations, fetchEntityCustomizations, fetchSiblingCustomizations } from "./customizations.ts";
+import { ENTITY_REPOS, type EntityWithId } from "./entityRepositories.ts";
 
 /**
  * A copy made: the copied entity, and each customization it copied, by its source's id (equal values don't make the
@@ -51,7 +46,7 @@ export interface CopyTarget {
  * which records the customizations it copied.
  */
 export default class EntityCopy {
-  private constructor(entityType: EntityType, entityId: string, target: CopyTarget) {
+  private constructor(entityType: RulesetEntityType, entityId: string, target: CopyTarget) {
     this.entityType = entityType;
     this.entityId = entityId;
     this.target = target;
@@ -62,13 +57,18 @@ export default class EntityCopy {
    * Copies `entityId` into the target ruleset, or returns the copy it already has (then with no copied ids): the
    * newly created child entity, and the customizations copied with it.
    */
-  static async create(tx: Db, entityType: EntityType, entityId: string, target: CopyTarget): Promise<CopiedEntity> {
+  static async create(
+    tx: Db,
+    entityType: RulesetEntityType,
+    entityId: string,
+    target: CopyTarget,
+  ): Promise<CopiedEntity> {
     const copy = new EntityCopy(entityType, entityId, target);
     const entity = await copy.copy(tx);
     return { entity, copiedIds: copy.copiedIds };
   }
 
-  private readonly entityType: EntityType;
+  private readonly entityType: RulesetEntityType;
 
   private readonly entityId: string;
 
@@ -145,15 +145,12 @@ export default class EntityCopy {
       await this.mergeSiblings(tx, newEntity.id, cust, siblingIds, cow);
     }
 
-    // 5. Compute content hash and create snapshot
-    const contentHash = await this.hash(tx, parentEntity, cust);
-
+    // 5. Record the copy: the ruleset's view shows it in place of the parent
     await EntitySnapshots.create(tx, {
       rulesetId: childRulesetId,
       entityType: this.entityType,
       sourceEntityId: this.entityId,
       forkedEntityId: newEntity.id,
-      contentHash,
     });
 
     return newEntity;
@@ -261,30 +258,6 @@ export default class EntityCopy {
 
       await this.copyKlassLevels(tx, targetEntityId, cow);
     }
-  }
-
-  /**
-   * The snapshot's content hash: the parent entity and its customizations, a class's with its levels' customizations
-   * and its relationships.
-   */
-  private async hash(tx: Db, parentEntity: EntityWithId, cust: EntityCustomizations) {
-    let klassRelationships: KlassRelationships | undefined;
-    let entityCustomizations = cust;
-    if (this.entityType === "klasses") {
-      const relMap = await fetchKlassRelationships(tx, [this.entityId]);
-      klassRelationships = relMap.get(this.entityId);
-      const levelCustMap = await fetchKlassLevelCustomizations(tx, [this.entityId]);
-      const levelCust = levelCustMap.get(this.entityId);
-      if (levelCust) {
-        entityCustomizations = {
-          modifiers: [...cust.modifiers, ...levelCust.modifiers],
-          properties: [...cust.properties, ...levelCust.properties],
-          requirements: [...cust.requirements, ...levelCust.requirements],
-          modifierRequirements: [...cust.modifierRequirements, ...levelCust.modifierRequirements],
-        };
-      }
-    }
-    return hashEntity(this.entityType, parentEntity, entityCustomizations, klassRelationships);
   }
 
   /**

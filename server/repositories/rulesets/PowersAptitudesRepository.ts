@@ -42,6 +42,7 @@ class PowersAptitudesRepository extends BaseRepository<typeof powersAptitudesInR
   }
 
   async findMany(db: Db, where: { powerIds: string[] } | { powerId: string }) {
+    if ("powerIds" in where && where.powerIds.length === 0) return [];
     return await db.query.powersAptitudesInRules.findMany({
       where: this.branchWhere(
         [

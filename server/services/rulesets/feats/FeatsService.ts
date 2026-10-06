@@ -3,8 +3,8 @@ import { getTableName } from "drizzle-orm";
 import { featsInRules } from "@/drizzle/schema.ts";
 import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { hasCharacterPicks, RulesetEdit, wasGeneratedFeat } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
+import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
@@ -13,6 +13,15 @@ import { getListFeatIds } from "@/server/services/rulesets/aptitudes/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
+  /**
+   * Whether the ancestor feat a fork deleted was generated, read by its stored id: a new feat with its name stands in
+   * for it (`RulesetEdit.repointTombstone`), and takes its mark.
+   */
+  private async wasGenerated(tx: Db, ancestorFeatId: string): Promise<boolean> {
+    const feat = await withCowContext(undefined, () => Feats.findOne(tx, { id: ancestorFeatId }));
+    return feat?.generated ?? false;
+  }
+
   async createFeat(
     session: Session,
     rulesetId: string,
@@ -43,7 +52,7 @@ class FeatsService {
         const rows = await Feats.create(tx, {
           name: body.name,
           description: body.description,
-          generated: tombstoneAncestorId ? await wasGeneratedFeat(tx, tombstoneAncestorId) : false,
+          generated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
           rulesetId,
         });
         const feat = rows[0];

@@ -13,6 +13,7 @@ class MechanicsRepository extends RulesetEntityRepository<typeof mechanicsInRule
   protected readonly entityType = "mechanics";
 
   async findMany(db: Db, where: { ids: string[] }) {
+    if (where.ids.length === 0) return [];
     return await db.query.mechanicsInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
       orderBy: [this.orderBy(this.table.name)],

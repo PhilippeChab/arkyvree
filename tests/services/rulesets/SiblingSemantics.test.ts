@@ -2,7 +2,6 @@ import { afterEach, expect, test } from "bun:test";
 
 import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { type EntityType } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
@@ -15,6 +14,7 @@ import {
   PowersAptitudes,
   Properties,
   Requirements,
+  type RulesetEntityType,
   Rulesets,
 } from "@/server/repositories/index.ts";
 import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";
@@ -56,7 +56,7 @@ function customizationsOf(data: RulesetData, id: string) {
 }
 
 /** The entity type of a feat, a power or an item of the view. */
-function typeOf(data: RulesetData, id: string): EntityType | undefined {
+function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
   if (data.featsById.has(id)) return "feats";
   if (data.powersById.has(id)) return "powers";
   return data.itemsById.has(id) ? "items" : undefined;
