@@ -30,10 +30,6 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 
 import type { PlayerFormData, PlayerSlot } from "./players.ts";
 
-export type CreateCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)["$post"]>["json"];
-
-export type EditCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)[":id"]["$put"]>["json"];
-
 interface CreateCampaignDialogProps {
   open: boolean;
   onClose: () => void;
@@ -82,6 +78,10 @@ interface RemovePlayerDialogProps {
   /** The slot being removed, from `getPlayerSlot`. */
   slot: PlayerSlot | null;
 }
+
+export type CreateCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)["$post"]>["json"];
+
+export type EditCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)[":id"]["$put"]>["json"];
 
 function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
   return (

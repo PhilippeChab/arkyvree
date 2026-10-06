@@ -6,15 +6,6 @@ import { DiceSpinner, EmailField, FormDialog, SelectField } from "@/client/src/c
 import { emailRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
-export type ContributorRole = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["contributors"][":contributorId"]["$put"]
->["json"]["role"];
-
-export interface InviteContributorFormData {
-  email: string;
-  role: ContributorRole;
-}
-
 interface InviteContributorDialogProps {
   open: boolean;
   onClose: () => void;
@@ -23,6 +14,15 @@ interface InviteContributorDialogProps {
   isLoading: boolean;
   /** Roles offered; no role picker when omitted. */
   roles?: ContributorRole[];
+}
+
+export type ContributorRole = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["contributors"][":contributorId"]["$put"]
+>["json"]["role"];
+
+export interface InviteContributorFormData {
+  email: string;
+  role: ContributorRole;
 }
 
 export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, roles }: InviteContributorDialogProps) {

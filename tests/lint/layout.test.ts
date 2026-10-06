@@ -79,6 +79,55 @@ describe("file layout", () => {
     ]);
   });
 
+  test("--fix puts a file's own types and constants before its exported ones, a constant below one it reads", async () => {
+    const out = await fixed({
+      "shared/exports.ts": lines(
+        "export type Shape = { n: number };",
+        "",
+        "type Local = { s: string };",
+        "",
+        "export interface Size {",
+        "  w: number;",
+        "}",
+        "",
+        "export const BASE = 1;",
+        "",
+        "const DOUBLED = BASE * 2;",
+        "",
+        "const LOCAL = 3;",
+        "",
+        "export const TOTAL = LOCAL + 1;",
+        "",
+        "export function f(s: Shape, l: Local, z: Size) {",
+        "  return [s, l, z, DOUBLED, TOTAL];",
+        "}",
+      ),
+    });
+    expect(out["shared/exports.ts"]).toBe(
+      lines(
+        "type Local = { s: string };",
+        "",
+        "export type Shape = { n: number };",
+        "",
+        "export interface Size {",
+        "  w: number;",
+        "}",
+        "",
+        "const LOCAL = 3;",
+        "",
+        "export const BASE = 1;",
+        "",
+        "const DOUBLED = BASE * 2;",
+        "",
+        "export const TOTAL = LOCAL + 1;",
+        "",
+        "export function f(s: Shape, l: Local, z: Size) {",
+        "  return [s, l, z, DOUBLED, TOTAL];",
+        "}",
+      ),
+    );
+  });
+
   test("--fix orders a file, keeping a statement above what uses it, its comments with it and a #! line first", async () => {
     const out = await fixed({
       "server/a.ts": lines(

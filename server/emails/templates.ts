@@ -9,8 +9,9 @@ import { EmailVerificationEmail } from "@/emails/email-verification.tsx";
 import { PasswordResetEmail } from "@/emails/password-reset.tsx";
 import { WelcomeEmail } from "@/emails/welcome.tsx";
 
-export type TemplateName = keyof typeof TEMPLATES;
 type PropsFor<K extends TemplateName> = Parameters<(typeof TEMPLATES)[K]>[0];
+
+export type TemplateName = keyof typeof TEMPLATES;
 
 export type EmailJobPayload = {
   [K in TemplateName]: { template: K; props: PropsFor<K> };
@@ -26,6 +27,9 @@ const TEMPLATES = {
   welcome: WelcomeEmail,
 } as const;
 
+const XHTML_DOCTYPE =
+  '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
+
 export const EmailTemplate = {
   CampaignInvitation: "campaignInvitation",
   CharacterContributorInvitation: "characterContributorInvitation",
@@ -35,9 +39,6 @@ export const EmailTemplate = {
   PasswordReset: "passwordReset",
   Welcome: "welcome",
 } as const satisfies Record<string, TemplateName>;
-
-const XHTML_DOCTYPE =
-  '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
 
 /** An email's HTML and its plain-text version, from its template and props. */
 export function renderEmail({ template, props }: EmailJobPayload) {

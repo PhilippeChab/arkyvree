@@ -6,8 +6,6 @@ interface EmailLayoutProps {
   children: ReactNode;
 }
 
-export const APP_URL = process.env.APP_URL || "http://localhost:5173";
-
 const colors = {
   primary: "#8d1e1e",
   text: "#3e2723",
@@ -76,6 +74,8 @@ const footer: CSSProperties = {
   padding: "16px 48px 36px",
   margin: 0,
 };
+
+export const APP_URL = process.env.APP_URL || "http://localhost:5173";
 
 export const styles = {
   heading: {

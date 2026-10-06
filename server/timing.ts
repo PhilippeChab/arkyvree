@@ -16,9 +16,9 @@ export interface TimingStore {
 
 const SLOW_QUERY_THRESHOLD_MS = 200;
 
-export const timingStorage = new AsyncLocalStorage<TimingStore>();
-
 let patched = false;
+
+export const timingStorage = new AsyncLocalStorage<TimingStore>();
 
 function isThenable(value: unknown): value is Promise<unknown> {
   return typeof value === "object" && value !== null && "then" in value && typeof value.then === "function";

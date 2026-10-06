@@ -1,3 +1,5 @@
+type Module<B extends Constructor, R extends Constructor> = (Base: B) => R;
+
 /**
  * Ruby's `include` for classes: `class X extends include(Base, A, B)` gives X the methods of the modules A and B. A
  * module is a mixin, a function from a class to a class extending it (`export function A<B extends Constructor<…>>(
@@ -7,8 +9,6 @@
 
 // oxlint-disable-next-line typescript/no-explicit-any -- TypeScript requires a mixin's constructor to take `any[]` (TS2545)
 export type Constructor<I = object> = abstract new (...args: any[]) => I;
-
-type Module<B extends Constructor, R extends Constructor> = (Base: B) => R;
 
 export function include<B extends Constructor, M1 extends Constructor>(base: B, m1: Module<B, M1>): M1 & B;
 export function include<B extends Constructor, M1 extends Constructor, M2 extends Constructor>(

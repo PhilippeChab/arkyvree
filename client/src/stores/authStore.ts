@@ -6,10 +6,6 @@ import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { AUTH_STORAGE_KEY } from "@/shared/auth.ts";
 
 type MeResponse = InferResponseType<typeof rpc.auth.me.$get, 200>;
-export type AuthUser = Pick<
-  MeResponse,
-  "id" | "emailAddress" | "username" | "pendingEmailAddress" | "onboardingCompletedAt" | "expiresAt"
->;
 
 interface AuthState {
   user: AuthUser | null;
@@ -35,6 +31,11 @@ interface AuthState {
   /** Merge fields into the signed-in user, e.g. after a profile update. */
   updateUser: (patch: Partial<AuthUser>) => void;
 }
+
+export type AuthUser = Pick<
+  MeResponse,
+  "id" | "emailAddress" | "username" | "pendingEmailAddress" | "onboardingCompletedAt" | "expiresAt"
+>;
 
 const signedOut = {
   user: null,

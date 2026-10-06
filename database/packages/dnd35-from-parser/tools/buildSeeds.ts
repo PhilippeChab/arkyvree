@@ -121,9 +121,6 @@ const CLASS_FEAT_FAMILIES: { pattern: RegExp; family: string }[] = [
   ...CLASS_FEATURE_FAMILIES.map((family) => ({ pattern: new RegExp(`^${RegExp.escape(family)} \\(`), family })),
 ];
 
-/** The families of class features, Favored Enemy's included, which a prerequisite checks by the family's name. */
-export const CLASS_FEAT_FAMILY_NAMES = [...CLASS_FEAT_FAMILIES.map(({ family }) => family), FAVORED_ENEMY_FAMILY];
-
 let _classSpellMaps: ReturnType<typeof buildClassSpellMaps> | undefined;
 
 const COMPONENT_MAP: Record<string, string> = {
@@ -169,6 +166,9 @@ const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Rin
 
 /** The specific armor and shields, whose text gives what they change of their base's. */
 const ARMOR_CATEGORIES = new Set<MagicItemCategory>(["specificArmor", "specificShield"]);
+
+/** The families of class features, Favored Enemy's included, which a prerequisite checks by the family's name. */
+export const CLASS_FEAT_FAMILY_NAMES = [...CLASS_FEAT_FAMILIES.map(({ family }) => family), FAVORED_ENEMY_FAMILY];
 
 function loadExistingFeats(book?: string): Set<string> {
   const key = book ?? "__srd__";

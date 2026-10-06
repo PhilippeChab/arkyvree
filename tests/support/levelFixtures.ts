@@ -29,6 +29,20 @@ export type LevelPlan = {
   powers?: Record<string, string[]>;
 };
 
+/** A human druid's first level, with a wolf for animal companion. */
+const DRUID_1: LevelPlan = {
+  hp: 8,
+  skills: { Concentration: 4, "Knowledge (Nature)": 4, Survival: 4, Spellcraft: 4, "Handle Animal": 4 },
+  feats: { General: ["Toughness", "Combat Casting"], "Animal Companion Bond": ["Wolf Animal Companion"] },
+};
+
+/** A human paladin's first level. */
+const PALADIN_1: LevelPlan = {
+  hp: 10,
+  skills: { Diplomacy: 4, "Knowledge (Religion)": 4, Ride: 4, "Sense Motive": 4 },
+  feats: { General: ["Toughness", "Power Attack"] },
+};
+
 /** The character builds the tests level up. */
 export const BUILDS = {
   /** Human, INT 12: (2 + 1 + 1) skill points a fighter level, ×4 at the first. */
@@ -165,20 +179,6 @@ export const WIZARD_1: LevelPlan = {
       "Shield",
     ],
   },
-};
-
-/** A human druid's first level, with a wolf for animal companion. */
-const DRUID_1: LevelPlan = {
-  hp: 8,
-  skills: { Concentration: 4, "Knowledge (Nature)": 4, Survival: 4, Spellcraft: 4, "Handle Animal": 4 },
-  feats: { General: ["Toughness", "Combat Casting"], "Animal Companion Bond": ["Wolf Animal Companion"] },
-};
-
-/** A human paladin's first level. */
-const PALADIN_1: LevelPlan = {
-  hp: 10,
-  skills: { Diplomacy: 4, "Knowledge (Religion)": 4, Ride: 4, "Sense Motive": 4 },
-  feats: { General: ["Toughness", "Power Attack"] },
 };
 
 /** A first cleric level taken as a second character level: the War and Good domains, and the longsword as war weapon. */

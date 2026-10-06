@@ -4,8 +4,6 @@ import type { InferResponseType } from "hono/client";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
-export type AttachmentResponse = InferResponseType<typeof rpc.api.attachments.$get, 200>;
-
 interface UseAttachmentParams {
   recordType: string;
   recordId: string | undefined;
@@ -18,6 +16,8 @@ interface UseAttachmentsParams {
   name: string;
   recordIds: string[];
 }
+
+export type AttachmentResponse = InferResponseType<typeof rpc.api.attachments.$get, 200>;
 
 async function fetchSlot(recordType: string, recordId: string, name: string): Promise<AttachmentResponse> {
   return parseResponse(

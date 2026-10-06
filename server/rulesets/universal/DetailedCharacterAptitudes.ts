@@ -6,13 +6,6 @@ import { stripSeparators } from "@/shared/text.ts";
 import type DetailedCharacterClasses from "./DetailedCharacterClasses.ts";
 import type DetailedCharacterIdentity from "./DetailedCharacterIdentity.ts";
 
-export type AptitudeLevelData = {
-  uses: number;
-  allowed: number;
-  spent: number;
-  available: number;
-};
-
 type DetailedCharacterComprehensiveAptitudes = {
   [key: string]: {
     id: string;
@@ -28,6 +21,13 @@ type DetailedCharacterComprehensiveAptitudes = {
 };
 
 type AptitudesById = Map<string, DetailedCharacterComprehensiveAptitudes[string]>;
+
+export type AptitudeLevelData = {
+  uses: number;
+  allowed: number;
+  spent: number;
+  available: number;
+};
 
 const ALLOWED_ENTITY_TYPES = ["feats", "klass_levels", "races"];
 
@@ -82,10 +82,10 @@ const POOL_SLOT_MODIFIERS: Pick<TargetPath, "operators" | "literalOnly" | "minVa
   minValue: 0,
 };
 
-export const ALLOWED_ALL = -1;
-
 /** The spell levels whose spells are all known: a state of the level, not a count it holds (`newSpellLevel`). */
 const ALL_KNOWN = new WeakSet<AptitudeLevelData>();
+
+export const ALLOWED_ALL = -1;
 
 /**
  * A spell level's entry. Its known slots are a count, or all known (ALLOWED_ALL), which a `set -1` makes them and an

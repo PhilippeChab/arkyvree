@@ -44,6 +44,21 @@ import type {
   Skill,
 } from "@/shared/relations.ts";
 
+type RawEntities = Pick<
+  RulesetRawData,
+  | "abilities"
+  | "saves"
+  | "skills"
+  | "feats"
+  | "powers"
+  | "aptitudes"
+  | "klasses"
+  | "races"
+  | "languages"
+  | "items"
+  | "mechanics"
+>;
+
 export interface RulesetRawData {
   abilities: RulesetAbility[];
   saves: RulesetSave[];
@@ -69,21 +84,6 @@ export interface RulesetRawData {
   /** Every requirement row in this ruleset, including those attached to modifiers. */
   requirements: Requirement[];
 }
-
-type RawEntities = Pick<
-  RulesetRawData,
-  | "abilities"
-  | "saves"
-  | "skills"
-  | "feats"
-  | "powers"
-  | "aptitudes"
-  | "klasses"
-  | "races"
-  | "languages"
-  | "items"
-  | "mechanics"
->;
 
 /**
  * Rounds 3 and 4: the customizations and the klass-level sub-tables. Customizations include everything keyed on

@@ -7,11 +7,11 @@ import { nameRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 
-export type RaceFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["races"]["$post"]>["json"];
-
 interface RaceFormFieldsProps {
   form: UseFormReturn<RaceFormData>;
 }
+
+export type RaceFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["races"]["$post"]>["json"];
 
 export function RaceFormFields({ form }: RaceFormFieldsProps) {
   return (

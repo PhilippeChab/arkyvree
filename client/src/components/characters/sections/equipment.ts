@@ -6,6 +6,15 @@ import { ITEM_HAS_CHARGES } from "@/shared/dnd3.5/properties/index.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { findSlotConflict, HAND_LOCATIONS, isHandLocation, type SlotConflictReason } from "@/shared/equipment.ts";
 
+type InventoryEntry = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>[number];
+
+type ItemProperties = { type: string; value: string }[];
+
+/** An inventory entry as the slot warnings read it. */
+type PlacedEntry = Pick<InventoryEntry, "id" | "equipped" | "location" | "weaponSet"> & {
+  item: Pick<InventoryEntry["item"], "name">;
+};
+
 /** A sheet's equipment row: the inventory entry with its item's fields. */
 export type EquipmentRow = CharacterDetail["equipment"][number];
 
@@ -14,8 +23,6 @@ export type EncumbranceData = Omit<CharacterDetail["combat"]["encumbrance"], "ma
   /** No cap (the server's Infinity, sent as null) under a light load. */
   maxdex: number | null;
 };
-
-type InventoryEntry = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>[number];
 
 /** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
 export interface InventoryFormData {
@@ -31,17 +38,7 @@ export interface InventoryFormData {
 /** The item fields placement depends on. */
 export type ItemColumns = { type: string | null; slot: string };
 
-type ItemProperties = { type: string; value: string }[];
-
 export type PlacementProfile = ReturnType<typeof placementProfile>;
-
-/** An inventory entry as the slot warnings read it. */
-type PlacedEntry = Pick<InventoryEntry, "id" | "equipped" | "location" | "weaponSet"> & {
-  item: Pick<InventoryEntry["item"], "name">;
-};
-
-/** A slot, or not equipped. */
-export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
 /** The warning for a slot taken by `entry`, `weaponSet` as the form shows it. */
 const SLOT_CONFLICT_WARNINGS: Record<
@@ -54,6 +51,9 @@ const SLOT_CONFLICT_WARNINGS: Record<
   twoHanded: (_, entry, weaponSet) => `Cannot equip: ${entry.item.name} is two-handed in Set ${weaponSet}`,
   sameHand: (location, entry, weaponSet) => `${location} is occupied by ${entry.item.name} (Set ${weaponSet})`,
 };
+
+/** A slot, or not equipped. */
+export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
 /** A weapon set as the user sees it: stored from 0, shown from 1 ("Set 1"), as on the sheet and the PDF. */
 export function shownWeaponSet(stored: number) {

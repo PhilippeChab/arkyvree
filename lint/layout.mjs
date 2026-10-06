@@ -1,7 +1,8 @@
 /**
  * `file-layout`: a file reads in one order, so its parts are always where you look for them: its imports, its types,
  * its constants, its helpers, then what the file is for (its exports, its class, a test file's `describe` and `test`
- * blocks, an index's re-exports). A helper is a function the file keeps to itself, or a constant one builds, or an
+ * blocks, an index's re-exports). Its types and its constants each go the ones it keeps first, then the ones it
+ * exports (a constant still below one it reads). A helper is a function the file keeps to itself, or a constant one builds, or an
  * export another helper calls; a test file's helper never sits in a `describe`. A top-level side effect (a script's
  * call, an `await`) is the file's purpose too, and a declaration after one is a step of its run, keeping its place.
  * `oxlint --fix` puts a file in order, each statement above what uses it, and lifts a helper out of a `describe` when it
@@ -19,13 +20,15 @@ const SUITE_CALLS = new Set(["describe", "test", "it", "beforeAll", "beforeEach"
 
 // The groups, in a file's order
 const RANK = { type: 1, constant: 2, helper: 3, main: 4 };
+// An exported type or constant goes after the file's own, in the same section
+const EXPORTED = 0.5;
 
 // What a type position holds: never an order a value needs
 const TYPE_KEYS = new Set(["typeAnnotation", "returnType", "typeParameters", "typeArguments", "superTypeArguments"]);
 
 const MESSAGE =
-  "A file reads in order: its imports, its types, its constants, its helpers, then what it's for (its exports, " +
-  "its class, its tests). `oxlint --fix` orders it.";
+  "A file reads in order: its imports, its types, its constants (each the file's own, then its exports), its " +
+  "helpers, then what it's for (its exports, its class, its tests). `oxlint --fix` orders it.";
 
 const LOOPS = new Set(["ForStatement", "ForOfStatement", "ForInStatement", "WhileStatement"]);
 
@@ -314,7 +317,9 @@ export function rankStatements(statements) {
     let kind = kindOf(statement);
     if (kind === "constant" && (afterEffect || awaits(statement))) kind = "effect";
     if (kind === "effect") afterEffect = true;
-    return { statement, index, kind, rank: RANK[kind] ?? RANK.main, names: declaredNames(statement) };
+    const exported = statement.type === "ExportNamedDeclaration" && (kind === "type" || kind === "constant");
+    const rank = (RANK[kind] ?? RANK.main) + (exported ? EXPORTED : 0);
+    return { statement, index, kind, rank, names: declaredNames(statement) };
   });
   const declaredBy = new Map(items.flatMap((item) => item.names.map((name) => [name, item])));
   for (const item of items) {

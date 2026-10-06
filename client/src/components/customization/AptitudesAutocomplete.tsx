@@ -8,7 +8,6 @@ import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
 type AptitudesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"], 200>;
-export type Aptitude = AptitudesPaginated["items"][number];
 
 interface AptitudesAutocompleteProps {
   rulesetId: string;
@@ -27,6 +26,8 @@ interface AptitudeAutocompleteProps {
   size?: "small" | "medium";
   scope?: "feats" | "spells";
 }
+
+export type Aptitude = AptitudesPaginated["items"][number];
 
 function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {
   const [search, setSearch] = useState("");

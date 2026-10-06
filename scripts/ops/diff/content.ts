@@ -4,25 +4,10 @@
 
 import { collectDiff, diffIsEmpty, type IdentifiedRow, stripVolatile, type TableDiff } from "./rows.ts";
 
-/** Runs a query with positional parameters ($1…) and gives its rows, as pg's client does. */
-export type Query = <R extends Record<string, unknown>>(text: string, params?: unknown[]) => Promise<R[]>;
-
 type ContentTable = (typeof CONTENT_TABLES)[number];
 
-/** The tables scoped by their ruleset_id, compared field by field. */
-export const CONTENT_TABLES = [
-  "abilities",
-  "aptitudes",
-  "feats",
-  "items",
-  "klasses",
-  "languages",
-  "mechanics",
-  "powers",
-  "races",
-  "saves",
-  "skills",
-] as const;
+/** Runs a query with positional parameters ($1…) and gives its rows, as pg's client does. */
+export type Query = <R extends Record<string, unknown>>(text: string, params?: unknown[]) => Promise<R[]>;
 
 /** The content tables' references to other entities, compared by what they name: `<ruleset>: <name>`. */
 const REFERENCES: Partial<Record<ContentTable, Record<string, ContentTable>>> = {
@@ -36,24 +21,6 @@ const REFERENCES: Partial<Record<ContentTable, Record<string, ContentTable>>> = 
 
 /** A ruleset's lists of other rulesets, compared by their names. */
 const RULESET_LISTS = ["ancestor_ruleset_ids", "extension_ruleset_ids"];
-
-/** The columns compared by the names of the rows they reference, which SQL can't set back from a name. */
-export const LABELLED_COLUMNS: Record<string, string[]> = {
-  "rules.rulesets": RULESET_LISTS,
-  ...Object.fromEntries(Object.entries(REFERENCES).map(([table, columns]) => [`rules.${table}`, Object.keys(columns)])),
-};
-
-/** The tables nothing compares, and why. */
-export const UNCOMPARED_TABLES: Record<string, string> = {
-  "rules.content_packages": "its versions are compared as the package drift",
-  "rules.contributors": "who edits a ruleset is user data, which no seed writes",
-};
-
-/** Every entity a snapshot can name, as `<ruleset>: <name>`. */
-const ENTITY_LABELS = CONTENT_TABLES.map(
-  (table) =>
-    `select e.id, rs.name || ': ' || e.name as label from rules.${table} e join rules.rulesets rs on rs.id = e.ruleset_id`,
-).join("\n  union all ");
 
 /**
  * The entities of the ruleset `$1` that customizations belong to, each with its type (`t`) and a readable name: the
@@ -83,6 +50,39 @@ const OWNERS = `
               join rules.feats f on f.id = klf.feat_id
              where k.ruleset_id = $1
                and klf.deleted_at is null and kl.deleted_at is null and k.deleted_at is null and f.deleted_at is null`;
+
+/** The tables scoped by their ruleset_id, compared field by field. */
+export const CONTENT_TABLES = [
+  "abilities",
+  "aptitudes",
+  "feats",
+  "items",
+  "klasses",
+  "languages",
+  "mechanics",
+  "powers",
+  "races",
+  "saves",
+  "skills",
+] as const;
+
+/** The columns compared by the names of the rows they reference, which SQL can't set back from a name. */
+export const LABELLED_COLUMNS: Record<string, string[]> = {
+  "rules.rulesets": RULESET_LISTS,
+  ...Object.fromEntries(Object.entries(REFERENCES).map(([table, columns]) => [`rules.${table}`, Object.keys(columns)])),
+};
+
+/** The tables nothing compares, and why. */
+export const UNCOMPARED_TABLES: Record<string, string> = {
+  "rules.content_packages": "its versions are compared as the package drift",
+  "rules.contributors": "who edits a ruleset is user data, which no seed writes",
+};
+
+/** Every entity a snapshot can name, as `<ruleset>: <name>`. */
+const ENTITY_LABELS = CONTENT_TABLES.map(
+  (table) =>
+    `select e.id, rs.name || ': ' || e.name as label from rules.${table} e join rules.rulesets rs on rs.id = e.ruleset_id`,
+).join("\n  union all ");
 
 /** Rows read as their business keys alone: a link compared by what it joins. */
 function keyed<T>(rows: T[], key: (row: T) => string): IdentifiedRow[] {

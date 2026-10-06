@@ -36,6 +36,16 @@ import type {
 
 import type { ServiceHooks } from "./hooks/index.ts";
 
+type ProjectedFeat = Feat & {
+  klassLevelId: string;
+  characterLevelId: string;
+  aptitudeId: string;
+  klassLevelFeatId?: string;
+  modifiers: Modifier[];
+  properties: Property[];
+  requirements: Requirement[];
+};
+
 export interface PreloadedRulesetData {
   ruleset: Ruleset;
   cowData: CachedCowData;
@@ -186,16 +196,6 @@ export type RequirementIssue = {
   entityName?: string;
   entityType?: string;
   requirementTree?: string;
-};
-
-type ProjectedFeat = Feat & {
-  klassLevelId: string;
-  characterLevelId: string;
-  aptitudeId: string;
-  klassLevelFeatId?: string;
-  modifiers: Modifier[];
-  properties: Property[];
-  requirements: Requirement[];
 };
 
 /**

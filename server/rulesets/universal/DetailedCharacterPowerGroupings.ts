@@ -5,6 +5,9 @@ import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/tar
 import type { Property } from "@/shared/relations.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 
+type PowerGroup = Record<string, PowerDcsByClass>;
+type PowerGroupingsData = Record<string, PowerGroup>;
+
 export type PowerDc = {
   base: number;
   level: number;
@@ -15,8 +18,6 @@ export type PowerDc = {
 
 // A spell's DC is its casting class's: grouping key (normalized) → spell → class (its aptitude's slug) → shared PowerDc
 export type PowerDcsByClass = Record<string, PowerDc>;
-type PowerGroup = Record<string, PowerDcsByClass>;
-type PowerGroupingsData = Record<string, PowerGroup>;
 
 const NAVIGATABLE_POWER_DC_PATHS = [
   { path: "dc.misc", description: "Other bonuses to spell DC", type: "number" as const },

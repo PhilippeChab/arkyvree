@@ -7,14 +7,14 @@ import type { RulesetAbility } from "@/client/src/hooks/index.ts";
 import { nameRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
-export type SkillFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"];
-
 type Ability = RulesetAbility;
 
 interface SkillFormFieldsProps {
   form: UseFormReturn<SkillFormData>;
   abilities: Ability[];
 }
+
+export type SkillFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"];
 
 export function SkillFormFields({ form, abilities }: SkillFormFieldsProps) {
   const impactedByWeight = !!form.watch("impactedByWeight");

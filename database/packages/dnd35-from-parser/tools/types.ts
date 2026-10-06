@@ -1,11 +1,5 @@
 import type { Modifier, ModifierSeed, Property, RequirementEntry } from "@/database/packages/dnd35/content/types.ts";
 
-// References as loaded (`loadReference`): what the file stores (`_meta`, `raw`, `overrides`), with `detected` and
-// `mapping` derived from it (items and magic items have only `detected`; spells and wizard schools, neither). The
-// file itself holds only `StoredReference` (tools/references.ts).
-
-export type BabType = "good" | "medium" | "poor";
-export type SaveType = "good" | "poor";
 type Saves = { fortitude: SaveType; reflex: SaveType; will: SaveType };
 
 /** Where and when a reference was scraped. */
@@ -16,21 +10,6 @@ type ScrapedMeta<T extends string> = { type: T; sourceUrl: string; book: string;
  * and the entries reviewed (no further action needed).
  */
 type Overrides<T> = Record<string, T> & { reviewed?: string[] };
-
-/**
- * A domain's or a race's detected modifiers, the invalid paths (bugs to fix) and the text that couldn't be parsed (to
- * review). Their modifiers have no requirements: only a feat's has.
- */
-export type DetectedModifiers = { modifiers: Modifier[]; errors?: string[]; unresolvedModifiers?: string[] };
-
-/** A named piece of text: a race's trait, a class feature's sub-option. */
-export type NamedText = { name: string; description: string };
-
-/** A class level pick of an aptitude's feats. */
-export type AptitudePick = { levels: number[]; target: string };
-
-/** Existing feats a class lets its player pick, as an aptitude (at `levels` only, when given). */
-export type BonusFeatList = { aptitude: string; feats: string[]; levels?: number[] };
 
 /** Template expansion config for family feats (Weapon Focus, Skill Focus, etc.) */
 type FeatTemplate = { type: "weapon" | "skill" | "school" | "crossbow"; familyName: string };
@@ -56,27 +35,6 @@ type DomainFeatPool = {
   grants: string[];
   description?: string;
 };
-
-/**
- * The spell list a class draws on, made of other classes' (`classes`, a spell at its level on the first that has it):
- * only their spells of `schools` when given, none with one of `excludeDescriptors`, and `additions`, its own spells by
- * level.
- */
-export type InheritedSpellList = {
-  classes: string[];
-  schools?: string[];
-  excludeDescriptors?: string[];
-  additions?: Record<string, string[]>;
-};
-
-/**
- * A class table column its levels' modifiers read (`progression[].columns`): at each level its value changes, `add`
- * the rise of its number (the table gives the total so far, "+10 ft.") or `set` its text ("1d8").
- */
-export type ColumnModifier = { target: string; operator: "add" | "set"; requirements?: RequirementEntry[] };
-
-/** A list a class's slots can go to, while its requirements are met: a pious templar's paladin or blackguard list. */
-export type ClassSpellList = { name: string; inheritsFrom: InheritedSpellList; requirements: RequirementEntry[] };
 
 /** A class's own spell list: its slots per day, its spells known, and the list it inherits. */
 type ClassSpells = {
@@ -125,6 +83,49 @@ type MagicItemFields = ItemFields & {
    */
   template?: boolean;
 };
+
+// References as loaded (`loadReference`): what the file stores (`_meta`, `raw`, `overrides`), with `detected` and
+// `mapping` derived from it (items and magic items have only `detected`; spells and wizard schools, neither). The
+// file itself holds only `StoredReference` (tools/references.ts).
+
+export type BabType = "good" | "medium" | "poor";
+export type SaveType = "good" | "poor";
+
+/**
+ * A domain's or a race's detected modifiers, the invalid paths (bugs to fix) and the text that couldn't be parsed (to
+ * review). Their modifiers have no requirements: only a feat's has.
+ */
+export type DetectedModifiers = { modifiers: Modifier[]; errors?: string[]; unresolvedModifiers?: string[] };
+
+/** A named piece of text: a race's trait, a class feature's sub-option. */
+export type NamedText = { name: string; description: string };
+
+/** A class level pick of an aptitude's feats. */
+export type AptitudePick = { levels: number[]; target: string };
+
+/** Existing feats a class lets its player pick, as an aptitude (at `levels` only, when given). */
+export type BonusFeatList = { aptitude: string; feats: string[]; levels?: number[] };
+
+/**
+ * The spell list a class draws on, made of other classes' (`classes`, a spell at its level on the first that has it):
+ * only their spells of `schools` when given, none with one of `excludeDescriptors`, and `additions`, its own spells by
+ * level.
+ */
+export type InheritedSpellList = {
+  classes: string[];
+  schools?: string[];
+  excludeDescriptors?: string[];
+  additions?: Record<string, string[]>;
+};
+
+/**
+ * A class table column its levels' modifiers read (`progression[].columns`): at each level its value changes, `add`
+ * the rise of its number (the table gives the total so far, "+10 ft.") or `set` its text ("1d8").
+ */
+export type ColumnModifier = { target: string; operator: "add" | "set"; requirements?: RequirementEntry[] };
+
+/** A list a class's slots can go to, while its requirements are met: a pious templar's paladin or blackguard list. */
+export type ClassSpellList = { name: string; inheritsFrom: InheritedSpellList; requirements: RequirementEntry[] };
 
 export type WeaponRow = {
   name: string;

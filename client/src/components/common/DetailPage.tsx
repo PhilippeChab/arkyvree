@@ -14,12 +14,6 @@ interface DetailPageHeaderProps {
   children?: ReactNode;
 }
 
-export interface SectionTab<K extends string> {
-  key: K;
-  label: ReactNode;
-  icon: ElementType;
-}
-
 interface SectionTabsProps<K extends string> {
   tabs: SectionTab<K>[];
   value: K;
@@ -27,6 +21,12 @@ interface SectionTabsProps<K extends string> {
   /** Warm a tab's data before it is clicked. */
   onTabHover?: (key: K) => void;
   "aria-label": string;
+}
+
+export interface SectionTab<K extends string> {
+  key: K;
+  label: ReactNode;
+  icon: ElementType;
 }
 
 /** Centered title block of a ruleset or campaign page, with back and menu buttons. */

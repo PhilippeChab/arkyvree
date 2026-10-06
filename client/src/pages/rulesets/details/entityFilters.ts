@@ -15,19 +15,19 @@ const ENTITY_KINDS: readonly EntityKind[] = ["pc", ...BONDED_KIND_SLUGS];
 
 const ENTITY_SORT_FIELDS = ["name", "createdAt", "updatedAt"] as const;
 
-/** Kind and sort the Races and Classes tabs open with. */
-export const DEFAULT_ENTITY_FILTERS = {
-  kind: "pc",
-  orderBy: "name",
-  orderDir: "asc",
-} as const satisfies { kind: EntityKind; orderBy: EntitySortField; orderDir: "asc" | "desc" };
-
 const KIND_FILTER_OPTIONS: FilterOption<EntityKind>[] = [
   { value: "pc", label: "Player Character" },
   ...BONDED_KINDS.map((b) => ({ value: b.slug, label: b.label })),
 ];
 
 const ENTITY_SORT_OPTIONS: SortOption<EntitySortField>[] = [...NAME_SORTS, ...CREATED_SORTS, ...UPDATED_SORTS];
+
+/** Kind and sort the Races and Classes tabs open with. */
+export const DEFAULT_ENTITY_FILTERS = {
+  kind: "pc",
+  orderBy: "name",
+  orderDir: "asc",
+} as const satisfies { kind: EntityKind; orderBy: EntitySortField; orderDir: "asc" | "desc" };
 
 /** The Races / Classes tab's search, kind and sort, kept in the URL, with the search bar props that change them. */
 export function useEntityFilters() {

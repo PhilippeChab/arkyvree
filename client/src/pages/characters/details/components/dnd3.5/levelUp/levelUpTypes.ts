@@ -6,14 +6,18 @@ import type { RPC } from "@/client/src/services/rpc.ts";
 
 type LevelsApi = RPC["api"]["characters"]["levels"][":characterId"];
 
+/** A saved level, as Edit Level loads it. */
+type LevelData = InferResponseType<LevelsApi[":characterLevelId"]["$get"], 200>;
+
+/** A spell picked for the level, as a saved level lists it. */
+type SelectedPower = LevelData["powers"][string][number];
+
 export type BaseRules = NonNullable<CharacterDetail["baseRules"]>;
 
 export type AttributesData = InferResponseType<LevelsApi["attribute-slots"]["$get"], 200>;
 export type SkillsData = InferResponseType<LevelsApi["skill-slots"]["$get"], 200>;
 export type FeatsData = InferResponseType<LevelsApi["feat-slots"]["$get"], 200>;
 export type PowersData = InferResponseType<LevelsApi["power-slots"]["$get"], 200>;
-/** A saved level, as Edit Level loads it. */
-type LevelData = InferResponseType<LevelsApi[":characterLevelId"]["$get"], 200>;
 
 export type AvailableKlass = InferResponseType<LevelsApi["available-classes"]["$get"], 200>["items"][number];
 export type AvailablePower = InferResponseType<LevelsApi["available-powers"]["$get"], 200>["items"][number];
@@ -28,8 +32,6 @@ export type PowerAptitudePool = PowersData["aptitudePools"][string];
 
 /** A feat picked for the level, as a saved level lists it. */
 export type SelectedFeat = LevelData["feats"][string][number];
-/** A spell picked for the level, as a saved level lists it. */
-type SelectedPower = LevelData["powers"][string][number];
 
 /** A class picked for a level. */
 export type SelectedKlass = Pick<AvailableKlass, "id" | "name" | "nextLevel" | "maxLevel" | "hd" | "eligible">;

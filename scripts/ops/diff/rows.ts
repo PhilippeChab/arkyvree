@@ -1,10 +1,10 @@
+type FieldChange = { bk: string; targetId: string; field: string; ref: unknown; tgt: unknown };
+
 // Comparing rows between two databases (diff-prod.ts): matched by a business key, never by id, which every seed draws
 // anew.
 
 /** A row by its business key (a name, or what a link joins), with its id in the target and its compared fields. */
 export type IdentifiedRow = { bk: string; id: string; row: Record<string, unknown> };
-
-type FieldChange = { bk: string; targetId: string; field: string; ref: unknown; tgt: unknown };
 
 export type TableDiff = {
   onlyInRef: string[];
