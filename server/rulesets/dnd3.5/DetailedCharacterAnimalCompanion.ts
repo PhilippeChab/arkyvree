@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 
 import { getBondedRaceStats } from "./bondedRaceData.ts";
 import type Dnd35DetailedCharacter from "./DetailedCharacter.ts";
@@ -66,7 +66,7 @@ function getAnimalCompanionEffectiveLevel(master: Dnd35DetailedCharacter): numbe
  *   bonuses apply on top of the race's ability modifiers.
  */
 export default class DetailedCharacterAnimalCompanion extends DetailedCharacterAdvancingBonded {
-  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: CachedRulesetData): Promise<void> {
+  protected async applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
     const effective = getAnimalCompanionEffectiveLevel(master);
     const row = basicsAt(effective);

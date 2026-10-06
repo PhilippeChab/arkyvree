@@ -7,7 +7,7 @@
  * - annotateRequirements — attaches eligibility and requirement tree info to candidate entities
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
@@ -38,7 +38,7 @@ function fetchAll<T>(ids: string[], byId: Map<string, T>, what: string): T[] {
 
 /** The submitted skills, feats and powers, from the character's ruleset; throws when one, or a pool, isn't in it. */
 function fetchSelections(
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   skills: Record<string, number>,
   feats: Record<string, string[]>,
   powers: Record<string, string[]>,
@@ -56,7 +56,7 @@ function fetchSelections(
  * in its pool, by `powerId:aptitudeId`.
  */
 function linkedPowerLevels(
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   feats: Record<string, string[]>,
   powers: Record<string, string[]>,
 ) {
@@ -132,7 +132,7 @@ async function checkNotTaken(
 export function annotateRequirements<T extends { id: string }>(
   detailedCharacter: DetailedCharacterInterface,
   candidates: T[],
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ): (T & { eligible: boolean; requirementTree?: string })[] {
   if (candidates.length === 0) return [];
   return candidates.map((candidate) => {
@@ -161,7 +161,7 @@ export function checkAbilityIncrease(isAbilityIncreaseLevel: boolean, abilityId:
 
 /** Throws when a submitted selection isn't the character's ruleset's, or isn't linked to the pool it's picked under. */
 export function checkSelections(
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   skills: Record<string, number>,
   feats: Record<string, string[]>,
   powers: Record<string, string[]>,
@@ -185,7 +185,7 @@ export async function validateAndFetchLevelSelections(
     skills: Record<string, number>;
     feats: Record<string, string[]>;
     powers: Record<string, string[]>;
-    rulesetData: CachedRulesetData;
+    rulesetData: RulesetData;
   },
 ) {
   const { klass, klassLevel, otherLevels, hp, abilityId, skills, feats, powers, rulesetData } = params;

@@ -5,7 +5,8 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 
 import CowDataBuilder, { buildSourceChain, type RulesetSources } from "./CowDataBuilder.ts";
 import { fetchRulesetRawData, type RulesetRawData } from "./rawData.ts";
-import RulesetComposition, { type CachedRulesetData } from "./RulesetComposition.ts";
+import RulesetComposition from "./RulesetComposition.ts";
+import type RulesetData from "./RulesetData.ts";
 
 type TargetPathsAndLabels = { paths: TargetPath[]; segmentLabels: Record<string, string> };
 
@@ -66,7 +67,7 @@ class RulesetCache {
   }
 
   /** A ruleset's view: its own rows and its source chain's, composed by its copy-on-write data. */
-  async getData(ruleset: RulesetSources, campaignId?: string): Promise<CachedRulesetData> {
+  async getData(ruleset: RulesetSources, campaignId?: string): Promise<RulesetData> {
     const cowData = await this.getCowData(ruleset);
     const chain = await Promise.all([
       this.getRawData(ruleset.id, campaignId),

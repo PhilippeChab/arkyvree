@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type { FeatWithPMR, KlassLevelWithPMR } from "@/server/rulesets/dnd3.5/DetailedCharacterDataLoader.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
@@ -209,7 +209,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     }
 
     fetchBonusCasterLevelData(
-      rulesetData: CachedRulesetData,
+      rulesetData: RulesetData,
       klassLevels: KlassLevelWithPMR[],
       feats: FeatWithPMR[],
       characterLevels: CharacterLevel[],

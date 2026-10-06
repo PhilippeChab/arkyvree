@@ -4,7 +4,7 @@
  * - getLevelUpPreview — computes merged pools, per-level skill points, and slot distributions for the level-up wizard
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
@@ -33,7 +33,7 @@ function abilityIncreaseLevels(rulesetModule: RulesetModule, existingCount: numb
 }
 
 /** The powers the planned class levels grant, each saying whether it's free. */
-function autoGrantedPowers(rulesetData: CachedRulesetData, klassLevelIds: string[]) {
+function autoGrantedPowers(rulesetData: RulesetData, klassLevelIds: string[]) {
   return klassLevelIds
     .flatMap((klassLevelId) => rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevelId) ?? [])
     .map((rec) => ({ ...rec.powersInRule, free: rec.free }));
@@ -43,7 +43,7 @@ function autoGrantedPowers(rulesetData: CachedRulesetData, klassLevelIds: string
  * The planned levels' pools and what's left to pick in them: an unleveled pool is a feat pool, and a power pool too
  * when it has powers (shared); a leveled one is a power pool.
  */
-function splitPools(aptitudesInstance: DetailedCharacterAptitudes, rulesetData: CachedRulesetData) {
+function splitPools(aptitudesInstance: DetailedCharacterAptitudes, rulesetData: RulesetData) {
   const powerPools: PowerPools = aptitudesInstance.extractPowerPools();
   const nonLeveledAptitudeIds = aptitudesInstance.getNonLeveledAptitudeIds();
   const sharedAptitudeIds = new Set(
@@ -77,7 +77,7 @@ function splitPools(aptitudesInstance: DetailedCharacterAptitudes, rulesetData: 
  */
 async function planSkills(
   levelUpProjector: Dnd35LevelUpProjector,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
   existingLevelCount: number,
   plannedLevelCount: number,

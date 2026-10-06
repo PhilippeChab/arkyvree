@@ -7,7 +7,7 @@
  * - getAttributeSlots — ability score increase availability
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -38,7 +38,7 @@ type LevelProjection = {
 };
 
 /** A projected character's spell pools, without the non-leveled aptitudes no spell belongs to (feat pools). */
-function spellPools(aptitudes: DetailedCharacterAptitudes, rulesetData: CachedRulesetData) {
+function spellPools(aptitudes: DetailedCharacterAptitudes, rulesetData: RulesetData) {
   const pools = aptitudes.extractPowerPools();
   for (const aptitudeId of aptitudes.getNonLeveledAptitudeIds()) {
     if (!rulesetData.aptitudeIdsByHavingPowers.has(aptitudeId)) delete pools[aptitudeId];

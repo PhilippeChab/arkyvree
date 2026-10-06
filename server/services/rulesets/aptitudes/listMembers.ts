@@ -5,10 +5,10 @@
  * stored links.
  */
 
-import type { CachedRulesetData } from "@/server/cache/index.ts";
+import type { RulesetData } from "@/server/cache/index.ts";
 
 /** The ids of the ruleset's feats on a list. */
-export function getListFeatIds(rulesetData: CachedRulesetData, aptitudeId: string): string[] {
+export function getListFeatIds(rulesetData: RulesetData, aptitudeId: string): string[] {
   const listId = rulesetData.canonicalize(aptitudeId);
   return rulesetData.feats
     .filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === listId))
@@ -16,10 +16,7 @@ export function getListFeatIds(rulesetData: CachedRulesetData, aptitudeId: strin
 }
 
 /** The ids of the ruleset's spells on a list, at a level when one is given (on any list when none is). */
-export function getListPowerIds(
-  rulesetData: CachedRulesetData,
-  where: { aptitudeId?: string; level?: number },
-): string[] {
+export function getListPowerIds(rulesetData: RulesetData, where: { aptitudeId?: string; level?: number }): string[] {
   const listId = where.aptitudeId === undefined ? undefined : rulesetData.canonicalize(where.aptitudeId);
   return rulesetData.powers
     .filter((power) =>

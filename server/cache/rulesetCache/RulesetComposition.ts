@@ -2,124 +2,16 @@ import type { CowData } from "@/server/database/index.ts";
 import type {
   Aptitude,
   FeatWithAptitudes,
-  Item,
   Klass,
-  KlassLevel,
-  KlassLevelFeat,
-  KlassLevelPower,
-  KlassLevelSave,
-  KlassSkill,
-  Language,
-  Mechanic,
   Modifier,
   PowerWithAptitudes,
   Property,
-  Race,
   Requirement,
-  RulesetAbility,
-  RulesetSave,
-  Skill,
 } from "@/shared/relations.ts";
 
 import { type RulesetRawData } from "./rawData.ts";
-import { buildById, buildCustomizationIndices, buildKlassIndices, buildSlugIndices } from "./rulesetIndices.ts";
+import RulesetData, { type RulesetLists } from "./RulesetData.ts";
 import { mergeSiblingRequirements } from "./siblingRequirements.ts";
-
-export interface CachedRulesetData {
-  abilities: RulesetAbility[];
-  saves: RulesetSave[];
-  skills: Skill[];
-  feats: FeatWithAptitudes[];
-  powers: PowerWithAptitudes[];
-  aptitudes: Aptitude[];
-  klasses: Klass[];
-  races: Race[];
-  languages: Language[];
-  items: Item[];
-  mechanics: Mechanic[];
-  klassLevels: KlassLevel[];
-  klassSkills: KlassSkill[];
-  klassLevelFeats: KlassLevelFeat[];
-  klassLevelPowers: KlassLevelPower[];
-  klassLevelSaves: KlassLevelSave[];
-  leveledAptitudeIds: Set<string>;
-
-  // O(1) lookup indices built from the arrays above
-  // Consumers that used to do `Feats.findOne(db, {id})` / `Properties.findMany(db, ...)`
-  // can read directly from these maps (cache is always warm on character/level paths).
-  abilitiesById: Map<string, RulesetAbility>;
-  savesById: Map<string, RulesetSave>;
-  skillsById: Map<string, Skill>;
-  featsById: Map<string, FeatWithAptitudes>;
-  powersById: Map<string, PowerWithAptitudes>;
-  aptitudesById: Map<string, Aptitude>;
-  klassesById: Map<string, Klass>;
-  racesById: Map<string, Race>;
-  languagesById: Map<string, Language>;
-  itemsById: Map<string, Item>;
-  mechanicsById: Map<string, Mechanic>;
-  klassLevelsById: Map<string, KlassLevel>;
-  /** Key: `${klassId}:${level}`. */
-  klassLevelByKlassAndLevel: Map<string, KlassLevel>;
-  /** klassId → klassLevels[] sorted by level. */
-  klassLevelsByKlassId: Map<string, KlassLevel[]>;
-  /** entityId → properties[]. */
-  propertiesByEntity: Map<string, Property[]>;
-  /** entityType → properties[] (e.g. "items" → all item properties across the chain).
-   *  Covers the "group properties by entity type" pattern TargetPaths needs. */
-  propertiesByEntityType: Map<string, Property[]>;
-  /** klassLevelId → klassLevelFeats[]. */
-  klassLevelFeatsByKlassLevel: Map<string, KlassLevelFeat[]>;
-  /** klassLevelId → klassLevelPowers[]. */
-  klassLevelPowersByKlassLevel: Map<string, KlassLevelPower[]>;
-  /** klassLevelId → klassLevelFeats joined with their feats. */
-  klassLevelFeatsWithFeatsByKlassLevel: Map<string, (KlassLevelFeat & { featsInRule: FeatWithAptitudes })[]>;
-  /** klassLevelId → klassLevelPowers joined with their powers. */
-  klassLevelPowersWithPowersByKlassLevel: Map<string, (KlassLevelPower & { powersInRule: PowerWithAptitudes })[]>;
-  /** klassId → klassSkills joined with their skills. */
-  klassSkillsWithSkillsByKlass: Map<string, (KlassSkill & { skillsInRule: Skill })[]>;
-  /** Aptitude IDs that have at least one power linked in powers_aptitudes. */
-  aptitudeIdsByHavingPowers: Set<string>;
-  /** Modifier rows indexed by sourceId. */
-  modifiersBySource: Map<string, Modifier[]>;
-  /** Modifier rows indexed by id. */
-  modifiersById: Map<string, Modifier>;
-  /** Requirement rows (non-sibling) indexed by entityId. */
-  requirementsByEntity: Map<string, Requirement[]>;
-  /** Reverse property index: `${entityType}:${type}:${value}` → entity IDs
-   *  matching that property.
-   *  Stays ruleset-agnostic — any (entityType, type, value) triple can be looked up. */
-  entityIdsByPropertyLookup: Map<string, string[]>;
-  /** klassId → highest `level` among that klass's klass levels (the level-up class list). */
-  maxLevelByKlassId: Map<string, number>;
-  /** klassId → klassSkills[] (bare rows, unjoined).
-   *  Complements `klassSkillsWithSkillsByKlass` for callers that only need the link rows. */
-  klassSkillsByKlassId: Map<string, KlassSkill[]>;
-  /** klassLevelId → klassLevelSaves[]. */
-  klassLevelSavesByKlassLevelId: Map<string, KlassLevelSave[]>;
-  /** `stripSeparators(aptitude.name)` → aptitudeId. Killed off 4+ inline rebuilds
-   *  of the same map across services (finalize, distribution, the pick queries, loader). */
-  aptitudeIdBySlug: Map<string, string>;
-  /** `toSpellPossessionSlug(aptitude.name)` → aptitudeId. Used by the "set powers.X.<apt>.known"
-   *  modifier scan in the virtually-possessed-power resolution path. */
-  aptitudeIdBySpellSlug: Map<string, string>;
-  /** `stripSeparators(feat.name)` → featId (first match wins, matching the original `.find`).
-   *  Used by the "set feats.<slug>.possessed" modifier scan. */
-  featIdBySlug: Map<string, string>;
-  /** `stripSeparators(power.name)` → powerIds[] (multiple powers can share a slug).
-   *  Resolve via `powersById` — mirrors the `featIdBySlug`/`featsById` pairing.
-   *  Used by the "set powers.<slug>.<apt>.known" modifier scan. */
-  powerIdsBySlug: Map<string, string[]>;
-  /** Resolve a stored (pre-COW) entity id to its post-COW form. Returns the
-   *  input unchanged if it isn't in the override map. Use this for Set/array
-   *  comparison patterns where the `.get`/`.has` auto-resolution on the id
-   *  Maps above doesn't apply. */
-  canonicalize: (id: string) => string;
-  /** COW context. Most consumers can ignore this and let the id Maps auto-
-   *  resolve, but lineage/sibling-aware code can reach it through here
-   *  without taking `cowData` as a separate parameter. */
-  cow: CowData;
-}
 
 /**
  * A ruleset's view: its own rows and its source chain's (`chain`, the ruleset's first), composed by its copy-on-write
@@ -203,7 +95,7 @@ export default class RulesetComposition {
   }
 
   /** The composed rows, before the lookup indices: each list across the chain, COW-resolved. */
-  private composeLists() {
+  private composeLists(): RulesetLists {
     // A row is left out when a copy overrides it or it's a sibling loser. A loser's customizations merge into its winner
     // (the customization steps below skip only the overridden ones), and every stored id resolves to the winner.
     const rowsOf = <T extends { id: string } & Record<string, unknown>>(pick: (raw: RulesetRawData) => T[]) =>
@@ -420,90 +312,7 @@ export default class RulesetComposition {
     }
   }
 
-  /**
-   * Wraps a string-keyed Map so `.get(key)` and `.has(key)` look the key up as `resolveKey` maps it: consumers can pass
-   * either a pre-COW (stored) id or a post-COW id — both land on the post-COW entity. `.size`, `.values()`, `.entries()`,
-   * etc. behave normally (no alias duplication). Returns the original Map when the scope resolves no id (no allocation
-   * cost).
-   */
-  private resolving<V>(map: Map<string, V>, resolveKey: (key: string) => string): Map<string, V> {
-    if (this.cow.isEmpty()) return map;
-    return new Proxy(map, {
-      get(target, prop) {
-        if (prop === "get") {
-          return (key: string) => target.get(resolveKey(key));
-        }
-        if (prop === "has") {
-          return (key: string) => target.has(resolveKey(key));
-        }
-        const value = Reflect.get(target, prop, target);
-        return typeof value === "function" ? value.bind(target) : value;
-      },
-    });
-  }
-
-  /**
-   * A Map keyed by `${id}:${rest}` composites (e.g. `klassLevelByKlassAndLevel`'s `${klassId}:${level}` keys): the id
-   * portion before the first `:` resolves through `CowData.resolve`, the rest stays. So a caller passing a pre-COW
-   * klassId still lands on the right klass level.
-   */
-  private resolvingCompositeKeys<V>(map: Map<string, V>): Map<string, V> {
-    return this.resolving(map, (key) => {
-      const sep = key.indexOf(":");
-      if (sep === -1) return key;
-      return this.cow.resolve(key.slice(0, sep)) + key.slice(sep);
-    });
-  }
-
-  /** A Map keyed by entity ids, whose `.get` and `.has` take a stored (pre-COW) id. */
-  private resolvingIds<V>(map: Map<string, V>): Map<string, V> {
-    return this.resolving(map, (key) => this.cow.resolve(key));
-  }
-
-  build(): CachedRulesetData {
-    const { properties, modifiers, requirements, ...rows } = this.composeLists();
-    const featsById = buildById(rows.feats);
-    const powersById = buildById(rows.powers);
-    const skillsById = buildById(rows.skills);
-    const klass = buildKlassIndices(rows, featsById, powersById, skillsById);
-    const customizations = buildCustomizationIndices(properties, modifiers, requirements);
-
-    // Wrap every id-keyed Map so `.get(storedId)` / `.has(storedId)` auto-resolve pre-COW ids to the post-COW entity.
-    // Consumers don't need to thread cowData through or remember to call canonicalize for the common lookup path.
-    // Composite-key Maps (e.g. klassLevelByKlassAndLevel) resolve the id portion before the first `:`.
-    return {
-      ...rows,
-      abilitiesById: this.resolvingIds(buildById(rows.abilities)),
-      savesById: this.resolvingIds(buildById(rows.saves)),
-      skillsById: this.resolvingIds(skillsById),
-      featsById: this.resolvingIds(featsById),
-      powersById: this.resolvingIds(powersById),
-      aptitudesById: this.resolvingIds(buildById(rows.aptitudes)),
-      klassesById: this.resolvingIds(buildById(rows.klasses)),
-      racesById: this.resolvingIds(buildById(rows.races)),
-      languagesById: this.resolvingIds(buildById(rows.languages)),
-      itemsById: this.resolvingIds(buildById(rows.items)),
-      mechanicsById: this.resolvingIds(buildById(rows.mechanics)),
-      klassLevelsById: this.resolvingIds(buildById(rows.klassLevels)),
-      klassLevelByKlassAndLevel: this.resolvingCompositeKeys(klass.klassLevelByKlassAndLevel),
-      klassLevelsByKlassId: this.resolvingIds(klass.klassLevelsByKlassId),
-      propertiesByEntity: this.resolvingIds(customizations.propertiesByEntity),
-      propertiesByEntityType: customizations.propertiesByEntityType,
-      klassLevelFeatsByKlassLevel: this.resolvingIds(klass.klassLevelFeatsByKlassLevel),
-      klassLevelPowersByKlassLevel: this.resolvingIds(klass.klassLevelPowersByKlassLevel),
-      klassLevelFeatsWithFeatsByKlassLevel: this.resolvingIds(klass.klassLevelFeatsWithFeatsByKlassLevel),
-      klassLevelPowersWithPowersByKlassLevel: this.resolvingIds(klass.klassLevelPowersWithPowersByKlassLevel),
-      klassSkillsWithSkillsByKlass: this.resolvingIds(klass.klassSkillsWithSkillsByKlass),
-      modifiersBySource: this.resolvingIds(customizations.modifiersBySource),
-      modifiersById: customizations.modifiersById,
-      requirementsByEntity: this.resolvingIds(customizations.requirementsByEntity),
-      entityIdsByPropertyLookup: customizations.entityIdsByPropertyLookup,
-      maxLevelByKlassId: this.resolvingIds(klass.maxLevelByKlassId),
-      klassSkillsByKlassId: this.resolvingIds(klass.klassSkillsByKlassId),
-      klassLevelSavesByKlassLevelId: this.resolvingIds(klass.klassLevelSavesByKlassLevelId),
-      ...buildSlugIndices(rows.aptitudes, rows.feats, rows.powers),
-      canonicalize: (id: string) => this.cow.resolve(id),
-      cow: this.cow,
-    };
+  build(): RulesetData {
+    return new RulesetData(this.composeLists(), this.cow);
   }
 }

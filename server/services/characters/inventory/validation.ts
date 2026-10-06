@@ -6,7 +6,7 @@
  * - validateCharges / validateEquipping — what adding or updating an inventory entry checks
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterInventory } from "@/server/repositories/index.ts";
@@ -31,7 +31,7 @@ async function validateEquipmentSlot(
   location: ItemLocation,
   weaponSet: number | null,
   ruleset: Ruleset,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ) {
   // The other entries: the item's own other ones count (a dagger in the other hand), the one being edited doesn't
   const inventory = await CharacterInventory.findMany(tx, { characterId });
@@ -63,7 +63,7 @@ async function validateItemRequirements(
   characterRecord: CharacterRecord,
   item: { id: string; type: string | null; sourceItemId: string | null },
   ruleset: Ruleset,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ) {
   // Weapons are exempt — non-proficiency applies a -4 penalty instead of blocking equip
   if (item.type === "Weapon") return;
@@ -96,7 +96,7 @@ async function validateWeaponInOneHand(
   item: { id: string; type: string | null; sourceItemId: string | null },
   location: ItemLocation,
   ruleset: Ruleset,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ) {
   if (item.type !== "Weapon" || !isHandLocation(location) || location === "Two Handed") return;
   const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
@@ -142,7 +142,7 @@ export async function validateEquipping(
   weaponSet: number | null,
   force: boolean,
   ruleset: Ruleset,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ) {
   if (isHandLocation(location) && weaponSet === null) {
     throw new BadRequestError("A weapon set is required when equipping to a hand slot");

@@ -6,7 +6,7 @@
  * - distributePoolSelections — distributes pooled user selections (skills, feats, powers) into per-level payloads
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { Dnd35LevelsHooks, type Dnd35LevelUpProjector } from "@/server/rulesets/dnd3.5/index.ts";
 import { ALLOWED_ALL } from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
 import { parseLiteralValue } from "@/server/rulesets/universal/literalValue.ts";
@@ -265,7 +265,7 @@ function fillSlots(
  * general feat every third character level.
  */
 function levelDeltas(
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   klassLevelId: string,
   autoFeatRecords: { featsInRule: { id: string } }[],
   charLevel: number,
@@ -298,7 +298,7 @@ function levelDeltas(
  * The spell level of each of these powers in each pool it's linked to, by `powerId:aptitudeId`: a spell can be at
  * different levels in different pools (Wizard 1, Bard 0).
  */
-export function buildPowerLevelLookup(rulesetData: CachedRulesetData, powerIds: string[]) {
+export function buildPowerLevelLookup(rulesetData: RulesetData, powerIds: string[]) {
   const lookup = new Map<string, number | null>();
   for (const powerId of powerIds) {
     const power = rulesetData.powersById.get(powerId);
@@ -343,7 +343,7 @@ export function buildSkillContexts(
  * full character build and added to the first level's delta.
  */
 export function computePerLevelAptitudeSlots(
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   klassLevelIds: string[],
   allAutoGrantedFeatRecords: { aptitudeId: string; featsInRule: { id: string } }[][],
   featPoolIds: string[],
@@ -428,7 +428,7 @@ export function distributePoolSelections(
  * goes with the first-pass feat that targets it.
  */
 export function getDeferredAptitudeSources(
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   feats: Record<string, string[]>,
   perLevelFeatSlots: FeatSlots,
 ) {

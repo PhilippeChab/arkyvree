@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 
 /**
  * Each character's classes, each at the highest level the character has in it: what a character card shows. Names come
@@ -8,7 +8,7 @@ import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
 export function getClassLevelsByCharacter(
   characters: { id: string; rulesetId: string }[],
   levels: { characterId: string; klassLevelId: string }[],
-  rulesetDataByRulesetId: Map<string, CachedRulesetData>,
+  rulesetDataByRulesetId: Map<string, RulesetData>,
 ): Map<string, { klass: string; level: number }[]> {
   const levelsByCharacter = new Map<string, Map<string, number>>();
   for (const level of levels) {

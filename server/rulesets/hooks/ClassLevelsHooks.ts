@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 
 import type { PropertyRecord } from "./SkillsHooks.ts";
@@ -20,10 +20,7 @@ export interface ClassLevelsHooks {
    * the others by level; none when they give none.
    */
   getSpellListIds(
-    rulesetData: Pick<
-      CachedRulesetData,
-      "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug"
-    >,
+    rulesetData: Pick<RulesetData, "klassesById" | "klassLevelsByKlassId" | "modifiersBySource" | "aptitudeIdBySlug">,
     klassId: string,
   ): string[];
 

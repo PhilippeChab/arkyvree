@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import type {
   FeatWithPMR,
@@ -230,7 +230,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       }
     }
 
-    fetchAptitudePowerData(rulesetData: CachedRulesetData, powers: PowerWithPMR[]) {
+    fetchAptitudePowerData(rulesetData: RulesetData, powers: PowerWithPMR[]) {
       const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels();
       if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
 

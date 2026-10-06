@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/index.ts";
+import type { RulesetData } from "@/server/cache/index.ts";
 import { refreshEntityData } from "@/server/cache/rulesetCache/index.ts";
 import { type CowData, db, type Db } from "@/server/database/index.ts";
 import {
@@ -59,7 +59,7 @@ interface SharedCharacterData {
   player: Player | undefined;
   campaign: Campaign | undefined;
   cowData: CowData;
-  rulesetData: CachedRulesetData;
+  rulesetData: RulesetData;
   characterAbilityRecords: Awaited<ReturnType<typeof CharacterAbilities.findMany>>;
   race: Race;
   characterLanguages: Awaited<ReturnType<typeof CharacterLanguages.findMany>>;
@@ -129,7 +129,7 @@ export default class DetailedCharacterDataLoader {
       feats: FeatWithPMR[];
       powers: PowerWithPMR[];
     },
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     extraRequirements: Requirement[],
   ) {
     const modifiers: Modifier[] = [...parts.characterSourcedModifiers, ...parts.race.modifiers];
@@ -179,7 +179,7 @@ export default class DetailedCharacterDataLoader {
   /** The feats: picked and given (deduped), then projected, in character-level order; and the given per aptitude. */
   private composeFeats(
     picks: Awaited<ReturnType<DetailedCharacterDataLoader["fetchPicks"]>>,
-    rulesetFeats: CachedRulesetData["feats"],
+    rulesetFeats: RulesetData["feats"],
     projectedData: Dnd35ProjectedCharacterData | undefined,
     allCharacterLevels: CharacterLevel[],
     resolve: Resolve,
@@ -236,7 +236,7 @@ export default class DetailedCharacterDataLoader {
   /** The character's skills, feats and powers: saved picks and grants, COW-resolved, then the projected ones. */
   private composePicks(
     picks: Awaited<ReturnType<DetailedCharacterDataLoader["fetchPicks"]>>,
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     projectedData: Dnd35ProjectedCharacterData | undefined,
     allCharacterLevels: CharacterLevel[],
     resolve: Resolve,
@@ -256,7 +256,7 @@ export default class DetailedCharacterDataLoader {
    */
   private composePowers(
     picks: Awaited<ReturnType<DetailedCharacterDataLoader["fetchPicks"]>>,
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     projectedData: Dnd35ProjectedCharacterData | undefined,
     allCharacterLevels: CharacterLevel[],
     resolve: Resolve,
@@ -298,7 +298,7 @@ export default class DetailedCharacterDataLoader {
   private featsWithPMR(
     allFeats: ReturnType<DetailedCharacterDataLoader["composeFeats"]>["allFeats"],
     virtuallyPossessedFeatIds: string[],
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ): FeatWithPMR[] {
     const realFeatsWithPMR: FeatWithPMR[] = allFeats.map((feat) => ({
       ...feat,
@@ -325,7 +325,7 @@ export default class DetailedCharacterDataLoader {
   }
 
   /** The D&D 3.5 reading of the cache's raw property rows: each skill's flags, and the skill-point ability. */
-  private interpretProperties(rulesetData: CachedRulesetData, resolveId: (id: string) => string) {
+  private interpretProperties(rulesetData: RulesetData, resolveId: (id: string) => string) {
     const skillProperties = readSkillFlags(rulesetData.propertiesByEntityType.get("skills") ?? []);
 
     // The skill-point-ability property is attached to whichever ruleset in the
@@ -343,10 +343,7 @@ export default class DetailedCharacterDataLoader {
    * are the proficiency with it: its template's, or its own when it is one. Its own on top of a template, or a plain
    * item's, are its other requirements, which its modifiers need
    */
-  private inventoryWithPMR(
-    inventory: SharedCharacterData["inventory"],
-    rulesetData: CachedRulesetData,
-  ): InventoryEntry[] {
+  private inventoryWithPMR(inventory: SharedCharacterData["inventory"], rulesetData: RulesetData): InventoryEntry[] {
     return inventory.map((inv) => {
       const item = inv.itemsInRule;
       const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
@@ -372,7 +369,7 @@ export default class DetailedCharacterDataLoader {
   }
 
   /** Klass level properties/modifiers/requirements, and each level's bab and skill points. */
-  private klassLevelsWithPMR(klassLevelsRaw: KlassLevel[], rulesetData: CachedRulesetData) {
+  private klassLevelsWithPMR(klassLevelsRaw: KlassLevel[], rulesetData: RulesetData) {
     const klassLevels: KlassLevelWithPMR[] = klassLevelsRaw
       .map((level) => ({
         ...level,
@@ -402,11 +399,7 @@ export default class DetailedCharacterDataLoader {
   }
 
   /** Klass properties (bonus spell ability + caster type). */
-  private klassProperties(
-    klassEntityIds: string[],
-    rulesetData: CachedRulesetData,
-    abilityLookup: Map<string, string>,
-  ) {
+  private klassProperties(klassEntityIds: string[], rulesetData: RulesetData, abilityLookup: Map<string, string>) {
     const klassBonusSpellAbilityMap = new Map<string, string>();
     const klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
     for (const klassId of klassEntityIds) {
@@ -452,7 +445,7 @@ export default class DetailedCharacterDataLoader {
   private powersWithPMR(
     allPowers: ReturnType<DetailedCharacterDataLoader["composePowers"]>["allPowers"],
     virtuallyPossessedPowers: { powerId: string; aptitudeId: string }[],
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ): PowerWithPMR[] {
     const realPowersWithPMR: PowerWithPMR[] = allPowers.map((power) => ({
       ...power,
@@ -484,7 +477,7 @@ export default class DetailedCharacterDataLoader {
   }
 
   /** The race with its properties, modifiers and requirements. */
-  private raceWithPMR(race: Race, rulesetData: CachedRulesetData): RaceWithPMR {
+  private raceWithPMR(race: Race, rulesetData: RulesetData): RaceWithPMR {
     return {
       ...race,
       properties: rulesetData.propertiesByEntity.get(race.id) ?? [],
@@ -546,7 +539,7 @@ export default class DetailedCharacterDataLoader {
   }
 
   /** The ruleset's own lists, as the loaded data carries them. */
-  private rulesetFields(rulesetData: CachedRulesetData) {
+  private rulesetFields(rulesetData: RulesetData) {
     return {
       rulesetAbilities: rulesetData.abilities,
       rulesetSaves: rulesetData.saves,
@@ -568,7 +561,7 @@ export default class DetailedCharacterDataLoader {
     baseModifiers: Modifier[],
     featIds: string[],
     powerIds: string[],
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ) {
     return {
       virtuallyPossessedFeatIds: this.resolvePossessedFeatIds(
@@ -594,7 +587,7 @@ export default class DetailedCharacterDataLoader {
    * scan for "set feats/powers.<slug>.possessed/known" targets). Built by O(entities) map lookups, not an O(all ruleset
    * mods) filter. Then the requirements of the character's own modifiers.
    */
-  private async fetchModifiers(database: Db, rulesetData: CachedRulesetData, sourceIds: string[]) {
+  private async fetchModifiers(database: Db, rulesetData: RulesetData, sourceIds: string[]) {
     const characterSourcedModifiers = await Modifiers.findMany(database, {
       sourceIds: [this.character.id],
     });

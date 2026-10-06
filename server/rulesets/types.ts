@@ -1,6 +1,6 @@
 import type { FC } from "react";
 
-import type { CachedRulesetData } from "@/server/cache/index.ts";
+import type { RulesetData } from "@/server/cache/index.ts";
 import type { CowData, Db } from "@/server/database/index.ts";
 import type { ValidationResult } from "@/server/rulesets/AbstractDetailedCharacter.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
@@ -206,7 +206,7 @@ export interface PreloadedCharacterData extends PreloadedRulesetData {
 export interface PreloadedRulesetData {
   ruleset: Ruleset;
   cowData: CowData;
-  rulesetData: CachedRulesetData;
+  rulesetData: RulesetData;
 }
 
 /**
@@ -266,7 +266,7 @@ export type SkillWithRank = Skill & {
 
 export interface TargetPathsInterface extends TargetPathsTraverser {
   getTargetPathsAndLabels(
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
     kind: "modifier" | "requirement",
   ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>;
   getCategories(): string[];

@@ -12,7 +12,7 @@
  * - buildBaselineAptitudes — the aptitudes of the character as saved, before planned levels
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
 import type { DetailedCharacterInterface, ProjectedCharacterData, RulesetModule } from "@/server/rulesets/types.ts";
@@ -76,7 +76,7 @@ export function buildProjectedFeatsFromPicks(
   selectedFeatPicks: FeatPick[],
   klassLevelId: string,
   projectedCharacterLevelId: string,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ): {
   projectedFeats: NonNullable<ProjectedCharacterData["feats"]>;
   nonStackableFeatIds: string[];
@@ -188,7 +188,7 @@ export function buildProjectedSkillsFromAllocations(
   allocations: { skillId: string; rank: number }[],
   klassLevelId: string,
   characterLevelId: string,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ) {
   if (allocations.length === 0) return [];
 
@@ -220,7 +220,7 @@ export function getLevelIdsFromOnward(
 }
 
 /** Loads modifiers, properties, and requirements for feats so projected data carries full effects. */
-export function loadFeatCustomizations(rulesetData: CachedRulesetData, featIds: string[]) {
+export function loadFeatCustomizations(rulesetData: RulesetData, featIds: string[]) {
   const modifiersMap = new Map<string, Modifier[]>();
   const propertiesMap = new Map<string, Property[]>();
   const requirementsMap = new Map<string, Requirement[]>();
@@ -248,7 +248,7 @@ export function loadFeatCustomizations(rulesetData: CachedRulesetData, featIds: 
 export function projectPlannedLevels(
   characterId: string,
   plannedLevels: { klassLevel: { id: string }; abilityId: string | null }[],
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
 ) {
   const projectedCharacterLevels = plannedLevels.map(({ klassLevel, abilityId }) =>
     buildProjectedCharacterLevel(characterId, klassLevel.id, abilityId),

@@ -8,7 +8,7 @@
  * - getSavedKlassLevel — a saved character level's class level and class, or a 404
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { isSkillSubtypeOf } from "@/server/rulesets/dnd3.5/index.ts";
 
@@ -26,7 +26,7 @@ export function getClassSkillIds(
 }
 
 /** The class's level `level`, in the composed ruleset, or a 404. */
-export function getKlassLevel(rulesetData: CachedRulesetData, klassId: string, level: number) {
+export function getKlassLevel(rulesetData: RulesetData, klassId: string, level: number) {
   const klassLevel = rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
   if (!klassLevel) throw new NotFoundError("Class level not found");
   return klassLevel;
@@ -36,7 +36,7 @@ export function getKlassLevel(rulesetData: CachedRulesetData, klassId: string, l
  * The class skills of planned levels, from their classes (`klassIds`, one per level): each level's, in the ruleset's
  * skill order (what a rank costs at that level), and every planned class's together (the rank cap).
  */
-export function getPlannedClassSkills(rulesetData: CachedRulesetData, klassIds: string[]) {
+export function getPlannedClassSkills(rulesetData: RulesetData, klassIds: string[]) {
   const skills = rulesetData.skills;
   const recordsOf = (klassId: string) => rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [];
   const perLevel = klassIds.map((klassId) => {
@@ -52,7 +52,7 @@ export function getPlannedClassSkills(rulesetData: CachedRulesetData, klassIds: 
  * class isn't the ruleset's (nor from `rulesetIds`, when given) or a player character's, or hasn't that level.
  */
 export function getPlannedKlassLevels(
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   levels: { klassId: string; level: number; abilityId: string | null }[],
   rulesetIds?: Set<string>,
 ) {
@@ -73,7 +73,7 @@ export function getPlannedKlassLevels(
 }
 
 /** A saved character level's class level and class, in the composed ruleset, or a 404. */
-export function getSavedKlassLevel(rulesetData: CachedRulesetData, characterLevel: { klassLevelId: string }) {
+export function getSavedKlassLevel(rulesetData: RulesetData, characterLevel: { klassLevelId: string }) {
   const klassLevel = rulesetData.klassLevelsById.get(characterLevel.klassLevelId);
   if (!klassLevel) {
     throw new NotFoundError("Class level not found");

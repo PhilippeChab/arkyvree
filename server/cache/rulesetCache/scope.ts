@@ -3,7 +3,7 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 
 import RulesetCache from "./RulesetCache.ts";
-import type { CachedRulesetData } from "./RulesetComposition.ts";
+import type RulesetData from "./RulesetData.ts";
 
 /**
  * Scope helper: loads the ruleset and its view (`RulesetCache.getData`), and runs `fn` inside a
@@ -21,7 +21,7 @@ export async function withRulesetScope<T>(
   rulesetId: string,
   fn: (ctx: {
     ruleset: NonNullable<Awaited<ReturnType<typeof Rulesets.findOne>>>;
-    rulesetData: CachedRulesetData;
+    rulesetData: RulesetData;
   }) => Promise<T>,
 ): Promise<T> {
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
@@ -48,10 +48,10 @@ export async function withRulesetScope<T>(
 export async function withRulesetScopes<T>(
   tx: Db,
   rulesetIds: Iterable<string>,
-  fn: (rulesetDataByRulesetId: Map<string, CachedRulesetData>) => Promise<T>,
+  fn: (rulesetDataByRulesetId: Map<string, RulesetData>) => Promise<T>,
 ): Promise<T> {
   const unique = [...new Set(rulesetIds)];
-  const map = new Map<string, CachedRulesetData>();
+  const map = new Map<string, RulesetData>();
   for (const rulesetId of unique) {
     const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
     if (!ruleset) continue;

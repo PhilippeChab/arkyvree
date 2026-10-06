@@ -11,7 +11,7 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import { type SeedContext } from "@/database/seeds/seedContext.ts";
 import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
-import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
@@ -23,7 +23,7 @@ function sortById<T extends { id: string }>(xs: T[]) {
 
 describe("cache join-maps — parity with repository queries", () => {
   let ctx: SeedContext;
-  let rulesetData: CachedRulesetData;
+  let rulesetData: RulesetData;
 
   beforeAll(async () => {
     ctx = await getSeedCtx();

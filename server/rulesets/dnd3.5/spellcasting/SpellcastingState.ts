@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { collectClassLists, JOIN_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type DetailedCharacterAbilities from "@/server/rulesets/universal/DetailedCharacterAbilities.ts";
 import type DetailedCharacterAptitudes from "@/server/rulesets/universal/DetailedCharacterAptitudes.ts";
@@ -121,7 +121,7 @@ export default abstract class SpellcastingState {
   }
 
   /** Reads each class's spell lists off the ruleset, its levels' slots (`collectClassLists`): `spellListsOf`'s. */
-  loadClassLists(rulesetData: Pick<CachedRulesetData, "klassLevels" | "modifiersBySource">) {
+  loadClassLists(rulesetData: Pick<RulesetData, "klassLevels" | "modifiersBySource">) {
     this.classListsByKlassId = collectClassLists(rulesetData);
   }
 }

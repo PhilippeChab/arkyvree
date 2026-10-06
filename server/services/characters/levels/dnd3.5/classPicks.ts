@@ -2,7 +2,7 @@
  * Classes the character can take next, with their eligibility.
  */
 
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Klasses } from "@/server/repositories/index.ts";
@@ -26,11 +26,7 @@ import {
 type KlassWithNextLevel = { klass: Klass; nextKlassLevel: KlassLevel };
 
 /** The classes the character can take another level of, each with that level. */
-function klassesWithNextLevel(
-  klasses: Klass[],
-  characterKlassLevelMap: Map<string, number>,
-  rulesetData: CachedRulesetData,
-) {
+function klassesWithNextLevel(klasses: Klass[], characterKlassLevelMap: Map<string, number>, rulesetData: RulesetData) {
   // Next klass level per class (served from cache — no DB)
   const nextKlassLevelMap = new Map<string, KlassLevel>();
   for (const klass of klasses) {
@@ -50,7 +46,7 @@ function klassesWithNextLevel(
 function pendingProjection(
   characterId: string,
   pendingLevels: ReturnType<typeof buildPendingCharacterLevels>,
-  rulesetData: CachedRulesetData,
+  rulesetData: RulesetData,
   pendingLevelKlassLevelIds?: string[],
   pendingFeatPicks?: FeatPick[],
   pendingSkillAllocations?: { skillId: string; rank: number }[],
@@ -98,7 +94,7 @@ function pendingProjection(
 }
 
 /** Each candidate's requirement groups, its class's own and its next level's, by its next level; none without any. */
-function requirementsByNextLevel(candidates: KlassWithNextLevel[], rulesetData: CachedRulesetData) {
+function requirementsByNextLevel(candidates: KlassWithNextLevel[], rulesetData: RulesetData) {
   const requirementsByKlassLevel = new Map<string, Requirement[][]>();
   for (const k of candidates) {
     const groups = [k.klass.id, k.nextKlassLevel.id]
@@ -149,9 +145,6 @@ export async function getAvailableKlasses(
       ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds, pendingLevelAbilityIds)
       : [];
 
-    // Max level per class — pre-indexed on rulesetData.
-    const maxLevelMap = rulesetData.maxLevelByKlassId;
-
     const candidates = klassesWithNextLevel(klassPage.items, characterKlassLevelMap, rulesetData);
     if (candidates.length === 0) {
       return { items: [], page: klassPage.page, nextPage: klassPage.nextPage };
@@ -200,7 +193,7 @@ export async function getAvailableKlasses(
       ...withoutRequirements.map((k) => ({
         ...k.klass,
         nextLevel: k.nextKlassLevel.level,
-        maxLevel: maxLevelMap.get(k.klass.id) ?? k.nextKlassLevel.level,
+        maxLevel: rulesetData.klassLevelsByKlassId.get(k.klass.id)?.at(-1)?.level ?? k.nextKlassLevel.level,
         eligible: true,
         requirementTree: undefined as string | undefined,
       })),
@@ -210,7 +203,7 @@ export async function getAvailableKlasses(
         return {
           ...k.klass,
           nextLevel: k.nextKlassLevel.level,
-          maxLevel: maxLevelMap.get(k.klass.id) ?? k.nextKlassLevel.level,
+          maxLevel: rulesetData.klassLevelsByKlassId.get(k.klass.id)?.at(-1)?.level ?? k.nextKlassLevel.level,
           eligible,
           requirementTree:
             !eligible && groups && detailedCharacter

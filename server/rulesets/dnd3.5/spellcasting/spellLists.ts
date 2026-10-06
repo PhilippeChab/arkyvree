@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 
 /** A spell list whose spells join the list of the class that gives it, as a cleric's domain does: `aptitudes.<list>.joinsclasslist`. */
 export const JOIN_TARGET = /^aptitudes\.([^.]+)\.joinsclasslist$/;
@@ -8,7 +8,7 @@ export const SLOT_TARGET = /^aptitudes\.([^.]+)\.\d+\.(?:uses|allowed)$/;
 
 /** The spell lists the ruleset's class levels give slots in, by aptitude id: each a class's own (`collectClassLists`). */
 export function collectClassListIds(
-  rulesetData: Pick<CachedRulesetData, "klassLevels" | "modifiersBySource" | "aptitudeIdBySlug">,
+  rulesetData: Pick<RulesetData, "klassLevels" | "modifiersBySource" | "aptitudeIdBySlug">,
 ): Set<string> {
   const ids = new Set<string>();
   for (const lists of collectClassLists(rulesetData).values()) {
@@ -27,7 +27,7 @@ export function collectClassListIds(
 export function collectClassLists({
   klassLevels,
   modifiersBySource,
-}: Pick<CachedRulesetData, "klassLevels" | "modifiersBySource">): Map<string, Set<string>> {
+}: Pick<RulesetData, "klassLevels" | "modifiersBySource">): Map<string, Set<string>> {
   const listsByKlassId = new Map<string, Set<string>>();
   for (const klassLevel of klassLevels) {
     for (const modifier of modifiersBySource.get(klassLevel.id) ?? []) {
@@ -47,7 +47,7 @@ export function collectClassLists({
  * class's). Their spells come with the feat, never learned; their slots follow the feat's class's spell levels.
  */
 export function collectFeatListIds(
-  rulesetData: Pick<CachedRulesetData, "feats" | "klassLevels" | "modifiersBySource" | "aptitudeIdBySlug">,
+  rulesetData: Pick<RulesetData, "feats" | "klassLevels" | "modifiersBySource" | "aptitudeIdBySlug">,
 ): Set<string> {
   const { feats, modifiersBySource, aptitudeIdBySlug } = rulesetData;
   const classListIds = collectClassListIds(rulesetData);

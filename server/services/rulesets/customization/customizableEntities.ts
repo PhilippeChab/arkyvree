@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -29,7 +29,7 @@ export async function checkCustomizedEntity(customization: Modifier | Requiremen
 export async function getCustomizableEntityName(
   entityId: string,
   entityType: string,
-  rulesetData?: CachedRulesetData,
+  rulesetData?: RulesetData,
 ): Promise<string> {
   let name: string | undefined;
 

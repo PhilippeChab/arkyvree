@@ -1,4 +1,4 @@
-import type { CachedRulesetData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
 import { KLASS_LEVEL_SKILL_POINTS, SPELL_SCHOOL, WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
@@ -15,7 +15,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
    * Each planned level's points per level before the minimum, in the batch's order: its class's and the skill point
    * ability's modifier.
    */
-  computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: CachedRulesetData): number[] {
+  computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: RulesetData): number[] {
     const skillPointsByKlassLevelId = new Map<string, number>();
     for (const klassLevelId of klassLevelIds) {
       const props = rulesetData.propertiesByEntity.get(klassLevelId);
@@ -57,7 +57,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
   async computeSkillPointsPerLevel(
     klassLevelIds: string[],
     existingLevelCount: number,
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ): Promise<number[]> {
     const { bonusPerLevel } = this.getSkillPointBases();
     return this.computeSkillPointBasesPerLevel(klassLevelIds, rulesetData).map((points, i) =>
@@ -97,7 +97,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     characterLevels: { id: string; klassLevelId: string }[],
     selectedFeatProperties: { type: string; value: string }[],
     clientExcludeSchools: string[],
-    rulesetData: CachedRulesetData,
+    rulesetData: RulesetData,
   ): Promise<string[]> {
     const aptitude = rulesetData.aptitudesById.get(aptitudeId);
     if (aptitude?.name !== "Wizard Spells") return [];
