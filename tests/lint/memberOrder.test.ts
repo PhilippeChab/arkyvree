@@ -362,7 +362,7 @@ describe("member order", () => {
     );
     expect(fs.readFileSync(declarations, "utf8")).toBe("export function a(): void;\nexport function b(): void;\n");
     expect((await runOxlint(["-f", "unix", "-c", config, dir])).stdout).toContain(
-      "Functions that call each other (y, x): untangle them, so the file reads bottom-up.",
+      "Functions that call each other (x, y): untangle them, so the file reads bottom-up.",
     );
     fs.rmSync(dir, { recursive: true });
   });
