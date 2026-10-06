@@ -11,6 +11,9 @@ export const idParam = z.object({ id: z.string().uuid() });
 /** A route's `:characterId` param */
 export const characterIdParam = z.object({ characterId: z.string().uuid() });
 
+/** A contributor route's `:id` (the ruleset or character) and `:contributorId` */
+export const contributorParams = idParam.extend({ contributorId: z.string().uuid() });
+
 /** Standard orderDir */
 export const orderDirAsc = z.enum(["asc", "desc"]).default("asc");
 export const orderDirDesc = z.enum(["asc", "desc"]).default("desc");

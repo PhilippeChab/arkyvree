@@ -3,8 +3,12 @@ import { z } from "zod";
 
 import { zValidator } from "@/server/middlewares/index.ts";
 import type { SessionContext } from "@/server/middlewares/index.ts";
-import { limit, page } from "@/server/routers/api/validation.ts";
+import { classParams } from "@/server/routers/api/rulesets/classes/validation.ts";
+import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+
+const levelParams = classParams.extend({ levelId: z.string().uuid() });
+const classLevelParams = idParam.extend({ classLevelId: z.string().uuid() });
 
 /** A class level's saves (each its base bonus) and granted feats, its create's and its update's. */
 const levelSaves = z.array(z.object({ saveId: z.string().uuid(), base: z.number().int().min(0).max(12) })).optional();
@@ -13,41 +17,25 @@ const levelFeats = z
   .optional();
 
 export default new Hono<SessionContext>()
-  .get(
-    "/:id/class-levels/:classLevelId",
-    zValidator("param", z.object({ id: z.string().uuid(), classLevelId: z.string().uuid() })),
-    async (c) => {
-      const { id, classLevelId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevelWithClassName(id, classLevelId), 200);
-    },
-  )
-  .get(
-    "/:id/classes/:classId/feat-pools",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
-    async (c) => {
-      const { id, classId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevelFeatPools(id, classId), 200);
-    },
-  )
-  .get(
-    "/:id/classes/:classId/levels",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
-    async (c) => {
-      const { id, classId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevels(id, classId), 200);
-    },
-  )
-  .get(
-    "/:id/classes/:classId/levels/:levelId",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid(), levelId: z.string().uuid() })),
-    async (c) => {
-      const { id, classId, levelId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevel(id, classId, levelId), 200);
-    },
-  )
+  .get("/:id/class-levels/:classLevelId", zValidator("param", classLevelParams), async (c) => {
+    const { id, classLevelId } = c.req.valid("param");
+    return c.json(await ClassLevelsService.getClassLevelWithClassName(id, classLevelId), 200);
+  })
+  .get("/:id/classes/:classId/feat-pools", zValidator("param", classParams), async (c) => {
+    const { id, classId } = c.req.valid("param");
+    return c.json(await ClassLevelsService.getClassLevelFeatPools(id, classId), 200);
+  })
+  .get("/:id/classes/:classId/levels", zValidator("param", classParams), async (c) => {
+    const { id, classId } = c.req.valid("param");
+    return c.json(await ClassLevelsService.getClassLevels(id, classId), 200);
+  })
+  .get("/:id/classes/:classId/levels/:levelId", zValidator("param", levelParams), async (c) => {
+    const { id, classId, levelId } = c.req.valid("param");
+    return c.json(await ClassLevelsService.getClassLevel(id, classId, levelId), 200);
+  })
   .get(
     "/:id/classes/:classId/spell-list",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
+    zValidator("param", classParams),
     zValidator(
       "query",
       z.object({
@@ -63,25 +51,17 @@ export default new Hono<SessionContext>()
       return c.json(await ClassLevelsService.getClassSpellList(id, classId, { level, search }, { limit, page }), 200);
     },
   )
-  .get(
-    "/:id/classes/:classId/spells",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
-    async (c) => {
-      const { id, classId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevelSpells(id, classId), 200);
-    },
-  )
-  .get(
-    "/:id/classes/:classId/spells-known",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
-    async (c) => {
-      const { id, classId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.getClassLevelSpellsKnown(id, classId), 200);
-    },
-  )
+  .get("/:id/classes/:classId/spells", zValidator("param", classParams), async (c) => {
+    const { id, classId } = c.req.valid("param");
+    return c.json(await ClassLevelsService.getClassLevelSpells(id, classId), 200);
+  })
+  .get("/:id/classes/:classId/spells-known", zValidator("param", classParams), async (c) => {
+    const { id, classId } = c.req.valid("param");
+    return c.json(await ClassLevelsService.getClassLevelSpellsKnown(id, classId), 200);
+  })
   .post(
     "/:id/classes/:classId/levels",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid() })),
+    zValidator("param", classParams),
     zValidator(
       "json",
       z.object({
@@ -100,7 +80,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/classes/:classId/levels/:levelId",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid(), levelId: z.string().uuid() })),
+    zValidator("param", levelParams),
     zValidator(
       "json",
       z.object({
@@ -116,11 +96,7 @@ export default new Hono<SessionContext>()
       return c.json(await ClassLevelsService.updateClassLevel(c.var.requestSession, id, classId, levelId, body), 200);
     },
   )
-  .delete(
-    "/:id/classes/:classId/levels/:levelId",
-    zValidator("param", z.object({ id: z.string().uuid(), classId: z.string().uuid(), levelId: z.string().uuid() })),
-    async (c) => {
-      const { id, classId, levelId } = c.req.valid("param");
-      return c.json(await ClassLevelsService.deleteClassLevel(c.var.requestSession, id, classId, levelId), 200);
-    },
-  );
+  .delete("/:id/classes/:classId/levels/:levelId", zValidator("param", levelParams), async (c) => {
+    const { id, classId, levelId } = c.req.valid("param");
+    return c.json(await ClassLevelsService.deleteClassLevel(c.var.requestSession, id, classId, levelId), 200);
+  });

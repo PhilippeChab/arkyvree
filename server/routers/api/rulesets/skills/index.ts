@@ -6,6 +6,8 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 
+const skillParams = idParam.extend({ skillId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
   .get(
     "/:id/skills",
@@ -27,14 +29,10 @@ export default new Hono<SessionContext>()
       return c.json(await SkillsService.getSkills(id, { search, childOnly, orderBy, orderDir }, { limit, page }), 200);
     },
   )
-  .get(
-    "/:id/skills/:skillId",
-    zValidator("param", z.object({ id: z.string().uuid(), skillId: z.string().uuid() })),
-    async (c) => {
-      const { id, skillId } = c.req.valid("param");
-      return c.json(await SkillsService.getSkill(id, skillId), 200);
-    },
-  )
+  .get("/:id/skills/:skillId", zValidator("param", skillParams), async (c) => {
+    const { id, skillId } = c.req.valid("param");
+    return c.json(await SkillsService.getSkill(id, skillId), 200);
+  })
   .post(
     "/:id/skills",
     zValidator("param", idParam),
@@ -60,7 +58,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/skills/:skillId",
-    zValidator("param", z.object({ id: z.string().uuid(), skillId: z.string().uuid() })),
+    zValidator("param", skillParams),
     zValidator(
       "json",
       z.object({
@@ -82,11 +80,7 @@ export default new Hono<SessionContext>()
       return c.json(await SkillsService.updateSkill(c.var.requestSession, id, skillId, body), 200);
     },
   )
-  .delete(
-    "/:id/skills/:skillId",
-    zValidator("param", z.object({ id: z.string().uuid(), skillId: z.string().uuid() })),
-    async (c) => {
-      const { id, skillId } = c.req.valid("param");
-      return c.json(await SkillsService.deleteSkill(c.var.requestSession, id, skillId), 200);
-    },
-  );
+  .delete("/:id/skills/:skillId", zValidator("param", skillParams), async (c) => {
+    const { id, skillId } = c.req.valid("param");
+    return c.json(await SkillsService.deleteSkill(c.var.requestSession, id, skillId), 200);
+  });

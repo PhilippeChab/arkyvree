@@ -3,7 +3,14 @@ import { z } from "zod";
 
 import { contributorRole } from "@/drizzle/schema.ts";
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
-import { idParam, limit, orderDirDesc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
+import {
+  contributorParams,
+  idParam,
+  limit,
+  orderDirDesc,
+  page,
+  sanitizedEmail,
+} from "@/server/routers/api/validation.ts";
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 
 const contributorRoleSchema = z.enum(contributorRole.enumValues);
@@ -74,7 +81,7 @@ export default new Hono<SessionContext>()
   })
   .put(
     "/:id/contributors/:contributorId",
-    zValidator("param", z.object({ id: z.string().uuid(), contributorId: z.string().uuid() })),
+    zValidator("param", contributorParams),
     zValidator(
       "json",
       z.object({
@@ -87,12 +94,7 @@ export default new Hono<SessionContext>()
       return c.json(await ContributorsService.updateContributorRole(c.var.requestSession, contributorId, role), 200);
     },
   )
-  .delete(
-    "/:id/contributors/:contributorId",
-    denyDemoUser,
-    zValidator("param", z.object({ id: z.string().uuid(), contributorId: z.string().uuid() })),
-    async (c) => {
-      const { contributorId } = c.req.valid("param");
-      return c.json(await ContributorsService.revokeContributor(c.var.requestSession, contributorId), 200);
-    },
-  );
+  .delete("/:id/contributors/:contributorId", denyDemoUser, zValidator("param", contributorParams), async (c) => {
+    const { contributorId } = c.req.valid("param");
+    return c.json(await ContributorsService.revokeContributor(c.var.requestSession, contributorId), 200);
+  });

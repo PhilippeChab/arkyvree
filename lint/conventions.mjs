@@ -10,8 +10,10 @@
  * - `route-conventions`: a route's path params are camelCase (`:modifierId`; `.get`, `.route`, `.on`) and its fixed
  *   segments kebab-case (`/class-levels`; a file's name, `robots.txt`, or `*` too), it answers with its status
  *   (`c.json(body, status)`), its validation
- *   is the app's `zValidator` (`@/server/middlewares/index.ts`, which answers in the API's error envelope), and it lets
- *   an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone is fine).
+ *   is the app's `zValidator` (`@/server/middlewares/index.ts`, which answers in the API's error envelope), its params
+ *   are a named schema (`zValidator("param", featParams)`: from a `validation.ts` when several routers use it,
+ *   declared at the top of its router otherwise), and it lets an error reach `onError` instead of catching it
+ *   (`server/routers/api/`; a `finally` alone is fine).
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
  *   drizzle's `asc` / `desc`.
  * - `shared-runtime`: `shared/` runs in the client too, so it uses neither Bun's APIs (`bun`, the `Bun` global) nor
@@ -269,6 +271,21 @@ const routeConventions = {
       CallExpression(node) {
         if (!inRouters) return;
         const callee = node.callee;
+        // zValidator("param", featParams): the params a route's path names, by a name, never a schema written there.
+        if (
+          callee.type === "Identifier" &&
+          callee.name === "zValidator" &&
+          node.arguments[0]?.value === "param" &&
+          node.arguments[1]?.type !== "Identifier"
+        ) {
+          context.report({
+            node: node.arguments[1],
+            message:
+              "A route's params are a named schema (`idParam`, `featParams`): from a `validation.ts` when several " +
+              "routers use it, declared at the top of the router otherwise.",
+          });
+          return;
+        }
         if (callee.type !== "MemberExpression") return;
         // c.json(body) → c.json(body, 200): a route says its status, which its types list.
         if (

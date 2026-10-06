@@ -5,6 +5,8 @@ import { attachmentUploadRateLimit, denyDemoUser, sessionMiddleware, zValidator 
 import { idParam } from "@/server/routers/api/validation.ts";
 import { AttachmentsService } from "@/server/services/attachments/index.ts";
 
+const signedIdParam = z.object({ signedId: z.string().min(1) });
+
 const directUploadBody = z.object({
   recordType: z.string().min(1),
   recordId: z.string().uuid(),
@@ -35,15 +37,10 @@ const attachments = new Hono()
     const params = c.req.valid("json");
     return c.json(await AttachmentsService.createDirectUpload(c.var.requestSession, params), 200);
   })
-  .post(
-    "/:signedId/attach",
-    denyDemoUser,
-    zValidator("param", z.object({ signedId: z.string().min(1) })),
-    async (c) => {
-      const { signedId } = c.req.valid("param");
-      return c.json(await AttachmentsService.attach(c.var.requestSession, signedId), 200);
-    },
-  )
+  .post("/:signedId/attach", denyDemoUser, zValidator("param", signedIdParam), async (c) => {
+    const { signedId } = c.req.valid("param");
+    return c.json(await AttachmentsService.attach(c.var.requestSession, signedId), 200);
+  })
   .delete("/:id", denyDemoUser, zValidator("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await AttachmentsService.detach(c.var.requestSession, id), 200);

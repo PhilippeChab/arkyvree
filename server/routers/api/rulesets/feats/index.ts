@@ -6,6 +6,8 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 
+const featParams = idParam.extend({ featId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
   .get(
     "/:id/feats",
@@ -51,14 +53,10 @@ export default new Hono<SessionContext>()
       return c.json(await FeatsService.getFeatGroups(id, { search, childOnly, aptitudeId }, { limit, page }), 200);
     },
   )
-  .get(
-    "/:id/feats/:featId",
-    zValidator("param", z.object({ id: z.string().uuid(), featId: z.string().uuid() })),
-    async (c) => {
-      const { id, featId } = c.req.valid("param");
-      return c.json(await FeatsService.getFeat(id, featId), 200);
-    },
-  )
+  .get("/:id/feats/:featId", zValidator("param", featParams), async (c) => {
+    const { id, featId } = c.req.valid("param");
+    return c.json(await FeatsService.getFeat(id, featId), 200);
+  })
   .post(
     "/:id/feats",
     zValidator("param", idParam),
@@ -81,7 +79,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/feats/:featId",
-    zValidator("param", z.object({ id: z.string().uuid(), featId: z.string().uuid() })),
+    zValidator("param", featParams),
     zValidator(
       "json",
       z.object({
@@ -100,11 +98,7 @@ export default new Hono<SessionContext>()
       return c.json(await FeatsService.updateFeat(c.var.requestSession, id, featId, body), 200);
     },
   )
-  .delete(
-    "/:id/feats/:featId",
-    zValidator("param", z.object({ id: z.string().uuid(), featId: z.string().uuid() })),
-    async (c) => {
-      const { id, featId } = c.req.valid("param");
-      return c.json(await FeatsService.deleteFeat(c.var.requestSession, id, featId), 200);
-    },
-  );
+  .delete("/:id/feats/:featId", zValidator("param", featParams), async (c) => {
+    const { id, featId } = c.req.valid("param");
+    return c.json(await FeatsService.deleteFeat(c.var.requestSession, id, featId), 200);
+  });

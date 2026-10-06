@@ -7,6 +7,8 @@ import type { SessionContext } from "@/server/middlewares/index.ts";
 import { characterIdParam } from "@/server/routers/api/validation.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 
+const entryParams = characterIdParam.extend({ entryId: z.string().uuid() });
+
 const inventory = new Hono<SessionContext>()
   .get("/:characterId", zValidator("param", characterIdParam), async (c) => {
     const { characterId } = c.req.valid("param");
@@ -51,7 +53,7 @@ const inventory = new Hono<SessionContext>()
   )
   .put(
     "/:characterId/:entryId",
-    zValidator("param", z.object({ characterId: z.string().uuid(), entryId: z.string().uuid() })),
+    zValidator("param", entryParams),
     zValidator(
       "json",
       z.object({
@@ -87,13 +89,9 @@ const inventory = new Hono<SessionContext>()
       );
     },
   )
-  .delete(
-    "/:characterId/:entryId",
-    zValidator("param", z.object({ characterId: z.string().uuid(), entryId: z.string().uuid() })),
-    async (c) => {
-      const { characterId, entryId } = c.req.valid("param");
-      return c.json(await CharacterInventoryService.removeItem(c.var.requestSession, characterId, entryId), 200);
-    },
-  );
+  .delete("/:characterId/:entryId", zValidator("param", entryParams), async (c) => {
+    const { characterId, entryId } = c.req.valid("param");
+    return c.json(await CharacterInventoryService.removeItem(c.var.requestSession, characterId, entryId), 200);
+  });
 
 export default inventory;

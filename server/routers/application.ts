@@ -1,5 +1,4 @@
 import { httpInstrumentationMiddleware } from "@hono/otel";
-import { sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors as buildCors } from "hono/cors";
 import { csrf } from "hono/csrf";
@@ -7,12 +6,13 @@ import { HTTPException } from "hono/http-exception";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
-import { db, runWithRequestCache } from "@/server/database/index.ts";
+import { runWithRequestCache } from "@/server/database/index.ts";
 import { isProduction, isTest, readEnv } from "@/server/environment.ts";
 import { toJson } from "@/server/errors/index.ts";
 import { requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
 import apiRouter from "@/server/routers/api.tsx";
 import authenticationRouter from "@/server/routers/authentication/index.ts";
+import healthRouter from "@/server/routers/health.ts";
 import staticRouter from "@/server/routers/static.ts";
 import wsRouter from "@/server/routers/ws.ts";
 import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
@@ -86,16 +86,7 @@ const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
       await next();
     }),
   )
-  .get("/health", async (c) => {
-    try {
-      await db.execute(sql`SELECT 1`);
-      return c.json({ status: "ok" }, 200);
-    } catch {
-      return c.json({ status: "unhealthy" }, 503);
-    }
-  })
-  .route("/", wsRouter)
-  .route("/auth", authenticationRouter)
+  // Records whom an API write notified, and tells them over the websocket once it succeeds.
   .use("/api/*", async (c, next) => {
     const notified = await collectNotified(next);
     if (["POST", "PUT", "DELETE"].includes(c.req.method) && c.res.ok) {
@@ -106,6 +97,10 @@ const app = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
       if (session) publish(session.userId, "activities:updated");
     }
   })
+  // The static router answers what no other route does: it comes last.
+  .route("/", wsRouter)
+  .route("/", healthRouter)
+  .route("/auth", authenticationRouter)
   .route("/api", apiRouter)
   .route("/", staticRouter)
   .onError((err, c) => {

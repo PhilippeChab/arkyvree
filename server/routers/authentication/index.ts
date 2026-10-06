@@ -74,6 +74,8 @@ export default new Hono()
   })
   .use(authSessionRateLimit)
   .use(sessionMiddleware)
+  .route("/", account)
+  .route("/", linkedAccounts)
   .get("/me", async (c) => {
     return c.json(await AuthenticationService.getCurrentUser(c.var.requestSession), 200);
   })
@@ -81,6 +83,4 @@ export default new Hono()
     await AuthenticationService.signOut(c.var.requestSession);
     deleteSessionCookie(c);
     return c.json({ success: true }, 200);
-  })
-  .route("/", account)
-  .route("/", linkedAccounts);
+  });

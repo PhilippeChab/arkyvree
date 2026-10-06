@@ -2,7 +2,14 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewares/index.ts";
-import { idParam, limit, orderDirDesc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
+import {
+  contributorParams,
+  idParam,
+  limit,
+  orderDirDesc,
+  page,
+  sanitizedEmail,
+} from "@/server/routers/api/validation.ts";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 
 export default new Hono<SessionContext>()
@@ -68,12 +75,7 @@ export default new Hono<SessionContext>()
     const { id } = c.req.valid("param");
     return c.json(await CharacterContributorsService.leaveCharacter(c.var.requestSession, id), 200);
   })
-  .delete(
-    "/:id/contributors/:contributorId",
-    denyDemoUser,
-    zValidator("param", z.object({ id: z.string().uuid(), contributorId: z.string().uuid() })),
-    async (c) => {
-      const { contributorId } = c.req.valid("param");
-      return c.json(await CharacterContributorsService.revokeContributor(c.var.requestSession, contributorId), 200);
-    },
-  );
+  .delete("/:id/contributors/:contributorId", denyDemoUser, zValidator("param", contributorParams), async (c) => {
+    const { contributorId } = c.req.valid("param");
+    return c.json(await CharacterContributorsService.revokeContributor(c.var.requestSession, contributorId), 200);
+  });

@@ -53,11 +53,7 @@ const LAYERS = [
 
 /** Where a query may be built: the repositories, the database layer, and the infrastructure that talks to Postgres. */
 const QUERY_HOMES = ["server/repositories/", "server/database/"];
-const QUERY_INFRASTRUCTURE = new Set([
-  "server/queue.ts",
-  "server/websockets/events.ts",
-  "server/routers/application.ts",
-]);
+const QUERY_INFRASTRUCTURE = new Set(["server/queue.ts", "server/websockets/events.ts", "server/routers/health.ts"]);
 const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "delete", "execute"]);
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
 

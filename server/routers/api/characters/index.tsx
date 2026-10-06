@@ -15,12 +15,15 @@ import levels from "./levels/dnd3.5/index.ts";
 import modifiers from "./modifiers/index.ts";
 import sharing from "./sharing/index.ts";
 
+const campaignIdParam = z.object({ campaignId: z.string().uuid() });
+
 const characters = new Hono()
   .use(sessionMiddleware)
   .route("/", contributors)
   .route("/levels", levels)
   .route("/inventory", inventory)
   .route("/modifiers", modifiers)
+  .route("/", sharing)
   .get(
     "/",
     zValidator(
@@ -80,7 +83,7 @@ const characters = new Hono()
   // Get characters not in a campaign
   .get(
     "/unlinked/:campaignId",
-    zValidator("param", z.object({ campaignId: z.string().uuid() })),
+    zValidator("param", campaignIdParam),
     zValidator(
       "query",
       z.object({
@@ -170,6 +173,12 @@ const characters = new Hono()
     await CharactersService.enqueuePdf(c.var.requestSession, characterId);
     return c.json({ message: "PDF generation started" }, 202);
   })
+  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+
+    await CharactersService.unarchiveCharacter(c.var.requestSession, id);
+    return c.json({ message: "Character unarchived successfully" }, 200);
+  })
   .put(
     "/:id",
     zValidator("param", idParam),
@@ -239,13 +248,6 @@ const characters = new Hono()
 
     await CharactersService.archiveCharacter(c.var.requestSession, id);
     return c.json({ message: "Character archived successfully" }, 200);
-  })
-  .route("/", sharing)
-  .post("/:id/unarchive", zValidator("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-
-    await CharactersService.unarchiveCharacter(c.var.requestSession, id);
-    return c.json({ message: "Character unarchived successfully" }, 200);
   })
   // Permanently delete an archived character
   .delete("/:id/permanent", zValidator("param", idParam), async (c) => {

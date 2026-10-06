@@ -6,6 +6,8 @@ import { denyDemoUser, type SessionContext, zValidator } from "@/server/middlewa
 import { idParam, limit, orderDirAsc, page, sanitizedEmail } from "@/server/routers/api/validation.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
 
+const playerParams = idParam.extend({ playerId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
   .get(
     "/:id/players",
@@ -53,7 +55,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/players/:playerId",
-    zValidator("param", z.object({ id: z.string().uuid(), playerId: z.string().uuid() })),
+    zValidator("param", playerParams),
     zValidator(
       "json",
       z.object({
@@ -67,17 +69,7 @@ export default new Hono<SessionContext>()
       return c.json(await CampaignPlayersService.updatePlayer(c.var.requestSession, id, playerId, role, email), 200);
     },
   )
-  .delete(
-    "/:id/players/:playerId",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().uuid(),
-        playerId: z.string().uuid(),
-      }),
-    ),
-    async (c) => {
-      const { id, playerId } = c.req.valid("param");
-      return c.json(await CampaignPlayersService.removePlayer(c.var.requestSession, id, playerId), 200);
-    },
-  );
+  .delete("/:id/players/:playerId", zValidator("param", playerParams), async (c) => {
+    const { id, playerId } = c.req.valid("param");
+    return c.json(await CampaignPlayersService.removePlayer(c.var.requestSession, id, playerId), 200);
+  });

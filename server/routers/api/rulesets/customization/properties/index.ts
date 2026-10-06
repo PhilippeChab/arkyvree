@@ -6,12 +6,14 @@ import propertyTypesRouter from "@/server/routers/api/rulesets/customization/pro
 import { entityParams } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 
+const propertyParams = entityParams.extend({ propertyId: z.string().uuid() });
+
 export default new Hono<SessionContext>()
+  .route("/", propertyTypesRouter)
   .get("/:id/customization/:entityType/:entityId/properties", zValidator("param", entityParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
     return c.json(await PropertiesService.getProperties(id, entityType, entityId), 200);
   })
-  .route("/", propertyTypesRouter)
   .post(
     "/:id/customization/:entityType/:entityId/properties",
     zValidator("param", entityParams),
@@ -31,7 +33,7 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/:id/customization/:entityType/:entityId/properties/:propertyId",
-    zValidator("param", entityParams.extend({ propertyId: z.string().uuid() })),
+    zValidator("param", propertyParams),
     zValidator(
       "json",
       z.object({
@@ -52,7 +54,7 @@ export default new Hono<SessionContext>()
   )
   .delete(
     "/:id/customization/:entityType/:entityId/properties/:propertyId",
-    zValidator("param", entityParams.extend({ propertyId: z.string().uuid() })),
+    zValidator("param", propertyParams),
     async (c) => {
       const { id, entityType, entityId, propertyId } = c.req.valid("param");
       return c.json(

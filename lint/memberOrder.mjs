@@ -8,7 +8,9 @@
  *   order (a field's initializer may read an earlier one).
  * - A router's routes group by HTTP method (GET, POST, PUT, PATCH, DELETE), then sort by path: a fixed segment
  *   before a parameter, which Hono needs anyway (it matches overlapping routes in the order they're registered).
- *   A run of routes ends at a `.use()`, `.route()` or anything else: middleware applies to what follows it.
+ *   Its sub-routers (`.route()`) come first, in their own order, then its routes, which must not overlap theirs:
+ *   Hono would run the sub-router's first (tests/routers/application.test.ts checks every route answers its own
+ *   requests). A run of routes ends at a `.use()` or anything else: middleware applies to what follows it.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -162,6 +164,16 @@ function checkClass(context, body) {
   );
 }
 
+function isMount(call) {
+  return call.callee.type === "MemberExpression" && call.callee.property.name === "route";
+}
+
+/** A run's order: its sub-routers first, as they come, then its routes, sorted. */
+function compareRunMembers(a, b) {
+  if (a.mount !== b.mount) return a.mount ? -1 : 1;
+  return (a.mount ? 0 : compareRoutes(a.route, b.route)) || a.index - b.index;
+}
+
 function isRoute(call) {
   return (
     call.callee.type === "MemberExpression" &&
@@ -177,20 +189,22 @@ function checkChain(context, outermost) {
   for (let n = outermost; n.type === "CallExpression" && n.callee.type === "MemberExpression"; n = n.callee.object) {
     calls.unshift(n);
   }
-  // Runs of consecutive routes.
+  // Runs of consecutive routes and sub-routers.
   let run = [];
   const flush = () => {
     if (run.length > 1) {
       const items = run.map((call, index) => ({
         node: call.callee.property,
         index,
-        route: { method: call.callee.property.name, path: call.arguments[0].value },
+        mount: isMount(call),
+        route: isMount(call) ? null : { method: call.callee.property.name, path: call.arguments[0].value },
         // From the line after what it's called on, its comments and `.get(…)`, to the comment ending its own line.
         start: rangeOf(call.callee.object)[1] + trailingComment(text, rangeOf(call.callee.object)[1]),
         codeEnd: rangeOf(call)[1],
         end: rangeOf(call)[1] + trailingComment(text, rangeOf(call)[1]),
       }));
-      const sorted = [...items].sort((a, b) => compareRoutes(a.route, b.route) || a.index - b.index);
+      const sorted = [...items].sort(compareRunMembers);
+      const mountsFirst = items.every((item, i) => !item.mount || items.slice(0, i).every((before) => before.mount));
       // What follows the run on its last line (the chain's `;`, a next call) stays right after the last route's
       // code: a comment ending the new last route's line goes after it, not over it.
       const runEnd = items.at(-1).end;
@@ -211,13 +225,15 @@ function checkChain(context, outermost) {
               )
               .join(""),
         },
-        "Routes go in CRUD order: GET, POST, PUT, PATCH, DELETE, by path in each (a fixed segment before a parameter).",
+        mountsFirst
+          ? "Routes go in CRUD order: GET, POST, PUT, PATCH, DELETE, by path in each (a fixed segment before a parameter)."
+          : "A router mounts its sub-routers (`.route()`) first, after its middleware, then its own routes.",
       );
     }
     run = [];
   };
   for (const call of calls) {
-    if (isRoute(call)) run.push(call);
+    if (isRoute(call) || isMount(call)) run.push(call);
     else flush();
   }
   flush();

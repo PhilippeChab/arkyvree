@@ -72,7 +72,7 @@ describe("conventions", () => {
     ).toEqual(["repository-instances server/services/s.ts"]);
   });
 
-  test("a route's params are camelCase, its fixed segments kebab-case, it validates with the app's zValidator, and it doesn't catch", async () => {
+  test("a route's params are camelCase, its fixed segments kebab-case, it validates with the app's zValidator, its params by a named schema, and it doesn't catch", async () => {
     expect(
       await lintRepo(
         {
@@ -96,12 +96,20 @@ describe("conventions", () => {
           "server/routers/files.ts":
             'export const r = app.get("/robots.txt", (c) => c).get("/assets/*", (c) => c).get("/:id/class-levels", (c) => c);\n',
           "server/routers/api/reexport.ts": 'export { zValidator } from "@hono/zod-validator";\n',
+          "server/routers/api/named.ts":
+            'export const r = app.get("/:id", zValidator("param", idParam), zValidator("json", z.object({})), (c) => c);\n',
+          "server/routers/api/inline.ts":
+            'export const r = app.get("/:id", zValidator("param", z.object({ id: z.string() })), (c) => c);\n',
+          "server/routers/api/extended.ts":
+            'export const r = app.get("/:id/:featId", zValidator("param", idParam.extend({ featId: z.string() })), (c) => c);\n',
         },
         ["route-conventions"],
       ),
     ).toEqual([
       "route-conventions server/routers/api/camel.ts",
       "route-conventions server/routers/api/caught.ts",
+      "route-conventions server/routers/api/extended.ts",
+      "route-conventions server/routers/api/inline.ts",
       "route-conventions server/routers/api/nostatus.ts",
       "route-conventions server/routers/api/on.ts",
       "route-conventions server/routers/api/params.ts",
