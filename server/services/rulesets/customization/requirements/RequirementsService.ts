@@ -3,7 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { type CachedRulesetData, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowCustomizationForMutation, cowEntityForCustomization } from "@/server/cow/index.ts";
+import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Requirements } from "@/server/repositories/index.ts";
@@ -56,7 +56,8 @@ class RequirementsService {
         const effectiveEntityId = rulesetData.canonicalize(entityId);
         const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
-        const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const resolvedEntityId = await edit.cowOwner(tx, entityType, effectiveEntityId);
 
         let requirement;
         if (body.target) {
@@ -130,9 +131,9 @@ class RequirementsService {
         // Before the copy-on-write: the lookup reads the shared db, not tx
         await checkCustomizedEntity(requirement);
 
-        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await cowCustomizationForMutation(
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
           tx,
-          rulesetId,
           entityType,
           effectiveEntityId,
           "requirement",
@@ -215,9 +216,9 @@ class RequirementsService {
         await checkCustomizedEntity(requirement);
 
         // COW the owning entity if this requirement is inherited
-        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await cowCustomizationForMutation(
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
           tx,
-          rulesetId,
           entityType,
           effectiveEntityId,
           "requirement",

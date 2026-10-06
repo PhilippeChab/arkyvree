@@ -1,15 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertAncestorNamesHidden,
-  copyEntityCustomizationsToMany,
-  fetchEntityCustomizations,
-  findScopedEntity,
-  repointTombstoneSnapshot,
-} from "@/server/cow/index.ts";
+import { copyEntityCustomizationsToMany, fetchEntityCustomizations, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -63,7 +57,7 @@ export function Variants<B extends Constructor>(Base: B) {
 
           // Batched pre-validation: one query for local conflicts, one for
           // ancestor conflicts, then the shared visibility / tombstone check
-          // used by `assertEntityNameAvailable`. Avoids N × sourceChain serial
+          // used by `RulesetEdit.assertNameAvailable`. Avoids N × sourceChain serial
           // round-trips when N can be up to 50.
           const ownConflicts = await Items.findMany(tx, { rulesetIds: [rulesetId], names });
           if (ownConflicts.length > 0) {
@@ -71,10 +65,9 @@ export function Variants<B extends Constructor>(Base: B) {
           }
 
           const ancestorConflicts = await Items.findMany(tx, { rulesetIds: sourceChain, names });
-          const tombstoned = await assertAncestorNamesHidden(
+          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const tombstoned = await edit.assertAncestorNamesHidden(
             tx,
-            rulesetId,
-            rulesetData.cow,
             "items",
             ancestorConflicts.map((c) => c.id),
           );
@@ -82,7 +75,7 @@ export function Variants<B extends Constructor>(Base: B) {
           // Preserve sourceChain order: when two tombstoned ancestors share a
           // name (e.g. an extension and a parent), the closer one (lower
           // sourceChain index) follows the new item, matching the sequential
-          // `assertEntityNameAvailable` semantics.
+          // `RulesetEdit.assertNameAvailable` semantics.
           const sourceChainOrder = new Map(sourceChain.map((id, i) => [id, i]));
           const tombstoneByName = new Map<string, (typeof ancestorConflicts)[number]>();
           for (const c of ancestorConflicts) {
@@ -123,7 +116,7 @@ export function Variants<B extends Constructor>(Base: B) {
 
             const tombstoneAncestorId = tombstones.get(i);
             if (tombstoneAncestorId) {
-              await repointTombstoneSnapshot(tx, rulesetId, "items", tombstoneAncestorId, item.id);
+              await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
             }
 
             await createActivityWithNotifications(tx, {

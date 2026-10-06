@@ -5,13 +5,12 @@ import { and, eq } from "drizzle-orm";
 import { aptitudesInRules, featsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
@@ -79,7 +78,7 @@ test("the original name of a renamed extension copy is available", async () => {
   const { session, fork, baseId, general, baseFeat } = await setup();
   const source = await baseFeat("Toughness");
   const extension = await createSeededTestRuleset(session.userId);
-  const extensionCopy = await cowEntity(db, "feats", source.id, extension.id, [baseId], []);
+  const extensionCopy = await copyEntity(db, "feats", source.id, extension.id, [baseId], []);
   await Rulesets.update(
     db,
     { kind: "extension", status: "Published", private: false, userId: null },

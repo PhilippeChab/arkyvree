@@ -321,7 +321,7 @@ export default class RulesetComposition {
 
   /**
    * Requirements: entityType='modifiers' rows survive when their modifier wasn't excluded (keyed by modifier.id).
-   * Entity-level rows go through the same recursive forest merge that mergeSiblingData uses at write time:
+   * Entity-level rows go through the same recursive forest merge that EntityCopy's sibling merge uses at write time:
    *   - Build the winner's forest from its own reqs
    *   - For each sibling, build its forest, dedup leaves against existing conditions on the winner, and append each
    *     tree at a fresh top-level position with renumbered child paths.

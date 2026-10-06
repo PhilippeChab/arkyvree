@@ -2,7 +2,6 @@ import { expect, test } from "bun:test";
 
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -26,7 +25,7 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { measure } from "@/tests/support/database.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 type EntityType = "feats" | "powers";
@@ -51,7 +50,7 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
     );
     const copy =
       pairing === "snapshot"
-        ? await cowEntity(db, entityType, base.id, extension.id, extension.ancestorRulesetIds, [])
+        ? await copyEntity(db, entityType, base.id, extension.id, extension.ancestorRulesetIds, [])
         : (await repo.create(db, { name: "Sibling write fixture", rulesetId: extension.id }))[0];
     extensions.push({ extension, copy });
   }

@@ -2,7 +2,6 @@ import { expect, test } from "bun:test";
 
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -11,7 +10,7 @@ import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/in
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
-import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 type EntityType = "races" | "klasses" | "items";
@@ -31,7 +30,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
   const sourceIds: string[] = [];
   for (let i = 0; i < 2; i++) {
     const extension = await createSeededTestRuleset(session.userId);
-    const copy = await cowEntity(db, entityType, source.id, extension.id, extension.ancestorRulesetIds, []);
+    const copy = await copyEntity(db, entityType, source.id, extension.id, extension.ancestorRulesetIds, []);
     await Properties.create(db, { entityId: copy.id, entityType, type: "SIBLING_MARKER", value: String(i) });
     // Classes have modifiers on their levels, not directly on the class.
     if (entityType !== "klasses")

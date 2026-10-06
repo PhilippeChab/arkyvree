@@ -1,15 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { savesInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertEntityNameAvailable,
-  cowEntityToDelete,
-  cowEntityToEdit,
-  findScopedEntity,
-  repointTombstoneSnapshot,
-} from "@/server/cow/index.ts";
+import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { KlassLevelSaves, Saves } from "@/server/repositories/index.ts";
@@ -31,19 +25,14 @@ class SavesService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "saves",
-          body.name,
-        );
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "saves", body.name);
 
         const rows = await Saves.create(tx, { ...body, rulesetId });
         const save = rows[0];
 
         if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "saves", tombstoneAncestorId, save.id);
+          await edit.repointTombstone(tx, "saves", tombstoneAncestorId, save.id);
         }
 
         await createActivityWithNotifications(tx, {
@@ -74,7 +63,8 @@ class SavesService {
         const inUse = await KlassLevelSaves.exists(tx, { saveId: save.id });
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "saves", save);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "saves", save);
 
         // The database deletes its customizations with it.
         const rows = await Saves.delete(tx, { id: targetId });
@@ -138,7 +128,8 @@ class SavesService {
 
         const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "saves", save);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "saves", save);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...saveData } = body;

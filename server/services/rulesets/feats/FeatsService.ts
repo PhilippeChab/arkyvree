@@ -1,17 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertEntityNameAvailable,
-  cowEntityToDelete,
-  cowEntityToEdit,
-  findScopedEntity,
-  hasCharacterPicks,
-  repointTombstoneSnapshot,
-  wasGeneratedFeat,
-} from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit, wasGeneratedFeat } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
@@ -34,13 +26,8 @@ class FeatsService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "feats",
-          body.name,
-        );
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "feats", body.name);
 
         if (!body.aptitudeIds || body.aptitudeIds.length === 0) {
           throw new BadRequestError("At least one aptitude must be selected for the feat");
@@ -51,7 +38,7 @@ class FeatsService {
           throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
         }
 
-        // Named as an ancestor the fork deleted, the feat stands in for it (`repointTombstoneSnapshot`), checks
+        // Named as an ancestor the fork deleted, the feat stands in for it (`RulesetEdit.repointTombstone`), checks
         // finding it by that name: generated if the ancestor was
         const rows = await Feats.create(tx, {
           name: body.name,
@@ -62,7 +49,7 @@ class FeatsService {
         const feat = rows[0];
 
         if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "feats", tombstoneAncestorId, feat.id);
+          await edit.repointTombstone(tx, "feats", tombstoneAncestorId, feat.id);
         }
 
         for (const aptitudeId of body.aptitudeIds) {
@@ -97,7 +84,8 @@ class FeatsService {
 
         const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
 
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "feats", feat);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "feats", feat);
 
         // FK CASCADE on feats_aptitudes.feat_id and klass_level_feats.feat_id
         // wipes those join rows when the feat row is deleted.
@@ -201,7 +189,8 @@ class FeatsService {
           throw new BadRequestError("Generated feats cannot be renamed");
         }
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "feats", feat);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "feats", feat);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const rows = await Feats.update(

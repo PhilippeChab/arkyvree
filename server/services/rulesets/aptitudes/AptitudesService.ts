@@ -1,16 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { aptitudesInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertEntityNameAvailable,
-  cowEntityToDelete,
-  cowEntityToEdit,
-  findScopedEntity,
-  hasCharacterPicks,
-  repointTombstoneSnapshot,
-} from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Aptitudes } from "@/server/repositories/index.ts";
@@ -31,13 +24,8 @@ class AptitudesService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "aptitudes",
-          body.name,
-        );
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "aptitudes", body.name);
 
         const rows = await Aptitudes.create(tx, {
           ...body,
@@ -46,7 +34,7 @@ class AptitudesService {
         const aptitude = rows[0];
 
         if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "aptitudes", tombstoneAncestorId, aptitude.id);
+          await edit.repointTombstone(tx, "aptitudes", tombstoneAncestorId, aptitude.id);
         }
 
         await createActivityWithNotifications(tx, {
@@ -74,7 +62,8 @@ class AptitudesService {
 
         const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
 
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "aptitudes", aptitude);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "aptitudes", aptitude);
 
         // FK CASCADE on feats_aptitudes / powers_aptitudes / klass_level_feats /
         // klass_level_powers wipes the join rows pointing at this aptitude.
@@ -140,7 +129,8 @@ class AptitudesService {
 
         const aptitude = findScopedEntity(rulesetData.aptitudesById, aptitudeId, rulesetId, sourceChain, "Aptitude");
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "aptitudes", aptitude);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "aptitudes", aptitude);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...aptitudeData } = body;

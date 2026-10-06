@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { featsInRules, itemsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
@@ -12,7 +11,7 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { insertRows } from "@/tests/support/database.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
@@ -558,8 +557,8 @@ describe("rulesetCache", () => {
         ancestorRulesetIds: [seed.id],
       });
 
-      const cowA = await cowEntity(db, "feats", baseFeat.id, extA.id, [seed.id], []);
-      const cowB = await cowEntity(db, "feats", baseFeat.id, extB.id, [seed.id], []);
+      const cowA = await copyEntity(db, "feats", baseFeat.id, extA.id, [seed.id], []);
+      const cowB = await copyEntity(db, "feats", baseFeat.id, extB.id, [seed.id], []);
 
       // Child fork subscribed to both extensions.
       const child = await createTestRuleset(SEED_USER_ID, {
@@ -614,8 +613,8 @@ describe("rulesetCache", () => {
         ancestorRulesetIds: [seed.id],
       });
 
-      const cowA = await cowEntity(db, "items", baseItem.id, extA.id, [seed.id], []);
-      const cowB = await cowEntity(db, "items", baseItem.id, extB.id, [seed.id], []);
+      const cowA = await copyEntity(db, "items", baseItem.id, extA.id, [seed.id], []);
+      const cowB = await copyEntity(db, "items", baseItem.id, extB.id, [seed.id], []);
 
       const child = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,

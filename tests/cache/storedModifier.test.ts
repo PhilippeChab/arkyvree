@@ -2,13 +2,12 @@ import { expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { withCowContext } from "@/server/database/cowContext.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
 import { measure } from "@/tests/support/database.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 test("stored modifier reads preserve ownership without changing ordinary COW reads", async () => {
@@ -17,7 +16,7 @@ test("stored modifier reads preserve ownership without changing ordinary COW rea
   const sourceId = seed.featMap.Toughness;
   const [modifier] = await Modifiers.findMany(db, { sourceIds: [sourceId], sourceType: "feats" });
   expect(modifier).toBeDefined();
-  const copy = await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
+  const copy = await copyEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
 
   await runWithRequestCache(() =>
     withRulesetScope(db, fork.id, async () => {

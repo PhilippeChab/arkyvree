@@ -5,7 +5,6 @@ import { and, eq } from "drizzle-orm";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -35,7 +34,7 @@ import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
 import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
-import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
@@ -188,7 +187,7 @@ describe("CharactersService", () => {
         ancestorRulesetIds: [ctx.rulesetId],
       });
       const character = await createCharacterAs(session, { rulesetId: fork.id });
-      const copy = (await cowEntity(db, "abilities", ctx.abilityMap["Strength"], fork.id, [], [])).id as string;
+      const copy = (await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork.id, [], [])).id as string;
       RulesetCache.invalidate(fork.id);
 
       await CharactersService.updateAbilities(session, character.id, { [copy]: 17 });

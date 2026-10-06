@@ -4,7 +4,8 @@ import { coreRulesetId } from "@/database/packages/dnd35/seed/context.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { db } from "@/server/database/index.ts";
+import { EntityCopy, type EntityType, RulesetEdit } from "@/server/cow/index.ts";
+import { type Db, db } from "@/server/database/index.ts";
 import { Properties, Rulesets } from "@/server/repositories/index.ts";
 import { api, expectOk } from "@/tests/support/api.ts";
 import { insertRows } from "@/tests/support/database.ts";
@@ -27,6 +28,22 @@ export function forgetSeededRulesetWrites() {
 export function invalidateSeededRuleset(rulesetId: string) {
   writtenSeededRulesets.add(rulesetId);
   RulesetCache.invalidate(rulesetId);
+}
+
+/**
+ * Copies an inherited entity into `rulesetId` (`EntityCopy`), on the chain given: what a first edit there copies. The
+ * copied row.
+ */
+export async function copyEntity(
+  database: Db,
+  entityType: EntityType,
+  entityId: string,
+  rulesetId: string,
+  sourceChain: string[],
+  extensionRulesetIds: string[],
+) {
+  return (await EntityCopy.create(database, entityType, entityId, { rulesetId, sourceChain, extensionRulesetIds }))
+    .entity;
 }
 
 /** A new seeded fork of the seed user's with an aptitude of its own: the fork's `id` and the `aptitudeId`. */
@@ -117,6 +134,15 @@ export async function createTestUserAndRuleset(aptitudeNames: string[] = []) {
     aptitudeNames.map((name) => ({ name, rulesetId: ruleset.id })),
   );
   return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
+}
+
+/** A change to `ruleset`'s entities, as a service makes in its scope, outside one. */
+export async function editRuleset(ruleset: {
+  id: string;
+  extensionRulesetIds: string[];
+  ancestorRulesetIds: string[];
+}) {
+  return new RulesetEdit(ruleset, await RulesetCache.getCowData(ruleset));
 }
 
 /** A new aptitude of the ruleset, created through the API as the seed user. */

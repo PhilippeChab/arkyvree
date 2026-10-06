@@ -1,16 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import {
-  assertEntityNameAvailable,
-  cowEntityToDelete,
-  cowEntityToEdit,
-  findScopedEntity,
-  hasCharacterPicks,
-  repointTombstoneSnapshot,
-} from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Klasses } from "@/server/repositories/index.ts";
@@ -33,13 +26,8 @@ class ClassesService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        const { tombstoneAncestorId } = await assertEntityNameAvailable(
-          tx,
-          rulesetId,
-          rulesetData.cow,
-          "klasses",
-          body.name,
-        );
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "klasses", body.name);
 
         const rows = await Klasses.create(tx, {
           ...body,
@@ -49,7 +37,7 @@ class ClassesService {
         const klass = rows[0];
 
         if (tombstoneAncestorId) {
-          await repointTombstoneSnapshot(tx, rulesetId, "klasses", tombstoneAncestorId, klass.id);
+          await edit.repointTombstone(tx, "klasses", tombstoneAncestorId, klass.id);
         }
 
         await createActivityWithNotifications(tx, {
@@ -77,7 +65,8 @@ class ClassesService {
 
         const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
 
-        const targetId = await cowEntityToDelete(tx, ruleset, sourceChain, "klasses", klass);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const targetId = await edit.cowToDelete(tx, "klasses", klass);
 
         // FK CASCADE wipes klass_levels (and their klass_level_feats /
         // klass_level_powers / klass_level_saves), klass_skills, and any
@@ -151,7 +140,8 @@ class ClassesService {
 
         const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
 
-        const { id: targetId, copied } = await cowEntityToEdit(tx, ruleset, sourceChain, "klasses", klass);
+        const edit = new RulesetEdit(ruleset, rulesetData.cow);
+        const { id: targetId, copied } = await edit.cowToEdit(tx, "klasses", klass);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
         const { updatedAt: _u, ...klassData } = body;

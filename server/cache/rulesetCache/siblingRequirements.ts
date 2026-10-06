@@ -1,5 +1,6 @@
 /**
- * Requirement forest model (used by siblingMerge.ts + the matching read-time compose in RulesetComposition.ts)
+ * Requirement forest model (used by EntityCopy's sibling merge + the matching read-time compose in
+ * RulesetComposition.ts)
  *
  * Every entity's requirements form a forest of trees:
  *   - Each top-level entry is a root (no `.` parent prefix).

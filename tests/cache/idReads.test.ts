@@ -2,18 +2,17 @@ import { expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { cowEntity } from "@/server/cow/index.ts";
 import { CowData, db, withCowContext } from "@/server/database/index.ts";
 import { mapResultIds } from "@/server/repositories/copyOnWriteIds.ts";
 import { Characters, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 test("a read returning ids gives ids in a ruleset's scope, whose copies map other ids", async () => {
   const seed = await getSeedCtx();
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   // A copy in the fork fills its scope's map
-  await cowEntity(db, "feats", seed.featMap.Toughness, fork.id, [seed.rulesetId], []);
+  await copyEntity(db, "feats", seed.featMap.Toughness, fork.id, [seed.rulesetId], []);
   const [general, wizardSpells] = [seed.aptMap["General"], seed.aptMap["Wizard Spells"]];
 
   await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
