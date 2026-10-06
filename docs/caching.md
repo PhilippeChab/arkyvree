@@ -140,7 +140,7 @@ From `server/cache/rulesetCache/` (the scopes) and `server/cow/` (the copies):
 
 For lineage checks (entity-belongs-to-sourceChain), `findScopedEntity`. For id canonicalization (pre-COW → post-COW) use `rulesetData.canonicalize(id)`. Sibling merging (aptitude links, modifiers, properties, requirements) is pre-baked into `rulesetData` by the compose step, so consumers only read `rulesetData.featsById`, `rulesetData.modifiersBySource`, etc. — never merge siblings themselves.
 
-From `server/cache/rulesetCache/index.ts` (its types re-exported via `server/cache/index.ts`): `RulesetCache`, the class that holds the cache (`RulesetCache.ts`), and the types of what it holds.
+From `server/cache/rulesetCache/index.ts`: `RulesetCache`, the class that holds the cache (`RulesetCache.ts`), and the types of what it holds.
 
 | Symbol                                       | Purpose                                                                                               |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
@@ -161,7 +161,7 @@ Used by the copy flows, `RulesetsService` (publish), `RulesetExtensionsService`,
 - **Copy-on-write data**: `CowDataBuilder` (`cache/rulesetCache/CowDataBuilder.ts`) builds a `CowData`, for copy-on-write only: its read side (`CowDataBuilder.build`, which `RulesetCache.getCowData` caches) and its write side (`CowDataBuilder.buildForCopy`, which `EntityCopy` remaps a copy's references and merges its siblings by).
 - **Source-chain construction**: `buildSourceChain`, shared by `publishRuleset`, the COW data build (`RulesetCache.getCowData`, `EntityCopy`) and target-path cache keys.
 - **Scope internals** (`withRulesetScope` wiring): `RulesetCache.getData`, which gets its `CowData` (`RulesetCache.getCowData`); `RulesetCache.invalidate*` drop it with the rest.
-- **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `refreshEntityData`, `CowData.resolveRows`.
+- **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped tables that the repo Proxy doesn't cover): `CowData.resolveRows`, then the engine's `refreshEntityData` (`rulesets/dnd3.5/refreshEntityData.ts`) takes the view's fields (a name, a description) for the row the id now names.
 - **Raw-tier test probes** (`tests/cache/rulesetCache.test.ts`): `RulesetCache.getRawData`, `RulesetCache.isRawDataPinned`.
 - **AsyncLocalStorage wiring**: `withCowContext`, `getCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy, `idMatches` (`ResolvesCopies`) and a ruleset entity list's sibling losers (`ScopesToRuleset`).
 
@@ -228,7 +228,7 @@ System-owned rulesets (`rulesets.system = true`) get `cache.pin(key)` on first f
 
 The underlying `MemoryCache` capacity is 200 entries. With ~30 system-owned rulesets pinned, 170 slots remain for the user-fork working set.
 
-Safety: if everything in the cache is pinned and you try to insert a non-pinned entry, `set()` bails rather than growing past `maxSize`.
+Safety: if everything in the cache is pinned and you try to insert a non-pinned entry, `set()` bails rather than growing past `MAX_ENTRIES`.
 
 ### Warm-up
 
@@ -394,7 +394,7 @@ Both the ruleset raw-tier cache and the target-paths cache use `MemoryCache<T>`:
 
 ```mermaid
 flowchart LR
-    Set[set key, value] --> Cap{size >= maxSize<br/>AND new key?}
+    Set[set key, value] --> Cap{size >= MAX_ENTRIES<br/>AND new key?}
     Cap -->|yes| Evict[evictOldest<br/>skip pinned]
     Evict -->|all pinned| Bail[bail, don't insert]
     Evict -->|evicted one| Insert

@@ -1,5 +1,4 @@
-import type { RulesetData } from "@/server/cache/index.ts";
-import { refreshEntityData } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { type CowData, db, type Db } from "@/server/database/index.ts";
 import {
   Campaigns,
@@ -47,6 +46,7 @@ import type {
   Ruleset,
 } from "@/shared/relations.ts";
 
+import { refreshEntityData } from "./refreshEntityData.ts";
 import { readSkillFlags } from "./skillFlags.ts";
 import { collectClassListIds, collectFeatListIds } from "./spellcasting/spellLists.ts";
 
@@ -261,16 +261,20 @@ export default class DetailedCharacterDataLoader {
     allCharacterLevels: CharacterLevel[],
     resolve: Resolve,
   ) {
-    const compose = <T extends Record<string, unknown> & { id: string; aptitudeId: string }>(rows: T[]) =>
-      refreshEntityData(resolve(rows), rulesetData.powers, ["name", "description"]).map((power) => ({
-        ...power,
-        powerLevel:
-          rulesetData.powersById
-            .get(power.id)
-            ?.powersAptitudesInRules.find((link) => link.aptitudeId === power.aptitudeId)?.level ?? null,
-      }));
-    const pickedPowers = compose(picks.pickedPowers);
-    const givenPowers = compose(picks.givenPowers);
+    const withLevel = <T extends { id: string; aptitudeId: string }>(power: T) => ({
+      ...power,
+      powerLevel:
+        rulesetData.powersById
+          .get(power.id)
+          ?.powersAptitudesInRules.find((link) => link.aptitudeId === power.aptitudeId)?.level ?? null,
+    });
+    const pickedPowers = refreshEntityData(resolve(picks.pickedPowers), rulesetData.powers, [
+      "name",
+      "description",
+    ]).map(withLevel);
+    const givenPowers = refreshEntityData(resolve(picks.givenPowers), rulesetData.powers, ["name", "description"]).map(
+      withLevel,
+    );
 
     const characterLevelIdSet = new Set(allCharacterLevels.map((l) => l.id));
     const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(

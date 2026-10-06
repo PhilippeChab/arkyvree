@@ -6,34 +6,21 @@ interface CacheEntry<T> {
   expiresAt: number;
 }
 
-interface MemoryCacheOptions {
-  defaultTtl?: number;
-  maxSize?: number;
-  sweepInterval?: number;
-}
+const SWEEP_INTERVAL_MS = 60 * 1000;
 
-const DEFAULT_MAX_SIZE = 200;
-const DEFAULT_SWEEP_INTERVAL_MS = 60 * 1000; // 1 minute
-const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const TTL_MS = 5 * 60 * 1000;
 
+/** The most entries a cache keeps: a new one evicts the unpinned entry that expires first. */
+export const MAX_ENTRIES = 200;
+
+/**
+ * A bounded in-memory store: an entry expires after five minutes, unless pinned, and a timer sweeps the expired ones
+ * out every minute.
+ */
 export default class MemoryCache<T> {
-  constructor(options: MemoryCacheOptions | number = {}) {
-    // Support legacy signature: new MemoryCache(ttlMs)
-    if (typeof options === "number") {
-      this.defaultTtl = options;
-      this.maxSize = DEFAULT_MAX_SIZE;
-    } else {
-      this.defaultTtl = options.defaultTtl ?? DEFAULT_TTL_MS;
-      this.maxSize = options.maxSize ?? DEFAULT_MAX_SIZE;
-    }
-
-    const interval =
-      typeof options === "number" ? DEFAULT_SWEEP_INTERVAL_MS : (options.sweepInterval ?? DEFAULT_SWEEP_INTERVAL_MS);
-    this.sweepTimer = setInterval(() => this.sweep(), interval);
+  constructor() {
     // Don't keep the process alive just for cache sweeping
-    if (typeof this.sweepTimer === "object" && "unref" in this.sweepTimer) {
-      this.sweepTimer.unref();
-    }
+    setInterval(() => this.sweep(), SWEEP_INTERVAL_MS).unref();
   }
 
   /** Whether every cache keeps what it's given: off with DISABLE_CACHE, and in the worker (`setEnabled`). */
@@ -49,15 +36,9 @@ export default class MemoryCache<T> {
     MemoryCache.enabled = enabled;
   }
 
-  private store = new Map<string, CacheEntry<T>>();
+  private readonly pinned = new Set<string>();
 
-  private pinned = new Set<string>();
-
-  private defaultTtl: number;
-
-  private maxSize: number;
-
-  private sweepTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly store = new Map<string, CacheEntry<T>>();
 
   /** Evict the entry with the earliest expiration (oldest). Pinned entries are skipped. */
   private evictOldest(): void {
@@ -75,6 +56,11 @@ export default class MemoryCache<T> {
     if (oldestKey) {
       this.store.delete(oldestKey);
     }
+  }
+
+  private invalidate(key: string): void {
+    this.store.delete(key);
+    this.pinned.delete(key);
   }
 
   /** Remove all expired entries. Called automatically by the sweep timer. */
@@ -109,23 +95,9 @@ export default class MemoryCache<T> {
     return entry.value;
   }
 
-  invalidate(key: string): void {
-    this.store.delete(key);
-    this.pinned.delete(key);
-  }
-
   invalidateAll(): void {
     this.store.clear();
     this.pinned.clear();
-  }
-
-  invalidateByPrefix(prefix: string): void {
-    for (const key of this.store.keys()) {
-      if (key.startsWith(prefix)) {
-        this.store.delete(key);
-        this.pinned.delete(key);
-      }
-    }
   }
 
   invalidateWhere(matches: (value: T) => boolean): void {
@@ -142,24 +114,18 @@ export default class MemoryCache<T> {
     this.pinned.add(key);
   }
 
-  set(key: string, value: T, ttl?: number): void {
+  /** Keeps `value` for `ttl` milliseconds (five minutes by default; the tests expire entries at once). */
+  set(key: string, value: T, ttl = TTL_MS): void {
     if (!MemoryCache.enabled) return;
     // If at capacity and this is a new key, evict the oldest unpinned entry.
     // If eviction fails (everything is pinned), skip the insert to prevent
-    // unbounded growth past maxSize.
-    if (!this.store.has(key) && this.store.size >= this.maxSize) {
+    // unbounded growth past MAX_ENTRIES.
+    if (!this.store.has(key) && this.store.size >= MAX_ENTRIES) {
       const sizeBefore = this.store.size;
       this.evictOldest();
       if (this.store.size === sizeBefore) return;
     }
 
-    this.store.set(key, {
-      value,
-      expiresAt: Date.now() + (ttl ?? this.defaultTtl),
-    });
-  }
-
-  unpin(key: string): void {
-    this.pinned.delete(key);
+    this.store.set(key, { value, expiresAt: Date.now() + ttl });
   }
 }

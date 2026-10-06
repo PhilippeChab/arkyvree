@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { addClassLevels, addFeats, addPowers } from "@/database/seeds/seedCharacter.ts";
-import { refreshEntityData } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/DetailedCharacter.ts";
+import { refreshEntityData } from "@/server/rulesets/dnd3.5/refreshEntityData.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { createSeedCharacter } from "@/tests/support/levelFixtures.ts";
@@ -23,11 +23,11 @@ describe("refreshEntityData", () => {
     expect(refreshEntityData(rows, reference, ["description"])).toEqual([{ ...rows[0], description: "new" }, rows[1]]);
   });
 
-  test.each([
+  test.each<[string, { id: string; name: string }[], "name"[]]>([
     ["no data", [], ["name"]],
     ["no fields", [{ id: "a", name: "new" }], []],
     ["data for other rows only", [{ id: "c", name: "new" }], ["name"]],
-  ])("leaves the rows as they are with %s", (_, reference: { id: string }[], keys: string[]) => {
+  ])("leaves the rows as they are with %s", (_, reference, keys) => {
     expect(refreshEntityData(rows, reference, keys)).toEqual(rows);
   });
 });

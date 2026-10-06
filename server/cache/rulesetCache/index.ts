@@ -6,7 +6,6 @@
  */
 export { buildSourceChain, default as CowDataBuilder, NAME_FALLBACK_ENTITY_TYPES } from "./CowDataBuilder.ts";
 export { findScopedEntity } from "./findScopedEntity.ts";
-export { refreshEntityData } from "./refreshEntityData.ts";
 export { default as RulesetCache } from "./RulesetCache.ts";
 export { default as RulesetData } from "./RulesetData.ts";
 export { withRulesetScope, withRulesetScopes } from "./scope.ts";

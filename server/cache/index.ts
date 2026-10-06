@@ -1,8 +1,5 @@
 /**
- * Public barrel for the ruleset cache layer's types. See `./rulesetCache/index.ts` for the API surface (consumer
- * invalidation + framework accessors); services read it through `withRulesetScope`.
+ * The server's in-memory caches: `MemoryCache`, the store they keep entries in, which the worker turns off (it reads
+ * committed rows each time). The rulesets' cache, and the view a ruleset's reads see, is `./rulesetCache/index.ts`.
  */
-export type { RulesetData } from "./rulesetCache/index.ts";
-
-export { default as DependentCache } from "./DependentCache.ts";
 export { default as MemoryCache } from "./MemoryCache.ts";
