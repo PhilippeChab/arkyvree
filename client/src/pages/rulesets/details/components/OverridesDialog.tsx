@@ -102,7 +102,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
     <Modal open={open} onClose={onClose}>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <CompareIcon />
-        Local changes
+        Local Changes
       </DialogTitle>
       <DialogContent sx={{ maxHeight: "60vh" }}>
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}

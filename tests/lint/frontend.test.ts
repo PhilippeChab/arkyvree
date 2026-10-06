@@ -556,4 +556,28 @@ describe("frontend rules", () => {
       "component-defaults client/src/timed.tsx",
     ]);
   });
+
+  test("a button's, a menu item's and a dialog's words are in Title Case", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/button.tsx": "export const b = <Button>Mark all read</Button>;\n",
+          "client/src/menu.tsx": 'export const m = <ActionMenuItem label="Delete permanently" />;\n',
+          "client/src/dialog.tsx": 'export const d = <ConfirmDialog title="Local changes" confirmLabel="Restore" />;\n',
+          "client/src/titled.tsx": "export const t = <DialogTitle>License & attribution</DialogTitle>;\n",
+          "client/src/cased.tsx":
+            'export const c = <><Button>Mark All as Read</Button><ConfirmDialog title="Delete Permanently" /><DialogTitle>Create Variants of {name}</DialogTitle></>;\n',
+          "client/src/tooltip.tsx":
+            'export const o = <Tooltip title="Opens the sheet in a new tab"><span /></Tooltip>;\n',
+          "client/src/chip.tsx": 'export const p = <Chip label="not equipped" />;\n',
+        },
+        ["label-case"],
+      ),
+    ).toEqual([
+      "label-case client/src/button.tsx",
+      "label-case client/src/dialog.tsx",
+      "label-case client/src/menu.tsx",
+      "label-case client/src/titled.tsx",
+    ]);
+  });
 });

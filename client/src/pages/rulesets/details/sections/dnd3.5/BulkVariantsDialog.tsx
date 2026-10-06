@@ -62,7 +62,7 @@ export function BulkVariantsDialog({
       slotProps={{ paper: { sx: { maxHeight: "85vh" } } }}
     >
       <form onSubmit={form.handleSubmit(submit)}>
-        <DialogTitle>Create variants of {baseItemName}</DialogTitle>
+        <DialogTitle>Create Variants of {baseItemName}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -118,7 +118,7 @@ export function BulkVariantsDialog({
               disabled={fields.length >= MAX_VARIANTS || isLoading}
               sx={{ alignSelf: "flex-start" }}
             >
-              Add variant
+              Add Variant
             </Button>
           </Stack>
         </DialogContent>

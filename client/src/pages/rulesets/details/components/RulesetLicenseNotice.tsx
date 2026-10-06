@@ -22,10 +22,10 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
         onClick={() => setOpen(true)}
         sx={{ mt: 1 }}
       >
-        License & attribution
+        License & Attribution
       </MuiLink>
       <Modal open={open} onClose={() => setOpen(false)} maxWidth="md" aria-labelledby="ruleset-license-title">
-        <DialogTitle id="ruleset-license-title">License & attribution</DialogTitle>
+        <DialogTitle id="ruleset-license-title">License & Attribution</DialogTitle>
         <DialogContent dividers>
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
             {name}

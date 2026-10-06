@@ -223,7 +223,7 @@ export default function CharacterDetailsPage() {
                         <ActionMenuItem
                           key="hard-delete"
                           icon={DeleteForeverIcon}
-                          label="Delete permanently"
+                          label="Delete Permanently"
                           intent="destructive"
                           onClick={closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
                         />
@@ -314,10 +314,10 @@ export default function CharacterDetailsPage() {
           open={isHardDeleteConfirmOpen}
           onClose={() => setHardDeleteConfirmOpen(false)}
           onConfirm={() => hardDeleteMutation.mutate()}
-          title="Delete permanently"
+          title="Delete Permanently"
           message="This will permanently delete this character and all of its levels, abilities, inventory, attachments, and customizations. This cannot be undone."
           isLoading={hardDeleteMutation.isPending}
-          confirmLabel="Delete permanently"
+          confirmLabel="Delete Permanently"
         />
 
         <ShareDialog

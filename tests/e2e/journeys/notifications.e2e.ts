@@ -58,7 +58,7 @@ test.describe("Notifications", () => {
     const unread = await unreadCount(gm);
 
     const markedRead = apiResponse(gm, "POST", /\/api\/notifications\/read-all$/);
-    await gm.getByRole("button", { name: "Mark all as read" }).click();
+    await gm.getByRole("button", { name: "Mark All as Read" }).click();
     await markedRead;
     await expect.poll(() => unreadRejections.count(), { timeout: 10_000 }).toBe(0);
     await expect.poll(() => unreadCount(gm), { timeout: 15_000 }).toBeLessThanOrEqual(unread - 2);

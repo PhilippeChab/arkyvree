@@ -11,16 +11,16 @@ import {
 } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
 
-/** Opens the fork's Local changes, from its page. */
+/** Opens the fork's Local Changes, from its page. */
 async function openLocalChanges(page: Page, forkId: string) {
   await page.goto(`/rulesets/${forkId}`);
-  await openActionsMenu(page, /^Local changes/);
-  const dialog = page.getByRole("dialog").filter({ hasText: "Local changes" });
+  await openActionsMenu(page, /^Local Changes/);
+  const dialog = page.getByRole("dialog").filter({ hasText: "Local Changes" });
   await expect(dialog).toBeVisible();
   return dialog;
 }
 
-/** Restores the renamed entity listed in the Local changes dialog, under `group`, which leaves the fork with no changes. */
+/** Restores the renamed entity listed in the Local Changes dialog, under `group`, which leaves the fork with no changes. */
 async function restore(page: Page, dialog: ReturnType<Page["getByRole"]>, group: string, renamed: string) {
   await expect(dialog.getByText(group, { exact: true })).toBeVisible();
   const row = dialog.getByRole("listitem").filter({ hasText: renamed });
@@ -42,12 +42,12 @@ test.describe("Changes to a fork", () => {
     await openRace(page, "Human");
     await renameEntity(page, renamed);
 
-    // The fork lists every race, and only the renamed one under Local changes.
+    // The fork lists every race, and only the renamed one under Local Changes.
     await page.goto(`/rulesets/${forkId}/races`);
     const rows = page.locator("table tbody tr");
     await expect(page.locator(`text="${renamed}"`).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.locator("table tbody").getByText("Dwarf", { exact: true })).toBeVisible();
-    const toggle = page.getByRole("button", { name: "Local changes" });
+    const toggle = page.getByRole("button", { name: "Local Changes" });
     await toggle.click();
     await expect(page).toHaveURL(/childOnly=true/);
     await expect(rows).toHaveCount(1, { timeout: 10_000 });
@@ -68,7 +68,7 @@ test.describe("Changes to a fork", () => {
     await restore(page, await openLocalChanges(page, forkId), "Races", renamed);
   });
 
-  test("a renamed feat is listed under Feats in Local changes, until restored", async ({ page, ownerUser }) => {
+  test("a renamed feat is listed under Feats in Local Changes, until restored", async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
     const renamed = `Feat Override Test ${Date.now()}`;
     const forkId = await forkCoreRuleset(page, uniqueName("Feat Override Fork"));
@@ -77,7 +77,7 @@ test.describe("Changes to a fork", () => {
     await restore(page, await openLocalChanges(page, forkId), "Feats", renamed);
   });
 
-  test("a new feat is listed with the inherited ones, and under Local changes", async ({ page, ownerUser }) => {
+  test("a new feat is listed with the inherited ones, and under Local Changes", async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
     const featName = `Custom Feat ${Date.now()}`;
     const forkId = await forkCoreRuleset(page, uniqueName("Add-Feat Fork"));
@@ -103,7 +103,7 @@ test.describe("Changes to a fork", () => {
     await page.getByPlaceholder("Search feats...").fill(featName);
     const row = page.locator("table tbody").getByText(featName, { exact: true }).first();
     await expect(row).toBeVisible({ timeout: 10_000 });
-    await page.getByRole("button", { name: "Local changes" }).click();
+    await page.getByRole("button", { name: "Local Changes" }).click();
     await expect(page).toHaveURL(/childOnly=true/);
     await expect(row).toBeVisible({ timeout: 10_000 });
   });

@@ -54,6 +54,7 @@
  *   default, makes `spacing` a gap), never a `Box` with a flex `display`.
  * - `component-defaults`: what the theme sets for every instance (a tooltip's arrow and delay, `Collapse`'s timeout)
  *   isn't set again on one.
+ * - `label-case`: a button's, a menu item's and a dialog's words are in Title Case ("Mark All as Read").
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -217,6 +218,32 @@ const SPACING_KEYS = new Set([
   "paddingLeft",
   "paddingRight",
   "paddingTop",
+]);
+
+/** The elements whose text is an action's label: a button, a menu item */
+const LABELLED = new Set(["ActionMenuItem", "Button", "MenuItem"]);
+
+/** The props that hold an action's label or a dialog's title */
+const LABEL_PROPS = new Set(["backLabel", "confirmLabel", "label", "submitLabel"]);
+
+/** The words a Title Case label leaves lowercase */
+const SMALL_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "as",
+  "at",
+  "by",
+  "for",
+  "from",
+  "in",
+  "of",
+  "on",
+  "or",
+  "the",
+  "to",
+  "vs",
+  "with",
 ]);
 
 /** `Intl`'s date formatters */
@@ -583,6 +610,39 @@ function createApiCallsInQueries(context) {
           "The API is called through TanStack Query: make this request in a function a query or a mutation runs, named " +
           "`…Fn` (a `queryFn`, a `mutationFn`, or a hook's `createFn` that becomes one), never on its own.",
       });
+    },
+  };
+}
+
+/** Whether a label is in Title Case: every word but the small ones starts with a capital (`Mark All as Read`). */
+function inTitleCase(text) {
+  const words = text
+    .trim()
+    .split(/\s+/)
+    .filter((word) => /^[a-z]/i.test(word));
+  return words.every((word, index) => /^[A-Z0-9]/.test(word) || (index > 0 && SMALL_WORDS.has(word.toLowerCase())));
+}
+
+function createLabelCase(context) {
+  if (!inClient(context)) return {};
+  const report = (node, text) =>
+    context.report({
+      node,
+      message: `A button's, a menu item's and a dialog's words are in Title Case ("Mark All as Read"): "${text.trim()}".`,
+    });
+  return {
+    JSXText(node) {
+      const parent = node.parent;
+      const owner = parent.type === "JSXElement" ? elementName(parent) : null;
+      const labels = LABELLED.has(owner) || owner === "DialogTitle";
+      if (labels && /[a-z]/i.test(node.value) && !inTitleCase(node.value)) report(node, node.value);
+    },
+    JSXAttribute(node) {
+      if (node.value?.type !== "Literal" || typeof node.value.value !== "string") return;
+      const element = elementName(node.parent.parent) ?? "";
+      const dialogTitle = node.name.name === "title" && /(Dialog|^Modal)$/.test(element);
+      const label = LABEL_PROPS.has(node.name.name) && (LABELLED.has(element) || /(Dialog|^Modal)$/.test(element));
+      if ((dialogTitle || label) && !inTitleCase(node.value.value)) report(node, node.value.value);
     },
   };
 }
@@ -1109,4 +1169,5 @@ export default {
   borders: { meta: { type: "suggestion" }, create: createBorders },
   "flex-layout": { meta: { type: "suggestion" }, create: createFlexLayout },
   "component-defaults": { meta: { type: "suggestion" }, create: createComponentDefaults },
+  "label-case": { meta: { type: "suggestion" }, create: createLabelCase },
 };

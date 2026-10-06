@@ -108,7 +108,7 @@ export function NotificationBell() {
                 onClick={() => actions.markAllRead.mutate(undefined, { onSuccess: () => setAnchorEl(null) })}
                 disabled={actions.markAllRead.isPending}
               >
-                Mark all read
+                Mark All as Read
               </Button>
             </Stack>,
             <Divider key="divider" />,

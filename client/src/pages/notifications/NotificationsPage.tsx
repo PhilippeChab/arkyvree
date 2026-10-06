@@ -87,7 +87,7 @@ export default function NotificationsPage() {
                 borderRadius: 2,
               }}
             >
-              Mark all as read
+              Mark All as Read
             </Button>
           }
         />

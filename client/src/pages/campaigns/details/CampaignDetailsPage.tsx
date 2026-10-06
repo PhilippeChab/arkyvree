@@ -208,7 +208,7 @@ export default function CampaignDetailsPage() {
                 <ActionMenuItem
                   key="hard-delete"
                   icon={DeleteForeverIcon}
-                  label="Delete permanently"
+                  label="Delete Permanently"
                   intent="destructive"
                   onClick={closeMenuAnd(() => setHardDeleteDialogOpen(true))}
                 />,
@@ -260,10 +260,10 @@ export default function CampaignDetailsPage() {
           open={hardDeleteDialogOpen}
           onClose={() => setHardDeleteDialogOpen(false)}
           onConfirm={() => hardDeleteMutation.mutate()}
-          title="Delete permanently"
+          title="Delete Permanently"
           message="This will permanently delete this campaign, its players, invites, and all campaign-specific ruleset extensions. This cannot be undone."
           isLoading={hardDeleteMutation.isPending}
-          confirmLabel="Delete permanently"
+          confirmLabel="Delete Permanently"
         />
       </Container>
     </PageTransition>

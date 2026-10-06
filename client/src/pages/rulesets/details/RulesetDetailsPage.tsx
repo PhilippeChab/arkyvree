@@ -412,7 +412,7 @@ export default function RulesetDetailsPage() {
           tabs={tabConfig}
           value={currentTab.key}
           onChange={(key) => navigate(`/rulesets/${id}/${key}`)}
-          // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local changes".
+          // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local Changes".
           onTabHover={(key) => void prefetchSection(queryClient, id, key, isExtension)}
           aria-label="ruleset details tabs"
         />
@@ -444,7 +444,7 @@ export default function RulesetDetailsPage() {
           {!!ruleset.rulesetId && (
             <ActionMenuItem
               icon={CompareIcon}
-              label="Local changes"
+              label="Local Changes"
               description="View added, modified, and deleted entities"
               onClick={closeMenuAnd(() => setOverridesDialogOpen(true))}
             />

@@ -260,7 +260,7 @@ export function skillsQuery(rulesetId: string, filters: ListFilters) {
 /**
  * Warm the first page of a tab the way it opens: switching tabs clears the
  * URL's filters, so that's no search, the default kind and sort, and the
- * ruleset's default "Local changes" setting.
+ * ruleset's default "Local Changes" setting.
  */
 export function prefetchSection(
   queryClient: QueryClient,

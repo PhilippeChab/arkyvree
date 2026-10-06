@@ -19,7 +19,7 @@ export default function DemoExpiredPage() {
       subtitle="Demo sessions last one hour and reset when they end. Sign up to keep working in a real account."
     >
       <Button variant="contained" color="primary" fullWidth component={Link} to={"/sign-up"}>
-        Sign up
+        Sign Up
       </Button>
     </AuthPage>
   );

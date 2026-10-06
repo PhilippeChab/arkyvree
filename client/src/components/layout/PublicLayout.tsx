@@ -35,7 +35,7 @@ export function PublicLayout() {
             </Button>
           ) : (
             <Button color="inherit" startIcon={<SignUpIcon />} component={Link} to={"/sign-up"}>
-              Sign up
+              Sign Up
             </Button>
           )}
         </Toolbar>
