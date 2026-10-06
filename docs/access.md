@@ -4,6 +4,8 @@ This is the source of truth for who can do what across the app. Every gated muta
 
 If you're adding a new mutation, find the matching row below and call the same policy method. If your case isn't covered, extend the policy — don't write inline `userId === session.userId` checks (see "Identity vs. policy" at the bottom).
 
+A service builds a policy with `await XPolicy.for(db, session, entity)`, through its transaction's handle: `for` loads the session's standing on the entity (its contributor role on a ruleset or a character, its player row in a campaign). Every check is then sync: it reads that standing, and what the service passes it about other rows (`canDeleteEntity({ inUse })`, `canHardDelete({ inActiveCampaign })`), and throws or answers. A policy has no other static and no check queries (`arkyvree/policy-shape`); a test may build one with `new`, from a standing it sets.
+
 ## Actors
 
 The system has four actor categories. Most policies are an OR of two or three of these.
@@ -19,7 +21,7 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 
 ## Rulesets — `RulesetsPolicy`
 
-Constructed with `(session, ruleset, contributorRole?)`. Pass the contributor role from `contributorsInRules` lookup; pass `null` if none. `RulesetsPolicy.for(tx, session, ruleset)` resolves the role and constructs the policy in one call.
+`RulesetsPolicy.for(tx, session, ruleset)` loads the session's contributor role (`contributorsInRules`), and, on a ruleset that isn't public, whether it plays in a campaign on it (what lets it create there).
 
 | Method | Allowed actors | Notes |
 |---|---|---|
@@ -70,11 +72,11 @@ The character-creation wizard combines `published + campaignAccessible` (and his
 
 ## Characters — `CharactersPolicy`
 
-Constructed with `(session, character, isActiveContributor?)`. The boolean comes from a lookup against `contributorsInCharacter` (status `Active`, not deleted). The schema has a `role` column (`Admin | Editor | Viewer`) for parity with ruleset contributors, but `CharacterContributorsService.inviteContributor` always creates rows as `Editor` and `CharactersPolicy` ignores the role — every active contributor has the same effective grant. The column is reserved for future tiering.
+`CharactersPolicy.for(tx, session, character)` loads whether the session is an active contributor (`contributorsInCharacter`, status `Active`, not deleted). The schema has a `role` column (`Admin | Editor | Viewer`) for parity with ruleset contributors, but `CharacterContributorsService.inviteContributor` always creates rows as `Editor` and `CharactersPolicy` ignores the role — every active contributor has the same effective grant. The column is reserved for future tiering.
 
 | Method | Allowed actors |
 |---|---|
-| `canHardDelete` | **owner only**, must be archived, must not be linked to an *active* campaign (links to archived campaigns don't block). Throws `ConflictError` on active-campaign link. See [persistence.md](./persistence.md#recoverable-user-content) |
+| `canHardDelete({ inActiveCampaign })` | **owner only**, must be archived, must not be linked to an *active* campaign (links to archived campaigns don't block): the service looks the link up. Throws `ConflictError` on active-campaign link. See [persistence.md](./persistence.md#recoverable-user-content) |
 | `canManageContributors` | **owner only** |
 | `canReadContributors` | owner, active contributor |
 
@@ -93,15 +95,15 @@ Campaign character responses redact private notes for viewers without character 
 
 ## Campaigns — `CampaignsPolicy`
 
-Constructed with `(session, campaign)`. No constructor flags; `canUpdate`/`canDelete` query `playersInCampaign` themselves.
+`CampaignsPolicy.for(tx, session, campaign)` loads the session's player row (`playersInCampaign`), an archived one too. The PDF worker, which has no session, builds one for the export's user and asks `isGameMaster()`.
 
 | Method | Allowed actors |
 |---|---|
-| `canUpdate` | **Game Master only** |
-| `canDelete` | **Game Master only** (archive) |
+| `canRead` | any member, Player or Game Master, of the campaign archived or not: returns their player row. Reading a campaign, its players, invites and characters starts with it (an unknown campaign is a 404 first) |
+| `canUpdate` | **Game Master only**, by an active player row (`isGameMaster`) |
+| `canDelete` | **Game Master only** (archive), an archived player row too |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
 | `canModify` | anyone the other checks allow, on a campaign that isn't archived (archived campaigns are read-only; a Game Master can still revoke an invite) |
-| `CampaignsPolicy.canRead(db, session, campaignId)` (static) | any member, Player or Game Master, of the campaign archived or not: returns their player row. Reading a campaign, its players, invites and characters starts with it |
 
 **Campaign character visibility** is *not* a CAS-protected surface — only the linking player can change visibility on their own character (`updateCharacterVisibility` throws `ForbiddenError "You do not own this character in this campaign"` for everyone else, including the GM: an identity match on the link's player). This is single-user contention by design.
 
@@ -136,14 +138,14 @@ The three invite lifecycles share the same shape:
 
 The invite services' `acceptInvite` and `rejectInvite` (campaigns, rulesets and characters), `leaveRuleset`, and `leaveCharacter` all follow this pattern. Campaign self-leave goes through `CampaignPlayersService.removePlayer` with the `isSelfRemoval = player.userId === session.userId` branch — same shape (identity match skips the GM gate). They're identity matches, not permission gates — see "Identity vs. policy" below.
 
-## Customizations — `CustomizationsPolicy`
+## Customizations
 
-Modifiers, properties, and requirements live on a parent entity (a feat, item, klass, race, power, klass-level, modifier, or character). The policy only validates that the parent still exists; the actual gating delegates to whichever policy owns the parent:
+Modifiers, properties, and requirements live on a parent entity (a feat, item, klass, race, power, klass-level, modifier, or character). They have no policy of their own: the gating is whichever policy owns the parent's, and `customizableEntities.ts` (`server/services/rulesets/customization/`) checks that the parent exists:
 
 - Customizations on a **ruleset entity** are gated by `RulesetsPolicy.canUpdateEntity` (owner / Admin / Editor).
 - Customizations on a **character** (e.g. character modifiers) go through `CharactersService` and are gated by `getEditableCharacter` (owner / contributor).
 
-`CustomizationsPolicy.canCustomize` fails closed if the parent has been deleted between policy construction and write, and returns the parent's display name for activity logging.
+`getCustomizableEntityName` is a 404 when the parent doesn't exist (within the composed ruleset when given one), and returns its display name for activity logging; `checkCustomizedEntity` checks an existing customization's parent the same way before an update or a delete.
 
 ## Identity vs. policy
 
@@ -163,7 +165,6 @@ Anything that *throws* on the basis of ownership is a permission gate and belong
 | `RulesetsPolicy` | `RulesetsService`, `RulesetExtensionsService` (subscribe / unsubscribe), `RulesetChangesService`, the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `RulesetsPolicy.for`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset |
 | `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `getEditableCharacter` instead and skip the policy class — same effective rule, fewer object instantiations |
 | `CampaignsPolicy` | `CampaignsService`, `CampaignPlayersService`, campaigns sub-services |
-| `CustomizationsPolicy` | `ModifiersService`, `PropertiesService`, `RequirementsService` (rulesets/customization). `CharacterModifiersService` uses `getEditableCharacter`, like the other character writes |
 | `AttachmentsService` registry | not a `BasePolicy` — uses `registerAttachable()` config map. Currently registered: `User` (avatar), `Character` (portrait) |
 
 Campaign creation validates ruleset access before inserting the campaign or GM membership. It uses the character-creation access policy: public published, owner, contributor, or existing active campaign membership. Archived rulesets and extensions cannot be used to create campaigns or characters. A newly requested campaign cannot grant its own ruleset access.

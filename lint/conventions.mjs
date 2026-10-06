@@ -34,6 +34,9 @@
  *   whose parameters the type gives). `oxlint --fix` declares one.
  * - `include-order`: a class includes its concerns by name, after its base (`include(BaseRepository<…>, Paginates,
  *   Searches)`): a concern builds on the base alone, so their order is the reader's. `oxlint --fix` sorts them.
+ * - `policy-shape`: a service builds a policy with `XPolicy.for(db, session, entity)`, which loads the session's standing
+ *   on the entity (its role on it), never with `new`; a policy's only static is `for`, and its only async method: a
+ *   check reads that standing and what the service passes it (`canDeleteEntity({ inUse })`), and throws or answers.
  * - `concern-shape`: a concern (`function X<B extends Constructor>(Base: B)`) sits in `X.ts`, its class is named for
  *   what it adds (a verb's `-ing`, `Archives` → `Archiving`, or `With` a noun, `ArmorClass` → `WithArmorClass`), and
  *   it adds methods, never state.
@@ -246,6 +249,40 @@ const includeOrder = {
           node: concerns[names.findIndex((name, i) => name !== sorted[i])],
           message: `A class includes its concerns by name, after its base: \`${sorted.join(", ")}\`.`,
           fix: (fixer) => concerns.map((c, i) => fixer.replaceText(c, sorted[i])),
+        });
+      },
+    };
+  },
+};
+
+const policyShape = {
+  meta: { type: "problem" },
+  create(context) {
+    const file = repoPath(context.filename);
+    if (!file.startsWith("server/")) return {};
+    const inPolicies = file.startsWith("server/services/policies/");
+    return {
+      MethodDefinition(node) {
+        if (!inPolicies || node.key.type !== "Identifier" || node.key.name === "for") return;
+        if (node.static) {
+          context.report({
+            node: node.key,
+            message: "A policy's only static is `for`, which builds it: a check is the policy's (`policy.canRead()`).",
+          });
+        } else if (node.value.async) {
+          context.report({
+            node: node.key,
+            message:
+              "A policy's check is sync: `for` loads the standing it reads, and the service passes it the rest " +
+              "(`canDeleteEntity({ inUse })`).",
+          });
+        }
+      },
+      NewExpression(node) {
+        if (inPolicies || node.callee.type !== "Identifier" || !node.callee.name.endsWith("Policy")) return;
+        context.report({
+          node,
+          message: `Build a policy with \`${node.callee.name}.for(db, session, entity)\`: it loads the session's standing on it.`,
         });
       },
     };
@@ -647,6 +684,7 @@ export const rules = {
   "shared-runtime": sharedRuntime,
   "session-param": sessionParam,
   "test-placement": testPlacement,
+  "policy-shape": policyShape,
   "concern-shape": concernShape,
   "include-order": includeOrder,
   "function-declarations": functionDeclarations,

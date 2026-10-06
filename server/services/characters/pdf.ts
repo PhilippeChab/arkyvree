@@ -3,7 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { addJob, pingWorker } from "@/server/queue.ts";
-import { Activities, Characters, PlayerCharacters } from "@/server/repositories/index.ts";
+import { Activities, Campaigns, Characters, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
@@ -19,7 +19,8 @@ import { findEditableCharacterOrBonded } from "./editableCharacter.ts";
 export async function findExportableCharacter(userId: string, characterId: string, campaignId?: string) {
   if (campaignId) {
     if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return null;
-    if (await CampaignsPolicy.isGameMaster(userId, campaignId)) {
+    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
+    if (campaign && (await CampaignsPolicy.for(db, { userId }, campaign)).isGameMaster()) {
       return (await Characters.findOne(db, { id: characterId })) ?? null;
     }
   }

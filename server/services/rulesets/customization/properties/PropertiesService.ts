@@ -6,12 +6,16 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
-import { CustomizationsPolicy, RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   cowCustomizationForMutation,
   cowEntityForCustomization,
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
+import {
+  checkCustomizedEntity,
+  getCustomizableEntityName,
+} from "@/server/services/rulesets/customization/customizableEntities.ts";
 import type { Property, Session } from "@/shared/relations.ts";
 
 class PropertiesService {
@@ -33,7 +37,7 @@ class PropertiesService {
   async getProperties(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);
-      await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+      await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
       const all = rulesetData.propertiesByEntity.get(effectiveEntityId) ?? [];
       return all.filter((p) => p.entityType === entityType);
     });
@@ -55,7 +59,7 @@ class PropertiesService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
         const resolvedEntityId = await cowEntityForCustomization(tx, rulesetId, entityType, effectiveEntityId);
 
@@ -101,7 +105,7 @@ class PropertiesService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
         const { property, fromTemplate } = this.findEntityProperty(
           rulesetData,
@@ -110,8 +114,7 @@ class PropertiesService {
           propertyId,
         );
 
-        const customizationPolicy = new CustomizationsPolicy(session, property);
-        await customizationPolicy.canUpdate();
+        await checkCustomizedEntity(property);
 
         if (fromTemplate) {
           // Template property: create an override on the derived item
@@ -125,7 +128,7 @@ class PropertiesService {
           });
           const newProperty = rows[0];
 
-          const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+          const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: newProperty.id,
@@ -155,7 +158,7 @@ class PropertiesService {
         }
         const updatedProperty = rows[0];
 
-        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: updatedProperty.id,
@@ -177,7 +180,7 @@ class PropertiesService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
         const { property, fromTemplate } = this.findEntityProperty(
           rulesetData,
@@ -190,8 +193,7 @@ class PropertiesService {
           throw new BadRequestError("Cannot delete a property inherited from a template");
         }
 
-        const customizationPolicy = new CustomizationsPolicy(session, property);
-        await customizationPolicy.canDelete();
+        await checkCustomizedEntity(property);
 
         const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await cowCustomizationForMutation(
           tx,
@@ -205,7 +207,7 @@ class PropertiesService {
         const rows = await Properties.delete(tx, { id: resolvedPropertyId });
         const deletedProperty = rows[0];
 
-        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: deletedProperty.id,

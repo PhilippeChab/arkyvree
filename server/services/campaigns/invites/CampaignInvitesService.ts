@@ -78,7 +78,7 @@ class CampaignInvitesService {
       throw new NotFoundError("Campaign not found");
     }
 
-    await CampaignsPolicy.canRead(db, session, campaignId);
+    (await CampaignsPolicy.for(db, session, campaign)).canRead();
 
     return await Invites.findPage(db, { campaignId, ...where }, pagination);
   }
@@ -116,7 +116,7 @@ class CampaignInvitesService {
 
       const campaign = await this.getInviteCampaign(tx, invite);
 
-      await new CampaignsPolicy(session, campaign).canUpdate();
+      (await CampaignsPolicy.for(tx, session, campaign)).canUpdate();
 
       if (invite.status !== "Pending") {
         throw new ConflictError("Only pending invites can be revoked");

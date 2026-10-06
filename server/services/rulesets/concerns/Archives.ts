@@ -46,7 +46,7 @@ export function Archives<B extends Constructor>(Base: B) {
           throw new NotFoundError("Ruleset not found");
         }
 
-        new RulesetsPolicy(session, ruleset).canUnarchive();
+        (await RulesetsPolicy.for(tx, session, ruleset)).canUnarchive();
 
         const rows = await Rulesets.unarchive(tx, { id });
         const unarchivedRuleset = rows[0];

@@ -16,7 +16,7 @@ class CampaignsService {
       throw new NotFoundError("Campaign not found");
     }
 
-    const player = await CampaignsPolicy.canRead(db, session, id);
+    const player = (await CampaignsPolicy.for(db, session, campaign)).canRead();
 
     return { ...campaign, currentUserRole: player.role };
   }
@@ -50,7 +50,7 @@ class CampaignsService {
     return await withTransaction(async (tx) => {
       const ruleset = await Rulesets.findOne(tx, { id: body.rulesetId });
       if (!ruleset) throw new NotFoundError("Ruleset not found");
-      await (await RulesetsPolicy.for(tx, session, ruleset)).canCreateCampaign(tx);
+      (await RulesetsPolicy.for(tx, session, ruleset)).canCreateCampaign();
 
       const campaignRows = await Campaigns.create(tx, body);
 
@@ -99,7 +99,7 @@ class CampaignsService {
         throw new NotFoundError("Campaign not found");
       }
 
-      await new CampaignsPolicy(session, existingCampaign).canUpdate();
+      (await CampaignsPolicy.for(tx, session, existingCampaign)).canUpdate();
 
       const rows = await Campaigns.update(tx, body, { id });
       const updatedCampaign = rows[0];
@@ -127,7 +127,7 @@ class CampaignsService {
         throw new NotFoundError("Campaign not found");
       }
 
-      await new CampaignsPolicy(session, existingCampaign).canDelete();
+      (await CampaignsPolicy.for(tx, session, existingCampaign)).canDelete();
 
       // Archive flips deletedAt on the campaign row only — players, invites,
       // and player-character links stay live. Campaigns.findMany filters
@@ -161,7 +161,7 @@ class CampaignsService {
         throw new NotFoundError("Campaign not found");
       }
 
-      await new CampaignsPolicy(session, existingCampaign).canHardDelete();
+      (await CampaignsPolicy.for(tx, session, existingCampaign)).canHardDelete();
 
       // Campaigns aren't an Attachable record type, so no polymorphic cleanup
       // is needed — every FK to campaigns.id cascades on delete.
@@ -186,7 +186,7 @@ class CampaignsService {
         throw new NotFoundError("Campaign not found");
       }
 
-      await new CampaignsPolicy(session, existingCampaign).canDelete();
+      (await CampaignsPolicy.for(tx, session, existingCampaign)).canDelete();
 
       const rows = await Campaigns.unarchive(tx, { id });
       const unarchivedCampaign = rows[0];

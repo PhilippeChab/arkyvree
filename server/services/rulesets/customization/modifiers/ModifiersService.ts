@@ -6,7 +6,7 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
-import { CustomizationsPolicy, RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import {
   copyEntityCustomizations,
   cowCustomizationForMutation,
@@ -14,6 +14,10 @@ import {
   fetchEntityCustomizations,
   withRulesetScope,
 } from "@/server/services/rulesets/cow/index.ts";
+import {
+  checkCustomizedEntity,
+  getCustomizableEntityName,
+} from "@/server/services/rulesets/customization/customizableEntities.ts";
 import {
   getTargetPathsWithLabels,
   resolvePathValueType,
@@ -48,7 +52,7 @@ class ModifiersService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
         if (sourceModifierId) {
           const sourceModifier = rulesetData.modifiersById.get(sourceModifierId);
@@ -107,14 +111,14 @@ class ModifiersService {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const effectiveEntityId = rulesetData.canonicalize(entityId);
 
-      const parentName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+      const parentName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
       const modifier = rulesetData.modifiersById.get(modifierId);
       if (!modifier) throw new NotFoundError("Modifier not found");
 
       const sourceName =
         modifier.sourceId === effectiveEntityId && modifier.sourceType === entityType
           ? parentName
-          : await CustomizationsPolicy.canCustomize(modifier.sourceId, modifier.sourceType, rulesetData);
+          : await getCustomizableEntityName(modifier.sourceId, modifier.sourceType, rulesetData);
 
       const requirements = rulesetData.requirementsByEntity.get(modifierId) ?? [];
       const modifierRequirements = requirements.filter((r) => r.entityType === "modifiers");
@@ -132,7 +136,7 @@ class ModifiersService {
   async getModifiers(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
       const resolvedId = rulesetData.canonicalize(entityId);
-      await CustomizationsPolicy.canCustomize(resolvedId, entityType, rulesetData);
+      await getCustomizableEntityName(resolvedId, entityType, rulesetData);
       // Compose step pre-merges sibling modifiers into the winner's bucket with
       // sourceId remapped. Filter by sourceType to isolate the requested family.
       const allMods = rulesetData.modifiersBySource.get(resolvedId) ?? [];
@@ -188,12 +192,11 @@ class ModifiersService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
         const modifier = this.findEntityModifier(rulesetData, entityType, effectiveEntityId, modifierId);
 
-        const customizationPolicy = new CustomizationsPolicy(session, modifier);
-        await customizationPolicy.canUpdate();
+        await checkCustomizedEntity(modifier);
 
         // COW the owning entity if this modifier is inherited
         const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await cowCustomizationForMutation(
@@ -230,7 +233,7 @@ class ModifiersService {
         }
         const updatedModifier = rows[0];
 
-        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: updatedModifier.id,
@@ -252,12 +255,11 @@ class ModifiersService {
         (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
         const effectiveEntityId = rulesetData.canonicalize(entityId);
-        await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
 
         const modifier = this.findEntityModifier(rulesetData, entityType, effectiveEntityId, modifierId);
 
-        const customizationPolicy = new CustomizationsPolicy(session, modifier);
-        await customizationPolicy.canDelete();
+        await checkCustomizedEntity(modifier);
 
         const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await cowCustomizationForMutation(
           tx,
@@ -272,7 +274,7 @@ class ModifiersService {
         const rows = await Modifiers.delete(tx, { ids: [resolvedModifierId] });
         const deletedModifier = rows[0];
 
-        const entityName = await CustomizationsPolicy.canCustomize(effectiveEntityId, entityType, rulesetData);
+        const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);
         await createActivityWithNotifications(tx, {
           userId: session.userId,
           targetId: deletedModifier.id,

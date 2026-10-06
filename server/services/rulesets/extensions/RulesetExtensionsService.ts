@@ -189,7 +189,7 @@ class RulesetExtensionsService {
       if (!childRuleset) {
         throw new NotFoundError("Ruleset not found");
       }
-      new RulesetsPolicy(session, childRuleset).canSubscribeExtension();
+      (await RulesetsPolicy.for(tx, session, childRuleset)).canSubscribeExtension();
 
       // The host can't subscribe to anything if it's already being used as an
       // extension by someone else — adding extensions to it would create
@@ -271,7 +271,7 @@ class RulesetExtensionsService {
       if (!ruleset) {
         throw new NotFoundError("Ruleset not found");
       }
-      const policy = new RulesetsPolicy(session, ruleset);
+      const policy = await RulesetsPolicy.for(tx, session, ruleset);
       policy.canUnsubscribeExtension();
 
       if (!ruleset.extensionRulesetIds.includes(extensionId)) {
