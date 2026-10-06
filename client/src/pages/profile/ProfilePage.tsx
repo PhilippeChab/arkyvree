@@ -15,7 +15,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
-import { wrongCredential } from "@/client/src/lib/errorMessage.ts";
+import { loadFailureMessage, wrongCredential } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { confirmPasswordRules, emailRules, newPasswordRules, usernameRules } from "@/client/src/lib/validation.ts";
 import { DeleteAccountDialog, EmailChangeVerificationDialog } from "@/client/src/pages/profile/components/index.ts";
@@ -42,7 +42,7 @@ interface ProfileCardProps {
 
 function ProfileCard({ title, children, danger = false }: ProfileCardProps) {
   return (
-    <Card sx={{ mb: 3, ...(danger && { borderColor: "error.main", borderWidth: 1, borderStyle: "solid" }) }}>
+    <Card sx={{ mb: 3, ...(danger && { borderColor: "error.main" }) }}>
       <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
         <Typography
           component="h2"
@@ -76,7 +76,11 @@ export default function ProfilePage() {
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const { data: userData, isLoading } = useQuery({
+  const {
+    data: userData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: queryKeys.auth.me,
     queryFn: () => parseResponse(rpc.auth.me.$get()),
   });
@@ -192,7 +196,7 @@ export default function ProfilePage() {
   if (!userData) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <PageError message="Failed to load your profile. Please try again later." />
+        <PageError message={loadFailureMessage("Profile", error)} />
       </Container>
     );
   }

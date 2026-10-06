@@ -41,15 +41,6 @@ export default function CampaignCharacterPage() {
     then();
   };
 
-  // The route always has both ids: only a malformed link lacks one
-  if (!campaignId || !characterId) {
-    return (
-      <Container maxWidth="xl" sx={{ py: 2 }}>
-        <PageError message="Character not found" backLabel="Back to Campaigns" backTo={"/campaigns"} />
-      </Container>
-    );
-  }
-
   if (isLoading) {
     return <CharacterDetailSkeleton />;
   }

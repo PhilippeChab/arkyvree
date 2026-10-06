@@ -7,7 +7,7 @@ import { PageError, PageTransition } from "@/client/src/components/common/index.
 import { DownloadIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { accessLost } from "@/client/src/lib/errorMessage.ts";
+import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 
@@ -45,7 +45,7 @@ export default function SharedCharacterPage() {
   if (!character || accessLost(error)) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageError message="This character sheet is not available or the link has been revoked." />
+        <PageError message={loadFailureMessage("Character sheet", error)} />
       </Container>
     );
   }

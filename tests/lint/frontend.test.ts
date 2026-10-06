@@ -679,4 +679,20 @@ describe("frontend rules", () => {
       ),
     ).toEqual(["confirm-wording client/src/stated.tsx", "confirm-wording client/src/undone.tsx"]);
   });
+
+  test("a page that couldn't load says why in loadFailureMessage's words", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/written.tsx":
+            'export const w = <PageError message="Failed to load your profile. Please try again later." />;\n',
+          "client/src/branched.tsx":
+            'export const b = <EntityPageError message={ok ? loadFailureMessage("Ruleset", e) : `Invalid type: ${t}`} />;\n',
+          "client/src/worded.tsx":
+            'export const o = <><PageError message={loadFailureMessage("Profile", error)} /><EntityPageError message={r ? loadFailureMessage("Ruleset", e) : loadFailureMessage("Class", f)} /></>;\n',
+        },
+        ["page-errors"],
+      ),
+    ).toEqual(["page-errors client/src/branched.tsx", "page-errors client/src/written.tsx"]);
+  });
 });

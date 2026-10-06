@@ -64,6 +64,7 @@
  *   fallback names what failed ("Failed to remove item").
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
  *   "This action cannot be undone."
+ * - `page-errors`: a page that couldn't load says why in `loadFailureMessage`'s words.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -1129,7 +1130,7 @@ function createBorders(context) {
           message: "A `Paper` or a `Card` takes its elevation as `elevation`, never `sx` `boxShadow`.",
         });
       }
-      if (key === "border") {
+      if (key === "border" || key === "borderWidth" || key === "borderStyle") {
         context.report({
           node,
           message:
@@ -1265,6 +1266,30 @@ function createToastWording(context) {
   };
 }
 
+/** Whether a message is `loadFailureMessage`'s: its call, or a condition whose branches are. */
+function worded(value) {
+  if (value?.type === "ConditionalExpression") return worded(value.consequent) && worded(value.alternate);
+  return value?.type === "CallExpression" && calleeName(value) === "loadFailureMessage";
+}
+
+function createPageErrors(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXAttribute(node) {
+      const element = elementName(node.parent.parent);
+      if (node.name.name !== "message" || (element !== "PageError" && element !== "EntityPageError")) return;
+      const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
+      if (worded(value)) return;
+      context.report({
+        node,
+        message:
+          "A page that couldn't load says why in `loadFailureMessage`'s words (`loadFailureMessage(\"Campaign\", " +
+          "error)`): not found, no access, or failed.",
+      });
+    },
+  };
+}
+
 /** Whether a style value is a size written out: `14`, `"0.75rem"`, `{ xs: 48, sm: 64 }` (not `"inherit"`, not computed). */
 function writtenSize(value) {
   if (value.type === "Literal")
@@ -1363,4 +1388,5 @@ export default {
   headings: { meta: { type: "suggestion" }, create: createHeadings },
   "toast-wording": { meta: { type: "suggestion" }, create: createToastWording },
   "confirm-wording": { meta: { type: "suggestion" }, create: createConfirmWording },
+  "page-errors": { meta: { type: "suggestion" }, create: createPageErrors },
 };

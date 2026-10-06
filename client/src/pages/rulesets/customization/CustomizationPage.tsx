@@ -403,9 +403,11 @@ export default function CustomizationPage() {
     );
   }
 
+  // A type no entity has is an address the app doesn't know, which the routes send on
+  if (!validType) return <Navigate to={`/rulesets/${rulesetId}`} replace />;
+
   // A failed refetch keeps showing the data it has (and any unsaved edits).
   if (
-    !validType ||
     (rulesetError && !ruleset) ||
     (entityError && !data) ||
     (!isRulesetLoading && !isEntityLoading && (!ruleset || !data))
@@ -413,11 +415,9 @@ export default function CustomizationPage() {
     return (
       <EntityPageError
         message={
-          !validType
-            ? `Invalid entity type: ${entityType}`
-            : !ruleset && (rulesetError || !entityError)
-              ? loadFailureMessage("Ruleset", rulesetError)
-              : loadFailureMessage(entityTypeLabel(validType, ruleset?.baseRules), entityError)
+          !ruleset && (rulesetError || !entityError)
+            ? loadFailureMessage("Ruleset", rulesetError)
+            : loadFailureMessage(entityTypeLabel(validType, ruleset?.baseRules), entityError)
         }
         backLabel="Back to Ruleset"
         backTo={`/rulesets/${rulesetId}`}

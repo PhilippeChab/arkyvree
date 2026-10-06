@@ -203,7 +203,7 @@ test.describe("Characters", () => {
     await anyone.goto(shareUrl);
     expect((await revoked).status()).toBe(404);
     await expect(
-      anyone.getByRole("alert").filter({ hasText: /not available or the link has been revoked/i }),
+      anyone.getByRole("alert").filter({ hasText: /Character sheet not found|access to this character sheet/i }),
     ).toBeVisible();
     await expect(anyone.locator(`text="${name}"`)).toHaveCount(0);
 
