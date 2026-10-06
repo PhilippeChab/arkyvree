@@ -1,14 +1,5 @@
-import { configureHttp } from "@/database/packages/dnd35-from-parser/tools/scraper/http.ts";
-import { scrapeAllClasses, scrapeClass } from "@/database/packages/dnd35-from-parser/tools/scraper/scrapeClasses.ts";
-import { scrapeBookDomains } from "@/database/packages/dnd35-from-parser/tools/scraper/scrapeDomains.ts";
-import { scrapeAllFeats, scrapeSingleFeat } from "@/database/packages/dnd35-from-parser/tools/scraper/scrapeFeats.ts";
-import { scrapeAllItems } from "@/database/packages/dnd35-from-parser/tools/scraper/scrapeItems.ts";
-import { scrapeAllMagicItems } from "@/database/packages/dnd35-from-parser/tools/scraper/scrapeMagicItems.ts";
-import { scrapeAllRaces, scrapeSingleRace } from "@/database/packages/dnd35-from-parser/tools/scraper/scrapeRaces.ts";
-import {
-  scrapeAllSpells,
-  scrapeSingleSpell,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/scrapeSpells.ts";
+import { HttpClient } from "@/database/packages/dnd35-from-parser/tools/scraper/HttpClient.ts";
+import { Scraper } from "@/database/packages/dnd35-from-parser/tools/scraper/Scraper.ts";
 
 function printUsage() {
   console.error("Usage: bun scraper/index.ts <type> [options]");
@@ -49,8 +40,6 @@ async function main() {
   const delay = delayIdx >= 0 ? parseInt(args[delayIdx + 1], 10) : undefined;
   if (delayIdx >= 0) args.splice(delayIdx, 2);
 
-  configureHttp({ noCache, ...(delay ? { delay } : {}) });
-
   if (args.length < 1) {
     printUsage();
     process.exit(1);
@@ -61,37 +50,38 @@ async function main() {
   const url = urlIdx >= 0 ? args[urlIdx + 1] : undefined;
   const bookIdx = args.indexOf("--book");
   const book = bookIdx >= 0 ? args[bookIdx + 1] : "srd";
+  const scraper = new Scraper(book, new HttpClient({ noCache, ...(delay ? { delay } : {}) }));
 
   if (type === "class") {
     if (url) {
-      await scrapeClass(url, book);
+      await scraper.scrapeClass(url);
     } else {
-      await scrapeAllClasses(book);
+      await scraper.scrapeClasses();
     }
   } else if (type === "feat") {
     if (url) {
-      await scrapeSingleFeat(url);
+      await scraper.scrapeFeat(url);
     } else {
-      await scrapeAllFeats(book);
+      await scraper.scrapeFeats();
     }
   } else if (type === "spell") {
     if (url) {
-      await scrapeSingleSpell(url);
+      await scraper.scrapeSpell(url);
     } else {
-      await scrapeAllSpells(book);
+      await scraper.scrapeSpells();
     }
   } else if (type === "domain") {
-    await scrapeBookDomains(book);
+    await scraper.scrapeDomains();
   } else if (type === "race") {
     if (url) {
-      await scrapeSingleRace(url);
+      await scraper.scrapeRace(url);
     } else {
-      await scrapeAllRaces(book);
+      await scraper.scrapeRaces();
     }
   } else if (type === "item") {
-    await scrapeAllItems(book);
+    await scraper.scrapeItems();
   } else if (type === "magicItem") {
-    await scrapeAllMagicItems(book);
+    await scraper.scrapeMagicItems();
   } else if (type === "wizardSchool") {
     console.log(`Skipping wizardSchool — no HTML parser (reference is manually maintained)`);
   } else {

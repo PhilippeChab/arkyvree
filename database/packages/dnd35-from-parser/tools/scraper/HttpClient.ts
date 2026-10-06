@@ -1,0 +1,150 @@
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { sanitizeHtml } from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
+
+interface HttpOptions {
+  /** Disable disk cache (default: false) */
+  noCache?: boolean;
+  /** Delay between requests in ms (default: 200) */
+  delay?: number;
+}
+
+const CACHE_DIR = join(import.meta.dirname!, ".cache");
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+const MAX_RETRIES = 3;
+
+/**
+ * Fetches the scraped sites' pages: from the disk cache while it holds them (a day), else from the site, a request at a
+ * time at most every `delay` ms, retried when the site is busy or fails.
+ */
+export class HttpClient {
+  constructor(private readonly options: HttpOptions = {}) {}
+
+  /** When the last request was sent, which the next one waits `delay` after. */
+  private lastRequestTime = 0;
+
+  private cacheKey(url: string): string {
+    return createHash("sha256").update(url).digest("hex");
+  }
+
+  private cachePath(url: string): string {
+    return join(CACHE_DIR, `${this.cacheKey(url)}.html`);
+  }
+
+  private readCache(url: string): string | null {
+    if (this.options.noCache) return null;
+
+    const path = this.cachePath(url);
+    if (!existsSync(path)) return null;
+
+    const stat = statSync(path);
+    if (Date.now() - stat.mtimeMs > CACHE_TTL_MS) return null;
+
+    return readFileSync(path, "utf-8");
+  }
+
+  private writeCache(url: string, html: string): void {
+    if (this.options.noCache) return;
+
+    mkdirSync(CACHE_DIR, { recursive: true });
+    writeFileSync(this.cachePath(url), html);
+  }
+
+  private async rateLimit(): Promise<void> {
+    const delay = this.options.delay ?? 200;
+    const elapsed = Date.now() - this.lastRequestTime;
+    if (elapsed < delay) {
+      await new Promise((resolve) => setTimeout(resolve, delay - elapsed));
+    }
+    this.lastRequestTime = Date.now();
+  }
+
+  /**
+   * Fetch all pages from a paginated dndtools.net listing.
+   *
+   * Page 1 is fetched first to extract the total item count from the
+   * "(total N items)" text. Remaining pages are fetched sequentially
+   * (to respect rate limiting).
+   *
+   * Note: dndtools.net returns 500 for custom `page_size` params,
+   * so we use the default page size (20 items) and paginate with `?page=N`.
+   *
+   * Returns an array of HTML strings, one per page.
+   */
+  async fetchAllPages(baseUrl: string): Promise<string[]> {
+    const PAGE_SIZE = 20; // dndtools.net default, cannot be changed
+    const sep = baseUrl.includes("?") ? "&" : "?";
+    const page1Url = `${baseUrl}${sep}page=1`;
+
+    console.log(`Fetching page 1: ${page1Url}`);
+    const page1Html = await this.fetchHtml(page1Url);
+
+    // Extract total from "(total N items)"
+    const totalMatch = page1Html.match(/\(total\s+(\d+)\s+items?\)/i);
+    if (!totalMatch) {
+      // Single page — no pagination indicator
+      return [page1Html];
+    }
+
+    const total = parseInt(totalMatch[1], 10);
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    console.log(`  Total: ${total} items across ${totalPages} page(s)`);
+
+    if (totalPages <= 1) return [page1Html];
+
+    const pages = [page1Html];
+    for (let page = 2; page <= totalPages; page++) {
+      const pageUrl = `${baseUrl}${sep}page=${page}`;
+      console.log(`Fetching page ${page}/${totalPages}: ${pageUrl}`);
+      pages.push(await this.fetchHtml(pageUrl));
+    }
+
+    return pages;
+  }
+
+  /** A page's HTML: from the disk cache, else fetched, rate limited, with up to MAX_RETRIES attempts. */
+  async fetchHtml(url: string): Promise<string> {
+    // Check cache first
+    const cached = this.readCache(url);
+    if (cached) return cached;
+
+    await this.rateLimit();
+
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const response = await fetch(url);
+
+        if (response.status === 429 || response.status >= 500) {
+          const backoff = Math.pow(2, attempt) * 500;
+          console.warn(
+            `HTTP ${response.status} for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, backoff));
+          continue;
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText} — ${url}`);
+        }
+
+        const html = sanitizeHtml(await response.text());
+        this.writeCache(url, html);
+        return html;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        if (attempt < MAX_RETRIES) {
+          const backoff = Math.pow(2, attempt) * 500;
+          console.warn(`Fetch error for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`);
+          await new Promise((resolve) => setTimeout(resolve, backoff));
+        }
+      }
+    }
+
+    throw lastError ?? new Error(`Failed to fetch ${url} after ${MAX_RETRIES} attempts`);
+  }
+}
