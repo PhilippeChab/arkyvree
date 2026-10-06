@@ -1,24 +1,19 @@
 import { describe, expect, test } from "bun:test";
 
-import { getTableName } from "drizzle-orm";
-
 import { modifiersInCustomization, powersAptitudesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import {
-  Abilities,
-  Activities,
-  Aptitudes,
-  Feats,
-  Items,
-  Powers,
-  Races,
-  Requirements,
-} from "@/server/repositories/index.ts";
+import { Abilities, Aptitudes, Feats, Items, Powers, Races, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
-import { createTestKlassLevel, createTestUserAndRuleset, insertRows, NIL_UUID } from "@/tests/helpers.ts";
+import {
+  activityTypes,
+  createTestKlassLevel,
+  createTestUserAndRuleset,
+  insertRows,
+  NIL_UUID,
+} from "@/tests/helpers.ts";
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", operator: "add" };
 
@@ -36,23 +31,6 @@ async function setup() {
   ]);
   const owners = { feats: feat.id, items: item.id, powers: power.id, races: race.id, klass_levels: klassLevel.id };
   return { session, rulesetId, feat, item, owners };
-}
-
-/** The activities logged against a row of `table`, by type, sorted: those of one test share a timestamp. */
-async function activityTypes(
-  userId: string,
-  table: typeof modifiersInCustomization | typeof requirementsInCustomization,
-  targetId: string,
-) {
-  const { items } = await Activities.findPage(
-    db,
-    { userId, targetTable: getTableName(table) },
-    { limit: 100, page: 1 },
-  );
-  return items
-    .filter((a) => a.targetId === targetId)
-    .map((a) => a.type)
-    .sort();
 }
 
 // The feat modifier routes are covered in the customization modifiers router test.

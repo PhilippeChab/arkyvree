@@ -11,12 +11,11 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import {
-  addCharacterLevel,
   createTestCharacter,
-  createTestKlassLevel,
   createTestRuleset,
   createTestUserAndRuleset,
   insertRows,
+  pickFeat,
 } from "@/tests/helpers.ts";
 
 /** A new user's empty ruleset with three aptitudes. */
@@ -32,14 +31,6 @@ async function setup() {
 async function linkedAptitudeIds(featId: string) {
   const rows = await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, featId));
   return rows.map((row) => row.aptitudeId).sort();
-}
-
-/** A character of `rulesetId` who picked the feat at their first level. */
-async function pickFeat(userId: string, rulesetId: string, featId: string, aptitudeId: string) {
-  const character = await createTestCharacter(userId, { rulesetId });
-  const { klassLevel } = await createTestKlassLevel(rulesetId);
-  await addCharacterLevel(character.id, klassLevel.id, { feats: [{ featId, aptitudeId }] });
-  return character;
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.

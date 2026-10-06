@@ -23,8 +23,7 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { timingStorage } from "@/server/timing.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, makeSession, measure } from "@/tests/helpers.ts";
 
 type EntityType = "feats" | "powers";
 type Pairing = "snapshot" | "name";
@@ -347,18 +346,7 @@ test("copying sibling modifiers and their requirements stays batched", async () 
     );
     RulesetCache.invalidateAll();
     await withRulesetScope(db, host.id, async () => {});
-    const timing = {
-      dbTimeMs: 0,
-      queryCount: 0,
-      activeQueries: 0,
-      dbWallStart: 0,
-      slowQueries: [],
-      cacheHits: 0,
-      cacheMisses: 0,
-      dedupHits: 0,
-      dedupMisses: 0,
-    };
-    await timingStorage.run(timing, () =>
+    const { timing } = await measure(() =>
       RequirementsService.createRequirement(session, host.id, "modifiers", modifiers[0].id, {
         level: "2",
         chainingOperator: "or",

@@ -7,29 +7,13 @@ import { CharacterContributorsService } from "@/server/services/characters/contr
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createTestUser, getSeedCtx, uniqueId } from "@/tests/helpers.ts";
-
-async function createCharacter(session: Session) {
-  const ctx = await getSeedCtx();
-  return await CharactersService.createCharacter(session, {
-    rulesetId: ctx.rulesetId,
-    raceId: ctx.raceMap.pc["Human"],
-    name: `Test Character ${uniqueId()}`,
-    xp: 0,
-    alignment: "True Neutral",
-    abilities: {},
-    age: 25,
-    gender: "Other",
-    height: "5'10\"",
-    weight: "160 lbs",
-  });
-}
+import { createCharacterAs, createTestUser, uniqueId } from "@/tests/helpers.ts";
 
 /** A new user's character and another user invited to contribute to it; accepted unless `pending`. */
 async function setup(pending = false) {
   const { user: owner, session: ownerSession } = await createTestUser("owner");
   const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
-  const character = await createCharacter(ownerSession);
+  const character = await createCharacterAs(ownerSession);
   const invite = await CharacterContributorsService.inviteContributor(ownerSession, character.id, invitee.emailAddress);
   if (!pending) await CharacterContributorsService.acceptInvite(inviteeSession, invite.id);
   return { owner, ownerSession, invitee, inviteeSession, character, invite };
@@ -77,7 +61,7 @@ describe("CharacterContributorsService", () => {
 
     test("hands an email-only invite to the account that signs up with that email", async () => {
       const { session: ownerSession } = await createTestUser("owner");
-      const character = await createCharacter(ownerSession);
+      const character = await createCharacterAs(ownerSession);
       const email = `future-${uniqueId()}@example.com`;
       const invite = await CharacterContributorsService.inviteContributor(ownerSession, character.id, email);
 
@@ -193,7 +177,7 @@ describe("CharacterContributorsService", () => {
 
     test("see the characters shared with them among their own, and can filter by access", async () => {
       const { inviteeSession, character: shared } = await setup();
-      const own = await createCharacter(inviteeSession);
+      const own = await createCharacterAs(inviteeSession);
       const list = async (accessRole?: "owner" | "contributor") =>
         (await CharactersService.getCharacters(inviteeSession, { accessRole }, { limit: 50, page: 1 })).items;
 

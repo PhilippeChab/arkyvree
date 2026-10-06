@@ -1,7 +1,5 @@
 import { afterAll, afterEach, expect, test } from "bun:test";
 
-import { sql } from "drizzle-orm";
-
 import { featsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -11,7 +9,7 @@ import { lockEntityForMutation, withRulesetScope } from "@/server/services/rules
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { createSeededTestRuleset, getSeedCtx, insertRows, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, getSeedCtx, insertRows, makeSession, runWhileLocked } from "@/tests/helpers.ts";
 
 const pool = createTestPool();
 
@@ -47,36 +45,11 @@ afterAll(() => pool.end());
 afterEach(() => RulesetCache.invalidateAll());
 test("owner mutation waits for a competing transaction and acquires the row after rollback", async () => {
   const seed = await getSeedCtx();
-  const writer = await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`);
-  const blocker = await pool.connect();
-  let locking: Promise<void> | undefined;
-  try {
-    await blocker.query("BEGIN");
-    expect(await Feats.lock(createTestDbFromClient(blocker), { id: seed.featMap.Toughness })).toBe(true);
-    locking = lockEntityForMutation(db, "feats", seed.featMap.Toughness);
-    let waiting = false;
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const result = await blocker.query<{ waiting: boolean }>(
-        "select pg_backend_pid() = ANY(pg_blocking_pids($1)) as waiting",
-        [writer.rows[0].pid],
-      );
-      if (result.rows[0].waiting) {
-        waiting = true;
-        break;
-      }
-      await Bun.sleep(10);
-    }
-    expect(waiting).toBe(true);
-    await blocker.query("ROLLBACK");
-    await locking;
-  } finally {
-    try {
-      await blocker.query("ROLLBACK");
-      await locking;
-    } finally {
-      blocker.release();
-    }
-  }
+  await runWhileLocked(
+    pool,
+    async (blockerDb) => expect(await Feats.lock(blockerDb, { id: seed.featMap.Toughness })).toBe(true),
+    () => lockEntityForMutation(db, "feats", seed.featMap.Toughness),
+  );
 });
 
 test("owner locks leave other entities independent and shared copy reads compatible", async () => {

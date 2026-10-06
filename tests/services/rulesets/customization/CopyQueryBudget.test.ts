@@ -4,8 +4,7 @@ import { featsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { copyEntityCustomizations, fetchEntityCustomizations } from "@/server/services/rulesets/cow/index.ts";
-import { timingStorage } from "@/server/timing.ts";
-import { createSeededTestRuleset, insertRows, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, insertRows, makeSession, measure } from "@/tests/helpers.ts";
 
 test("modifier and requirement copies stay batched as modifier count grows", async () => {
   const session = makeSession();
@@ -35,18 +34,7 @@ test("modifier and requirement copies stay batched as modifier count grows", asy
       })),
     );
     const customizations = (await fetchEntityCustomizations(db, [source.id], "feats", "feats")).get(source.id)!;
-    const timing = {
-      dbTimeMs: 0,
-      queryCount: 0,
-      activeQueries: 0,
-      dbWallStart: 0,
-      slowQueries: [],
-      cacheHits: 0,
-      cacheMisses: 0,
-      dedupHits: 0,
-      dedupMisses: 0,
-    };
-    await timingStorage.run(timing, () => copyEntityCustomizations(db, source.id, target.id, "feats", customizations));
+    const { timing } = await measure(() => copyEntityCustomizations(db, source.id, target.id, "feats", customizations));
     counts.push(timing.queryCount);
     const copiedRoots = await Modifiers.findMany(db, { sourceIds: [target.id], sourceType: "feats" });
     expect(copiedRoots).toHaveLength(width);

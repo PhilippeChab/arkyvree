@@ -1,13 +1,11 @@
 import { afterAll, expect, test } from "bun:test";
 
-import { sql } from "drizzle-orm";
-
 import { SEED_USER_ID } from "@/database/seeds/helpers.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { EntitySnapshots, Feats } from "@/server/repositories/index.ts";
 import { cowEntity } from "@/server/services/rulesets/cow/index.ts";
-import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, getSeedCtx, runWhileLocked } from "@/tests/helpers.ts";
 
 const pool = createTestPool();
 afterAll(() => pool.end());
@@ -16,44 +14,15 @@ test("COW waits for a competing copy transaction and continues after rollback", 
   const seed = await getSeedCtx();
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const sourceId = seed.featMap.Toughness;
-  const writer = await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`);
-  const blocker = await pool.connect();
-  let copying: ReturnType<typeof cowEntity> | undefined;
-  try {
-    await blocker.query("BEGIN");
-    const blockerDb = createTestDbFromClient(blocker);
-    await EntitySnapshots.lock(blockerDb, { rulesetId: fork.id, sourceEntityId: sourceId });
-    copying = cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []);
-    // Observe an actual PostgreSQL wait, rather than relying on a sleep to
-    // guess whether the competing call has reached its critical section.
-    let waiting = false;
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const result = await blocker.query<{ waiting: boolean }>(
-        "select pg_backend_pid() = ANY(pg_blocking_pids($1)) as waiting",
-        [writer.rows[0].pid],
-      );
-      if (result.rows[0].waiting) {
-        waiting = true;
-        break;
-      }
-      await Bun.sleep(10);
-    }
-    expect(waiting).toBe(true);
-    await blocker.query("ROLLBACK");
-    const copied = await copying;
-    expect(copied.id).not.toBe(sourceId);
-    expect((await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], [])).id).toBe(copied.id);
-    expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toHaveLength(1);
-    expect((await Feats.findOne(db, { id: sourceId }))?.rulesetId).toBe(seed.rulesetId);
-  } finally {
-    try {
-      await blocker.query("ROLLBACK");
-      // Drain the pending call before the global test transaction rolls back.
-      await copying;
-    } finally {
-      blocker.release();
-    }
-  }
+  const copied = await runWhileLocked(
+    pool,
+    (blockerDb) => EntitySnapshots.lock(blockerDb, { rulesetId: fork.id, sourceEntityId: sourceId }),
+    () => cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], []),
+  );
+  expect(copied.id).not.toBe(sourceId);
+  expect((await cowEntity(db, "feats", sourceId, fork.id, [seed.rulesetId], [])).id).toBe(copied.id);
+  expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toHaveLength(1);
+  expect((await Feats.findOne(db, { id: sourceId }))?.rulesetId).toBe(seed.rulesetId);
 });
 
 test("copy locks do not block other sources or other forks", async () => {

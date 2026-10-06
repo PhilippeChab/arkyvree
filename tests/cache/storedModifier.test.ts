@@ -6,8 +6,7 @@ import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
 import { cowEntity, withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
-import { timingStorage } from "@/server/timing.ts";
-import { createSeededTestRuleset, getSeedCtx } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, getSeedCtx, measure } from "@/tests/helpers.ts";
 
 test("stored modifier reads preserve ownership without changing ordinary COW reads", async () => {
   const seed = await getSeedCtx();
@@ -19,18 +18,7 @@ test("stored modifier reads preserve ownership without changing ordinary COW rea
 
   await runWithRequestCache(() =>
     withRulesetScope(db, fork.id, async () => {
-      const timing = {
-        dbTimeMs: 0,
-        queryCount: 0,
-        activeQueries: 0,
-        dbWallStart: 0,
-        slowQueries: [],
-        cacheHits: 0,
-        cacheMisses: 0,
-        dedupHits: 0,
-        dedupMisses: 0,
-      };
-      await timingStorage.run(timing, async () => {
+      const { timing } = await measure(async () => {
         const resolved = await Modifiers.findOne(db, { id: modifier.id });
         const stored = await withCowContext(undefined, () => Modifiers.findOne(db, { id: modifier.id }));
         expect(resolved?.sourceId).toBe(copy.id);

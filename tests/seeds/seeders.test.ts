@@ -38,7 +38,7 @@ import {
   KLASS_LEVEL_SKILL_POINTS,
 } from "@/shared/dnd3.5/properties/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
-import { customizationsOf, freshExtensionContext, freshSeedContext, namesOf } from "@/tests/seeds/freshSeed.ts";
+import { describeCustomizations, freshExtensionContext, freshSeedContext, namesOf } from "@/tests/seeds/freshSeed.ts";
 
 /** The class level each spell level opens at, the first at the first: 1, 3, 5… */
 const SPELL_LEVELS = Object.fromEntries(Array.from({ length: 10 }, (_, level) => [level, Math.max(1, 2 * level - 1)]));
@@ -105,7 +105,7 @@ async function aptitudesOfFeat(ctx: SeedContext, featId: string) {
     .sort();
 }
 
-/** A spell list's slot at each spell level, as `customizationsOf` reads it, gated from the second on by `classTarget`. */
+/** A spell list's slot at each spell level, as `describeCustomizations` reads it, gated from the second on by `classTarget`. */
 function gatedSlots(list: string, classTarget: string) {
   return Array.from({ length: 9 }, (_, i) => {
     const gate = i === 0 ? "" : `\n  if 1 ${classTarget} greater_than_or_equal ${2 * i + 1}`;
@@ -132,7 +132,7 @@ async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
     .where(inArray(klassLevelFeatsInRules.klassLevelId, ids));
   const levels = [];
   for (const [level, id] of Object.entries(levelIds)) {
-    const { properties, modifiers, requirements } = await customizationsOf(id);
+    const { properties, modifiers, requirements } = await describeCustomizations(id);
     levels.push({
       level: Number(level),
       properties,
@@ -212,7 +212,7 @@ describe("Seeding", () => {
         { named: true, name: "Test Toughness", description: "", stackable: true, selectable: false },
       ]);
       expect(await aptitudesOfFeat(ctx, ctx.featMap["Test Dodge"])).toEqual(["Fighter Bonus Feat", "General"]);
-      expect(await customizationsOf(ctx.featMap["Test Dodge"])).toEqual({
+      expect(await describeCustomizations(ctx.featMap["Test Dodge"])).toEqual({
         requirements: ["1 abilities.dexterity.score greater_than_or_equal 13"],
         modifiers: [
           "combat.ac.dodge add 1 number",
@@ -220,7 +220,7 @@ describe("Seeding", () => {
         ],
         properties: ["FEAT_FAMILY Dodge"],
       });
-      expect(await customizationsOf(ctx.featMap["Test Toughness"])).toEqual({
+      expect(await describeCustomizations(ctx.featMap["Test Toughness"])).toEqual({
         requirements: [],
         modifiers: [],
         properties: [],
@@ -285,7 +285,7 @@ describe("Seeding", () => {
         hd: 6,
         kind: "pc",
       });
-      expect(await customizationsOf(klassId)).toEqual({
+      expect(await describeCustomizations(klassId)).toEqual({
         requirements: [],
         modifiers: [],
         properties: [
@@ -365,7 +365,7 @@ describe("Seeding", () => {
         }),
       );
       expect((await db.select().from(klassesInRules).where(eq(klassesInRules.id, klassId)))[0].kind).toBe("npc");
-      expect(await customizationsOf(klassId)).toEqual({ requirements: [], modifiers: [], properties: [] });
+      expect(await describeCustomizations(klassId)).toEqual({ requirements: [], modifiers: [], properties: [] });
       const levels = await levelsOf(ctx, levelIds);
       expect(levels.map(({ level, properties, modifiers }) => ({ level, properties, modifiers }))).toEqual([
         {
@@ -454,12 +454,12 @@ describe("Seeding", () => {
       { name: "Test Flaming Blade", isTemplate: false, slot: "Main Hand", source: "Test Blade" },
       { name: "Test Rope", isTemplate: false, slot: "Other", source: null },
     ]);
-    expect(await customizationsOf(templates["Test Blade"])).toEqual({
+    expect(await describeCustomizations(templates["Test Blade"])).toEqual({
       requirements: ["1 feats.martialweaponproficiency.possessed equal true"],
       modifiers: [],
       properties: ["WEAPON_DAMAGE 1d8"],
     });
-    expect(await customizationsOf(made["Test Flaming Blade"])).toEqual({
+    expect(await describeCustomizations(made["Test Flaming Blade"])).toEqual({
       requirements: [],
       modifiers: ["weapon.tohit.misc add 1 number"],
       properties: [],
@@ -506,7 +506,7 @@ describe("Seeding", () => {
       "Test Divine Spells 4",
     ]);
     expect(await spellListsOf(ctx, ctx.powerMap["Test Charm"])).toEqual(["Test Arcane Spells 1"]);
-    expect((await customizationsOf(ctx.powerMap["Test Bolt"])).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
+    expect((await describeCustomizations(ctx.powerMap["Test Bolt"])).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
 
     await linkPower(db, ctx.powerMap["Test Charm"], [
       { aptitudeId: ctx.aptMap["Test Arcane Spells"], level: 5 },
@@ -540,7 +540,7 @@ describe("Seeding", () => {
       { name: "Test Hawk", size: "Tiny", baseSpeed: 10, kind: "familiar" },
       { name: "Test Steed", size: "Large", baseSpeed: 30, kind: "mount" },
     ]);
-    expect((await customizationsOf(rows.find((row) => row.name === "Test Elf")!.id)).modifiers).toEqual([
+    expect((await describeCustomizations(rows.find((row) => row.name === "Test Elf")!.id)).modifiers).toEqual([
       "abilities.dexterity.score add 2 number",
     ]);
   });
@@ -573,7 +573,7 @@ describe("Seeding", () => {
     const [feat] = await db.select().from(featsInRules).where(eq(featsInRules.id, featId));
     expect(feat.description).toBe("Luck");
     expect(await aptitudesOfFeat(ctx, featId)).toEqual(["Cleric Domain"]);
-    expect(await customizationsOf(featId)).toEqual({
+    expect(await describeCustomizations(featId)).toEqual({
       requirements: [],
       modifiers: [
         ...gatedSlots("testluckdomainspells", "classes.cleric.level"),
@@ -612,7 +612,7 @@ describe("Seeding", () => {
       SPELL_LEVELS,
     );
 
-    expect((await customizationsOf(ctx.featMap["Evocation Specialist"])).modifiers).toEqual(
+    expect((await describeCustomizations(ctx.featMap["Evocation Specialist"])).modifiers).toEqual(
       gatedSlots("evocationspecialistspells", "classes.wizard.level").sort(),
     );
     expect({
@@ -677,7 +677,7 @@ describe("Seeding", () => {
         { name: "Test Open", description: "", aptitudes: ["General"] },
       ]);
       const original = { ...core.featMap };
-      const before = await customizationsOf(original["Test Grouped"]);
+      const before = await describeCustomizations(original["Test Grouped"]);
 
       const ctx = await freshExtensionContext(core);
       await seedAptitudes(db, ctx, ["Test Class Feature"]);
@@ -731,7 +731,7 @@ describe("Seeding", () => {
 
       const classLevel = (className: string, level: number, at: string) =>
         `${at} classes.${className}.level greater_than_or_equal ${level}`;
-      expect(await customizationsOf(ctx.featMap["Test Grouped"])).toEqual({
+      expect(await describeCustomizations(ctx.featMap["Test Grouped"])).toEqual({
         requirements: [
           "1 or",
           "1.1 classes.fighter.level greater_than_or_equal 4",
@@ -743,18 +743,18 @@ describe("Seeding", () => {
         modifiers: before.modifiers,
         properties: before.properties,
       });
-      expect((await customizationsOf(ctx.featMap["Test Single"])).requirements).toEqual([
+      expect((await describeCustomizations(ctx.featMap["Test Single"])).requirements).toEqual([
         "1 or",
         "1.1 combat.bab greater_than_or_equal 1",
         classLevel("ranger", 2, "1.2"),
       ]);
-      expect((await customizationsOf(ctx.featMap["Test Open"])).requirements).toEqual([]);
+      expect((await describeCustomizations(ctx.featMap["Test Open"])).requirements).toEqual([]);
       expect(await aptitudesOfFeat(ctx, ctx.featMap["Test Grouped"])).toEqual(["General", "Test Class Feature"]);
       expect(await aptitudesOfFeat(ctx, ctx.featMap["Test Single"])).toEqual(["General"]);
       expect(await aptitudesOfFeat(ctx, ctx.featMap["Test Open"])).toEqual(["General", "Test Class Feature"]);
 
       // The originals are as they were, and the core rules' context too
-      expect(await customizationsOf(original["Test Grouped"])).toEqual(before);
+      expect(await describeCustomizations(original["Test Grouped"])).toEqual(before);
       expect(await aptitudesOfFeat(ctx, original["Test Grouped"])).toEqual(["General"]);
       expect(core.featMap).toEqual(original);
       expect(Object.keys(core.aptMap)).toEqual(["General"]);
@@ -795,7 +795,7 @@ describe("Seeding", () => {
       const [bolt] = await db.select().from(powersInRules).where(eq(powersInRules.id, boltId));
       expect(bolt).toMatchObject({ rulesetId: ctx.rulesetId, name: "Test Bolt", saveEffect: "See text" });
       expect(await spellListsOf(ctx, boltId)).toEqual(["Arcane Spells 2", "Wizard Spells 3"]);
-      expect((await customizationsOf(boltId)).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
+      expect((await describeCustomizations(boltId)).properties).toEqual([`${SPELL_SCHOOL} Evocation`]);
       // Its own spell keeps the inherited one's lists, and isn't copied
       expect(ctx.powerMap["Test Ward"]).toBe(ownWard);
       expect(await spellListsOf(ctx, ownWard)).toEqual(["Arcane Spells 2", "Cleric Spells 1"]);

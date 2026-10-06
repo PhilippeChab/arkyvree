@@ -1,8 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
-import { itemsInRules, languagesInRules, racesInRules } from "@/drizzle/schema.ts";
+import { languagesInRules, racesInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, CharacterLanguages, Characters } from "@/server/repositories/index.ts";
@@ -11,7 +11,7 @@ import { withRulesetScope } from "@/server/services/rulesets/cow/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { LanguagesService } from "@/server/services/rulesets/languages/index.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
-import { createSeededTestRuleset, makeSession } from "@/tests/helpers.ts";
+import { createSeededTestRuleset, findPlainItem, makeSession } from "@/tests/helpers.ts";
 
 // A character that picked an inherited entity stores the source id. Deleting
 // the fork's later local copy leaves a tombstone that hides the source, which
@@ -76,14 +76,7 @@ test("a language picked before the fork copied it blocks deleting the copy", asy
 
 test("an item picked before the fork copied it blocks deleting the copy", async () => {
   const { session, fork, baseId, character } = await setup();
-  const item = (await db.query.itemsInRules.findFirst({
-    where: and(
-      eq(itemsInRules.rulesetId, baseId),
-      eq(itemsInRules.isTemplate, false),
-      isNull(itemsInRules.sourceItemId),
-      eq(itemsInRules.type, "Other"),
-    ),
-  }))!;
+  const item = await findPlainItem(baseId);
   await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
   const local = await ItemsService.updateItem(session, fork.id, item.id, {
     name: item.name,

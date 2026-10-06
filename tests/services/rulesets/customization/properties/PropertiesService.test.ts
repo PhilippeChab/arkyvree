@@ -1,13 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { getTableName } from "drizzle-orm";
-
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Activities, Feats, Items, Properties } from "@/server/repositories/index.ts";
+import { Feats, Items, Properties } from "@/server/repositories/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
-import { createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
+import { activityTypes, createTestUserAndRuleset, NIL_UUID } from "@/tests/helpers.ts";
 
 const acBonus = { type: "AC_BONUS", value: "5", description: "Armor class bonus" };
 
@@ -20,19 +18,6 @@ async function setup() {
   const [templateProperty] = await Properties.create(db, { ...acBonus, entityId: template.id, entityType: "items" });
   const [derived] = await Items.create(db, { name: "Chainmail", rulesetId, sourceItemId: template.id });
   return { session, rulesetId, feat, template, templateProperty, derived };
-}
-
-/** The activities logged against a property, by type, sorted: those of one test share a timestamp. */
-async function activityTypes(userId: string, propertyId: string) {
-  const { items } = await Activities.findPage(
-    db,
-    { userId, targetTable: getTableName(propertiesInCustomization) },
-    { limit: 100, page: 1 },
-  );
-  return items
-    .filter((a) => a.targetId === propertyId)
-    .map((a) => a.type)
-    .sort();
 }
 
 // The feat property routes are covered in the customization properties router test.
@@ -53,7 +38,7 @@ describe("PropertiesService", () => {
 
     await PropertiesService.deleteProperty(session, rulesetId, "feats", feat.id, created.id);
     expect(await PropertiesService.getProperties(rulesetId, "feats", feat.id)).toEqual([]);
-    expect(await activityTypes(session.userId, created.id)).toEqual([
+    expect(await activityTypes(session.userId, propertiesInCustomization, created.id)).toEqual([
       "createProperty",
       "deleteProperty",
       "updateProperty",

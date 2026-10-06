@@ -1,19 +1,23 @@
-import { and, eq, type InferInsertModel, type InferSelectModel, isNull, sql } from "drizzle-orm";
+import { and, eq, getTableName, type InferInsertModel, type InferSelectModel, isNull, sql } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { JobHelpers } from "graphile-worker";
+import type { Pool, PoolClient } from "pg";
 
 import { coreRulesetId } from "@/database/packages/dnd35/seed/context.ts";
 import { getSeedContext, SEED_USER_ID, type SeedContext } from "@/database/seeds/helpers.ts";
 import {
   type charactersInCharacter,
+  itemsInRules,
   klassLevelsInRules,
   rulesetExtensionsInRules,
   type rulesetsInRules,
 } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { db } from "@/server/database/index.ts";
+import { type Db, db } from "@/server/database/index.ts";
+import { createTestDbFromClient } from "@/server/database/test.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
+  Activities,
   Attachments,
   Blobs,
   Campaigns,
@@ -33,7 +37,9 @@ import {
   Users,
 } from "@/server/repositories/index.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { newTimingStore, timingStorage } from "@/server/timing.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Player, Session } from "@/shared/relations.ts";
 
@@ -56,6 +62,19 @@ const writtenSeededRulesets = new Set<string>();
 export const silentJobHelpers = {
   logger: { info() {}, warn() {}, error() {}, debug() {} },
 } as unknown as JobHelpers;
+
+/** Whether `blocker` holds a lock the backend `pid` waits on, polled until it does (for up to a second). */
+async function waitUntilBlocked(blocker: PoolClient, pid: number) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const result = await blocker.query<{ waiting: boolean }>(
+      "select pg_backend_pid() = ANY(pg_blocking_pids($1)) as waiting",
+      [pid],
+    );
+    if (result.rows[0].waiting) return true;
+    await Bun.sleep(10);
+  }
+  return false;
+}
 
 /** A short random suffix that keeps names and emails unique between tests. */
 export function uniqueId() {
@@ -103,6 +122,20 @@ export async function insertRows<T extends PgTable>(
 ): Promise<InferSelectModel<T>[]> {
   if (rows.length === 0) return [];
   return (await db.insert(table).values(rows).returning()) as InferSelectModel<T>[];
+}
+
+/** An item of the ruleset's own that is neither a template nor a variant: one of type "Other". */
+export async function findPlainItem(rulesetId: string) {
+  const item = await db.query.itemsInRules.findFirst({
+    where: and(
+      eq(itemsInRules.rulesetId, rulesetId),
+      eq(itemsInRules.isTemplate, false),
+      isNull(itemsInRules.sourceItemId),
+      eq(itemsInRules.type, "Other"),
+    ),
+  });
+  if (!item) throw new Error(`The ruleset ${rulesetId} has no plain item`);
+  return item;
 }
 
 /** A new user and a session for them. `prefix` starts the username and email. */
@@ -200,6 +233,53 @@ export function forgetSeededRulesetWrites() {
   writtenSeededRulesets.clear();
 }
 
+/**
+ * Runs `call` on the test's connection while another transaction (a connection of `pool`) holds what `lock` takes, and
+ * returns its result once that transaction rolls back. `call` must have waited on the lock: PostgreSQL shows it blocked,
+ * rather than a sleep guessing it reached its critical section.
+ */
+export async function runWhileLocked<T>(pool: Pool, lock: (blockerDb: Db) => Promise<unknown>, call: () => Promise<T>) {
+  const writer = await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`);
+  const blocker = await pool.connect();
+  let pending: Promise<T> | undefined;
+  try {
+    await blocker.query("BEGIN");
+    await lock(createTestDbFromClient(blocker));
+    pending = call();
+    if (!(await waitUntilBlocked(blocker, writer.rows[0].pid))) throw new Error("The call never waited on the lock");
+    await blocker.query("ROLLBACK");
+    return await pending;
+  } finally {
+    try {
+      await blocker.query("ROLLBACK");
+      // Drain the pending call before the test's own transaction rolls back.
+      await pending;
+    } finally {
+      blocker.release();
+    }
+  }
+}
+
+/** The types of `userId`'s activities on the row `targetId` of `table`, sorted. */
+export async function activityTypes(userId: string, table: PgTable, targetId: string) {
+  const { items } = await Activities.findPage(
+    db,
+    { userId, targetTable: getTableName(table) },
+    { limit: 100, page: 1 },
+  );
+  return items
+    .filter((a) => a.targetId === targetId)
+    .map((a) => a.type)
+    .sort();
+}
+
+/** What `run` costs the database: its queries, and the caches' hits and misses, as the request logger counts them. */
+export async function measure<T>(run: () => Promise<T>) {
+  const timing = newTimingStore();
+  const result = await timingStorage.run(timing, run);
+  return { result, timing };
+}
+
 /** A seeded fork that also uses every extension shipped with the seeded base ruleset. */
 export async function createSeededTestRulesetWithExtensions(userId: string) {
   const fork = await createSeededTestRuleset(userId);
@@ -291,6 +371,38 @@ export async function addCharacterLevel(characterId: string, klassLevelId: strin
     (picks.skills ?? []).map((pick) => ({ ...pick, characterLevelId })),
   );
   return level;
+}
+
+/**
+ * A new character of `session`'s, created through the service: a Human on the seeded ruleset, unless `values` says
+ * otherwise.
+ */
+export async function createCharacterAs(
+  session: Session,
+  values: Partial<Parameters<typeof CharactersService.createCharacter>[1]> = {},
+) {
+  const { rulesetId, raceMap } = await getSeedCtx();
+  return await CharactersService.createCharacter(session, {
+    rulesetId,
+    raceId: raceMap.pc["Human"],
+    name: `Test Character ${uniqueId()}`,
+    xp: 0,
+    alignment: "True Neutral",
+    abilities: {},
+    age: 25,
+    gender: "Male",
+    height: "180",
+    weight: "80",
+    ...values,
+  });
+}
+
+/** A character of `userId`'s on `rulesetId`, who picked the feat at their first level. */
+export async function pickFeat(userId: string, rulesetId: string, featId: string, aptitudeId: string) {
+  const character = await createTestCharacter(userId, { rulesetId });
+  const { klassLevel } = await createTestKlassLevel(rulesetId);
+  await addCharacterLevel(character.id, klassLevel.id, { feats: [{ featId, aptitudeId }] });
+  return character;
 }
 
 /** Makes `user` an active contributor of a ruleset, as if they accepted an invite from `invitedBy`. */

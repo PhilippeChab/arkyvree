@@ -5,40 +5,17 @@ import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.tsx";
 import { Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
-import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/api.ts";
-import { getSeedCtx, NIL_UUID, queuedPdfJobs, silentJobHelpers, uniqueId } from "@/tests/helpers.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi, postCharacter } from "@/tests/api.ts";
+import { getSeedCtx, NIL_UUID, queuedPdfJobs, silentJobHelpers } from "@/tests/helpers.ts";
 
 const characters = api.api.campaigns[":id"].characters;
 const character = characters[":characterId"];
-
-/** A character of the seeded user's, built on the seeded ruleset unless `rulesetId` says otherwise. */
-async function createCharacter(name = `Test Character ${uniqueId()}`, rulesetId?: string) {
-  const ctx = await getSeedCtx();
-  const abilities = Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10]));
-  const created = await expectOk(
-    api.api.characters.$post({
-      json: {
-        rulesetId: rulesetId ?? ctx.rulesetId,
-        raceId: ctx.raceMap.pc["Human"],
-        name,
-        xp: 0,
-        alignment: "True Neutral",
-        abilities,
-        age: 25,
-        gender: "Male",
-        height: "180",
-        weight: "80",
-      },
-    }),
-  );
-  return created.id;
-}
 
 /** A campaign of the seeded user's and a character of theirs, not linked yet. */
 async function setup() {
   const { rulesetId } = await getSeedCtx();
   const { campaign } = await expectOk(api.api.campaigns.$post({ json: { name: "Characters Campaign", rulesetId } }));
-  return { campaignId: campaign.id, characterId: await createCharacter() };
+  return { campaignId: campaign.id, characterId: (await postCharacter()).id };
 }
 
 /** Adds a new user to the campaign with `role`, and returns a client signed in as them. */
@@ -82,7 +59,9 @@ describe("campaigns characters", () => {
   test("pages the linked characters", async () => {
     const { campaignId } = await setup();
     for (let i = 0; i < 3; i++) {
-      await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId: await createCharacter() } }));
+      await expectOk(
+        characters.$post({ param: { id: campaignId }, json: { characterId: (await postCharacter()).id } }),
+      );
     }
     const page1 = await expectOk(characters.$get({ param: { id: campaignId }, query: { limit: "2", page: "1" } }));
     expect(page1.items).toHaveLength(2);
@@ -111,7 +90,7 @@ describe("campaigns characters", () => {
         json: { name: "Link Test Fork", description: "", private: true },
       }),
     );
-    const characterId = await createCharacter("Fork Character", fork.id);
+    const characterId = (await postCharacter({ name: "Fork Character", rulesetId: fork.id })).id;
 
     const response = await characters.$post({ param: { id: campaignId }, json: { characterId } });
     await expectStatus(response, 400);

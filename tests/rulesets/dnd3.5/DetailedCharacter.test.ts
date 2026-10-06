@@ -255,7 +255,7 @@ async function forkWith(...extensionNames: string[]) {
 }
 
 /** A new character of the seed user's: human, neutral good, with these scores. */
-async function createSeedCharacter(
+async function seedHuman(
   name: string,
   abilities: Record<string, number>,
   values: { xp?: number; rulesetId?: string; alignment?: "Neutral Good" | "Chaotic Neutral" | "Neutral Evil" } = {},
@@ -280,7 +280,7 @@ async function createSeedCharacter(
 /** A ranger 6 with Two-Weapon Fighting and its improved feat, through the combat style: STR 14, DEX 16, BAB +6. */
 async function buildRanger(carried: Carried[]) {
   const ctx = await getSeedCtx();
-  const characterId = await createSeedCharacter(
+  const characterId = await seedHuman(
     "Two-Weapon Ranger",
     { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 10, Wisdom: 12, Charisma: 8 },
     { xp: 15000 },
@@ -381,7 +381,7 @@ async function divineCharacter(
   alignment?: "Neutral Good" | "Chaotic Neutral",
 ) {
   const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
-  const characterId = await createSeedCharacter(name, abilities, { rulesetId: fork.id, alignment });
+  const characterId = await seedHuman(name, abilities, { rulesetId: fork.id, alignment });
   for (const [target, value, valueType] of granted) {
     const operator = valueType === "boolean" ? "set" : "add";
     await Modifiers.create(db, {
@@ -399,7 +399,7 @@ async function divineCharacter(
 /** A new wizard 1 whose Toughness grants Magic Missile, which gets `requirement` of its own when given. */
 async function setupGrantedSpell({ requirement = false, spellFocus = false } = {}) {
   const ctx = await getSeedCtx();
-  const characterId = await createSeedCharacter("Granted Spell Test", WIZARD_SCORES, { xp: 1000 });
+  const characterId = await seedHuman("Granted Spell Test", WIZARD_SCORES, { xp: 1000 });
   const levelIds = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
   await addSkills(db, ctx, levelIds, [
     { levelIndex: 0, skillName: "Spellcraft", rank: 4 },
@@ -590,7 +590,7 @@ describe("DetailedCharacter", () => {
 
     test("never drop a level below 1 hit point, however low the constitution", async () => {
       const ctx = await getSeedCtx();
-      const characterId = await createSeedCharacter(
+      const characterId = await seedHuman(
         "Frail Fighter",
         { Strength: 10, Dexterity: 10, Constitution: 6, Intelligence: 10, Wisdom: 10, Charisma: 10 },
         { xp: 1000 },
@@ -607,7 +607,7 @@ describe("DetailedCharacter", () => {
   describe("skill points", () => {
     test("give a level at least 1, before the first level's four times over", async () => {
       const ctx = await getSeedCtx();
-      const characterId = await createSeedCharacter(
+      const characterId = await seedHuman(
         "Dim Fighter",
         { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 3, Wisdom: 10, Charisma: 10 },
         { xp: 1000 },
@@ -1504,7 +1504,7 @@ describe("DetailedCharacter", () => {
         rulesetId: (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id,
       }))!;
       const dodgeAt = async (intelligence: number, duelistLevels: number) => {
-        const characterId = await createSeedCharacter(
+        const characterId = await seedHuman(
           `Duelist ${intelligence} ${duelistLevels}`,
           { ...WIZARD_SCORES, Intelligence: intelligence },
           { rulesetId: fork.id },
@@ -1731,7 +1731,7 @@ describe("DetailedCharacter", () => {
       /** A fighter 1 with `levels` of the class from `book`, unarmored: its speed and AC parts. */
       const sheetWith = async (book: string, className: string, levels: number) => {
         const fork = await forkWith(book);
-        const characterId = await createSeedCharacter(`${className} ${levels}`, WIZARD_SCORES, { rulesetId: fork.id });
+        const characterId = await seedHuman(`${className} ${levels}`, WIZARD_SCORES, { rulesetId: fork.id });
         await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
         const klass = (await Klasses.findOne(db, {
           name: className,
@@ -2007,7 +2007,7 @@ describe("DetailedCharacter", () => {
       test("count as possessed, their own modifiers applying", async () => {
         // War Domain Weapon: Longsword grants Weapon Focus and the martial proficiency.
         const ctx = await getSeedCtx();
-        const characterId = await createSeedCharacter(
+        const characterId = await seedHuman(
           "War Domain Test",
           { Strength: 14, Dexterity: 10, Constitution: 14, Intelligence: 12, Wisdom: 16, Charisma: 12 },
           { xp: 1000 },
@@ -2045,7 +2045,7 @@ describe("DetailedCharacter", () => {
       test("aren't held to their own prerequisites", async () => {
         // A first bard level grants Exotic Weapon Proficiency: Whip, which needs BAB 1; the bard has 0.
         const ctx = await getSeedCtx();
-        const characterId = await createSeedCharacter("Whip Bard Test", {
+        const characterId = await seedHuman("Whip Bard Test", {
           Strength: 10,
           Dexterity: 14,
           Constitution: 12,
@@ -2072,7 +2072,7 @@ describe("DetailedCharacter", () => {
       // copy's, whose grants a lookup by the levels' stored class levels never reached
       const dmgId = (await Rulesets.findOne(db, { name: DND35_DMG_NAME }))!.id;
       const fork = await forkWith(DND35_DMG_NAME);
-      const characterId = await createSeedCharacter(
+      const characterId = await seedHuman(
         "Archmage Candidate",
         { Strength: 8, Dexterity: 14, Constitution: 12, Intelligence: 18, Wisdom: 10, Charisma: 10 },
         { rulesetId: fork.id },
@@ -2111,7 +2111,7 @@ describe("DetailedCharacter", () => {
     test("give a class drawing on another class's list its slots: a spellthief's, of the sorcerer's", async () => {
       const fork = await forkWith(DND35_COMPLETE_ADVENTURER_NAME);
       const scores = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 10, Charisma: 10 };
-      const characterId = await createSeedCharacter("Spellthief", scores, { rulesetId: fork.id });
+      const characterId = await seedHuman("Spellthief", scores, { rulesetId: fork.id });
       const adventurerId = (await Rulesets.findOne(db, { name: DND35_COMPLETE_ADVENTURER_NAME }))!.id;
       const spellthief = (await Klasses.findOne(db, { name: "Spellthief", rulesetId: adventurerId }))!;
       for (let level = 1; level <= 6; level++) {
@@ -2130,7 +2130,7 @@ describe("DetailedCharacter", () => {
       const scores = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 10, Charisma: 10 };
       // A good templar's list is the paladin's, an evil one's the blackguard's; a neutral one picks either
       const allowed = async (alignment: "Neutral Good" | "Chaotic Neutral" | "Neutral Evil") => {
-        const characterId = await createSeedCharacter(alignment, scores, { rulesetId: fork.id, alignment });
+        const characterId = await seedHuman(alignment, scores, { rulesetId: fork.id, alignment });
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         return ["Paladin", "Blackguard"].filter((list) =>
           detailed.areRequirementsMet([divine.requirementsOf(listFeat(list).id)]),
@@ -2144,7 +2144,7 @@ describe("DetailedCharacter", () => {
       // and caster level go to the list she picked, none to the other
       const templar = divine.klasses.find((klass) => klass.name === "Pious Templar")!;
       const sheetWith = async (list: string, bonus = 0) => {
-        const characterId = await createSeedCharacter(
+        const characterId = await seedHuman(
           `${list} Templar`,
           { ...scores, Wisdom: 16 },
           { rulesetId: fork.id, alignment: "Chaotic Neutral" },
@@ -2321,7 +2321,7 @@ describe("DetailedCharacter", () => {
         const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
         const extension = (await Rulesets.findOne(db, { name: DND35_COMPLETE_DIVINE_NAME }))!;
         const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
-        const characterId = await createSeedCharacter(
+        const characterId = await seedHuman(
           "Storm Cleric",
           { Strength: 14, Dexterity: 10, Constitution: 14, Intelligence: 12, Wisdom: 18, Charisma: 10 },
           { xp: 66000, alignment: "Chaotic Neutral", rulesetId: fork.id },
@@ -2434,7 +2434,7 @@ describe("DetailedCharacter", () => {
         ]);
         RulesetCache.invalidate(fork.id);
 
-        const characterId = await createSeedCharacter(
+        const characterId = await seedHuman(
           "Order Cleric",
           { Strength: 14, Dexterity: 10, Constitution: 14, Intelligence: 12, Wisdom: 18, Charisma: 10 },
           { xp: 66000, alignment: "Chaotic Neutral", rulesetId: fork.id },
@@ -2624,7 +2624,7 @@ describe("DetailedCharacter", () => {
         invalidateSeededRuleset(ctx.rulesetId);
 
         const knownAt = async (levels: number) => {
-          const characterId = await createSeedCharacter(`Test Raider ${levels}`, WIZARD_SCORES);
+          const characterId = await seedHuman(`Test Raider ${levels}`, WIZARD_SCORES);
           for (let level = 1; level <= levels; level++) await addCharacterLevel(characterId, levelIds[level]);
           const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
           const list = detailed.getDetailedCharacterAptitudes().getAptitudes()["testraiderspells"].id;
@@ -2669,7 +2669,7 @@ describe("DetailedCharacter", () => {
         });
         invalidateSeededRuleset(ctx.rulesetId);
 
-        const characterId = await createSeedCharacter("Sun Priest", { ...WIZARD_SCORES, Wisdom: 16 });
+        const characterId = await seedHuman("Sun Priest", { ...WIZARD_SCORES, Wisdom: 16 });
         const cleric = (await Klasses.findOne(db, { name: "Cleric", rulesetId: ctx.rulesetId }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(cleric.id, 1))!.id, {
           feats: [{ featId: ctx.featMap["Fire Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }],
@@ -2691,7 +2691,7 @@ describe("DetailedCharacter", () => {
       test("keep a domain's spells on its own list for a class with no list knowing their level", async () => {
         // A fighter picking the sun domain, as a prestige class granting a domain pick would: its first-level slot is its own
         const ctx = await getSeedCtx();
-        const characterId = await createSeedCharacter("Sun Fighter", { ...WIZARD_SCORES, Wisdom: 16 });
+        const characterId = await seedHuman("Sun Fighter", { ...WIZARD_SCORES, Wisdom: 16 });
         const fighter = (await Klasses.findOne(db, { name: "Fighter", rulesetId: ctx.rulesetId }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(fighter.id, 1))!.id, {
           feats: [{ featId: ctx.featMap["Sun Domain"], aptitudeId: ctx.aptMap["Cleric Domain"] }],
@@ -2723,7 +2723,7 @@ describe("DetailedCharacter", () => {
         ]);
         RulesetCache.invalidate(fork.id);
 
-        const characterId = await createSeedCharacter("Reserve Wizard", WIZARD_SCORES, { rulesetId: fork.id });
+        const characterId = await seedHuman("Reserve Wizard", WIZARD_SCORES, { rulesetId: fork.id });
         const wizard = (await Klasses.findOne(db, { name: "Wizard", rulesetId: ctx.rulesetId }))!;
         await addCharacterLevel(characterId, (await findKlassLevel(wizard.id, 1))!.id, {
           feats: [{ featId: reserve.id, aptitudeId: ctx.aptMap["General"] }],
@@ -2739,7 +2739,7 @@ describe("DetailedCharacter", () => {
         // An evocation specialist wizard 5 / loremaster 3 casts as a wizard 8: fourth-level spells, a school slot there too
         const ctx = await getSeedCtx();
         const fork = await forkWith(DND35_DMG_NAME);
-        const characterId = await createSeedCharacter("Lore Specialist", WIZARD_SCORES, {
+        const characterId = await seedHuman("Lore Specialist", WIZARD_SCORES, {
           xp: 36000,
           rulesetId: fork.id,
         });
@@ -2827,7 +2827,7 @@ describe("DetailedCharacter", () => {
         ]);
         RulesetCache.invalidate(fork.id);
 
-        const characterId = await createSeedCharacter("Sun Cleric", WIZARD_SCORES, { rulesetId: fork.id });
+        const characterId = await seedHuman("Sun Cleric", WIZARD_SCORES, { rulesetId: fork.id });
         const clericClass = (await Klasses.findOne(db, { name: "Cleric", rulesetId: ctx.rulesetId }))!;
         const cleric = (await findKlassLevel(clericClass.id, 1))!;
         await addCharacterLevel(characterId, cleric.id, {
@@ -2883,7 +2883,7 @@ describe("DetailedCharacter", () => {
     test("give a spell known through two classes each class's DC: its level on that list and that class's ability", async () => {
       // Hold Person is a 3rd-level wizard spell and a 2nd-level bard spell: Intelligence 16 (+3), Charisma 12 (+1)
       const ctx = await getSeedCtx();
-      const characterId = await createSeedCharacter("Two Casters", { ...WIZARD_SCORES, Charisma: 12 }, { xp: 1000 });
+      const characterId = await seedHuman("Two Casters", { ...WIZARD_SCORES, Charisma: 12 }, { xp: 1000 });
       const wizardLevel = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
       const bardLevel = await addClassLevels(db, ctx, characterId, "Bard", [1], [6]);
       await addFeats(db, ctx, wizardLevel, [
@@ -2960,7 +2960,7 @@ describe("DetailedCharacter", () => {
         // Regression: the value was 0 or 1 during the build, so a cleric 5 failed the Thaumaturgist's divine 3.
         const ctx = await getSeedCtx();
         const fork = await forkWith(DND35_DMG_NAME);
-        const characterId = await createSeedCharacter(
+        const characterId = await seedHuman(
           "Thaumaturgist Candidate",
           { Strength: 10, Dexterity: 10, Constitution: 14, Intelligence: 12, Wisdom: 16, Charisma: 12 },
           { xp: 15000, rulesetId: fork.id },
@@ -3178,11 +3178,7 @@ describe("DetailedCharacter", () => {
     test("give a dragon disciple its ability boosts", async () => {
       const ctx = await getSeedCtx();
       const fork = await forkWith(DND35_DMG_NAME);
-      const characterId = await createSeedCharacter(
-        "Dragon Blooded",
-        { ...WIZARD_SCORES, Strength: 12 },
-        { rulesetId: fork.id },
-      );
+      const characterId = await seedHuman("Dragon Blooded", { ...WIZARD_SCORES, Strength: 12 }, { rulesetId: fork.id });
       await addClassLevels(db, ctx, characterId, "Sorcerer", [1], [4]);
       const dragonDisciple = (await Klasses.findOne(db, {
         name: "Dragon Disciple",
@@ -3268,7 +3264,7 @@ describe("DetailedCharacter", () => {
       // An assassin level adds its +1d6, from a feat of its own
       const ctx = await getSeedCtx();
       const fork = await forkWith(DND35_DMG_NAME);
-      const characterId = await createSeedCharacter(
+      const characterId = await seedHuman(
         "Two Sneak Attacks",
         { Strength: 10, Dexterity: 16, Constitution: 12, Intelligence: 12, Wisdom: 10, Charisma: 10 },
         { rulesetId: fork.id },
