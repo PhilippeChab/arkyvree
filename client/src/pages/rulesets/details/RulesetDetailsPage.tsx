@@ -2,7 +2,6 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   Container,
   DialogActions,
   DialogContent,
@@ -13,12 +12,11 @@ import {
   MenuItem,
   Popover,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { type MouseEvent, useCallback, useMemo, useState } from "react";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import {
   ActionMenuItem,
@@ -30,6 +28,7 @@ import {
   PageTransition,
   type SectionTab,
   SectionTabs,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import {
   AbilitiesIcon,
@@ -45,8 +44,6 @@ import {
   ItemsIcon,
   LanguagesIcon,
   MechanicsIcon,
-  PrivateIcon,
-  PublicIcon,
   PublishIcon,
   RacesIcon,
   SavesIcon,
@@ -60,11 +57,10 @@ import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { externalLinks } from "@/client/src/lib/externalLinks.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
-import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
+import { rulesetTags } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   ArchiveRulesetDialog,
   EditRulesetDialog,
@@ -91,22 +87,6 @@ import {
   RacesSection,
   SavesSection,
 } from "./sections/index.ts";
-
-function getStatusChip(status: RulesetDetail["status"]) {
-  const { icon: StatusIcon, color, tooltip } = RULESET_STATUS[status];
-  return (
-    <Tooltip describeChild title={tooltip}>
-      <Chip
-        icon={<StatusIcon />}
-        label={status}
-        size="medium"
-        color={color}
-        variant="filled"
-        sx={{ fontWeight: 600 }}
-      />
-    </Tooltip>
-  );
-}
 
 export default function RulesetDetailsPage() {
   const { id = "", section } = useParams<{ id: string; section?: string }>();
@@ -302,97 +282,54 @@ export default function RulesetDetailsPage() {
           }
           backTo={"/rulesets"}
           onMenuOpen={hasMenuItems ? (e) => setAnchorEl(e.currentTarget) : undefined}
-          chips={
-            <>
-              {getStatusChip(ruleset.status)}
-              <Chip
-                icon={ruleset.private ? <PrivateIcon /> : <PublicIcon />}
-                label={ruleset.private ? "Private" : "Public"}
-                size="medium"
-                color={ruleset.private ? "warning" : "success"}
-                variant="filled"
-                sx={{ fontWeight: 600 }}
-              />
-              {isExtension && (
-                <Chip
-                  icon={<ExtensionIcon />}
-                  label="Extension"
-                  size="medium"
-                  color="secondary"
-                  variant="filled"
-                  sx={{ fontWeight: 600 }}
-                />
-              )}
-              {ruleset.rulesetId && ruleset.rulesetName && (
-                <Chip
-                  icon={<ForkIcon />}
-                  label={`Forked from ${ruleset.rulesetName}`}
-                  size="medium"
-                  color="info"
-                  variant="outlined"
-                  component={Link}
-                  to={`/rulesets/${ruleset.rulesetId}`}
-                  clickable
-                  sx={{ fontWeight: 500 }}
-                  onMouseEnter={prefetchParent}
-                  onFocus={prefetchParent}
-                />
-              )}
-              {subscribedExtensions && subscribedExtensions.length > 0 && (
-                <>
-                  <Chip
-                    icon={<ExtensionIcon />}
-                    label={formatCount(subscribedExtensions.length, "extension")}
-                    size="medium"
-                    color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
-                    variant="outlined"
-                    clickable
-                    onClick={(e) => setExtensionsAnchor(e.currentTarget)}
-                    sx={{ fontWeight: 500 }}
-                  />
-                  <Popover
-                    open={Boolean(extensionsAnchor)}
-                    anchorEl={extensionsAnchor}
-                    onClose={() => setExtensionsAnchor(null)}
-                    anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-                    transformOrigin={{ vertical: "top", horizontal: "center" }}
-                  >
-                    <Stack spacing={1} sx={{ p: 1.5, maxWidth: 360 }}>
-                      {subscribedExtensions.map((ext) => (
-                        <Chip
-                          key={ext.extensionId}
-                          icon={<ExtensionIcon />}
-                          label={ext.extensionName}
-                          size="medium"
-                          color={ext.updateAvailable ? "warning" : "default"}
-                          variant="outlined"
-                          component={Link}
-                          to={`/rulesets/${ext.extensionId}`}
-                          clickable
-                          sx={{ fontWeight: 500, justifyContent: "flex-start" }}
-                          onDelete={
-                            isOwner
-                              ? (e: React.MouseEvent) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName);
-                                }
-                              : undefined
-                          }
-                        />
-                      ))}
-                    </Stack>
-                  </Popover>
-                </>
-              )}
-            </>
-          }
+          tags={[
+            ...rulesetTags(ruleset, prefetchParent),
+            ...(subscribedExtensions && subscribedExtensions.length > 0
+              ? [
+                  {
+                    icon: ExtensionIcon,
+                    label: formatCount(subscribedExtensions.length, "extension"),
+                    color: subscribedExtensions.some((ext) => ext.updateAvailable)
+                      ? ("warning" as const)
+                      : ("default" as const),
+                    onClick: (event: MouseEvent<HTMLElement>) => setExtensionsAnchor(event.currentTarget),
+                  },
+                ]
+              : []),
+          ]}
           description={ruleset.description || "Explore the complete rules and content for this game system"}
         >
           {ruleset.system && ruleset.baseRules === "Dungeons & Dragons: 3.5" && (
             <RulesetLicenseNotice key={ruleset.id} name={ruleset.name} />
           )}
         </DetailPageHeader>
+        {subscribedExtensions && subscribedExtensions.length > 0 && (
+          <Popover
+            open={Boolean(extensionsAnchor)}
+            anchorEl={extensionsAnchor}
+            onClose={() => setExtensionsAnchor(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            transformOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <Stack spacing={1} sx={{ p: 1.5, maxWidth: 360, alignItems: "flex-start" }}>
+              {subscribedExtensions.map((ext) => (
+                <TagChip
+                  key={ext.extensionId}
+                  size="medium"
+                  tag={{
+                    icon: ExtensionIcon,
+                    label: ext.extensionName,
+                    color: ext.updateAvailable ? "warning" : "default",
+                    to: `/rulesets/${ext.extensionId}`,
+                    onDelete: isOwner
+                      ? () => handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName)
+                      : undefined,
+                  }}
+                />
+              ))}
+            </Stack>
+          </Popover>
+        )}
 
         {/* Read-Only Banner for Archived Rulesets */}
         {ruleset.status === "Archived" && (

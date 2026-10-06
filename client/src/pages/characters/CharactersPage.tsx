@@ -1,8 +1,9 @@
-import { Button, Chip, Container } from "@mui/material";
+import { Button, Container } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { characterTags } from "@/client/src/components/characters/index.ts";
 import {
   BlankState,
   CREATED_SORTS,
@@ -118,27 +119,11 @@ export default function CharactersPage() {
                   avatarSrc={portraitsByCharacterId.get(character.id) ?? undefined}
                   title={character.name}
                   description={character.description}
-                  pills={
-                    <>
-                      {character.accessRole === "contributor" && (
-                        <Chip label="Shared" size="small" color="info" variant="outlined" />
-                      )}
-                      <Chip
-                        label={character.race}
-                        size="small"
-                        variant="outlined"
-                        sx={{ borderColor: "secondary.main", color: "secondary.main", fontWeight: 500 }}
-                      />
-                      {character.levels.map((level) => (
-                        <Chip
-                          key={level.klass}
-                          label={`${level.klass} ${level.level}`}
-                          size="small"
-                          sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 500 }}
-                        />
-                      ))}
-                    </>
-                  }
+                  tags={characterTags({
+                    race: character.race,
+                    levels: character.levels,
+                    shared: character.accessRole === "contributor",
+                  })}
                 />
               ))}
             </ListCardGrid>

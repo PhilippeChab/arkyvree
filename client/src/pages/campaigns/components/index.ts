@@ -15,3 +15,4 @@ export {
   type PlayerState,
   toPlayerPayload,
 } from "./players.ts";
+export { campaignTags } from "./campaignTags.ts";

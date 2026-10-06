@@ -1,4 +1,4 @@
-import { Alert, Box, Chip, Container, Menu, Typography } from "@mui/material";
+import { Alert, Box, Container, Menu, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -25,10 +25,13 @@ import {
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { campaignDetailQuery } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { EditCampaignDialog, type EditCampaignFormData } from "@/client/src/pages/campaigns/components/index.ts";
+import {
+  campaignTags,
+  EditCampaignDialog,
+  type EditCampaignFormData,
+} from "@/client/src/pages/campaigns/components/index.ts";
 import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -154,12 +157,7 @@ export default function CampaignDetailsPage() {
           title={`⚔️ ${campaign.name}`}
           backTo={"/campaigns"}
           onMenuOpen={canEdit ? (e) => setAnchorEl(e.currentTarget) : undefined}
-          chips={
-            <>
-              <Chip label={formatCount(campaign.currentPlayers, "player")} color="primary" sx={{ fontWeight: 600 }} />
-              <Chip label={campaign.rulesetName} color="secondary" sx={{ fontWeight: 600 }} />
-            </>
-          }
+          tags={campaignTags(campaign)}
           description={campaign.description || "Manage your campaign players, characters, and invitations"}
         />
 

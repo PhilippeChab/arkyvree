@@ -18,11 +18,11 @@ export {
 } from "./FormFields.tsx";
 export { ErrorBoundary } from "./ErrorBoundary.tsx";
 export { FormDialog } from "./FormDialog.tsx";
-export { InfoPill } from "./InfoPill.tsx";
 export { ListCard, ListCardGrid, NO_DESCRIPTION } from "./ListCard.tsx";
 export { LoadError } from "./LoadError.tsx";
 export { LoadMoreButton } from "./LoadMoreButton.tsx";
 export { SearchField } from "./SearchField.tsx";
+export { type Tag, TagChip } from "./TagChip.tsx";
 export { NextPageSpinner } from "./NextPageSpinner.tsx";
 export { Modal } from "./Modal.tsx";
 export { faqTooltip } from "./faqTooltip.tsx";
@@ -39,5 +39,4 @@ export { ScrollSafeListbox } from "./ScrollSafeListbox.tsx";
 export { SearchBar, type FilterOption, type SortOption } from "./SearchBar.tsx";
 export { CREATED_SORTS, NAME_SORTS, UPDATED_SORTS } from "./sortOptions.ts";
 export { CreateDialog, EditDialog, ConfirmDialog, DeleteDialog } from "./StandardDialogs.tsx";
-export { StyledCard } from "./StyledCard.tsx";
 export { ValidationIssueList } from "./ValidationIssueList.tsx";

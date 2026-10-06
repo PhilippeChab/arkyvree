@@ -1,11 +1,23 @@
-import { Chip, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 
 import {
   DataTable,
   type DataTableColumn,
   type DataTableEmpty,
   type RowAction,
+  type Tag,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
+import {
+  AdminIcon,
+  CheckIcon,
+  EditorIcon,
+  OwnerIcon,
+  PendingIcon,
+  RejectedIcon,
+  RevokeIcon,
+  ViewerIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 interface ContributorRow {
@@ -36,29 +48,22 @@ interface ContributorsTableProps<T extends ContributorRow> {
 
 const OWNER_ROW_ID = "owner";
 
-function contributorStatusColor(status: string): "warning" | "success" | "error" | "default" {
-  switch (status) {
-    case "Pending":
-      return "warning";
-    case "Active":
-      return "success";
-    case "Rejected":
-      return "error";
-    default:
-      return "default";
-  }
-}
+/** A contributor's role */
+const CONTRIBUTOR_ROLES: Record<string, Tag> = {
+  Admin: { icon: AdminIcon, label: "Admin", color: "error" },
+  Editor: { icon: EditorIcon, label: "Editor", color: "primary" },
+  Viewer: { icon: ViewerIcon, label: "Viewer", color: "default" },
+};
 
-function roleColor(role: string): "error" | "primary" | "default" {
-  switch (role) {
-    case "Admin":
-      return "error";
-    case "Editor":
-      return "primary";
-    default:
-      return "default";
-  }
-}
+/** Where a contributor's invite stands */
+const CONTRIBUTOR_STATUSES: Record<string, Tag> = {
+  Pending: { icon: PendingIcon, label: "Invite Pending", color: "warning" },
+  Active: { icon: CheckIcon, label: "Active", color: "success" },
+  Rejected: { icon: RejectedIcon, label: "Rejected", color: "error" },
+  Revoked: { icon: RevokeIcon, label: "Revoked", color: "default" },
+};
+
+const OWNER: Tag = { icon: OwnerIcon, label: "Owner", color: "primary" };
 
 /** Owner row followed by the invited contributors, with their status. */
 export function ContributorsTable<T extends ContributorRow>({
@@ -86,7 +91,6 @@ export function ContributorsTable<T extends ContributorRow>({
       contributor,
     })),
   ];
-  const ownerChip = <Chip label="Owner" size="small" color="primary" variant="filled" />;
 
   function renderCell(row: TableRow<T>, column: string) {
     switch (column) {
@@ -106,29 +110,11 @@ export function ContributorsTable<T extends ContributorRow>({
       case "email":
         return row.email;
       case "role":
-        if (row.owner) return ownerChip;
-        return (
-          row.contributor.role && (
-            <Chip
-              label={row.contributor.role}
-              size="small"
-              color={roleColor(row.contributor.role)}
-              variant="outlined"
-            />
-          )
-        );
+        if (row.owner) return <TagChip tag={OWNER} />;
+        return row.contributor.role && <TagChip tag={CONTRIBUTOR_ROLES[row.contributor.role]} />;
       default:
-        if (row.owner) {
-          return showRoles ? <Chip label="Active" size="small" color="success" variant="filled" /> : ownerChip;
-        }
-        return (
-          <Chip
-            label={row.contributor.status}
-            size="small"
-            color={contributorStatusColor(row.contributor.status)}
-            variant="filled"
-          />
-        );
+        if (row.owner) return <TagChip tag={showRoles ? CONTRIBUTOR_STATUSES.Active : OWNER} />;
+        return <TagChip tag={CONTRIBUTOR_STATUSES[row.contributor.status]} />;
     }
   }
 

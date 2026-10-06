@@ -65,6 +65,7 @@
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
  *   "This action cannot be undone."
  * - `page-errors`: a page that couldn't load says why in `loadFailureMessage`'s words.
+ * - `tag-chips`: a role, a status or a fact is a `TagChip`, and a chip's color is its `color` prop.
  * - `motion`: motion is timed in `lib/animations.ts`: an animation it names (`ANIMATIONS`), a transition of its tokens
  *   (`transitionOf`), or a template of `DURATION` / `EASING`; keyframes are defined there alone.
  *
@@ -267,6 +268,9 @@ const BUTTON_INTENTS = [
 
 /** `Intl`'s date formatters */
 const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
+
+/** The style keys that color a chip, which its `color` prop sets */
+const CHIP_COLOR_KEYS = new Set(["background", "backgroundColor", "bgcolor", "borderColor", "color"]);
 
 /** Whether a JSX element has the attribute `name`. */
 function hasAttribute(node, name) {
@@ -1188,6 +1192,28 @@ function createFlexLayout(context) {
   };
 }
 
+function createTagChips(context) {
+  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/TagChip.tsx") return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "Chip") return;
+      const attributes = node.openingElement.attributes.filter((a) => a.type === "JSXAttribute");
+      if (attributes.some((a) => a.name.name === "icon")) {
+        context.report({
+          node: node.openingElement,
+          message: "A role, a status or a fact is a `TagChip` (`components/common`): its icon, its words, its color.",
+        });
+      }
+    },
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      if (!CHIP_COLOR_KEYS.has(key) || node.parent.type !== "ObjectExpression" || sxOwner(node.parent) !== "Chip")
+        return;
+      context.report({ node, message: "A chip's color is its `color` prop, never `sx`." });
+    },
+  };
+}
+
 /** Whether a template literal times something by its own numbers: a literal time, or a time no `DURATION` gives (`${i * 80}ms`). */
 function timesItself(template, sourceCode) {
   const texts = template.quasis.map((quasi) => quasi.value.cooked ?? "");
@@ -1389,4 +1415,5 @@ export default {
   "toast-wording": { meta: { type: "suggestion" }, create: createToastWording },
   "confirm-wording": { meta: { type: "suggestion" }, create: createConfirmWording },
   "page-errors": { meta: { type: "suggestion" }, create: createPageErrors },
+  "tag-chips": { meta: { type: "suggestion" }, create: createTagChips },
 };

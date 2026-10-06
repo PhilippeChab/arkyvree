@@ -1,6 +1,6 @@
-import { Box, Button, Chip, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -12,6 +12,8 @@ import {
   type RowAction,
   SearchBar,
   SectionContent,
+  type Tag,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import {
   AddIcon,
@@ -45,16 +47,24 @@ import { campaignPlayersQuery } from "@/client/src/pages/campaigns/details/secti
 import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import type { CampaignRole } from "@/shared/enums.ts";
 
 interface PlayersSectionProps {
   campaign: CampaignDetail;
 }
 
-const STATUS_CHIPS = {
-  assigned: null,
-  pending: { icon: <PendingIcon fontSize="tiny" />, label: "Invite Pending", color: "warning" },
-  unassigned: { icon: <UnassignedIcon fontSize="tiny" />, label: "Unassigned", color: "default" },
-} as const satisfies Record<PlayerState, { icon: ReactNode; label: string; color: "warning" | "default" } | null>;
+/** A player's role in the campaign */
+const PLAYER_ROLES = {
+  "Game Master": { icon: GameMasterIcon, label: "Game Master", color: "warning" },
+  "Player Character": { icon: PlayerIcon, label: "Player Character", color: "primary" },
+} as const satisfies Record<CampaignRole, Tag>;
+
+/** Where a player's slot stands */
+const PLAYER_STATES = {
+  assigned: { icon: PlayerIcon, label: "Active", color: "success" },
+  pending: { icon: PendingIcon, label: "Invite Pending", color: "warning" },
+  unassigned: { icon: UnassignedIcon, label: "Unassigned", color: "default" },
+} as const satisfies Record<PlayerState, Tag>;
 
 /** The players' columns; each row's actions sit over its last. */
 const PLAYER_COLUMNS: DataTableColumn[] = [
@@ -240,7 +250,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
 
   const renderPlayerCell = (player: CampaignPlayer, column: string) => {
     const slot = getPlayerSlot(player);
-    const isGameMaster = player.role === "Game Master";
     switch (column) {
       case "player": {
         const { name, email } = playerDisplay(player, slot);
@@ -256,38 +265,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         );
       }
       case "role":
-        return (
-          <Chip
-            icon={isGameMaster ? <GameMasterIcon fontSize="tiny" /> : <PlayerIcon fontSize="tiny" />}
-            label={player.role}
-            size="small"
-            color={isGameMaster ? "warning" : "primary"}
-            variant="filled"
-            sx={{ fontWeight: 500 }}
-          />
-        );
-      case "status": {
-        const statusChip = STATUS_CHIPS[slot.state];
-        return statusChip ? (
-          <Chip
-            icon={statusChip.icon}
-            label={statusChip.label}
-            size="small"
-            color={statusChip.color}
-            variant="outlined"
-            sx={{ fontWeight: 500 }}
-          />
-        ) : (
-          <Chip
-            icon={<PlayerIcon fontSize="tiny" />}
-            label="Active"
-            size="small"
-            color="success"
-            variant="outlined"
-            sx={{ fontWeight: 500 }}
-          />
-        );
-      }
+        return <TagChip tag={PLAYER_ROLES[player.role]} />;
+      case "status":
+        return <TagChip tag={PLAYER_STATES[slot.state]} />;
       default:
         return slot.state === "assigned" ? (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>

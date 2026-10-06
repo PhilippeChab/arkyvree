@@ -103,6 +103,7 @@
     "arkyvree/toast-wording": "error",
     "arkyvree/confirm-wording": "error",
     "arkyvree/page-errors": "error",
+    "arkyvree/tag-chips": "error",
     "arkyvree/test-conventions": "error",
     // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
     "arkyvree/function-length": "error",

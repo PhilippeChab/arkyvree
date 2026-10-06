@@ -4,6 +4,11 @@
  */
 
 export {
+  Block as RejectedIcon,
+  Key as OwnerIcon,
+  Visibility as ViewerIcon,
+  Edit as EditorIcon,
+  AdminPanelSettings as AdminIcon,
   FitnessCenter as AbilitiesIcon,
   AccountCircle as AccountIcon,
   History as ActivityIcon,

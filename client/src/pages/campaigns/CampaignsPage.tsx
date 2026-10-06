@@ -7,7 +7,6 @@ import {
   CREATED_SORTS,
   DiceSpinner,
   type FilterOption,
-  InfoPill,
   ListCard,
   ListCardGrid,
   LoadError,
@@ -21,13 +20,12 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
-import { ArchiveIcon, CampaignsIcon, PlayersIcon, RulesetsIcon } from "@/client/src/components/icons/index.ts";
+import { ArchiveIcon, CampaignsIcon } from "@/client/src/components/icons/index.ts";
 import { useListParams, usePageTitle, useStaggerOffset } from "@/client/src/hooks/index.ts";
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { campaignDetailQuery, type CampaignListFilters, campaignListQuery } from "@/client/src/lib/queries.ts";
-import { CreateCampaignDialog } from "@/client/src/pages/campaigns/components/index.ts";
+import { campaignTags, CreateCampaignDialog } from "@/client/src/pages/campaigns/components/index.ts";
 import { prefetchCampaignSections } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { useCampaignOperations } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -101,7 +99,6 @@ export default function CampaignsPage() {
           <>
             <ListCardGrid>
               {campaigns.map((campaign, index) => {
-                const players = formatCount(campaign.currentPlayers, "player");
                 return (
                   <ListCard
                     key={campaign.id}
@@ -114,22 +111,7 @@ export default function CampaignsPage() {
                     avatarTone="secondary"
                     title={campaign.name}
                     description={campaign.description}
-                    pills={
-                      <>
-                        <InfoPill
-                          icon={PlayersIcon}
-                          label={players}
-                          color="info"
-                          tooltip={`${players} in this campaign`}
-                        />
-                        <InfoPill
-                          icon={RulesetsIcon}
-                          label={campaign.rulesetName}
-                          color="secondary"
-                          tooltip={campaign.rulesetName}
-                        />
-                      </>
-                    }
+                    tags={campaignTags(campaign)}
                   />
                 );
               })}

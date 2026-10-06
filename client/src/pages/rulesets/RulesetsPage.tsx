@@ -7,7 +7,6 @@ import {
   CREATED_SORTS,
   DiceSpinner,
   type FilterOption,
-  InfoPill,
   ListCard,
   ListCardGrid,
   LoadError,
@@ -19,20 +18,12 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
-import {
-  ExtensionIcon,
-  ForkIcon,
-  PrivateIcon,
-  PublicIcon,
-  RulesetsIcon,
-  StarredIcon,
-  UnstarredIcon,
-} from "@/client/src/components/icons/index.ts";
+import { RulesetsIcon, StarredIcon, UnstarredIcon } from "@/client/src/components/icons/index.ts";
 import { useListParams, usePageTitle, useStaggerOffset } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { rulesetDetailQuery, type RulesetListFilters, rulesetListQuery } from "@/client/src/lib/queries.ts";
-import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
+import { rulesetTags } from "@/client/src/pages/rulesets/components/index.ts";
 import { prefetchSection } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts";
 
@@ -108,7 +99,6 @@ function RulesetList({ filters }: RulesetListProps) {
     <>
       <ListCardGrid>
         {rulesets.map((ruleset, index) => {
-          const status = RULESET_STATUS[ruleset.status];
           // The page opens on the Races tab, with "Local Changes" on for extensions.
           const prefetch = () => {
             void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.id));
@@ -152,33 +142,7 @@ function RulesetList({ filters }: RulesetListProps) {
                   </Stack>
                 )
               }
-              pills={
-                <>
-                  <InfoPill icon={status.icon} label={ruleset.status} color={status.color} tooltip={status.tooltip} />
-                  {ruleset.private ? (
-                    <InfoPill icon={PrivateIcon} label="Private" color="warning" tooltip="Private ruleset" />
-                  ) : (
-                    <InfoPill icon={PublicIcon} label="Public" color="success" tooltip="Public ruleset" />
-                  )}
-                  {ruleset.kind === "extension" ? (
-                    <InfoPill
-                      icon={ExtensionIcon}
-                      label="Extension"
-                      color="secondary"
-                      tooltip={ruleset.userId ? "Extension" : "Official Extension"}
-                    />
-                  ) : (
-                    ruleset.rulesetId && (
-                      <InfoPill
-                        icon={ForkIcon}
-                        label="Fork"
-                        color="info"
-                        tooltip={`Forked from ${ruleset.rulesetName}`}
-                      />
-                    )
-                  )}
-                </>
-              }
+              tags={rulesetTags(ruleset)}
             />
           );
         })}

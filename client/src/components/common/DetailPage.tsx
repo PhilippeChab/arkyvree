@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 
 import { BackIcon, MoreIcon } from "@/client/src/components/icons/index.ts";
 
+import { type Tag, TagChip } from "./TagChip.tsx";
+
 interface DetailPageHeaderProps {
   title: string;
   /** Inline control after the title, e.g. a star toggle. */
@@ -12,7 +14,8 @@ interface DetailPageHeaderProps {
   backTo: string;
   /** Opens the page's action menu; the button is hidden when omitted. */
   onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
-  chips?: ReactNode;
+  /** Its facts, beside the title: a status, a visibility… */
+  tags?: Tag[];
   description: ReactNode;
   children?: ReactNode;
 }
@@ -42,7 +45,7 @@ export function DetailPageHeader({
   titleAdornment,
   backTo,
   onMenuOpen,
-  chips,
+  tags,
   description,
   children,
 }: DetailPageHeaderProps) {
@@ -68,9 +71,11 @@ export function DetailPageHeader({
           </Typography>
           {titleAdornment}
         </Stack>
-        {chips && (
+        {tags && tags.length > 0 && (
           <Stack direction="row" spacing={1} sx={{ justifyContent: "center", mb: 2, flexWrap: "wrap" }}>
-            {chips}
+            {tags.map((tag) => (
+              <TagChip key={tag.label} tag={tag} size="medium" />
+            ))}
           </Stack>
         )}
         <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 600, mx: "auto" }}>

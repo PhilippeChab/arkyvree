@@ -1,5 +1,33 @@
 import { keyframes } from "@mui/material";
 
+const pulse = keyframes`
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+`;
+
+const diceRoll = keyframes`
+  0%   { transform: translateY(0)    rotate(0deg); }
+  25%  { transform: translateY(-8px) rotate(90deg); }
+  50%  { transform: translateY(0)    rotate(180deg); }
+  75%  { transform: translateY(-8px) rotate(270deg); }
+  100% { transform: translateY(0)    rotate(360deg); }
+`;
+
+const settledPulse = keyframes`
+  0%   { box-shadow: none; }
+  50%  { box-shadow: 0 0 0 3px rgba(var(--mui-palette-primary-mainChannel) / 0.4); }
+  100% { box-shadow: none; }
+`;
+
+const bellShake = keyframes`
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-12deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  75% { transform: rotate(4deg); }
+`;
+
 export const DURATION = {
   fast: 150,
   normal: 250,
@@ -24,34 +52,6 @@ export const fadeIn = keyframes`
 export const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
-`;
-
-export const pulse = keyframes`
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-`;
-
-export const diceRoll = keyframes`
-  0%   { transform: translateY(0)    rotate(0deg); }
-  25%  { transform: translateY(-8px) rotate(90deg); }
-  50%  { transform: translateY(0)    rotate(180deg); }
-  75%  { transform: translateY(-8px) rotate(270deg); }
-  100% { transform: translateY(0)    rotate(360deg); }
-`;
-
-export const settledPulse = keyframes`
-  0%   { box-shadow: none; }
-  50%  { box-shadow: 0 0 0 3px rgba(var(--mui-palette-primary-mainChannel) / 0.4); }
-  100% { box-shadow: none; }
-`;
-
-export const bellShake = keyframes`
-  0%, 100% { transform: rotate(0deg); }
-  15% { transform: rotate(14deg); }
-  30% { transform: rotate(-12deg); }
-  45% { transform: rotate(10deg); }
-  60% { transform: rotate(-8deg); }
-  75% { transform: rotate(4deg); }
 `;
 
 /** The app's animations, timed here: a component names one (`animation: ANIMATIONS.diceRoll`). */

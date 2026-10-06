@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { getInitial } from "@/shared/text.ts";
 
 import { StyledCard } from "./StyledCard.tsx";
+import { type Tag, TagChip } from "./TagChip.tsx";
 
 interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "children" | "title"> {
   /** Defaults to the title's initial. */
@@ -14,7 +15,8 @@ interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "childre
   title: string;
   /** Corner control, e.g. a star toggle. */
   corner?: ReactNode;
-  pills?: ReactNode;
+  /** Its facts: a status, a race, a ruleset… */
+  tags?: Tag[];
   description: string | null | undefined;
 }
 
@@ -32,7 +34,7 @@ export function ListCard({
   avatarSrc,
   title,
   corner,
-  pills,
+  tags,
   description,
   ...cardProps
 }: ListCardProps) {
@@ -66,9 +68,11 @@ export function ListCard({
             {title}
           </Typography>
         </Stack>
-        {pills && (
+        {tags && tags.length > 0 && (
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", mb: 2 }}>
-            {pills}
+            {tags.map((tag) => (
+              <TagChip key={tag.label} tag={tag} />
+            ))}
           </Stack>
         )}
       </Box>

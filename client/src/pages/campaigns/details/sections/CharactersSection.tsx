@@ -1,9 +1,7 @@
 import {
   Autocomplete,
-  Avatar,
   Box,
   Button,
-  Chip,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -19,19 +17,20 @@ import type { InferRequestType, InferResponseType } from "hono/client";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { characterTags } from "@/client/src/components/characters/index.ts";
 import {
   BlankState,
   DiceSpinner,
   faqTooltip,
+  ListCard,
   LoadError,
   LoadMoreButton,
   Modal,
-  NO_DESCRIPTION,
   NoMatchesState,
   ScrollSafeListbox,
   SearchBar,
   SectionContent,
-  StyledCard,
+  TagChip,
 } from "@/client/src/components/common/index.ts";
 import { AddIcon, CharactersIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -49,7 +48,6 @@ import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { parseResponse, rpc } from "@/client/src/services/rpc.ts";
-import { getInitial } from "@/shared/text.ts";
 
 type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
@@ -142,68 +140,26 @@ function CharacterCard({
   const canEditVisibility = character.isOwn && !isArchived;
 
   return (
-    <StyledCard
+    <ListCard
       onClick={handleViewSheet}
       animationIndex={animationIndex}
       animationOffset={animationOffset}
       {...prefetchHandlers}
-    >
-      <Box sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1.5, sm: 2 } }}>
-        {/* Title Row */}
-        <Stack direction="row" spacing={2} sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0, flex: 1 }}>
-            <Avatar
-              src={portraitUrl ?? undefined}
-              sx={{
-                typography: "body1",
-                width: 36,
-                height: 36,
-                border: 2,
-                borderColor: "secondary.main",
-                background: (theme) =>
-                  `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
-                fontWeight: 700,
-                flexShrink: 0,
-              }}
-            >
-              {getInitial(character.name)}
-            </Avatar>
-            <Typography
-              component="h2"
-              variant="h6"
-              noWrap
-              sx={{ fontWeight: 600, color: "text.primary", lineHeight: 1.2, textAlign: "left", flex: 1, minWidth: 0 }}
-            >
-              {character.name}
-            </Typography>
-          </Stack>
-          <Chip
-            label={
-              <Stack
-                direction="row"
-                spacing={0.5}
-                sx={{
-                  alignItems: "center",
-                }}
-              >
-                <span>{character.visibility}</span>
-                <VisibilityIcon fontSize="tiny" />
-              </Stack>
-            }
-            size="small"
-            variant="outlined"
-            onClick={
-              canEditVisibility
-                ? (e) => {
-                    e.stopPropagation();
-                    setMenuAnchorEl(e.currentTarget);
+      avatarSrc={portraitUrl ?? undefined}
+      title={character.name}
+      corner={
+        <>
+          <TagChip
+            tag={{
+              icon: VisibilityIcon,
+              label: character.visibility,
+              color: "default",
+              onClick: canEditVisibility
+                ? (event) => {
+                    event.stopPropagation();
+                    setMenuAnchorEl(event.currentTarget);
                   }
-                : undefined
-            }
-            sx={{
-              typography: "caption",
-              fontWeight: 500,
-              ...(canEditVisibility && { cursor: "pointer" }),
+                : undefined,
             }}
           />
           {canEditVisibility && (
@@ -232,47 +188,11 @@ function CharacterCard({
               ))}
             </Menu>
           )}
-        </Stack>
-
-        {/* Race and Class Level Pills */}
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ alignItems: "center", justifyContent: "flex-start", flexWrap: "wrap", mb: 2 }}
-        >
-          <Chip
-            label={character.race}
-            size="small"
-            variant="outlined"
-            sx={{ borderColor: "secondary.main", color: "secondary.main", fontWeight: 500 }}
-          />
-          {character.levels.map((level, index) => (
-            <Chip
-              key={index}
-              label={`${level.klass} ${level.level}`}
-              size="small"
-              sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 500 }}
-            />
-          ))}
-        </Stack>
-      </Box>
-      <Box sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1 }}>
-        <Typography
-          variant="body2"
-          sx={{
-            color: "text.secondary",
-            lineHeight: 1.6,
-            minHeight: "6.4em",
-            display: "-webkit-box",
-            WebkitLineClamp: 4,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {character.description || NO_DESCRIPTION}
-        </Typography>
-      </Box>
-    </StyledCard>
+        </>
+      }
+      tags={characterTags({ race: character.race, levels: character.levels })}
+      description={character.description}
+    />
   );
 }
 

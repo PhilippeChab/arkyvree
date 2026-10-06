@@ -695,4 +695,22 @@ describe("frontend rules", () => {
       ),
     ).toEqual(["page-errors client/src/branched.tsx", "page-errors client/src/written.tsx"]);
   });
+
+  test("a role, a status or a fact is a TagChip, and a chip's color is its color prop", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/iconed.tsx": 'export const i = <Chip icon={<PlayerIcon />} label="Active" />;\n',
+          "client/src/painted.tsx":
+            'export const p = <Chip label={race} sx={{ bgcolor: "primary.main", fontWeight: 500 }} />;\n',
+          "client/src/tagged.tsx":
+            'export const t = <TagChip tag={{ icon: PlayerIcon, label: "Active", color: "success" }} />;\n',
+          "client/src/plain.tsx":
+            'export const c = <Chip label={count} size="tiny" color="primary" sx={{ ml: 1 }} />;\n',
+          "client/src/components/common/TagChip.tsx": "export const x = <Chip icon={<Icon />} label={label} />;\n",
+        },
+        ["tag-chips"],
+      ),
+    ).toEqual(["tag-chips client/src/iconed.tsx", "tag-chips client/src/painted.tsx"]);
+  });
 });
