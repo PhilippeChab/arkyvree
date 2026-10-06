@@ -1043,7 +1043,7 @@ function writeGenerated(out: Output, path: string, code: string) {
 
 /**
  * Writes a file of items, `constName`: each its name and description, then the lines `fields` gives. `uses` are the
- * builders it takes from content/proficiencies.ts and content/properties.ts.
+ * builders it takes from content/items/proficiencies.ts and content/items/properties.ts.
  */
 function writeItemFile<T extends { name: string; description: string }>(
   out: Output,

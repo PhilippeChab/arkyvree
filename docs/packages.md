@@ -37,7 +37,8 @@ database/packages/
     │   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceDefinition; DomainDefinition
     │   ├── wizardSchools/    # WizardSchoolDefinition; the wizard's school feats
     │   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
-    │   └── rulesets/         # CoreContent, BookContent; the core rules' abilities, saves, skills, languages
+    │   ├── abilities/, saves/, skills/, languages/   # The core rules' own: AbilityDefinition, SaveDefinition…
+    │   └── rulesets/         # CoreContent, BookContent: what a ruleset is seeded with
     ├── data/             # The hand-written data
     │   ├── core.ts           # The core ruleset, its abilities, saves, skills, languages, and CORE: all it's seeded with
     │   ├── skills.ts, weapons.ts, creatureTypes.ts, templateItems.ts

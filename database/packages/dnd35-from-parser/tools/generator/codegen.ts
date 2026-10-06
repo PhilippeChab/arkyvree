@@ -14,7 +14,7 @@ import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts"
 /** Modules and the names a generated file can import from them, in the order its imports list them. */
 export type ImportTable = [string, string[]][];
 
-/** The builders of content/requirements.ts the generated code writes checks with. */
+/** The builders of content/customization/requirements.ts the generated code writes checks with. */
 const BUILDERS = { eq, eqNum, gte, eqStr };
 
 /** Each builder, with how it takes a check's value: not at all (`eq` checks a flag is set), as a number or a string. */
