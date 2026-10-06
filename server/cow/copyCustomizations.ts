@@ -7,7 +7,7 @@ import type { EntityCustomizations } from "./hashing.ts";
 /**
  * Inserts one copy of each row per target in a single batch, target-major, with
  * `owner` repointing each copy. Copies pair with their sources by position, and
- * the first target's copies are recorded in `customizationIds`: equal values do
+ * the first target's copies are recorded in `copiedIds`: equal values do
  * not imply the same row (a modifier's requirements may differ).
  */
 async function copyRows<R extends { id: string }>(
@@ -16,7 +16,7 @@ async function copyRows<R extends { id: string }>(
   rows: R[],
   targetEntityIds: string[],
   owner: (row: R, targetId: string, targetIndex: number) => Partial<R>,
-  customizationIds?: Map<string, string>,
+  copiedIds?: Map<string, string>,
 ): Promise<{ id: string }[]> {
   if (rows.length === 0) return [];
   const copies = await repo.createMany(
@@ -26,9 +26,20 @@ async function copyRows<R extends { id: string }>(
     ),
   );
   for (let i = 0; i < rows.length; i++) {
-    customizationIds?.set(rows[i].id, copies[i].id);
+    copiedIds?.set(rows[i].id, copies[i].id);
   }
   return copies;
+}
+
+/** Copy customizations onto the target entity */
+export async function copyEntityCustomizations(
+  tx: Db,
+  targetEntityId: string,
+  entityType: string,
+  sourceCust: EntityCustomizations,
+  copiedIds?: Map<string, string>,
+): Promise<void> {
+  await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust, copiedIds);
 }
 
 export async function copyEntityCustomizationsToMany(
@@ -36,13 +47,13 @@ export async function copyEntityCustomizationsToMany(
   targetEntityIds: string[],
   entityType: string,
   sourceCust: EntityCustomizations,
-  customizationIds?: Map<string, string>,
+  copiedIds?: Map<string, string>,
 ): Promise<void> {
   if (targetEntityIds.length === 0) return;
   // Copies are paired with their sources by position, so reject inputs that
   // position cannot represent instead of writing rows to the wrong owner.
-  if (customizationIds && targetEntityIds.length > 1) {
-    throw new Error("customizationIds maps each source row to one copy; copy to a single target");
+  if (copiedIds && targetEntityIds.length > 1) {
+    throw new Error("copiedIds maps each source row to one copy; copy to a single target");
   }
   if (!isCustomizableEntityType(entityType) && sourceCust.modifiers.length > 0) {
     throw new Error(`Cannot copy modifiers onto ${entityType}`);
@@ -60,24 +71,10 @@ export async function copyEntityCustomizationsToMany(
     modifiers,
     targetEntityIds,
     (_, targetId) => ({ sourceId: targetId }),
-    customizationIds,
+    copiedIds,
   );
-  await copyRows(
-    tx,
-    Properties,
-    properties,
-    targetEntityIds,
-    (_, targetId) => ({ entityId: targetId }),
-    customizationIds,
-  );
-  await copyRows(
-    tx,
-    Requirements,
-    requirements,
-    targetEntityIds,
-    (_, targetId) => ({ entityId: targetId }),
-    customizationIds,
-  );
+  await copyRows(tx, Properties, properties, targetEntityIds, (_, targetId) => ({ entityId: targetId }), copiedIds);
+  await copyRows(tx, Requirements, requirements, targetEntityIds, (_, targetId) => ({ entityId: targetId }), copiedIds);
   // A modifier requirement belongs to the copy of its modifier made for the same target.
   const modifierIndex = new Map(modifiers.map((m, i) => [m.id, i]));
   await copyRows(
@@ -88,17 +85,6 @@ export async function copyEntityCustomizationsToMany(
     (r, _, targetIndex) => ({
       entityId: newModifiers[targetIndex * modifiers.length + modifierIndex.get(r.entityId)!].id,
     }),
-    customizationIds,
+    copiedIds,
   );
-}
-
-/** Copy customizations onto the target entity */
-export async function copyEntityCustomizations(
-  tx: Db,
-  targetEntityId: string,
-  entityType: string,
-  sourceCust: EntityCustomizations,
-  customizationIds?: Map<string, string>,
-): Promise<void> {
-  await copyEntityCustomizationsToMany(tx, [targetEntityId], entityType, sourceCust, customizationIds);
 }
