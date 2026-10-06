@@ -1,4 +1,4 @@
-import { ThemeProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
 
 import { useUserPreferencesStore } from "@/client/src/stores/userPreferencesStore.ts";

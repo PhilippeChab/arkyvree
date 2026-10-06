@@ -1,5 +1,4 @@
-import { Card, type CardProps, Stack } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { alpha, Card, type CardProps, Stack } from "@mui/material";
 import { type ReactNode } from "react";
 
 import { fadeInUpSx, prefersReducedMotion, transitionOf } from "@/client/src/lib/animations.ts";

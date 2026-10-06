@@ -1,5 +1,4 @@
-import { Grow } from "@mui/material";
-import { createTheme, responsiveFontSizes, type Theme } from "@mui/material/styles";
+import { alpha, createTheme, Grow, responsiveFontSizes, type Theme } from "@mui/material";
 
 import { DURATION, prefersReducedMotion, transitionOf } from "@/client/src/lib/animations.ts";
 
@@ -158,34 +157,28 @@ export function createAppTheme(darkMode: boolean): Theme {
         h1: {
           fontSize: "2.5rem",
           fontWeight: 600,
-          fontFamily: '"Lora Variable", "Georgia", serif',
           letterSpacing: "0.02em",
         },
         h2: {
           fontSize: "2rem",
           fontWeight: 600,
-          fontFamily: '"Lora Variable", "Georgia", serif',
           letterSpacing: "0.01em",
         },
         h3: {
           fontSize: "1.75rem",
           fontWeight: 600,
-          fontFamily: '"Lora Variable", "Georgia", serif',
         },
         h4: {
           fontSize: "1.5rem",
           fontWeight: 500,
-          fontFamily: '"Lora Variable", "Georgia", serif',
         },
         h5: {
           fontSize: "1.25rem",
           fontWeight: 500,
-          fontFamily: '"Lora Variable", "Georgia", serif',
         },
         h6: {
           fontSize: "1rem",
           fontWeight: 500,
-          fontFamily: '"Lora Variable", "Georgia", serif',
         },
         subtitle1: {
           fontSize: "1rem",
@@ -224,6 +217,20 @@ export function createAppTheme(darkMode: boolean): Theme {
       },
       spacing: 8,
       components: {
+        MuiCssBaseline: {
+          styleOverrides: (theme: Theme) => {
+            const thumb = theme.palette.grey[500];
+            return {
+              html: { fontSynthesis: "none", textRendering: "optimizeLegibility" },
+              body: { minWidth: 320, minHeight: "100vh", overflowX: "hidden" },
+              "*": { scrollbarWidth: "thin", scrollbarColor: `${alpha(thumb, 0.5)} transparent` },
+              "*::-webkit-scrollbar": { width: 8, height: 8 },
+              "*::-webkit-scrollbar-track": { background: "transparent" },
+              "*::-webkit-scrollbar-thumb": { backgroundColor: alpha(thumb, 0.5), borderRadius: 4 },
+              "*::-webkit-scrollbar-thumb:hover": { backgroundColor: alpha(thumb, 0.7) },
+            };
+          },
+        },
         MuiButton: {
           styleOverrides: {
             root: ({ ownerState }) => {

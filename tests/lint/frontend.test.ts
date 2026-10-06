@@ -332,13 +332,15 @@ describe("frontend rules", () => {
           "client/src/spaced.tsx": 'import * as M from "@mui/material";\nexport const S = M.styled("div")({});\n',
           "client/src/emotion.tsx": 'import styled from "@emotion/styled";\nexport const E = styled.div({});\n',
           "client/src/sheet.tsx": 'import "./sheet.css";\nexport const c = 1;\n',
-          "client/src/main.tsx": 'import "./index.css";\nexport const m = 1;\n',
+          "client/src/main.tsx":
+            'import "@fontsource-variable/lora/wght-italic.css";\nimport "./index.css";\nexport const m = 1;\n',
         },
         ["sx-styles"],
       ),
     ).toEqual([
       "sx-styles client/src/emotion.tsx",
       "sx-styles client/src/made.tsx",
+      "sx-styles client/src/main.tsx",
       "sx-styles client/src/sheet.tsx",
       "sx-styles client/src/slotted.tsx",
       "sx-styles client/src/spaced.tsx",

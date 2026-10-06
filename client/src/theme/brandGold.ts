@@ -1,4 +1,4 @@
-import { alpha } from "@mui/material/styles";
+import { alpha } from "@mui/material";
 
 /** The brand gold of the logo and page accents; brighter on the dark theme than `secondary.main`. */
 export function brandGold(darkMode: boolean) {

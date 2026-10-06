@@ -1,5 +1,4 @@
-import { Avatar, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { alpha, Avatar, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { useRef, useState } from "react";
 
 import { DeleteIcon, ImageIcon, PhotoIcon, UploadIcon } from "@/client/src/components/icons/index.ts";

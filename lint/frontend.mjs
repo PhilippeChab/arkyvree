@@ -29,8 +29,8 @@
  *   `saveFn`).
  * - `date-formats`: a date is shown through `lib/formatDate.ts` (`formatDate`, `formatDateTime`, `formatRelativeTime`),
  *   in one locale and three forms: no `toLocaleDateString`, `toLocaleTimeString` or `Intl.DateTimeFormat` elsewhere.
- * - `sx-styles`: a style is written with `sx`, by the theme's scale: never `styled()` (nor `M.styled`), never a stylesheet but the global
- *   one `main.tsx` loads (`index.css`, the fonts), and `style` only passes on one a component is given
+ * - `sx-styles`: a style is written with `sx`, by the theme's scale: never `styled()` (nor `M.styled`), never a stylesheet but the
+ *   fonts `main.tsx` loads (the page's own styles are the theme's `MuiCssBaseline`), and `style` only passes on one a component is given
  *   (`{ ...props.style, … }`, as MUI hands a list option), on an element or in a prop's object (`slotProps`).
  * - `error-alerts`: an error reaches the user one way per kind: a list, a section or a step that failed to load is a
  *   `LoadError` (`loadFailureMessage`'s words), a page that can't show is a `PageError`, a failed action is a toast
@@ -1156,7 +1156,7 @@ function createSxStyles(context) {
     context.report({
       node,
       message:
-        "A style is written with `sx`: never `styled()`, no stylesheet but the global one `main.tsx` loads, and " +
+        "A style is written with `sx`: never `styled()`, no stylesheet but the fonts `main.tsx` loads (the page's own are the theme's `MuiCssBaseline`), and " +
         "`style` only passes on one a component is given (`{ ...props.style }`).",
     });
   // What a file imports MUI's packages whole as (`import * as M from "@mui/material"`), whose `M.styled` it reports
@@ -1164,7 +1164,8 @@ function createSxStyles(context) {
   return {
     ImportDeclaration(node) {
       const source = node.source.value;
-      const stylesheet = source.endsWith(".css") && repoPath(context.filename) !== "client/src/main.tsx";
+      const font = repoPath(context.filename) === "client/src/main.tsx" && source.startsWith("@fontsource");
+      const stylesheet = source.endsWith(".css") && !font;
       const styled = node.specifiers.some((s) => s.type === "ImportSpecifier" && s.imported.name === "styled");
       if (stylesheet || source === "@emotion/styled" || (STYLED_SOURCES.has(source) && styled)) report(node);
       if (!STYLED_SOURCES.has(source)) return;

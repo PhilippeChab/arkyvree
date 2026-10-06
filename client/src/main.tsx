@@ -4,8 +4,6 @@ import "@fontsource-variable/lora";
 
 import "@fontsource-variable/lora/wght-italic.css";
 import App from "@/client/src/App.tsx";
-
-import "@/client/src/index.css";
 import { reloadForStaleChunks } from "@/client/src/lib/chunkReload.ts";
 import { initSentry } from "@/client/src/lib/sentry.ts";
 import { useDirtyFormsStore } from "@/client/src/stores/dirtyFormsStore.ts";

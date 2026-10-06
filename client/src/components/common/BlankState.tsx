@@ -1,6 +1,5 @@
-import { Box, Typography } from "@mui/material";
+import { alpha, Box, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import type { ElementType, ReactNode } from "react";
 
 import { NoMatchesIcon } from "@/client/src/components/icons/index.ts";

@@ -1,5 +1,4 @@
-import { Box, Paper, Stack, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { alpha, Box, Paper, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
 interface PageHeaderProps {

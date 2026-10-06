@@ -1,4 +1,5 @@
 import {
+  alpha,
   AppBar,
   Avatar,
   Box,
@@ -16,7 +17,6 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";

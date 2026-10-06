@@ -149,6 +149,10 @@
               "!**/index.ts"
             ],
             "message": "Import from the barrel index instead."
+          },
+          {
+            "group": ["@mui/material/*"],
+            "message": "MUI comes from its one entry, @mui/material (alpha, createTheme, CssBaseline…), never a deep path."
           }
         ]
       }

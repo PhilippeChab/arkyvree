@@ -1,4 +1,5 @@
 import {
+  alpha,
   Backdrop,
   Box,
   Button,
@@ -12,7 +13,6 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import type { Instance } from "@popperjs/core";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 

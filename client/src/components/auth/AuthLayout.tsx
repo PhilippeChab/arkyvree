@@ -1,5 +1,4 @@
-import { Alert, Box, Card, CardContent, Link as MuiLink, Stack, Typography, useTheme } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { Alert, alpha, Box, Card, CardContent, Link as MuiLink, Stack, Typography, useTheme } from "@mui/material";
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
 

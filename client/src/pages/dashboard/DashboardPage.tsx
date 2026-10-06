@@ -1,4 +1,5 @@
 import {
+  alpha,
   Box,
   Card,
   CardActionArea,
@@ -10,7 +11,6 @@ import {
   type Theme,
   Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import type { ElementType } from "react";
 import { Link } from "react-router-dom";
